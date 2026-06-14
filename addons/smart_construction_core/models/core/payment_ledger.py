@@ -78,7 +78,10 @@ class PaymentLedger(models.Model):
             if request.material_settlement_id.state == "confirmed":
                 return
             raise UserError("材料结算单未确认，不能登记付款。")
+        line_settlements = request._linked_settlement_orders()
         if not request.settlement_id:
+            if line_settlements and all(settlement.state in ("approve", "done") for settlement in line_settlements):
+                return
             raise UserError("付款申请未关联结算单，不能登记付款。")
         if request.settlement_id.state not in ("approve", "done"):
             ICP = self.env["ir.config_parameter"].sudo()
@@ -182,7 +185,13 @@ class PaymentLedger(models.Model):
             }
         settlement = self.payment_request_id.settlement_id
         if not settlement:
-            raise UserError(_("当前付款台账没有关联结算单或材料结算单。"))
+            settlements = self.payment_request_id._linked_settlement_orders()
+            if len(settlements) == 1:
+                settlement = settlements
+            elif settlements:
+                raise UserError(_("当前付款申请关联多张结算单，请在付款申请明细中查看。"))
+            else:
+                raise UserError(_("当前付款台账没有关联结算单或材料结算单。"))
         return {
             "type": "ir.actions.act_window",
             "name": _("结算单"),

@@ -152,6 +152,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_general_contract_no" model="ir.sequence">
+        <field name="name">一般合同（公司）合同编号</field>
+        <field name="code">sc.general.contract.no</field>
+        <field name="prefix">GHT%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_material_rental_plan" model="ir.sequence">
         <field name="name">周转材料租赁计划</field>
         <field name="code">sc.material.rental.plan</field>

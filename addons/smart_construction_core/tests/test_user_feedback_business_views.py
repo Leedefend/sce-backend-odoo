@@ -1654,7 +1654,309 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn('name="%s"' % field_name, tree + form)
         self.assertEqual(contract_field.string, "合同明细合计")
 
-    def test_repayment_registration_is_inflow_business_entry(self):
+    def test_expense_claim_exposes_handling_and_anchor_policy(self):
+        tree = self.env.ref("smart_construction_core.view_sc_expense_claim_tree").arch_db
+        form = self.env.ref("smart_construction_core.view_sc_expense_claim_form").arch_db
+        search = self.env.ref("smart_construction_core.view_sc_expense_claim_search").arch_db
+        claim = self.env["sc.expense.claim"].create(
+            {
+                "source_origin": "legacy",
+                "claim_type": "deposit_receive",
+                "expense_type": "自筹保证金",
+                "summary": "自筹保证金",
+                "project_id": self.project.id,
+                "amount": 1000,
+                "state": "legacy_confirmed",
+            }
+        )
+
+        for field_name in ("business_axis", "handling_kind", "financial_flow", "payment_anchor_policy"):
+            self.assertIn('name="%s"' % field_name, tree + form + search)
+        self.assertEqual(claim.business_axis, "guarantee")
+        self.assertEqual(claim.handling_kind, "self_funding_deposit")
+        self.assertEqual(claim.financial_flow, "cash_in")
+        self.assertEqual(claim.payment_anchor_policy, "legacy_optional")
+
+    def test_deduction_cash_flow_drives_payment_request_type(self):
+        receive_request = self.env["payment.request"].create(
+            {
+                "name": "Deduction Paid Receive Request",
+                "type": "receive",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "amount": 100,
+            }
+        )
+        pay_request = self.env["payment.request"].create(
+            {
+                "name": "Deduction Refund Pay Request",
+                "type": "pay",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "amount": 100,
+            }
+        )
+        deduction_paid = self.env["sc.expense.claim"].create(
+            {
+                "claim_type": "expense",
+                "expense_type": "扣款实缴登记",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "payment_request_id": receive_request.id,
+                "payment_account_name": "公司收款账户",
+                "amount": 100,
+            }
+        )
+        deduction_refund = self.env["sc.expense.claim"].create(
+            {
+                "claim_type": "deduction_refund",
+                "expense_type": "扣款实缴退回",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "payment_request_id": pay_request.id,
+                "payee": self.partner.name,
+                "payment_account_name": "公司付款账户",
+                "amount": 100,
+            }
+        )
+
+        self.assertEqual(deduction_paid.financial_flow, "cash_in")
+        self.assertEqual(deduction_paid.payment_anchor_policy, "receive_request_required")
+        deduction_paid._check_business_ready()
+        self.assertEqual(deduction_refund.financial_flow, "cash_out")
+        self.assertEqual(deduction_refund.payment_anchor_policy, "pay_request_required")
+        deduction_refund._check_business_ready()
+        deduction_paid.payment_request_id = pay_request
+        with self.assertRaises(UserError):
+            deduction_paid._check_business_ready()
+
+    def test_expense_claim_actions_default_to_financial_flow_filters(self):
+        expected_contexts = {
+            "smart_construction_core.action_sc_expense_claim_deduction_bill": "search_default_finance_noncash",
+            "smart_construction_core.action_sc_expense_claim_deduction_paid": "search_default_finance_cash_in",
+            "smart_construction_core.action_sc_expense_claim_deduction_paid_refund": "search_default_finance_cash_out",
+            "smart_construction_core.action_sc_bid_deposit_pay": "search_default_finance_cash_out",
+            "smart_construction_core.action_sc_bid_deposit_return": "search_default_finance_cash_in",
+            "smart_construction_core.action_sc_contract_deposit_pay": "search_default_finance_cash_out",
+            "smart_construction_core.action_sc_contract_deposit_return": "search_default_finance_cash_in",
+            "smart_construction_core.action_sc_expense_claim_repayment_registration": "search_default_finance_interfund",
+            "smart_construction_core.action_sc_expense_claim_project_repay_company": "search_default_finance_interfund",
+        }
+
+        for action_xmlid, search_key in expected_contexts.items():
+            context = self.env.ref(action_xmlid).context
+            self.assertIn("'%s': 1" % search_key, context)
+            self.assertNotIn("'search_default_inflow': 1", context)
+            self.assertNotIn("'search_default_outflow': 1", context)
+
+    def test_deduction_registration_action_creates_deduction_bill_lines(self):
+        action = self.env.ref("smart_construction_core.action_sc_expense_claim_deduction_bill")
+        category = self.env.ref("smart_construction_core.business_category_finance_deduction_bill")
+        tree = self.env.ref("smart_construction_core.view_sc_expense_claim_deduction_registration_tree")
+        form = self.env.ref("smart_construction_core.view_sc_expense_claim_deduction_registration_form")
+        noncash_group = self.env.ref("smart_construction_core.menu_sc_noncash_business_group")
+        cash_group = self.env.ref("smart_construction_core.menu_sc_expense_reimbursement_group")
+        deduction_menu = self.env.ref("smart_construction_core.menu_sc_deduction_bill")
+        deduction_paid_menu = self.env.ref("smart_construction_core.menu_sc_deduction_paid")
+        legacy_claim = self.env["sc.expense.claim"].create(
+            {
+                "claim_type": "expense",
+                "expense_type": "扣款单",
+                "summary": "扣款单",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "amount": 100,
+                "deduction_line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "item_name": "代扣税费",
+                            "deduction_category": "enterprise_income_tax",
+                            "amount": 100,
+                        },
+                    )
+                ],
+            }
+        )
+        new_claim = self.env["sc.expense.claim"].create(
+            {
+                "claim_type": "expense",
+                "expense_type": "扣款登记",
+                "summary": "代扣税费后列支",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "amount": 100,
+                "deduction_line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "item_name": "代扣税费",
+                            "deduction_category": "enterprise_income_tax",
+                            "amount": 100,
+                        },
+                    )
+                ],
+                "attachment_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "name": "deduction-registration.txt",
+                            "datas": "ZGVkdWN0aW9u",
+                        },
+                    )
+                ],
+            }
+        )
+        auto_amount_claim = self.env["sc.expense.claim"].with_context(
+            default_business_category_code="finance.deduction.bill",
+        ).create(
+            {
+                "claim_type": "expense",
+                "expense_type": "扣款登记",
+                "summary": "只填明细自动汇总金额",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "deduction_line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "item_name": "管理费",
+                            "deduction_category": "management_fee",
+                            "amount": 60,
+                        },
+                    ),
+                    (
+                        0,
+                        0,
+                        {
+                            "item_name": "税费",
+                            "deduction_category": "vat",
+                            "amount": 40,
+                        },
+                    ),
+                ],
+            }
+        )
+        missing_line_claim = self.env["sc.expense.claim"].create(
+            {
+                "claim_type": "expense",
+                "expense_type": "扣款登记",
+                "summary": "只有表头金额的扣款登记",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "amount": 100,
+            }
+        )
+        mismatch_claim = self.env["sc.expense.claim"].create(
+            {
+                "claim_type": "expense",
+                "expense_type": "扣款登记",
+                "summary": "明细合计不一致",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "amount": 100,
+                "deduction_line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "item_name": "代扣税费",
+                            "deduction_category": "enterprise_income_tax",
+                            "amount": 80,
+                        },
+                    )
+                ],
+            }
+        )
+
+        self.assertEqual(action.name, "扣款登记")
+        self.assertIn("'default_expense_type': '扣款登记'", action.context)
+        self.assertEqual(action.view_id, tree)
+        self.assertEqual(deduction_menu.parent_id, noncash_group)
+        self.assertEqual(deduction_paid_menu.parent_id, cash_group)
+        self.assertIn('string="扣款登记"', tree.arch_db)
+        self.assertIn('string="扣款单类型"', tree.arch_db)
+        self.assertIn('string="扣款事项"', tree.arch_db)
+        self.assertNotIn('name="guarantee_type"', tree.arch_db)
+        self.assertNotIn('name="payment_account_name"', tree.arch_db)
+        self.assertIn('string="扣款登记"', form.arch_db)
+        self.assertIn('string="扣款单明细"', form.arch_db)
+        self.assertIn('name="deduction_line_ids"', form.arch_db)
+        self.assertIn('name="deduction_line_amount_total"', form.arch_db)
+        self.assertIn('string="金额由扣款单明细汇总"', form.arch_db)
+        self.assertIn('name="amount" string="本次扣款金额" readonly="1"', form.arch_db)
+        self.assertLess(form.arch_db.index('name="deduction_line_ids"'), form.arch_db.index('string="金额由扣款单明细汇总"'))
+        self.assertIn('string="责任方"', form.arch_db)
+        self.assertIn('string="登记日期"', form.arch_db)
+        self.assertNotIn('string="扣款单类型"', form.arch_db)
+        self.assertNotIn('string="业务域"', form.arch_db)
+        self.assertNotIn('string="财务影响"', form.arch_db)
+        self.assertNotIn('string="申请锚点口径"', form.arch_db)
+        self.assertNotIn('name="guarantee_type"', form.arch_db)
+        self.assertNotIn('name="payment_account_name"', form.arch_db)
+        self.assertIn(form, action.view_ids.mapped("view_id"))
+        self.assertEqual(category.name, "扣款登记")
+        self.assertEqual(legacy_claim.handling_kind, "deduction_bill")
+        self.assertEqual(new_claim.handling_kind, "deduction_bill")
+        self.assertEqual(new_claim.business_axis, "deduction")
+        self.assertEqual(new_claim.financial_flow, "noncash")
+        self.assertEqual(new_claim.payment_anchor_policy, "noncash_no_request")
+        self.assertEqual(new_claim.deduction_line_amount_total, 100)
+        self.assertEqual(auto_amount_claim.amount, 100)
+        self.assertEqual(auto_amount_claim.approved_amount, 100)
+        self.assertEqual(auto_amount_claim.deduction_line_amount_total, 100)
+        line_field = self.env["sc.expense.claim.deduction.line"]._fields["deduction_category"]
+        line_labels = dict(line_field.selection)
+        for category in ("management_fee", "enterprise_income_tax", "vat", "vat_surcharge", "construction_stamp_tax", "purchase_sale_stamp_tax", "vat_nonrefundable"):
+            self.assertIn(category, line_labels)
+        new_claim._check_business_ready()
+        with self.assertRaisesRegex(UserError, "至少一条扣款单明细"):
+            missing_line_claim._check_business_ready()
+        with self.assertRaisesRegex(UserError, "明细金额合计必须等于本次扣款金额"):
+            mismatch_claim._check_business_ready()
+
+    def test_deduction_registration_is_released_in_noncash_frontend_menu(self):
+        self.env["sc.product.policy"].sync_construction_menu_product_policies()
+        for product_key in ("construction.standard", "construction.preview"):
+            policy = self.env["sc.product.policy"].search([("product_key", "=", product_key)], limit=1)
+            menus = [
+                menu
+                for group in (policy.menu_groups or [])
+                if isinstance(group, dict)
+                for menu in (group.get("menus") or [])
+                if isinstance(menu, dict)
+            ]
+            deduction_menu = next(
+                menu
+                for menu in menus
+                if (
+                    menu.get("menu_xmlid")
+                    or menu.get("page_key")
+                    or menu.get("menu_key")
+                ) == "smart_construction_core.menu_sc_deduction_bill"
+            )
+            paid_menu = next(
+                menu
+                for menu in menus
+                if (
+                    menu.get("menu_xmlid")
+                    or menu.get("page_key")
+                    or menu.get("menu_key")
+                ) == "smart_construction_core.menu_sc_deduction_paid"
+            )
+
+            self.assertEqual(deduction_menu.get("label"), "扣款登记")
+            self.assertIn("非现金业务管理", deduction_menu.get("visible_menu_path"))
+            self.assertEqual(deduction_menu.get("product_domain"), "finance_noncash")
+            self.assertEqual(deduction_menu.get("default_business_category_code"), "finance.deduction.bill")
+            self.assertIn("费用/保证金现金办理", paid_menu.get("visible_menu_path"))
+            self.assertEqual(paid_menu.get("product_domain"), "finance_cash")
+
+    def test_repayment_registration_is_interfund_business_entry(self):
         action = self.env.ref("smart_construction_core.action_sc_expense_claim_repayment_registration")
         claim = self.env["sc.expense.claim"].create(
             {
@@ -1666,9 +1968,11 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             }
         )
 
-        self.assertEqual(claim.direction, "inflow")
+        self.assertEqual(claim.business_axis, "interfund")
+        self.assertEqual(claim.handling_kind, "repayment_registration")
+        self.assertEqual(claim.financial_flow, "interfund")
         self.assertIn("project_company_repay", action.domain)
-        self.assertIn("'search_default_inflow': 1", action.context)
+        self.assertIn("'search_default_finance_interfund': 1", action.context)
         self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_expense_claim_tree").active)
         self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_financing_loan_tree").active)
         self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_receipt_income_tree").active)

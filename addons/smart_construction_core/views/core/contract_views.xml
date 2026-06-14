@@ -175,6 +175,7 @@
                             <field name="subject"/>
                             <field name="type" required="1"/>
                             <field name="business_category_id" options="{'no_create': True}"/>
+                            <field name="original_contract_id"/>
                             <field name="project_id" required="1"/>
                             <field name="operation_strategy" readonly="1"/>
                             <field name="partner_id" required="1"/>
@@ -403,6 +404,7 @@
                                 <field name="subject"/>
                                 <field name="type" readonly="1" invisible="1"/>
                                 <field name="business_category_id" options="{'no_create': True}"/>
+                                <field name="original_contract_id"/>
                                 <field name="document_status"/>
                                 <field name="state" readonly="1"/>
                                 <field name="company_id" readonly="1"/>
@@ -596,6 +598,18 @@
         <field name="res_model">construction.contract</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_construction_contract_search"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+    </record>
+
+    <record id="action_construction_contract_handling" model="ir.actions.act_window">
+        <field name="name">合同办理</field>
+        <field name="res_model">construction.contract</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_construction_contract_tree"/>
+        <field name="views" eval="[(ref('view_construction_contract_tree'), 'tree'), (ref('view_construction_contract_form'), 'form')]"/>
+        <field name="search_view_id" ref="view_construction_contract_search"/>
+        <field name="domain">[('business_category_id.code', 'in', ['contract.income', 'contract.income.supplement', 'contract.expense', 'contract.expense.supplement'])]</field>
+        <field name="context">{'create': True, 'edit': True, 'default_business_category_code': 'contract.income', 'allowed_business_category_codes': ['contract.income', 'contract.income.supplement', 'contract.expense', 'contract.expense.supplement'], 'entry_intent': 'handling', 'disposition_policy': 'merge_by_category', 'entry_target_policy': 'merge_to_list_form_by_business_category', 'business_entry_contract_version': 'business_entry_disposition.v1'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
 

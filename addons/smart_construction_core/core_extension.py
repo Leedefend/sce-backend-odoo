@@ -1003,6 +1003,64 @@ def get_api_data_mutation_policy_contribution(env, model_name: str, op: str):
     return out
 
 
+def _is_contract_tax_rate_quick_create(env, vals: dict) -> bool:
+    safe_vals = vals if isinstance(vals, dict) else {}
+    if (
+        safe_vals.get("type_tax_use") == "none"
+        and safe_vals.get("amount_type") == "percent"
+        and safe_vals.get("price_include") is False
+        and safe_vals.get("tax_group_id")
+    ):
+        try:
+            group = env["account.tax.group"].sudo().browse(int(safe_vals.get("tax_group_id") or 0)).exists()
+        except Exception:
+            group = env["account.tax.group"].browse()
+        if group and group.name == "合同税率":
+            return True
+    return False
+
+
+def get_intent_permission_model_acl_policy_contribution(env, intent_name: str, model_name: str, access_mode: str, params: dict):
+    if (
+        str(intent_name or "").strip() == "api.data"
+        and str(model_name or "").strip() == "account.tax"
+        and str(access_mode or "").strip() == "create"
+    ):
+        raw_params = params if isinstance(params, dict) else {}
+        payload = raw_params.get("params") if isinstance(raw_params.get("params"), dict) else raw_params
+        if isinstance(raw_params.get("payload"), dict):
+            payload = raw_params.get("payload")
+        vals = payload.get("vals") or payload.get("values") if isinstance(payload, dict) else {}
+        if _is_contract_tax_rate_quick_create(env, vals if isinstance(vals, dict) else {}):
+            return {
+                "skip_model_acl": True,
+                "reason_code": "CONTRACT_TAX_RATE_QUICK_CREATE",
+                "source": "smart_construction_core",
+            }
+    return {"skip_model_acl": False, "source": "smart_construction_core"}
+
+
+def get_api_data_create_execution_policy_contribution(env, model_name: str, vals: dict, ctx: dict, params: dict):
+    model = str(model_name or "").strip()
+    safe_vals = vals if isinstance(vals, dict) else {}
+    if model != "account.tax":
+        return {"sudo": False, "source": "smart_construction_core"}
+    if _is_contract_tax_rate_quick_create(env, safe_vals):
+        return {
+            "allowed": True,
+            "sudo": True,
+            "reason_code": "CONTRACT_TAX_RATE_QUICK_CREATE",
+            "source": "smart_construction_core",
+        }
+    return {
+        "allowed": False,
+        "sudo": False,
+        "reason_code": "ACCOUNT_TAX_NATIVE_CREATE_FORBIDDEN",
+        "message": "税率只能通过合同税率百分比快建，不能维护原生会计税种。",
+        "source": "smart_construction_core",
+    }
+
+
 def get_api_data_unlink_allowed_model_contributions(env):
     policies = {
         str(model_name): dict(policy)
@@ -1839,6 +1897,14 @@ def smart_core_api_data_write_allowlist(env):
 
 def smart_core_api_data_mutation_policy(env, model_name: str, op: str):
     return get_api_data_mutation_policy_contribution(env, model_name, op)
+
+
+def smart_core_intent_permission_model_acl_policy(env, intent_name: str, model_name: str, access_mode: str, params: dict):
+    return get_intent_permission_model_acl_policy_contribution(env, intent_name, model_name, access_mode, params)
+
+
+def smart_core_api_data_create_execution_policy(env, model_name: str, vals: dict, ctx: dict, params: dict):
+    return get_api_data_create_execution_policy_contribution(env, model_name, vals, ctx, params)
 
 
 def smart_core_api_data_unlink_allowed_models(env):

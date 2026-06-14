@@ -10,6 +10,12 @@ from odoo.osv import expression
 
 
 BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-13.1"
+CONTRACT_HANDLING_CATEGORY_CODES = {
+    "contract.income",
+    "contract.income.supplement",
+    "contract.expense",
+    "contract.expense.supplement",
+}
 BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.construction.diary": "smart_construction_core.action_sc_construction_diary",
     "site.quality.issue": "smart_construction_core.action_sc_quality_issue",
@@ -18,9 +24,10 @@ BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.safety.issue": "smart_construction_core.action_sc_safety_issue",
     "site.safety.rectification": "smart_construction_core.action_sc_safety_rectification",
     "site.safety.recheck": "smart_construction_core.action_sc_safety_recheck",
-    "contract.income": "smart_construction_core.action_construction_contract_income",
-    "contract.expense": "smart_construction_core.action_construction_contract_expense",
-    "contract.expense.supplement": "smart_construction_core.action_construction_contract_expense",
+    "contract.income": "smart_construction_core.action_construction_contract_handling",
+    "contract.income.supplement": "smart_construction_core.action_construction_contract_handling",
+    "contract.expense": "smart_construction_core.action_construction_contract_handling",
+    "contract.expense.supplement": "smart_construction_core.action_construction_contract_handling",
     "settlement.income": "smart_construction_core.action_sc_settlement_order",
     "settlement.expense": "smart_construction_core.action_sc_settlement_order",
     "finance.payment.apply.pay": "smart_construction_core.action_payment_request_user_payment_apply",
@@ -149,10 +156,12 @@ BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS = {
         "balance_guard": "self_funding_balance",
     },
     "finance.deduction.bill": {
-        "facts": ["sc.finance.business.fact"],
+        "facts": ["sc.finance.business.fact", "sc.company.contractor.responsibility.fact", "sc.company.contractor.responsibility.summary"],
         "terminal_action": "action_done",
         "payment_request_policy": "not_applicable",
         "balance_policy": "noncash_deduction",
+        "responsibility_scope": "company_contractor",
+        "business_cognition": "company_deducts_tax_fee_then_charges_to_project_or_contractor",
     },
     "material.inbound": {
         "facts": ["sc.material.inbound", "sc.material.stock.summary"],
@@ -274,7 +283,7 @@ BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS = {
         "payment_account_name",
         "payer_account",
     ],
-    "finance.deduction.bill": ["project_id", "partner_id", "amount", "expense_type"],
+    "finance.deduction.bill": ["project_id", "partner_id", "deduction_line_ids", "expense_type"],
     "finance.repayment.registration": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.contractor_project": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.project_company": ["project_id", "partner_id", "amount", "expense_type"],
@@ -421,7 +430,7 @@ class ScBusinessCategory(models.Model):
     @api.depends("code", "name")
     def _compute_display_name(self):
         for category in self:
-            category.display_name = "[%s] %s" % (category.code, category.name) if category.code else category.name
+            category.display_name = category.name or category.code or ""
 
     @api.constrains(
         "default_values_json",
@@ -492,6 +501,9 @@ class ScBusinessCategory(models.Model):
             context = dict(raw_context) if isinstance(raw_context, dict) else {}
         context.update({"default_%s" % key: value for key, value in defaults.items()})
         context["current_business_category_code"] = self.code
+        context["default_business_category_code"] = self.code
+        context["current_business_category_label"] = self.name or self.display_name or ""
+        context["default_business_category_label"] = self.name or self.display_name or ""
         result_domain = self._combine_bound_action_domain(result.get("domain"))
         result.update(
             {
@@ -543,6 +555,8 @@ class ScBusinessCategory(models.Model):
                 "template_version": BUSINESS_CATEGORY_TEMPLATE_VERSION,
                 "action_xmlid": action_xmlid,
             }
+            if (category.display_name or "").strip() != (category.name or category.code or "").strip():
+                vals["display_name"] = category.name or category.code or ""
             default_values = BUSINESS_CATEGORY_DEFAULT_VALUE_DEFAULTS.get(code)
             if default_values is not None:
                 vals["default_values_json"] = json.dumps(default_values, ensure_ascii=False, sort_keys=True)
@@ -583,6 +597,21 @@ class ScBusinessCategory(models.Model):
     def _sync_seed_form_policies(self):
         """Sync product-owned form policies from noupdate seed records."""
         xml_policy_codes = set()
+        product_owned_contract_fields = {
+            "name",
+            "domain",
+            "target_model",
+            "direction",
+            "sequence",
+            "source_aliases",
+            "default_values_json",
+            "domain_json",
+            "required_fields_json",
+            "visible_groups_json",
+            "ledger_policy_json",
+            "attachment_policy",
+            "note",
+        }
         seed_path = get_module_resource(
             "smart_construction_core",
             "data",
@@ -602,31 +631,64 @@ class ScBusinessCategory(models.Model):
                     if not xmlid:
                         continue
                     form_policy = None
+                    target_model = None
+                    code = None
+                    seed_vals = {}
                     for field in record.findall("field"):
-                        if field.get("name") == "form_policy_json":
+                        field_name = field.get("name")
+                        field_text = (field.text or "").strip()
+                        if field_name == "code":
+                            code = field_text
+                        elif field_name == "form_policy_json":
                             form_policy = (field.text or "").strip()
-                            break
-                    if not form_policy or form_policy == "{}":
+                        elif field_name == "target_model":
+                            target_model = field_text
+                        if field_name in product_owned_contract_fields:
+                            seed_vals[field_name] = int(field_text or "0") if field_name == "sequence" else field_text
+                    if (not form_policy or form_policy == "{}") and not target_model:
                         continue
                     category = self.env.ref(f"{xmlid_prefix}{xmlid}", raise_if_not_found=False)
                     if not category or category._name != "sc.business.category":
                         continue
                     xml_policy_codes.add(str(category.code or "").strip())
-                    if (category.form_policy_json or "").strip() != form_policy:
-                        category.sudo().write({"form_policy_json": form_policy})
+                    vals = {}
+                    if form_policy and form_policy != "{}" and (category.form_policy_json or "").strip() != form_policy:
+                        vals["form_policy_json"] = form_policy
+                    if target_model and (category.target_model or "").strip() != target_model:
+                        vals["target_model"] = target_model
+                    if code in CONTRACT_HANDLING_CATEGORY_CODES:
+                        for field_name, value in seed_vals.items():
+                            current = category[field_name]
+                            if field_name == "sequence":
+                                if int(current or 0) != int(value or 0):
+                                    vals[field_name] = int(value or 0)
+                            elif (current or "").strip() != (value or "").strip():
+                                vals[field_name] = value
+                    if vals:
+                        category.sudo().write(vals)
         try:
             from .business_form_policy_templates import get_business_category_form_policy_templates
         except Exception:
             return bool(xml_policy_codes)
         for code, policy in get_business_category_form_policy_templates().items():
-            if code in xml_policy_codes:
-                continue
             category = self.sudo().search([("code", "=", code)], limit=1)
             if not category:
                 continue
+            vals = {}
             form_policy = json.dumps(policy or {}, ensure_ascii=False, sort_keys=True)
             if form_policy and form_policy != "{}" and (category.form_policy_json or "").strip() != form_policy:
-                category.sudo().write({"form_policy_json": form_policy})
+                vals["form_policy_json"] = form_policy
+            required_fields = [
+                field.get("name")
+                for field in policy.get("fields") or []
+                if field.get("name") and "create" in (field.get("required_profiles") or [])
+            ]
+            if required_fields:
+                required_fields_json = json.dumps(required_fields, ensure_ascii=False)
+                if (category.required_fields_json or "").strip() != required_fields_json:
+                    vals["required_fields_json"] = required_fields_json
+            if vals:
+                category.sudo().write(vals)
         return True
 
     @api.model

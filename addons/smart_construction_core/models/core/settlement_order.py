@@ -14,6 +14,20 @@ class ScSettlementOrder(models.Model):
     _description = "结算单"
     _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
     _order = "id desc"
+    _rec_names_search = [
+        "name",
+        "title",
+        "project_id.name",
+        "partner_id.name",
+        "settlement_unit_id.name",
+        "legacy_counterparty_name",
+        "contract_id.subject",
+        "contract_id.legacy_contract_no",
+        "contract_id.legacy_document_no",
+        "legacy_contract_no",
+        "legacy_fact_model",
+        "legacy_fact_type",
+    ]
 
     name = fields.Char(string="结算单号", required=True, default="新建", copy=False)
     project_id = fields.Many2one(
@@ -184,6 +198,12 @@ class ScSettlementOrder(models.Model):
         string="付款申请",
         readonly=True,
     )
+    payment_request_line_ids = fields.One2many(
+        "payment.request.line",
+        "settlement_id",
+        string="付款申请明细",
+        readonly=True,
+    )
     paid_amount = fields.Monetary(
         string="已付款金额",
         currency_field="currency_id",
@@ -243,6 +263,10 @@ class ScSettlementOrder(models.Model):
         "payment_request_ids",
         "payment_request_ids.state",
         "payment_request_ids.amount",
+        "payment_request_line_ids",
+        "payment_request_line_ids.current_pay_amount",
+        "payment_request_line_ids.request_id.state",
+        "payment_request_line_ids.request_id.settlement_id",
     )
     def _compute_paid_amounts(self):
         """Phase7-1: 结算单的已付/可付口径，统一由 operating_metrics 提供。"""
@@ -289,6 +313,70 @@ class ScSettlementOrder(models.Model):
     def _compute_amount_total(self):
         for order in self:
             order.amount_total = sum(order.line_ids.mapped("amount"))
+
+    @api.depends(
+        "name",
+        "title",
+        "settlement_flow_label",
+        "settlement_type",
+        "amount_payable",
+        "remaining_amount",
+        "settlement_amount",
+        "amount_total",
+        "currency_id.symbol",
+        "project_id.display_name",
+        "partner_id.display_name",
+        "settlement_unit_id.display_name",
+        "legacy_counterparty_name",
+        "contract_id.subject",
+        "contract_id.legacy_contract_no",
+        "contract_id.legacy_document_no",
+    )
+    def _compute_display_name(self):
+        for order in self:
+            flow = (
+                order.settlement_flow_label
+                or (_("收入合同结算") if order.settlement_type == "in" else _("支出合同结算"))
+            )
+            if flow and _("结算") not in flow:
+                flow = _("%s结算") % flow
+            project_name = order.project_id.display_name or ""
+            partner_name = (
+                order.settlement_unit_id.display_name
+                or order.partner_id.display_name
+                or order.legacy_counterparty_name
+                or ""
+            )
+            contract_label = ""
+            if order.contract_id:
+                contract_label = (
+                    order.contract_id.subject
+                    or order.contract_id.legacy_contract_no
+                    or order.contract_id.legacy_document_no
+                    or ""
+                )
+            amount_text = order._display_amount_label()
+            document_no = (order.name or "").strip()
+            parts = [
+                part
+                for part in (flow, project_name, partner_name, contract_label, amount_text, document_no)
+                if part
+            ]
+            order.display_name = " / ".join(parts) or document_no or _("结算单")
+
+    def _display_amount_label(self):
+        self.ensure_one()
+        amount = (
+            self.amount_payable
+            or self.remaining_amount
+            or self.settlement_amount
+            or self.amount_total
+            or 0.0
+        )
+        if not amount:
+            return ""
+        symbol = (self.currency_id.symbol or "").strip()
+        return "%s%s" % (symbol, "{:,.2f}".format(amount))
 
     @api.depends("settlement_category_id.name", "expense_contract_category_id.name")
     def _compute_settlement_category_display(self):

@@ -156,15 +156,30 @@ class ScOperatingMetricsProject(models.Model):
                     GROUP BY project_id
                 ),
                 overpay_risk AS (
-                    -- 近似口径：付款申请金额 > 结算可付余额 视为超付风险（与 UI 标记一致）
+                    -- 近似口径：付款申请/明细金额 > 结算可付余额 视为超付风险（与 UI 标记一致）
                     SELECT
-                        pr.project_id,
-                        COUNT(*) AS overpay_risk_count
-                    FROM payment_request pr
-                    JOIN sc_settlement_order s ON s.id = pr.settlement_id
-                    WHERE pr.type = 'pay'
-                      AND COALESCE(s.amount_payable, 0.0) < COALESCE(pr.amount, 0.0)
-                    GROUP BY pr.project_id
+                        risk.project_id,
+                        COUNT(DISTINCT risk.payment_request_id) AS overpay_risk_count
+                    FROM (
+                        SELECT
+                            pr.id AS payment_request_id,
+                            pr.project_id
+                        FROM payment_request pr
+                        JOIN sc_settlement_order s ON s.id = pr.settlement_id
+                        WHERE pr.type = 'pay'
+                          AND COALESCE(s.amount_payable, 0.0) < COALESCE(pr.amount, 0.0)
+                        UNION ALL
+                        SELECT
+                            pr.id AS payment_request_id,
+                            pr.project_id
+                        FROM payment_request_line l
+                        JOIN payment_request pr ON pr.id = l.request_id
+                        JOIN sc_settlement_order s ON s.id = l.settlement_id
+                        WHERE pr.type = 'pay'
+                          AND pr.settlement_id IS NULL
+                          AND COALESCE(s.amount_payable, 0.0) < COALESCE(l.current_pay_amount, 0.0)
+                    ) risk
+                    GROUP BY risk.project_id
                 )
                 SELECT
                     ROW_NUMBER() OVER() AS id,

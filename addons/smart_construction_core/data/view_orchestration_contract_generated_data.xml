@@ -53,7 +53,7 @@
         <field name="active" eval="True"/>
         <field name="status">published</field>
         <field name="version_no">1</field>
-        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "settlement_id", "sequence": 20}, {"name": "settlement_amount_total", "sequence": 30}, {"name": "settlement_paid_amount", "sequence": 40}, {"name": "settlement_amount_payable", "sequence": 50}, {"name": "is_overpay_risk", "sequence": 60}, {"name": "settlement_remaining_amount", "sequence": 70}, {"name": "settlement_amount_insufficient", "sequence": 80}, {"name": "settlement_match_blocked", "sequence": 90}, {"name": "settlement_match_warn", "sequence": 100}, {"name": "settlement_compliance_message", "sequence": 110}, {"name": "note", "sequence": 120}, {"name": "attachment_ids", "sequence": 130}, {"name": "creator_name", "sequence": 140}, {"name": "created_time", "sequence": 150}, {"name": "outflow_line_ids", "sequence": 160}, {"name": "receipt_invoice_line_ids", "sequence": 170}, {"name": "ledger_line_ids", "sequence": 180}, {"name": "name", "sequence": 190}, {"name": "type", "sequence": 200}, {"name": "project_id", "sequence": 210}, {"name": "operation_strategy", "sequence": 220}, {"name": "contract_id", "sequence": 230}, {"name": "partner_id", "sequence": 240}, {"name": "amount", "sequence": 250}, {"name": "currency_id", "sequence": 260}, {"name": "date_request", "sequence": 270}, {"name": "paid_amount_total", "sequence": 280}, {"name": "unpaid_amount", "sequence": 290}, {"name": "is_fully_paid", "sequence": 300}]}}}}'/>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "business_category_id", "sequence": 10}, {"name": "payment_flow_label", "sequence": 20}, {"name": "state", "sequence": 30}, {"name": "name", "sequence": 40}, {"name": "project_id", "sequence": 50}, {"name": "operation_strategy", "sequence": 60}, {"name": "partner_id", "sequence": 70}, {"name": "contract_id", "sequence": 80}, {"name": "settlement_id", "sequence": 90}, {"name": "material_settlement_id", "sequence": 100}, {"name": "cost_category_name", "sequence": 110}, {"name": "date_request", "sequence": 120}, {"name": "amount", "sequence": 130}, {"name": "amount_uppercase", "sequence": 140}, {"name": "accepted_amount_uppercase", "sequence": 150}, {"name": "currency_id", "sequence": 160}, {"name": "actual_payee_unit", "sequence": 170}, {"name": "payment_account_name", "sequence": 180}, {"name": "payment_bank_name", "sequence": 190}, {"name": "payment_account_no", "sequence": 200}, {"name": "payer_unit", "sequence": 210}, {"name": "note", "sequence": 220}, {"name": "attachment_ids", "sequence": 230}, {"name": "outflow_line_ids", "sequence": 300}, {"name": "receipt_invoice_line_ids", "sequence": 310}, {"name": "paid_amount_total", "sequence": 400}, {"name": "unpaid_amount", "sequence": 410}, {"name": "is_fully_paid", "sequence": 420}, {"name": "settlement_amount_total", "sequence": 430}, {"name": "settlement_paid_amount", "sequence": 440}, {"name": "settlement_amount_payable", "sequence": 450}, {"name": "settlement_remaining_amount", "sequence": 460}, {"name": "is_overpay_risk", "sequence": 470}, {"name": "settlement_amount_insufficient", "sequence": 480}, {"name": "settlement_match_blocked", "sequence": 490}, {"name": "settlement_match_warn", "sequence": 500}, {"name": "settlement_compliance_message", "sequence": 510}, {"name": "ledger_line_ids", "sequence": 520}, {"name": "partner_account_name", "sequence": 600}, {"name": "partner_bank_name", "sequence": 610}, {"name": "partner_bank_account", "sequence": 620}, {"name": "creator_name", "sequence": 900}, {"name": "created_time", "sequence": 910}, {"name": "type", "sequence": 920}, {"name": "receipt_type", "sequence": 930}]}}}}'/>
     </record>
     <record id="business_config_contract_payment_request_line_form_structure_generated" model="ui.business.config.contract">
         <field name="name">payment_request_line_form_structure_generated_v1</field>
@@ -383,7 +383,7 @@
         <field name="active" eval="True"/>
         <field name="status">published</field>
         <field name="version_no">1</field>
-        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "construction_unit", "sequence": 20}, {"name": "project_manager", "sequence": 30}, {"name": "weather", "sequence": 40}, {"name": "quality_name", "sequence": 50}, {"name": "description", "sequence": 60}, {"name": "material_inspection_note", "sequence": 70}, {"name": "design_change_note", "sequence": 80}, {"name": "test_block_note", "sequence": 90}, {"name": "safety_note", "sequence": 100}, {"name": "hidden_acceptance_note", "sequence": 110}, {"name": "next_plan", "sequence": 120}, {"name": "header_description", "sequence": 130}, {"name": "note", "sequence": 140}, {"name": "attachment_ids", "sequence": 150}, {"name": "name", "sequence": 160}, {"name": "date_diary", "sequence": 170}, {"name": "report_period_start", "sequence": 180}, {"name": "report_period_end", "sequence": 190}, {"name": "document_no", "sequence": 200}, {"name": "title", "sequence": 210}, {"name": "project_id", "sequence": 220}, {"name": "diary_type", "sequence": 230}, {"name": "category", "sequence": 240}, {"name": "handler_name", "sequence": 250}, {"name": "p1_visible_8fa8662ad38f", "sequence": 260}, {"name": "p1_visible_3e7255522b33", "sequence": 270}, {"name": "p1_visible_ae8c5d45f392", "sequence": 280}, {"name": "p1_visible_c27cdbf90458", "sequence": 290}, {"name": "p1_visible_73bf794d61b3", "sequence": 300}, {"name": "p1_visible_d3bea9efb1b9", "sequence": 310}, {"name": "p1_visible_364d38fc2b37", "sequence": 320}, {"name": "p1_visible_853e6ba25fc5", "sequence": 330}, {"name": "p1_visible_bd3c202b3612", "sequence": 340}, {"name": "p1_visible_b18125817eb9", "sequence": 350}, {"name": "p1_visible_df39195d3c5c", "sequence": 360}, {"name": "p1_visible_f11e4f6f4dbe", "sequence": 370}]}}}}'/>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10, "readonly": true}, {"name": "project_id", "label": "项目", "sequence": 20, "required": true}, {"name": "date_diary", "label": "日志日期", "sequence": 30, "required": true}, {"name": "diary_type", "label": "日志类型", "sequence": 40, "required": true}, {"name": "title", "label": "日志标题", "sequence": 50}, {"name": "weather", "label": "天气", "sequence": 60}, {"name": "construction_unit", "label": "施工单位", "sequence": 70}, {"name": "project_manager", "label": "项目经理", "sequence": 80}, {"name": "manpower_count", "label": "现场人数", "sequence": 90}, {"name": "attendance_equipment", "label": "出勤机械", "sequence": 100}, {"name": "description", "label": "今日施工内容", "sequence": 110}, {"name": "material_inspection_note", "label": "材料进场/送检", "sequence": 120}, {"name": "hidden_acceptance_note", "label": "隐蔽工程验收", "sequence": 130}, {"name": "next_plan", "label": "下步计划", "sequence": 140}, {"name": "quality_name", "label": "质量事项", "sequence": 150}, {"name": "safety_note", "label": "安全情况", "sequence": 160}, {"name": "test_block_note", "label": "试块制作", "sequence": 170}, {"name": "design_change_note", "label": "设计变更/技术核定", "sequence": 180}, {"name": "handler_name", "label": "经办人", "sequence": 190}, {"name": "note", "label": "备注", "sequence": 200}]}}}}'/>
     </record>
     <record id="business_config_contract_sc_contract_event_form_structure_generated" model="ui.business.config.contract">
         <field name="name">sc_contract_event_form_structure_generated_v1</field>
@@ -562,15 +562,88 @@
         <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "document_date", "sequence": 10}, {"name": "business_entity_id", "sequence": 20}, {"name": "company_id", "sequence": 30}, {"name": "current_account_balance", "sequence": 40}, {"name": "current_bank_balance", "sequence": 50}, {"name": "bank_system_difference", "sequence": 60}]}}}}'/>
     </record>
     <record id="business_config_contract_sc_general_contract_form_structure_generated" model="ui.business.config.contract">
-        <field name="name">sc_general_contract_form_structure_generated_v1</field>
+        <field name="name">sc_general_contract_company_handling_form_v2</field>
         <field name="model">sc.general.contract</field>
         <field name="view_type">form</field>
-        <field name="priority">111</field>
+        <field name="priority">1000</field>
         <field name="company_id" eval="False"/>
         <field name="active" eval="True"/>
         <field name="status">published</field>
-        <field name="version_no">1</field>
-        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "amount_total", "sequence": 20}, {"name": "amount_untaxed", "sequence": 30}, {"name": "settlement_amount", "sequence": 40}, {"name": "invoice_amount", "sequence": 50}, {"name": "uninvoiced_amount", "sequence": 60}, {"name": "received_amount", "sequence": 70}, {"name": "unreceived_amount", "sequence": 80}, {"name": "paid_amount", "sequence": 90}, {"name": "unpaid_amount", "sequence": 100}, {"name": "prepayment_amount", "sequence": 110}, {"name": "install_commissioning_payment", "sequence": 120}, {"name": "warranty_deposit", "sequence": 130}, {"name": "change_amount_total", "sequence": 140}, {"name": "currency_id", "sequence": 150}, {"name": "payment_terms", "sequence": 160}, {"name": "special_condition", "sequence": 170}, {"name": "partner_id", "sequence": 180}, {"name": "partner_name_text", "sequence": 190}, {"name": "credit_code", "sequence": 200}, {"name": "contact_name", "sequence": 210}, {"name": "contact_phone", "sequence": 220}, {"name": "engineering_address", "sequence": 230}, {"name": "bank_name", "sequence": 240}, {"name": "bank_account", "sequence": 250}, {"name": "applicant_name", "sequence": 260}, {"name": "applicant_department", "sequence": 270}, {"name": "purchase_engineer", "sequence": 280}, {"name": "handler_id", "sequence": 290}, {"name": "entry_user_id", "sequence": 300}, {"name": "note", "sequence": 310}, {"name": "name", "sequence": 320}, {"name": "project_id", "sequence": 330}, {"name": "operation_strategy", "sequence": 340}, {"name": "document_no", "sequence": 350}, {"name": "contract_no", "sequence": 360}, {"name": "contract_name", "sequence": 370}, {"name": "submitted_time", "sequence": 380}, {"name": "contract_type", "sequence": 390}, {"name": "sign_status", "sequence": 400}, {"name": "contract_attribute", "sequence": 410}, {"name": "template_name", "sequence": 420}, {"name": "union_mode", "sequence": 430}, {"name": "pricing_mode", "sequence": 440}, {"name": "subcontract_mode", "sequence": 450}, {"name": "company_id", "sequence": 460}, {"name": "contract_date", "sequence": 470}, {"name": "expected_sign_date", "sequence": 480}, {"name": "completion_date", "sequence": 490}, {"name": "signing_place", "sequence": 500}, {"name": "is_supplement_contract", "sequence": 510}, {"name": "related_contract_no", "sequence": 520}, {"name": "attachment_ids", "sequence": 530}]}}}}'/>
+        <field name="version_no">2</field>
+        <field name="contract_json" eval='{
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "fields": [
+                            {"name": "contract_name", "label": "合同名称", "sequence": 10, "required": True},
+                            {"name": "contract_no", "label": "合同编号", "sequence": 20, "readonly": true},
+                            {"name": "contract_type", "label": "合同类型", "sequence": 30},
+                            {"name": "contract_direction", "label": "合同方向", "sequence": 40},
+                            {"name": "project_id", "label": "关联项目", "sequence": 50},
+                            {"name": "partner_id", "label": "往来单位", "sequence": 60},
+                            {"name": "partner_name_text", "label": "合同方", "sequence": 70},
+                            {"name": "credit_code", "label": "统一信用代码", "sequence": 80},
+                            {"name": "contact_name", "label": "联系人", "sequence": 90},
+                            {"name": "contact_phone", "label": "联系电话", "sequence": 100},
+                            {"name": "engineering_address", "label": "工程地址", "sequence": 110},
+                            {"name": "bank_name", "label": "开户行", "sequence": 120},
+                            {"name": "bank_account", "label": "银行账号", "sequence": 130},
+                            {"name": "amount_total", "label": "合同金额", "sequence": 140, "required": True},
+                            {"name": "tax_id", "label": "税率", "sequence": 150},
+                            {"name": "amount_untaxed", "label": "不含税金额", "sequence": 160},
+                            {"name": "currency_id", "label": "币种", "sequence": 170},
+                            {"name": "payment_terms", "label": "付款条件", "sequence": 180},
+                            {"name": "special_condition", "label": "特殊条款", "sequence": 190},
+                            {"name": "contract_date", "label": "合同日期", "sequence": 200},
+                            {"name": "expected_sign_date", "label": "预计签订日期", "sequence": 210},
+                            {"name": "completion_date", "label": "计划交货或完工日期", "sequence": 220},
+                            {"name": "signing_place", "label": "签订地点", "sequence": 230},
+                            {"name": "pricing_mode", "label": "计价模式", "sequence": 240},
+                            {"name": "union_mode", "label": "联合体模式", "sequence": 250},
+                            {"name": "subcontract_mode", "label": "分包类型", "sequence": 260},
+                            {"name": "applicant_name", "label": "申请人", "sequence": 270},
+                            {"name": "applicant_department", "label": "申请部门", "sequence": 280},
+                            {"name": "handler_id", "label": "经办人", "sequence": 290},
+                            {"name": "purchase_engineer", "label": "采购工程师", "sequence": 300},
+                            {"name": "note", "label": "备注", "sequence": 310},
+                            {"name": "name", "visible": False},
+                            {"name": "state", "visible": False},
+                            {"name": "can_review", "visible": False},
+                            {"name": "validation_status", "visible": False},
+                            {"name": "document_no", "visible": False},
+                            {"name": "submitted_time", "visible": False},
+                            {"name": "sign_status", "visible": False},
+                            {"name": "contract_attribute", "visible": False},
+                            {"name": "template_name", "visible": False},
+                            {"name": "is_supplement_contract", "visible": False},
+                            {"name": "related_contract_no", "visible": False},
+                            {"name": "entry_user_id", "visible": False},
+                            {"name": "entry_data", "visible": False},
+                            {"name": "company_id", "visible": False},
+                            {"name": "operation_strategy", "visible": False},
+                            {"name": "source_origin", "visible": False},
+                            {"name": "reject_reason", "visible": False},
+                            {"name": "active", "visible": False},
+                            {"name": "archived", "visible": False},
+                            {"name": "tax_rate", "visible": False},
+                            {"name": "attachment_ids", "visible": False},
+                            {"name": "settlement_amount", "visible": False},
+                            {"name": "invoice_amount", "visible": False},
+                            {"name": "uninvoiced_amount", "visible": False},
+                            {"name": "received_amount", "visible": False},
+                            {"name": "unreceived_amount", "visible": False},
+                            {"name": "paid_amount", "visible": False},
+                            {"name": "unpaid_amount", "visible": False},
+                            {"name": "prepayment_amount", "visible": False},
+                            {"name": "install_commissioning_payment", "visible": False},
+                            {"name": "warranty_deposit", "visible": False},
+                            {"name": "change_amount_total", "visible": False},
+                            {"name": "change_rate", "visible": False}
+                        ]
+                    }
+                }
+            }
+        }'/>
     </record>
     <record id="business_config_contract_sc_hazard_source_form_structure_generated" model="ui.business.config.contract">
         <field name="name">sc_hazard_source_form_structure_generated_v1</field>
@@ -867,7 +940,7 @@
         <field name="active" eval="True"/>
         <field name="status">published</field>
         <field name="version_no">1</field>
-        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "payment_family", "sequence": 20}, {"name": "payment_method", "sequence": 30}, {"name": "bank_account", "sequence": 40}, {"name": "handler_name", "sequence": 50}, {"name": "payment_account_name", "sequence": 60}, {"name": "payment_account_no", "sequence": 70}, {"name": "payment_bank_name", "sequence": 80}, {"name": "receipt_account_name", "sequence": 90}, {"name": "receipt_account_no", "sequence": 100}, {"name": "receipt_bank_name", "sequence": 110}, {"name": "planned_amount", "sequence": 120}, {"name": "paid_amount", "sequence": 130}, {"name": "invoice_amount", "sequence": 140}, {"name": "currency_id", "sequence": 150}, {"name": "note", "sequence": 160}, {"name": "attachment_ids", "sequence": 170}, {"name": "creator_name", "sequence": 180}, {"name": "created_time", "sequence": 190}, {"name": "name", "sequence": 200}, {"name": "source_kind", "sequence": 210}, {"name": "date_payment", "sequence": 220}, {"name": "document_no", "sequence": 230}, {"name": "project_id", "sequence": 240}, {"name": "operation_strategy", "sequence": 250}, {"name": "partner_id", "sequence": 260}, {"name": "contract_id", "sequence": 270}, {"name": "payment_request_id", "sequence": 280}]}}}}'/>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "business_category_id", "sequence": 10}, {"name": "execution_flow_label", "sequence": 20}, {"name": "state", "sequence": 30}, {"name": "name", "sequence": 40}, {"name": "payment_request_id", "sequence": 50}, {"name": "project_id", "sequence": 60}, {"name": "operation_strategy", "sequence": 70}, {"name": "partner_id", "sequence": 80}, {"name": "contract_id", "sequence": 90}, {"name": "date_payment", "sequence": 100}, {"name": "paid_amount", "sequence": 110}, {"name": "planned_amount", "sequence": 120}, {"name": "invoice_amount", "sequence": 130}, {"name": "currency_id", "sequence": 140}, {"name": "receipt_account_name", "sequence": 150}, {"name": "receipt_bank_name", "sequence": 160}, {"name": "receipt_account_no", "sequence": 170}, {"name": "payment_account_name", "sequence": 180}, {"name": "payment_bank_name", "sequence": 190}, {"name": "payment_account_no", "sequence": 200}, {"name": "bank_account", "sequence": 210}, {"name": "payment_method", "sequence": 220}, {"name": "handler_name", "sequence": 230}, {"name": "document_no", "sequence": 240}, {"name": "note", "sequence": 250}, {"name": "attachment_ids", "sequence": 260}, {"name": "company_contractor_responsibility_state", "sequence": 300}, {"name": "company_contractor_arrival_unprocessed_amount", "sequence": 310}, {"name": "company_contractor_arrival_over_processed_amount", "sequence": 320}, {"name": "company_contractor_self_funding_balance", "sequence": 330}, {"name": "company_contractor_responsibility_notice", "sequence": 340}, {"name": "payment_family", "sequence": 900}, {"name": "source_kind", "sequence": 910}, {"name": "push_result", "sequence": 920}, {"name": "kingdee_document_no", "sequence": 930}, {"name": "creator_name", "sequence": 940}, {"name": "created_time", "sequence": 950}, {"name": "legacy_attachment_ref", "sequence": 960}]}}}}'/>
     </record>
     <record id="business_config_contract_sc_plan_form_structure_generated" model="ui.business.config.contract">
         <field name="name">sc_plan_form_structure_generated_v1</field>

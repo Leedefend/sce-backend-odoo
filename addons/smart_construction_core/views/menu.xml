@@ -104,14 +104,14 @@
 
     <!-- 合同中心 -->
     <menuitem id="menu_sc_contract_center"
-              name="合同管理"
+              name="合同中心"
               parent="menu_sc_root"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager,smart_construction_core.group_sc_cap_purchase_manager"/>
     <menuitem id="menu_sc_construction_contract"
-              name="项目合同"
+              name="合同办理"
               parent="menu_sc_contract_center"
-              action="action_construction_contract"
+              action="action_construction_contract_handling"
               sequence="3"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <menuitem id="menu_sc_contract_income"

@@ -13,9 +13,11 @@
                     <field name="source_model"/>
                     <field name="source_res_id"/>
                     <field name="settlement_id"/>
+                    <field name="linked_settlement_summary"/>
                     <filter string="支出" name="direction_out" domain="[('direction', '=', 'out')]"/>
                     <filter string="收入" name="direction_in" domain="[('direction', '=', 'in')]"/>
                     <filter string="已入账" name="state_posted" domain="[('state', '=', 'posted')]"/>
+                    <filter string="明细有关联结算单" name="has_linked_settlement" domain="[('linked_settlement_count', '&gt;', 0)]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
                     <filter string="按业务类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
@@ -34,6 +36,8 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="settlement_id"/>
+                    <field name="linked_settlement_count" optional="show"/>
+                    <field name="linked_settlement_summary" optional="show"/>
                     <field name="payment_request_id"/>
                     <field name="source_model" optional="show"/>
                     <field name="source_res_id" optional="show"/>
@@ -42,7 +46,7 @@
                     <field name="amount" sum="金额合计"/>
                     <field name="currency_id" invisible="1"/>
                     <button name="action_open_payment_request" type="object" string="打开申请" class="btn-primary" invisible="not payment_request_id"/>
-                    <button name="action_open_settlement" type="object" string="打开结算单" class="btn-secondary" invisible="not settlement_id"/>
+                    <button name="action_open_settlement" type="object" string="打开结算单" class="btn-secondary" invisible="not settlement_id and linked_settlement_count == 0"/>
                     <field name="legacy_record_id" optional="hide"/>
                     <field name="legacy_source_ref" optional="hide"/>
                     <field name="state"/>
@@ -57,7 +61,7 @@
                 <form string="资金台账" create="false" edit="false" delete="false">
                     <header>
                         <button name="action_open_payment_request" type="object" string="打开申请" class="btn-primary" invisible="not payment_request_id"/>
-                        <button name="action_open_settlement" type="object" string="打开结算单" class="btn-secondary" invisible="not settlement_id"/>
+                        <button name="action_open_settlement" type="object" string="打开结算单" class="btn-secondary" invisible="not settlement_id and linked_settlement_count == 0"/>
                     </header>
                     <sheet>
                         <group>
@@ -74,6 +78,8 @@
                         </group>
                         <group string="关联单据">
                             <field name="settlement_id" readonly="1"/>
+                            <field name="linked_settlement_count" readonly="1"/>
+                            <field name="linked_settlement_summary" readonly="1"/>
                             <field name="payment_request_id" readonly="1"/>
                             <field name="source_model" readonly="1"/>
                             <field name="source_res_id" readonly="1"/>

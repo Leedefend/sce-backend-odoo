@@ -652,13 +652,14 @@
         <field name="context">{'create': False, 'default_fact_type': 'salary_registration'}</field>
     </record>
     <record id="action_sc_construction_diary" model="ir.actions.act_window">
-        <field name="name">施工日志（新）</field>
-        <field name="view_id" ref="smart_construction_core.view_sc_construction_diary_user_confirmed_tree"/>
+        <field name="name">施工日志</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_construction_diary_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_construction_diary_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_construction_diary_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_construction_diary_form')})
         ]"/>
-        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance'), ('legacy_source_table', '=', 'direct_acceptance:施工日志（新）')]</field>
-        <field name="context">{'create': False, 'default_diary_type': '施工日志'}</field>
+        <field name="domain">[]</field>
+        <field name="context">{'default_diary_type': '施工日志', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_receipt_income_engineering_progress" model="ir.actions.act_window">
         <field name="name">工程进度款收入登记</field>

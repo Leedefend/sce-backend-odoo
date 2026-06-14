@@ -258,6 +258,17 @@
                                         <field name="state"/>
                                     </tree>
                                 </field>
+                                <field name="payment_request_line_ids" readonly="1" context="{'create': False, 'edit': False}">
+                                    <tree>
+                                        <field name="request_id"/>
+                                        <field name="project_id"/>
+                                        <field name="partner_id"/>
+                                        <field name="source_document_no"/>
+                                        <field name="source_line_type"/>
+                                        <field name="current_pay_amount"/>
+                                        <field name="amount"/>
+                                    </tree>
+                                </field>
                             </page>
                             <page string="扣款调整" invisible="not id">
                                 <field name="adjustment_ids"

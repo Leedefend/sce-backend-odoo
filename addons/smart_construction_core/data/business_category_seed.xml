@@ -119,7 +119,7 @@
         <field name="name">收入合同</field>
         <field name="code">contract.income</field>
         <field name="domain">contract</field>
-        <field name="target_model">construction.contract.income</field>
+        <field name="target_model">construction.contract</field>
         <field name="direction">income</field>
         <field name="sequence">1</field>
         <field name="source_aliases">收入合同、项目收入合同、施工合同、工程合同收入</field>
@@ -129,24 +129,25 @@
         <field name="visible_groups_json"><![CDATA[["contract_header", "amount", "execution", "attachments"]]]></field>
         <field name="form_policy_json"><![CDATA[{
             "sections": [
-                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "type", "state", "name"]},
-                {"name": "project_counterparty", "title": "项目与发包人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "date_contract", "handler_id"]},
-                {"name": "contract_scope", "title": "合同范围", "sequence": 30, "fields": ["category_id", "contract_type_id", "engineering_address", "engineering_category_text", "engineering_content", "contract_duration_text", "contract_payment_method_text"]},
-                {"name": "amount_tax", "title": "合同明细与金额", "sequence": 40, "fields": ["tax_id", "line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与发包人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "tax_id", "date_contract", "handler_id"]},
+                {"name": "contract_scope", "title": "合同范围", "sequence": 30, "fields": ["category_id", "engineering_category_text", "engineering_address", "engineering_content", "contract_duration_text", "contract_payment_method_text"]},
+                {"name": "amount_tax", "title": "合同明细与金额", "sequence": 40, "fields": ["line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
                 {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["budget_id", "analytic_id", "archived", "note", "attachment_ids", "attachment_text"]},
                 {"name": "execution", "title": "执行情况", "sequence": 70, "collapsible": true, "collapsed_by_default": true, "fields": ["settlement_amount", "invoice_amount", "uninvoiced_amount", "received_amount", "unreceived_amount", "visible_invoice_amount", "visible_received_amount", "visible_unreceived_amount", "visible_unreceived_rate"]},
                 {"name": "source_trace", "title": "来源与系统追溯", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "fields": ["legacy_contract_no", "legacy_external_contract_no", "legacy_document_no", "document_status", "legacy_visible_title", "legacy_contract_amount", "entry_user_id", "entry_user_text", "entry_time", "legacy_status", "company_id", "reject_reason", "approval_info"]}
             ],
             "fields": [
-                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"], "group": "core"},
-                {"name": "subject", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "type", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "business_category_id", "label": "办理类型", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"], "group": "core"},
+                {"name": "subject", "label": "合同标题", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "type", "visible_profiles": [], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
-                {"name": "project_id", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "partner_id", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "tax_id", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "project_id", "label": "项目名称", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "partner_id", "label": "发包人", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "tax_id", "label": "税率", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "operation_strategy", "label": "经营方式", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "contract_type_id", "visible_profiles": [], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "line_amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_untaxed", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
@@ -179,16 +180,83 @@
         }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["construction.contract.income", "sc.receipt.income", "sc.invoice.registration"], "terminal_action": "action_confirm", "balance_fields": ["amount_total", "received_amount", "unreceived_amount", "invoice_amount", "uninvoiced_amount"]}]]></field>
         <field name="attachment_policy">recommended</field>
-        <field name="note">合同结算域建筑行业模板分类；当前通过收入合同 action/context 承载，后续绑定合同分类字段和行业模板策略。</field>
+        <field name="note">合同办理分类；统一由 construction.contract 承载，收入语义通过 type=out 与业务分类策略表达。</field>
+    </record>
+
+    <record id="business_category_contract_income_supplement" model="sc.business.category">
+        <field name="name">收入合同补充</field>
+        <field name="code">contract.income.supplement</field>
+        <field name="domain">contract</field>
+        <field name="target_model">construction.contract</field>
+        <field name="direction">income</field>
+        <field name="sequence">2</field>
+        <field name="source_aliases">收入补充合同、收入合同补充、合同补充协议、补充合同</field>
+        <field name="default_values_json"><![CDATA[{"type": "out", "subject": "补充合同", "business_category_code": "contract.income.supplement"}]]></field>
+        <field name="domain_json"><![CDATA[["|", ["business_category_id.code", "=", "contract.income.supplement"], ["subject", "=", "补充合同"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "subject", "tax_id"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["contract_header", "amount", "execution", "attachments"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与发包人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "tax_id", "date_contract", "handler_id"]},
+                {"name": "supplement_scope", "title": "补充事项", "sequence": 30, "fields": ["engineering_content", "note", "attachment_ids", "attachment_text", "legacy_visible_attachment"]},
+                {"name": "amount_tax", "title": "补充明细与金额", "sequence": 40, "fields": ["line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
+                {"name": "execution", "title": "执行情况", "sequence": 70, "collapsible": true, "collapsed_by_default": true, "fields": ["settlement_amount", "invoice_amount", "uninvoiced_amount", "received_amount", "unreceived_amount", "visible_invoice_amount", "visible_received_amount", "visible_unreceived_amount", "visible_unreceived_rate"]},
+                {"name": "source_trace", "title": "来源与系统追溯", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "fields": ["legacy_contract_no", "legacy_external_contract_no", "legacy_document_no", "document_status", "legacy_visible_title", "legacy_contract_amount", "entry_user_id", "entry_user_text", "entry_time", "legacy_status", "company_id", "reject_reason", "approval_info"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "label": "办理类型", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"], "group": "core"},
+                {"name": "subject", "label": "补充事项", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "type", "visible_profiles": [], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "project_id", "label": "项目名称", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "partner_id", "label": "发包人", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "tax_id", "label": "税率", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "operation_strategy", "label": "经营方式", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "contract_type_id", "visible_profiles": [], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "line_amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_untaxed", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_final", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "legacy_visible_attachment", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "settlement_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "invoice_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "uninvoiced_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "received_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "unreceived_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "visible_invoice_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "legacy"},
+                {"name": "visible_received_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "legacy"},
+                {"name": "visible_unreceived_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "legacy"},
+                {"name": "visible_unreceived_rate", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "legacy"},
+                {"name": "legacy_contract_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_external_contract_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_document_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "document_status", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_visible_title", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_contract_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_user_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_user_text", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_status", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "company_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "reject_reason", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "approval_info", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"}
+            ]
+        }]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["construction.contract.income", "sc.receipt.income", "sc.invoice.registration"], "terminal_action": "action_confirm", "balance_fields": ["amount_total", "received_amount", "unreceived_amount", "invoice_amount", "uninvoiced_amount"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">收入合同补充办理分类；统一由 construction.contract 承载，收入方向补充语义通过 type=out 与业务分类策略表达。</field>
     </record>
 
     <record id="business_category_contract_expense" model="sc.business.category">
         <field name="name">支出合同</field>
         <field name="code">contract.expense</field>
         <field name="domain">contract</field>
-        <field name="target_model">construction.contract.expense</field>
+        <field name="target_model">construction.contract</field>
         <field name="direction">cost</field>
-        <field name="sequence">2</field>
+        <field name="sequence">3</field>
         <field name="source_aliases">支出合同、采购合同、分包合同、劳务合同、材料合同、设备租赁合同</field>
         <field name="default_values_json"><![CDATA[{"type": "in"}]]></field>
         <field name="domain_json"><![CDATA[[]]]></field>
@@ -196,26 +264,27 @@
         <field name="visible_groups_json"><![CDATA[["contract_header", "amount", "execution", "attachments"]]]></field>
         <field name="form_policy_json"><![CDATA[{
             "sections": [
-                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "type", "state", "name"]},
-                {"name": "project_counterparty", "title": "项目与供应商/分包方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "expense_contract_category_id", "date_contract", "handler_id"]},
-                {"name": "contract_scope", "title": "合同范围", "sequence": 30, "fields": ["category_id", "contract_type_id", "engineering_address", "engineering_category_text", "engineering_content"]},
-                {"name": "amount_tax", "title": "合同明细与金额", "sequence": 40, "fields": ["tax_id", "line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与供应商/分包方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "expense_contract_category_id", "tax_id", "date_contract", "handler_id"]},
+                {"name": "contract_scope", "title": "合同范围", "sequence": 30, "fields": ["category_id", "engineering_category_text", "engineering_address", "engineering_content"]},
+                {"name": "amount_tax", "title": "合同明细与金额", "sequence": 40, "fields": ["line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
                 {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["budget_id", "analytic_id", "archived", "note", "attachment_ids", "attachment_text", "legacy_visible_attachment"]},
                 {"name": "execution", "title": "执行情况", "sequence": 70, "collapsible": true, "collapsed_by_default": true, "fields": ["settlement_amount", "paid_amount", "unpaid_amount", "invoice_amount", "uninvoiced_amount"]},
                 {"name": "source_trace", "title": "来源与系统追溯", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "fields": ["legacy_contract_no", "legacy_external_contract_no", "legacy_document_no", "document_status", "legacy_visible_title", "legacy_visible_category", "legacy_contract_amount", "expense_contract_category_auto_id", "entry_user_id", "entry_user_text", "entry_time", "legacy_visible_creator_name", "legacy_visible_created_time", "legacy_status", "company_id", "reject_reason", "approval_info"]}
             ],
             "fields": [
-                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"], "group": "core"},
-                {"name": "subject", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "type", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "business_category_id", "label": "办理类型", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"], "group": "core"},
+                {"name": "subject", "label": "合同标题", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "type", "visible_profiles": [], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
-                {"name": "project_id", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "partner_id", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "expense_contract_category_id", "visible_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "project_id", "label": "项目名称", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "partner_id", "label": "供应商/分包方", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "expense_contract_category_id", "label": "支出合同分类", "visible_profiles": ["create", "edit", "readonly"], "group": "core"},
                 {"name": "expense_contract_category_auto_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
-                {"name": "tax_id", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "tax_id", "label": "税率", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "operation_strategy", "label": "经营方式", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "contract_type_id", "visible_profiles": [], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "line_amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_untaxed", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
@@ -247,16 +316,16 @@
         }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["construction.contract.expense", "sc.settlement.order", "payment.request", "sc.invoice.registration"], "terminal_action": "action_confirm", "balance_fields": ["amount_total", "settlement_amount", "paid_amount", "unpaid_amount", "invoice_amount", "uninvoiced_amount"]}]]></field>
         <field name="attachment_policy">recommended</field>
-        <field name="note">合同结算域建筑行业模板分类；当前通过支出合同 action/context 承载，后续绑定合同分类字段和行业模板策略。</field>
+        <field name="note">合同办理分类；统一由 construction.contract 承载，支出语义通过 type=in、支出合同分类与业务分类策略表达。</field>
     </record>
 
     <record id="business_category_contract_expense_supplement" model="sc.business.category">
         <field name="name">支出合同补充</field>
         <field name="code">contract.expense.supplement</field>
         <field name="domain">contract</field>
-        <field name="target_model">construction.contract.expense</field>
+        <field name="target_model">construction.contract</field>
         <field name="direction">cost</field>
-        <field name="sequence">3</field>
+        <field name="sequence">4</field>
         <field name="source_aliases">补充合同、支出补充合同、合同补充协议</field>
         <field name="default_values_json"><![CDATA[{"type": "in", "subject": "补充合同", "business_category_code": "contract.expense.supplement"}]]></field>
         <field name="domain_json"><![CDATA[["|", ["business_category_id.code", "=", "contract.expense.supplement"], ["subject", "=", "补充合同"]]]]></field>
@@ -264,25 +333,26 @@
         <field name="visible_groups_json"><![CDATA[["contract_header", "amount", "execution", "attachments"]]]></field>
         <field name="form_policy_json"><![CDATA[{
             "sections": [
-                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "type", "state", "name"]},
-                {"name": "project_counterparty", "title": "项目与供应商/分包方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "expense_contract_category_id", "date_contract", "handler_id"]},
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与供应商/分包方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "expense_contract_category_id", "tax_id", "date_contract", "handler_id"]},
                 {"name": "supplement_scope", "title": "补充事项", "sequence": 30, "fields": ["engineering_content", "note", "attachment_ids", "attachment_text", "legacy_visible_attachment"]},
-                {"name": "amount_tax", "title": "补充明细与金额", "sequence": 40, "fields": ["tax_id", "line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
+                {"name": "amount_tax", "title": "补充明细与金额", "sequence": 40, "fields": ["line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
                 {"name": "execution", "title": "执行情况", "sequence": 70, "collapsible": true, "collapsed_by_default": true, "fields": ["settlement_amount", "paid_amount", "unpaid_amount", "invoice_amount", "uninvoiced_amount"]},
                 {"name": "source_trace", "title": "来源与系统追溯", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "fields": ["legacy_contract_no", "legacy_external_contract_no", "legacy_document_no", "document_status", "legacy_visible_title", "legacy_visible_category", "legacy_contract_amount", "expense_contract_category_auto_id", "entry_user_id", "entry_user_text", "entry_time", "legacy_visible_creator_name", "legacy_visible_created_time", "legacy_status", "company_id", "reject_reason", "approval_info"]}
             ],
             "fields": [
-                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"], "group": "core"},
-                {"name": "subject", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "type", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "business_category_id", "label": "办理类型", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"], "group": "core"},
+                {"name": "subject", "label": "补充事项", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "type", "visible_profiles": [], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
-                {"name": "project_id", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "partner_id", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "expense_contract_category_id", "visible_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "project_id", "label": "项目名称", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "partner_id", "label": "供应商/分包方", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "expense_contract_category_id", "label": "支出合同分类", "visible_profiles": ["create", "edit", "readonly"], "group": "core"},
                 {"name": "expense_contract_category_auto_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
-                {"name": "tax_id", "required_profiles": ["create", "edit"], "group": "core"},
-                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "tax_id", "label": "税率", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "operation_strategy", "label": "经营方式", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "contract_type_id", "visible_profiles": [], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "line_amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_untaxed", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
@@ -390,7 +460,7 @@
         <field name="direction">pay</field>
         <field name="sequence">30</field>
         <field name="source_aliases">往来单位付款、实际付款、付款执行</field>
-        <field name="default_values_json"><![CDATA[{"payment_family": "往来单位付款"}]]></field>
+        <field name="default_values_json"><![CDATA[{"source_kind": "actual_outflow", "payment_family": "往来单位付款"}]]></field>
         <field name="domain_json"><![CDATA[["|", ["payment_family", "=", "往来单位付款"], ["legacy_source_table", "!=", false]]]]></field>
         <field name="required_fields_json"><![CDATA[["payment_request_id", "project_id", "partner_id", "contract_id", "payment_account_name", "payment_account_no", "receipt_account_name", "receipt_account_no", "paid_amount"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger"], "terminal_action": "action_paid", "syncs": ["payment.request"]}]]></field>
@@ -512,7 +582,7 @@
         <field name="source_aliases">公司财务支出、公司付款、财务支出</field>
         <field name="default_values_json"><![CDATA[{"source_kind": "actual_outflow", "payment_family": "公司财务支出"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "actual_outflow"], ["payment_family", "=", "公司财务支出"]]]]></field>
-        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "payment_account_name", "payment_account_no", "receipt_account_name", "receipt_account_no", "paid_amount"]]]></field>
+        <field name="required_fields_json"><![CDATA[["payment_request_id", "project_id", "partner_id", "contract_id", "payment_account_name", "payment_account_no", "receipt_account_name", "receipt_account_no", "paid_amount"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger"], "terminal_action": "action_paid", "syncs": ["payment.request"]}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -723,22 +793,24 @@
     </record>
 
     <record id="business_category_finance_deduction_bill" model="sc.business.category">
-        <field name="name">扣款单</field>
+        <field name="name">扣款登记</field>
         <field name="code">finance.deduction.bill</field>
         <field name="domain">finance</field>
         <field name="target_model">sc.expense.claim</field>
         <field name="direction">mixed</field>
         <field name="sequence">80</field>
-        <field name="source_aliases">扣款单、扣款办理</field>
-        <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "扣款单", "summary": "扣款单"}]]></field>
-        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "expense"], ["expense_type", "=", "扣款单"]]]]></field>
-        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="source_aliases">扣款登记、扣款单、扣款办理、代扣列支</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "扣款登记", "summary": "扣款登记"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "expense"], ["expense_type", "in", ["扣款登记", "扣款单"]]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "deduction_line_ids", "expense_type"]]]></field>
         <field name="form_policy_json"><![CDATA[{
             "sections": [
                 {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "claim_flow_label", "state", "name"]},
                 {"name": "project_counterparty", "title": "项目与责任方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "company_id"]},
-                {"name": "deduction_amount", "title": "扣款事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount"]},
-                {"name": "responsibility_balance", "title": "责任余额", "sequence": 40, "collapsible": true, "fields": ["company_contractor_responsibility_state", "company_contractor_arrival_unprocessed_amount", "company_contractor_arrival_over_processed_amount", "company_contractor_self_funding_balance", "company_contractor_responsibility_notice"]},
+                {"name": "deduction_identity", "title": "扣款登记信息", "sequence": 30, "fields": ["date_claim", "expense_type", "summary"]},
+                {"name": "deduction_lines", "title": "扣款单明细", "sequence": 35, "fields": ["deduction_line_ids"]},
+                {"name": "deduction_amount", "title": "金额由扣款单明细汇总", "sequence": 40, "fields": ["deduction_line_amount_total", "amount", "approved_amount"]},
+                {"name": "responsibility_balance", "title": "公司-项目/承包人责任余额", "sequence": 50, "collapsible": true, "fields": ["company_contractor_responsibility_state", "company_contractor_arrival_unprocessed_amount", "company_contractor_arrival_over_processed_amount", "company_contractor_self_funding_balance", "company_contractor_responsibility_notice"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
                 {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_adjustment_item", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
@@ -753,9 +825,12 @@
                 {"name": "partner_id", "required_profiles": ["create", "edit"]},
                 {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
                 {"name": "date_claim", "required_profiles": ["create", "edit"]},
-                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "deduction_line_ids", "required_profiles": ["create", "edit"], "one2many_columns": ["item_name", "deduction_category", "amount", "note"]},
+                {"name": "deduction_line_amount_total", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"], "readonly_profiles": ["create", "edit", "readonly"]},
                 {"name": "summary", "required_profiles": ["create", "edit"]},
-                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "approved_amount", "readonly_profiles": ["create", "edit", "readonly"]},
                 {"name": "company_contractor_responsibility_state", "readonly_profiles": ["create", "edit", "readonly"]},
                 {"name": "company_contractor_arrival_unprocessed_amount", "readonly_profiles": ["create", "edit", "readonly"]},
                 {"name": "company_contractor_arrival_over_processed_amount", "readonly_profiles": ["create", "edit", "readonly"]},
@@ -765,8 +840,9 @@
                 {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
             ]
         }]]></field>
-        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.finance.business.fact"], "terminal_action": "action_done", "payment_request_policy": "not_applicable", "balance_policy": "noncash_deduction"}]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.finance.business.fact", "sc.company.contractor.responsibility.fact", "sc.company.contractor.responsibility.summary"], "terminal_action": "action_done", "payment_request_policy": "not_applicable", "balance_policy": "noncash_deduction", "responsibility_scope": "company_contractor", "business_cognition": "company_deducts_tax_fee_then_charges_to_project_or_contractor"}]]></field>
         <field name="attachment_policy">recommended</field>
+        <field name="note">扣款登记是办理动作和列表入口；扣款单是登记动作下的具体代扣列支明细，表达公司与项目/承包人之间的责任清分关系：公司先扣除税费、管理费等应扣事项，再在项目或承包人责任余额中列支；不是现金付款或收款申请。</field>
     </record>
 
     <record id="business_category_finance_deduction_paid" model="sc.business.category">

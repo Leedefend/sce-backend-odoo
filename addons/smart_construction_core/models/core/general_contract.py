@@ -33,12 +33,12 @@ class ScGeneralContract(models.Model):
         required=True,
         index=True,
     )
-    project_id = fields.Many2one("project.project", string="项目", required=True, index=True)
+    project_id = fields.Many2one("project.project", string="关联项目", index=True)
     company_id = fields.Many2one(
         "res.company",
         string="公司",
-        related="project_id.company_id",
-        store=True,
+        default=lambda self: self.env.company.id,
+        required=True,
         readonly=True,
         index=True,
     )
@@ -58,7 +58,7 @@ class ScGeneralContract(models.Model):
     bank_name = fields.Char(string="开户行", index=True)
     bank_account = fields.Char(string="银行账号", index=True)
     document_no = fields.Char(string="审批编号", index=True)
-    contract_no = fields.Char(string="合同编号", index=True)
+    contract_no = fields.Char(string="合同编号", index=True, readonly=True, copy=False)
     contract_name = fields.Char(string="合同名称", required=True, index=True)
     submitted_time = fields.Datetime(string="提交时间", index=True)
     contract_type = fields.Char(string="合同类型", index=True)
@@ -87,7 +87,7 @@ class ScGeneralContract(models.Model):
     contract_date = fields.Date(string="合同日期", default=fields.Date.context_today, index=True)
     expected_sign_date = fields.Date(string="合同预计签订日期", index=True)
     completion_date = fields.Date(string="计划交货或完工日期", index=True)
-    amount_total = fields.Monetary(string="最终合同价", currency_field="currency_id", required=True)
+    amount_total = fields.Monetary(string="合同金额", currency_field="currency_id", required=True)
     amount_untaxed = fields.Monetary(string="不含税金额", currency_field="currency_id")
     settlement_amount = fields.Monetary(string="结算金额", currency_field="currency_id")
     invoice_amount = fields.Monetary(string="开票金额", currency_field="currency_id")
@@ -104,7 +104,13 @@ class ScGeneralContract(models.Model):
         compute="_compute_business_aliases",
     )
     warranty_deposit = fields.Monetary(string="质保金", currency_field="currency_id")
-    tax_rate = fields.Float(string="税率", digits=(16, 4))
+    tax_id = fields.Many2one(
+        "account.tax",
+        string="税率",
+        domain=[("type_tax_use", "=", "none"), ("amount_type", "=", "percent"), ("price_include", "=", False)],
+        help="合同办理使用的税率百分比。历史税率数值会保留在兼容字段中。",
+    )
+    tax_rate = fields.Float(string="税率(兼容)", digits=(16, 4))
     change_amount_total = fields.Monetary(string="累计变更金额", currency_field="currency_id")
     change_rate = fields.Float(string="变更率(%)", compute="_compute_change_rate", store=True)
     currency_id = fields.Many2one(
@@ -191,13 +197,23 @@ class ScGeneralContract(models.Model):
         for vals in vals_list:
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.general.contract") or _("一般合同（公司）")
+            if not vals.get("contract_no"):
+                vals["contract_no"] = seq.next_by_code("sc.general.contract.no") or vals["name"]
+            self._sync_company_vals(vals)
             vals.update(self._prepare_contract_direction_vals(vals))
+            self._sync_tax_vals(vals)
         return super().create(vals_list)
 
     def write(self, vals):
         if self._needs_contract_direction_refresh(vals):
             vals = dict(vals)
             vals.update(self._prepare_contract_direction_vals(vals))
+        if "tax_id" in vals or "tax_rate" in vals:
+            vals = dict(vals)
+            self._sync_tax_vals(vals)
+        if "project_id" in vals and vals.get("project_id") and "company_id" not in vals:
+            vals = dict(vals)
+            self._sync_company_vals(vals)
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
             allowed = {
                 "partner_id",
@@ -208,10 +224,111 @@ class ScGeneralContract(models.Model):
                 "contract_direction",
                 "contract_direction_source",
                 "contract_direction_reason",
+                "tax_id",
+                "tax_rate",
             }
             if set(vals) - allowed:
                 raise UserError(_("历史迁移综合合同已确认，只允许补充往来单位和备注。"))
         return super().write(vals)
+
+    @api.model
+    def _sync_company_vals(self, vals):
+        if vals.get("company_id"):
+            return
+        project_id = vals.get("project_id")
+        if project_id:
+            project = self.env["project.project"].browse(int(project_id)).exists()
+            if project and project.company_id:
+                vals["company_id"] = project.company_id.id
+                return
+        vals["company_id"] = self.env.company.id
+
+    @api.onchange("tax_id")
+    def _onchange_tax_id(self):
+        for rec in self:
+            rec.tax_rate = rec.tax_id.amount if rec.tax_id else 0.0
+
+    @api.onchange("project_id")
+    def _onchange_project_id(self):
+        for rec in self:
+            if rec.project_id and rec.project_id.company_id:
+                rec.company_id = rec.project_id.company_id
+
+    @api.onchange("partner_id")
+    def _onchange_partner_id(self):
+        for rec in self:
+            if not rec.partner_id:
+                continue
+            partner_vals = rec._general_contract_partner_defaults(rec.partner_id)
+            for field_name, value in partner_vals.items():
+                if value and not rec[field_name]:
+                    rec[field_name] = value
+
+    @api.model
+    def _general_contract_partner_defaults(self, partner):
+        partner = partner.exists()
+        if not partner:
+            return {}
+        bank = partner.bank_ids[:1]
+        return {
+            "partner_name_text": partner.display_name or partner.name,
+            "credit_code": partner.vat or getattr(partner, "legacy_credit_code", False),
+            "contact_name": partner.name if partner.company_type == "person" else "",
+            "contact_phone": partner.mobile or partner.phone,
+            "bank_name": getattr(partner, "sc_bank_name", False) or getattr(bank, "sc_bank_name", False) or getattr(bank, "bank_name", False),
+            "bank_account": getattr(partner, "sc_bank_account", False) or getattr(bank, "acc_number", False),
+        }
+
+    @api.model
+    def _contract_tax_for_rate(self, amount):
+        try:
+            amount = float(amount or 0.0)
+        except Exception:
+            amount = 0.0
+        if amount <= 0:
+            return self.env["account.tax"].browse()
+        helper = self.env["construction.contract"].sudo().with_company(self.env.company)
+        helper._sc_ensure_contract_tax_seeds()
+        return (
+            self.env["account.tax"]
+            .sudo()
+            .with_context(active_test=False)
+            .search(
+                [
+                    ("company_id", "=", self.env.company.id),
+                    ("type_tax_use", "=", "none"),
+                    ("amount_type", "=", "percent"),
+                    ("price_include", "=", False),
+                    ("amount", "=", amount),
+                ],
+                order="active desc, id asc",
+                limit=1,
+            )
+        )
+
+    @api.model
+    def _sync_tax_vals(self, vals):
+        if not isinstance(vals, dict):
+            return
+        if vals.get("tax_id"):
+            tax = self.env["account.tax"].browse(int(vals.get("tax_id") or 0)).exists()
+            if tax:
+                vals["tax_rate"] = tax.amount
+            return
+        if vals.get("tax_rate") and not vals.get("tax_id"):
+            tax = self._contract_tax_for_rate(vals.get("tax_rate"))
+            if tax:
+                vals["tax_id"] = tax.id
+
+    @api.model
+    def _sync_contract_tax_ids_from_rate(self):
+        self.env["construction.contract"].sudo()._sc_ensure_contract_tax_seeds()
+        rows = self.sudo().search([("tax_id", "=", False), ("tax_rate", ">", 0)])
+        for rec in rows:
+            tax = rec._contract_tax_for_rate(rec.tax_rate)
+            if tax:
+                rec.write({"tax_id": tax.id})
+        return True
 
     @api.model
     def _needs_contract_direction_refresh(self, vals):

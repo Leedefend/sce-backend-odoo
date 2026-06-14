@@ -105,47 +105,50 @@
                     </header>
                     <sheet>
                         <group>
-                            <group string="业务方向">
-                                <field name="name" readonly="1"/>
-                                <field name="execution_flow_label" readonly="1"/>
+                            <group string="办理类型">
                                 <field name="business_category_id" options="{'no_create': True}"/>
-                                <field name="source_kind" readonly="state == 'legacy_confirmed'"/>
-                                <field name="date_payment" readonly="state == 'legacy_confirmed'"/>
-                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
+                                <field name="execution_flow_label" readonly="1"/>
+                                <field name="state" readonly="1"/>
+                                <field name="name" readonly="1"/>
                             </group>
-                            <group string="项目与往来单位">
+                            <group string="付款依据">
+                                <field name="payment_request_id" domain="[('type', '=', 'pay'), ('project_id', '=', project_id)]" readonly="state == 'legacy_confirmed'"/>
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="operation_strategy" readonly="1"/>
-                                <field name="partner_id"/>
-                                <field name="contract_id"/>
-                                <field name="payment_request_id" domain="[('type', '=', 'pay'), ('project_id', '=', project_id)]"/>
+                                <field name="partner_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="contract_id" readonly="state == 'legacy_confirmed'"/>
                             </group>
                         </group>
-                        <group string="付款信息">
-                            <field name="payment_family" readonly="state == 'legacy_confirmed'"/>
-                            <field name="payment_method" readonly="state == 'legacy_confirmed'"/>
-                            <field name="bank_account" readonly="state == 'legacy_confirmed'"/>
-                            <field name="handler_name" readonly="state == 'legacy_confirmed'"/>
+                        <group>
+                            <group string="付款金额">
+                                <field name="date_payment" readonly="state == 'legacy_confirmed'"/>
+                                <field name="paid_amount" readonly="state == 'legacy_confirmed'"/>
+                                <field name="planned_amount" readonly="state == 'legacy_confirmed'"/>
+                                <field name="invoice_amount" readonly="state == 'legacy_confirmed'"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                            <group string="办理说明">
+                                <field name="payment_method" readonly="state == 'legacy_confirmed'"/>
+                                <field name="handler_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
+                                <field name="note" readonly="state == 'legacy_confirmed'"/>
+                            </group>
                         </group>
-                        <group string="金蝶推送">
-                            <field name="push_result" readonly="1"/>
-                            <field name="kingdee_document_no" readonly="1"/>
+                        <group>
+                            <group string="收款账户">
+                                <field name="receipt_account_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="receipt_bank_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="receipt_account_no" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                            <group string="付款账户">
+                                <field name="payment_account_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="payment_bank_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="payment_account_no" readonly="state == 'legacy_confirmed'"/>
+                                <field name="bank_account" readonly="state == 'legacy_confirmed'"/>
+                            </group>
                         </group>
-                        <group string="付款账户">
-                            <field name="payment_account_name" readonly="state == 'legacy_confirmed'"/>
-                            <field name="payment_account_no" readonly="state == 'legacy_confirmed'"/>
-                            <field name="payment_bank_name" readonly="state == 'legacy_confirmed'"/>
-                        </group>
-                        <group string="收款账户">
-                            <field name="receipt_account_name" readonly="state == 'legacy_confirmed'"/>
-                            <field name="receipt_account_no" readonly="state == 'legacy_confirmed'"/>
-                            <field name="receipt_bank_name" readonly="state == 'legacy_confirmed'"/>
-                        </group>
-                        <group string="付款金额">
-                            <field name="planned_amount" readonly="state == 'legacy_confirmed'"/>
-                            <field name="paid_amount" readonly="state == 'legacy_confirmed'"/>
-                            <field name="invoice_amount" readonly="state == 'legacy_confirmed'"/>
-                            <field name="currency_id" invisible="1"/>
+                        <group string="附件">
+                            <field name="attachment_ids" widget="many2many_binary" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group string="公司-承包人资金责任">
                             <field name="company_contractor_responsibility_summary_id" invisible="1"/>
@@ -160,10 +163,12 @@
                                     class="btn-secondary"
                                     invisible="not company_contractor_responsibility_summary_id"/>
                         </group>
-                        <group>
-                            <field name="note"/>
-                            <field name="attachment_ids" widget="many2many_binary"/>
-                            <field name="active"/>
+                        <group string="来源与系统追溯" invisible="state != 'legacy_confirmed'">
+                            <field name="payment_family" readonly="1"/>
+                            <field name="source_kind" readonly="1"/>
+                            <field name="push_result" readonly="1"/>
+                            <field name="kingdee_document_no" readonly="1"/>
+                            <field name="active" readonly="1"/>
                         </group>
                         <notebook>
                             <page string="历史办理信息" invisible="not legacy_source_table">

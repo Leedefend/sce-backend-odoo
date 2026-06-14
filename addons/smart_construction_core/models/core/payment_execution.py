@@ -22,8 +22,8 @@ class ScPaymentExecution(models.Model):
     )
     source_kind = fields.Selection(
         [
-            ("outflow_request", "付款申请残余"),
-            ("actual_outflow", "实付残余"),
+            ("outflow_request", "付款申请"),
+            ("actual_outflow", "实际付款"),
         ],
         string="业务类型",
         default="outflow_request",
@@ -188,15 +188,28 @@ class ScPaymentExecution(models.Model):
     def _payment_request_values(self, request):
         if not request:
             return {}
+        receipt_account_name = request.payment_account_name or request.partner_account_name or ""
+        receipt_bank_name = request.payment_bank_name or request.partner_bank_name or ""
+        receipt_account_no = request.payment_account_no or request.partner_bank_account or ""
+        payment_account_name = request.legacy_payment_account_name or request.payer_unit or ""
+        payment_account_no = request.legacy_payment_account_no or ""
         return {
             "project_id": request.project_id.id,
             "partner_id": request.partner_id.id,
             "contract_id": request.contract_id.id,
             "payment_request_id": request.id,
+            "source_kind": "actual_outflow",
+            "payment_family": "往来单位付款",
             "document_no": request.name,
             "planned_amount": request.amount or 0.0,
             "paid_amount": request.amount or 0.0,
             "currency_id": request.currency_id.id,
+            "receipt_account_name": receipt_account_name,
+            "receipt_bank_name": receipt_bank_name,
+            "receipt_account_no": receipt_account_no,
+            "payment_account_name": payment_account_name,
+            "payment_account_no": payment_account_no,
+            "note": request.note or request.legacy_visible_remark or "",
         }
 
     @api.onchange("payment_request_id")
@@ -404,13 +417,14 @@ class ScPaymentExecution(models.Model):
                     _("办理付款执行"),
                     reasons=[_("新系统付款执行必须关联已审批的付款申请")],
                 )
-            material_settlement = rec.payment_request_id.material_settlement_id if rec.payment_request_id else False
-            if not rec.contract_id and not material_settlement:
+            request = rec.payment_request_id
+            material_settlement = request.material_settlement_id if request else False
+            if not rec.contract_id and not material_settlement and not (request and request._has_payment_basis()):
                 raise_guard(
                     "PAYMENT_EXECUTION_MISSING_CONTRACT",
                     f"付款执行[{rec.display_name}]",
                     _("办理付款执行"),
-                    reasons=[_("新系统付款执行必须关联合同或材料结算")],
+                    reasons=[_("新系统付款执行必须关联合同或结算依据")],
                 )
             if not rec.partner_id:
                 raise_guard(

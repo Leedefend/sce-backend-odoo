@@ -52,14 +52,21 @@ class ThreeWayLinkIntegrityRule(BaseRule):
 
         payment_domain = self._scope_domain("payment.request")
         if targeted_settlement_scope:
-            payment_domain.append(("settlement_id", "in", scoped_res_ids))
+            payment_domain.extend(
+                [
+                    "|",
+                    ("settlement_id", "in", scoped_res_ids),
+                    ("outflow_line_ids.settlement_id", "in", scoped_res_ids),
+                ]
+            )
 
         for pr in Payment.search(payment_domain):
             checked += 1
             # 仅对支出付款单执行三单匹配校验
             if pr.type != "pay" or pr.state not in pr_states_need_settle:
                 continue
-            if not pr.settlement_id:
+            linked_settlements = pr._linked_settlement_orders()
+            if not linked_settlements:
                 issues.append(
                     {
                         "model": "payment.request",
@@ -69,15 +76,19 @@ class ThreeWayLinkIntegrityRule(BaseRule):
                         "suggestions": _suggest_settlements(pr),
                     }
                 )
-            elif pr.settlement_id.state in settle_states_need_po and not pr.settlement_id.purchase_order_ids:
-                issues.append(
-                    {
-                        "model": "payment.request",
-                        "res_id": pr.id,
-                        "message": _("结算单未关联采购订单"),
-                        "refs": {"settlement_id": pr.settlement_id.id, "name": pr.settlement_id.name},
-                    }
-            )
+            else:
+                missing_po = linked_settlements.filtered(
+                    lambda settlement: settlement.state in settle_states_need_po and not settlement.purchase_order_ids
+                )
+                for settlement in missing_po:
+                    issues.append(
+                        {
+                            "model": "payment.request",
+                            "res_id": pr.id,
+                            "message": _("结算单未关联采购订单"),
+                            "refs": {"settlement_id": settlement.id, "name": settlement.name},
+                        }
+                    )
 
         if not targeted_payment_scope:
             for settle in Settlement.search(self._scope_domain("sc.settlement.order")):

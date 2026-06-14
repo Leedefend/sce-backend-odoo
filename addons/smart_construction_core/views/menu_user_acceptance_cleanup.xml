@@ -20,14 +20,20 @@
             <field name="active">1</field>
         </record>
         <record id="menu_sc_expense_reimbursement_group" model="ir.ui.menu">
-            <field name="name">费用与报销办理</field>
+            <field name="name">费用/保证金现金办理</field>
             <field name="sequence">30</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
+            <field name="active">1</field>
+        </record>
+        <record id="menu_sc_noncash_business_group" model="ir.ui.menu">
+            <field name="name">非现金业务管理</field>
+            <field name="sequence">35</field>
             <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
             <field name="active">1</field>
         </record>
         <record id="menu_sc_fund_account_group" model="ir.ui.menu">
             <field name="name">资金往来办理</field>
-            <field name="sequence">40</field>
+            <field name="sequence">45</field>
             <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
             <field name="active">1</field>
         </record>
@@ -84,7 +90,7 @@
             <field name="sequence">60</field>
         </record>
 
-        <!-- 费用与报销办理：报销、扣款、保证金放在同一日常办理组。 -->
+        <!-- 费用/保证金现金办理：只保留会形成现金流的报销、实缴、退回和保证金办理。 -->
         <record id="menu_sc_reimbursement_request" model="ir.ui.menu">
             <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
             <field name="sequence">10</field>
@@ -94,8 +100,8 @@
             <field name="sequence">20</field>
         </record>
         <record id="menu_sc_deduction_bill" model="ir.ui.menu">
-            <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
-            <field name="sequence">30</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_noncash_business_group"/>
+            <field name="sequence">10</field>
         </record>
         <record id="menu_sc_deduction_paid" model="ir.ui.menu">
             <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>

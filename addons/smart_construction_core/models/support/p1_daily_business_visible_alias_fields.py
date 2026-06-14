@@ -1057,7 +1057,11 @@ LABEL_SOURCE_OVERRIDES = {
     '是否过渡账户': ['fixed_account'],
     '初期余额': ['opening_balance'],
     '排序号': ['sequence'],
-    '是否关联单据': ['settlement_id', 'contract_id'],
+    '是否关联单据': ['settlement_id', 'line_settlement_summary', 'legacy_relation_summary', 'material_settlement_id', 'contract_id'],
+    '明细结算依据': ['line_settlement_summary'],
+    '明细结算单数': ['line_settlement_count'],
+    '历史关联依据': ['legacy_relation_summary'],
+    '历史关联依据数': ['legacy_relation_count'],
     '是否退回': ['is_refund', 'state'],
     '是否转出': ['is_transfer_out', 'state'],
     '计价方式': ['pricing_method', 'type'],
@@ -1129,7 +1133,11 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '申请付款金额': ['legacy_visible_request_amount', 'amount'],
         '实际付款金额': ['legacy_visible_actual_paid_amount', 'paid_amount_total', 'paid_amount', 'amount'],
         '可用余额': ['legacy_visible_available_balance', 'settlement_amount_payable', 'settlement_remaining_amount'],
-        '是否关联单据': ['settlement_id', 'contract_id'],
+        '是否关联单据': ['settlement_id', 'line_settlement_summary', 'legacy_relation_summary', 'material_settlement_id', 'contract_id'],
+        '明细结算依据': ['line_settlement_summary'],
+        '明细结算单数': ['line_settlement_count'],
+        '历史关联依据': ['legacy_relation_summary'],
+        '历史关联依据数': ['legacy_relation_count'],
         '付款账号': ['payment_account_no', 'legacy_payment_account_no', 'partner_bank_account', 'bank_account', 'bank_account_id'],
         '金额大写': ['accepted_amount_uppercase', 'legacy_visible_amount_uppercase', 'amount_uppercase'],
         '户名': ['payment_account_name', 'legacy_payee_account_name', 'partner_account_name'],
@@ -2437,7 +2445,7 @@ def _alias_value(record, label):
         if legacy_state:
             return PAYMENT_REQUEST_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
     if record._name == 'payment.request' and label == '是否关联单据':
-        return "是" if record.settlement_id or record.contract_id or record.outflow_line_ids else "否"
+        return "是" if record._has_payment_basis() else "否"
     if record._name == 'tender.doc.purchase' and label == '申请人':
         if _format_alias_value(record, 'legacy_source_table') == 'BGGL_ZTBJHT_TBBM_TBBMFSQ':
             return _format_alias_value(record, 'legacy_visible_applicant_name')

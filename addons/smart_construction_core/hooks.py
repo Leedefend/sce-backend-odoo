@@ -3,6 +3,13 @@ import zlib
 from odoo import SUPERUSER_ID, api
 
 
+COMMON_TAX_PERCENTAGES = (1, 3, 6, 9, 13)
+
+
+def _format_tax_name(amount):
+    return f"{amount:g}%"
+
+
 def _tax_key(company_id, type_tax_use, name, amount, amount_type, price_include=False):
     raw = f"{company_id}|{type_tax_use}|{amount_type}|{amount}|{int(bool(price_include))}|{name}".encode("utf-8")
     return zlib.crc32(raw) & 0xFFFFFFFF
@@ -40,6 +47,28 @@ def _find_or_create_tax(
             tax.active = True
         return tax
 
+    legacy_domain = [
+        ("company_id", "=", company.id),
+        ("type_tax_use", "=", type_tax_use),
+        ("amount_type", "=", amount_type),
+        ("amount", "=", amount),
+        ("price_include", "=", bool(price_include)),
+    ]
+    legacy_tax = Tax.search(legacy_domain, order="active desc, id asc", limit=1)
+    if legacy_tax:
+        vals = {}
+        if legacy_tax.name != name:
+            vals["name"] = name
+        if not legacy_tax.active:
+            vals["active"] = True
+        if tax_group and legacy_tax.tax_group_id != tax_group:
+            vals["tax_group_id"] = tax_group.id
+        if country and legacy_tax.country_id != country:
+            vals["country_id"] = country.id
+        if vals:
+            legacy_tax.write(vals)
+        return legacy_tax
+
     lock_key = _tax_key(company.id, type_tax_use, name, amount, amount_type, price_include)
     _advisory_xact_lock(env.cr, lock_key)
 
@@ -48,6 +77,21 @@ def _find_or_create_tax(
         if not tax.active:
             tax.active = True
         return tax
+
+    legacy_tax = Tax.search(legacy_domain, order="active desc, id asc", limit=1)
+    if legacy_tax:
+        vals = {}
+        if legacy_tax.name != name:
+            vals["name"] = name
+        if not legacy_tax.active:
+            vals["active"] = True
+        if tax_group and legacy_tax.tax_group_id != tax_group:
+            vals["tax_group_id"] = tax_group.id
+        if country and legacy_tax.country_id != country:
+            vals["country_id"] = country.id
+        if vals:
+            legacy_tax.write(vals)
+        return legacy_tax
 
     vals = {
         "name": name,
@@ -96,12 +140,7 @@ def ensure_core_taxes(env_or_cr, registry=None):
     if not tax_group:
         tax_group = env["account.tax.group"].sudo().create(tax_group_vals)
 
-    tax_defs = [
-        ("销项VAT 9%", 9, "sale"),
-        ("进项VAT 13%", 13, "purchase"),
-        ("进项VAT 3%", 3, "purchase"),
-        ("进项VAT 1%", 1, "purchase"),
-    ]
+    tax_defs = [(_format_tax_name(amount), amount, "none") for amount in COMMON_TAX_PERCENTAGES]
     for name, amount, tax_use in tax_defs:
         tax = _find_or_create_tax(
             env,

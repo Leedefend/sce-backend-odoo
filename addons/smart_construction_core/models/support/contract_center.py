@@ -10,6 +10,16 @@ from .state_machine import ScStateMachine
 
 _logger = logging.getLogger(__name__)
 
+CONTRACT_TAX_PERCENTAGES = (1.0, 3.0, 6.0, 9.0, 13.0)
+SUPPLEMENT_CONTRACT_CATEGORY_CODES = {
+    "contract.income.supplement",
+    "contract.expense.supplement",
+}
+SUPPLEMENT_CONTRACT_EXPECTED_TYPES = {
+    "contract.income.supplement": "out",
+    "contract.expense.supplement": "in",
+}
+
 
 class ConstructionContract(models.Model):
     """
@@ -80,7 +90,20 @@ class ConstructionContract(models.Model):
         string="业务分类",
         index=True,
         ondelete="restrict",
-        domain="[('code', 'in', ['contract.income', 'contract.expense', 'contract.expense.supplement'])]",
+        domain="[('code', 'in', ['contract.income', 'contract.income.supplement', 'contract.expense', 'contract.expense.supplement'])]",
+    )
+    original_contract_id = fields.Many2one(
+        "construction.contract",
+        string="原合同",
+        index=True,
+        ondelete="restrict",
+        domain="[('id', '!=', id), ('type', '=', type), ('business_category_id.code', 'not in', ['contract.income.supplement', 'contract.expense.supplement'])]",
+        help="补充合同必须直接关联被补充的原合同。",
+    )
+    supplement_contract_ids = fields.One2many(
+        "construction.contract",
+        "original_contract_id",
+        string="补充合同",
     )
     project_id = fields.Many2one(
         "project.project",
@@ -151,7 +174,7 @@ class ConstructionContract(models.Model):
         "account.tax",
         string="税率",
         required=True,
-        help="使用 account.tax 主数据进行税额计算，收入合同使用销项税，支出合同使用进项税。",
+        help="使用合同税率百分比进行税额计算。",
     )
     amount_untaxed = fields.Monetary(
         string="合同金额",
@@ -278,7 +301,7 @@ class ConstructionContract(models.Model):
     def _find_tax(self, *, name: str, amount: float, type_tax_use: str):
         """Return an account.tax scoped to company.
 
-        - Search: company + type_tax_use/all + amount_type=percent + amount
+        - Search: company + contract-compatible type_tax_use + amount_type=percent + amount
         - If multiple, prefer same name; otherwise pick the first match.
         - Do not create missing taxes at runtime; raise for explicit configuration.
         """
@@ -286,7 +309,7 @@ class ConstructionContract(models.Model):
         company = self.env.company
         domain = [
             ("company_id", "=", company.id),
-            ("type_tax_use", "in", [type_tax_use, "all"]),
+            ("type_tax_use", "in", [type_tax_use, "none"]),
             ("amount_type", "=", "percent"),
             ("amount", "=", float(amount)),
         ]
@@ -304,17 +327,132 @@ class ConstructionContract(models.Model):
         )
 
     @api.model
+    def _sc_format_contract_tax_name(self, amount):
+        return f"{float(amount):g}%"
+
+    @api.model
+    def _sc_bind_xmlid(self, xmlid, record):
+        module, name = str(xmlid or "").split(".", 1)
+        Imd = self.env["ir.model.data"].sudo()
+        row = Imd.search([("module", "=", module), ("name", "=", name)], limit=1)
+        vals = {"model": record._name, "res_id": record.id, "noupdate": True}
+        if row:
+            row.write(vals)
+        else:
+            vals.update({"module": module, "name": name})
+            Imd.create(vals)
+
+    @api.model
+    def _sc_contract_tax_group(self, company):
+        Group = self.env["account.tax.group"].sudo().with_context(active_test=False)
+        group = Group.search([("company_id", "=", company.id), ("name", "=", "合同税率")], limit=1)
+        country = company.account_fiscal_country_id or company.partner_id.country_id
+        if not country:
+            country = self.env.ref("base.cn", raise_if_not_found=False)
+        if group:
+            if country and group.country_id != country:
+                group.write({"country_id": country.id})
+            return group
+        vals = {"name": "合同税率", "company_id": company.id}
+        if country:
+            vals["country_id"] = country.id
+        return Group.create(vals)
+
+    @api.model
+    def _sc_ensure_contract_tax_seeds(self):
+        """Create one common percentage tax set per company and bind seed XMLIDs.
+
+        Contract forms only need a percent for custom amount calculations. Using
+        Odoo's neutral tax usage avoids duplicate sale/purchase labels such as
+        two visible "9%" options in the same dropdown.
+        """
+        Tax = self.env["account.tax"].sudo().with_context(active_test=False)
+        Company = self.env["res.company"].sudo()
+        main_company = self.env.ref("base.main_company", raise_if_not_found=False)
+        ICP = self.env["ir.config_parameter"].sudo()
+        for company in Company.search([]):
+            group = self._sc_contract_tax_group(company)
+            country = company.account_fiscal_country_id or company.partner_id.country_id
+            if not country:
+                country = self.env.ref("base.cn", raise_if_not_found=False)
+            for amount in CONTRACT_TAX_PERCENTAGES:
+                name = self._sc_format_contract_tax_name(amount)
+                domain = [
+                    ("company_id", "=", company.id),
+                    ("type_tax_use", "=", "none"),
+                    ("amount_type", "=", "percent"),
+                    ("amount", "=", float(amount)),
+                    ("price_include", "=", False),
+                ]
+                candidates = Tax.search(domain, order="active desc, id asc")
+                preferred = Tax.browse()
+                if main_company and company.id == main_company.id:
+                    preferred = self.env.ref(
+                        f"smart_construction_seed.tax_{amount:g}",
+                        raise_if_not_found=False,
+                    )
+                    if preferred and (preferred.company_id.id != company.id or preferred.amount != float(amount)):
+                        preferred = Tax.browse()
+                tax = preferred if preferred else candidates[:1]
+                if tax:
+                    vals = {}
+                    if tax.name != name:
+                        vals["name"] = name
+                    if tax.type_tax_use != "none":
+                        vals["type_tax_use"] = "none"
+                    if tax.amount_type != "percent":
+                        vals["amount_type"] = "percent"
+                    if tax.amount != float(amount):
+                        vals["amount"] = float(amount)
+                    if tax.price_include:
+                        vals["price_include"] = False
+                    if tax.tax_group_id != group:
+                        vals["tax_group_id"] = group.id
+                    if country and tax.country_id != country:
+                        vals["country_id"] = country.id
+                    if not tax.active:
+                        vals["active"] = True
+                    if vals:
+                        tax.write(vals)
+                else:
+                    vals = {
+                        "name": name,
+                        "company_id": company.id,
+                        "tax_group_id": group.id,
+                        "type_tax_use": "none",
+                        "amount_type": "percent",
+                        "amount": float(amount),
+                        "price_include": False,
+                        "active": True,
+                    }
+                    if country:
+                        vals["country_id"] = country.id
+                    tax = Tax.create(vals)
+                duplicates = (candidates - tax).filtered(lambda item: item.active)
+                if duplicates:
+                    duplicates.write({"active": False})
+                if main_company and company.id == main_company.id:
+                    self._sc_bind_xmlid(f"smart_construction_seed.tax_{amount:g}", tax)
+                    ICP.set_param(f"sc.seed.tax.none.{amount}", str(tax.id))
+                    if float(amount) == 9.0:
+                        self._sc_bind_xmlid("smart_construction_seed.tax_sale_9", tax)
+                    if float(amount) == 13.0:
+                        self._sc_bind_xmlid("smart_construction_seed.tax_purchase_13", tax)
+        ICP.set_param("sc.seed.tax_seeded", "1")
+        return True
+
+    @api.model
     def _get_default_tax(self, contract_type):
         """Return default tax by contract type with self-healing fallback."""
         type_tax_use = self._tax_use_from_contract_type(contract_type or "out")
         if type_tax_use == "sale":
-            name = "销项VAT 9%"
+            name = "9%"
             amount = 9.0
-            xmlid = "smart_construction_seed.tax_sale_9"
+            xmlid = "smart_construction_seed.tax_9"
         else:
-            name = "进项VAT 13%"
+            name = "13%"
             amount = 13.0
-            xmlid = "smart_construction_seed.tax_purchase_13"
+            xmlid = "smart_construction_seed.tax_13"
 
         # 优先 XMLID（seed/demo 可提供）
         tax = self.env.ref(xmlid, raise_if_not_found=False)
@@ -334,7 +472,7 @@ class ConstructionContract(models.Model):
             Tax = self.env["account.tax"].sudo()
             domain = [
                 ("company_id", "=", self.env.company.id),
-                ("type_tax_use", "in", [type_tax_use, "all"]),
+                ("type_tax_use", "in", [type_tax_use, "none"]),
                 ("amount_type", "=", "percent"),
                 ("price_include", "=", False),
                 ("amount", "=", float(amount)),
@@ -359,15 +497,68 @@ class ConstructionContract(models.Model):
             return tax
 
     @api.model
+    def _is_contract_tax_rate(self, tax):
+        return bool(
+            tax
+            and tax.type_tax_use == "none"
+            and tax.amount_type == "percent"
+            and not tax.price_include
+            and tax.tax_group_id.name == "合同税率"
+        )
+
+    @api.model
+    def _contract_tax_for_amount(self, amount, company=False):
+        company = company or self.env.company
+        self.with_company(company)._sc_ensure_contract_tax_seeds()
+        Tax = self.env["account.tax"].sudo().with_context(active_test=False)
+        tax = Tax.search(
+            [
+                ("company_id", "=", company.id),
+                ("type_tax_use", "=", "none"),
+                ("amount_type", "=", "percent"),
+                ("amount", "=", float(amount or 0.0)),
+                ("price_include", "=", False),
+                ("tax_group_id.name", "=", "合同税率"),
+            ],
+            order="active desc, id asc",
+            limit=1,
+        )
+        if tax and not tax.active:
+            tax.active = True
+        return tax
+
+    @api.model
+    def _normalize_contract_tax_id(self, tax, company=False):
+        if not tax:
+            return tax
+        if self._is_contract_tax_rate(tax):
+            return tax
+        if tax.amount_type == "percent" and not tax.price_include:
+            normalized = self._contract_tax_for_amount(tax.amount, company or tax.company_id or self.env.company)
+            if normalized:
+                return normalized
+        return tax
+
+    @api.model
     def _is_contract_tax_compatible(self, tax, contract_type):
         if not tax:
             return False
         expected_use = self._tax_use_from_contract_type(contract_type or "out")
         return (
-            tax.type_tax_use in (expected_use, "all")
+            tax.type_tax_use in (expected_use, "none")
             and tax.amount_type == "percent"
             and not tax.price_include
         )
+
+    @api.model
+    def _sync_contract_tax_ids_to_neutral(self):
+        self._sc_ensure_contract_tax_seeds()
+        rows = self.sudo().search([("tax_id", "!=", False)])
+        for contract in rows:
+            normalized = self._normalize_contract_tax_id(contract.tax_id, contract.company_id)
+            if normalized and normalized != contract.tax_id:
+                contract.with_context(tracking_disable=True).write({"tax_id": normalized.id})
+        return True
 
     @api.model
     def _context_project_id(self):
@@ -377,17 +568,111 @@ class ConstructionContract(models.Model):
         except (TypeError, ValueError):
             return False
 
+    @api.model
+    def _contract_type_from_business_category_code(self, code):
+        code = str(code or "").strip()
+        if code in {"contract.income", "contract.income.supplement"}:
+            return "out"
+        if code in {"contract.expense", "contract.expense.supplement"}:
+            return "in"
+        return False
+
+    @api.model
+    def _contract_type_from_business_category_id(self, category_id):
+        if not category_id:
+            return False
+        category = self.env["sc.business.category"].sudo().browse(category_id).exists()
+        return self._contract_type_from_business_category_code(category.code) if category else False
+
+    @api.model
+    def _business_category_code_from_id(self, category_id):
+        if not category_id:
+            return False
+        category = self.env["sc.business.category"].sudo().browse(category_id).exists()
+        return category.code if category else False
+
+    @api.model
+    def _business_category_code_from_vals(self, vals, record=False):
+        if "business_category_id" in vals:
+            return self._business_category_code_from_id(vals.get("business_category_id"))
+        if record and record.business_category_id:
+            return record.business_category_id.code
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        return code or False
+
+    @api.model
+    def _is_supplement_contract_category_code(self, code):
+        return code in SUPPLEMENT_CONTRACT_CATEGORY_CODES
+
+    @api.model
+    def _original_contract_from_vals(self, vals, record=False):
+        if "original_contract_id" in vals:
+            original_id = vals.get("original_contract_id")
+        elif record:
+            return record.original_contract_id
+        else:
+            original_id = False
+        if isinstance(original_id, (list, tuple)):
+            original_id = original_id[0] if original_id else False
+        try:
+            original_id = int(original_id) if original_id else False
+        except (TypeError, ValueError):
+            original_id = False
+        return self.browse(original_id).exists() if original_id else self.browse()
+
+    @api.model
+    def _apply_original_contract_defaults_to_vals(self, vals):
+        original = self._original_contract_from_vals(vals)
+        if not original:
+            return vals
+        vals["type"] = original.type
+        relation_fields = (
+            "project_id",
+            "partner_id",
+            "currency_id",
+            "tax_id",
+            "category_id",
+            "expense_contract_category_id",
+            "contract_type_id",
+            "budget_id",
+            "analytic_id",
+        )
+        for field_name in relation_fields:
+            source = original[field_name]
+            vals[field_name] = source.id if source else False
+        vals["engineering_address"] = original.engineering_address or False
+        vals["date_start"] = original.date_start or False
+        vals["date_end"] = original.date_end or False
+        subject = str(vals.get("subject") or "").strip()
+        if not subject or subject == "补充合同":
+            vals["subject"] = "%s补充合同" % (original.subject or original.name or "原合同")
+        return vals
+
+    @api.model
+    def _context_contract_type(self):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        return self._contract_type_from_business_category_code(code) or self.env.context.get("default_type") or False
+
     def _resolve_business_category_id(self, vals):
         code = self.env.context.get("default_business_category_code") or self.env.context.get(
             "current_business_category_code"
         )
-        contract_type = vals.get("type") or self.env.context.get("default_type") or "out"
+        contract_type = (
+            self._contract_type_from_business_category_code(code)
+            or self.env.context.get("default_type")
+            or vals.get("type")
+            or "out"
+        )
         if not code:
             code = "contract.income" if contract_type == "out" else "contract.expense"
         category = self.env["sc.business.category"].sudo().search(
             [
                 ("code", "=", code),
-                ("target_model", "in", ["construction.contract.income", "construction.contract.expense"]),
+                ("target_model", "in", ["construction.contract", "construction.contract.income", "construction.contract.expense"]),
             ],
             limit=1,
         )
@@ -403,8 +688,15 @@ class ConstructionContract(models.Model):
             project = self.env["project.project"].browse(project_id).exists()
             if project:
                 res["operation_strategy"] = project.operation_strategy
-        contract_type = res.get("type") or "out"
-        if "tax_id" in fields_list and not res.get("tax_id"):
+        context_code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        category_type = self._contract_type_from_business_category_code(context_code)
+        contract_type = category_type or self.env.context.get("default_type") or res.get("type") or "out"
+        if "type" in fields_list and (category_type or not res.get("type")):
+            res["type"] = contract_type
+        tax = self.env["account.tax"].browse(res.get("tax_id")).exists() if res.get("tax_id") else False
+        if "tax_id" in fields_list and (not tax or not self._is_contract_tax_compatible(tax, contract_type)):
             default_tax = self._get_default_tax(contract_type)
             res["tax_id"] = default_tax.id
         if "business_category_id" in fields_list and not res.get("business_category_id"):
@@ -419,12 +711,34 @@ class ConstructionContract(models.Model):
         domain = {}
         if self.type:
             expected_use = "sale" if self.type == "out" else "purchase"
-            if (not self.tax_id) or (self.tax_id.type_tax_use not in (expected_use, "all")):
+            if (not self.tax_id) or (self.tax_id.type_tax_use not in (expected_use, "none")):
                 default_tax = self._get_default_tax(self.type)
                 if default_tax:
                     self.tax_id = default_tax
-            domain = {"tax_id": [("type_tax_use", "in", [expected_use, "all"])]}
+            domain = {"tax_id": [("type_tax_use", "in", [expected_use, "none"])]}
         return {"domain": domain}
+
+    @api.onchange("original_contract_id")
+    def _onchange_original_contract_id(self):
+        for contract in self:
+            original = contract.original_contract_id
+            if not original:
+                continue
+            contract.type = original.type
+            contract.project_id = original.project_id
+            contract.partner_id = original.partner_id
+            contract.currency_id = original.currency_id
+            contract.tax_id = original.tax_id
+            contract.category_id = original.category_id
+            contract.expense_contract_category_id = original.expense_contract_category_id
+            contract.contract_type_id = original.contract_type_id
+            contract.budget_id = original.budget_id
+            contract.analytic_id = original.analytic_id
+            contract.engineering_address = original.engineering_address
+            contract.date_start = original.date_start
+            contract.date_end = original.date_end
+            if not contract.subject or contract.subject.strip() == "补充合同":
+                contract.subject = "%s补充合同" % (original.subject or original.name or "原合同")
 
     def _compute_ref_stats(self):
         Pay = self.env["payment.request"]
@@ -575,12 +889,36 @@ class ConstructionContract(models.Model):
             if not contract.tax_id:
                 continue
             expect = "sale" if contract.type == "out" else "purchase"
-            if contract.tax_id.type_tax_use not in (expect, "all"):
+            if contract.tax_id.type_tax_use not in (expect, "none"):
                 raise ValidationError("合同类型与税率类型不一致，请选择正确的税率。")
             if contract.tax_id.amount_type != "percent":
                 raise ValidationError("合同仅支持百分比税率，请选择 amount_type=percent 的税。")
             if contract.tax_id.price_include:
                 raise ValidationError("合同税率必须为不含税价，请选择未含税的税率。")
+
+    @api.constrains("business_category_id", "original_contract_id", "type", "project_id", "partner_id")
+    def _check_supplement_original_contract(self):
+        for contract in self:
+            code = contract.business_category_id.code if contract.business_category_id else False
+            is_supplement = self._is_supplement_contract_category_code(code)
+            if not is_supplement:
+                if contract.original_contract_id:
+                    raise ValidationError("原合同仅用于补充合同办理。")
+                continue
+            original = contract.original_contract_id
+            if not original:
+                raise ValidationError("补充合同必须先选择原合同。")
+            if original == contract:
+                raise ValidationError("补充合同不能关联自身作为原合同。")
+            if self._is_supplement_contract_category_code(original.business_category_id.code if original.business_category_id else False):
+                raise ValidationError("补充合同应直接关联原合同，不能再关联另一份补充合同。")
+            expected_type = SUPPLEMENT_CONTRACT_EXPECTED_TYPES.get(code)
+            if expected_type and (contract.type != expected_type or original.type != expected_type):
+                raise ValidationError("补充合同的办理类型必须与原合同方向一致。")
+            if contract.project_id and original.project_id and contract.project_id != original.project_id:
+                raise ValidationError("补充合同的项目必须与原合同一致。")
+            if contract.partner_id and original.partner_id and contract.partner_id != original.partner_id:
+                raise ValidationError("补充合同的往来单位必须与原合同一致。")
 
     @api.depends("line_ids.amount_contract")
     def _compute_line_amount_total(self):
@@ -700,13 +1038,18 @@ class ConstructionContract(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
-            if not vals.get("type"):
-                vals["type"] = "out"
+            category_contract_type = self._contract_type_from_business_category_id(vals.get("business_category_id"))
+            context_contract_type = self._context_contract_type()
+            if category_contract_type or context_contract_type or not vals.get("type"):
+                vals["type"] = category_contract_type or context_contract_type or vals.get("type") or "out"
             vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
+            self._apply_original_contract_defaults_to_vals(vals)
             tax = self.env["account.tax"].browse(vals.get("tax_id")).exists() if vals.get("tax_id") else False
             if not self._is_contract_tax_compatible(tax, vals.get("type")):
                 default_tax = self._get_default_tax(vals["type"])
                 vals["tax_id"] = default_tax.id
+            elif tax:
+                vals["tax_id"] = self._normalize_contract_tax_id(tax, self.env.company).id
             if not vals.get("name") or vals["name"] == "新建":
                 seq_code = (
                     "construction.contract.income"
@@ -738,6 +1081,36 @@ class ConstructionContract(models.Model):
     def init(self):
         self.env.cr.execute(
             """
+            ALTER TABLE construction_contract
+                ADD COLUMN IF NOT EXISTS original_contract_id integer
+            """
+        )
+        self.env.cr.execute(
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                      FROM pg_constraint
+                     WHERE conname = 'construction_contract_original_contract_id_fkey'
+                ) THEN
+                    ALTER TABLE construction_contract
+                        ADD CONSTRAINT construction_contract_original_contract_id_fkey
+                        FOREIGN KEY (original_contract_id)
+                        REFERENCES construction_contract(id)
+                        ON DELETE RESTRICT;
+                END IF;
+            END $$
+            """
+        )
+        self.env.cr.execute(
+            """
+            CREATE INDEX IF NOT EXISTS construction_contract_original_contract_id_index
+                ON construction_contract(original_contract_id)
+            """
+        )
+        self.env.cr.execute(
+            """
             UPDATE construction_contract contract
                SET business_category_id = category.id
               FROM sc_business_category category
@@ -746,15 +1119,25 @@ class ConstructionContract(models.Model):
                        WHEN contract.type = 'in' THEN 'contract.expense'
                        ELSE 'contract.income'
                    END
-               AND category.target_model = CASE
-                       WHEN contract.type = 'in' THEN 'construction.contract.expense'
-                       ELSE 'construction.contract.income'
-                   END
+               AND category.target_model = 'construction.contract'
             """
         )
 
     def write(self, vals):
-        res = super().write(vals)
+        vals = dict(vals or {})
+        if vals.get("tax_id"):
+            tax = self.env["account.tax"].browse(vals.get("tax_id")).exists()
+            normalized = self._normalize_contract_tax_id(tax, self.env.company)
+            if normalized:
+                vals["tax_id"] = normalized.id
+        if "original_contract_id" in vals:
+            for record in self:
+                record_vals = dict(vals)
+                self._apply_original_contract_defaults_to_vals(record_vals)
+                super(ConstructionContract, record).write(record_vals)
+            res = True
+        else:
+            res = super().write(vals)
         trigger_fields = {
             "type",
             "subject",

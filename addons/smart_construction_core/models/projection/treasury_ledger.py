@@ -18,6 +18,18 @@ class TreasuryLedger(models.Model):
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
     settlement_id = fields.Many2one("sc.settlement.order", string="结算单", index=True)
     payment_request_id = fields.Many2one("payment.request", string="付款/收款申请", index=True)
+    linked_settlement_count = fields.Integer(
+        string="关联结算单数",
+        compute="_compute_linked_settlement_summary",
+        store=True,
+        compute_sudo=True,
+    )
+    linked_settlement_summary = fields.Char(
+        string="明细结算依据",
+        compute="_compute_linked_settlement_summary",
+        store=True,
+        compute_sudo=True,
+    )
     source_model = fields.Char(string="来源模型", index=True)
     source_res_id = fields.Integer(string="来源记录ID", index=True)
     direction = fields.Selection(
@@ -193,6 +205,30 @@ class TreasuryLedger(models.Model):
             if rec.amount <= 0:
                 raise ValidationError(_("资金流水金额必须大于 0。"))
 
+    @api.depends(
+        "settlement_id",
+        "settlement_id.name",
+        "payment_request_id.outflow_line_ids.settlement_id",
+        "payment_request_id.outflow_line_ids.settlement_id.name",
+    )
+    def _compute_linked_settlement_summary(self):
+        for rec in self:
+            settlements = rec._linked_settlement_orders()
+            rec.linked_settlement_count = len(settlements)
+            names = [settlement.display_name for settlement in settlements]
+            if len(names) > 3:
+                rec.linked_settlement_summary = "%s 等%s张" % ("、".join(names[:3]), len(names))
+            else:
+                rec.linked_settlement_summary = "、".join(names)
+
+    def _linked_settlement_orders(self):
+        self.ensure_one()
+        settlements = self.settlement_id
+        request = self.payment_request_id
+        if request:
+            settlements |= request._linked_settlement_orders()
+        return settlements.exists()
+
     def action_open_payment_request(self):
         self.ensure_one()
         if not self.payment_request_id:
@@ -212,13 +248,20 @@ class TreasuryLedger(models.Model):
 
     def action_open_settlement(self):
         self.ensure_one()
-        if not self.settlement_id:
+        settlement = self.settlement_id
+        if not settlement:
+            settlements = self._linked_settlement_orders()
+            if len(settlements) == 1:
+                settlement = settlements
+            elif len(settlements) > 1:
+                raise UserError(_("当前资金流水关联多张结算单，请在付款/收款申请明细中查看。"))
+        if not settlement:
             raise UserError(_("当前资金流水没有关联结算单。"))
         return {
             "type": "ir.actions.act_window",
             "name": _("结算单"),
             "res_model": "sc.settlement.order",
-            "res_id": self.settlement_id.id,
+            "res_id": settlement.id,
             "view_mode": "form",
             "target": "current",
             "context": {"default_project_id": self.project_id.id},

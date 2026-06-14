@@ -187,11 +187,12 @@ def _settlement_policy(title: str, counterparty_title: str) -> dict:
     )
     return _policy(
         [
+            _section("business_identity", "办理类型", ["business_category_id"], 5, visible_profiles=["create"]),
             _section("business_object", counterparty_title, ["project_id", "contract_id", "partner_id", "operation_strategy"], 10),
             _section("settlement_basis", "结算依据", ["title", "settlement_category_id", "settlement_stage_id", "document_date", "date_settlement", "settlement_period_start", "settlement_period_end"], 20),
             _section("amount", "结算明细与金额", ["line_ids", "amount_total", "settlement_amount", "submitted_amount", "approved_amount", "deduction_amount"], 30),
             _section("handling", "办理说明", ["settlement_description", "note"], 40),
-            _section("business_identity", "系统办理信息", ["business_category_id", "settlement_flow_label", "settlement_type", "state", "name"], 80, collapsed=True, visible_profiles=EDIT_READONLY),
+            _section("system_identity", "系统办理信息", ["settlement_flow_label", "settlement_type", "state", "name"], 80, collapsed=True, visible_profiles=EDIT_READONLY),
             _section("execution", "执行与匹配", list(ledger), 90, collapsed=True),
             _section("source_trace", "历史与系统追溯", list(trace) + list(APPROVAL_FIELDS), 100, collapsed=True, visible_profiles=READONLY_ONLY),
         ],
@@ -238,16 +239,52 @@ def _payment_request_policy(title: str, counterparty_title: str) -> dict:
     )
     return _policy(
         [
-            _section("business_identity", "办理类型", ["business_category_id", "payment_flow_label", "type", "receipt_type", "state", "name"], 10),
-            _section("business_object", counterparty_title, ["project_id", "operation_strategy", "partner_id", "contract_id", "settlement_id", "material_settlement_id"], 20),
-            _section("amount", title, ["date_request", "amount", "amount_uppercase", "currency_id"], 30),
-            _section("account", "收付款账户", ["actual_payee_unit", "payer_unit", "payment_account_name", "payment_bank_name", "payment_account_no", "partner_account_name", "partner_bank_name", "partner_bank_account"], 40),
-            _section("handling", "办理说明", ["cost_category_name", "note", "attachment_ids", "outflow_line_ids", "receipt_invoice_line_ids"], 50),
-            _section("execution", "执行与额度", list(ledger), 70, collapsed=True),
+            _section("business_identity", "办理类型", ["business_category_id", "payment_flow_label", "state", "name"], 10),
+            _section("business_object", counterparty_title, ["project_id", "operation_strategy", "partner_id", "contract_id"], 20),
+            _section(
+                "basis",
+                "申请依据",
+                [
+                    "settlement_id",
+                    "payment_basis_type",
+                    "line_settlement_count",
+                    "line_settlement_summary",
+                    "legacy_relation_count",
+                    "legacy_relation_summary",
+                    "material_settlement_id",
+                    "cost_category_name",
+                ],
+                25,
+            ),
+            _section("amount", title, ["date_request", "amount", "amount_uppercase", "accepted_amount_uppercase", "currency_id"], 30),
+            _section("receipt_account", "收款账户", ["actual_payee_unit", "payment_account_name", "payment_bank_name", "payment_account_no"], 40),
+            _section("payer", "付款单位", ["payer_unit"], 45),
+            _section("handling", "办理说明与附件", ["note", "attachment_ids"], 50),
+            _section("detail", "申请明细", ["outflow_line_ids", "receipt_invoice_line_ids"], 60, collapsed=True),
+            _section("execution", "执行与额度", list(ledger) + ["ledger_line_ids"], 70, collapsed=True),
+            _section("partner_account", "往来单位默认账户", ["partner_account_name", "partner_bank_name", "partner_bank_account"], 80, collapsed=True),
             _section("source_trace", "迁移来源", list(trace) + list(approval), 90, collapsed=True, visible_profiles=("readonly",)),
         ],
         required=("business_category_id", "project_id", "partner_id", "amount"),
-        readonly_all=("operation_strategy", "payment_flow_label", "type", "receipt_type") + SYSTEM_FIELDS,
+        readonly_all=("operation_strategy", "payment_flow_label", "type", "receipt_type", "cost_category_name") + SYSTEM_FIELDS,
+        hide_create=("state", "name", "type", "receipt_type", "paid_amount_total", "unpaid_amount", "is_fully_paid"),
+        readonly_only=(
+            "partner_account_name",
+            "partner_bank_name",
+            "partner_bank_account",
+            "settlement_amount_total",
+            "settlement_paid_amount",
+            "settlement_remaining_amount",
+            "settlement_amount_payable",
+            "settlement_compliance_state",
+            "settlement_compliance_message",
+            "line_settlement_count",
+            "line_settlement_summary",
+            "legacy_relation_count",
+            "legacy_relation_summary",
+            "payment_basis_type",
+            "is_overpay_risk",
+        ),
         trace=trace + approval,
         ledger=ledger,
     )
@@ -273,7 +310,22 @@ def _expense_claim_policy(title: str) -> dict:
     )
     return _policy(
         [
-            _section("business_identity", "办理类型", ["business_category_id", "expense_type", "claim_type", "state", "name"], 10),
+            _section(
+                "business_identity",
+                "办理类型",
+                [
+                    "business_category_id",
+                    "business_axis",
+                    "handling_kind",
+                    "financial_flow",
+                    "payment_anchor_policy",
+                    "expense_type",
+                    "claim_type",
+                    "state",
+                    "name",
+                ],
+                10,
+            ),
             _section("business_object", "项目与往来单位", ["project_id", "operation_strategy", "partner_id", "payment_request_id"], 20),
             _section("amount", title, ["date_claim", "amount", "currency_id", "summary"], 30),
             _section("account", "收付款信息", ["payee", "receipt_account_name", "payee_account", "payment_account_name", "payer_account"], 40),
@@ -282,10 +334,84 @@ def _expense_claim_policy(title: str) -> dict:
             _section("source_trace", "来源与系统追溯", list(trace) + list(APPROVAL_FIELDS), 90, collapsed=True),
         ],
         required=("business_category_id", "project_id", "amount"),
-        readonly_all=("operation_strategy", "expense_type", "claim_type") + SYSTEM_FIELDS,
+        readonly_all=(
+            "operation_strategy",
+            "business_axis",
+            "handling_kind",
+            "financial_flow",
+            "payment_anchor_policy",
+            "expense_type",
+            "claim_type",
+        )
+        + SYSTEM_FIELDS,
         trace=trace + APPROVAL_FIELDS,
         ledger=responsibility,
     )
+
+
+def _deduction_bill_policy() -> dict:
+    policy = _expense_claim_policy("扣款单明细")
+    sections = policy.get("sections") if isinstance(policy.get("sections"), list) else []
+    kept_sections = []
+    for section in sections:
+        if not isinstance(section, dict):
+            continue
+        name = section.get("name")
+        if name == "business_identity":
+            section["fields"] = ["state", "name"]
+            kept_sections.append(section)
+            continue
+        if name == "business_object":
+            section["fields"] = ["project_id", "operation_strategy", "partner_id"]
+            kept_sections.append(section)
+            continue
+        if name == "amount":
+            section["title"] = "扣款登记信息"
+            section["fields"] = ["date_claim", "summary", "currency_id"]
+            kept_sections.append(section)
+            continue
+        if name in {"handling", "responsibility", "source_trace"}:
+            kept_sections.append(section)
+    sections = kept_sections
+    sections.append(_section("deduction_lines", "扣款单明细", ["deduction_line_ids"], 35))
+    sections.append(
+        _section(
+            "deduction_amount_summary",
+            "金额由扣款单明细汇总",
+            ["deduction_line_amount_total", "amount", "approved_amount"],
+            40,
+        )
+    )
+    policy["sections"] = sections
+    required = {"business_category_id", "project_id", "partner_id", "deduction_line_ids"}
+    readonly = {"amount", "approved_amount", "deduction_line_amount_total"}
+    field_policies = policy.get("fields") if isinstance(policy.get("fields"), list) else []
+    for field_policy in policy.get("fields") or []:
+        if not isinstance(field_policy, dict):
+            continue
+        name = field_policy.get("name")
+        if name == "amount":
+            field_policy.pop("required_profiles", None)
+        if name == "deduction_line_ids":
+            field_policy["one2many_columns"] = ["item_name", "deduction_category", "amount", "note"]
+        if name in required:
+            field_policy["required_profiles"] = ["create", "edit"]
+        if name in readonly:
+            field_policy["readonly_profiles"] = CREATE_EDIT_READONLY
+    existing = {field.get("name") for field in field_policies if isinstance(field, dict)}
+    for name in ("deduction_line_ids", "deduction_line_amount_total", "approved_amount"):
+        if name in existing:
+            continue
+        field_policy = {"name": name, "group": "core"}
+        if name == "deduction_line_ids":
+            field_policy["one2many_columns"] = ["item_name", "deduction_category", "amount", "note"]
+        if name in required:
+            field_policy["required_profiles"] = ["create", "edit"]
+        if name in readonly:
+            field_policy["readonly_profiles"] = CREATE_EDIT_READONLY
+        field_policies.append(field_policy)
+    policy["fields"] = field_policies
+    return policy
 
 
 def _loan_policy(title: str) -> dict:
@@ -364,15 +490,49 @@ def _payment_execution_policy(title: str) -> dict:
     )
     return _policy(
         [
-            _section("business_identity", "办理类型", ["business_category_id", "execution_flow_label", "payment_family", "source_kind", "state", "name"], 10),
-            _section("business_object", "项目与往来单位", ["project_id", "operation_strategy", "partner_id", "contract_id", "payment_request_id"], 20),
-            _section("amount", title, ["date_payment", "paid_amount", "currency_id", "invoice_amount", "planned_amount"], 30),
-            _section("account", "付款账户", ["payment_account_name", "payment_bank_name", "payment_account_no", "receipt_account_name", "receipt_bank_name", "receipt_account_no", "bank_account"], 40),
-            _section("handling", "办理说明", ["payment_method", "handler_name", "document_no", "kingdee_document_no", "note", "attachment_ids"], 50),
-            _section("source_trace", "来源与系统追溯", list(trace), 90, collapsed=True),
+            _section("business_identity", "办理类型", ["business_category_id", "execution_flow_label", "state", "name"], 10),
+            _section("business_object", "付款依据", ["payment_request_id", "project_id", "operation_strategy", "partner_id", "contract_id"], 20),
+            _section("amount", title, ["date_payment", "paid_amount", "planned_amount", "invoice_amount", "currency_id"], 30),
+            _section("receipt_account", "收款账户", ["receipt_account_name", "receipt_bank_name", "receipt_account_no"], 40),
+            _section("payment_account", "付款账户", ["payment_account_name", "payment_bank_name", "payment_account_no", "bank_account"], 50),
+            _section("handling", "办理说明", ["payment_method", "handler_name", "document_no", "note", "attachment_ids"], 60),
+            _section(
+                "responsibility_balance",
+                "公司-承包人资金责任",
+                [
+                    "company_contractor_responsibility_state",
+                    "company_contractor_arrival_unprocessed_amount",
+                    "company_contractor_arrival_over_processed_amount",
+                    "company_contractor_self_funding_balance",
+                    "company_contractor_responsibility_notice",
+                ],
+                70,
+                collapsed=True,
+            ),
+            _section("source_trace", "来源与系统追溯", ["payment_family", "source_kind", "push_result", "kingdee_document_no"] + list(trace), 90, collapsed=True),
         ],
-        required=("business_category_id", "project_id", "partner_id", "paid_amount"),
+        required=(
+            "business_category_id",
+            "payment_request_id",
+            "project_id",
+            "partner_id",
+            "paid_amount",
+            "receipt_account_name",
+            "receipt_account_no",
+            "payment_account_name",
+            "payment_account_no",
+        ),
         readonly_all=("operation_strategy", "execution_flow_label", "payment_family", "source_kind") + SYSTEM_FIELDS,
+        hide_create=("payment_family", "source_kind", "push_result", "kingdee_document_no"),
+        readonly_only=(
+            "push_result",
+            "kingdee_document_no",
+            "company_contractor_responsibility_state",
+            "company_contractor_arrival_unprocessed_amount",
+            "company_contractor_arrival_over_processed_amount",
+            "company_contractor_self_funding_balance",
+            "company_contractor_responsibility_notice",
+        ),
         trace=trace,
     )
 
@@ -563,6 +723,69 @@ def _responsibility_summary_policy() -> dict:
     )
 
 
+def _contract_handling_policy(title: str, *, supplement: bool = False, expense: bool = False) -> dict:
+    trace = (
+        "legacy_source_model",
+        "legacy_source_table",
+        "legacy_fact_model",
+        "legacy_fact_id",
+        "legacy_fact_type",
+        "legacy_record_id",
+        "legacy_document_no",
+        "legacy_external_contract_no",
+        "legacy_contract_no",
+        "legacy_status",
+        "legacy_document_state",
+        "legacy_document_state_label",
+        "legacy_attachment_ref",
+        "creator_legacy_user_id",
+        "creator_name",
+        "created_time",
+        "entry_user_id",
+        "entry_data",
+        "active",
+    )
+    ledger = (
+        "settlement_amount",
+        "invoice_amount",
+        "uninvoiced_amount",
+        "received_amount",
+        "unreceived_amount",
+        "paid_amount",
+        "unpaid_amount",
+        "payment_request_count",
+        "settlement_count",
+        "is_locked",
+    )
+    identity_fields = ["business_category_id"]
+    required = ["business_category_id", "project_id", "partner_id", "subject", "tax_id"]
+    if supplement:
+        identity_fields.append("original_contract_id")
+        required.append("original_contract_id")
+    basic_fields = ["subject", "date_contract", "category_id"]
+    if expense:
+        basic_fields.append("expense_contract_category_id")
+    basic_fields.append("engineering_address")
+    return _policy(
+        [
+            _section("business_identity", "办理类型", identity_fields, 10),
+            _section("business_object", "项目与往来单位", ["project_id", "partner_id", "operation_strategy"], 20),
+            _section("contract_basic", title, basic_fields, 30),
+            _section("amount", "金额与税率", ["tax_id", "currency_id", "amount_untaxed", "amount_tax", "amount_total"], 40),
+            _section("period", "履约与管理", ["date_start", "date_end", "budget_id", "archived", "handler_id"], 50),
+            _section("handling", "备注与附件", ["note", "attachment_ids"], 60),
+            _section("contract_detail", "合同明细", ["line_ids"], 70),
+            _section("execution", "执行结果", list(ledger), 80, collapsed=True),
+            _section("system_identity", "系统信息", ["type", "state", "name"], 85, collapsed=True, visible_profiles=EDIT_READONLY),
+            _section("source_trace", "来源与系统追溯", list(trace) + list(APPROVAL_FIELDS), 90, collapsed=True, visible_profiles=READONLY_ONLY),
+        ],
+        required=tuple(required),
+        readonly_all=("operation_strategy", "type", "state", "name") + SYSTEM_FIELDS,
+        trace=trace + APPROVAL_FIELDS,
+        ledger=ledger + ("amount_untaxed", "amount_tax", "amount_total"),
+    )
+
+
 def _material_policy(
     title: str,
     detail_fields: list[str],
@@ -653,6 +876,10 @@ def _construction_diary_policy() -> dict:
 
 
 BUSINESS_CATEGORY_FORM_POLICY_TEMPLATES = {
+    "contract.income": _contract_handling_policy("收入合同信息"),
+    "contract.income.supplement": _contract_handling_policy("收入补充合同信息", supplement=True),
+    "contract.expense": _contract_handling_policy("支出合同信息", expense=True),
+    "contract.expense.supplement": _contract_handling_policy("支出补充合同信息", supplement=True, expense=True),
     "settlement.income": _settlement_policy("收入结算金额", "项目与发包人"),
     "settlement.expense": _settlement_policy("支出结算金额", "项目与供应商/分包方"),
     "finance.payment.apply.pay": _payment_request_policy("付款申请金额", "项目与收款单位"),
@@ -680,7 +907,7 @@ BUSINESS_CATEGORY_FORM_POLICY_TEMPLATES = {
     "finance.deposit.bid.return": _expense_claim_policy("投标保证金退回"),
     "finance.deposit.contract.pay": _expense_claim_policy("合同保证金登记"),
     "finance.deposit.contract.return": _expense_claim_policy("合同保证金退回"),
-    "finance.deduction.bill": _expense_claim_policy("扣款金额"),
+    "finance.deduction.bill": _deduction_bill_policy(),
     "finance.deduction.paid": _expense_claim_policy("扣款实缴金额"),
     "finance.deduction.refund": _expense_claim_policy("扣款实缴退回"),
     "finance.repayment.registration": _expense_claim_policy("还款登记金额"),

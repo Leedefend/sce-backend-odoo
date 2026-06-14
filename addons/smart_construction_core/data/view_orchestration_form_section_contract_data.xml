@@ -287,7 +287,18 @@
             <field name="active" eval="True"/>
             <field name="status">published</field>
             <field name="version_no">1</field>
-            <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"sections": [{"title": "付款信息"}]}}}}'/>
+            <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"sections": [{"title": "办理类型"}, {"title": "付款依据"}, {"title": "付款金额"}, {"title": "收款账户"}, {"title": "付款账户"}, {"title": "办理说明"}, {"title": "公司-承包人资金责任"}, {"title": "来源与系统追溯"}]}}}}'/>
+        </record>
+        <record id="business_config_contract_payment_request_form_sections_v1" model="ui.business.config.contract">
+            <field name="name">payment_request_form_sections_v1</field>
+            <field name="model">payment.request</field>
+            <field name="view_type">form</field>
+            <field name="priority">20</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"sections": [{"title": "办理类型"}, {"title": "项目与往来单位"}, {"title": "申请依据"}, {"title": "申请金额"}, {"title": "收款账户"}, {"title": "付款单位"}, {"title": "办理说明与附件"}, {"title": "申请明细"}, {"title": "执行与额度"}, {"title": "往来单位默认账户"}, {"title": "迁移来源"}]}}}}'/>
         </record>
         <record id="business_config_contract_sc_fund_account_operation_form_sections_v1" model="ui.business.config.contract">
             <field name="name">sc_fund_account_operation_form_sections_v1</field>

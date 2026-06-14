@@ -4,6 +4,7 @@ from . import business_category
 from . import delete_guard_mixin
 from . import project_dictionary
 from . import account_extend
+from . import account_tax_contract_rate
 from . import account_move_line_ext
 from . import stock_extend
 from . import product_extend
