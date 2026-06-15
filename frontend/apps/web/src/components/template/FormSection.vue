@@ -165,6 +165,7 @@
                       :placeholder="selectPlaceholderText(field)"
                       autocomplete="off"
                       @input="emitMany2oneQuery(field, ($event.target as HTMLInputElement).value)"
+                      @focus="emitMany2oneQuery(field, many2oneTextValue(field))"
                       @change="emitMany2oneCommit(field, ($event.target as HTMLInputElement).value)"
                       @keydown.enter.prevent="emitMany2oneCommit(field, ($event.target as HTMLInputElement).value)"
                       @blur="emitMany2oneCommit(field, ($event.target as HTMLInputElement).value)"

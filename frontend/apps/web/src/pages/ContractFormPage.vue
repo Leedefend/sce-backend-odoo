@@ -1333,6 +1333,8 @@ const advancedExpanded = ref(false);
 const relationOptions = ref<Record<string, RelationOption[]>>({});
 const relationFieldDescriptors = ref<Record<string, Record<string, FieldDescriptor>>>({});
 const relationKeywords = reactive<Record<string, string>>({});
+const invalidatedRelationKeywords = reactive<Record<string, string>>({});
+const clearedDynamicRelationFields = reactive<Record<string, boolean>>({});
 const relationSearchDialog = reactive<{
   open: boolean;
   fieldName: string;
@@ -3049,6 +3051,21 @@ function nativeNodeFieldDescriptor(nodeRaw: NativeFormLayoutNode, fallback?: Fie
   const selection = Array.isArray(fieldInfo.selection)
     ? fieldInfo.selection as FieldDescriptor['selection']
     : fallback?.selection;
+  const domain = fieldInfo.domain !== undefined
+    ? fieldInfo.domain
+    : (fallback as Record<string, unknown> | undefined)?.domain;
+  const context = fieldInfo.context !== undefined
+    ? fieldInfo.context
+    : (fallback as Record<string, unknown> | undefined)?.context;
+  const relationEntry = fieldInfo.relation_entry !== undefined
+    ? fieldInfo.relation_entry
+    : (fallback as Record<string, unknown> | undefined)?.relation_entry;
+  const widgetOptions = fieldInfo.widget_options !== undefined
+    ? fieldInfo.widget_options
+    : (fieldInfo.options !== undefined
+      ? fieldInfo.options
+      : ((fallback as Record<string, unknown> | undefined)?.widget_options
+        ?? (fallback as Record<string, unknown> | undefined)?.options));
   return {
     ...(fallback || {}),
     ...(name ? { name } : {}),
@@ -3060,7 +3077,68 @@ function nativeNodeFieldDescriptor(nodeRaw: NativeFormLayoutNode, fallback?: Fie
     ...(relation ? { relation } : {}),
     ...(relationField ? { relation_field: relationField } : {}),
     ...(widget ? { widget } : {}),
+    ...(domain !== undefined ? { domain } : {}),
+    ...(context !== undefined ? { context } : {}),
+    ...(relationEntry !== undefined ? { relation_entry: relationEntry } : {}),
+    ...(widgetOptions !== undefined ? { widget_options: widgetOptions } : {}),
   } as FieldDescriptor;
+}
+
+function findNativeFieldNode(name: string): NativeFormLayoutNode | null {
+  const target = String(name || '').trim();
+  if (!target) return null;
+  const walk = (nodes: NativeFormLayoutNode[]): NativeFormLayoutNode | null => {
+    for (const node of nodes) {
+      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      if (type === 'field' && String(node?.name || '').trim() === target) return node;
+      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+        const children = node?.[key];
+        if (!Array.isArray(children)) continue;
+        const found = walk(children as NativeFormLayoutNode[]);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nativeFormLayoutNodes.value);
+}
+
+function effectiveFieldDescriptor(name: string): FieldDescriptor | undefined {
+  const normalized = String(name || '').trim();
+  if (!normalized) return undefined;
+  const fallback = contract.value?.fields?.[normalized];
+  const nativeNode = findNativeFieldNode(normalized);
+  return nativeNode ? nativeNodeFieldDescriptor(nativeNode, fallback) : fallback;
+}
+
+function mergeNativeLayoutFieldDescriptorsIntoContract() {
+  if (!contract.value?.fields) return;
+  const fields = { ...(contract.value.fields || {}) };
+  let changed = false;
+  const walk = (nodes: NativeFormLayoutNode[]) => {
+    nodes.forEach((node) => {
+      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      const name = String(node?.name || '').trim();
+      if (type === 'field' && name) {
+        const descriptor = nativeNodeFieldDescriptor(node, fields[name]);
+        if (descriptor) {
+          fields[name] = descriptor;
+          changed = true;
+        }
+      }
+      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
+      }
+    });
+  };
+  walk(rawNativeFormLayoutNodes.value);
+  if (changed) {
+    contract.value = {
+      ...contract.value,
+      fields,
+    };
+  }
 }
 
 function nativeFieldSubview(name: string): Record<string, unknown> | null {
@@ -3534,7 +3612,7 @@ function applyOnchangeLinePatches(linePatches: OnchangeLinePatch[]) {
 
 function setRelationKeyword(name: string, keyword: string) {
   relationKeywords[name] = keyword;
-  const descriptor = contract.value?.fields?.[name];
+  const descriptor = effectiveFieldDescriptor(name);
   const widget = String((descriptor as Record<string, unknown> | undefined)?.widget || '').trim().toLowerCase();
   if (fieldType(descriptor) === 'many2many' && widget === 'many2many_tags') {
     markFieldChanged(name);
@@ -3589,7 +3667,7 @@ function filteredRelationOptions(name: string) {
 }
 
 function relationModel(name: string) {
-  const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
+  const descriptor = effectiveFieldDescriptor(name) as Record<string, unknown> | undefined;
   const entry = descriptor?.relation_entry && typeof descriptor.relation_entry === 'object' && !Array.isArray(descriptor.relation_entry)
     ? descriptor.relation_entry as Record<string, unknown>
     : {};
@@ -3756,27 +3834,123 @@ function dynamicDomainFromDescriptor(descriptor?: FieldDescriptor) {
   if (typeof raw !== 'string' || !raw.trim()) return [];
   const out: unknown[] = [];
   const text = raw.trim();
-  const tuplePattern = /\\(['"]([\\w.]+)['"]\\s*,\\s*['"]([=!<>]{1,2}|in|not in|ilike|like)['"]\\s*,\\s*([A-Za-z_]\\w*)\\)/g;
+  const tuplePattern = /\(['"]([\w.]+)['"]\s*,\s*['"]([=!<>]{1,2}|in|not in|ilike|like)['"]\s*,\s*([A-Za-z_]\w*)\)/g;
   let match: RegExpExecArray | null;
+  let hasDynamicDependency = false;
+  let hasUnresolvedDependency = false;
   while ((match = tuplePattern.exec(text))) {
     const [, fieldName, operator, valueField] = match;
     if (!fieldName || !operator || !valueField) continue;
-    const value = formData[valueField]
-      ?? route.query[`default_${valueField}`]
-      ?? route.query[valueField];
-    if (value === undefined || value === null || value === '') continue;
+    hasDynamicDependency = true;
+    const value = resolveDynamicDomainDependencyValue(valueField);
+    if (value === undefined || value === null || value === '' || value === false) {
+      hasUnresolvedDependency = true;
+      continue;
+    }
     const normalizedValue = normalizeFieldValue(valueField, value);
-    if (normalizedValue === undefined || normalizedValue === null || normalizedValue === '') continue;
+    if (normalizedValue === undefined || normalizedValue === null || normalizedValue === '' || normalizedValue === false) {
+      hasUnresolvedDependency = true;
+      continue;
+    }
     out.push([fieldName, operator, normalizedValue]);
   }
+  if (hasDynamicDependency && hasUnresolvedDependency) {
+    const descriptorRecord = descriptor as Record<string, unknown> | undefined;
+    const currentFieldName = String(descriptorRecord?.name || descriptorRecord?.field || '').trim();
+    if (currentFieldName && fieldType(descriptor) === 'many2one') {
+      const currentValue = normalizeFieldValue(currentFieldName, formData[currentFieldName]);
+      const currentId = Number(currentValue || 0);
+      if (Number.isFinite(currentId) && currentId > 0) {
+        return [['id', '=', Math.trunc(currentId)]];
+      }
+    }
+    return [['id', '=', -1]];
+  }
   return out;
+}
+
+function resolveDynamicDomainDependencyValue(valueField: string) {
+  const direct = formData[valueField]
+    ?? route.query[`default_${valueField}`]
+    ?? route.query[valueField];
+  if (direct !== undefined && direct !== null && direct !== '') return direct;
+  const keyword = relationKeyword(valueField).trim().toLowerCase();
+  if (!keyword) return direct;
+  const option = (relationOptions.value[valueField] || []).find((item) => {
+    const label = item.label.trim().toLowerCase();
+    return label === keyword || label.includes(keyword) || keyword.includes(label);
+  });
+  return option?.id || direct;
+}
+
+function dynamicDomainDependencyFields(descriptor?: FieldDescriptor) {
+  const raw = (descriptor as Record<string, unknown> | undefined)?.domain;
+  if (typeof raw !== 'string' || !raw.trim()) return [];
+  const deps = new Set<string>();
+  const tuplePattern = /\(['"]([\w.]+)['"]\s*,\s*['"]([=!<>]{1,2}|in|not in|ilike|like)['"]\s*,\s*([A-Za-z_]\w*)\)/g;
+  let match: RegExpExecArray | null;
+  while ((match = tuplePattern.exec(raw.trim()))) {
+    const valueField = match[3];
+    if (valueField) deps.add(valueField);
+  }
+  return Array.from(deps);
+}
+
+function isBlockAllDomain(domain: unknown) {
+  return Array.isArray(domain)
+    && domain.length === 1
+    && Array.isArray(domain[0])
+    && String(domain[0][0] || '') === 'id'
+    && String(domain[0][1] || '') === '='
+    && Number(domain[0][2]) === -1;
+}
+
+function clearDynamicRelationDependents(changedName: string) {
+  const fields = contract.value?.fields || {};
+  const changed = String(changedName || '').trim();
+  if (!changed) return;
+  Object.entries(fields).forEach(([name, descriptor]) => {
+    descriptor = effectiveFieldDescriptor(name) || descriptor;
+    if (name === changed) return;
+    if (!['many2one', 'many2many'].includes(fieldType(descriptor))) return;
+    if (!dynamicDomainDependencyFields(descriptor).includes(changed)) return;
+    const currentIds = relationIds(name);
+    const selectedOption = currentIds.length
+      ? (relationOptions.value[name] || []).find((option) => option.id === currentIds[0])
+      : null;
+    const staleKeyword = relationKeyword(name).trim() || String(selectedOption?.label || '').trim();
+    if (staleKeyword) invalidatedRelationKeywords[name] = staleKeyword;
+    clearedDynamicRelationFields[name] = true;
+    if (fieldType(descriptor) === 'many2many') {
+      formData[name] = [];
+    } else {
+      formData[name] = false;
+    }
+    if (relationQueryTimers[name]) {
+      clearTimeout(relationQueryTimers[name]);
+      delete relationQueryTimers[name];
+    }
+    relationKeywords[name] = '';
+    relationOptions.value = {
+      ...relationOptions.value,
+      [name]: [],
+    };
+    void queryRelationOptions(name, '');
+  });
 }
 
 function relationDomain(descriptor?: FieldDescriptor) {
   const entry = relationEntry(descriptor);
   const out: unknown[] = [];
-  if (Array.isArray(entry?.domain)) out.push(...entry.domain);
-  out.push(...dynamicDomainFromDescriptor(descriptor));
+  const entryDomain = Array.isArray(entry?.domain) ? entry.domain : [];
+  const dynamicDomain = dynamicDomainFromDescriptor(descriptor);
+  const dynamicResolved = Array.isArray(dynamicDomain)
+    && dynamicDomain.length > 0
+    && !isBlockAllDomain(dynamicDomain);
+  const entryBlocksAll = isBlockAllDomain(entryDomain);
+  const dynamicBlocksAll = isBlockAllDomain(dynamicDomain);
+  if (entryDomain.length && !(entryBlocksAll && (dynamicResolved || dynamicBlocksAll))) out.push(...entryDomain);
+  out.push(...dynamicDomain);
   const descriptorRecord = descriptor as Record<string, unknown> | undefined;
   const fieldName = String(descriptorRecord?.name || descriptorRecord?.field || '').trim();
   const relation = String(descriptorRecord?.relation || entry?.model || '').trim();
@@ -3807,13 +3981,15 @@ function mergedRelationDomain(name: string, descriptor?: FieldDescriptor) {
   const base = relationDomain(descriptor);
   const runtime = runtimeRelationDomain(name);
   const out: unknown[] = [];
-  if (Array.isArray(base)) out.push(...base);
+  const runtimeHasDomain = Array.isArray(runtime) && runtime.length > 0;
+  const baseOnlyBlocksAll = isBlockAllDomain(base);
+  if (Array.isArray(base) && !(runtimeHasDomain && baseOnlyBlocksAll)) out.push(...base);
   if (Array.isArray(runtime)) out.push(...runtime);
   return out.length ? out : undefined;
 }
 
 async function queryRelationOptions(name: string, keyword: string): Promise<RelationOption[]> {
-  const descriptor = contract.value?.fields?.[name];
+  const descriptor = effectiveFieldDescriptor(name);
   const relation = relationModel(name);
   if (!relation) return [];
   const entry = relationEntry(descriptor);
@@ -3822,7 +3998,11 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
     return [];
   }
   if (deniedRelationModels.has(relation)) return [];
-  const search = String(keyword || '').trim();
+  let search = String(keyword || '').trim();
+  if (search && invalidatedRelationKeywords[name] === search && !formData[name]) {
+    search = '';
+    relationKeywords[name] = '';
+  }
   const domain = mergedRelationDomain(name, descriptor);
   try {
     const listed = await listContractFormRecords({
@@ -3838,6 +4018,9 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
     const mapped = records
       .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor))
       .filter((item): item is RelationOption => Boolean(item));
+    if (search && !mapped.length && (dynamicDomainDependencyFields(descriptor).length || runtimeRelationDomain(name).length)) {
+      return queryRelationOptions(name, '');
+    }
     if (mapped.length || !search) {
       relationOptions.value = {
         ...relationOptions.value,
@@ -3856,7 +4039,7 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
 }
 
 async function fetchRelationOptions(name: string, keyword: string, limit = 80): Promise<RelationOption[]> {
-  const descriptor = contract.value?.fields?.[name];
+  const descriptor = effectiveFieldDescriptor(name);
   const relation = relationModel(name);
   if (!relation) return [];
   const entry = relationEntry(descriptor);
@@ -3962,7 +4145,7 @@ function relationSearchReadFields(columns: RelationSearchColumn[], dialog: Recor
 }
 
 async function fetchRelationSearchRows(name: string, keyword: string, limit = 120): Promise<RelationSearchRow[]> {
-  const descriptor = contract.value?.fields?.[name];
+  const descriptor = effectiveFieldDescriptor(name);
   const relation = relationModel(name);
   if (!relation) return [];
   const entry = relationEntry(descriptor);
@@ -4093,9 +4276,10 @@ function selectRelationSearchOption(option: RelationOption) {
 
 function setMany2oneOption(fieldName: string, option: RelationOption) {
   formData[fieldName] = option.id;
-  markFieldChanged(fieldName);
   relationKeywords[fieldName] = option.label;
   mergeRelationOptions(fieldName, [option]);
+  clearDynamicRelationDependents(fieldName);
+  markFieldChanged(fieldName);
   void switchFormByRelationOption(fieldName, option);
 }
 
@@ -6595,6 +6779,7 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
   if (!normalized) {
     formData[name] = false;
     relationKeywords[name] = '';
+    clearDynamicRelationDependents(name);
     markFieldChanged(name);
     return;
   }
@@ -6614,6 +6799,7 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
   if (!Number.isFinite(id) || id <= 0) {
     formData[name] = false;
     relationKeywords[name] = '';
+    clearDynamicRelationDependents(name);
     markFieldChanged(name);
     return;
   }
@@ -6624,15 +6810,26 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
     relationKeywords[name] = selected.label;
     void switchFormByRelationOption(name, selected);
   }
+  clearDynamicRelationDependents(name);
   markFieldChanged(name);
 }
 
 function queryMany2oneInline(name: string, descriptor: FieldDescriptor | undefined, value: string) {
   const keyword = String(value || '').trim();
+  if (keyword && clearedDynamicRelationFields[name]) {
+    delete clearedDynamicRelationFields[name];
+    delete invalidatedRelationKeywords[name];
+  }
+  if (keyword && invalidatedRelationKeywords[name] === keyword && !formData[name]) {
+    relationKeywords[name] = '';
+    return;
+  }
+  if (keyword && invalidatedRelationKeywords[name] && invalidatedRelationKeywords[name] !== keyword) {
+    delete invalidatedRelationKeywords[name];
+  }
   relationKeywords[name] = keyword;
   if (!keyword) {
-    formData[name] = false;
-    markFieldChanged(name);
+    void queryRelationOptions(name, '');
     return;
   }
   setRelationKeyword(name, keyword);
@@ -6640,11 +6837,30 @@ function queryMany2oneInline(name: string, descriptor: FieldDescriptor | undefin
 
 async function commitMany2oneInline(name: string, descriptor: FieldDescriptor | undefined, value: string) {
   const keyword = String(value || '').trim();
+  if (keyword && clearedDynamicRelationFields[name] && !formData[name]) {
+    relationKeywords[name] = '';
+    return;
+  }
+  if (keyword && invalidatedRelationKeywords[name] === keyword && !formData[name]) {
+    relationKeywords[name] = '';
+    return;
+  }
+  if (keyword && invalidatedRelationKeywords[name] && invalidatedRelationKeywords[name] !== keyword) {
+    delete invalidatedRelationKeywords[name];
+  }
   if (!keyword) {
     formData[name] = false;
     relationKeywords[name] = '';
     markFieldChanged(name);
     return;
+  }
+  const currentId = Number(formData[name] || 0);
+  if (Number.isFinite(currentId) && currentId > 0) {
+    const currentOption = relationOptionsForField(name).find((option) => option.id === Math.trunc(currentId));
+    if (currentOption && currentOption.label.trim().toLowerCase() === keyword.toLowerCase()) {
+      relationKeywords[name] = currentOption.label;
+      return;
+    }
   }
   const inline = relationInlineCreate(name, descriptor);
   const localQuickFill = resolveRelationQuickFillOption(relationOptionsForField(name), keyword, inline.match);
@@ -6917,6 +7133,19 @@ async function runOnchangeRoundtrip() {
           upsertRelationOption(name, option);
           const ids = normalizeRelationIds(value);
           const nextId = ids.length ? ids[0] : false;
+          if (!nextId) {
+            const currentIds = relationIds(name);
+            const selectedOption = currentIds.length
+              ? (relationOptions.value[name] || []).find((item) => item.id === currentIds[0])
+              : null;
+            const staleKeyword = relationKeyword(name).trim() || String(selectedOption?.label || '').trim();
+            if (staleKeyword) invalidatedRelationKeywords[name] = staleKeyword;
+            clearedDynamicRelationFields[name] = true;
+            if (relationQueryTimers[name]) {
+              clearTimeout(relationQueryTimers[name]);
+              delete relationQueryTimers[name];
+            }
+          }
           const node = layoutNodes.value.find((item) => item.kind === 'field' && item.name === name);
           const readonly = Boolean(node?.readonly || contract.value?.fields?.[name]?.readonly);
           formData[name] = readonly && option ? [option.id, option.label] : nextId;
@@ -7472,6 +7701,7 @@ async function loadContract() {
   contract.value = response.data as ActionContract;
   contractMeta.value = response.meta || null;
   syncContractV2ShadowStore(response.data);
+  mergeNativeLayoutFieldDescriptorsIntoContract();
   const policy = contractAccessPolicy.value;
   if (policy.mode === 'block') {
     const message = policy.message || 'contract access policy blocked this page';
