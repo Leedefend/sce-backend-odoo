@@ -123,6 +123,41 @@ async function visibleStatusbars(page) {
     .filter((item) => item.visible));
 }
 
+async function visibleWorkflowStateFields(page) {
+  return page.locator('.template-form-section .field').evaluateAll((nodes) => {
+    const stateFieldNames = new Set([
+      'state',
+      'status',
+      'lifecycle_state',
+      'workflow_state',
+      'approval_state',
+      'tier_validation_state',
+      'validation_state',
+    ]);
+    const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+    return nodes
+      .map((node) => {
+        const style = window.getComputedStyle(node);
+        const visible = style.display !== 'none'
+          && style.visibility !== 'hidden'
+          && style.opacity !== '0'
+          && Boolean(node.offsetWidth || node.offsetHeight || node.getClientRects().length);
+        const classNames = Array.from(node.classList || []);
+        const fieldClass = classNames.find((item) => item.startsWith('field--'));
+        const fieldName = fieldClass ? fieldClass.replace(/^field--/, '') : '';
+        const label = normalize(node.querySelector('.label')?.textContent || '');
+        return {
+          visible,
+          fieldName,
+          label,
+          text: normalize(node.textContent || ''),
+        };
+      })
+      .filter((item) => item.visible)
+      .filter((item) => stateFieldNames.has(item.fieldName) || item.label === '状态' || item.label.endsWith('状态'));
+  });
+}
+
 async function launchBrowser() {
   try {
     const runtime = await import(pathToFileUrl(path.join(repoRoot, 'scripts/verify/playwright_runtime.mjs')));
@@ -159,10 +194,11 @@ async function main() {
       const text = await waitForFormReady(page);
       await page.waitForTimeout(500);
       const visible = await visibleStatusbars(page);
+      const visibleStateFields = await visibleWorkflowStateFields(page);
       const screenshot = outPath(`${scenario.code.replace(/[^a-z0-9_.-]+/gi, '_')}.png`);
       await page.screenshot({ path: screenshot, fullPage: true });
       const result = {
-        ok: visible.length === 0,
+        ok: visible.length === 0 && visibleStateFields.length === 0,
         code: scenario.code,
         name: scenario.name,
         model: scenario.model,
@@ -170,12 +206,16 @@ async function main() {
         menuId: scenario.menuId,
         url: page.url(),
         visibleStatusbars: visible,
+        visibleStateFields,
         textSample: text.slice(0, 300),
         screenshot,
       };
       results.push(result);
       if (!result.ok) {
-        throw new Error(`create form rendered workflow statusbar: ${scenario.code} ${JSON.stringify(visible)}`);
+        throw new Error(`create form rendered workflow state surface: ${scenario.code} ${JSON.stringify({
+          visibleStatusbars: visible,
+          visibleStateFields,
+        })}`);
       }
     }
     const payload = {
