@@ -19,7 +19,7 @@ const CATEGORY_CODES = (process.env.WORKFLOW_CREATE_STATUSBAR_CATEGORIES || 'fin
   .split(',')
   .map((item) => item.trim())
   .filter(Boolean);
-const ALL_CATEGORIES = process.env.WORKFLOW_CREATE_STATUSBAR_ALL === '1';
+const ALL_CATEGORIES = process.env.WORKFLOW_CREATE_STATUSBAR_ALL !== '0';
 
 function outPath(name) {
   fs.mkdirSync(ARTIFACTS_DIR, { recursive: true });
@@ -64,7 +64,7 @@ function loadCatalog() {
       actionId: Number(row.action_id || row.actionId || 0),
       menuId: Number(row.menu_id || row.menuId || 0),
     }))
-    .filter((row) => row.code && row.model && row.actionId && row.menuId);
+    .filter((row) => row.code && row.model && row.actionId);
 }
 
 function selectScenarios(catalog) {
@@ -80,7 +80,6 @@ function selectScenarios(catalog) {
 function createUrl(scenario) {
   const params = new URLSearchParams({
     db: DB_NAME,
-    menu_id: String(scenario.menuId),
     action_id: String(scenario.actionId),
     current_business_category_code: scenario.code,
     default_business_category_code: scenario.code,
@@ -88,6 +87,9 @@ function createUrl(scenario) {
     default_business_category_label: scenario.name,
     ctx_source: 'workflow_create_statusbar_browser_acceptance',
   });
+  if (scenario.menuId) {
+    params.set('menu_id', String(scenario.menuId));
+  }
   return `${FRONTEND_URL}/f/${encodeURIComponent(scenario.model)}/new?${params.toString()}`;
 }
 
