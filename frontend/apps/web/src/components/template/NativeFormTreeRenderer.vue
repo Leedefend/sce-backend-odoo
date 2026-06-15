@@ -55,7 +55,7 @@
               :field-config-editable="fieldConfigEditable"
               :field-selection-mode="fieldSelectionMode"
               :selected-field-key="selectedFieldKey"
-              :columns="columns"
+              :columns="nodeColumns(node)"
               @field-change="emit('field-change', $event)"
               @field-action="emit('field-action', $event)"
               @field-order-move="emit('field-order-move', $event)"
@@ -123,7 +123,7 @@
             :field-config-editable="fieldConfigEditable"
             :field-selection-mode="fieldSelectionMode"
             :selected-field-key="selectedFieldKey"
-            :columns="columns"
+            :columns="nodeColumns(node)"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
             @field-order-move="emit('field-order-move', $event)"
@@ -152,7 +152,7 @@
           <FormSection
             v-if="fieldSchemasForNodes(fieldChildren(node)).length"
             :title="fieldSectionTitle(node)"
-            :columns="columns"
+            :columns="nodeColumns(node)"
             :fields="fieldSchemasForNodes(fieldChildren(node))"
             :relation-adapter="relationAdapter"
             :field-actions="fieldActions"
@@ -243,7 +243,7 @@
             :field-config-editable="fieldConfigEditable"
             :field-selection-mode="fieldSelectionMode"
             :selected-field-key="selectedFieldKey"
-            :columns="columns"
+            :columns="nodeColumns(node)"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
             @field-order-move="emit('field-order-move', $event)"
@@ -271,8 +271,8 @@
 
       <FormSection
         v-else-if="nodeType(node) === 'field' && fieldSchemasForNodes([node]).length"
-          :title="fieldSectionTitle(node)"
-        :columns="columns"
+        :title="fieldSectionTitle(node)"
+        :columns="nodeColumns(node)"
         :fields="fieldSchemasForNodes([node])"
         :relation-adapter="relationAdapter"
         :field-actions="fieldActions"
@@ -346,6 +346,8 @@ export type NativeFormLayoutNode = {
   displayLabel?: string;
   semanticTitle?: string;
   text?: string;
+  cols?: number;
+  columns?: number;
   widget?: string;
   attributes?: Record<string, unknown>;
   fieldInfo?: Record<string, unknown>;
@@ -380,7 +382,7 @@ const props = withDefaults(defineProps<{
   fieldConfigEditable?: boolean;
   fieldSelectionMode?: boolean;
   selectedFieldKey?: string;
-  columns?: 1 | 2;
+  columns?: 1 | 2 | 3;
 }>(), {
   columns: 2,
   isNodeVisible: () => true,
@@ -548,6 +550,18 @@ function fieldSectionTitle(node?: NativeFormLayoutNode) {
   const semanticTitle = String(node?.semanticTitle || '').trim();
   if (semanticTitle) return semanticTitle;
   return node ? containerTitle(node) : '';
+}
+
+function normalizeColumns(value: unknown): 1 | 2 | 3 {
+  const columns = Number(value);
+  if (columns === 1 || columns === 2 || columns === 3) return columns;
+  return 2;
+}
+
+function nodeColumns(node?: NativeFormLayoutNode): 1 | 2 | 3 {
+  const attrs = node ? nodeAttributes(node) : {};
+  const layoutNode = node as { cols?: unknown; columns?: unknown } | undefined;
+  return normalizeColumns(attrs.col ?? attrs.columns ?? layoutNode?.cols ?? layoutNode?.columns ?? props.columns);
 }
 
 function isEditableGroupNode(node: NativeFormLayoutNode) {

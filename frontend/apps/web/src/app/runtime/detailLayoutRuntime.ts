@@ -22,7 +22,7 @@ export type LayoutSectionView = {
   key: string;
   title: string;
   kind: LayoutKind;
-  columns?: 1 | 2;
+  columns?: 1 | 2 | 3;
   fields: LayoutNodeView[];
 };
 
@@ -30,13 +30,15 @@ export type LayoutTreeSectionView = {
   key: string;
   title: string;
   kind: LayoutKind;
-  columns?: 1 | 2;
+  columns?: 1 | 2 | 3;
   fields: LayoutNodeView[];
   children: LayoutTreeSectionView[];
 };
 
-function normalizeSectionColumns(columnsRaw: unknown): 1 | 2 {
-  return Number(columnsRaw) === 1 ? 1 : 2;
+function normalizeSectionColumns(columnsRaw: unknown): 1 | 2 | 3 {
+  const columns = Number(columnsRaw);
+  if (columns === 1 || columns === 2 || columns === 3) return columns;
+  return 2;
 }
 
 function resolveSectionShellClass(section: LayoutSectionView) {

@@ -1363,6 +1363,40 @@ def _form_structure_contract_layout_rows(
         return native_layout_rows
     available = {name for name in fields_by_name if _text(name)}
     native_field_nodes: dict[str, dict[str, Any]] = {}
+    native_group_layouts: list[dict[str, Any]] = []
+
+    def normalize_layout_columns(value: Any) -> int | None:
+        try:
+            columns = int(value)
+        except (TypeError, ValueError):
+            return None
+        return columns if columns > 0 else None
+
+    def node_layout_columns(node: dict[str, Any]) -> int | None:
+        attrs = _dict(node.get("attributes") or node.get("attrs"))
+        return (
+            normalize_layout_columns(node.get("cols"))
+            or normalize_layout_columns(node.get("columns"))
+            or normalize_layout_columns(node.get("col"))
+            or normalize_layout_columns(attrs.get("columns"))
+            or normalize_layout_columns(attrs.get("cols"))
+            or normalize_layout_columns(attrs.get("col"))
+        )
+
+    def collect_node_field_names(nodes: Any, out: list[str] | None = None) -> list[str]:
+        names = out if out is not None else []
+        for node in _list(nodes):
+            if not isinstance(node, dict):
+                continue
+            node_type = _text(node.get("type") or node.get("kind")).lower()
+            node_name = _text(node.get("name") or node.get("field"))
+            if node_type == "field" and node_name and node_name not in names:
+                names.append(node_name)
+            for key in ("children", "pages", "tabs", "nodes", "items", "groups", "fields"):
+                child_rows = node.get(key)
+                if isinstance(child_rows, list) and child_rows:
+                    collect_node_field_names(child_rows, names)
+        return names
 
     def collect_native_field_nodes(nodes: Any) -> None:
         for node in _list(nodes):
@@ -1372,6 +1406,15 @@ def _form_structure_contract_layout_rows(
             node_name = _text(node.get("name") or node.get("field"))
             if node_type == "field" and node_name and node_name not in native_field_nodes:
                 native_field_nodes[node_name] = deepcopy(node)
+            if node_type == "group":
+                columns = node_layout_columns(node)
+                if columns:
+                    title = _text(node.get("string") or node.get("label") or node.get("title"))
+                    native_group_layouts.append({
+                        "title": title,
+                        "fields": collect_node_field_names(node.get("children")),
+                        "cols": columns,
+                    })
             for key in ("children", "pages", "tabs", "nodes", "items", "groups", "fields"):
                 child_rows = node.get(key)
                 if isinstance(child_rows, list) and child_rows:
@@ -1455,7 +1498,24 @@ def _form_structure_contract_layout_rows(
         children = field_nodes(field_refs, readonly=readonly)
         if not children:
             return {}
-        return {
+        child_names = [row.get("name") for row in children if _text(row.get("name"))]
+        inherited_columns = next(
+            (
+                row.get("cols")
+                for row in native_group_layouts
+                if row.get("title") and _text(row.get("title")) == title
+            ),
+            None,
+        ) or next(
+            (
+                row.get("cols")
+                for row in native_group_layouts
+                if row.get("fields") and child_names and set(row.get("fields") or []) == set(child_names)
+            ),
+            None,
+        )
+        layout_attrs = {"col": str(inherited_columns)} if inherited_columns else {}
+        node = {
             "type": "group",
             "name": name,
             "string": title,
@@ -1472,6 +1532,10 @@ def _form_structure_contract_layout_rows(
                 "no_business_fact_authority": True,
             },
         }
+        if inherited_columns:
+            node["cols"] = inherited_columns
+            node["attributes"] = layout_attrs
+        return node
 
     header_rows = [
         deepcopy(row)

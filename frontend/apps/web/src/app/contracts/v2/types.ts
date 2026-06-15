@@ -32,6 +32,8 @@ export interface ContractV2Container {
   string?: string;
   label?: string;
   title: string;
+  cols?: number;
+  columns?: number;
   widget?: string;
   attributes?: ContractV2Dictionary;
   fieldInfo?: ContractV2Dictionary;

@@ -293,7 +293,7 @@ import { resolveInputPlaceholder, resolveSelectPlaceholder } from './placeholder
 const props = withDefaults(defineProps<{
   title: string;
   hint?: string;
-  columns?: 1 | 2;
+  columns?: 1 | 2 | 3;
   tone?: 'core' | 'advanced';
   fields?: FormSectionFieldSchema[];
   relationAdapter?: RelationFieldAdapter;
@@ -347,7 +347,7 @@ const slots = useSlots();
 const toneClass = computed(() => (props.tone === 'advanced' ? 'template-form-section--advanced' : 'template-form-section--core'));
 const showHead = computed(() => Boolean(props.title || slots.action));
 const gridStyle = computed(() => ({
-  gridTemplateColumns: props.columns === 1 ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+  gridTemplateColumns: props.columns === 1 ? '1fr' : `repeat(${props.columns === 3 ? 3 : 2}, minmax(0, 1fr))`,
 }));
 
 function isBaseFieldType(type: TemplateFieldType) {

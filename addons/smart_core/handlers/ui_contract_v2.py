@@ -312,6 +312,10 @@ class UiContractV2Handler(BaseIntentHandler):
             model=str(model or "").strip(),
             view_type=str(view_type or "").strip().lower(),
         )
+        self._inject_native_group_layout_columns(
+            source_contract,
+            view_type=str(view_type or "").strip().lower(),
+        )
         hydrated_record = self._hydrate_record_snapshot(
             model=str(model or "").strip(),
             record_id=params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
@@ -2908,6 +2912,111 @@ class UiContractV2Handler(BaseIntentHandler):
                 label = f"{label} | {url}"
                 display_values.append(label)
             values[name] = display_values
+
+    def _inject_native_group_layout_columns(self, source_contract: dict[str, Any], *, view_type: str) -> None:
+        if view_type != "form" or not isinstance(source_contract, dict):
+            return
+        views = source_contract.get("views") if isinstance(source_contract.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        layout = form.get("layout") if isinstance(form.get("layout"), list) else []
+        if not layout:
+            return
+        meta = form.get("meta") if isinstance(form.get("meta"), dict) else {}
+        projection = meta.get("projection_identity") if isinstance(meta.get("projection_identity"), dict) else {}
+        trace = form.get("source_trace") if isinstance(form.get("source_trace"), dict) else {}
+        orchestration = trace.get("view_orchestration") if isinstance(trace.get("view_orchestration"), dict) else {}
+        raw_view_id = projection.get("source_view_id") or projection.get("view_id") or orchestration.get("view_id")
+        try:
+            view_id = int(raw_view_id or 0)
+        except (TypeError, ValueError):
+            view_id = 0
+        if not view_id:
+            return
+        view = self.env["ir.ui.view"].sudo().browse(view_id).exists()
+        if not view:
+            return
+        arch = str(view.arch_db or "")
+        if not arch:
+            return
+        try:
+            root = etree.fromstring(arch.encode("utf-8"))
+        except Exception:
+            _logger.debug("ui.contract.v2 native group column extraction skipped: invalid arch", exc_info=True)
+            return
+
+        def normalize_columns(value: Any) -> int | None:
+            try:
+                columns = int(value)
+            except (TypeError, ValueError):
+                return None
+            return columns if columns > 0 else None
+
+        def field_names(el: etree._Element) -> list[str]:
+            names: list[str] = []
+            for field in el.xpath(".//field[@name]"):
+                name = str(field.get("name") or "").strip()
+                if name and name not in names:
+                    names.append(name)
+            return names
+
+        group_rows: list[dict[str, Any]] = []
+        for group in root.xpath(".//group[@col]"):
+            columns = normalize_columns(group.get("col"))
+            if not columns:
+                continue
+            group_rows.append({
+                "label": str(group.get("string") or group.get("name") or "").strip(),
+                "fields": field_names(group),
+                "cols": columns,
+            })
+        if not group_rows:
+            return
+
+        def node_fields(node: dict[str, Any]) -> list[str]:
+            names: list[str] = []
+
+            def collect(value: Any) -> None:
+                if isinstance(value, list):
+                    for item in value:
+                        collect(item)
+                    return
+                if not isinstance(value, dict):
+                    return
+                if str(value.get("type") or value.get("kind") or "").strip().lower() == "field":
+                    name = str(value.get("name") or value.get("field") or "").strip()
+                    if name and name not in names:
+                        names.append(name)
+                for key in ("children", "pages", "tabs", "nodes", "items", "groups", "fields"):
+                    collect(value.get(key))
+
+            collect(node.get("children"))
+            return names
+
+        def apply_columns(node: dict[str, Any]) -> None:
+            node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+            if node_type == "group" and not normalize_columns(node.get("cols")):
+                label = str(node.get("string") or node.get("label") or node.get("title") or "").strip()
+                fields = node_fields(node)
+                match = next((row for row in group_rows if row.get("label") and row.get("label") == label), None)
+                if not match and fields:
+                    field_set = set(fields)
+                    match = next((row for row in group_rows if row.get("fields") and set(row.get("fields") or []) == field_set), None)
+                if match:
+                    columns = match.get("cols")
+                    node["cols"] = columns
+                    attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
+                    attrs["col"] = str(columns)
+                    node["attributes"] = attrs
+            for key in ("children", "pages", "tabs", "nodes", "items"):
+                child_rows = node.get(key)
+                if isinstance(child_rows, list):
+                    for child in child_rows:
+                        if isinstance(child, dict):
+                            apply_columns(child)
+
+        for row in layout:
+            if isinstance(row, dict):
+                apply_columns(row)
 
     def _handle_scene_contract(self, params: dict[str, Any], *, client_type: str, delivery_profile: str):
         scene_key = str(params.get("scene_key") or params.get("sceneKey") or "").strip()

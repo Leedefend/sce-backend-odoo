@@ -239,6 +239,8 @@ class TestUserFeedbackBusinessViews(TransactionCase):
                 self.assertIn('optional="hide"', arch[field_pos:close_pos])
         self.assertNotIn('name="sc_supplier_type"', customer_tree.arch_db)
         for arch in (customer_form.arch_db, supplier_form.arch_db):
+            self.assertNotIn("<notebook", arch)
+            self.assertNotIn("<page", arch)
             self.assertIn('name="child_ids"', arch)
             self.assertIn('name="bank_ids"', arch)
             self.assertIn('name="sc_attachment_ids"', arch)
@@ -258,8 +260,10 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn('name="sc_source_payment_amount" string="付款金额" readonly="1"', arch)
             self.assertIn('name="sc_supplier_type_label"', arch)
         self.assertIn('name="company_type" string="客户类型"', customer_tree.arch_db)
-        for label in ("客户身份", "企业资质", "联系与地址", "账户与开票", "业务画像"):
+        for label in ("客户身份", "企业资质与联系", "账户与业务画像", "账户明细", "附件与备注"):
             self.assertIn('string="%s"' % label, customer_form.arch_db)
+        for label in ("供应商身份", "企业资质与联系", "账户与业务画像", "账户明细", "附件与备注"):
+            self.assertIn('string="%s"' % label, supplier_form.arch_db)
         self.assertIn('name="company_type" string="客户类型"', customer_form.arch_db)
         self.assertIn('name="property_account_receivable_id"', customer_form.arch_db)
         for arch in (customer_search.arch_db, supplier_search.arch_db):
