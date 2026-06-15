@@ -310,3 +310,38 @@ class TestActionDispatcherServerMapping(TransactionCase):
         dispatcher._enrich_nav_models(tree)
         model = str(tree[0].get("model") or "").strip()
         self.assertEqual(model, "construction.work.breakdown")
+
+    def test_nav_enrich_menu_action_overrides_stale_config_projection(self):
+        menu = self.env.ref("smart_construction_core.menu_sc_self_funding_advance_refund", raise_if_not_found=False)
+        stale_action = self.env.ref(
+            "smart_construction_core.action_sc_self_funding_registration_refund",
+            raise_if_not_found=False,
+        )
+        current_action = self.env.ref(
+            "smart_construction_core.action_sc_self_funding_deposit_refund",
+            raise_if_not_found=False,
+        )
+        if not menu or not stale_action or not current_action:
+            self.skipTest("self funding refund menu/action fixtures not installed")
+
+        dispatcher = NavDispatcher(self.env, self.env)
+        tree = [
+            {
+                "menu_id": int(menu.id),
+                "action_id": int(stale_action.id),
+                "action_type": "ir.actions.act_window",
+                "action_xmlid": "smart_construction_core.action_sc_self_funding_registration_refund",
+                "model": "sc.self.funding.registration",
+                "action": {
+                    "id": int(stale_action.id),
+                    "type": "ir.actions.act_window",
+                    "res_model": "sc.self.funding.registration",
+                },
+                "children": [],
+            }
+        ]
+        dispatcher._enrich_nav_models(tree)
+
+        self.assertEqual(tree[0].get("action_id"), current_action.id)
+        self.assertEqual(tree[0].get("action_xmlid"), "smart_construction_core.action_sc_self_funding_deposit_refund")
+        self.assertEqual(tree[0].get("model"), "sc.expense.claim")
