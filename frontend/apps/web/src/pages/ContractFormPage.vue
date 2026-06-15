@@ -1698,6 +1698,14 @@ const pageDisplaySubtitle = computed(() => {
   return recordId.value ? `记录 #${recordId.value}` : '';
 });
 
+watch(
+  pageDisplayTitle,
+  (title) => {
+    session.updateActiveActivityTitle(title);
+  },
+  { immediate: true },
+);
+
 const suppressPageHeaderTitle = computed(() => useNativeFormTree.value && !isProjectIntakeCreateMode.value);
 
 const intakeCreateButtonLabel = computed(() => {

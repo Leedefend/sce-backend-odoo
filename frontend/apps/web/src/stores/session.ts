@@ -1236,6 +1236,18 @@ export const useSessionStore = defineStore('session', {
       });
       if (changed) this.persist();
     },
+    updateActiveActivityTitle(rawTitle: unknown) {
+      const activeKey = asText(this.activeActivityPageKey);
+      const title = asText(rawTitle);
+      if (!activeKey || !title) return;
+      let changed = false;
+      this.activityPages = this.activityPages.map((page) => {
+        if (page.key !== activeKey || page.title === title) return page;
+        changed = true;
+        return { ...page, title };
+      });
+      if (changed) this.persist();
+    },
     async applyActivityProjectContext(snapshot: ActivityProjectContextSnapshot | null | undefined) {
       if (!snapshot || !this.projectContext) return;
       const currentSelectedId = Number(this.projectContext.selected?.id || 0) || 0;
