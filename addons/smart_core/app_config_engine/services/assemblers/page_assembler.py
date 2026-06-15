@@ -2097,6 +2097,41 @@ class PageAssembler:
                     "create_and_edit": _(""),
                     "quick_create": _(""),
                 }
+        if (
+            relation == "res.partner"
+            and str(model_name or "").strip() == "sc.expense.claim"
+            and str(field_name or "").strip() == "partner_id"
+        ):
+            context = contract_context if isinstance(contract_context, dict) else {}
+            category_code = str(
+                context.get("current_business_category_code")
+                or context.get("default_business_category_code")
+                or ""
+            ).strip()
+            if category_code == "finance.deduction.bill":
+                partner_ids = []
+                try:
+                    summaries = self.env["sc.company.contractor.responsibility.summary"].sudo().search(
+                        [("partner_id", "!=", False)]
+                    )
+                    partners = summaries.mapped("partner_id").filtered(
+                        lambda partner: partner.supplier_rank > 0 or partner.customer_rank > 0
+                    )
+                    partner_ids = sorted(set(partners.ids))
+                except Exception:
+                    partner_ids = []
+                relation_domain.append(["id", "in", partner_ids or [0]])
+                display_field = "display_name"
+                relation_order = "name asc, id asc"
+                can_create = False
+                has_page = False
+                ui_labels_extra = {
+                    "search_more": _("搜索责任方..."),
+                    "dialog_title": _("责任方：搜索更多"),
+                    "search_placeholder": _("输入责任方名称搜索"),
+                    "create_and_edit": _(""),
+                    "quick_create": _(""),
+                }
         if options_override:
             action_id = options_override.get("action_id") or self._resolve_relation_entry_ref_id(options_override.get("action_xmlid"))
             menu_id = options_override.get("menu_id") or self._resolve_relation_entry_ref_id(options_override.get("menu_xmlid"))
