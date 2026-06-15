@@ -1888,7 +1888,6 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             "expense_project",
             "deposit_bid_pay",
             "deposit_bid_return",
-            "deposit_self_funding_return",
             "deposit_contract_pay",
             "deposit_contract_return",
             "group_business_category",
@@ -1910,11 +1909,12 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             "finance.expense.project",
             "finance.deposit.bid.pay",
             "finance.deposit.bid.return",
-            "finance.deposit.self_funding.return",
             "finance.deposit.contract.pay",
             "finance.deposit.contract.return",
         ):
             self.assertIn(code, main_action.domain)
+        self.assertNotIn("deposit_self_funding_return", search)
+        self.assertNotIn("finance.deposit.self_funding.return", main_action.domain)
 
     def test_expense_deposit_legacy_cash_actions_do_not_reuse_generic_search(self):
         application_search = self.env.ref("smart_construction_core.view_sc_expense_claim_application_search")
@@ -2330,6 +2330,12 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertEqual(refund_menu.get("integration_model"), "sc.self.funding.registration")
             self.assertEqual(refund_menu.get("integration_action_xmlid"), "smart_construction_core.action_sc_self_funding_registration_refund")
             self.assertNotEqual(refund_menu.get("integration_model"), "sc.expense.claim")
+            for menu in menus:
+                if menu.get("integration_target") == "sc.expense.claim 费用/保证金申请":
+                    self.assertNotIn(
+                        "finance.deposit.self_funding.return",
+                        menu.get("allowed_business_category_codes") or [],
+                    )
 
     def test_repayment_registration_is_interfund_business_entry(self):
         action = self.env.ref("smart_construction_core.action_sc_expense_claim_repayment_registration")

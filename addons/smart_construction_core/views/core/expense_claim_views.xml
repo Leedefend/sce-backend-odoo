@@ -507,13 +507,12 @@
                     <filter name="expense_project" string="项目费用报销" domain="[('business_category_id.code', '=', 'finance.expense.project')]"/>
                     <filter name="deposit_bid_pay" string="投标保证金支付" domain="[('business_category_id.code', '=', 'finance.deposit.bid.pay')]"/>
                     <filter name="deposit_bid_return" string="投标保证金退回" domain="[('business_category_id.code', '=', 'finance.deposit.bid.return')]"/>
-                    <filter name="deposit_self_funding_return" string="自筹保证金退回" domain="[('business_category_id.code', '=', 'finance.deposit.self_funding.return')]"/>
                     <filter name="deposit_contract_pay" string="合同保证金登记" domain="[('business_category_id.code', '=', 'finance.deposit.contract.pay')]"/>
                     <filter name="deposit_contract_return" string="合同保证金退回" domain="[('business_category_id.code', '=', 'finance.deposit.contract.return')]"/>
                     <separator/>
                     <filter name="expense_business" string="费用报销" domain="[('business_category_id.code', 'in', ['finance.expense.reimbursement', 'finance.expense.project'])]"/>
                     <filter name="deposit_pay" string="保证金支付/登记" domain="[('business_category_id.code', 'in', ['finance.deposit.bid.pay', 'finance.deposit.contract.pay'])]"/>
-                    <filter name="deposit_return" string="保证金退回" domain="[('business_category_id.code', 'in', ['finance.deposit.bid.return', 'finance.deposit.self_funding.return', 'finance.deposit.contract.return'])]"/>
+                    <filter name="deposit_return" string="保证金退回" domain="[('business_category_id.code', 'in', ['finance.deposit.bid.return', 'finance.deposit.contract.return'])]"/>
                     <separator/>
                     <filter name="draft" string="草稿" domain="[('state', '=', 'draft')]"/>
                     <filter name="submitted" string="已提交" domain="[('state', '=', 'submit')]"/>
@@ -648,7 +647,7 @@
             <field name="view_id" ref="view_sc_expense_claim_application_tree"/>
             <field name="views" eval="[(ref('view_sc_expense_claim_application_tree'), 'tree'), (ref('view_sc_expense_claim_form'), 'form')]"/>
             <field name="search_view_id" ref="view_sc_expense_claim_application_search"/>
-            <field name="domain">[('business_category_id.code', 'in', ['finance.expense.reimbursement', 'finance.expense.project', 'finance.deposit.bid.pay', 'finance.deposit.bid.return', 'finance.deposit.self_funding.return', 'finance.deposit.contract.pay', 'finance.deposit.contract.return'])]</field>
+            <field name="domain">[('business_category_id.code', 'in', ['finance.expense.reimbursement', 'finance.expense.project', 'finance.deposit.bid.pay', 'finance.deposit.bid.return', 'finance.deposit.contract.pay', 'finance.deposit.contract.return'])]</field>
             <field name="context">{'search_default_active_rows': 1, 'search_default_group_business_category': 1}</field>
             <field name="groups_id" eval="[
                 (4, ref('smart_construction_core.group_sc_cap_business_initiator')),
