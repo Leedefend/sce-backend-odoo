@@ -161,7 +161,7 @@ MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL = {
     "sc.self.funding.registration": "smart_construction_core.action_sc_self_funding_registration",
 }
 SELF_FUNDING_REFUND_MENU_XMLID = "smart_construction_core.menu_sc_self_funding_advance_refund"
-SELF_FUNDING_DEPOSIT_RETURN_CODE = "finance.deposit.self_funding.return"
+SELF_FUNDING_REFUND_CODE = "finance.self_funding.refund"
 
 CONTRACT_HANDLING_CATEGORY_CODES = (
     "contract.income",
@@ -330,14 +330,14 @@ class ScProductPolicy(models.Model):
                 "entry_intent_label": "办理",
                 "fact_model": "sc.legacy.self.funding.fact",
                 "disposition_policy": "merge_by_category",
-                "integration_target": "sc.expense.claim 自筹退回办理",
-                "default_business_category_code": SELF_FUNDING_DEPOSIT_RETURN_CODE,
-                "allowed_business_category_codes": [SELF_FUNDING_DEPOSIT_RETURN_CODE],
-                "required_relationships": ["project_id", "partner_id", "contract_id", "fund_account_id", "cost_item_id"],
+                "integration_target": "sc.self.funding.registration 自筹退回办理",
+                "default_business_category_code": SELF_FUNDING_REFUND_CODE,
+                "allowed_business_category_codes": [SELF_FUNDING_REFUND_CODE],
+                "required_relationships": ["project_id", "partner_id"],
                 "entry_target_policy": "merge_to_list_form_by_business_category",
                 "locked_data_policy": "read_only_source_facts_no_rewrite",
-                "productization_source": "self_funding_deposit_return_retarget",
-                "policy_note": "self_funding_refund_retargeted_to_deposit_return",
+                "productization_source": "self_funding_refund_formal_entry",
+                "policy_note": "self_funding_refund_uses_formal_registration_caliber",
                 "business_entry_contract_version": "business_entry_disposition.v1",
                 "visible_menu_path": "智慧施工管理平台 / 财务中心 / 自筹退回办理",
             }
@@ -345,9 +345,27 @@ class ScProductPolicy(models.Model):
         context_defaults = row.setdefault("context_defaults", {})
         if isinstance(context_defaults, dict):
             context_defaults.clear()
-            context_defaults["default_business_category_code"] = SELF_FUNDING_DEPOSIT_RETURN_CODE
-            context_defaults["allowed_business_category_codes"] = [SELF_FUNDING_DEPOSIT_RETURN_CODE]
+            context_defaults["default_funding_type"] = "refund"
+            context_defaults["default_business_category_code"] = SELF_FUNDING_REFUND_CODE
+            context_defaults["allowed_business_category_codes"] = [SELF_FUNDING_REFUND_CODE]
         self._annotate_merge_by_category_integration_target(row)
+        action = self.env.ref("smart_construction_core.action_sc_self_funding_registration_refund", raise_if_not_found=False)
+        if action and _text(getattr(action, "res_model", "")) == "sc.self.funding.registration":
+            action_id = int(action.id or 0)
+            view_modes = [_text(item) for item in _text(getattr(action, "view_mode", "")).split(",") if _text(item)]
+            row["integration_action_xmlid"] = "smart_construction_core.action_sc_self_funding_registration_refund"
+            row["integration_action_id"] = action_id
+            row["integration_view_modes"] = view_modes
+            row["integration_entry_target"] = {
+                "type": "compatibility",
+                "route": "/a/%s" % action_id,
+                "compatibility_refs": {
+                    "action_id": action_id,
+                    "model": "sc.self.funding.registration",
+                    "view_modes": view_modes,
+                    "delivery_mode": "merge_by_category_integration",
+                },
+            }
         return row
 
     @api.model

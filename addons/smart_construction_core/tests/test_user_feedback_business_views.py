@@ -1959,16 +1959,16 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertTrue(all(rec.business_category_id == category for rec in self_funding_records))
         self.assertTrue(all(rec.handling_kind == "self_funding_deposit_return" for rec in self_funding_records))
 
-    def test_self_funding_refund_menu_opens_migrated_deposit_refunds(self):
+    def test_self_funding_refund_menu_opens_formal_self_funding_refunds(self):
         menu = self.env.ref("smart_construction_core.menu_sc_self_funding_advance_refund")
-        action = self.env.ref("smart_construction_core.action_sc_self_funding_deposit_refund")
+        action = self.env.ref("smart_construction_core.action_sc_self_funding_registration_refund")
 
         self.assertEqual(menu.action, action)
-        self.assertEqual(action.res_model, "sc.expense.claim")
-        self.assertIn("finance.deposit.self_funding.return", action.domain)
+        self.assertEqual(action.res_model, "sc.self.funding.registration")
+        self.assertIn("finance.self_funding.refund", action.domain)
         self.assertTrue(
-            self.env["sc.expense.claim"].search_count(
-                [("business_category_id.code", "=", "finance.deposit.self_funding.return")]
+            self.env["sc.self.funding.registration"].search_count(
+                [("business_category_id.code", "=", "finance.self_funding.refund")]
             )
         )
 
@@ -2263,7 +2263,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn("费用/保证金现金办理", paid_menu.get("visible_menu_path"))
             self.assertEqual(paid_menu.get("product_domain"), "finance_cash")
 
-    def test_self_funding_refund_product_entry_uses_migrated_deposit_return(self):
+    def test_self_funding_refund_product_entry_uses_formal_self_funding_refund(self):
         self.env["sc.product.policy"].sync_construction_menu_product_policies()
         for product_key in ("construction.standard", "construction.preview"):
             policy = self.env["sc.product.policy"].search([("product_key", "=", product_key)], limit=1)
@@ -2284,16 +2284,16 @@ class TestUserFeedbackBusinessViews(TransactionCase):
                 ) == "smart_construction_core.menu_sc_self_funding_advance_refund"
             )
 
-            self.assertEqual(refund_menu.get("action_id"), self.env.ref("smart_construction_core.action_sc_self_funding_deposit_refund").id)
+            self.assertEqual(refund_menu.get("action_id"), self.env.ref("smart_construction_core.action_sc_self_funding_registration_refund").id)
             self.assertEqual(refund_menu.get("label"), "自筹退回办理")
             self.assertEqual(refund_menu.get("product_domain"), "finance")
             self.assertEqual(refund_menu.get("visible_menu_path"), "智慧施工管理平台 / 财务中心 / 自筹退回办理")
-            self.assertEqual(refund_menu.get("default_business_category_code"), "finance.deposit.self_funding.return")
-            self.assertEqual(refund_menu.get("allowed_business_category_codes"), ["finance.deposit.self_funding.return"])
-            self.assertEqual(refund_menu.get("integration_target"), "sc.expense.claim 自筹退回办理")
-            self.assertEqual(refund_menu.get("integration_model"), "sc.expense.claim")
-            self.assertEqual(refund_menu.get("integration_action_xmlid"), "smart_construction_core.action_sc_expense_claim")
-            self.assertNotEqual(refund_menu.get("integration_model"), "sc.self.funding.registration")
+            self.assertEqual(refund_menu.get("default_business_category_code"), "finance.self_funding.refund")
+            self.assertEqual(refund_menu.get("allowed_business_category_codes"), ["finance.self_funding.refund"])
+            self.assertEqual(refund_menu.get("integration_target"), "sc.self.funding.registration 自筹退回办理")
+            self.assertEqual(refund_menu.get("integration_model"), "sc.self.funding.registration")
+            self.assertEqual(refund_menu.get("integration_action_xmlid"), "smart_construction_core.action_sc_self_funding_registration_refund")
+            self.assertNotEqual(refund_menu.get("integration_model"), "sc.expense.claim")
 
     def test_repayment_registration_is_interfund_business_entry(self):
         action = self.env.ref("smart_construction_core.action_sc_expense_claim_repayment_registration")

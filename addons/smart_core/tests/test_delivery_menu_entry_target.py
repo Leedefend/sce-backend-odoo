@@ -458,15 +458,15 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
                             },
                             {
                                 **common,
-                                "menu_key": "self_funding_refund",
-                                "label": "自筹退回办理",
+                                "menu_key": "deposit_refund",
+                                "label": "保证金退回",
                                 "menu_id": 732,
                                 "route": "/a/813?menu_id=732",
                                 "action_id": 813,
-                                "menu_xmlid": "smart_construction_core.menu_sc_self_funding_advance_refund",
-                                "integration_target": "sc.expense.claim 自筹退回办理",
-                                "default_business_category_code": "finance.deposit.self_funding.return",
-                                "allowed_business_category_codes": ["finance.deposit.self_funding.return"],
+                                "menu_xmlid": "smart_construction_core.menu_sc_deposit_refund",
+                                "integration_target": "sc.expense.claim 保证金退回",
+                                "default_business_category_code": "finance.deposit.bid.return",
+                                "allowed_business_category_codes": ["finance.deposit.bid.return"],
                             },
                         ],
                     }
@@ -486,12 +486,12 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
                             menu_xmlid="smart_construction_core.menu_sc_expense_claim",
                         ),
                         self._native_leaf(
-                            label="自筹退回办理",
+                            label="保证金退回",
                             menu_id=732,
                             route="/a/813?menu_id=732",
                             action_id=813,
                             model="sc.expense.claim",
-                            menu_xmlid="smart_construction_core.menu_sc_self_funding_advance_refund",
+                            menu_xmlid="smart_construction_core.menu_sc_deposit_refund",
                         ),
                     ],
                 }
@@ -504,7 +504,7 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
             for child in (group.get("children") or [])
         ]
         self.assertIn("费用/保证金申请", labels)
-        self.assertIn("自筹退回办理", labels)
+        self.assertIn("保证金退回", labels)
 
 
 if __name__ == "__main__":
