@@ -322,15 +322,15 @@ class ScProductPolicy(models.Model):
             return row
         row.update(
             {
-                "label": "自筹垫付退回",
-                "page_label": "自筹垫付退回",
+                "label": "自筹退回办理",
+                "page_label": "自筹退回办理",
                 "product_domain": "finance",
                 "product_domain_label": "资金财务域",
                 "entry_intent": "handling",
                 "entry_intent_label": "办理",
                 "fact_model": "sc.legacy.self.funding.fact",
                 "disposition_policy": "merge_by_category",
-                "integration_target": FINANCE_CASH_EXPENSE_DEPOSIT_TARGET,
+                "integration_target": "sc.expense.claim 自筹退回办理",
                 "default_business_category_code": SELF_FUNDING_DEPOSIT_RETURN_CODE,
                 "allowed_business_category_codes": [SELF_FUNDING_DEPOSIT_RETURN_CODE],
                 "required_relationships": ["project_id", "partner_id", "contract_id", "fund_account_id", "cost_item_id"],
@@ -339,7 +339,7 @@ class ScProductPolicy(models.Model):
                 "productization_source": "self_funding_deposit_return_retarget",
                 "policy_note": "self_funding_refund_retargeted_to_deposit_return",
                 "business_entry_contract_version": "business_entry_disposition.v1",
-                "visible_menu_path": "智慧施工管理平台 / 财务中心 / 自筹垫付退回",
+                "visible_menu_path": "智慧施工管理平台 / 财务中心 / 自筹退回办理",
             }
         )
         context_defaults = row.setdefault("context_defaults", {})

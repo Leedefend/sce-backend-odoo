@@ -419,6 +419,93 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         self.assertEqual(subgroup_labels, ["基础资料", "发票税务"])
         self.assertEqual(leaf_labels, ["供应商/合作单位", "预缴税款"])
 
+    def test_merge_by_category_preserves_distinct_business_entry_targets(self):
+        common = {
+            "res_model": "sc.expense.claim",
+            "integration_model": "sc.expense.claim",
+            "integration_action_id": 626,
+            "integration_action_xmlid": "smart_construction_core.action_sc_expense_claim",
+            "integration_view_modes": ["tree", "form"],
+            "integration_entry_target": {
+                "type": "compatibility",
+                "route": "/a/626",
+                "compatibility_refs": {"action_id": 626, "model": "sc.expense.claim"},
+            },
+            "entry_intent": "handling",
+            "entry_intent_label": "办理",
+            "disposition_policy": "merge_by_category",
+            "release_state": "released",
+            "enabled": True,
+        }
+        nav = menu_service.MenuService().build_nav(
+            policy={
+                "menu_groups": [
+                    {
+                        "group_key": "construction.finance",
+                        "group_label": "财务中心",
+                        "menus": [
+                            {
+                                **common,
+                                "menu_key": "expense",
+                                "label": "费用/保证金申请",
+                                "menu_id": 700,
+                                "route": "/a/626?menu_id=700",
+                                "action_id": 626,
+                                "menu_xmlid": "smart_construction_core.menu_sc_expense_claim",
+                                "integration_target": "sc.expense.claim 费用/保证金申请",
+                                "default_business_category_code": "finance.expense.reimbursement",
+                                "allowed_business_category_codes": ["finance.expense.reimbursement"],
+                            },
+                            {
+                                **common,
+                                "menu_key": "self_funding_refund",
+                                "label": "自筹退回办理",
+                                "menu_id": 732,
+                                "route": "/a/813?menu_id=732",
+                                "action_id": 813,
+                                "menu_xmlid": "smart_construction_core.menu_sc_self_funding_advance_refund",
+                                "integration_target": "sc.expense.claim 自筹退回办理",
+                                "default_business_category_code": "finance.deposit.self_funding.return",
+                                "allowed_business_category_codes": ["finance.deposit.self_funding.return"],
+                            },
+                        ],
+                    }
+                ]
+            },
+            role_surface={"role_code": "employee"},
+            native_nav=[
+                {
+                    "label": "财务中心",
+                    "children": [
+                        self._native_leaf(
+                            label="费用/保证金申请",
+                            menu_id=700,
+                            route="/a/626?menu_id=700",
+                            action_id=626,
+                            model="sc.expense.claim",
+                            menu_xmlid="smart_construction_core.menu_sc_expense_claim",
+                        ),
+                        self._native_leaf(
+                            label="自筹退回办理",
+                            menu_id=732,
+                            route="/a/813?menu_id=732",
+                            action_id=813,
+                            model="sc.expense.claim",
+                            menu_xmlid="smart_construction_core.menu_sc_self_funding_advance_refund",
+                        ),
+                    ],
+                }
+            ],
+        )
+
+        labels = [
+            child.get("label")
+            for group in (nav[0].get("children") or [])
+            for child in (group.get("children") or [])
+        ]
+        self.assertIn("费用/保证金申请", labels)
+        self.assertIn("自筹退回办理", labels)
+
 
 if __name__ == "__main__":
     unittest.main()
