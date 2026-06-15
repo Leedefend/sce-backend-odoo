@@ -64,6 +64,29 @@ class ScOperatingMetricsProject(models.Model):
         required_tables = self._cr.fetchone()
         if not all(required_tables):
             return
+        self._cr.execute(
+            """
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_name = 'payment_request_line'
+              AND column_name = 'settlement_id'
+            """
+        )
+        has_payment_line_settlement = bool(self._cr.fetchone())
+        payment_line_overpay_sql = ""
+        if has_payment_line_settlement:
+            payment_line_overpay_sql = """
+                        UNION ALL
+                        SELECT
+                            pr.id AS payment_request_id,
+                            pr.project_id
+                        FROM payment_request_line l
+                        JOIN payment_request pr ON pr.id = l.request_id
+                        JOIN sc_settlement_order s ON s.id = l.settlement_id
+                        WHERE pr.type = 'pay'
+                          AND pr.settlement_id IS NULL
+                          AND COALESCE(s.amount_payable, 0.0) < COALESCE(l.current_pay_amount, 0.0)
+            """
         # 强制清理残留表/视图，再重建只读视图；init 内不能 rollback 外层升级事务。
         self._cr.execute("SELECT relkind FROM pg_class WHERE oid = to_regclass(%s)", [self._table])
         existing = self._cr.fetchone()
@@ -168,16 +191,7 @@ class ScOperatingMetricsProject(models.Model):
                         JOIN sc_settlement_order s ON s.id = pr.settlement_id
                         WHERE pr.type = 'pay'
                           AND COALESCE(s.amount_payable, 0.0) < COALESCE(pr.amount, 0.0)
-                        UNION ALL
-                        SELECT
-                            pr.id AS payment_request_id,
-                            pr.project_id
-                        FROM payment_request_line l
-                        JOIN payment_request pr ON pr.id = l.request_id
-                        JOIN sc_settlement_order s ON s.id = l.settlement_id
-                        WHERE pr.type = 'pay'
-                          AND pr.settlement_id IS NULL
-                          AND COALESCE(s.amount_payable, 0.0) < COALESCE(l.current_pay_amount, 0.0)
+                        {payment_line_overpay_sql}
                     ) risk
                     GROUP BY risk.project_id
                 )
