@@ -706,6 +706,49 @@
         <field name="attachment_policy">recommended</field>
     </record>
 
+    <record id="business_category_finance_deposit_self_funding_return" model="sc.business.category">
+        <field name="name">自筹保证金退回</field>
+        <field name="code">finance.deposit.self_funding.return</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">receive</field>
+        <field name="sequence">66</field>
+        <field name="source_aliases">自筹保证金退回、自筹退回、自筹垫付退回</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "deposit_refund", "guarantee_type": "bid", "expense_type": "自筹保证金退回"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "deposit_refund"], ["expense_type", "=", "自筹保证金退回"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "receipt_account_name", "payee_account"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "guarantee_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与承包人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "guarantee_project_name", "company_id"]},
+                {"name": "refund_amount", "title": "退回事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "paid_amount", "is_returned", "return_reason"]},
+                {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["receipt_account_name", "payee_account", "payee_bank"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "clearing_method", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_returned_flag", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "guarantee_type", "required_profiles": ["create", "edit"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact", "sc.company.contractor.responsibility.fact"], "terminal_action": "action_done", "user_cognition": "self_funding_refund_business", "responsibility_scope": "company_contractor"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">自筹保证金退回反映公司与承包人之间的资金责任冲减关系，不归入公司与业主之间的投标保证金退回。</field>
+    </record>
+
     <record id="business_category_finance_deposit_contract_pay" model="sc.business.category">
         <field name="name">合同保证金登记</field>
         <field name="code">finance.deposit.contract.pay</field>

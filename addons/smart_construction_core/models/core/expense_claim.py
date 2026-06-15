@@ -313,6 +313,10 @@ class ScExpenseClaim(models.Model):
                 rec.handling_kind = "deduction_refund"
             elif code == "finance.deposit.bid.pay" or (rec.claim_type == "deposit_pay" and rec.guarantee_type != "contract"):
                 rec.handling_kind = "bid_deposit_pay"
+            elif code == "finance.deposit.self_funding.return" or (
+                rec.claim_type == "deposit_refund" and expense_type == "自筹保证金退回"
+            ):
+                rec.handling_kind = "self_funding_deposit_return"
             elif code == "finance.deposit.bid.return" or (
                 rec.claim_type == "deposit_refund"
                 and rec.guarantee_type != "contract"
@@ -325,8 +329,6 @@ class ScExpenseClaim(models.Model):
                 rec.claim_type == "deposit_refund" and rec.guarantee_type == "contract"
             ):
                 rec.handling_kind = "contract_deposit_return"
-            elif rec.claim_type == "deposit_refund" and expense_type == "自筹保证金退回":
-                rec.handling_kind = "self_funding_deposit_return"
             elif code == "finance.repayment.contractor_project" or (
                 rec.claim_type == "deposit_receive" and "承包人还项目款" in text
             ):
@@ -531,6 +533,8 @@ class ScExpenseClaim(models.Model):
         if claim_type == "deposit_pay":
             return "finance.deposit.contract.pay" if guarantee_type == "contract" else "finance.deposit.bid.pay"
         if claim_type == "deposit_refund":
+            if expense_type == "自筹保证金退回" or "自筹保证金退回" in text:
+                return "finance.deposit.self_funding.return"
             return "finance.deposit.contract.return" if guarantee_type == "contract" else "finance.deposit.bid.return"
         if claim_type == "deduction_refund" or expense_type == "扣款实缴退回":
             return "finance.deduction.refund"
@@ -629,6 +633,12 @@ class ScExpenseClaim(models.Model):
                 "payment_state",
                 "paid_amount",
                 "active",
+                "business_category_id",
+                "direction",
+                "handling_kind",
+                "business_axis",
+                "financial_flow",
+                "payment_anchor_policy",
                 "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
@@ -705,6 +715,13 @@ class ScExpenseClaim(models.Model):
                        THEN 'finance.deposit.contract.pay'
                    WHEN claim.claim_type = 'deposit_pay'
                        THEN 'finance.deposit.bid.pay'
+                   WHEN claim.claim_type = 'deposit_refund'
+                         AND (
+                             COALESCE(claim.expense_type, '') = '自筹保证金退回'
+                             OR COALESCE(claim.expense_type, '') || ' ' || COALESCE(claim.summary, '') LIKE '%自筹保证金退回%'
+                             OR COALESCE(claim.legacy_source_table, '') = 'C_JFHKLR_TH_ZCDF_CB'
+                         )
+                       THEN 'finance.deposit.self_funding.return'
                    WHEN claim.claim_type = 'deposit_refund' AND claim.guarantee_type = 'contract'
                        THEN 'finance.deposit.contract.return'
                    WHEN claim.claim_type = 'deposit_refund'
@@ -737,12 +754,70 @@ class ScExpenseClaim(models.Model):
         )
         self.env.cr.execute(
             """
+            UPDATE sc_expense_claim claim
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE category.target_model = 'sc.expense.claim'
+               AND category.code = 'finance.deposit.self_funding.return'
+               AND claim.claim_type = 'deposit_refund'
+               AND (
+                   COALESCE(claim.expense_type, '') = '自筹保证金退回'
+                   OR COALESCE(claim.expense_type, '') || ' ' || COALESCE(claim.summary, '') LIKE '%自筹保证金退回%'
+                   OR COALESCE(claim.legacy_source_table, '') = 'C_JFHKLR_TH_ZCDF_CB'
+               )
+               AND (
+                   claim.business_category_id IS NULL
+                   OR claim.business_category_id <> category.id
+               )
+            """
+        )
+        self.env.cr.execute(
+            """
             UPDATE sc_expense_claim
                SET direction = 'outflow'
              WHERE claim_type = 'project_company_repay'
                AND direction IS DISTINCT FROM 'outflow'
             """
         )
+
+    @api.model
+    def _migrate_self_funding_deposit_return_category(self):
+        category = self.env["sc.business.category"].sudo().search(
+            [
+                ("code", "=", "finance.deposit.self_funding.return"),
+                ("target_model", "=", "sc.expense.claim"),
+            ],
+            limit=1,
+        )
+        if not category:
+            return False
+        self.env.cr.execute(
+            """
+            UPDATE sc_expense_claim claim
+               SET business_category_id = %s,
+                   handling_kind = 'self_funding_deposit_return',
+                   business_axis = 'guarantee',
+                   financial_flow = 'cash_out',
+                   payment_anchor_policy = CASE
+                       WHEN source_origin = 'legacy' THEN 'legacy_optional'
+                       ELSE 'pay_request_required'
+                   END
+             WHERE claim.claim_type = 'deposit_refund'
+               AND (
+                   COALESCE(claim.expense_type, '') = '自筹保证金退回'
+                   OR COALESCE(claim.expense_type, '') || ' ' || COALESCE(claim.summary, '') LIKE '%%自筹保证金退回%%'
+                   OR COALESCE(claim.legacy_source_table, '') = 'C_JFHKLR_TH_ZCDF_CB'
+               )
+               AND (
+                   claim.business_category_id IS NULL
+                   OR claim.business_category_id <> %s
+                   OR claim.handling_kind IS DISTINCT FROM 'self_funding_deposit_return'
+                   OR claim.financial_flow IS DISTINCT FROM 'cash_out'
+               )
+            """,
+            (category.id, category.id),
+        )
+        return True
 
     def action_submit(self):
         policy = self.env["sc.approval.policy"]

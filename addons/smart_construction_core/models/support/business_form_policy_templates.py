@@ -905,6 +905,7 @@ BUSINESS_CATEGORY_FORM_POLICY_TEMPLATES = {
     "finance.expense.project": _expense_claim_policy("项目费用金额"),
     "finance.deposit.bid.pay": _expense_claim_policy("投标保证金支付"),
     "finance.deposit.bid.return": _expense_claim_policy("投标保证金退回"),
+    "finance.deposit.self_funding.return": _expense_claim_policy("自筹保证金退回"),
     "finance.deposit.contract.pay": _expense_claim_policy("合同保证金登记"),
     "finance.deposit.contract.return": _expense_claim_policy("合同保证金退回"),
     "finance.deduction.bill": _deduction_bill_policy(),

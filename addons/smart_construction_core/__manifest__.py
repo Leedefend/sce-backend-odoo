@@ -64,6 +64,7 @@
         'data/approval_policy_tier_sync.xml',
         'data/business_category_seed.xml',
         'data/business_category_template_binding_sync.xml',
+        'data/expense_claim_category_migration.xml',
         'data/general_contract_tax_sync.xml',
 
         # 顶级菜单基础

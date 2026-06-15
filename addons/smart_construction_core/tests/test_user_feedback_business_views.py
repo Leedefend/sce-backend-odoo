@@ -1852,6 +1852,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             "expense_project",
             "deposit_bid_pay",
             "deposit_bid_return",
+            "deposit_self_funding_return",
             "deposit_contract_pay",
             "deposit_contract_return",
             "group_business_category",
@@ -1873,6 +1874,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             "finance.expense.project",
             "finance.deposit.bid.pay",
             "finance.deposit.bid.return",
+            "finance.deposit.self_funding.return",
             "finance.deposit.contract.pay",
             "finance.deposit.contract.return",
         ):
@@ -1896,7 +1898,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             "smart_construction_core.action_sc_expense_claim_deposit_refund": "search_default_deposit_refund",
             "smart_construction_core.action_sc_expense_claim_deposit_receive": "search_default_deposit_receive",
             "smart_construction_core.action_sc_self_funding_deposit": "search_default_deposit_receive",
-            "smart_construction_core.action_sc_self_funding_deposit_refund": "search_default_deposit_refund",
+            "smart_construction_core.action_sc_self_funding_deposit_refund": "search_default_deposit_self_funding_return",
             "smart_construction_core.action_sc_payment_deposit_refund": "search_default_deposit_refund",
         }
         for action_xmlid, search_key in deposit_actions.items():
@@ -1923,6 +1925,39 @@ class TestUserFeedbackBusinessViews(TransactionCase):
                 "payment_anchor_policy",
             ):
                 self.assertNotIn(token, arch)
+
+    def test_self_funding_deposit_refund_is_not_bid_deposit_return(self):
+        category = self.env.ref("smart_construction_core.business_category_finance_deposit_self_funding_return")
+        bid_return = self.env.ref("smart_construction_core.business_category_finance_deposit_bid_return")
+        action = self.env.ref("smart_construction_core.action_sc_self_funding_deposit_refund")
+
+        self.assertEqual(category.code, "finance.deposit.self_funding.return")
+        self.assertEqual(category.target_model, "sc.expense.claim")
+        self.assertIn("finance.deposit.self_funding.return", action.domain)
+        self.assertIn("'default_business_category_code': 'finance.deposit.self_funding.return'", action.context)
+
+        resolved_code = self.env["sc.expense.claim"]._resolve_business_category_code(
+            {
+                "claim_type": "deposit_refund",
+                "guarantee_type": "bid",
+                "expense_type": "自筹保证金退回",
+            }
+        )
+        self.assertEqual(resolved_code, "finance.deposit.self_funding.return")
+
+        self_funding_records = self.env["sc.expense.claim"].search(
+            [
+                ("claim_type", "=", "deposit_refund"),
+                "|",
+                ("expense_type", "=", "自筹保证金退回"),
+                ("legacy_source_table", "=", "C_JFHKLR_TH_ZCDF_CB"),
+            ],
+            limit=20,
+        )
+        self.assertTrue(self_funding_records)
+        self.assertFalse(self_funding_records.filtered(lambda rec: rec.business_category_id == bid_return))
+        self.assertTrue(all(rec.business_category_id == category for rec in self_funding_records))
+        self.assertTrue(all(rec.handling_kind == "self_funding_deposit_return" for rec in self_funding_records))
 
     def test_formal_user_menu_search_and_list_views_hide_internal_fact_tokens(self):
         bad_search_tokens = (

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <function model="sc.expense.claim" name="_migrate_self_funding_deposit_return_category"/>
+</odoo>

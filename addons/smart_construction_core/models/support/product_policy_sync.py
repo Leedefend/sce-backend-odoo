@@ -99,6 +99,7 @@ FINANCE_CASH_EXPENSE_DEPOSIT_CATEGORY_CODES = {
     "finance.expense.project",
     "finance.deposit.bid.pay",
     "finance.deposit.bid.return",
+    "finance.deposit.self_funding.return",
     "finance.deposit.contract.pay",
     "finance.deposit.contract.return",
 }
