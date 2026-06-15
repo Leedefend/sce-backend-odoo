@@ -2059,6 +2059,44 @@ class PageAssembler:
                 "create_and_edit": _(""),
                 "quick_create": _(""),
             }
+        if (
+            relation == "res.partner"
+            and str(model_name or "").strip() == "sc.self.funding.registration"
+            and str(field_name or "").strip() == "partner_id"
+        ):
+            context = contract_context if isinstance(contract_context, dict) else {}
+            category_code = str(
+                context.get("current_business_category_code")
+                or context.get("default_business_category_code")
+                or ""
+            ).strip()
+            if category_code == "finance.self_funding.refund":
+                contractor_ids = []
+                try:
+                    summaries = self.env["sc.company.contractor.responsibility.summary"].sudo().search(
+                        [
+                            ("partner_id", "!=", False),
+                            ("self_funding_balance", ">", 0.01),
+                        ]
+                    )
+                    partners = summaries.mapped("partner_id").filtered(
+                        lambda partner: partner.supplier_rank > 0 or partner.customer_rank > 0
+                    )
+                    contractor_ids = sorted(set(partners.ids))
+                except Exception:
+                    contractor_ids = []
+                relation_domain.append(["id", "in", contractor_ids or [0]])
+                display_field = "display_name"
+                relation_order = "name asc, id asc"
+                can_create = False
+                has_page = False
+                ui_labels_extra = {
+                    "search_more": _("搜索承包人..."),
+                    "dialog_title": _("承包人：搜索更多"),
+                    "search_placeholder": _("输入承包人名称搜索"),
+                    "create_and_edit": _(""),
+                    "quick_create": _(""),
+                }
         if options_override:
             action_id = options_override.get("action_id") or self._resolve_relation_entry_ref_id(options_override.get("action_xmlid"))
             menu_id = options_override.get("menu_id") or self._resolve_relation_entry_ref_id(options_override.get("menu_xmlid"))
