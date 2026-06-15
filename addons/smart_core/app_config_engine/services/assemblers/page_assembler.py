@@ -111,6 +111,47 @@ class PageAssembler:
             return {}, raw_text
         return parsed, raw_text
 
+    @staticmethod
+    def _normalize_business_category_codes(value):
+        if value in (None, False, ""):
+            return []
+        raw_items = value if isinstance(value, (list, tuple, set)) else [value]
+        codes = []
+        seen = set()
+        for item in raw_items:
+            code = str(item or "").strip()
+            if not code or code in seen:
+                continue
+            seen.add(code)
+            codes.append(code)
+        return codes
+
+    @classmethod
+    def _extract_allowed_business_category_codes_from_domain(cls, domain):
+        codes = []
+        seen = set()
+
+        def add(value):
+            for code in cls._normalize_business_category_codes(value):
+                if code in seen:
+                    continue
+                seen.add(code)
+                codes.append(code)
+
+        def visit(node):
+            if not isinstance(node, (list, tuple)):
+                return
+            if len(node) >= 3 and str(node[0] or "").strip() == "business_category_id.code":
+                operator = str(node[1] or "").strip()
+                if operator in ("=", "==", "in"):
+                    add(node[2])
+                return
+            for child in node:
+                visit(child)
+
+        visit(domain)
+        return codes
+
     def assemble_page_contract(self, p, action=None):
         """
         页面契约主装配：
@@ -153,6 +194,13 @@ class PageAssembler:
                 effective_context[key] = env_context.get(key)
         if request_context:
             effective_context.update(request_context)
+        allowed_codes = self._normalize_business_category_codes(
+            effective_context.get("allowed_business_category_codes")
+        )
+        if not allowed_codes:
+            allowed_codes = self._extract_allowed_business_category_codes_from_domain(action_domain)
+        if allowed_codes:
+            effective_context["allowed_business_category_codes"] = allowed_codes
         current_project_id = p.get("current_project_id") or effective_context.get("current_project_id")
         if current_project_id:
             try:

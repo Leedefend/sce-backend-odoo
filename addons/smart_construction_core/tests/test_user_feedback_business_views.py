@@ -3,6 +3,7 @@ import inspect
 import re
 
 from odoo.exceptions import UserError
+from odoo.addons.smart_core.handlers.ui_contract import UiContractHandler
 from odoo.tests import TransactionCase
 from odoo.tests.common import tagged
 
@@ -1915,6 +1916,40 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn(code, main_action.domain)
         self.assertNotIn("deposit_self_funding_return", search)
         self.assertNotIn("finance.deposit.self_funding.return", main_action.domain)
+
+    def test_expense_deposit_application_contract_scopes_business_category_relation(self):
+        action = self.env.ref("smart_construction_core.action_sc_expense_claim")
+        result = UiContractHandler(self.env).handle(
+            {
+                "op": "action_open",
+                "action_id": action.id,
+                "source_mode": "backend_internal",
+                "contract_surface": "user",
+            },
+            {},
+        )
+        if hasattr(result, "to_legacy_dict"):
+            result = result.to_legacy_dict()
+        data = result.get("data") or {}
+        allowed_codes = data.get("context", {}).get("allowed_business_category_codes") or []
+        expected_codes = [
+            "finance.expense.reimbursement",
+            "finance.expense.project",
+            "finance.deposit.bid.pay",
+            "finance.deposit.bid.return",
+            "finance.deposit.contract.pay",
+            "finance.deposit.contract.return",
+        ]
+        self.assertEqual(allowed_codes, expected_codes)
+        relation_domain = (
+            data.get("fields", {})
+            .get("business_category_id", {})
+            .get("relation_entry", {})
+            .get("domain", [])
+        )
+        self.assertIn(["code", "in", expected_codes], relation_domain)
+        self.assertIn(["target_model", "=", "sc.expense.claim"], relation_domain)
+        self.assertNotIn("finance.deposit.self_funding.return", str(relation_domain))
 
     def test_expense_deposit_legacy_cash_actions_do_not_reuse_generic_search(self):
         application_search = self.env.ref("smart_construction_core.view_sc_expense_claim_application_search")
