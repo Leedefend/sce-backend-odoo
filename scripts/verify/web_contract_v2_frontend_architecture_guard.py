@@ -312,6 +312,18 @@ REQUIRED_WORKFLOW_CONTRACT_PROJECTION_TOKENS: tuple[tuple[str, str], ...] = (
     ("pages/ContractFormPage.vue", "resolveNativeActionState"),
 )
 
+REQUIRED_WORKFLOW_STATUSBAR_CONTRACT_TOKENS: tuple[tuple[Path, str], ...] = (
+    (ROOT / "addons/smart_construction_core/models/support/workflow_contract_service.py", '"statusbar": self._statusbar_projection'),
+    (ROOT / "addons/smart_construction_core/models/support/workflow_contract_service.py", 'field": "__workflow_phase"'),
+    (ROOT / "addons/smart_construction_core/models/support/workflow_contract_service.py", '"source": "workflowContract"'),
+    (WEB_ROOT / "pages/ContractFormPage.vue", "function workflowPhaseStatusbar"),
+    (WEB_ROOT / "pages/ContractFormPage.vue", "const statusbar = dictOrEmpty(workflow.statusbar)"),
+    (WEB_ROOT / "pages/ContractFormPage.vue", "if (!recordId.value)"),
+    (WEB_ROOT / "pages/ContractFormPage.vue", "return workflowPhaseStatusbar();"),
+    (ROOT / "docs/ops/audit/workflow_state_unification_plan.md", "New-record forms must not render workflow statusbar"),
+    (ROOT / "Makefile", "verify.workflow_contract.browser.create_statusbar.host"),
+)
+
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore") if path.is_file() else ""
@@ -425,6 +437,15 @@ def validate_workflow_contract_projection() -> list[str]:
     return errors
 
 
+def validate_workflow_statusbar_contract() -> list[str]:
+    errors: list[str] = []
+    for path, token in REQUIRED_WORKFLOW_STATUSBAR_CONTRACT_TOKENS:
+        text = read(path)
+        if token not in text:
+            errors.append(f"workflow statusbar contract missing token in {path.relative_to(ROOT)}: {token}")
+    return errors
+
+
 def write_reports(strict: bool, findings: list[dict[str, object]], errors: list[str]) -> None:
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
@@ -477,6 +498,7 @@ def main() -> int:
     errors.extend(validate_form_shadow_host())
     errors.extend(validate_form_store_selector_boundary())
     errors.extend(validate_workflow_contract_projection())
+    errors.extend(validate_workflow_statusbar_contract())
     write_reports(strict, findings, errors)
 
     if errors:

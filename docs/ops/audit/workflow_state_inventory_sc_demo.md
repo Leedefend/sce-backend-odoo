@@ -1,6 +1,6 @@
 # Workflow State Inventory
 
-- Generated: 2026-06-15T02:05:48Z
+- Generated: 2026-06-15T03:25:00Z
 - Database: sc_demo
 - Models with workflow signals: 149
 

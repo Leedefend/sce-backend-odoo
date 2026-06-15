@@ -4861,6 +4861,7 @@ verify.workflow_contract.backend: guard.prod.forbid audit.workflow_state.invento
 .PHONY: verify.workflow_contract.browser.syntax
 verify.workflow_contract.browser.syntax: guard.prod.forbid
 	@node --check scripts/verify/workflow_evidence_gate_browser_acceptance.js
+	@node --check scripts/verify/workflow_create_statusbar_browser_acceptance.js
 
 .PHONY: verify.workflow_contract.browser.expense_claim.host
 verify.workflow_contract.browser.expense_claim.host: guard.prod.forbid verify.workflow_contract.browser.syntax
@@ -4870,8 +4871,12 @@ verify.workflow_contract.browser.expense_claim.host: guard.prod.forbid verify.wo
 verify.workflow_contract.browser.contract_close.host: guard.prod.forbid verify.workflow_contract.browser.syntax
 	@FRONTEND_URL="$${FRONTEND_URL:-$(WORKFLOW_CONTRACT_FRONTEND_URL)}" DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" MODEL=construction.contract RECORD_ID="$(WORKFLOW_CONTRACT_CLOSE_RECORD_ID)" EXPECTED_TEXT='无合同明细的合同不可关闭，请补充明细。' EXPECTED_REASON_CODE=CONTRACT_MISSING_LINES_FOR_CLOSE TARGET_BUTTON_PATTERN='完成' TARGET_BUTTON_LABEL='完成' UNIQUE_BUTTON_PATTERN='^完成$$' FORBIDDEN_BUTTON_PATTERN='提交审批|审批通过|审批驳回|重置为草稿' ARTIFACTS_DIR=artifacts/workflow-evidence-gate-browser-contract-close-workflow-contract-required node scripts/verify/workflow_evidence_gate_browser_acceptance.js
 
+.PHONY: verify.workflow_contract.browser.create_statusbar.host
+verify.workflow_contract.browser.create_statusbar.host: guard.prod.forbid verify.workflow_contract.browser.syntax
+	@FRONTEND_URL="$${FRONTEND_URL:-$(WORKFLOW_CONTRACT_FRONTEND_URL)}" DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" ARTIFACTS_DIR=artifacts/workflow-create-statusbar-browser node scripts/verify/workflow_create_statusbar_browser_acceptance.js
+
 .PHONY: verify.workflow_contract.browser.host
-verify.workflow_contract.browser.host: verify.workflow_contract.browser.expense_claim.host verify.workflow_contract.browser.contract_close.host
+verify.workflow_contract.browser.host: verify.workflow_contract.browser.expense_claim.host verify.workflow_contract.browser.contract_close.host verify.workflow_contract.browser.create_statusbar.host
 
 .PHONY: verify.workflow_contract.frontend
 verify.workflow_contract.frontend: verify.frontend.typecheck.strict verify.unified_page_contract.v2.web_architecture verify.frontend.build

@@ -1181,6 +1181,15 @@ type StatusbarState = {
   label: string;
 };
 
+type NativeStatusbarVm = {
+  visible: boolean;
+  field: string;
+  current: string;
+  states: StatusbarState[];
+  reachedValues: string[];
+  readonly: boolean;
+};
+
 type One2ManyInlineRow = {
   key: string;
   id: number | null;
@@ -5742,7 +5751,34 @@ const nativeFavoriteFieldNames = computed(() => {
   return names;
 });
 
-const nativeStatusbar = computed(() => {
+function workflowPhaseStatusbar(): NativeStatusbarVm {
+  const workflow = currentWorkflowContract();
+  const statusbar = dictOrEmpty(workflow.statusbar);
+  const current = String(statusbar.current || '').trim();
+  const states = Array.isArray(statusbar.states)
+    ? statusbar.states
+      .map((item) => dictOrEmpty(item))
+      .map((item) => ({ value: String(item.value || '').trim(), label: String(item.label || item.value || '').trim() }))
+      .filter((item) => item.value && item.label)
+    : [];
+  if (!current || !states.length) {
+    return { visible: false, field: '', current: '', states: [], reachedValues: [], readonly: true };
+  }
+  const currentIndex = states.findIndex((item) => String(item.value) === current);
+  return {
+    visible: true,
+    field: String(statusbar.field || '__workflow_phase').trim() || '__workflow_phase',
+    current,
+    states,
+    reachedValues: currentIndex >= 0 ? states.slice(0, currentIndex).map((item) => String(item.value)) : [],
+    readonly: true,
+  };
+}
+
+const nativeStatusbar = computed<NativeStatusbarVm>(() => {
+  if (!recordId.value) {
+    return { visible: false, field: '', current: '', states: [], reachedValues: [], readonly: true };
+  }
   const formView = contract.value?.views?.form as Record<string, unknown> | undefined;
   const raw = formView?.statusbar && typeof formView.statusbar === 'object'
     ? formView.statusbar as Record<string, unknown>
@@ -5771,6 +5807,9 @@ const nativeStatusbar = computed(() => {
   ).trim();
   const currentIndex = states.findIndex((item) => String(item.value) === current);
   const state = field ? runtimeState(field) : { readonly: true };
+  if (!field || !states.length) {
+    return workflowPhaseStatusbar();
+  }
   return {
     visible: Boolean(field && states.length),
     field,

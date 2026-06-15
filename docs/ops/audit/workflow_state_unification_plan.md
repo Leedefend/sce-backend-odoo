@@ -80,6 +80,7 @@ Rules:
 - Frontend scope: frontend consumers may render, disable, hide duplicates, and show evidence messages from `workflowContract`; they must not infer workflow permission from button labels, raw XML invisibility, route context, or stale session action state.
 - Backend scope: backend action methods remain the enforcement point and must reject invalid transitions even if a client bypasses UI disabled state.
 - Contract placement: `ui.contract.v2` exposes `workflowContract` at the top level and mirrors it under `runtimeContract.workflowContract` for compatibility; other contract blocks may reference workflow phase, but must not recalculate it.
+- Statusbar rule: `workflowContract.statusbar` is the only workflow fallback source for business statusbar rendering when native XML statusbar is absent. New-record forms must not render workflow statusbar because no persisted business workflow fact exists yet.
 - Coverage rule: inventory coverage is measured against custom business workflow forms, not every installed Odoo model. Standard Odoo exceptions must stay visible in the generated inventory.
 
 Required gates:
@@ -87,6 +88,7 @@ Required gates:
 - `ENV=dev DB_NAME=sc_demo make audit.workflow_state.inventory`
 - `python3 scripts/verify/workflow_inventory_profile_method_guard.py`
 - `python3 scripts/verify/workflow_contract_custom_coverage_guard.py`
+- `ENV=dev DB_NAME=sc_demo make verify.workflow_contract.browser.create_statusbar.host`
 - `ENV=dev DB_NAME=sc_demo make verify.workflow_contract`
 
 ## Canonical State Layers
@@ -207,6 +209,12 @@ Backend projection shape:
 - header buttons
 - button disabled/visible state
 - action execution refresh policy
+
+Statusbar acceptance boundary:
+
+- Existing-record forms may render native XML statusbar first, then `workflowContract.statusbar` as the governed workflow fallback.
+- New-record forms must not render workflow statusbar. The create path can show create/save actions, but it must not invent a business workflow phase before a record id exists.
+- Frontend code may only choose the display source and enforce this persisted-record boundary; it must not define workflow phase sequences or terminal labels locally.
 
 Every blocking `evidenceGate` row should have a matching model-level guard before the state transition mutates data. Current first-batch hard guards:
 

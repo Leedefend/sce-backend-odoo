@@ -948,6 +948,21 @@ class ScWorkflowContractService(models.AbstractModel):
     }
 
     TERMINAL_PHASES = {"done", "cancelled", "legacy_confirmed"}
+    STATUSBAR_BASE_STATES = (
+        ("draft", "草稿"),
+        ("submitted", "已提交"),
+        ("under_review", "审批中"),
+        ("approved", "已批准"),
+        ("effective", "执行中"),
+        ("done", "已完成"),
+    )
+    STATUSBAR_EXTRA_LABELS = {
+        "cancelled": "已取消",
+        "rejected": "已驳回",
+        "legacy_confirmed": "历史确认",
+        "closed": "已关闭",
+        "open": "处理中",
+    }
 
     @api.model
     def source_authority_contract(self):
@@ -989,8 +1004,26 @@ class ScWorkflowContractService(models.AbstractModel):
             "businessPhase": business_phase,
             "approvalPhase": approval_phase,
             "editability": editability,
+            "statusbar": self._statusbar_projection(business_phase, approval_phase),
             "evidenceGate": evidence_gate,
             "availableActions": actions,
+        }
+
+    @api.model
+    def _statusbar_projection(self, business_phase, approval_phase):
+        current = str(business_phase or "").strip()
+        approval = str(approval_phase or "").strip()
+        if current == "submitted" and approval in ("waiting", "pending"):
+            current = "under_review"
+        states = [{"value": value, "label": label} for value, label in self.STATUSBAR_BASE_STATES]
+        if current and current not in {row["value"] for row in states}:
+            states.append({"value": current, "label": self.STATUSBAR_EXTRA_LABELS.get(current, current)})
+        return {
+            "field": "__workflow_phase",
+            "current": current,
+            "states": states,
+            "readonly": True,
+            "source": "workflowContract",
         }
 
     @api.model

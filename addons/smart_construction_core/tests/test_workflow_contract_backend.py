@@ -510,6 +510,12 @@ class TestWorkflowContractBackend(TransactionCase):
         self.assertTrue(contract["businessPhase"])
         self.assertTrue(contract["approvalPhase"])
         self.assertIn(contract["editability"], {"editable", "readonly", "locked"})
+        self.assertIsInstance(contract["statusbar"], dict)
+        self.assertEqual(contract["statusbar"]["field"], "__workflow_phase")
+        self.assertTrue(contract["statusbar"]["current"])
+        self.assertTrue(contract["statusbar"]["readonly"])
+        self.assertTrue(contract["statusbar"]["states"])
+        self.assertIn(contract["statusbar"]["current"], {row["value"] for row in contract["statusbar"]["states"]})
         self.assertIsInstance(contract["evidenceGate"], list)
         self.assertIsInstance(contract["availableActions"], list)
         for gate in contract["evidenceGate"]:
