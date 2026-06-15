@@ -259,6 +259,12 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn('name="sc_source_receipt_amount" string="收款金额" readonly="1"', arch)
             self.assertIn('name="sc_source_payment_amount" string="付款金额" readonly="1"', arch)
             self.assertIn('name="sc_supplier_type_label"', arch)
+            self.assertIn('name="vat" string="统一社会信用代码"', arch)
+            self.assertIn('name="sc_registered_capital"', arch)
+            self.assertIn('name="sc_establishment_date"', arch)
+            self.assertIn('name="sc_business_term"', arch)
+            self.assertIn('name="sc_legal_representative"', arch)
+            self.assertIn('name="sc_contact_name"', arch)
         self.assertIn('name="company_type" string="客户类型"', customer_tree.arch_db)
         for label in ("客户身份", "企业资质与联系", "账户与业务画像", "账户明细", "附件与备注"):
             self.assertIn('string="%s"' % label, customer_form.arch_db)
