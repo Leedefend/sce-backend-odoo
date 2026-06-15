@@ -37,6 +37,7 @@ class ViewOrchestrator:
             return out
         normalized_view_type = "tree" if view_type == "list" else str(view_type or "").strip()
         applied_contracts = []
+        form_layout_overlay_applied = False
         if "ui.business.config.contract" in self.env:
             configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
                 model_name,
@@ -47,6 +48,10 @@ class ViewOrchestrator:
             )
             for config in configs:
                 before = deepcopy(out)
+                declares_form_layout_overlay = (
+                    normalized_view_type == "form"
+                    and self._config_declares_layout_overlay(config, normalized_view_type, model_name)
+                )
                 out = self._apply_business_config_contract(out, config, normalized_view_type, model_name)
                 if out != before:
                     applied_contracts.append({
@@ -54,6 +59,7 @@ class ViewOrchestrator:
                         "name": config.name,
                         "version_no": int(config.version_no or 1),
                     })
+                    form_layout_overlay_applied = form_layout_overlay_applied or declares_form_layout_overlay
 
         # Compatibility: legacy form field policy remains an orchestration input
         # until low-code writes into ui.business.config.contract directly.
@@ -76,6 +82,7 @@ class ViewOrchestrator:
             "source_authority": source_authority_contract(),
             "business_config_contracts": applied_contracts,
             "legacy_field_policy_overlay": bool(legacy_policy_applied),
+            "form_layout_overlay": bool(form_layout_overlay_applied),
         }
         out["governance"] = governance
         source_trace = out.get("source_trace") if isinstance(out.get("source_trace"), dict) else {}
@@ -87,6 +94,7 @@ class ViewOrchestrator:
             "view_id": int(view_id or 0),
             "business_config_contracts": applied_contracts,
             "legacy_field_policy_overlay": bool(legacy_policy_applied),
+            "form_layout_overlay": bool(form_layout_overlay_applied),
         }
         out["source_trace"] = source_trace
         return out
@@ -109,6 +117,14 @@ class ViewOrchestrator:
         if view_type in {"pivot", "graph"}:
             return self._apply_analysis_spec(out, spec, view_type)
         return self._apply_generic_spec(out, spec, view_type)
+
+    def _config_declares_layout_overlay(self, config, view_type: str, model_name: str) -> bool:
+        payload = config.contract_json if isinstance(config.contract_json, dict) else {}
+        spec = self._view_spec(payload, view_type)
+        if not isinstance(spec, dict):
+            return False
+        spec = self._sanitize_spec_field_refs(spec, model_name)
+        return isinstance(spec.get("layout"), list) and bool(spec.get("layout"))
 
     def _view_spec(self, payload: dict, view_type: str) -> dict:
         orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
@@ -204,6 +220,24 @@ class ViewOrchestrator:
                         clean[slot_key] = slot_value
             out[key] = clean
 
+        def sanitize_layout_nodes(nodes) -> list:
+            if not isinstance(nodes, list):
+                return []
+            clean = []
+            for item in nodes:
+                if not isinstance(item, dict):
+                    continue
+                row = deepcopy(item)
+                node_type = str(row.get("type") or "").strip().lower()
+                if node_type == "field" and not row_known(row):
+                    continue
+                for child_key in ("children", "pages", "tabs", "nodes", "items"):
+                    children = row.get(child_key)
+                    if isinstance(children, list):
+                        row[child_key] = sanitize_layout_nodes(children)
+                clean.append(row)
+            return clean
+
         for key in ("fields", "columns", "measures", "dimensions"):
             filter_field_rows(key)
         for key in ("filters", "group_by", "groupBys"):
@@ -224,10 +258,14 @@ class ViewOrchestrator:
         default_group_by = simple_field(out.get("default_group_by"))
         if default_group_by and default_group_by not in model_fields:
             out.pop("default_group_by", None)
+        if isinstance(out.get("layout"), list):
+            out["layout"] = sanitize_layout_nodes(out.get("layout"))
         return out
 
     def _apply_form_spec(self, contract: dict, spec: dict, model_name: str) -> dict:
         self._apply_view_options(contract, spec, scalar_keys=("title",), dict_keys=("defaults", "context", "domain"))
+        if isinstance(spec.get("layout"), list):
+            contract["layout"] = deepcopy(spec.get("layout") or [])
         rows = self._normalized_rows(spec.get("fields") or spec.get("field_slots"))
         if rows:
             fields_meta = self.env[model_name].fields_get() if model_name in self.env else {}

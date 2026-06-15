@@ -1918,7 +1918,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 type_for=field_type,
             )
 
-        if form_structure_governance:
+        if form_structure_governance and not form_structure_governance.get("form_layout_overlay"):
             source_contract["form_structure_contract"] = self._build_form_structure_contract(
                 model=model,
                 profile=profile,
@@ -1958,6 +1958,7 @@ class UiContractV2Handler(BaseIntentHandler):
         if not isinstance(business_contracts, list):
             business_contracts = []
         legacy_overlay = bool(view_trace.get("legacy_field_policy_overlay") or view_governance.get("legacy_field_policy_overlay"))
+        form_layout_overlay = bool(view_trace.get("form_layout_overlay") or view_governance.get("form_layout_overlay"))
         field_names: list[str] = []
         field_labels: dict[str, str] = {}
         section_titles: list[str] = []
@@ -1984,6 +1985,8 @@ class UiContractV2Handler(BaseIntentHandler):
             orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
             views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
             form_spec = views.get("form") if isinstance(views.get("form"), dict) else {}
+            if isinstance(form_spec.get("layout"), list) and form_spec.get("layout"):
+                form_layout_overlay = True
             rows = form_spec.get("fields") if isinstance(form_spec.get("fields"), list) else []
             for row in rows:
                 if isinstance(row, dict):
@@ -2019,6 +2022,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "owner_layer": str(view_trace.get("owner_layer") or view_governance.get("owner_layer") or "business_view_orchestration"),
             "business_config_contracts": [dict(item) for item in business_contracts if isinstance(item, dict)] or config_summaries,
             "legacy_field_policy_overlay": legacy_overlay,
+            "form_layout_overlay": form_layout_overlay,
             "field_names": field_names,
             "field_labels": field_labels,
             "section_titles": section_titles,

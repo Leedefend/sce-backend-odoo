@@ -101,6 +101,19 @@ class UIBusinessConfigContract(models.Model):
                                     add_ref(view_type, "%s.%s" % (key, slot_key), item.get(nested_key))
                                     break
 
+        def add_layout_refs(view_type: str, rows, path: str = "layout") -> None:
+            if not isinstance(rows, list):
+                return
+            for idx, row in enumerate(rows):
+                if not isinstance(row, dict):
+                    continue
+                if str(row.get("type") or "").strip().lower() == "field":
+                    add_row_ref(view_type, "%s[%s]" % (path, idx), row)
+                for child_key in ("children", "pages", "tabs", "nodes", "items"):
+                    children = row.get(child_key)
+                    if isinstance(children, list):
+                        add_layout_refs(view_type, children, "%s[%s].%s" % (path, idx, child_key))
+
         for view_type, spec in views.items():
             if not isinstance(spec, dict):
                 continue
@@ -128,6 +141,7 @@ class UIBusinessConfigContract(models.Model):
                 "chart_slots",
             ):
                 add_slot_refs(view_type, key, spec.get(key))
+            add_layout_refs(view_type, spec.get("layout"))
             for key in ("default_group_by", "order", "default_order"):
                 add_ref(view_type, key, spec.get(key))
         return sorted(set(unknown))
@@ -243,6 +257,7 @@ class UIBusinessConfigContract(models.Model):
             "cards",
             "kpis",
             "sections",
+            "layout",
         }
         dict_keys = {
             "defaults",

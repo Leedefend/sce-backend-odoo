@@ -547,7 +547,13 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
             })
     form_subviews = _dict(form_layout.get("subviews"))
     form_structure_contract = _dict(source.get("formStructureContract") or source.get("form_structure_contract"))
-    if layout_type == "form" and form_structure_contract:
+    preserve_governed_form_layout = (
+        layout_type == "form"
+        and bool(native_layout_rows)
+        and _has_governed_form_layout_overlay(source)
+    )
+    form_structure_applied = False
+    if layout_type == "form" and form_structure_contract and not preserve_governed_form_layout:
         render_profile = _text(source_context.get("renderProfile")).lower()
         structure_rows = _form_structure_contract_layout_rows(
             form_structure_contract,
@@ -566,6 +572,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
             widget_status=contract["statusContract"]["widgetStatus"],
             context=source_context_context,
         )
+        form_structure_applied = True
     elif layout_type == "form" and layout_rows:
         container_tree = _normalize_native_layout_nodes(
             native_layout_rows,
@@ -662,7 +669,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     _standardize_form_container_semantics(container_tree, model=model, view_type=view_type, source=source)
     contract["layoutContract"]["containerTree"] = container_tree
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
-    if form_structure_contract:
+    if form_structure_contract and form_structure_applied:
         contract["formStructureContract"] = deepcopy(form_structure_contract)
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
     if source_context:
@@ -713,6 +720,14 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     _append_ui_contract_row_actions(contract, ui)
     _append_project_kanban_row_action(contract, model=model, view_type=view_type)
     return contract
+
+
+def _has_governed_form_layout_overlay(source: dict[str, Any]) -> bool:
+    governance = _dict(source.get("governance"))
+    view_governance = _dict(governance.get("view_orchestration"))
+    source_trace = _dict(source.get("source_trace"))
+    view_trace = _dict(source_trace.get("view_orchestration"))
+    return bool(view_trace.get("form_layout_overlay") or view_governance.get("form_layout_overlay"))
 
 
 def _ui_search_contract(source: dict[str, Any], ui: dict[str, Any]) -> dict[str, Any]:

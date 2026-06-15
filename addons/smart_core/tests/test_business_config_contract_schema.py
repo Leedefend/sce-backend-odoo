@@ -140,6 +140,35 @@ class BusinessConfigContractSchemaTests(unittest.TestCase):
             [],
         )
 
+    def test_form_layout_unknown_fields_are_reported(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "layout": [
+                            {
+                                "type": "sheet",
+                                "children": [
+                                    {
+                                        "type": "group",
+                                        "children": [
+                                            {"type": "field", "name": "name"},
+                                            {"type": "field", "name": "missing_layout_field"},
+                                        ],
+                                    }
+                                ],
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+        self.assertEqual(
+            self.contract._unknown_view_orchestration_fields(payload, {"name"}),
+            ["form.layout[0].children[0].children[1]:missing_layout_field"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
