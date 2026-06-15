@@ -1693,6 +1693,15 @@ const {
 });
 const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
 
+watch(
+  pageTitle,
+  (title) => {
+    if (!isComponentActive.value) return;
+    session.updateActiveActivityTitle(title);
+  },
+  { immediate: true },
+);
+
 function resolveContractActionCountForHud() {
   const contract = actionContract.value;
   if (!contract) return 0;
