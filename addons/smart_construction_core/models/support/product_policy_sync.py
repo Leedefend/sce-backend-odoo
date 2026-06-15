@@ -324,8 +324,8 @@ class ScProductPolicy(models.Model):
             {
                 "label": "自筹垫付退回",
                 "page_label": "自筹垫付退回",
-                "product_domain": "finance_cash",
-                "product_domain_label": "费用/保证金现金办理",
+                "product_domain": "finance",
+                "product_domain_label": "资金财务域",
                 "entry_intent": "handling",
                 "entry_intent_label": "办理",
                 "fact_model": "sc.legacy.self.funding.fact",
@@ -339,7 +339,7 @@ class ScProductPolicy(models.Model):
                 "productization_source": "self_funding_deposit_return_retarget",
                 "policy_note": "self_funding_refund_retargeted_to_deposit_return",
                 "business_entry_contract_version": "business_entry_disposition.v1",
-                "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 自筹垫付退回",
+                "visible_menu_path": "智慧施工管理平台 / 财务中心 / 自筹垫付退回",
             }
         )
         context_defaults = row.setdefault("context_defaults", {})
@@ -740,7 +740,12 @@ class ScProductPolicy(models.Model):
                     for code in (next_allowed_codes if isinstance(next_allowed_codes, list) else [default_code])
                     if _text(code) in FINANCE_CASH_EXPENSE_DEPOSIT_CATEGORY_CODES
                 ]
-                if cash_codes and default_code not in FINANCE_DEDUCTION_CATEGORY_CODES:
+                menu_xmlid = _text(next_menu.get("menu_xmlid") or next_menu.get("page_key") or next_menu.get("menu_key"))
+                if (
+                    cash_codes
+                    and default_code not in FINANCE_DEDUCTION_CATEGORY_CODES
+                    and menu_xmlid != SELF_FUNDING_REFUND_MENU_XMLID
+                ):
                     label = _text(next_menu.get("label") or next_menu.get("page_label"))
                     if label:
                         next_menu["visible_menu_path"] = "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / %s" % label

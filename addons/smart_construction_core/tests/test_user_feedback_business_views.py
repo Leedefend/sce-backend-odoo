@@ -2285,7 +2285,8 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             )
 
             self.assertEqual(refund_menu.get("action_id"), self.env.ref("smart_construction_core.action_sc_self_funding_deposit_refund").id)
-            self.assertEqual(refund_menu.get("product_domain"), "finance_cash")
+            self.assertEqual(refund_menu.get("product_domain"), "finance")
+            self.assertEqual(refund_menu.get("visible_menu_path"), "智慧施工管理平台 / 财务中心 / 自筹垫付退回")
             self.assertEqual(refund_menu.get("default_business_category_code"), "finance.deposit.self_funding.return")
             self.assertEqual(refund_menu.get("allowed_business_category_codes"), ["finance.deposit.self_funding.return"])
             self.assertEqual(refund_menu.get("integration_model"), "sc.expense.claim")
