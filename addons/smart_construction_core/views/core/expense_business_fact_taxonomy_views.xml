@@ -294,7 +294,7 @@
             <field name="res_model">sc.expense.claim</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_deposit_cash_search"/>
-            <field name="domain">[('claim_type', '=', 'deposit_refund')]</field>
+            <field name="domain">[('claim_type', '=', 'deposit_refund'), ('business_category_id.code', '!=', 'finance.deposit.self_funding.return')]</field>
             <field name="context">{'default_claim_type': 'deposit_refund', 'search_default_active_rows': 1, 'search_default_deposit_refund': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
         </record>
@@ -457,6 +457,12 @@
                   action="smart_construction_core.action_sc_self_funding_deposit_refund"
                   sequence="70"
                   groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+        <record id="menu_sc_self_funding_deposit" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sc_self_funding_deposit_refund" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
         <menuitem id="menu_sc_payment_deposit_return"
                   name="付款还保证金"
                   parent="smart_construction_core.menu_sc_deposit_management_group"

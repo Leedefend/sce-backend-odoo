@@ -1933,8 +1933,6 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             "smart_construction_core.action_sc_expense_claim_deposit_pay": "search_default_deposit_payment",
             "smart_construction_core.action_sc_expense_claim_deposit_refund": "search_default_deposit_refund",
             "smart_construction_core.action_sc_expense_claim_deposit_receive": "search_default_deposit_receive",
-            "smart_construction_core.action_sc_self_funding_deposit": "search_default_deposit_receive",
-            "smart_construction_core.action_sc_self_funding_deposit_refund": "search_default_deposit_self_funding_return",
             "smart_construction_core.action_sc_payment_deposit_refund": "search_default_deposit_refund",
         }
         for action_xmlid, search_key in deposit_actions.items():
@@ -1961,6 +1959,16 @@ class TestUserFeedbackBusinessViews(TransactionCase):
                 "payment_anchor_policy",
             ):
                 self.assertNotIn(token, arch)
+        self.assertNotIn("deposit_self_funding_return", deposit_search.arch_db)
+        self.assertIn(
+            "('business_category_id.code', '!=', 'finance.deposit.self_funding.return')",
+            self.env.ref("smart_construction_core.action_sc_expense_claim_deposit_refund").domain,
+        )
+        for menu_xmlid in (
+            "smart_construction_core.menu_sc_self_funding_deposit",
+            "smart_construction_core.menu_sc_self_funding_deposit_refund",
+        ):
+            self.assertFalse(self.env.ref(menu_xmlid).active)
 
     def test_self_funding_deposit_refund_is_not_bid_deposit_return(self):
         category = self.env.ref("smart_construction_core.business_category_finance_deposit_self_funding_return")
@@ -2331,6 +2339,15 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertEqual(refund_menu.get("integration_action_xmlid"), "smart_construction_core.action_sc_self_funding_registration_refund")
             self.assertNotEqual(refund_menu.get("integration_model"), "sc.expense.claim")
             for menu in menus:
+                self.assertNotIn(
+                    menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"),
+                    {
+                        "smart_construction_core.menu_sc_self_funding_deposit",
+                        "smart_construction_core.menu_sc_self_funding_deposit_refund",
+                        "smart_construction_core.menu_scbs55_user_acceptance_180_自筹保证金",
+                        "smart_construction_core.menu_scbs55_user_acceptance_190_自筹保证金退回",
+                    },
+                )
                 if menu.get("integration_target") == "sc.expense.claim 费用/保证金申请":
                     self.assertNotIn(
                         "finance.deposit.self_funding.return",

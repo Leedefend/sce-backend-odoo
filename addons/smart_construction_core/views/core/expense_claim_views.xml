@@ -619,8 +619,7 @@
                     <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
                     <separator/>
                     <filter name="deposit_payment" string="保证金支付" domain="[('claim_type', '=', 'deposit_pay')]"/>
-                    <filter name="deposit_refund" string="保证金退回" domain="[('claim_type', '=', 'deposit_refund')]"/>
-                    <filter name="deposit_self_funding_return" string="自筹保证金退回" domain="[('business_category_id.code', '=', 'finance.deposit.self_funding.return')]"/>
+                    <filter name="deposit_refund" string="保证金退回" domain="[('claim_type', '=', 'deposit_refund'), ('business_category_id.code', '!=', 'finance.deposit.self_funding.return')]"/>
                     <filter name="deposit_receive" string="保证金收取" domain="[('claim_type', '=', 'deposit_receive')]"/>
                     <separator/>
                     <filter name="draft" string="草稿" domain="[('state', '=', 'draft')]"/>

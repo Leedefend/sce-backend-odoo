@@ -144,6 +144,12 @@ USER_CONFIRMED_FORMAL_HIDE_MENU_XMLIDS = (
     "smart_construction_core.menu_scbsly_direct_project_acceptance_root",
     "smart_construction_core.menu_scbsly_acceptance_engineering_progress_receipt",
 )
+USER_CONFIRMED_FORMAL_DEPRECATED_MENU_XMLIDS = {
+    "smart_construction_core.menu_sc_self_funding_deposit",
+    "smart_construction_core.menu_sc_self_funding_deposit_refund",
+    "smart_construction_core.menu_scbs55_user_acceptance_180_自筹保证金",
+    "smart_construction_core.menu_scbs55_user_acceptance_190_自筹保证金退回",
+}
 MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL = {
     "construction.contract": "smart_construction_core.action_construction_contract_handling",
     "construction.contract.income": "smart_construction_core.action_construction_contract_income",
@@ -551,6 +557,8 @@ class ScProductPolicy(models.Model):
                 )
                 for menu in (group.get("menus") or [])
                 if isinstance(menu, dict)
+                and _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"))
+                not in USER_CONFIRMED_FORMAL_DEPRECATED_MENU_XMLIDS
             ]
             self._consolidate_contract_handling_menu_entries(next_group)
             out.append(next_group)
@@ -805,6 +813,11 @@ class ScProductPolicy(models.Model):
                 upsert(menu, False, "user_confirmed_formal_release_hide_acceptance_surface")
         for xmlid in USER_CONFIRMED_FORMAL_HIDE_MENU_XMLIDS:
             upsert(self.env.ref(xmlid, raise_if_not_found=False), False, "user_confirmed_formal_release_hide_acceptance_surface")
+        for xmlid in USER_CONFIRMED_FORMAL_DEPRECATED_MENU_XMLIDS:
+            menu = self.env.ref(xmlid, raise_if_not_found=False)
+            upsert(menu, False, "user_confirmed_formal_deprecated_self_funding_deposit_surface")
+            if menu:
+                menu.sudo().write({"active": False})
 
     @api.model
     def _sync_user_confirmed_locked_construction_product_policies(self):
