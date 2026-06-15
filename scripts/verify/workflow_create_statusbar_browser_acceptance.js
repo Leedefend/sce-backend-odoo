@@ -15,7 +15,7 @@ const LOGIN = process.env.E2E_LOGIN || process.env.LOGIN || 'wutao';
 const PASSWORD = process.env.E2E_PASSWORD || process.env.PASSWORD || '123456';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts/workflow-create-statusbar-browser';
 const CATEGORY_CATALOG = process.env.CATEGORY_CATALOG || path.join(repoRoot, 'artifacts/playwright/business-form-all-category-direct/category_catalog.json');
-const CATEGORY_CODES = (process.env.WORKFLOW_CREATE_STATUSBAR_CATEGORIES || 'finance.deduction.bill,finance.deduction.paid,finance.deduction.refund,contract.income')
+const CATEGORY_CODES = (process.env.WORKFLOW_CREATE_STATUSBAR_CATEGORIES || 'finance.deduction.bill,finance.deduction.paid,finance.deduction.refund,finance.receipt.income.project,contract.income')
   .split(',')
   .map((item) => item.trim())
   .filter(Boolean);
