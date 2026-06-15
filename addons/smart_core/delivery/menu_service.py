@@ -321,6 +321,7 @@ class MenuService:
             "integration_view_modes",
             "integration_entry_target",
             "integration_model",
+            "project_scope_policy",
         )
         for group in policy.get("menu_groups") or []:
             if not isinstance(group, dict):
@@ -542,6 +543,25 @@ class MenuService:
             "entry_target": entry_target if isinstance(entry_target, dict) else {},
         }
 
+    def _merged_project_scope_policy(self, items: list[dict]) -> str:
+        policies = {
+            str((item.get("meta") or {}).get("project_scope_policy") or "").strip().lower()
+            for item in items or []
+            if isinstance(item, dict) and isinstance(item.get("meta"), dict)
+        }
+        policies.discard("")
+        if not policies:
+            return ""
+        if policies == {"current_project"}:
+            return "current_project"
+        if "current_project" in policies:
+            return "current_project"
+        if "global" in policies:
+            return "global"
+        if "exempt" in policies:
+            return "exempt"
+        return ""
+
     def _business_category_codes(self, items: list[dict]) -> list[str]:
         codes = []
         seen = set()
@@ -670,6 +690,7 @@ class MenuService:
                 "disposition_policy": meta.get("disposition_policy"),
                 "business_entry_contract_version": meta.get("business_entry_contract_version"),
                 "entry_target_policy": "merge_to_list_form_by_business_category",
+                "project_scope_policy": self._merged_project_scope_policy(items),
                 "source": "delivery_engine_v1",
                 "source_authority": self.source_authority_contract(),
             }

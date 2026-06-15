@@ -108,6 +108,34 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
 
         self.assertEqual(node["meta"]["entry_target"], entry_target)
 
+    def test_project_ledger_query_menu_uses_current_project_scope(self):
+        node = delivery_menu_defaults.build_delivery_menu_child(
+            {
+                "menu_key": "system.menu_379",
+                "label": "项目台账",
+                "menu_id": 379,
+                "action_id": 506,
+                "model": "project.project",
+                "entry_intent": "query",
+            }
+        )
+
+        self.assertEqual(node["meta"]["project_scope_policy"], "current_project")
+
+    def test_non_project_query_menu_stays_global_scope(self):
+        node = delivery_menu_defaults.build_delivery_menu_child(
+            {
+                "menu_key": "system.menu_598",
+                "label": "客户",
+                "menu_id": 598,
+                "action_id": 786,
+                "model": "res.partner",
+                "entry_intent": "query",
+            }
+        )
+
+        self.assertEqual(node["meta"]["project_scope_policy"], "global")
+
     def test_native_action_menu_child_exposes_compatibility_entry_target(self):
         node = delivery_menu_defaults.build_delivery_menu_child(
             {

@@ -1133,6 +1133,14 @@ const actionId = computed(() => {
   return Number.isFinite(fromQuery) && fromQuery > 0 ? fromQuery : 0;
 });
 const actionMeta = computed(() => session.currentAction);
+function resolveActionProjectScopeContext(): Record<string, unknown> {
+  const policy = String(
+    (actionMeta.value as Record<string, unknown> | null)?.project_scope_policy
+      || (actionMeta.value as Record<string, unknown> | null)?.projectScopePolicy
+      || '',
+  ).trim();
+  return policy ? { project_scope_policy: policy } : {};
+}
 const businessCategoryCreatePickerVisible = ref(false);
 const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
@@ -2219,7 +2227,10 @@ const {
 } = useActionViewRequestContextRuntime({
   routeDomainRaw: () => String(route.query.domain_raw || '').trim(),
   routeContextRaw: () => String(route.query.context_raw || '').trim(),
-  routeContext: () => buildBusinessEntryRequestContext(route.query as Record<string, unknown>),
+  routeContext: () => ({
+    ...buildBusinessEntryRequestContext(route.query as Record<string, unknown>),
+    ...resolveActionProjectScopeContext(),
+  }),
   menuId,
   activeField,
   filterValue,

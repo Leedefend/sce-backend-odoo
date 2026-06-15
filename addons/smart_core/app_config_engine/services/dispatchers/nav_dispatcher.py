@@ -704,6 +704,7 @@ class NavDispatcher:
                 "views": n.get("views"),
                 "domain": n.get("domain"),
                 "context": n.get("context"),
+                "project_scope_policy": n.get("project_scope_policy"),
                 "groups_xmlids": n.get("groups") or n.get("groups_xmlids"),
             }
             return {k: v for k, v in m.items() if v not in (None, [], "", {})}

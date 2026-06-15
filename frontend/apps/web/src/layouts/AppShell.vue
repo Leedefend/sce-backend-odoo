@@ -403,9 +403,8 @@ const currentProjectLabel = computed(() => {
     return projectContext.value?.message || '未启用';
   }
   const selected = selectedProject.value;
-  const scopeParts = [selectedCompanyLabel.value, selectedOperationLabel.value].filter(Boolean);
-  if (!selected) return scopeParts.length ? `全部记录 · ${scopeParts.join(' / ')}` : '全部记录';
-  return projectOptionLabel(selected);
+  if (!selected) return '全部记录';
+  return projectNameLabel(selected);
 });
 const projectSearchPlaceholder = computed(() =>
   String(projectContext.value?.selector?.placeholder || '搜索项目名称').trim() || '搜索项目名称',
@@ -547,9 +546,14 @@ function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
 
 function projectOptionLabel(option: ProjectContextOption | null | undefined) {
   if (!option) return '';
-  const label = String(option.display_name || option.name || `记录 ${option.id}`).trim();
+  const label = projectNameLabel(option);
   const scope = String(option.operation_strategy_label || option.operation_strategy || '').trim();
   return scope ? `${label} · ${scope}` : label;
+}
+
+function projectNameLabel(option: ProjectContextOption | null | undefined) {
+  if (!option) return '';
+  return String(option.display_name || option.name || `记录 ${option.id}`).trim();
 }
 
 function operationScopeLabel(option: BusinessScopeOperationOption | null | undefined) {

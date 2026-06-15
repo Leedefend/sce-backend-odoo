@@ -26,6 +26,30 @@ def synthetic_menu_id(key: str, base: int = 900_000_000, span: int = 50_000_000)
     return int(base + (raw % span))
 
 
+def _project_scope_policy(menu: Dict[str, Any]) -> str:
+    explicit = str(menu.get("project_scope_policy") or "").strip().lower()
+    if explicit in {"current_project", "global", "exempt"}:
+        return explicit
+    model = str(
+        menu.get("model")
+        or menu.get("res_model")
+        or menu.get("integration_model")
+        or menu.get("fact_model")
+        or ""
+    ).strip()
+    if model == "project.project":
+        return "current_project"
+    intent = str(menu.get("entry_intent") or "").strip()
+    if intent in {"query", "master_data", "analysis", "config"}:
+        return "global"
+    if intent in {"handling", "source_fact"}:
+        return "current_project"
+    required = menu.get("required_relationships")
+    if isinstance(required, list) and any(str(item or "").strip() == "project_id" for item in required):
+        return "current_project"
+    return ""
+
+
 def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
     key = str(menu.get("menu_key") or "").strip()
     label = str(menu.get("label") or "").strip()
@@ -62,6 +86,9 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
     view_modes = menu.get("view_modes")
     if isinstance(view_modes, list) and view_modes:
         meta["view_modes"] = view_modes
+    project_scope_policy = _project_scope_policy(menu)
+    if project_scope_policy:
+        meta["project_scope_policy"] = project_scope_policy
     release_state = str(menu.get("release_state") or "").strip()
     if release_state:
         meta["release_state"] = release_state
@@ -94,6 +121,7 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         "integration_view_modes",
         "integration_entry_target",
         "integration_model",
+        "project_scope_policy",
     ):
         value = menu.get(key)
         if value not in (None, "", []):
