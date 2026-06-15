@@ -2972,6 +2972,16 @@ class UiContractV2Handler(BaseIntentHandler):
         if not group_rows:
             return
 
+        def dominant_group_columns() -> int | None:
+            counts: dict[int, int] = {}
+            for row in group_rows:
+                columns = normalize_columns(row.get("cols"))
+                if columns:
+                    counts[columns] = counts.get(columns, 0) + 1
+            if not counts:
+                return None
+            return sorted(counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
+
         def node_fields(node: dict[str, Any]) -> list[str]:
             names: list[str] = []
 
@@ -3001,8 +3011,8 @@ class UiContractV2Handler(BaseIntentHandler):
                 if not match and fields:
                     field_set = set(fields)
                     match = next((row for row in group_rows if row.get("fields") and set(row.get("fields") or []) == field_set), None)
-                if match:
-                    columns = match.get("cols")
+                columns = match.get("cols") if match else dominant_group_columns()
+                if columns:
                     node["cols"] = columns
                     attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
                     attrs["col"] = str(columns)

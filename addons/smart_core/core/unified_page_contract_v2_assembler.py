@@ -1420,6 +1420,16 @@ def _form_structure_contract_layout_rows(
                 if isinstance(child_rows, list) and child_rows:
                     collect_native_field_nodes(child_rows)
 
+    def dominant_native_group_columns() -> int | None:
+        counts: dict[int, int] = {}
+        for row in native_group_layouts:
+            columns = normalize_layout_columns(row.get("cols"))
+            if columns:
+                counts[columns] = counts.get(columns, 0) + 1
+        if not counts:
+            return None
+        return sorted(counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
+
     def native_field_hidden(node: dict[str, Any]) -> bool:
         if node.get("invisible") is True:
             return True
@@ -1513,7 +1523,7 @@ def _form_structure_contract_layout_rows(
                 if row.get("fields") and child_names and set(row.get("fields") or []) == set(child_names)
             ),
             None,
-        )
+        ) or dominant_native_group_columns()
         layout_attrs = {"col": str(inherited_columns)} if inherited_columns else {}
         node = {
             "type": "group",
