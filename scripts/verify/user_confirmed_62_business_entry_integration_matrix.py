@@ -172,7 +172,7 @@ DISPOSITION_BY_LABEL = {
     "油卡登记": ("source_fact", "油卡费用来源事实明细", "source_readonly", ""),
     "充值登记": ("source_fact", "油卡充值来源事实明细", "source_readonly", ""),
     "自筹垫付收入": ("handling", "sc.self.funding.registration 自筹垫付办理", "merge_by_category", "finance.self_funding.income"),
-    "自筹垫付退回": ("handling", "sc.self.funding.registration 自筹退回办理", "merge_by_category", "finance.self_funding.refund"),
+    "自筹垫付退回": ("handling", "sc.expense.claim 费用/扣款/保证金办理", "merge_by_category", "finance.deposit.self_funding.return"),
     "自筹保证金": ("handling", "sc.expense.claim 费用/扣款/保证金办理", "merge_by_category", "finance.deposit.bid.pay"),
     "自筹保证金退回": ("handling", "sc.expense.claim 费用/扣款/保证金办理", "merge_by_category", "finance.deposit.bid.return"),
     "进项发票": ("handling", "sc.invoice.registration 票税办理", "merge_by_category", "invoice.input.report"),
@@ -209,6 +209,7 @@ ALLOWED_CATEGORY_CODES_BY_TARGET = {
         "finance.deduction.refund",
         "finance.deposit.bid.pay",
         "finance.deposit.bid.return",
+        "finance.deposit.self_funding.return",
         "finance.deposit.contract.pay",
         "finance.deposit.contract.return",
     ],
@@ -218,7 +219,6 @@ ALLOWED_CATEGORY_CODES_BY_TARGET = {
         "finance.repayment.project_company",
     ],
     "sc.self.funding.registration 自筹垫付办理": ["finance.self_funding.income"],
-    "sc.self.funding.registration 自筹退回办理": ["finance.self_funding.refund"],
 }
 
 

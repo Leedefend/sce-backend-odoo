@@ -51,7 +51,7 @@ FINANCE_CATEGORY_ROWS: dict[str, tuple[tuple[str, str, str], ...]] = {
     ),
     "fund_standalone": (
         ("finance.self_funding.income", "自筹垫付", "smart_construction_core.action_sc_self_funding_registration_income"),
-        ("finance.self_funding.refund", "自筹退回", "smart_construction_core.action_sc_self_funding_registration_refund"),
+        ("finance.deposit.self_funding.return", "自筹退回", "smart_construction_core.action_sc_self_funding_deposit_refund"),
         ("finance.fund.transfer", "账户间资金往来", "smart_construction_core.action_sc_fund_account_between_user"),
     ),
 }

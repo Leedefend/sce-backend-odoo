@@ -160,6 +160,8 @@ MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL = {
     "sc.invoice.registration": "smart_construction_core.action_sc_invoice_registration",
     "sc.self.funding.registration": "smart_construction_core.action_sc_self_funding_registration",
 }
+SELF_FUNDING_REFUND_MENU_XMLID = "smart_construction_core.menu_sc_self_funding_advance_refund"
+SELF_FUNDING_DEPOSIT_RETURN_CODE = "finance.deposit.self_funding.return"
 
 CONTRACT_HANDLING_CATEGORY_CODES = (
     "contract.income",
@@ -271,6 +273,7 @@ class ScProductPolicy(models.Model):
         menu_xmlid = _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
         matrix = matrix_index.get(menu_xmlid) if isinstance(matrix_index, dict) else None
         if not isinstance(matrix, dict):
+            self._normalize_self_funding_refund_business_entry(row)
             return row
         next_row = dict(row)
         category_code = _text(matrix.get("default_business_category_code"))
@@ -307,7 +310,45 @@ class ScProductPolicy(models.Model):
         else:
             next_row["entry_target_policy"] = "keep_list_form"
         self._normalize_contract_handling_business_entry(next_row)
+        self._normalize_self_funding_refund_business_entry(next_row)
         return next_row
+
+    @api.model
+    def _normalize_self_funding_refund_business_entry(self, row):
+        if not isinstance(row, dict):
+            return row
+        menu_xmlid = _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
+        if menu_xmlid != SELF_FUNDING_REFUND_MENU_XMLID:
+            return row
+        row.update(
+            {
+                "label": "自筹垫付退回",
+                "page_label": "自筹垫付退回",
+                "product_domain": "finance_cash",
+                "product_domain_label": "费用/保证金现金办理",
+                "entry_intent": "handling",
+                "entry_intent_label": "办理",
+                "fact_model": "sc.legacy.self.funding.fact",
+                "disposition_policy": "merge_by_category",
+                "integration_target": FINANCE_CASH_EXPENSE_DEPOSIT_TARGET,
+                "default_business_category_code": SELF_FUNDING_DEPOSIT_RETURN_CODE,
+                "allowed_business_category_codes": [SELF_FUNDING_DEPOSIT_RETURN_CODE],
+                "required_relationships": ["project_id", "partner_id", "contract_id", "fund_account_id", "cost_item_id"],
+                "entry_target_policy": "merge_to_list_form_by_business_category",
+                "locked_data_policy": "read_only_source_facts_no_rewrite",
+                "productization_source": "self_funding_deposit_return_retarget",
+                "policy_note": "self_funding_refund_retargeted_to_deposit_return",
+                "business_entry_contract_version": "business_entry_disposition.v1",
+                "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 自筹垫付退回",
+            }
+        )
+        context_defaults = row.setdefault("context_defaults", {})
+        if isinstance(context_defaults, dict):
+            context_defaults.clear()
+            context_defaults["default_business_category_code"] = SELF_FUNDING_DEPOSIT_RETURN_CODE
+            context_defaults["allowed_business_category_codes"] = [SELF_FUNDING_DEPOSIT_RETURN_CODE]
+        self._annotate_merge_by_category_integration_target(row)
+        return row
 
     @api.model
     def _normalize_contract_handling_business_entry(self, row):

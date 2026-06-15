@@ -2263,6 +2263,35 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn("费用/保证金现金办理", paid_menu.get("visible_menu_path"))
             self.assertEqual(paid_menu.get("product_domain"), "finance_cash")
 
+    def test_self_funding_refund_product_entry_uses_migrated_deposit_return(self):
+        self.env["sc.product.policy"].sync_construction_menu_product_policies()
+        for product_key in ("construction.standard", "construction.preview"):
+            policy = self.env["sc.product.policy"].search([("product_key", "=", product_key)], limit=1)
+            menus = [
+                menu
+                for group in (policy.menu_groups or [])
+                if isinstance(group, dict)
+                for menu in (group.get("menus") or [])
+                if isinstance(menu, dict)
+            ]
+            refund_menu = next(
+                menu
+                for menu in menus
+                if (
+                    menu.get("menu_xmlid")
+                    or menu.get("page_key")
+                    or menu.get("menu_key")
+                ) == "smart_construction_core.menu_sc_self_funding_advance_refund"
+            )
+
+            self.assertEqual(refund_menu.get("action_id"), self.env.ref("smart_construction_core.action_sc_self_funding_deposit_refund").id)
+            self.assertEqual(refund_menu.get("product_domain"), "finance_cash")
+            self.assertEqual(refund_menu.get("default_business_category_code"), "finance.deposit.self_funding.return")
+            self.assertEqual(refund_menu.get("allowed_business_category_codes"), ["finance.deposit.self_funding.return"])
+            self.assertEqual(refund_menu.get("integration_model"), "sc.expense.claim")
+            self.assertEqual(refund_menu.get("integration_action_xmlid"), "smart_construction_core.action_sc_expense_claim")
+            self.assertNotEqual(refund_menu.get("integration_model"), "sc.self.funding.registration")
+
     def test_repayment_registration_is_interfund_business_entry(self):
         action = self.env.ref("smart_construction_core.action_sc_expense_claim_repayment_registration")
         claim = self.env["sc.expense.claim"].create(
