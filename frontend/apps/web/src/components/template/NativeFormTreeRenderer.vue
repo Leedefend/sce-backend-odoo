@@ -855,7 +855,7 @@ function closeMore(node: NativeFormLayoutNode) {
 .native-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -876,17 +876,20 @@ function closeMore(node: NativeFormLayoutNode) {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border: 1px solid var(--sc-app-border-strong);
-  background: var(--sc-app-panel);
+  min-height: calc(var(--sc-component-button-height-sm) * 1px);
+  border: 1px solid var(--sc-app-border);
+  background: transparent;
   color: var(--sc-app-text-primary);
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 13px;
+  padding: 4px 9px;
+  border-radius: var(--sc-component-button-radius);
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: 0;
   cursor: pointer;
   min-width: 0;
   max-width: 100%;
-  white-space: normal;
+  white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
 }
 
 .native-action-btn--smart {
@@ -964,8 +967,18 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-action-btn:hover {
-  border-color: var(--sc-app-border-strong);
   background: var(--sc-app-hover-bg);
+}
+
+.native-action-btn:focus-visible {
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
+  outline: none;
+}
+
+.native-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: var(--sc-base-opacity-disabled);
 }
 
 .native-action-btn--smart:hover {

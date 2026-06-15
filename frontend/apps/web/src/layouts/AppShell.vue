@@ -159,20 +159,22 @@
       >
         <div class="topbar-main">
           <p v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="eyebrow">智能工程协作平台</p>
-          <div v-if="!sceneHeaderMinimal" class="breadcrumb">
-            <button
-              v-for="(item, index) in breadcrumb"
-              :key="`${item.label}-${index}`"
-              class="crumb"
-              :class="{ active: index === breadcrumb.length - 1 }"
-              :disabled="!item.to"
-              @click="item.to && router.push(item.to)"
-            >
-              {{ item.label }}
-            </button>
+          <div v-if="!sceneHeaderMinimal" class="topbar-title-row">
+            <div class="breadcrumb">
+              <button
+                v-for="(item, index) in displayBreadcrumb"
+                :key="`${item.label}-${index}`"
+                class="crumb"
+                :class="{ active: index === displayBreadcrumb.length - 1 }"
+                :disabled="!item.to"
+                @click="item.to && router.push(item.to)"
+              >
+                {{ item.label }}
+              </button>
+            </div>
+            <h1 v-if="showTopbarHeadline" class="headline">{{ pageTitle }}</h1>
           </div>
           <p v-if="!useMinimalTopbar && sceneHeaderMinimal && sceneHeaderAnchorLine" class="scene-anchor-line">{{ sceneHeaderAnchorLine }}</p>
-          <h1 v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="headline">{{ pageTitle }}</h1>
           <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
         </div>
         <div class="topbar-actions">
@@ -488,6 +490,7 @@ const useMinimalTopbar = computed(() =>
   || route.name === 'home'
   || businessRouteUsesCompactTopbar.value,
 );
+const showTopbarHeadline = computed(() => !sceneHeaderMinimal.value && (!useMinimalTopbar.value || route.name === 'record'));
 const sidebarClass = computed(() =>
   activeLayout.value.sidebar === 'scroll' ? 'sidebar--scroll' : 'sidebar--fixed'
 );
@@ -1215,6 +1218,17 @@ const breadcrumb = computed(() => {
   return crumbs;
 });
 
+const displayBreadcrumb = computed(() => {
+  const title = pageTitle.value.trim();
+  const crumbs = breadcrumb.value;
+  if (!title || !crumbs.length) return crumbs;
+  const last = crumbs[crumbs.length - 1];
+  if (!last.to && last.label.trim() === title) {
+    return crumbs.slice(0, -1);
+  }
+  return crumbs;
+});
+
 const showRefresh = computed(
   () => !isDeliveryMode.value && (import.meta.env.DEV || localStorage.getItem('DEBUG_INTENT') === '1'),
 );
@@ -1788,10 +1802,10 @@ async function logout() {
 }
 
 .content {
-  padding: 10px 20px;
+  padding: 8px 18px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   height: 100vh;
   overflow: auto;
@@ -1801,7 +1815,7 @@ async function logout() {
 
 .content--scene-compact {
   gap: 4px;
-  padding: 10px 20px;
+  padding: 8px 18px;
 }
 
 .topbar {
@@ -1811,8 +1825,8 @@ async function logout() {
   flex-wrap: wrap;
   min-width: 0;
   background: var(--panel);
-  border-radius: 10px;
-  padding: 6px 10px;
+  border-radius: 8px;
+  padding: 5px 9px;
   border: 1px solid var(--sc-app-border);
   box-shadow: var(--sc-app-shadow);
 }
@@ -1823,7 +1837,7 @@ async function logout() {
 }
 
 .topbar--compact {
-  padding: 6px 10px;
+  padding: 5px 9px;
 }
 
 .topbar--scene-minimal {
@@ -1838,6 +1852,13 @@ async function logout() {
   margin: 0;
   font-size: 12px;
   color: var(--sc-semantic-text-muted);
+}
+
+.topbar-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .topbar--compact .breadcrumb {
@@ -1886,10 +1907,11 @@ async function logout() {
 }
 
 .headline {
-  margin: 2px 0 0;
-  font-size: 20px;
-  line-height: 1.12;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.15;
   font-weight: 700;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
@@ -1905,14 +1927,15 @@ async function logout() {
   gap: 4px;
   margin: 0;
   min-width: 0;
+  flex: 0 1 auto;
 }
 
 .crumb {
   background: transparent;
   border: 1px solid transparent;
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: uppercase;

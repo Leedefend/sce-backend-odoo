@@ -1,8 +1,8 @@
 <template>
-  <header class="template-page-header" data-component="PageHeader">
+  <header class="template-page-header" :class="{ 'template-page-header--title-hidden': hideTitle }" data-component="PageHeader">
     <div class="template-page-header-main">
-      <h1>{{ title }}</h1>
-      <p v-if="subtitle" class="template-page-subtitle">{{ subtitle }}</p>
+      <h1 v-if="!hideTitle">{{ title }}</h1>
+      <p v-if="!hideTitle && subtitle" class="template-page-subtitle">{{ subtitle }}</p>
       <slot name="meta" />
     </div>
     <div v-if="$slots.status" class="template-page-header-status">
@@ -18,6 +18,7 @@
 defineProps<{
   title: string;
   subtitle?: string;
+  hideTitle?: boolean;
 }>();
 </script>
 
@@ -25,11 +26,11 @@ defineProps<{
 .template-page-header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
   border-bottom: 1px solid var(--sc-app-border);
-  padding: 8px 0 10px;
-  margin-bottom: 10px;
+  padding: 4px 0 6px;
+  margin-bottom: 6px;
   min-width: 0;
 }
 
@@ -75,6 +76,10 @@ defineProps<{
 }
 
 .template-page-header-actions:empty {
+  display: none;
+}
+
+.template-page-header--title-hidden .template-page-header-main {
   display: none;
 }
 

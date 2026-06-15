@@ -20,7 +20,11 @@
     :data-v2-shadow-value-source="v2ShadowValueSourceKind"
     :data-v2-shadow-error="v2ContractDecodeError || '-'"
   >
-    <PageHeaderTemplate :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle || undefined">
+    <PageHeaderTemplate
+      :title="pageDisplayTitle"
+      :subtitle="pageDisplaySubtitle || undefined"
+      :hide-title="suppressPageHeaderTitle"
+    >
       <template #meta>
         <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
         <p v-if="showHud && contractMetaLine" class="meta">{{ contractMetaLine }}</p>
@@ -49,18 +53,8 @@
       </template>
       <template #actions>
         <button
-          v-for="action in headerActionsVisible"
-          :key="`hdr-${action.key}`"
-          :class="action.semantic === 'primary_action' ? 'primary' : 'ghost'"
-          :disabled="busy || !action.enabled"
-          :title="action.hint"
-          @click="runAction(action)"
-        >
-          {{ action.label }}
-        </button>
-        <button
           v-if="showDraftSaveAction"
-          class="ghost"
+          class="sc-btn sc-btn-ghost sc-btn-sm"
           :disabled="draftSaveDisabled"
           @click="() => saveRecord()"
         >
@@ -68,23 +62,37 @@
         </button>
         <button
           v-if="!isProjectIntakeCreateMode"
-          class="primary"
+          class="sc-btn sc-btn-primary sc-btn-sm"
           :disabled="primaryFormActionDisabled"
           @click="runPrimaryFormAction"
         >
           {{ submitButtonLabel }}
         </button>
         <button
-          v-if="showDiscardAction"
-          class="ghost"
-          :disabled="busy"
-          @click="discardChanges"
+          v-for="action in headerBusinessActionsVisible"
+          :key="`hdr-${action.key}`"
+          :class="headerActionButtonClass(action)"
+          :disabled="busy || !action.enabled"
+          :title="action.hint"
+          @click="runAction(action)"
         >
-          {{ formUiLabel('discard') }}
+          {{ action.label }}
         </button>
-        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
-        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
-        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="ghost" :disabled="busy" @click="reload">{{ formUiLabel('reload') }}</button>
+        <span v-if="headerConfigActionsVisible.length" class="contract-header-action-separator" aria-hidden="true" />
+        <button
+          v-for="action in headerConfigActionsVisible"
+          :key="`hdr-config-${action.key}`"
+          class="sc-btn sc-btn-ghost sc-btn-sm contract-header-config-action"
+          :disabled="busy || !action.enabled"
+          :title="action.hint"
+          @click="runAction(action)"
+        >
+          {{ action.label }}
+        </button>
+        <button v-if="showDiscardAction" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy" @click="discardChanges">{{ formUiLabel('discard') }}</button>
+        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
+        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
+        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy" @click="reload">{{ formUiLabel('reload') }}</button>
       </template>
     </PageHeaderTemplate>
 
@@ -1681,6 +1689,8 @@ const pageDisplaySubtitle = computed(() => {
   return recordId.value ? `记录 #${recordId.value}` : '';
 });
 
+const suppressPageHeaderTitle = computed(() => useNativeFormTree.value && !isProjectIntakeCreateMode.value);
+
 const intakeCreateButtonLabel = computed(() => {
   if (!isProjectIntakeCreateMode.value) return '创建项目';
   return busy.value && busyKind.value === 'save' ? '创建中…' : '创建项目';
@@ -1717,6 +1727,20 @@ const headerActionsVisible = computed(() => {
   }
   return filterPrimarySubmit(headerActions.value);
 });
+
+function isHeaderConfigAction(action: ContractAction) {
+  const label = String(action.label || '').trim();
+  const key = String(action.key || '').trim().toLowerCase();
+  const source = String(action.sourceWidgetId || '').trim().toLowerCase();
+  return label.includes('设置') || key.includes('setting') || key.includes('config') || source.includes('setting') || source.includes('config');
+}
+
+const headerBusinessActionsVisible = computed(() => headerActionsVisible.value.filter((action) => !isHeaderConfigAction(action)));
+const headerConfigActionsVisible = computed(() => headerActionsVisible.value.filter((action) => isHeaderConfigAction(action)));
+
+function headerActionButtonClass(action: ContractAction) {
+  return ['sc-btn', 'sc-btn-sm', action.semantic === 'primary_action' && !isHeaderConfigAction(action) ? 'sc-btn-primary' : 'sc-btn-ghost'];
+}
 
 function contractV2ActionRules() {
   const v2ActionRules = resolveUnifiedPageContractV2(contract.value)?.actionContract;
@@ -9448,7 +9472,7 @@ onBeforeUnmount(() => {
 
 .contract-form-native-shell :deep(.template-page-header) {
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .contract-form-native-shell :deep(.template-page-header-main) {
@@ -9472,12 +9496,45 @@ onBeforeUnmount(() => {
 
 .contract-form-native-shell :deep(.template-page-header-actions) {
   flex: 0 0 auto;
+  gap: 6px;
+}
+
+.contract-header-action-separator {
+  align-self: center;
+  width: 1px;
+  height: 18px;
+  background: var(--sc-app-border);
+}
+
+.contract-header-config-action {
+  color: var(--sc-semantic-text-muted);
 }
 
 .native-statusbar--header .native-statusbar-step {
-  min-width: 78px;
-  min-height: 36px;
-  padding: 0 14px;
+  min-width: 68px;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+@media (max-width: 860px) {
+  .contract-form-native-shell :deep(.template-page-header) {
+    align-items: stretch;
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+
+  .contract-form-native-shell :deep(.template-page-header-status) {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .contract-form-native-shell :deep(.template-page-header-actions) {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    width: auto;
+  }
 }
 
 .native-form-notice {
