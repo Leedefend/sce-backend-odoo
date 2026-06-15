@@ -32,20 +32,14 @@
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <tree string="客户" default_order="name">
-                <field name="sc_source_document_state" string="单据状态"/>
-                <field name="sc_source_push_result" string="推送结果"/>
-                <field name="sc_source_project_name" string="关联项目"/>
-                <field name="sc_source_partner_code" string="单位编号"/>
-                <field name="sc_source_cooperation_type" string="合作类型"/>
-                <field name="sc_supplier_type_label" string="供应商类型" optional="show"/>
                 <field name="company_type" string="客户类型"/>
                 <field name="name" string="单位名称"/>
+                <field name="sc_source_project_name" string="关联项目"/>
                 <field name="sc_source_receipt_amount" string="收款金额"/>
                 <field name="sc_source_payment_amount" string="付款金额"/>
+                <field name="sc_supplier_type_label" string="供应商类型" optional="show"/>
                 <field name="vat" string="统一社会信用代码"/>
                 <field name="sc_default_tax_rate_text" string="主税率"/>
-                <field name="sc_source_created_by" string="录入人"/>
-                <field name="sc_source_created_at" string="录入时间"/>
                 <field name="sc_business_role_label" string="业务身份" optional="hide"/>
                 <field name="sc_business_fact_basis" string="业务依据" optional="hide"/>
                 <field name="phone" string="电话" optional="hide"/>
@@ -62,12 +56,16 @@
                 <field name="is_company" string="企业/组织" optional="hide"/>
                 <field name="sc_registered_capital" optional="hide"/>
                 <field name="sc_account_name" optional="hide"/>
+                <field name="sc_source_document_state" string="单据状态" optional="hide"/>
+                <field name="sc_source_push_result" string="推送结果" optional="hide"/>
+                <field name="sc_source_partner_code" string="单位编号" optional="hide"/>
+                <field name="sc_source_cooperation_type" string="合作类型" optional="hide"/>
+                <field name="sc_source_created_by" string="录入人" optional="hide"/>
+                <field name="sc_source_created_at" string="录入时间" optional="hide"/>
                 <field name="sc_source_fact_count" string="关联业务数" optional="hide"/>
                 <field name="sc_source_fact_source" string="关联业务范围" optional="hide"/>
                 <field name="street" string="地址" optional="hide"/>
                 <field name="sc_business_scope" optional="hide"/>
-                <field name="customer_rank" invisible="1"/>
-                <field name="supplier_rank" invisible="1"/>
             </tree>
         </field>
     </record>
@@ -225,19 +223,13 @@
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <tree string="供应商" default_order="name">
-                <field name="sc_source_document_state" string="单据状态"/>
-                <field name="sc_source_push_result" string="推送结果"/>
-                <field name="sc_source_project_name" string="关联项目"/>
-                <field name="sc_source_partner_code" string="单位编号"/>
-                <field name="sc_source_cooperation_type" string="合作类型"/>
-                <field name="sc_supplier_type_label" string="供应商类型"/>
                 <field name="name" string="单位名称"/>
+                <field name="sc_supplier_type_label" string="供应商类型"/>
+                <field name="sc_source_project_name" string="关联项目"/>
                 <field name="sc_source_receipt_amount" string="收款金额"/>
                 <field name="sc_source_payment_amount" string="付款金额"/>
                 <field name="vat" string="统一社会信用代码"/>
                 <field name="sc_default_tax_rate_text" string="主税率"/>
-                <field name="sc_source_created_by" string="录入人"/>
-                <field name="sc_source_created_at" string="录入时间"/>
                 <field name="sc_business_role_label" string="业务身份" optional="hide"/>
                 <field name="sc_business_fact_basis" string="业务依据" optional="hide"/>
                 <field name="phone" string="电话" optional="hide"/>
@@ -254,12 +246,16 @@
                 <field name="is_company" string="企业/组织" optional="hide"/>
                 <field name="sc_registered_capital" optional="hide"/>
                 <field name="sc_account_name" optional="hide"/>
+                <field name="sc_source_document_state" string="单据状态" optional="hide"/>
+                <field name="sc_source_push_result" string="推送结果" optional="hide"/>
+                <field name="sc_source_partner_code" string="单位编号" optional="hide"/>
+                <field name="sc_source_cooperation_type" string="合作类型" optional="hide"/>
+                <field name="sc_source_created_by" string="录入人" optional="hide"/>
+                <field name="sc_source_created_at" string="录入时间" optional="hide"/>
                 <field name="sc_source_fact_count" string="关联业务数" optional="hide"/>
                 <field name="sc_source_fact_source" string="关联业务范围" optional="hide"/>
                 <field name="street" string="地址" optional="hide"/>
                 <field name="sc_business_scope" optional="hide"/>
-                <field name="supplier_rank" invisible="1"/>
-                <field name="customer_rank" invisible="1"/>
             </tree>
         </field>
     </record>

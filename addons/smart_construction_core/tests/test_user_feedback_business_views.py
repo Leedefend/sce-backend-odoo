@@ -178,7 +178,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(supplier.sc_supplier_type_label, "劳务供应商、设备供应商")
         self.assertEqual(supplier.sc_bank_account, "100200300")
         self.assertEqual(supplier._fields["legacy_partner_id"].string, "历史供应商编号")
-        self.assertIn("'active_test': False", action.context)
+        self.assertNotIn("'active_test': False", action.context)
         self.assertIn('name="sc_supplier_type_label"', tree.arch_db)
         self.assertIn('name="sc_supplier_type_ids"', form.arch_db)
         self.assertNotIn('name="legacy_partner_id"', tree.arch_db)
@@ -198,7 +198,9 @@ class TestUserFeedbackBusinessViews(TransactionCase):
 
         self.assertIn("'default_customer_rank': 1", customer_action.context)
         self.assertIn("'default_company_type': 'company'", customer_action.context)
+        self.assertNotIn("'active_test': False", customer_action.context)
         self.assertIn("'default_supplier_rank': 1", supplier_action.context)
+        self.assertNotIn("'active_test': False", supplier_action.context)
         for arch in (customer_tree.arch_db, supplier_tree.arch_db):
             self.assertIn('name="active"', arch)
             self.assertIn('name="user_id"', arch)
@@ -218,6 +220,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn('name="sc_source_payment_amount"', arch)
             self.assertIn('name="sc_default_tax_rate_text"', arch)
             self.assertIn('name="sc_source_created_by"', arch)
+            self.assertLess(arch.index('name="name"'), arch.index('name="sc_source_document_state"'))
             self.assertIn('name="sc_source_created_at"', arch)
             self.assertIn('name="sc_business_role_label"', arch)
             self.assertIn('name="sc_business_fact_basis"', arch)
