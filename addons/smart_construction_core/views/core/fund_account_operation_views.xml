@@ -64,6 +64,38 @@
         </field>
     </record>
 
+    <record id="view_sc_fund_account_operation_user_tree" model="ir.ui.view">
+        <field name="name">sc.fund.account.operation.user.tree</field>
+        <field name="model">sc.fund.account.operation</field>
+        <field name="arch" type="xml">
+            <tree string="账户资金办理" default_order="operation_date desc,id desc">
+                <field name="name" string="单据号"/>
+                <field name="fund_flow_label"/>
+                <field name="operation_date"/>
+                <field name="project_id"/>
+                <field name="operation_strategy"/>
+                <field name="source_account_id"/>
+                <field name="source_project_id" optional="show"/>
+                <field name="target_account_id"/>
+                <field name="target_project_id" optional="show"/>
+                <field name="amount" string="办理金额" sum="金额合计"/>
+                <field name="operation_reason"/>
+                <field name="business_category_id" optional="show"/>
+                <field name="operation_type" optional="hide"/>
+                <field name="fund_account_id" optional="hide"/>
+                <field name="daily_income" sum="收入合计"/>
+                <field name="daily_expense" sum="支出合计"/>
+                <field name="account_balance"/>
+                <field name="bank_balance"/>
+                <field name="before_balance"/>
+                <field name="after_balance"/>
+                <field name="creator_name" optional="show"/>
+                <field name="created_time" optional="show"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
     <record id="view_sc_fund_account_operation_form" model="ir.ui.view">
         <field name="name">sc.fund.account.operation.form</field>
         <field name="model">sc.fund.account.operation</field>

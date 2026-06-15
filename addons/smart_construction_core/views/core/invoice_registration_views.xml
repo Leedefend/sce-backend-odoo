@@ -107,6 +107,41 @@
             </field>
         </record>
 
+        <record id="view_sc_invoice_application_user_tree" model="ir.ui.view">
+            <field name="name">sc.invoice.application.user.tree</field>
+            <field name="model">sc.invoice.registration</field>
+            <field name="arch" type="xml">
+                <tree string="销项开票申请">
+                    <field name="name" string="单据号"/>
+                    <field name="business_category_id" optional="show"/>
+                    <field name="state"/>
+                    <field name="invoice_date"/>
+                    <field name="invoice_no"/>
+                    <field name="invoice_code"/>
+                    <field name="invoice_type"/>
+                    <field name="invoice_content"/>
+                    <field name="amount_no_tax" sum="不含税金额"/>
+                    <field name="tax_amount" sum="税额"/>
+                    <field name="amount_total" sum="价税合计"/>
+                    <field name="actual_invoice_amount" optional="show" sum="实开总金额"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id" optional="show"/>
+                    <field name="settlement_id" optional="hide"/>
+                    <field name="document_no" optional="show"/>
+                    <field name="document_date" optional="show"/>
+                    <field name="applicant_name" optional="show"/>
+                    <field name="handler_name"/>
+                    <field name="invoice_holder"/>
+                    <field name="accounting_state"/>
+                    <field name="voucher_no"/>
+                    <field name="creator_name" optional="show"/>
+                    <field name="created_time" optional="show"/>
+                </tree>
+            </field>
+        </record>
+
         <record id="view_sc_invoice_registration_form" model="ir.ui.view">
             <field name="name">sc.invoice.registration.form</field>
             <field name="model">sc.invoice.registration</field>

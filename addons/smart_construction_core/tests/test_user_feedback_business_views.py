@@ -1730,17 +1730,14 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         with self.assertRaises(UserError):
             deduction_paid._check_business_ready()
 
-    def test_expense_claim_actions_default_to_financial_flow_filters(self):
+    def test_expense_claim_formal_actions_use_business_filters_not_financial_flow(self):
         expected_contexts = {
-            "smart_construction_core.action_sc_expense_claim_deduction_bill": "search_default_finance_noncash",
-            "smart_construction_core.action_sc_expense_claim_deduction_paid": "search_default_finance_cash_in",
-            "smart_construction_core.action_sc_expense_claim_deduction_paid_refund": "search_default_finance_cash_out",
-            "smart_construction_core.action_sc_bid_deposit_pay": "search_default_finance_cash_out",
-            "smart_construction_core.action_sc_bid_deposit_return": "search_default_finance_cash_in",
-            "smart_construction_core.action_sc_contract_deposit_pay": "search_default_finance_cash_out",
-            "smart_construction_core.action_sc_contract_deposit_return": "search_default_finance_cash_in",
-            "smart_construction_core.action_sc_expense_claim_repayment_registration": "search_default_finance_interfund",
-            "smart_construction_core.action_sc_expense_claim_project_repay_company": "search_default_finance_interfund",
+            "smart_construction_core.action_sc_expense_claim_deduction_bill": "search_default_deduction_bill",
+            "smart_construction_core.action_sc_expense_claim_deduction_paid": "search_default_deduction_paid",
+            "smart_construction_core.action_sc_expense_claim_deduction_paid_refund": "search_default_deduction_refund",
+            "smart_construction_core.action_sc_expense_claim_repayment_registration": "search_default_repayment_registration",
+            "smart_construction_core.action_sc_expense_claim_contractor_project_repay": "search_default_repayment_contractor_project",
+            "smart_construction_core.action_sc_expense_claim_project_repay_company": "search_default_repayment_project_company",
         }
 
         for action_xmlid, search_key in expected_contexts.items():
@@ -1748,6 +1745,236 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn("'%s': 1" % search_key, context)
             self.assertNotIn("'search_default_inflow': 1", context)
             self.assertNotIn("'search_default_outflow': 1", context)
+            self.assertNotIn("'search_default_finance_noncash': 1", context)
+            self.assertNotIn("'search_default_finance_cash_in': 1", context)
+            self.assertNotIn("'search_default_finance_cash_out': 1", context)
+            self.assertNotIn("'search_default_finance_interfund': 1", context)
+
+    def test_expense_claim_formal_actions_use_dedicated_search_and_list_views(self):
+        deduction_search = self.env.ref("smart_construction_core.view_sc_expense_claim_deduction_search")
+        deduction_tree = self.env.ref("smart_construction_core.view_sc_expense_claim_deduction_registration_tree")
+        deduction_cash_tree = self.env.ref("smart_construction_core.view_sc_expense_claim_deduction_cash_tree")
+        repayment_search = self.env.ref("smart_construction_core.view_sc_expense_claim_repayment_search")
+        repayment_tree = self.env.ref("smart_construction_core.view_sc_expense_claim_repayment_tree")
+
+        expected = {
+            "smart_construction_core.action_sc_expense_claim_deduction_bill": (deduction_search, deduction_tree),
+            "smart_construction_core.action_sc_expense_claim_deduction_paid": (deduction_search, deduction_cash_tree),
+            "smart_construction_core.action_sc_expense_claim_deduction_paid_refund": (deduction_search, deduction_cash_tree),
+            "smart_construction_core.action_sc_expense_claim_repayment_registration": (repayment_search, repayment_tree),
+            "smart_construction_core.action_sc_expense_claim_contractor_project_repay": (repayment_search, repayment_tree),
+            "smart_construction_core.action_sc_expense_claim_project_repay_company": (repayment_search, repayment_tree),
+        }
+
+        for action_xmlid, (search, tree) in expected.items():
+            action = self.env.ref(action_xmlid)
+            self.assertEqual(action.search_view_id, search)
+            self.assertEqual(action.view_id, tree)
+            self.assertIn(tree, action.view_ids.mapped("view_id"))
+        for arch in (
+            deduction_search.arch_db,
+            deduction_tree.arch_db,
+            deduction_cash_tree.arch_db,
+            repayment_search.arch_db,
+            repayment_tree.arch_db,
+        ):
+            for token in (
+                "business_axis",
+                "handling_kind",
+                "financial_flow",
+                "payment_anchor_policy",
+                "direction",
+                "legacy_visible_attachment",
+            ):
+                self.assertNotIn(token, arch)
+
+    def test_expense_deposit_application_actions_use_business_search_filters(self):
+        expected_contexts = {
+            "smart_construction_core.action_sc_expense_claim_reimbursement_request": "search_default_expense_reimbursement",
+            "smart_construction_core.action_sc_expense_claim_project": "search_default_expense_project",
+            "smart_construction_core.action_sc_bid_deposit_pay": "search_default_deposit_bid_pay",
+            "smart_construction_core.action_sc_bid_deposit_return": "search_default_deposit_bid_return",
+            "smart_construction_core.action_sc_contract_deposit_pay": "search_default_deposit_contract_pay",
+            "smart_construction_core.action_sc_contract_deposit_return": "search_default_deposit_contract_return",
+        }
+        search = self.env.ref("smart_construction_core.view_sc_expense_claim_application_search")
+
+        for action_xmlid, search_key in expected_contexts.items():
+            action = self.env.ref(action_xmlid)
+            context = action.context
+            self.assertEqual(action.search_view_id, search)
+            self.assertIn("'%s': 1" % search_key, context)
+            self.assertNotIn("'search_default_finance_cash_in': 1", context)
+            self.assertNotIn("'search_default_finance_cash_out': 1", context)
+
+    def test_expense_deposit_application_actions_use_business_list_view(self):
+        action_xmlids = (
+            "smart_construction_core.action_sc_expense_claim_reimbursement_request",
+            "smart_construction_core.action_sc_expense_claim_project",
+            "smart_construction_core.action_sc_bid_deposit_pay",
+            "smart_construction_core.action_sc_bid_deposit_return",
+            "smart_construction_core.action_sc_contract_deposit_pay",
+            "smart_construction_core.action_sc_contract_deposit_return",
+        )
+        tree = self.env.ref("smart_construction_core.view_sc_expense_claim_application_tree")
+        tree_arch = tree.arch_db
+
+        for action_xmlid in action_xmlids:
+            action = self.env.ref(action_xmlid)
+            self.assertEqual(action.view_id, tree)
+            self.assertIn(tree, action.view_ids.mapped("view_id"))
+        for token in (
+            "business_category_id",
+            "project_id",
+            "partner_id",
+            "expense_type",
+            "summary",
+            "amount",
+            "payment_state",
+        ):
+            self.assertIn(token, tree_arch)
+        for token in (
+            "business_axis",
+            "handling_kind",
+            "financial_flow",
+            "payment_anchor_policy",
+            "direction",
+            "legacy_visible_attachment",
+        ):
+            self.assertNotIn(token, tree_arch)
+
+    def test_expense_deposit_application_search_is_business_oriented(self):
+        search = self.env.ref("smart_construction_core.view_sc_expense_claim_application_search").arch_db
+        main_action = self.env.ref("smart_construction_core.action_sc_expense_claim")
+
+        for token in (
+            "expense_reimbursement",
+            "expense_project",
+            "deposit_bid_pay",
+            "deposit_bid_return",
+            "deposit_contract_pay",
+            "deposit_contract_return",
+            "group_business_category",
+            "group_project",
+            "group_partner",
+        ):
+            self.assertIn(token, search)
+        for token in (
+            "finance_noncash",
+            "finance_interfund",
+            "business_axis",
+            "handling_kind",
+            "financial_flow",
+            "payment_anchor_policy",
+        ):
+            self.assertNotIn(token, search)
+        for code in (
+            "finance.expense.reimbursement",
+            "finance.expense.project",
+            "finance.deposit.bid.pay",
+            "finance.deposit.bid.return",
+            "finance.deposit.contract.pay",
+            "finance.deposit.contract.return",
+        ):
+            self.assertIn(code, main_action.domain)
+
+    def test_expense_deposit_legacy_cash_actions_do_not_reuse_generic_search(self):
+        application_search = self.env.ref("smart_construction_core.view_sc_expense_claim_application_search")
+        application_tree = self.env.ref("smart_construction_core.view_sc_expense_claim_application_tree")
+        deposit_search = self.env.ref("smart_construction_core.view_sc_expense_claim_deposit_cash_search")
+        tender_search = self.env.ref("smart_construction_core.view_tender_guarantee_search")
+
+        expense_action = self.env.ref("smart_construction_core.action_sc_expense_claim_expense")
+        self.assertEqual(expense_action.search_view_id, application_search)
+        self.assertEqual(expense_action.view_id, application_tree)
+        self.assertIn("finance.expense.reimbursement", expense_action.domain)
+        self.assertIn("finance.expense.project", expense_action.domain)
+        self.assertIn("'search_default_expense_business': 1", expense_action.context)
+
+        deposit_actions = {
+            "smart_construction_core.action_sc_expense_claim_deposit_pay": "search_default_deposit_payment",
+            "smart_construction_core.action_sc_expense_claim_deposit_refund": "search_default_deposit_refund",
+            "smart_construction_core.action_sc_expense_claim_deposit_receive": "search_default_deposit_receive",
+            "smart_construction_core.action_sc_self_funding_deposit": "search_default_deposit_receive",
+            "smart_construction_core.action_sc_self_funding_deposit_refund": "search_default_deposit_refund",
+            "smart_construction_core.action_sc_payment_deposit_refund": "search_default_deposit_refund",
+        }
+        for action_xmlid, search_key in deposit_actions.items():
+            action = self.env.ref(action_xmlid)
+            self.assertEqual(action.search_view_id, deposit_search)
+            self.assertIn("'%s': 1" % search_key, action.context)
+            for old_key in (
+                "search_default_finance_cash_in",
+                "search_default_finance_cash_out",
+                "search_default_finance_noncash",
+                "search_default_finance_interfund",
+            ):
+                self.assertNotIn("'%s': 1" % old_key, action.context)
+
+        tender_action = self.env.ref("smart_construction_core.action_sc_payment_deposit_return")
+        self.assertEqual(tender_action.res_model, "tender.guarantee")
+        self.assertEqual(tender_action.search_view_id, tender_search)
+
+        for arch in (deposit_search.arch_db, tender_search.arch_db):
+            for token in (
+                "business_axis",
+                "handling_kind",
+                "financial_flow",
+                "payment_anchor_policy",
+            ):
+                self.assertNotIn(token, arch)
+
+    def test_formal_user_menu_search_and_list_views_hide_internal_fact_tokens(self):
+        bad_search_tokens = (
+            "business_axis",
+            "handling_kind",
+            "financial_flow",
+            "payment_anchor_policy",
+        )
+        bad_tree_tokens = bad_search_tokens + (
+            "direction",
+            "legacy_visible_attachment",
+            "legacy_fact_type",
+            "legacy_fact_model",
+            "legacy_source",
+        )
+        roots = (
+            "智慧施工管理平台/财务中心",
+            "智慧施工管理平台/合同中心",
+            "智慧施工管理平台/物资与分包",
+            "智慧施工管理平台/施工管理",
+            "智慧施工管理平台/人事行政",
+            "智慧施工管理平台/用户验收/直营项目系统菜单",
+        )
+        failures = []
+
+        for menu in self.env["ir.ui.menu"].search([]):
+            complete_name = menu.complete_name or ""
+            if not any(complete_name.startswith(root) for root in roots):
+                continue
+            action = menu.action
+            if not action or action._name != "ir.actions.act_window":
+                continue
+            search_arch = action.search_view_id.arch_db if action.search_view_id else ""
+            tree = action.view_id if action.view_id and action.view_id.type == "tree" else False
+            if not tree:
+                for action_view in action.view_ids:
+                    if action_view.view_mode == "tree" and action_view.view_id:
+                        tree = action_view.view_id
+                        break
+            tree_arch = tree.arch_db if tree else ""
+            bad_search = [token for token in bad_search_tokens if token in search_arch]
+            bad_tree = [token for token in bad_tree_tokens if token in tree_arch]
+            if bad_search or bad_tree:
+                failures.append(
+                    "%s search=%s tree=%s" % (
+                        complete_name,
+                        ",".join(bad_search) or "-",
+                        ",".join(bad_tree) or "-",
+                    )
+                )
+
+        self.assertFalse(failures, "\n".join(failures))
 
     def test_deduction_registration_action_creates_deduction_bill_lines(self):
         action = self.env.ref("smart_construction_core.action_sc_expense_claim_deduction_bill")
@@ -2003,8 +2230,9 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(claim.business_axis, "interfund")
         self.assertEqual(claim.handling_kind, "repayment_registration")
         self.assertEqual(claim.financial_flow, "interfund")
-        self.assertIn("project_company_repay", action.domain)
-        self.assertIn("'search_default_finance_interfund': 1", action.context)
+        self.assertIn("finance.repayment.registration", action.domain)
+        self.assertIn("'search_default_repayment_registration': 1", action.context)
+        self.assertNotIn("'search_default_finance_interfund': 1", action.context)
         self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_expense_claim_tree").active)
         self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_financing_loan_tree").active)
         self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_receipt_income_tree").active)

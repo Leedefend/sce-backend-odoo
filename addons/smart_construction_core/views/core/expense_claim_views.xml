@@ -51,6 +51,35 @@
             </field>
         </record>
 
+        <record id="view_sc_expense_claim_application_tree" model="ir.ui.view">
+            <field name="name">sc.expense.claim.application.tree</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <tree string="费用/保证金申请" decoration-muted="state == 'cancel'">
+                    <field name="date_claim" string="单据日期"/>
+                    <field name="name" string="单据号"/>
+                    <field name="business_category_id" string="业务类型"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id" string="往来单位"/>
+                    <field name="applicant_name"/>
+                    <field name="guarantee_project_name" optional="show"/>
+                    <field name="guarantee_type" optional="show"/>
+                    <field name="expense_type" string="办理事项"/>
+                    <field name="summary"/>
+                    <field name="amount" string="申请金额" sum="申请金额合计"/>
+                    <field name="approved_amount" sum="批准金额合计"/>
+                    <field name="paid_amount" sum="已付款金额合计"/>
+                    <field name="unpaid_amount" sum="未付款金额合计"/>
+                    <field name="payment_state"/>
+                    <field name="payee" optional="show"/>
+                    <field name="receipt_account_name" optional="hide"/>
+                    <field name="payment_account_name" optional="hide"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
         <record id="view_sc_expense_claim_deduction_registration_tree" model="ir.ui.view">
             <field name="name">sc.expense.claim.deduction.registration.tree</field>
             <field name="model">sc.expense.claim</field>
@@ -61,9 +90,6 @@
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id" string="责任方"/>
-                    <field name="handling_kind" string="明细类型"/>
-                    <field name="financial_flow"/>
-                    <field name="payment_anchor_policy"/>
                     <field name="expense_type" string="扣款单类型"/>
                     <field name="summary" string="扣款事项"/>
                     <field name="amount" string="扣款金额" sum="扣款金额合计"/>
@@ -76,6 +102,53 @@
                     <field name="legacy_visible_document_no" optional="show"/>
                     <field name="creator_name" optional="show"/>
                     <field name="created_time" optional="hide"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_deduction_cash_tree" model="ir.ui.view">
+            <field name="name">sc.expense.claim.deduction.cash.tree</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <tree string="扣款实缴办理" decoration-muted="state == 'cancel'">
+                    <field name="date_claim" string="单据日期"/>
+                    <field name="name" string="单据号"/>
+                    <field name="business_category_id" string="业务分类"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id" string="责任方"/>
+                    <field name="expense_type" string="扣款事项"/>
+                    <field name="summary"/>
+                    <field name="amount" string="办理金额" sum="办理金额合计"/>
+                    <field name="approved_amount" sum="确认金额合计"/>
+                    <field name="paid_amount" sum="已收付金额合计"/>
+                    <field name="unpaid_amount" sum="未收付金额合计"/>
+                    <field name="payment_state"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_repayment_tree" model="ir.ui.view">
+            <field name="name">sc.expense.claim.repayment.tree</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <tree string="还款/资金往来办理" decoration-muted="state == 'cancel'">
+                    <field name="date_claim" string="单据日期"/>
+                    <field name="name" string="单据号"/>
+                    <field name="business_category_id" string="业务分类"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id" string="往来单位"/>
+                    <field name="applicant_name"/>
+                    <field name="expense_type" string="办理事项"/>
+                    <field name="summary"/>
+                    <field name="amount" string="办理金额" sum="办理金额合计"/>
+                    <field name="approved_amount" sum="确认金额合计"/>
+                    <field name="paid_amount" sum="已收付金额合计"/>
+                    <field name="unpaid_amount" sum="未收付金额合计"/>
+                    <field name="payment_state"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -415,12 +488,166 @@
             </field>
         </record>
 
+        <record id="view_sc_expense_claim_application_search" model="ir.ui.view">
+            <field name="name">sc.expense.claim.application.search</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <search string="费用/保证金申请">
+                    <field name="name" string="单据号"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="business_category_id"/>
+                    <field name="applicant_name"/>
+                    <field name="payee"/>
+                    <field name="expense_type"/>
+                    <field name="summary"/>
+                    <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+                    <separator/>
+                    <filter name="expense_reimbursement" string="报销申请" domain="[('business_category_id.code', '=', 'finance.expense.reimbursement')]"/>
+                    <filter name="expense_project" string="项目费用报销" domain="[('business_category_id.code', '=', 'finance.expense.project')]"/>
+                    <filter name="deposit_bid_pay" string="投标保证金支付" domain="[('business_category_id.code', '=', 'finance.deposit.bid.pay')]"/>
+                    <filter name="deposit_bid_return" string="投标保证金退回" domain="[('business_category_id.code', '=', 'finance.deposit.bid.return')]"/>
+                    <filter name="deposit_contract_pay" string="合同保证金登记" domain="[('business_category_id.code', '=', 'finance.deposit.contract.pay')]"/>
+                    <filter name="deposit_contract_return" string="合同保证金退回" domain="[('business_category_id.code', '=', 'finance.deposit.contract.return')]"/>
+                    <separator/>
+                    <filter name="expense_business" string="费用报销" domain="[('business_category_id.code', 'in', ['finance.expense.reimbursement', 'finance.expense.project'])]"/>
+                    <filter name="deposit_pay" string="保证金支付/登记" domain="[('business_category_id.code', 'in', ['finance.deposit.bid.pay', 'finance.deposit.contract.pay'])]"/>
+                    <filter name="deposit_return" string="保证金退回" domain="[('business_category_id.code', 'in', ['finance.deposit.bid.return', 'finance.deposit.contract.return'])]"/>
+                    <separator/>
+                    <filter name="draft" string="草稿" domain="[('state', '=', 'draft')]"/>
+                    <filter name="submitted" string="已提交" domain="[('state', '=', 'submit')]"/>
+                    <filter name="approved" string="已批准" domain="[('state', '=', 'approved')]"/>
+                    <filter name="done" string="已完成" domain="[('state', 'in', ['done', 'legacy_confirmed'])]"/>
+                    <filter name="cancelled" string="已取消" domain="[('state', '=', 'cancel')]"/>
+                    <separator/>
+                    <filter name="request_linked" string="已关联申请" domain="[('payment_request_id', '!=', False)]"/>
+                    <filter name="request_missing" string="未关联申请" domain="[('payment_request_id', '=', False)]"/>
+                    <group expand="0" string="分组">
+                        <filter name="group_business_category" string="业务类型" context="{'group_by': 'business_category_id'}"/>
+                        <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_id'}"/>
+                        <filter name="group_state" string="办理状态" context="{'group_by': 'state'}"/>
+                        <filter name="group_operation_strategy" string="经营方式" context="{'group_by': 'operation_strategy'}"/>
+                        <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
+                        <filter name="group_date_claim" string="单据日期" context="{'group_by': 'date_claim'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_deduction_search" model="ir.ui.view">
+            <field name="name">sc.expense.claim.deduction.search</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <search string="扣款办理">
+                    <field name="name" string="单据号"/>
+                    <field name="project_id"/>
+                    <field name="partner_id" string="责任方"/>
+                    <field name="business_category_id"/>
+                    <field name="expense_type"/>
+                    <field name="summary"/>
+                    <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+                    <separator/>
+                    <filter name="deduction_bill" string="扣款登记" domain="[('business_category_id.code', '=', 'finance.deduction.bill')]"/>
+                    <filter name="deduction_paid" string="扣款实缴登记" domain="[('business_category_id.code', '=', 'finance.deduction.paid')]"/>
+                    <filter name="deduction_refund" string="扣款实缴退回" domain="[('business_category_id.code', '=', 'finance.deduction.refund')]"/>
+                    <separator/>
+                    <filter name="draft" string="草稿" domain="[('state', '=', 'draft')]"/>
+                    <filter name="submitted" string="已提交" domain="[('state', '=', 'submit')]"/>
+                    <filter name="approved" string="已批准" domain="[('state', '=', 'approved')]"/>
+                    <filter name="done" string="已完成" domain="[('state', 'in', ['done', 'legacy_confirmed'])]"/>
+                    <filter name="cancelled" string="已取消" domain="[('state', '=', 'cancel')]"/>
+                    <group expand="0" string="分组">
+                        <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_partner" string="责任方" context="{'group_by': 'partner_id'}"/>
+                        <filter name="group_business_category" string="业务类型" context="{'group_by': 'business_category_id'}"/>
+                        <filter name="group_operation_strategy" string="经营方式" context="{'group_by': 'operation_strategy'}"/>
+                        <filter name="group_state" string="办理状态" context="{'group_by': 'state'}"/>
+                        <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_repayment_search" model="ir.ui.view">
+            <field name="name">sc.expense.claim.repayment.search</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <search string="还款/资金往来办理">
+                    <field name="name" string="单据号"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="business_category_id"/>
+                    <field name="applicant_name"/>
+                    <field name="expense_type"/>
+                    <field name="summary"/>
+                    <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+                    <separator/>
+                    <filter name="repayment_registration" string="还款登记" domain="[('business_category_id.code', '=', 'finance.repayment.registration')]"/>
+                    <filter name="repayment_contractor_project" string="承包人还项目款" domain="[('business_category_id.code', '=', 'finance.repayment.contractor_project')]"/>
+                    <filter name="repayment_project_company" string="项目还公司款登记" domain="[('business_category_id.code', '=', 'finance.repayment.project_company')]"/>
+                    <separator/>
+                    <filter name="draft" string="草稿" domain="[('state', '=', 'draft')]"/>
+                    <filter name="submitted" string="已提交" domain="[('state', '=', 'submit')]"/>
+                    <filter name="approved" string="已批准" domain="[('state', '=', 'approved')]"/>
+                    <filter name="done" string="已完成" domain="[('state', 'in', ['done', 'legacy_confirmed'])]"/>
+                    <filter name="cancelled" string="已取消" domain="[('state', '=', 'cancel')]"/>
+                    <group expand="0" string="分组">
+                        <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_id'}"/>
+                        <filter name="group_business_category" string="业务类型" context="{'group_by': 'business_category_id'}"/>
+                        <filter name="group_operation_strategy" string="经营方式" context="{'group_by': 'operation_strategy'}"/>
+                        <filter name="group_state" string="办理状态" context="{'group_by': 'state'}"/>
+                        <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_deposit_cash_search" model="ir.ui.view">
+            <field name="name">sc.expense.claim.deposit.cash.search</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <search string="保证金现金办理">
+                    <field name="name" string="单据号"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="business_category_id"/>
+                    <field name="payee"/>
+                    <field name="expense_type"/>
+                    <field name="summary"/>
+                    <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+                    <separator/>
+                    <filter name="deposit_payment" string="保证金支付" domain="[('claim_type', '=', 'deposit_pay')]"/>
+                    <filter name="deposit_refund" string="保证金退回" domain="[('claim_type', '=', 'deposit_refund')]"/>
+                    <filter name="deposit_receive" string="保证金收取" domain="[('claim_type', '=', 'deposit_receive')]"/>
+                    <separator/>
+                    <filter name="draft" string="草稿" domain="[('state', '=', 'draft')]"/>
+                    <filter name="submitted" string="已提交" domain="[('state', '=', 'submit')]"/>
+                    <filter name="approved" string="已批准" domain="[('state', '=', 'approved')]"/>
+                    <filter name="done" string="已完成" domain="[('state', 'in', ['done', 'legacy_confirmed'])]"/>
+                    <filter name="cancelled" string="已取消" domain="[('state', '=', 'cancel')]"/>
+                    <group expand="0" string="分组">
+                        <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_id'}"/>
+                        <filter name="group_business_category" string="业务类型" context="{'group_by': 'business_category_id'}"/>
+                        <filter name="group_expense_type" string="办理事项" context="{'group_by': 'expense_type'}"/>
+                        <filter name="group_state" string="办理状态" context="{'group_by': 'state'}"/>
+                        <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
         <record id="action_sc_expense_claim" model="ir.actions.act_window">
             <field name="name">费用/保证金</field>
             <field name="res_model">sc.expense.claim</field>
             <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="view_sc_expense_claim_search"/>
-            <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+            <field name="view_id" ref="view_sc_expense_claim_application_tree"/>
+            <field name="views" eval="[(ref('view_sc_expense_claim_application_tree'), 'tree'), (ref('view_sc_expense_claim_form'), 'form')]"/>
+            <field name="search_view_id" ref="view_sc_expense_claim_application_search"/>
+            <field name="domain">[('business_category_id.code', 'in', ['finance.expense.reimbursement', 'finance.expense.project', 'finance.deposit.bid.pay', 'finance.deposit.bid.return', 'finance.deposit.contract.pay', 'finance.deposit.contract.return'])]</field>
+            <field name="context">{'search_default_active_rows': 1, 'search_default_group_business_category': 1}</field>
             <field name="groups_id" eval="[
                 (4, ref('smart_construction_core.group_sc_cap_business_initiator')),
                 (4, ref('smart_construction_core.group_sc_cap_finance_read')),
