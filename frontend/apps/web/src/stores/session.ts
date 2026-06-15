@@ -275,6 +275,31 @@ export interface WorkspaceCapabilityGroupRow {
   }>;
 }
 
+export interface ActivityProjectContextSnapshot {
+  selected: ProjectContextOption | null;
+  company_id: number | null;
+  company_name: string;
+  operation_strategy: string;
+  operation_strategy_label: string;
+}
+
+export interface ActivityPage {
+  key: string;
+  title: string;
+  route: string;
+  kind: 'menu_action' | 'record_form' | 'scene' | 'workspace' | 'custom';
+  model?: string;
+  action_id?: number;
+  menu_id?: number;
+  record_id?: string;
+  scene_key?: string;
+  project_scope_policy?: string;
+  project_context?: ActivityProjectContextSnapshot | null;
+  dirty?: boolean;
+  created_at: number;
+  last_active_at: number;
+}
+
 export interface PageContract {
   schema_version?: string;
   texts?: Record<string, unknown>;
@@ -346,6 +371,8 @@ export interface SessionState {
   roleSurface: RoleSurface | null;
   roleSurfaceMap: RoleSurfaceMap;
   projectContext: ProjectContextContract | null;
+  activityPages: ActivityPage[];
+  activeActivityPageKey: string;
   capabilityCatalog: Record<string, CapabilityRuntimeMeta>;
   sceneActionHints: Record<string, SceneActionHint>;
   capabilityGroups: CapabilityGroup[];
@@ -378,6 +405,7 @@ export interface SessionState {
 }
 
 const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
+const MAX_ACTIVITY_PAGES = 6;
 
 function currentDbScope(): string {
   return String(resolveActiveDb('') || resolveConfiguredDb(String(config.odooDb || '').trim()) || config.odooDb || 'default').trim() || 'default';
@@ -531,6 +559,74 @@ function projectContextStorageSnapshot(raw: ProjectContextContract | null): Proj
   };
 }
 
+function normalizeActivityProjectContext(raw: unknown): ActivityProjectContextSnapshot | null {
+  const row = asRecord(raw);
+  if (!Object.keys(row).length) return null;
+  return {
+    selected: normalizeProjectOption(row.selected),
+    company_id: Number(row.company_id || 0) || null,
+    company_name: asText(row.company_name),
+    operation_strategy: asText(row.operation_strategy),
+    operation_strategy_label: asText(row.operation_strategy_label),
+  };
+}
+
+function normalizeActivityPage(raw: unknown): ActivityPage | null {
+  const row = asRecord(raw);
+  const key = asText(row.key);
+  const route = asText(row.route);
+  if (!key || !route) return null;
+  const kindText = asText(row.kind);
+  const kind = ['menu_action', 'record_form', 'scene', 'workspace', 'custom'].includes(kindText)
+    ? kindText as ActivityPage['kind']
+    : 'custom';
+  const createdAt = Number(row.created_at || row.createdAt || 0) || Date.now();
+  const lastActiveAt = Number(row.last_active_at || row.lastActiveAt || 0) || createdAt;
+  return {
+    key,
+    route,
+    kind,
+    title: asText(row.title) || '活动页面',
+    model: asText(row.model) || undefined,
+    action_id: Number(row.action_id || row.actionId || 0) || undefined,
+    menu_id: Number(row.menu_id || row.menuId || 0) || undefined,
+    record_id: asText(row.record_id || row.recordId) || undefined,
+    scene_key: asText(row.scene_key || row.sceneKey) || undefined,
+    project_scope_policy: asText(row.project_scope_policy || row.projectScopePolicy) || undefined,
+    project_context: normalizeActivityProjectContext(row.project_context || row.projectContext),
+    dirty: Boolean(row.dirty),
+    created_at: createdAt,
+    last_active_at: lastActiveAt,
+  };
+}
+
+function trimActivityPages(pages: ActivityPage[], activeKey: string): ActivityPage[] {
+  if (pages.length <= MAX_ACTIVITY_PAGES) return pages;
+  const keep = [...pages];
+  while (keep.length > MAX_ACTIVITY_PAGES) {
+    const removable = keep
+      .filter((page) => page.key !== activeKey && !page.dirty)
+      .sort((a, b) => a.last_active_at - b.last_active_at)[0];
+    if (!removable) break;
+    const index = keep.findIndex((page) => page.key === removable.key);
+    if (index >= 0) keep.splice(index, 1);
+    else break;
+  }
+  return keep;
+}
+
+function isRetainedActivityPage(page: ActivityPage | null): page is ActivityPage {
+  if (!page) return false;
+  const key = asText(page.key).toLowerCase();
+  const route = asText(page.route).split(/[?#]/, 1)[0];
+  const pageRecord = page as unknown as Record<string, unknown>;
+  const sceneKey = asText(page.scene_key || pageRecord.sceneKey).toLowerCase();
+  if (key === 'workspace:home') return false;
+  if (sceneKey === 'workspace.home') return false;
+  if (route === '/' || route === '/s/workspace.home') return false;
+  return true;
+}
+
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
     token: null,
@@ -545,6 +641,8 @@ export const useSessionStore = defineStore('session', {
     roleSurface: null,
     roleSurfaceMap: {},
     projectContext: null,
+    activityPages: [],
+    activeActivityPageKey: '',
     capabilityCatalog: {},
     sceneActionHints: {},
     capabilityGroups: [],
@@ -813,6 +911,13 @@ export const useSessionStore = defineStore('session', {
           this.roleSurface = parsed.roleSurface ?? null;
           this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
           this.projectContext = projectContextStorageSnapshot(normalizeProjectContext(parsed.projectContext));
+          this.activityPages = Array.isArray(parsed.activityPages)
+            ? parsed.activityPages.map((item) => normalizeActivityPage(item)).filter(isRetainedActivityPage)
+            : [];
+          const restoredActiveKey = asText(parsed.activeActivityPageKey);
+          this.activeActivityPageKey = this.activityPages.some((page) => page.key === restoredActiveKey)
+            ? restoredActiveKey
+            : '';
           this.capabilityCatalog = parsed.capabilityCatalog ?? {};
           this.sceneActionHints = parsed.sceneActionHints ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
@@ -858,6 +963,8 @@ export const useSessionStore = defineStore('session', {
       this.roleSurface = null;
       this.roleSurfaceMap = {};
       this.projectContext = null;
+      this.activityPages = [];
+      this.activeActivityPageKey = '';
       this.capabilityCatalog = {};
       this.sceneActionHints = {};
       this.capabilityGroups = [];
@@ -920,6 +1027,8 @@ export const useSessionStore = defineStore('session', {
         roleSurface: this.roleSurface,
         roleSurfaceMap: this.roleSurfaceMap,
         projectContext: projectContextStorageSnapshot(this.projectContext),
+        activityPages: this.activityPages,
+        activeActivityPageKey: this.activeActivityPageKey,
         capabilityCatalog: this.capabilityCatalog,
         sceneActionHints: this.sceneActionHints,
         capabilityGroups: this.capabilityGroups,
@@ -952,6 +1061,8 @@ export const useSessionStore = defineStore('session', {
           currentAction: this.currentAction,
           roleSurface: this.roleSurface,
           projectContext: this.projectContext,
+          activityPages: this.activityPages,
+          activeActivityPageKey: this.activeActivityPageKey,
           workspaceHomeRef: this.workspaceHomeRef,
           lastTraceId: this.lastTraceId,
           lastIntent: this.lastIntent,
@@ -965,6 +1076,96 @@ export const useSessionStore = defineStore('session', {
       } catch {
         localStorage.removeItem(sessionStorageKey());
       }
+    },
+    currentActivityProjectContextSnapshot(): ActivityProjectContextSnapshot | null {
+      const current = this.projectContext;
+      if (!current) return null;
+      return {
+        selected: current.selected ?? null,
+        company_id: Number(current.company_id || current.selected?.company_id || 0) || null,
+        company_name: asText(current.company_name || current.selected?.company_name),
+        operation_strategy: asText(current.operation_strategy || current.selected?.operation_strategy),
+        operation_strategy_label: asText(current.operation_strategy_label || current.selected?.operation_strategy_label),
+      };
+    },
+    registerActivityPage(rawPage: Omit<ActivityPage, 'created_at' | 'last_active_at'> & Partial<Pick<ActivityPage, 'created_at' | 'last_active_at'>>) {
+      const now = Date.now();
+      const key = asText(rawPage.key);
+      const route = asText(rawPage.route);
+      if (!key || !route) return;
+      const title = asText(rawPage.title) || '活动页面';
+      const existing = this.activityPages.find((page) => page.key === key);
+      const nextPage: ActivityPage = {
+        key,
+        route,
+        title,
+        kind: rawPage.kind,
+        model: asText(rawPage.model) || undefined,
+        action_id: Number(rawPage.action_id || 0) || undefined,
+        menu_id: Number(rawPage.menu_id || 0) || undefined,
+        record_id: asText(rawPage.record_id) || undefined,
+        scene_key: asText(rawPage.scene_key) || undefined,
+        project_scope_policy: asText(rawPage.project_scope_policy) || undefined,
+        project_context: rawPage.project_context ?? this.currentActivityProjectContextSnapshot(),
+        dirty: Boolean(rawPage.dirty || existing?.dirty),
+        created_at: existing?.created_at || Number(rawPage.created_at || 0) || now,
+        last_active_at: now,
+      };
+      if (!isRetainedActivityPage(nextPage)) return;
+      const others = this.activityPages.filter((page) => page.key !== key);
+      this.activeActivityPageKey = key;
+      this.activityPages = trimActivityPages([...others, nextPage], key)
+        .sort((a, b) => a.created_at - b.created_at);
+      this.persist();
+    },
+    closeActivityPage(key: string): ActivityPage | null {
+      const normalizedKey = asText(key);
+      if (!normalizedKey) return null;
+      const closingActive = this.activeActivityPageKey === normalizedKey;
+      this.activityPages = this.activityPages.filter((page) => page.key !== normalizedKey);
+      let nextPage: ActivityPage | null = null;
+      if (closingActive) {
+        nextPage = [...this.activityPages].sort((a, b) => b.last_active_at - a.last_active_at)[0] || null;
+        this.activeActivityPageKey = nextPage?.key || '';
+      }
+      this.persist();
+      return nextPage;
+    },
+    markActivityPageActive(key: string) {
+      const normalizedKey = asText(key);
+      if (!normalizedKey) return;
+      const now = Date.now();
+      this.activityPages = this.activityPages.map((page) => (
+        page.key === normalizedKey ? { ...page, last_active_at: now } : page
+      ));
+      this.activeActivityPageKey = normalizedKey;
+      this.persist();
+    },
+    async applyActivityProjectContext(snapshot: ActivityProjectContextSnapshot | null | undefined) {
+      if (!snapshot || !this.projectContext) return;
+      const currentSelectedId = Number(this.projectContext.selected?.id || 0) || 0;
+      const nextSelectedId = Number(snapshot.selected?.id || 0) || 0;
+      const currentCompanyId = Number(this.projectContext.company_id || this.projectContext.selected?.company_id || 0) || 0;
+      const nextCompanyId = Number(snapshot.company_id || snapshot.selected?.company_id || 0) || 0;
+      const currentOperation = asText(this.projectContext.operation_strategy || this.projectContext.selected?.operation_strategy);
+      const nextOperation = asText(snapshot.operation_strategy || snapshot.selected?.operation_strategy);
+      if (
+        currentSelectedId === nextSelectedId
+        && currentCompanyId === nextCompanyId
+        && currentOperation === nextOperation
+      ) {
+        return;
+      }
+      this.projectContext = {
+        ...this.projectContext,
+        selected: snapshot.selected ?? null,
+        company_id: nextCompanyId || null,
+        company_name: asText(snapshot.company_name || snapshot.selected?.company_name),
+        operation_strategy: nextOperation,
+        operation_strategy_label: asText(snapshot.operation_strategy_label || snapshot.selected?.operation_strategy_label),
+      };
+      this.persist();
+      await this.loadAppInit();
     },
     recordIntentTrace(params: { traceId?: string; intent: string; latencyMs?: number | null; writeMode?: string }) {
       if (params.traceId) {

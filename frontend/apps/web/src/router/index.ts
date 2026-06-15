@@ -1,10 +1,10 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import LoginView from '../views/LoginView.vue';
 import { ApiError } from '../api/client';
 import { buildCanonicalSceneRouteTarget, normalizeEmbeddedSceneQuery, normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
-import { findActionNodeByModel, findMenuNode } from '../app/menu';
+import { findActionMeta, findActionMetaByMenu, findActionNodeByModel, findMenuNode } from '../app/menu';
 import { config } from '../config';
 
 const APP_TITLE = config.appTitle;
@@ -65,6 +65,110 @@ function resolveExplicitSceneKeyFromMenuContext(menuId: number, session: ReturnT
   const menuSceneKey = String(menuNode?.meta?.scene_key || '').trim();
   if (menuSceneKey) return menuSceneKey;
   return '';
+}
+
+function routeQueryText(value: unknown): string {
+  if (Array.isArray(value)) return String(value[0] || '').trim();
+  return String(value || '').trim();
+}
+
+function activityProjectPart(session: ReturnType<typeof useSessionStore>, policy: string): string {
+  const normalizedPolicy = String(policy || '').trim().toLowerCase();
+  if (normalizedPolicy === 'global' || normalizedPolicy === 'exempt') return 'global';
+  const selectedId = Number(session.projectContext?.selected?.id || 0) || 0;
+  return selectedId > 0 ? `project:${selectedId}` : 'all';
+}
+
+function resolveActivityRoutePolicy(actionId: number, menuId: number, session: ReturnType<typeof useSessionStore>): string {
+  const meta = (menuId > 0 ? findActionMetaByMenu(session.menuTree, menuId, actionId) : null)
+    || (actionId > 0 ? findActionMeta(session.menuTree, actionId) : null)
+    || session.currentAction
+    || null;
+  return String(meta?.project_scope_policy || meta?.projectScopePolicy || '').trim().toLowerCase();
+}
+
+function resolveActivityTitle(to: RouteLocationNormalized, session: ReturnType<typeof useSessionStore>): string {
+  const businessLabel = routeQueryText(to.query.current_business_category_label || to.query.default_business_category_label);
+  if (businessLabel) return businessLabel;
+  if (to.name === 'home' || to.name === 'scene-home') return '角色首页';
+  if (to.name === 'my-work' || to.name === 'scene-my-work') return '我的工作';
+  if (to.name === 'scene') {
+    const sceneKey = routeQueryText(to.params.sceneKey || to.query.scene_key || to.query.scene);
+    const scene = sceneKey ? getSceneByKey(sceneKey) : null;
+    return String(scene?.label || sceneKey || '业务场景').trim();
+  }
+  if (to.name === 'action') {
+    const actionId = positiveInteger(to.params.actionId || to.query.action_id);
+    const menuId = positiveInteger(to.query.menu_id);
+    const meta = (menuId > 0 ? findActionMetaByMenu(session.menuTree, menuId, actionId) : null)
+      || (actionId > 0 ? findActionMeta(session.menuTree, actionId) : null)
+      || session.currentAction
+      || null;
+    const menuNode = menuId > 0 ? findMenuNode(session.menuTree, menuId) : null;
+    return String(meta?.ui_title || meta?.scene_title || meta?.menu_title || menuNode?.label || meta?.name || `动作 ${actionId}`).trim();
+  }
+  if (to.name === 'record' || to.name === 'model-form') {
+    const model = routeQueryText(to.params.model);
+    const id = routeQueryText(to.params.id);
+    return id === 'new' ? '新建业务表单' : `${model || '记录'} #${id || ''}`.trim();
+  }
+  return routeTitle(to.name);
+}
+
+function registerRouteActivity(to: RouteLocationNormalized) {
+  const session = useSessionStore();
+  if (!session.token || !session.isReady) return;
+  if (to.name === 'login' || to.name === 'platform-admin-login') return;
+  if (to.name === 'menu') return;
+  if (to.name === 'home' || to.name === 'scene-home') return;
+  if (to.meta?.adminOnly) return;
+  const fullPath = String(to.fullPath || '').trim();
+  if (!fullPath) return;
+  const now = Date.now();
+  let key = '';
+  let kind: 'menu_action' | 'record_form' | 'scene' | 'workspace' | 'custom' = 'custom';
+  let actionId = 0;
+  let menuId = 0;
+  let model = '';
+  let recordId = '';
+  let sceneKey = '';
+  let projectScopePolicy = '';
+  if (to.name === 'action') {
+    actionId = positiveInteger(to.params.actionId || to.query.action_id);
+    menuId = positiveInteger(to.query.menu_id);
+    projectScopePolicy = resolveActivityRoutePolicy(actionId, menuId, session);
+    key = `action:${actionId}:menu:${menuId}:${activityProjectPart(session, projectScopePolicy)}`;
+    kind = 'menu_action';
+  } else if (to.name === 'record' || to.name === 'model-form') {
+    model = routeQueryText(to.params.model);
+    recordId = routeQueryText(to.params.id);
+    key = recordId === 'new'
+      ? `new:${model}:${routeQueryText(to.query.menu_id)}:${activityProjectPart(session, 'current_project')}:${now}`
+      : `record:${model}:${recordId}`;
+    kind = 'record_form';
+  } else if (to.name === 'scene' || to.name === 'projects-intake' || String(to.name || '').startsWith('scene-')) {
+    sceneKey = routeQueryText(to.params.sceneKey || to.meta?.sceneKey || to.query.scene_key || to.query.scene);
+    key = `scene:${sceneKey || String(to.name || 'scene')}:${activityProjectPart(session, 'current_project')}`;
+    kind = sceneKey === 'workspace.home' || to.name === 'scene-home' ? 'workspace' : 'scene';
+  } else if (to.name === 'home' || to.name === 'my-work') {
+    key = `workspace:${String(to.name)}`;
+    kind = 'workspace';
+  } else {
+    key = `route:${String(to.name || to.path)}:${fullPath}`;
+  }
+  session.registerActivityPage({
+    key,
+    title: resolveActivityTitle(to, session),
+    route: fullPath,
+    kind,
+    model: model || undefined,
+    action_id: actionId || undefined,
+    menu_id: menuId || undefined,
+    record_id: recordId || undefined,
+    scene_key: sceneKey || undefined,
+    project_scope_policy: projectScopePolicy || undefined,
+    project_context: session.currentActivityProjectContextSnapshot(),
+  });
 }
 
 const router = createRouter({
@@ -152,6 +256,10 @@ router.beforeEach(async (to) => {
     }
   }
   return true;
+});
+
+router.afterEach((to) => {
+  registerRouteActivity(to);
 });
 
 export default router;

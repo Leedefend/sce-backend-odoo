@@ -152,7 +152,10 @@
       </div>
     </aside>
 
-    <section class="content" :class="{ 'content--scene-compact': sceneHeaderMinimal }">
+    <section
+      class="content"
+      :class="{ 'content--scene-compact': sceneHeaderMinimal, 'content--with-activity-tabs': activityPages.length }"
+    >
       <header
         class="topbar sc-toolbar"
         :class="{ 'topbar--compact': activeLayout.header === 'compact', 'topbar--minimal': useMinimalTopbar, 'topbar--scene-minimal': sceneHeaderMinimal }"
@@ -182,6 +185,33 @@
           <button class="theme-switch sc-btn sc-btn-sm" type="button" @click="toggleTheme">主题：{{ themeLabel }}</button>
         </div>
       </header>
+
+      <nav v-if="activityPages.length" class="activity-tabs" aria-label="活动页面">
+        <div
+          v-for="page in activityPages"
+          :key="page.key"
+          class="activity-tab"
+          :class="{ active: page.key === activeActivityPageKey }"
+        >
+          <button
+            class="activity-tab-main"
+            type="button"
+            :title="page.title"
+            @click="activateActivityPage(page)"
+          >
+            <span>{{ page.title }}</span>
+          </button>
+          <button
+            class="activity-tab-close"
+            type="button"
+            :aria-label="`关闭 ${page.title}`"
+            :title="`关闭 ${page.title}`"
+            @click.stop="closeActivityPage(page)"
+          >
+            ×
+          </button>
+        </div>
+      </nav>
 
       <StatusPanel
         v-if="initStatus === 'loading'"
@@ -232,7 +262,7 @@ import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import GlobalMessagePanel from '../components/GlobalMessagePanel.vue';
-import { useSessionStore } from '../stores/session';
+import { useSessionStore, type ActivityPage } from '../stores/session';
 import { intentRequest } from '../api/intents';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { resolveMenuAction } from '../app/resolvers/menuResolver';
@@ -1275,6 +1305,8 @@ function filterNodes(nodes: NavNode[], q: string): NavNode[] {
 }
 
 const filteredMenu = computed(() => filterNodes(visibleMenuNodes.value, query.value));
+const activityPages = computed(() => session.activityPages);
+const activeActivityPageKey = computed(() => session.activeActivityPageKey);
 
 function buildMenuSelectionQuery(): LocationQueryRaw {
   const next: LocationQueryRaw = {};
@@ -1325,6 +1357,27 @@ function handleSelect(node: NavNode) {
 
 function openRoleLanding() {
   router.push(roleLandingPath.value).catch(() => {});
+}
+
+async function activateActivityPage(page: ActivityPage) {
+  if (!page?.key || !page.route) return;
+  await session.applyActivityProjectContext(page.project_context);
+  session.markActivityPageActive(page.key);
+  if (route.fullPath !== page.route) {
+    await router.push(page.route).catch(() => {});
+  }
+}
+
+async function closeActivityPage(page: ActivityPage) {
+  if (!page?.key) return;
+  const wasActive = page.key === activeActivityPageKey.value;
+  const nextPage = session.closeActivityPage(page.key);
+  if (!wasActive) return;
+  if (nextPage) {
+    await activateActivityPage(nextPage);
+    return;
+  }
+  await router.push(roleLandingPath.value || '/').catch(() => {});
 }
 
 async function refreshInit() {
@@ -1817,6 +1870,10 @@ async function logout() {
   background: var(--sc-app-bg);
 }
 
+.content--with-activity-tabs {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
 .content--scene-compact {
   gap: 4px;
   padding: 8px 18px;
@@ -1971,6 +2028,75 @@ async function logout() {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.activity-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1px 0 2px;
+  scrollbar-width: thin;
+}
+
+.activity-tab {
+  flex: 0 1 180px;
+  min-width: 92px;
+  max-width: 220px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22px;
+  align-items: center;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
+  overflow: hidden;
+}
+
+.activity-tab.active {
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+}
+
+.activity-tab-main,
+.activity-tab-close {
+  min-width: 0;
+  height: 26px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.activity-tab-main {
+  padding: 0 6px 0 8px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.activity-tab-main span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-tab-close {
+  width: 22px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.activity-tab-close:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--sc-app-danger-bg, #fee2e2) 70%, transparent);
 }
 
 .theme-switch {
