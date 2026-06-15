@@ -4,6 +4,57 @@ type Dict = Record<string, unknown>;
 type SavedFilterChip = { key: string; isDefault: boolean };
 type GroupByChip = { field: string; isDefault: boolean };
 
+function collectOrderCandidateFields(value: unknown, fields: Set<string>): void {
+  if (!value) return;
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectOrderCandidateFields(item, fields));
+    return;
+  }
+  if (typeof value !== 'object') return;
+  const row = value as Dict;
+  ['name', 'field', 'field_name', 'fieldCode', 'field_code'].forEach((key) => {
+    const text = String(row[key] || '').trim();
+    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(text)) fields.add(text);
+  });
+  Object.values(row).forEach((item) => {
+    if (item && typeof item === 'object') collectOrderCandidateFields(item, fields);
+  });
+}
+
+function collectContractOrderFields(contract: unknown): Set<string> {
+  const fields = new Set<string>(['id', 'name', 'display_name']);
+  const typed = contract && typeof contract === 'object' && !Array.isArray(contract) ? contract as Dict : {};
+  ['fields', 'field_schema', 'fields_schema'].forEach((key) => {
+    const row = typed[key];
+    if (row && typeof row === 'object' && !Array.isArray(row)) {
+      Object.keys(row as Dict).forEach((field) => {
+        if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(field)) fields.add(field);
+      });
+    }
+  });
+  collectOrderCandidateFields(typed.views, fields);
+  collectOrderCandidateFields(typed.data_sources, fields);
+  collectOrderCandidateFields(typed.projection, fields);
+  collectOrderCandidateFields(typed.surface, fields);
+  return fields;
+}
+
+function sanitizeOrderValue(order: unknown, allowedFields: Set<string>): string {
+  const clauses: string[] = [];
+  String(order || '').split(',').forEach((rawClause) => {
+    const text = rawClause.trim();
+    if (!text) return;
+    const parts = text.split(/\s+/);
+    const field = String(parts[0] || '').trim();
+    const direction = String(parts[1] || 'asc').trim().toLowerCase();
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(field)) return;
+    if (!allowedFields.has(field)) return;
+    if (direction !== 'asc' && direction !== 'desc') return;
+    clauses.push(`${field} ${direction}`);
+  });
+  return clauses.join(', ');
+}
+
 type ExecuteLoadPreflightOptions = {
   sessionMenuTree: unknown;
   actionId: number;
@@ -245,31 +296,23 @@ export function useActionViewLoadPreflightRuntime() {
       return { kind: 'handled' };
     }
 
-    let sortValue = options.currentSortRaw;
-    if (!sortValue) {
-      const v2PrimarySource = resolveUnifiedPageContractV2PrimaryDataSource(contract);
-      const v2PrimaryParams = (v2PrimarySource.params && typeof v2PrimarySource.params === 'object' && !Array.isArray(v2PrimarySource.params))
-        ? v2PrimarySource.params as Dict
-        : {};
-      const searchDefaults = (typedContract.search as Dict | undefined)?.defaults as Dict | undefined;
-      const viewsTree = (typedContract.views as Dict | undefined)?.tree as Dict | undefined;
-      const fallbackSort = options.extractListOrderFromContract(contract) || '';
-      sortValue = options.resolveLoadPreflightSortValue({
-        currentSortRaw: sortValue,
-        sceneReadyDefaultSortRaw: options.sceneReadyDefaultSortRaw,
-        sceneDefaultSortRaw: options.sceneDefaultSortRaw,
-        searchDefaultOrderRaw: v2PrimaryParams.order || searchDefaults?.order,
-        viewOrderRaw: viewsTree?.order,
-        metaOrderRaw: '',
-        fallbackSortRaw: fallbackSort,
-      });
-    }
-
     const v2PrimarySource = resolveUnifiedPageContractV2PrimaryDataSource(contract);
     const v2PrimaryParams = (v2PrimarySource.params && typeof v2PrimarySource.params === 'object' && !Array.isArray(v2PrimarySource.params))
       ? v2PrimarySource.params as Dict
       : {};
     const searchDefaults = (typedContract.search as Dict | undefined)?.defaults as Dict | undefined;
+    const viewsTree = (typedContract.views as Dict | undefined)?.tree as Dict | undefined;
+    const orderFields = collectContractOrderFields(contract);
+    const fallbackSort = options.extractListOrderFromContract(contract) || '';
+    const sortValue = sanitizeOrderValue(options.resolveLoadPreflightSortValue({
+      currentSortRaw: sanitizeOrderValue(options.currentSortRaw, orderFields),
+      sceneReadyDefaultSortRaw: sanitizeOrderValue(options.sceneReadyDefaultSortRaw, orderFields),
+      sceneDefaultSortRaw: sanitizeOrderValue(options.sceneDefaultSortRaw, orderFields),
+      searchDefaultOrderRaw: sanitizeOrderValue(v2PrimaryParams.order || searchDefaults?.order, orderFields),
+      viewOrderRaw: sanitizeOrderValue(viewsTree?.order, orderFields),
+      metaOrderRaw: '',
+      fallbackSortRaw: sanitizeOrderValue(fallbackSort, orderFields),
+    }), orderFields) || 'id desc';
     const contractLimit = options.resolveLoadPreflightContractLimit({ searchDefaultLimitRaw: v2PrimaryParams.limit || searchDefaults?.limit });
 
     const policy = options.evaluateCapabilityPolicy({
