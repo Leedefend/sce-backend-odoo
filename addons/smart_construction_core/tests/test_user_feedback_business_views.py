@@ -1959,6 +1959,19 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertTrue(all(rec.business_category_id == category for rec in self_funding_records))
         self.assertTrue(all(rec.handling_kind == "self_funding_deposit_return" for rec in self_funding_records))
 
+    def test_self_funding_refund_menu_opens_migrated_deposit_refunds(self):
+        menu = self.env.ref("smart_construction_core.menu_sc_self_funding_advance_refund")
+        action = self.env.ref("smart_construction_core.action_sc_self_funding_deposit_refund")
+
+        self.assertEqual(menu.action, action)
+        self.assertEqual(action.res_model, "sc.expense.claim")
+        self.assertIn("finance.deposit.self_funding.return", action.domain)
+        self.assertTrue(
+            self.env["sc.expense.claim"].search_count(
+                [("business_category_id.code", "=", "finance.deposit.self_funding.return")]
+            )
+        )
+
     def test_formal_user_menu_search_and_list_views_hide_internal_fact_tokens(self):
         bad_search_tokens = (
             "business_axis",
