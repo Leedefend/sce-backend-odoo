@@ -224,6 +224,19 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn('name="sc_source_created_at"', arch)
             self.assertIn('name="sc_business_role_label"', arch)
             self.assertIn('name="sc_business_fact_basis"', arch)
+            for sparse_field in (
+                'name="sc_bank_name"',
+                'name="sc_bank_account"',
+                'name="sc_source_project_name"',
+                'name="sc_source_receipt_amount"',
+                'name="sc_source_payment_amount"',
+                'name="sc_default_tax_rate_text"',
+                'name="sc_source_document_state"',
+                'name="sc_source_push_result"',
+            ):
+                field_pos = arch.index(sparse_field)
+                close_pos = arch.index("/>", field_pos)
+                self.assertIn('optional="hide"', arch[field_pos:close_pos])
         self.assertNotIn('name="sc_supplier_type"', customer_tree.arch_db)
         for arch in (customer_form.arch_db, supplier_form.arch_db):
             self.assertIn('name="child_ids"', arch)
