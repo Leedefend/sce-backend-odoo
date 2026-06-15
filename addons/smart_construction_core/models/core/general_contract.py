@@ -327,7 +327,7 @@ class ScGeneralContract(models.Model):
         for rec in rows:
             tax = rec._contract_tax_for_rate(rec.tax_rate)
             if tax:
-                rec.write({"tax_id": tax.id})
+                rec.with_context(skip_validation_check=True, tracking_disable=True).write({"tax_id": tax.id})
         return True
 
     @api.model

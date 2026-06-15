@@ -557,7 +557,7 @@ class ConstructionContract(models.Model):
         for contract in rows:
             normalized = self._normalize_contract_tax_id(contract.tax_id, contract.company_id)
             if normalized and normalized != contract.tax_id:
-                contract.with_context(tracking_disable=True).write({"tax_id": normalized.id})
+                contract.with_context(skip_validation_check=True, tracking_disable=True).write({"tax_id": normalized.id})
         return True
 
     @api.model
