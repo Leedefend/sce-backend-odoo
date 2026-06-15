@@ -544,9 +544,9 @@ class ScFinanceBusinessFact(models.Model):
                         r.partner_id,
                         rp.name AS partner_name,
                         r.state,
-                        NULL::varchar AS legacy_source_model,
-                        NULL::varchar AS legacy_source_table,
-                        NULL::varchar AS legacy_record_id,
+                        CASE WHEN r.source_origin = 'legacy' THEN 'online_old_scbs:self_funding' ELSE NULL::varchar END AS legacy_source_model,
+                        r.legacy_source_table AS legacy_source_table,
+                        r.legacy_record_id AS legacy_record_id,
                         COALESCE(r.note, r.summary) AS legacy_visible_note
                     FROM sc_self_funding_registration r
                     LEFT JOIN res_partner rp ON rp.id = r.partner_id

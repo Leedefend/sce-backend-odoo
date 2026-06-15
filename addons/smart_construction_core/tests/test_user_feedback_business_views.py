@@ -1677,6 +1677,42 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(claim.financial_flow, "cash_in")
         self.assertEqual(claim.payment_anchor_policy, "legacy_optional")
 
+    def test_legacy_self_funding_fact_projects_to_formal_registration(self):
+        category = self.env.ref("smart_construction_core.business_category_finance_self_funding_refund")
+        legacy = self.env["sc.legacy.self.funding.fact"].create(
+            {
+                "source_table": "unit_legacy_self_funding_refund",
+                "legacy_record_id": "refund-001",
+                "line_type": "refund",
+                "document_no": "LEG-SF-REFUND-001",
+                "document_date": "2026-06-01",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "partner_name": self.partner.name,
+                "refund_amount": 123.45,
+                "account_name": "历史账户",
+                "note": "历史自筹退回回放测试",
+            }
+        )
+
+        first = self.env["sc.self.funding.registration"].project_legacy_self_funding_facts()
+        second = self.env["sc.self.funding.registration"].project_legacy_self_funding_facts()
+        projected = self.env["sc.self.funding.registration"].search(
+            [
+                ("legacy_source_table", "=", legacy.source_table),
+                ("legacy_record_id", "=", legacy.legacy_record_id),
+                ("funding_type", "=", "refund"),
+            ]
+        )
+
+        self.assertEqual(len(projected), 1)
+        self.assertGreaterEqual(first.get("created"), 1)
+        self.assertGreaterEqual(second.get("skipped_existing"), 1)
+        self.assertEqual(projected.source_origin, "legacy")
+        self.assertEqual(projected.state, "done")
+        self.assertEqual(projected.business_category_id, category)
+        self.assertEqual(projected.amount, 123.45)
+
     def test_deduction_cash_flow_drives_payment_request_type(self):
         receive_request = self.env["payment.request"].create(
             {

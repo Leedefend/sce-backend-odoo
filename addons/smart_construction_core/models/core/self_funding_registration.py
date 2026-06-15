@@ -64,6 +64,9 @@ class ScSelfFundingRegistration(models.Model):
     )
     partner_id = fields.Many2one("res.partner", string="承包人", required=True, index=True)
     document_no = fields.Char(string="来源编号", index=True)
+    legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
+    legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
+    legacy_line_type = fields.Char(string="历史行类型", index=True, readonly=True)
     document_date = fields.Date(string="发生日期", default=fields.Date.context_today, required=True, index=True)
     amount = fields.Monetary(string="金额", currency_field="currency_id", required=True)
     currency_id = fields.Many2one(
@@ -90,6 +93,11 @@ class ScSelfFundingRegistration(models.Model):
 
     _sql_constraints = [
         ("amount_positive", "CHECK(amount > 0)", "自筹办理金额必须大于 0。"),
+        (
+            "legacy_self_funding_registration_unique",
+            "unique(legacy_source_table, legacy_record_id, funding_type)",
+            "同一历史自筹办理记录不能重复回放。",
+        ),
     ]
 
     @api.model
@@ -120,6 +128,101 @@ class ScSelfFundingRegistration(models.Model):
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.self.funding.registration") or _("Self Funding")
         return super().create(vals_list)
+
+    @api.model
+    def project_legacy_self_funding_facts(self, limit=0):
+        LegacyFact = self.env["sc.legacy.self.funding.fact"].sudo()
+        domain = [
+            ("active", "=", True),
+            ("line_type", "in", ["income", "refund"]),
+        ]
+        facts = LegacyFact.search(domain, order="document_date, id", limit=limit or None)
+        categories = {
+            category.code: category
+            for category in self.env["sc.business.category"].sudo().search(
+                [
+                    ("target_model", "=", self._name),
+                    ("code", "in", ["finance.self_funding.income", "finance.self_funding.refund"]),
+                    ("active", "=", True),
+                ]
+            )
+        }
+        existing = {
+            (
+                rec.legacy_source_table or "",
+                rec.legacy_record_id or "",
+                rec.funding_type or "",
+            )
+            for rec in self.sudo().with_context(active_test=False).search(
+                [
+                    ("source_origin", "=", "legacy"),
+                    ("legacy_source_table", "!=", False),
+                    ("legacy_record_id", "!=", False),
+                ]
+            )
+        }
+        vals_list = []
+        skipped_existing = 0
+        skipped_missing_project = 0
+        skipped_missing_partner = 0
+        skipped_missing_amount = 0
+        skipped_missing_category = 0
+        for fact in facts:
+            funding_type = "refund" if fact.line_type == "refund" else "income"
+            key = (fact.source_table or "", fact.legacy_record_id or "", funding_type)
+            if key in existing:
+                skipped_existing += 1
+                continue
+            if not fact.project_id:
+                skipped_missing_project += 1
+                continue
+            if not fact.partner_id:
+                skipped_missing_partner += 1
+                continue
+            amount = fact.refund_amount if funding_type == "refund" else fact.self_funding_amount
+            if not amount or amount <= 0:
+                skipped_missing_amount += 1
+                continue
+            category_code = "finance.self_funding.refund" if funding_type == "refund" else "finance.self_funding.income"
+            category = categories.get(category_code)
+            if not category:
+                skipped_missing_category += 1
+                continue
+            title = "历史自筹退回" if funding_type == "refund" else "历史自筹垫付"
+            vals_list.append(
+                {
+                    "source_origin": "legacy",
+                    "funding_type": funding_type,
+                    "business_category_id": category.id,
+                    "state": "done",
+                    "project_id": fact.project_id.id,
+                    "partner_id": fact.partner_id.id,
+                    "document_no": fact.document_no or fact.legacy_record_id,
+                    "legacy_source_table": fact.source_table,
+                    "legacy_record_id": fact.legacy_record_id,
+                    "legacy_line_type": fact.line_type,
+                    "document_date": fact.document_date or fields.Date.context_today(self),
+                    "amount": amount,
+                    "payment_account_name": fact.account_name or "",
+                    "partner_account_name": fact.partner_name or "",
+                    "summary": title,
+                    "note": fact.note or fact.document_state_label or fact.document_state or "",
+                    "active": True,
+                }
+            )
+            existing.add(key)
+        created = 0
+        for offset in range(0, len(vals_list), 500):
+            created += len(self.sudo().create(vals_list[offset : offset + 500]))
+        return {
+            "source_rows": len(facts),
+            "created": created,
+            "skipped_existing": skipped_existing,
+            "skipped_missing_project": skipped_missing_project,
+            "skipped_missing_partner": skipped_missing_partner,
+            "skipped_missing_amount": skipped_missing_amount,
+            "skipped_missing_category": skipped_missing_category,
+        }
 
     def write(self, vals):
         if any(rec.state == "done" for rec in self) and not self.env.context.get("allow_done_self_funding_write"):

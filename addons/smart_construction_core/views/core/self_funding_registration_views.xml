@@ -154,6 +154,9 @@
                             <page string="迁移来源" invisible="source_origin != 'legacy'">
                                 <group>
                                     <field name="document_no" readonly="1"/>
+                                    <field name="legacy_source_table" readonly="1"/>
+                                    <field name="legacy_record_id" readonly="1"/>
+                                    <field name="legacy_line_type" readonly="1"/>
                                 </group>
                             </page>
                         </notebook>
