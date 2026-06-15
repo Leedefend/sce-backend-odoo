@@ -2277,6 +2277,25 @@ class PageAssembler:
 
     def _build_relation_search_dialog_contract(self, relation):
         relation = str(relation or "").strip()
+        if relation == "sc.business.category":
+            return {
+                "columns": [
+                    {
+                        "name": "name",
+                        "label": _("业务类别"),
+                        "type": "char",
+                        "widget": "char",
+                        "optional": "",
+                    }
+                ],
+                "read_fields": ["id", "display_name", "name", "code", "default_values_json"],
+                "order": "sequence asc, id asc",
+                "limit": 120,
+                "search": {"filters": [], "group_by": [], "facets": {"enabled": True}},
+                "governance": {},
+                "source_trace": {},
+                "source": "business_category_relation_contract",
+            }
         columns = []
         read_fields = ["id", "display_name", "name"]
         order = "id desc"

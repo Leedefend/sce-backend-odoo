@@ -1950,6 +1950,19 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn(["code", "in", expected_codes], relation_domain)
         self.assertIn(["target_model", "=", "sc.expense.claim"], relation_domain)
         self.assertNotIn("finance.deposit.self_funding.return", str(relation_domain))
+        search_dialog = (
+            data.get("fields", {})
+            .get("business_category_id", {})
+            .get("relation_entry", {})
+            .get("search_dialog", {})
+        )
+        self.assertEqual(
+            [column.get("name") for column in search_dialog.get("columns", [])],
+            ["name"],
+        )
+        self.assertNotIn("domain", search_dialog.get("read_fields", []))
+        self.assertNotIn("target_model", search_dialog.get("read_fields", []))
+        self.assertNotIn("action_xmlid", search_dialog.get("read_fields", []))
 
     def test_expense_deposit_legacy_cash_actions_do_not_reuse_generic_search(self):
         application_search = self.env.ref("smart_construction_core.view_sc_expense_claim_application_search")
