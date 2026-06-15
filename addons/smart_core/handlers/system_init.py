@@ -582,6 +582,15 @@ def _node_release_gate_keys(node: dict) -> set[str]:
         values.add(f"system.menu_{menu_id}")
     if action_id:
         values.add(f"/a/{action_id}")
+    for option in meta.get("business_category_options") or []:
+        if not isinstance(option, dict):
+            continue
+        option_menu_xmlid = _text(option.get("menu_xmlid"))
+        if option_menu_xmlid:
+            values.add(option_menu_xmlid)
+        option_menu_id = option.get("menu_id")
+        if option_menu_id:
+            values.add(f"system.menu_{option_menu_id}")
     return {item for item in values if item}
 
 
