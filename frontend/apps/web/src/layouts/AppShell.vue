@@ -1359,12 +1359,32 @@ function openRoleLanding() {
   router.push(roleLandingPath.value).catch(() => {});
 }
 
+function resolveActivityPageRoute(page: ActivityPage): string {
+  const baseRoute = String(page.route || '').trim();
+  if (!baseRoute || !page.runtime_query || !Object.keys(page.runtime_query).length) return baseRoute;
+  const [beforeHash, hashText = ''] = baseRoute.split('#', 2);
+  const [path, queryText = ''] = beforeHash.split('?', 2);
+  const params = new URLSearchParams(queryText);
+  Object.entries(page.runtime_query).forEach(([key, raw]) => {
+    params.delete(key);
+    const values = Array.isArray(raw) ? raw : [raw];
+    values.forEach((value) => {
+      const text = String(value || '').trim();
+      if (text) params.append(key, text);
+    });
+  });
+  const nextQuery = params.toString();
+  const hash = hashText ? `#${hashText}` : '';
+  return `${path}${nextQuery ? `?${nextQuery}` : ''}${hash}`;
+}
+
 async function activateActivityPage(page: ActivityPage) {
   if (!page?.key || !page.route) return;
   await session.applyActivityProjectContext(page.project_context);
   session.markActivityPageActive(page.key);
-  if (route.fullPath !== page.route) {
-    await router.push(page.route).catch(() => {});
+  const targetRoute = resolveActivityPageRoute(page);
+  if (route.fullPath !== targetRoute) {
+    await router.push(targetRoute).catch(() => {});
   }
 }
 
@@ -2033,23 +2053,23 @@ async function logout() {
 .activity-tabs {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 1px 0 2px;
+  padding: 0;
   scrollbar-width: thin;
 }
 
 .activity-tab {
-  flex: 0 1 180px;
-  min-width: 92px;
-  max-width: 220px;
+  flex: 0 1 132px;
+  min-width: 78px;
+  max-width: 176px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 22px;
+  grid-template-columns: minmax(0, 1fr) 18px;
   align-items: center;
   border: 1px solid var(--sc-app-border);
-  border-radius: 6px;
+  border-radius: 5px;
   background: var(--sc-app-panel);
   color: var(--sc-app-text-secondary);
   overflow: hidden;
@@ -2064,7 +2084,7 @@ async function logout() {
 .activity-tab-main,
 .activity-tab-close {
   min-width: 0;
-  height: 26px;
+  height: 22px;
   border: 0;
   background: transparent;
   color: inherit;
@@ -2072,9 +2092,9 @@ async function logout() {
 }
 
 .activity-tab-main {
-  padding: 0 6px 0 8px;
+  padding: 0 4px 0 6px;
   text-align: left;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -2087,9 +2107,9 @@ async function logout() {
 }
 
 .activity-tab-close {
-  width: 22px;
+  width: 18px;
   padding: 0;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
   opacity: 0.7;
 }

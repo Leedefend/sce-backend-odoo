@@ -2097,9 +2097,63 @@ function applyRoutePatchAndReload(patch: Record<string, unknown>): void {
   routePresetRuntime.applyRoutePatchAndReload(patch);
 }
 
+function normalizeActivityRuntimeRouteQuery(source: Record<string, unknown>): Record<string, unknown> {
+  const allowedKeys = new Set([
+    'search',
+    'q',
+    'active_filter',
+    'saved_filter',
+    'group_by',
+    'group_value',
+    'group_sample_limit',
+    'group_sort',
+    'group_collapsed',
+    'group_page',
+    'group_offset',
+    'group_fp',
+    'group_wid',
+    'group_wdg',
+    'group_wik',
+  ]);
+  const next: Record<string, unknown> = {};
+  Object.entries(source).forEach(([key, value]) => {
+    if (!allowedKeys.has(key)) return;
+    if (Array.isArray(value)) {
+      const values = value.map((item) => String(item || '').trim()).filter(Boolean);
+      if (values.length) next[key] = values;
+      return;
+    }
+    const text = String(value || '').trim();
+    if (text) next[key] = text;
+  });
+  if (next.active_filter && !['all', 'active', 'archived'].includes(String(next.active_filter))) {
+    delete next.active_filter;
+  }
+  if (next.group_sort && !['asc', 'desc'].includes(String(next.group_sort).toLowerCase())) {
+    delete next.group_sort;
+  }
+  return next;
+}
+
+function updateActivityRuntimeQueryFromRoute(): void {
+  if (route.name !== 'action') return;
+  session.updateActiveActivityRuntimeQuery(normalizeActivityRuntimeRouteQuery(route.query));
+}
+
 function syncRouteListState(extra?: Record<string, unknown>): void {
   suppressNextRouteReload.value = true;
   routePresetRuntime.syncRouteListState(extra);
+  const routeState = normalizeActivityRuntimeRouteQuery({
+    ...route.query,
+    search: searchTerm.value,
+    active_filter: filterValue.value !== 'all' ? filterValue.value : undefined,
+    saved_filter: activeSavedFilterKey.value,
+    group_by: activeGroupByField.value,
+    group_sample_limit: groupSampleLimit.value,
+    group_sort: groupSort.value,
+    ...extra,
+  });
+  session.updateActiveActivityRuntimeQuery(routeState);
 }
 
 function syncRouteStateAndReload(extra?: Record<string, unknown>): void {
@@ -3236,17 +3290,27 @@ watch(
     if (suppressNextRouteReload.value) {
       suppressNextRouteReload.value = false;
       applyRoutePreset();
+      updateActivityRuntimeQueryFromRoute();
       return;
     }
     renderErrorMessage.value = '';
     listOffset.value = 0;
     clearSelection();
     applyRoutePreset();
+    updateActivityRuntimeQueryFromRoute();
     if (await redirectMenuOnlyRouteIfNeeded()) {
       return;
     }
     void requestLoadPage();
   },
+);
+
+watch(
+  () => route.query,
+  () => {
+    updateActivityRuntimeQueryFromRoute();
+  },
+  { deep: true, immediate: true },
 );
 
 watch(

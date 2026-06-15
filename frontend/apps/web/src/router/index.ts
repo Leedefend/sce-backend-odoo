@@ -72,6 +72,59 @@ function routeQueryText(value: unknown): string {
   return String(value || '').trim();
 }
 
+function buildActivityQuery(to: RouteLocationNormalized, allowedKeys: string[]): string {
+  const params = new URLSearchParams();
+  allowedKeys.forEach((key) => {
+    const raw = to.query[key];
+    const values = Array.isArray(raw) ? raw : [raw];
+    values.forEach((value) => {
+      const text = String(value ?? '').trim();
+      if (text) params.append(key, text);
+    });
+  });
+  const text = params.toString();
+  return text ? `?${text}` : '';
+}
+
+function resolveActivityRoute(to: RouteLocationNormalized, actionId: number, menuId: number, model: string, recordId: string): string {
+  if (to.name === 'action') {
+    const query = buildActivityQuery(to, [
+      'menu_id',
+      'action_id',
+      'product_domain',
+      'entry_intent',
+      'disposition_policy',
+      'integration_target',
+      'entry_target_policy',
+      'business_entry_contract_version',
+      'allowed_business_category_codes',
+      'default_business_category_code',
+      'default_business_category_label',
+      'current_business_category_code',
+      'current_business_category_label',
+    ]);
+    return `/a/${actionId}${query}`;
+  }
+  if (to.name === 'record' || to.name === 'model-form') {
+    const query = buildActivityQuery(to, [
+      'menu_id',
+      'action_id',
+      'current_business_category_code',
+      'current_business_category_label',
+      'default_business_category_code',
+      'default_business_category_label',
+    ]);
+    const prefix = to.name === 'record' ? '/r' : '/f';
+    return `${prefix}/${encodeURIComponent(model)}/${encodeURIComponent(recordId)}${query}`;
+  }
+  if (to.name === 'scene' || to.name === 'projects-intake' || String(to.name || '').startsWith('scene-')) {
+    const query = buildActivityQuery(to, ['menu_id', 'action_id', 'scene_key', 'scene']);
+    return `${to.path}${query}`;
+  }
+  if (to.name === 'my-work') return '/my-work';
+  return String(to.path || to.fullPath || '').trim();
+}
+
 function activityProjectPart(session: ReturnType<typeof useSessionStore>, policy: string): string {
   const normalizedPolicy = String(policy || '').trim().toLowerCase();
   if (normalizedPolicy === 'global' || normalizedPolicy === 'exempt') return 'global';
@@ -133,6 +186,7 @@ function registerRouteActivity(to: RouteLocationNormalized) {
   let recordId = '';
   let sceneKey = '';
   let projectScopePolicy = '';
+  let activityRoute = '';
   if (to.name === 'action') {
     actionId = positiveInteger(to.params.actionId || to.query.action_id);
     menuId = positiveInteger(to.query.menu_id);
@@ -156,10 +210,11 @@ function registerRouteActivity(to: RouteLocationNormalized) {
   } else {
     key = `route:${String(to.name || to.path)}:${fullPath}`;
   }
+  activityRoute = resolveActivityRoute(to, actionId, menuId, model, recordId);
   session.registerActivityPage({
     key,
     title: resolveActivityTitle(to, session),
-    route: fullPath,
+    route: activityRoute || fullPath,
     kind,
     model: model || undefined,
     action_id: actionId || undefined,

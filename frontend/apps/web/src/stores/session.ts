@@ -283,6 +283,8 @@ export interface ActivityProjectContextSnapshot {
   operation_strategy_label: string;
 }
 
+export type ActivityRuntimeQuery = Record<string, string | string[]>;
+
 export interface ActivityPage {
   key: string;
   title: string;
@@ -295,6 +297,7 @@ export interface ActivityPage {
   scene_key?: string;
   project_scope_policy?: string;
   project_context?: ActivityProjectContextSnapshot | null;
+  runtime_query?: ActivityRuntimeQuery;
   dirty?: boolean;
   created_at: number;
   last_active_at: number;
@@ -406,6 +409,50 @@ export interface SessionState {
 
 const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
 const MAX_ACTIVITY_PAGES = 6;
+const TRANSIENT_ACTIVITY_ROUTE_QUERY_KEYS = new Set([
+  't',
+  'search',
+  'q',
+  'order',
+  'sort',
+  'filter',
+  'active_filter',
+  'saved_filter',
+  'group_by',
+  'group_value',
+  'group_sample_limit',
+  'group_sort',
+  'group_collapsed',
+  'group_page',
+  'group_offset',
+  'group_fp',
+  'group_window_id',
+  'group_window_digest',
+  'group_window_identity_key',
+  'group_wid',
+  'group_wdg',
+  'group_wik',
+  'offset',
+  'limit',
+]);
+
+const ACTIVITY_RUNTIME_QUERY_KEYS = new Set([
+  'search',
+  'q',
+  'active_filter',
+  'saved_filter',
+  'group_by',
+  'group_value',
+  'group_sample_limit',
+  'group_sort',
+  'group_collapsed',
+  'group_page',
+  'group_offset',
+  'group_fp',
+  'group_wid',
+  'group_wdg',
+  'group_wik',
+]);
 
 function currentDbScope(): string {
   return String(resolveActiveDb('') || resolveConfiguredDb(String(config.odooDb || '').trim()) || config.odooDb || 'default').trim() || 'default';
@@ -571,10 +618,38 @@ function normalizeActivityProjectContext(raw: unknown): ActivityProjectContextSn
   };
 }
 
+function normalizeActivityRuntimeQuery(raw: unknown): ActivityRuntimeQuery | undefined {
+  const source = asRecord(raw);
+  const next: ActivityRuntimeQuery = {};
+  Object.entries(source).forEach(([key, value]) => {
+    if (!ACTIVITY_RUNTIME_QUERY_KEYS.has(key)) return;
+    if (Array.isArray(value)) {
+      const values = value.map((item) => asText(item)).filter(Boolean);
+      if (values.length) next[key] = values;
+      return;
+    }
+    const text = asText(value);
+    if (text) next[key] = text;
+  });
+  return Object.keys(next).length ? next : undefined;
+}
+
+function stripTransientActivityRouteQuery(rawRoute: unknown): string {
+  const source = asText(rawRoute);
+  if (!source || !source.includes('?')) return source;
+  const [pathWithMaybeHash, queryWithMaybeHash = ''] = source.split('?', 2);
+  const [queryText, hashText = ''] = queryWithMaybeHash.split('#', 2);
+  const params = new URLSearchParams(queryText);
+  TRANSIENT_ACTIVITY_ROUTE_QUERY_KEYS.forEach((key) => params.delete(key));
+  const nextQuery = params.toString();
+  const hash = hashText ? `#${hashText}` : '';
+  return `${pathWithMaybeHash}${nextQuery ? `?${nextQuery}` : ''}${hash}`;
+}
+
 function normalizeActivityPage(raw: unknown): ActivityPage | null {
   const row = asRecord(raw);
   const key = asText(row.key);
-  const route = asText(row.route);
+  const route = stripTransientActivityRouteQuery(row.route);
   if (!key || !route) return null;
   const kindText = asText(row.kind);
   const kind = ['menu_action', 'record_form', 'scene', 'workspace', 'custom'].includes(kindText)
@@ -594,6 +669,7 @@ function normalizeActivityPage(raw: unknown): ActivityPage | null {
     scene_key: asText(row.scene_key || row.sceneKey) || undefined,
     project_scope_policy: asText(row.project_scope_policy || row.projectScopePolicy) || undefined,
     project_context: normalizeActivityProjectContext(row.project_context || row.projectContext),
+    runtime_query: normalizeActivityRuntimeQuery(row.runtime_query || row.runtimeQuery),
     dirty: Boolean(row.dirty),
     created_at: createdAt,
     last_active_at: lastActiveAt,
@@ -1107,6 +1183,7 @@ export const useSessionStore = defineStore('session', {
         scene_key: asText(rawPage.scene_key) || undefined,
         project_scope_policy: asText(rawPage.project_scope_policy) || undefined,
         project_context: rawPage.project_context ?? this.currentActivityProjectContextSnapshot(),
+        runtime_query: existing?.runtime_query,
         dirty: Boolean(rawPage.dirty || existing?.dirty),
         created_at: existing?.created_at || Number(rawPage.created_at || 0) || now,
         last_active_at: now,
@@ -1140,6 +1217,24 @@ export const useSessionStore = defineStore('session', {
       ));
       this.activeActivityPageKey = normalizedKey;
       this.persist();
+    },
+    updateActiveActivityRuntimeQuery(rawQuery: unknown) {
+      const activeKey = asText(this.activeActivityPageKey);
+      if (!activeKey) return;
+      const runtimeQuery = normalizeActivityRuntimeQuery(rawQuery);
+      let changed = false;
+      this.activityPages = this.activityPages.map((page) => {
+        if (page.key !== activeKey) return page;
+        const current = JSON.stringify(page.runtime_query || {});
+        const next = JSON.stringify(runtimeQuery || {});
+        if (current === next) return page;
+        changed = true;
+        return {
+          ...page,
+          runtime_query: runtimeQuery,
+        };
+      });
+      if (changed) this.persist();
     },
     async applyActivityProjectContext(snapshot: ActivityProjectContextSnapshot | null | undefined) {
       if (!snapshot || !this.projectContext) return;
