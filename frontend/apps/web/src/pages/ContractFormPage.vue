@@ -99,6 +99,18 @@
           <li v-for="item in warnings" :key="item">{{ item }}</li>
         </ul>
       </section>
+      <section v-if="workflowEvidenceGateRows.length && !isProjectIntakeCreateMode" class="block workflow-evidence-block">
+        <h3>办理前置条件</h3>
+        <ul class="workflow-evidence-list">
+          <li
+            v-for="item in workflowEvidenceGateRows"
+            :key="item.reasonCode"
+            :class="{ 'workflow-evidence-list__item--block': item.blocking }"
+          >
+            {{ item.message }}
+          </li>
+        </ul>
+      </section>
       <section v-if="strictContractMissingSummary && !isProjectIntakeCreateMode" class="block contract-missing-block">
         <h3>契约缺口提示</h3>
         <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
@@ -269,11 +281,13 @@
         </section>
         <NativeFormTreeRenderer
           v-if="useNativeFormTree"
+          :key="nativeLayoutVisibilityRevision"
           :nodes="nativeFormLayoutNodes"
           :field-schemas-for-nodes="nativeFieldSchemasForNodes"
           :is-node-visible="isNativeLayoutNodeVisible"
           :button-label-resolver="resolveNativeButtonLabel"
           :native-action-handler="runNativeLayoutAction"
+          :native-action-state-resolver="resolveNativeActionState"
           :relation-adapter="relationFieldAdapter"
           :field-actions="isContractFieldOrderEditable ? undefined : contractFieldActions"
           :field-order-editable="false"
@@ -1294,6 +1308,7 @@ const activeFilterKey = ref('');
 const originalValues = ref<Record<string, unknown>>({});
 const recordVersionToken = ref('');
 const formData = reactive<Record<string, unknown>>({});
+const nativeLayoutVisibilityRevision = ref(0);
 const advancedExpanded = ref(false);
 const relationOptions = ref<Record<string, RelationOption[]>>({});
 const relationFieldDescriptors = ref<Record<string, Record<string, FieldDescriptor>>>({});
@@ -1361,9 +1376,11 @@ let activeReloadToken = 0;
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const actionId = computed(() => {
+  const rawRecordId = String(route.params.id || '').trim();
+  const isCreateRoute = !rawRecordId || rawRecordId === 'new';
   return resolveActionIdFromContext({
     routeQuery: route.query as Record<string, unknown>,
-    currentActionId: session.currentAction?.action_id,
+    currentActionId: isCreateRoute ? session.currentAction?.action_id : null,
     currentActionModel: session.currentAction?.model,
     model: model.value,
   });
@@ -4353,6 +4370,179 @@ function normalizeActionLabel(raw: unknown, fallback = ''): string {
   return text;
 }
 
+function currentWorkflowContract(): Record<string, unknown> {
+  const root = contract.value || {};
+  const storeSnapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
+  const storeDirect = dictOrEmpty(storeSnapshot.workflowContract);
+  if (Object.keys(storeDirect).length) return storeDirect;
+  const storeRuntime = dictOrEmpty(storeSnapshot.runtimeContract);
+  const storeNested = dictOrEmpty(storeRuntime.workflowContract);
+  if (Object.keys(storeNested).length) return storeNested;
+  const direct = root.workflowContract;
+  if (direct && typeof direct === 'object' && !Array.isArray(direct)) {
+    return direct as Record<string, unknown>;
+  }
+  const runtime = root.runtimeContract;
+  if (runtime && typeof runtime === 'object' && !Array.isArray(runtime)) {
+    const nested = (runtime as Record<string, unknown>).workflowContract;
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+      return nested as Record<string, unknown>;
+    }
+  }
+  const rawV2 = dictOrEmpty((root as Record<string, unknown>).__unified_page_contract_v2);
+  const rawDirect = dictOrEmpty(rawV2.workflowContract);
+  if (Object.keys(rawDirect).length) return rawDirect;
+  const rawRuntime = dictOrEmpty(rawV2.runtimeContract);
+  const rawNested = dictOrEmpty(rawRuntime.workflowContract);
+  if (Object.keys(rawNested).length) return rawNested;
+  return {};
+}
+
+function workflowContractActionRows(): Array<Record<string, unknown>> {
+  if (!recordId.value) return [];
+  const workflow = currentWorkflowContract();
+  const rows = Array.isArray(workflow.availableActions) ? workflow.availableActions : [];
+  return rows
+    .map((raw) => (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null))
+    .filter((row): row is Record<string, unknown> => Boolean(row))
+    .map((row) => {
+      const target = parseMaybeJsonRecord(row.target);
+      const method = String(row.method || target.method || '').trim();
+      const key = String(row.key || method || '').trim();
+      return {
+        key,
+        label: String(row.label || key).trim() || key,
+        kind: method ? 'object' : 'client',
+        level: 'header',
+        selection: 'none',
+        intent: String(row.intent || '').trim(),
+        allowed: row.enabled !== false,
+        blocked_message: String(row.blocked_message || row.message || '').trim(),
+        reason_code: String(row.reason_code || row.reasonCode || '').trim(),
+        target_model: String(target.model || row.model || model.value || '').trim(),
+        payload: {
+          method,
+          context_raw: target.context_raw,
+        },
+        target: {
+          ...target,
+          method,
+        },
+        visible_profiles: ['edit', 'readonly'],
+        source_widget_id: 'workflow.contract',
+        workflow_contract_action: true,
+      };
+    })
+    .filter((row) => String(row.key || '').trim());
+}
+
+function workflowActionMethodAliases(key: string): string[] {
+  const normalized = String(key || '').trim();
+  if (normalized === 'submit') return ['action_submit', 'action_submit_progress', 'action_confirm', 'button_confirm'];
+  if (normalized === 'approve') return ['action_approval_decision', 'validate_tier', 'action_approve', 'button_approve'];
+  if (normalized === 'reject') return ['action_reject', 'reject_tier', 'button_reject'];
+  if (normalized === 'activate') return ['action_set_running'];
+  if (normalized === 'complete') {
+    return [
+      'action_done',
+      'action_complete',
+      'action_close',
+      'action_paid',
+      'action_received',
+      'action_register',
+      'action_reconcile',
+      'button_done',
+    ];
+  }
+  if (normalized === 'cancel') return ['action_cancel', 'button_cancel'];
+  if (normalized === 'reopen') return ['action_reset_draft', 'button_draft'];
+  return [];
+}
+
+function workflowActionRowForMethod(methodName: string): Record<string, unknown> | null {
+  const method = String(methodName || '').trim();
+  if (!method) return null;
+  const workflow = currentWorkflowContract();
+  const rows = Array.isArray(workflow.availableActions) ? workflow.availableActions : [];
+  for (const raw of rows) {
+    const row = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null;
+    if (!row) continue;
+    const target = parseMaybeJsonRecord(row.target);
+    const rowMethod = String(row.method || target.method || '').trim();
+    const rowKey = String(row.key || '').trim();
+    const aliases = workflowActionMethodAliases(rowKey);
+    if (rowMethod === method || aliases.includes(method)) return row;
+  }
+  return null;
+}
+
+function isWorkflowTransitionMethod(methodName: string) {
+  const method = String(methodName || '').trim();
+  if (workflowActionRowForMethod(method)) return true;
+  return ['submit', 'approve', 'reject', 'activate', 'complete', 'cancel', 'reopen']
+    .some((key) => workflowActionMethodAliases(key).includes(method));
+}
+
+function blockingWorkflowEvidenceMessage() {
+  const row = workflowEvidenceGateRows.value.find((item) => item.blocking);
+  return row?.message || '';
+}
+
+function applyWorkflowContractToAction(action: ContractAction): ContractAction {
+  if (!recordId.value || !action.methodName || !isWorkflowTransitionMethod(action.methodName)) return action;
+  const workflowRow = workflowActionRowForMethod(action.methodName);
+  const blockingMessage = blockingWorkflowEvidenceMessage();
+  if (!workflowRow) {
+    return {
+      ...action,
+      enabled: false,
+      hint: blockingMessage || '当前流程状态不允许执行该操作',
+    };
+  }
+  if (workflowRow.enabled === false) {
+    return {
+      ...action,
+      enabled: false,
+      hint: String(workflowRow.blocked_message || workflowRow.message || blockingMessage || workflowRow.reason_code || workflowRow.reasonCode || '').trim(),
+    };
+  }
+  return action;
+}
+
+function hasWorkflowContractActions() {
+  const workflow = currentWorkflowContract();
+  return Array.isArray(workflow.availableActions);
+}
+
+function shouldShowWorkflowNativeAction(methodName: string) {
+  const method = String(methodName || '').trim();
+  if (!recordId.value || !method || !hasWorkflowContractActions() || !isWorkflowTransitionMethod(method)) return true;
+  return Boolean(workflowActionRowForMethod(method));
+}
+
+const workflowEvidenceGateRows = computed(() => {
+  const workflow = currentWorkflowContract();
+  const rows = Array.isArray(workflow.evidenceGate) ? workflow.evidenceGate : [];
+  const seen = new Set<string>();
+  return rows
+    .map((raw) => (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null))
+    .filter((row): row is Record<string, unknown> => Boolean(row))
+    .map((row, index) => {
+      const reasonCode = String(row.reasonCode || row.reason_code || `workflow_gate_${index}`).trim();
+      return {
+        reasonCode,
+        message: String(row.message || reasonCode).trim(),
+        blocking: row.blocking !== false,
+        severity: String(row.severity || '').trim(),
+      };
+    })
+    .filter((row) => {
+      if (!row.message || seen.has(row.reasonCode)) return false;
+      seen.add(row.reasonCode);
+      return true;
+    });
+});
+
 const contractActions = computed<ContractAction[]>(() => {
   const mapSceneReadyAction = (row: Record<string, unknown>): ContractAction | null => {
     const protocol = normalizeSceneActionProtocol(row);
@@ -4406,6 +4596,16 @@ const contractActions = computed<ContractAction[]>(() => {
     ? storeButtonStatus
     : collectUnifiedPageContractV2ButtonStatus(contract.value);
   const merged: Array<Record<string, unknown>> = [];
+  const workflowRows = workflowContractActionRows();
+  const workflowMethods = new Set<string>();
+  workflowRows.forEach((row) => {
+    const method = String(parseMaybeJsonRecord(row.payload).method || '').trim();
+    if (method) workflowMethods.add(method);
+    workflowActionMethodAliases(String(row.key || '').trim()).forEach((alias) => workflowMethods.add(alias));
+  });
+  if (workflowRows.length) {
+    merged.push(...workflowRows);
+  }
   const nativeFormContract = contract.value?.views?.form as Record<string, unknown> | undefined;
   if (Array.isArray(nativeFormContract?.header_buttons)) {
     merged.push(...(nativeFormContract.header_buttons as Array<Record<string, unknown>>));
@@ -4506,6 +4706,8 @@ const contractActions = computed<ContractAction[]>(() => {
     const level = String(row.level || 'body').trim().toLowerCase();
     const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref) ?? toActionId(row.actionId) ?? toActionId(row.action_id);
     const methodName = detectMethodName(key, String(payload.method || '').trim());
+    const isWorkflowContractAction = row.workflow_contract_action === true;
+    if (!isWorkflowContractAction && methodName && workflowMethods.has(methodName)) continue;
     if (isTierValidationActionHidden(methodName)) continue;
     const targetModel = String(row.target_model || row.model || model.value || '').trim();
     const context = parseMaybeJsonRecord(payload.context_raw);
@@ -4829,8 +5031,9 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     key,
     String(payload.method || row.method || (kind === 'object' || kind === 'server' ? rowName : '') || '').trim(),
   );
+  if (!shouldShowWorkflowNativeAction(methodName)) return null;
   const needRecord = kind === 'object' || kind === 'server' || level === 'row' || level === 'smart';
-  return {
+  return applyWorkflowContractToAction({
     key,
     label: rowLabel || key,
     kind,
@@ -4853,6 +5056,15 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     requiredParams: normalizeRequiredParams(nativeAction.required_params || row.required_params),
     requiresReason: nativeAction.requires_reason === true || row.requires_reason === true,
     actionSafety: normalizeActionSafety(nativeAction.action_safety || row.action_safety),
+  });
+}
+
+function resolveNativeActionState(row: Record<string, unknown>) {
+  const action = contractActionFromNativeRow(row);
+  if (!action) return {};
+  return {
+    disabled: busy.value || !action.enabled,
+    title: action.hint || '',
   };
 }
 
@@ -5291,7 +5503,22 @@ const useNativeFormTree = computed(() => {
   return nativeFormLayoutNodes.value.length > 0;
 });
 
-const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
+function filterVisibleNativeLayoutNodes(nodes: NativeFormLayoutNode[]): NativeFormLayoutNode[] {
+  return nodes
+    .filter((node) => isNativeLayoutNodeVisible(node))
+    .map((node) => {
+      const next = { ...(node as Record<string, unknown>) } as Record<string, unknown>;
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const value = next[key];
+        if (Array.isArray(value)) {
+          next[key] = filterVisibleNativeLayoutNodes(value as NativeFormLayoutNode[]);
+        }
+      });
+      return next as NativeFormLayoutNode;
+    });
+}
+
+const rawNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   const storeContainers = resolveContractV2ContainerTree(v2ContractStore.value);
   const v2 = storeContainers.length ? null : resolveUnifiedPageContractV2(contract.value);
   const containers = storeContainers.length
@@ -5304,6 +5531,11 @@ const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
     ? contract.value?.views?.form?.layout
     : [];
   return legacyLayout as unknown as NativeFormLayoutNode[];
+});
+
+const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
+  nativeLayoutVisibilityRevision.value;
+  return filterVisibleNativeLayoutNodes(rawNativeFormLayoutNodes.value);
 });
 
 function countNativeNodesByType(nodes: NativeFormLayoutNode[], targetType: string): number {
@@ -5451,8 +5683,8 @@ function formDataFieldNames() {
     ? views.form as Record<string, unknown>
     : {};
   const names = new Set<string>();
-  collectNativeLayoutFieldNames(nativeFormLayoutNodes.value, names);
-  collectNativeLayoutBadgeCountFieldNames(nativeFormLayoutNodes.value, names);
+  collectNativeLayoutFieldNames(rawNativeFormLayoutNodes.value, names);
+  collectNativeLayoutBadgeCountFieldNames(rawNativeFormLayoutNodes.value, names);
   collectContractActionBadgeCountFieldNames(contractRecord.buttons, names);
   collectContractActionBadgeCountFieldNames(toolbar.header, names);
   collectContractActionBadgeCountFieldNames(toolbar.sidebar, names);
@@ -5468,6 +5700,11 @@ function formDataFieldNames() {
   });
   const statusField = nativeStatusbar.value.field;
   if (statusField && fieldMap[statusField]) names.add(statusField);
+  const storeMainData = resolveContractV2MainData(v2ContractStore.value);
+  const contractMainData = Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value);
+  ['can_review', 'validation_status'].forEach((name) => {
+    if (fieldMap[name] || Object.prototype.hasOwnProperty.call(contractMainData, name)) names.add(name);
+  });
   if (fieldMap.active) names.add('active');
   if (!names.size) {
     Object.keys(fieldMap).slice(0, 40).forEach((name) => names.add(name));
@@ -5477,7 +5714,7 @@ function formDataFieldNames() {
 
 const nativeFavoriteFieldNames = computed(() => {
   const names = new Set<string>();
-  collectNativeFavoriteFieldNames(nativeFormLayoutNodes.value, names);
+  collectNativeFavoriteFieldNames(rawNativeFormLayoutNodes.value, names);
   return names;
 });
 
@@ -5610,8 +5847,12 @@ function evaluateNativeModifierValue(value: unknown) {
 }
 
 function evaluateNativeActionVisibility(row: Record<string, unknown>) {
-  const visible = row.visible && typeof row.visible === 'object' && !Array.isArray(row.visible)
-    ? row.visible as Record<string, unknown>
+  const nativeAction = row.action && typeof row.action === 'object' && !Array.isArray(row.action)
+    ? row.action as Record<string, unknown>
+    : {};
+  const visibleRaw = nativeAction.visible || row.visible;
+  const visible = visibleRaw && typeof visibleRaw === 'object' && !Array.isArray(visibleRaw)
+    ? visibleRaw as Record<string, unknown>
     : {};
   const states = Array.isArray(visible.states)
     ? visible.states.map((item) => String(item || '').trim()).filter(Boolean)
@@ -5627,11 +5868,26 @@ function evaluateNativeActionVisibility(row: Record<string, unknown>) {
     ? row.modifiers as Record<string, unknown>
     : {};
   const invisible = attrs.invisible ?? modifiers.invisible ?? row.invisible;
-  return !evaluateNativeModifierValue(invisible);
+  if (evaluateNativeModifierValue(invisible)) return false;
+  const nativeType = String(row.type || row.buttonType || '').trim().toLowerCase();
+  const hasNativeActionShape = nativeType === 'button'
+    || nativeType === 'object'
+    || nativeType === 'server'
+    || Boolean(row.action || row.payload || row.name || row.method);
+  if (hasNativeActionShape) {
+    const action = contractActionFromNativeRow(row);
+    if (!action) return false;
+  }
+  return true;
 }
 
 function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
-  return !evaluateNativeModifierValue(nativeModifierValue(nodeRaw, 'invisible'));
+  if (evaluateNativeModifierValue(nativeModifierValue(nodeRaw, 'invisible'))) return false;
+  const node = nodeRaw as Record<string, unknown>;
+  if (String(node.type || '').trim().toLowerCase() === 'button') {
+    return Boolean(contractActionFromNativeRow(node));
+  }
+  return true;
 }
 
 function nativeNodeWidget(nodeRaw?: NativeFormLayoutNode) {
@@ -7191,6 +7447,7 @@ async function loadRecord() {
       }
       return acc;
     }, {});
+    nativeLayoutVisibilityRevision.value += 1;
     restoreIntakeAutosave();
     return;
   }
@@ -7209,9 +7466,9 @@ async function loadRecord() {
     if (name === versionPolicy?.tokenField && !contract.value?.fields?.[name]) return;
     const descriptor = contract.value?.fields?.[name];
     const ttype = fieldType(descriptor);
-    const incoming = Object.prototype.hasOwnProperty.call(contractMainData, name)
-      ? contractMainData[name]
-      : (row as Record<string, unknown>)[name] ?? '';
+    const incoming = Object.prototype.hasOwnProperty.call(row, name)
+      ? (row as Record<string, unknown>)[name]
+      : (contractMainData[name] ?? '');
     if (ttype === 'many2many' || ttype === 'one2many') {
       formData[name] = Array.isArray(incoming) ? incoming : [];
       if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
@@ -7243,6 +7500,7 @@ async function loadRecord() {
     }
     return acc;
   }, {});
+  nativeLayoutVisibilityRevision.value += 1;
   if (recordId.value && (nativeChatterActions.value.length || nativeAttachments.value)) {
     await loadNativeChatterTimeline(recordId.value, model.value);
   }
@@ -8121,7 +8379,7 @@ async function runAction(action: ContractAction) {
     await saveRecord(action.refreshPolicy);
     return;
   }
-  if (actionKey === 'cancel') {
+  if (actionKey === 'cancel' && !action.methodName) {
     await router.push({
       name: 'workbench',
       query: pickContractNavQuery(route.query as Record<string, unknown>, {
@@ -8532,12 +8790,13 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
         await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
         if (await returnToProjectIntakeList(created.id)) return true;
       }
-      await router.replace({
+      const createdRoute = router.resolve({
         name: 'model-form',
         params: { model: model.value, id: String(created.id) },
         query: pickContractNavQuery(route.query as Record<string, unknown>),
       });
-      return Number(created.id);
+      window.location.replace(new URL(createdRoute.href, window.location.origin).toString());
+      await new Promise<never>(() => {});
     }
   } catch (err) {
     const fallback = recordId.value ? '保存失败，请检查填写内容' : '创建失败，请检查填写内容';
@@ -8850,6 +9109,23 @@ onBeforeUnmount(() => {
 .block.warn {
   border-color: var(--sc-app-warning-border);
   background: var(--sc-app-warning-bg);
+}
+
+.workflow-evidence-block {
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+}
+
+.workflow-evidence-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.workflow-evidence-list__item--block {
+  color: var(--sc-app-warning-text);
 }
 
 .contract-missing-block {

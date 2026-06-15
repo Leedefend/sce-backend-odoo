@@ -1841,6 +1841,28 @@ class TestUserFeedbackBusinessViews(TransactionCase):
                 ],
             }
         )
+        amount_sync_claim = self.env["sc.expense.claim"].with_context(
+            default_business_category_code="finance.deduction.bill",
+        ).create(
+            {
+                "claim_type": "expense",
+                "expense_type": "扣款登记",
+                "summary": "编辑明细后自动同步金额",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "deduction_line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "item_name": "管理费",
+                            "deduction_category": "management_fee",
+                            "amount": 60,
+                        },
+                    )
+                ],
+            }
+        )
         missing_line_claim = self.env["sc.expense.claim"].create(
             {
                 "claim_type": "expense",
@@ -1909,6 +1931,15 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(auto_amount_claim.amount, 100)
         self.assertEqual(auto_amount_claim.approved_amount, 100)
         self.assertEqual(auto_amount_claim.deduction_line_amount_total, 100)
+        amount_sync_line = amount_sync_claim.deduction_line_ids[0]
+        amount_sync_claim.write({"deduction_line_ids": [(1, amount_sync_line.id, {"amount": 80})]})
+        self.assertEqual(amount_sync_claim.amount, 80)
+        self.assertEqual(amount_sync_claim.approved_amount, 80)
+        self.assertEqual(amount_sync_claim.deduction_line_amount_total, 80)
+        amount_sync_claim.write({"deduction_line_ids": [(2, amount_sync_line.id)]})
+        self.assertEqual(amount_sync_claim.amount, 0)
+        self.assertEqual(amount_sync_claim.approved_amount, 0)
+        self.assertEqual(amount_sync_claim.deduction_line_amount_total, 0)
         line_field = self.env["sc.expense.claim.deduction.line"]._fields["deduction_category"]
         line_labels = dict(line_field.selection)
         for category in ("management_fee", "enterprise_income_tax", "vat", "vat_surcharge", "construction_stamp_tax", "purchase_sale_stamp_tax", "vat_nonrefundable"):
@@ -1953,6 +1984,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn("非现金业务管理", deduction_menu.get("visible_menu_path"))
             self.assertEqual(deduction_menu.get("product_domain"), "finance_noncash")
             self.assertEqual(deduction_menu.get("default_business_category_code"), "finance.deduction.bill")
+            self.assertEqual(deduction_menu.get("route"), "/a/%s?menu_id=%s" % (deduction_menu.get("action_id"), deduction_menu.get("menu_id")))
             self.assertIn("费用/保证金现金办理", paid_menu.get("visible_menu_path"))
             self.assertEqual(paid_menu.get("product_domain"), "finance_cash")
 

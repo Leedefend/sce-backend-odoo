@@ -188,6 +188,8 @@
               :key="nodeKey(buttonNode, buttonIndex)"
               type="button"
               :class="nativeActionButtonClass(buttonNode)"
+              :disabled="nativeActionDisabled(buttonNode)"
+              :title="nativeActionTitle(buttonNode)"
               @click.stop.prevent="emitNativeAction(buttonNode)"
             >
               <span v-if="buttonIcon(buttonNode)" :class="['native-action-icon', buttonIcon(buttonNode)]" aria-hidden="true" />
@@ -209,6 +211,8 @@
                   type="button"
                   class="native-action-more-item"
                   role="menuitem"
+                  :disabled="nativeActionDisabled(buttonNode)"
+                  :title="nativeActionTitle(buttonNode)"
                   @click.stop.prevent="emitNativeAction(buttonNode); closeMore(node)"
                 >
                   <span v-if="buttonIcon(buttonNode)" :class="['native-action-icon', buttonIcon(buttonNode)]" aria-hidden="true" />
@@ -299,7 +303,13 @@
       </FormSection>
 
       <div v-else-if="nodeType(node) === 'button'" :class="nativeActionsClass(node)">
-        <button type="button" :class="nativeActionButtonClass(node)" @click.stop.prevent="emitNativeAction(node)">
+        <button
+          type="button"
+          :class="nativeActionButtonClass(node)"
+          :disabled="nativeActionDisabled(node)"
+          :title="nativeActionTitle(node)"
+          @click.stop.prevent="emitNativeAction(node)"
+        >
           <span v-if="buttonIcon(node)" :class="['native-action-icon', buttonIcon(node)]" aria-hidden="true" />
           <span class="native-action-label">{{ buttonLabel(node) }}</span>
         </button>
@@ -359,6 +369,7 @@ const props = withDefaults(defineProps<{
   isNodeVisible?: (node: NativeFormLayoutNode) => boolean;
   buttonLabelResolver?: (node: NativeFormLayoutNode) => string | undefined;
   nativeActionHandler?: (payload: Record<string, unknown>) => void | Promise<void>;
+  nativeActionStateResolver?: (payload: Record<string, unknown>) => { disabled?: boolean; title?: string } | null | undefined;
   relationAdapter?: RelationFieldAdapter;
   fieldActions?: (field: FormSectionFieldSchema) => FormSectionFieldAction[];
   fieldOrderEditable?: boolean;
@@ -374,6 +385,7 @@ const props = withDefaults(defineProps<{
   columns: 2,
   isNodeVisible: () => true,
   nativeActionHandler: undefined,
+  nativeActionStateResolver: undefined,
   relationAdapter: undefined,
   fieldActions: undefined,
   fieldOrderEditable: false,
@@ -596,6 +608,18 @@ function nativeActionButtonClass(node: NativeFormLayoutNode) {
   return ['native-action-btn', { 'native-action-btn--smart': isSmartButtonNode(node) }];
 }
 
+function nativeActionState(node: NativeFormLayoutNode) {
+  return props.nativeActionStateResolver?.(node as Record<string, unknown>) || {};
+}
+
+function nativeActionDisabled(node: NativeFormLayoutNode) {
+  return nativeActionState(node).disabled === true;
+}
+
+function nativeActionTitle(node: NativeFormLayoutNode) {
+  return String(nativeActionState(node).title || '').trim();
+}
+
 function widgetName(node: NativeFormLayoutNode) {
   const attrs = nodeAttributes(node);
   return String(node?.widget || node?.name || attrs.name || '').trim();
@@ -626,6 +650,7 @@ function buttonIcon(node: NativeFormLayoutNode) {
 }
 
 function emitNativeAction(node: NativeFormLayoutNode) {
+  if (nativeActionDisabled(node)) return;
   const buttonType = String(node.buttonType || 'object');
   const rawAction = node.action && typeof node.action === 'object' ? node.action : {};
   const rawPayload = rawAction.payload && typeof rawAction.payload === 'object' && !Array.isArray(rawAction.payload)

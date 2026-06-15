@@ -374,6 +374,9 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
     : [];
   const legacyBusinessProfile = asDict(legacyProjection.business_operation_profile);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
+  const workflowContract = Object.keys(asDict(v2Contract.workflowContract)).length
+    ? asDict(v2Contract.workflowContract)
+    : asDict(asDict(v2Contract.runtimeContract).workflowContract);
   const layoutButtons = collectV2LayoutButtons(v2Contract);
   const statusbar = collectV2Statusbar(v2Contract);
   const model = String(pageInfo.model || '').trim();
@@ -570,6 +573,10 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
       batch_policy: batchPolicy,
     },
     surface_mapping: buildSurfaceMapping(contractSurface, renderMode, sourceMode),
+    ...(Object.keys(workflowContract).length ? {
+      workflowContract,
+      runtimeContract: { workflowContract },
+    } : {}),
     __v2_main_data: mainData,
     __v2_source_context: v2SourceContext,
   };

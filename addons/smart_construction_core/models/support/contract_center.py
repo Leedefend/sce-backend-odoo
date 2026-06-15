@@ -2,7 +2,7 @@
 import logging
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools import config
 
 from .state_machine import ScStateMachine
@@ -1167,7 +1167,7 @@ class ConstructionContract(models.Model):
                 contract.with_context(skip_validation_check=True).write(
                     {"state": "confirmed", "reject_reason": False}
                 )
-                contract.message_post(body="合同状态：草稿 → 已生效")
+                contract._post_contract_state_message("合同状态：草稿 → 已生效")
 
     def _requires_contract_approval(self):
         self.ensure_one()
@@ -1219,6 +1219,18 @@ class ConstructionContract(models.Model):
                 {"reject_reason": reason or contract._get_tier_reject_reason()}
             )
 
+    def _post_contract_state_message(self, body):
+        for contract in self:
+            try:
+                contract.message_post(body=body)
+            except (AccessError, UserError, ValidationError) as exc:
+                _logger.warning(
+                    "contract state message skipped contract=%s state=%s error=%s",
+                    contract.id,
+                    contract.state,
+                    exc,
+                )
+
     def action_set_running(self):
         for contract in self:
             old = contract.state
@@ -1226,7 +1238,7 @@ class ConstructionContract(models.Model):
                 raise UserError("仅草稿/已生效的合同可置为执行中。")
             contract.state = "running"
             if old != contract.state:
-                contract.message_post(body="合同状态：%s → 执行中" % ("已生效" if old == "confirmed" else "草稿"))
+                contract._post_contract_state_message("合同状态：%s → 执行中" % ("已生效" if old == "confirmed" else "草稿"))
 
     def action_close(self):
         for contract in self:
@@ -1237,7 +1249,7 @@ class ConstructionContract(models.Model):
                 raise UserError("无合同明细的合同不可关闭，请补充明细。")
             contract.state = "closed"
             if old != contract.state:
-                contract.message_post(body="合同状态：%s → 已关闭" % ("已生效" if old == "confirmed" else "执行中"))
+                contract._post_contract_state_message("合同状态：%s → 已关闭" % ("已生效" if old == "confirmed" else "执行中"))
 
     def action_cancel(self):
         for contract in self:
@@ -1247,7 +1259,7 @@ class ConstructionContract(models.Model):
             if contract.state != "cancel":
                 contract.state = "cancel"
                 if old != contract.state:
-                    contract.message_post(body="合同状态：取消")
+                    contract._post_contract_state_message("合同状态：取消")
 
     def action_reset_draft(self):
         for contract in self:
@@ -1256,7 +1268,7 @@ class ConstructionContract(models.Model):
                 raise UserError("合同已被付款申请/结算单引用，禁止重置为草稿。")
             contract.state = "draft"
             if old != contract.state:
-                contract.message_post(body="合同状态：重置为草稿")
+                contract._post_contract_state_message("合同状态：重置为草稿")
 
     def action_open_payment_requests(self):
         self.ensure_one()

@@ -1068,7 +1068,7 @@ introduce
 Batch-A 冻结时必须同时冻结：
 
 - 必选顶层字段：`pageInfo/layoutContract/statusContract/actionContract/dataContract/runtimeContract/meta`
-- 受控可选顶层扩展：`formStructureContract`
+- 受控可选顶层扩展：`formStructureContract`、`workflowContract`
 - ID 规则：稳定 ID 列表与禁止后缀规则
 - Client enum：首批支持与延期支持列表
 - Patch protocol：partial/full 与 patch operation enum
@@ -1080,6 +1080,14 @@ Batch-A 冻结时必须同时冻结：
 - Anti-DSL VM：禁止字段和静态 guard 规则
 
 未冻结前，不允许进入后端 assembler 实现。
+
+`workflowContract` 的冻结边界：
+
+- 它是后端业务 workflow service 对单条记录的投影，不是通用 assembler 从 XML 按钮或前端上下文推导出的状态。
+- `workflowContract.availableActions` 是表单工作流按钮显示、禁用和去重的权威输入；`actionContract` 可以承载普通 UI 动作，但不得覆盖工作流可执行性结论。
+- `workflowContract.evidenceGate` 是用户可见前置条件说明；相同业务条件必须在对应 backend action method 中再次校验。
+- `runtimeContract.workflowContract` 仅作为兼容镜像，不能成为独立事实源。
+- 覆盖口径按自定义业务工作流表单计算；标准 Odoo 模型例外必须由专项 guard 显式列出。
 
 ## 25. Open Decisions
 
@@ -1107,5 +1115,7 @@ Batch-A 冻结时必须同时冻结：
 - Patch operation allowlist guard
 - Frontend private field guard
 - Snapshot volatility normalization guard
+- Workflow contract profile-method guard
+- Workflow contract custom business coverage guard
 
 任何 guard 失败，都不得将 v2+ 设为默认 frontend contract。

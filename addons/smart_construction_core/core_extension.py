@@ -177,7 +177,6 @@ def _sc_append_project_responsibility_group(contract: dict, *, include_collabora
 
 
 def smart_core_finalize_unified_page_contract_v2(env, contract, context):
-    del env
     if not isinstance(contract, dict):
         return None
     source = context.get("source_contract") if isinstance(context, dict) and isinstance(context.get("source_contract"), dict) else {}
@@ -185,9 +184,10 @@ def smart_core_finalize_unified_page_contract_v2(env, contract, context):
     model = _sc_text(source.get("model") or head.get("model"))
     view_type = _sc_text(source.get("view_type") or head.get("view_type") or (context or {}).get("view_type")).lower()
     render_profile = _sc_text(source.get("render_profile") or head.get("render_profile") or (((context or {}).get("meta") or {}).get("params") or {}).get("render_profile")).lower()
-    if model != "project.project" or view_type != "form":
-        return None
     out = deepcopy(contract)
+    _sc_inject_workflow_contract(env, out, source, model=model, view_type=view_type)
+    if model != "project.project" or view_type != "form":
+        return out if out != contract else None
     layout = out.get("layoutContract") if isinstance(out.get("layoutContract"), dict) else {}
     tree = layout.get("containerTree") if isinstance(layout.get("containerTree"), list) else []
     layout["containerTree"] = _sc_prune_and_label_project_nodes(tree)
@@ -201,6 +201,49 @@ def smart_core_finalize_unified_page_contract_v2(env, contract, context):
         out["statusContract"] = status
     _sc_append_project_responsibility_group(out, include_collaborators=render_profile != "create")
     return out
+
+
+def _sc_inject_workflow_contract(env, contract, source, *, model, view_type):
+    if view_type != "form" or not model:
+        return
+    record_id = (
+        source.get("record_id")
+        or source.get("recordId")
+        or ((source.get("head") or {}).get("record_id") if isinstance(source.get("head"), dict) else None)
+    )
+    try:
+        record_id = int(record_id or 0)
+    except Exception:
+        record_id = 0
+    if record_id <= 0:
+        return
+    try:
+        if model not in env.registry:
+            return
+        record = env[model].browse(record_id).exists()
+        if not record:
+            return
+        workflow_contract = env["sc.workflow.contract.service"].describe_record(record)
+    except Exception:
+        _logger.exception("Failed to inject workflow contract for %s,%s", model, record_id)
+        return
+    if not isinstance(workflow_contract, dict) or not workflow_contract:
+        return
+    contract["workflowContract"] = workflow_contract
+    runtime = contract.get("runtimeContract") if isinstance(contract.get("runtimeContract"), dict) else {}
+    runtime["workflowContract"] = workflow_contract
+    contract["runtimeContract"] = runtime
+    status = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
+    global_status = status.get("globalStatus") if isinstance(status.get("globalStatus"), dict) else {}
+    editability = _sc_text(workflow_contract.get("editability"))
+    if editability in {"readonly", "locked"}:
+        global_status["pageAuth"] = "read"
+    elif editability == "editable":
+        global_status["pageAuth"] = "edit"
+    global_status["workflowPhase"] = workflow_contract.get("businessPhase")
+    global_status["approvalPhase"] = workflow_contract.get("approvalPhase")
+    status["globalStatus"] = global_status
+    contract["statusContract"] = status
 
 
 ROLE_SURFACE_OVERRIDES = {

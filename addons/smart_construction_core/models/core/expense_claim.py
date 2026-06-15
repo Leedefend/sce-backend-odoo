@@ -457,10 +457,9 @@ class ScExpenseClaim(models.Model):
             if not rec._is_noncash_deduction_bill():
                 continue
             total = sum(rec.deduction_line_ids.mapped("amount"))
-            if total:
-                rec.amount = total
-                if not rec.approved_amount or rec.approved_amount == rec._origin.approved_amount:
-                    rec.approved_amount = total
+            rec.amount = total
+            if not rec.approved_amount or rec.approved_amount == rec._origin.approved_amount:
+                rec.approved_amount = total
 
     @api.model
     def _deduction_line_commands_amount_total(self, commands):
@@ -652,7 +651,7 @@ class ScExpenseClaim(models.Model):
                     and rec.state not in {"approved", "done", "legacy_confirmed", "cancel"}
                 ):
                     total = rec.deduction_line_amount_total
-                    if total and (
+                    if (
                         float_compare(rec.amount or 0.0, total, precision_rounding=rec.currency_id.rounding or 0.01) != 0
                         or float_compare(rec.approved_amount or 0.0, total, precision_rounding=rec.currency_id.rounding or 0.01) != 0
                     ):

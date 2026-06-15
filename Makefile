@@ -100,6 +100,11 @@ BASELINE_FREEZE_ENFORCE ?= 1
 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES ?= 1
 BUSINESS_INCREMENT_PROFILE ?= base
 SC_WARN_ACT_URL_LEGACY_MAX ?= 3
+WORKFLOW_CONTRACT_FRONTEND_URL ?= http://127.0.0.1:18081
+WORKFLOW_CONTRACT_DB_NAME ?= $(or $(DB_NAME),sc_demo)
+WORKFLOW_CONTRACT_EXPENSE_RECORD_ID ?= 273134
+WORKFLOW_CONTRACT_CLOSE_RECORD_ID ?= 13159
+WORKFLOW_CONTRACT_INVENTORY_OUT ?= docs/ops/audit/workflow_state_inventory_sc_demo.md
 DB_CI        ?= sc_test
 DB_USER      ?= odoo
 DB_PASSWORD  ?= $(DB_USER)
@@ -4839,6 +4844,42 @@ verify.unified_page_contract.v2.web_visual_acceptance.host: guard.prod.forbid
 .PHONY: verify.unified_page_contract.v2.web_form_shadow_browser.host
 verify.unified_page_contract.v2.web_form_shadow_browser.host: guard.prod.forbid
 	@node scripts/verify/web_contract_v2_form_shadow_browser_smoke.js
+
+.PHONY: audit.workflow_state.inventory
+audit.workflow_state.inventory: guard.prod.forbid
+	@mkdir -p "$$(dirname "$(WORKFLOW_CONTRACT_INVENTORY_OUT)")"
+	@$(RUN_ENV) DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" bash scripts/ops/odoo_shell_exec.sh < scripts/audit/workflow_state_inventory.py > "$(WORKFLOW_CONTRACT_INVENTORY_OUT)"
+
+.PHONY: verify.workflow_contract.backend
+verify.workflow_contract.backend: guard.prod.forbid audit.workflow_state.inventory
+	@python3 -m py_compile addons/smart_construction_core/models/support/workflow_contract_service.py addons/smart_construction_core/tests/test_workflow_contract_backend.py addons/smart_construction_core/tests/test_user_feedback_business_views.py scripts/audit/workflow_state_inventory.py scripts/verify/workflow_inventory_profile_method_guard.py scripts/verify/workflow_contract_custom_coverage_guard.py
+	@python3 scripts/verify/workflow_inventory_profile_method_guard.py
+	@python3 scripts/verify/workflow_contract_custom_coverage_guard.py
+	@DOCS_MOUNT_HOST=./docs DOCS_MOUNT_CONT=/mnt/docs ADDONS_EXTERNAL_MOUNT=/mnt/addons_external/oca_server_ux DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" MODULE=smart_construction_core TEST_TAGS='/smart_construction_core:TestWorkflowContractBackend' bash scripts/test/test_safe.sh
+	@DOCS_MOUNT_HOST=./docs DOCS_MOUNT_CONT=/mnt/docs ADDONS_EXTERNAL_MOUNT=/mnt/addons_external/oca_server_ux DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" MODULE=smart_construction_core TEST_TAGS='/smart_construction_core:TestUserFeedbackBusinessViews.test_deduction_registration_action_creates_deduction_bill_lines' bash scripts/test/test_safe.sh
+
+.PHONY: verify.workflow_contract.browser.syntax
+verify.workflow_contract.browser.syntax: guard.prod.forbid
+	@node --check scripts/verify/workflow_evidence_gate_browser_acceptance.js
+
+.PHONY: verify.workflow_contract.browser.expense_claim.host
+verify.workflow_contract.browser.expense_claim.host: guard.prod.forbid verify.workflow_contract.browser.syntax
+	@FRONTEND_URL="$${FRONTEND_URL:-$(WORKFLOW_CONTRACT_FRONTEND_URL)}" DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" MODEL=sc.expense.claim RECORD_ID="$(WORKFLOW_CONTRACT_EXPENSE_RECORD_ID)" EXPECTED_REASON_CODE=DEDUCTION_BILL_MISSING_LINES UNIQUE_BUTTON_PATTERN='^提交审批$$' ARTIFACTS_DIR=artifacts/workflow-evidence-gate-browser-workflow-contract-required node scripts/verify/workflow_evidence_gate_browser_acceptance.js
+
+.PHONY: verify.workflow_contract.browser.contract_close.host
+verify.workflow_contract.browser.contract_close.host: guard.prod.forbid verify.workflow_contract.browser.syntax
+	@FRONTEND_URL="$${FRONTEND_URL:-$(WORKFLOW_CONTRACT_FRONTEND_URL)}" DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" MODEL=construction.contract RECORD_ID="$(WORKFLOW_CONTRACT_CLOSE_RECORD_ID)" EXPECTED_TEXT='无合同明细的合同不可关闭，请补充明细。' EXPECTED_REASON_CODE=CONTRACT_MISSING_LINES_FOR_CLOSE TARGET_BUTTON_PATTERN='完成' TARGET_BUTTON_LABEL='完成' UNIQUE_BUTTON_PATTERN='^完成$$' FORBIDDEN_BUTTON_PATTERN='提交审批|审批通过|审批驳回|重置为草稿' ARTIFACTS_DIR=artifacts/workflow-evidence-gate-browser-contract-close-workflow-contract-required node scripts/verify/workflow_evidence_gate_browser_acceptance.js
+
+.PHONY: verify.workflow_contract.browser.host
+verify.workflow_contract.browser.host: verify.workflow_contract.browser.expense_claim.host verify.workflow_contract.browser.contract_close.host
+
+.PHONY: verify.workflow_contract.frontend
+verify.workflow_contract.frontend: verify.frontend.typecheck.strict verify.unified_page_contract.v2.web_architecture verify.frontend.build
+	@python3 -m py_compile scripts/verify/web_unified_page_contract_v2_guard.py
+	@python3 scripts/verify/web_unified_page_contract_v2_guard.py
+
+.PHONY: verify.workflow_contract
+verify.workflow_contract: verify.workflow_contract.backend verify.workflow_contract.frontend verify.workflow_contract.browser.host
 
 .PHONY: verify.unified_page_contract.v2
 verify.unified_page_contract.v2: verify.unified_page_contract.v2.schema verify.unified_page_contract.v2.assembler verify.unified_page_contract.v2.status verify.unified_page_contract.v2.action verify.unified_page_contract.v2.data verify.unified_page_contract.v2.runtime verify.unified_page_contract.v2.client verify.unified_page_contract.v2.web_consumer verify.unified_page_contract.v2.web_architecture
