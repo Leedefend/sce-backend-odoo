@@ -30,16 +30,28 @@ function cachedChromiumCandidates() {
     return [];
   }
   return entries
-    .filter((entry) => entry.isDirectory() && entry.name.startsWith('chromium-'))
+    .filter((entry) => entry.isDirectory() && (entry.name.startsWith('chromium-') || entry.name.startsWith('chromium_headless_shell-')))
     .sort((a, b) => revisionOf(b.name) - revisionOf(a.name))
-    .map((entry) => path.join(root, entry.name, 'chrome-linux64', 'chrome'))
+    .flatMap((entry) => [
+      path.join(root, entry.name, 'chrome-linux64', 'chrome'),
+      path.join(root, entry.name, 'chrome-headless-shell-linux64', 'chrome-headless-shell'),
+    ])
     .filter(isExecutable);
 }
 
 export function resolveChromiumExecutablePath() {
-  const explicit = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
-  if (explicit && isExecutable(explicit)) {
-    return explicit;
+  const explicitKeys = [
+    'CHROMIUM_EXECUTABLE_PATH',
+    'PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH',
+    'PLAYWRIGHT_EXECUTABLE_PATH',
+    'CHROMIUM_PATH',
+    'PLAYWRIGHT_CHROMIUM_EXECUTABLE',
+  ];
+  for (const key of explicitKeys) {
+    const explicit = process.env[key];
+    if (explicit && isExecutable(explicit)) {
+      return explicit;
+    }
   }
   return cachedChromiumCandidates()[0] || '';
 }
