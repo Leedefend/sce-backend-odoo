@@ -376,6 +376,7 @@ export interface SessionState {
   projectContext: ProjectContextContract | null;
   activityPages: ActivityPage[];
   activeActivityPageKey: string;
+  activityPageCacheEpochs: Record<string, number>;
   capabilityCatalog: Record<string, CapabilityRuntimeMeta>;
   sceneActionHints: Record<string, SceneActionHint>;
   capabilityGroups: CapabilityGroup[];
@@ -703,6 +704,15 @@ function isRetainedActivityPage(page: ActivityPage | null): page is ActivityPage
   return true;
 }
 
+function activityPageCacheRouteKey(key: string): string {
+  const normalized = asText(key);
+  if (!normalized) return '';
+  const parts = normalized.split(':');
+  if (parts[0] === 'action' && parts.length >= 4) return parts.slice(0, 4).join(':');
+  if (parts[0] === 'scene' && parts.length >= 2) return parts.slice(0, 2).join(':');
+  return normalized;
+}
+
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
     token: null,
@@ -719,6 +729,7 @@ export const useSessionStore = defineStore('session', {
     projectContext: null,
     activityPages: [],
     activeActivityPageKey: '',
+    activityPageCacheEpochs: {},
     capabilityCatalog: {},
     sceneActionHints: {},
     capabilityGroups: [],
@@ -1041,6 +1052,7 @@ export const useSessionStore = defineStore('session', {
       this.projectContext = null;
       this.activityPages = [];
       this.activeActivityPageKey = '';
+      this.activityPageCacheEpochs = {};
       this.capabilityCatalog = {};
       this.sceneActionHints = {};
       this.capabilityGroups = [];
@@ -1200,6 +1212,14 @@ export const useSessionStore = defineStore('session', {
       if (!normalizedKey) return null;
       const closingActive = this.activeActivityPageKey === normalizedKey;
       this.activityPages = this.activityPages.filter((page) => page.key !== normalizedKey);
+      const cacheRouteKey = activityPageCacheRouteKey(normalizedKey);
+      this.activityPageCacheEpochs = {
+        ...this.activityPageCacheEpochs,
+        [normalizedKey]: Number(this.activityPageCacheEpochs[normalizedKey] || 0) + 1,
+        ...(cacheRouteKey ? {
+          [cacheRouteKey]: Number(this.activityPageCacheEpochs[cacheRouteKey] || 0) + 1,
+        } : {}),
+      };
       let nextPage: ActivityPage | null = null;
       if (closingActive) {
         nextPage = [...this.activityPages].sort((a, b) => b.last_active_at - a.last_active_at)[0] || null;

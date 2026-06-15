@@ -560,7 +560,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
+import { computed, inject, onActivated, onBeforeUnmount, onDeactivated, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { ActionContract } from '@sc/schema';
 import { ApiError } from '../api/client';
@@ -877,6 +877,12 @@ function requestLoadPage(): Promise<void> {
   return loadPageInvoker();
 }
 
+function currentActionActivityRouteKey(): string {
+  const currentActionId = String(route.params.actionId || route.query.action_id || '').trim();
+  const currentMenuId = String(route.query.menu_id || '').trim() || '0';
+  return currentActionId ? `action:${currentActionId}:menu:${currentMenuId}` : '';
+}
+
 let clearSelectionInvoker: () => void = () => {};
 function clearSelection(): void {
   clearSelectionInvoker();
@@ -897,6 +903,9 @@ const {
 const routeQueryMap = computed<Record<string, unknown>>(() => normalizeActionViewRouteQuery(route.query));
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
+const isComponentActive = ref(true);
+const instanceActivityRouteKey = ref('');
+const retainedRouteFullPath = ref('');
 const renderErrorMessage = ref('');
 const traceId = ref('');
 const lastTraceId = ref('');
@@ -3256,15 +3265,25 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
 }
 
 onMounted(async () => {
+  instanceActivityRouteKey.value = currentActionActivityRouteKey();
   renderErrorMessage.value = '';
   applyRoutePreset();
   if (await redirectMenuOnlyRouteIfNeeded()) {
     return;
   }
   await requestLoadPage();
+  retainedRouteFullPath.value = route.fullPath;
   if (typeof window !== 'undefined') {
     window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
   }
+});
+
+onActivated(() => {
+  isComponentActive.value = true;
+});
+
+onDeactivated(() => {
+  isComponentActive.value = false;
 });
 
 onBeforeUnmount(() => {
@@ -3287,8 +3306,17 @@ onErrorCaptured((err) => {
 watch(
   () => route.fullPath,
   async () => {
+    const currentKey = currentActionActivityRouteKey();
+    if (instanceActivityRouteKey.value && currentKey !== instanceActivityRouteKey.value) return;
+    if (!isComponentActive.value) return;
     if (suppressNextRouteReload.value) {
       suppressNextRouteReload.value = false;
+      applyRoutePreset();
+      updateActivityRuntimeQueryFromRoute();
+      retainedRouteFullPath.value = route.fullPath;
+      return;
+    }
+    if (retainedRouteFullPath.value === route.fullPath && status.value !== 'idle' && status.value !== 'loading') {
       applyRoutePreset();
       updateActivityRuntimeQueryFromRoute();
       return;
@@ -3301,13 +3329,18 @@ watch(
     if (await redirectMenuOnlyRouteIfNeeded()) {
       return;
     }
-    void requestLoadPage();
+    void Promise.resolve(requestLoadPage()).then(() => {
+      retainedRouteFullPath.value = route.fullPath;
+    });
   },
 );
 
 watch(
   () => route.query,
   () => {
+    const currentKey = currentActionActivityRouteKey();
+    if (instanceActivityRouteKey.value && currentKey !== instanceActivityRouteKey.value) return;
+    if (!isComponentActive.value) return;
     updateActivityRuntimeQueryFromRoute();
   },
   { deep: true, immediate: true },
@@ -3316,6 +3349,7 @@ watch(
 watch(
   () => Number(session.projectContext?.selected?.id || 0),
   () => {
+    if (!isComponentActive.value) return;
     refreshForProjectContextChange();
   },
 );

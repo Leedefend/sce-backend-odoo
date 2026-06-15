@@ -925,7 +925,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onErrorCaptured, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onErrorCaptured, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -1261,6 +1261,9 @@ function resolveWorkspaceContextQuery() {
 }
 
 const status = ref<UiStatus>('loading');
+const isComponentActive = ref(true);
+const instanceRouteIdentity = ref('');
+const retainedRouteIdentity = ref('');
 const renderErrorMessage = ref('');
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
@@ -1701,6 +1704,7 @@ const pageDisplaySubtitle = computed(() => {
 watch(
   pageDisplayTitle,
   (title) => {
+    if (!isComponentActive.value) return;
     session.updateActiveActivityTitle(title);
   },
   { immediate: true },
@@ -7925,6 +7929,7 @@ async function reload() {
     await loadRecord();
     if (reloadToken !== activeReloadToken) return;
     status.value = 'ok';
+    retainedRouteIdentity.value = `${String(route.params.model || '')}|${String(route.params.id || '')}|${String(route.query.action_id || '')}`;
     void preloadFormAuxiliaryData(reloadToken);
   } catch (err) {
     if (reloadToken !== activeReloadToken) return;
@@ -8953,7 +8958,11 @@ function exportContractJson() {
 
 watch(
   () => `${String(route.params.model || '')}|${String(route.params.id || '')}|${String(route.query.action_id || '')}`,
-  () => {
+  (identity) => {
+    if (instanceRouteIdentity.value && identity !== instanceRouteIdentity.value) return;
+    if (!instanceRouteIdentity.value && identity) instanceRouteIdentity.value = identity;
+    if (!isComponentActive.value) return;
+    if (identity && identity === retainedRouteIdentity.value && status.value === 'ok') return;
     void reload();
   },
   { immediate: true },
@@ -8965,6 +8974,7 @@ watch(
     code: currentBusinessCategoryCode.value,
   }),
   (state) => {
+    if (!isComponentActive.value) return;
     if (!state.label) return;
     const hasRouteLabel = String(route.query.current_business_category_label || route.query.default_business_category_label || '').trim();
     if (hasRouteLabel) return;
@@ -9003,6 +9013,7 @@ function projectContextChangedPreviousProjectId(event: Event): number {
 }
 
 function handleProjectContextChanged(event: Event): void {
+  if (!isComponentActive.value) return;
   const selectedProjectId = projectContextChangedProjectId(event);
   const previousProjectId = projectContextChangedPreviousProjectId(event);
   if (selectedProjectId > 0 && previousProjectId === selectedProjectId) return;
@@ -9048,6 +9059,7 @@ watch(
     projectIntake: isProjectIntakeCreateMode.value,
   }),
   (state) => {
+    if (!isComponentActive.value) return;
     if (state.projectIntake || !state.model || !state.recordId || !state.collaborationReady) return;
     const key = `${state.model}:${state.recordId}`;
     if (nativeChatterAutoLoadKey.value === key || chatterLoading.value) return;
@@ -9064,6 +9076,14 @@ onMounted(() => {
   if (typeof document !== 'undefined') {
     document.addEventListener('keydown', onRelationDialogDocumentKeydown);
   }
+});
+
+onActivated(() => {
+  isComponentActive.value = true;
+});
+
+onDeactivated(() => {
+  isComponentActive.value = false;
 });
 
 onBeforeUnmount(() => {
