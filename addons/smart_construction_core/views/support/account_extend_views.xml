@@ -139,7 +139,7 @@
                                 </tree>
                                 <form>
                                     <sheet>
-                                        <group>
+                                        <group col="3">
                                             <field name="name"/>
                                             <field name="function"/>
                                             <field name="phone"/>
@@ -345,7 +345,7 @@
                                 </tree>
                                 <form>
                                     <sheet>
-                                        <group>
+                                        <group col="3">
                                             <field name="name"/>
                                             <field name="function"/>
                                             <field name="phone"/>
