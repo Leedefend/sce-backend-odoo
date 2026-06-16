@@ -4,6 +4,9 @@ import { useSessionStore } from '../stores/session';
 import { recordTrace, digestParams, createTraceId } from './trace';
 import { buildEntryTargetRouteTarget } from '../app/routeQuery';
 
+const BUSINESS_CONFIG_ACTION_XMLID = 'smart_construction_core.action_sc_business_config_workbench';
+const BUSINESS_CONFIG_ROOT_MENU_XMLID = 'smart_construction_core.menu_sc_root';
+
 function normalizeDomain(domain: unknown) {
   return Array.isArray(domain) ? domain : [];
 }
@@ -54,14 +57,19 @@ export function resolveActionWebRoute(action: NavMeta | null | undefined): strin
 
 export function resolveActionWebRouteQuery(action: NavMeta | null | undefined): Record<string, string> {
   const rootMenuXmlid = contextValue(action, 'business_config_root_menu_xmlid');
-  return rootMenuXmlid ? { root_menu_xmlid: rootMenuXmlid } : {};
+  if (rootMenuXmlid) return { root_menu_xmlid: rootMenuXmlid };
+  if (isBusinessConfigurationAction(action)) return { root_menu_xmlid: BUSINESS_CONFIG_ROOT_MENU_XMLID };
+  return {};
 }
 
 export function isBusinessConfigurationAction(action: NavMeta | null | undefined) {
   const model = String(action?.model || action?.res_model || '').trim();
   const name = String(action?.name || action?.title || '').trim();
+  const actionXmlid = String(action?.action_xmlid || action?.xmlid || '').trim();
   const route = resolveActionWebRoute(action);
   return route === '/admin/business-config'
+    || actionXmlid === BUSINESS_CONFIG_ACTION_XMLID
+    || model === 'ui.business.config.contract'
     || (model === 'ui.business.config.contract' && /业务配置工作台|低代码配置|配置工作台/.test(name));
 }
 

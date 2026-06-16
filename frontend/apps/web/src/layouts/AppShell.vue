@@ -137,7 +137,7 @@
           class="published-app"
           :class="{ active: route.name === 'business-config' }"
           type="button"
-          @click="pushRoute('/admin/business-config')"
+          @click="openBusinessConfigWorkbench"
         >
           <span class="published-app__mark">配</span>
           <span class="published-app__label">业务配置工作台</span>
@@ -307,6 +307,7 @@ type PublishedApp = {
   badges: Record<string, unknown>;
 };
 const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
+const BUSINESS_CONFIG_ROOT_MENU_XMLID = 'smart_construction_core.menu_sc_root';
 
 function asDict(value: unknown): UnknownDict | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -709,6 +710,25 @@ function appBadge(app: PublishedApp) {
 function pushRoute(path: string) {
   if (!path) return;
   router.push(path).catch(() => {});
+}
+
+function openBusinessConfigWorkbench() {
+  router.push(businessConfigWorkbenchRoute()).catch(() => {});
+}
+
+function businessConfigWorkbenchRoute(queryOverride: LocationQueryRaw = {}) {
+  return {
+    path: '/admin/business-config',
+    query: {
+      ...queryOverride,
+      root_menu_xmlid: BUSINESS_CONFIG_ROOT_MENU_XMLID,
+    },
+  };
+}
+
+function isBusinessConfigWorkbenchNode(node: NavNode) {
+  const label = String(node.title || node.name || node.label || '').trim();
+  return label === '业务配置工作台';
 }
 
 function openAppTarget(target: unknown, fallbackAppId: string) {
@@ -1341,6 +1361,10 @@ function handleSelect(node: NavNode) {
   const targetMenuId = Number(node.menu_id || node.id || 0);
   const menuQuery = buildMenuSelectionQuery();
   if (targetMenuId <= 0) return;
+  if (isBusinessConfigWorkbenchNode(node)) {
+    router.push(businessConfigWorkbenchRoute(menuQuery)).catch(() => {});
+    return;
+  }
   const resolved = resolveMenuAction(menuTree.value, targetMenuId);
   if (resolved.kind === 'redirect') {
     const entryTarget = asDict(resolved.target?.entry_target);
