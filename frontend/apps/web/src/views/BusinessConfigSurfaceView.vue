@@ -330,7 +330,7 @@
             {{ hasListSearchDraftChanges ? (listSearchSaving ? '保存中...' : '保存并预览') : '预览页面' }}
           </button>
           <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="saveListSearchConfig">
-            {{ listSearchSaving ? '保存中...' : '保存业务默认' }}
+            {{ listSearchSaving ? '保存中...' : '保存设置' }}
           </button>
           <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="resetListSearchDraft">
             放弃调整
@@ -375,7 +375,7 @@
             placeholder="搜索可选字段"
           />
           <div class="field-option-summary">
-            可选字段 {{ fieldOptionAvailableCount('list') }}，当前显示 {{ availableListFieldOptions.length }}
+            可添加字段 {{ fieldOptionAvailableCount('list') }}，当前显示 {{ availableListFieldOptions.length }}
           </div>
           <div v-if="availableListFieldOptions.length" class="field-option-pool">
             <button
@@ -414,7 +414,7 @@
             placeholder="搜索可选字段"
           />
           <div class="field-option-summary">
-            可选字段 {{ fieldOptionAvailableCount('filter') }}，当前显示 {{ availableFilterFieldOptions.length }}
+            可添加字段 {{ fieldOptionAvailableCount('filter') }}，当前显示 {{ availableFilterFieldOptions.length }}
           </div>
           <div v-if="availableFilterFieldOptions.length" class="field-option-pool">
             <button
@@ -453,7 +453,7 @@
             placeholder="搜索可选字段"
           />
           <div class="field-option-summary">
-            可选字段 {{ fieldOptionAvailableCount('group') }}，当前显示 {{ availableGroupFieldOptions.length }}
+            可添加字段 {{ fieldOptionAvailableCount('group') }}，当前显示 {{ availableGroupFieldOptions.length }}
           </div>
           <div v-if="availableGroupFieldOptions.length" class="field-option-pool">
             <button
