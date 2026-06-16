@@ -6,14 +6,11 @@
         <h1>{{ title }}</h1>
       </div>
       <div class="header-actions">
+        <button type="button" class="ghost primary" :disabled="scanLoading" @click="scanSystemRootCoverage">
+          {{ scanLoading ? '扫描中...' : primaryScanButtonLabel }}
+        </button>
         <button type="button" class="ghost" :disabled="scanLoading || !currentModel" @click="scanCurrentModel">
-          扫当前模型
-        </button>
-        <button type="button" class="ghost" :disabled="scanLoading" @click="scanCoverage">
-          {{ scanLoading ? '扫描中...' : '可见范围扫描' }}
-        </button>
-        <button type="button" class="ghost" :disabled="scanLoading" @click="scanSystemRootCoverage">
-          {{ scanLoading ? '扫描中...' : systemScanButtonLabel }}
+          扫描当前业务对象
         </button>
         <button type="button" class="ghost" :disabled="loading" @click="applyScopeAndLoad">
           {{ loading ? '刷新中...' : '刷新' }}
@@ -24,24 +21,53 @@
     <div v-if="error" class="status error">{{ error }}</div>
     <div v-else-if="message" class="status ok">{{ message }}</div>
 
+    <section v-if="!coverageScan" class="workbench-flow">
+      <article class="flow-card flow-card--primary">
+        <span class="flow-step">1</span>
+        <div>
+          <h2>扫描业务菜单</h2>
+          <p>{{ rootMenuXmlid ? '按当前产品线检查可配置页面。' : '检查当前可见业务页面。' }}</p>
+        </div>
+        <button type="button" class="ghost primary" :disabled="scanLoading" @click="scanSystemRootCoverage">
+          {{ scanLoading ? '扫描中...' : '开始扫描' }}
+        </button>
+      </article>
+      <article class="flow-card">
+        <span class="flow-step">2</span>
+        <div>
+          <h2>处理缺口</h2>
+          <p>扫描后可批量补齐，也可以逐个页面处理。</p>
+        </div>
+        <button type="button" class="ghost" disabled>等待扫描</button>
+      </article>
+      <article class="flow-card">
+        <span class="flow-step">3</span>
+        <div>
+          <h2>精修页面</h2>
+          <p>选中页面后配置表单、列表、搜索和菜单。</p>
+        </div>
+        <button type="button" class="ghost" :disabled="!currentModel" @click="openFormConfig">配置当前页面</button>
+      </article>
+    </section>
+
     <section class="scope-panel">
       <label>
-        <span>模型</span>
+        <span>业务对象</span>
         <input v-model="scopeModel" type="text" placeholder="res.partner" />
       </label>
       <label>
-        <span>动作</span>
+        <span>页面ID</span>
         <input v-model.number="scopeActionId" type="number" min="0" />
       </label>
       <label>
-        <span>视图</span>
+        <span>视图ID</span>
         <input v-model.number="scopeViewId" type="number" min="0" />
       </label>
       <label>
-        <span>角色</span>
+        <span>角色编码</span>
         <input v-model="scopeRoleKey" type="text" placeholder="可选 role_key" />
       </label>
-      <button type="button" class="ghost small" :disabled="loading" @click="applyScopeAndLoad">应用作用域</button>
+      <button type="button" class="ghost small" :disabled="loading" @click="applyScopeAndLoad">读取配置对象</button>
     </section>
 
     <section v-if="loading" class="loading-state">正在读取配置能力...</section>
@@ -67,25 +93,15 @@
         <span>结论 {{ overallStatusLabel(coverageScan.summary.overall_status) }}</span>
         <span>{{ coverageScopeLabel }}</span>
         <span>范围 {{ coverageScan.model || '全部模型' }}</span>
-        <span>动作 {{ coverageScan.summary.action_count }}</span>
+        <span>业务页面 {{ coverageScan.summary.action_count }}</span>
         <span>阻断 {{ coverageScan.summary.severity_counts.error || 0 }}</span>
         <span>警告 {{ coverageScan.summary.severity_counts.warning || 0 }}</span>
-        <span>提示 {{ coverageScan.summary.severity_counts.notice || 0 }}</span>
         <span>完整 {{ coverageScan.summary.complete_count }}</span>
         <span>缺口 {{ coverageScan.summary.missing_count }}</span>
-        <span>运行时缺口 {{ coverageScan.summary.runtime_missing_count }}</span>
         <span>缺表单 {{ coverageScan.summary.missing_form_count }}</span>
         <span>缺列表 {{ coverageScan.summary.missing_list_count }}</span>
         <span>缺搜索 {{ coverageScan.summary.missing_search_count }}</span>
-        <span>运行时缺表单 {{ coverageScan.summary.runtime_missing_form_count }}</span>
-        <span>运行时缺列表 {{ coverageScan.summary.runtime_missing_list_count }}</span>
-        <span>运行时缺搜索 {{ coverageScan.summary.runtime_missing_search_count }}</span>
-        <span>未发布 {{ coverageScan.summary.not_published_gap_count }}</span>
-        <span>作用域未命中 {{ coverageScan.summary.not_runtime_applicable_gap_count }}</span>
-        <span>无菜单 {{ coverageScan.summary.no_menu_count }}</span>
         <span>个人偏好 {{ coverageScan.summary.user_preference_count }}</span>
-        <span>证据：配置/发布/运行时</span>
-        <span>{{ coverageScan.runtime_evidence_source }}</span>
         <span v-for="item in remediationSummaryItems" :key="item.code">
           {{ item.label }} {{ item.count }}
         </span>
@@ -124,7 +140,7 @@
           <button type="button" class="link-button" @click="focusScanRow(row)">定位</button>
         </div>
       </div>
-      <div v-else class="empty-state">当前扫描范围没有需要展示的记录。</div>
+      <div v-else class="empty-state">当前扫描范围没有待处理缺口。</div>
     </section>
     <section v-if="!loading" class="section-grid">
       <article v-for="section in sections" :key="section.key" class="config-card">
@@ -134,7 +150,7 @@
         </div>
         <p>{{ boundaryLabel(section.boundary) }}</p>
         <div class="config-card-meta">
-          <span>{{ section.intent }}</span>
+          <span>{{ sectionHelpLabel(section.key) }}</span>
         </div>
         <div class="config-card-actions">
           <button
@@ -331,7 +347,7 @@ const scopeActionId = ref(numericQuery('action_id') || 0);
 const scopeViewId = ref(numericQuery('view_id') || 0);
 const scopeRoleKey = ref(String(route.query.role_key || '').trim());
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || '').trim());
-const systemScanButtonLabel = computed(() => (rootMenuXmlid.value ? '系统根菜单扫描' : '全部菜单扫描'));
+const primaryScanButtonLabel = computed(() => (rootMenuXmlid.value ? '扫描业务菜单' : '扫描可见菜单'));
 
 const title = computed(() => {
   const model = scopeModel.value.trim();
@@ -391,10 +407,17 @@ const scopeView = computed(() => {
 const scopeRole = computed(() => String(scopeRoleKey.value || '').trim() || undefined);
 
 function boundaryLabel(boundary: string) {
-  if (boundary === 'business_contract') return '正式业务契约';
-  if (boundary === 'business_contract_not_user_preference') return '正式业务契约，不使用个人偏好';
-  if (boundary === 'business_contract_with_policy_runtime') return '正式契约追踪，运行时由 policy 生效';
+  if (boundary === 'business_contract') return '业务默认配置';
+  if (boundary === 'business_contract_not_user_preference') return '业务默认配置';
+  if (boundary === 'business_contract_with_policy_runtime') return '菜单显示规则';
   return boundary || '未声明边界';
+}
+
+function sectionHelpLabel(sectionKey: string) {
+  if (sectionKey === 'form') return '字段显示、隐藏、必填、布局';
+  if (sectionKey === 'list_search') return '列表列、搜索条件、默认分组';
+  if (sectionKey === 'menu') return '菜单入口、显示范围、发布状态';
+  return '业务配置';
 }
 
 function viewTypeLabel(viewType: string) {
@@ -1005,6 +1028,12 @@ h1 {
   cursor: pointer;
 }
 
+.ghost.primary {
+  border-color: var(--sc-app-accent);
+  background: var(--sc-app-accent);
+  color: var(--sc-app-accent-contrast);
+}
+
 .ghost:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -1016,6 +1045,7 @@ h1 {
 }
 
 .status,
+.workbench-flow,
 .scope-panel,
 .loading-state,
 .scan-panel {
@@ -1038,6 +1068,53 @@ h1 {
   border: 1px solid var(--sc-app-success-border);
   background: var(--sc-app-success-bg);
   color: var(--sc-app-success-text);
+}
+
+.workbench-flow {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.flow-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
+}
+
+.flow-card--primary {
+  border-color: var(--sc-app-accent);
+}
+
+.flow-step {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+  font-weight: 700;
+}
+
+.flow-card h2,
+.config-card h2,
+.edit-panel h2,
+.version-panel h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.flow-card p {
+  margin: 4px 0 0;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
 }
 
 .scope-panel {
@@ -1159,11 +1236,6 @@ h1 {
   gap: 12px;
 }
 
-.config-card h2 {
-  margin: 0;
-  font-size: 16px;
-}
-
 .config-card strong {
   font-size: 22px;
 }
@@ -1214,11 +1286,6 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
-
-.edit-panel h2 {
-  margin: 0;
-  font-size: 16px;
 }
 
 .edit-panel p {
@@ -1355,9 +1422,18 @@ h1 {
 }
 
 @media (max-width: 900px) {
+  .workbench-flow,
   .scope-panel,
   .edit-grid {
     grid-template-columns: 1fr;
+  }
+
+  .flow-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .flow-card .ghost {
+    grid-column: 1 / -1;
   }
 }
 </style>
