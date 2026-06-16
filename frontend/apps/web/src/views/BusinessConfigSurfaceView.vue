@@ -1285,6 +1285,7 @@ async function setActiveListSearchEditor(kind: ListSearchEditorKind) {
 function setListSearchNames(kind: ListSearchEditorKind, names: string[]) {
   const state = listSearchEditorState(kind);
   state.text.value = namesToText(names);
+  clearMessage();
 }
 
 function resetListSearchDraft() {
