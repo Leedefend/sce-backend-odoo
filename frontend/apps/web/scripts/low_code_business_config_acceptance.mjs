@@ -93,6 +93,10 @@ async function main() {
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
     const selectedName = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
+    const defaultPageText = await page.locator("body").innerText();
+    const pageTypeLabels = await page.locator(".page-type-tabs button").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
     const leakedDefaultTerms = await visibleForbiddenTerms(page);
     const defaultVersionButtonCount = await page.getByRole("button", { name: "版本记录" }).count();
     await page.getByRole("button", { name: "版本记录" }).first().click();
@@ -115,6 +119,10 @@ async function main() {
     await page.getByPlaceholder("输入页面名称").fill("");
     await page.getByRole("button", { name: "表单页面" }).click();
     const formPageRows = await page.locator(".scan-row-main strong").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    await page.getByRole("button", { name: "分析页面" }).click();
+    const analysisPageRows = await page.locator(".scan-row-main strong").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
     await page.getByRole("button", { name: "全部页面" }).click();
@@ -153,7 +161,9 @@ async function main() {
     report.checks.defaultConfigPage = {
       defaultCards,
       selectedName,
+      pageTypeLabels,
       leakedDefaultTerms,
+      defaultHasUnwiredCopy: defaultPageText.includes("编辑入口待接入"),
       defaultVersionButtonCount,
       defaultVersionTitle,
       defaultVersionDescription,
@@ -164,12 +174,14 @@ async function main() {
       initialPageRows,
       searchedPageRows,
       formPageRows,
+      analysisPageRows,
       selectedAfterSwitch,
       titleAfterSwitch,
       cardsAfterSwitch,
       selectedAfterRestore,
       advancedScopeLabels,
       advancedPanelVisible,
+      advancedHasUnwiredCopy: advancedText.includes("编辑入口待接入"),
       advancedHasGovernanceText: advancedText.includes("高级治理视图") && advancedText.includes("治理结论"),
       previewUrl,
     };
@@ -181,6 +193,11 @@ async function main() {
     );
     assert(selectedName === "项目合同汇总", "配置页没有恢复选中页面", { selectedName });
     assert(
+      pageTypeLabels.join("|") === "全部页面|表单页面|列表页面|分析页面",
+      "页面类型筛选不完整",
+      { pageTypeLabels },
+    );
+    assert(
       initialPageRows.includes("项目合同汇总")
         && initialPageRows.includes("合同办理")
         && searchedPageRows.length === 1
@@ -189,6 +206,7 @@ async function main() {
       "业务页面搜索或类型筛选不可用",
       { initialPageRows, searchedPageRows, formPageRows },
     );
+    assert(!defaultPageText.includes("编辑入口待接入"), "默认配置页出现未接入编辑入口", { defaultPageText });
     assert(
       selectedAfterSwitch === "合同办理"
         && titleAfterSwitch.includes("合同办理")
@@ -206,6 +224,7 @@ async function main() {
       "高级设置边界不可用",
       { advancedScopeLabels, advancedPanelVisible },
     );
+    assert(!advancedText.includes("编辑入口待接入"), "高级设置中出现未接入编辑入口", { advancedText });
     assert(previewUrl.includes("/a/562"), "业务页面预览入口不可用", { previewUrl });
     assert(
       leakedDefaultTerms.length === 0,

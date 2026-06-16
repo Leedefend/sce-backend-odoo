@@ -115,6 +115,15 @@ class _ActionModel(list):
     def sudo(self):
         return self
 
+    def browse(self, ident):
+        rows = [row for row in self if row.id == ident]
+
+        class _RecordSet(list):
+            def exists(self):
+                return self[0] if self else None
+
+        return _RecordSet(rows)
+
     def search(self, domain, limit=None, order=None):
         self.domain = domain
         self.limit = limit
@@ -217,6 +226,8 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
                 _Contract("res.partner", "form", action_id=11, view_id=22, role_key="sales"),
                 _Contract("res.partner", "tree", action_id=11, view_id=22, role_key="sales"),
                 _Contract("res.partner", "search", action_id=11, view_id=22, role_key="sales"),
+                _Contract("res.partner", "pivot", action_id=11, view_id=22, role_key="sales"),
+                _Contract("res.partner", "graph", action_id=11, view_id=22, role_key="sales"),
                 _Contract("res.partner", "search", action_id=99, view_id=22, role_key="sales"),
                 _Contract("ir.ui.menu", False),
             ]),
@@ -232,9 +243,30 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
         sections = {row["key"]: row for row in result["data"]["sections"]}
         self.assertEqual(sections["form"]["contract_count"], 1)
         self.assertEqual(sections["list_search"]["contract_count"], 2)
+        self.assertEqual(sections["analysis"]["contract_count"], 2)
         self.assertEqual(sections["menu"]["contract_count"], 1)
         self.assertEqual(result["data"]["role_key"], "sales")
         self.assertEqual(sections["list_search"]["boundary"], "business_contract_not_user_preference")
+        self.assertEqual(sections["analysis"]["boundary"], "business_contract")
+
+    def test_surface_exposes_analysis_section_from_action_view_mode(self):
+        env = _Env({
+            "ir.actions.act_window": _ActionModel([
+                _Action(11, "经营分析", "res.partner", "pivot,graph"),
+            ]),
+            "ui.business.config.contract": _ContractModel([]),
+        })
+        handler = self.module.BusinessConfigSurfaceGetHandler(
+            env=env,
+            params={"model": "res.partner", "action_id": 11},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        sections = {row["key"]: row for row in result["data"]["sections"]}
+        self.assertIn("analysis", sections)
+        self.assertEqual(sections["analysis"]["contract_count"], 0)
 
     def test_coverage_scan_reports_action_contract_gaps(self):
         action_model = _ActionModel([

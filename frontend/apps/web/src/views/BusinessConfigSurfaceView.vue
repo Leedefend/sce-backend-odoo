@@ -212,7 +212,7 @@
         </div>
         <div class="config-card-actions">
           <button
-            v-if="section.key === 'form' || section.key === 'list_search'"
+            v-if="section.key === 'form' || section.key === 'list_search' || section.key === 'analysis'"
             type="button"
             class="ghost small"
             :disabled="!currentModel || versionsLoading"
@@ -247,12 +247,13 @@
             调整菜单入口
           </button>
           <button
-            v-else
+            v-else-if="section.key === 'analysis'"
             type="button"
             class="ghost small"
-            disabled
+            :disabled="!previewRouteTarget.path"
+            @click="previewSelectedRuntimeRoute"
           >
-            编辑入口待接入
+            预览页面
           </button>
         </div>
       </article>
@@ -299,12 +300,7 @@
               <span>v{{ version.version_no }}</span>
               <span>{{ versionStatusLabel(version.status) }}</span>
               <span>{{ version.created_by || '-' }}</span>
-              <span>
-                字段 {{ version.summary.form_field_count }} /
-                列 {{ version.summary.list_column_count }} /
-                筛选 {{ version.summary.search_filter_count }} /
-                分组 {{ version.summary.search_group_by_count }}
-              </span>
+              <span>{{ versionSummaryText(version.summary) }}</span>
               <span>{{ versionDeltaText(contract.summary, version.summary, version.version_no === contract.version_no) }}</span>
               <button
                 type="button"
@@ -519,7 +515,7 @@ const surface = ref<BusinessConfigSurfacePayload | null>(null);
 const coverageScan = ref<BusinessConfigCoverageScanPayload | null>(null);
 const showOnlyIssues = ref(false);
 const pageSearch = ref('');
-const pageTypeFilter = ref<'all' | 'form' | 'list'>('all');
+const pageTypeFilter = ref<'all' | 'form' | 'list' | 'analysis'>('all');
 const listSearchAudit = ref<BusinessConfigListSearchAuditPayload | null>(null);
 const listSearchPanelOpen = ref(false);
 const selectedRuntimeRoute = ref<BusinessConfigCoverageScanItem['runtime_route'] | null>(null);
@@ -585,6 +581,7 @@ const pageTypeOptions = [
   { key: 'all' as const, label: '全部页面' },
   { key: 'form' as const, label: '表单页面' },
   { key: 'list' as const, label: '列表页面' },
+  { key: 'analysis' as const, label: '分析页面' },
 ];
 const listSearchEditorTabs: Array<{ key: ListSearchEditorKind; label: string }> = [
   { key: 'list', label: '列表列' },
@@ -634,6 +631,7 @@ const visibleCoverageRows = computed(() => {
     .filter((row) => {
       if (pageTypeFilter.value === 'form') return row.target_view_types.includes('form');
       if (pageTypeFilter.value === 'list') return rowHasListSearchConfig(row);
+      if (pageTypeFilter.value === 'analysis') return rowHasAnalysisConfig(row);
       return true;
     })
     .filter((row) => {
@@ -724,6 +722,7 @@ function boundaryLabel(boundary: string) {
 function sectionHelpLabel(sectionKey: string) {
   if (sectionKey === 'form') return '字段显示、隐藏、必填、布局';
   if (sectionKey === 'list_search') return '列表列、搜索条件、默认分组';
+  if (sectionKey === 'analysis') return '透视、图表、日历、看板';
   if (sectionKey === 'menu') return '菜单入口、显示范围、发布状态';
   return '业务配置';
 }
@@ -731,6 +730,7 @@ function sectionHelpLabel(sectionKey: string) {
 function sectionDisplayLabel(sectionKey: string, fallback: string) {
   if (sectionKey === 'form') return '表单字段与布局';
   if (sectionKey === 'list_search') return '列表与搜索';
+  if (sectionKey === 'analysis') return '分析视图';
   if (sectionKey === 'menu') return '菜单入口';
   return fallback || '业务配置';
 }
@@ -738,6 +738,7 @@ function sectionDisplayLabel(sectionKey: string, fallback: string) {
 function sectionPrimaryCopy(sectionKey: string) {
   if (sectionKey === 'form') return '调整字段显示、必填、顺序和页面布局。';
   if (sectionKey === 'list_search') return '调整列表列、搜索条件和默认分组。';
+  if (sectionKey === 'analysis') return '查看透视、图表、日历和看板配置版本。';
   if (sectionKey === 'menu') return '调整这个页面在菜单中的显示方式。';
   return '调整当前业务页面配置。';
 }
@@ -750,6 +751,10 @@ function viewTypeLabel(viewType: string) {
   if (viewType === 'form') return '表单';
   if (viewType === 'tree' || viewType === 'list') return '列表';
   if (viewType === 'search') return '搜索';
+  if (viewType === 'pivot') return '透视';
+  if (viewType === 'graph') return '图表';
+  if (viewType === 'calendar') return '日历';
+  if (viewType === 'dashboard') return '看板';
   return viewType || '通用';
 }
 
@@ -776,6 +781,12 @@ function rowHasListSearchConfig(row: BusinessConfigCoverageScanItem) {
 function rowHasFormConfig(row: BusinessConfigCoverageScanItem) {
   return row.target_view_types.includes('form')
     || String(row.view_mode || '').split(',').some((viewType) => viewType.trim() === 'form');
+}
+
+function rowHasAnalysisConfig(row: BusinessConfigCoverageScanItem) {
+  const analysisViewTypes = new Set(['pivot', 'graph', 'calendar', 'dashboard']);
+  return row.target_view_types.some((viewType) => analysisViewTypes.has(viewType))
+    || String(row.view_mode || '').split(',').some((viewType) => analysisViewTypes.has(viewType.trim()));
 }
 
 function runtimeReasonLabel(reason: string) {
@@ -814,6 +825,7 @@ function versionSummaryNames(summary: BusinessConfigContractVersionsPayload['con
     list: summary.list_columns || [],
     filter: summary.search_filters || [],
     group: summary.search_group_by || [],
+    viewTypes: summary.view_types || [],
   };
 }
 
@@ -839,6 +851,7 @@ function versionDeltaText(
     { label: '列', diff: countDiff(currentNames.list, targetNames.list) },
     { label: '筛选', diff: countDiff(currentNames.filter, targetNames.filter) },
     { label: '分组', diff: countDiff(currentNames.group, targetNames.group) },
+    { label: '视图', diff: countDiff(currentNames.viewTypes, targetNames.viewTypes) },
   ]
     .map((item) => {
       const changes = [
@@ -849,6 +862,18 @@ function versionDeltaText(
     })
     .filter(Boolean);
   return parts.length ? `与当前相比：${parts.join('；')}` : '与当前一致';
+}
+
+function versionSummaryText(summary: BusinessConfigContractVersionsPayload['contracts'][number]['summary']) {
+  const counts = [
+    summary.form_field_count ? `字段 ${summary.form_field_count}` : '',
+    summary.list_column_count ? `列 ${summary.list_column_count}` : '',
+    summary.search_filter_count ? `筛选 ${summary.search_filter_count}` : '',
+    summary.search_group_by_count ? `分组 ${summary.search_group_by_count}` : '',
+  ].filter(Boolean);
+  if (counts.length) return counts.join(' / ');
+  const viewTypes = (summary.view_types || []).map(viewTypeLabel).filter(Boolean);
+  return viewTypes.length ? `视图 ${viewTypes.join('、')}` : '暂无配置项';
 }
 
 function runtimeReasonText(row: BusinessConfigCoverageScanItem) {
@@ -1508,13 +1533,21 @@ async function loadVersions(sectionKey: string) {
       const result = await loadBusinessConfigContractVersions(versionParams('form'));
       versionTitle.value = '表单配置版本';
       versionContracts.value = result.contracts || [];
-    } else {
+    } else if (sectionKey === 'list_search') {
       const [treeResult, searchResult] = await Promise.all([
         loadBusinessConfigContractVersions(versionParams('tree')),
         loadBusinessConfigContractVersions(versionParams('search')),
       ]);
       versionTitle.value = '列表/搜索配置版本';
       versionContracts.value = [...(treeResult.contracts || []), ...(searchResult.contracts || [])];
+    } else {
+      const results = await Promise.all(
+        ['pivot', 'graph', 'calendar', 'dashboard'].map((viewType) => (
+          loadBusinessConfigContractVersions(versionParams(viewType))
+        )),
+      );
+      versionTitle.value = '分析视图配置版本';
+      versionContracts.value = results.flatMap((result) => result.contracts || []);
     }
     versionsPanelOpen.value = true;
   } catch (err) {
@@ -1546,7 +1579,7 @@ async function rollbackContractFromWorkbench(
       version_no: versionNo,
     });
     await loadSurface();
-    await loadVersions(contract.view_type === 'form' ? 'form' : 'list_search');
+    await loadVersions(sectionKeyForViewType(contract.view_type));
     if (coverageScan.value) {
       await rescanCoverageAfterBootstrap();
     }
@@ -1556,6 +1589,13 @@ async function rollbackContractFromWorkbench(
   } finally {
     listSearchSaving.value = false;
   }
+}
+
+function sectionKeyForViewType(viewType: string) {
+  if (viewType === 'form') return 'form';
+  if (viewType === 'tree' || viewType === 'list' || viewType === 'search') return 'list_search';
+  if (['pivot', 'graph', 'calendar', 'dashboard'].includes(viewType)) return 'analysis';
+  return 'list_search';
 }
 
 function openMenuConfig() {

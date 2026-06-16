@@ -10,6 +10,7 @@ from ..core.base_handler import BaseIntentHandler
 
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
 PLATFORM_ADMIN_GROUP = "smart_core.group_smart_core_admin"
+ANALYSIS_VIEW_TYPES = ("pivot", "graph", "calendar", "dashboard")
 
 
 def _to_int(value: Any) -> int:
@@ -150,6 +151,16 @@ class _BusinessConfigSurfaceBase(BaseIntentHandler):
         except Exception:
             return len(Contract.search(domain, limit=100))
 
+    def _action_view_types(self, action_id: int) -> set[str]:
+        if not action_id or "ir.actions.act_window" not in self.env:
+            return set()
+        try:
+            action = self.env["ir.actions.act_window"].sudo().browse(action_id).exists()
+        except Exception:
+            action = None
+        view_mode = _to_text(getattr(action, "view_mode", "")) if action else ""
+        return {item.strip() for item in view_mode.split(",") if item.strip()}
+
 
 class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
     INTENT_TYPE = "ui.business_config.surface.get"
@@ -175,6 +186,17 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
         action_id = _to_int(params.get("action_id") or params.get("actionId"))
         view_id = _to_int(params.get("view_id") or params.get("viewId"))
         role_key = _to_text(params.get("role_key") or params.get("roleKey"))
+        action_view_types = self._action_view_types(action_id)
+        analysis_contract_count = sum(
+            self._contract_count(
+                model=model,
+                view_type=view_type,
+                action_id=action_id,
+                view_id=view_id,
+                role_key=role_key,
+            )
+            for view_type in ANALYSIS_VIEW_TYPES
+        ) if model else 0
         sections = [
             {
                 "key": "form",
@@ -212,14 +234,22 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
                 "intent": "ui.business_config.list_search.audit",
                 "boundary": "business_contract_not_user_preference",
             },
-            {
-                "key": "menu",
-                "label": "菜单配置",
-                "contract_count": self._contract_count(model="ir.ui.menu", role_key=role_key),
-                "intent": "ui.menu_config.audit",
-                "boundary": "business_contract_with_policy_runtime",
-            },
         ]
+        if analysis_contract_count or action_view_types.intersection(ANALYSIS_VIEW_TYPES):
+            sections.append({
+                "key": "analysis",
+                "label": "分析视图配置",
+                "contract_count": analysis_contract_count,
+                "intent": "ui.business_config.contract.versions",
+                "boundary": "business_contract",
+            })
+        sections.append({
+            "key": "menu",
+            "label": "菜单配置",
+            "contract_count": self._contract_count(model="ir.ui.menu", role_key=role_key),
+            "intent": "ui.menu_config.audit",
+            "boundary": "business_contract_with_policy_runtime",
+        })
         return {
             "ok": True,
             "data": {
