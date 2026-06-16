@@ -334,8 +334,20 @@
           </button>
         </div>
       </div>
-      <div class="edit-grid">
-        <section class="field-chip-editor">
+      <div class="list-search-tabs" role="group" aria-label="列表搜索配置类型">
+        <button
+          v-for="tab in listSearchEditorTabs"
+          :key="tab.key"
+          type="button"
+          :class="{ active: activeListSearchEditor === tab.key }"
+          @click="activeListSearchEditor = tab.key"
+        >
+          <span>{{ tab.label }}</span>
+          <em>{{ listSearchEditorCount(tab.key) }}</em>
+        </button>
+      </div>
+      <div class="edit-grid edit-grid--single">
+        <section v-if="activeListSearchEditor === 'list'" class="field-chip-editor">
           <header>
             <strong>默认列表列</strong>
             <span>{{ parseNames(listColumnsText).length }} 项</span>
@@ -371,7 +383,7 @@
             </button>
           </div>
         </section>
-        <section class="field-chip-editor">
+        <section v-if="activeListSearchEditor === 'filter'" class="field-chip-editor">
           <header>
             <strong>搜索筛选字段</strong>
             <span>{{ parseNames(searchFiltersText).length }} 项</span>
@@ -407,7 +419,7 @@
             </button>
           </div>
         </section>
-        <section class="field-chip-editor">
+        <section v-if="activeListSearchEditor === 'group'" class="field-chip-editor">
           <header>
             <strong>搜索分组字段</strong>
             <span>{{ parseNames(searchGroupByText).length }} 项</span>
@@ -446,10 +458,10 @@
       </div>
       <div class="edit-meta">
         <span v-if="hasListSearchDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
-        <span>个人偏好记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
-        <span>边界：{{ listSearchAudit?.user_preference_boundary || 'ui_only' }}</span>
+        <span v-if="advancedPanelOpen">个人偏好记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
+        <span v-if="advancedPanelOpen">边界：{{ listSearchAudit?.user_preference_boundary || 'ui_only' }}</span>
       </div>
-      <div v-if="listSearchAudit?.user_preferences?.length" class="preference-list">
+      <div v-if="advancedPanelOpen && listSearchAudit?.user_preferences?.length" class="preference-list">
         <span
           v-for="item in listSearchAudit.user_preferences.slice(0, 6)"
           :key="item.id || item.scope_key"
@@ -510,6 +522,8 @@ const listSearchBase = ref({ list: '', filter: '', group: '' });
 const listColumnDraft = ref('');
 const searchFilterDraft = ref('');
 const searchGroupDraft = ref('');
+type ListSearchEditorKind = 'list' | 'filter' | 'group';
+const activeListSearchEditor = ref<ListSearchEditorKind>('list');
 const listFieldOptionSearch = ref('');
 const filterFieldOptionSearch = ref('');
 const groupFieldOptionSearch = ref('');
@@ -536,6 +550,11 @@ const pageTypeOptions = [
   { key: 'all' as const, label: '全部页面' },
   { key: 'form' as const, label: '表单页面' },
   { key: 'list' as const, label: '列表页面' },
+];
+const listSearchEditorTabs: Array<{ key: ListSearchEditorKind; label: string }> = [
+  { key: 'list', label: '列表列' },
+  { key: 'filter', label: '搜索条件' },
+  { key: 'group', label: '默认分组' },
 ];
 function isCoverageIssue(row: BusinessConfigCoverageScanItem) {
   return !row.is_complete || !row.is_runtime_complete || !row.has_menu;
@@ -1156,12 +1175,14 @@ function parseNames(raw: string) {
     });
 }
 
-type ListSearchEditorKind = 'list' | 'filter' | 'group';
-
 function listSearchEditorState(kind: ListSearchEditorKind) {
   if (kind === 'list') return { text: listColumnsText, draft: listColumnDraft };
   if (kind === 'filter') return { text: searchFiltersText, draft: searchFilterDraft };
   return { text: searchGroupByText, draft: searchGroupDraft };
+}
+
+function listSearchEditorCount(kind: ListSearchEditorKind) {
+  return parseNames(listSearchEditorState(kind).text.value).length;
 }
 
 function fieldOptionSearchState(kind: ListSearchEditorKind) {
@@ -1264,6 +1285,7 @@ async function loadListSearchConfig() {
       filter: normalizeNamesText(searchFiltersText.value),
       group: normalizeNamesText(searchGroupByText.value),
     };
+    activeListSearchEditor.value = 'list';
     listSearchPanelOpen.value = true;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '列表/搜索配置读取失败';
@@ -1856,6 +1878,50 @@ h1 {
   font-size: 13px;
 }
 
+.list-search-tabs {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-bg);
+}
+
+.list-search-tabs button {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.list-search-tabs button.active {
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  box-shadow: 0 0 0 1px var(--sc-app-border);
+}
+
+.list-search-tabs em {
+  min-width: 20px;
+  min-height: 20px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  font-style: normal;
+}
+
 .empty-state {
   padding: 10px 0;
   color: var(--sc-app-text-secondary);
@@ -1938,6 +2004,10 @@ h1 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.edit-grid--single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .field-chip-editor {
