@@ -853,6 +853,7 @@ async function scanCoverage() {
       include_all_root_menu_actions: false,
       limit: 1000,
     });
+    hydrateSelectedCoverageRowFromScan();
   } catch (err) {
     error.value = err instanceof Error ? err.message : '业务配置覆盖扫描失败';
   } finally {
@@ -872,6 +873,7 @@ async function scanSystemRootCoverage() {
       include_all_root_menu_actions: true,
       limit: 1000,
     });
+    hydrateSelectedCoverageRowFromScan();
   } catch (err) {
     error.value = err instanceof Error ? err.message : '系统根菜单覆盖扫描失败';
   } finally {
@@ -892,6 +894,7 @@ async function scanCurrentModel() {
       include_all_root_menu_actions: Boolean(coverageScan.value?.include_all_root_menu_actions),
       limit: 1000,
     });
+    hydrateSelectedCoverageRowFromScan();
   } catch (err) {
     error.value = err instanceof Error ? err.message : '当前模型覆盖扫描失败';
   } finally {
@@ -994,6 +997,17 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
     },
   });
   await loadSurface();
+}
+
+function hydrateSelectedCoverageRowFromScan() {
+  const actionId = scopeAction.value;
+  if (!actionId) return;
+  const matched = (coverageScan.value?.items || []).find((row) => row.action_id === actionId);
+  if (!matched) return;
+  scopeModel.value = matched.model || scopeModel.value;
+  scopeActionId.value = matched.action_id || scopeActionId.value;
+  selectedPageLabel.value = matched.name || selectedPageLabel.value || matched.model;
+  selectedRuntimeRoute.value = matched.runtime_route || selectedRuntimeRoute.value;
 }
 
 async function openDesignerForRow(row: BusinessConfigCoverageScanItem) {
