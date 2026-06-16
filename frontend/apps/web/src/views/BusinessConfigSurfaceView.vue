@@ -308,18 +308,60 @@
         </button>
       </div>
       <div class="edit-grid">
-        <label>
-          <span>默认列表列</span>
-          <textarea v-model="listColumnsText" placeholder="name, email, phone" />
-        </label>
-        <label>
-          <span>搜索筛选字段</span>
-          <textarea v-model="searchFiltersText" placeholder="state, partner_id" />
-        </label>
-        <label>
-          <span>搜索分组字段</span>
-          <textarea v-model="searchGroupByText" placeholder="partner_id, state" />
-        </label>
+        <section class="field-chip-editor">
+          <header>
+            <strong>默认列表列</strong>
+            <span>{{ parseNames(listColumnsText).length }} 项</span>
+          </header>
+          <div class="field-chip-list">
+            <span v-for="(name, index) in parseNames(listColumnsText)" :key="`list-${name}`" class="field-chip">
+              {{ name }}
+              <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('list', name, -1)">↑</button>
+              <button type="button" title="下移" :disabled="index === parseNames(listColumnsText).length - 1" @click="moveListSearchName('list', name, 1)">↓</button>
+              <button type="button" title="移除" @click="removeListSearchName('list', name)">×</button>
+            </span>
+          </div>
+          <form class="field-chip-add" @submit.prevent="addListSearchName('list')">
+            <input v-model="listColumnDraft" type="text" placeholder="输入字段名" />
+            <button type="submit" class="ghost small">添加</button>
+          </form>
+        </section>
+        <section class="field-chip-editor">
+          <header>
+            <strong>搜索筛选字段</strong>
+            <span>{{ parseNames(searchFiltersText).length }} 项</span>
+          </header>
+          <div class="field-chip-list">
+            <span v-for="(name, index) in parseNames(searchFiltersText)" :key="`filter-${name}`" class="field-chip">
+              {{ name }}
+              <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('filter', name, -1)">↑</button>
+              <button type="button" title="下移" :disabled="index === parseNames(searchFiltersText).length - 1" @click="moveListSearchName('filter', name, 1)">↓</button>
+              <button type="button" title="移除" @click="removeListSearchName('filter', name)">×</button>
+            </span>
+          </div>
+          <form class="field-chip-add" @submit.prevent="addListSearchName('filter')">
+            <input v-model="searchFilterDraft" type="text" placeholder="输入字段名" />
+            <button type="submit" class="ghost small">添加</button>
+          </form>
+        </section>
+        <section class="field-chip-editor">
+          <header>
+            <strong>搜索分组字段</strong>
+            <span>{{ parseNames(searchGroupByText).length }} 项</span>
+          </header>
+          <div class="field-chip-list">
+            <span v-for="(name, index) in parseNames(searchGroupByText)" :key="`group-${name}`" class="field-chip">
+              {{ name }}
+              <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('group', name, -1)">↑</button>
+              <button type="button" title="下移" :disabled="index === parseNames(searchGroupByText).length - 1" @click="moveListSearchName('group', name, 1)">↓</button>
+              <button type="button" title="移除" @click="removeListSearchName('group', name)">×</button>
+            </span>
+          </div>
+          <form class="field-chip-add" @submit.prevent="addListSearchName('group')">
+            <input v-model="searchGroupDraft" type="text" placeholder="输入字段名" />
+            <button type="submit" class="ghost small">添加</button>
+          </form>
+        </section>
       </div>
       <div class="edit-meta">
         <span>个人偏好记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
@@ -380,6 +422,9 @@ const versionContracts = ref<BusinessConfigContractVersionsPayload['contracts']>
 const listColumnsText = ref('');
 const searchFiltersText = ref('');
 const searchGroupByText = ref('');
+const listColumnDraft = ref('');
+const searchFilterDraft = ref('');
+const searchGroupDraft = ref('');
 const scopeModel = ref(String(route.query.model || '').trim());
 const scopeActionId = ref(numericQuery('action_id') || 0);
 const scopeViewId = ref(numericQuery('view_id') || 0);
@@ -903,6 +948,43 @@ function parseNames(raw: string) {
       seen.add(item);
       return true;
     });
+}
+
+type ListSearchEditorKind = 'list' | 'filter' | 'group';
+
+function listSearchEditorState(kind: ListSearchEditorKind) {
+  if (kind === 'list') return { text: listColumnsText, draft: listColumnDraft };
+  if (kind === 'filter') return { text: searchFiltersText, draft: searchFilterDraft };
+  return { text: searchGroupByText, draft: searchGroupDraft };
+}
+
+function setListSearchNames(kind: ListSearchEditorKind, names: string[]) {
+  const state = listSearchEditorState(kind);
+  state.text.value = namesToText(names);
+}
+
+function addListSearchName(kind: ListSearchEditorKind) {
+  const state = listSearchEditorState(kind);
+  const name = state.draft.value.trim();
+  if (!name) return;
+  const names = parseNames(state.text.value);
+  if (!names.includes(name)) names.push(name);
+  setListSearchNames(kind, names);
+  state.draft.value = '';
+}
+
+function removeListSearchName(kind: ListSearchEditorKind, name: string) {
+  setListSearchNames(kind, parseNames(listSearchEditorState(kind).text.value).filter((item) => item !== name));
+}
+
+function moveListSearchName(kind: ListSearchEditorKind, name: string, delta: number) {
+  const names = parseNames(listSearchEditorState(kind).text.value);
+  const index = names.indexOf(name);
+  const nextIndex = index + delta;
+  if (index < 0 || nextIndex < 0 || nextIndex >= names.length) return;
+  const [moved] = names.splice(index, 1);
+  names.splice(nextIndex, 0, moved);
+  setListSearchNames(kind, names);
 }
 
 async function loadListSearchConfig() {
@@ -1534,22 +1616,90 @@ h1 {
   gap: 12px;
 }
 
-.edit-grid label {
+.field-chip-editor {
   min-width: 0;
   display: grid;
-  gap: 6px;
+  align-content: start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-bg);
   color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 
-.edit-grid textarea {
+.field-chip-editor header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.field-chip-editor strong {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+}
+
+.field-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px;
+  min-height: 82px;
+}
+
+.field-chip {
+  max-width: 100%;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 0 9px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-primary);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.field-chip button {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.field-chip button:hover:not(:disabled) {
+  background: var(--sc-app-hover-bg);
+  color: var(--sc-app-text-primary);
+}
+
+.field-chip button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.field-chip-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.field-chip-add input {
   width: 100%;
-  min-height: 112px;
-  resize: vertical;
+  min-height: 32px;
   border: 1px solid var(--sc-app-border);
   border-radius: 6px;
-  padding: 8px;
-  background: var(--sc-app-bg);
+  padding: 0 9px;
+  background: var(--sc-app-panel);
   color: var(--sc-app-text-primary);
   font: inherit;
 }
