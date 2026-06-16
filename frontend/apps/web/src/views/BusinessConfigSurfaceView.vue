@@ -323,7 +323,7 @@
       <div class="edit-panel-head">
         <div>
           <h2>列表/搜索业务配置</h2>
-          <p>这些配置写入正式业务契约，不写入个人列偏好。</p>
+          <p>{{ listSearchPanelDescription }}</p>
         </div>
         <div class="edit-panel-actions">
           <button type="button" class="ghost small primary" :disabled="listSearchSaving || !previewRouteTarget.path" @click="previewListSearchConfig">
@@ -587,6 +587,11 @@ const listSearchEditorTabs: Array<{ key: ListSearchEditorKind; label: string }> 
   { key: 'filter', label: '搜索条件' },
   { key: 'group', label: '默认分组' },
 ];
+const listSearchPanelDescription = computed(() => (
+  advancedPanelOpen.value
+    ? '这些配置写入正式业务契约，不写入个人列偏好。'
+    : '保存为这个页面的默认列表、搜索和分组设置，不覆盖个人列宽和排序偏好。'
+));
 function isCoverageIssue(row: BusinessConfigCoverageScanItem) {
   return !row.is_complete || !row.is_runtime_complete || !row.has_menu;
 }
