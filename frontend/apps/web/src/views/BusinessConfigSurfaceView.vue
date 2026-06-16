@@ -1037,7 +1037,15 @@ async function previewSelectedRuntimeRoute() {
   if (!path) return;
   await router.push({
     path,
-    query: target.query || {},
+    query: {
+      ...(target.query || {}),
+      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
+      page_label: selectedPageLabel.value || undefined,
+      return_to_business_config: '1',
+      open_pages: '1',
+      model: currentModel.value || undefined,
+      action_id: scopeAction.value ? String(scopeAction.value) : undefined,
+    },
   });
 }
 

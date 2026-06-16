@@ -53,6 +53,14 @@
       </template>
       <template #actions>
         <button
+          v-if="showReturnToBusinessConfigAction"
+          class="sc-btn sc-btn-ghost sc-btn-sm"
+          :disabled="busy"
+          @click="returnToBusinessConfigDesigner"
+        >
+          返回配置
+        </button>
+        <button
           v-if="showDraftSaveAction"
           class="sc-btn sc-btn-ghost sc-btn-sm"
           :disabled="draftSaveDisabled"
@@ -1902,6 +1910,10 @@ const selectedFormSettingsFieldLabel = ref('');
 const selectedFormSettingsFieldGroupTitleDraft = ref('');
 const isContractFieldOrderEditable = computed(() => (
   activeContractMode.value === 'form_field_configuration'
+  || activeContractMode.value === 'business_config_lowcode'
+));
+const showReturnToBusinessConfigAction = computed(() => (
+  routeQueryText('return_to_business_config') === '1'
   || activeContractMode.value === 'business_config_lowcode'
 ));
 const fieldVisibilityBase = ref<Record<string, boolean>>({});
@@ -8802,6 +8814,9 @@ function previewLowCodeConfiguredPage() {
     const value = String(raw || '').trim();
     if (value) query[key] = value;
   });
+  query.return_to_business_config = '1';
+  query.open_pages = '1';
+  query.open_form_config = '1';
   router.push({ path: route.path, query });
 }
 
