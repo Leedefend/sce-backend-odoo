@@ -560,7 +560,10 @@ const designerTitle = computed(() => {
 });
 
 const sections = computed(() => surface.value?.sections || []);
-const visibleSections = computed(() => sections.value.filter((section) => advancedPanelOpen.value || section.key !== 'menu'));
+const visibleSections = computed(() => sections.value.filter((section) => {
+  if (advancedPanelOpen.value) return true;
+  return section.key === 'form' || section.key === 'list_search';
+}));
 const selectedCoverageRow = computed(() => (coverageScan.value?.items || []).find((row) => row.action_id === scopeAction.value));
 const selectedPageHasFormConfig = computed(() => {
   const row = selectedCoverageRow.value;
