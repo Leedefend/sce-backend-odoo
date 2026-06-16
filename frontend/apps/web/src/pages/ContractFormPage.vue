@@ -569,7 +569,7 @@
         <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
           <li v-for="(warning, index) in lowCodePrecheckWarnings" :key="`lowcode-warning-${index}`">{{ warning }}</li>
         </ul>
-        <section v-if="isContractFieldOrderEditable && !useNativeFormTree" class="contract-lowcode-objects">
+        <section v-if="showLegacyLowCodeTechnicalPanels" class="contract-lowcode-objects">
           <header class="contract-lowcode-objects-head">
             <h4>业务对象配置</h4>
             <div class="contract-lowcode-contract-switch">
@@ -608,7 +608,7 @@
             </div>
           </div>
         </section>
-        <section v-if="isContractFieldOrderEditable && !useNativeFormTree" class="contract-lowcode-objects">
+        <section v-if="showLegacyLowCodeTechnicalPanels" class="contract-lowcode-objects">
           <header class="contract-lowcode-objects-head">
             <h4>布局配置</h4>
             <div class="chips">
@@ -628,7 +628,7 @@
             <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeLayoutNode(nodeIndex)">删除</button>
           </div>
         </section>
-        <section v-if="isContractFieldOrderEditable && !useNativeFormTree" class="contract-lowcode-objects">
+        <section v-if="showLegacyLowCodeTechnicalPanels" class="contract-lowcode-objects">
           <header class="contract-lowcode-objects-head">
             <h4>规则配置</h4>
             <button type="button" class="ghost" :disabled="busy" @click="addLowCodeRule">新增规则</button>
@@ -2146,6 +2146,11 @@ async function auditCurrentFormConfiguration() {
 }
 
 const showCurrentFormFieldConfigScope = computed(() => isContractFieldOrderEditable.value);
+const showLegacyLowCodeTechnicalPanels = computed(() => (
+  isContractFieldOrderEditable.value
+  && !useNativeFormTree.value
+  && showDebugActionsVisible.value
+));
 
 const formFieldConfigScope = computed(() => {
   const page = pageDisplayTitle.value || '当前表单';
