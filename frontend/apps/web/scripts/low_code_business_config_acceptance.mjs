@@ -171,6 +171,14 @@ async function main() {
     await page.getByRole("button", { name: "重置" }).click();
     const formDirtyAfterReset = await page.locator(".contract-field-governance-dirty").count();
     const saveFormEnabledAfterReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
+    await page.locator(".field--selectable").nth(1).click();
+    const selectedPanelBeforeMove = await page.locator(".contract-field-selection-card").innerText();
+    await page.locator(".contract-field-selection-card button[title='上移']").click();
+    const formDirtyAfterMove = await page.locator(".contract-field-governance-dirty").count();
+    const saveFormEnabledAfterMove = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
+    await page.getByRole("button", { name: "重置" }).click();
+    const formDirtyAfterMoveReset = await page.locator(".contract-field-governance-dirty").count();
+    const saveFormEnabledAfterMoveReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     await page.locator(".contract-field-selection-card").getByRole("button", { name: "新增字段" }).click();
     await page.waitForSelector(".contract-field-create-dialog", { timeout: 10000 });
     const createFieldDialogText = await page.locator(".contract-field-create-dialog").innerText();
@@ -191,6 +199,11 @@ async function main() {
       resetFormEnabledAfterHide,
       formDirtyAfterReset,
       saveFormEnabledAfterReset,
+      selectedPanelBeforeMove,
+      formDirtyAfterMove,
+      saveFormEnabledAfterMove,
+      formDirtyAfterMoveReset,
+      saveFormEnabledAfterMoveReset,
       createFieldDialogText,
       createFieldLabelInputCount,
       createFieldTypeOptionCount,
@@ -224,6 +237,21 @@ async function main() {
         resetFormEnabledAfterHide,
         formDirtyAfterReset,
         saveFormEnabledAfterReset,
+      },
+    );
+    assert(
+      selectedPanelBeforeMove.includes("已选字段")
+        && formDirtyAfterMove > 0
+        && saveFormEnabledAfterMove
+        && formDirtyAfterMoveReset === 0
+        && !saveFormEnabledAfterMoveReset,
+      "表单字段顺序调整或重置不可用",
+      {
+        selectedPanelBeforeMove,
+        formDirtyAfterMove,
+        saveFormEnabledAfterMove,
+        formDirtyAfterMoveReset,
+        saveFormEnabledAfterMoveReset,
       },
     );
     assert(
