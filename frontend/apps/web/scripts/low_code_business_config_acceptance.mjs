@@ -107,6 +107,24 @@ async function main() {
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
     await page.getByRole("button", { name: "全部页面" }).click();
+    const alternateRow = page.locator(".scan-row").filter({ hasText: "合同办理" }).first();
+    await alternateRow.getByRole("button", { name: "选择" }).click();
+    await page.waitForFunction(() => {
+      const selected = document.querySelector(".scan-row--selected .scan-row-main strong");
+      return selected?.textContent?.trim() === "合同办理";
+    });
+    const selectedAfterSwitch = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
+    const titleAfterSwitch = await page.locator(".business-config-header h1").innerText();
+    const cardsAfterSwitch = await page.locator(".config-card h2").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    const originalRow = page.locator(".scan-row").filter({ hasText: "项目合同汇总" }).first();
+    await originalRow.getByRole("button", { name: "选择" }).click();
+    await page.waitForFunction(() => {
+      const selected = document.querySelector(".scan-row--selected .scan-row-main strong");
+      return selected?.textContent?.trim() === "项目合同汇总";
+    });
+    const selectedAfterRestore = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
     await page.locator(".scan-row--selected").getByRole("button", { name: "预览页面" }).click();
     await page.waitForURL((url) => String(url).includes("/a/562"), { timeout: 20000 });
     const previewUrl = page.url();
@@ -119,6 +137,10 @@ async function main() {
       initialPageRows,
       searchedPageRows,
       formPageRows,
+      selectedAfterSwitch,
+      titleAfterSwitch,
+      cardsAfterSwitch,
+      selectedAfterRestore,
       previewUrl,
     };
     report.artifacts.defaultConfigPage = await captureStep(page, "default-config-page");
@@ -136,6 +158,15 @@ async function main() {
         && formPageRows.includes("项目合同汇总"),
       "业务页面搜索或类型筛选不可用",
       { initialPageRows, searchedPageRows, formPageRows },
+    );
+    assert(
+      selectedAfterSwitch === "合同办理"
+        && titleAfterSwitch.includes("合同办理")
+        && cardsAfterSwitch.includes("表单字段与布局")
+        && cardsAfterSwitch.includes("列表与搜索")
+        && selectedAfterRestore === "项目合同汇总",
+      "业务页面选择或恢复不可用",
+      { selectedAfterSwitch, titleAfterSwitch, cardsAfterSwitch, selectedAfterRestore },
     );
     assert(previewUrl.includes("/a/562"), "业务页面预览入口不可用", { previewUrl });
     assert(
