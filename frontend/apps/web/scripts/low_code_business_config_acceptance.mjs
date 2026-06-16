@@ -356,6 +356,7 @@ async function main() {
       "返回配置后配置卡片丢失",
       { returnedCards },
     );
+    assert(errors.length === 0, "浏览器出现未预期错误", { errors });
 
     report.ok = true;
   } catch (err) {
