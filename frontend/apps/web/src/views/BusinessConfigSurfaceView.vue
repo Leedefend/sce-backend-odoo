@@ -315,7 +315,7 @@
           </header>
           <div class="field-chip-list">
             <span v-for="(name, index) in parseNames(listColumnsText)" :key="`list-${name}`" class="field-chip">
-              {{ name }}
+              {{ fieldDisplayLabel(name) }}
               <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('list', name, -1)">↑</button>
               <button type="button" title="下移" :disabled="index === parseNames(listColumnsText).length - 1" @click="moveListSearchName('list', name, 1)">↓</button>
               <button type="button" title="移除" @click="removeListSearchName('list', name)">×</button>
@@ -343,7 +343,7 @@
           </header>
           <div class="field-chip-list">
             <span v-for="(name, index) in parseNames(searchFiltersText)" :key="`filter-${name}`" class="field-chip">
-              {{ name }}
+              {{ fieldDisplayLabel(name) }}
               <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('filter', name, -1)">↑</button>
               <button type="button" title="下移" :disabled="index === parseNames(searchFiltersText).length - 1" @click="moveListSearchName('filter', name, 1)">↓</button>
               <button type="button" title="移除" @click="removeListSearchName('filter', name)">×</button>
@@ -371,7 +371,7 @@
           </header>
           <div class="field-chip-list">
             <span v-for="(name, index) in parseNames(searchGroupByText)" :key="`group-${name}`" class="field-chip">
-              {{ name }}
+              {{ fieldDisplayLabel(name) }}
               <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('group', name, -1)">↑</button>
               <button type="button" title="下移" :disabled="index === parseNames(searchGroupByText).length - 1" @click="moveListSearchName('group', name, 1)">↓</button>
               <button type="button" title="移除" @click="removeListSearchName('group', name)">×</button>
@@ -1007,6 +1007,12 @@ function setListSearchNames(kind: ListSearchEditorKind, names: string[]) {
 function fieldOptionsNotIn(kind: ListSearchEditorKind) {
   const selected = new Set(parseNames(listSearchEditorState(kind).text.value));
   return availableModelFields.value.filter((field) => !selected.has(field.name));
+}
+
+function fieldDisplayLabel(name: string) {
+  const fieldName = String(name || '').trim();
+  const field = availableModelFields.value.find((item) => item.name === fieldName);
+  return field?.label || fieldName;
 }
 
 function addListSearchName(kind: ListSearchEditorKind, explicitName = '') {
