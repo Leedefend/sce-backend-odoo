@@ -957,6 +957,10 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(data["business_config_list_columns"], ["email", "name"])
         self.assertEqual(data["business_config_search_filters"], ["state"])
         self.assertEqual(data["business_config_search_group_by"], ["partner_id"])
+        self.assertEqual(
+            [item["name"] for item in data["available_model_fields"]],
+            ["email", "name", "partner_id", "state"],
+        )
         self.assertEqual(data["user_preference_count"], 2)
         self.assertEqual(data["user_preferences"], [{
             "id": 31,

@@ -988,6 +988,36 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
             })
         return items
 
+    def _available_model_fields(self, model: str) -> list[dict]:
+        Model = self.env[model]
+        technical_prefixes = ("__",)
+        technical_names = {"id", "display_name", "create_uid", "create_date", "write_uid", "write_date", "__last_update"}
+        try:
+            fields_meta = Model.sudo().fields_get() if hasattr(Model, "sudo") else Model.fields_get()
+        except Exception:
+            fields_meta = {}
+        if not isinstance(fields_meta, dict) or not fields_meta:
+            fields_meta = {
+                name: {}
+                for name in sorted(getattr(Model, "_fields", {}) or {})
+            }
+        out = []
+        for name in sorted(fields_meta):
+            field_name = str(name or "").strip()
+            if not field_name or field_name in technical_names or field_name.startswith(technical_prefixes):
+                continue
+            meta = fields_meta.get(name) if isinstance(fields_meta.get(name), dict) else {}
+            field_type = str(meta.get("type") or getattr((getattr(Model, "_fields", {}) or {}).get(name), "type", "") or "").strip()
+            if field_type in {"binary", "one2many", "many2many"}:
+                continue
+            label = str(meta.get("string") or getattr((getattr(Model, "_fields", {}) or {}).get(name), "string", "") or field_name).strip()
+            out.append({
+                "name": field_name,
+                "label": label or field_name,
+                "type": field_type or "unknown",
+            })
+        return out
+
     def handle(self, payload=None, ctx=None):
         del payload, ctx
         params = self.params if isinstance(self.params, dict) else {}
@@ -1088,6 +1118,7 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
                 "business_config_list_columns": sorted(list_columns),
                 "business_config_search_filters": sorted(search_filters),
                 "business_config_search_group_by": sorted(search_group_by),
+                "available_model_fields": self._available_model_fields(model),
                 "user_preference_count": preference_count,
                 "user_preferences": preference_items,
                 "user_preference_boundary": "ui_only",

@@ -325,6 +325,16 @@
             <input v-model="listColumnDraft" type="text" placeholder="输入字段名" />
             <button type="submit" class="ghost small">添加</button>
           </form>
+          <div v-if="availableListFieldOptions.length" class="field-option-pool">
+            <button
+              v-for="field in availableListFieldOptions"
+              :key="`list-option-${field.name}`"
+              type="button"
+              @click="addListSearchName('list', field.name)"
+            >
+              {{ field.label }}
+            </button>
+          </div>
         </section>
         <section class="field-chip-editor">
           <header>
@@ -343,6 +353,16 @@
             <input v-model="searchFilterDraft" type="text" placeholder="输入字段名" />
             <button type="submit" class="ghost small">添加</button>
           </form>
+          <div v-if="availableFilterFieldOptions.length" class="field-option-pool">
+            <button
+              v-for="field in availableFilterFieldOptions"
+              :key="`filter-option-${field.name}`"
+              type="button"
+              @click="addListSearchName('filter', field.name)"
+            >
+              {{ field.label }}
+            </button>
+          </div>
         </section>
         <section class="field-chip-editor">
           <header>
@@ -361,6 +381,16 @@
             <input v-model="searchGroupDraft" type="text" placeholder="输入字段名" />
             <button type="submit" class="ghost small">添加</button>
           </form>
+          <div v-if="availableGroupFieldOptions.length" class="field-option-pool">
+            <button
+              v-for="field in availableGroupFieldOptions"
+              :key="`group-option-${field.name}`"
+              type="button"
+              @click="addListSearchName('group', field.name)"
+            >
+              {{ field.label }}
+            </button>
+          </div>
         </section>
       </div>
       <div class="edit-meta">
@@ -482,6 +512,17 @@ const remediationSummaryItems = computed(() => {
     .filter((item) => item.count > 0)
     .sort((left, right) => left.label.localeCompare(right.label, 'zh-Hans-CN'));
 });
+const availableModelFields = computed(() => (listSearchAudit.value?.available_model_fields || [])
+  .map((field) => ({
+    name: String(field.name || '').trim(),
+    label: String(field.label || field.name || '').trim(),
+    type: String(field.type || '').trim(),
+  }))
+  .filter((field) => field.name)
+  .slice(0, 80));
+const availableListFieldOptions = computed(() => fieldOptionsNotIn('list'));
+const availableFilterFieldOptions = computed(() => fieldOptionsNotIn('filter'));
+const availableGroupFieldOptions = computed(() => fieldOptionsNotIn('group'));
 
 function numericQuery(name: string) {
   const parsed = Number(route.query[name] || 0);
@@ -963,14 +1004,19 @@ function setListSearchNames(kind: ListSearchEditorKind, names: string[]) {
   state.text.value = namesToText(names);
 }
 
-function addListSearchName(kind: ListSearchEditorKind) {
+function fieldOptionsNotIn(kind: ListSearchEditorKind) {
+  const selected = new Set(parseNames(listSearchEditorState(kind).text.value));
+  return availableModelFields.value.filter((field) => !selected.has(field.name));
+}
+
+function addListSearchName(kind: ListSearchEditorKind, explicitName = '') {
   const state = listSearchEditorState(kind);
-  const name = state.draft.value.trim();
+  const name = String(explicitName || state.draft.value || '').trim();
   if (!name) return;
   const names = parseNames(state.text.value);
   if (!names.includes(name)) names.push(name);
   setListSearchNames(kind, names);
-  state.draft.value = '';
+  if (!explicitName) state.draft.value = '';
 }
 
 function removeListSearchName(kind: ListSearchEditorKind, name: string) {
@@ -1702,6 +1748,35 @@ h1 {
   background: var(--sc-app-panel);
   color: var(--sc-app-text-primary);
   font: inherit;
+}
+
+.field-option-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 96px;
+  overflow: auto;
+  padding-top: 2px;
+}
+
+.field-option-pool button {
+  min-height: 26px;
+  max-width: 100%;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 0 9px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field-option-pool button:hover {
+  border-color: var(--sc-app-accent);
+  color: var(--sc-app-text-primary);
 }
 
 .edit-meta {

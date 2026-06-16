@@ -21,6 +21,11 @@ export interface BusinessConfigListSearchAuditPayload {
   business_config_list_columns: string[];
   business_config_search_filters: string[];
   business_config_search_group_by: string[];
+  available_model_fields?: Array<{
+    name: string;
+    label: string;
+    type: string;
+  }>;
   user_preference_count: number;
   user_preferences: Array<{
     id: number;
