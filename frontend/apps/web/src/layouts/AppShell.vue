@@ -1381,11 +1381,11 @@ function resolveActivityPageRoute(page: ActivityPage): string {
 async function activateActivityPage(page: ActivityPage) {
   if (!page?.key || !page.route) return;
   await session.applyActivityProjectContext(page.project_context);
-  session.markActivityPageActive(page.key);
   const targetRoute = resolveActivityPageRoute(page);
   if (route.fullPath !== targetRoute) {
     await router.push(targetRoute).catch(() => {});
   }
+  session.markActivityPageActive(page.key);
 }
 
 async function closeActivityPage(page: ActivityPage) {

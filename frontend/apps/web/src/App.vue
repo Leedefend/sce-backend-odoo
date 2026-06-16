@@ -20,6 +20,7 @@
 
 <script setup lang="ts">
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
+import { findActionMeta, findActionMetaByMenu } from './app/menu';
 import AppShell from './layouts/AppShell.vue';
 import { useSessionStore } from './stores/session';
 
@@ -30,21 +31,55 @@ function routeText(value: unknown): string {
   return String(value || '').trim();
 }
 
+function positiveInteger(value: unknown): number {
+  const parsed = Number(value || 0);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return Math.trunc(parsed);
+}
+
+function activityProjectPart(policy: string): string {
+  const normalizedPolicy = String(policy || '').trim().toLowerCase();
+  if (normalizedPolicy === 'global' || normalizedPolicy === 'exempt') return 'global';
+  const selectedId = Number(session.projectContext?.selected?.id || 0) || 0;
+  return selectedId > 0 ? `project:${selectedId}` : 'all';
+}
+
+function currentActionMatches(actionId: number): boolean {
+  const current = session.currentAction as Record<string, unknown> | null;
+  if (!current || actionId <= 0) return false;
+  return positiveInteger(current.action_id || current.actionId || current.id) === actionId;
+}
+
+function resolveActivityRoutePolicy(actionId: number, menuId: number): string {
+  const meta = (menuId > 0 ? findActionMetaByMenu(session.menuTree, menuId, actionId) : null)
+    || (actionId > 0 ? findActionMeta(session.menuTree, actionId) : null)
+    || (currentActionMatches(actionId) ? session.currentAction : null)
+    || null;
+  return String(meta?.project_scope_policy || meta?.projectScopePolicy || '').trim().toLowerCase();
+}
+
 function activityRouteKey(route: RouteLocationNormalizedLoaded): string {
   if (route.name === 'action') {
-    const actionId = routeText(route.params.actionId || route.query.action_id);
-    const menuId = routeText(route.query.menu_id);
-    return actionId ? `action:${actionId}:menu:${menuId || '0'}` : '';
+    const actionId = positiveInteger(route.params.actionId || route.query.action_id);
+    const menuId = positiveInteger(route.query.menu_id);
+    const projectScopePolicy = resolveActivityRoutePolicy(actionId, menuId);
+    return actionId ? `action:${actionId}:menu:${menuId || 0}:${activityProjectPart(projectScopePolicy)}` : '';
   }
   if (route.name === 'record' || route.name === 'model-form') {
     const model = routeText(route.params.model);
     const recordId = routeText(route.params.id);
-    return model && recordId && recordId !== 'new' ? `record:${model}:${recordId}` : '';
+    if (!model || !recordId) return '';
+    if (recordId === 'new') {
+      const activityInstanceId = routeText(route.query.activity_page_id);
+      const menuId = routeText(route.query.menu_id);
+      return `new:${model}:${menuId}:${activityProjectPart('current_project')}:${activityInstanceId || 'route'}`;
+    }
+    return `record:${model}:${recordId}`;
   }
   if (route.name === 'scene' || route.name === 'projects-intake' || String(route.name || '').startsWith('scene-')) {
     const sceneKey = routeText(route.params.sceneKey || route.meta?.sceneKey || route.query.scene_key || route.query.scene);
     if (!sceneKey || sceneKey === 'workspace.home') return '';
-    return `scene:${sceneKey}`;
+    return `scene:${sceneKey}:${activityProjectPart('current_project')}`;
   }
   if (route.name === 'my-work' || route.name === 'scene-my-work') return 'workspace:my-work';
   return '';

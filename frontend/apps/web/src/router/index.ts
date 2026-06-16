@@ -86,6 +86,10 @@ function buildActivityQuery(to: RouteLocationNormalized, allowedKeys: string[]):
   return text ? `?${text}` : '';
 }
 
+function createActivityInstanceId(): string {
+  return `ap_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 function resolveActivityRoute(to: RouteLocationNormalized, actionId: number, menuId: number, model: string, recordId: string): string {
   if (to.name === 'action') {
     const query = buildActivityQuery(to, [
@@ -109,6 +113,7 @@ function resolveActivityRoute(to: RouteLocationNormalized, actionId: number, men
     const query = buildActivityQuery(to, [
       'menu_id',
       'action_id',
+      'activity_page_id',
       'current_business_category_code',
       'current_business_category_label',
       'default_business_category_code',
@@ -132,10 +137,16 @@ function activityProjectPart(session: ReturnType<typeof useSessionStore>, policy
   return selectedId > 0 ? `project:${selectedId}` : 'all';
 }
 
+function currentActionMatches(session: ReturnType<typeof useSessionStore>, actionId: number): boolean {
+  const current = session.currentAction as Record<string, unknown> | null;
+  if (!current || actionId <= 0) return false;
+  return positiveInteger(current.action_id || current.actionId || current.id) === actionId;
+}
+
 function resolveActivityRoutePolicy(actionId: number, menuId: number, session: ReturnType<typeof useSessionStore>): string {
   const meta = (menuId > 0 ? findActionMetaByMenu(session.menuTree, menuId, actionId) : null)
     || (actionId > 0 ? findActionMeta(session.menuTree, actionId) : null)
-    || session.currentAction
+    || (currentActionMatches(session, actionId) ? session.currentAction : null)
     || null;
   return String(meta?.project_scope_policy || meta?.projectScopePolicy || '').trim().toLowerCase();
 }
@@ -155,7 +166,7 @@ function resolveActivityTitle(to: RouteLocationNormalized, session: ReturnType<t
     const menuId = positiveInteger(to.query.menu_id);
     const meta = (menuId > 0 ? findActionMetaByMenu(session.menuTree, menuId, actionId) : null)
       || (actionId > 0 ? findActionMeta(session.menuTree, actionId) : null)
-      || session.currentAction
+      || (currentActionMatches(session, actionId) ? session.currentAction : null)
       || null;
     const menuNode = menuId > 0 ? findMenuNode(session.menuTree, menuId) : null;
     return String(meta?.ui_title || meta?.scene_title || meta?.menu_title || menuNode?.label || meta?.name || `动作 ${actionId}`).trim();
@@ -163,7 +174,18 @@ function resolveActivityTitle(to: RouteLocationNormalized, session: ReturnType<t
   if (to.name === 'record' || to.name === 'model-form') {
     const model = routeQueryText(to.params.model);
     const id = routeQueryText(to.params.id);
-    return id === 'new' ? '新建业务表单' : `${model || '记录'} #${id || ''}`.trim();
+    if (id === 'new') {
+      const actionId = positiveInteger(to.query.action_id);
+      const menuId = positiveInteger(to.query.menu_id);
+      const meta = (menuId > 0 ? findActionMetaByMenu(session.menuTree, menuId, actionId) : null)
+        || (actionId > 0 ? findActionMeta(session.menuTree, actionId) : null)
+        || (currentActionMatches(session, actionId) ? session.currentAction : null)
+        || null;
+      const menuNode = menuId > 0 ? findMenuNode(session.menuTree, menuId) : null;
+      const baseTitle = String(meta?.ui_title || meta?.scene_title || meta?.menu_title || menuNode?.label || meta?.name || '').trim();
+      return baseTitle ? `新建${baseTitle}` : '新建业务表单';
+    }
+    return `${model || '记录'} #${id || ''}`.trim();
   }
   return routeTitle(to.name);
 }
@@ -196,8 +218,9 @@ function registerRouteActivity(to: RouteLocationNormalized) {
   } else if (to.name === 'record' || to.name === 'model-form') {
     model = routeQueryText(to.params.model);
     recordId = routeQueryText(to.params.id);
+    const activityInstanceId = routeQueryText(to.query.activity_page_id);
     key = recordId === 'new'
-      ? `new:${model}:${routeQueryText(to.query.menu_id)}:${activityProjectPart(session, 'current_project')}:${now}`
+      ? `new:${model}:${routeQueryText(to.query.menu_id)}:${activityProjectPart(session, 'current_project')}:${activityInstanceId || now}`
       : `record:${model}:${recordId}`;
     kind = 'record_form';
   } else if (to.name === 'scene' || to.name === 'projects-intake' || String(to.name || '').startsWith('scene-')) {
@@ -291,6 +314,18 @@ router.beforeEach(async (to) => {
   const normalizedWorkbenchPath = normalizeLegacyWorkbenchPath(to.fullPath);
   if (normalizedWorkbenchPath !== to.fullPath && normalizedWorkbenchPath !== to.path) {
     return splitRoutePath(normalizedWorkbenchPath);
+  }
+  if ((to.name === 'record' || to.name === 'model-form') && routeQueryText(to.params.id) === 'new' && !routeQueryText(to.query.activity_page_id)) {
+    return {
+      name: to.name,
+      params: to.params,
+      query: {
+        ...to.query,
+        activity_page_id: createActivityInstanceId(),
+      },
+      hash: to.hash,
+      replace: true,
+    };
   }
   const querySceneKey = parseSceneKeyFromQuery(to.query);
   if (to.name === 'action') {

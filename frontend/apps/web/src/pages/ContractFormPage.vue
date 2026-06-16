@@ -1687,7 +1687,11 @@ const currentBusinessCategoryCode = computed(() => {
 
 const pageDisplayTitle = computed(() => {
   if (isProjectIntakeCreateMode.value) return '创建项目';
-  if (currentBusinessCategoryLabel.value) return currentBusinessCategoryLabel.value;
+  const businessTitle = currentBusinessCategoryLabel.value || pageTitle.value;
+  if (businessTitle) {
+    if (recordId.value) return businessTitle;
+    return businessTitle.startsWith('新建') ? businessTitle : `新建${businessTitle}`;
+  }
   return pageTitle.value;
 });
 

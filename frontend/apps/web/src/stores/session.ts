@@ -713,6 +713,12 @@ function activityPageCacheRouteKey(key: string): string {
   return normalized;
 }
 
+function isGenericActivityTitle(title: string): boolean {
+  const text = asText(title);
+  if (!text) return true;
+  return /^(动作\s*\d+|业务动作|业务表单|新建业务表单|活动页面)$/.test(text);
+}
+
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
     token: null,
@@ -1005,6 +1011,7 @@ export const useSessionStore = defineStore('session', {
           this.activeActivityPageKey = this.activityPages.some((page) => page.key === restoredActiveKey)
             ? restoredActiveKey
             : '';
+          this.activityPageCacheEpochs = parsed.activityPageCacheEpochs ?? {};
           this.capabilityCatalog = parsed.capabilityCatalog ?? {};
           this.sceneActionHints = parsed.sceneActionHints ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
@@ -1117,6 +1124,7 @@ export const useSessionStore = defineStore('session', {
         projectContext: projectContextStorageSnapshot(this.projectContext),
         activityPages: this.activityPages,
         activeActivityPageKey: this.activeActivityPageKey,
+        activityPageCacheEpochs: this.activityPageCacheEpochs,
         capabilityCatalog: this.capabilityCatalog,
         sceneActionHints: this.sceneActionHints,
         capabilityGroups: this.capabilityGroups,
@@ -1151,6 +1159,7 @@ export const useSessionStore = defineStore('session', {
           projectContext: this.projectContext,
           activityPages: this.activityPages,
           activeActivityPageKey: this.activeActivityPageKey,
+          activityPageCacheEpochs: this.activityPageCacheEpochs,
           workspaceHomeRef: this.workspaceHomeRef,
           lastTraceId: this.lastTraceId,
           lastIntent: this.lastIntent,
@@ -1181,8 +1190,11 @@ export const useSessionStore = defineStore('session', {
       const key = asText(rawPage.key);
       const route = asText(rawPage.route);
       if (!key || !route) return;
-      const title = asText(rawPage.title) || '活动页面';
       const existing = this.activityPages.find((page) => page.key === key);
+      const incomingTitle = asText(rawPage.title) || '活动页面';
+      const title = existing?.title && !isGenericActivityTitle(existing.title) && isGenericActivityTitle(incomingTitle)
+        ? existing.title
+        : incomingTitle;
       const nextPage: ActivityPage = {
         key,
         route,
@@ -1260,6 +1272,17 @@ export const useSessionStore = defineStore('session', {
       const activeKey = asText(this.activeActivityPageKey);
       const title = asText(rawTitle);
       if (!activeKey || !title) return;
+      const activePage = this.activityPages.find((page) => page.key === activeKey);
+      const titleBelongsToAnotherPage = this.activityPages.some((page) => page.key !== activeKey && page.title === title);
+      if (
+        activePage?.title
+        && activePage.title !== title
+        && !isGenericActivityTitle(activePage.title)
+        && !isGenericActivityTitle(title)
+        && titleBelongsToAnotherPage
+      ) {
+        return;
+      }
       let changed = false;
       this.activityPages = this.activityPages.map((page) => {
         if (page.key !== activeKey || page.title === title) return page;
