@@ -6,6 +6,7 @@ Run inside Odoo shell:
 """
 
 from odoo.addons.smart_construction_custom.models import user_preferences
+from odoo.addons.smart_core.handlers import system_init
 
 
 def _menu_key(row):
@@ -142,3 +143,32 @@ if failures:
     raise SystemExit(1)
 
 print("[user_menu_preference_runtime_audit] PASS checked=%s policies=%s" % (checked, len(policies)))
+
+sample_node = {
+    "label": "收入合同执行",
+    "menu_id": 485,
+    "children": [],
+    "meta": {
+        "menu_id": 485,
+        "menu_xmlid": "smart_construction_core.menu_sc_income_contract_execution",
+        "productization_source": "smart_construction_custom.user_menu_preference",
+    },
+}
+filtered, meta = system_init._filter_nav_by_release_gate(
+    [sample_node],
+    {
+        "applied": True,
+        "product_key": "construction.standard",
+        "allowed": {
+            "page_keys": [],
+            "menu_keys": [],
+            "menu_xmlids": [],
+            "routes": [],
+            "menu_ids": [],
+            "action_ids": [],
+        },
+    },
+)
+if not filtered:
+    raise SystemExit("user preference menu must survive stale release gate filtering: %s" % meta)
+print("[user_menu_preference_runtime_audit] release_gate_user_preference_passthrough=PASS")

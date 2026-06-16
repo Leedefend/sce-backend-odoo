@@ -647,6 +647,9 @@ def _node_is_runtime_business_config_entry(node: dict) -> bool:
     if _node_is_user_acceptance_surface(node):
         return False
     meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    productization_source = _text(meta.get("productization_source"))
+    if productization_source == "smart_construction_custom.user_menu_preference":
+        return True
     if _text(node.get("delivery_bucket")) == "delivery_business_config":
         return True
     if _text(meta.get("delivery_bucket")) == "delivery_business_config":
