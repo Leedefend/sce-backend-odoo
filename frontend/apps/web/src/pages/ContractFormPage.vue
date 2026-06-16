@@ -2096,6 +2096,10 @@ const hasCurrentFormFieldDraftChanges = computed(() => (
   hasFieldOrderChanges.value || hasFieldVisibilityChanges.value || fieldVisibilityDirty.value
 ));
 
+watch(hasCurrentFormFieldDraftChanges, (changed) => {
+  if (changed) formConfigAuditResult.value = null;
+});
+
 function changedFieldVisibilityDraft() {
   return contractModeBaseFieldRows.value.reduce<Record<string, boolean>>((acc, row) => {
     if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)) return acc;
@@ -8476,6 +8480,7 @@ async function onContractFieldAction(payload: FormSectionFieldActionPayload) {
   const actionValue = String(payload.action.value || '').trim();
   if (isContractFieldOrderEditable.value && fieldKey && ['show', 'hide'].includes(actionValue)) {
     fieldVisibilityDraft[fieldKey] = actionValue === 'show';
+    formConfigAuditResult.value = null;
     contractModeFeedback.value = '字段显示设置已调整，保存后生效';
     return;
   }
@@ -8487,6 +8492,7 @@ async function onContractFieldAction(payload: FormSectionFieldActionPayload) {
 function onFieldVisibilityDraftChange(fieldKey: string, value: string) {
   fieldVisibilityDraft[fieldKey] = value === 'show';
   fieldVisibilityDirty.value = true;
+  formConfigAuditResult.value = null;
   contractModeFeedback.value = '字段显示设置已调整，保存后生效';
 }
 
@@ -8762,6 +8768,7 @@ function moveFieldOrderTo(sourceFieldKey: string, targetFieldKey: string) {
   draft.splice(to, 0, moved);
   fieldOrderDraft.value = draft;
   fieldOrderPreviewActive.value = true;
+  formConfigAuditResult.value = null;
 }
 
 function moveFieldOrder(fieldKey: string, delta: number) {
@@ -8775,6 +8782,7 @@ function moveFieldOrder(fieldKey: string, delta: number) {
   draft.splice(to, 0, moved);
   fieldOrderDraft.value = draft;
   fieldOrderPreviewActive.value = true;
+  formConfigAuditResult.value = null;
 }
 
 function onFieldOrderDragEnd() {
@@ -8794,6 +8802,7 @@ function resetContractFieldOrder() {
     if (selected) fieldVisibilityDraft[row.fieldKey] = selected.value === 'show';
   });
   fieldVisibilityDirty.value = false;
+  formConfigAuditResult.value = null;
   contractModeFeedback.value = '';
 }
 
@@ -8912,6 +8921,7 @@ async function saveContractFieldOrder() {
     const warnings = Array.isArray(saveResult?.precheck?.warnings) ? saveResult.precheck?.warnings || [] : [];
     lowCodePrecheckWarnings.value = warnings.map((item) => String(item || '').trim()).filter(Boolean);
     fieldVisibilityDirty.value = false;
+    formConfigAuditResult.value = null;
     contractModeFeedback.value = '表单设置已保存';
     await reload();
     return true;
