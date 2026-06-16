@@ -360,7 +360,7 @@
               <button type="button" title="移除" @click="removeListSearchName('list', name)">×</button>
             </span>
           </div>
-          <form class="field-chip-add" @submit.prevent="addListSearchName('list')">
+          <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addListSearchName('list')">
             <input v-model="listColumnDraft" type="text" placeholder="输入字段名" />
             <button type="submit" class="ghost small">添加</button>
           </form>
@@ -371,6 +371,9 @@
             type="search"
             placeholder="搜索可选字段"
           />
+          <div class="field-option-summary">
+            可选字段 {{ fieldOptionAvailableCount('list') }}，当前显示 {{ availableListFieldOptions.length }}
+          </div>
           <div v-if="availableListFieldOptions.length" class="field-option-pool">
             <button
               v-for="field in availableListFieldOptions"
@@ -396,7 +399,7 @@
               <button type="button" title="移除" @click="removeListSearchName('filter', name)">×</button>
             </span>
           </div>
-          <form class="field-chip-add" @submit.prevent="addListSearchName('filter')">
+          <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addListSearchName('filter')">
             <input v-model="searchFilterDraft" type="text" placeholder="输入字段名" />
             <button type="submit" class="ghost small">添加</button>
           </form>
@@ -407,6 +410,9 @@
             type="search"
             placeholder="搜索可选字段"
           />
+          <div class="field-option-summary">
+            可选字段 {{ fieldOptionAvailableCount('filter') }}，当前显示 {{ availableFilterFieldOptions.length }}
+          </div>
           <div v-if="availableFilterFieldOptions.length" class="field-option-pool">
             <button
               v-for="field in availableFilterFieldOptions"
@@ -432,7 +438,7 @@
               <button type="button" title="移除" @click="removeListSearchName('group', name)">×</button>
             </span>
           </div>
-          <form class="field-chip-add" @submit.prevent="addListSearchName('group')">
+          <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addListSearchName('group')">
             <input v-model="searchGroupDraft" type="text" placeholder="输入字段名" />
             <button type="submit" class="ghost small">添加</button>
           </form>
@@ -443,6 +449,9 @@
             type="search"
             placeholder="搜索可选字段"
           />
+          <div class="field-option-summary">
+            可选字段 {{ fieldOptionAvailableCount('group') }}，当前显示 {{ availableGroupFieldOptions.length }}
+          </div>
           <div v-if="availableGroupFieldOptions.length" class="field-option-pool">
             <button
               v-for="field in availableGroupFieldOptions"
@@ -1206,16 +1215,23 @@ function resetListSearchDraft() {
 }
 
 function fieldOptionsNotIn(kind: ListSearchEditorKind) {
+  return fieldOptionCandidates(kind).slice(0, fieldOptionSearchState(kind).value.trim() ? 80 : 24);
+}
+
+function fieldOptionAvailableCount(kind: ListSearchEditorKind) {
+  return fieldOptionCandidates(kind).length;
+}
+
+function fieldOptionCandidates(kind: ListSearchEditorKind) {
   const selected = new Set(parseNames(listSearchEditorState(kind).text.value));
   const keyword = fieldOptionSearchState(kind).value.trim().toLowerCase();
-  const filtered = availableModelFields.value
+  return availableModelFields.value
     .filter((field) => !selected.has(field.name))
     .filter((field) => {
       if (!keyword) return true;
       return [field.name, field.label, field.type]
         .some((text) => String(text || '').toLowerCase().includes(keyword));
     });
-  return filtered.slice(0, keyword ? 80 : 24);
 }
 
 function fieldDisplayLabel(name: string) {
@@ -2107,6 +2123,11 @@ h1 {
   background: var(--sc-app-panel);
   color: var(--sc-app-text-primary);
   font: inherit;
+  font-size: 12px;
+}
+
+.field-option-summary {
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
