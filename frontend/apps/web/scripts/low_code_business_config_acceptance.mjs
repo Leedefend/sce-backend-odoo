@@ -105,11 +105,13 @@ async function main() {
     const designTitle = await page.locator(".contract-form-settings h4").innerText();
     const designFieldCountText = await page.locator(".contract-form-settings-field-count").innerText();
     const designFieldCount = Number((designFieldCountText.match(/\d+/) || ["0"])[0]);
+    const dragHandleCount = await page.locator(".field-order-handle").count();
     const returnButtonCount = await page.getByRole("button", { name: "返回配置" }).count();
     const legacyPanelCount = await page.locator(".contract-lowcode-objects").count();
-    report.checks.formDesigner = { designTitle, designFieldCount, returnButtonCount, legacyPanelCount };
+    report.checks.formDesigner = { designTitle, designFieldCount, dragHandleCount, returnButtonCount, legacyPanelCount };
     assert(designTitle === "当前页面设计", "表单设计器标题不正确", { designTitle });
     assert(designFieldCount > 0, "表单设计器没有显示可配置字段数量", { designFieldCountText });
+    assert(dragHandleCount > 0, "表单设计器没有可拖拽字段把手", { dragHandleCount });
     assert(returnButtonCount >= 1, "表单设计器缺少返回配置入口", { returnButtonCount });
     assert(legacyPanelCount === 0, "默认表单设计器不应显示技术配置面板", { legacyPanelCount });
 

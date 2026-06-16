@@ -215,7 +215,7 @@
           <section v-if="formSettingsActiveTab === 'fields'" class="contract-form-settings-fields">
             <header class="contract-form-settings-section-head">
               <strong>字段设计</strong>
-              <span>按住字段左侧拖拽把手调整顺序，点选字段后可设置显示、隐藏或新增字段。</span>
+              <span>在下方表单点选字段，或按住字段左侧拖拽把手调整顺序。</span>
             </header>
             <section class="contract-field-selection-panel">
               <div v-if="selectedFormSettingsFieldRow" class="contract-field-selection-card">
@@ -267,7 +267,7 @@
               </div>
               <div v-else class="contract-field-selection-empty">
                 <strong>选择字段后开始配置</strong>
-                <span>字段被选中后，可在这里调整显示、隐藏、顺序或新增字段。</span>
+                <span>在下方表单点选字段后，可在这里调整显示、隐藏、顺序或新增字段。</span>
               </div>
             </section>
           </section>
