@@ -1485,13 +1485,31 @@ function openFormConfig() {
   });
 }
 
+async function clearConsumedOpenIntent(keys: string[]) {
+  const params = new URLSearchParams(window.location.search);
+  let changed = false;
+  keys.forEach((key) => {
+    if (params.has(key)) {
+      params.delete(key);
+      changed = true;
+    }
+  });
+  if (!changed) return;
+  const query = params.toString();
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+}
+
 onMounted(() => {
   void (async () => {
+    const openPageListOnMount = shouldOpenPageList.value;
+    const openFormConfigOnMount = shouldOpenFormConfig.value;
+    const openListSearchOnMount = shouldOpenListSearch.value;
     await loadSurface();
-    if (shouldOpenPageList.value) {
+    if (openPageListOnMount) {
       await scanSystemRootCoverage();
     }
-    if (shouldOpenFormConfig.value && currentModel.value && scopeAction.value) {
+    if (openFormConfigOnMount && currentModel.value && scopeAction.value) {
+      await clearConsumedOpenIntent(['open_form_config']);
       const matched = (coverageScan.value?.items || []).find((row) => row.action_id === scopeAction.value);
       if (matched) {
         await focusScanRow(matched);
@@ -1499,7 +1517,8 @@ onMounted(() => {
         await loadSurface();
       }
     }
-    if (shouldOpenListSearch.value && currentModel.value) {
+    if (openListSearchOnMount && currentModel.value) {
+      await clearConsumedOpenIntent(['open_list_search']);
       await loadListSearchConfig();
     }
   })();
