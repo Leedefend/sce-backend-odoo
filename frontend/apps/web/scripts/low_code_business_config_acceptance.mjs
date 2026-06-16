@@ -71,13 +71,42 @@ async function main() {
     ));
     const selectedName = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
     const leakedDefaultTerms = await visibleForbiddenTerms(page);
-    report.checks.defaultConfigPage = { defaultCards, selectedName, leakedDefaultTerms };
+    const initialPageRows = await page.locator(".scan-row-main strong").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    await page.getByPlaceholder("输入页面名称").fill("合同办理");
+    const searchedPageRows = await page.locator(".scan-row-main strong").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    await page.getByPlaceholder("输入页面名称").fill("");
+    await page.getByRole("button", { name: "表单页面" }).click();
+    const formPageRows = await page.locator(".scan-row-main strong").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    await page.getByRole("button", { name: "全部页面" }).click();
+    report.checks.defaultConfigPage = {
+      defaultCards,
+      selectedName,
+      leakedDefaultTerms,
+      initialPageRows,
+      searchedPageRows,
+      formPageRows,
+    };
     assert(
       defaultCards.join("|") === "表单字段与布局|列表与搜索",
       "默认配置卡片不符合用户配置边界",
       { defaultCards },
     );
     assert(selectedName === "项目合同汇总", "配置页没有恢复选中页面", { selectedName });
+    assert(
+      initialPageRows.includes("项目合同汇总")
+        && initialPageRows.includes("合同办理")
+        && searchedPageRows.length === 1
+        && searchedPageRows[0] === "合同办理"
+        && formPageRows.includes("项目合同汇总"),
+      "业务页面搜索或类型筛选不可用",
+      { initialPageRows, searchedPageRows, formPageRows },
+    );
     assert(
       leakedDefaultTerms.length === 0,
       "默认配置页露出了治理或技术话术",
