@@ -272,6 +272,8 @@
             >{{ formConfigAuditSummary }}</span>
             <button class="ghost" type="button" :disabled="busy || formConfigAuditBusy" @click="auditCurrentFormConfiguration">检查效果</button>
             <button class="chip-btn" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
+            <button class="ghost" type="button" :disabled="busy || hasCurrentFormFieldDraftChanges" @click="previewLowCodeConfiguredPage">预览当前页面</button>
+            <button class="ghost" type="button" :disabled="busy" @click="returnToBusinessConfigDesigner">返回页面列表</button>
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
           </div>
         </section>
@@ -8759,6 +8761,50 @@ function resetContractFieldOrder() {
   });
   fieldVisibilityDirty.value = false;
   contractModeFeedback.value = '';
+}
+
+function routeQueryText(key: string) {
+  const value = route.query[key];
+  if (Array.isArray(value)) return String(value[0] || '').trim();
+  return String(value || '').trim();
+}
+
+function lowCodeReturnQuery() {
+  const query: Record<string, string> = {};
+  ['root_menu_xmlid', 'db', 'menu_id'].forEach((key) => {
+    const value = routeQueryText(key);
+    if (value) query[key] = value;
+  });
+  if (model.value) query.model = model.value;
+  if (actionId.value) query.action_id = String(actionId.value);
+  query.open_pages = '1';
+  const viewId = routeQueryText('view_id');
+  if (viewId) query.view_id = viewId;
+  const roleKey = routeQueryText('role_key');
+  if (roleKey) query.role_key = roleKey;
+  return query;
+}
+
+function previewLowCodeConfiguredPage() {
+  const query: Record<string, string | string[]> = {};
+  Object.entries(route.query as Record<string, unknown>).forEach(([key, raw]) => {
+    if (['config_mode', 'activity_page_id'].includes(key)) return;
+    if (Array.isArray(raw)) {
+      const values = raw.map((item) => String(item || '').trim()).filter(Boolean);
+      if (values.length) query[key] = values;
+      return;
+    }
+    const value = String(raw || '').trim();
+    if (value) query[key] = value;
+  });
+  router.push({ path: route.path, query });
+}
+
+function returnToBusinessConfigDesigner() {
+  router.push({
+    path: '/admin/business-config',
+    query: lowCodeReturnQuery(),
+  });
 }
 
 async function saveContractFieldOrder() {

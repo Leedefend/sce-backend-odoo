@@ -385,6 +385,7 @@ const scopeActionId = ref(numericQuery('action_id') || 0);
 const scopeViewId = ref(numericQuery('view_id') || 0);
 const scopeRoleKey = ref(String(route.query.role_key || '').trim());
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || '').trim());
+const shouldOpenPageList = computed(() => String(route.query.open_pages || '').trim() === '1');
 const designerTitle = computed(() => {
   const model = currentModel.value || scopeModel.value.trim();
   return model ? `正在配置：${model}` : '选择一个业务页面开始配置';
@@ -1041,6 +1042,7 @@ function openFormConfig() {
     query: {
       action_id: scopeAction.value ? String(scopeAction.value) : undefined,
       menu_id: route.query.menu_id || undefined,
+      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
       view_id: scopeView.value ? String(scopeView.value) : undefined,
       role_key: scopeRole.value || undefined,
       config_mode: 'business_config_lowcode',
@@ -1049,7 +1051,12 @@ function openFormConfig() {
 }
 
 onMounted(() => {
-  void loadSurface();
+  void (async () => {
+    await loadSurface();
+    if (shouldOpenPageList.value) {
+      await scanSystemRootCoverage();
+    }
+  })();
 });
 </script>
 
