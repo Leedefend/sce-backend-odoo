@@ -2146,10 +2146,17 @@ async function auditCurrentFormConfiguration() {
 }
 
 const showCurrentFormFieldConfigScope = computed(() => isContractFieldOrderEditable.value);
+const showLowCodeTechnicalDetails = computed(() => {
+  if (activeContractMode.value !== 'business_config_lowcode') return showHud.value;
+  const hudFlag = routeQueryText('hud').toLowerCase();
+  const surface = routeQueryText('surface').toLowerCase();
+  return hudFlag === '1' || hudFlag === 'true' || surface === 'hud';
+});
 const showLegacyLowCodeTechnicalPanels = computed(() => (
   isContractFieldOrderEditable.value
   && !useNativeFormTree.value
   && showDebugActionsVisible.value
+  && showLowCodeTechnicalDetails.value
 ));
 
 const formFieldConfigScope = computed(() => {
@@ -2164,6 +2171,12 @@ const formFieldConfigScope = computed(() => {
 const formConfigAuditSummary = computed(() => {
   const result = formConfigAuditResult.value;
   if (!result) return '';
+  if (!showLowCodeTechnicalDetails.value) {
+    if (result.skippedLegacyPolicyFields.length) {
+      return `发现 ${result.skippedLegacyPolicyFields.length} 个字段被旧规则覆盖，请联系管理员处理。`;
+    }
+    return `检查通过，当前页面 ${result.businessConfigFormFields.length} 个字段配置可生效。`;
+  }
   const conflictText = result.skippedLegacyPolicyFields.length
     ? `冲突字段：${result.skippedLegacyPolicyFields.join('、')}`
     : '无冲突字段';
