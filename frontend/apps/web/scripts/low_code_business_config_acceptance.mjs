@@ -85,11 +85,32 @@ async function main() {
     const saveButtonCount = await page.getByRole("button", { name: "保存设置" }).count();
     const oldSaveButtonCount = await page.getByRole("button", { name: "保存业务默认" }).count();
     const optionSummary = await page.locator(".field-option-summary").first().innerText();
+    const initialListChipCount = await page.locator(".field-chip-editor").first().locator(".field-chip").count();
+    const firstOption = page.locator(".field-option-pool button").first();
+    const optionCount = await page.locator(".field-option-pool button").count();
+    if (optionCount > 0) {
+      await firstOption.click();
+    }
+    const changedListChipCount = await page.locator(".field-chip-editor").first().locator(".field-chip").count();
+    const dirtyVisible = await page.locator(".edit-dirty").count();
+    const saveEnabledAfterEdit = await page.getByRole("button", { name: "保存设置" }).isEnabled();
+    const resetEnabledAfterEdit = await page.getByRole("button", { name: "放弃调整" }).isEnabled();
+    if (optionCount > 0) {
+      await page.getByRole("button", { name: "放弃调整" }).click();
+    }
+    const resetListChipCount = await page.locator(".field-chip-editor").first().locator(".field-chip").count();
     report.checks.listSearchPanel = {
       listSearchTitle,
       saveButtonCount,
       oldSaveButtonCount,
       optionSummary,
+      optionCount,
+      initialListChipCount,
+      changedListChipCount,
+      dirtyVisible,
+      saveEnabledAfterEdit,
+      resetEnabledAfterEdit,
+      resetListChipCount,
     };
     assert(listSearchTitle === "列表与搜索设置", "列表与搜索面板标题不正确", { listSearchTitle });
     assert(saveButtonCount === 1 && oldSaveButtonCount === 0, "列表与搜索保存按钮文案不正确", {
@@ -97,6 +118,23 @@ async function main() {
       oldSaveButtonCount,
     });
     assert(optionSummary.includes("可添加字段"), "列表与搜索字段池说明不正确", { optionSummary });
+    assert(optionCount > 0, "列表与搜索没有可添加字段", { optionCount });
+    assert(
+      changedListChipCount === initialListChipCount + 1
+        && dirtyVisible > 0
+        && saveEnabledAfterEdit
+        && resetEnabledAfterEdit
+        && resetListChipCount === initialListChipCount,
+      "列表与搜索草稿编辑或放弃调整不可用",
+      {
+        initialListChipCount,
+        changedListChipCount,
+        dirtyVisible,
+        saveEnabledAfterEdit,
+        resetEnabledAfterEdit,
+        resetListChipCount,
+      },
+    );
 
     await page.goto(CONFIG_URL, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".scan-row--selected", { timeout: 20000 });
