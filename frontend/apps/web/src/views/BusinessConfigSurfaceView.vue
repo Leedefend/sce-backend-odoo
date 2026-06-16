@@ -145,7 +145,7 @@
               class="ghost small"
               @click="openListSearchForRow(row)"
             >
-              配置列表搜索
+              配置列表与搜索
             </button>
             <button
               type="button"
@@ -227,7 +227,7 @@
             :disabled="!currentModel || listSearchBusy"
             @click="loadListSearchConfig"
           >
-            {{ listSearchBusy ? '读取中...' : '配置列表搜索' }}
+            {{ listSearchBusy ? '读取中...' : '配置列表与搜索' }}
           </button>
           <button
             v-else-if="section.key === 'form'"
@@ -322,7 +322,7 @@
     <section v-if="listSearchPanelOpen" class="edit-panel">
       <div class="edit-panel-head">
         <div>
-          <h2>列表/搜索业务配置</h2>
+          <h2>列表与搜索设置</h2>
           <p>{{ listSearchPanelDescription }}</p>
         </div>
         <div class="edit-panel-actions">
@@ -1190,7 +1190,7 @@ async function bootstrapListSearchConfig(row: BusinessConfigCoverageScanItem) {
     await scanCurrentModel();
     setMessage('已生成列表/搜索基础配置', `已发布 ${result.saved_count} 个业务配置`);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '列表/搜索契约自动生成失败';
+    error.value = err instanceof Error ? err.message : '列表与搜索基础配置生成失败';
     await loadListSearchConfig();
   } finally {
     listSearchSaving.value = false;
@@ -1383,7 +1383,7 @@ async function loadListSearchConfig() {
     activeListSearchEditor.value = requestedListSearchTab.value;
     listSearchPanelOpen.value = true;
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '列表/搜索配置读取失败';
+    error.value = err instanceof Error ? err.message : '列表与搜索设置读取失败';
   } finally {
     listSearchBusy.value = false;
   }
@@ -1410,7 +1410,7 @@ async function saveListSearchConfig() {
     setMessage('列表与搜索配置已保存', `已保存 ${result.saved_count} 个业务配置`);
     return true;
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '列表/搜索配置保存失败';
+    error.value = err instanceof Error ? err.message : '列表与搜索设置保存失败';
     return false;
   } finally {
     listSearchSaving.value = false;
