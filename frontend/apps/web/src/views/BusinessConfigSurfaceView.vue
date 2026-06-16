@@ -212,13 +212,13 @@
         </div>
         <div class="config-card-actions">
           <button
-            v-if="advancedPanelOpen && (section.key === 'form' || section.key === 'list_search')"
+            v-if="section.key === 'form' || section.key === 'list_search'"
             type="button"
             class="ghost small"
             :disabled="!currentModel || versionsLoading"
             @click="loadVersions(section.key)"
           >
-            {{ versionsLoading ? '读取中...' : '版本' }}
+            {{ versionsLoading ? '读取中...' : '版本记录' }}
           </button>
           <button
             v-if="section.key === 'list_search'"
@@ -262,13 +262,13 @@
       <div class="edit-panel-head">
         <div>
           <h2>{{ versionTitle }}</h2>
-          <p>按当前模型、动作、视图、角色作用域读取正式业务契约版本。</p>
+          <p>{{ versionPanelDescription }}</p>
         </div>
         <button type="button" class="ghost small" :disabled="versionsLoading" @click="versionsPanelOpen = false">
           关闭
         </button>
       </div>
-      <div v-if="!versionContracts.length" class="empty-state">当前作用域暂无版本记录。</div>
+      <div v-if="!versionContracts.length" class="empty-state">{{ versionEmptyText }}</div>
       <div v-else class="version-list">
         <article v-for="contract in versionContracts" :key="contract.id" class="version-card">
           <div class="version-card-head">
@@ -297,7 +297,7 @@
           <div class="version-rows">
             <div v-for="version in contract.versions" :key="version.id" class="version-row">
               <span>v{{ version.version_no }}</span>
-              <span>{{ version.status }}</span>
+              <span>{{ versionStatusLabel(version.status) }}</span>
               <span>{{ version.created_by || '-' }}</span>
               <span>
                 字段 {{ version.summary.form_field_count }} /
@@ -595,6 +595,14 @@ const listSearchPanelDescription = computed(() => (
     ? '这些配置写入正式业务契约，不写入个人列偏好。'
     : '保存为这个页面的默认列表、搜索和分组设置，不覆盖个人列宽和排序偏好。'
 ));
+const versionPanelDescription = computed(() => (
+  advancedPanelOpen.value
+    ? '按当前模型、动作、视图、角色作用域读取正式业务契约版本。'
+    : '查看这个页面的配置保存记录，可在需要时回滚到历史版本。'
+));
+const versionEmptyText = computed(() => (
+  advancedPanelOpen.value ? '当前作用域暂无版本记录。' : '当前页面暂无版本记录。'
+));
 function isCoverageIssue(row: BusinessConfigCoverageScanItem) {
   return !row.is_complete || !row.is_runtime_complete || !row.has_menu;
 }
@@ -789,6 +797,13 @@ function overallStatusLabel(status: string) {
   if (status === 'warning') return '警告';
   if (status === 'notice') return '提示';
   if (status === 'pass') return '通过';
+  return status || '未知';
+}
+
+function versionStatusLabel(status: string) {
+  if (status === 'published') return '已发布';
+  if (status === 'draft') return '草稿';
+  if (status === 'archived') return '已归档';
   return status || '未知';
 }
 

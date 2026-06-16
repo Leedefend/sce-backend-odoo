@@ -156,7 +156,7 @@
 - 已补第三步：工作台接入列表/搜索编辑区，调用 `ui.business_config.list_search.audit/set`，只写正式业务契约，不写个人偏好。
 - 已补第四步：工作台接入表单配置入口，通过 `config_mode=form_field_configuration` 打开当前模型/action 的表单配置模式。
 - 已补第五步：工作台接入模型、action、view、role_key 作用域选择；摘要、列表/搜索保存和表单配置跳转统一使用当前作用域。
-- 已补第六步：新增 `ui.business_config.contract.versions`，工作台可查看当前作用域下表单、列表、搜索业务契约版本摘要；工作台版本面板已接入 `ui.business_config.contract.rollback`，支持回滚上一版和回滚到指定版本，不触碰个人偏好。
+- 已补第六步：新增 `ui.business_config.contract.versions`，工作台默认路径可查看当前页面表单、列表、搜索配置版本摘要；工作台版本面板已接入 `ui.business_config.contract.rollback`，支持回滚上一版和回滚到指定版本，不触碰个人偏好。作用域和业务契约解释只在高级设置中展示。
 - 已补第七步：行业模块新增“业务配置工作台”菜单入口，前端动作服务识别该配置动作后进入 `/admin/business-config`；平台管理员侧栏也提供工作台快捷入口，确保配置工作台不是隐藏路由。
 - 已补第八步：行业根菜单扫描范围由行业 action context 提供 `business_config_root_menu_xmlid`，平台前端壳不硬编码行业 XMLID。
 - 支持作用域选择：当前页面、当前动作、当前视图、当前公司、当前角色/用户组。
@@ -177,7 +177,7 @@
 - 已补第四步：新增 `make verify.business_config.coverage`，按系统根菜单和代表角色账号输出只读覆盖验收报告，用于本地和开发服务器升级后确认表单/列表/搜索运行态缺口为 0；报告同时落盘运行页面样本路径，便于升级后浏览器验收。
 - 已补第五步：覆盖扫描行输出 `runtime_route` 和 `menu_ids`，工作台可从扫描结果直接打开对应运行页面，作为浏览器验收入口。
 - 已补第六步：新增 `make verify.business_config.full_acceptance`，先跑低代码后端单测，再构建前端静态资源、跑覆盖门禁，最后用 Playwright 打开覆盖报告中的运行页面样本，生成截图和 JSON 报告，补齐配置契约到真实页面的闭环证据。
-- 已补第七步：新增 `make verify.business_config.low_code_acceptance`，用业务配置管理员账号打开 `/admin/business-config`，验证默认用户路径不暴露治理/技术话术，并覆盖页面搜索/筛选、页面选择、运行页面预览、列表与搜索三类 tab、列表与搜索草稿编辑和放弃调整、表单字段点选/拖拽/显示隐藏/顺序调整/新增字段、检查效果、返回配置上下文；验收报告落盘关键截图，并检查浏览器 error/warning 为空。
+- 已补第七步：新增 `make verify.business_config.low_code_acceptance`，用业务配置管理员账号打开 `/admin/business-config`，验证默认用户路径不暴露治理/技术话术，并覆盖页面搜索/筛选、页面选择、配置版本记录、运行页面预览、列表与搜索三类 tab、列表与搜索草稿编辑和放弃调整、表单字段点选/拖拽/显示隐藏/顺序调整/新增字段、检查效果、返回配置上下文；验收报告落盘关键截图，并检查浏览器 error/warning 为空。
 - 已补第八步：低代码用户路径验收补 390px 移动宽度检查，要求配置工作台无横向溢出，并落盘移动截图；`make verify.business_config.full_acceptance` 已串联该验收。
 - 已补第九步：低代码用户路径验收补高级设置边界检查，默认路径不展示治理/技术话术，显式打开高级设置后必须出现作用域字段和高级治理视图。
 - 已补第十步：新增 `make verify.business_config.unit`，串联表单/列表/搜索配置 handler 和业务配置工作台单测，并纳入 full acceptance。

@@ -94,6 +94,14 @@ async function main() {
     ));
     const selectedName = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
     const leakedDefaultTerms = await visibleForbiddenTerms(page);
+    const defaultVersionButtonCount = await page.getByRole("button", { name: "版本记录" }).count();
+    await page.getByRole("button", { name: "版本记录" }).first().click();
+    await page.waitForSelector(".version-panel", { timeout: 10000 });
+    const defaultVersionTitle = await page.locator(".version-panel h2").innerText();
+    const defaultVersionDescription = await page.locator(".version-panel .edit-panel-head p").innerText();
+    const leakedDefaultVersionTerms = await visibleForbiddenTerms(page, ".version-panel");
+    await page.locator(".version-panel").getByRole("button", { name: "关闭" }).click();
+    await page.waitForSelector(".version-panel", { state: "detached", timeout: 10000 });
     const initialPageRows = await page.locator(".scan-row-main strong").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
@@ -143,6 +151,10 @@ async function main() {
       defaultCards,
       selectedName,
       leakedDefaultTerms,
+      defaultVersionButtonCount,
+      defaultVersionTitle,
+      defaultVersionDescription,
+      leakedDefaultVersionTerms,
       initialPageRows,
       searchedPageRows,
       formPageRows,
@@ -193,6 +205,19 @@ async function main() {
       leakedDefaultTerms.length === 0,
       "默认配置页露出了治理或技术话术",
       { leakedDefaultTerms },
+    );
+    assert(
+      defaultVersionButtonCount >= 2
+        && defaultVersionTitle.includes("配置版本")
+        && defaultVersionDescription.includes("配置保存记录")
+        && leakedDefaultVersionTerms.length === 0,
+      "默认版本记录面板不可用或露出了治理话术",
+      {
+        defaultVersionButtonCount,
+        defaultVersionTitle,
+        defaultVersionDescription,
+        leakedDefaultVersionTerms,
+      },
     );
 
     await page.goto(LIST_SEARCH_URL, { waitUntil: "domcontentloaded" });
