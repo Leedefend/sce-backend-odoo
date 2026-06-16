@@ -174,6 +174,13 @@ async function main() {
     await page.getByRole("button", { name: /默认分组/ }).click();
     const groupEditorTitle = await page.locator(".field-chip-editor header strong").innerText();
     const groupOptionSummary = await page.locator(".field-option-summary").innerText();
+    await page.getByRole("button", { name: /列表列/ }).click();
+    await page.locator(".field-option-search").fill("合同");
+    const searchedListOptionLabels = await page.locator(".field-option-pool button").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    const searchedListOptionCount = searchedListOptionLabels.length;
+    await page.locator(".field-option-search").fill("");
     report.checks.listSearchPanel = {
       listSearchTitle,
       saveButtonCount,
@@ -192,6 +199,8 @@ async function main() {
       filterOptionSummary,
       groupEditorTitle,
       groupOptionSummary,
+      searchedListOptionCount,
+      searchedListOptionLabels,
     };
     report.artifacts.listSearchPanel = await captureStep(page, "list-search-panel");
     assert(listSearchTitle === "列表与搜索设置", "列表与搜索面板标题不正确", { listSearchTitle });
@@ -214,6 +223,11 @@ async function main() {
         && groupOptionSummary.includes("可添加字段"),
       "列表与搜索配置类型切换不可用",
       { listSearchTabs, filterEditorTitle, filterOptionSummary, groupEditorTitle, groupOptionSummary },
+    );
+    assert(
+      searchedListOptionCount > 0 && searchedListOptionLabels.every((label) => label.includes("合同")),
+      "列表与搜索字段池搜索不可用",
+      { searchedListOptionCount, searchedListOptionLabels },
     );
     assert(
       changedListChipCount === initialListChipCount + 1
