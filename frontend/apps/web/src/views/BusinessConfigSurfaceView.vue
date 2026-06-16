@@ -310,6 +310,9 @@
           <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="saveListSearchConfig">
             {{ listSearchSaving ? '保存中...' : '保存业务默认' }}
           </button>
+          <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="resetListSearchDraft">
+            放弃调整
+          </button>
         </div>
       </div>
       <div class="edit-grid">
@@ -1072,6 +1075,15 @@ function fieldOptionSearchState(kind: ListSearchEditorKind) {
 function setListSearchNames(kind: ListSearchEditorKind, names: string[]) {
   const state = listSearchEditorState(kind);
   state.text.value = namesToText(names);
+}
+
+function resetListSearchDraft() {
+  listColumnsText.value = listSearchBase.value.list;
+  searchFiltersText.value = listSearchBase.value.filter;
+  searchGroupByText.value = listSearchBase.value.group;
+  listColumnDraft.value = '';
+  searchFilterDraft.value = '';
+  searchGroupDraft.value = '';
 }
 
 function fieldOptionsNotIn(kind: ListSearchEditorKind) {
