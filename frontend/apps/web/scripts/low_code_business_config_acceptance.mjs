@@ -125,6 +125,15 @@ async function main() {
       return selected?.textContent?.trim() === "项目合同汇总";
     });
     const selectedAfterRestore = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
+    await page.getByRole("button", { name: "高级设置" }).click();
+    await page.waitForSelector(".scope-panel", { timeout: 10000 });
+    const advancedScopeLabels = await page.locator(".scope-panel label span").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    const advancedText = await page.locator("body").innerText();
+    const advancedPanelVisible = await page.locator(".scan-panel--admin").count();
+    await page.getByRole("button", { name: "高级设置" }).click();
+    await page.waitForSelector(".scope-panel", { state: "detached", timeout: 10000 });
     await page.locator(".scan-row--selected").getByRole("button", { name: "预览页面" }).click();
     await page.waitForURL((url) => String(url).includes("/a/562"), { timeout: 20000 });
     const previewUrl = page.url();
@@ -141,6 +150,9 @@ async function main() {
       titleAfterSwitch,
       cardsAfterSwitch,
       selectedAfterRestore,
+      advancedScopeLabels,
+      advancedPanelVisible,
+      advancedHasGovernanceText: advancedText.includes("高级治理视图") && advancedText.includes("治理结论"),
       previewUrl,
     };
     report.artifacts.defaultConfigPage = await captureStep(page, "default-config-page");
@@ -167,6 +179,14 @@ async function main() {
         && selectedAfterRestore === "项目合同汇总",
       "业务页面选择或恢复不可用",
       { selectedAfterSwitch, titleAfterSwitch, cardsAfterSwitch, selectedAfterRestore },
+    );
+    assert(
+      advancedScopeLabels.join("|") === "业务对象|页面ID|视图ID|角色编码"
+        && advancedPanelVisible === 1
+        && advancedText.includes("高级治理视图")
+        && advancedText.includes("治理结论"),
+      "高级设置边界不可用",
+      { advancedScopeLabels, advancedPanelVisible },
     );
     assert(previewUrl.includes("/a/562"), "业务页面预览入口不可用", { previewUrl });
     assert(
