@@ -46,7 +46,7 @@
           <h2>保存并预览</h2>
           <p>保存配置后打开业务页面确认效果。</p>
         </div>
-        <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">预览配置</button>
+        <button type="button" class="ghost" :disabled="!previewRouteTarget.path" @click="previewSelectedRuntimeRoute">预览配置</button>
       </article>
     </section>
 
@@ -125,6 +125,14 @@
           </div>
           <div class="scan-row-actions">
             <button type="button" class="ghost small primary" @click="openDesignerForRow(row)">设计表单</button>
+            <button
+              v-if="rowHasListSearchConfig(row)"
+              type="button"
+              class="ghost small"
+              @click="openListSearchForRow(row)"
+            >
+              配置列表搜索
+            </button>
             <button
               type="button"
               class="ghost small"
@@ -499,6 +507,7 @@ const scopeViewId = ref(numericQuery('view_id') || 0);
 const scopeRoleKey = ref(String(route.query.role_key || '').trim());
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || '').trim());
 const shouldOpenPageList = computed(() => String(route.query.open_pages || '').trim() === '1');
+const shouldOpenListSearch = computed(() => String(route.query.open_list_search || '').trim() === '1');
 const designerTitle = computed(() => {
   const model = currentModel.value || scopeModel.value.trim();
   return model ? `正在配置：${model}` : '选择一个业务页面开始配置';
@@ -638,6 +647,11 @@ function pageDesignStatus(row: BusinessConfigCoverageScanItem) {
   if (row.runtime_missing_view_types.includes('form')) return '可生成后设计';
   if (row.target_view_types.includes('form')) return '可设计表单';
   return '可打开页面';
+}
+
+function rowHasListSearchConfig(row: BusinessConfigCoverageScanItem) {
+  return row.target_view_types.some((viewType) => viewType === 'tree' || viewType === 'search')
+    || String(row.view_mode || '').split(',').some((viewType) => ['tree', 'list', 'search'].includes(viewType.trim()));
 }
 
 function runtimeReasonLabel(reason: string) {
@@ -865,6 +879,7 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
       action_id: row.action_id ? String(row.action_id) : undefined,
       view_id: undefined,
       role_key: scopeRole.value || undefined,
+      open_list_search: undefined,
     },
   });
   await loadSurface();
@@ -873,6 +888,28 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
 async function openDesignerForRow(row: BusinessConfigCoverageScanItem) {
   await focusScanRow(row);
   openFormConfig();
+}
+
+async function openListSearchForRow(row: BusinessConfigCoverageScanItem) {
+  scopeModel.value = row.model;
+  scopeActionId.value = row.action_id;
+  scopeViewId.value = 0;
+  selectedRuntimeRoute.value = row.runtime_route || null;
+  versionsPanelOpen.value = false;
+  versionContracts.value = [];
+  await router.replace({
+    path: route.path,
+    query: {
+      ...route.query,
+      model: row.model || undefined,
+      action_id: row.action_id ? String(row.action_id) : undefined,
+      view_id: undefined,
+      role_key: scopeRole.value || undefined,
+      open_list_search: '1',
+    },
+  });
+  await loadSurface();
+  await loadListSearchConfig();
 }
 
 async function openRuntimeRoute(row: BusinessConfigCoverageScanItem) {
@@ -1321,6 +1358,9 @@ onMounted(() => {
     await loadSurface();
     if (shouldOpenPageList.value) {
       await scanSystemRootCoverage();
+    }
+    if (shouldOpenListSearch.value && currentModel.value) {
+      await loadListSearchConfig();
     }
   })();
 });
