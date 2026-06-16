@@ -2301,24 +2301,29 @@ async function hydrateLowCodeDraftFromContract() {
     const base = lowCodeApplyBaseParams();
     const scopedName = lowCodeScopedContractName(modelName, base);
     const legacyName = legacyLowCodeContractName(modelName);
-    let res = await intentRequest<{
+    const listResult = await intentRequest<{
+      items?: Array<{ name?: string }>;
+    }>({
+      intent: 'ui.business_config.contract.list',
+      params: { ...base, model: modelName, view_type: 'form' },
+    }).catch(() => null);
+    const availableNames = new Set((Array.isArray(listResult?.items) ? listResult?.items || [] : [])
+      .map((row) => String(row?.name || '').trim())
+      .filter(Boolean));
+    const contractName = availableNames.has(scopedName)
+      ? scopedName
+      : (scopedName !== legacyName && availableNames.has(legacyName) ? legacyName : '');
+    if (!contractName) return;
+    const res = await intentRequest<{
       contract_json?: {
         objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number }> }>;
       }
     }>({
       intent: 'ui.business_config.contract.get',
-      params: { ...base, model: modelName, name: scopedName, view_type: 'form' },
+      params: contractName === scopedName
+        ? { ...base, model: modelName, name: contractName, view_type: 'form' }
+        : { model: modelName, name: contractName },
     }).catch(() => null);
-    if (!res && scopedName !== legacyName) {
-      res = await intentRequest<{
-        contract_json?: {
-          objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number }> }>;
-        }
-      }>({
-        intent: 'ui.business_config.contract.get',
-        params: { model: modelName, name: legacyName },
-      }).catch(() => null);
-    }
     if (!res) return;
     const legacyDraft = lowCodeLegacyDraftFromContract(res?.contract_json);
     const objects = legacyDraft.objects;
