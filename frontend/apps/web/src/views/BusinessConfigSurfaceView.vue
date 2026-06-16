@@ -325,6 +325,13 @@
             <input v-model="listColumnDraft" type="text" placeholder="输入字段名" />
             <button type="submit" class="ghost small">添加</button>
           </form>
+          <input
+            v-if="availableListFieldOptions.length || listFieldOptionSearch"
+            v-model="listFieldOptionSearch"
+            class="field-option-search"
+            type="search"
+            placeholder="搜索可选字段"
+          />
           <div v-if="availableListFieldOptions.length" class="field-option-pool">
             <button
               v-for="field in availableListFieldOptions"
@@ -353,6 +360,13 @@
             <input v-model="searchFilterDraft" type="text" placeholder="输入字段名" />
             <button type="submit" class="ghost small">添加</button>
           </form>
+          <input
+            v-if="availableFilterFieldOptions.length || filterFieldOptionSearch"
+            v-model="filterFieldOptionSearch"
+            class="field-option-search"
+            type="search"
+            placeholder="搜索可选字段"
+          />
           <div v-if="availableFilterFieldOptions.length" class="field-option-pool">
             <button
               v-for="field in availableFilterFieldOptions"
@@ -381,6 +395,13 @@
             <input v-model="searchGroupDraft" type="text" placeholder="输入字段名" />
             <button type="submit" class="ghost small">添加</button>
           </form>
+          <input
+            v-if="availableGroupFieldOptions.length || groupFieldOptionSearch"
+            v-model="groupFieldOptionSearch"
+            class="field-option-search"
+            type="search"
+            placeholder="搜索可选字段"
+          />
           <div v-if="availableGroupFieldOptions.length" class="field-option-pool">
             <button
               v-for="field in availableGroupFieldOptions"
@@ -455,6 +476,9 @@ const searchGroupByText = ref('');
 const listColumnDraft = ref('');
 const searchFilterDraft = ref('');
 const searchGroupDraft = ref('');
+const listFieldOptionSearch = ref('');
+const filterFieldOptionSearch = ref('');
+const groupFieldOptionSearch = ref('');
 const scopeModel = ref(String(route.query.model || '').trim());
 const scopeActionId = ref(numericQuery('action_id') || 0);
 const scopeViewId = ref(numericQuery('view_id') || 0);
@@ -519,7 +543,7 @@ const availableModelFields = computed(() => (listSearchAudit.value?.available_mo
     type: String(field.type || '').trim(),
   }))
   .filter((field) => field.name)
-  .slice(0, 80));
+);
 const availableListFieldOptions = computed(() => fieldOptionsNotIn('list'));
 const availableFilterFieldOptions = computed(() => fieldOptionsNotIn('filter'));
 const availableGroupFieldOptions = computed(() => fieldOptionsNotIn('group'));
@@ -999,6 +1023,12 @@ function listSearchEditorState(kind: ListSearchEditorKind) {
   return { text: searchGroupByText, draft: searchGroupDraft };
 }
 
+function fieldOptionSearchState(kind: ListSearchEditorKind) {
+  if (kind === 'list') return listFieldOptionSearch;
+  if (kind === 'filter') return filterFieldOptionSearch;
+  return groupFieldOptionSearch;
+}
+
 function setListSearchNames(kind: ListSearchEditorKind, names: string[]) {
   const state = listSearchEditorState(kind);
   state.text.value = namesToText(names);
@@ -1006,7 +1036,15 @@ function setListSearchNames(kind: ListSearchEditorKind, names: string[]) {
 
 function fieldOptionsNotIn(kind: ListSearchEditorKind) {
   const selected = new Set(parseNames(listSearchEditorState(kind).text.value));
-  return availableModelFields.value.filter((field) => !selected.has(field.name));
+  const keyword = fieldOptionSearchState(kind).value.trim().toLowerCase();
+  const filtered = availableModelFields.value
+    .filter((field) => !selected.has(field.name))
+    .filter((field) => {
+      if (!keyword) return true;
+      return [field.name, field.label, field.type]
+        .some((text) => String(text || '').toLowerCase().includes(keyword));
+    });
+  return filtered.slice(0, keyword ? 80 : 24);
 }
 
 function fieldDisplayLabel(name: string) {
@@ -1754,6 +1792,18 @@ h1 {
   background: var(--sc-app-panel);
   color: var(--sc-app-text-primary);
   font: inherit;
+}
+
+.field-option-search {
+  width: 100%;
+  min-height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 0 9px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  font: inherit;
+  font-size: 12px;
 }
 
 .field-option-pool {
