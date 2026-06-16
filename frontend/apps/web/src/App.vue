@@ -69,12 +69,15 @@ function activityRouteKey(route: RouteLocationNormalizedLoaded): string {
     const model = routeText(route.params.model);
     const recordId = routeText(route.params.id);
     if (!model || !recordId) return '';
+    const actionId = positiveInteger(route.query.action_id);
+    const menuId = positiveInteger(route.query.menu_id);
+    const viewId = positiveInteger(route.query.view_id || route.query.viewId);
+    const projectScopePolicy = resolveActivityRoutePolicy(actionId, menuId);
     if (recordId === 'new') {
       const activityInstanceId = routeText(route.query.activity_page_id);
-      const menuId = routeText(route.query.menu_id);
-      return `new:${model}:${menuId}:${activityProjectPart('current_project')}:${activityInstanceId || 'route'}`;
+      return `new:${model}:action:${actionId || 0}:menu:${menuId || 0}:view:${viewId || 0}:${activityProjectPart(projectScopePolicy || 'current_project')}:${activityInstanceId || 'route'}`;
     }
-    return `record:${model}:${recordId}`;
+    return `record:${model}:${recordId}:action:${actionId || 0}:menu:${menuId || 0}:view:${viewId || 0}:${activityProjectPart(projectScopePolicy)}`;
   }
   if (route.name === 'scene' || route.name === 'projects-intake' || String(route.name || '').startsWith('scene-')) {
     const sceneKey = routeText(route.params.sceneKey || route.meta?.sceneKey || route.query.scene_key || route.query.scene);

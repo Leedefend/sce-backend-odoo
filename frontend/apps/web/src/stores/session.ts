@@ -647,6 +647,54 @@ function stripTransientActivityRouteQuery(rawRoute: unknown): string {
   return `${pathWithMaybeHash}${nextQuery ? `?${nextQuery}` : ''}${hash}`;
 }
 
+function isDeprecatedMergedExpenseDepositActivity(row: ActivityPage): boolean {
+  const title = asText(row.title);
+  if (title === '费用/保证金申请') return true;
+  const route = asText(row.route);
+  if (!route.includes('integration_target')) return false;
+  try {
+    const queryText = route.split('?', 2)[1]?.split('#', 1)[0] || '';
+    const target = asText(new URLSearchParams(queryText).get('integration_target'));
+    return target === 'sc.expense.claim 费用/保证金申请';
+  } catch {
+    return route.includes('sc.expense.claim+%E8%B4%B9%E7%94%A8/%E4%BF%9D%E8%AF%81%E9%87%91%E7%94%B3%E8%AF%B7')
+      || route.includes('sc.expense.claim%20%E8%B4%B9%E7%94%A8%2F%E4%BF%9D%E8%AF%81%E9%87%91%E7%94%B3%E8%AF%B7');
+  }
+}
+
+function isDeprecatedMergedContractHandlingActivity(row: ActivityPage): boolean {
+  const title = asText(row.title);
+  const model = asText(row.model);
+  const route = asText(row.route);
+  if (title === '合同办理' && model === 'construction.contract') return true;
+  if (route.includes('/a/1002') && (title === '合同办理' || model === 'construction.contract')) return true;
+  if (!route.includes('integration_target')) return false;
+  try {
+    const queryText = route.split('?', 2)[1]?.split('#', 1)[0] || '';
+    const target = asText(new URLSearchParams(queryText).get('integration_target'));
+    return target === 'construction.contract 合同办理';
+  } catch {
+    return route.includes('construction.contract+%E5%90%88%E5%90%8C%E5%8A%9E%E7%90%86')
+      || route.includes('construction.contract%20%E5%90%88%E5%90%8C%E5%8A%9E%E7%90%86');
+  }
+}
+
+function isDeprecatedMergedContractSettlementActivity(row: ActivityPage): boolean {
+  const title = asText(row.title);
+  const model = asText(row.model);
+  const route = asText(row.route);
+  if (title === '结算办理' && model === 'sc.settlement.order') return true;
+  if (!route.includes('integration_target')) return false;
+  try {
+    const queryText = route.split('?', 2)[1]?.split('#', 1)[0] || '';
+    const target = asText(new URLSearchParams(queryText).get('integration_target'));
+    return target === 'sc.settlement.order 结算办理';
+  } catch {
+    return route.includes('sc.settlement.order+%E7%BB%93%E7%AE%97%E5%8A%9E%E7%90%86')
+      || route.includes('sc.settlement.order%20%E7%BB%93%E7%AE%97%E5%8A%9E%E7%90%86');
+  }
+}
+
 function normalizeActivityPage(raw: unknown): ActivityPage | null {
   const row = asRecord(raw);
   const key = asText(row.key);
@@ -694,6 +742,9 @@ function trimActivityPages(pages: ActivityPage[], activeKey: string): ActivityPa
 
 function isRetainedActivityPage(page: ActivityPage | null): page is ActivityPage {
   if (!page) return false;
+  if (isDeprecatedMergedExpenseDepositActivity(page)) return false;
+  if (isDeprecatedMergedContractHandlingActivity(page)) return false;
+  if (isDeprecatedMergedContractSettlementActivity(page)) return false;
   const key = asText(page.key).toLowerCase();
   const route = asText(page.route).split(/[?#]/, 1)[0];
   const pageRecord = page as unknown as Record<string, unknown>;
@@ -711,6 +762,20 @@ function activityPageCacheRouteKey(key: string): string {
   if (parts[0] === 'action' && parts.length >= 4) return parts.slice(0, 4).join(':');
   if (parts[0] === 'scene' && parts.length >= 2) return parts.slice(0, 2).join(':');
   return normalized;
+}
+
+function invalidateRestoredActivityPageCaches(
+  pages: ActivityPage[],
+  currentEpochs: Record<string, number> | undefined,
+): Record<string, number> {
+  const next = { ...(currentEpochs || {}) };
+  pages.forEach((page) => {
+    const keys = [asText(page.key), activityPageCacheRouteKey(page.key)].filter(Boolean);
+    keys.forEach((key) => {
+      next[key] = Number(next[key] || 0) + 1;
+    });
+  });
+  return next;
 }
 
 function isGenericActivityTitle(title: string): boolean {
@@ -1011,14 +1076,17 @@ export const useSessionStore = defineStore('session', {
           this.activeActivityPageKey = this.activityPages.some((page) => page.key === restoredActiveKey)
             ? restoredActiveKey
             : '';
-          this.activityPageCacheEpochs = parsed.activityPageCacheEpochs ?? {};
+          this.activityPageCacheEpochs = invalidateRestoredActivityPageCaches(
+            this.activityPages,
+            parsed.activityPageCacheEpochs,
+          );
           this.capabilityCatalog = parsed.capabilityCatalog ?? {};
           this.sceneActionHints = parsed.sceneActionHints ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
           this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
           this.workspaceHome = parsed.workspaceHome ?? null;
           this.workspaceHomeRef = parsed.workspaceHomeRef ?? null;
-          this.pageContracts = parsed.pageContracts ?? {};
+          this.pageContracts = {};
           this.sceneReadyContractV1 = parsed.sceneReadyContractV1 ?? null;
           this.sceneGovernanceV1 = parsed.sceneGovernanceV1 ?? null;
           if (this.sceneReadyContractV1?.scenes?.length) {
@@ -1131,7 +1199,6 @@ export const useSessionStore = defineStore('session', {
         productFacts: this.productFacts,
         workspaceHome: this.workspaceHome,
         workspaceHomeRef: this.workspaceHomeRef,
-        pageContracts: this.pageContracts,
         sceneReadyContractV1: this.sceneReadyContractV1,
         sceneGovernanceV1: this.sceneGovernanceV1,
         lastTraceId: this.lastTraceId,

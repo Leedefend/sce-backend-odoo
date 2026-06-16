@@ -976,7 +976,7 @@ import {
 } from '../app/contractRuntime';
 import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
-import { findActionMeta, findMenuNode } from '../app/menu';
+import { findActionMeta, findActionMetaByMenu, findMenuNode } from '../app/menu';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
 import { readWorkspaceContext } from '../app/workspaceContext';
@@ -1283,6 +1283,19 @@ const v2ShadowStoreReady = computed(() => Boolean(v2ContractStore.value));
 const v2ShadowWidgetCount = computed(() => v2ContractStore.value?.widgetsById.size || 0);
 const v2ShadowActionCount = computed(() => v2ContractStore.value?.actionsById.size || 0);
 const v2ShadowButtonStatusCount = computed(() => v2ContractStore.value?.buttonStatusById.size || 0);
+
+function formRouteIdentity() {
+  const query = route.query as Record<string, unknown>;
+  return [
+    String(route.params.model || ''),
+    String(route.params.id || ''),
+    String(query.action_id || ''),
+    String(query.menu_id || ''),
+    String(query.view_id || query.viewId || ''),
+    String(query.current_business_category_code || query.default_business_category_code || ''),
+    String(query.allowed_business_category_codes || ''),
+  ].join('|');
+}
 const v2ShadowFieldCodes = computed(() => Array.from(v2ContractStore.value?.widgetsByFieldCode.keys() || []));
 const v2ShadowFieldCodeCount = computed(() => v2ShadowFieldCodes.value.length);
 const v2ShadowLegacyFieldMissing = computed(() => {
@@ -1397,17 +1410,20 @@ const nativeChatterAutoLoadKey = ref('');
 let activeReloadToken = 0;
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
+const menuId = computed(() => Number(route.query.menu_id || 0) || 0);
 const actionId = computed(() => {
   const rawRecordId = String(route.params.id || '').trim();
   const isCreateRoute = !rawRecordId || rawRecordId === 'new';
+  const menuAction = findActionMetaByMenu(session.menuTree, menuId.value);
   return resolveActionIdFromContext({
     routeQuery: route.query as Record<string, unknown>,
+    menuActionId: menuAction?.action_id,
+    menuActionModel: menuAction?.model,
     currentActionId: isCreateRoute ? session.currentAction?.action_id : null,
     currentActionModel: session.currentAction?.model,
     model: model.value,
   });
 });
-const menuId = computed(() => Number(route.query.menu_id || 0) || 0);
 const currentMenuTitle = computed(() => {
   const node = findMenuNode(session.menuTree, menuId.value);
   return String(node?.label || node?.name || node?.title || '').trim();
@@ -4604,7 +4620,7 @@ function normalizeActionLabel(raw: unknown, fallback = ''): string {
 }
 
 function currentWorkflowContract(): Record<string, unknown> {
-  const root = contract.value || {};
+  const root = dictOrEmpty(contract.value);
   const storeSnapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
   const storeDirect = dictOrEmpty(storeSnapshot.workflowContract);
   if (Object.keys(storeDirect).length) return storeDirect;
@@ -4622,7 +4638,7 @@ function currentWorkflowContract(): Record<string, unknown> {
       return nested as Record<string, unknown>;
     }
   }
-  const rawV2 = dictOrEmpty((root as Record<string, unknown>).__unified_page_contract_v2);
+  const rawV2 = dictOrEmpty(root.__unified_page_contract_v2);
   const rawDirect = dictOrEmpty(rawV2.workflowContract);
   if (Object.keys(rawDirect).length) return rawDirect;
   const rawRuntime = dictOrEmpty(rawV2.runtimeContract);
@@ -8163,7 +8179,7 @@ async function reload() {
     await loadRecord();
     if (reloadToken !== activeReloadToken) return;
     status.value = 'ok';
-    retainedRouteIdentity.value = `${String(route.params.model || '')}|${String(route.params.id || '')}|${String(route.query.action_id || '')}`;
+    retainedRouteIdentity.value = formRouteIdentity();
     void preloadFormAuxiliaryData(reloadToken);
   } catch (err) {
     if (reloadToken !== activeReloadToken) return;
@@ -9191,11 +9207,13 @@ function exportContractJson() {
 }
 
 watch(
-  () => `${String(route.params.model || '')}|${String(route.params.id || '')}|${String(route.query.action_id || '')}`,
+  () => formRouteIdentity(),
   (identity) => {
-    if (instanceRouteIdentity.value && identity !== instanceRouteIdentity.value) return;
-    if (!instanceRouteIdentity.value && identity) instanceRouteIdentity.value = identity;
     if (!isComponentActive.value) return;
+    if (!instanceRouteIdentity.value && identity) instanceRouteIdentity.value = identity;
+    if (instanceRouteIdentity.value && identity !== instanceRouteIdentity.value) {
+      instanceRouteIdentity.value = identity;
+    }
     if (identity && identity === retainedRouteIdentity.value && status.value === 'ok') return;
     void reload();
   },
@@ -9314,6 +9332,10 @@ onMounted(() => {
 
 onActivated(() => {
   isComponentActive.value = true;
+  const identity = formRouteIdentity();
+  if (identity && identity !== retainedRouteIdentity.value) {
+    void reload();
+  }
 });
 
 onDeactivated(() => {

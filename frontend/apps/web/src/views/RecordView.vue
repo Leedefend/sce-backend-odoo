@@ -207,6 +207,7 @@ import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics
 import { pickContractNavQuery } from '../app/navigationContext';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { buildEntryTargetRouteTarget } from '../app/routeQuery';
+import { findActionMetaByMenu } from '../app/menu';
 
 const route = useRoute();
 const router = useRouter();
@@ -310,6 +311,15 @@ const readonlyHint = computed(() => {
 const actionContext = computed(() => {
   const fromQuery = Number(route.query.action_id || 0);
   if (Number.isFinite(fromQuery) && fromQuery > 0) return { id: fromQuery, source: 'query' as const };
+  const menuId = toPositiveInt(route.query.menu_id);
+  const menuAction = menuId ? findActionMetaByMenu(session.menuTree, menuId) : null;
+  const fromMenu = Number(menuAction?.action_id || 0);
+  if (Number.isFinite(fromMenu) && fromMenu > 0) {
+    const menuModel = String(menuAction?.model || '').trim();
+    if (!menuModel || menuModel === model.value) {
+      return { id: fromMenu, source: 'menu' as const };
+    }
+  }
   const fromCurrent = Number(session.currentAction?.action_id || 0);
   if (Number.isFinite(fromCurrent) && fromCurrent > 0) {
     const currentModel = String(session.currentAction?.model || '').trim();

@@ -385,6 +385,20 @@ class PageAssembler:
             _logger.warning("app.permission.config missing; fallback permissions for model=%s", model)
             data["permissions"] = {}
             versions["perm"] = 0
+        permissions_root = data["permissions"] if isinstance(data.get("permissions"), dict) else {}
+        effective_permissions = permissions_root.get("effective") if isinstance(permissions_root.get("effective"), dict) else {}
+        effective_rights = effective_permissions.get("rights") if isinstance(effective_permissions.get("rights"), dict) else {}
+        effective_rights.update(
+            {
+                "read": env[model].check_access_rights("read", raise_exception=False),
+                "write": env[model].check_access_rights("write", raise_exception=False),
+                "create": env[model].check_access_rights("create", raise_exception=False),
+                "unlink": env[model].check_access_rights("unlink", raise_exception=False),
+            }
+        )
+        effective_permissions["rights"] = effective_rights
+        permissions_root["effective"] = effective_permissions
+        data["permissions"] = permissions_root
         if isinstance(effective_context, dict) and effective_context.get("create") is False:
             permissions_root = data["permissions"] if isinstance(data.get("permissions"), dict) else {}
             effective_permissions = permissions_root.get("effective") if isinstance(permissions_root.get("effective"), dict) else {}
@@ -511,6 +525,7 @@ class PageAssembler:
             render_profile=requested_render_profile,
             record_id=requested_record_id,
         )
+        self._sync_visible_form_required_markers(data)
 
         # 8.x) 访问策略（后端唯一决策点）：allow/degrade/block
         self._apply_access_policy(data, model_name=model)
@@ -735,6 +750,66 @@ class PageAssembler:
                 labels[name] = label
         return labels
 
+    @staticmethod
+    def _normalize_render_profile(profile: str) -> str:
+        normalized = str(profile or "").strip().lower()
+        if normalized in {"read", "view"}:
+            return "readonly"
+        return normalized if normalized in {"create", "edit", "readonly"} else ""
+
+    @classmethod
+    def _form_policy_profiles_match(cls, profiles, render_profile: str) -> bool:
+        if not isinstance(profiles, list) or not profiles:
+            return False
+        normalized_profiles = {
+            cls._normalize_render_profile(str(item or "").strip())
+            for item in profiles
+            if str(item or "").strip()
+        }
+        normalized_profiles.discard("")
+        profile = cls._normalize_render_profile(render_profile)
+        if profile:
+            return profile in normalized_profiles
+        return bool(normalized_profiles & {"create", "edit"})
+
+    @classmethod
+    def _form_policy_required_names_for_profile(cls, form_policy: dict, fields_map: dict, render_profile: str) -> list[str]:
+        required = []
+        for name in form_policy.get("required_fields") if isinstance(form_policy.get("required_fields"), list) else []:
+            field_name = str(name or "").strip()
+            if field_name and field_name in fields_map and field_name not in required:
+                required.append(field_name)
+        for row in form_policy.get("fields") if isinstance(form_policy.get("fields"), list) else []:
+            if not isinstance(row, dict):
+                continue
+            field_name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+            if (
+                field_name
+                and field_name in fields_map
+                and field_name not in required
+                and cls._form_policy_profiles_match(row.get("required_profiles"), render_profile)
+            ):
+                required.append(field_name)
+        return required
+
+    @classmethod
+    def _apply_form_policy_required_marker(
+        cls,
+        descriptor: dict,
+        field_policy: dict,
+        render_profile: str,
+        *,
+        required_field_names: set[str] | None = None,
+        field_name: str = "",
+    ) -> None:
+        if not isinstance(descriptor, dict):
+            return
+        required_by_list = field_name and required_field_names is not None and field_name in required_field_names
+        required_by_profile = cls._form_policy_profiles_match(field_policy.get("required_profiles"), render_profile)
+        if required_by_list or required_by_profile:
+            descriptor["required"] = True
+            descriptor["source_required"] = True
+
     def _form_policy_one2many_subview(self, name: str, descriptor: dict, field_policy: dict | None = None) -> dict:
         field_policy = field_policy if isinstance(field_policy, dict) else {}
         columns_raw = (
@@ -794,8 +869,18 @@ class PageAssembler:
         fields_map: dict,
         field_labels: dict | None = None,
         field_policies: dict | None = None,
+        render_profile: str = "",
+        required_field_names: set[str] | None = None,
     ) -> dict:
-        descriptor = fields_map.get(name) if isinstance(fields_map.get(name), dict) else {}
+        descriptor = dict(fields_map.get(name) if isinstance(fields_map.get(name), dict) else {})
+        field_policy = (field_policies or {}).get(name) if isinstance((field_policies or {}).get(name), dict) else {}
+        self._apply_form_policy_required_marker(
+            descriptor,
+            field_policy,
+            render_profile,
+            required_field_names=required_field_names,
+            field_name=name,
+        )
         labels = field_labels if isinstance(field_labels, dict) else {}
         label = str(labels.get(name) or (descriptor or {}).get("string") or (descriptor or {}).get("label") or name).strip()
         node = {"type": "field", "name": name}
@@ -807,13 +892,33 @@ class PageAssembler:
         for key in ("type", "relation", "relation_field", "selection", "required", "readonly"):
             if key in descriptor:
                 field_info[key] = descriptor[key]
-        field_policy = (field_policies or {}).get(name) if isinstance((field_policies or {}).get(name), dict) else {}
         subview = self._form_policy_one2many_subview(name, descriptor, field_policy)
         if subview:
             field_info["subview"] = subview
         if len(field_info) > 1 or subview:
             node["fieldInfo"] = field_info
         return node
+
+    @staticmethod
+    def _has_explicit_user_form_layout(data: dict) -> bool:
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        layout = form.get("layout")
+        user_layout_names = {
+            "sc_custom_partner_flat_fields",
+            "sc_custom_user_flat_fields",
+        }
+
+        def visit(node):
+            if isinstance(node, dict):
+                if str(node.get("name") or "").strip() in user_layout_names:
+                    return True
+                return any(visit(value) for value in node.values())
+            if isinstance(node, list):
+                return any(visit(item) for item in node)
+            return False
+
+        return visit(layout)
 
     def _inject_business_category_form_policy(self, data: dict, *, model_name: str, render_profile: str = "") -> None:
         if not isinstance(data, dict) or not model_name:
@@ -849,9 +954,58 @@ class PageAssembler:
         one2many_subviews = {}
         policy_field_policies = self._form_policy_field_policies(form_policy, fields_map)
         policy_field_labels = self._form_policy_field_labels(form_policy, fields_map)
-        profile = str(render_profile or "").strip().lower()
-        if profile in {"read", "view"}:
-            profile = "readonly"
+        profile = self._normalize_render_profile(render_profile)
+        profile_required_names = self._form_policy_required_names_for_profile(form_policy, fields_map, profile)
+        profile_required_set = set(profile_required_names)
+        for name in profile_required_names:
+            descriptor = dict(fields_map.get(name) if isinstance(fields_map.get(name), dict) else {})
+            self._apply_form_policy_required_marker(
+                descriptor,
+                policy_field_policies.get(name) if isinstance(policy_field_policies.get(name), dict) else {},
+                profile,
+                required_field_names=profile_required_set,
+                field_name=name,
+            )
+            if descriptor:
+                fields_map[name] = descriptor
+        field_policies = data.get("field_policies") if isinstance(data.get("field_policies"), dict) else {}
+        field_policies = dict(field_policies or {})
+        for name, field_policy in policy_field_policies.items():
+            policy = field_policies.get(name) if isinstance(field_policies.get(name), dict) else {}
+            policy = dict(policy or {})
+            for key in ("visible_profiles", "readonly_profiles", "required_profiles"):
+                if isinstance(field_policy.get(key), list):
+                    policy[key] = list(field_policy.get(key) or [])
+            if name in profile_required_set:
+                policy["source_required"] = True
+            if policy:
+                field_policies[name] = policy
+        for name in profile_required_names:
+            policy = field_policies.get(name) if isinstance(field_policies.get(name), dict) else {}
+            policy = dict(policy or {})
+            policy["source_required"] = True
+            field_policies[name] = policy
+        if field_policies:
+            data["field_policies"] = field_policies
+
+        validation_rules = data.get("validation_rules") if isinstance(data.get("validation_rules"), list) else []
+        existing_required_rules = {
+            str(row.get("field") or "").strip()
+            for row in validation_rules
+            if isinstance(row, dict) and str(row.get("code") or "").strip().upper() == "REQUIRED"
+        }
+        for name in profile_required_names:
+            if name in existing_required_rules:
+                continue
+            validation_rules.append({
+                "code": "REQUIRED",
+                "field": name,
+                "source": "sc.business.category.form_policy_json",
+                "when_profiles": ["create", "edit"],
+            })
+            existing_required_rules.add(name)
+        if validation_rules:
+            data["validation_rules"] = validation_rules
         for index, section in enumerate(sections):
             if not isinstance(section, dict):
                 continue
@@ -871,7 +1025,14 @@ class PageAssembler:
             seen_fields.update(names)
             group_name = str(section.get("name") or f"business_category_section_{index + 1}").strip()
             field_nodes = [
-                self._make_form_policy_field_node(name, fields_map, policy_field_labels, policy_field_policies)
+                self._make_form_policy_field_node(
+                    name,
+                    fields_map,
+                    policy_field_labels,
+                    policy_field_policies,
+                    render_profile=profile,
+                    required_field_names=profile_required_set,
+                )
                 for name in names
             ]
             for field_node in field_nodes:
@@ -880,6 +1041,13 @@ class PageAssembler:
                 if not field_name or not field_info:
                     continue
                 descriptor = dict(fields_map.get(field_name) if isinstance(fields_map.get(field_name), dict) else {})
+                self._apply_form_policy_required_marker(
+                    descriptor,
+                    policy_field_policies.get(field_name) if isinstance(policy_field_policies.get(field_name), dict) else {},
+                    profile,
+                    required_field_names=profile_required_set,
+                    field_name=field_name,
+                )
                 for key in ("type", "relation", "relation_field", "selection", "required", "readonly"):
                     if key in field_info:
                         descriptor[key] = field_info[key]
@@ -911,17 +1079,18 @@ class PageAssembler:
         if layout_children:
             views = data.get("views") if isinstance(data.get("views"), dict) else {}
             form = views.get("form") if isinstance(views.get("form"), dict) else {}
-            form["layout"] = [{
-                "type": "sheet",
-                "name": "business_category_form_sheet",
-                "children": layout_children,
-            }]
+            if not self._has_explicit_user_form_layout(data):
+                form["layout"] = [{
+                    "type": "sheet",
+                    "name": "business_category_form_sheet",
+                    "children": layout_children,
+                }]
             if one2many_subviews:
                 subviews = form.get("subviews") if isinstance(form.get("subviews"), dict) else {}
                 form["subviews"] = {**subviews, **one2many_subviews}
             views["form"] = form
             data["views"] = views
-            data["fields"] = fields_map
+        data["fields"] = fields_map
         if field_groups:
             data["field_groups"] = field_groups
         policy_fields = form_policy.get("fields") if isinstance(form_policy.get("fields"), list) else []
@@ -932,7 +1101,7 @@ class PageAssembler:
             "category_name": str(category.name or "").strip(),
             "target_model": model_name,
             "render_profile": str(render_profile or "").strip(),
-            "required_fields": normalized_required,
+            "required_fields": profile_required_names,
             "fields": policy_fields,
             "field_labels": policy_field_labels,
             "layout_fields": list(seen_fields),
@@ -1516,6 +1685,159 @@ class PageAssembler:
 
         visit(raw)
         return names
+
+    def _collect_layout_required_field_names(self, raw):
+        names = set()
+
+        def visit(node):
+            if isinstance(node, list):
+                for item in node:
+                    visit(item)
+                return
+            if not isinstance(node, dict):
+                return
+            node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+            field_name = str(node.get("name") or "").strip()
+            field_info = node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}
+            field_info = field_info or (node.get("field_info") if isinstance(node.get("field_info"), dict) else {})
+            if field_name and (node_type == "field" or field_info):
+                if node.get("required") is True or field_info.get("required") is True:
+                    names.add(field_name)
+            for child_key in ("children", "pages", "tabs", "nodes", "items", "layout"):
+                visit(node.get(child_key))
+
+        visit(raw)
+        return names
+
+    def _mark_layout_required_field_nodes(self, raw, required_names):
+        names = {
+            str(name or "").strip()
+            for name in (required_names or [])
+            if str(name or "").strip()
+        }
+        if not names:
+            return
+
+        def visit(node):
+            if isinstance(node, list):
+                for item in node:
+                    visit(item)
+                return
+            if not isinstance(node, dict):
+                return
+            node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+            field_name = str(node.get("name") or "").strip()
+            if field_name in names and (node_type == "field" or node.get("fieldInfo") or node.get("field_info")):
+                node["required"] = True
+                field_info = node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}
+                field_info = dict(field_info or {})
+                field_info["required"] = True
+                node["fieldInfo"] = field_info
+            for child_key in ("children", "pages", "tabs", "nodes", "items", "layout"):
+                visit(node.get(child_key))
+
+        visit(raw)
+
+    @staticmethod
+    def _contract_validation_required_field_names(data):
+        names = set()
+        validation_rules = data.get("validation_rules") if isinstance(data.get("validation_rules"), list) else []
+        for row in validation_rules:
+            if not isinstance(row, dict):
+                continue
+            if str(row.get("code") or "").strip().upper() != "REQUIRED":
+                continue
+            field_name = str(row.get("field") or "").strip()
+            if field_name:
+                names.add(field_name)
+        return names
+
+    @staticmethod
+    def _contract_policy_required_field_names(data):
+        names = set()
+        field_policies = data.get("field_policies") if isinstance(data.get("field_policies"), dict) else {}
+        for name, policy in field_policies.items():
+            if not isinstance(policy, dict):
+                continue
+            field_name = str(name or "").strip()
+            if not field_name:
+                continue
+            if (
+                policy.get("source_required") is True
+                or policy.get("required") is True
+                or bool(policy.get("required_profiles") if isinstance(policy.get("required_profiles"), list) else [])
+            ):
+                names.add(field_name)
+        return names
+
+    def _sync_visible_form_required_markers(self, data):
+        if not isinstance(data, dict):
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        if not form:
+            return
+        layout = form.get("layout")
+        visible_fields = self._collect_layout_field_names(layout)
+        if not visible_fields:
+            return
+        fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        if not fields_map:
+            return
+        explicit_required = self._collect_layout_required_field_names(layout)
+        validation_required = self._contract_validation_required_field_names(data)
+        policy_required = self._contract_policy_required_field_names(data)
+        required_names = []
+        for name in sorted(visible_fields):
+            descriptor = fields_map.get(name) if isinstance(fields_map.get(name), dict) else {}
+            if not descriptor:
+                continue
+            if descriptor.get("readonly") is True:
+                continue
+            if (
+                descriptor.get("required") is True
+                or name in explicit_required
+                or name in validation_required
+                or name in policy_required
+            ):
+                required_names.append(name)
+        if not required_names:
+            return
+
+        for name in required_names:
+            descriptor = dict(fields_map.get(name) if isinstance(fields_map.get(name), dict) else {})
+            descriptor["required"] = True
+            descriptor["source_required"] = True
+            fields_map[name] = descriptor
+        data["fields"] = fields_map
+
+        field_policies = data.get("field_policies") if isinstance(data.get("field_policies"), dict) else {}
+        field_policies = dict(field_policies or {})
+        for name in required_names:
+            policy = field_policies.get(name) if isinstance(field_policies.get(name), dict) else {}
+            policy = dict(policy or {})
+            policy["source_required"] = True
+            field_policies[name] = policy
+        data["field_policies"] = field_policies
+
+        validation_rules = data.get("validation_rules") if isinstance(data.get("validation_rules"), list) else []
+        existing = {
+            str(row.get("field") or "").strip()
+            for row in validation_rules
+            if isinstance(row, dict) and str(row.get("code") or "").strip().upper() == "REQUIRED"
+        }
+        for name in required_names:
+            if name in existing:
+                continue
+            validation_rules.append({
+                "code": "REQUIRED",
+                "field": name,
+                "source": "visible_form_required_marker",
+                "when_profiles": ["create", "edit"],
+            })
+            existing.add(name)
+        data["validation_rules"] = validation_rules
+        self._mark_layout_required_field_nodes(layout, required_names)
 
     def _safe_model_can_read(self, model_name):
         name = str(model_name or "").strip()

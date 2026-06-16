@@ -380,6 +380,10 @@ class UiContractV2Handler(BaseIntentHandler):
         self._normalize_construction_diary_form(contract_v2, source_contract=source_contract)
         if isinstance(source_contract.get("delete_policy"), dict):
             contract_v2["delete_policy"] = dict(source_contract.get("delete_policy") or {})
+        if isinstance(source_contract.get("surface_policies"), dict):
+            contract_v2["surface_policies"] = deepcopy(source_contract.get("surface_policies") or {})
+        if isinstance(source_contract.get("list_profile"), dict):
+            contract_v2["list_profile"] = deepcopy(source_contract.get("list_profile") or {})
         contract_v2 = trim_unified_page_contract_v2(
             contract_v2,
             client_type=client_type,

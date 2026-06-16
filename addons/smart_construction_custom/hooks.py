@@ -25,7 +25,8 @@ def apply_platform_initialization(env):
 
 
 def apply_user_preferences(env):
-    env["sc.user.preference.initialization"].apply_partner_form_preferences()
+    env["sc.user.preference.initialization"].apply_user_menu_preferences()
+    env["sc.user.preference.initialization"].apply_user_form_preferences()
 
 
 def post_init_hook(env):

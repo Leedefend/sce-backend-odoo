@@ -40,6 +40,7 @@ def _action_model(xmlid: str) -> str:
 def _probe_backend_unlink(errors: list[str]) -> None:
     source = _read("addons/smart_core/handlers/api_data_unlink.py")
     policy_source = _read("addons/smart_core/utils/delete_policy.py")
+    assembler_source = _read("addons/smart_core/app_config_engine/services/assemblers/page_assembler.py")
     _assert("resolve_unlink_policy" in source, "api.data.unlink must be gated by delete_policy", errors)
     _assert("dry_run = parse_bool" in source, "api.data.unlink must keep dry_run support", errors)
     _assert("missing_ids = [rec_id for rec_id in ids if rec_id not in found_ids]" in source, "api.data.unlink must reject partial missing id sets", errors)
@@ -49,6 +50,12 @@ def _probe_backend_unlink(errors: list[str]) -> None:
     _assert("if not dry_run:" in source and "recs.unlink()" in source, "dry_run must not call unlink", errors)
     _assert("\"deleted_count\": 0 if dry_run else len(set(ids))" in source, "unlink result must expose deleted_count", errors)
     _assert('"state_field"' in policy_source and '"allowed_states"' in policy_source, "delete_policy normalization must preserve state-limited policy metadata", errors)
+    _assert(
+        '"unlink": env[model].check_access_rights("unlink", raise_exception=False)' in assembler_source
+        and 'effective_rights.update(' in assembler_source,
+        "page contract effective rights must sync unlink from Odoo runtime ACL",
+        errors,
+    )
 
 
 def _probe_business_delete_policy_scope(errors: list[str]) -> None:
@@ -85,11 +92,16 @@ def _probe_business_delete_policy_scope(errors: list[str]) -> None:
         "payment.request",
         "sc.general.contract",
         "sc.expense.claim",
+        "sc.financing.loan",
+        "sc.invoice.registration",
         "sc.payment.execution",
         "sc.receipt.income",
         "sc.fund.account.operation",
+        "sc.self.funding.registration",
+        "sc.tax.deduction.registration",
         "sc.settlement.order",
         "sc.material.purchase.request",
+        "project.material.plan",
         "sc.material.acceptance",
         "sc.material.inbound",
         "sc.material.outbound",
@@ -99,6 +111,10 @@ def _probe_business_delete_policy_scope(errors: list[str]) -> None:
         "sc.equipment.request",
         "sc.safety.plan",
         "sc.quality.issue",
+        "sc.quality.rectification",
+        "sc.quality.recheck",
+        "sc.safety.rectification",
+        "sc.safety.recheck",
         "project.progress.entry",
         "tender.bid",
         "tender.doc.purchase",
@@ -117,7 +133,9 @@ def _probe_business_delete_policy_scope(errors: list[str]) -> None:
     _assert(
         "API_DATA_DRAFT_UNLINK_POLICIES" in source
         and "DRAFT_DELETE_ALLOWED_STATES" in source
-        and '"state_field": "state"' in source
+        and '"state_field": state_field' in source
+        and 'state_field: str = "state"' in source
+        and 'state_field="issue_state"' in source
         and '"allowed_states": list(allowed_states)' in source
         and '"tender.bid": _state_unlink_policy("tender.bid", "投标主单", ("prepare", "estimating"))' in source,
         "business document delete policies must be centrally state-limited, with tender pre-submit states covered",
@@ -125,15 +143,15 @@ def _probe_business_delete_policy_scope(errors: list[str]) -> None:
     )
     _assert("project.project" not in policy_models, "project.project must not be in static all-user physical delete policy", errors)
     _assert(
-        'env.user.has_group("smart_construction_core.group_sc_cap_business_config_admin")' in source,
-        "project.project physical delete policy must be gated by business config admin group",
+        '"project.project"' in source
+        and '"PROJECT_MASTER_DELETE_ALLOWED"' in source
+        and '"dependency_guard": "project.project._raise_project_unlink_blockers"' in source,
+        "project.project delete policy must be dynamically exposed and keep dependency guard metadata",
         errors,
     )
     _assert(
-        '"project.project"' in source
-        and '"requires_group": "smart_construction_core.group_sc_cap_business_config_admin"' in source
-        and '"dependency_guard": "project.project._raise_project_unlink_blockers"' in source,
-        "project.project delete policy must document group and dependency guard",
+        '"requires_group": "smart_construction_core.group_sc_cap_business_config_admin"' not in source,
+        "project.project delete policy must not add a group gate beyond ACL and record rules",
         errors,
     )
     project_source = _read("addons/smart_construction_core/models/core/project_core.py")
@@ -147,12 +165,30 @@ def _probe_frontend_delete_flow(errors: list[str]) -> None:
     flow = _read("frontend/apps/web/src/app/runtime/actionViewBatchActionFlowRuntime.ts")
     action_view = _read("frontend/apps/web/src/views/ActionView.vue")
     list_page = _read("frontend/apps/web/src/pages/ListPage.vue")
+    shape_runtime = _read("frontend/apps/web/src/app/action_runtime/useActionViewContractShapeRuntime.ts")
+    v2_adapter = _read("frontend/apps/web/src/app/runtime/unifiedPageContractV2CompatProjection.ts")
+    v2_handler = _read("addons/smart_core/handlers/ui_contract_v2.py")
     _assert("dryRun?: boolean;" in api and "dry_run: Boolean(params.dryRun)" in api, "unlinkRecord must expose dryRun to api.data.unlink", errors)
     _assert("dryRunIdempotencyKey" in flow and "'delete.dry_run'" in flow, "batch delete must use a distinct dry-run idempotency key", errors)
     _assert("dryRun: true" in action_view, "ActionView batch delete must preflight with dryRun", errors)
     _assert("const result = await unlinkActionViewRecord" in action_view, "ActionView batch delete must still execute real unlink after preflight", errors)
     _assert("const hasSelectionActions = computed(() => selectionActions.value.length > 0);" in list_page, "ListPage must derive selection visibility from executable actions", errors)
     _assert("const showSelectionColumn = computed(() => hasSelectionActions.value" in list_page, "ListPage must hide selection column without delete/archive actions", errors)
+    _assert(
+        "Array.isArray(profilePolicy.available_actions) && profilePolicy.available_actions.length > 0" in action_view
+        and "actionContract.value?.surface_policies?.batch_policy || profilePolicy || {}" in action_view,
+        "ActionView batch policy must fall back to surface policy when list_profile has no executable actions",
+        errors,
+    )
+    _assert(
+        "const hasRawBatchPolicy = Object.keys(rawBatchPolicy).length > 0;" in shape_runtime
+        and "...(hasRawBatchPolicy ? { batch_policy: batchPolicy } : {})" in shape_runtime,
+        "list_profile extraction must not synthesize an empty batch_policy that shadows surface policy",
+        errors,
+    )
+    _assert("contract_v2[\"surface_policies\"]" in v2_handler, "ui.contract.v2 must carry governed surface batch policy", errors)
+    _assert("const sourceSurfacePolicies = asDict(v2Contract.surface_policies);" in v2_adapter, "V2 adapter must consume backend surface policies", errors)
+    _assert("sourceBatchPolicy.available_actions" in v2_adapter, "V2 adapter must prefer backend batch available_actions", errors)
 
 
 def _probe_domain_action_binding(errors: list[str]) -> None:

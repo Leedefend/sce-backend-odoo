@@ -505,6 +505,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
           .filter(Boolean)
       : [];
     const rawBatchPolicy = (rawProfile.batch_policy || listSemantics.batch_policy || {}) as Dict;
+    const hasRawBatchPolicy = Object.keys(rawBatchPolicy).length > 0;
     const batchPolicy = {
       enabled: rawBatchPolicy.enabled === true,
       active_field: String(rawBatchPolicy.active_field || '').trim() || undefined,
@@ -566,7 +567,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       show_row_number: showRowNumber,
       status_field: statusField,
       metric_fields: metricFields,
-      batch_policy: batchPolicy,
+      ...(hasRawBatchPolicy ? { batch_policy: batchPolicy } : {}),
       grouping,
     };
   }

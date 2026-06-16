@@ -1177,7 +1177,13 @@ const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 const listProfile = computed<SceneListProfile | null>(() => {
   return extractListProfile(actionContract.value);
 });
-const batchPolicy = computed(() => listProfile.value?.batch_policy || actionContract.value?.surface_policies?.batch_policy || {});
+const batchPolicy = computed(() => {
+  const profilePolicy = listProfile.value?.batch_policy;
+  if (profilePolicy && Array.isArray(profilePolicy.available_actions) && profilePolicy.available_actions.length > 0) {
+    return profilePolicy;
+  }
+  return actionContract.value?.surface_policies?.batch_policy || profilePolicy || {};
+});
 const activeField = computed(() => String(batchPolicy.value.active_field || '').trim());
 const allowedBatchActions = computed(() =>
   Array.isArray(batchPolicy.value.available_actions)

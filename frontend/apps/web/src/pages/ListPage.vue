@@ -265,12 +265,26 @@
                   :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col, 'is-sort-disabled': !isColumnSortable(col) }]"
                   :data-column="col"
                   :style="columnWidthStyle(col)"
-                  draggable="true"
-                  @dragstart="onColumnDragStart(col, $event)"
                   @dragover="onColumnDragOver(col, $event)"
                   @drop="onColumnDrop(col, $event)"
                   @dragend="onColumnDragEnd"
+                  @click="toggleColumnSort(col)"
+                  @keydown.enter.prevent="toggleColumnSort(col)"
+                  @keydown.space.prevent="toggleColumnSort(col)"
+                  :tabindex="isColumnSortable(col) ? 0 : -1"
+                  :title="columnSortTitle(col)"
+                  :aria-sort="columnAriaSort(col)"
                 >
+                  <button
+                    type="button"
+                    class="column-drag-handle"
+                    :title="uiLabel('column_drag_reorder', '拖动调整列顺序')"
+                    draggable="true"
+                    @click.stop
+                    @keydown.stop
+                    @dragstart.stop="onColumnDragStart(col, $event)"
+                    @dragend.stop="onColumnDragEnd"
+                  ></button>
                   <button
                     type="button"
                     class="column-sort-btn"
@@ -422,12 +436,26 @@
               :class="[columnDensityClass(col), { 'is-sorted': isSortedColumn(col), 'is-dragging': draggingColumn === col, 'is-sort-disabled': !isColumnSortable(col) }]"
               :data-column="col"
               :style="columnWidthStyle(col)"
-              draggable="true"
-              @dragstart="onColumnDragStart(col, $event)"
               @dragover="onColumnDragOver(col, $event)"
               @drop="onColumnDrop(col, $event)"
               @dragend="onColumnDragEnd"
+              @click="toggleColumnSort(col)"
+              @keydown.enter.prevent="toggleColumnSort(col)"
+              @keydown.space.prevent="toggleColumnSort(col)"
+              :tabindex="isColumnSortable(col) ? 0 : -1"
+              :title="columnSortTitle(col)"
+              :aria-sort="columnAriaSort(col)"
             >
+              <button
+                type="button"
+                class="column-drag-handle"
+                :title="uiLabel('column_drag_reorder', '拖动调整列顺序')"
+                draggable="true"
+                @click.stop
+                @keydown.stop
+                @dragstart.stop="onColumnDragStart(col, $event)"
+                @dragend.stop="onColumnDragEnd"
+              ></button>
               <button
                 type="button"
                 class="column-sort-btn"
@@ -1376,8 +1404,9 @@ const selectedCount = computed(() => (props.selectedIds || []).length);
 const selectionActions = computed(() =>
   Array.isArray(props.selectionActions) ? props.selectionActions : [],
 );
+const hasSelectionActions = computed(() => selectionActions.value.length > 0);
 const selectableRows = computed(() => pageVisibleRows.value.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
-const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll);
+const showSelectionColumn = computed(() => hasSelectionActions.value && !!props.onToggleSelection && !!props.onToggleSelectionAll);
 const showBatchBar = computed(() => showSelectionColumn.value && (selectedCount.value > 0 || Boolean(props.batchMessage)));
 const allSelected = computed(() => {
   const rows = selectableRows.value;
@@ -1691,6 +1720,12 @@ function isSortedColumn(col: string) {
 function columnSortIndicator(col: string) {
   if (!isSortedColumn(col)) return '';
   return sortDirection(props.sortValue || '') === 'desc' ? '▼' : '▲';
+}
+
+function columnAriaSort(col: string) {
+  if (!isColumnSortable(col)) return undefined;
+  if (!isSortedColumn(col)) return 'none';
+  return sortDirection(props.sortValue || '') === 'desc' ? 'descending' : 'ascending';
 }
 
 function columnSortTitle(col: string) {
@@ -2756,6 +2791,7 @@ tbody td {
 
 .column-long-text > *,
 .column-long-text .column-sort-btn,
+.column-long-text .column-drag-handle,
 .column-long-text .primary,
 .column-long-text .secondary {
   min-width: 0;
@@ -2826,12 +2862,34 @@ tfoot tr:nth-child(2) td {
 
 .cell-sortable {
   position: relative;
-  cursor: grab;
+  cursor: pointer;
   user-select: none;
+  padding: 0;
+  transition: background 120ms ease, box-shadow 120ms ease;
 }
 
 .cell-sortable.is-dragging {
   opacity: 0.55;
+}
+
+.cell-sortable:hover,
+.cell-sortable:focus-visible {
+  background: var(--sc-app-hover-bg);
+}
+
+.cell-sortable:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--sc-app-info-text);
+}
+
+.cell-sortable.is-sort-disabled {
+  cursor: default;
+}
+
+.cell-sortable.is-sort-disabled:hover,
+.cell-sortable.is-sort-disabled:focus-visible {
+  background: var(--sc-app-panel);
+  box-shadow: none;
 }
 
 .cell-sortable.is-sort-disabled .column-sort-btn {
@@ -2839,15 +2897,62 @@ tfoot tr:nth-child(2) td {
   cursor: default;
 }
 
+.column-drag-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  width: 22px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: grab;
+}
+
+.column-drag-handle:active {
+  cursor: grabbing;
+}
+
+.column-drag-handle::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 9px;
+  width: 3px;
+  height: 14px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, var(--sc-app-text-secondary) 1.2px, transparent 1.4px) 0 0 / 3px 5px repeat-y;
+  opacity: 0.45;
+  transform: translateY(-50%);
+}
+
+.column-drag-handle:hover::before,
+.column-drag-handle:focus-visible::before,
+.cell-sortable.is-dragging .column-drag-handle::before {
+  background:
+    radial-gradient(circle, var(--sc-app-info-text) 1.2px, transparent 1.4px) 0 0 / 3px 5px repeat-y;
+  opacity: 1;
+}
+
+.column-drag-handle:focus-visible {
+  outline: 2px solid var(--sc-app-info-text);
+  outline-offset: -3px;
+}
+
 .column-sort-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 6px;
-  max-width: 100%;
+  width: 100%;
+  min-height: 36px;
+  max-width: calc(100% - 12px);
   border: 0;
   background: transparent;
   color: var(--sc-app-text-primary);
-  padding: 0;
+  padding: 8px 8px 8px 28px;
   font: inherit;
   font-weight: 700;
   text-align: left;
@@ -2884,10 +2989,14 @@ tfoot tr:nth-child(2) td {
   background: var(--sc-app-info-text);
 }
 
+.cell-sortable:hover .column-sort-btn,
+.cell-sortable:focus-visible .column-sort-btn,
 .column-sort-btn:hover {
   color: var(--sc-app-info-text);
 }
 
+.cell-sortable.is-sort-disabled:hover .column-sort-btn,
+.cell-sortable.is-sort-disabled:focus-visible .column-sort-btn,
 .cell-sortable.is-sort-disabled .column-sort-btn:hover {
   color: var(--sc-app-text-secondary);
 }

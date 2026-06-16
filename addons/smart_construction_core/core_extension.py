@@ -404,12 +404,17 @@ API_DATA_MUTATION_POLICIES = {
 DRAFT_DELETE_ALLOWED_STATES = ("cancel", "cancelled", "draft")
 
 
-def _state_unlink_policy(model_name: str, business_label: str, allowed_states=DRAFT_DELETE_ALLOWED_STATES):
+def _state_unlink_policy(
+    model_name: str,
+    business_label: str,
+    allowed_states=DRAFT_DELETE_ALLOWED_STATES,
+    state_field: str = "state",
+):
     return {
         "allowed": True,
         "delete_mode": "unlink",
         "policy_kind": "state_limited_business_document",
-        "state_field": "state",
+        "state_field": state_field,
         "allowed_states": list(allowed_states),
         "reason_code": "DRAFT_BUSINESS_DOCUMENT_DELETE_ALLOWED",
         "message": f"允许删除未形成业务事实的{business_label}；仅限草稿/取消等未提交状态，并继续受模型 ACL 与记录规则约束。",
@@ -424,11 +429,16 @@ API_DATA_DRAFT_UNLINK_POLICIES = {
     "payment.request": _state_unlink_policy("payment.request", "付款申请"),
     "sc.general.contract": _state_unlink_policy("sc.general.contract", "综合合同"),
     "sc.expense.claim": _state_unlink_policy("sc.expense.claim", "费用与保证金单据"),
+    "sc.financing.loan": _state_unlink_policy("sc.financing.loan", "融资借款单据"),
+    "sc.invoice.registration": _state_unlink_policy("sc.invoice.registration", "发票登记单据"),
     "sc.payment.execution": _state_unlink_policy("sc.payment.execution", "付款执行单"),
     "sc.receipt.income": _state_unlink_policy("sc.receipt.income", "收款收入登记"),
     "sc.fund.account.operation": _state_unlink_policy("sc.fund.account.operation", "资金账户操作单"),
+    "sc.self.funding.registration": _state_unlink_policy("sc.self.funding.registration", "自筹资金登记"),
+    "sc.tax.deduction.registration": _state_unlink_policy("sc.tax.deduction.registration", "税票抵扣登记"),
     "sc.settlement.order": _state_unlink_policy("sc.settlement.order", "结算单"),
     "sc.settlement.adjustment": _state_unlink_policy("sc.settlement.adjustment", "结算调整单"),
+    "project.material.plan": _state_unlink_policy("project.material.plan", "材料计划"),
     "sc.material.purchase.request": _state_unlink_policy("sc.material.purchase.request", "材料采购申请"),
     "sc.material.acceptance": _state_unlink_policy("sc.material.acceptance", "材料验收单"),
     "sc.material.inbound": _state_unlink_policy("sc.material.inbound", "材料入库单"),
@@ -453,6 +463,30 @@ API_DATA_DRAFT_UNLINK_POLICIES = {
     "sc.safety.issue": _state_unlink_policy("sc.safety.issue", "安全问题"),
     "sc.safety.patrol.task": _state_unlink_policy("sc.safety.patrol.task", "安全巡检任务"),
     "sc.quality.issue": _state_unlink_policy("sc.quality.issue", "质量问题"),
+    "sc.quality.rectification": _state_unlink_policy(
+        "sc.quality.rectification",
+        "质量整改记录",
+        ("submitted", "rectifying", "rechecking", "cancel"),
+        state_field="issue_state",
+    ),
+    "sc.quality.recheck": _state_unlink_policy(
+        "sc.quality.recheck",
+        "质量复验记录",
+        ("rectifying", "rechecking", "cancel"),
+        state_field="issue_state",
+    ),
+    "sc.safety.rectification": _state_unlink_policy(
+        "sc.safety.rectification",
+        "安全整改记录",
+        ("submitted", "rectifying", "rechecking", "cancel"),
+        state_field="issue_state",
+    ),
+    "sc.safety.recheck": _state_unlink_policy(
+        "sc.safety.recheck",
+        "安全复验记录",
+        ("rectifying", "rechecking", "cancel"),
+        state_field="issue_state",
+    ),
     "sc.construction.diary": _state_unlink_policy("sc.construction.diary", "施工日志"),
     "project.progress.entry": _state_unlink_policy("project.progress.entry", "进度填报"),
     "project.risk.action": _state_unlink_policy("project.risk.action", "风险措施"),
@@ -1109,16 +1143,14 @@ def get_api_data_unlink_allowed_model_contributions(env):
         str(model_name): dict(policy)
         for model_name, policy in API_DATA_UNLINK_POLICIES.items()
     }
-    if env.user.has_group("smart_construction_core.group_sc_cap_business_config_admin"):
-        policies["project.project"] = {
-            "allowed": True,
-            "delete_mode": "unlink",
-            "reason_code": "PROJECT_MASTER_DELETE_ALLOWED",
-            "message": "允许业务配置管理员删除无业务依赖的项目主数据；存在业务依赖时由项目删除规则阻断。",
-            "source": "smart_construction_core",
-            "requires_group": "smart_construction_core.group_sc_cap_business_config_admin",
-            "dependency_guard": "project.project._raise_project_unlink_blockers",
-        }
+    policies["project.project"] = {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "PROJECT_MASTER_DELETE_ALLOWED",
+        "message": "允许删除无业务依赖的项目主数据；继续受模型 ACL、记录规则与项目依赖阻断约束。",
+        "source": "smart_construction_core",
+        "dependency_guard": "project.project._raise_project_unlink_blockers",
+    }
     return policies
 
 

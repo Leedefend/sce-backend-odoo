@@ -247,7 +247,7 @@ class TestUserViewPreferenceBoundaries(unittest.TestCase):
             env=env,
             payload={
                 "model": "project.project",
-                "action_id": 506,
+                "action_id": 99999,
                 "preference_key": "list_columns",
                 "preference": {
                     "visible_columns": ["name"],
@@ -266,6 +266,38 @@ class TestUserViewPreferenceBoundaries(unittest.TestCase):
             {
                 "visible_columns": ["name"],
                 "hidden_columns": ["business_nature", "manager_id"],
+                "column_order": [],
+                "column_widths": {},
+            },
+        )
+
+    def test_set_rejects_formal_list_structure_preference(self):
+        module = _load_handler()
+        Preference = _PreferenceModel()
+        env = _Env({"sc.user.view.preference": Preference, "app.contract.service": _ContractService()})
+        handler = module.UserViewPreferenceSetHandler(
+            env=env,
+            payload={
+                "model": "project.project",
+                "action_id": 506,
+                "preference_key": "list_columns",
+                "preference": {
+                    "visible_columns": ["name"],
+                    "hidden_columns": ["business_nature", "manager_id"],
+                    "column_order": ["manager_id", "name"],
+                    "column_widths": {"name": 160, "manager_id": 220},
+                },
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(
+            Preference.created_vals["value_json"],
+            {
+                "visible_columns": [],
+                "hidden_columns": [],
                 "column_order": [],
                 "column_widths": {},
             },

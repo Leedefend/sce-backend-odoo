@@ -59,6 +59,14 @@
 - 前端不能根据用户偏好发明结构。
 - `NativeFormTreeRenderer` 只渲染后端契约给出的原生结构：page 是可见 tab，group 是布局容器。
 
+### 用户偏好发布器
+
+- 用户偏好只能承载已经被用户明确提出的体验差异，例如特定用户版客户/供应商表单三栏平铺、隐藏基础资料维护阶段不办理的字段。
+- 用户偏好不能扩展为“所有表单默认三栏”“所有模型字段重排”或通用 `custom_user_default` 覆盖；未被用户明确点名的模型继续由平台/行业/产品线契约治理。
+- 用户偏好不能改变产品线字段文案、业务字段顺序、业务状态机、数据口径或权限规则；这些分别归属产品线契约、行业功能、业务模型和权限体系。
+- 特定用户版偏好必须绑定到明确业务入口，例如客户/供应商 `res.partner` action；不能以模型主视图、默认视图或全模型扫描作为输入。
+- 历史通用用户偏好合同只能被停用清理，不能再次发布为有效合同。
+
 ## 冲突处理优先级
 
 字段 overlay 合并时，后进入者覆盖前者：
@@ -76,6 +84,7 @@
 
 ```bash
 make verify.form_view.scope.boundary_guard
+make verify.user_form.preference.boundary_guard
 make verify.form_view.scope.action_projection_audit DB_NAME=sc_demo
 ```
 
@@ -88,3 +97,4 @@ make verify.form_view.scope.action_projection_audit DB_NAME=sc_demo
 - 自定义字段创建只写 `action_id/view_id/company_id`，不写用户 scope。
 - 旧 `ui.dynamic.config.user_id` 只能作为偏好 overlay 存在，不能接入结构主链路。
 - 动作入口、动作选中的 form view、`app.view.config` 投影 identity、只读投影生成结果必须保持同一个 action/view scope。
+- `smart_construction_custom` 用户表单偏好发布器只能发布客户/供应商 `res.partner` 表单偏好，以及用户确认的正式办理入口三栏平铺偏好；正式办理入口必须来自产品线发布的业务分类表单策略，缺失时才允许回退到动作绑定的合成表单结构，并且必须停用历史 `custom_user_default` 通用覆盖。
