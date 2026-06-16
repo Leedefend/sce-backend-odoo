@@ -73,14 +73,19 @@
     <section v-if="loading" class="loading-state">正在读取配置能力...</section>
     <section v-if="coverageScan" class="scan-panel">
       <div class="scan-toolbar">
+        <label class="page-search">
+          <span>页面搜索</span>
+          <input v-model="pageSearch" type="search" placeholder="输入页面名称或业务对象" />
+        </label>
         <label class="scan-toggle">
           <input v-model="showOnlyIssues" type="checkbox" />
           <span>只看需处理</span>
         </label>
-        <button type="button" class="ghost small" @click="copyCoverageSummary">
+        <button v-if="advancedPanelOpen" type="button" class="ghost small" @click="copyCoverageSummary">
           复制配置摘要
         </button>
         <button
+          v-if="advancedPanelOpen"
           type="button"
           class="ghost small"
           :disabled="scanLoading || listSearchSaving || !coverageBatchBootstrapRows.length"
@@ -90,39 +95,71 @@
         </button>
       </div>
       <div class="scan-summary">
-        <span>结论 {{ overallStatusLabel(coverageScan.summary.overall_status) }}</span>
-        <span>{{ coverageScopeLabel }}</span>
-        <span>范围 {{ coverageScan.model || '全部模型' }}</span>
         <span>业务页面 {{ coverageScan.summary.action_count }}</span>
-        <span>阻断 {{ coverageScan.summary.severity_counts.error || 0 }}</span>
-        <span>警告 {{ coverageScan.summary.severity_counts.warning || 0 }}</span>
-        <span>完整 {{ coverageScan.summary.complete_count }}</span>
-        <span>缺口 {{ coverageScan.summary.missing_count }}</span>
-        <span>缺表单 {{ coverageScan.summary.missing_form_count }}</span>
-        <span>缺列表 {{ coverageScan.summary.missing_list_count }}</span>
-        <span>缺搜索 {{ coverageScan.summary.missing_search_count }}</span>
-        <span>个人偏好 {{ coverageScan.summary.user_preference_count }}</span>
-        <span v-for="item in remediationSummaryItems" :key="item.code">
+        <span>当前显示 {{ visibleCoverageRows.length }}</span>
+        <span>{{ coverageScopeLabel }}</span>
+        <span v-if="coverageScan.summary.user_preference_count">已有个人配置 {{ coverageScan.summary.user_preference_count }}</span>
+        <span v-if="advancedPanelOpen">治理结论 {{ overallStatusLabel(coverageScan.summary.overall_status) }}</span>
+        <span v-if="advancedPanelOpen">需处理 {{ coverageIssueRows.length }}</span>
+        <span v-for="item in advancedPanelOpen ? remediationSummaryItems : []" :key="item.code">
           {{ item.label }} {{ item.count }}
         </span>
       </div>
       <div v-if="visibleCoverageRows.length" class="scan-list">
-        <div v-for="row in visibleCoverageRows" :key="row.action_id" class="scan-row">
+        <div v-for="row in visibleCoverageRows" :key="row.action_id" class="scan-row" :class="{ 'scan-row--selected': row.action_id === scopeAction }">
+          <div class="scan-row-main">
+            <strong>{{ row.name || row.model }}</strong>
+            <span>{{ row.model }}</span>
+          </div>
+          <div class="scan-row-meta">
+            <span>{{ pageViewModeText(row) }}</span>
+            <span>{{ pageDesignStatus(row) }}</span>
+            <span v-if="row.user_preference_count">已有个人配置 {{ row.user_preference_count }}</span>
+            <span v-if="advancedPanelOpen">{{ runtimeEvidenceText(row) }}</span>
+            <span v-if="advancedPanelOpen && runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
+          </div>
+          <div v-if="advancedPanelOpen" class="scan-row-admin-actions">
+            <span>{{ severityLabel(row.severity) }}</span>
+            <span v-if="row.missing_view_types.length">需补 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
+            <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
+          </div>
+          <div class="scan-row-actions">
+            <button type="button" class="ghost small primary" @click="openDesignerForRow(row)">设计表单</button>
+            <button
+              type="button"
+              class="ghost small"
+              :disabled="!row.runtime_route?.path"
+              @click="openRuntimeRoute(row)"
+            >
+              预览页面
+            </button>
+            <button type="button" class="ghost small" @click="focusScanRow(row)">选择</button>
+          </div>
+        </div>
+      </div>
+      <div v-else class="empty-state">当前没有匹配的业务页面，可调整搜索条件或取消“只看需处理”。</div>
+    </section>
+    <section v-if="advancedPanelOpen && coverageScan" class="scan-panel scan-panel--admin">
+      <div class="scan-toolbar">
+        <strong>高级治理视图</strong>
+      </div>
+      <div class="scan-list">
+        <div v-for="row in visibleCoverageRows" :key="`admin-${row.action_id}`" class="scan-row">
           <strong>{{ row.name || row.model }}</strong>
           <span>{{ severityLabel(row.severity) }}</span>
           <span>{{ row.model }}</span>
           <span>{{ row.view_mode || '-' }}</span>
           <span>菜单 {{ row.menu_count }}</span>
           <span v-if="row.user_preference_count">个人偏好 {{ row.user_preference_count }} · {{ row.user_preference_boundary }}</span>
-          <span v-if="row.missing_view_types.length">缺 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
-          <span v-else>契约完整</span>
-          <span v-if="row.runtime_missing_view_types.length">运行时缺 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
+          <span v-if="row.missing_view_types.length">需补 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
+          <span v-else>配置完整</span>
+          <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
           <span v-else>运行时完整</span>
           <span>{{ runtimeEvidenceText(row) }}</span>
           <span v-if="runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
           <button
             v-for="action in row.remediation_actions"
-            :key="`${row.action_id}-${action.code}`"
+            :key="`admin-${row.action_id}-${action.code}`"
             type="button"
             class="link-button"
             @click="runRemediationAction(row, action)"
@@ -140,7 +177,6 @@
           <button type="button" class="link-button" @click="focusScanRow(row)">选择此页面</button>
         </div>
       </div>
-      <div v-else class="empty-state">当前范围没有待处理页面，可取消“只看需处理”查看全部页面。</div>
     </section>
     <section v-if="!loading" class="section-grid">
       <article v-for="section in sections" :key="section.key" class="config-card">
@@ -333,6 +369,7 @@ const message = ref('');
 const surface = ref<BusinessConfigSurfacePayload | null>(null);
 const coverageScan = ref<BusinessConfigCoverageScanPayload | null>(null);
 const showOnlyIssues = ref(false);
+const pageSearch = ref('');
 const listSearchAudit = ref<BusinessConfigListSearchAuditPayload | null>(null);
 const listSearchPanelOpen = ref(false);
 const versionsLoading = ref(false);
@@ -378,9 +415,20 @@ const coverageScopeLabel = computed(() => {
   return '扫描范围：当前用户可见';
 });
 
-const visibleCoverageRows = computed(() => (
-  showOnlyIssues.value ? coverageIssueRows.value : coverageScan.value?.items || []
-).slice(0, 60));
+const pageSearchText = computed(() => pageSearch.value.trim().toLowerCase());
+const visibleCoverageRows = computed(() => {
+  const rows = showOnlyIssues.value ? coverageIssueRows.value : coverageScan.value?.items || [];
+  const keyword = pageSearchText.value;
+  const filtered = keyword
+    ? rows.filter((row) => [
+      row.name,
+      row.model,
+      row.view_mode,
+      pageViewModeText(row),
+    ].some((text) => String(text || '').toLowerCase().includes(keyword)))
+    : rows;
+  return filtered.slice(0, 60);
+});
 const remediationSummaryItems = computed(() => {
   const counts = coverageScan.value?.summary.remediation_action_counts || {};
   return Object.entries(counts)
@@ -425,6 +473,21 @@ function viewTypeLabel(viewType: string) {
   if (viewType === 'tree' || viewType === 'list') return '列表';
   if (viewType === 'search') return '搜索';
   return viewType || '通用';
+}
+
+function pageViewModeText(row: BusinessConfigCoverageScanItem) {
+  const modes = String(row.view_mode || '')
+    .split(',')
+    .map((item) => viewTypeLabel(item.trim()))
+    .filter(Boolean);
+  return modes.length ? `页面类型 ${modes.join('、')}` : '页面类型 通用';
+}
+
+function pageDesignStatus(row: BusinessConfigCoverageScanItem) {
+  if (!row.runtime_route?.path) return '暂不可预览';
+  if (row.runtime_missing_view_types.includes('form')) return '可生成后设计';
+  if (row.target_view_types.includes('form')) return '可设计表单';
+  return '可打开页面';
 }
 
 function runtimeReasonLabel(reason: string) {
@@ -654,6 +717,11 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
     },
   });
   await loadSurface();
+}
+
+async function openDesignerForRow(row: BusinessConfigCoverageScanItem) {
+  await focusScanRow(row);
+  openFormConfig();
 }
 
 async function openRuntimeRoute(row: BusinessConfigCoverageScanItem) {
@@ -1159,8 +1227,29 @@ h1 {
 .scan-toolbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.page-search {
+  flex: 1 1 320px;
+  min-width: 220px;
+  display: grid;
+  gap: 4px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.page-search input {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
 }
 
 .scan-toggle {
@@ -1171,8 +1260,7 @@ h1 {
   font-size: 12px;
 }
 
-.scan-summary,
-.scan-row {
+.scan-summary {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 12px;
@@ -1185,17 +1273,78 @@ h1 {
 
 .scan-list {
   display: grid;
-  gap: 4px;
+  gap: 8px;
 }
 
 .scan-row {
-  padding-top: 6px;
-  border-top: 1px solid var(--sc-app-border);
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(220px, 1fr) auto;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-bg);
   color: var(--sc-app-text-secondary);
+  font-size: 13px;
 }
 
-.scan-row strong {
+.scan-row--selected {
+  border-color: var(--sc-app-accent);
+  box-shadow: inset 3px 0 0 var(--sc-app-accent);
+}
+
+.scan-row-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.scan-row strong,
+.scan-row-main strong {
   color: var(--sc-app-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scan-row-main span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scan-row-meta,
+.scan-row-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.scan-row-meta span,
+.scan-row-admin-actions span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  background: var(--sc-app-panel-muted);
+  font-size: 12px;
+}
+
+.scan-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.scan-panel--admin .scan-row {
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .link-button {
