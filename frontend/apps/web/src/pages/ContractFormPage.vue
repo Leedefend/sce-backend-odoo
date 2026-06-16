@@ -1905,6 +1905,7 @@ const activeContractModeActions = computed(() => {
 
 const fieldOrderDraft = ref<string[]>([]);
 const fieldOrderPreviewActive = ref(false);
+const nativeFormDesignFieldKeys = ref<string[]>([]);
 const draggingFieldKey = ref('');
 const dropTargetFieldKey = ref('');
 const selectedFormSettingsFieldKey = ref('');
@@ -2079,17 +2080,28 @@ watch(isContractFieldOrderEditable, (enabled) => {
   void hydrateLowCodeDraftFromContract();
 }, { immediate: true });
 
+const currentFormDesignFieldKeys = computed(() => {
+  const keys = new Set<string>();
+  contractModeBaseFieldRows.value.forEach((row) => {
+    if (row.fieldKey) keys.add(row.fieldKey);
+  });
+  nativeFormDesignFieldKeys.value.forEach((fieldKey) => {
+    if (fieldKey) keys.add(fieldKey);
+  });
+  return Array.from(keys);
+});
+
 const hasFieldOrderChanges = computed(() => {
   if (!fieldOrderPreviewActive.value) return false;
-  const rows = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
+  const rows = currentFormDesignFieldKeys.value;
   if (!rows.length || !fieldOrderDraft.value.length) return false;
   return rows.some((key, index) => fieldOrderDraft.value[index] !== key);
 });
 
-const hasFieldVisibilityChanges = computed(() => contractModeBaseFieldRows.value.some((row) => {
-  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)) return false;
-  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, row.fieldKey)) return false;
-  return fieldVisibilityDraft[row.fieldKey] !== fieldVisibilityBase.value[row.fieldKey];
+const hasFieldVisibilityChanges = computed(() => currentFormDesignFieldKeys.value.some((fieldKey) => {
+  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)) return false;
+  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) return false;
+  return fieldVisibilityDraft[fieldKey] !== fieldVisibilityBase.value[fieldKey];
 }));
 
 const hasCurrentFormFieldDraftChanges = computed(() => (
@@ -2101,11 +2113,11 @@ watch(hasCurrentFormFieldDraftChanges, (changed) => {
 });
 
 function changedFieldVisibilityDraft() {
-  return contractModeBaseFieldRows.value.reduce<Record<string, boolean>>((acc, row) => {
-    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)) return acc;
-    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, row.fieldKey)) return acc;
-    if (fieldVisibilityDraft[row.fieldKey] !== fieldVisibilityBase.value[row.fieldKey]) {
-      acc[row.fieldKey] = fieldVisibilityDraft[row.fieldKey];
+  return currentFormDesignFieldKeys.value.reduce<Record<string, boolean>>((acc, fieldKey) => {
+    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)) return acc;
+    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) return acc;
+    if (fieldVisibilityDraft[fieldKey] !== fieldVisibilityBase.value[fieldKey]) {
+      acc[fieldKey] = fieldVisibilityDraft[fieldKey];
     }
     return acc;
   }, {});
@@ -5966,6 +5978,27 @@ const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   return filterVisibleNativeLayoutNodes(rawNativeFormLayoutNodes.value);
 });
 
+watch(nativeFormLayoutNodes, (nodes) => {
+  const keys: string[] = [];
+  const seen = new Set<string>();
+  const walk = (items: NativeFormLayoutNode[]) => {
+    items.forEach((node) => {
+      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      const name = String(node?.name || '').trim();
+      if (type === 'field' && name && !seen.has(name)) {
+        seen.add(name);
+        keys.push(name);
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
+      });
+    });
+  };
+  walk(nodes);
+  nativeFormDesignFieldKeys.value = keys;
+}, { immediate: true });
+
 function countNativeNodesByType(nodes: NativeFormLayoutNode[], targetType: string): number {
   const target = String(targetType || '').trim().toLowerCase();
   let count = 0;
@@ -8826,15 +8859,16 @@ function onFieldOrderDragEnd() {
 }
 
 function resetContractFieldOrder() {
-  fieldOrderDraft.value = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
+  fieldOrderDraft.value = currentFormDesignFieldKeys.value;
   fieldOrderPreviewActive.value = false;
-  contractModeBaseFieldRows.value.forEach((row) => {
-    if (Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, row.fieldKey)) {
-      fieldVisibilityDraft[row.fieldKey] = fieldVisibilityBase.value[row.fieldKey];
+  currentFormDesignFieldKeys.value.forEach((fieldKey) => {
+    if (Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) {
+      fieldVisibilityDraft[fieldKey] = fieldVisibilityBase.value[fieldKey];
       return;
     }
-    const selected = row.actions.find((action) => Boolean(action.checked));
-    if (selected) fieldVisibilityDraft[row.fieldKey] = selected.value === 'show';
+    const row = contractModeBaseFieldRows.value.find((item) => item.fieldKey === fieldKey);
+    const selected = row?.actions.find((action) => Boolean(action.checked));
+    fieldVisibilityDraft[fieldKey] = selected ? selected.value === 'show' : true;
   });
   fieldVisibilityDirty.value = false;
   formConfigAuditResult.value = null;

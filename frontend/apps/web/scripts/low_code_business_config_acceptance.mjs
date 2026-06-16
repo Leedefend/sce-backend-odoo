@@ -164,6 +164,13 @@ async function main() {
     await selectableField.click();
     const selectedFieldCount = await page.locator(".field--selected").count();
     const selectedPanelText = await page.locator(".contract-field-selection-card").innerText();
+    await page.locator(".contract-field-selection-card").getByText("隐藏", { exact: true }).click();
+    const formDirtyAfterHide = await page.locator(".contract-field-governance-dirty").count();
+    const saveFormEnabledAfterHide = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
+    const resetFormEnabledAfterHide = await page.getByRole("button", { name: "重置" }).isEnabled();
+    await page.getByRole("button", { name: "重置" }).click();
+    const formDirtyAfterReset = await page.locator(".contract-field-governance-dirty").count();
+    const saveFormEnabledAfterReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     await page.locator(".contract-field-selection-card").getByRole("button", { name: "新增字段" }).click();
     await page.waitForSelector(".contract-field-create-dialog", { timeout: 10000 });
     const createFieldDialogText = await page.locator(".contract-field-create-dialog").innerText();
@@ -179,6 +186,11 @@ async function main() {
       dragHandleCount,
       selectedFieldCount,
       selectedPanelText,
+      formDirtyAfterHide,
+      saveFormEnabledAfterHide,
+      resetFormEnabledAfterHide,
+      formDirtyAfterReset,
+      saveFormEnabledAfterReset,
       createFieldDialogText,
       createFieldLabelInputCount,
       createFieldTypeOptionCount,
@@ -199,6 +211,21 @@ async function main() {
       selectedFieldCount,
       selectedPanelText,
     });
+    assert(
+      formDirtyAfterHide > 0
+        && saveFormEnabledAfterHide
+        && resetFormEnabledAfterHide
+        && formDirtyAfterReset === 0
+        && !saveFormEnabledAfterReset,
+      "表单字段显示隐藏草稿或重置不可用",
+      {
+        formDirtyAfterHide,
+        saveFormEnabledAfterHide,
+        resetFormEnabledAfterHide,
+        formDirtyAfterReset,
+        saveFormEnabledAfterReset,
+      },
+    );
     assert(
       createFieldDialogText.includes("字段标题")
         && createFieldDialogText.includes("字段类型")
