@@ -185,44 +185,29 @@
         <section v-if="showCurrentFormFieldConfigScope" class="contract-form-settings">
           <header class="contract-form-settings-head">
             <div>
-              <h4>当前表单设置</h4>
+              <h4>当前页面设计</h4>
               <p>{{ formFieldConfigScope.summary }}</p>
             </div>
-            <nav class="contract-form-settings-tabs" aria-label="表单设置范围">
-              <button
-                v-for="tab in formSettingsTabs"
-                :key="tab.key"
-                type="button"
-                class="contract-form-settings-tab"
-                :class="{ 'contract-form-settings-tab--active': formSettingsActiveTab === tab.key }"
-                @click="formSettingsActiveTab = tab.key"
-              >
-                {{ tab.label }}
-              </button>
-            </nav>
+            <span class="contract-form-settings-field-count">字段 {{ activeContractModeFieldRows.length }}</span>
           </header>
-          <dl class="contract-form-settings-scope">
+          <div class="contract-form-design-strip" aria-label="页面设计步骤">
             <div>
-              <dt>配置范围</dt>
-              <dd>{{ formFieldConfigScope.scope }}</dd>
+              <span>当前页面</span>
+              <strong>{{ formFieldConfigScope.scope }}</strong>
             </div>
             <div>
-              <dt>字段来源</dt>
-              <dd>{{ formFieldConfigScope.fieldSource }}</dd>
+              <span>可配置项</span>
+              <strong>字段顺序、显示隐藏、新增字段</strong>
             </div>
             <div>
-              <dt>保存位置</dt>
-              <dd>{{ formFieldConfigScope.saveTarget }}</dd>
+              <span>影响范围</span>
+              <strong>{{ formFieldConfigScope.saveTarget }}</strong>
             </div>
-            <div>
-              <dt>系统标识</dt>
-              <dd>{{ formFieldConfigScope.systemKey }}</dd>
-            </div>
-          </dl>
+          </div>
           <section v-if="formSettingsActiveTab === 'fields'" class="contract-form-settings-fields">
             <header class="contract-form-settings-section-head">
-              <strong>字段</strong>
-              <span>在下方表单里点选字段，然后调整这个字段。</span>
+              <strong>字段设计</strong>
+              <span>按住字段左侧拖拽把手调整顺序，点选字段后可设置显示、隐藏或新增字段。</span>
             </header>
             <section class="contract-field-selection-panel">
               <div v-if="selectedFormSettingsFieldRow" class="contract-field-selection-card">
@@ -273,8 +258,8 @@
                 </div>
               </div>
               <div v-else class="contract-field-selection-empty">
-                <strong>先在表单中选择一个字段</strong>
-                <span>被选中的字段会高亮显示，再调整显示、隐藏、顺序或新增字段。</span>
+                <strong>选择字段后开始配置</strong>
+                <span>字段被选中后，可在这里调整显示、隐藏、顺序或新增字段。</span>
               </div>
             </section>
           </section>
@@ -285,7 +270,7 @@
               class="contract-field-governance-audit"
               :class="{ 'contract-field-governance-audit--warning': formConfigAuditResult?.hasConflict }"
             >{{ formConfigAuditSummary }}</span>
-            <button class="ghost" type="button" :disabled="busy || formConfigAuditBusy" @click="auditCurrentFormConfiguration">生效检查</button>
+            <button class="ghost" type="button" :disabled="busy || formConfigAuditBusy" @click="auditCurrentFormConfiguration">检查效果</button>
             <button class="chip-btn" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
           </div>
@@ -2144,39 +2129,16 @@ async function auditCurrentFormConfiguration() {
   }
 }
 
-const formFieldSettingsGovernance = computed(() => {
-  const root = contract.value && typeof contract.value === 'object'
-    ? (contract.value as Record<string, unknown>).governance
-    : undefined;
-  const governance = root && typeof root === 'object' && !Array.isArray(root)
-    ? root as Record<string, unknown>
-    : {};
-  const settings = governance.current_form_field_settings;
-  return settings && typeof settings === 'object' && !Array.isArray(settings)
-    ? settings as Record<string, unknown>
-    : {};
-});
-
 const showCurrentFormFieldConfigScope = computed(() => isContractFieldOrderEditable.value);
 
 const formFieldConfigScope = computed(() => {
-  const settings = formFieldSettingsGovernance.value;
-  const action = Number(settings.action_id || actionId.value || 0) || 0;
   const page = pageDisplayTitle.value || '当前表单';
-  const objectLabel = String(settings.model_label || '').trim();
-  const modelName = String(settings.model || model.value || '-');
   return {
     scope: `${page}这个页面`,
-    fieldSource: '当前页面已有字段和管理员新增字段',
-    saveTarget: '当前页面的表单设置',
-    systemKey: action > 0 ? `${objectLabel || modelName} / action_id=${action}` : (objectLabel || modelName),
+    saveTarget: '只影响当前页面，不影响其它页面',
     summary: `本页只调整${page}的字段显示、顺序和新增字段，保存后只影响这个页面。`,
   };
 });
-
-const formSettingsTabs = computed(() => [
-  { key: 'fields' as const, label: `字段 ${activeContractModeFieldRows.value.length}` },
-]);
 
 const formConfigAuditSummary = computed(() => {
   const result = formConfigAuditResult.value;
@@ -10119,41 +10081,28 @@ onBeforeUnmount(() => {
   line-height: 1.45;
 }
 
-.contract-form-settings-tabs {
+.contract-form-settings-field-count {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 0 10px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px;
   border: 1px solid var(--sc-app-border);
-  border-radius: 6px;
+  border-radius: 999px;
   background: var(--sc-app-panel-muted);
-}
-
-.contract-form-settings-tab {
-  min-height: 30px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
-  cursor: pointer;
 }
 
-.contract-form-settings-tab--active {
-  background: var(--sc-app-panel);
-  color: var(--sc-app-text-primary);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
-}
-
-.contract-form-settings-scope {
+.contract-form-design-strip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 8px;
-  margin: 0;
 }
 
-.contract-form-settings-scope > div {
+.contract-form-design-strip > div {
+  display: grid;
+  gap: 3px;
   min-width: 0;
   padding: 8px 10px;
   border: 1px solid var(--sc-app-border);
@@ -10161,16 +10110,15 @@ onBeforeUnmount(() => {
   background: var(--sc-app-panel-muted);
 }
 
-.contract-form-settings-scope dt {
-  margin: 0 0 3px;
+.contract-form-design-strip span {
   color: var(--sc-app-text-secondary);
   font-size: 11px;
 }
 
-.contract-form-settings-scope dd {
-  margin: 0;
+.contract-form-design-strip strong {
   color: var(--sc-app-text-primary);
   font-size: 12px;
+  font-weight: 650;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }

@@ -37,7 +37,7 @@
             />
             <div v-if="fieldOrderEditable || fieldActionsFor(field).length" class="field-inline-config">
               <div v-if="fieldOrderEditable" class="field-order-inline-tools" :aria-label="`${field.label}字段排序`">
-                <span class="field-order-handle" aria-hidden="true" title="按住字段拖动调整顺序">拖动</span>
+                <span class="field-order-handle" aria-hidden="true" title="按住字段拖动调整顺序">⋮⋮</span>
                 <button
                   class="field-order-btn"
                   type="button"
@@ -685,6 +685,7 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   padding: 6px;
   margin: -6px;
   cursor: grab;
+  background: color-mix(in srgb, var(--sc-app-info-bg) 42%, transparent);
 }
 
 .field--order-editable:active {
@@ -807,7 +808,7 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 .field-order-inline-tools {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -815,8 +816,8 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 .field-order-btn {
   flex: 0 0 auto;
   min-width: 26px;
-  height: 26px;
-  padding: 0 6px;
+  height: 28px;
+  padding: 0 7px;
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--sc-app-border);
@@ -828,7 +829,18 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 }
 
 .field-order-handle {
-  font-size: 12px;
+  min-width: 28px;
+  border-color: var(--sc-app-border-strong);
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-semantic-surface-interactive);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: grab;
+  letter-spacing: 0;
+}
+
+.field-order-handle:active {
+  cursor: grabbing;
 }
 
 .field-order-btn {
