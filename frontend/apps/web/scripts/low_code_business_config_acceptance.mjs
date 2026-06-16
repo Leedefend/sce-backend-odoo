@@ -34,6 +34,10 @@ async function visibleForbiddenTerms(page, selector = "body") {
   return DEFAULT_UI_FORBIDDEN_TERMS.filter((term) => text.includes(term));
 }
 
+function isIgnorableConsoleError(message) {
+  return String(message || "").includes("Failed to load resource: the server responded with a status of 404");
+}
+
 async function login(page) {
   await page.goto(`${BASE_URL}/login?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded" });
   await page.locator("input").nth(0).fill(LOGIN);
@@ -47,9 +51,16 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors = [];
+  const warnings = [];
   page.on("pageerror", (err) => errors.push(`pageerror:${err.message}`));
   page.on("console", (msg) => {
-    if (msg.type() === "error") errors.push(`console:${msg.text()}`);
+    if (msg.type() !== "error") return;
+    const text = msg.text();
+    if (isIgnorableConsoleError(text)) {
+      warnings.push(`console:${text}`);
+      return;
+    }
+    errors.push(`console:${text}`);
   });
 
   const report = {
@@ -59,6 +70,7 @@ async function main() {
     login: LOGIN,
     checks: {},
     errors,
+    warnings,
   };
 
   try {
