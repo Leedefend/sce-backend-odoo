@@ -15,6 +15,7 @@ const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
 
 const CONFIG_URL = `${BASE_URL}/admin/business-config?root_menu_xmlid=smart_construction_core.menu_sc_root&db=${encodeURIComponent(DB_NAME)}&model=construction.contract&action_id=562&page_label=${encodeURIComponent("项目合同汇总")}&open_pages=1`;
 const LIST_SEARCH_URL = `${CONFIG_URL}&open_list_search=1`;
+const DEFAULT_UI_FORBIDDEN_TERMS = ["已有个人配置", "个人偏好", "契约", "缺口", "治理", "legacy policy"];
 
 function assert(condition, message, details = {}) {
   if (!condition) {
@@ -26,6 +27,11 @@ function assert(condition, message, details = {}) {
 
 async function ensureDirs() {
   await fs.mkdir(ARTIFACT_ROOT, { recursive: true });
+}
+
+async function visibleForbiddenTerms(page, selector = "body") {
+  const text = await page.locator(selector).innerText();
+  return DEFAULT_UI_FORBIDDEN_TERMS.filter((term) => text.includes(term));
 }
 
 async function login(page) {
@@ -64,8 +70,7 @@ async function main() {
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
     const selectedName = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
-    const defaultPageText = await page.locator("body").innerText();
-    const leakedDefaultTerms = ["已有个人配置", "契约", "缺口", "治理"].filter((term) => defaultPageText.includes(term));
+    const leakedDefaultTerms = await visibleForbiddenTerms(page);
     report.checks.defaultConfigPage = { defaultCards, selectedName, leakedDefaultTerms };
     assert(
       defaultCards.join("|") === "表单字段与布局|列表与搜索",
@@ -82,6 +87,7 @@ async function main() {
     await page.goto(LIST_SEARCH_URL, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".edit-panel", { timeout: 20000 });
     const listSearchTitle = await page.locator(".edit-panel h2").innerText();
+    const leakedListSearchTerms = await visibleForbiddenTerms(page, ".edit-panel");
     const saveButtonCount = await page.getByRole("button", { name: "保存设置" }).count();
     const oldSaveButtonCount = await page.getByRole("button", { name: "保存业务默认" }).count();
     const optionSummary = await page.locator(".field-option-summary").first().innerText();
@@ -104,6 +110,7 @@ async function main() {
       saveButtonCount,
       oldSaveButtonCount,
       optionSummary,
+      leakedListSearchTerms,
       optionCount,
       initialListChipCount,
       changedListChipCount,
@@ -118,6 +125,11 @@ async function main() {
       oldSaveButtonCount,
     });
     assert(optionSummary.includes("可添加字段"), "列表与搜索字段池说明不正确", { optionSummary });
+    assert(
+      leakedListSearchTerms.length === 0,
+      "列表与搜索默认面板露出了治理或技术话术",
+      { leakedListSearchTerms },
+    );
     assert(optionCount > 0, "列表与搜索没有可添加字段", { optionCount });
     assert(
       changedListChipCount === initialListChipCount + 1
@@ -141,6 +153,7 @@ async function main() {
     await page.getByRole("button", { name: "进入拖拽设计" }).click();
     await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
     const designTitle = await page.locator(".contract-form-settings h4").innerText();
+    const leakedFormDesignerTerms = await visibleForbiddenTerms(page, ".contract-form-settings");
     const designFieldCountText = await page.locator(".contract-form-settings-field-count").innerText();
     const designFieldCount = Number((designFieldCountText.match(/\d+/) || ["0"])[0]);
     const dragHandleCount = await page.locator(".field-order-handle").count();
@@ -160,6 +173,7 @@ async function main() {
     const createFieldDialogClosed = await page.locator(".contract-field-create-dialog").count() === 0;
     report.checks.formDesigner = {
       designTitle,
+      leakedFormDesignerTerms,
       designFieldCount,
       selectableFieldCount,
       dragHandleCount,
@@ -173,6 +187,11 @@ async function main() {
       legacyPanelCount,
     };
     assert(designTitle === "当前页面设计", "表单设计器标题不正确", { designTitle });
+    assert(
+      leakedFormDesignerTerms.length === 0,
+      "表单设计器默认面板露出了治理或技术话术",
+      { leakedFormDesignerTerms },
+    );
     assert(designFieldCount > 0, "表单设计器没有显示可配置字段数量", { designFieldCountText });
     assert(selectableFieldCount > 0, "表单设计器没有可点选字段", { selectableFieldCount });
     assert(dragHandleCount > 0, "表单设计器没有可拖拽字段把手", { dragHandleCount });
@@ -196,10 +215,10 @@ async function main() {
     await page.getByRole("button", { name: "检查效果" }).click();
     await page.waitForSelector(".contract-field-governance-audit", { timeout: 20000 });
     const auditText = await page.locator(".contract-field-governance-audit").innerText();
-    const hasLegacyPolicyText = (await page.locator("body").innerText()).includes("legacy policy");
-    report.checks.formAudit = { auditText, hasLegacyPolicyText };
+    const leakedAuditTerms = await visibleForbiddenTerms(page, ".contract-form-settings");
+    report.checks.formAudit = { auditText, leakedAuditTerms };
     assert(auditText.includes("检查通过") || auditText.includes("字段被旧规则覆盖"), "表单检查结果不是用户语言", { auditText });
-    assert(!hasLegacyPolicyText, "默认表单检查不应显示 legacy policy", { auditText });
+    assert(leakedAuditTerms.length === 0, "默认表单检查不应显示治理或技术话术", { auditText, leakedAuditTerms });
 
     await page.getByRole("button", { name: "返回配置" }).first().click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 20000 });
