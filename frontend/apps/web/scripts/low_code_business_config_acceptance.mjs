@@ -156,6 +156,15 @@ async function main() {
       await page.getByRole("button", { name: "放弃调整" }).click();
     }
     const resetListChipCount = await page.locator(".field-chip-editor").first().locator(".field-chip").count();
+    const listSearchTabs = await page.locator(".list-search-tabs button span").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    await page.getByRole("button", { name: /搜索条件/ }).click();
+    const filterEditorTitle = await page.locator(".field-chip-editor header strong").innerText();
+    const filterOptionSummary = await page.locator(".field-option-summary").innerText();
+    await page.getByRole("button", { name: /默认分组/ }).click();
+    const groupEditorTitle = await page.locator(".field-chip-editor header strong").innerText();
+    const groupOptionSummary = await page.locator(".field-option-summary").innerText();
     report.checks.listSearchPanel = {
       listSearchTitle,
       saveButtonCount,
@@ -169,6 +178,11 @@ async function main() {
       saveEnabledAfterEdit,
       resetEnabledAfterEdit,
       resetListChipCount,
+      listSearchTabs,
+      filterEditorTitle,
+      filterOptionSummary,
+      groupEditorTitle,
+      groupOptionSummary,
     };
     assert(listSearchTitle === "列表与搜索设置", "列表与搜索面板标题不正确", { listSearchTitle });
     assert(saveButtonCount === 1 && oldSaveButtonCount === 0, "列表与搜索保存按钮文案不正确", {
@@ -182,6 +196,15 @@ async function main() {
       { leakedListSearchTerms },
     );
     assert(optionCount > 0, "列表与搜索没有可添加字段", { optionCount });
+    assert(
+      listSearchTabs.join("|") === "列表列|搜索条件|默认分组"
+        && filterEditorTitle === "搜索筛选字段"
+        && filterOptionSummary.includes("可添加字段")
+        && groupEditorTitle === "搜索分组字段"
+        && groupOptionSummary.includes("可添加字段"),
+      "列表与搜索配置类型切换不可用",
+      { listSearchTabs, filterEditorTitle, filterOptionSummary, groupEditorTitle, groupOptionSummary },
+    );
     assert(
       changedListChipCount === initialListChipCount + 1
         && dirtyVisible > 0
