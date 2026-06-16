@@ -38,6 +38,17 @@ function isIgnorableConsoleError(message) {
   return String(message || "").includes("Failed to load resource: the server responded with a status of 404");
 }
 
+function consoleEntry(msg) {
+  const location = typeof msg.location === "function" ? msg.location() : {};
+  const url = String(location.url || "");
+  return {
+    text: msg.text(),
+    url,
+    lineNumber: location.lineNumber || 0,
+    columnNumber: location.columnNumber || 0,
+  };
+}
+
 async function login(page) {
   await page.goto(`${BASE_URL}/login?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded" });
   await page.locator("input").nth(0).fill(LOGIN);
@@ -55,12 +66,12 @@ async function main() {
   page.on("pageerror", (err) => errors.push(`pageerror:${err.message}`));
   page.on("console", (msg) => {
     if (msg.type() !== "error") return;
-    const text = msg.text();
-    if (isIgnorableConsoleError(text)) {
-      warnings.push(`console:${text}`);
+    const entry = consoleEntry(msg);
+    if (isIgnorableConsoleError(entry.text)) {
+      warnings.push({ type: "console", ...entry });
       return;
     }
-    errors.push(`console:${text}`);
+    errors.push({ type: "console", ...entry });
   });
 
   const report = {
