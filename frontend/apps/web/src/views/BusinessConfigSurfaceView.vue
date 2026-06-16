@@ -109,7 +109,7 @@
         <div v-for="row in visibleCoverageRows" :key="row.action_id" class="scan-row" :class="{ 'scan-row--selected': row.action_id === scopeAction }">
           <div class="scan-row-main">
             <strong>{{ row.name || row.model }}</strong>
-            <span>{{ row.model }}</span>
+            <span v-if="advancedPanelOpen">{{ row.model }}</span>
           </div>
           <div class="scan-row-meta">
             <span>{{ pageViewModeText(row) }}</span>
@@ -505,11 +505,14 @@ const scopeModel = ref(String(route.query.model || '').trim());
 const scopeActionId = ref(numericQuery('action_id') || 0);
 const scopeViewId = ref(numericQuery('view_id') || 0);
 const scopeRoleKey = ref(String(route.query.role_key || '').trim());
+const selectedPageLabel = ref(String(route.query.page_label || '').trim());
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || '').trim());
 const shouldOpenPageList = computed(() => String(route.query.open_pages || '').trim() === '1');
 const shouldOpenListSearch = computed(() => String(route.query.open_list_search || '').trim() === '1');
 const designerTitle = computed(() => {
   const model = currentModel.value || scopeModel.value.trim();
+  const pageLabel = selectedPageLabel.value.trim();
+  if (pageLabel) return `正在配置：${pageLabel}`;
   return model ? `正在配置：${model}` : '选择一个业务页面开始配置';
 });
 
@@ -849,6 +852,7 @@ async function applyScopeAndLoad() {
   versionsPanelOpen.value = false;
   versionContracts.value = [];
   coverageScan.value = null;
+  selectedPageLabel.value = '';
   await router.replace({
     path: route.path,
     query: {
@@ -857,6 +861,7 @@ async function applyScopeAndLoad() {
       action_id: scopeAction.value ? String(scopeAction.value) : undefined,
       view_id: scopeView.value ? String(scopeView.value) : undefined,
       role_key: scopeRole.value || undefined,
+      page_label: undefined,
     },
   });
   await loadSurface();
@@ -866,6 +871,7 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
   scopeModel.value = row.model;
   scopeActionId.value = row.action_id;
   scopeViewId.value = 0;
+  selectedPageLabel.value = row.name || row.model;
   selectedRuntimeRoute.value = row.runtime_route || null;
   listSearchPanelOpen.value = false;
   listSearchAudit.value = null;
@@ -879,6 +885,7 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
       action_id: row.action_id ? String(row.action_id) : undefined,
       view_id: undefined,
       role_key: scopeRole.value || undefined,
+      page_label: row.name || undefined,
       open_list_search: undefined,
     },
   });
@@ -894,6 +901,7 @@ async function openListSearchForRow(row: BusinessConfigCoverageScanItem) {
   scopeModel.value = row.model;
   scopeActionId.value = row.action_id;
   scopeViewId.value = 0;
+  selectedPageLabel.value = row.name || row.model;
   selectedRuntimeRoute.value = row.runtime_route || null;
   versionsPanelOpen.value = false;
   versionContracts.value = [];
@@ -905,6 +913,7 @@ async function openListSearchForRow(row: BusinessConfigCoverageScanItem) {
       action_id: row.action_id ? String(row.action_id) : undefined,
       view_id: undefined,
       role_key: scopeRole.value || undefined,
+      page_label: row.name || undefined,
       open_list_search: '1',
     },
   });
