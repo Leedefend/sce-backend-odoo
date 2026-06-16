@@ -2196,7 +2196,36 @@ const selectedFormSettingsFieldRow = computed(() => {
   const fieldKey = selectedFormSettingsFieldKey.value;
   if (!fieldKey) return undefined;
   const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === fieldKey);
-  if (!row) return undefined;
+  if (!row) {
+    const label = selectedFormSettingsFieldLabel.value || fieldKey;
+    const visible = Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)
+      ? fieldVisibilityDraft[fieldKey]
+      : true;
+    return {
+      fieldKey,
+      label,
+      actions: [
+        {
+          key: `${fieldKey}:show`,
+          label: '显示',
+          value: 'show',
+          checked: visible,
+          disabled: busy.value,
+          title: '在当前页面显示这个字段',
+          raw: {},
+        },
+        {
+          key: `${fieldKey}:hide`,
+          label: '隐藏',
+          value: 'hide',
+          checked: !visible,
+          disabled: busy.value,
+          title: '在当前页面隐藏这个字段',
+          raw: {},
+        },
+      ],
+    };
+  }
   return {
     ...row,
     label: selectedFormSettingsFieldLabel.value || row.label || fieldKey,
@@ -8508,11 +8537,12 @@ function onFormSettingsFieldSelect(payload: { field: FormSectionFieldSchema; gro
   if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) {
     const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === fieldKey);
     const checkedAction = row?.actions.find((action) => Boolean(action.checked));
-    if (checkedAction) {
-      fieldVisibilityBase.value = {
-        ...fieldVisibilityBase.value,
-        [fieldKey]: checkedAction.value === 'show',
-      };
+    fieldVisibilityBase.value = {
+      ...fieldVisibilityBase.value,
+      [fieldKey]: checkedAction ? checkedAction.value === 'show' : true,
+    };
+    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)) {
+      fieldVisibilityDraft[fieldKey] = checkedAction ? checkedAction.value === 'show' : true;
     }
   }
   selectedFormSettingsFieldKey.value = fieldKey;

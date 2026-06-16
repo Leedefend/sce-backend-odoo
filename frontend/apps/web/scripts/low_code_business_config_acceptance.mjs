@@ -106,12 +106,31 @@ async function main() {
     const designFieldCountText = await page.locator(".contract-form-settings-field-count").innerText();
     const designFieldCount = Number((designFieldCountText.match(/\d+/) || ["0"])[0]);
     const dragHandleCount = await page.locator(".field-order-handle").count();
+    const selectableField = page.locator(".field--selectable").first();
+    const selectableFieldCount = await page.locator(".field--selectable").count();
     const returnButtonCount = await page.getByRole("button", { name: "返回配置" }).count();
     const legacyPanelCount = await page.locator(".contract-lowcode-objects").count();
-    report.checks.formDesigner = { designTitle, designFieldCount, dragHandleCount, returnButtonCount, legacyPanelCount };
+    await selectableField.click();
+    const selectedFieldCount = await page.locator(".field--selected").count();
+    const selectedPanelText = await page.locator(".contract-field-selection-card").innerText();
+    report.checks.formDesigner = {
+      designTitle,
+      designFieldCount,
+      selectableFieldCount,
+      dragHandleCount,
+      selectedFieldCount,
+      selectedPanelText,
+      returnButtonCount,
+      legacyPanelCount,
+    };
     assert(designTitle === "当前页面设计", "表单设计器标题不正确", { designTitle });
     assert(designFieldCount > 0, "表单设计器没有显示可配置字段数量", { designFieldCountText });
+    assert(selectableFieldCount > 0, "表单设计器没有可点选字段", { selectableFieldCount });
     assert(dragHandleCount > 0, "表单设计器没有可拖拽字段把手", { dragHandleCount });
+    assert(selectedFieldCount > 0 && selectedPanelText.includes("已选字段"), "表单字段点选后没有进入配置状态", {
+      selectedFieldCount,
+      selectedPanelText,
+    });
     assert(returnButtonCount >= 1, "表单设计器缺少返回配置入口", { returnButtonCount });
     assert(legacyPanelCount === 0, "默认表单设计器不应显示技术配置面板", { legacyPanelCount });
 
