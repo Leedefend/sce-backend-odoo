@@ -305,6 +305,7 @@
                 筛选 {{ version.summary.search_filter_count }} /
                 分组 {{ version.summary.search_group_by_count }}
               </span>
+              <span>{{ versionDeltaText(contract.summary, version.summary, version.version_no === contract.version_no) }}</span>
               <button
                 type="button"
                 class="link-button"
@@ -805,6 +806,49 @@ function versionStatusLabel(status: string) {
   if (status === 'draft') return '草稿';
   if (status === 'archived') return '已归档';
   return status || '未知';
+}
+
+function versionSummaryNames(summary: BusinessConfigContractVersionsPayload['contracts'][number]['summary']) {
+  return {
+    form: summary.form_fields || [],
+    list: summary.list_columns || [],
+    filter: summary.search_filters || [],
+    group: summary.search_group_by || [],
+  };
+}
+
+function countDiff(left: string[], right: string[]) {
+  const leftSet = new Set(left);
+  const rightSet = new Set(right);
+  return {
+    added: right.filter((name) => !leftSet.has(name)).length,
+    removed: left.filter((name) => !rightSet.has(name)).length,
+  };
+}
+
+function versionDeltaText(
+  current: BusinessConfigContractVersionsPayload['contracts'][number]['summary'],
+  target: BusinessConfigContractVersionsPayload['contracts'][number]['summary'],
+  isCurrent: boolean,
+) {
+  if (isCurrent) return '当前版本';
+  const currentNames = versionSummaryNames(current);
+  const targetNames = versionSummaryNames(target);
+  const parts = [
+    { label: '字段', diff: countDiff(currentNames.form, targetNames.form) },
+    { label: '列', diff: countDiff(currentNames.list, targetNames.list) },
+    { label: '筛选', diff: countDiff(currentNames.filter, targetNames.filter) },
+    { label: '分组', diff: countDiff(currentNames.group, targetNames.group) },
+  ]
+    .map((item) => {
+      const changes = [
+        item.diff.added ? `多 ${item.diff.added}` : '',
+        item.diff.removed ? `少 ${item.diff.removed}` : '',
+      ].filter(Boolean).join('、');
+      return changes ? `${item.label}${changes}` : '';
+    })
+    .filter(Boolean);
+  return parts.length ? `与当前相比：${parts.join('；')}` : '与当前一致';
 }
 
 function runtimeReasonText(row: BusinessConfigCoverageScanItem) {

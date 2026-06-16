@@ -156,7 +156,7 @@
 - 已补第三步：工作台接入列表/搜索编辑区，调用 `ui.business_config.list_search.audit/set`，只写正式业务契约，不写个人偏好。
 - 已补第四步：工作台接入表单配置入口，通过 `config_mode=form_field_configuration` 打开当前模型/action 的表单配置模式。
 - 已补第五步：工作台接入模型、action、view、role_key 作用域选择；摘要、列表/搜索保存和表单配置跳转统一使用当前作用域。
-- 已补第六步：新增 `ui.business_config.contract.versions`，工作台默认路径可查看当前页面表单、列表、搜索配置版本摘要；工作台版本面板已接入 `ui.business_config.contract.rollback`，支持回滚上一版和回滚到指定版本，不触碰个人偏好。作用域和业务契约解释只在高级设置中展示。
+- 已补第六步：新增 `ui.business_config.contract.versions`，工作台默认路径可查看当前页面表单、列表、搜索配置版本摘要；工作台版本面板已接入 `ui.business_config.contract.rollback`，支持回滚上一版和回滚到指定版本，并在历史版本行显示相对当前版本的字段/列/筛选/分组差异摘要，不触碰个人偏好。作用域和业务契约解释只在高级设置中展示。
 - 已补第七步：行业模块新增“业务配置工作台”菜单入口，前端动作服务识别该配置动作后进入 `/admin/business-config`；平台管理员侧栏也提供工作台快捷入口，确保配置工作台不是隐藏路由。
 - 已补第八步：行业根菜单扫描范围由行业 action context 提供 `business_config_root_menu_xmlid`，平台前端壳不硬编码行业 XMLID。
 - 支持作用域选择：当前页面、当前动作、当前视图、当前公司、当前角色/用户组。

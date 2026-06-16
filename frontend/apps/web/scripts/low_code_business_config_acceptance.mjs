@@ -99,6 +99,9 @@ async function main() {
     await page.waitForSelector(".version-panel", { timeout: 10000 });
     const defaultVersionTitle = await page.locator(".version-panel h2").innerText();
     const defaultVersionDescription = await page.locator(".version-panel .edit-panel-head p").innerText();
+    const defaultVersionPanelText = await page.locator(".version-panel").innerText();
+    const defaultVersionRowCount = await page.locator(".version-panel .version-row").count();
+    const defaultHistoricalVersionRowCount = await page.locator(".version-panel .version-row button:not([disabled])").count();
     const leakedDefaultVersionTerms = await visibleForbiddenTerms(page, ".version-panel");
     await page.locator(".version-panel").getByRole("button", { name: "关闭" }).click();
     await page.waitForSelector(".version-panel", { state: "detached", timeout: 10000 });
@@ -154,6 +157,9 @@ async function main() {
       defaultVersionButtonCount,
       defaultVersionTitle,
       defaultVersionDescription,
+      defaultVersionPanelText,
+      defaultVersionRowCount,
+      defaultHistoricalVersionRowCount,
       leakedDefaultVersionTerms,
       initialPageRows,
       searchedPageRows,
@@ -210,12 +216,19 @@ async function main() {
       defaultVersionButtonCount >= 2
         && defaultVersionTitle.includes("配置版本")
         && defaultVersionDescription.includes("配置保存记录")
+        && (defaultVersionRowCount > 0
+          ? defaultVersionPanelText.includes("当前版本")
+          : defaultVersionPanelText.includes("当前页面暂无版本记录"))
+        && (defaultHistoricalVersionRowCount === 0 || defaultVersionPanelText.includes("与当前相比"))
         && leakedDefaultVersionTerms.length === 0,
       "默认版本记录面板不可用或露出了治理话术",
       {
         defaultVersionButtonCount,
         defaultVersionTitle,
         defaultVersionDescription,
+        defaultVersionPanelText,
+        defaultVersionRowCount,
+        defaultHistoricalVersionRowCount,
         leakedDefaultVersionTerms,
       },
     );
