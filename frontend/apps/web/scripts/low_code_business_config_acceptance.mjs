@@ -394,6 +394,31 @@ async function main() {
       "返回配置后配置卡片丢失",
       { returnedCards },
     );
+
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.goto(CONFIG_URL, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector(".scan-row--selected", { timeout: 20000 });
+    const mobileMetrics = await page.evaluate(() => ({
+      innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      bodyScrollWidth: document.body.scrollWidth,
+    }));
+    const mobileSelectedRowBox = await page.locator(".scan-row--selected").boundingBox();
+    const mobileActionsBox = await page.locator(".scan-row--selected .scan-row-actions").boundingBox();
+    report.checks.mobileConfigPage = {
+      mobileMetrics,
+      mobileSelectedRowBox,
+      mobileActionsBox,
+    };
+    report.artifacts.mobileConfigPage = await captureStep(page, "mobile-config-page");
+    assert(
+      mobileMetrics.scrollWidth <= mobileMetrics.innerWidth + 1
+        && mobileSelectedRowBox
+        && mobileSelectedRowBox.width <= mobileMetrics.innerWidth,
+      "移动宽度下低代码配置页出现横向溢出",
+      { mobileMetrics, mobileSelectedRowBox, mobileActionsBox },
+    );
+
     assert(errors.length === 0, "浏览器出现未预期错误", { errors });
     assert(warnings.length === 0, "浏览器出现未预期警告", { warnings });
 
