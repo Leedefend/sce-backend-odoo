@@ -58,3 +58,16 @@ class TestProjectCostCompare(TransactionCase):
         self.assertEqual(rec.budget_amount, 1000)
         self.assertEqual(rec.actual_amount, 800)
         self.assertEqual(rec.period, "2025-01")
+
+    @tagged("post_install", "-at_install", "sc_regression", "cost")
+    def test_cost_ledger_flow_label_readable(self):
+        ledger = self.env["project.cost.ledger"].create({
+            "project_id": self.project.id,
+            "cost_code_id": self.cost_code.id,
+            "wbs_id": self.wbs.id,
+            "date": "2025-01-20",
+            "amount": 10,
+            "source_model": "stock.move",
+        })
+
+        self.assertEqual(ledger.read(["cost_flow_label"])[0]["cost_flow_label"], "入库成本")
