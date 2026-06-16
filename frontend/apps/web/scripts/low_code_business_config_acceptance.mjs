@@ -64,13 +64,20 @@ async function main() {
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
     const selectedName = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
-    report.checks.defaultConfigPage = { defaultCards, selectedName };
+    const defaultPageText = await page.locator("body").innerText();
+    const leakedDefaultTerms = ["已有个人配置", "契约", "缺口", "治理"].filter((term) => defaultPageText.includes(term));
+    report.checks.defaultConfigPage = { defaultCards, selectedName, leakedDefaultTerms };
     assert(
       defaultCards.join("|") === "表单字段与布局|列表与搜索",
       "默认配置卡片不符合用户配置边界",
       { defaultCards },
     );
     assert(selectedName === "项目合同汇总", "配置页没有恢复选中页面", { selectedName });
+    assert(
+      leakedDefaultTerms.length === 0,
+      "默认配置页露出了治理或技术话术",
+      { leakedDefaultTerms },
+    );
 
     await page.goto(LIST_SEARCH_URL, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".edit-panel", { timeout: 20000 });

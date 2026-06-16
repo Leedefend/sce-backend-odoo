@@ -128,7 +128,7 @@
           <div class="scan-row-meta">
             <span>{{ pageViewModeText(row) }}</span>
             <span>{{ pageDesignStatus(row) }}</span>
-            <span v-if="row.user_preference_count">已有个人配置 {{ row.user_preference_count }}</span>
+            <span v-if="advancedPanelOpen && row.user_preference_count">已有个人配置 {{ row.user_preference_count }}</span>
             <span v-if="advancedPanelOpen">{{ runtimeEvidenceText(row) }}</span>
             <span v-if="advancedPanelOpen && runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
           </div>
