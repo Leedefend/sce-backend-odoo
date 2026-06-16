@@ -186,7 +186,7 @@
         </div>
       </div>
     </section>
-    <section v-if="!loading" class="section-grid">
+    <section v-if="!loading && currentModel" class="section-grid">
       <article v-for="section in sections" :key="section.key" class="config-card">
         <div class="config-card-head">
           <h2>{{ section.label }}</h2>
@@ -198,7 +198,7 @@
         </div>
         <div class="config-card-actions">
           <button
-            v-if="section.key === 'form' || section.key === 'list_search'"
+            v-if="advancedPanelOpen && (section.key === 'form' || section.key === 'list_search')"
             type="button"
             class="ghost small"
             :disabled="!currentModel || versionsLoading"
