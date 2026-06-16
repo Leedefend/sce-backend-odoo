@@ -304,7 +304,7 @@
           :native-action-state-resolver="resolveNativeActionState"
           :relation-adapter="relationFieldAdapter"
           :field-actions="isContractFieldOrderEditable ? undefined : contractFieldActions"
-          :field-order-editable="false"
+          :field-order-editable="isContractFieldOrderEditable"
           :field-order-index="contractInlineFieldOrderIndex"
           :field-order-count="fieldOrderDraft.length"
           :field-order-dragging-key="draggingFieldKey"
@@ -2157,9 +2157,7 @@ const formFieldSettingsGovernance = computed(() => {
     : {};
 });
 
-const showCurrentFormFieldConfigScope = computed(() => (
-  isContractFieldOrderEditable.value && activeContractModeFieldRows.value.length > 0
-));
+const showCurrentFormFieldConfigScope = computed(() => isContractFieldOrderEditable.value);
 
 const formFieldConfigScope = computed(() => {
   const settings = formFieldSettingsGovernance.value;

@@ -2,18 +2,18 @@
   <section class="business-config-page">
     <header class="business-config-header">
       <div>
-        <p class="eyebrow">业务配置工作台</p>
-        <h1>{{ title }}</h1>
+        <p class="eyebrow">低代码页面设计器</p>
+        <h1>{{ designerTitle }}</h1>
       </div>
       <div class="header-actions">
-        <button type="button" class="ghost primary" :disabled="scanLoading" @click="scanSystemRootCoverage">
-          {{ scanLoading ? '扫描中...' : primaryScanButtonLabel }}
+        <button type="button" class="ghost primary" :disabled="!canOpenDesigner" @click="openFormConfig">
+          {{ canOpenDesigner ? '进入拖拽设计' : '先选择页面' }}
         </button>
-        <button type="button" class="ghost" :disabled="scanLoading || !currentModel" @click="scanCurrentModel">
-          扫描当前业务对象
+        <button type="button" class="ghost" :disabled="scanLoading" @click="scanSystemRootCoverage">
+          {{ scanLoading ? '读取中...' : '选择业务页面' }}
         </button>
-        <button type="button" class="ghost" :disabled="loading" @click="applyScopeAndLoad">
-          {{ loading ? '刷新中...' : '刷新' }}
+        <button type="button" class="ghost" :disabled="loading" @click="advancedPanelOpen = !advancedPanelOpen">
+          高级作用域
         </button>
       </div>
     </header>
@@ -25,32 +25,32 @@
       <article class="flow-card flow-card--primary">
         <span class="flow-step">1</span>
         <div>
-          <h2>扫描业务菜单</h2>
-          <p>{{ rootMenuXmlid ? '按当前产品线检查可配置页面。' : '检查当前可见业务页面。' }}</p>
+          <h2>选择业务页面</h2>
+          <p>读取可配置页面列表，选择要调整的页面。</p>
         </div>
         <button type="button" class="ghost primary" :disabled="scanLoading" @click="scanSystemRootCoverage">
-          {{ scanLoading ? '扫描中...' : '开始扫描' }}
+          {{ scanLoading ? '读取中...' : '选择页面' }}
         </button>
       </article>
       <article class="flow-card">
         <span class="flow-step">2</span>
         <div>
-          <h2>处理缺口</h2>
-          <p>扫描后可批量补齐，也可以逐个页面处理。</p>
+          <h2>拖拽设计表单</h2>
+          <p>进入设计器后拖动字段、隐藏字段、调整分组。</p>
         </div>
-        <button type="button" class="ghost" disabled>等待扫描</button>
+        <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">进入设计</button>
       </article>
       <article class="flow-card">
         <span class="flow-step">3</span>
         <div>
-          <h2>精修页面</h2>
-          <p>选中页面后配置表单、列表、搜索和菜单。</p>
+          <h2>保存并预览</h2>
+          <p>保存配置后打开业务页面确认效果。</p>
         </div>
-        <button type="button" class="ghost" :disabled="!currentModel" @click="openFormConfig">配置当前页面</button>
+        <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">预览配置</button>
       </article>
     </section>
 
-    <section class="scope-panel">
+    <section v-if="advancedPanelOpen" class="scope-panel">
       <label>
         <span>业务对象</span>
         <input v-model="scopeModel" type="text" placeholder="res.partner" />
@@ -75,10 +75,10 @@
       <div class="scan-toolbar">
         <label class="scan-toggle">
           <input v-model="showOnlyIssues" type="checkbox" />
-          <span>只看问题</span>
+          <span>只看需处理</span>
         </label>
         <button type="button" class="ghost small" @click="copyCoverageSummary">
-          复制验收摘要
+          复制配置摘要
         </button>
         <button
           type="button"
@@ -86,7 +86,7 @@
           :disabled="scanLoading || listSearchSaving || !coverageBatchBootstrapRows.length"
           @click="bootstrapCoverageMissing"
         >
-          {{ listSearchSaving ? '补齐中...' : '补齐缺口' }}
+          {{ listSearchSaving ? '生成中...' : '生成基础配置' }}
         </button>
       </div>
       <div class="scan-summary">
@@ -135,12 +135,12 @@
             :disabled="!row.runtime_route?.path"
             @click="openRuntimeRoute(row)"
           >
-            打开页面
+            预览页面
           </button>
-          <button type="button" class="link-button" @click="focusScanRow(row)">定位</button>
+          <button type="button" class="link-button" @click="focusScanRow(row)">选择此页面</button>
         </div>
       </div>
-      <div v-else class="empty-state">当前扫描范围没有待处理缺口。</div>
+      <div v-else class="empty-state">当前范围没有待处理页面，可取消“只看需处理”查看全部页面。</div>
     </section>
     <section v-if="!loading" class="section-grid">
       <article v-for="section in sections" :key="section.key" class="config-card">
@@ -169,16 +169,16 @@
             :disabled="!currentModel || listSearchBusy"
             @click="loadListSearchConfig"
           >
-            {{ listSearchBusy ? '读取中...' : '配置列表/搜索' }}
+            {{ listSearchBusy ? '读取中...' : '配置列表搜索' }}
           </button>
           <button
             v-else-if="section.key === 'form'"
             type="button"
             class="ghost small"
-            :disabled="!currentModel"
+            :disabled="!canOpenDesigner"
             @click="openFormConfig"
           >
-            打开表单配置
+            拖拽设计表单
           </button>
           <button
             v-else-if="section.key === 'menu'"
@@ -186,7 +186,7 @@
             class="ghost small"
             @click="openMenuConfig"
           >
-            打开菜单配置
+            调整菜单入口
           </button>
           <button
             v-else
@@ -332,11 +332,12 @@ const error = ref('');
 const message = ref('');
 const surface = ref<BusinessConfigSurfacePayload | null>(null);
 const coverageScan = ref<BusinessConfigCoverageScanPayload | null>(null);
-const showOnlyIssues = ref(true);
+const showOnlyIssues = ref(false);
 const listSearchAudit = ref<BusinessConfigListSearchAuditPayload | null>(null);
 const listSearchPanelOpen = ref(false);
 const versionsLoading = ref(false);
 const versionsPanelOpen = ref(false);
+const advancedPanelOpen = ref(false);
 const versionTitle = ref('配置版本');
 const versionContracts = ref<BusinessConfigContractVersionsPayload['contracts']>([]);
 const listColumnsText = ref('');
@@ -347,15 +348,14 @@ const scopeActionId = ref(numericQuery('action_id') || 0);
 const scopeViewId = ref(numericQuery('view_id') || 0);
 const scopeRoleKey = ref(String(route.query.role_key || '').trim());
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || '').trim());
-const primaryScanButtonLabel = computed(() => (rootMenuXmlid.value ? '扫描业务菜单' : '扫描可见菜单'));
-
-const title = computed(() => {
-  const model = scopeModel.value.trim();
-  return model ? `当前页面配置：${model}` : '当前页面配置';
+const designerTitle = computed(() => {
+  const model = currentModel.value || scopeModel.value.trim();
+  return model ? `正在配置：${model}` : '选择一个业务页面开始配置';
 });
 
 const sections = computed(() => surface.value?.sections || []);
 const currentModel = computed(() => String(scopeModel.value || surface.value?.model || '').trim());
+const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value));
 function isCoverageIssue(row: BusinessConfigCoverageScanItem) {
   return !row.is_complete || !row.is_runtime_complete || !row.has_menu;
 }
@@ -967,7 +967,7 @@ function openMenuConfig() {
 }
 
 function openFormConfig() {
-  if (!currentModel.value) return;
+  if (!canOpenDesigner.value) return;
   router.push({
     path: `/f/${encodeURIComponent(currentModel.value)}/new`,
     query: {
@@ -975,7 +975,7 @@ function openFormConfig() {
       menu_id: route.query.menu_id || undefined,
       view_id: scopeView.value ? String(scopeView.value) : undefined,
       role_key: scopeRole.value || undefined,
-      config_mode: 'form_field_configuration',
+      config_mode: 'business_config_lowcode',
     },
   });
 }
