@@ -34,6 +34,13 @@ async function visibleForbiddenTerms(page, selector = "body") {
   return DEFAULT_UI_FORBIDDEN_TERMS.filter((term) => text.includes(term));
 }
 
+async function captureStep(page, name) {
+  const fileName = `${name}.png`;
+  const filePath = path.join(ARTIFACT_ROOT, fileName);
+  await page.screenshot({ path: filePath, fullPage: true });
+  return path.relative(ROOT_DIR, filePath);
+}
+
 function consoleEntry(msg) {
   const location = typeof msg.location === "function" ? msg.location() : {};
   const url = String(location.url || "");
@@ -72,6 +79,7 @@ async function main() {
     dbName: DB_NAME,
     login: LOGIN,
     checks: {},
+    artifacts: {},
     errors,
     warnings,
   };
@@ -113,6 +121,7 @@ async function main() {
       formPageRows,
       previewUrl,
     };
+    report.artifacts.defaultConfigPage = await captureStep(page, "default-config-page");
     assert(
       defaultCards.join("|") === "表单字段与布局|列表与搜索",
       "默认配置卡片不符合用户配置边界",
@@ -184,6 +193,7 @@ async function main() {
       groupEditorTitle,
       groupOptionSummary,
     };
+    report.artifacts.listSearchPanel = await captureStep(page, "list-search-panel");
     assert(listSearchTitle === "列表与搜索设置", "列表与搜索面板标题不正确", { listSearchTitle });
     assert(saveButtonCount === 1 && oldSaveButtonCount === 0, "列表与搜索保存按钮文案不正确", {
       saveButtonCount,
@@ -285,6 +295,7 @@ async function main() {
       returnButtonCount,
       legacyPanelCount,
     };
+    report.artifacts.formDesigner = await captureStep(page, "form-designer");
     assert(designTitle === "当前页面设计", "表单设计器标题不正确", { designTitle });
     assert(
       leakedFormDesignerTerms.length === 0,
@@ -367,6 +378,7 @@ async function main() {
       pageLabel: returnedUrl.searchParams.get("page_label"),
     };
     report.checks.returnPath = { returnedTitle, returnedSelected, returnedCards, url: page.url(), returnedQuery };
+    report.artifacts.returnPath = await captureStep(page, "return-path");
     assert(returnedTitle.includes("项目合同汇总"), "返回配置后标题丢失", { returnedTitle });
     assert(returnedSelected === "项目合同汇总", "返回配置后选中页面丢失", { returnedSelected });
     assert(
