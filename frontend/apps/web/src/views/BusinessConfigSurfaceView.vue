@@ -2306,6 +2306,21 @@ h1 {
 }
 
 @media (max-width: 900px) {
+  .business-config-header,
+  .edit-panel-head,
+  .version-card-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .header-actions,
+  .edit-panel-actions,
+  .config-card-actions,
+  .version-card-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
   .workbench-flow,
   .scope-panel,
   .edit-grid {
@@ -2318,6 +2333,16 @@ h1 {
 
   .flow-card .ghost {
     grid-column: 1 / -1;
+  }
+
+  .scan-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .scan-row-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    white-space: normal;
   }
 }
 </style>
