@@ -75,9 +75,20 @@
       <div class="scan-toolbar">
         <label class="page-search">
           <span>页面搜索</span>
-          <input v-model="pageSearch" type="search" placeholder="输入页面名称或业务对象" />
+          <input v-model="pageSearch" type="search" placeholder="输入页面名称" />
         </label>
-        <label class="scan-toggle">
+        <div class="page-type-tabs" role="group" aria-label="页面类型筛选">
+          <button
+            v-for="option in pageTypeOptions"
+            :key="option.key"
+            type="button"
+            :class="{ active: pageTypeFilter === option.key }"
+            @click="pageTypeFilter = option.key"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+        <label v-if="advancedPanelOpen" class="scan-toggle">
           <input v-model="showOnlyIssues" type="checkbox" />
           <span>只看需处理</span>
         </label>
@@ -97,8 +108,8 @@
       <div class="scan-summary">
         <span>业务页面 {{ coverageScan.summary.action_count }}</span>
         <span>当前显示 {{ visibleCoverageRows.length }}</span>
-        <span>{{ coverageScopeLabel }}</span>
-        <span v-if="coverageScan.summary.user_preference_count">已有个人配置 {{ coverageScan.summary.user_preference_count }}</span>
+        <span v-if="advancedPanelOpen">{{ coverageScopeLabel }}</span>
+        <span v-if="advancedPanelOpen && coverageScan.summary.user_preference_count">已有个人配置 {{ coverageScan.summary.user_preference_count }}</span>
         <span v-if="advancedPanelOpen">治理结论 {{ overallStatusLabel(coverageScan.summary.overall_status) }}</span>
         <span v-if="advancedPanelOpen">需处理 {{ coverageIssueRows.length }}</span>
         <span v-for="item in advancedPanelOpen ? remediationSummaryItems : []" :key="item.code">
@@ -483,6 +494,7 @@ const surface = ref<BusinessConfigSurfacePayload | null>(null);
 const coverageScan = ref<BusinessConfigCoverageScanPayload | null>(null);
 const showOnlyIssues = ref(false);
 const pageSearch = ref('');
+const pageTypeFilter = ref<'all' | 'form' | 'list'>('all');
 const listSearchAudit = ref<BusinessConfigListSearchAuditPayload | null>(null);
 const listSearchPanelOpen = ref(false);
 const selectedRuntimeRoute = ref<BusinessConfigCoverageScanItem['runtime_route'] | null>(null);
@@ -520,6 +532,11 @@ const sections = computed(() => surface.value?.sections || []);
 const visibleSections = computed(() => sections.value.filter((section) => advancedPanelOpen.value || section.key !== 'menu'));
 const currentModel = computed(() => String(scopeModel.value || surface.value?.model || '').trim());
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value));
+const pageTypeOptions = [
+  { key: 'all' as const, label: '全部页面' },
+  { key: 'form' as const, label: '表单页面' },
+  { key: 'list' as const, label: '列表页面' },
+];
 function isCoverageIssue(row: BusinessConfigCoverageScanItem) {
   return !row.is_complete || !row.is_runtime_complete || !row.has_menu;
 }
@@ -546,14 +563,19 @@ const pageSearchText = computed(() => pageSearch.value.trim().toLowerCase());
 const visibleCoverageRows = computed(() => {
   const rows = showOnlyIssues.value ? coverageIssueRows.value : coverageScan.value?.items || [];
   const keyword = pageSearchText.value;
-  const filtered = keyword
-    ? rows.filter((row) => [
-      row.name,
-      row.model,
-      row.view_mode,
-      pageViewModeText(row),
-    ].some((text) => String(text || '').toLowerCase().includes(keyword)))
-    : rows;
+  const filtered = rows
+    .filter((row) => {
+      if (pageTypeFilter.value === 'form') return row.target_view_types.includes('form');
+      if (pageTypeFilter.value === 'list') return rowHasListSearchConfig(row);
+      return true;
+    })
+    .filter((row) => {
+      if (!keyword) return true;
+      const searchable = advancedPanelOpen.value
+        ? [row.name, row.model, row.view_mode, pageViewModeText(row)]
+        : [row.name, pageViewModeText(row)];
+      return searchable.some((text) => String(text || '').toLowerCase().includes(keyword));
+    });
   return filtered.slice(0, 60);
 });
 const remediationSummaryItems = computed(() => {
@@ -1591,6 +1613,34 @@ h1 {
   background: var(--sc-app-bg);
   color: var(--sc-app-text-primary);
   font-size: 13px;
+}
+
+.page-type-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-bg);
+}
+
+.page-type-tabs button {
+  min-height: 28px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.page-type-tabs button.active {
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  box-shadow: 0 0 0 1px var(--sc-app-border);
 }
 
 .scan-toggle {
