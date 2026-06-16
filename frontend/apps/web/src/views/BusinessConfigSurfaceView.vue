@@ -135,7 +135,7 @@
             <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
           </div>
           <div class="scan-row-actions">
-            <button type="button" class="ghost small primary" @click="openDesignerForRow(row)">设计表单</button>
+            <button v-if="rowHasFormConfig(row)" type="button" class="ghost small primary" @click="openDesignerForRow(row)">设计表单</button>
             <button
               v-if="rowHasListSearchConfig(row)"
               type="button"
@@ -198,7 +198,7 @@
       </div>
     </section>
     <section v-if="!loading && currentModel" class="section-grid">
-      <article v-for="section in visibleSections" :key="section.key" class="config-card">
+      <article v-for="section in visibleConfigSections" :key="section.key" class="config-card">
         <div class="config-card-head">
           <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
           <strong :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.contract_count) }}</strong>
@@ -554,6 +554,20 @@ const designerTitle = computed(() => {
 
 const sections = computed(() => surface.value?.sections || []);
 const visibleSections = computed(() => sections.value.filter((section) => advancedPanelOpen.value || section.key !== 'menu'));
+const selectedCoverageRow = computed(() => (coverageScan.value?.items || []).find((row) => row.action_id === scopeAction.value));
+const selectedPageHasFormConfig = computed(() => {
+  const row = selectedCoverageRow.value;
+  return row ? rowHasFormConfig(row) : true;
+});
+const selectedPageHasListSearchConfig = computed(() => {
+  const row = selectedCoverageRow.value;
+  return row ? rowHasListSearchConfig(row) : true;
+});
+const visibleConfigSections = computed(() => visibleSections.value.filter((section) => {
+  if (section.key === 'form') return selectedPageHasFormConfig.value;
+  if (section.key === 'list_search') return selectedPageHasListSearchConfig.value;
+  return true;
+}));
 const currentModel = computed(() => String(scopeModel.value || surface.value?.model || '').trim());
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value));
 const pageTypeOptions = [
@@ -725,6 +739,11 @@ function pageDesignStatus(row: BusinessConfigCoverageScanItem) {
 function rowHasListSearchConfig(row: BusinessConfigCoverageScanItem) {
   return row.target_view_types.some((viewType) => viewType === 'tree' || viewType === 'search')
     || String(row.view_mode || '').split(',').some((viewType) => ['tree', 'list', 'search'].includes(viewType.trim()));
+}
+
+function rowHasFormConfig(row: BusinessConfigCoverageScanItem) {
+  return row.target_view_types.includes('form')
+    || String(row.view_mode || '').split(',').some((viewType) => viewType.trim() === 'form');
 }
 
 function runtimeReasonLabel(reason: string) {

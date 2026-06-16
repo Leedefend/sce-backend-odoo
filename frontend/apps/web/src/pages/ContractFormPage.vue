@@ -271,8 +271,10 @@
               :class="{ 'contract-field-governance-audit--warning': formConfigAuditResult?.hasConflict }"
             >{{ formConfigAuditSummary }}</span>
             <button class="ghost" type="button" :disabled="busy || formConfigAuditBusy" @click="auditCurrentFormConfiguration">检查效果</button>
-            <button class="chip-btn" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
-            <button class="ghost" type="button" :disabled="busy || hasCurrentFormFieldDraftChanges" @click="previewLowCodeConfiguredPage">预览当前页面</button>
+            <button class="chip-btn" type="button" :disabled="busy" @click="previewCurrentFormConfiguration">
+              {{ hasCurrentFormFieldDraftChanges ? '保存并预览' : '预览当前页面' }}
+            </button>
+            <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
             <button class="ghost" type="button" :disabled="busy" @click="returnToBusinessConfigDesigner">返回页面列表</button>
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
           </div>
@@ -8803,6 +8805,14 @@ function previewLowCodeConfiguredPage() {
   router.push({ path: route.path, query });
 }
 
+async function previewCurrentFormConfiguration() {
+  if (hasCurrentFormFieldDraftChanges.value) {
+    const saved = await saveContractFieldOrder();
+    if (!saved) return;
+  }
+  previewLowCodeConfiguredPage();
+}
+
 function returnToBusinessConfigDesigner() {
   router.push({
     path: '/admin/business-config',
@@ -8811,7 +8821,7 @@ function returnToBusinessConfigDesigner() {
 }
 
 async function saveContractFieldOrder() {
-  if (!hasCurrentFormFieldDraftChanges.value) return;
+  if (!hasCurrentFormFieldDraftChanges.value) return true;
   const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
   const target = parseMaybeJsonRecord(configAction?.target);
   const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
@@ -8826,7 +8836,7 @@ async function saveContractFieldOrder() {
   if (!('field_order' in applyParams) && !('field_visibility' in applyParams)) {
     fieldVisibilityDirty.value = false;
     contractModeFeedback.value = '';
-    return;
+    return true;
   }
   busyKind.value = 'action';
   try {
@@ -8869,9 +8879,11 @@ async function saveContractFieldOrder() {
     fieldVisibilityDirty.value = false;
     contractModeFeedback.value = '表单设置已保存';
     await reload();
+    return true;
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'field order update failed';
     status.value = 'error';
+    return false;
   } finally {
     busyKind.value = null;
   }
