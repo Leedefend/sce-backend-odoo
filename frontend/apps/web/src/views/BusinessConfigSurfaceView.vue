@@ -304,10 +304,10 @@
           <p>这些配置写入正式业务契约，不写入个人列偏好。</p>
         </div>
         <div class="edit-panel-actions">
-          <button type="button" class="ghost small" :disabled="!previewRouteTarget.path || hasListSearchDraftChanges" @click="previewSelectedRuntimeRoute">
-            预览页面
+          <button type="button" class="ghost small primary" :disabled="listSearchSaving || !previewRouteTarget.path" @click="previewListSearchConfig">
+            {{ hasListSearchDraftChanges ? (listSearchSaving ? '保存中...' : '保存并预览') : '预览页面' }}
           </button>
-          <button type="button" class="ghost small primary" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="saveListSearchConfig">
+          <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="saveListSearchConfig">
             {{ listSearchSaving ? '保存中...' : '保存业务默认' }}
           </button>
         </div>
@@ -420,7 +420,7 @@
         </section>
       </div>
       <div class="edit-meta">
-        <span v-if="hasListSearchDraftChanges" class="edit-dirty">配置已调整，保存后可预览效果</span>
+        <span v-if="hasListSearchDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
         <span>个人偏好记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
         <span>边界：{{ listSearchAudit?.user_preference_boundary || 'ui_only' }}</span>
       </div>
@@ -1147,7 +1147,7 @@ async function loadListSearchConfig() {
 }
 
 async function saveListSearchConfig() {
-  if (!currentModel.value || !hasListSearchDraftChanges.value) return;
+  if (!currentModel.value || !hasListSearchDraftChanges.value) return false;
   listSearchSaving.value = true;
   error.value = '';
   message.value = '';
@@ -1165,11 +1165,21 @@ async function saveListSearchConfig() {
     await loadSurface();
     await loadListSearchConfig();
     message.value = `已保存 ${result.saved_count} 个业务配置契约`;
+    return true;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '列表/搜索配置保存失败';
+    return false;
   } finally {
     listSearchSaving.value = false;
   }
+}
+
+async function previewListSearchConfig() {
+  if (hasListSearchDraftChanges.value) {
+    const saved = await saveListSearchConfig();
+    if (!saved) return;
+  }
+  await previewSelectedRuntimeRoute();
 }
 
 function versionParams(viewType?: string) {
