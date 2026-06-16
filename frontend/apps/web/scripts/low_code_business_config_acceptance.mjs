@@ -278,11 +278,36 @@ async function main() {
     await page.getByRole("button", { name: "返回配置" }).first().click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 20000 });
     await page.waitForSelector(".scan-row--selected", { timeout: 20000 });
+    await page.waitForSelector(".config-card h2", { timeout: 20000 });
     const returnedTitle = await page.locator(".business-config-header h1").innerText();
     const returnedSelected = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
-    report.checks.returnPath = { returnedTitle, returnedSelected, url: page.url() };
+    const returnedCards = await page.locator(".config-card h2").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    const returnedUrl = new URL(page.url());
+    const returnedQuery = {
+      model: returnedUrl.searchParams.get("model"),
+      actionId: returnedUrl.searchParams.get("action_id"),
+      openPages: returnedUrl.searchParams.get("open_pages"),
+      openFormConfig: returnedUrl.searchParams.get("open_form_config"),
+      pageLabel: returnedUrl.searchParams.get("page_label"),
+    };
+    report.checks.returnPath = { returnedTitle, returnedSelected, returnedCards, url: page.url(), returnedQuery };
     assert(returnedTitle.includes("项目合同汇总"), "返回配置后标题丢失", { returnedTitle });
     assert(returnedSelected === "项目合同汇总", "返回配置后选中页面丢失", { returnedSelected });
+    assert(
+      returnedQuery.model === "construction.contract"
+        && returnedQuery.actionId === "562"
+        && returnedQuery.openPages === "1"
+        && returnedQuery.pageLabel === "项目合同汇总",
+      "返回配置后页面上下文丢失",
+      returnedQuery,
+    );
+    assert(
+      returnedCards.includes("表单字段与布局") && returnedCards.includes("列表与搜索"),
+      "返回配置后配置卡片丢失",
+      { returnedCards },
+    );
 
     report.ok = true;
   } catch (err) {
