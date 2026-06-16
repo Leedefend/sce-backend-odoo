@@ -304,10 +304,10 @@
           <p>这些配置写入正式业务契约，不写入个人列偏好。</p>
         </div>
         <div class="edit-panel-actions">
-          <button type="button" class="ghost small" :disabled="!previewRouteTarget.path" @click="previewSelectedRuntimeRoute">
+          <button type="button" class="ghost small" :disabled="!previewRouteTarget.path || hasListSearchDraftChanges" @click="previewSelectedRuntimeRoute">
             预览页面
           </button>
-          <button type="button" class="ghost small primary" :disabled="listSearchSaving" @click="saveListSearchConfig">
+          <button type="button" class="ghost small primary" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="saveListSearchConfig">
             {{ listSearchSaving ? '保存中...' : '保存业务默认' }}
           </button>
         </div>
@@ -420,6 +420,7 @@
         </section>
       </div>
       <div class="edit-meta">
+        <span v-if="hasListSearchDraftChanges" class="edit-dirty">配置已调整，保存后可预览效果</span>
         <span>个人偏好记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
         <span>边界：{{ listSearchAudit?.user_preference_boundary || 'ui_only' }}</span>
       </div>
@@ -479,6 +480,7 @@ const versionContracts = ref<BusinessConfigContractVersionsPayload['contracts']>
 const listColumnsText = ref('');
 const searchFiltersText = ref('');
 const searchGroupByText = ref('');
+const listSearchBase = ref({ list: '', filter: '', group: '' });
 const listColumnDraft = ref('');
 const searchFilterDraft = ref('');
 const searchGroupDraft = ref('');
@@ -565,6 +567,11 @@ const previewRouteTarget = computed(() => {
   }
   return { path: '', query: {} };
 });
+const hasListSearchDraftChanges = computed(() => (
+  normalizeNamesText(listColumnsText.value) !== listSearchBase.value.list
+  || normalizeNamesText(searchFiltersText.value) !== listSearchBase.value.filter
+  || normalizeNamesText(searchGroupByText.value) !== listSearchBase.value.group
+));
 
 function numericQuery(name: string) {
   const parsed = Number(route.query[name] || 0);
@@ -1032,6 +1039,10 @@ function namesToText(names: string[]) {
   return names.join(', ');
 }
 
+function normalizeNamesText(raw: string) {
+  return namesToText(parseNames(raw));
+}
+
 function parseNames(raw: string) {
   const seen = new Set<string>();
   return String(raw || '')
@@ -1122,6 +1133,11 @@ async function loadListSearchConfig() {
     listColumnsText.value = namesToText(result.business_config_list_columns || []);
     searchFiltersText.value = namesToText(result.business_config_search_filters || []);
     searchGroupByText.value = namesToText(result.business_config_search_group_by || []);
+    listSearchBase.value = {
+      list: normalizeNamesText(listColumnsText.value),
+      filter: normalizeNamesText(searchFiltersText.value),
+      group: normalizeNamesText(searchGroupByText.value),
+    };
     listSearchPanelOpen.value = true;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '列表/搜索配置读取失败';
@@ -1131,7 +1147,7 @@ async function loadListSearchConfig() {
 }
 
 async function saveListSearchConfig() {
-  if (!currentModel.value) return;
+  if (!currentModel.value || !hasListSearchDraftChanges.value) return;
   listSearchSaving.value = true;
   error.value = '';
   message.value = '';
@@ -1877,6 +1893,10 @@ h1 {
   gap: 8px 12px;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
+}
+
+.edit-dirty {
+  color: var(--sc-app-warning-text);
 }
 
 .preference-list {
