@@ -5,11 +5,16 @@
             <field name="name">sc.tax.deduction.registration.search</field>
             <field name="model">sc.tax.deduction.registration</field>
             <field name="arch" type="xml">
-                <search string="抵扣登记">
+                <search string="抵扣税务办理">
                     <field name="name"/>
                     <field name="document_no"/>
+                    <field name="business_category_id"/>
                     <field name="project_id"/>
                     <field name="partner_id"/>
+                    <field name="company_contractor_responsibility_state" optional="show"/>
+                    <field name="company_contractor_arrival_unprocessed_amount" optional="hide" sum="到款可处理余额合计"/>
+                    <field name="company_contractor_arrival_over_processed_amount" optional="show" sum="到款超处理金额合计"/>
+                    <field name="company_contractor_self_funding_balance" optional="hide" sum="自筹未退余额合计"/>
                     <field name="partner_name"/>
                     <field name="deduction_unit_name"/>
                     <field name="invoice_no"/>
@@ -33,8 +38,10 @@
             <field name="name">sc.tax.deduction.registration.tree</field>
             <field name="model">sc.tax.deduction.registration</field>
             <field name="arch" type="xml">
-                <tree string="抵扣登记">
+                <tree string="抵扣税务办理">
                     <field name="name"/>
+                    <field name="deduction_flow_label"/>
+                    <field name="business_category_id" optional="show"/>
                     <field name="document_date"/>
                     <field name="deduction_confirm_date"/>
                     <field name="document_no"/>
@@ -64,7 +71,7 @@
             <field name="name">sc.tax.deduction.registration.form</field>
             <field name="model">sc.tax.deduction.registration</field>
             <field name="arch" type="xml">
-                <form string="抵扣登记">
+                <form string="抵扣税务办理">
                     <header>
                         <button name="action_confirm" string="确认" type="object" class="btn-primary"
                                 invisible="state != 'draft'"/>
@@ -77,17 +84,19 @@
                     </header>
                     <sheet>
                         <group>
-                            <group>
+                            <group string="业务方向">
                                 <field name="name" readonly="1"/>
+                                <field name="source_origin" invisible="1"/>
+                                <field name="deduction_flow_label" readonly="1"/>
+                                <field name="business_category_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_date" readonly="state == 'legacy_confirmed'"/>
                                 <field name="deduction_confirm_date" readonly="state == 'legacy_confirmed'"/>
                             </group>
-                            <group>
+                            <group string="项目与往来单位">
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id"/>
-                                <field name="partner_name" readonly="state == 'legacy_confirmed'"/>
                             </group>
                         </group>
                         <group string="发票信息">
@@ -96,7 +105,7 @@
                             <field name="invoice_date" readonly="state == 'legacy_confirmed'"/>
                             <field name="tax_rate_text" readonly="1"/>
                         </group>
-                        <group string="金额">
+                        <group string="抵扣金额与税额">
                             <field name="invoice_amount_untaxed" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_tax_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_amount_total" readonly="state == 'legacy_confirmed'"/>
@@ -111,18 +120,46 @@
                             <field name="deduction_unit_name" readonly="state == 'legacy_confirmed'"/>
                             <field name="withholding_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="deduction_reason" readonly="state == 'legacy_confirmed'" nolabel="1"/>
+                        </group>
+                        <group string="办理说明与附件">
+                            <field name="note"/>
                             <field name="attachment_ids" widget="many2many_binary" readonly="state == 'legacy_confirmed'"/>
                         </group>
-                        <group string="历史追溯">
-                            <field name="source_origin" readonly="1"/>
-                            <field name="legacy_source_model" readonly="1"/>
-                            <field name="legacy_source_table" readonly="1"/>
-                            <field name="legacy_record_id" readonly="1"/>
-                            <field name="legacy_document_state" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="note" nolabel="1"/>
-                        </group>
+                        <notebook>
+                            <page string="责任余额" invisible="not company_contractor_responsibility_summary_id">
+                                <group string="公司-承包人责任约束">
+                                    <field name="company_contractor_responsibility_summary_id" invisible="1"/>
+                                    <field name="company_contractor_responsibility_state" readonly="1"/>
+                                    <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
+                                    <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
+                                    <field name="company_contractor_self_funding_balance" readonly="1"/>
+                                    <field name="company_contractor_responsibility_notice" readonly="1" nolabel="1"/>
+                                    <button name="action_view_company_contractor_responsibility_summary"
+                                            type="object"
+                                            string="查看责任余额"
+                                            class="btn-secondary"
+                                            invisible="not company_contractor_responsibility_summary_id"/>
+                                </group>
+                            </page>
+                            <page string="历史办理信息" invisible="source_origin != 'legacy'">
+                                <group>
+                                    <field name="legacy_visible_project_name" readonly="1"/>
+                                    <field name="partner_name" readonly="1"/>
+                                    <field name="legacy_document_state" readonly="1"/>
+                                </group>
+                            </page>
+                            <page string="迁移来源" invisible="source_origin != 'legacy'">
+                                <group>
+                                    <field name="legacy_source_model" readonly="1"/>
+                                    <field name="legacy_source_table" readonly="1"/>
+                                    <field name="legacy_record_id" readonly="1"/>
+                                    <field name="creator_legacy_user_id" readonly="1"/>
+                                    <field name="creator_name" readonly="1"/>
+                                    <field name="created_time" readonly="1"/>
+                                    <field name="active"/>
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                     <chatter/>
                 </form>

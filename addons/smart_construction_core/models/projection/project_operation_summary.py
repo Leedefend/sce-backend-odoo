@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models, tools
+from odoo import api, fields, models, tools
+from odoo.exceptions import UserError
 
 
 class ScProjectOperationSummary(models.Model):
@@ -8,6 +9,10 @@ class ScProjectOperationSummary(models.Model):
     _auto = False
     _rec_name = "project_name"
     _order = "legacy_pid desc, project_name"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_project",
+        "action_open_source_fact",
+    }
 
     project_id = fields.Many2one("project.project", string="项目", readonly=True, index=True)
     project_name = fields.Char(string="项目名称", readonly=True, index=True)
@@ -31,6 +36,57 @@ class ScProjectOperationSummary(models.Model):
     net_income_amount = fields.Monetary(string="净收入", currency_field="currency_id", readonly=True)
     operation_income_amount = fields.Monetary(string="经营收入", currency_field="currency_id", readonly=True)
     coverage_note = fields.Char(string="承载说明", readonly=True)
+
+    def _raise_readonly_projection(self):
+        raise UserError("项目经营统计表是旧系统经营统计事实汇总结果，请从来源项目或统计事实维护数据。")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._raise_readonly_projection()
+
+    def write(self, vals):
+        self._raise_readonly_projection()
+
+    def unlink(self):
+        self._raise_readonly_projection()
+
+    def _open_action(self, action_xmlid, name, domain, context=None):
+        self.ensure_one()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        result = action.sudo().read()[0] if action else {"type": "ir.actions.act_window", "view_mode": "tree,form"}
+        result.update(
+            {
+                "name": "%s / %s" % (self.project_name or "项目经营统计表", name),
+                "domain": domain,
+                "context": context or {"create": False},
+                "target": "current",
+            }
+        )
+        return result
+
+    def action_open_project(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "%s / 项目档案" % (self.project_name or "项目经营统计表"),
+            "res_model": "project.project",
+            "view_mode": "tree,form",
+            "domain": [("id", "=", self.project_id.id if self.project_id else 0)],
+            "context": {"create": False},
+            "target": "current",
+        }
+
+    def action_open_source_fact(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "%s / 旧项目经营统计事实" % (self.project_name or "项目经营统计表"),
+            "res_model": "sc.legacy.project.operation.report.fact",
+            "view_mode": "tree,form",
+            "domain": [("legacy_project_id", "=", self.legacy_project_id)],
+            "context": {"create": False, "edit": False, "delete": False},
+            "target": "current",
+        }
 
     def init(self):
         self._cr.execute(

@@ -19,18 +19,22 @@ class CompanyConsistencyRule(BaseRule):
 
         for pr in Payment.search(self._scope_domain("payment.request")):
             checked += 1
-            settle = pr.settlement_id
-            if settle and pr.company_id and settle.company_id and pr.company_id != settle.company_id:
+            linked_settlements = pr._linked_settlement_orders()
+            bad_settlements = linked_settlements.filtered(
+                lambda settle: pr.company_id and settle.company_id and pr.company_id != settle.company_id
+            )
+            if bad_settlements:
                 issues.append(
                     {
                         "model": "payment.request",
                         "res_id": pr.id,
                         "message": _("付款申请与结算单公司不一致"),
-                        "refs": {"settlement_id": settle.id},
+                        "refs": {"settlement_ids": bad_settlements.ids},
                     }
                 )
-            if settle and settle.purchase_order_ids:
-                bad = settle.purchase_order_ids.filtered(
+            purchase_orders = linked_settlements.mapped("purchase_order_ids")
+            if purchase_orders:
+                bad = purchase_orders.filtered(
                     lambda po: po.company_id and pr.company_id and po.company_id != pr.company_id
                 )
                 if bad:

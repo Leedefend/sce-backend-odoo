@@ -39,7 +39,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_project_capital_position",
             {
-                "name": "项目资金综合口径",
+                "name": "项目资金总览",
                 "action": f"{MODULE}.action_sc_finance_project_capital_position",
                 "model": "sc.finance.project.capital.position",
             },
@@ -47,7 +47,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_counterparty_position_summary",
             {
-                "name": "往来对象资金综合口径",
+                "name": "往来对象资金总览",
                 "action": f"{MODULE}.action_sc_finance_counterparty_position_summary",
                 "model": "sc.finance.counterparty.position.summary",
             },
@@ -55,15 +55,31 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_project_counterparty_position",
             {
-                "name": "项目往来对象资金口径",
+                "name": "项目与对象资金往来",
                 "action": f"{MODULE}.action_sc_finance_project_counterparty_position",
                 "model": "sc.finance.project.counterparty.position",
             },
         ),
         (
+            f"{MODULE}.menu_sc_company_contractor_responsibility_summary",
+            {
+                "name": "公司-承包人资金责任余额",
+                "action": f"{MODULE}.action_sc_company_contractor_responsibility_summary",
+                "model": "sc.company.contractor.responsibility.summary",
+            },
+        ),
+        (
+            f"{MODULE}.menu_sc_company_contractor_responsibility_fact",
+            {
+                "name": "公司-承包人资金责任明细",
+                "action": f"{MODULE}.action_sc_company_contractor_responsibility_fact",
+                "model": "sc.company.contractor.responsibility.fact",
+            },
+        ),
+        (
             f"{MODULE}.menu_sc_finance_business_project_summary",
             {
-                "name": "项目财务业务事实汇总",
+                "name": "项目收付款汇总",
                 "action": f"{MODULE}.action_sc_finance_business_project_summary",
                 "model": "sc.finance.business.project.summary",
             },
@@ -71,7 +87,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_interfund_movement_project_summary",
             {
-                "name": "项目资金往来事实汇总",
+                "name": "项目借还调拨汇总",
                 "action": f"{MODULE}.action_sc_interfund_movement_project_summary",
                 "model": "sc.interfund.movement.project.summary",
             },
@@ -79,7 +95,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_business_fact",
             {
-                "name": "财务业务事实明细",
+                "name": "项目收付款来源明细",
                 "action": f"{MODULE}.action_sc_finance_business_fact",
                 "model": "sc.finance.business.fact",
             },
@@ -87,7 +103,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_interfund_movement_fact",
             {
-                "name": "资金往来事实明细",
+                "name": "借款还款与调拨明细",
                 "action": f"{MODULE}.action_sc_interfund_movement_fact",
                 "model": "sc.interfund.movement.fact",
             },
@@ -98,6 +114,8 @@ EXPECTED_PRODUCT_MENU_XMLIDS = (
     f"{MODULE}.menu_sc_finance_project_capital_position",
     f"{MODULE}.menu_sc_finance_counterparty_position_summary",
     f"{MODULE}.menu_sc_finance_project_counterparty_position",
+    f"{MODULE}.menu_sc_company_contractor_responsibility_summary",
+    f"{MODULE}.menu_sc_company_contractor_responsibility_fact",
 )
 PRODUCT_KEYS = ("construction.standard", "construction.preview")
 VISIBLE_CHECK_USERS = ("wutao", "demo_role_project_read", "sc_fx_pm")

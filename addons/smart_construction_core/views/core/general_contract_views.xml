@@ -59,7 +59,7 @@
                     <field name="contract_attribute"/>
                     <field name="pricing_mode"/>
                     <field name="subcontract_mode"/>
-                    <field name="amount_total" sum="最终合同价"/>
+                    <field name="amount_total" sum="合同金额"/>
                     <field name="settlement_amount" sum="结算金额"/>
                     <field name="invoice_amount" sum="开票金额"/>
                     <field name="uninvoiced_amount" sum="未开票金额"/>
@@ -71,7 +71,7 @@
                     <field name="handler_id"/>
                     <field name="engineering_address"/>
                     <field name="change_rate"/>
-                    <field name="tax_rate"/>
+                    <field name="tax_id"/>
                 </tree>
             </field>
         </record>
@@ -101,81 +101,103 @@
                         <field name="can_review" invisible="1"/>
                     </header>
                     <sheet>
-                        <group>
+                        <group string="合同基本信息">
                             <group>
-                                <field name="name" readonly="1"/>
-                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
-                                <field name="operation_strategy" readonly="1"/>
-                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
-                                <field name="contract_no" readonly="state == 'legacy_confirmed'"/>
                                 <field name="contract_name" readonly="state == 'legacy_confirmed'"/>
-                                <field name="submitted_time" readonly="state == 'legacy_confirmed'"/>
+                                <field name="contract_no" readonly="1"/>
                                 <field name="contract_type" readonly="state == 'legacy_confirmed'"/>
                                 <field name="contract_direction" readonly="state == 'legacy_confirmed'"/>
-                                <field name="sign_status" readonly="state == 'legacy_confirmed'"/>
-                                <field name="contract_attribute" readonly="state == 'legacy_confirmed'"/>
-                                <field name="template_name" readonly="state == 'legacy_confirmed'"/>
-                                <field name="union_mode" readonly="state == 'legacy_confirmed'"/>
-                                <field name="pricing_mode" readonly="state == 'legacy_confirmed'"/>
-                                <field name="subcontract_mode" readonly="state == 'legacy_confirmed'"/>
                             </group>
                             <group>
+                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="operation_strategy" readonly="1"/>
                                 <field name="company_id" readonly="1"/>
-                                <field name="reject_reason" readonly="1" invisible="not reject_reason"/>
-                                <field name="contract_date" readonly="state == 'legacy_confirmed'"/>
-                                <field name="expected_sign_date" readonly="state == 'legacy_confirmed'"/>
-                                <field name="completion_date" readonly="state == 'legacy_confirmed'"/>
+                                <field name="name" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="合同方">
+                            <group>
+                                <field name="partner_id"/>
+                                <field name="partner_name_text" readonly="state == 'legacy_confirmed'"/>
+                                <field name="credit_code" readonly="state == 'legacy_confirmed'"/>
+                                <field name="contact_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="contact_phone" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                            <group>
+                                <field name="engineering_address" readonly="state == 'legacy_confirmed'"/>
+                                <field name="bank_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="bank_account" readonly="state == 'legacy_confirmed'"/>
                                 <field name="signing_place" readonly="state == 'legacy_confirmed'"/>
-                                <field name="is_supplement_contract" readonly="state == 'legacy_confirmed'"/>
-                                <field name="related_contract_no" readonly="state == 'legacy_confirmed'"/>
                             </group>
                         </group>
                         <group string="金额与条款">
-                            <field name="amount_total" readonly="state == 'legacy_confirmed'"/>
-                            <field name="amount_untaxed" readonly="state == 'legacy_confirmed'"/>
-                            <field name="settlement_amount" readonly="state == 'legacy_confirmed'"/>
-                            <field name="invoice_amount" readonly="state == 'legacy_confirmed'"/>
-                            <field name="uninvoiced_amount" readonly="1"/>
-                            <field name="received_amount" readonly="state == 'legacy_confirmed'"/>
-                            <field name="unreceived_amount" readonly="1"/>
-                            <field name="paid_amount" readonly="state == 'legacy_confirmed'"/>
-                            <field name="unpaid_amount" readonly="1"/>
-                            <field name="prepayment_amount" readonly="state == 'legacy_confirmed'"/>
-                            <field name="install_commissioning_payment" readonly="state == 'legacy_confirmed'"/>
-                            <field name="warranty_deposit" readonly="state == 'legacy_confirmed'"/>
-                            <field name="tax_rate" readonly="state == 'legacy_confirmed'"/>
-                            <field name="change_amount_total" readonly="state == 'legacy_confirmed'"/>
-                            <field name="change_rate" readonly="1"/>
-                            <field name="currency_id" invisible="1"/>
-                            <field name="payment_terms" readonly="state == 'legacy_confirmed'"/>
-                            <field name="special_condition" readonly="state == 'legacy_confirmed'"/>
+                            <group>
+                                <field name="amount_total" readonly="state == 'legacy_confirmed'"/>
+                                <field name="tax_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="tax_rate" invisible="1"/>
+                                <field name="amount_untaxed" readonly="state == 'legacy_confirmed'"/>
+                                <field name="currency_id"/>
+                            </group>
+                            <group>
+                                <field name="payment_terms" readonly="state == 'legacy_confirmed'"/>
+                                <field name="special_condition" readonly="state == 'legacy_confirmed'"/>
+                                <field name="prepayment_amount" readonly="state == 'legacy_confirmed'"/>
+                                <field name="warranty_deposit" readonly="state == 'legacy_confirmed'"/>
+                            </group>
                         </group>
-                        <group string="合同方">
-                            <field name="partner_id"/>
-                            <field name="partner_name_text" readonly="state == 'legacy_confirmed'"/>
-                            <field name="credit_code" readonly="state == 'legacy_confirmed'"/>
-                            <field name="contact_name" readonly="state == 'legacy_confirmed'"/>
-                            <field name="contact_phone" readonly="state == 'legacy_confirmed'"/>
-                            <field name="engineering_address" readonly="state == 'legacy_confirmed'"/>
-                            <field name="bank_name" readonly="state == 'legacy_confirmed'"/>
-                            <field name="bank_account" readonly="state == 'legacy_confirmed'"/>
+                        <group string="签署与履约">
+                            <group>
+                                <field name="contract_date" readonly="state == 'legacy_confirmed'"/>
+                                <field name="expected_sign_date" readonly="state == 'legacy_confirmed'"/>
+                                <field name="completion_date" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                            <group>
+                                <field name="pricing_mode" readonly="state == 'legacy_confirmed'"/>
+                                <field name="union_mode" readonly="state == 'legacy_confirmed'"/>
+                                <field name="subcontract_mode" readonly="state == 'legacy_confirmed'"/>
+                            </group>
                         </group>
                         <group string="办理信息">
-                            <field name="applicant_name" readonly="state == 'legacy_confirmed'"/>
-                            <field name="applicant_department" readonly="state == 'legacy_confirmed'"/>
-                            <field name="purchase_engineer" readonly="state == 'legacy_confirmed'"/>
-                            <field name="handler_id" readonly="state == 'legacy_confirmed'"/>
-                            <field name="entry_user_id" readonly="1"/>
-                            <field name="entry_data" readonly="state == 'legacy_confirmed'"/>
-                        </group>
-                        <group>
-                            <field name="note"/>
-                            <field name="active"/>
-                            <field name="archived"/>
+                            <group>
+                                <field name="applicant_name" readonly="state == 'legacy_confirmed'"/>
+                                <field name="applicant_department" readonly="state == 'legacy_confirmed'"/>
+                                <field name="handler_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="purchase_engineer" readonly="state == 'legacy_confirmed'"/>
+                            </group>
+                            <group>
+                                <field name="note"/>
+                                <field name="reject_reason" readonly="1" invisible="not reject_reason"/>
+                            </group>
                         </group>
                         <notebook>
                             <page string="合同附件">
                                 <field name="attachment_ids" widget="many2many_binary"/>
+                            </page>
+                            <page string="执行与历史">
+                                <group string="执行金额">
+                                    <field name="settlement_amount" readonly="1"/>
+                                    <field name="invoice_amount" readonly="1"/>
+                                    <field name="uninvoiced_amount" readonly="1"/>
+                                    <field name="received_amount" readonly="1"/>
+                                    <field name="unreceived_amount" readonly="1"/>
+                                    <field name="paid_amount" readonly="1"/>
+                                    <field name="unpaid_amount" readonly="1"/>
+                                    <field name="change_amount_total" readonly="1"/>
+                                    <field name="change_rate" readonly="1"/>
+                                </group>
+                                <group string="历史信息">
+                                    <field name="document_no" readonly="1"/>
+                                    <field name="submitted_time" readonly="1"/>
+                                    <field name="sign_status" readonly="1"/>
+                                    <field name="contract_attribute" readonly="1"/>
+                                    <field name="template_name" readonly="1"/>
+                                    <field name="is_supplement_contract" readonly="1"/>
+                                    <field name="related_contract_no" readonly="1"/>
+                                    <field name="entry_user_id" readonly="1"/>
+                                    <field name="entry_data" readonly="1"/>
+                                    <field name="active"/>
+                                    <field name="archived"/>
+                                </group>
                             </page>
                         </notebook>
                     </sheet>

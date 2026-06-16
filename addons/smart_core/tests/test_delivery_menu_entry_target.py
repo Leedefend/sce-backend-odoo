@@ -108,6 +108,34 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
 
         self.assertEqual(node["meta"]["entry_target"], entry_target)
 
+    def test_project_ledger_query_menu_uses_current_project_scope(self):
+        node = delivery_menu_defaults.build_delivery_menu_child(
+            {
+                "menu_key": "system.menu_379",
+                "label": "项目台账",
+                "menu_id": 379,
+                "action_id": 506,
+                "model": "project.project",
+                "entry_intent": "query",
+            }
+        )
+
+        self.assertEqual(node["meta"]["project_scope_policy"], "current_project")
+
+    def test_non_project_query_menu_stays_global_scope(self):
+        node = delivery_menu_defaults.build_delivery_menu_child(
+            {
+                "menu_key": "system.menu_598",
+                "label": "客户",
+                "menu_id": 598,
+                "action_id": 786,
+                "model": "res.partner",
+                "entry_intent": "query",
+            }
+        )
+
+        self.assertEqual(node["meta"]["project_scope_policy"], "global")
+
     def test_native_action_menu_child_exposes_compatibility_entry_target(self):
         node = delivery_menu_defaults.build_delivery_menu_child(
             {
@@ -279,6 +307,50 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         labels = [child.get("label") for group in groups for child in group.get("children") or []]
         self.assertEqual(labels, ["项目台账"])
 
+    def test_policy_scene_route_menu_is_allowed_when_authorized_by_route(self):
+        nav = menu_service.MenuService().build_nav(
+            policy={
+                "menu_groups": [
+                    {
+                        "group_key": "construction.finance",
+                        "group_label": "财务中心",
+                        "menus": [
+                            {
+                                "menu_key": "finance_workspace",
+                                "label": "财务综合办理",
+                                "route": "/s/finance.workspace",
+                                "scene_key": "finance.workspace",
+                                "release_state": "released",
+                                "enabled": True,
+                            }
+                        ],
+                    }
+                ]
+            },
+            role_surface={"role_code": "employee"},
+            native_nav=[
+                {
+                    "label": "财务中心",
+                    "children": [
+                        self._native_leaf(
+                            label="财务综合办理",
+                            menu_id=540,
+                            route="/s/finance.workspace",
+                            scene_key="finance.workspace",
+                            action_id=0,
+                            model="",
+                        )
+                    ],
+                }
+            ],
+        )
+
+        groups = (nav[0].get("children") or []) if nav else []
+        self.assertEqual([group.get("label") for group in groups], ["财务中心"])
+        child = groups[0]["children"][0]
+        self.assertEqual(child["label"], "财务综合办理")
+        self.assertEqual(child["meta"]["entry_target"]["scene_key"], "finance.workspace")
+
     def test_user_acceptance_container_is_not_used_as_native_preview_group(self):
         groups = menu_service.MenuService()._native_preview_menus(
             native_nav=[
@@ -374,6 +446,93 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         ]
         self.assertEqual(subgroup_labels, ["基础资料", "发票税务"])
         self.assertEqual(leaf_labels, ["供应商/合作单位", "预缴税款"])
+
+    def test_merge_by_category_preserves_distinct_business_entry_targets(self):
+        common = {
+            "res_model": "sc.expense.claim",
+            "integration_model": "sc.expense.claim",
+            "integration_action_id": 626,
+            "integration_action_xmlid": "smart_construction_core.action_sc_expense_claim",
+            "integration_view_modes": ["tree", "form"],
+            "integration_entry_target": {
+                "type": "compatibility",
+                "route": "/a/626",
+                "compatibility_refs": {"action_id": 626, "model": "sc.expense.claim"},
+            },
+            "entry_intent": "handling",
+            "entry_intent_label": "办理",
+            "disposition_policy": "merge_by_category",
+            "release_state": "released",
+            "enabled": True,
+        }
+        nav = menu_service.MenuService().build_nav(
+            policy={
+                "menu_groups": [
+                    {
+                        "group_key": "construction.finance",
+                        "group_label": "财务中心",
+                        "menus": [
+                            {
+                                **common,
+                                "menu_key": "expense",
+                                "label": "费用/保证金申请",
+                                "menu_id": 700,
+                                "route": "/a/626?menu_id=700",
+                                "action_id": 626,
+                                "menu_xmlid": "smart_construction_core.menu_sc_expense_claim",
+                                "integration_target": "sc.expense.claim 费用/保证金申请",
+                                "default_business_category_code": "finance.expense.reimbursement",
+                                "allowed_business_category_codes": ["finance.expense.reimbursement"],
+                            },
+                            {
+                                **common,
+                                "menu_key": "deposit_refund",
+                                "label": "保证金退回",
+                                "menu_id": 732,
+                                "route": "/a/813?menu_id=732",
+                                "action_id": 813,
+                                "menu_xmlid": "smart_construction_core.menu_sc_deposit_refund",
+                                "integration_target": "sc.expense.claim 保证金退回",
+                                "default_business_category_code": "finance.deposit.bid.return",
+                                "allowed_business_category_codes": ["finance.deposit.bid.return"],
+                            },
+                        ],
+                    }
+                ]
+            },
+            role_surface={"role_code": "employee"},
+            native_nav=[
+                {
+                    "label": "财务中心",
+                    "children": [
+                        self._native_leaf(
+                            label="费用/保证金申请",
+                            menu_id=700,
+                            route="/a/626?menu_id=700",
+                            action_id=626,
+                            model="sc.expense.claim",
+                            menu_xmlid="smart_construction_core.menu_sc_expense_claim",
+                        ),
+                        self._native_leaf(
+                            label="保证金退回",
+                            menu_id=732,
+                            route="/a/813?menu_id=732",
+                            action_id=813,
+                            model="sc.expense.claim",
+                            menu_xmlid="smart_construction_core.menu_sc_deposit_refund",
+                        ),
+                    ],
+                }
+            ],
+        )
+
+        labels = [
+            child.get("label")
+            for group in (nav[0].get("children") or [])
+            for child in (group.get("children") or [])
+        ]
+        self.assertIn("费用/保证金申请", labels)
+        self.assertIn("保证金退回", labels)
 
 
 if __name__ == "__main__":

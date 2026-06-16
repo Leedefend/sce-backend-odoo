@@ -38,13 +38,22 @@ def scalar(sql: str) -> object:
 
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_receipt_income_projection_write_result_v1.json"
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
+Category = env["sc.business.category"].sudo()  # noqa: F821
+receipt_project_category_id = Category.search(
+    [("code", "=", "finance.receipt.income.project"), ("target_model", "=", "sc.receipt.income")],
+    limit=1,
+).id
+receipt_progress_category_id = Category.search(
+    [("code", "=", "finance.receipt.income.progress"), ("target_model", "=", "sc.receipt.income")],
+    limit=1,
+).id
 before = int(scalar("SELECT COUNT(*) FROM sc_receipt_income") or 0)
 
 env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_receipt_income (
-      name, source_origin, source_kind, state, project_id, partner_id,
+      name, source_origin, source_kind, business_category_id, state, project_id, partner_id,
       date_receipt, document_no, receipt_type, legacy_receipt_type, legacy_receipt_subtype,
       income_category, amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id,
@@ -55,6 +64,11 @@ env.cr.execute(  # noqa: F821
       COALESCE(NULLIF(f.document_no, ''), 'LEGACY-INCOME-' || f.legacy_record_id),
       'legacy',
       'receipt_income',
+      CASE
+        WHEN f.source_family = 'engineering_progress_receipt_visible' OR f.income_category = '工程进度款收入'
+          THEN %s
+        ELSE %s
+      END,
       CASE WHEN COALESCE(f.legacy_state, '') = '2' THEN 'legacy_confirmed' ELSE 'draft' END,
       f.project_id,
       COALESCE(f.partner_id, partner_match.id),
@@ -108,6 +122,7 @@ env.cr.execute(  # noqa: F821
       partner_id = EXCLUDED.partner_id,
       date_receipt = EXCLUDED.date_receipt,
       document_no = EXCLUDED.document_no,
+      business_category_id = COALESCE(sc_receipt_income.business_category_id, EXCLUDED.business_category_id),
       receipt_type = EXCLUDED.receipt_type,
       legacy_receipt_type = EXCLUDED.legacy_receipt_type,
       legacy_receipt_subtype = EXCLUDED.legacy_receipt_subtype,
@@ -122,13 +137,13 @@ env.cr.execute(  # noqa: F821
       write_uid = 1,
       write_date = NOW()
     """,
-    [currency_id],
+    [receipt_progress_category_id or None, receipt_project_category_id or None, currency_id],
 )
 
 env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_receipt_income (
-      name, source_origin, source_kind, state, project_id, partner_id, contract_id,
+      name, source_origin, source_kind, business_category_id, state, project_id, partner_id, contract_id,
       date_receipt, document_no, receipt_type, legacy_receipt_type, legacy_receipt_subtype,
       income_category, payment_method,
       receiving_account, bill_no, invoice_ref, amount, deducted_invoice_amount,
@@ -142,6 +157,7 @@ env.cr.execute(  # noqa: F821
       COALESCE(NULLIF(r.document_no, ''), 'LEGACY-RECEIPT-' || r.legacy_record_id),
       'legacy',
       'residual_receipt',
+      NULL,
       CASE WHEN COALESCE(r.document_state, '') = '2' THEN 'legacy_confirmed' ELSE 'draft' END,
       COALESCE(r.project_id, project_match.id),
       r.partner_id,
@@ -207,6 +223,7 @@ env.cr.execute(  # noqa: F821
       contract_id = EXCLUDED.contract_id,
       date_receipt = EXCLUDED.date_receipt,
       document_no = EXCLUDED.document_no,
+      business_category_id = COALESCE(sc_receipt_income.business_category_id, EXCLUDED.business_category_id),
       receipt_type = EXCLUDED.receipt_type,
       legacy_receipt_type = EXCLUDED.legacy_receipt_type,
       legacy_receipt_subtype = EXCLUDED.legacy_receipt_subtype,

@@ -42,7 +42,7 @@ if allowlist and env.cr.dbname not in allowlist:  # noqa: F821
 
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_invoice_registration_projection_write_result_v1.json"
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 default_issue_company_name = env.company.name  # noqa: F821
 include_income_invoice_facts = os.getenv("INVOICE_REGISTRATION_INCLUDE_INCOME_INVOICE_FACTS") == "1"
 before = int(scalar("SELECT COUNT(*) FROM sc_invoice_registration") or 0)

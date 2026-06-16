@@ -290,7 +290,7 @@ def import_profiles(rows: list[dict[str, Any]]) -> tuple[int, int, int, int]:
 def import_payroll(seq: int, rows: list[dict[str, Any]]) -> tuple[int, int, int, int]:
     spec = SPECS[seq]
     Doc = env["sc.hr.payroll.document"].sudo().with_context(active_test=False)  # noqa: F821
-    Currency = env.company.currency_id  # noqa: F821
+    Currency = env.ref("base.CNY", raise_if_not_found=False)  # noqa: F821
     created = updated = 0
     seen: set[str] = set()
     for index, row in enumerate(rows, start=1):

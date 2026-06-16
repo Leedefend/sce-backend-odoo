@@ -214,7 +214,7 @@ input_csv = resolve_input_csv()
 rows = load_rows(input_csv)
 people = person_index(rows)
 seen = existing_legacy_ids()
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 
 env.cr.execute("SELECT COUNT(*) FROM sc_document_admin_document WHERE fact_type = %s", (FACT_TYPE,))  # noqa: F821
 before_count = env.cr.fetchone()[0]  # noqa: F821

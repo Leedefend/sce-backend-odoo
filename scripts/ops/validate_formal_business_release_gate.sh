@@ -93,5 +93,9 @@ echo "FORMAL_BUSINESS_RELEASE_GATE_CHECK_START: business_capability"
 DB_NAME="$DB_NAME" "$ROOT_DIR/scripts/ops/validate_business_capability_gate.sh"
 echo "FORMAL_BUSINESS_RELEASE_GATE_CHECK_PASS: business_capability"
 
+echo "FORMAL_BUSINESS_RELEASE_GATE_CHECK_START: business_capability_productization_p1"
+DB_NAME="$DB_NAME" "$ROOT_DIR/scripts/ops/validate_business_capability_productization_p1.sh"
+echo "FORMAL_BUSINESS_RELEASE_GATE_CHECK_PASS: business_capability_productization_p1"
+
 finished_at="$(date -Iseconds)"
 echo "FORMAL_BUSINESS_RELEASE_GATE_RESULT: PASS db=${DB_NAME} started_at=${started_at} finished_at=${finished_at}"

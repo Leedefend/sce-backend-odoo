@@ -5,9 +5,10 @@
             <field name="name">sc.invoice.registration.search</field>
             <field name="model">sc.invoice.registration</field>
             <field name="arch" type="xml">
-                <search string="发票总台账">
+                <search string="发票税务办理">
                     <field name="name"/>
                     <field name="source_kind"/>
+                    <field name="business_category_id"/>
                     <field name="direction"/>
                     <field name="document_no"/>
                     <field name="application_date"/>
@@ -54,8 +55,10 @@
             <field name="name">sc.invoice.registration.tree</field>
             <field name="model">sc.invoice.registration</field>
             <field name="arch" type="xml">
-                <tree string="发票总台账">
+                <tree string="发票税务办理">
                     <field name="name"/>
+                    <field name="invoice_flow_label"/>
+                    <field name="business_category_id" optional="show"/>
                     <field name="source_kind"/>
                     <field name="direction"/>
                     <field name="state"/>
@@ -104,11 +107,46 @@
             </field>
         </record>
 
+        <record id="view_sc_invoice_application_user_tree" model="ir.ui.view">
+            <field name="name">sc.invoice.application.user.tree</field>
+            <field name="model">sc.invoice.registration</field>
+            <field name="arch" type="xml">
+                <tree string="销项开票申请">
+                    <field name="name" string="单据号"/>
+                    <field name="business_category_id" optional="show"/>
+                    <field name="state"/>
+                    <field name="invoice_date"/>
+                    <field name="invoice_no"/>
+                    <field name="invoice_code"/>
+                    <field name="invoice_type"/>
+                    <field name="invoice_content"/>
+                    <field name="amount_no_tax" sum="不含税金额"/>
+                    <field name="tax_amount" sum="税额"/>
+                    <field name="amount_total" sum="价税合计"/>
+                    <field name="actual_invoice_amount" optional="show" sum="实开总金额"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id" optional="show"/>
+                    <field name="settlement_id" optional="hide"/>
+                    <field name="document_no" optional="show"/>
+                    <field name="document_date" optional="show"/>
+                    <field name="applicant_name" optional="show"/>
+                    <field name="handler_name"/>
+                    <field name="invoice_holder"/>
+                    <field name="accounting_state"/>
+                    <field name="voucher_no"/>
+                    <field name="creator_name" optional="show"/>
+                    <field name="created_time" optional="show"/>
+                </tree>
+            </field>
+        </record>
+
         <record id="view_sc_invoice_registration_form" model="ir.ui.view">
             <field name="name">sc.invoice.registration.form</field>
             <field name="model">sc.invoice.registration</field>
             <field name="arch" type="xml">
-                <form string="发票登记">
+                <form string="发票税务办理">
                     <header>
                         <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
                                 invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"/>
@@ -127,15 +165,18 @@
                     </header>
                     <sheet>
                         <group>
-                            <group>
+                            <group string="业务方向">
                                 <field name="name" readonly="1"/>
+                                <field name="source_origin" invisible="1"/>
+                                <field name="invoice_flow_label" readonly="1"/>
+                                <field name="business_category_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="source_kind" readonly="state == 'legacy_confirmed'"/>
                                 <field name="direction" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_date" required="1" readonly="state == 'legacy_confirmed'"/>
                                 <field name="application_date" readonly="state == 'legacy_confirmed'"/>
                             </group>
-                            <group>
+                            <group string="项目与往来单位">
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id"/>
@@ -143,7 +184,7 @@
                                 <field name="settlement_id"/>
                             </group>
                         </group>
-                        <group string="发票">
+                        <group string="发票与税务信息">
                             <field name="invoice_state" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_date" readonly="state == 'legacy_confirmed'"/>
                             <field name="recognition_date" readonly="state == 'legacy_confirmed'"/>
@@ -151,9 +192,6 @@
                             <field name="invoice_code" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_type" readonly="state == 'legacy_confirmed'"/>
                             <field name="tax_rate" readonly="state == 'legacy_confirmed'"/>
-                            <field name="tax_type" readonly="state == 'legacy_confirmed'"/>
-                            <field name="prepaid_tax_date" readonly="state == 'legacy_confirmed'"/>
-                            <field name="tax_certificate_no" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_company_type" readonly="state == 'legacy_confirmed'"/>
                             <field name="recipient_unit_name" readonly="state == 'legacy_confirmed'"/>
                             <field name="caliber" readonly="state == 'legacy_confirmed'"/>
@@ -164,7 +202,12 @@
                             <field name="cost_category_name" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_count" readonly="state == 'legacy_confirmed'"/>
                         </group>
-                        <group string="金额">
+                        <group string="预缴税信息" invisible="source_kind != 'prepaid_tax' and direction != 'prepaid'">
+                            <field name="tax_type" readonly="state == 'legacy_confirmed'"/>
+                            <field name="prepaid_tax_date" readonly="state == 'legacy_confirmed'"/>
+                            <field name="tax_certificate_no" readonly="state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="发票金额与税额">
                             <field name="amount_no_tax" readonly="state == 'legacy_confirmed'"/>
                             <field name="tax_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="amount_total" readonly="state == 'legacy_confirmed'"/>
@@ -174,7 +217,7 @@
                             <field name="contract_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
-                        <group string="销项业务信息">
+                        <group string="销项业务信息" invisible="source_kind not in ['output_invoice_tax'] and direction != 'output'">
                             <field name="push_result" readonly="state == 'legacy_confirmed'"/>
                             <field name="kingdee_document_no" readonly="state == 'legacy_confirmed'"/>
                             <field name="expected_receipt_date" readonly="state == 'legacy_confirmed'"/>
@@ -186,15 +229,67 @@
                             <field name="accounting_state" readonly="state == 'legacy_confirmed'"/>
                             <field name="voucher_no" readonly="state == 'legacy_confirmed'"/>
                         </group>
-                        <group>
+                        <group string="办理说明">
                             <field name="note"/>
-                            <field name="creator_name" readonly="1"/>
-                            <field name="creator_legacy_user_id" readonly="1"/>
-                            <field name="created_time" readonly="1"/>
-                            <field name="legacy_attachment_ref" readonly="1"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
-                            <field name="active"/>
                         </group>
+                        <notebook>
+                            <page string="历史办理信息" invisible="source_origin != 'legacy'">
+                                <group>
+                                    <group string="旧系统发票口径">
+                                        <field name="legacy_document_state" readonly="1"/>
+                                        <field name="legacy_visible_data_type" readonly="1"/>
+                                        <field name="legacy_visible_contract_no" readonly="1"/>
+                                        <field name="legacy_visible_application_date" readonly="1"/>
+                                        <field name="legacy_visible_invoice_state" readonly="1"/>
+                                        <field name="legacy_visible_partner_name" readonly="1"/>
+                                        <field name="legacy_visible_note" readonly="1"/>
+                                    </group>
+                                    <group string="旧系统开票与金额">
+                                        <field name="legacy_visible_current_invoice_amount" readonly="1"/>
+                                        <field name="legacy_visible_cumulative_invoice_amount" readonly="1"/>
+                                        <field name="legacy_visible_invoice_count" readonly="1"/>
+                                        <field name="legacy_visible_tax_rate" readonly="1"/>
+                                        <field name="legacy_visible_surcharge_amount" readonly="1"/>
+                                        <field name="legacy_visible_related_receipt_amount" readonly="1"/>
+                                    </group>
+                                </group>
+                                <group>
+                                    <group string="旧系统票据线索">
+                                        <field name="legacy_visible_invoice_no" readonly="1"/>
+                                        <field name="legacy_visible_invoice_type" readonly="1"/>
+                                        <field name="legacy_visible_invoice_issue_company" readonly="1"/>
+                                        <field name="legacy_visible_kingdee_no" readonly="1"/>
+                                    </group>
+                                    <group string="旧系统往来与税号">
+                                        <field name="legacy_partner_name" readonly="1"/>
+                                        <field name="legacy_partner_tax_no" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="红冲关联" invisible="not red_flush_adjustment_id and not red_flush_origin_invoice_no">
+                                <group>
+                                    <field name="red_flush_adjustment_id" readonly="1"/>
+                                    <field name="red_flush_origin_source_model" readonly="1"/>
+                                    <field name="red_flush_origin_source_record_id" readonly="1"/>
+                                    <field name="red_flush_origin_invoice_no" readonly="1"/>
+                                    <field name="reject_reason" readonly="1"/>
+                                </group>
+                            </page>
+                            <page string="迁移来源" invisible="source_origin != 'legacy'">
+                                <group>
+                                    <field name="legacy_source_model" readonly="1"/>
+                                    <field name="legacy_source_table" readonly="1"/>
+                                    <field name="legacy_record_id" readonly="1"/>
+                                    <field name="legacy_partner_id" readonly="1"/>
+                                    <field name="legacy_attachment_ref" readonly="1"/>
+                                    <field name="creator_legacy_user_id" readonly="1"/>
+                                    <field name="creator_name" readonly="1"/>
+                                    <field name="created_time" readonly="1"/>
+                                    <field name="active"/>
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>

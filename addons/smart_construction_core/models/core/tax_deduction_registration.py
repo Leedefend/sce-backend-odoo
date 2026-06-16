@@ -3,11 +3,13 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_compare
 
+from ..support.state_guard import raise_guard
+
 
 class ScTaxDeductionRegistration(models.Model):
     _name = "sc.tax.deduction.registration"
     _description = "抵扣登记"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.company.contractor.responsibility.context.mixin"]
     _order = "deduction_confirm_date desc, document_date desc, id desc"
 
     name = fields.Char(string="登记单号", required=True, default="新建", copy=False, index=True)
@@ -31,6 +33,14 @@ class ScTaxDeductionRegistration(models.Model):
         required=True,
         index=True,
     )
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.tax.deduction.registration')]",
+    )
+    deduction_flow_label = fields.Char(string="办理事项", compute="_compute_deduction_flow_label")
     document_no = fields.Char(string="单据编号", index=True)
     document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     deduction_confirm_date = fields.Date(string="认证抵扣日期", index=True)
@@ -84,7 +94,7 @@ class ScTaxDeductionRegistration(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: (self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id).id,
     )
     legacy_source_model = fields.Char(string="历史来源模型", index=True, readonly=True)
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
@@ -104,13 +114,105 @@ class ScTaxDeductionRegistration(models.Model):
         ),
     ]
 
+    @api.model
+    def _context_project_id(self):
+        project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
+        try:
+            return int(project_id) if project_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
+    def _context_partner_id(self):
+        partner_id = self.env.context.get("default_partner_id") or self.env.context.get("current_partner_id")
+        try:
+            return int(partner_id) if partner_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        project_id = res.get("project_id") or self._context_project_id()
+        if project_id and "project_id" in fields_list:
+            res["project_id"] = project_id
+        partner_id = res.get("partner_id") or self._context_partner_id()
+        if partner_id and "partner_id" in fields_list:
+            res["partner_id"] = partner_id
+        return res
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            project_id = self._context_project_id()
+            if project_id:
+                vals.setdefault("project_id", project_id)
+            partner_id = self._context_partner_id()
+            if partner_id:
+                vals.setdefault("partner_id", partner_id)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
+            context_date = self.env.context.get("default_document_date") or self.env.context.get("current_document_date")
+            if context_date:
+                vals.setdefault("document_date", context_date)
+            context_deduction_amount = self.env.context.get("default_deduction_amount") or self.env.context.get("default_amount")
+            if context_deduction_amount:
+                vals.setdefault("deduction_amount", context_deduction_amount)
+            context_tax_amount = self.env.context.get("default_deduction_tax_amount")
+            if context_tax_amount:
+                vals.setdefault("deduction_tax_amount", context_tax_amount)
+            context_note = self.env.context.get("default_note")
+            if context_note:
+                vals.setdefault("note", context_note)
+            context_document_no = self.env.context.get("default_document_no") or self.env.context.get("current_source_document_no")
+            if context_document_no:
+                vals.setdefault("document_no", context_document_no)
+            context_partner_name = self.env.context.get("default_partner_name")
+            if context_partner_name:
+                vals.setdefault("partner_name", context_partner_name)
+                vals.setdefault("deduction_unit_name", context_partner_name)
+            for field_name in (
+                "invoice_no",
+                "invoice_code",
+                "invoice_date",
+                "invoice_amount_untaxed",
+                "invoice_tax_amount",
+                "invoice_amount_total",
+                "deduction_confirm_date",
+                "withholding_amount",
+                "deduction_reason",
+            ):
+                value = self.env.context.get("default_%s" % field_name)
+                if value:
+                    vals.setdefault(field_name, value)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.tax.deduction.registration") or _("Tax Deduction")
         return super().create(vals_list)
+
+    def _resolve_business_category_id(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        is_transfer_out = vals.get("is_transfer_out", self.env.context.get("default_is_transfer_out", False))
+        if not code and not is_transfer_out:
+            code = "tax.deduction.registration"
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", "sc.tax.deduction.registration")],
+            limit=1,
+        )
+        return category.id if category else False
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_tax_deduction_registration
+               SET business_category_id = (
+                   SELECT id FROM sc_business_category WHERE code = 'tax.deduction.registration' LIMIT 1
+               )
+             WHERE business_category_id IS NULL
+               AND COALESCE(is_transfer_out, false) = false
+            """
+        )
 
     @api.depends("invoice_amount_untaxed", "invoice_tax_amount")
     def _compute_tax_rate_text(self):
@@ -122,6 +224,18 @@ class ScTaxDeductionRegistration(models.Model):
                 continue
             rate = tax / untaxed * 100
             record.tax_rate_text = f"{rate:.2f}".rstrip("0").rstrip(".") + "%"
+
+    @api.depends("is_transfer_out", "withholding_amount", "deduction_tax_amount", "deduction_amount")
+    def _compute_deduction_flow_label(self):
+        for rec in self:
+            if rec.is_transfer_out:
+                rec.deduction_flow_label = _("进项税额转出")
+            elif rec.withholding_amount:
+                rec.deduction_flow_label = _("扣款抵扣")
+            elif rec.deduction_tax_amount or rec.deduction_amount:
+                rec.deduction_flow_label = _("进项税额抵扣")
+            else:
+                rec.deduction_flow_label = _("抵扣登记")
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
@@ -147,12 +261,21 @@ class ScTaxDeductionRegistration(models.Model):
         for rec in self:
             if rec.state != "draft":
                 raise UserError(_("只有草稿状态的抵扣登记可以确认。"))
+            before = rec._snapshot_audit_payload()
             rec.write({"state": "confirmed"})
+            rec._audit_transition(
+                "tax_deduction_confirmed",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_confirm",
+            )
 
     def action_deduct(self):
+        self._assert_finance_deduct_access()
         for rec in self:
             if rec.state not in ("draft", "confirmed"):
                 raise UserError(_("只有草稿或已确认状态的抵扣登记可以确认抵扣。"))
+            before = rec._snapshot_audit_payload()
             vals = {}
             if not rec.deduction_confirm_date:
                 vals["deduction_confirm_date"] = fields.Date.context_today(rec)
@@ -163,7 +286,24 @@ class ScTaxDeductionRegistration(models.Model):
             if vals:
                 rec.write(vals)
             rec._check_deduct_ready()
+            rec._check_company_contractor_deduction_responsibility_or_raise()
             rec.write({"state": "deducted"})
+            rec._audit_transition(
+                "tax_deduction_deducted",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_deduct",
+            )
+
+    def _has_finance_deduct_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
+    def _assert_finance_deduct_access(self):
+        if not self._has_finance_deduct_access():
+            raise UserError(_("你没有确认抵扣的财务确认权限。"))
 
     def _check_deduct_ready(self):
         for rec in self:
@@ -187,10 +327,75 @@ class ScTaxDeductionRegistration(models.Model):
             ) == 1:
                 raise UserError(_("抵扣金额不能超过发票不含税金额。"))
 
+    def _company_contractor_tax_deduction_responsibility_failures(self, summary, withholding_amount):
+        return self._company_contractor_responsibility_balance_failures(summary, withholding_amount, _("本次扣款金额"))
+
+    def _check_company_contractor_deduction_responsibility_or_raise(self):
+        for rec in self:
+            if rec.source_origin == "legacy" and rec.state == "legacy_confirmed":
+                continue
+            amount = rec.withholding_amount or 0.0
+            if amount <= 0:
+                continue
+            summary = rec.company_contractor_responsibility_summary_id
+            if not summary:
+                continue
+            failures = rec._company_contractor_tax_deduction_responsibility_failures(summary, amount)
+            if failures:
+                raise_guard(
+                    "TAX_DEDUCTION_RESPONSIBILITY_BALANCE_BLOCKED",
+                    f"抵扣登记[{rec.display_name}]",
+                    _("办理扣款抵扣"),
+                    reasons=failures,
+                    hints=[_("打开公司-承包人责任余额，核对到款确认、已拨付和已扣款明细后再继续办理。")],
+                )
+
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移抵扣登记不能在新系统取消。"))
             if rec.state not in ("draft", "confirmed"):
                 raise UserError(_("只有草稿或已确认状态的抵扣登记可以取消。"))
+            before = rec._snapshot_audit_payload()
             rec.write({"state": "cancel"})
+            rec._audit_transition(
+                "tax_deduction_cancelled",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_cancel",
+            )
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "source_origin": self.source_origin,
+            "business_category_code": self.business_category_id.code,
+            "project_id": self.project_id.id,
+            "partner_id": self.partner_id.id,
+            "partner_name": self.partner_name,
+            "invoice_no": self.invoice_no,
+            "invoice_code": self.invoice_code,
+            "invoice_amount_untaxed": self.invoice_amount_untaxed,
+            "invoice_tax_amount": self.invoice_tax_amount,
+            "invoice_amount_total": self.invoice_amount_total,
+            "deduction_amount": self.deduction_amount,
+            "deduction_tax_amount": self.deduction_tax_amount,
+            "withholding_amount": self.withholding_amount,
+            "is_transfer_out": self.is_transfer_out,
+            "deduction_reason": self.deduction_reason,
+        }
+
+    def _audit_transition(self, event_code, before, after, reason=None, action_name=None):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code=event_code,
+            model=self._name,
+            res_id=self.id,
+            action=action_name or event_code,
+            before=before,
+            after=after,
+            reason=reason,
+            company_id=self.company_id or self.env.company,
+            project_id=self.project_id,
+        )

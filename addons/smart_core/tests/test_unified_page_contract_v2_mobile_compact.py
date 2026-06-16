@@ -185,6 +185,108 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
 
         self.assertEqual(full["statusContract"]["globalStatus"]["pageAuth"], "read")
 
+    def _source_with_form_structure_summary(self, render_profile):
+        return {
+            "model": "tender.doc.purchase",
+            "view_type": "form",
+            "render_profile": render_profile,
+            "head": {"render_profile": render_profile},
+            "fields": {
+                "invoice_no": {"name": "invoice_no", "type": "char", "string": "发票号/凭证号"},
+                "amount": {"name": "amount", "type": "monetary", "string": "金额", "readonly": False},
+                "bid_id": {"name": "bid_id", "type": "many2one", "string": "投标", "readonly": False},
+                "receipt_partner_name": {"name": "receipt_partner_name", "type": "char", "string": "历史/快照收款单位", "readonly": True},
+                "legacy_state": {"name": "legacy_state", "type": "char", "string": "历史状态", "readonly": True},
+                "legacy_source_user": {"name": "legacy_source_user", "type": "char", "string": "历史录入人", "readonly": True},
+            },
+            "form_structure_contract": {
+                "source": "ui.contract.v2.form_structure_contract",
+                "viewType": "form",
+                "slots": [
+                    {
+                        "slot": "overview",
+                        "title": "办理总览",
+                        "fieldRefs": ["invoice_no", "amount"],
+                    },
+                    {
+                        "slot": "primary_facts",
+                        "title": "主业务事实",
+                        "groups": [
+                            {"name": "identity", "title": "申请信息", "fieldRefs": ["bid_id", "receipt_partner_name"]},
+                        ],
+                    },
+                    {
+                        "slot": "amount_progress",
+                        "title": "金额与进度",
+                        "groups": [
+                            {"name": "amounts", "title": "金额信息", "fieldRefs": ["amount"]},
+                        ],
+                    },
+                    {
+                        "slot": "details_source",
+                        "title": "明细与来源",
+                        "groups": [
+                            {
+                                "name": "history_check",
+                                "title": "历史核对信息",
+                                "role": "history_check",
+                                "fieldRefs": ["legacy_state", "legacy_source_user"],
+                            },
+                        ],
+                    },
+                ],
+            },
+        }
+
+    def test_form_structure_create_layout_starts_with_task_not_summary(self):
+        full = assembler.assemble_unified_page_contract_v2(
+            self._source_with_form_structure_summary("create"),
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.create.form.no.summary.first",
+        )
+
+        sheet = full["layoutContract"]["containerTree"][0]
+        self.assertEqual([child["type"] for child in sheet["children"]], ["group", "group"])
+        self.assertEqual([child["label"] for child in sheet["children"]], ["申请信息", "金额信息"])
+        rendered_names = [
+            node.get("name")
+            for group in sheet["children"]
+            for node in group.get("children", [])
+        ]
+        self.assertNotIn("receipt_partner_name", rendered_names)
+        self.assertNotIn("legacy_state", rendered_names)
+        self.assertNotIn("legacy_source_user", rendered_names)
+
+    def test_form_structure_readonly_layout_keeps_summary_first(self):
+        full = assembler.assemble_unified_page_contract_v2(
+            self._source_with_form_structure_summary("readonly"),
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.readonly.form.summary.first",
+        )
+
+        sheet = full["layoutContract"]["containerTree"][0]
+        self.assertEqual(sheet["children"][0]["type"], "group")
+        self.assertEqual(sheet["children"][0]["label"], "办理总览")
+        self.assertEqual(sheet["children"][1]["type"], "notebook")
+        tabs = sheet["children"][1]["tabs"]
+        history_tab = next(tab for tab in tabs if tab["label"] == "明细与来源")
+        history_fields = [
+            node.get("name")
+            for group in history_tab.get("children", [])
+            for node in group.get("children", [])
+        ]
+        primary_tab = next(tab for tab in tabs if tab["label"] == "主业务事实")
+        primary_fields = [
+            node.get("name")
+            for group in primary_tab.get("children", [])
+            for node in group.get("children", [])
+        ]
+        self.assertIn("receipt_partner_name", primary_fields)
+        self.assertIn("legacy_state", history_fields)
+        self.assertIn("legacy_source_user", history_fields)
+
     def test_ui_contract_v2_preserves_tree_column_optional_hide(self):
         source = {
             "model": "hr.department",
@@ -484,24 +586,97 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         tree = full["layoutContract"]["containerTree"]
         self.assertEqual([node["type"] for node in tree], ["header", "sheet"])
         sheet_children = tree[1]["children"]
-        self.assertEqual([node["type"] for node in sheet_children], ["group", "notebook"])
-        self.assertEqual(sheet_children[0]["label"], "办理总览")
-        self.assertEqual([node["name"] for node in sheet_children[0]["children"]], ["subject", "project_id", "visible_contract_amount"])
-        self.assertTrue(sheet_children[0]["children"][0]["readonly"])
-        pages = sheet_children[1]["tabs"]
-        self.assertEqual([page["label"] for page in pages], ["主业务事实", "明细与来源"])
-        self.assertEqual(pages[0]["formStructure"], {"slot": "primary_facts", "role": "primary_facts"})
-        self.assertEqual(pages[0]["children"][0]["label"], "业务识别")
-        self.assertEqual(pages[0]["children"][0]["formStructure"]["role"], "identity")
-        self.assertEqual(pages[0]["children"][0]["children"][1]["formStructureRole"]["role"], "identity")
+        self.assertEqual([node["type"] for node in sheet_children], ["group", "group"])
+        self.assertEqual([node["label"] for node in sheet_children], ["业务识别", "业务明细"])
+        self.assertEqual(sheet_children[0]["formStructure"]["slot"], "primary_facts")
+        self.assertEqual(sheet_children[0]["formStructure"]["role"], "identity")
+        self.assertEqual(sheet_children[0]["children"][1]["formStructureRole"]["role"], "identity")
         rendered_names = [
             node.get("name")
-            for page in pages
-            for group in page.get("children", [])
+            for group in sheet_children
             for node in group.get("children", [])
         ]
         self.assertNotIn("hidden_internal_note", rendered_names)
-        self.assertEqual(pages[1]["children"][0]["children"][0]["name"], "line_ids")
+        self.assertEqual(sheet_children[1]["children"][0]["name"], "line_ids")
+
+    def test_governed_form_layout_overlay_takes_precedence_over_form_structure(self):
+        source = {
+            "model": "res.partner",
+            "view_type": "form",
+            "governance": {
+                "view_orchestration": {
+                    "applied": True,
+                    "form_layout_overlay": True,
+                }
+            },
+            "source_trace": {
+                "view_orchestration": {
+                    "form_layout_overlay": True,
+                    "business_config_contracts": [{"id": 261, "name": "partner customer preference"}],
+                }
+            },
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "name": "sc_custom_partner_form_sheet",
+                            "children": [
+                                {
+                                    "type": "group",
+                                    "name": "sc_custom_partner_flat_fields",
+                                    "columns": 3,
+                                    "children": [
+                                        {"type": "field", "name": "name", "label": "客户名称"},
+                                        {"type": "field", "name": "company_type", "label": "客户类型"},
+                                        {"type": "field", "name": "vat", "label": "统一社会信用代码"},
+                                    ],
+                                }
+                            ],
+                        }
+                    ]
+                }
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "名称"},
+                "company_type": {"name": "company_type", "type": "selection", "string": "客户类型"},
+                "vat": {"name": "vat", "type": "char", "string": "税号"},
+                "category_id": {"name": "category_id", "type": "many2many", "string": "标签"},
+            },
+            "form_structure_contract": {
+                "source": "ui.contract.v2.form_structure_contract",
+                "mode": "business_task_form",
+                "fieldRoles": {
+                    "category_id": {"role": "identity", "slot": "primary_facts", "group": "identity"},
+                    "name": {"role": "identity", "slot": "primary_facts", "group": "identity"},
+                },
+                "slots": [
+                    {
+                        "slot": "primary_facts",
+                        "title": "主业务事实",
+                        "groups": [
+                            {"name": "identity", "title": "业务识别", "fieldRefs": ["category_id", "name"]},
+                        ],
+                    },
+                ],
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.layout.overlay.precedence",
+        )
+
+        self.assertNotIn("formStructureContract", full)
+        group = full["layoutContract"]["containerTree"][0]["children"][0]
+        self.assertEqual(group["name"], "sc_custom_partner_flat_fields")
+        self.assertEqual(group["columns"], 3)
+        self.assertEqual(
+            [node["name"] for node in group["children"]],
+            ["name", "company_type", "vat"],
+        )
 
     def test_ui_contract_v2_preserves_relation_entry_search_dialog(self):
         search_dialog = {

@@ -97,10 +97,24 @@ class TenderBid(models.Model):
     legacy_visible_project_name = fields.Char("历史项目名称", readonly=True)
     legacy_visible_registration_time = fields.Datetime("历史登记时间", readonly=True)
     legacy_visible_creator_name = fields.Char("历史录入人", readonly=True)
+    legacy_attachment_ref = fields.Char("历史附件引用", readonly=True, index=True)
 
     _sql_constraints = [
         ("legacy_tender_bid_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用投标事实已迁移为投标记录。"),
     ]
+
+    @api.depends("name", "tender_name", "project_id")
+    def _compute_display_name(self):
+        for record in self:
+            bid_no = (record.name or "").strip()
+            project_name = record.project_id.display_name if record.project_id else ""
+            title = (record.tender_name or record.legacy_visible_project_name or project_name or "").strip()
+            parts = [
+                title,
+                bid_no if bid_no and bid_no != "新建" else "",
+                project_name if project_name and project_name != title else "",
+            ]
+            record.display_name = " / ".join(part for part in parts if part) or bid_no or "投标记录"
 
     @api.model
     def _context_project_id(self):
@@ -284,7 +298,14 @@ class TenderDocPurchase(models.Model):
     amount = fields.Monetary("金额", currency_field="currency_id")
     invoice_no = fields.Char("发票号/凭证号")
     payment_method = fields.Char("缴费方式", index=True)
-    receipt_partner_name = fields.Char("收款单位", index=True)
+    receipt_partner_id = fields.Many2one(
+        "res.partner",
+        string="收款单位",
+        domain=["|", ("supplier_rank", ">", 0), ("customer_rank", ">", 0)],
+        index=True,
+        tracking=True,
+    )
+    receipt_partner_name = fields.Char("历史/快照收款单位", index=True)
     receipt_payee_name = fields.Char("收款人", index=True)
     receipt_bank_name = fields.Char("开户银行", index=True)
     receipt_bank_account = fields.Char("收款账户", index=True)
@@ -307,7 +328,70 @@ class TenderDocPurchase(models.Model):
         "res.currency", related="bid_id.currency_id", store=True, readonly=True
     )
 
+    def _receipt_partner_snapshot_values(self, partner):
+        if not partner:
+            return {}
+        return {
+            "receipt_partner_name": partner.display_name or partner.name,
+            "receipt_payee_name": partner.sc_account_name or partner.name,
+            "receipt_bank_name": partner.sc_bank_name or "",
+            "receipt_bank_account": partner.sc_bank_account or "",
+        }
+
+    @api.onchange("receipt_partner_id")
+    def _onchange_receipt_partner_id(self):
+        result_values = {}
+        for record in self:
+            if record.receipt_partner_id:
+                values = record._receipt_partner_snapshot_values(record.receipt_partner_id)
+                record.receipt_partner_name = values.get("receipt_partner_name")
+                record.receipt_payee_name = values.get("receipt_payee_name")
+                record.receipt_bank_name = values.get("receipt_bank_name")
+                record.receipt_bank_account = values.get("receipt_bank_account")
+                result_values.update(values)
+        if result_values:
+            return {"value": result_values}
+        return {}
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            partner_id = vals.get("receipt_partner_id")
+            if partner_id:
+                partner = self.env["res.partner"].browse(partner_id).exists()
+                for key, value in self._receipt_partner_snapshot_values(partner).items():
+                    if not vals.get(key):
+                        vals[key] = value
+        return super().create(vals_list)
+
+    def write(self, vals):
+        vals = dict(vals or {})
+        if "receipt_partner_id" in vals and vals.get("receipt_partner_id"):
+            partner = self.env["res.partner"].browse(vals["receipt_partner_id"]).exists()
+            for key, value in self._receipt_partner_snapshot_values(partner).items():
+                if not vals.get(key):
+                    vals[key] = value
+        return super().write(vals)
+
     def action_submit(self):
+        for record in self:
+            if record.state != "draft":
+                raise UserError("只有草稿状态的投标报名费申请可以提交。")
+            missing = []
+            if not record.bid_id:
+                missing.append("投标")
+            if not record.apply_date:
+                missing.append("申请日期")
+            if not record.amount or record.amount <= 0:
+                missing.append("金额")
+            if not record.payment_method:
+                missing.append("缴费方式")
+            if not record.receipt_partner_id and not record.receipt_partner_name:
+                missing.append("收款单位")
+            if not record.receipt_bank_account:
+                missing.append("收款账户")
+            if missing:
+                raise UserError("提交前请补充：%s。" % "、".join(missing))
         self.write({"state": "submitted"})
         return True
 
@@ -409,6 +493,7 @@ class TenderGuarantee(models.Model):
     legacy_visible_project_name = fields.Char("历史可见项目名称", readonly=True)
     legacy_visible_creator_name = fields.Char("历史可见录入人", readonly=True)
     legacy_visible_created_time = fields.Datetime("历史可见录入时间", readonly=True)
+    legacy_visible_attachment = fields.Char("历史可见附件", readonly=True)
     project_id = fields.Many2one(related="bid_id.project_id", store=True, readonly=True)
     type = fields.Selection([("out", "支出"), ("return", "退回")], string="类型", required=True, default="out")
     date = fields.Date("单据日期", default=fields.Date.context_today)

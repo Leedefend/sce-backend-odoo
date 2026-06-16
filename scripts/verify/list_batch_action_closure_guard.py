@@ -57,12 +57,22 @@ READONLY_OR_PROJECTION_MODELS = {
     "sc.ar.ap.company.summary",
     "sc.ar.ap.project.summary",
     "sc.company.operation.summary",
+    "sc.company.contractor.responsibility.fact",
     "sc.comprehensive.cost.summary",
     "sc.expense.reimbursement.summary",
+    "sc.finance.business.fact",
+    "sc.finance.project.capital.position",
+    "sc.finance.project.counterparty.position",
     "sc.fund.daily.summary",
+    "sc.interfund.movement.fact",
     "sc.invoice.category.summary",
+    "sc.labor.settlement.candidate",
     "sc.material.stock.summary",
     "sc.operating.metrics.project",
+    "sc.output.invoice.adjustment",
+    "sc.p1.relationship.review.queue",
+    "sc.p1.relationship.suggestion",
+    "sc.partner.business.fact.line",
     "sc.entitlement",
     "sc.scene.company.channel",
     "sc.scene.governance.log",
@@ -198,7 +208,7 @@ def _probe_contract_governance(errors: list[str]) -> None:
         "head": {"model": "payment.request", "view_type": "tree"},
         "views": {"tree": {"columns": ["name"]}},
         "fields": {"name": {"string": "名称", "type": "char"}},
-        "permissions": {"effective": {"rights": {"write": True}}},
+        "permissions": {"effective": {"rights": {"write": True, "unlink": True}}},
         "surface_policies": {
             "delete_mode": "none",
             "batch_policy": {
@@ -212,6 +222,26 @@ def _probe_contract_governance(errors: list[str]) -> None:
     _assert(batch_policy.get("enabled") is False, "archive/activate must be disabled when active field is absent", errors)
     _assert(batch_policy.get("available_actions") == [], "available_actions must be empty when no batch action is executable", errors)
 
+    delete_only = {
+        "head": {"model": "sc.expense.claim", "view_type": "tree,form"},
+        "views": {"tree": {"columns": ["name"]}},
+        "fields": {"name": {"string": "名称", "type": "char"}},
+        "permissions": {"effective": {"rights": {"write": True, "unlink": True}}},
+        "delete_policy": {"allowed": True, "delete_mode": "unlink"},
+        "surface_policies": {
+            "delete_mode": "unlink",
+            "batch_policy": {
+                "enabled": False,
+                "available_actions": [],
+            },
+        },
+    }
+    out = governance.apply_contract_governance(delete_only, "user")
+    batch_policy = _runtime_batch_policy(out)
+    _assert(batch_policy.get("enabled") is True, "delete-only list policy should be enabled when unlink is allowed", errors)
+    _assert(batch_policy.get("delete_mode") == "unlink", "delete-only list policy must preserve unlink mode", errors)
+    _assert(batch_policy.get("available_actions") == ["delete"], "delete-only list policy must expose delete without active field", errors)
+
     executable = {
         "head": {"model": "payment.request", "view_type": "tree"},
         "views": {"tree": {"columns": ["name", "active"]}},
@@ -219,7 +249,7 @@ def _probe_contract_governance(errors: list[str]) -> None:
             "name": {"string": "名称", "type": "char"},
             "active": {"string": "启用", "type": "boolean"},
         },
-        "permissions": {"effective": {"rights": {"write": True}}},
+        "permissions": {"effective": {"rights": {"write": True, "unlink": True}}},
         "delete_policy": {"allowed": True, "delete_mode": "unlink"},
         "surface_policies": {
             "delete_mode": "unlink",
@@ -247,7 +277,7 @@ def _probe_contract_governance(errors: list[str]) -> None:
             "subject": {"string": "合同标题", "type": "char"},
             "active": {"string": "有效", "type": "boolean"},
         },
-        "permissions": {"effective": {"rights": {"write": True}}},
+        "permissions": {"effective": {"rights": {"write": True, "unlink": True}}},
         "delete_policy": {"allowed": True, "delete_mode": "unlink"},
         "surface_policies": {
             "delete_mode": "unlink",

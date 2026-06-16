@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models, tools
+from odoo import api, fields, models, tools
+from odoo.exceptions import UserError
 
 
 class ScSalarySummary(models.Model):
@@ -8,6 +9,7 @@ class ScSalarySummary(models.Model):
     _auto = False
     _rec_name = "display_name"
     _order = "period_year desc, period_month desc, department_id, payer_unit"
+    _sc_readonly_navigation_button_methods = {"action_open_salary_documents"}
 
     display_name = fields.Char(string="汇总项", readonly=True)
     period_year = fields.Integer(string="年度", readonly=True, index=True)
@@ -26,6 +28,71 @@ class ScSalarySummary(models.Model):
     first_business_date = fields.Date(string="最早业务日期", readonly=True)
     last_business_date = fields.Date(string="最晚业务日期", readonly=True)
     coverage_note = fields.Char(string="承载说明", readonly=True)
+
+    def _raise_readonly_projection(self):
+        raise UserError("工资统计表是历史事实汇总结果，请从来源工资登记维护数据。")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._raise_readonly_projection()
+
+    def write(self, vals):
+        self._raise_readonly_projection()
+
+    def unlink(self):
+        self._raise_readonly_projection()
+
+    def _empty_aware_domain(self, field_name, value):
+        if value:
+            return [(field_name, "=", value)]
+        return ["|", (field_name, "=", False), (field_name, "=", "")]
+
+    def _payer_unit_domain(self):
+        self.ensure_one()
+        if self.payer_unit == "未填写发放单位":
+            return self._empty_aware_domain("payer_unit", False)
+        return self._empty_aware_domain("payer_unit", self.payer_unit)
+
+    def _salary_document_domain(self):
+        self.ensure_one()
+        return (
+            [
+                ("active", "=", True),
+                ("fact_type", "=", "salary_registration"),
+                ("state", "!=", "cancel"),
+                ("period_year", "=", self.period_year),
+                ("period_month", "=", self.period_month),
+                ("department_id", "=", self.department_id.id if self.department_id else False),
+            ]
+            + self._payer_unit_domain()
+        )
+
+    def _open_action(self, action_xmlid, name, domain, context=None):
+        self.ensure_one()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        result = action.sudo().read()[0] if action else {"type": "ir.actions.act_window", "view_mode": "tree,form"}
+        result.update(
+            {
+                "name": "%s / %s" % (self.display_name or "工资统计表", name),
+                "domain": domain,
+                "context": context or {"default_fact_type": "salary_registration"},
+                "target": "current",
+            }
+        )
+        return result
+
+    def action_open_salary_documents(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_salary_registration",
+            "工资登记",
+            self._salary_document_domain(),
+            {
+                "default_fact_type": "salary_registration",
+                "default_department_id": self.department_id.id if self.department_id else False,
+                "search_default_group_period_year": 1,
+                "search_default_group_period_month": 1,
+            },
+        )
 
     def init(self):
         self._cr.execute("SELECT to_regclass('sc_hr_payroll_document'), to_regclass('res_company')")

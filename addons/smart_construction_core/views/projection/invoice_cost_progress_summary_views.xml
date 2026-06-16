@@ -36,6 +36,11 @@
         <field name="model">sc.invoice.cost.progress.summary</field>
         <field name="arch" type="xml">
             <form string="发票成本进度报表" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_progress_receipts" type="object" string="工程进度收款" class="btn-primary"/>
+                    <button name="action_open_output_invoices" type="object" string="销项发票" class="btn-secondary"/>
+                    <button name="action_open_input_invoices" type="object" string="进项发票" class="btn-secondary"/>
+                </header>
                 <sheet>
                     <group>
                         <group>

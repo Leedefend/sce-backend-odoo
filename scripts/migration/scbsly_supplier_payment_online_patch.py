@@ -178,7 +178,7 @@ for row in rows:
         "planned_amount": amount(row.get("f_FKJE")),
         "paid_amount": amount(row.get("f_FKJE")),
         "invoice_amount": amount(row.get("f_FPJE")),
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "legacy_source_model": SURFACE,
         "legacy_source_table": TABLE,
         "legacy_record_id": key,
@@ -196,6 +196,8 @@ for row in rows:
         "legacy_visible_payment_account_no": clean(row.get("FKZH")),
         "legacy_visible_payment_account_name": clean(row.get("FKZHMC")),
         "legacy_visible_request_no": clean(row.get("ZFSQDH")),
+        "push_result": clean(row.get("TSJG") or row.get("D_SCBSJS_IsPush")),
+        "kingdee_document_no": clean(row.get("OTHER_SYSTEM_CODE")),
         "creator_legacy_user_id": clean(row.get("LRRID")),
         "creator_name": clean(row.get("f_LRR") or row.get("LRR")),
         "created_time": parse_dt(row.get("f_LRSJ") or row.get("LRSJ")),

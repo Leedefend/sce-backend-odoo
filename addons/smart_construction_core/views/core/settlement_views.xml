@@ -7,47 +7,22 @@
             <field name="name">sc.settlement.order.tree</field>
             <field name="model">sc.settlement.order</field>
             <field name="arch" type="xml">
-                <tree string="结算单">
+                <tree string="合同结算办理" default_order="id desc">
                     <field name="name"/>
+                    <field name="settlement_flow_label"/>
                     <field name="title"/>
-                    <field name="settlement_category_id" string="结算类型"/>
-                    <field name="settlement_category_display" string="结算类型"/>
+                    <field name="settlement_category_id" string="结算分类"/>
                     <field name="settlement_type" invisible="1"/>
-                    <field name="settlement_stage"/>
+                    <field name="settlement_stage_id"/>
                     <field name="project_id"/>
-                    <field name="operation_strategy"/>
                     <field name="contract_id"/>
-                    <field name="legacy_contract_no"/>
-                    <field name="contract_subject"/>
-                    <field name="contract_total_amount" sum="合同总额合计"/>
-                    <field name="settlement_unit_id"/>
                     <field name="partner_id"/>
-                    <field name="settlement_amount" sum="结算金额合计"/>
-                    <field name="submitted_amount" sum="送审金额合计"/>
-                    <field name="approved_amount" sum="审定金额合计"/>
-                    <field name="requested_fund_amount" sum="申请资金金额合计"/>
-                    <field name="legacy_unrequested_amount" sum="原始未申请金额合计"/>
                     <field name="amount_total" sum="金额合计"/>
-                    <field name="legacy_payment_state"/>
-                    <field name="legacy_paid_amount" sum="原始已付款金额合计"/>
-                    <field name="legacy_unpaid_amount" sum="原始未付款金额合计"/>
-                    <field name="legacy_payment_request_state"/>
-                    <field name="deduction_amount" sum="扣款金额合计"/>
                     <field name="amount_paid" sum="已付款金额合计"/>
                     <field name="unpaid_amount" sum="未付款金额合计"/>
-                    <field name="legacy_document_state"/>
-                    <field name="settlement_period_start"/>
-                    <field name="settlement_period_end"/>
-                    <field name="engineering_address"/>
-                    <field name="settlement_description"/>
-                    <field name="legacy_visible_attachment" string="附件"/>
                     <field name="attachment_count"/>
-                    <field name="source_created_by" string="录入人"/>
-                    <field name="source_created_at" string="录入时间"/>
-                    <field name="entry_user_id"/>
                     <field name="state"/>
                     <field name="document_date"/>
-                    <field name="planned_settlement_date"/>
                 </tree>
             </field>
         </record>
@@ -56,7 +31,7 @@
             <field name="name">sc.settlement.order.search</field>
             <field name="model">sc.settlement.order</field>
             <field name="arch" type="xml">
-                <search string="结算单">
+                <search string="合同结算办理">
                     <field name="name"/>
                     <field name="title"/>
                     <field name="project_id"/>
@@ -64,13 +39,14 @@
                     <field name="contract_id"/>
                     <field name="legacy_contract_no"/>
                     <field name="partner_id"/>
-                    <field name="settlement_unit_id"/>
-                    <field name="settlement_category_id" string="结算类型"/>
-                    <field name="settlement_category_display" string="结算类型"/>
+                    <field name="settlement_category_id" string="结算分类"/>
+                    <field name="settlement_category_display" string="结算分类"/>
+                    <field name="business_category_id"/>
                     <field name="legacy_payment_state"/>
                     <field name="legacy_payment_request_state"/>
                     <field name="legacy_document_state"/>
-                    <field name="settlement_stage"/>
+                    <field name="settlement_stage_id"/>
+                    <field name="settlement_stage" invisible="1"/>
                     <filter name="category_material_settlement" string="材料" domain="[('settlement_category_id.code', '=', 'material')]"/>
                     <filter name="category_labor_settlement" string="劳务" domain="[('settlement_category_id.code', '=', 'labor')]"/>
                     <filter name="category_machine_settlement" string="机械" domain="[('settlement_category_id.code', '=', 'machine')]"/>
@@ -85,17 +61,17 @@
                     <filter name="operation_direct" string="公司直营" domain="[('operation_strategy', '=', 'direct')]"/>
                     <filter name="operation_joint" string="联营项目" domain="[('operation_strategy', '=', 'joint')]"/>
                     <filter name="with_contract" string="有关联合同" domain="[('contract_id', '!=', False)]"/>
-                    <filter name="stage_final" string="结算定案" domain="[('settlement_stage', '=', 'final')]"/>
+                    <filter name="stage_final" string="结算定案" domain="[('settlement_stage_id.code', '=', 'final')]"/>
                     <group expand="0" string="分组">
                         <filter name="group_project" string="按项目" context="{'group_by': 'project_id'}"/>
                         <filter name="group_operation_strategy" string="按经营策略" context="{'group_by': 'operation_strategy'}"/>
                         <filter name="group_contract" string="按合同" context="{'group_by': 'contract_id'}"/>
                         <filter name="group_partner" string="按往来单位" context="{'group_by': 'partner_id'}"/>
-                        <filter name="group_type" string="按结算类型" context="{'group_by': 'settlement_category_display'}"/>
+                        <filter name="group_type" string="按结算分类" context="{'group_by': 'settlement_category_display'}"/>
                         <filter name="group_payment_state" string="按付款状态" context="{'group_by': 'legacy_payment_state'}"/>
                         <filter name="group_payment_request_state" string="按支付申请状态" context="{'group_by': 'legacy_payment_request_state'}"/>
                         <filter name="group_settlement_income_out" string="按收支类型" context="{'group_by': 'settlement_type'}"/>
-                        <filter name="group_stage" string="按结算阶段" context="{'group_by': 'settlement_stage'}"/>
+                        <filter name="group_stage" string="按结算阶段" context="{'group_by': 'settlement_stage_id'}"/>
                         <filter name="group_state" string="按状态" context="{'group_by': 'state'}"/>
                         <filter name="group_date_settlement" string="按结算日期" context="{'group_by': 'date_settlement:month'}"/>
                     </group>
@@ -108,7 +84,7 @@
             <field name="name">sc.settlement.order.form</field>
             <field name="model">sc.settlement.order</field>
             <field name="arch" type="xml">
-                <form string="结算单">
+                <form string="合同结算办理">
                     <header>
                         <button name="action_submit" type="object" string="提交审批" class="btn-primary" invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"
                                 groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_settlement_user"/>
@@ -126,10 +102,51 @@
                                 groups="smart_construction_core.group_sc_cap_settlement_manager"/>
                         <field name="validation_status" invisible="1"/>
                         <field name="can_review" invisible="1"/>
+                        <field name="legacy_fact_model" invisible="1"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve,done,cancel"/>
                     </header>
                     <sheet>
-                        <group string="结算额度">
+                        <notebook>
+                            <page string="系统办理信息" invisible="not id">
+                                <group>
+                                <field name="name" readonly="1"/>
+                                <field name="settlement_flow_label" readonly="1"/>
+                                <field name="business_category_id" options="{'no_create': True}" readonly="1"/>
+                                    <field name="settlement_type" string="收支类型" required="1" readonly="1"/>
+                                    <field name="state" readonly="1"/>
+                                </group>
+                            </page>
+                            <page string="项目与合同">
+                                <group>
+                                    <field name="project_id" options="{'no_create': True}" required="1"/>
+                                    <field name="operation_strategy" readonly="1"/>
+                                    <field name="contract_id"
+                                           domain="[('project_id','=',project_id),('company_id','=',company_id)]"/>
+                                    <field name="partner_id" options="{'no_create_edit': True}" required="1"/>
+                                    <field name="settlement_unit_id" options="{'no_create_edit': True}" invisible="1"/>
+                                    <field name="company_id" readonly="1"/>
+                                    <field name="currency_id" required="1" invisible="1"/>
+                                </group>
+                            </page>
+                            <page string="结算依据">
+                                <group>
+                                    <field name="title"/>
+                                <field name="settlement_category_id" string="结算分类"/>
+                                <field name="settlement_stage_id" options="{'no_create_edit': False}"/>
+                                <field name="settlement_stage" invisible="1"/>
+                                <field name="document_date"/>
+                                <field name="date_settlement"/>
+                                <field name="settlement_period_start" readonly="1"/>
+                                <field name="settlement_period_end" readonly="1"/>
+                                <field name="planned_settlement_date"/>
+                                <field name="declared_date"/>
+                                <field name="final_approved_date"/>
+                                <field name="approved_date"/>
+                                </group>
+                            </page>
+                            <page string="结算金额">
+                                <group>
+                            <field name="settlement_amount"/>
                             <field name="amount_total" readonly="1"/>
                             <field name="submitted_amount"/>
                             <field name="approved_amount"/>
@@ -143,82 +160,12 @@
                             <field name="amount_payable" readonly="1" string="可付余额（风险）"
                                    class="text-danger"
                                    modifiers="{'invisible': [['amount_payable','&gt;=',0.0]]}"/>
-                        </group>
-                        <group string="来源匹配">
-                            <field name="compliance_message"
-                                   nolabel="1"
-                                   readonly="1"
-                                   class="text-danger"
-                                   modifiers="{'invisible': [['compliance_state', '!=', 'block']]}"/>
-                            <field name="compliance_message"
-                                   nolabel="1"
-                                   readonly="1"
-                                   class="text-warning"
-                                   modifiers="{'invisible': [['compliance_state', '!=', 'warn']]}"/>
-                            <field name="compliance_message"
-                                   nolabel="1"
-                                   readonly="1"
-                                   modifiers="{'invisible': [['compliance_state', '!=', 'ok']]}"/>
-                        </group>
-                        <group>
-                            <group>
-                                <field name="name" readonly="1"/>
-                                <field name="title"/>
-                                <field name="project_id" options="{'no_create': True}" required="1"/>
-                                <field name="operation_strategy" readonly="1"/>
-                                <field name="settlement_category_id" string="结算类型"/>
-                                <field name="settlement_type" required="1" invisible="1"/>
-                                <field name="settlement_stage"/>
-                                <field name="contract_id"
-                                       domain="[('project_id','=',project_id),('company_id','=',company_id)]"/>
-                                <field name="legacy_contract_no" readonly="1"/>
-                                <field name="contract_subject" readonly="1"/>
-                                <field name="contract_total_amount" readonly="1"/>
-                            </group>
-                            <group>
-                                <field name="partner_id" options="{'no_create_edit': True}" required="1"/>
-                                <field name="settlement_unit_id" options="{'no_create_edit': True}"/>
-                                <field name="employer_name" readonly="1"/>
-                                <field name="contractor_name" readonly="1"/>
-                                <field name="document_date"/>
-                                <field name="date_settlement"/>
-                                <field name="settlement_period_start" readonly="1"/>
-                                <field name="settlement_period_end" readonly="1"/>
-                                <field name="planned_settlement_date"/>
-                                <field name="declared_date"/>
-                                <field name="final_approved_date"/>
-                                <field name="approved_date"/>
-                                <field name="currency_id" required="1" invisible="1"/>
-                                <field name="settlement_amount"/>
-                                <field name="company_id" readonly="1"/>
-                            </group>
-                        </group>
-                        <group>
-                            <field name="legacy_document_state" readonly="1"/>
-                            <field name="legacy_payment_state" readonly="1"/>
-                            <field name="legacy_paid_amount" readonly="1"/>
-                            <field name="legacy_unpaid_amount" readonly="1"/>
-                            <field name="legacy_payment_request_state" readonly="1"/>
-                            <field name="requested_fund_amount"/>
-                            <field name="legacy_unrequested_amount" readonly="1"/>
-                            <field name="engineering_address" readonly="1"/>
-                            <field name="source_created_by" readonly="1" string="录入人"/>
-                            <field name="source_created_at" readonly="1" string="录入时间"/>
-                            <field name="entry_user_id"/>
-                            <field name="entry_data"/>
-                            <field name="settlement_description"/>
-                            <field name="legacy_visible_attachment" string="附件"/>
-                            <field name="note"/>
-                        </group>
-                        <group string="发票信息（占位）">
-                            <field name="invoice_ref"/>
-                            <field name="invoice_date"/>
-                            <field name="invoice_amount"/>
-                        </group>
-                        <notebook>
-                            <page string="明细">
-                                <field name="line_ids">
+                                </group>
+                                <field name="line_ids" context="{'default_contract_id': contract_id}">
                                     <tree editable="bottom">
+                                        <field name="contract_id"
+                                               domain="[('project_id','=',parent.project_id),('company_id','=',parent.company_id)]"
+                                               options="{'no_create': True}"/>
                                         <field name="name"/>
                                         <field name="qty"/>
                                         <field name="price_unit"/>
@@ -227,6 +174,9 @@
                                     </tree>
                                     <form>
                                         <group>
+                                            <field name="contract_id"
+                                                   domain="[('project_id','=',parent.project_id),('company_id','=',parent.company_id)]"
+                                                   options="{'no_create': True}"/>
                                             <field name="name"/>
                                             <field name="qty"/>
                                             <field name="price_unit"/>
@@ -235,7 +185,69 @@
                                     </form>
                                 </field>
                             </page>
-                            <page string="付款申请">
+                            <page string="办理说明">
+                                <group>
+                                    <field name="settlement_description"/>
+                                    <field name="note"/>
+                                </group>
+                            </page>
+                            <page string="执行与匹配" invisible="not id">
+                                <group>
+                                    <field name="compliance_message"
+                                           nolabel="1"
+                                           readonly="1"
+                                           class="text-danger"
+                                           modifiers="{'invisible': [['compliance_state', '!=', 'block']]}"/>
+                                    <field name="compliance_message"
+                                           nolabel="1"
+                                           readonly="1"
+                                           class="text-warning"
+                                           modifiers="{'invisible': [['compliance_state', '!=', 'warn']]}"/>
+                                    <field name="compliance_message"
+                                           nolabel="1"
+                                           readonly="1"
+                                           modifiers="{'invisible': [['compliance_state', '!=', 'ok']]}"/>
+                                    <field name="requested_fund_amount"/>
+                                    <field name="amount_paid" readonly="1"/>
+                                    <field name="unpaid_amount" readonly="1"/>
+                                    <field name="invoice_amount"/>
+                                    <field name="adjustment_total" readonly="1"/>
+                                    <field name="amount_after_adjustment" readonly="1"/>
+                                </group>
+                            </page>
+                            <page string="历史办理信息" invisible="not legacy_fact_model">
+                                <group>
+                                    <field name="legacy_document_state" readonly="1"/>
+                                    <field name="legacy_payment_state" readonly="1"/>
+                                    <field name="legacy_paid_amount" readonly="1"/>
+                                    <field name="legacy_unpaid_amount" readonly="1"/>
+                                    <field name="legacy_payment_request_state" readonly="1"/>
+                                    <field name="legacy_unrequested_amount" readonly="1"/>
+                                    <field name="legacy_contract_no" readonly="1"/>
+                                    <field name="contract_subject" readonly="1"/>
+                                    <field name="contract_total_amount" readonly="1"/>
+                                    <field name="employer_name" readonly="1"/>
+                                    <field name="contractor_name" readonly="1"/>
+                                    <field name="engineering_address" readonly="1"/>
+                                    <field name="legacy_visible_attachment" string="历史附件"/>
+                                </group>
+                            </page>
+                            <page string="迁移来源" invisible="not legacy_fact_model">
+                                <group>
+                                    <field name="source_created_by" readonly="1" string="录入人"/>
+                                    <field name="source_created_at" readonly="1" string="录入时间"/>
+                                    <field name="entry_user_id"/>
+                                    <field name="entry_data"/>
+                                </group>
+                            </page>
+                            <page string="发票信息" invisible="not id">
+                                <group>
+                                    <field name="invoice_ref"/>
+                                    <field name="invoice_date"/>
+                                    <field name="invoice_amount"/>
+                                </group>
+                            </page>
+                            <page string="付款申请" invisible="not id">
                                 <field name="payment_request_ids" readonly="1" context="{'create': False, 'edit': False}">
                                     <tree>
                                         <field name="name"/>
@@ -246,8 +258,19 @@
                                         <field name="state"/>
                                     </tree>
                                 </field>
+                                <field name="payment_request_line_ids" readonly="1" context="{'create': False, 'edit': False}">
+                                    <tree>
+                                        <field name="request_id"/>
+                                        <field name="project_id"/>
+                                        <field name="partner_id"/>
+                                        <field name="source_document_no"/>
+                                        <field name="source_line_type"/>
+                                        <field name="current_pay_amount"/>
+                                        <field name="amount"/>
+                                    </tree>
+                                </field>
                             </page>
-                            <page string="扣款调整">
+                            <page string="扣款调整" invisible="not id">
                                 <field name="adjustment_ids"
                                        context="{'default_project_id': project_id, 'default_settlement_id': id, 'default_contract_id': contract_id, 'default_partner_id': partner_id, 'default_currency_id': currency_id}">
                                     <tree editable="bottom">
@@ -261,7 +284,7 @@
                                     </tree>
                                 </field>
                             </page>
-                            <page string="采购订单">
+                            <page string="采购订单" invisible="not id">
                                 <group>
                                     <field name="purchase_order_ids"
                                            widget="many2many_tags"
@@ -276,9 +299,6 @@
                                         <field name="state"/>
                                     </tree>
                                 </field>
-                            </page>
-                            <page string="结算附件">
-                                <field name="attachment_ids" widget="many2many_binary"/>
                             </page>
                         </notebook>
                     </sheet>
@@ -328,34 +348,79 @@
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,legacy_confirmed,cancel"/>
                     </header>
                     <sheet>
-                        <group>
-                            <group>
-                                <field name="name" readonly="1"/>
-                                <field name="adjustment_type" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
-                                <field name="date_adjustment" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
-                            </group>
-                            <group>
-                                <field name="amount" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
-                                <field name="signed_amount" readonly="1"/>
-                                <field name="currency_id" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']" invisible="1"/>
-                                <field name="active"/>
-                            </group>
-                        </group>
-                        <group>
-                            <group string="业务锚点">
-                                <field name="project_id" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
-                                <field name="settlement_id" readonly="state == 'legacy_confirmed'"/>
-                                <field name="contract_id"/>
-                                <field name="partner_id"/>
-                            </group>
-                            <group string="调整事项">
-                                <field name="item_name" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
-                                <field name="account_name" readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
-                            </group>
-                        </group>
-                        <group>
-                            <field name="note"/>
-                        </group>
+                        <notebook>
+                            <page string="办理类型">
+                                <group>
+                                    <group>
+                                        <field name="name" readonly="1"/>
+                                        <field name="adjustment_type"
+                                               readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                        <field name="date_adjustment"
+                                               readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                    </group>
+                                    <group>
+                                        <field name="state" readonly="1"/>
+                                        <field name="active"/>
+                                        <field name="currency_id"
+                                               readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"
+                                               invisible="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="项目与结算锚点">
+                                <group>
+                                    <group>
+                                        <field name="project_id"
+                                               readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                        <field name="settlement_id" readonly="state == 'legacy_confirmed'"/>
+                                        <field name="contract_id"/>
+                                    </group>
+                                    <group>
+                                        <field name="partner_id"/>
+                                        <field name="company_id" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="调整事项">
+                                <group>
+                                    <group>
+                                        <field name="item_name"
+                                               readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                        <field name="account_name"
+                                               readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                    </group>
+                                    <group>
+                                        <field name="amount"
+                                               readonly="state in ['confirmed', 'legacy_confirmed', 'cancel']"/>
+                                        <field name="signed_amount" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="办理说明">
+                                <group>
+                                    <field name="note" nolabel="1"/>
+                                </group>
+                                <group string="审批结果"
+                                       invisible="not reject_reason and validation_status not in ('waiting', 'pending', 'rejected')">
+                                    <field name="validation_status" readonly="1"/>
+                                    <field name="reject_reason" readonly="1"/>
+                                </group>
+                            </page>
+                            <page string="历史办理信息" invisible="source_origin != 'legacy'">
+                                <group>
+                                    <group>
+                                        <field name="legacy_document_no" readonly="1"/>
+                                        <field name="legacy_document_state" readonly="1"/>
+                                        <field name="legacy_fund_confirmation_id" readonly="1"/>
+                                    </group>
+                                    <group>
+                                        <field name="source_origin" readonly="1"/>
+                                        <field name="legacy_line_id" readonly="1"/>
+                                        <field name="legacy_source_table" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
@@ -387,6 +452,12 @@
             <field name="name">结算调整</field>
             <field name="res_model">sc.settlement.adjustment</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_sc_settlement_adjustment_tree"/>
+            <field name="views" eval="[(ref('view_sc_settlement_adjustment_tree'), 'tree'), (ref('view_sc_settlement_adjustment_form'), 'form')]"/>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_settlement_adjustment_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_settlement_adjustment_form')})
+            ]"/>
             <field name="search_view_id" ref="view_sc_settlement_adjustment_search"/>
             <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[

@@ -1,0 +1,146 @@
+{
+  "version": "v1",
+  "date": "2026-06-10",
+  "scope": "real_user_business_data_productization",
+  "policy": {
+    "required_family_count": 11,
+    "min_total_profiled_records": 1000000,
+    "require_all_families_with_data": true,
+    "menu_surface_policy": "user_confirmed_visible_surface_is_locked",
+    "design_pattern": "handling_entry_plus_source_fact_detail_plus_summary_view"
+  },
+  "families": [
+    {
+      "key": "project_master_data",
+      "name": "项目与主数据",
+      "priority": "P1",
+      "role": "master_anchor",
+      "primary_models": ["project.project", "res.partner", "sc.business.entity", "sc.fund.account"],
+      "handling_entries": ["项目台账", "客户/供应商", "资金账户", "业务主体"],
+      "source_fact_entries": ["历史项目映射", "历史往来单位映射"],
+      "summary_entries": [],
+      "required_relationships": ["project_id", "partner_id"],
+      "product_goal": "统一项目、公司、客户、供应商、账户等主数据，作为所有业务办理的关系基础。"
+    },
+    {
+      "key": "contract_settlement",
+      "name": "合同与结算",
+      "priority": "P1",
+      "role": "business_backbone",
+      "primary_models": ["construction.contract", "sc.settlement.order", "sc.income.contract.ledger", "sc.expense.contract.ledger"],
+      "handling_entries": ["收入合同办理", "支出合同办理", "收入合同结算", "支出合同结算"],
+      "source_fact_entries": ["合同来源明细", "结算来源明细"],
+      "summary_entries": ["合同执行台账", "合同对账汇总"],
+      "required_relationships": ["project_id", "partner_id", "contract_id"],
+      "product_goal": "合同驱动结算、收款、付款、发票和成本，不把合同停留在历史列表展示。"
+    },
+    {
+      "key": "income_receivable",
+      "name": "收入与收款",
+      "priority": "P1",
+      "role": "cash_in_handling",
+      "primary_models": ["sc.receipt.income", "sc.receipt.invoice.line"],
+      "handling_entries": ["项目收款登记", "工程进度收款", "自筹资金收入/退回", "收款发票核销"],
+      "source_fact_entries": ["到款确认来源明细", "工程进度收款来源明细", "自筹资金来源明细"],
+      "summary_entries": ["项目收入收款汇总"],
+      "required_relationships": ["project_id", "partner_id", "contract_id"],
+      "product_goal": "把到款确认、工程进度收款、自筹收入统一为项目收入和收款办理。"
+    },
+    {
+      "key": "payment_expense",
+      "name": "付款与费用",
+      "priority": "P1",
+      "role": "cash_out_handling",
+      "primary_models": ["payment.request", "sc.payment.execution", "sc.expense.claim"],
+      "handling_entries": ["付款申请", "付款执行", "费用与保证金办理", "扣款/退回办理"],
+      "source_fact_entries": ["费用来源明细", "扣款来源明细", "保证金来源明细"],
+      "summary_entries": ["项目付款费用汇总"],
+      "required_relationships": ["project_id", "partner_id", "contract_id", "payment_request_id"],
+      "product_goal": "把费用、扣款、保证金、项目还款统一到付款和费用办理链。"
+    },
+    {
+      "key": "tax_invoice",
+      "name": "税务与发票",
+      "priority": "P1",
+      "role": "tax_invoice_handling",
+      "primary_models": ["sc.invoice.registration", "sc.tax.deduction.registration", "sc.output.invoice.ledger"],
+      "handling_entries": ["发票登记", "抵扣登记", "销项发票台账"],
+      "source_fact_entries": ["进项发票来源明细", "销项发票来源明细", "抵扣来源明细"],
+      "summary_entries": ["发票税务汇总"],
+      "required_relationships": ["project_id", "partner_id", "contract_id"],
+      "product_goal": "把发票、抵扣和非现金税务事实统一进入项目经营口径。"
+    },
+    {
+      "key": "fund_interfund",
+      "name": "账户与往来资金",
+      "priority": "P1",
+      "role": "capital_movement_handling",
+      "primary_models": ["sc.fund.account.operation", "sc.financing.loan"],
+      "handling_entries": ["资金往来办理", "账户调拨", "融资与借款登记"],
+      "source_fact_entries": ["财务来源明细", "往来资金明细", "资金日报来源明细"],
+      "summary_entries": ["项目资金总览", "往来对象资金总览", "项目往来明细"],
+      "required_relationships": ["project_id", "partner_id", "source_account_id", "target_account_id"],
+      "product_goal": "把公司与项目、项目与项目、项目与承包人之间的借还和调拨统一为资金往来办理。"
+    },
+    {
+      "key": "procurement_material",
+      "name": "材料与采购库存",
+      "priority": "P2",
+      "role": "resource_procurement_handling",
+      "primary_models": ["project.material.plan", "sc.material.purchase.request", "sc.material.rfq", "sc.material.inbound", "sc.material.outbound", "sc.material.settlement"],
+      "handling_entries": ["材料计划", "材料采购申请", "材料询价", "材料验收", "入库/出库", "材料结算"],
+      "source_fact_entries": ["材料库存来源明细", "采购合同来源明细"],
+      "summary_entries": ["材料库存汇总", "材料结算汇总"],
+      "required_relationships": ["project_id", "partner_id"],
+      "product_goal": "材料链路从计划、采购、验收、入库、出库到结算，并最终进入成本和付款。"
+    },
+    {
+      "key": "subcontract_labor_equipment",
+      "name": "分包劳务机械",
+      "priority": "P2",
+      "role": "resource_execution_handling",
+      "primary_models": ["sc.subcontract.request", "sc.subcontract.settlement", "sc.labor.usage", "sc.labor.settlement", "sc.equipment.usage", "sc.equipment.settlement"],
+      "handling_entries": ["分包办理", "劳务办理", "机械办理"],
+      "source_fact_entries": ["分包来源明细", "劳务来源明细", "机械来源明细"],
+      "summary_entries": ["资源使用结算汇总"],
+      "required_relationships": ["project_id", "partner_id", "contract_id"],
+      "product_goal": "围绕使用记录、结算、成本、付款形成分包劳务机械闭环。"
+    },
+    {
+      "key": "site_quality_safety_progress",
+      "name": "现场进度质量安全",
+      "priority": "P2",
+      "role": "site_execution_handling",
+      "primary_models": ["sc.construction.diary", "project.progress.entry", "project.task", "sc.quality.issue", "sc.safety.issue"],
+      "handling_entries": ["施工日志", "进度登记", "质量问题整改", "安全问题整改", "现场证据"],
+      "source_fact_entries": ["历史现场证据", "历史施工日志"],
+      "summary_entries": ["项目现场履约汇总"],
+      "required_relationships": ["project_id"],
+      "product_goal": "现场过程数据服务项目履约、结算依据和风险追溯。"
+    },
+    {
+      "key": "cost_budget_control",
+      "name": "预算成本管控",
+      "priority": "P1",
+      "role": "cost_control",
+      "primary_models": ["project.budget", "project.cost.ledger", "project.cost.code", "project.cost.period"],
+      "handling_entries": ["目标成本", "成本科目", "成本台账", "成本期间锁定"],
+      "source_fact_entries": ["成本来源明细"],
+      "summary_entries": ["综合成本分析"],
+      "required_relationships": ["project_id", "partner_id", "contract_id"],
+      "product_goal": "付款、材料、分包、劳务、机械、发票最终沉淀到成本口径。"
+    },
+    {
+      "key": "governance_workflow_evidence",
+      "name": "审批附件与治理",
+      "priority": "P0",
+      "role": "audit_evidence",
+      "primary_models": ["sc.approval.policy", "sc.history.todo", "ir.attachment", "sc.legacy.file.index"],
+      "handling_entries": ["审批配置", "附件证据", "历史流程追溯", "审计日志"],
+      "source_fact_entries": ["历史附件索引", "历史审批轨迹"],
+      "summary_entries": ["审计追溯"],
+      "required_relationships": [],
+      "product_goal": "附件、审批、历史流程和审计日志是正式办理可追溯的硬前提。"
+    }
+  ]
+}

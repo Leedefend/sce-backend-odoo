@@ -18,6 +18,7 @@ WEB_ACTION_NAV = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewN
 WEB_ACTION_PREFLIGHT = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewLoadPreflightRuntime.ts"
 WEB_ACTION_LOAD_REQUEST = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewLoadRequestRuntime.ts"
 WEB_ACTION_META = ROOT / "frontend/apps/web/src/app/runtime/actionViewMetaRuntime.ts"
+WEB_COMPAT_PROJECTION = ROOT / "frontend/apps/web/src/app/runtime/unifiedPageContractV2CompatProjection.ts"
 WEB_ACTION_CONTRACT_RUNTIME = ROOT / "frontend/apps/web/src/app/contractActionRuntime.ts"
 WEB_RECORD_RUNTIME = ROOT / "frontend/apps/web/src/app/contractRecordRuntime.ts"
 WEB_SURFACE_CONTRACT = ROOT / "frontend/apps/web/src/app/contracts/actionViewSurfaceContract.ts"
@@ -39,6 +40,7 @@ def main() -> int:
     preflight_source = WEB_ACTION_PREFLIGHT.read_text(encoding="utf-8") if WEB_ACTION_PREFLIGHT.exists() else ""
     load_request_source = WEB_ACTION_LOAD_REQUEST.read_text(encoding="utf-8") if WEB_ACTION_LOAD_REQUEST.exists() else ""
     meta_source = WEB_ACTION_META.read_text(encoding="utf-8") if WEB_ACTION_META.exists() else ""
+    compat_projection_source = WEB_COMPAT_PROJECTION.read_text(encoding="utf-8") if WEB_COMPAT_PROJECTION.exists() else ""
     contract_runtime_source = WEB_ACTION_CONTRACT_RUNTIME.read_text(encoding="utf-8") if WEB_ACTION_CONTRACT_RUNTIME.exists() else ""
     record_runtime_source = WEB_RECORD_RUNTIME.read_text(encoding="utf-8") if WEB_RECORD_RUNTIME.exists() else ""
     surface_source = WEB_SURFACE_CONTRACT.read_text(encoding="utf-8") if WEB_SURFACE_CONTRACT.exists() else ""
@@ -91,8 +93,17 @@ def main() -> int:
         errors.append("web contract action runtime must honor v2 globalStatus for page access/read guards")
     if "collectUnifiedPageContractV2FieldWidgets" not in record_runtime_source or "collectUnifiedPageContractV2FieldStatus" not in record_runtime_source or "mapV2ActionButton" not in record_runtime_source:
         errors.append("web record runtime must build form fields, states, and actions from v2 before legacy fallback")
-    if "resolveV2CollaborationContract" not in ((ROOT / "frontend/apps/web/src/app/runtime/unifiedPageContractV2CompatProjection.ts").read_text(encoding="utf-8")):
+    if "resolveV2CollaborationContract" not in compat_projection_source:
         errors.append("web v2 compatibility projection must consume runtimeContract.collaboration for chatter/attachments")
+    for token in (
+        "v2Contract.workflowContract",
+        "asDict(v2Contract.runtimeContract).workflowContract",
+        "workflowContract,",
+        "runtimeContract: { workflowContract }",
+        "__unified_page_contract_v2: v2Contract",
+    ):
+        if token not in compat_projection_source:
+            errors.append(f"web v2 compatibility projection must preserve workflow contract token: {token}")
     if "resolveUnifiedPageContractV2GlobalStatus" not in record_runtime_source or "pageAuth === 'read'" not in record_runtime_source:
         errors.append("web record runtime must merge v2 globalStatus into form rights")
     if "collectUnifiedPageContractV2FieldContainerStatus" not in record_runtime_source or "container?.visible === false" not in record_runtime_source:

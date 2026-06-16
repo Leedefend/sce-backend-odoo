@@ -23,6 +23,14 @@ class ScFundAccountOperation(models.Model):
         tracking=True,
         index=True,
     )
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        domain="[('target_model', '=', 'sc.fund.account.operation')]",
+        index=True,
+        tracking=True,
+        ondelete="restrict",
+    )
     operation_date = fields.Date(
         string="单据日期",
         required=True,
@@ -44,6 +52,19 @@ class ScFundAccountOperation(models.Model):
         ondelete="restrict",
         tracking=True,
     )
+    source_project_id = fields.Many2one(
+        "project.project",
+        string="付款方项目",
+        related="source_account_id.project_id",
+        readonly=True,
+    )
+    target_project_id = fields.Many2one(
+        "project.project",
+        string="收款方项目",
+        related="target_account_id.project_id",
+        readonly=True,
+    )
+    fund_flow_label = fields.Char(string="业务方向", compute="_compute_fund_flow_label")
     fund_account_id = fields.Many2one(
         "sc.fund.account",
         string="账户",
@@ -70,7 +91,7 @@ class ScFundAccountOperation(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: (self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id).id,
     )
     amount = fields.Monetary(string="金额", currency_field="currency_id", tracking=True)
     daily_income = fields.Monetary(string="当日收入", currency_field="currency_id", tracking=True)
@@ -112,6 +133,7 @@ class ScFundAccountOperation(models.Model):
     legacy_visible_transfer_type = fields.Char(string="历史可见转账类别", readonly=True)
     legacy_visible_reason = fields.Char(string="历史可见事由", readonly=True)
     legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
+    legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", readonly=True, index=True)
     creator_name = fields.Char(string="历史录入人", readonly=True, index=True)
@@ -125,6 +147,26 @@ class ScFundAccountOperation(models.Model):
             "同一历史资金操作只能迁移一次。",
         ),
     ]
+
+    @api.depends("operation_type", "source_account_id.project_id", "target_account_id.project_id")
+    def _compute_fund_flow_label(self):
+        for record in self:
+            if record.operation_type == "fund_daily_report":
+                record.fund_flow_label = _("账户日报")
+                continue
+            if record.operation_type == "balance_adjustment":
+                record.fund_flow_label = _("账户余额调整")
+                continue
+            source_project = record.source_account_id.project_id
+            target_project = record.target_account_id.project_id
+            if source_project and target_project:
+                record.fund_flow_label = _("同项目账户调拨") if source_project == target_project else _("项目间资金调拨")
+            elif source_project and not target_project:
+                record.fund_flow_label = _("项目转出到公司账户")
+            elif target_project and not source_project:
+                record.fund_flow_label = _("公司账户转入项目")
+            else:
+                record.fund_flow_label = _("公司账户间调拨")
 
     @api.model
     def _context_project_id(self):
@@ -142,7 +184,15 @@ class ScFundAccountOperation(models.Model):
             res["project_id"] = project_id
         return res
 
-    @api.constrains("operation_type", "source_account_id", "target_account_id", "amount", "before_balance", "after_balance")
+    @api.constrains(
+        "operation_type",
+        "source_account_id",
+        "target_account_id",
+        "fund_account_id",
+        "amount",
+        "before_balance",
+        "after_balance",
+    )
     def _check_operation_values(self):
         for record in self:
             if record.operation_type in ("transfer_out", "transfer_between"):
@@ -152,11 +202,18 @@ class ScFundAccountOperation(models.Model):
                     raise ValidationError(_("转出账户和转入账户不能相同。"))
                 if record.amount <= 0:
                     raise ValidationError(_("资金划拨/调拨金额必须大于 0。"))
+                if record.source_account_id.currency_id != record.target_account_id.currency_id:
+                    raise ValidationError(_("转出账户和转入账户币种必须一致。"))
             if record.operation_type == "balance_adjustment":
+                if not record.fund_account_id:
+                    raise ValidationError(_("余额调整必须填写调整账户。"))
                 if record.before_balance == record.after_balance:
                     raise ValidationError(_("余额调整前后金额不能相同。"))
             if record.operation_type == "fund_daily_report" and not record.fund_account_id:
                 raise ValidationError(_("资金日报表必须填写账户。"))
+            if record.operation_type == "fund_daily_report":
+                if record.daily_income < 0 or record.daily_expense < 0:
+                    raise ValidationError(_("资金日报收入和支出不能为负数。"))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -165,23 +222,186 @@ class ScFundAccountOperation(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            context_date = self.env.context.get("default_operation_date") or self.env.context.get("current_document_date")
+            if context_date:
+                vals.setdefault("operation_date", context_date)
+            context_amount = self.env.context.get("default_amount") or self.env.context.get("current_business_amount")
+            if context_amount:
+                vals.setdefault("amount", context_amount)
+            context_reason = self.env.context.get("default_operation_reason") or self.env.context.get("default_note")
+            if context_reason:
+                vals.setdefault("operation_reason", context_reason)
+            source_account_id = self.env.context.get("default_source_account_id")
+            if source_account_id:
+                vals.setdefault("source_account_id", source_account_id)
+            target_account_id = self.env.context.get("default_target_account_id")
+            if target_account_id:
+                vals.setdefault("target_account_id", target_account_id)
+            context_note = self.env.context.get("default_note")
+            if context_note:
+                vals.setdefault("note", context_note)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if vals.get("name", "/") == "/":
                 vals["name"] = seq.next_by_code("sc.fund.account.operation") or _("资金账户操作单")
         return super().create(vals_list)
+
+    @api.model
+    def _resolve_business_category_code(self, vals):
+        code = (
+            vals.get("business_category_code")
+            or self.env.context.get("default_business_category_code")
+            or self.env.context.get("business_category_code")
+            or self.env.context.get("current_business_category_code")
+        )
+        if code:
+            return code
+        operation_type = vals.get("operation_type") or self.env.context.get("default_operation_type")
+        if operation_type == "fund_daily_report":
+            return "finance.fund.daily_report"
+        if operation_type == "balance_adjustment":
+            return "finance.fund.balance_adjustment"
+        return "finance.fund.transfer"
+
+    @api.model
+    def _resolve_business_category_id(self, vals):
+        code = self._resolve_business_category_code(vals)
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", self._name)],
+            limit=1,
+        )
+        return category.id if category else False
 
     def action_confirm(self):
         for rec in self:
             if rec.state != "draft":
                 raise UserError(_("只有草稿状态的资金账户操作单可以确认。"))
+            before = rec._snapshot_audit_payload()
             rec._check_active_accounts()
-            rec.state = "confirmed"
+            rec.write({"state": "confirmed"})
+            rec._audit_transition(
+                "fund_account_operation_confirmed",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_confirm",
+            )
 
     def action_done(self):
         for rec in self:
             if rec.state != "confirmed":
                 raise UserError(_("只有已确认的资金账户操作单可以完成。"))
+            before = rec._snapshot_audit_payload()
             rec._check_active_accounts()
-            rec.state = "done"
+            rec.write({"state": "done"})
+            rec._ensure_interfund_cash_ledger()
+            rec._ensure_fund_daily_cash_ledger()
+            rec._apply_account_balance_state()
+            rec._audit_transition(
+                "fund_account_operation_done",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_done",
+            )
+
+    def _ensure_fund_daily_cash_ledger(self):
+        for rec in self:
+            if rec.operation_type != "fund_daily_report":
+                continue
+            project = rec.project_id or rec.fund_account_id.project_id
+            if not project:
+                continue
+            Ledger = self.env["sc.treasury.ledger"]
+            currency = rec.currency_id or rec.fund_account_id.currency_id or project.company_id.currency_id
+            date = rec.operation_date
+            for direction, amount, note in (
+                ("in", rec.daily_income, _("auto:fund_daily_report_done:income")),
+                ("out", rec.daily_expense, _("auto:fund_daily_report_done:expense")),
+            ):
+                if not amount or amount <= 0:
+                    continue
+                domain = [
+                    ("source_model", "=", rec._name),
+                    ("source_res_id", "=", rec.id),
+                    ("project_id", "=", project.id),
+                    ("direction", "=", direction),
+                    ("source_kind", "=", "daily_line"),
+                ]
+                existing = Ledger.sudo().search(domain, limit=1)
+                vals = {
+                    "date": date,
+                    "partner_id": False,
+                    "amount": amount,
+                    "currency_id": currency.id,
+                    "state": "posted",
+                    "note": note,
+                }
+                if existing:
+                    existing.sudo().write(vals)
+                    continue
+                Ledger.sudo().with_context(allow_ledger_auto=True).create(
+                    dict(
+                        vals,
+                        project_id=project.id,
+                        direction=direction,
+                        source_kind="daily_line",
+                        source_model=rec._name,
+                        source_res_id=rec.id,
+                    )
+                )
+
+    def _apply_account_balance_state(self):
+        for rec in self:
+            if rec.operation_type not in ("fund_daily_report", "balance_adjustment") or not rec.fund_account_id:
+                continue
+            vals = {
+                "balance_as_of_date": rec.operation_date,
+                "balance_source_operation_id": rec.id,
+            }
+            if rec.operation_type == "fund_daily_report":
+                vals.update(
+                    {
+                        "current_account_balance": rec.account_balance,
+                        "current_bank_balance": rec.bank_balance,
+                        "current_balance_source": "fund_daily_report",
+                    }
+                )
+            elif rec.operation_type == "balance_adjustment":
+                vals.update(
+                    {
+                        "current_account_balance": rec.after_balance,
+                        "current_balance_source": "balance_adjustment",
+                    }
+                )
+            rec.fund_account_id.sudo().write(vals)
+
+    def _ensure_interfund_cash_ledger(self):
+        for rec in self:
+            if rec.operation_type not in ("transfer_out", "transfer_between") or (rec.amount or 0.0) <= 0:
+                continue
+            source_project = rec.source_account_id.project_id
+            target_project = rec.target_account_id.project_id
+            if source_project and target_project and source_project == target_project:
+                continue
+            Ledger = self.env["sc.treasury.ledger"]
+            if source_project:
+                Ledger._ensure_interfund_ledger(
+                    rec,
+                    project=source_project,
+                    direction="out",
+                    amount=rec.amount,
+                    date=rec.operation_date,
+                    currency=rec.currency_id,
+                    note=_("auto:fund_account_operation_done:out"),
+                )
+            if target_project:
+                Ledger._ensure_interfund_ledger(
+                    rec,
+                    project=target_project,
+                    direction="in",
+                    amount=rec.amount,
+                    date=rec.operation_date,
+                    currency=rec.currency_id,
+                    note=_("auto:fund_account_operation_done:in"),
+                )
 
     def _check_active_accounts(self):
         self.ensure_one()
@@ -198,10 +418,79 @@ class ScFundAccountOperation(models.Model):
         for rec in self:
             if rec.state not in ("draft", "confirmed"):
                 raise UserError(_("只有草稿或已确认状态的资金账户操作单可以取消。"))
+            before = rec._snapshot_audit_payload()
             rec.write({"state": "cancelled"})
+            rec._audit_transition(
+                "fund_account_operation_cancelled",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_cancel",
+            )
 
     def action_reset_draft(self):
         for rec in self:
             if rec.state != "cancelled":
                 raise UserError(_("只有已取消的资金账户操作单可以重置为草稿。"))
+            before = rec._snapshot_audit_payload()
             rec.write({"state": "draft"})
+            rec._audit_transition(
+                "fund_account_operation_reset_draft",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_reset_draft",
+            )
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "operation_type": self.operation_type,
+            "business_category_id": self.business_category_id.id,
+            "business_category_code": self.business_category_id.code,
+            "operation_date": fields.Date.to_string(self.operation_date) if self.operation_date else False,
+            "source_account_id": self.source_account_id.id,
+            "target_account_id": self.target_account_id.id,
+            "source_project_id": self.source_account_id.project_id.id,
+            "target_project_id": self.target_account_id.project_id.id,
+            "fund_account_id": self.fund_account_id.id,
+            "project_id": self.project_id.id,
+            "company_id": self.company_id.id,
+            "currency_id": self.currency_id.id,
+            "amount": self.amount,
+            "daily_income": self.daily_income,
+            "daily_expense": self.daily_expense,
+            "account_balance": self.account_balance,
+            "bank_balance": self.bank_balance,
+            "operation_reason": self.operation_reason,
+        }
+
+    def _audit_transition(self, event_code, before, after, action_name):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code,
+            self._name,
+            self.id,
+            action=action_name,
+            before=before,
+            after=after,
+            company_id=self.company_id,
+            project_id=self.project_id or self.source_account_id.project_id or self.target_account_id.project_id,
+        )
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_fund_account_operation operation
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE operation.business_category_id IS NULL
+               AND category.target_model = 'sc.fund.account.operation'
+               AND category.code = CASE
+                   WHEN operation.operation_type = 'fund_daily_report'
+                       THEN 'finance.fund.daily_report'
+                   WHEN operation.operation_type = 'balance_adjustment'
+                       THEN 'finance.fund.balance_adjustment'
+                   ELSE 'finance.fund.transfer'
+               END
+            """
+        )

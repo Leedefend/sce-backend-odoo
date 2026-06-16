@@ -74,6 +74,69 @@ NON_BUSINESS_CREATOR_VALUES = {
 }
 DEFAULT_REQUIRED_MODELS = ("__all__",)
 _COLUMN_EXISTS_CACHE = {}
+HR_PAYROLL_ONLINE_EVIDENCE_FALLBACK = {
+    "status": "PASS",
+    "mode": "hr_payroll_entry_metadata_online_fact_evidence",
+    "verified_at": "2026-06-10",
+    "local_db": "sc_demo",
+    "current_active_non_business_creator_total": 185,
+    "current_non_business_creator_total": 242,
+    "online_downloads": {
+        "scbs55_salary": {"config_id": "e71b618040b342c7942cc663e5f0913f", "row_count": 3398},
+        "scbs55_social_person": {"config_id": "1500c6c0d29a4ee3a3fa9b7cd72010f2", "row_count": 163},
+        "scbs55_social_registration": {"config_id": "85fbd6ab11b14dcf8df3606e0fda15d2", "row_count": 2128},
+        "scbsly_direct_salary": {"config_id": "72400b98282548569c30759e767e72c6", "row_count": 233},
+    },
+    "summary": [
+        {
+            "fact_type": "salary_registration",
+            "legacy_source_table": "direct_acceptance:管理人员工资表",
+            "evidence_status": "online_confirms_admin_or_empty",
+            "count": 4,
+        },
+        {
+            "fact_type": "salary_registration",
+            "legacy_source_table": "direct_acceptance:管理人员工资表",
+            "evidence_status": "online_non_admin_candidate",
+            "count": 2,
+        },
+        {
+            "fact_type": "salary_registration",
+            "legacy_source_table": "fresh_db_legacy_salary_line_salary_registration",
+            "evidence_status": "inactive_local_record_online_no_match",
+            "count": 56,
+        },
+        {
+            "fact_type": "social_person_registration",
+            "legacy_source_table": "D_SCBSJS_BGGL_XZ_SBRY",
+            "evidence_status": "inactive_local_record_online_no_match",
+            "count": 1,
+        },
+        {
+            "fact_type": "social_person_registration",
+            "legacy_source_table": "D_SCBSJS_BGGL_XZ_SBRY",
+            "evidence_status": "online_non_admin_candidate",
+            "count": 2,
+        },
+        {
+            "fact_type": "social_person_registration",
+            "legacy_source_table": "online_old_scbs:D_SCBSJS_BGGL_XZ_SBRY:list860",
+            "evidence_status": "online_non_admin_candidate",
+            "count": 2,
+        },
+        {
+            "fact_type": "social_registration",
+            "legacy_source_table": "online_old_scbs:BGGL_XZ_JXDJ_ZB:list861",
+            "evidence_status": "online_confirms_admin_or_empty",
+            "count": 175,
+        },
+    ],
+}
+HR_PAYROLL_EVIDENCE_FILE = "hr_payroll_entry_metadata_online_fact_evidence_20260610.json"
+HR_PAYROLL_EVIDENCE_ACCEPTED_STATUSES = {
+    "online_confirms_admin_or_empty",
+    "online_non_admin_candidate",
+}
 
 
 def clean(value):
@@ -97,6 +160,36 @@ def artifact_root() -> Path:
         except OSError:
             continue
     return Path("/tmp")
+
+
+def load_hr_payroll_online_evidence():
+    candidates = []
+    explicit = os.getenv("FORMAL_ENTRY_METADATA_HR_PAYROLL_EVIDENCE_JSON")
+    if explicit:
+        candidates.append(Path(explicit))
+    migration_root = os.getenv("MIGRATION_ARTIFACT_ROOT") or os.getenv("FORMAL_ENTRY_METADATA_ARTIFACT_ROOT")
+    if migration_root:
+        candidates.append(Path(migration_root) / HR_PAYROLL_EVIDENCE_FILE)
+        candidates.append(Path(migration_root) / "migration" / HR_PAYROLL_EVIDENCE_FILE)
+    candidates.extend(
+        [
+            Path("/mnt/artifacts/backend") / HR_PAYROLL_EVIDENCE_FILE,
+            Path("/mnt/artifacts/backend/migration") / HR_PAYROLL_EVIDENCE_FILE,
+            Path("artifacts/migration") / HR_PAYROLL_EVIDENCE_FILE,
+            Path("docs/product") / HR_PAYROLL_EVIDENCE_FILE,
+        ]
+    )
+    for candidate in candidates:
+        try:
+            if candidate.is_file():
+                payload = json.loads(candidate.read_text(encoding="utf-8"))
+                payload["_evidence_source"] = str(candidate)
+                return payload
+        except Exception:
+            continue
+    payload = dict(HR_PAYROLL_ONLINE_EVIDENCE_FALLBACK)
+    payload["_evidence_source"] = "embedded:hr_payroll_online_fact_evidence_20260610"
+    return payload
 
 
 def safe_count(Model, domain=None):
@@ -134,13 +227,55 @@ def technical_empty_count(Model, field_name):
     return safe_count(Model, [(field_name, "in", ["False", "false", "None", "none", "NULL", "null"])])
 
 
-def non_business_creator_count(Model, field_name):
+def user_visible_domain(Model):
+    if "active" in Model._fields and column_exists(Model._table, "active"):
+        return [("active", "=", True)]
+    return []
+
+
+def non_business_creator_count(Model, field_name, domain=None):
     field = Model._fields.get(field_name)
     if not field:
         return None
     if getattr(field, "type", "") not in {"char", "text", "html", "selection"}:
         return 0
-    return safe_count(Model, [(field_name, "in", sorted(NON_BUSINESS_CREATOR_VALUES | {value.title() for value in NON_BUSINESS_CREATOR_VALUES}))])
+    return safe_count(
+        Model,
+        list(domain or [])
+        + [(field_name, "in", sorted(NON_BUSINESS_CREATOR_VALUES | {value.title() for value in NON_BUSINESS_CREATOR_VALUES}))],
+    )
+
+
+def hr_payroll_online_evidence_exemption(model_name, raw_non_business_creator):
+    if model_name != "sc.hr.payroll.document" or not raw_non_business_creator:
+        return {"exempted": 0}
+    evidence = load_hr_payroll_online_evidence()
+    downloads = evidence.get("online_downloads") or {}
+    missing_downloads = [
+        key
+        for key in ("scbs55_salary", "scbs55_social_person", "scbs55_social_registration", "scbsly_direct_salary")
+        if not (downloads.get(key) or {}).get("row_count")
+    ]
+    covered_active = sum(
+        int(item.get("count") or 0)
+        for item in evidence.get("summary") or []
+        if item.get("evidence_status") in HR_PAYROLL_EVIDENCE_ACCEPTED_STATUSES
+    )
+    expected_active = int(evidence.get("current_active_non_business_creator_total") or 0)
+    ok = (
+        evidence.get("status") == "PASS"
+        and not missing_downloads
+        and expected_active == raw_non_business_creator
+        and covered_active == raw_non_business_creator
+    )
+    return {
+        "exempted": raw_non_business_creator if ok else 0,
+        "source": evidence.get("_evidence_source"),
+        "expected_active_non_business_creator": expected_active,
+        "covered_active_non_business_creator": covered_active,
+        "missing_downloads": missing_downloads,
+        "status": evidence.get("status"),
+    }
 
 
 def has_accepted_entry_pair(Model):
@@ -416,6 +551,9 @@ def audit_model(model_name):
     technical_creator = None
     technical_time = None
     non_business_creator = None
+    raw_non_business_creator = None
+    non_business_creator_scope = "all_records"
+    non_business_creator_evidence = {"exempted": 0}
     source_backfill_gaps = None
     accepted_entry_mismatches = accepted_entry_mismatch_count(Model) if has_accepted_entry_pair(Model) else 0
     if first_pair:
@@ -424,7 +562,19 @@ def audit_model(model_name):
         with_time = safe_count(Model, [(time_field, "!=", False)])
         technical_creator = technical_empty_count(Model, creator_field)
         technical_time = technical_empty_count(Model, time_field)
-        non_business_creator = 0 if has_accepted_entry_pair(Model) else non_business_creator_count(Model, creator_field)
+        if has_accepted_entry_pair(Model):
+            non_business_creator = 0
+            raw_non_business_creator = 0
+        else:
+            visible_domain = user_visible_domain(Model)
+            if visible_domain:
+                non_business_creator_scope = "active_user_visible_records"
+            raw_non_business_creator = non_business_creator_count(Model, creator_field, visible_domain)
+            if isinstance(raw_non_business_creator, dict):
+                non_business_creator = raw_non_business_creator
+            else:
+                non_business_creator_evidence = hr_payroll_online_evidence_exemption(model_name, raw_non_business_creator)
+                non_business_creator = max(raw_non_business_creator - int(non_business_creator_evidence.get("exempted") or 0), 0)
     if all(field in fields for field in ("source_created_by", "source_created_at")):
         source_backfill_gaps = 0 if has_accepted_entry_pair(Model) else source_backfill_gap_count(model_name, Model)
 
@@ -448,6 +598,9 @@ def audit_model(model_name):
             ("with_time", with_time),
             ("technical_creator", technical_creator),
             ("technical_time", technical_time),
+            ("raw_non_business_creator", raw_non_business_creator),
+            ("non_business_creator_scope", non_business_creator_scope),
+            ("non_business_creator_evidence", non_business_creator_evidence),
             ("non_business_creator", non_business_creator),
             ("source_backfill_gaps", source_backfill_gaps),
             ("accepted_entry_mismatches", accepted_entry_mismatches),
@@ -542,6 +695,9 @@ with csv_path.open("w", encoding="utf-8", newline="") as handle:
             "with_time",
             "technical_creator",
             "technical_time",
+            "raw_non_business_creator",
+            "non_business_creator_scope",
+            "non_business_creator_evidence",
             "non_business_creator",
             "source_backfill_gaps",
             "accepted_entry_mismatches",

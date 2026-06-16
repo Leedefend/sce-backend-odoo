@@ -69,9 +69,31 @@ def _amount_to_chinese_upper(value):
 
 class PaymentRequest(models.Model):
     _name = "payment.request"
-    _description = "Payment Request"
-    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation", "sc.delete.guard.mixin"]
+    _description = "付款/收款申请"
+    _inherit = [
+        "mail.thread",
+        "mail.activity.mixin",
+        "tier.validation",
+        "sc.delete.guard.mixin",
+        "sc.company.contractor.responsibility.context.mixin",
+    ]
     _order = "id desc"
+    _rec_names_search = [
+        "name",
+        "legacy_visible_document_no",
+        "project_id.name",
+        "legacy_visible_project_name",
+        "partner_id.name",
+        "actual_payee_unit",
+        "payer_unit",
+        "payment_account_name",
+        "legacy_visible_payee_unit",
+        "legacy_visible_actual_payee_unit",
+        "legacy_visible_payer_unit",
+        "contract_id.subject",
+        "contract_id.legacy_contract_no",
+        "contract_id.legacy_document_no",
+    ]
     _sc_delete_guard_blocker_models = (
         "sc.material.rental.order",
     )
@@ -83,6 +105,14 @@ class PaymentRequest(models.Model):
         default="pay",
         required=True,
         tracking=True,
+    )
+    payment_flow_label = fields.Char(string="办理事项", compute="_compute_payment_flow_label")
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'payment.request')]",
     )
     receipt_type = fields.Char(
         string="登记类型",
@@ -131,6 +161,14 @@ class PaymentRequest(models.Model):
         domain="[('project_id', '=', project_id), ('state', '=', 'approve')]",
         tracking=True,
     )
+    material_settlement_id = fields.Many2one(
+        "sc.material.settlement",
+        string="材料结算单",
+        domain="[('project_id', '=', project_id), ('state', '=', 'confirmed')]",
+        index=True,
+        tracking=True,
+        ondelete="set null",
+    )
     settlement_currency_id = fields.Many2one(
         "res.currency",
         string="结算币种",
@@ -172,6 +210,45 @@ class PaymentRequest(models.Model):
         store=False,
         help="用于列表高亮：当申请金额超过结算可付余额时为 True。",
     )
+    line_settlement_count = fields.Integer(
+        string="明细结算单数",
+        compute="_compute_line_settlement_summary",
+        store=True,
+        compute_sudo=True,
+    )
+    line_settlement_summary = fields.Char(
+        string="明细结算依据",
+        compute="_compute_line_settlement_summary",
+        store=True,
+        compute_sudo=True,
+    )
+    legacy_relation_count = fields.Integer(
+        string="历史关联依据数",
+        compute="_compute_legacy_relation_summary",
+        store=True,
+        compute_sudo=True,
+    )
+    legacy_relation_summary = fields.Char(
+        string="历史关联依据",
+        compute="_compute_legacy_relation_summary",
+        store=True,
+        compute_sudo=True,
+    )
+    payment_basis_type = fields.Selection(
+        [
+            ("standard_settlement", "标准结算单"),
+            ("line_settlement", "明细结算单"),
+            ("material_settlement", "材料结算单"),
+            ("contract", "合同依据"),
+            ("legacy_relation", "历史关联依据"),
+            ("none", "无可解释依据"),
+        ],
+        string="依据口径",
+        compute="_compute_payment_basis_type",
+        store=True,
+        compute_sudo=True,
+        index=True,
+    )
     settlement_compliance_state = fields.Selection(
         related="settlement_id.compliance_state",
         string="匹配状态",
@@ -209,7 +286,7 @@ class PaymentRequest(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id,
+        default=lambda self: self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id,
     )
     amount = fields.Monetary(
         string="申请金额",
@@ -334,19 +411,19 @@ class PaymentRequest(models.Model):
         help="付款申请自身确认的付款单位；历史迁移数据来自用户验收面。",
     )
     payment_account_name = fields.Char(
-        string="户名",
+        string="收款户名",
         index=True,
         tracking=True,
         help="付款申请自身确认的收款户名；不覆盖往来单位主数据。",
     )
     payment_bank_name = fields.Char(
-        string="开户行",
+        string="收款开户行",
         index=True,
         tracking=True,
         help="付款申请自身确认的收款开户行；不覆盖往来单位主数据。",
     )
     payment_account_no = fields.Char(
-        string="账号",
+        string="收款账号",
         index=True,
         tracking=True,
         help="付款申请自身确认的收款账号；不覆盖往来单位主数据。",
@@ -361,21 +438,21 @@ class PaymentRequest(models.Model):
         readonly=True,
     )
     partner_account_name = fields.Char(
-        string="户名",
+        string="往来单位默认户名",
         related="partner_id.sc_account_name",
         store=True,
         readonly=True,
         index=True,
     )
     partner_bank_name = fields.Char(
-        string="开户行",
+        string="往来单位默认开户行",
         related="partner_id.sc_bank_name",
         store=True,
         readonly=True,
         index=True,
     )
     partner_bank_account = fields.Char(
-        string="账号",
+        string="往来单位默认账号",
         related="partner_id.sc_bank_account",
         store=True,
         readonly=True,
@@ -440,6 +517,71 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
 
+    @api.depends("type", "receipt_type", "legacy_source_table", "cost_category_name", "material_settlement_id")
+    def _compute_payment_flow_label(self):
+        for record in self:
+            if record.type == "receive":
+                record.payment_flow_label = record.receipt_type or _("收款申请")
+            elif record.material_settlement_id:
+                record.payment_flow_label = _("材料结算付款申请")
+            elif record.legacy_source_table == "T_FK_Supplier":
+                record.payment_flow_label = _("往来单位付款申请")
+            elif record.legacy_source_table == "SCBSLY_DIRECT_PAYMENT_APPLY_ACCEPTED":
+                record.payment_flow_label = _("支付申请")
+            elif record.cost_category_name:
+                record.payment_flow_label = _("付款申请：%s") % record.cost_category_name
+            else:
+                record.payment_flow_label = _("付款申请")
+
+    @api.depends(
+        "name",
+        "type",
+        "amount",
+        "currency_id.symbol",
+        "project_id.display_name",
+        "legacy_visible_project_name",
+        "partner_id.display_name",
+        "actual_payee_unit",
+        "payer_unit",
+        "legacy_visible_payee_unit",
+        "legacy_visible_actual_payee_unit",
+        "legacy_visible_payer_unit",
+        "legacy_visible_document_no",
+        "legacy_visible_request_amount",
+    )
+    def _compute_display_name(self):
+        for record in self:
+            flow = _("收款申请") if record.type == "receive" else _("付款申请")
+            project_name = (
+                record.project_id.display_name
+                or record.legacy_visible_project_name
+                or ""
+            ).strip()
+            partner_name = (
+                record.actual_payee_unit
+                or record.payer_unit
+                or record.partner_id.display_name
+                or record.legacy_visible_actual_payee_unit
+                or record.legacy_visible_payee_unit
+                or record.legacy_visible_payer_unit
+                or ""
+            ).strip()
+            amount_text = record._display_amount_label()
+            document_no = (
+                record.name
+                or record.legacy_visible_document_no
+                or ""
+            ).strip()
+            parts = [part for part in (flow, project_name, partner_name, amount_text, document_no) if part]
+            record.display_name = " / ".join(parts) or flow
+
+    def _display_amount_label(self):
+        self.ensure_one()
+        if self.amount:
+            symbol = (self.currency_id.symbol or "").strip()
+            return "%s%s" % (symbol, "{:,.2f}".format(self.amount))
+        return (self.legacy_visible_request_amount or "").strip()
+
     @api.depends("outflow_line_ids.source_line_type", "legacy_visible_cost_category_name")
     def _compute_reconciliation_summary(self):
         for record in self:
@@ -487,6 +629,95 @@ class PaymentRequest(models.Model):
                     exc,
                 )
 
+    @api.model
+    def _partner_payment_defaults(self, partner, request_type="pay"):
+        if not partner:
+            return {}
+        vals = {}
+        if request_type == "pay":
+            vals.update(
+                {
+                    "actual_payee_unit": partner.display_name or partner.name or "",
+                    "payment_account_name": partner.sc_account_name or "",
+                    "payment_bank_name": partner.sc_bank_name or "",
+                    "payment_account_no": partner.sc_bank_account or "",
+                }
+            )
+        elif request_type == "receive":
+            vals["payer_unit"] = partner.display_name or partner.name or ""
+        return {key: value for key, value in vals.items() if value}
+
+    @api.model
+    def _basis_payment_request_values(self, vals):
+        values = {}
+        request_type = vals.get("type") or self.env.context.get("default_type") or "pay"
+        settlement = self.env["sc.settlement.order"].browse(vals.get("settlement_id")).exists() if vals.get("settlement_id") else False
+        material_settlement = (
+            self.env["sc.material.settlement"].browse(vals.get("material_settlement_id")).exists()
+            if vals.get("material_settlement_id")
+            else False
+        )
+        contract = self.env["construction.contract"].browse(vals.get("contract_id")).exists() if vals.get("contract_id") else False
+        partner = self.env["res.partner"].browse(vals.get("partner_id")).exists() if vals.get("partner_id") else False
+
+        if settlement:
+            values.update(
+                {
+                    "project_id": settlement.project_id.id,
+                    "contract_id": settlement.contract_id.id,
+                    "partner_id": (settlement.settlement_unit_id or settlement.partner_id).id,
+                    "amount": settlement.amount_payable or settlement.remaining_amount or settlement.settlement_amount or settlement.amount_total,
+                    "currency_id": settlement.currency_id.id,
+                }
+            )
+            partner = settlement.settlement_unit_id or settlement.partner_id or partner
+        elif material_settlement:
+            values.update(
+                {
+                    "project_id": material_settlement.project_id.id,
+                    "partner_id": material_settlement.supplier_id.id,
+                    "amount": material_settlement.payment_remaining_amount or material_settlement.amount_total,
+                    "currency_id": material_settlement.currency_id.id,
+                }
+            )
+            partner = material_settlement.supplier_id or partner
+        elif contract:
+            values.update(
+                {
+                    "project_id": contract.project_id.id,
+                    "partner_id": contract.partner_id.id,
+                    "currency_id": contract.currency_id.id,
+                }
+            )
+            partner = contract.partner_id or partner
+
+        if partner:
+            values.update(self._partner_payment_defaults(partner, request_type=request_type))
+        return {key: value for key, value in values.items() if value not in (False, None, "")}
+
+    def _apply_payment_request_basis_values(self, values, *, only_empty=False):
+        for field_name, value in values.items():
+            if field_name not in self._fields:
+                continue
+            if only_empty and self[field_name]:
+                continue
+            setattr(self, field_name, value)
+
+    @api.onchange("settlement_id", "material_settlement_id", "contract_id", "partner_id", "type")
+    def _onchange_payment_request_basis(self):
+        for record in self:
+            vals = {
+                "type": record.type,
+                "settlement_id": record.settlement_id.id,
+                "material_settlement_id": record.material_settlement_id.id,
+                "contract_id": record.contract_id.id,
+                "partner_id": record.partner_id.id,
+            }
+            record._apply_payment_request_basis_values(
+                record._basis_payment_request_values(vals),
+                only_empty=True,
+            )
+
     def action_create_payment_execution(self):
         self.ensure_one()
         action = self.env.ref("smart_construction_core.action_sc_payment_execution").read()[0]
@@ -495,6 +726,8 @@ class PaymentRequest(models.Model):
         action["context"] = {
             **dict(self.env.context or {}),
             "default_payment_request_id": self.id,
+            "default_source_kind": "actual_outflow",
+            "default_payment_family": "往来单位付款",
             "default_project_id": self.project_id.id,
             "default_partner_id": self.partner_id.id,
             "default_contract_id": self.contract_id.id,
@@ -502,6 +735,12 @@ class PaymentRequest(models.Model):
             "default_planned_amount": self.amount or 0.0,
             "default_paid_amount": self.amount or 0.0,
             "default_currency_id": self.currency_id.id,
+            "default_receipt_account_name": self.payment_account_name or self.partner_account_name,
+            "default_receipt_bank_name": self.payment_bank_name or self.partner_bank_name,
+            "default_receipt_account_no": self.payment_account_no or self.partner_bank_account,
+            "default_payment_account_name": self.legacy_payment_account_name or self.payer_unit,
+            "default_payment_account_no": self.legacy_payment_account_no,
+            "default_note": self.note or self.legacy_visible_remark,
         }
         return action
 
@@ -627,6 +866,9 @@ class PaymentRequest(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            for field_name, value in self._basis_payment_request_values(vals).items():
+                vals.setdefault(field_name, value)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if not vals.get("name") or vals.get("name") == "New":
                 vals["name"] = seq.next_by_code("payment.request") or _("Payment Request")
         records = super().create(vals_list)
@@ -634,6 +876,27 @@ class PaymentRequest(models.Model):
             lambda r: r.type == "pay" and r.state in ("submit", "approve", "approved")
         )._enforce_funding_gate()
         return records
+
+    @api.model
+    def _resolve_business_category_code(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        if code:
+            return code
+        request_type = vals.get("type") or self.env.context.get("default_type") or "pay"
+        if request_type == "receive":
+            return "finance.payment.apply.receive"
+        return "finance.payment.apply.pay"
+
+    @api.model
+    def _resolve_business_category_id(self, vals):
+        code = self._resolve_business_category_code(vals)
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", self._name)],
+            limit=1,
+        )
+        return category.id if category else False
 
     def write(self, vals):
         if "state" in vals and not self.env.context.get("allow_transition"):
@@ -678,6 +941,8 @@ class PaymentRequest(models.Model):
             "state": self.state,
             "amount": self.amount,
             "partner_id": self.partner_id.id if self.partner_id else False,
+            "business_category_id": self.business_category_id.id if self.business_category_id else False,
+            "business_category_code": self.business_category_id.code if self.business_category_id else False,
             "attachment_count": self._get_attachment_count(),
             "validation_status": self.validation_status,
         }
@@ -697,12 +962,38 @@ class PaymentRequest(models.Model):
             project_id=self.project_id,
         )
 
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE payment_request request
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE request.business_category_id IS NULL
+               AND category.target_model = 'payment.request'
+               AND category.code = CASE
+                   WHEN request.type = 'receive'
+                       THEN 'finance.payment.apply.receive'
+                   ELSE 'finance.payment.apply.pay'
+               END
+            """
+        )
+
     def _has_submit_access(self):
         return (
             self.env.user.has_group("smart_construction_core.group_sc_cap_business_initiator")
             or self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
             or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
         )
+
+    def _has_finance_approve_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
+    def _assert_finance_approve_access(self):
+        if not self._has_finance_approve_access():
+            raise ValidationError(_("你没有审批付款/收款申请的权限。"))
 
     @api.depends("settlement_id", "settlement_remaining_amount", "amount")
     def _compute_settlement_amount_insufficient(self):
@@ -720,6 +1011,63 @@ class PaymentRequest(models.Model):
             state = rec.settlement_id.compliance_state if rec.settlement_id else False
             rec.settlement_match_blocked = state == "block"
             rec.settlement_match_warn = state == "warn"
+
+    @api.depends("outflow_line_ids.settlement_id", "outflow_line_ids.settlement_id.name")
+    def _compute_line_settlement_summary(self):
+        for rec in self:
+            settlements = rec.outflow_line_ids.mapped("settlement_id").exists()
+            rec.line_settlement_count = len(settlements)
+            names = settlements.mapped("name")
+            if len(names) > 3:
+                rec.line_settlement_summary = "%s 等%s张" % ("、".join(names[:3]), len(names))
+            else:
+                rec.line_settlement_summary = "、".join(names)
+
+    @api.depends(
+        "outflow_line_ids.import_batch",
+        "outflow_line_ids.source_line_type",
+        "outflow_line_ids.source_document_no",
+    )
+    def _compute_legacy_relation_summary(self):
+        for rec in self:
+            lines = rec.outflow_line_ids.filtered(lambda line: line.import_batch and (line.source_document_no or line.source_line_type))
+            rec.legacy_relation_count = len(lines)
+            labels = []
+            seen = set()
+            for line in lines:
+                line_type = (line.source_line_type or "历史关联").strip() or "历史关联"
+                document_no = (line.source_document_no or "").strip()
+                label = "%s:%s" % (line_type, document_no) if document_no else line_type
+                if label in seen:
+                    continue
+                seen.add(label)
+                labels.append(label)
+            if len(labels) > 3:
+                rec.legacy_relation_summary = "%s 等%s项" % ("、".join(labels[:3]), len(labels))
+            else:
+                rec.legacy_relation_summary = "、".join(labels)
+
+    @api.depends(
+        "settlement_id",
+        "line_settlement_count",
+        "material_settlement_id",
+        "contract_id",
+        "legacy_relation_count",
+    )
+    def _compute_payment_basis_type(self):
+        for rec in self:
+            if rec.settlement_id:
+                rec.payment_basis_type = "standard_settlement"
+            elif rec.line_settlement_count:
+                rec.payment_basis_type = "line_settlement"
+            elif rec.material_settlement_id:
+                rec.payment_basis_type = "material_settlement"
+            elif rec.contract_id:
+                rec.payment_basis_type = "contract"
+            elif rec.legacy_relation_count:
+                rec.payment_basis_type = "legacy_relation"
+            else:
+                rec.payment_basis_type = "none"
 
     def _get_bool_param(self, key, default=True):
         val = self.env["ir.config_parameter"].sudo().get_param(key)
@@ -789,6 +1137,7 @@ class PaymentRequest(models.Model):
             lambda: self._check_settlement_state(self.settlement_id),
             lambda: self._check_project_funding_gate(self.project_id, self.amount, exclude_ids=self.ids),
             self._check_settlement_remaining_amount,
+            self._check_material_settlement_remaining_amount,
             self._check_not_overpay_settlement,
             self._check_settlement_consistency,
             lambda: self._check_settlement_compliance_or_raise(strict=False),
@@ -856,16 +1205,75 @@ class PaymentRequest(models.Model):
             if float_compare(unpaid, 0.0, precision_rounding=rounding) == 1:
                 raise ValidationError(_("付款/收款未结清，无法完成。"))
 
-    @api.onchange("type", "project_id")
+    def _settlement_domain_for_payment_request(self):
+        self.ensure_one()
+        settlement_type = "in" if self.type == "receive" else "out"
+        domain = [
+            ("state", "=", "approve"),
+            ("settlement_type", "=", settlement_type),
+        ]
+        if self.project_id:
+            domain.append(("project_id", "=", self.project_id.id))
+        if self.contract_id:
+            domain.append(("contract_id", "=", self.contract_id.id))
+        return domain
+
+    def _material_settlement_domain_for_payment_request(self):
+        self.ensure_one()
+        domain = [("state", "=", "confirmed")]
+        if self.project_id:
+            domain.append(("project_id", "=", self.project_id.id))
+        if self.partner_id:
+            domain.append(("supplier_id", "=", self.partner_id.id))
+        return domain
+
+    def _settlement_matches_payment_context(self, settlement):
+        self.ensure_one()
+        if not settlement:
+            return True
+        expected_type = "in" if self.type == "receive" else "out"
+        if settlement.state != "approve" or settlement.settlement_type != expected_type:
+            return False
+        if self.project_id and settlement.project_id and settlement.project_id != self.project_id:
+            return False
+        if self.contract_id and settlement.contract_id and settlement.contract_id != self.contract_id:
+            return False
+        if self.partner_id and settlement.partner_id and settlement.partner_id != self.partner_id:
+            return False
+        return True
+
+    def _material_settlement_matches_payment_context(self, settlement):
+        self.ensure_one()
+        if not settlement:
+            return True
+        if settlement.state != "confirmed":
+            return False
+        if self.project_id and settlement.project_id and settlement.project_id != self.project_id:
+            return False
+        if self.partner_id and settlement.supplier_id and settlement.supplier_id != self.partner_id:
+            return False
+        return True
+
+    @api.onchange("type", "project_id", "contract_id", "partner_id")
     def _onchange_type_set_contract_domain(self):
         domain = {}
         expected_contract_type = "in" if self.type == "pay" else "out"
-        domain["contract_id"] = [
-            ("project_id", "=", self.project_id.id),
-            ("type", "=", expected_contract_type),
-        ]
-        if self.contract_id and self.contract_id.type != expected_contract_type:
-            self.contract_id = False
+        contract_domain = [("type", "=", expected_contract_type)]
+        if self.project_id:
+            contract_domain.append(("project_id", "=", self.project_id.id))
+        domain["contract_id"] = contract_domain
+        for record in self:
+            if record.contract_id and record.contract_id.type != expected_contract_type:
+                record.contract_id = False
+            if record.settlement_id and not record._settlement_matches_payment_context(record.settlement_id):
+                record.settlement_id = False
+            if (
+                record.material_settlement_id
+                and not record._material_settlement_matches_payment_context(record.material_settlement_id)
+            ):
+                record.material_settlement_id = False
+            domain["settlement_id"] = record._settlement_domain_for_payment_request()
+            domain["material_settlement_id"] = record._material_settlement_domain_for_payment_request()
         return {"domain": domain}
 
     def _check_settlement_compliance_or_raise(self, strict=True):
@@ -880,6 +1288,35 @@ class PaymentRequest(models.Model):
             raise ValidationError(_("结算单来源匹配未通过，禁止继续：\n%s") % msg)
         if state == "warn" and strict and block_on_warn:
             raise ValidationError(_("结算单来源匹配存在缺失/提示，按策略禁止继续：\n%s") % msg)
+
+    def _linked_settlement_orders(self):
+        """Return settlement orders linked either on the request or legacy detail lines."""
+        self.ensure_one()
+        settlements = self.settlement_id
+        if self.outflow_line_ids:
+            settlements |= self.outflow_line_ids.mapped("settlement_id")
+        return settlements.exists()
+
+    def _has_payment_basis(self):
+        self.ensure_one()
+        return bool(
+            self.contract_id
+            or self.settlement_id
+            or self.material_settlement_id
+            or self.outflow_line_ids.filtered("settlement_id")
+            or self._has_legacy_relation_basis()
+        )
+
+    def _has_legacy_relation_basis(self):
+        self.ensure_one()
+        if self.legacy_source_table != "SCBSLY_DIRECT_PAYMENT_APPLY_ACCEPTED":
+            return False
+        return bool(
+            self.outflow_line_ids.filtered(
+                lambda line: line.import_batch == "scbsly_payment_settlement_relation_backfill_v1"
+                and (line.source_document_no or line.source_line_type)
+            )
+        )
 
     @api.constrains("settlement_id", "type", "project_id", "partner_id", "contract_id")
     def _check_settlement_consistency(self):
@@ -900,6 +1337,21 @@ class PaymentRequest(models.Model):
             # 已进入流程的记录在字段更改时仍要守住额度
             if rec.state in ("submit", "approve", "approved", "done"):
                 rec._check_settlement_remaining_amount()
+
+    @api.constrains("material_settlement_id", "type", "project_id", "partner_id", "amount", "state")
+    def _check_material_settlement_consistency(self):
+        for rec in self:
+            settlement = rec.material_settlement_id
+            if not settlement:
+                continue
+            if rec.type != "pay":
+                raise ValidationError(_("材料结算只能生成付款申请。"))
+            if settlement.project_id and rec.project_id and settlement.project_id != rec.project_id:
+                raise ValidationError(_("材料结算项目必须与付款申请项目一致。"))
+            if settlement.supplier_id and rec.partner_id and settlement.supplier_id != rec.partner_id:
+                raise ValidationError(_("材料结算供应商必须与付款申请往来单位一致。"))
+            if rec.state in ("submit", "approve", "approved", "done"):
+                rec._check_material_settlement_remaining_amount()
 
     @api.constrains("contract_id", "type")
     def _check_contract_direction(self):
@@ -942,26 +1394,135 @@ class PaymentRequest(models.Model):
         防超付硬校验：付款金额不得超过结算单可付余额。
         """
         for rec in self:
-            if rec.type != "pay" or not rec.settlement_id:
+            if rec.type != "pay":
                 continue
-            metrics = opm.compute_payment_payable_excluding_self(rec)
-            payable = metrics["payable"]
-            precision = metrics["precision"]
+            if rec.settlement_id:
+                metrics = opm.compute_payment_payable_excluding_self(rec)
+                payable = metrics["payable"]
+                precision = metrics["precision"]
+                amount = rec.amount or 0.0
+                if float_compare(amount, payable, precision_rounding=precision) == 1:
+                    raise_guard(
+                        "P0_PAYMENT_OVER_BALANCE",
+                        f"付款申请[{rec.display_name}]",
+                        "提交/审批付款申请",
+                        reasons=[f"付款金额 {amount} 超出结算单可付余额 {payable}"],
+                        hints=["请降低付款金额或先调整结算单余额"],
+                    )
+                continue
+            settlement_amounts = {}
+            for line in rec.outflow_line_ids.filtered("settlement_id"):
+                settlement_amounts[line.settlement_id.id] = (
+                    settlement_amounts.get(line.settlement_id.id, 0.0) + (line.current_pay_amount or 0.0)
+                )
+            if not settlement_amounts:
+                continue
+            paid_states = opm.get_paid_states()
+            paid_map = opm.settlement_paid_map(rec.env, settlement_amounts.keys(), paid_states=paid_states)
+            precision = rec.currency_id.rounding if rec.currency_id else 0.01
+            if precision <= 0:
+                precision = 0.01
+            for settlement in rec.env["sc.settlement.order"].browse(settlement_amounts.keys()):
+                amount = settlement_amounts.get(settlement.id, 0.0)
+                paid = paid_map.get(settlement.id, 0.0)
+                if rec.state in paid_states:
+                    paid -= amount
+                payable = (settlement.amount_total or 0.0) - paid
+                if float_compare(amount, payable, precision_rounding=precision) == 1:
+                    raise_guard(
+                        "P0_PAYMENT_OVER_BALANCE",
+                        f"付款申请[{rec.display_name}]",
+                        "提交/审批付款申请",
+                        reasons=[f"明细结算单[{settlement.display_name}]付款金额 {amount} 超出可付余额 {payable}"],
+                        hints=["请降低付款金额或先调整结算单余额"],
+                    )
+
+    def _material_settlement_requested_amount_excluding_self(self):
+        self.ensure_one()
+        settlement = self.material_settlement_id
+        if not settlement:
+            return 0.0
+        domain = [
+            ("material_settlement_id", "=", settlement.id),
+            ("type", "=", "pay"),
+            ("state", "not in", ("draft", "cancel")),
+            ("id", "!=", self.id),
+        ]
+        data = self.sudo().read_group(domain, ["amount:sum"], [])
+        return data[0].get("amount_sum", data[0].get("amount", 0.0)) if data else 0.0
+
+    def _check_material_settlement_remaining_amount(self):
+        for rec in self:
+            settlement = rec.material_settlement_id
+            if rec.type != "pay" or not settlement:
+                continue
+            if settlement.state != "confirmed":
+                raise_guard(
+                    "P0_MATERIAL_SETTLEMENT_NOT_CONFIRMED",
+                    f"付款申请[{rec.display_name}]",
+                    "提交/审批材料付款申请",
+                    reasons=[_("材料结算单未确认")],
+                    hints=[_("请先确认材料结算单")],
+                )
+            precision = rec.currency_id.rounding if rec.currency_id else 0.01
+            requested = rec._material_settlement_requested_amount_excluding_self()
+            payable = (settlement.amount_total or 0.0) - (requested or 0.0)
             amount = rec.amount or 0.0
+            if float_compare(payable, 0.0, precision_rounding=precision) <= 0:
+                raise_guard(
+                    "P0_MATERIAL_PAYMENT_OVER_BALANCE",
+                    f"付款申请[{rec.display_name}]",
+                    "提交/审批材料付款申请",
+                    reasons=[f"材料结算剩余可申请金额不足（剩余：{payable}）"],
+                    hints=[_("请先撤销多余付款申请或调整本次申请金额")],
+                )
             if float_compare(amount, payable, precision_rounding=precision) == 1:
                 raise_guard(
-                    "P0_PAYMENT_OVER_BALANCE",
+                    "P0_MATERIAL_PAYMENT_OVER_BALANCE",
                     f"付款申请[{rec.display_name}]",
-                    "提交/审批付款申请",
-                    reasons=[f"付款金额 {amount} 超出结算单可付余额 {payable}"],
-                    hints=["请降低付款金额或先调整结算单余额"],
+                    "提交/审批材料付款申请",
+                    reasons=[f"本次申请金额 {amount} 超过材料结算剩余可申请金额 {payable}"],
+                    hints=[_("请降低付款金额或拆分到后续付款申请")],
                 )
 
     def _compute_is_overpay_risk(self):
         """用于 UI 高亮：金额 > 可付余额 时标记风险。"""
         for rec in self:
-            if rec.type != "pay" or not rec.settlement_id:
+            if rec.type != "pay":
                 rec.is_overpay_risk = False
+                continue
+            if rec.material_settlement_id:
+                precision = rec.currency_id.rounding if rec.currency_id else 0.01
+                payable = (rec.material_settlement_id.amount_total or 0.0) - (
+                    rec._material_settlement_requested_amount_excluding_self() or 0.0
+                )
+                rec.is_overpay_risk = float_compare(rec.amount or 0.0, payable, precision_rounding=precision) == 1
+                continue
+            if not rec.settlement_id:
+                settlement_amounts = {}
+                for line in rec.outflow_line_ids.filtered("settlement_id"):
+                    settlement_amounts[line.settlement_id.id] = (
+                        settlement_amounts.get(line.settlement_id.id, 0.0) + (line.current_pay_amount or 0.0)
+                    )
+                if not settlement_amounts:
+                    rec.is_overpay_risk = False
+                    continue
+                paid_states = opm.get_paid_states()
+                paid_map = opm.settlement_paid_map(rec.env, settlement_amounts.keys(), paid_states=paid_states)
+                precision = rec.currency_id.rounding if rec.currency_id else 0.01
+                if precision <= 0:
+                    precision = 0.01
+                risk = False
+                for settlement in rec.env["sc.settlement.order"].browse(settlement_amounts.keys()):
+                    amount = settlement_amounts.get(settlement.id, 0.0)
+                    paid = paid_map.get(settlement.id, 0.0)
+                    if rec.state in paid_states:
+                        paid -= amount
+                    payable = (settlement.amount_total or 0.0) - paid
+                    if float_compare(amount, payable, precision_rounding=precision) == 1:
+                        risk = True
+                        break
+                rec.is_overpay_risk = risk
                 continue
             metrics = opm.compute_payment_payable_excluding_self(rec)
             payable = metrics["payable"]
@@ -973,10 +1534,12 @@ class PaymentRequest(models.Model):
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
         advisory_result = {}
         for rec in self:
-            if not rec.contract_id:
-                raise UserError("请先选择关联合同后再提交付款/收款申请。")
-            if rec.contract_id.state == "cancel":
+            if not rec._has_payment_basis():
+                raise UserError("请先选择关联合同或结算单后再提交付款/收款申请。")
+            if rec.contract_id and rec.contract_id.state == "cancel":
                 raise UserError("关联合同已取消，不能提交付款/收款申请。")
+            rec._check_settlement_remaining_amount()
+            rec._check_material_settlement_remaining_amount()
             advisory_result[rec.id] = rec._handle_payment_advisories(
                 "提交付款申请",
                 rec._collect_payment_advisories("submit"),
@@ -996,6 +1559,7 @@ class PaymentRequest(models.Model):
         return {"warnings": advisory_result}
 
     def action_approve(self):
+        self._assert_finance_approve_access()
         advisory_result = {}
         for rec in self:
             if rec.state != "submit":
@@ -1007,6 +1571,8 @@ class PaymentRequest(models.Model):
                     "审批付款申请",
                     reasons=["tier validation not complete"],
                 )
+            rec._check_settlement_remaining_amount()
+            rec._check_material_settlement_remaining_amount()
             advisory_result[rec.id] = rec._handle_payment_advisories(
                 "审批付款申请",
                 rec._collect_payment_advisories("approve"),
@@ -1023,12 +1589,15 @@ class PaymentRequest(models.Model):
 
     def action_approval_decision(self):
         """Execute the current approval step without forcing the frontend to know tier state."""
+        self._assert_finance_approve_access()
         result = None
         advisory_result = {}
         for rec in self:
             if rec.state != "submit":
                 continue
             if rec.validation_status in ("waiting", "pending"):
+                rec._check_settlement_remaining_amount()
+                rec._check_material_settlement_remaining_amount()
                 advisory_result[rec.id] = rec._handle_payment_advisories(
                     "审批付款申请",
                     rec._collect_payment_advisories("approve"),
@@ -1040,6 +1609,8 @@ class PaymentRequest(models.Model):
             if rec.validation_status == "validated":
                 return rec.action_approve()
             if rec.validation_status in ("no", False) and not rec.review_ids:
+                rec._check_settlement_remaining_amount()
+                rec._check_material_settlement_remaining_amount()
                 advisory_result[rec.id] = rec._handle_payment_advisories(
                     "审批付款申请",
                     rec._collect_payment_advisories("approve"),
@@ -1059,9 +1630,12 @@ class PaymentRequest(models.Model):
         return result or {"warnings": advisory_result}
 
     def action_set_approved(self):
+        self._assert_finance_approve_access()
         advisory_result = {}
         result = None
         for rec in self:
+            rec._check_settlement_remaining_amount()
+            rec._check_material_settlement_remaining_amount()
             advisory_result[rec.id] = rec._handle_payment_advisories(
                 "批准付款申请",
                 rec._collect_payment_advisories("approve"),
@@ -1106,6 +1680,8 @@ class PaymentRequest(models.Model):
                     "完成付款申请",
                     reasons=[f"当前状态为 {rec.state}"],
                 )
+            rec._check_settlement_remaining_amount()
+            rec._check_material_settlement_remaining_amount()
             advisory_result[rec.id] = rec._handle_payment_advisories(
                 "完成付款申请",
                 rec._collect_payment_advisories("done"),
@@ -1172,7 +1748,33 @@ class PaymentRequest(models.Model):
         )
         if not has_finance_cancel_access:
             raise ValidationError(_("你没有取消付款/收款申请的权限。"))
-        self.with_context(allow_transition=True).write({"state": "cancel"})
+        for rec in self:
+            if rec.state in ("done", "cancel"):
+                raise_guard(
+                    "PAYMENT_CANCEL_INVALID_STATE",
+                    f"付款/收款申请[{rec.display_name}]",
+                    _("取消付款/收款申请"),
+                    reasons=[_("已完成或已取消的付款/收款申请不能直接取消。")],
+                    hints=[_("已付款执行请先从付款执行单撤销；已收款入账需走后续冲销/红冲流程。")],
+                )
+            payment_ledger_count = self.env["payment.ledger"].sudo().search_count(
+                [("payment_request_id", "=", rec.id)]
+            )
+            treasury_ledger_count = self.env["sc.treasury.ledger"].sudo().search_count(
+                [("payment_request_id", "=", rec.id), ("state", "!=", "void")]
+            )
+            if payment_ledger_count or treasury_ledger_count:
+                raise_guard(
+                    "PAYMENT_CANCEL_LEDGER_EXISTS",
+                    f"付款/收款申请[{rec.display_name}]",
+                    _("取消付款/收款申请"),
+                    reasons=[_("当前申请已生成付款或资金台账，不能直接取消。")],
+                    hints=[_("请先按对应业务链路撤销付款执行或办理收款冲销，保持台账可追溯。")],
+                )
+            before = rec._snapshot_audit_payload()
+            rec.with_context(allow_transition=True).write({"state": "cancel"})
+            after = rec._snapshot_audit_payload()
+            rec._audit_transition("payment_cancelled", before, after, action_name="action_cancel")
 
     def _check_state_from_condition(self):
         self.ensure_one()
@@ -1184,6 +1786,8 @@ class PaymentRequest(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
+            rec._check_settlement_remaining_amount()
+            rec._check_material_settlement_remaining_amount()
             advisories = rec._collect_payment_advisories("approve")
             if advisories:
                 lines = [

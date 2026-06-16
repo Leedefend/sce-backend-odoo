@@ -5,14 +5,23 @@
             <field name="name">sc.expense.claim.tree</field>
             <field name="model">sc.expense.claim</field>
             <field name="arch" type="xml">
-                <tree string="费用/保证金" decoration-muted="state == 'cancel'">
+                <tree string="费用、保证金与还款办理" decoration-muted="state == 'cancel'">
                     <field name="date_claim"/>
                     <field name="name"/>
-                    <field name="claim_type"/>
+                    <field name="business_category_id" optional="show"/>
+                    <field name="business_axis" optional="show"/>
+                    <field name="handling_kind" optional="show"/>
+                    <field name="financial_flow" optional="show"/>
+                    <field name="payment_anchor_policy" optional="show"/>
+                    <field name="claim_flow_label"/>
                     <field name="direction"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="company_contractor_responsibility_state" optional="show"/>
+                    <field name="company_contractor_arrival_unprocessed_amount" optional="hide" sum="到款可处理余额合计"/>
+                    <field name="company_contractor_arrival_over_processed_amount" optional="show" sum="到款超处理金额合计"/>
+                    <field name="company_contractor_self_funding_balance" optional="hide" sum="自筹未退余额合计"/>
                     <field name="applicant_name"/>
                     <field name="guarantee_project_name"/>
                     <field name="guarantee_type"/>
@@ -26,13 +35,15 @@
                     <field name="payer_bank"/>
                     <field name="expense_type"/>
                     <field name="summary"/>
-                    <field name="amount" sum="申请金额合计"/>
+                    <field name="amount" string="办理金额" sum="申请金额合计"/>
                     <field name="approved_amount" sum="批准金额合计"/>
                     <field name="paid_amount" sum="已付款金额合计"/>
                     <field name="unpaid_amount" sum="未付款金额合计"/>
                     <field name="payment_state"/>
+                    <field name="claim_type" optional="hide"/>
                     <field name="legacy_document_no"/>
                     <field name="legacy_document_state"/>
+                    <field name="legacy_visible_attachment" optional="show"/>
                     <field name="creator_name" optional="show"/>
                     <field name="created_time" optional="show"/>
                     <field name="state"/>
@@ -40,11 +51,233 @@
             </field>
         </record>
 
+        <record id="view_sc_expense_claim_application_tree" model="ir.ui.view">
+            <field name="name">sc.expense.claim.application.tree</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <tree string="费用/保证金申请" decoration-muted="state == 'cancel'">
+                    <field name="date_claim" string="单据日期"/>
+                    <field name="name" string="单据号"/>
+                    <field name="business_category_id" string="业务类型"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id" string="往来单位"/>
+                    <field name="applicant_name"/>
+                    <field name="guarantee_project_name" optional="show"/>
+                    <field name="guarantee_type" optional="show"/>
+                    <field name="expense_type" string="办理事项"/>
+                    <field name="summary"/>
+                    <field name="amount" string="申请金额" sum="申请金额合计"/>
+                    <field name="approved_amount" sum="批准金额合计"/>
+                    <field name="paid_amount" sum="已付款金额合计"/>
+                    <field name="unpaid_amount" sum="未付款金额合计"/>
+                    <field name="payment_state"/>
+                    <field name="payee" optional="show"/>
+                    <field name="receipt_account_name" optional="hide"/>
+                    <field name="payment_account_name" optional="hide"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_deduction_registration_tree" model="ir.ui.view">
+            <field name="name">sc.expense.claim.deduction.registration.tree</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <tree string="扣款登记" decoration-muted="state == 'cancel'">
+                    <field name="date_claim"/>
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id" string="责任方"/>
+                    <field name="expense_type" string="扣款单类型"/>
+                    <field name="summary" string="扣款事项"/>
+                    <field name="amount" string="扣款金额" sum="扣款金额合计"/>
+                    <field name="approved_amount" string="确认金额" sum="确认金额合计"/>
+                    <field name="company_contractor_responsibility_state" optional="show"/>
+                    <field name="company_contractor_arrival_unprocessed_amount" optional="show" sum="到款可处理余额合计"/>
+                    <field name="company_contractor_arrival_over_processed_amount" optional="show" sum="到款超处理金额合计"/>
+                    <field name="company_contractor_self_funding_balance" optional="hide" sum="自筹未退余额合计"/>
+                    <field name="legacy_visible_adjustment_item" optional="show"/>
+                    <field name="legacy_visible_document_no" optional="show"/>
+                    <field name="creator_name" optional="show"/>
+                    <field name="created_time" optional="hide"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_deduction_cash_tree" model="ir.ui.view">
+            <field name="name">sc.expense.claim.deduction.cash.tree</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <tree string="扣款实缴办理" decoration-muted="state == 'cancel'">
+                    <field name="date_claim" string="单据日期"/>
+                    <field name="name" string="单据号"/>
+                    <field name="business_category_id" string="业务分类"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id" string="责任方"/>
+                    <field name="expense_type" string="扣款事项"/>
+                    <field name="summary"/>
+                    <field name="amount" string="办理金额" sum="办理金额合计"/>
+                    <field name="approved_amount" sum="确认金额合计"/>
+                    <field name="paid_amount" sum="已收付金额合计"/>
+                    <field name="unpaid_amount" sum="未收付金额合计"/>
+                    <field name="payment_state"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_repayment_tree" model="ir.ui.view">
+            <field name="name">sc.expense.claim.repayment.tree</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <tree string="还款/资金往来办理" decoration-muted="state == 'cancel'">
+                    <field name="date_claim" string="单据日期"/>
+                    <field name="name" string="单据号"/>
+                    <field name="business_category_id" string="业务分类"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id" string="往来单位"/>
+                    <field name="applicant_name"/>
+                    <field name="expense_type" string="办理事项"/>
+                    <field name="summary"/>
+                    <field name="amount" string="办理金额" sum="办理金额合计"/>
+                    <field name="approved_amount" sum="确认金额合计"/>
+                    <field name="paid_amount" sum="已收付金额合计"/>
+                    <field name="unpaid_amount" sum="未收付金额合计"/>
+                    <field name="payment_state"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_deduction_registration_form" model="ir.ui.view">
+            <field name="name">sc.expense.claim.deduction.registration.form</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <form string="扣款登记">
+                    <header>
+                        <button name="action_submit" type="object" string="提交审批" class="btn-primary"
+                                invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"
+                                groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_user"/>
+                        <button name="validate_tier" type="object" string="审批通过" class="btn-primary"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="reject_tier" type="object" string="审批驳回"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="action_approve" type="object" string="批准"
+                                invisible="state != 'submit' or validation_status != 'validated'"
+                                groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <button name="action_done" type="object" string="完成"
+                                invisible="state != 'approved'"
+                                groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <button name="action_cancel" type="object" string="取消"
+                                invisible="state in ['done', 'legacy_confirmed', 'cancel']"
+                                groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <field name="validation_status" invisible="1"/>
+                        <field name="can_review" invisible="1"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submit,approved,done,legacy_confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <field name="legacy_source_table" invisible="1"/>
+                        <field name="source_origin" invisible="1"/>
+                        <field name="business_category_id" invisible="1"/>
+                        <field name="business_axis" invisible="1"/>
+                        <field name="handling_kind" invisible="1"/>
+                        <field name="financial_flow" invisible="1"/>
+                        <field name="payment_anchor_policy" invisible="1"/>
+                        <field name="claim_type" invisible="1"/>
+                        <field name="direction" invisible="1"/>
+                        <field name="expense_type" invisible="1"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="active" invisible="1"/>
+                        <group>
+                            <group string="基本信息">
+                                <field name="name" readonly="1"/>
+                                <field name="date_claim" string="登记日期" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="fill_date" string="填写日期" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            </group>
+                            <group string="责任对象">
+                                <field name="project_id" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="operation_strategy" readonly="1"/>
+                                <field name="partner_id" string="责任方" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            </group>
+                        </group>
+                        <group string="扣款说明">
+                            <field name="summary" string="整体说明" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            <field name="legacy_visible_adjustment_item" readonly="1" invisible="not legacy_visible_adjustment_item"/>
+                        </group>
+                        <group string="扣款单明细">
+                            <field name="deduction_line_ids"
+                                   string="扣款单明细"
+                                   nolabel="1"
+                                   readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="item_name"/>
+                                    <field name="deduction_category"/>
+                                    <field name="amount" sum="扣款金额合计"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="金额由扣款单明细汇总">
+                            <field name="deduction_line_amount_total" string="明细合计" readonly="1"/>
+                            <field name="amount" string="本次扣款金额" readonly="1"/>
+                            <field name="approved_amount" string="确认金额" readonly="1"/>
+                        </group>
+                        <group string="办理说明与附件">
+                            <field name="note"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </group>
+                        <notebook>
+                            <page string="责任余额">
+                                <group string="公司-承包人责任约束">
+                                    <field name="company_contractor_responsibility_summary_id" invisible="1"/>
+                                    <field name="company_contractor_responsibility_state" readonly="1"/>
+                                    <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
+                                    <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
+                                    <field name="company_contractor_self_funding_balance" readonly="1"/>
+                                    <field name="company_contractor_responsibility_notice" readonly="1" nolabel="1"/>
+                                    <button name="action_view_company_contractor_responsibility_summary"
+                                            type="object"
+                                            string="查看责任余额"
+                                            class="btn-secondary"
+                                            invisible="not company_contractor_responsibility_summary_id"/>
+                                </group>
+                            </page>
+                            <page string="历史办理信息" invisible="not legacy_source_table">
+                                <group>
+                                    <group string="旧系统单据口径">
+                                        <field name="legacy_visible_document_no" readonly="1"/>
+                                        <field name="legacy_document_no" readonly="1"/>
+                                        <field name="legacy_visible_document_state" readonly="1"/>
+                                        <field name="legacy_document_state" readonly="1"/>
+                                        <field name="legacy_visible_date" readonly="1"/>
+                                        <field name="legacy_visible_project_name" readonly="1"/>
+                                        <field name="legacy_visible_department" readonly="1"/>
+                                    </group>
+                                    <group string="旧系统事项与金额">
+                                        <field name="legacy_visible_title" readonly="1"/>
+                                        <field name="legacy_visible_expense_type" readonly="1"/>
+                                        <field name="legacy_visible_summary" readonly="1"/>
+                                        <field name="legacy_visible_amount" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
         <record id="view_sc_expense_claim_form" model="ir.ui.view">
             <field name="name">sc.expense.claim.form</field>
             <field name="model">sc.expense.claim</field>
             <field name="arch" type="xml">
-                <form string="费用/保证金">
+                <form string="费用、保证金与还款办理">
                     <header>
                         <button name="action_submit" type="object" string="提交审批" class="btn-primary"
                                 invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"
@@ -68,15 +301,22 @@
                     </header>
                     <sheet>
                         <group>
-                            <group>
+                            <group string="业务方向">
                                 <field name="name" readonly="1"/>
+                                <field name="source_origin" invisible="1"/>
+                                <field name="business_category_id" readonly="state in ['legacy_confirmed']"/>
+                                <field name="business_axis" readonly="1"/>
+                                <field name="handling_kind" readonly="1"/>
+                                <field name="financial_flow" readonly="1"/>
+                                <field name="payment_anchor_policy" readonly="1"/>
+                                <field name="claim_flow_label" readonly="1"/>
                                 <field name="claim_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="direction" readonly="1"/>
                                 <field name="date_claim" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="fill_date" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             </group>
-                            <group>
-                                <field name="amount" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            <group string="金额与状态">
+                                <field name="amount" string="办理金额" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="approved_amount" readonly="state in ['done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="paid_amount" readonly="state in ['done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="unpaid_amount" readonly="1"/>
@@ -86,49 +326,112 @@
                             </group>
                         </group>
                         <group>
-                            <group string="业务锚点">
+                            <group string="项目与往来单位">
                                 <field name="project_id" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id"/>
-                                <field name="payment_request_id"/>
+                                <field name="payment_request_id" invisible="payment_anchor_policy in ['noncash_no_request', 'interfund_no_request']"/>
                                 <field name="company_name_text"/>
                                 <field name="guarantee_project_name"/>
                                 <field name="guarantee_type"/>
                             </group>
-                            <group string="申请与收款">
+                            <group string="申请人与收款方">
                                 <field name="applicant_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="department_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="receipt_account_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee_account" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee_bank" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            </group>
+                        </group>
+                        <group string="付款账户">
+                            <group>
                                 <field name="payment_account_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payer_account" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payer_bank" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             </group>
                         </group>
-                        <group string="保证金办理">
+                        <group string="保证金办理" invisible="claim_type not in ['deposit_pay', 'deposit_refund', 'deposit_receive']">
                             <field name="payment_method" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="clearing_method" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="is_returned" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="return_reason" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                         </group>
-                        <group string="费用说明">
+                        <group string="事项说明">
                             <field name="expense_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="summary" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="legacy_visible_title" readonly="1" invisible="not legacy_visible_title"/>
                             <field name="legacy_visible_adjustment_item" readonly="1" invisible="not legacy_visible_adjustment_item"/>
                         </group>
-                        <group>
+                        <group string="办理说明与附件">
                             <field name="note"/>
-                            <field name="legacy_visible_push_result" readonly="1" invisible="not legacy_visible_push_result"/>
-                            <field name="legacy_document_no" readonly="1" invisible="not legacy_document_no"/>
-                            <field name="legacy_document_state" readonly="1" invisible="not legacy_document_state"/>
-                            <field name="creator_name" readonly="1"/>
-                            <field name="creator_legacy_user_id" readonly="1"/>
-                            <field name="created_time" readonly="1"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                         </group>
+                        <notebook>
+                            <page string="责任余额" invisible="not company_contractor_responsibility_summary_id">
+                                <group string="公司-承包人责任约束">
+                                    <field name="company_contractor_responsibility_summary_id" invisible="1"/>
+                                    <field name="company_contractor_responsibility_state" readonly="1"/>
+                                    <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
+                                    <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
+                                    <field name="company_contractor_self_funding_balance" readonly="1"/>
+                                    <field name="company_contractor_responsibility_notice" readonly="1" nolabel="1"/>
+                                    <button name="action_view_company_contractor_responsibility_summary"
+                                            type="object"
+                                            string="查看责任余额"
+                                            class="btn-secondary"
+                                            invisible="not company_contractor_responsibility_summary_id"/>
+                                </group>
+                            </page>
+                            <page string="历史办理信息" invisible="not legacy_source_table">
+                                <group>
+                                    <group string="旧系统单据口径">
+                                        <field name="legacy_visible_document_no" readonly="1"/>
+                                        <field name="legacy_document_no" readonly="1"/>
+                                        <field name="legacy_visible_document_state" readonly="1"/>
+                                        <field name="legacy_document_state" readonly="1"/>
+                                        <field name="legacy_visible_date" readonly="1"/>
+                                        <field name="legacy_visible_project_name" readonly="1"/>
+                                        <field name="legacy_visible_department" readonly="1"/>
+                                    </group>
+                                    <group string="旧系统事项与金额">
+                                        <field name="legacy_visible_title" readonly="1"/>
+                                        <field name="legacy_visible_expense_type" readonly="1"/>
+                                        <field name="legacy_visible_summary" readonly="1"/>
+                                        <field name="legacy_visible_amount" readonly="1"/>
+                                        <field name="legacy_visible_adjustment_item" readonly="1"/>
+                                        <field name="legacy_visible_returned_flag" readonly="1"/>
+                                    </group>
+                                </group>
+                                <group>
+                                    <group string="还款与利息线索">
+                                        <field name="legacy_visible_borrower" readonly="1"/>
+                                        <field name="legacy_visible_loan_amount" readonly="1"/>
+                                        <field name="legacy_visible_repayment_amount" readonly="1"/>
+                                        <field name="legacy_visible_loan_rate" readonly="1"/>
+                                        <field name="legacy_visible_interest" readonly="1"/>
+                                        <field name="legacy_visible_repayment_time" readonly="1"/>
+                                    </group>
+                                    <group string="状态、备注与附件">
+                                        <field name="legacy_visible_push_result" readonly="1"/>
+                                        <field name="legacy_visible_payment_time" readonly="1"/>
+                                        <field name="legacy_visible_note" readonly="1"/>
+                                        <field name="legacy_visible_attachment" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="迁移来源" invisible="not legacy_source_table">
+                                <group>
+                                    <field name="legacy_source_model" readonly="1"/>
+                                    <field name="legacy_source_table" readonly="1"/>
+                                    <field name="legacy_record_id" readonly="1"/>
+                                    <field name="creator_name" readonly="1"/>
+                                    <field name="creator_legacy_user_id" readonly="1"/>
+                                    <field name="created_time" readonly="1"/>
+                                    <field name="active"/>
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
@@ -138,22 +441,39 @@
             <field name="name">sc.expense.claim.search</field>
             <field name="model">sc.expense.claim</field>
             <field name="arch" type="xml">
-                <search string="费用/保证金">
+                <search string="费用、保证金与还款办理">
                     <field name="name"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="business_category_id"/>
+                    <field name="business_axis"/>
+                    <field name="handling_kind"/>
+                    <field name="financial_flow"/>
+                    <field name="payment_anchor_policy"/>
                     <field name="applicant_name"/>
                     <field name="payee"/>
                     <field name="expense_type"/>
                     <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
                     <filter name="outflow" string="流出" domain="[('direction', '=', 'outflow')]"/>
                     <filter name="inflow" string="流入" domain="[('direction', '=', 'inflow')]"/>
+                    <filter name="finance_cash_in" string="现金流入" domain="[('financial_flow', '=', 'cash_in')]"/>
+                    <filter name="finance_cash_out" string="现金流出" domain="[('financial_flow', '=', 'cash_out')]"/>
+                    <filter name="finance_noncash" string="非现金事实" domain="[('financial_flow', '=', 'noncash')]"/>
+                    <filter name="finance_interfund" string="内部往来资金" domain="[('financial_flow', '=', 'interfund')]"/>
                     <filter name="operation_direct" string="公司直营" domain="[('operation_strategy', '=', 'direct')]"/>
                     <filter name="operation_joint" string="联营项目" domain="[('operation_strategy', '=', 'joint')]"/>
                     <filter name="confirmed" string="已确认/完成" domain="[('state', 'in', ['approved', 'done', 'legacy_confirmed'])]"/>
+                    <filter name="anchor_required" string="需关联申请" domain="[('payment_anchor_policy', 'in', ['pay_request_required', 'receive_request_required'])]"/>
+                    <filter name="anchor_not_applicable" string="不关联申请" domain="[('payment_anchor_policy', 'in', ['noncash_no_request', 'interfund_no_request'])]"/>
+                    <filter name="legacy_optional_anchor" string="历史事实" domain="[('payment_anchor_policy', '=', 'legacy_optional')]"/>
                     <group expand="0" string="分组">
                         <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_business_category" string="业务分类" context="{'group_by': 'business_category_id'}"/>
+                        <filter name="group_business_axis" string="业务域" context="{'group_by': 'business_axis'}"/>
+                        <filter name="group_handling_kind" string="办理口径" context="{'group_by': 'handling_kind'}"/>
+                        <filter name="group_financial_flow" string="财务影响" context="{'group_by': 'financial_flow'}"/>
+                        <filter name="group_payment_anchor_policy" string="申请锚点口径" context="{'group_by': 'payment_anchor_policy'}"/>
                         <filter name="group_operation_strategy" string="经营策略" context="{'group_by': 'operation_strategy'}"/>
                         <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_id'}"/>
                         <filter name="group_type" string="业务类型" context="{'group_by': 'claim_type'}"/>
@@ -168,12 +488,166 @@
             </field>
         </record>
 
+        <record id="view_sc_expense_claim_application_search" model="ir.ui.view">
+            <field name="name">sc.expense.claim.application.search</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <search string="费用/保证金申请">
+                    <field name="name" string="单据号"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="business_category_id"/>
+                    <field name="applicant_name"/>
+                    <field name="payee"/>
+                    <field name="expense_type"/>
+                    <field name="summary"/>
+                    <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+                    <separator/>
+                    <filter name="expense_reimbursement" string="报销申请" domain="[('business_category_id.code', '=', 'finance.expense.reimbursement')]"/>
+                    <filter name="expense_project" string="项目费用报销" domain="[('business_category_id.code', '=', 'finance.expense.project')]"/>
+                    <filter name="deposit_bid_pay" string="投标保证金支付" domain="[('business_category_id.code', '=', 'finance.deposit.bid.pay')]"/>
+                    <filter name="deposit_bid_return" string="投标保证金退回" domain="[('business_category_id.code', '=', 'finance.deposit.bid.return')]"/>
+                    <filter name="deposit_contract_pay" string="合同保证金登记" domain="[('business_category_id.code', '=', 'finance.deposit.contract.pay')]"/>
+                    <filter name="deposit_contract_return" string="合同保证金退回" domain="[('business_category_id.code', '=', 'finance.deposit.contract.return')]"/>
+                    <separator/>
+                    <filter name="expense_business" string="费用报销" domain="[('business_category_id.code', 'in', ['finance.expense.reimbursement', 'finance.expense.project'])]"/>
+                    <filter name="deposit_pay" string="保证金支付/登记" domain="[('business_category_id.code', 'in', ['finance.deposit.bid.pay', 'finance.deposit.contract.pay'])]"/>
+                    <filter name="deposit_return" string="保证金退回" domain="[('business_category_id.code', 'in', ['finance.deposit.bid.return', 'finance.deposit.contract.return'])]"/>
+                    <separator/>
+                    <filter name="draft" string="草稿" domain="[('state', '=', 'draft')]"/>
+                    <filter name="submitted" string="已提交" domain="[('state', '=', 'submit')]"/>
+                    <filter name="approved" string="已批准" domain="[('state', '=', 'approved')]"/>
+                    <filter name="done" string="已完成" domain="[('state', 'in', ['done', 'legacy_confirmed'])]"/>
+                    <filter name="cancelled" string="已取消" domain="[('state', '=', 'cancel')]"/>
+                    <separator/>
+                    <filter name="request_linked" string="已关联申请" domain="[('payment_request_id', '!=', False)]"/>
+                    <filter name="request_missing" string="未关联申请" domain="[('payment_request_id', '=', False)]"/>
+                    <group expand="0" string="分组">
+                        <filter name="group_business_category" string="业务类型" context="{'group_by': 'business_category_id'}"/>
+                        <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_id'}"/>
+                        <filter name="group_state" string="办理状态" context="{'group_by': 'state'}"/>
+                        <filter name="group_operation_strategy" string="经营方式" context="{'group_by': 'operation_strategy'}"/>
+                        <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
+                        <filter name="group_date_claim" string="单据日期" context="{'group_by': 'date_claim'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_deduction_search" model="ir.ui.view">
+            <field name="name">sc.expense.claim.deduction.search</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <search string="扣款办理">
+                    <field name="name" string="单据号"/>
+                    <field name="project_id"/>
+                    <field name="partner_id" string="责任方"/>
+                    <field name="business_category_id"/>
+                    <field name="expense_type"/>
+                    <field name="summary"/>
+                    <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+                    <separator/>
+                    <filter name="deduction_bill" string="扣款登记" domain="[('business_category_id.code', '=', 'finance.deduction.bill')]"/>
+                    <filter name="deduction_paid" string="扣款实缴登记" domain="[('business_category_id.code', '=', 'finance.deduction.paid')]"/>
+                    <filter name="deduction_refund" string="扣款实缴退回" domain="[('business_category_id.code', '=', 'finance.deduction.refund')]"/>
+                    <separator/>
+                    <filter name="draft" string="草稿" domain="[('state', '=', 'draft')]"/>
+                    <filter name="submitted" string="已提交" domain="[('state', '=', 'submit')]"/>
+                    <filter name="approved" string="已批准" domain="[('state', '=', 'approved')]"/>
+                    <filter name="done" string="已完成" domain="[('state', 'in', ['done', 'legacy_confirmed'])]"/>
+                    <filter name="cancelled" string="已取消" domain="[('state', '=', 'cancel')]"/>
+                    <group expand="0" string="分组">
+                        <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_partner" string="责任方" context="{'group_by': 'partner_id'}"/>
+                        <filter name="group_business_category" string="业务类型" context="{'group_by': 'business_category_id'}"/>
+                        <filter name="group_operation_strategy" string="经营方式" context="{'group_by': 'operation_strategy'}"/>
+                        <filter name="group_state" string="办理状态" context="{'group_by': 'state'}"/>
+                        <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_repayment_search" model="ir.ui.view">
+            <field name="name">sc.expense.claim.repayment.search</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <search string="还款/资金往来办理">
+                    <field name="name" string="单据号"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="business_category_id"/>
+                    <field name="applicant_name"/>
+                    <field name="expense_type"/>
+                    <field name="summary"/>
+                    <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+                    <separator/>
+                    <filter name="repayment_registration" string="还款登记" domain="[('business_category_id.code', '=', 'finance.repayment.registration')]"/>
+                    <filter name="repayment_contractor_project" string="承包人还项目款" domain="[('business_category_id.code', '=', 'finance.repayment.contractor_project')]"/>
+                    <filter name="repayment_project_company" string="项目还公司款登记" domain="[('business_category_id.code', '=', 'finance.repayment.project_company')]"/>
+                    <separator/>
+                    <filter name="draft" string="草稿" domain="[('state', '=', 'draft')]"/>
+                    <filter name="submitted" string="已提交" domain="[('state', '=', 'submit')]"/>
+                    <filter name="approved" string="已批准" domain="[('state', '=', 'approved')]"/>
+                    <filter name="done" string="已完成" domain="[('state', 'in', ['done', 'legacy_confirmed'])]"/>
+                    <filter name="cancelled" string="已取消" domain="[('state', '=', 'cancel')]"/>
+                    <group expand="0" string="分组">
+                        <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_id'}"/>
+                        <filter name="group_business_category" string="业务类型" context="{'group_by': 'business_category_id'}"/>
+                        <filter name="group_operation_strategy" string="经营方式" context="{'group_by': 'operation_strategy'}"/>
+                        <filter name="group_state" string="办理状态" context="{'group_by': 'state'}"/>
+                        <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_expense_claim_deposit_cash_search" model="ir.ui.view">
+            <field name="name">sc.expense.claim.deposit.cash.search</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="arch" type="xml">
+                <search string="保证金现金办理">
+                    <field name="name" string="单据号"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="business_category_id"/>
+                    <field name="payee"/>
+                    <field name="expense_type"/>
+                    <field name="summary"/>
+                    <filter name="active_rows" string="有效" domain="[('active', '=', True)]"/>
+                    <separator/>
+                    <filter name="deposit_payment" string="保证金支付" domain="[('claim_type', '=', 'deposit_pay')]"/>
+                    <filter name="deposit_refund" string="保证金退回" domain="[('claim_type', '=', 'deposit_refund'), ('business_category_id.code', '!=', 'finance.deposit.self_funding.return')]"/>
+                    <filter name="deposit_receive" string="保证金收取" domain="[('claim_type', '=', 'deposit_receive')]"/>
+                    <separator/>
+                    <filter name="draft" string="草稿" domain="[('state', '=', 'draft')]"/>
+                    <filter name="submitted" string="已提交" domain="[('state', '=', 'submit')]"/>
+                    <filter name="approved" string="已批准" domain="[('state', '=', 'approved')]"/>
+                    <filter name="done" string="已完成" domain="[('state', 'in', ['done', 'legacy_confirmed'])]"/>
+                    <filter name="cancelled" string="已取消" domain="[('state', '=', 'cancel')]"/>
+                    <group expand="0" string="分组">
+                        <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_id'}"/>
+                        <filter name="group_business_category" string="业务类型" context="{'group_by': 'business_category_id'}"/>
+                        <filter name="group_expense_type" string="办理事项" context="{'group_by': 'expense_type'}"/>
+                        <filter name="group_state" string="办理状态" context="{'group_by': 'state'}"/>
+                        <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
         <record id="action_sc_expense_claim" model="ir.actions.act_window">
             <field name="name">费用/保证金</field>
             <field name="res_model">sc.expense.claim</field>
             <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="view_sc_expense_claim_search"/>
-            <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+            <field name="view_id" ref="view_sc_expense_claim_application_tree"/>
+            <field name="views" eval="[(ref('view_sc_expense_claim_application_tree'), 'tree'), (ref('view_sc_expense_claim_form'), 'form')]"/>
+            <field name="search_view_id" ref="view_sc_expense_claim_application_search"/>
+            <field name="domain">[('business_category_id.code', 'in', ['finance.expense.reimbursement', 'finance.expense.project', 'finance.deposit.bid.pay', 'finance.deposit.bid.return', 'finance.deposit.contract.pay', 'finance.deposit.contract.return'])]</field>
+            <field name="context">{'search_default_active_rows': 1, 'search_default_group_business_category': 1}</field>
             <field name="groups_id" eval="[
                 (4, ref('smart_construction_core.group_sc_cap_business_initiator')),
                 (4, ref('smart_construction_core.group_sc_cap_finance_read')),

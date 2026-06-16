@@ -61,6 +61,21 @@ def _force_validated(record, table_name):
         record.invalidate_recordset()
 
 
+def _attach_proof(record, label):
+    attachment = env["ir.attachment"].sudo().create(
+        {
+            "name": "%s.txt" % label,
+            "datas": base64.b64encode(("proof:%s" % label).encode("utf-8")).decode("ascii"),
+            "res_model": record._name,
+            "res_id": record.id,
+            "mimetype": "text/plain",
+        }
+    )
+    if "attachment_ids" in record._fields:
+        record.sudo().write({"attachment_ids": [(4, attachment.id)]})
+    return attachment
+
+
 def _partner(name):
     return env["res.partner"].create({"name": name})
 
@@ -269,7 +284,10 @@ def _run_expense_claims(failures):
         ("deposit_pay", "付款还保证金", "pay"),
         ("deposit_refund", "付款保证金退回", "receive"),
         ("deduction_refund", "扣款实缴退回", "receive"),
-        ("project_company_repay", "还款登记", "receive"),
+    ]
+    interfund_claim_specs = [
+        ("project_company_repay", "还款登记"),
+        ("deposit_receive", "承包人还项目款"),
     ]
     claim_ids = {}
     payment_ids = {}
@@ -298,8 +316,14 @@ def _run_expense_claims(failures):
                 "approved_amount": amount,
                 "paid_amount": 0.0,
                 "summary": _name("CDP Gate %s" % expense_type),
+                "payee": _name("CDP Gate Payee"),
+                "receipt_account_name": _name("CDP Gate Receipt Account"),
+                "payee_account": _name("CDP-GATE-RECEIPT"),
+                "payment_account_name": _name("CDP Gate Payment Account"),
+                "payer_account": _name("CDP-GATE-PAYER"),
             }
         )
+        _attach_proof(claim, "expense-claim-%s" % claim_type)
         _expect_exception("expense_claim.%s.done_before_submit" % claim_type, claim.action_done, failures)
         claim.action_submit()
         if claim.state == "submit":
@@ -313,6 +337,38 @@ def _run_expense_claims(failures):
             failures.append("expense_claim.%s.payment_done: expected done, got %s" % (claim_type, payment.state))
         claim_ids[claim_type] = claim.id
         payment_ids[claim_type] = payment.id
+
+    for index, (claim_type, expense_type) in enumerate(interfund_claim_specs, start=1):
+        amount = 90.0 + index
+        claim = env["sc.expense.claim"].sudo().create(
+            {
+                "claim_type": claim_type,
+                "expense_type": expense_type,
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "amount": amount,
+                "approved_amount": amount,
+                "paid_amount": 0.0,
+                "summary": _name("CDP Gate %s" % expense_type),
+                "payee": _name("CDP Gate Interfund Payee"),
+                "receipt_account_name": _name("CDP Gate Interfund Receipt Account"),
+                "payee_account": _name("CDP-GATE-INTERFUND-RECEIPT"),
+                "payment_account_name": _name("CDP Gate Interfund Payment Account"),
+                "payer_account": _name("CDP-GATE-INTERFUND-PAYER"),
+            }
+        )
+        _attach_proof(claim, "expense-claim-%s" % expense_type)
+        _expect_exception("expense_claim.%s.done_before_submit" % expense_type, claim.action_done, failures)
+        claim.action_submit()
+        if claim.state == "submit":
+            _force_validated(claim, "sc_expense_claim")
+            claim.action_on_tier_approved()
+        _expect_state("expense_claim.%s.approved" % expense_type, claim, "approved", failures)
+        claim.action_done()
+        _expect_state("expense_claim.%s.done" % expense_type, claim, "done", failures)
+        if claim.payment_request_id:
+            failures.append("expense_claim.%s.payment_request: expected empty" % expense_type)
+        claim_ids[expense_type] = claim.id
 
     cancel_claim = env["sc.expense.claim"].sudo().create(
         {

@@ -136,10 +136,26 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_self_funding_registration" model="ir.sequence">
+        <field name="name">自筹垫付/退回办理</field>
+        <field name="code">sc.self.funding.registration</field>
+        <field name="prefix">SF%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_general_contract" model="ir.sequence">
         <field name="name">综合合同登记</field>
         <field name="code">sc.general.contract</field>
         <field name="prefix">GC%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_general_contract_no" model="ir.sequence">
+        <field name="name">一般合同（公司）合同编号</field>
+        <field name="code">sc.general.contract.no</field>
+        <field name="prefix">GHT%(y)s</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>

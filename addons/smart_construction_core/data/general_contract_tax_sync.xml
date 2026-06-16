@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <function model="construction.contract" name="_sync_contract_tax_ids_to_neutral"/>
+        <function model="sc.general.contract" name="_sync_contract_tax_ids_from_rate"/>
+    </data>
+</odoo>

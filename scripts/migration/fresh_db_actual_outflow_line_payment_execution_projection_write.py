@@ -49,7 +49,7 @@ def scalar(sql: str, params: list[object] | None = None) -> object:
 ensure_allowed_db()
 output_json = artifact_root() / "fresh_db_actual_outflow_line_payment_execution_projection_write_result_v1.json"
 uid = env.uid  # noqa: F821
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 
 env.cr.execute(  # noqa: F821
     """

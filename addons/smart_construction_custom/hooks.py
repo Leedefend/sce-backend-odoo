@@ -24,7 +24,13 @@ def apply_platform_initialization(env):
     env["sc.platform.initialization"].apply_baseline()
 
 
+def apply_user_preferences(env):
+    env["sc.user.preference.initialization"].apply_user_menu_preferences()
+    env["sc.user.preference.initialization"].apply_user_form_preferences()
+
+
 def post_init_hook(env):
     ensure_company_currency_cny(env)
     apply_platform_initialization(env)
     apply_business_full_policy(env)
+    apply_user_preferences(env)

@@ -86,7 +86,7 @@ source_counts["deduction_refund"] = sql_one(
 source_counts["tax_deduction"] = sql_one(
     "SELECT COUNT(*)::integer FROM sc_tax_deduction_registration WHERE active IS TRUE"
 )
-source_counts["self_funding"] = sql_one(
+source_counts["legacy_self_funding"] = sql_one(
     """
     SELECT COUNT(*)::integer
       FROM sc_legacy_self_funding_fact
@@ -94,8 +94,27 @@ source_counts["self_funding"] = sql_one(
        AND COALESCE(deleted_flag, '0') IN ('0', '')
     """
 )
+source_counts["formal_self_funding"] = sql_one(
+    """
+    SELECT COUNT(*)::integer
+      FROM sc_self_funding_registration
+     WHERE active IS TRUE
+       AND state = 'done'
+    """
+)
+source_counts["self_funding"] = source_counts["legacy_self_funding"] + source_counts["formal_self_funding"]
 source_counts["guarantee_deposit"] = sql_one("SELECT COUNT(*)::integer FROM tender_guarantee")
-source_counts["total"] = sum(int(v or 0) for v in source_counts.values())
+source_counts["total"] = sum(
+    int(source_counts[key] or 0)
+    for key in [
+        "arrival_settlement",
+        "deduction_paid",
+        "deduction_refund",
+        "tax_deduction",
+        "self_funding",
+        "guarantee_deposit",
+    ]
+)
 
 projection_counts = OrderedDict(
     sql_rows(
@@ -148,7 +167,7 @@ source_amounts["tax_deduction_amount"] = sql_one(
 source_amounts["tax_amount"] = sql_one(
     "SELECT COALESCE(SUM(deduction_tax_amount), 0.0) FROM sc_tax_deduction_registration WHERE active IS TRUE"
 )
-source_amounts["self_funding_canonical_balance"] = sql_one(
+source_amounts["legacy_self_funding_canonical_balance"] = sql_one(
     """
     SELECT COALESCE(SUM(
         CASE
@@ -161,6 +180,23 @@ source_amounts["self_funding_canonical_balance"] = sql_one(
      WHERE active IS TRUE
        AND COALESCE(deleted_flag, '0') IN ('0', '')
     """
+)
+source_amounts["formal_self_funding_canonical_balance"] = sql_one(
+    """
+    SELECT COALESCE(SUM(
+        CASE
+            WHEN funding_type = 'refund' THEN -amount
+            ELSE amount
+        END
+    ), 0.0)
+      FROM sc_self_funding_registration
+     WHERE active IS TRUE
+       AND state = 'done'
+    """
+)
+source_amounts["self_funding_canonical_balance"] = (
+    source_amounts["legacy_self_funding_canonical_balance"]
+    + source_amounts["formal_self_funding_canonical_balance"]
 )
 source_amounts["guarantee_balance"] = sql_one(
     "SELECT COALESCE(SUM(CASE WHEN type = 'return' THEN -amount ELSE amount END), 0.0) FROM tender_guarantee"

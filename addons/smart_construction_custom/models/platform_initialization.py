@@ -2,9 +2,10 @@
 from odoo import api, models
 
 
+COMMON_TAX_PERCENTAGES = (1.0, 3.0, 6.0, 9.0, 13.0)
 REQUIRED_TAXES = [
-    ("销项VAT 9%", 9.0, "sale"),
-    ("进项VAT 13%", 13.0, "purchase"),
+    (f"{amount:g}%", amount, "none")
+    for amount in COMMON_TAX_PERCENTAGES
 ]
 DEFAULT_LANG = "zh_CN"
 DEFAULT_TZ = "Asia/Shanghai"
@@ -96,6 +97,30 @@ class ScPlatformInitialization(models.TransientModel):
             if tax:
                 if not tax.active:
                     tax.write({"active": True})
+                continue
+            legacy_tax = Tax.search(
+                [
+                    ("company_id", "=", company.id),
+                    ("amount", "=", float(amount)),
+                    ("type_tax_use", "=", tax_use),
+                    ("amount_type", "=", "percent"),
+                    ("price_include", "=", False),
+                ],
+                order="active desc, id asc",
+                limit=1,
+            )
+            if legacy_tax:
+                vals = {}
+                if legacy_tax.name != name:
+                    vals["name"] = name
+                if legacy_tax.tax_group_id != tax_group:
+                    vals["tax_group_id"] = tax_group.id
+                if country and legacy_tax.country_id != country:
+                    vals["country_id"] = country.id
+                if not legacy_tax.active:
+                    vals["active"] = True
+                if vals:
+                    legacy_tax.write(vals)
                 continue
             vals = {
                 "name": name,

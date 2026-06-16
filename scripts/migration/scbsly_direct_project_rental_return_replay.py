@@ -149,7 +149,7 @@ def values_for(row, project_cache, partner_cache, created_projects, created_part
         "rental_date": date_value(row.get("f_DJRQ") or row.get("f_LRSJ")),
         "planned_return_date": date_value(row.get("f_DJRQ") or row.get("f_LRSJ")),
         "owner_id": env.uid,  # noqa: F821
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "state": state_for(row),
         "note": "\n".join(
             item

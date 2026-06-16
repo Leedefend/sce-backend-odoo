@@ -645,7 +645,7 @@ env.cr.execute(  # noqa: F821
     )
     SELECT (SELECT COUNT(*) FROM deleted), (SELECT COUNT(*) FROM source), (SELECT COUNT(*) FROM inserted)
     """,
-    [env.company.currency_id.id, uid, uid],  # noqa: F821
+    [env.ref("base.CNY", raise_if_not_found=False).id, uid, uid],  # noqa: F821
 )
 material_prices_deleted, material_price_source, material_prices_inserted = env.cr.fetchone()  # noqa: F821
 
@@ -701,7 +701,7 @@ for fact in rental_contract_facts:
         "rental_date": as_date(fact.document_date or fact.created_time),
         "planned_return_date": as_date(fact.created_time),
         "owner_id": uid,
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "state": "active" if fact.state == "legacy_confirmed" else "cancel",
         "note": "\n".join(
             item
@@ -771,7 +771,7 @@ for fact in rental_settlement_facts:
         "supplier_id": supplier.id,
         "settlement_date": as_date(fact.document_date or fact.created_time),
         "owner_id": uid,
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "state": "confirmed" if fact.state == "legacy_confirmed" else "cancel",
         "note": "\n".join(
             item

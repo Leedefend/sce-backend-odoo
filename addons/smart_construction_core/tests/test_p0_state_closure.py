@@ -352,6 +352,10 @@ class TestP0StateClosure(TransactionCase):
                 "settlement_id": settlement.id,
                 "amount": 10.0,
                 "state": "approved",
+                "payment_account_name": "收款户名",
+                "payment_account_no": "R-001",
+                "legacy_payment_account_name": "付款户名",
+                "legacy_payment_account_no": "P-001",
             }
         )
         self.env.cr.execute(
@@ -384,6 +388,175 @@ class TestP0StateClosure(TransactionCase):
         self.assertEqual(pr.state, "done")
         self.assertEqual(len(ledger), 1)
         self.assertEqual(ledger.amount, 10.0)
+
+    def test_payment_execution_values_from_payment_request(self):
+        project = self._create_project("P0 Project Payment Execution Values", with_boq=True)
+        partner = self._create_partner()
+        contract = self._create_contract(project, partner)
+
+        pr = self.env["payment.request"].sudo().create(
+            {
+                "name": "P0 PR Payment Execution Values",
+                "type": "pay",
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "contract_id": contract.id,
+                "amount": 88.0,
+                "payment_account_name": "收款户名A",
+                "payment_bank_name": "收款开户行A",
+                "payment_account_no": "R-001",
+                "legacy_payment_account_name": "付款户名A",
+                "legacy_payment_account_no": "P-001",
+                "note": "付款申请备注",
+            }
+        )
+
+        values = self.env["sc.payment.execution"].sudo()._payment_request_values(pr)
+        self.assertEqual(values["source_kind"], "actual_outflow")
+        self.assertEqual(values["payment_family"], "往来单位付款")
+        self.assertEqual(values["project_id"], project.id)
+        self.assertEqual(values["partner_id"], partner.id)
+        self.assertEqual(values["contract_id"], contract.id)
+        self.assertEqual(values["payment_request_id"], pr.id)
+        self.assertEqual(values["planned_amount"], 88.0)
+        self.assertEqual(values["paid_amount"], 88.0)
+        self.assertEqual(values["receipt_account_name"], "收款户名A")
+        self.assertEqual(values["receipt_bank_name"], "收款开户行A")
+        self.assertEqual(values["receipt_account_no"], "R-001")
+        self.assertEqual(values["payment_account_name"], "付款户名A")
+        self.assertEqual(values["payment_account_no"], "P-001")
+        self.assertEqual(values["note"], "付款申请备注")
+
+        action = pr.action_create_payment_execution()
+        context = action["context"]
+        self.assertEqual(context["default_source_kind"], "actual_outflow")
+        self.assertEqual(context["default_payment_family"], "往来单位付款")
+        self.assertEqual(context["default_receipt_account_name"], "收款户名A")
+        self.assertEqual(context["default_receipt_account_no"], "R-001")
+        self.assertEqual(context["default_payment_account_name"], "付款户名A")
+        self.assertEqual(context["default_payment_account_no"], "P-001")
+
+    def test_payment_request_display_name_is_business_friendly(self):
+        project = self._create_project("P0 Project Payment Request Display", with_boq=True)
+        partner = self._create_partner("P0 Payee Display")
+        contract = self._create_contract(project, partner)
+
+        pr = self.env["payment.request"].sudo().create(
+            {
+                "name": "PR-DISPLAY-001",
+                "type": "pay",
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "contract_id": contract.id,
+                "amount": 12345.67,
+                "actual_payee_unit": "实际收款单位A",
+            }
+        )
+
+        self.assertIn("付款申请", pr.display_name)
+        self.assertIn(project.name, pr.display_name)
+        self.assertIn("实际收款单位A", pr.display_name)
+        self.assertIn("12,345.67", pr.display_name)
+        self.assertIn("PR-DISPLAY-001", pr.display_name)
+
+    def test_settlement_order_display_name_is_business_friendly(self):
+        project = self._create_project("P0 Project Settlement Display", with_boq=True)
+        partner = self._create_partner("P0 Settlement Partner Display")
+        contract = self._create_contract(project, partner)
+        settlement = self._create_settlement_order(project, partner, contract, amount=188.0, state="approve")
+
+        self.assertIn("结算", settlement.display_name)
+        self.assertIn(project.name, settlement.display_name)
+        self.assertIn(partner.name, settlement.display_name)
+        self.assertIn("P0 Contract", settlement.display_name)
+        self.assertIn("188.00", settlement.display_name)
+        self.assertIn(settlement.name, settlement.display_name)
+
+        search_result = self.env["sc.settlement.order"].name_search(project.name, [], "ilike", 5)
+        self.assertIn((settlement.id, settlement.display_name), search_result)
+
+    def test_payment_request_defaults_from_partner_and_settlement(self):
+        project = self._create_project("P0 Project Payment Request Defaults", with_boq=True)
+        partner = self._create_partner("P0 Payee Defaults")
+        partner.write(
+            {
+                "sc_account_name": "默认收款户名",
+                "sc_bank_name": "默认收款开户行",
+                "sc_bank_account": "R-DEFAULT-001",
+            }
+        )
+        contract = self._create_contract(project, partner)
+        settlement = self._create_settlement_order(project, partner, contract, amount=188.0, state="approve")
+
+        values = self.env["payment.request"].sudo()._basis_payment_request_values(
+            {"type": "pay", "settlement_id": settlement.id}
+        )
+        self.assertEqual(values["project_id"], project.id)
+        self.assertEqual(values["partner_id"], partner.id)
+        self.assertEqual(values["contract_id"], contract.id)
+        self.assertEqual(values["amount"], 188.0)
+        self.assertEqual(values["actual_payee_unit"], "P0 Payee Defaults")
+        self.assertEqual(values["payment_account_name"], "默认收款户名")
+        self.assertEqual(values["payment_bank_name"], "默认收款开户行")
+        self.assertEqual(values["payment_account_no"], "R-DEFAULT-001")
+
+        pr = self.env["payment.request"].sudo().create(
+            {
+                "name": "P0 PR Defaults",
+                "type": "pay",
+                "settlement_id": settlement.id,
+            }
+        )
+        self.assertEqual(pr.project_id, project)
+        self.assertEqual(pr.partner_id, partner)
+        self.assertEqual(pr.contract_id, contract)
+        self.assertEqual(pr.amount, 188.0)
+        self.assertEqual(pr.payment_account_no, "R-DEFAULT-001")
+
+    def test_payment_request_settlement_domain_follows_project_and_contract(self):
+        project = self._create_project("P0 Project Payment Settlement Domain", with_boq=True)
+        partner_a = self._create_partner("P0 Settlement Domain Partner A")
+        partner_b = self._create_partner("P0 Settlement Domain Partner B")
+        tax = self._create_tax("P0 VAT Settlement Domain")
+        contract_a = self.env["construction.contract"].create(
+            {
+                "subject": "P0 Contract Settlement Domain A",
+                "type": "in",
+                "project_id": project.id,
+                "partner_id": partner_a.id,
+                "tax_id": tax.id,
+            }
+        )
+        contract_b = self.env["construction.contract"].create(
+            {
+                "subject": "P0 Contract Settlement Domain B",
+                "type": "in",
+                "project_id": project.id,
+                "partner_id": partner_b.id,
+                "tax_id": tax.id,
+            }
+        )
+        settlement_a = self._create_settlement_order(project, partner_a, contract_a, amount=100.0, state="approve")
+        settlement_b = self._create_settlement_order(project, partner_b, contract_b, amount=200.0, state="approve")
+
+        draft = self.env["payment.request"].new(
+            {
+                "type": "pay",
+                "project_id": project.id,
+                "partner_id": partner_a.id,
+                "contract_id": contract_a.id,
+                "settlement_id": settlement_b.id,
+            }
+        )
+        result = draft._onchange_type_set_contract_domain()
+
+        self.assertFalse(draft.settlement_id)
+        settlement_domain = result["domain"]["settlement_id"]
+        self.assertIn(("project_id", "=", project.id), settlement_domain)
+        self.assertIn(("contract_id", "=", contract_a.id), settlement_domain)
+        candidates = self.env["sc.settlement.order"].search(settlement_domain)
+        self.assertIn(settlement_a, candidates)
+        self.assertNotIn(settlement_b, candidates)
 
     def test_receipt_income_received_closes_receive_request(self):
         project = self._create_project("P0 Project Receipt Income", with_boq=True)
@@ -434,6 +607,7 @@ class TestP0StateClosure(TransactionCase):
         contract = self._create_contract(project, partner)
         self._enable_funding(project, cap=1000.0)
         settlement = self._create_settlement_order(project, partner, contract, amount=100.0, state="approve")
+        finance_manager = self._create_finance_manager("p0_finance_manager_payment_execution_block")
 
         pr = self.env["payment.request"].sudo().create(
             {
@@ -445,6 +619,10 @@ class TestP0StateClosure(TransactionCase):
                 "settlement_id": settlement.id,
                 "amount": 10.0,
                 "state": "approved",
+                "payment_account_name": "收款户名",
+                "payment_account_no": "R-002",
+                "legacy_payment_account_name": "付款户名",
+                "legacy_payment_account_no": "P-002",
             }
         )
         self.env.cr.execute(
@@ -470,7 +648,7 @@ class TestP0StateClosure(TransactionCase):
         execution.action_confirm()
         with self.assertRaises(UserError):
             execution.action_confirm()
-        execution.action_paid()
+        execution.with_user(finance_manager).action_paid()
         with self.assertRaises(UserError):
             execution.action_cancel()
 

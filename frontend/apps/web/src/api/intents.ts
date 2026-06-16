@@ -88,26 +88,41 @@ function withCurrentProjectContext(session: ReturnType<typeof useSessionStore>, 
   if ((!projectId && !companyId && !operationStrategy) || skip.has(intent)) {
     return payload;
   }
+  const projectScopePolicy = String(
+    paramsContext.project_scope_policy
+      || paramsContext.projectScopePolicy
+      || payload.context?.project_scope_policy
+      || payload.context?.projectScopePolicy
+      || '',
+  ).trim().toLowerCase();
   if (isMenuListRequest) {
+    const shouldUseProjectScope = projectScopePolicy !== 'global' && projectScopePolicy !== 'exempt';
     const context = {
       ...(payload.context || {}),
       ...(companyId ? { company_id: companyId } : {}),
       ...(operationStrategy ? { operation_strategy: operationStrategy } : {}),
+      ...(projectScopePolicy ? { project_scope_policy: projectScopePolicy } : {}),
+      ...(shouldUseProjectScope && projectId ? { current_project_id: projectId } : {}),
     };
     const paramsRecord = params as Record<string, unknown>;
     const requestContext = (paramsRecord.context && typeof paramsRecord.context === 'object' && !Array.isArray(paramsRecord.context))
       ? paramsRecord.context as Record<string, unknown>
       : {};
-    // Menu actions are global lists: keep company/operation scope, but never narrow them to the selected project.
     paramsRecord.context = {
       ...requestContext,
       ...(companyId ? { company_id: companyId } : {}),
       ...(operationStrategy ? { operation_strategy: operationStrategy } : {}),
+      ...(projectScopePolicy ? { project_scope_policy: projectScopePolicy } : {}),
+      ...(shouldUseProjectScope && projectId ? { current_project_id: projectId } : {}),
     };
     if (companyId) paramsRecord.company_id = companyId;
     if (operationStrategy) paramsRecord.operation_strategy = operationStrategy;
-    delete paramsRecord.current_project_id;
-    delete (paramsRecord.context as Record<string, unknown>).current_project_id;
+    if (shouldUseProjectScope && projectId) {
+      paramsRecord.current_project_id = projectId;
+    } else {
+      delete paramsRecord.current_project_id;
+      delete (paramsRecord.context as Record<string, unknown>).current_project_id;
+    }
     return {
       ...payload,
       context,

@@ -401,11 +401,45 @@ class ProjectCostLedger(models.Model):
     )
 
     partner_id = fields.Many2one("res.partner", string="往来单位/人员")
+    cost_flow_label = fields.Char(string="成本来源", compute="_compute_cost_flow_label")
     source_model = fields.Char("来源模型")
     source_id = fields.Integer("来源记录ID")
     source_line_id = fields.Integer("来源行ID")
 
     note = fields.Char("备注/摘要")
+
+    @api.depends("source_model", "note", "cost_code_id.name")
+    def _compute_cost_flow_label(self):
+        source_labels = {
+            "purchase.order": _("采购成本"),
+            "purchase.order.line": _("采购成本"),
+            "stock.picking": _("入库成本"),
+            "stock.move": _("入库成本"),
+            "stock.move.line": _("入库成本"),
+            "account.move": _("凭证成本"),
+            "account.move.line": _("凭证成本"),
+            "payment.request": _("付款成本"),
+            "sc.payment.execution": _("付款成本"),
+            "sc.expense.claim": _("费用成本"),
+            "sc.invoice.registration": _("发票税务成本"),
+            "sc.tax.deduction.registration": _("抵扣税务成本"),
+            "sc.settlement.order": _("合同结算成本"),
+            "sc.settlement.order.line": _("合同结算成本"),
+            "sc.material.acceptance": _("材料成本"),
+            "sc.material.outbound": _("材料出库成本"),
+            "sc.material.settlement": _("材料结算成本"),
+            "sc.labor.settlement": _("劳务结算成本"),
+            "sc.equipment.settlement": _("机械结算成本"),
+            "sc.subcontract.settlement": _("分包结算成本"),
+        }
+        for rec in self:
+            source_model = rec.source_model or ""
+            if source_model in source_labels:
+                rec.cost_flow_label = source_labels[source_model]
+            elif rec.cost_code_id:
+                rec.cost_flow_label = rec.cost_code_id.name
+            else:
+                rec.cost_flow_label = _("成本归集")
 
     @staticmethod
     def _compute_period_value(date_value):

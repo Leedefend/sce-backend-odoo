@@ -245,6 +245,30 @@ class ScSubcontractRequest(models.Model):
                 ):
                     raise UserError(_("分包申请建议分包单位必须与关联合同相对方一致。"))
 
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_subcontract_request request
+               SET contract_id = matched.contract_id
+              FROM (
+                    SELECT r.id AS request_id,
+                           MIN(c.id) AS contract_id
+                      FROM sc_subcontract_request r
+                      JOIN construction_contract c
+                        ON c.type = 'in'
+                       AND c.project_id = r.project_id
+                       AND c.partner_id = r.suggested_subcontractor_id
+                     WHERE r.contract_id IS NULL
+                       AND r.legacy_fact_type = 'direct_acceptance:分包方单'
+                       AND r.project_id IS NOT NULL
+                       AND r.suggested_subcontractor_id IS NOT NULL
+                     GROUP BY r.id
+                    HAVING COUNT(c.id) = 1
+              ) matched
+             WHERE request.id = matched.request_id
+            """
+        )
+
     @api.constrains("need_start_date", "need_end_date")
     def _check_need_date_order(self):
         for record in self:

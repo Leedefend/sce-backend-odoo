@@ -104,6 +104,7 @@ export interface Scene {
     permission_surface?: Record<string, unknown>;
     action_surface?: Record<string, unknown>;
     workflow_surface?: Record<string, unknown>;
+    handling_entry_catalog?: Record<string, unknown>;
     actions?: Array<Record<string, unknown>>;
     scene_blocks?: Array<Record<string, unknown>>;
     scene_blocks_by_view?: Record<string, Array<Record<string, unknown>>>;
@@ -266,6 +267,9 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
   const workflowRow = (row.workflow_surface && typeof row.workflow_surface === 'object')
     ? row.workflow_surface as Record<string, unknown>
     : {};
+  const handlingEntryCatalogRow = (row.handling_entry_catalog && typeof row.handling_entry_catalog === 'object')
+    ? row.handling_entry_catalog as Record<string, unknown>
+    : {};
   const blockRows = Array.isArray(row.blocks)
     ? row.blocks as Array<Record<string, unknown>>
     : [];
@@ -325,6 +329,7 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
       permission_surface: permissionRow,
       action_surface: actionSurfaceRow,
       workflow_surface: workflowRow,
+      handling_entry_catalog: handlingEntryCatalogRow,
       actions: actionsRow,
       scene_blocks: sceneBlocksRow,
       scene_blocks_by_view: sceneBlocksByViewRow,

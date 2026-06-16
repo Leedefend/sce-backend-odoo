@@ -265,8 +265,11 @@
                 <field name="supplier_id"/>
                 <field name="contract_id"/>
                 <field name="plan_id"/>
+                <field name="rental_date"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
+                <filter string="按日期" name="group_rental_date" context="{'group_by': 'rental_date'}"/>
+                <filter string="按业务分类" name="group_legacy_acceptance_label" context="{'group_by': 'legacy_acceptance_label'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
         </field>

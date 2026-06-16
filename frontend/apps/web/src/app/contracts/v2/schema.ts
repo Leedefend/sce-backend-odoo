@@ -220,6 +220,8 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
     ...(asString(raw.string) ? { string: asString(raw.string) } : {}),
     ...(asString(raw.label) ? { label: asString(raw.label) } : {}),
     title: asString(raw.title) || asString(raw.string) || asString(raw.label),
+    ...(Number(raw.cols || raw.col) ? { cols: Number(raw.cols || raw.col) } : {}),
+    ...(Number(raw.columns) ? { columns: Number(raw.columns) } : {}),
     ...(asString(raw.widget) ? { widget: asString(raw.widget) } : {}),
     ...(Object.keys(attributes).length ? { attributes } : {}),
     ...(Object.keys(fieldInfo).length ? { fieldInfo, field_info: fieldInfo } : {}),

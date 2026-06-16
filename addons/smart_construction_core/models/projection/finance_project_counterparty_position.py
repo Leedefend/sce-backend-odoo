@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import ast
+
 from odoo import api, fields, models, tools
 from odoo.osv import expression
 from odoo.exceptions import UserError
@@ -6,10 +8,19 @@ from odoo.exceptions import UserError
 
 class ScFinanceProjectCounterpartyPosition(models.Model):
     _name = "sc.finance.project.counterparty.position"
-    _description = "项目往来对象资金口径"
+    _description = "项目与对象资金往来"
     _auto = False
     _rec_name = "display_name"
     _order = "project_id, counterparty_type, counterparty_name"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_finance_facts",
+        "action_open_interfund_facts",
+        "action_open_company_borrow_entry",
+        "action_open_company_repay_entry",
+        "action_open_contractor_borrow_entry",
+        "action_open_contractor_repay_entry",
+        "action_open_account_transfer_entry",
+    }
 
     display_name = fields.Char(string="往来对象口径", readonly=True)
     project_id = fields.Many2one("project.project", string="项目", readonly=True, index=True)
@@ -30,23 +41,23 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
     counterparty_project_id = fields.Many2one("project.project", string="对方项目", readonly=True, index=True)
     partner_id = fields.Many2one("res.partner", string="对方单位/人员", readonly=True, index=True)
     counterparty_name = fields.Char(string="对方名称", readonly=True, index=True)
-    finance_source_line_count = fields.Integer(string="财务事实明细数", readonly=True)
-    interfund_source_line_count = fields.Integer(string="资金往来明细数", readonly=True)
-    source_line_count = fields.Integer(string="综合明细数", readonly=True)
-    finance_balance_effect = fields.Monetary(string="财务余额影响", currency_field="currency_id", readonly=True)
-    finance_cash_in_amount = fields.Monetary(string="财务现金流入", currency_field="currency_id", readonly=True)
-    finance_cash_out_amount = fields.Monetary(string="财务现金流出", currency_field="currency_id", readonly=True)
-    finance_cash_net_amount = fields.Monetary(string="财务现金净额", currency_field="currency_id", readonly=True)
-    interfund_inflow_amount = fields.Monetary(string="往来项目流入", currency_field="currency_id", readonly=True)
-    interfund_outflow_amount = fields.Monetary(string="往来项目流出", currency_field="currency_id", readonly=True)
-    interfund_net_amount = fields.Monetary(string="往来项目净流入", currency_field="currency_id", readonly=True)
-    internal_transfer_amount = fields.Monetary(string="项目内调拨", currency_field="currency_id", readonly=True)
-    combined_balance_effect = fields.Monetary(string="综合余额影响", currency_field="currency_id", readonly=True)
-    combined_cash_net_amount = fields.Monetary(string="综合现金净额", currency_field="currency_id", readonly=True)
-    coverage_note = fields.Char(string="承载说明", readonly=True)
+    finance_source_line_count = fields.Integer(string="收付款明细数", readonly=True)
+    interfund_source_line_count = fields.Integer(string="借还调拨明细数", readonly=True)
+    source_line_count = fields.Integer(string="全部明细数", readonly=True)
+    finance_balance_effect = fields.Monetary(string="收付款余额影响", currency_field="currency_id", readonly=True)
+    finance_cash_in_amount = fields.Monetary(string="收付款现金流入", currency_field="currency_id", readonly=True)
+    finance_cash_out_amount = fields.Monetary(string="收付款现金流出", currency_field="currency_id", readonly=True)
+    finance_cash_net_amount = fields.Monetary(string="收付款现金净额", currency_field="currency_id", readonly=True)
+    interfund_inflow_amount = fields.Monetary(string="借还调拨流入", currency_field="currency_id", readonly=True)
+    interfund_outflow_amount = fields.Monetary(string="借还调拨流出", currency_field="currency_id", readonly=True)
+    interfund_net_amount = fields.Monetary(string="借还调拨净流入", currency_field="currency_id", readonly=True)
+    internal_transfer_amount = fields.Monetary(string="账户调拨", currency_field="currency_id", readonly=True)
+    combined_balance_effect = fields.Monetary(string="资金余额影响", currency_field="currency_id", readonly=True)
+    combined_cash_net_amount = fields.Monetary(string="现金净额", currency_field="currency_id", readonly=True)
+    coverage_note = fields.Char(string="口径说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("项目往来对象资金口径是只读投影，请从来源业务单据维护数据。")
+        raise UserError("项目与对象资金往来是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -63,6 +74,125 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
         if self.project_id:
             return [("project_id", "=", self.project_id.id)]
         return [("project_id", "=", False)]
+
+    def _action_domain(self, action_result):
+        raw_domain = action_result.get("domain") or []
+        if isinstance(raw_domain, str):
+            try:
+                parsed = ast.literal_eval(raw_domain)
+            except (SyntaxError, ValueError):
+                parsed = []
+            return list(parsed) if isinstance(parsed, list) else []
+        return list(raw_domain) if isinstance(raw_domain, list) else []
+
+    def _analysis_note(self, action_name):
+        self.ensure_one()
+        parts = [
+            "办理来源：项目与对象资金往来",
+            "办理事项：%s" % action_name,
+            "项目：%s" % self.project_id.display_name if self.project_id else False,
+            "往来对象：%s" % (self.counterparty_name or self.display_name or ""),
+            "对象类型：%s" % (dict(self._fields["counterparty_type"].selection).get(self.counterparty_type) or self.counterparty_type or ""),
+            "全部明细数：%s" % self.source_line_count,
+            "资金余额影响：%s" % (self.combined_balance_effect or 0.0),
+            "现金净额：%s" % (self.combined_cash_net_amount or 0.0),
+        ]
+        return "\n".join(part for part in parts if part)
+
+    def _action_context(self, action_result, action_name=None):
+        raw_context = action_result.get("context") or {}
+        if isinstance(raw_context, str):
+            try:
+                parsed = ast.literal_eval(raw_context)
+            except (SyntaxError, ValueError):
+                parsed = {}
+            context = dict(parsed) if isinstance(parsed, dict) else {}
+        else:
+            context = dict(raw_context) if isinstance(raw_context, dict) else {}
+        if self.project_id:
+            context.update(
+                {
+                    "default_project_id": self.project_id.id,
+                    "current_project_id": self.project_id.id,
+                }
+            )
+        if self.partner_id:
+            context.update(
+                {
+                    "default_partner_id": self.partner_id.id,
+                    "current_partner_id": self.partner_id.id,
+                }
+            )
+        elif self.counterparty_name and self.counterparty_type == "partner":
+            context.update(
+                {
+                    "default_partner_name": self.counterparty_name,
+                    "default_payee": self.counterparty_name,
+                }
+            )
+        if self.counterparty_project_id:
+            context["current_counterparty_project_id"] = self.counterparty_project_id.id
+        if action_name:
+            context.setdefault("default_summary", action_name)
+            context.setdefault("default_purpose", action_name)
+            context.setdefault("default_operation_reason", action_name)
+            context.setdefault("default_note", self._analysis_note(action_name))
+        return context
+
+    def _formal_entry_action(self, action_xmlid, action_name):
+        self.ensure_one()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        if not action:
+            raise UserError("正式办理入口不存在，请检查业务菜单配置。")
+        result = action.sudo().read()[0]
+        domain = self._action_domain(result)
+        if self.project_id and result.get("res_model") in {"sc.expense.claim", "sc.financing.loan", "sc.tax.deduction.registration"}:
+            domain.append(("project_id", "=", self.project_id.id))
+        if self.partner_id and result.get("res_model") in {"sc.expense.claim", "sc.financing.loan", "sc.tax.deduction.registration"}:
+            domain.append(("partner_id", "=", self.partner_id.id))
+        if result.get("res_model") == "sc.fund.account.operation":
+            domain = expression.AND([domain, self._fund_account_operation_domain()])
+        result.update(
+            {
+                "name": "%s / %s" % (self.display_name or "项目与对象资金往来", action_name),
+                "domain": domain,
+                "context": self._action_context(result, action_name=action_name),
+                "target": "current",
+            }
+        )
+        return result
+
+    def _fund_account_operation_domain(self):
+        self.ensure_one()
+        project_id = self.project_id.id if self.project_id else False
+        if not project_id:
+            return [("id", "=", 0)]
+        if self.counterparty_type == "company":
+            return expression.OR(
+                [
+                    [("source_project_id", "=", project_id), ("target_project_id", "=", False)],
+                    [("source_project_id", "=", False), ("target_project_id", "=", project_id)],
+                    [("project_id", "=", project_id)],
+                ]
+            )
+        if self.counterparty_type == "project":
+            counterparty_project_id = self.counterparty_project_id.id if self.counterparty_project_id else False
+            if not counterparty_project_id:
+                return [("id", "=", 0)]
+            return expression.OR(
+                [
+                    [("source_project_id", "=", project_id), ("target_project_id", "=", counterparty_project_id)],
+                    [("source_project_id", "=", counterparty_project_id), ("target_project_id", "=", project_id)],
+                ]
+            )
+        if self.counterparty_type == "internal":
+            return expression.OR(
+                [
+                    [("source_project_id", "=", project_id), ("target_project_id", "=", project_id)],
+                    [("project_id", "=", project_id)],
+                ]
+            )
+        return [("id", "=", 0)]
 
     def _counterparty_identity_domain(self):
         self.ensure_one()
@@ -177,7 +307,7 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": "财务业务事实",
+            "name": "项目收付款来源明细",
             "res_model": "sc.finance.business.fact",
             "view_mode": "tree,pivot,form",
             "domain": self._finance_fact_counterparty_domain(),
@@ -188,12 +318,42 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": "资金往来事实",
+            "name": "借款还款与调拨明细",
             "res_model": "sc.interfund.movement.fact",
             "view_mode": "tree,pivot,form",
             "domain": self._interfund_fact_counterparty_domain(),
             "context": {"search_default_group_movement_type": 1},
         }
+
+    def action_open_company_borrow_entry(self):
+        return self._formal_entry_action(
+            "smart_construction_core.action_sc_financing_loan_project_borrow_company",
+            "项目借公司款登记",
+        )
+
+    def action_open_company_repay_entry(self):
+        return self._formal_entry_action(
+            "smart_construction_core.action_sc_expense_claim_project_repay_company",
+            "项目还公司款登记",
+        )
+
+    def action_open_contractor_borrow_entry(self):
+        return self._formal_entry_action(
+            "smart_construction_core.action_sc_financing_loan_contractor_project_borrow",
+            "承包人借项目款",
+        )
+
+    def action_open_contractor_repay_entry(self):
+        return self._formal_entry_action(
+            "smart_construction_core.action_sc_expense_claim_contractor_project_repay",
+            "承包人还项目款",
+        )
+
+    def action_open_account_transfer_entry(self):
+        return self._formal_entry_action(
+            "smart_construction_core.action_sc_fund_account_between_user",
+            "账户间资金往来",
+        )
 
     def init(self):
         self._cr.execute(
@@ -385,7 +545,7 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
                     g.internal_transfer_amount,
                     (g.finance_balance_effect + g.interfund_net_amount) AS combined_balance_effect,
                     ((g.finance_cash_in_amount - g.finance_cash_out_amount) + g.interfund_net_amount) AS combined_cash_net_amount,
-                    '由财务事实与资金往来事实按项目及对方对象归集；不替代来源业务单据' AS coverage_note
+                    '由项目收付款与借款还款调拨数据按项目和对方对象归集；本页只做分析，不替代业务办理单据' AS coverage_note
                 FROM grouped g
                 LEFT JOIN project_project p ON p.id = g.project_id
             )

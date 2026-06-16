@@ -37,6 +37,7 @@ from . import payment_execution
 from . import invoice_registration
 from . import tax_deduction_registration
 from . import financing_loan
+from . import self_funding_registration
 from . import general_contract
 from . import income_contract_ledger
 from . import expense_contract_ledger

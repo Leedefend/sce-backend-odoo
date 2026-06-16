@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from . import base_dictionary
+from . import business_category
 from . import delete_guard_mixin
 from . import project_dictionary
 from . import account_extend
+from . import account_tax_contract_rate
 from . import account_move_line_ext
 from . import stock_extend
 from . import product_extend
@@ -26,6 +28,7 @@ from . import sc_data_validator
 from . import operating_metrics
 from . import operating_metrics_project
 from . import state_machine
+from . import workflow_contract_service
 from . import state_guard
 from . import signup_throttle
 from . import project_stage_requirements
@@ -45,6 +48,7 @@ from . import legacy_expense_deposit_fact
 from . import legacy_invoice_tax_fact
 from . import legacy_invoice_surcharge_fact
 from . import legacy_tax_deduction_fact
+from . import company_contractor_responsibility_context_mixin
 from . import legacy_self_funding_fact
 from . import legacy_project_fund_balance_fact
 from . import legacy_supplier_contract_pricing_fact

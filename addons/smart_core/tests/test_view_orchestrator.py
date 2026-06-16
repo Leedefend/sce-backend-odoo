@@ -129,6 +129,56 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual(trace["view_id"], 22)
         self.assertEqual(trace["business_config_contracts"][0]["id"], 9)
 
+    def test_form_view_can_use_business_config_layout_overlay(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "layout": [
+                            {
+                                "type": "sheet",
+                                "children": [
+                                    {
+                                        "type": "group",
+                                        "name": "flat_fields",
+                                        "columns": 3,
+                                        "children": [
+                                            {"type": "field", "name": "email"},
+                                            {"type": "field", "name": "missing_field"},
+                                            {"type": "field", "name": "name"},
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                        "fields": [
+                            {"name": "name", "label": "Partner Name", "sequence": 10},
+                            {"name": "email", "label": "Email Alias", "sequence": 20},
+                        ],
+                    }
+                }
+            }
+        }
+        source_layout = [
+            {
+                "type": "sheet",
+                "children": [
+                    {"type": "group", "name": "native_group", "children": [{"type": "field", "name": "name"}]}
+                ],
+            }
+        ]
+
+        result, _calls = self._compose(payload, {"layout": source_layout}, "form")
+
+        sheet = result["layout"][0]
+        group = sheet["children"][0]
+        self.assertEqual(group.get("name"), "flat_fields")
+        self.assertEqual(group.get("columns"), 3)
+        self.assertEqual([row.get("name") for row in group.get("children")], ["name", "email"])
+        self.assertEqual(group["children"][0].get("label"), "Partner Name")
+        self.assertNotIn("native_group", str(result["layout"]))
+        self.assertNotIn("missing_field", str(result["layout"]))
+
     def test_pivot_view_uses_business_config_measures_dimensions_and_defaults(self):
         payload = {
             "view_orchestration": {

@@ -1,5 +1,18 @@
 # -*- coding: utf-8 -*-
+from odoo.exceptions import UserError
+
 from ..registry import SeedStep, register
+
+
+COMMON_TAX_PERCENTAGES = (1.0, 3.0, 6.0, 9.0, 13.0)
+
+
+def _format_tax_name(amount):
+    return f"{amount:g}%"
+
+
+def _tax_xmlid(type_tax_use, amount):
+    return f"smart_construction_seed.tax_{amount:g}"
 
 
 def _get_country_id(env):
@@ -29,12 +42,17 @@ def _get_country_id(env):
 def _get_tax_group(env, type_tax_use: str):
     Group = env["account.tax.group"].sudo().with_context(active_test=False)
     company = env.company
-    grp = Group.search([("company_id", "=", company.id)], limit=1)
+    preferred_name = "合同税率"
+    grp = Group.search([("company_id", "=", company.id), ("name", "=", preferred_name)], limit=1)
     if grp:
         return grp
+    legacy_names = ["销项税率", "进项税率", "销项税组", "进项税组", "默认税组(销项)", "默认税组(进项)"]
+    grp = Group.search([("company_id", "=", company.id), ("name", "in", legacy_names)], limit=1)
+    if grp:
+        grp.write({"name": preferred_name})
+        return grp
     # fallback: create minimal group
-    name = "默认税组(销项)" if type_tax_use == "sale" else "默认税组(进项)"
-    return Group.create({"name": name, "company_id": company.id})
+    return Group.create({"name": preferred_name, "company_id": company.id})
 
 
 def _find_template_tax(env, type_tax_use: str):
@@ -42,14 +60,12 @@ def _find_template_tax(env, type_tax_use: str):
     company = env.company
     domain = [
         ("company_id", "=", company.id),
-        ("type_tax_use", "in", [type_tax_use, "all"]),
+        ("type_tax_use", "=", type_tax_use),
         ("amount_type", "=", "percent"),
         ("price_include", "=", False),
         ("active", "in", [True, False]),
     ]
-    tax = Tax.search(domain + [("type_tax_use", "=", type_tax_use)], limit=1)
-    if not tax:
-        tax = Tax.search(domain, limit=1)
+    tax = Tax.search(domain, limit=1)
     return tax
 
 
@@ -78,14 +94,31 @@ def _ensure_tax(env, xmlid, name, amount, type_tax_use):
 
     tax = env.ref(xmlid, raise_if_not_found=False)
     if tax:
+        vals = {}
+        if tax.name != name:
+            vals["name"] = name
+        if tax.amount != float(amount):
+            vals["amount"] = float(amount)
+        if tax.amount_type != "percent":
+            vals["amount_type"] = "percent"
+        if tax.type_tax_use != type_tax_use:
+            vals["type_tax_use"] = type_tax_use
+        if tax.price_include:
+            vals["price_include"] = False
+        if tax.company_id.id != company.id:
+            vals["company_id"] = company.id
         if not tax.active:
-            tax.active = True
+            vals["active"] = True
+        if not tax.tax_group_id:
+            vals["tax_group_id"] = _get_tax_group(env, type_tax_use).id
+        if vals:
+            tax.write(vals)
         ICP.set_param(f"sc.seed.tax.{type_tax_use}.{amount}", str(tax.id))
         return tax
 
     domain = [
         ("company_id", "=", company.id),
-        ("type_tax_use", "in", [type_tax_use, "all"]),
+        ("type_tax_use", "=", type_tax_use),
         ("amount_type", "=", "percent"),
         ("price_include", "=", False),
         ("amount", "=", float(amount)),
@@ -129,15 +162,25 @@ def _ensure_tax(env, xmlid, name, amount, type_tax_use):
 
 
 def _run(env):
-    _ensure_tax(env, "smart_construction_seed.tax_sale_9", "销项VAT 9%", 9.0, "sale")
-    _ensure_tax(env, "smart_construction_seed.tax_purchase_13", "进项VAT 13%", 13.0, "purchase")
+    ensured_by_amount = {}
+    for amount in COMMON_TAX_PERCENTAGES:
+        tax = _ensure_tax(env, _tax_xmlid("none", amount), _format_tax_name(amount), amount, "none")
+        ensured_by_amount[float(amount)] = tax
+    legacy_xmlids = {
+        "smart_construction_seed.tax_sale_9": 9.0,
+        "smart_construction_seed.tax_purchase_13": 13.0,
+    }
+    for xmlid, amount in legacy_xmlids.items():
+        tax = ensured_by_amount.get(float(amount))
+        if tax:
+            _bind_xmlid(env, xmlid, tax)
     env["ir.config_parameter"].sudo().set_param("sc.seed.tax_seeded", "1")
 
 
 register(
     SeedStep(
         name="tax_defaults",
-        description="Seed default taxes for contract (sale 9%, purchase 13%).",
+        description="Seed common contract taxes as direct percentage options.",
         run=_run,
     )
 )

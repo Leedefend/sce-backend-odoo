@@ -100,6 +100,11 @@ BASELINE_FREEZE_ENFORCE ?= 1
 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES ?= 1
 BUSINESS_INCREMENT_PROFILE ?= base
 SC_WARN_ACT_URL_LEGACY_MAX ?= 3
+WORKFLOW_CONTRACT_FRONTEND_URL ?= http://127.0.0.1:18081
+WORKFLOW_CONTRACT_DB_NAME ?= $(or $(DB_NAME),sc_demo)
+WORKFLOW_CONTRACT_EXPENSE_RECORD_ID ?= 273134
+WORKFLOW_CONTRACT_CLOSE_RECORD_ID ?= 13159
+WORKFLOW_CONTRACT_INVENTORY_OUT ?= docs/ops/audit/workflow_state_inventory_sc_demo.md
 DB_CI        ?= sc_test
 DB_USER      ?= odoo
 DB_PASSWORD  ?= $(DB_USER)
@@ -583,7 +588,7 @@ odoo.exec: check-compose-project check-compose-env
 # ==================== Diagnostics =====================
 # ======================================================
 .PHONY: diag.project odoo.shell.exec runtime.language.ensure verify.runtime.language.baseline verify.business.oca_runtime_smoke verify.business.document_state_policy_switch verify.formal_entry_metadata.audit verify.user_role_approval_matrix.guard history.users.verify history.users.rebuild history.real_users.normalize.write history.user_data_migration.closure project.legacy_entry.backfill history.continuity.rehearse history.continuity.replay history.production.fresh_init history.business.usable.init history.business.usable.probe history.legacy_user_access.projection.write history.organization.department.materialize.write history.organization.carrying.audit.probe history.settlement_adjustment.runtime.probe history.expense_claim.runtime.probe history.treasury_reconciliation.runtime.probe history.receipt_income.runtime.probe history.payment_execution.runtime.probe history.construction_diary.runtime.probe history.attachment.custody.probe history.invoice_tax.runtime.probe history.treasury.reconciliation.probe history.expense_deposit.runtime.probe history.material_catalog.runtime.probe history.material_product.projection.probe history.purchase_contract.runtime.probe history.project.lifecycle.continuity.adapter migration.assets.fetch migration.assets.verify_all migration.assets.delivery_audit history.contract.core.gap.audit history.contract.partner.gap.audit history.contract.strong_evidence.backtrace.audit history.contract.direction_defer.audit history.partner.master.targeted.replay.adapter history.contract.partner.recovery.adapter history.contract.direction_defer.recovery.adapter history.partner.master.direction_defer.replay.adapter history.supplier.partner.targeted.replay.adapter history.outflow.partner.targeted.replay.adapter history.actual_outflow.partner.targeted.replay.adapter history.receipt.parent.recovery.adapter history.receipt.partner.targeted.replay.adapter history.receipt_income.partner.targeted.replay.adapter history.expense_deposit.partner.targeted.replay.adapter history.project_member.attachment.targeted.replay.adapter history.payment_request.outflow.state_activation.adapter history.payment_request.outflow.approved_recovery.adapter history.payment_request.outflow.done_recovery.adapter fresh_db.legacy_user_context.replay.adapter fresh_db.legacy_user_context.replay.write fresh_db.legacy_user_project_scope.replay.adapter fresh_db.legacy_task_evidence.replay.adapter fresh_db.legacy_attendance_checkin.replay.adapter fresh_db.legacy_personnel_movement.replay.adapter fresh_db.legacy_salary_line.replay.adapter fresh_db.legacy_purchase_contract.replay.adapter fresh_db.legacy_account_master.replay.adapter fresh_db.legacy_account_master.replay.write fresh_db.construction_contract.income_count_alignment.write fresh_db.construction_contract.income_count.probe fresh_db.construction_contract.visible_trace.write fresh_db.construction_contract.attachment.write fresh_db.construction_contract.attachment.probe fresh_db.construction_contract.replay_manifest.refresh fresh_db.fund_account.projection.write fresh_db.workbench_item.projection.write fresh_db.dashboard_cockpit.projection.write fresh_db.material_category.projection.write fresh_db.material_catalog.projection.write fresh_db.supplier_contract_pricing.projection.write prod.sim.partner.semantic.normalize.write prod.sim.formal.projections.refresh verify.prod.sim.formal.projections fresh_db.legacy_account_transaction.replay.adapter fresh_db.legacy_account_transaction.replay.write fresh_db.legacy_material_catalog.replay.adapter fresh_db.material_product.projection.write fresh_db.legacy_file_index.replay.adapter fresh_db.outflow_request.replay.adapter fresh_db.outflow_request.fact_coverage.write fresh_db.actual_outflow.replay.adapter fresh_db.actual_outflow_residual.replay.adapter fresh_db.actual_outflow_line.replay.adapter fresh_db.outflow_request_line.replay.adapter fresh_db.receipt_invoice_line.replay.adapter fresh_db.receipt_invoice_attachment.replay.adapter fresh_db.legacy_attachment_backfill.replay.adapter fresh_db.legacy_fund_daily_snapshot.replay.adapter fresh_db.legacy_fund_daily_line.replay.adapter fresh_db.legacy_financing_loan.replay.adapter fresh_db.legacy_receipt_income.replay.adapter fresh_db.legacy_expense_deposit.replay.adapter fresh_db.legacy_invoice_tax.replay.adapter fresh_db.legacy_tax_deduction.replay.adapter fresh_db.legacy_self_funding.replay.adapter fresh_db.legacy_invoice_registration_line.replay.adapter fresh_db.legacy_deduction_adjustment_line.replay.adapter fresh_db.legacy_fund_confirmation_line.replay.adapter fresh_db.legacy_expense_reimbursement_line.replay.adapter fresh_db.legacy_construction_diary_line.replay.adapter fresh_db.legacy_payment_residual.replay.adapter fresh_db.legacy_receipt_residual.replay.adapter fresh_db.legacy_workflow_audit.replay.adapter fresh_db.legacy_tax_deduction.replay.write fresh_db.legacy_self_funding.replay.write fresh_db.history_todo.projection.write fresh_db.treasury_ledger.projection.write fresh_db.settlement_adjustment.projection.write fresh_db.expense_claim.projection.write fresh_db.treasury_reconciliation.projection.write fresh_db.receipt_income.projection.write fresh_db.payment_execution.projection.write fresh_db.tax_deduction_registration.projection.write fresh_db.construction_diary.projection.write
-.PHONY: verify.business.finance_document_tier_runtime_smoke verify.formal_business_backfill.audit verify.project_migration_field_continuity_gap.probe verify.construction_contract_history_value_gap.probe verify.visible_data_usability_warning.classify verify.tender_optional_scope_metadata.probe verify.platform_company_access_manifest.guard verify.platform_company_access_kernel.probe verify.business_scope.context.runtime verify.interfund_movement.fact.audit verify.interfund_movement_project.summary.audit verify.finance_business_fact.scope.audit verify.finance_business_fact.projection.audit verify.finance_business_project.summary.audit verify.finance_project_capital.position.audit verify.finance_project_counterparty.position.audit verify.finance_counterparty.position_summary.audit verify.finance_counterparty.identity_quality.audit verify.finance_position.drilldown_usability.audit verify.finance_interfund.projection.static_guard verify.finance_interfund.position.menu_runtime.audit verify.finance_interfund.position.bundle_summary verify.finance_interfund.position.all
+.PHONY: verify.business.finance_document_tier_runtime_smoke verify.formal_business_backfill.audit verify.project_migration_field_continuity_gap.probe verify.construction_contract_history_value_gap.probe verify.visible_data_usability_warning.classify verify.tender_optional_scope_metadata.probe verify.platform_company_access_manifest.guard verify.platform_company_access_kernel.probe verify.business_scope.context.runtime verify.interfund_user_data.full_coverage.audit verify.interfund_borrow.classification_gap.audit verify.finance_interfund_category.handling_policy.audit verify.interfund_movement.fact.audit verify.interfund_movement_project.summary.audit verify.interfund_treasury_ledger.backfill_readiness.audit verify.company_contractor.responsibility_fact.audit verify.company_contractor.responsibility_summary.audit verify.finance_expense.approval_policy.audit verify.finance_business_fact.scope.audit verify.finance_business_fact.projection.audit verify.finance_business_project.summary.audit verify.finance_project_capital.position.audit verify.finance_project_counterparty.position.audit verify.finance_counterparty.position_summary.audit verify.finance_counterparty.identity_quality.audit verify.finance_position.drilldown_usability.audit verify.finance_interfund.projection.static_guard verify.finance_interfund.position.menu_runtime.audit verify.finance_interfund.position.bundle_summary verify.finance_interfund.position.all
 .PHONY: fresh_db.deposit_claim.projection.write fresh_db.deposit_claim_taxonomy.projection.write fresh_db.repayment_registration.projection.write fresh_db.contractor_project_repay.projection.write fresh_db.project_repay_company.projection.write fresh_db.deduction_bill.projection.write fresh_db.deduction_paid.projection.write fresh_db.deduction_paid_refund.projection.write fresh_db.arrival_confirmation.projection.write fresh_db.payment_execution_taxonomy.projection.write fresh_db.fund_account_between.projection.write fresh_db.fund_daily_report.projection.write project.cost.ledger.projection.write project.cost_ledger.projection.write
 .PHONY: formal_entry_metadata.surface.write direct_acceptance.construction_contract.income_execution.write joint_acceptance.contract.income_execution.write income_contract.settlement_surface.write direct_acceptance.engineering_settlement.income_projection.write verify.income_contract_execution.acceptance_projection verify.income_contract_settlement_surface.cutover verify.direct_acceptance_engineering_settlement.income_projection
 .PHONY: history.legacy_user_visible_surface.overlay.write history.legacy_user_recovery.probe fresh_db.legacy_user_project_scope.replay.write
@@ -631,11 +636,80 @@ verify.business.document_state_policy_switch: check-compose-project check-compos
 verify.formal_entry_metadata.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/formal_entry_metadata_audit.py
 
+verify.interfund_user_data.full_coverage.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/interfund_user_data_full_coverage_audit.py
+
+verify.interfund_borrow.classification_gap.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/interfund_borrow_classification_gap_audit.py
+
+verify.finance_interfund_category.handling_policy.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_interfund_category_handling_policy.sh
+
 verify.interfund_movement.fact.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/interfund_movement_fact_audit.py
 
 verify.interfund_movement_project.summary.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/interfund_movement_project_summary_audit.py
+
+verify.interfund_treasury_ledger.backfill_readiness.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_interfund_treasury_ledger_backfill_readiness.sh
+
+verify.company_contractor.responsibility_fact.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/company_contractor_responsibility_fact_audit.py
+
+verify.company_contractor.responsibility_summary.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/company_contractor_responsibility_summary_audit.py
+
+verify.company_contractor.responsibility_http.smoke:
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) FRONTEND_URL="$${FRONTEND_URL:-http://127.0.0.1:18081}" E2E_LOGIN="$${E2E_LOGIN:-wutao}" E2E_PASSWORD="$${E2E_PASSWORD:-123456}" python3 scripts/verify/company_contractor_responsibility_http_smoke.py
+
+verify.finance_handling.http_surface.smoke:
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) FRONTEND_URL="$${FRONTEND_URL:-http://127.0.0.1:18081}" E2E_LOGIN="$${E2E_LOGIN:-wutao}" E2E_PASSWORD="$${E2E_PASSWORD:-123456}" python3 scripts/verify/finance_handling_http_surface_smoke.py
+
+verify.finance_legacy_cash_ledger.backfill_readiness.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_cash_ledger_backfill_readiness.sh
+
+verify.finance_expense_category.handling_policy.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_expense_category_handling_policy.sh
+
+verify.finance_expense.approval_policy.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_expense_approval_policy.sh
+
+verify.finance_legacy_cash_ledger.backfill.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_cash_ledger_backfill.sh
+
+backfill.finance_legacy_cash_ledger: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) APPLY=1 scripts/ops/validate_finance_legacy_cash_ledger_backfill.sh
+
+verify.finance_legacy_source_less_ledger.reconciliation.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_source_less_ledger_reconciliation.sh
+
+verify.finance_legacy_source_less_ledger.attach.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_source_less_ledger_attach.sh
+
+backfill.finance_legacy_source_less_ledger.attach: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) APPLY=1 scripts/ops/validate_finance_legacy_source_less_ledger_attach.sh
+
+verify.finance_legacy_source_linked_ledger.payment_request_boundary.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_source_linked_ledger_payment_request_boundary.sh
+
+backfill.finance_legacy_source_linked_ledger.payment_request_boundary: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) APPLY=1 scripts/ops/validate_finance_legacy_source_linked_ledger_payment_request_boundary.sh
+
+verify.finance_legacy_handling.currency.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_handling_currency.sh
+
+backfill.finance_legacy_handling.currency: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) APPLY=1 scripts/ops/validate_finance_legacy_handling_currency.sh
+
+verify.finance_legacy_treasury.currency.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_treasury_currency.sh
+
+backfill.finance_legacy_treasury.currency: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) APPLY=1 scripts/ops/validate_finance_legacy_treasury_currency.sh
+
+verify.finance_p0.currency_default.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_p0_currency_default_audit.py
 
 verify.finance_business_fact.scope.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_business_fact_scope_audit.py
@@ -645,6 +719,18 @@ verify.finance_business_fact.projection.audit: guard.prod.forbid check-compose-p
 
 verify.finance_business_project.summary.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_business_project_summary_audit.py
+
+verify.self_funding.handling.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/self_funding_handling_audit.py
+
+verify.fund_daily.handling.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/fund_daily_handling_audit.py
+
+verify.fund_account.balance_backfill_readiness.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/fund_account_balance_backfill_readiness_audit.py
+
+backfill.fund_account.balance: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fund_account_balance_backfill_write.py
 
 verify.finance_project_capital.position.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_project_capital_position_audit.py
@@ -670,8 +756,12 @@ verify.finance_interfund.position.menu_runtime.audit: guard.prod.forbid check-co
 verify.finance_interfund.position.bundle_summary: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_interfund_position_bundle_summary.py
 
-verify.finance_interfund.position.all: verify.finance_interfund.projection.static_guard verify.finance_business_fact.scope.audit verify.finance_business_fact.projection.audit verify.finance_business_project.summary.audit verify.interfund_movement.fact.audit verify.interfund_movement_project.summary.audit verify.finance_project_capital.position.audit verify.finance_project_counterparty.position.audit verify.finance_counterparty.position_summary.audit verify.finance_counterparty.identity_quality.audit verify.finance_position.drilldown_usability.audit verify.finance_interfund.position.menu_runtime.audit verify.finance_interfund.position.bundle_summary
+verify.finance_interfund.position.all: verify.finance_interfund.projection.static_guard verify.interfund_user_data.full_coverage.audit verify.interfund_borrow.classification_gap.audit verify.finance_business_fact.scope.audit verify.finance_business_fact.projection.audit verify.finance_business_project.summary.audit verify.interfund_movement.fact.audit verify.interfund_movement_project.summary.audit verify.interfund_treasury_ledger.backfill_readiness.audit verify.company_contractor.responsibility_fact.audit verify.company_contractor.responsibility_summary.audit verify.company_contractor.responsibility_http.smoke verify.finance_project_capital.position.audit verify.finance_project_counterparty.position.audit verify.finance_counterparty.position_summary.audit verify.finance_counterparty.identity_quality.audit verify.finance_position.drilldown_usability.audit verify.finance_interfund.position.menu_runtime.audit verify.finance_interfund.position.bundle_summary
 	@echo "FINANCE_INTERFUND_POSITION_AUDIT_ALL_PASS db=$(DB_NAME)"
+
+.PHONY: verify.business_capability.productization_p1
+verify.business_capability.productization_p1: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/validate_business_capability_productization_p1.sh
 
 formal_entry_metadata.surface.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) FORMAL_ENTRY_METADATA_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/ops/formal_entry_metadata_surface_write.py
@@ -704,10 +794,34 @@ verify.user_role_approval_matrix.guard: check-compose-project check-compose-env
 verify.user_permission_view_contract_boundary.guard: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_permission_view_contract_boundary_guard.py
 
-.PHONY: verify.form_structure.contract.guard verify.form_structure.contract_runtime.audit verify.form_structure.contract verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.view.orchestration_user_surface.browser verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit verify.action_default_group.contract_audit
+.PHONY: verify.form_structure.contract.guard verify.form_structure.contract_runtime.audit verify.form_structure.contract verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.view.orchestration_user_surface.browser verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.user_form.preference.boundary_guard verify.user_form.preference.runtime_audit verify.user_menu.preference.runtime_audit verify.industry_form.required_marker_audit verify.industry_list.delete_action_audit verify.application_form.required_marker_audit verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit verify.action_default_group.contract_audit
 verify.form_view.scope.boundary_guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/form_view_scope_boundary_guard.py
 	@python3 scripts/verify/form_view_scope_boundary_guard.py
+
+verify.user_form.preference.boundary_guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/user_form_preference_boundary_guard.py
+	@python3 scripts/verify/user_form_preference_boundary_guard.py
+
+verify.user_form.preference.runtime_audit: guard.prod.forbid check-compose-project check-compose-env verify.user_form.preference.boundary_guard
+	@python3 -m py_compile scripts/verify/user_form_preference_runtime_audit.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_form_preference_runtime_audit.py
+
+verify.user_menu.preference.runtime_audit: guard.prod.forbid check-compose-project check-compose-env
+	@python3 -m py_compile scripts/verify/user_menu_preference_runtime_audit.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_menu_preference_runtime_audit.py
+
+verify.industry_form.required_marker_audit: guard.prod.forbid check-compose-project check-compose-env
+	@python3 -m py_compile scripts/verify/industry_form_required_marker_audit.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/industry_form_required_marker_audit.py
+
+verify.industry_list.delete_action_audit: guard.prod.forbid check-compose-project check-compose-env
+	@python3 -m py_compile scripts/verify/industry_list_delete_action_audit.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/industry_list_delete_action_audit.py
+
+verify.application_form.required_marker_audit: guard.prod.forbid check-compose-project check-compose-env
+	@python3 -m py_compile scripts/verify/application_form_required_marker_audit.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/application_form_required_marker_audit.py
 
 verify.form_view.scope.runtime_chain_guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/form_view_scope_runtime_chain_guard.py
@@ -738,10 +852,10 @@ verify.form_structure.contract.guard: guard.prod.forbid
 	@python3 -m py_compile addons/smart_core/core/unified_page_contract_v2_assembler.py scripts/verify/form_structure_contract_standardizer_guard.py scripts/verify/form_structure_contract_runtime_audit.py
 	@python3 scripts/verify/form_structure_contract_standardizer_guard.py
 
-verify.form_structure.contract_runtime.audit: guard.prod.forbid check-compose-project check-compose-env verify.form_structure.contract.guard verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit
+verify.form_structure.contract_runtime.audit: guard.prod.forbid check-compose-project check-compose-env verify.form_structure.contract.guard verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.user_form.preference.runtime_audit verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/form_structure_contract_runtime_audit.sh
 
-verify.form_structure.contract: verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.form_structure.contract_runtime.audit
+verify.form_structure.contract: verify.form_view.scope.boundary_guard verify.user_form.preference.boundary_guard verify.user_form.preference.runtime_audit verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.form_structure.contract_runtime.audit
 	@echo "[OK] verify.form_structure.contract done"
 
 history.users.verify: guard.prod.forbid check-compose-project check-compose-env
@@ -1157,7 +1271,7 @@ migration.assets.verify_all: guard.prod.forbid check-compose-project check-compo
 migration.assets.delivery_audit: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/migration_asset_delivery_audit.py --asset-root "$(MIGRATION_ASSET_ROOT)"
 
-.PHONY: migration.assets.user_acceptance_manifest_guard migration.assets.user_acceptance_manifest_guard.evidence migration.assets.user_acceptance_online_probe migration.assets.user_acceptance_browser_field_guard migration.assets.scbs_55_browser_full_visible_data_coverage migration.assets.scbsly_direct_project_menu_probe migration.assets.scbsly_direct_project_new_system_alignment_probe migration.assets.scbsly_direct_project_browser_menu_acceptance migration.assets.scbsly_direct_project_gap_matrix migration.assets.scbsly_direct_project_old_row_dump migration.assets.scbsly_direct_project_old_identity_lock migration.assets.scbsly_direct_project_replay_carrier_plan migration.assets.scbsly_direct_project_fuel_replay.write migration.assets.scbsly_direct_project_engineering_progress_replay.write migration.assets.scbsly_direct_project_rental_return_replay.write migration.assets.user_acceptance_replay.write migration.assets.live_old_system_business_data_strict_parity_gate migration.assets.full_inventory migration.assets.replay_payload_gap_report migration.assets.payload_promotion_queue migration.assets.delivery_replay_requirement_lock migration.assets.full_scope_guard migration.assets.full_scope_refresh migration.assets.release_package migration.assets.release_package.verify
+.PHONY: migration.assets.user_acceptance_manifest_guard migration.assets.user_acceptance_manifest_guard.evidence migration.assets.user_acceptance_online_probe migration.assets.user_acceptance_browser_field_guard migration.assets.scbs_55_browser_full_visible_data_coverage migration.assets.scbsly_direct_project_menu_probe migration.assets.scbsly_direct_project_new_system_alignment_probe migration.assets.scbsly_direct_project_browser_menu_acceptance migration.assets.scbsly_direct_project_gap_matrix migration.assets.scbsly_direct_project_old_row_dump migration.assets.scbsly_direct_project_old_identity_lock migration.assets.scbsly_direct_project_replay_carrier_plan migration.assets.scbsly_direct_project_fuel_replay.write migration.assets.scbsly_direct_project_engineering_progress_replay.write migration.assets.scbsly_direct_project_rental_return_replay.write migration.assets.user_acceptance_replay.write migration.assets.live_old_system_business_data_strict_parity_gate verify.online_visible_surface.strict migration.assets.full_inventory migration.assets.replay_payload_gap_report migration.assets.payload_promotion_queue migration.assets.delivery_replay_requirement_lock migration.assets.full_scope_guard migration.assets.full_scope_refresh migration.assets.release_package migration.assets.release_package.verify
 migration.assets.user_acceptance_manifest_guard: guard.prod.forbid
 	@python3 scripts/verify/scbs55_user_acceptance_asset_manifest_guard.py
 
@@ -1207,7 +1321,9 @@ migration.assets.user_acceptance_replay.write: guard.prod.forbid
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" MIGRATION_SCBS55_OLD_ROWS_DIR="$${MIGRATION_SCBS55_OLD_ROWS_DIR:-$${SCBS55_OLD_ROWS_DIR:-/tmp/scbs55_old_pages_20260530}}" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/scbs55_user_acceptance_replay.py
 
 migration.assets.live_old_system_business_data_strict_parity_gate: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) LIVE_STRICT_ODOO_SHELL_CMD="$${LIVE_STRICT_ODOO_SHELL_CMD:-bash scripts/ops/odoo_shell_exec.sh}" python3 scripts/verify/live_old_system_business_data_strict_parity_gate.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/validate_online_visible_surface_verification.sh
+
+verify.online_visible_surface.strict: migration.assets.live_old_system_business_data_strict_parity_gate
 
 migration.assets.full_inventory: guard.prod.forbid
 	@python3 scripts/migration/scbs55_full_migration_asset_inventory.py
@@ -4752,6 +4868,47 @@ verify.unified_page_contract.v2.web_visual_acceptance.host: guard.prod.forbid
 .PHONY: verify.unified_page_contract.v2.web_form_shadow_browser.host
 verify.unified_page_contract.v2.web_form_shadow_browser.host: guard.prod.forbid
 	@node scripts/verify/web_contract_v2_form_shadow_browser_smoke.js
+
+.PHONY: audit.workflow_state.inventory
+audit.workflow_state.inventory: guard.prod.forbid
+	@mkdir -p "$$(dirname "$(WORKFLOW_CONTRACT_INVENTORY_OUT)")"
+	@$(RUN_ENV) DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" bash scripts/ops/odoo_shell_exec.sh < scripts/audit/workflow_state_inventory.py > "$(WORKFLOW_CONTRACT_INVENTORY_OUT)"
+
+.PHONY: verify.workflow_contract.backend
+verify.workflow_contract.backend: guard.prod.forbid audit.workflow_state.inventory
+	@python3 -m py_compile addons/smart_construction_core/models/support/workflow_contract_service.py addons/smart_construction_core/tests/test_workflow_contract_backend.py addons/smart_construction_core/tests/test_user_feedback_business_views.py scripts/audit/workflow_state_inventory.py scripts/verify/workflow_inventory_profile_method_guard.py scripts/verify/workflow_contract_custom_coverage_guard.py
+	@python3 scripts/verify/workflow_inventory_profile_method_guard.py
+	@python3 scripts/verify/workflow_contract_custom_coverage_guard.py
+	@DOCS_MOUNT_HOST=./docs DOCS_MOUNT_CONT=/mnt/docs ADDONS_EXTERNAL_MOUNT=/mnt/addons_external/oca_server_ux DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" MODULE=smart_construction_core TEST_TAGS='/smart_construction_core:TestWorkflowContractBackend' bash scripts/test/test_safe.sh
+	@DOCS_MOUNT_HOST=./docs DOCS_MOUNT_CONT=/mnt/docs ADDONS_EXTERNAL_MOUNT=/mnt/addons_external/oca_server_ux DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" MODULE=smart_construction_core TEST_TAGS='/smart_construction_core:TestUserFeedbackBusinessViews.test_deduction_registration_action_creates_deduction_bill_lines' bash scripts/test/test_safe.sh
+
+.PHONY: verify.workflow_contract.browser.syntax
+verify.workflow_contract.browser.syntax: guard.prod.forbid
+	@node --check scripts/verify/workflow_evidence_gate_browser_acceptance.js
+	@node --check scripts/verify/workflow_create_statusbar_browser_acceptance.js
+
+.PHONY: verify.workflow_contract.browser.expense_claim.host
+verify.workflow_contract.browser.expense_claim.host: guard.prod.forbid verify.workflow_contract.browser.syntax
+	@FRONTEND_URL="$${FRONTEND_URL:-$(WORKFLOW_CONTRACT_FRONTEND_URL)}" DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" MODEL=sc.expense.claim RECORD_ID="$(WORKFLOW_CONTRACT_EXPENSE_RECORD_ID)" EXPECTED_REASON_CODE=DEDUCTION_BILL_MISSING_LINES UNIQUE_BUTTON_PATTERN='^提交审批$$' ARTIFACTS_DIR=artifacts/workflow-evidence-gate-browser-workflow-contract-required node scripts/verify/workflow_evidence_gate_browser_acceptance.js
+
+.PHONY: verify.workflow_contract.browser.contract_close.host
+verify.workflow_contract.browser.contract_close.host: guard.prod.forbid verify.workflow_contract.browser.syntax
+	@FRONTEND_URL="$${FRONTEND_URL:-$(WORKFLOW_CONTRACT_FRONTEND_URL)}" DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" MODEL=construction.contract RECORD_ID="$(WORKFLOW_CONTRACT_CLOSE_RECORD_ID)" EXPECTED_TEXT='无合同明细的合同不可关闭，请补充明细。' EXPECTED_REASON_CODE=CONTRACT_MISSING_LINES_FOR_CLOSE TARGET_BUTTON_PATTERN='完成' TARGET_BUTTON_LABEL='完成' UNIQUE_BUTTON_PATTERN='^完成$$' FORBIDDEN_BUTTON_PATTERN='提交审批|审批通过|审批驳回|重置为草稿' ARTIFACTS_DIR=artifacts/workflow-evidence-gate-browser-contract-close-workflow-contract-required node scripts/verify/workflow_evidence_gate_browser_acceptance.js
+
+.PHONY: verify.workflow_contract.browser.create_statusbar.host
+verify.workflow_contract.browser.create_statusbar.host: guard.prod.forbid verify.workflow_contract.browser.syntax
+	@FRONTEND_URL="$${FRONTEND_URL:-$(WORKFLOW_CONTRACT_FRONTEND_URL)}" DB_NAME="$${DB_NAME:-$(WORKFLOW_CONTRACT_DB_NAME)}" ARTIFACTS_DIR=artifacts/workflow-create-statusbar-browser node scripts/verify/workflow_create_statusbar_browser_acceptance.js
+
+.PHONY: verify.workflow_contract.browser.host
+verify.workflow_contract.browser.host: verify.workflow_contract.browser.expense_claim.host verify.workflow_contract.browser.contract_close.host verify.workflow_contract.browser.create_statusbar.host
+
+.PHONY: verify.workflow_contract.frontend
+verify.workflow_contract.frontend: verify.frontend.typecheck.strict verify.unified_page_contract.v2.web_architecture verify.frontend.build
+	@python3 -m py_compile scripts/verify/web_unified_page_contract_v2_guard.py
+	@python3 scripts/verify/web_unified_page_contract_v2_guard.py
+
+.PHONY: verify.workflow_contract
+verify.workflow_contract: verify.workflow_contract.backend verify.workflow_contract.frontend verify.workflow_contract.browser.host
 
 .PHONY: verify.unified_page_contract.v2
 verify.unified_page_contract.v2: verify.unified_page_contract.v2.schema verify.unified_page_contract.v2.assembler verify.unified_page_contract.v2.status verify.unified_page_contract.v2.action verify.unified_page_contract.v2.data verify.unified_page_contract.v2.runtime verify.unified_page_contract.v2.client verify.unified_page_contract.v2.web_consumer verify.unified_page_contract.v2.web_architecture

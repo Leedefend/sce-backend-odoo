@@ -55,7 +55,7 @@
               :field-config-editable="fieldConfigEditable"
               :field-selection-mode="fieldSelectionMode"
               :selected-field-key="selectedFieldKey"
-              :columns="columns"
+              :columns="nodeColumns(node)"
               @field-change="emit('field-change', $event)"
               @field-action="emit('field-action', $event)"
               @field-order-move="emit('field-order-move', $event)"
@@ -123,7 +123,7 @@
             :field-config-editable="fieldConfigEditable"
             :field-selection-mode="fieldSelectionMode"
             :selected-field-key="selectedFieldKey"
-            :columns="columns"
+            :columns="nodeColumns(node)"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
             @field-order-move="emit('field-order-move', $event)"
@@ -152,7 +152,7 @@
           <FormSection
             v-if="fieldSchemasForNodes(fieldChildren(node)).length"
             :title="fieldSectionTitle(node)"
-            :columns="columns"
+            :columns="nodeColumns(node)"
             :fields="fieldSchemasForNodes(fieldChildren(node))"
             :relation-adapter="relationAdapter"
             :field-actions="fieldActions"
@@ -188,6 +188,8 @@
               :key="nodeKey(buttonNode, buttonIndex)"
               type="button"
               :class="nativeActionButtonClass(buttonNode)"
+              :disabled="nativeActionDisabled(buttonNode)"
+              :title="nativeActionTitle(buttonNode)"
               @click.stop.prevent="emitNativeAction(buttonNode)"
             >
               <span v-if="buttonIcon(buttonNode)" :class="['native-action-icon', buttonIcon(buttonNode)]" aria-hidden="true" />
@@ -209,6 +211,8 @@
                   type="button"
                   class="native-action-more-item"
                   role="menuitem"
+                  :disabled="nativeActionDisabled(buttonNode)"
+                  :title="nativeActionTitle(buttonNode)"
                   @click.stop.prevent="emitNativeAction(buttonNode); closeMore(node)"
                 >
                   <span v-if="buttonIcon(buttonNode)" :class="['native-action-icon', buttonIcon(buttonNode)]" aria-hidden="true" />
@@ -239,7 +243,7 @@
             :field-config-editable="fieldConfigEditable"
             :field-selection-mode="fieldSelectionMode"
             :selected-field-key="selectedFieldKey"
-            :columns="columns"
+            :columns="nodeColumns(node)"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
             @field-order-move="emit('field-order-move', $event)"
@@ -267,8 +271,8 @@
 
       <FormSection
         v-else-if="nodeType(node) === 'field' && fieldSchemasForNodes([node]).length"
-          :title="fieldSectionTitle(node)"
-        :columns="columns"
+        :title="fieldSectionTitle(node)"
+        :columns="nodeColumns(node)"
         :fields="fieldSchemasForNodes([node])"
         :relation-adapter="relationAdapter"
         :field-actions="fieldActions"
@@ -299,7 +303,13 @@
       </FormSection>
 
       <div v-else-if="nodeType(node) === 'button'" :class="nativeActionsClass(node)">
-        <button type="button" :class="nativeActionButtonClass(node)" @click.stop.prevent="emitNativeAction(node)">
+        <button
+          type="button"
+          :class="nativeActionButtonClass(node)"
+          :disabled="nativeActionDisabled(node)"
+          :title="nativeActionTitle(node)"
+          @click.stop.prevent="emitNativeAction(node)"
+        >
           <span v-if="buttonIcon(node)" :class="['native-action-icon', buttonIcon(node)]" aria-hidden="true" />
           <span class="native-action-label">{{ buttonLabel(node) }}</span>
         </button>
@@ -336,6 +346,8 @@ export type NativeFormLayoutNode = {
   displayLabel?: string;
   semanticTitle?: string;
   text?: string;
+  cols?: number;
+  columns?: number;
   widget?: string;
   attributes?: Record<string, unknown>;
   fieldInfo?: Record<string, unknown>;
@@ -359,6 +371,7 @@ const props = withDefaults(defineProps<{
   isNodeVisible?: (node: NativeFormLayoutNode) => boolean;
   buttonLabelResolver?: (node: NativeFormLayoutNode) => string | undefined;
   nativeActionHandler?: (payload: Record<string, unknown>) => void | Promise<void>;
+  nativeActionStateResolver?: (payload: Record<string, unknown>) => { disabled?: boolean; title?: string } | null | undefined;
   relationAdapter?: RelationFieldAdapter;
   fieldActions?: (field: FormSectionFieldSchema) => FormSectionFieldAction[];
   fieldOrderEditable?: boolean;
@@ -369,11 +382,12 @@ const props = withDefaults(defineProps<{
   fieldConfigEditable?: boolean;
   fieldSelectionMode?: boolean;
   selectedFieldKey?: string;
-  columns?: 1 | 2;
+  columns?: 1 | 2 | 3;
 }>(), {
   columns: 2,
   isNodeVisible: () => true,
   nativeActionHandler: undefined,
+  nativeActionStateResolver: undefined,
   relationAdapter: undefined,
   fieldActions: undefined,
   fieldOrderEditable: false,
@@ -538,6 +552,18 @@ function fieldSectionTitle(node?: NativeFormLayoutNode) {
   return node ? containerTitle(node) : '';
 }
 
+function normalizeColumns(value: unknown): 1 | 2 | 3 {
+  const columns = Number(value);
+  if (columns === 1 || columns === 2 || columns === 3) return columns;
+  return 2;
+}
+
+function nodeColumns(node?: NativeFormLayoutNode): 1 | 2 | 3 {
+  const attrs = node ? nodeAttributes(node) : {};
+  const layoutNode = node as { cols?: unknown; columns?: unknown } | undefined;
+  return normalizeColumns(attrs.col ?? attrs.columns ?? layoutNode?.cols ?? layoutNode?.columns ?? props.columns);
+}
+
 function isEditableGroupNode(node: NativeFormLayoutNode) {
   return ['group', 'page'].includes(nodeType(node));
 }
@@ -596,6 +622,18 @@ function nativeActionButtonClass(node: NativeFormLayoutNode) {
   return ['native-action-btn', { 'native-action-btn--smart': isSmartButtonNode(node) }];
 }
 
+function nativeActionState(node: NativeFormLayoutNode) {
+  return props.nativeActionStateResolver?.(node as Record<string, unknown>) || {};
+}
+
+function nativeActionDisabled(node: NativeFormLayoutNode) {
+  return nativeActionState(node).disabled === true;
+}
+
+function nativeActionTitle(node: NativeFormLayoutNode) {
+  return String(nativeActionState(node).title || '').trim();
+}
+
 function widgetName(node: NativeFormLayoutNode) {
   const attrs = nodeAttributes(node);
   return String(node?.widget || node?.name || attrs.name || '').trim();
@@ -626,6 +664,7 @@ function buttonIcon(node: NativeFormLayoutNode) {
 }
 
 function emitNativeAction(node: NativeFormLayoutNode) {
+  if (nativeActionDisabled(node)) return;
   const buttonType = String(node.buttonType || 'object');
   const rawAction = node.action && typeof node.action === 'object' ? node.action : {};
   const rawPayload = rawAction.payload && typeof rawAction.payload === 'object' && !Array.isArray(rawAction.payload)
@@ -830,7 +869,7 @@ function closeMore(node: NativeFormLayoutNode) {
 .native-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -851,17 +890,20 @@ function closeMore(node: NativeFormLayoutNode) {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border: 1px solid var(--sc-app-border-strong);
-  background: var(--sc-app-panel);
+  min-height: calc(var(--sc-component-button-height-sm) * 1px);
+  border: 1px solid var(--sc-app-border);
+  background: transparent;
   color: var(--sc-app-text-primary);
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 13px;
+  padding: 4px 9px;
+  border-radius: var(--sc-component-button-radius);
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: 0;
   cursor: pointer;
   min-width: 0;
   max-width: 100%;
-  white-space: normal;
+  white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
 }
 
 .native-action-btn--smart {
@@ -939,8 +981,18 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-action-btn:hover {
-  border-color: var(--sc-app-border-strong);
   background: var(--sc-app-hover-bg);
+}
+
+.native-action-btn:focus-visible {
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
+  outline: none;
+}
+
+.native-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: var(--sc-base-opacity-disabled);
 }
 
 .native-action-btn--smart:hover {

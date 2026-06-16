@@ -116,7 +116,7 @@ ensure_allowed_db()
 repo_root = resolve_repo_root()
 artifact_root = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(repo_root / "artifacts/migration")))
 output_json = artifact_root / "fresh_db_receipt_income_from_payment_request_projection_write_result_v1.json"
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 
 columns = [
     "legacy_record_id",

@@ -36,7 +36,23 @@ const TARGET_MENU_XMLIDS = [
   'smart_construction_core.menu_sc_finance_project_capital_position',
   'smart_construction_core.menu_sc_finance_counterparty_position_summary',
   'smart_construction_core.menu_sc_finance_project_counterparty_position',
+  'smart_construction_core.menu_sc_company_contractor_responsibility_summary',
+  'smart_construction_core.menu_sc_company_contractor_responsibility_fact',
 ];
+
+const DRILLDOWN_BUTTONS_BY_MODEL = {
+  'sc.finance.project.capital.position': ['查看收付款明细', '查看借还调拨明细'],
+  'sc.finance.project.counterparty.position': ['查看收付款明细', '查看借还调拨明细'],
+  'sc.finance.counterparty.position.summary': ['查看项目资金往来'],
+};
+
+const EXPECTED_DRILLDOWN_ACTION_BY_LABEL = {
+  查看收付款明细: 970,
+  查看借还调拨明细: 969,
+  查看项目资金往来: 974,
+};
+
+const FAIL_HINTS = ['页面加载失败', '无权以 write 访问模型', 'Access Error', 'RPC_ERROR', '当前视图使用可读降级渲染'];
 
 function normalize(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
@@ -83,6 +99,21 @@ async function intentRequest(page, intent, params) {
     throw new Error(`${intent} failed: ${JSON.stringify(response.body?.error || response.body).slice(0, 1000)}`);
   }
   return response.body.data || {};
+}
+
+async function listFirstRecordId(page, model) {
+  const data = await intentRequest(page, 'api.data', {
+    op: 'list',
+    model,
+    fields: ['id', 'display_name'],
+    domain: [],
+    limit: 1,
+    offset: 0,
+    order: '',
+    context: {},
+  });
+  const records = Array.isArray(data.records) ? data.records : [];
+  return Number(records[0]?.id || 0);
 }
 
 function walkMenuGroups(groups) {
@@ -146,7 +177,7 @@ async function runtimeProductMenus(page) {
   const rows = [...navRows, ...groupRows];
   const byXmlid = rows.filter((row) => TARGET_MENU_XMLIDS.includes(row.menuXmlid));
   if (byXmlid.length) return byXmlid;
-  const byLabel = rows.filter((row) => ['项目资金综合口径', '往来对象资金综合口径', '项目往来对象资金口径'].includes(row.label));
+  const byLabel = rows.filter((row) => ['项目资金总览', '往来对象资金总览', '项目与对象资金往来', '公司-承包人资金责任余额', '公司-承包人资金责任明细'].includes(row.label));
   writeJson('runtime_menu_debug.json', {
     target_xmlids: TARGET_MENU_XMLIDS,
     matched_by_label: byLabel,
@@ -160,6 +191,7 @@ async function verifyMenu(browser, menu, index, storageState, token) {
   const page = await context.newPage();
   const consoleRows = [];
   const responseRows = [];
+  const intentErrorRows = [];
   const pageErrors = [];
   const onConsole = (msg) => {
     if (['error', 'warning'].includes(msg.type())) {
@@ -169,14 +201,18 @@ async function verifyMenu(browser, menu, index, storageState, token) {
   const onResponse = async (resp) => {
     const url = resp.url();
     if (!url.includes('/api/') && !url.includes('/web/')) return;
-    if (resp.status() < 400) return;
     let body = '';
     try {
       body = (await resp.text()).slice(0, 1200);
     } catch (_err) {
       body = '';
     }
-    responseRows.push({ status: resp.status(), url, body });
+    if (url.includes('/api/v1/intent') && body.includes('"intent":"execute_button"') && !body.includes('"ok":true')) {
+      intentErrorRows.push({ status: resp.status(), url, body });
+    }
+    if (resp.status() >= 400) {
+      responseRows.push({ status: resp.status(), url, body });
+    }
   };
   const onPageError = (err) => pageErrors.push({ message: err.message, stack: String(err.stack || '').slice(0, 1200) });
 
@@ -213,9 +249,8 @@ async function verifyMenu(browser, menu, index, storageState, token) {
     const bodyText = normalize(await page.locator('body').textContent().catch(() => ''));
     const screenshot = path.join(outDir, `menu_${index + 1}_${menu.menuXmlid.split('.').pop()}.png`);
     await page.screenshot({ path: screenshot, fullPage: true }).catch(() => {});
-    const failHints = ['页面加载失败', '无权以 write 访问模型', 'Access Error', 'RPC_ERROR', '当前视图使用可读降级渲染'];
     const errors = [];
-    for (const hint of failHints) {
+    for (const hint of FAIL_HINTS) {
       if (bodyText.includes(hint)) errors.push(`page_contains:${hint}`);
     }
     for (const row of responseRows) {
@@ -253,6 +288,144 @@ async function verifyMenu(browser, menu, index, storageState, token) {
   }
 }
 
+async function verifyRecordDrilldown(browser, menu, index, storageState, token) {
+  const buttons = DRILLDOWN_BUTTONS_BY_MODEL[menu.model] || [];
+  if (!buttons.length) {
+    return {
+      ...menu,
+      status: 'PASS',
+      errors: [],
+      skipped: 'no_drilldown_buttons',
+    };
+  }
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'zh-CN', storageState });
+  const page = await context.newPage();
+  const consoleRows = [];
+  const responseRows = [];
+  const intentErrorRows = [];
+  const pageErrors = [];
+  const onConsole = (msg) => {
+    if (['error', 'warning'].includes(msg.type())) {
+      consoleRows.push({ type: msg.type(), text: msg.text().slice(0, 1000) });
+    }
+  };
+  const onResponse = async (resp) => {
+    const url = resp.url();
+    if (!url.includes('/api/') && !url.includes('/web/')) return;
+    let body = '';
+    try {
+      body = (await resp.text()).slice(0, 1200);
+    } catch (_err) {
+      body = '';
+    }
+    if (url.includes('/api/v1/intent') && body.includes('"intent":"execute_button"') && !body.includes('"ok":true')) {
+      intentErrorRows.push({ status: resp.status(), url, body });
+    }
+    if (resp.status() >= 400) {
+      responseRows.push({ status: resp.status(), url, body });
+    }
+  };
+  const onPageError = (err) => pageErrors.push({ message: err.message, stack: String(err.stack || '').slice(0, 1200) });
+
+  page.on('console', onConsole);
+  page.on('response', onResponse);
+  page.on('pageerror', onPageError);
+  try {
+    await page.goto(FRONTEND_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await page.evaluate(({ dbName, bearer }) => {
+      sessionStorage.setItem(`sc_auth_token:${dbName}`, bearer);
+    }, { dbName: DB_NAME, bearer: token });
+    const recordId = await listFirstRecordId(page, menu.model);
+    const errors = [];
+    const buttonResults = [];
+    if (!recordId) {
+      errors.push(`no_record:${menu.model}`);
+    }
+    const recordUrl = `${FRONTEND_URL}/r/${encodeURIComponent(menu.model)}/${recordId}?action_id=${menu.actionId}&menu_id=${menu.menuId}`;
+    for (const [buttonIndex, label] of buttons.entries()) {
+      if (!recordId) break;
+      responseRows.length = 0;
+      intentErrorRows.length = 0;
+      consoleRows.length = 0;
+      pageErrors.length = 0;
+      await page.goto(recordUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await page.waitForFunction(() => {
+        const text = String(document.body?.textContent || '');
+        return !text.includes('正在加载页面') && !text.includes('Loading');
+      }, null, { timeout: 60000 }).catch(() => {});
+      await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+      await page.waitForTimeout(800);
+      const beforeText = normalize(await page.locator('body').textContent().catch(() => ''));
+      for (const hint of FAIL_HINTS) {
+        if (beforeText.includes(hint)) errors.push(`record_page_contains:${hint}`);
+      }
+      const button = page.getByRole('button', { name: label }).first();
+      if (!(await button.isVisible().catch(() => false))) {
+        errors.push(`missing_button:${label}`);
+        buttonResults.push({ label, status: 'FAIL', errors: [`missing_button:${label}`] });
+        continue;
+      }
+      const expectedActionId = Number(EXPECTED_DRILLDOWN_ACTION_BY_LABEL[label] || 0);
+      await button.click({ timeout: 10000 });
+      if (expectedActionId) {
+        await page.waitForURL((url) => url.pathname === `/a/${expectedActionId}`, { timeout: 30000 }).catch(() => {});
+      }
+      await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+      await page.waitForTimeout(500);
+      const afterText = normalize(await page.locator('body').textContent().catch(() => ''));
+      const buttonErrors = [];
+      for (const hint of FAIL_HINTS) {
+        if (afterText.includes(hint)) buttonErrors.push(`after_click_contains:${hint}`);
+      }
+      for (const row of responseRows) {
+        buttonErrors.push(`http_${row.status}:${row.url}`);
+      }
+      for (const row of intentErrorRows) {
+        buttonErrors.push(`intent_error_${row.status}:${row.body}`);
+      }
+      for (const row of consoleRows) {
+        if (row.text.includes('intent=execute_button') && row.text.includes('status=error')) {
+          buttonErrors.push(`console_error:${row.text}`);
+        }
+      }
+      for (const err of pageErrors) {
+        buttonErrors.push(`pageerror:${err.message}`);
+      }
+      const currentPath = new URL(page.url()).pathname;
+      if (expectedActionId && currentPath !== `/a/${expectedActionId}`) {
+        buttonErrors.push(`unexpected_route:${currentPath}:expected=/a/${expectedActionId}`);
+      }
+      if (buttonErrors.length) {
+        errors.push(...buttonErrors.map((item) => `${label}:${item}`));
+      }
+      const screenshot = path.join(outDir, `drilldown_${index + 1}_${buttonIndex + 1}_${menu.menuXmlid.split('.').pop()}.png`);
+      await page.screenshot({ path: screenshot, fullPage: true }).catch(() => {});
+      buttonResults.push({
+        label,
+        status: buttonErrors.length ? 'FAIL' : 'PASS',
+        errors: buttonErrors,
+        bodyExcerpt: afterText.slice(0, 1000),
+        screenshot,
+      });
+    }
+    return {
+      ...menu,
+      recordId,
+      status: errors.length ? 'FAIL' : 'PASS',
+      errors,
+      buttons: buttonResults,
+      console: consoleRows,
+      responses: responseRows,
+      pageErrors,
+    };
+  } finally {
+    page.off('console', onConsole);
+    page.off('response', onResponse);
+    page.off('pageerror', onPageError);
+    await context.close().catch(() => {});
+  }
+}
+
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH || process.env.CHROMIUM_PATH || '';
@@ -260,6 +433,7 @@ async function main() {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'zh-CN' });
   const page = await context.newPage();
   const results = [];
+  const drilldownResults = [];
   try {
     await login(page);
     const menus = await runtimeProductMenus(page);
@@ -272,19 +446,23 @@ async function main() {
       const result = await verifyMenu(browser, menu, index, storageState, token);
       results.push(result);
       console.log(`${result.status} ${result.group}/${result.label} action=${result.actionId} menu=${result.menuId}${result.errors.length ? ` errors=${result.errors.join('|')}` : ''}`);
+      const drilldown = await verifyRecordDrilldown(browser, menu, index, storageState, token);
+      drilldownResults.push(drilldown);
+      console.log(`${drilldown.status} drilldown ${drilldown.label} model=${drilldown.model} record=${drilldown.recordId || '-'}${drilldown.errors.length ? ` errors=${drilldown.errors.join('|')}` : ''}`);
     }
   } finally {
     await context.close().catch(() => {});
     await browser.close();
   }
   const payload = {
-    status: results.every((row) => row.status === 'PASS') ? 'PASS' : 'FAIL',
+    status: [...results, ...drilldownResults].every((row) => row.status === 'PASS') ? 'PASS' : 'FAIL',
     frontend_url: FRONTEND_URL,
     db: DB_NAME,
     login: LOGIN,
     product_key: PRODUCT_KEY,
     artifact_dir: outDir,
     results,
+    drilldown_results: drilldownResults,
   };
   writeJson('summary.json', payload);
   if (payload.status !== 'PASS') {

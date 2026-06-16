@@ -12,6 +12,7 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
+                    <field name="settlement_id"/>
                     <field name="source_document_no"/>
                     <field name="source_line_type"/>
                     <field name="source_counterparty_text"/>
@@ -47,6 +48,7 @@
                                 <field name="project_id" readonly="1"/>
                                 <field name="partner_id" readonly="1"/>
                                 <field name="contract_id"/>
+                                <field name="settlement_id" readonly="1"/>
                                 <field name="source_document_no"/>
                                 <field name="source_line_type"/>
                                 <field name="source_counterparty_text"/>
@@ -86,6 +88,7 @@
                         <filter string="付款申请" name="group_by_request_id" context="{'group_by': 'request_id'}"/>
                         <filter string="项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>
                         <filter string="供应合同" name="group_by_contract_id" context="{'group_by': 'contract_id'}"/>
+                        <filter string="结算单" name="group_by_settlement_id" context="{'group_by': 'settlement_id'}"/>
                     </group>
                 </search>
             </field>

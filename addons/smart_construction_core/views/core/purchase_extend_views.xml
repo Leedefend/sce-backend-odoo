@@ -42,6 +42,7 @@
                 <field name="project_id"/>
                 <field name="plan_id"/>
                 <field name="source_material_rfq_id"/>
+                <field name="source_material_purchase_request_id"/>
                 <field name="reject_reason" readonly="1" modifiers='{"invisible": [["reject_reason","=",false]]}'/>
                 <field name="amount_untaxed" invisible="1"/>
                 <field name="amount_total" invisible="1"/>
@@ -52,6 +53,7 @@
                 <field name="project_id"/>
                 <field name="plan_line_id"/>
                 <field name="source_material_rfq_line_id"/>
+                <field name="source_material_purchase_request_line_id"/>
                 <field name="wbs_id"/>
                 <field name="cost_code_id"/>
             </xpath>
@@ -61,6 +63,7 @@
                     <field name="project_id"/>
                     <field name="plan_line_id"/>
                     <field name="source_material_rfq_line_id"/>
+                    <field name="source_material_purchase_request_line_id"/>
                     <field name="wbs_id"/>
                     <field name="cost_code_id"/>
                 </group>

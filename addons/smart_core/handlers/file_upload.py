@@ -139,6 +139,13 @@ class FileUploadHandler(BaseIntentHandler):
                     "res_id": res_id,
                 }
             )
+            attachment_field = getattr(record, "_fields", {}).get("attachment_ids")
+            if (
+                attachment_field
+                and attachment_field.type == "many2many"
+                and attachment_field.comodel_name == "ir.attachment"
+            ):
+                record.write({"attachment_ids": [(4, attachment.id)]})
         except AccessError as ae:
             _logger.warning("file.upload AccessError on %s: %s", model, ae)
             return self._err(403, "无上传权限")

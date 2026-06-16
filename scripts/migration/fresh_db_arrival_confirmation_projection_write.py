@@ -38,7 +38,7 @@ def scalar(sql: str, params: list[object] | None = None) -> object:
 
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_arrival_confirmation_projection_write_result_v1.json"
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 uid = env.uid  # noqa: F821
 
 document_domain_sql = """
@@ -62,6 +62,19 @@ candidate_count = int(
         WHERE d.active
           AND d.project_id IS NOT NULL
           AND COALESCE(d.actual_fund_amount, 0) > 0
+        """
+    )
+    or 0
+)
+expected_document_count = int(
+    scalar(
+        """
+        SELECT COUNT(DISTINCT d.document_no)
+        FROM sc_legacy_fund_confirmation_document d
+        WHERE d.active
+          AND d.project_id IS NOT NULL
+          AND COALESCE(d.actual_fund_amount, 0) > 0
+          AND COALESCE(d.document_no, '') <> ''
         """
     )
     or 0
@@ -254,6 +267,31 @@ duplicate_active_documents = int(
     )
     or 0
 )
+missing_active_documents = int(
+    scalar(
+        """
+        SELECT COUNT(*)
+        FROM (
+          SELECT DISTINCT d.document_no
+          FROM sc_legacy_fund_confirmation_document d
+          WHERE d.active
+            AND d.project_id IS NOT NULL
+            AND COALESCE(d.actual_fund_amount, 0) > 0
+            AND COALESCE(d.document_no, '') <> ''
+        ) source
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM sc_receipt_income target
+          WHERE target.source_kind = 'receipt_income'
+            AND target.receipt_type = '到款确认表'
+            AND target.active
+            AND target.document_no = source.document_no
+            AND target.legacy_source_model <> 'sc.legacy.fund.confirmation.line'
+        )
+        """
+    )
+    or 0
+)
 
 payload = {
     "mode": "fresh_db_arrival_confirmation_projection_write",
@@ -263,6 +301,7 @@ payload = {
     "target_model": "sc.receipt.income",
     "target_receipt_type": "到款确认表",
     "candidate_count": candidate_count,
+    "expected_document_count": expected_document_count,
     "before_visible": before_visible,
     "after_visible": after_visible,
     "before_line_active": before_line_active,
@@ -271,6 +310,7 @@ payload = {
     "inserted_or_updated_document": inserted_or_updated_document,
     "deactivated_line_rows": deactivated_line_rows,
     "duplicate_active_documents": duplicate_active_documents,
+    "missing_active_documents": missing_active_documents,
     "amount_sum": float(scalar(f"SELECT COALESCE(SUM(amount), 0) FROM sc_receipt_income WHERE {document_domain_sql}") or 0),
     "settlement_sum": float(
         scalar(f"SELECT COALESCE(SUM(settlement_amount), 0) FROM sc_receipt_income WHERE {document_domain_sql}") or 0
@@ -289,7 +329,14 @@ payload = {
         )
         or 0
     ),
-    "status": "PASS" if after_visible == candidate_count and after_line_active == 0 and duplicate_active_documents == 0 else "FAIL",
+    "status": (
+        "PASS"
+        if after_visible >= expected_document_count
+        and missing_active_documents == 0
+        and after_line_active == 0
+        and duplicate_active_documents == 0
+        else "FAIL"
+    ),
 }
 write_json(output_json, payload)
 print("FRESH_DB_ARRIVAL_CONFIRMATION_PROJECTION_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

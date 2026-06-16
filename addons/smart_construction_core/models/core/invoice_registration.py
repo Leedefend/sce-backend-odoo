@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
 
 
 class ScInvoiceRegistration(models.Model):
@@ -29,6 +30,13 @@ class ScInvoiceRegistration(models.Model):
         required=True,
         index=True,
     )
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.invoice.registration')]",
+    )
     direction = fields.Selection(
         [
             ("input", "进项"),
@@ -41,6 +49,7 @@ class ScInvoiceRegistration(models.Model):
         required=True,
         index=True,
     )
+    invoice_flow_label = fields.Char(string="办理事项", compute="_compute_invoice_flow_label")
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -72,8 +81,18 @@ class ScInvoiceRegistration(models.Model):
         index=True,
     )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
-    contract_id = fields.Many2one("construction.contract", string="合同", index=True)
-    settlement_id = fields.Many2one("sc.settlement.order", string="结算单", index=True)
+    contract_id = fields.Many2one(
+        "construction.contract",
+        string="合同",
+        index=True,
+        domain="[('project_id', '=', project_id)]",
+    )
+    settlement_id = fields.Many2one(
+        "sc.settlement.order",
+        string="结算单",
+        index=True,
+        domain="[('project_id', '=', project_id)]",
+    )
     document_no = fields.Char(string="来源单号", index=True)
     document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     application_date = fields.Date(string="申请日期", index=True)
@@ -127,7 +146,7 @@ class ScInvoiceRegistration(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: (self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id).id,
     )
     handler_name = fields.Char(string="经办人", index=True)
     invoice_holder = fields.Char(string="持票人", index=True)
@@ -197,9 +216,49 @@ class ScInvoiceRegistration(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.invoice.registration") or _("Invoice Registration")
         return super().create(vals_list)
+
+    def _resolve_business_category_id(self, vals):
+        Category = self.env["sc.business.category"].sudo()
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        source_kind = vals.get("source_kind") or self.env.context.get("default_source_kind") or "invoice_registration"
+        direction = vals.get("direction") or self.env.context.get("default_direction") or "input"
+        invoice_content = vals.get("invoice_content") or self.env.context.get("default_invoice_content") or ""
+        if not code:
+            if source_kind == "prepaid_tax" or direction == "prepaid":
+                code = "invoice.prepaid_tax"
+            elif source_kind == "input_invoice_tax" or direction == "input":
+                code = "invoice.input.report"
+            elif invoice_content == "销项开票申请":
+                code = "invoice.output.application"
+            elif source_kind == "output_invoice_tax" or direction == "output":
+                code = "invoice.output.registration"
+        category = Category.search(
+            [("code", "=", code), ("target_model", "=", "sc.invoice.registration")],
+            limit=1,
+        )
+        return category.id if category else False
+
+    @api.depends("source_kind", "direction", "invoice_content", "tax_type")
+    def _compute_invoice_flow_label(self):
+        for rec in self:
+            if rec.invoice_content:
+                rec.invoice_flow_label = rec.invoice_content
+            elif rec.source_kind == "prepaid_tax" or rec.direction == "prepaid":
+                rec.invoice_flow_label = _("预缴税款")
+            elif rec.source_kind == "output_invoice_tax" or rec.direction == "output":
+                rec.invoice_flow_label = _("销项开票")
+            elif rec.source_kind == "input_invoice_tax" or rec.direction == "input":
+                rec.invoice_flow_label = _("进项发票")
+            elif rec.tax_type:
+                rec.invoice_flow_label = rec.tax_type
+            else:
+                rec.invoice_flow_label = _("发票登记")
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
@@ -285,8 +344,47 @@ class ScInvoiceRegistration(models.Model):
                        END
                    ),
                    kingdee_document_no = COALESCE(NULLIF(kingdee_document_no, ''), NULLIF(legacy_visible_kingdee_no, '')),
-                   note = COALESCE(NULLIF(note, ''), NULLIF(legacy_visible_note, ''))
+                   note = COALESCE(NULLIF(note, ''), NULLIF(legacy_visible_note, '')),
+                   business_category_id = COALESCE(
+                       business_category_id,
+                       CASE
+                           WHEN source_kind = 'prepaid_tax' OR direction = 'prepaid' THEN (
+                               SELECT id FROM sc_business_category WHERE code = 'invoice.prepaid_tax' LIMIT 1
+                           )
+                           WHEN source_kind = 'input_invoice_tax' OR direction = 'input' THEN (
+                               SELECT id FROM sc_business_category WHERE code = 'invoice.input.report' LIMIT 1
+                           )
+                           WHEN source_kind = 'output_invoice_tax' AND invoice_content = '销项开票申请' THEN (
+                               SELECT id FROM sc_business_category WHERE code = 'invoice.output.application' LIMIT 1
+                           )
+                           WHEN source_kind = 'output_invoice_tax' OR direction = 'output' THEN (
+                               SELECT id FROM sc_business_category WHERE code = 'invoice.output.registration' LIMIT 1
+                           )
+                           ELSE NULL
+                       END
+                   )
              WHERE legacy_source_model IS NOT NULL OR legacy_source_table IS NOT NULL
+            """
+        )
+        self.env.cr.execute(
+            """
+            UPDATE sc_invoice_registration
+               SET business_category_id = CASE
+                   WHEN source_kind = 'prepaid_tax' OR direction = 'prepaid' THEN (
+                       SELECT id FROM sc_business_category WHERE code = 'invoice.prepaid_tax' LIMIT 1
+                   )
+                   WHEN source_kind = 'input_invoice_tax' OR direction = 'input' THEN (
+                       SELECT id FROM sc_business_category WHERE code = 'invoice.input.report' LIMIT 1
+                   )
+                   WHEN source_kind = 'output_invoice_tax' AND invoice_content = '销项开票申请' THEN (
+                       SELECT id FROM sc_business_category WHERE code = 'invoice.output.application' LIMIT 1
+                   )
+                   WHEN source_kind = 'output_invoice_tax' OR direction = 'output' THEN (
+                       SELECT id FROM sc_business_category WHERE code = 'invoice.output.registration' LIMIT 1
+                   )
+                   ELSE NULL
+               END
+             WHERE business_category_id IS NULL
             """
         )
 
@@ -296,13 +394,18 @@ class ScInvoiceRegistration(models.Model):
             if rec.state != "draft":
                 raise UserError(_("只有草稿发票登记可以确认。"))
             rec._check_business_anchor()
+            before = rec._snapshot_audit_payload()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 company = rec.company_id or self.env.company
                 rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+                rec.invalidate_recordset()
+                rec._audit_transition("invoice_submitted", before, rec._snapshot_audit_payload(), action_name="action_confirm")
             else:
                 rec.write({"state": "confirmed", "reject_reason": False})
+                rec._audit_transition("invoice_confirmed", before, rec._snapshot_audit_payload(), action_name="action_confirm")
 
     def action_register(self):
+        self._assert_finance_register_access()
         policy = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state != "confirmed":
@@ -310,7 +413,19 @@ class ScInvoiceRegistration(models.Model):
             rec._check_business_anchor()
             if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
                 raise UserError(_("发票登记尚未完成统一审批流程。"))
-            rec.state = "registered"
+            before = rec._snapshot_audit_payload()
+            rec.write({"state": "registered"})
+            rec._audit_transition("invoice_registered", before, rec._snapshot_audit_payload(), action_name="action_register")
+
+    def _has_finance_register_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
+    def _assert_finance_register_access(self):
+        if not self._has_finance_register_access():
+            raise UserError(_("你没有完成发票登记的财务确认权限。"))
 
     def action_cancel(self):
         for rec in self:
@@ -318,7 +433,43 @@ class ScInvoiceRegistration(models.Model):
                 raise UserError(_("历史迁移发票登记不能在新系统取消。"))
             if rec.state not in ("draft", "confirmed"):
                 raise UserError(_("只有草稿或已确认发票登记可以取消。"))
-            rec.state = "cancel"
+            before = rec._snapshot_audit_payload()
+            rec.write({"state": "cancel"})
+            rec._audit_transition("invoice_cancelled", before, rec._snapshot_audit_payload(), action_name="action_cancel")
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "validation_status": self.validation_status,
+            "source_kind": self.source_kind,
+            "business_category_code": self.business_category_id.code,
+            "direction": self.direction,
+            "invoice_content": self.invoice_content,
+            "project_id": self.project_id.id,
+            "partner_id": self.partner_id.id,
+            "contract_id": self.contract_id.id,
+            "settlement_id": self.settlement_id.id,
+            "invoice_no": self.invoice_no,
+            "tax_certificate_no": self.tax_certificate_no,
+            "amount_no_tax": self.amount_no_tax,
+            "tax_amount": self.tax_amount,
+            "amount_total": self.amount_total,
+        }
+
+    def _audit_transition(self, event_code, before, after, reason=None, action_name=None):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code=event_code,
+            model=self._name,
+            res_id=self.id,
+            action=action_name or event_code,
+            before=before,
+            after=after,
+            reason=reason,
+            company_id=self.company_id or self.env.company,
+            project_id=self.project_id,
+        )
 
     def _check_business_anchor(self):
         for rec in self:
@@ -343,6 +494,42 @@ class ScInvoiceRegistration(models.Model):
                     raise UserError(_("发票登记合同必须与结算单合同一致。"))
                 if rec.settlement_id.partner_id and rec.partner_id and rec.settlement_id.partner_id != rec.partner_id:
                     raise UserError(_("发票登记往来单位必须与结算单往来单位一致。"))
+            rec._check_output_invoice_contract_balance()
+
+    def _check_output_invoice_contract_balance(self):
+        for rec in self:
+            if rec.source_origin == "legacy":
+                continue
+            if rec.direction != "output" or not rec.contract_id:
+                continue
+            if rec.red_flush_adjustment_id or (rec.amount_total or 0.0) <= 0.0:
+                continue
+            contract_total = rec.contract_id.amount_final or rec.contract_id.amount_total or 0.0
+            if contract_total <= 0.0:
+                continue
+            rounding = rec.currency_id.rounding if rec.currency_id else 0.01
+            rows = self.sudo().read_group(
+                [
+                    ("contract_id", "=", rec.contract_id.id),
+                    ("direction", "=", "output"),
+                    ("state", "in", ["confirmed", "registered", "legacy_confirmed"]),
+                    ("amount_total", ">", 0.0),
+                    ("id", "!=", rec.id),
+                ],
+                ["amount_total:sum"],
+                [],
+            )
+            invoiced = rows[0].get("amount_total_sum", rows[0].get("amount_total", 0.0)) if rows else 0.0
+            requested = (invoiced or 0.0) + (rec.amount_total or 0.0)
+            if float_compare(requested, contract_total, precision_rounding=rounding) == 1:
+                raise UserError(
+                    _("销项开票金额不能超过合同剩余开票余额。合同金额：%(total)s，已开票：%(invoiced)s，本次：%(current)s。")
+                    % {
+                        "total": contract_total,
+                        "invoiced": invoiced or 0.0,
+                        "current": rec.amount_total or 0.0,
+                    }
+                )
 
     def _request_document_approval(self):
         self.ensure_one()
@@ -373,12 +560,22 @@ class ScInvoiceRegistration(models.Model):
             if rec.state != "draft":
                 raise UserError(_("只有草稿发票登记可以完成统一审批回调。"))
             rec._check_business_anchor()
+            before = rec._snapshot_audit_payload()
             rec.with_context(skip_validation_check=True).write({"state": "confirmed", "reject_reason": False})
+            rec._audit_transition("invoice_confirmed", before, rec._snapshot_audit_payload(), action_name="action_on_tier_approved")
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state != "draft":
                 raise UserError(_("只有草稿发票登记可以驳回。"))
+            before = rec._snapshot_audit_payload()
             rec.with_context(skip_validation_check=True).write(
                 {"reject_reason": reason or rec._get_tier_reject_reason()}
+            )
+            rec._audit_transition(
+                "invoice_rejected",
+                before,
+                rec._snapshot_audit_payload(),
+                reason=reason or rec.reject_reason,
+                action_name="action_on_tier_rejected",
             )

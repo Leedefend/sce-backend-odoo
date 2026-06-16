@@ -165,6 +165,7 @@ function synthesizeUnifiedPageContractV2Widget(row: Dict): UnifiedPageContractV2
   const componentConfig = asDict(row.componentConfig || row.component_config || fieldInfo.componentConfig || fieldInfo.component_config || attributes.componentConfig || attributes.component_config);
   const relationEntry = asDict(fieldInfo.relation_entry || fieldInfo.relationEntry || componentConfig.relationEntry || componentConfig.relation_entry);
   const widgetOptions = asDict(fieldInfo.widgetOptions || fieldInfo.widget_options || fieldInfo.options || componentConfig.widgetOptions || componentConfig.widget_options);
+  const subview = asDict(fieldInfo.subview || fieldInfo.subView || componentConfig.subview || componentConfig.subView);
   return {
     widgetId,
     widgetType,
@@ -175,9 +176,11 @@ function synthesizeUnifiedPageContractV2Widget(row: Dict): UnifiedPageContractV2
       ...(componentConfig || {}),
       ...(asText(fieldInfo.type || fieldInfo.ttype) ? { fieldType: asText(fieldInfo.type || fieldInfo.ttype) } : {}),
       ...(asText(fieldInfo.relation) ? { relation: asText(fieldInfo.relation) } : {}),
+      ...(asText(fieldInfo.relation_field || fieldInfo.relationField) ? { relation_field: asText(fieldInfo.relation_field || fieldInfo.relationField) } : {}),
       ...(Array.isArray(fieldInfo.selection) ? { selection: fieldInfo.selection } : {}),
       ...(Object.keys(relationEntry).length ? { relationEntry } : {}),
       ...(Object.keys(widgetOptions).length ? { widgetOptions } : {}),
+      ...(Object.keys(subview).length ? { subview } : {}),
     },
     fieldType: asText(fieldInfo.type || fieldInfo.ttype) || undefined,
     relation: asText(fieldInfo.relation) || undefined,

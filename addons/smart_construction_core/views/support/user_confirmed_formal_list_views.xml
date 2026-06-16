@@ -500,7 +500,7 @@
         <field name="name">sc.settlement.order.user.confirmed.tree</field>
         <field name="model">sc.settlement.order</field>
         <field name="arch" type="xml">
-            <tree string="合同结算" create="false" edit="false" delete="false" default_order="id desc">
+            <tree string="合同结算" create="true" edit="false" delete="false" default_order="id desc">
                 <field name="legacy_acceptance_label" string="业务分类"/>
                 <field name="user_acceptance_document_state" string="单据状态"/>
                 <field name="user_acceptance_document_no" string="单据编号"/>
@@ -570,8 +570,10 @@
     </record>
     <record id="action_payment_request_user_payment_apply" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree"/>
+        <field name="views" eval="[(ref('smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree'), 'tree'), (ref('smart_construction_core.view_payment_request_form'), 'form')]"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_payment_request_form')})
         ]"/>
     </record>
     <record id="action_sc_payment_execution_partner_payment" model="ir.actions.act_window">
@@ -604,8 +606,8 @@
             (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_construction_contract_expense_tree')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_construction_contract_expense_form')})
         ]"/>
-        <field name="domain">['&amp;', '&amp;', ('state', 'in', ['confirmed', 'running']), ('legacy_visible_title', 'not ilike', '结算'), ('subject', 'not ilike', '结算')]</field>
-        <field name="context">{'default_type': 'in'}</field>
+        <field name="domain">['&amp;', '&amp;', '&amp;', ('business_category_id.code', '=', 'contract.expense'), ('state', 'in', ['confirmed', 'running']), ('legacy_visible_title', 'not ilike', '结算'), ('subject', 'not ilike', '结算')]</field>
+        <field name="context">{'default_type': 'in', 'default_business_category_code': 'contract.expense'}</field>
     </record>
     <record id="action_construction_contract_income_construction" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_construction_contract_income_construction_user_confirmed_tree"/>
@@ -650,55 +652,62 @@
         <field name="context">{'create': False, 'default_fact_type': 'salary_registration'}</field>
     </record>
     <record id="action_sc_construction_diary" model="ir.actions.act_window">
-        <field name="name">施工日志（新）</field>
-        <field name="view_id" ref="smart_construction_core.view_sc_construction_diary_user_confirmed_tree"/>
+        <field name="name">施工日志</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_construction_diary_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_construction_diary_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_construction_diary_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_construction_diary_form')})
         ]"/>
-        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance'), ('legacy_source_table', '=', 'direct_acceptance:施工日志（新）')]</field>
-        <field name="context">{'create': False, 'default_diary_type': '施工日志'}</field>
+        <field name="domain">[]</field>
+        <field name="context">{'default_diary_type': '施工日志', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_receipt_income_engineering_progress" model="ir.actions.act_window">
         <field name="name">工程进度款收入登记</field>
         <field name="view_id" ref="smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_receipt_income_form')})
         ]"/>
-        <field name="domain">[('source_kind', '=', 'receipt_income'), ('legacy_source_model', '=', 'sc.legacy.receipt.income.fact'), ('legacy_source_table', '=', 'C_JFHKLR'), ('source_family', '=', 'engineering_progress_receipt_visible')]</field>
-        <field name="context">{'create': False, 'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'search_default_group_project': 1}</field>
+        <field name="domain">[('business_category_id.code', '=', 'finance.receipt.income.progress')]</field>
+        <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'default_business_category_code': 'finance.receipt.income.progress', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_invoice_input_report_user" model="ir.actions.act_window">
-        <field name="name">进项上报</field>
+        <field name="name">进项税额上报</field>
         <field name="view_id" ref="smart_construction_core.view_sc_invoice_registration_input_tax_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_input_tax_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_input_tax_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_form')})
         ]"/>
-        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance:input_tax_report:action932'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_INPUT_TAX_REPORT')]</field>
-        <field name="context">{'create': False, 'default_source_kind': 'input_invoice_tax', 'default_direction': 'input', 'default_invoice_content': '进项上报'}</field>
+        <field name="domain">[('business_category_id.code', '=', 'invoice.input.report')]</field>
+        <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'input_invoice_tax', 'default_direction': 'input', 'default_invoice_content': '进项税额上报', 'default_business_category_code': 'invoice.input.report', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_invoice_registration_user" model="ir.actions.act_window">
+        <field name="name">销项开票登记</field>
         <field name="view_id" ref="smart_construction_core.view_sc_invoice_registration_general_input_tax_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_general_input_tax_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_general_input_tax_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_form')})
         ]"/>
-        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance:general_contract_input_tax_report:action933'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_GENERAL_CONTRACT_INPUT_TAX_REPORT')]</field>
-        <field name="context">{'create': False, 'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '总包进项上报'}</field>
+        <field name="domain">[('business_category_id.code', '=', 'invoice.output.registration')]</field>
+        <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票登记', 'default_business_category_code': 'invoice.output.registration', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_settlement_order_income" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})
         ]"/>
-        <field name="domain">[('settlement_type', '=', 'in'), ('legacy_fact_model', '=', 'sc.legacy.direct.acceptance.fact:direct_engineering_settlement_order')]</field>
-        <field name="context">{'create': False, 'default_settlement_type': 'in'}</field>
+        <field name="domain">[('business_category_id.code', '=', 'settlement.income')]</field>
+        <field name="context">{'create': True, 'edit': True, 'default_settlement_type': 'in', 'default_business_category_code': 'settlement.income', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_settlement_order_expense" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})
         ]"/>
-        <field name="domain">[('settlement_type', '=', 'out'), ('legacy_fact_type', 'in', ['direct_acceptance_expense_settlement:材料结算单', 'direct_acceptance_expense_settlement:劳务结算', 'direct_acceptance_subcontract_settlement_expense_settlement', 'direct_acceptance_expense_settlement:机械结算单', 'direct_acceptance_expense_settlement:租赁结算单'])]</field>
-        <field name="context">{'create': False, 'default_settlement_type': 'out'}</field>
+        <field name="domain">[('business_category_id.code', '=', 'settlement.expense')]</field>
+        <field name="context">{'create': True, 'edit': True, 'default_settlement_type': 'out', 'default_business_category_code': 'settlement.expense', 'search_default_group_project': 1}</field>
     </record>
 
     <record id="menu_sc_material_quote_acceptance" model="ir.ui.menu">

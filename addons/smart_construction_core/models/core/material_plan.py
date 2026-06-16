@@ -16,6 +16,13 @@ class ProjectMaterialPlan(models.Model):
 
     name = fields.Char("单号", default="新建", copy=False, readonly=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True)
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'project.material.plan')]",
+    )
     company_id = fields.Many2one(
         "res.company",
         string="公司",
@@ -66,6 +73,7 @@ class ProjectMaterialPlan(models.Model):
 
     purchase_order_count = fields.Integer("采购单", compute="_compute_po_counts")
     purchase_line_count = fields.Integer("采购明细", compute="_compute_po_counts")
+    purchase_request_count = fields.Integer("采购申请", compute="_compute_purchase_request_count")
 
     _sql_constraints = [
         (
@@ -74,6 +82,34 @@ class ProjectMaterialPlan(models.Model):
             "来源通用材料计划已迁移为材料计划。",
         ),
     ]
+
+    def _resolve_business_category_id(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        ) or "material.plan"
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", "project.material.plan")],
+            limit=1,
+        )
+        return category.id if category else False
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
+        return super().create(vals_list)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE project_material_plan plan
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE plan.business_category_id IS NULL
+               AND category.code = 'material.plan'
+               AND category.target_model = 'project.material.plan'
+            """
+        )
 
     @api.depends("line_ids.quantity", "line_ids.bill_qty")
     def _compute_plan_totals(self):
@@ -161,6 +197,35 @@ class ProjectMaterialPlan(models.Model):
                 if line.quantity <= 0:
                     raise UserError(_("物资计划数量必须大于0。"))
 
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "name": self.name,
+            "state": self.state,
+            "project_id": self.project_id.id if self.project_id else False,
+            "line_count": len(self.line_ids),
+            "total_plan_qty": float(self.total_plan_qty or 0.0),
+            "total_bill_qty": float(self.total_bill_qty or 0.0),
+            "total_unplanned_qty": float(self.total_unplanned_qty or 0.0),
+            "submitted_by": self.submitted_by.id if self.submitted_by else False,
+            "approved_by": self.approved_by.id if self.approved_by else False,
+        }
+
+    def _audit_transition(self, event_code, before, after, reason=None, action_name=None):
+        self.ensure_one()
+        company = self.company_id or self.env.company
+        return self.env["sc.audit.log"].write_event(
+            event_code=event_code,
+            model=self._name,
+            res_id=self.id,
+            action=action_name or event_code,
+            before=before,
+            after=after,
+            reason=reason,
+            company_id=company.id if company else False,
+            project_id=self.project_id.id if self.project_id else False,
+        )
+
     def action_submit(self):
         seq = self.env["ir.sequence"]
         for rec in self:
@@ -173,6 +238,7 @@ class ProjectMaterialPlan(models.Model):
                 raise UserError(_("你没有提交物资计划的权限。"))
             rec._check_business_anchor()
             rec._normalize_lines_uom()
+            before = rec._snapshot_audit_payload()
             if rec.name == "新建":
                 rec.name = seq.next_by_code("project.material.plan") or rec.name
             rec.write(
@@ -189,6 +255,12 @@ class ProjectMaterialPlan(models.Model):
                 allowed_company_ids=[company.id],
             ).request_validation()
             rec._message_post_non_blocking(_("物资计划已提交，进入审批流程。"))
+            rec._audit_transition(
+                "material_plan_submitted",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_submit",
+            )
 
     def action_approve(self):
         for rec in self:
@@ -197,6 +269,7 @@ class ProjectMaterialPlan(models.Model):
             if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有审批物资计划的权限。"))
             rec._check_business_anchor()
+            before = rec._snapshot_audit_payload()
             rec.write(
                 {
                     "state": "approved",
@@ -206,6 +279,12 @@ class ProjectMaterialPlan(models.Model):
             )
             rec.activity_unlink(["mail.mail_activity_data_todo"])
             rec._message_post_non_blocking(_("物资计划已批准。"))
+            rec._audit_transition(
+                "material_plan_approved",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_approve",
+            )
 
     def action_reject(self, reason=None):
         for rec in self:
@@ -213,6 +292,7 @@ class ProjectMaterialPlan(models.Model):
                 raise UserError(_("只有已提交状态的物资计划可以驳回。"))
             if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有驳回物资计划的权限。"))
+            before = rec._snapshot_audit_payload()
             rec.activity_unlink(["mail.mail_activity_data_todo"])
             rec.write(
                 {
@@ -221,6 +301,13 @@ class ProjectMaterialPlan(models.Model):
                 }
             )
             rec._message_post_non_blocking(_("物资计划被驳回：%s") % rec.reject_reason)
+            rec._audit_transition(
+                "material_plan_rejected",
+                before,
+                rec._snapshot_audit_payload(),
+                reason=rec.reject_reason,
+                action_name="action_reject",
+            )
 
     # ==== Tier 回调 ====
     def action_on_tier_approved(self):
@@ -230,6 +317,7 @@ class ProjectMaterialPlan(models.Model):
             if rec.validation_status != "validated":
                 raise UserError(_("物资计划尚未完成统一审批流程。"))
             rec._check_business_anchor()
+            before = rec._snapshot_audit_payload()
             rec.write(
                 {
                     "state": "approved",
@@ -238,11 +326,18 @@ class ProjectMaterialPlan(models.Model):
                 }
             )
             rec._message_post_non_blocking(_("物资计划审批通过。"))
+            rec._audit_transition(
+                "material_plan_approved",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_on_tier_approved",
+            )
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state != "submit":
                 raise UserError(_("只有已提交状态的物资计划可以执行审批驳回回调。"))
+            before = rec._snapshot_audit_payload()
             rec.write(
                 {
                     "state": "draft",
@@ -250,6 +345,13 @@ class ProjectMaterialPlan(models.Model):
                 }
             )
             rec._message_post_non_blocking(_("物资计划审批驳回：%s") % rec.reject_reason)
+            rec._audit_transition(
+                "material_plan_rejected",
+                before,
+                rec._snapshot_audit_payload(),
+                reason=rec.reject_reason,
+                action_name="action_on_tier_rejected",
+            )
 
     def action_done(self):
         for rec in self:
@@ -258,7 +360,14 @@ class ProjectMaterialPlan(models.Model):
             if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有完成物资计划的权限。"))
             rec._check_business_anchor()
+            before = rec._snapshot_audit_payload()
             rec.state = "done"
+            rec._audit_transition(
+                "material_plan_done",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_done",
+            )
 
     def action_cancel(self):
         for rec in self:
@@ -266,7 +375,14 @@ class ProjectMaterialPlan(models.Model):
                 raise UserError(_("只有草稿、已提交或已批准状态的物资计划可以取消。"))
             if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有取消物资计划的权限。"))
+            before = rec._snapshot_audit_payload()
             rec.state = "cancel"
+            rec._audit_transition(
+                "material_plan_cancelled",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_cancel",
+            )
 
     def _compute_po_counts(self):
         PurchaseLine = self.env["purchase.order.line"].sudo()
@@ -278,6 +394,101 @@ class ProjectMaterialPlan(models.Model):
             else:
                 rec.purchase_line_count = 0
                 rec.purchase_order_count = 0
+
+    def _compute_purchase_request_count(self):
+        Request = self.env["sc.material.purchase.request"].sudo()
+        for rec in self:
+            if "source_material_plan_id" in Request._fields:
+                rec.purchase_request_count = Request.search_count(
+                    [("source_material_plan_id", "=", rec.id), ("state", "!=", "cancel")]
+                )
+            else:
+                rec.purchase_request_count = 0
+
+    def _prepare_purchase_request_line_vals(self, line):
+        line._ensure_technical_product()
+        return {
+            "source_material_plan_line_id": line.id,
+            "product_id": line.product_id.id,
+            "material_catalog_id": line.material_catalog_id.id,
+            "material_spec": line.spec_model or line.spec or "",
+            "product_uom_id": line.uom_id.id or line.product_id.uom_id.id,
+            "qty": line.quantity or 1.0,
+            "note": line.note,
+        }
+
+    def _prepare_purchase_request_vals(self):
+        self.ensure_one()
+        return {
+            "project_id": self.project_id.id,
+            "required_date": self.date_plan,
+            "purpose": _("由材料计划 %s 生成") % (self.name or self.display_name),
+            "source_material_plan_id": self.id,
+            "line_ids": [
+                (0, 0, self._prepare_purchase_request_line_vals(line))
+                for line in self.line_ids
+            ],
+            "note": _("来源材料计划：%s") % (self.name or self.display_name),
+        }
+
+    def action_create_purchase_request(self):
+        self.ensure_one()
+        if not (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_material_user")
+            or self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager")
+        ):
+            raise UserError(_("你没有生成采购申请的权限。"))
+        if self.state != "approved":
+            raise UserError(_("只有已批准状态的物资计划可以生成采购申请。"))
+        self._check_business_anchor()
+        self._normalize_lines_uom()
+        Request = self.env["sc.material.purchase.request"].sudo()
+        request = Request.search(
+            [("source_material_plan_id", "=", self.id), ("state", "!=", "cancel")],
+            order="id desc",
+            limit=1,
+        )
+        if not request:
+            before = self._snapshot_audit_payload()
+            request = Request.create(self._prepare_purchase_request_vals())
+            self._message_post_non_blocking(_("已由物资计划生成采购申请：%s") % request.display_name)
+            self._audit_transition(
+                "material_plan_purchase_request_generated",
+                before,
+                self._snapshot_audit_payload(),
+                reason=request.display_name,
+                action_name="action_create_purchase_request",
+            )
+        return self._action_open_purchase_request(request)
+
+    def _action_open_purchase_request(self, request):
+        action = self.env.ref("smart_construction_core.action_sc_material_purchase_request").sudo().read()[0]
+        action.update(
+            {
+                "views": [(self.env.ref("smart_construction_core.view_sc_material_purchase_request_form").id, "form")],
+                "res_id": request.id,
+                "domain": [("id", "=", request.id)],
+                "context": {
+                    "default_project_id": self.project_id.id,
+                    "default_source_material_plan_id": self.id,
+                },
+            }
+        )
+        return action
+
+    def action_view_purchase_requests(self):
+        self.ensure_one()
+        action = self.env.ref("smart_construction_core.action_sc_material_purchase_request").sudo().read()[0]
+        action.update(
+            {
+                "domain": [("source_material_plan_id", "=", self.id)],
+                "context": {
+                    "default_project_id": self.project_id.id,
+                    "default_source_material_plan_id": self.id,
+                },
+            }
+        )
+        return action
 
     def action_view_purchase_orders(self):
         self.ensure_one()

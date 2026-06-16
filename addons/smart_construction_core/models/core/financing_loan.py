@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
@@ -34,6 +36,14 @@ class ScFinancingLoan(models.Model):
         required=True,
         index=True,
     )
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        domain="[('target_model', '=', 'sc.financing.loan'), ('active', '=', True)]",
+        index=True,
+        tracking=True,
+    )
+    loan_flow_label = fields.Char(string="借款方向", compute="_compute_loan_flow_label")
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -72,7 +82,7 @@ class ScFinancingLoan(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: self.env.ref("base.CNY", raise_if_not_found=False).id or self.env.company.currency_id.id,
     )
     purpose = fields.Text(string="用途说明")
     rate_label = fields.Char(string="利率/类型", index=True)
@@ -143,6 +153,22 @@ class ScFinancingLoan(models.Model):
         ("amount_nonnegative", "CHECK(amount >= 0)", "Financing loan amount must be non-negative."),
     ]
 
+    @api.depends("loan_type", "direction", "purpose", "business_category_id.code")
+    def _compute_loan_flow_label(self):
+        for record in self:
+            category_code = record.business_category_id.code
+            purpose = (record.purpose or "").strip()
+            if category_code == "finance.loan.contractor_project_borrow" or re.search(r"借.*项目.*款", purpose):
+                record.loan_flow_label = _("项目借款给承包人")
+            elif category_code == "finance.loan.project_borrow_company" or "项目借公司款" in purpose:
+                record.loan_flow_label = _("公司借款给项目")
+            elif record.loan_type == "borrowing_request" and record.direction == "borrowed_fund":
+                record.loan_flow_label = _("项目借入资金")
+            elif record.direction == "financing_in":
+                record.loan_flow_label = _("融资流入项目")
+            else:
+                record.loan_flow_label = _("借款办理")
+
     @api.model
     def _context_project_id(self):
         project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
@@ -152,11 +178,54 @@ class ScFinancingLoan(models.Model):
             return False
 
     @api.model
+    def _context_partner_id(self):
+        partner_id = self.env.context.get("default_partner_id") or self.env.context.get("current_partner_id")
+        try:
+            return int(partner_id) if partner_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
+    def _resolve_business_category_code(self, vals):
+        code = (
+            vals.get("business_category_code")
+            or self.env.context.get("default_business_category_code")
+            or self.env.context.get("business_category_code")
+            or self.env.context.get("current_business_category_code")
+        )
+        if code:
+            return code
+        loan_type = vals.get("loan_type", self.env.context.get("default_loan_type") or "loan_registration")
+        direction = vals.get("direction", self.env.context.get("default_direction") or "financing_in")
+        purpose = (vals.get("purpose") or self.env.context.get("default_purpose") or "").strip()
+        if loan_type == "borrowing_request" and direction == "borrowed_fund":
+            if re.search(r"借.*项目.*款", purpose):
+                return "finance.loan.contractor_project_borrow"
+            if "项目借公司款" in purpose:
+                return "finance.loan.project_borrow_company"
+            return "finance.loan.borrowing"
+        return False
+
+    @api.model
+    def _resolve_business_category_id(self, vals):
+        code = self._resolve_business_category_code(vals)
+        if not code:
+            return False
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", "sc.financing.loan")],
+            limit=1,
+        )
+        return category.id if category else False
+
+    @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
         project_id = res.get("project_id") or self._context_project_id()
         if project_id and "project_id" in fields_list:
             res["project_id"] = project_id
+        partner_id = res.get("partner_id") or self._context_partner_id()
+        if partner_id and "partner_id" in fields_list:
+            res["partner_id"] = partner_id
         return res
 
     @api.model_create_multi
@@ -166,14 +235,41 @@ class ScFinancingLoan(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            partner_id = self._context_partner_id()
+            if partner_id:
+                vals.setdefault("partner_id", partner_id)
+            context_date = self.env.context.get("default_document_date") or self.env.context.get("current_document_date")
+            if context_date:
+                vals.setdefault("document_date", context_date)
+            context_amount = self.env.context.get("default_amount") or self.env.context.get("current_business_amount")
+            if context_amount:
+                vals.setdefault("amount", context_amount)
+            context_purpose = self.env.context.get("default_purpose") or self.env.context.get("default_note")
+            if context_purpose:
+                vals.setdefault("purpose", context_purpose)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
+            context_document_no = self.env.context.get("default_document_no") or self.env.context.get("current_source_document_no")
+            if context_document_no:
+                vals.setdefault("document_no", context_document_no)
+            context_note = self.env.context.get("default_note")
+            if context_note:
+                vals.setdefault("note", context_note)
+            for field_name in ("due_date", "rate_label", "extra_ref", "extra_label"):
+                value = self.env.context.get("default_%s" % field_name)
+                if value:
+                    vals.setdefault(field_name, value)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.financing.loan") or _("Financing Loan")
         return super().create(vals_list)
 
     def write(self, vals):
-        if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
+        if (
+            not self.env.context.get("legacy_visible_surface_sync")
+            and any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self)
+        ):
             allowed = {
                 "partner_id",
+                "business_category_id",
                 "note",
                 "active",
                 "creator_legacy_user_id",
@@ -195,12 +291,25 @@ class ScFinancingLoan(models.Model):
         for rec in self:
             if rec.state != "draft":
                 raise UserError(_("只有草稿状态的融资借款可以确认。"))
+            before = rec._snapshot_audit_payload()
             rec._check_done_ready()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 company = rec.company_id or self.env.company
                 rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+                rec._audit_transition(
+                    "financing_loan_submitted",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_confirm",
+                )
             else:
                 rec.write({"state": "confirmed", "reject_reason": False})
+                rec._audit_transition(
+                    "financing_loan_confirmed",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_confirm",
+                )
 
     def action_done(self):
         policy = self.env["sc.approval.policy"]
@@ -209,8 +318,16 @@ class ScFinancingLoan(models.Model):
                 raise UserError(_("只有草稿或已确认状态的融资借款可以完成。"))
             if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
                 raise UserError(_("融资借款尚未完成统一审批流程。"))
+            before = rec._snapshot_audit_payload()
             rec._check_done_ready()
-            rec.state = "done"
+            rec.write({"state": "done"})
+            rec._ensure_interfund_cash_ledger()
+            rec._audit_transition(
+                "financing_loan_done",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_done",
+            )
 
     def _check_done_ready(self):
         self.ensure_one()
@@ -220,6 +337,104 @@ class ScFinancingLoan(models.Model):
             raise UserError(_("请先填写单据日期后再完成融资借款。"))
         if self.amount <= 0:
             raise UserError(_("融资借款金额必须大于 0。"))
+        if self.loan_type == "borrowing_request" and self.direction == "borrowed_fund":
+            allowed_codes = {
+                "finance.loan.contractor_project_borrow",
+                "finance.loan.project_borrow_company",
+            }
+            if self.business_category_id.code not in allowed_codes:
+                raise UserError(_("借款办理必须选择“承包人借项目款”或“项目借公司款登记”业务分类后才能完成。"))
+
+    def _ensure_interfund_cash_ledger(self):
+        Ledger = self.env["sc.treasury.ledger"]
+        for rec in self:
+            if rec.loan_type != "borrowing_request" or rec.direction != "borrowed_fund" or (rec.amount or 0.0) <= 0:
+                continue
+            if rec.business_category_id.code == "finance.loan.contractor_project_borrow":
+                direction = "out"
+            elif rec.business_category_id.code == "finance.loan.project_borrow_company":
+                direction = "in"
+            else:
+                continue
+            Ledger._ensure_interfund_ledger(
+                rec,
+                project=rec.project_id,
+                partner=rec.partner_id,
+                direction=direction,
+                amount=rec.amount,
+                date=rec.document_date,
+                currency=rec.currency_id,
+                note=_("auto:financing_loan_done"),
+            )
+
+    @api.model
+    def _backfill_business_categories(self):
+        """Bootstrap legacy borrowing categories without overwriting customer-maintained values."""
+        self.env.cr.execute(
+            """
+            UPDATE sc_business_category
+               SET domain_json = %s,
+                   default_values_json = %s,
+                   ledger_policy_json = %s
+             WHERE code = 'finance.loan.contractor_project_borrow'
+               AND target_model = 'sc.financing.loan'
+               AND domain_json IN (
+                   '["&", ["loan_type", "=", "borrowing_request"], ["purpose", "ilike", "项目"]]',
+                   '["&", ["loan_type", "=", "borrowing_request"], ["purpose", "ilike", "借%%项目%%款"]]'
+               )
+            """,
+            [
+                '["&", "&", ["loan_type", "=", "borrowing_request"], ["direction", "=", "borrowed_fund"], ["business_category_id.code", "=", "finance.loan.contractor_project_borrow"]]',
+                '{"loan_type": "borrowing_request", "direction": "borrowed_fund", "business_category_code": "finance.loan.contractor_project_borrow", "purpose": "承包人借项目款"}',
+                '{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}',
+            ],
+        )
+        self.env.cr.execute(
+            """
+            UPDATE sc_business_category
+               SET domain_json = %s,
+                   default_values_json = %s,
+                   ledger_policy_json = %s
+             WHERE code = 'finance.loan.project_borrow_company'
+               AND target_model = 'sc.financing.loan'
+               AND domain_json IN (
+                   '["&", ["loan_type", "=", "borrowing_request"], ["direction", "=", "borrowed_fund"]]',
+                   '["&", "&", ["loan_type", "=", "borrowing_request"], ["direction", "=", "borrowed_fund"], "|", ["purpose", "=", false], ["purpose", "not ilike", "借%%项目%%款"]]'
+               )
+            """,
+            [
+                '["&", "&", ["loan_type", "=", "borrowing_request"], ["direction", "=", "borrowed_fund"], ["business_category_id.code", "=", "finance.loan.project_borrow_company"]]',
+                '{"loan_type": "borrowing_request", "direction": "borrowed_fund", "business_category_code": "finance.loan.project_borrow_company", "purpose": "项目借公司款登记"}',
+                '{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}',
+            ],
+        )
+        self.env.cr.execute(
+            """
+            WITH categories AS (
+                SELECT
+                    MAX(id) FILTER (WHERE code = 'finance.loan.contractor_project_borrow') AS contractor_project_id,
+                    MAX(id) FILTER (WHERE code = 'finance.loan.project_borrow_company') AS project_company_id
+                  FROM sc_business_category
+                 WHERE target_model = 'sc.financing.loan'
+                   AND active IS TRUE
+            )
+            UPDATE sc_financing_loan loan
+               SET business_category_id = CASE
+                       WHEN COALESCE(loan.purpose, '') ILIKE '%%借%%项目%%款%%'
+                            THEN categories.contractor_project_id
+                       ELSE categories.project_company_id
+                   END
+              FROM categories
+             WHERE loan.business_category_id IS NULL
+               AND loan.loan_type = 'borrowing_request'
+               AND loan.direction = 'borrowed_fund'
+               AND (
+                   (COALESCE(loan.purpose, '') ILIKE '%%借%%项目%%款%%' AND categories.contractor_project_id IS NOT NULL)
+                   OR (COALESCE(loan.purpose, '') NOT ILIKE '%%借%%项目%%款%%' AND categories.project_company_id IS NOT NULL)
+               )
+            """
+        )
+        return True
 
     def action_cancel(self):
         for rec in self:
@@ -227,7 +442,14 @@ class ScFinancingLoan(models.Model):
                 raise UserError(_("历史迁移融资/借款单据不能在新系统取消。"))
             if rec.state not in ("draft", "confirmed"):
                 raise UserError(_("只有草稿或已确认状态的融资借款可以取消。"))
-            rec.state = "cancel"
+            before = rec._snapshot_audit_payload()
+            rec.write({"state": "cancel"})
+            rec._audit_transition(
+                "financing_loan_cancelled",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_cancel",
+            )
 
     def _request_document_approval(self):
         self.ensure_one()
@@ -256,11 +478,60 @@ class ScFinancingLoan(models.Model):
     def action_on_tier_approved(self):
         for rec in self:
             if rec.state == "draft":
+                before = rec._snapshot_audit_payload()
                 rec.with_context(skip_validation_check=True).write({"state": "confirmed", "reject_reason": False})
+                rec._audit_transition(
+                    "financing_loan_confirmed",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_on_tier_approved",
+                )
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state == "draft":
+                before = rec._snapshot_audit_payload()
                 rec.with_context(skip_validation_check=True).write(
                     {"reject_reason": reason or rec._get_tier_reject_reason()}
                 )
+                rec._audit_transition(
+                    "financing_loan_rejected",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_on_tier_rejected",
+                )
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "source_origin": self.source_origin,
+            "loan_type": self.loan_type,
+            "direction": self.direction,
+            "business_category_id": self.business_category_id.id,
+            "business_category_code": self.business_category_id.code,
+            "project_id": self.project_id.id,
+            "company_id": self.company_id.id,
+            "partner_id": self.partner_id.id,
+            "document_no": self.document_no,
+            "document_date": fields.Date.to_string(self.document_date) if self.document_date else False,
+            "due_date": fields.Date.to_string(self.due_date) if self.due_date else False,
+            "amount": self.amount,
+            "currency_id": self.currency_id.id,
+            "purpose": self.purpose,
+            "reject_reason": self.reject_reason,
+            "validation_status": self.validation_status,
+        }
+
+    def _audit_transition(self, event_code, before, after, action_name):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code,
+            self._name,
+            self.id,
+            action=action_name,
+            before=before,
+            after=after,
+            company_id=self.company_id,
+            project_id=self.project_id,
+        )

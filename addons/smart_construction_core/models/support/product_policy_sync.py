@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import json
+import importlib.util
 from pathlib import Path
 
 from odoo import api, models
 
 
 FORMAL_CONTRACT_PRODUCT_MENU_XMLIDS = {
+    "smart_construction_core.menu_sc_construction_contract",
+    "smart_construction_core.menu_sc_contract_handling",
     "smart_construction_core.menu_sc_contract_income",
     "smart_construction_core.menu_sc_project_income_contract",
     "smart_construction_core.menu_sc_income_contract_execution",
@@ -13,6 +16,7 @@ FORMAL_CONTRACT_PRODUCT_MENU_XMLIDS = {
     "smart_construction_core.menu_sc_general_contract",
     "smart_construction_core.menu_sc_contract_expense",
     "smart_construction_core.menu_sc_expense_contract_execution",
+    "smart_construction_core.menu_sc_expense_contract_supplement",
 }
 
 FORMAL_SETTLEMENT_PRODUCT_MENU_XMLIDS = {
@@ -36,8 +40,73 @@ FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = (
     "smart_construction_core.menu_sc_finance_project_capital_position",
     "smart_construction_core.menu_sc_finance_counterparty_position_summary",
     "smart_construction_core.menu_sc_finance_project_counterparty_position",
+    "smart_construction_core.menu_sc_company_contractor_responsibility_summary",
+    "smart_construction_core.menu_sc_company_contractor_responsibility_fact",
 )
-
+FINANCE_CASH_NONCASH_PRODUCT_MENU_OVERRIDES = {
+    "smart_construction_core.menu_sc_deduction_bill": {
+        "label": "扣款登记",
+        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 非现金业务管理 / 扣款登记",
+        "product_domain": "finance_noncash",
+        "product_domain_label": "非现金业务管理",
+        "entry_intent": "handling",
+        "entry_intent_label": "办理",
+        "fact_model": "sc.expense.claim",
+        "disposition_policy": "keep_list_form",
+        "integration_target": "sc.expense.claim 扣款登记",
+        "default_business_category_code": "finance.deduction.bill",
+        "allowed_business_category_codes": ["finance.deduction.bill"],
+        "required_relationships": ["project_id", "partner_id"],
+        "entry_target_policy": "keep_list_form",
+        "locked_data_policy": "read_only_source_facts_no_rewrite",
+        "productization_source": "finance_cash_noncash_menu_split",
+        "business_entry_contract_version": "business_entry_disposition.v1",
+    },
+    "smart_construction_core.menu_sc_reimbursement_request": {
+        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 报销申请",
+        "product_domain": "finance_cash",
+        "product_domain_label": "费用/保证金现金办理",
+    },
+    "smart_construction_core.menu_sc_project_expense_claim": {
+        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 项目费用报销单",
+        "product_domain": "finance_cash",
+        "product_domain_label": "费用/保证金现金办理",
+    },
+    "smart_construction_core.menu_sc_deduction_paid": {
+        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 扣款实缴登记",
+        "product_domain": "finance_cash",
+        "product_domain_label": "费用/保证金现金办理",
+        "disposition_policy": "keep_list_form",
+        "integration_target": "sc.expense.claim 扣款实缴登记",
+        "allowed_business_category_codes": ["finance.deduction.paid"],
+        "entry_target_policy": "keep_list_form",
+        "productization_source": "finance_cash_noncash_menu_split",
+    },
+    "smart_construction_core.menu_sc_deduction_paid_refund": {
+        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 扣款实缴退回",
+        "product_domain": "finance_cash",
+        "product_domain_label": "费用/保证金现金办理",
+        "disposition_policy": "keep_list_form",
+        "integration_target": "sc.expense.claim 扣款实缴退回",
+        "allowed_business_category_codes": ["finance.deduction.refund"],
+        "entry_target_policy": "keep_list_form",
+        "productization_source": "finance_cash_noncash_menu_split",
+    },
+}
+FINANCE_CASH_EXPENSE_DEPOSIT_TARGET = "sc.expense.claim 费用/保证金申请"
+FINANCE_CASH_EXPENSE_DEPOSIT_CATEGORY_CODES = {
+    "finance.expense.reimbursement",
+    "finance.expense.project",
+    "finance.deposit.bid.pay",
+    "finance.deposit.bid.return",
+    "finance.deposit.contract.pay",
+    "finance.deposit.contract.return",
+}
+FINANCE_DEDUCTION_CATEGORY_CODES = {
+    "finance.deduction.bill",
+    "finance.deduction.paid",
+    "finance.deduction.refund",
+}
 USER_ACCEPTANCE_MENU_KEY_TOKENS = (
     "_acceptance",
     "user_acceptance",
@@ -53,6 +122,10 @@ USER_CONFIRMED_POLICY_LOCK_NOTE = "user_confirmed_formal_menu_policy_62_locked"
 USER_CONFIRMED_POLICY_BASELINE_PATHS = (
     "/mnt/scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
     "scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
+)
+USER_CONFIRMED_ENTRY_MATRIX_SCRIPT_PATHS = (
+    "/mnt/scripts/verify/user_confirmed_62_business_entry_integration_matrix.py",
+    "scripts/verify/user_confirmed_62_business_entry_integration_matrix.py",
 )
 USER_CONFIRMED_FORMAL_HIDDEN_GROUP_LABELS = {"用户核对菜单", "用户验收", "用户数据验收"}
 USER_CONFIRMED_FORMAL_VISIBLE_PARENT_XMLIDS = {
@@ -71,6 +144,36 @@ USER_CONFIRMED_FORMAL_HIDE_MENU_XMLIDS = (
     "smart_construction_core.menu_scbsly_direct_project_acceptance_root",
     "smart_construction_core.menu_scbsly_acceptance_engineering_progress_receipt",
 )
+USER_CONFIRMED_FORMAL_DEPRECATED_MENU_XMLIDS = {
+    "smart_construction_core.menu_sc_self_funding_deposit",
+    "smart_construction_core.menu_sc_self_funding_deposit_refund",
+    "smart_construction_core.menu_scbs55_user_acceptance_180_自筹保证金",
+    "smart_construction_core.menu_scbs55_user_acceptance_190_自筹保证金退回",
+}
+MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL = {
+    "construction.contract": "smart_construction_core.action_construction_contract_handling",
+    "construction.contract.income": "smart_construction_core.action_construction_contract_income",
+    "construction.contract.expense": "smart_construction_core.action_construction_contract_expense",
+    "sc.settlement.order": "smart_construction_core.action_sc_settlement_order",
+    "sc.labor.usage": "smart_construction_core.action_sc_labor_usage",
+    "sc.material.outbound": "smart_construction_core.action_sc_material_outbound",
+    "sc.receipt.income": "smart_construction_core.action_sc_receipt_income",
+    "payment.request": "smart_construction_core.action_payment_request",
+    "sc.payment.execution": "smart_construction_core.action_sc_payment_execution",
+    "sc.expense.claim": "smart_construction_core.action_sc_expense_claim",
+    "sc.financing.loan": "smart_construction_core.action_sc_financing_loan",
+    "sc.invoice.registration": "smart_construction_core.action_sc_invoice_registration",
+    "sc.self.funding.registration": "smart_construction_core.action_sc_self_funding_registration",
+}
+SELF_FUNDING_REFUND_MENU_XMLID = "smart_construction_core.menu_sc_self_funding_advance_refund"
+SELF_FUNDING_REFUND_CODE = "finance.self_funding.refund"
+
+CONTRACT_HANDLING_CATEGORY_CODES = (
+    "contract.income",
+    "contract.income.supplement",
+    "contract.expense",
+    "contract.expense.supplement",
+)
 
 
 def _text(value):
@@ -80,6 +183,13 @@ def _text(value):
 def _is_user_acceptance_menu_key(value):
     key = _text(value)
     return key in USER_ACCEPTANCE_PRODUCT_MENU_XMLIDS or any(token in key for token in USER_ACCEPTANCE_MENU_KEY_TOKENS)
+
+
+def _integration_model_from_target(target):
+    first_token = _text(target).split(" ", 1)[0].split("/", 1)[0]
+    if first_token in MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL:
+        return first_token
+    return ""
 
 
 class ScProductPolicy(models.Model):
@@ -132,6 +242,221 @@ class ScProductPolicy(models.Model):
         return {}
 
     @api.model
+    def _load_user_confirmed_entry_matrix_index(self):
+        candidates = []
+        for raw_path in USER_CONFIRMED_ENTRY_MATRIX_SCRIPT_PATHS:
+            path = Path(raw_path)
+            if not path.is_absolute():
+                path = Path(__file__).resolve().parents[4] / path
+            candidates.append(path)
+        for path in candidates:
+            if not path.is_file():
+                continue
+            try:
+                spec = importlib.util.spec_from_file_location("user_confirmed_business_entry_matrix_runtime", path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                payload = module._build_matrix()
+            except Exception:
+                continue
+            rows = payload.get("rows") if isinstance(payload, dict) else []
+            index = {}
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                menu_xmlid = _text(row.get("menu_xmlid"))
+                if menu_xmlid:
+                    index[menu_xmlid] = row
+            if index:
+                return index
+        return {}
+
+    @api.model
+    def _annotate_user_confirmed_business_entry(self, row, matrix_index):
+        if not isinstance(row, dict):
+            return row
+        menu_xmlid = _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
+        matrix = matrix_index.get(menu_xmlid) if isinstance(matrix_index, dict) else None
+        if not isinstance(matrix, dict):
+            self._normalize_self_funding_refund_business_entry(row)
+            return row
+        next_row = dict(row)
+        category_code = _text(matrix.get("default_business_category_code"))
+        product_domain = _text(matrix.get("product_domain"))
+        entry_intent = _text(matrix.get("entry_intent"))
+        disposition_policy = _text(matrix.get("disposition_policy"))
+        integration_target = _text(matrix.get("integration_target"))
+        next_row.update(
+            {
+                "product_domain": product_domain,
+                "product_domain_label": _text(matrix.get("product_domain_label")),
+                "entry_intent": entry_intent,
+                "entry_intent_label": _text(matrix.get("entry_intent_label")),
+                "fact_model": _text(matrix.get("fact_model") or matrix.get("model")),
+                "disposition_policy": disposition_policy,
+                "integration_target": integration_target,
+                "default_business_category_code": category_code,
+                "allowed_business_category_codes": matrix.get("allowed_business_category_codes") if isinstance(matrix.get("allowed_business_category_codes"), list) else [],
+                "required_relationships": matrix.get("required_relationships") if isinstance(matrix.get("required_relationships"), list) else [],
+                "locked_data_policy": _text(matrix.get("locked_data_policy")) or "read_only_source_facts_no_rewrite",
+                "productization_source": "user_confirmed_62_business_entry_integration_matrix",
+                "business_entry_contract_version": "business_entry_disposition.v1",
+            }
+        )
+        if category_code:
+            next_row.setdefault("context_defaults", {})
+            if isinstance(next_row["context_defaults"], dict):
+                next_row["context_defaults"].setdefault("default_business_category_code", category_code)
+        if disposition_policy == "merge_by_category":
+            next_row["entry_target_policy"] = "merge_to_list_form_by_business_category"
+            self._annotate_merge_by_category_integration_target(next_row)
+        elif entry_intent in {"query", "analysis", "config", "master_data", "source_fact"}:
+            next_row["entry_target_policy"] = "keep_separate_%s" % entry_intent
+        else:
+            next_row["entry_target_policy"] = "keep_list_form"
+        self._normalize_contract_handling_business_entry(next_row)
+        self._normalize_self_funding_refund_business_entry(next_row)
+        return next_row
+
+    @api.model
+    def _normalize_self_funding_refund_business_entry(self, row):
+        if not isinstance(row, dict):
+            return row
+        menu_xmlid = _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
+        if menu_xmlid != SELF_FUNDING_REFUND_MENU_XMLID:
+            return row
+        row.update(
+            {
+                "label": "自筹退回办理",
+                "page_label": "自筹退回办理",
+                "product_domain": "finance",
+                "product_domain_label": "资金财务域",
+                "entry_intent": "handling",
+                "entry_intent_label": "办理",
+                "fact_model": "sc.legacy.self.funding.fact",
+                "disposition_policy": "merge_by_category",
+                "integration_target": "sc.self.funding.registration 自筹退回办理",
+                "default_business_category_code": SELF_FUNDING_REFUND_CODE,
+                "allowed_business_category_codes": [SELF_FUNDING_REFUND_CODE],
+                "required_relationships": ["project_id", "partner_id"],
+                "entry_target_policy": "merge_to_list_form_by_business_category",
+                "locked_data_policy": "read_only_source_facts_no_rewrite",
+                "productization_source": "self_funding_refund_formal_entry",
+                "policy_note": "self_funding_refund_uses_formal_registration_caliber",
+                "business_entry_contract_version": "business_entry_disposition.v1",
+                "visible_menu_path": "智慧施工管理平台 / 财务中心 / 自筹退回办理",
+            }
+        )
+        context_defaults = row.setdefault("context_defaults", {})
+        if isinstance(context_defaults, dict):
+            context_defaults.clear()
+            context_defaults["default_funding_type"] = "refund"
+            context_defaults["default_business_category_code"] = SELF_FUNDING_REFUND_CODE
+            context_defaults["allowed_business_category_codes"] = [SELF_FUNDING_REFUND_CODE]
+        self._annotate_merge_by_category_integration_target(row)
+        action = self.env.ref("smart_construction_core.action_sc_self_funding_registration_refund", raise_if_not_found=False)
+        if action and _text(getattr(action, "res_model", "")) == "sc.self.funding.registration":
+            action_id = int(action.id or 0)
+            view_modes = [_text(item) for item in _text(getattr(action, "view_mode", "")).split(",") if _text(item)]
+            row["integration_action_xmlid"] = "smart_construction_core.action_sc_self_funding_registration_refund"
+            row["integration_action_id"] = action_id
+            row["integration_view_modes"] = view_modes
+            row["integration_entry_target"] = {
+                "type": "compatibility",
+                "route": "/a/%s" % action_id,
+                "compatibility_refs": {
+                    "action_id": action_id,
+                    "model": "sc.self.funding.registration",
+                    "view_modes": view_modes,
+                    "delivery_mode": "merge_by_category_integration",
+                },
+            }
+        return row
+
+    @api.model
+    def _normalize_contract_handling_business_entry(self, row):
+        if not isinstance(row, dict):
+            return row
+        category_code = _text(row.get("default_business_category_code"))
+        allowed_codes = row.get("allowed_business_category_codes") if isinstance(row.get("allowed_business_category_codes"), list) else []
+        menu_xmlid = _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
+        is_contract_category = category_code in CONTRACT_HANDLING_CATEGORY_CODES or any(
+            _text(code) in CONTRACT_HANDLING_CATEGORY_CODES for code in allowed_codes
+        )
+        is_contract_execution_menu = menu_xmlid in {
+            "smart_construction_core.menu_sc_construction_contract",
+            "smart_construction_core.menu_sc_contract_handling",
+            "smart_construction_core.menu_sc_income_contract_execution",
+            "smart_construction_core.menu_sc_expense_contract_execution",
+            "smart_construction_core.menu_sc_expense_contract_supplement",
+        }
+        if not (is_contract_category or is_contract_execution_menu):
+            return row
+        if not category_code:
+            category_code = "contract.income"
+        row.update(
+            {
+                "label": "合同办理",
+                "page_label": "合同办理",
+                "product_domain": "contract",
+                "product_domain_label": "合同结算域",
+                "entry_intent": "handling",
+                "entry_intent_label": "办理",
+                "fact_model": "construction.contract",
+                "res_model": "construction.contract",
+                "model": "construction.contract",
+                "disposition_policy": "merge_by_category",
+                "integration_target": "construction.contract 合同办理",
+                "default_business_category_code": category_code,
+                "allowed_business_category_codes": [category_code],
+                "required_relationships": ["project_id", "partner_id"],
+                "entry_target_policy": "merge_to_list_form_by_business_category",
+                "locked_data_policy": "read_only_source_facts_no_rewrite",
+                "productization_source": "contract_handling_product_consolidation",
+                "business_entry_contract_version": "business_entry_disposition.v1",
+            }
+        )
+        context_defaults = row.setdefault("context_defaults", {})
+        if isinstance(context_defaults, dict):
+            context_defaults["default_business_category_code"] = category_code
+            if category_code in {"contract.income", "contract.income.supplement"}:
+                context_defaults["default_type"] = "out"
+            elif category_code in {"contract.expense", "contract.expense.supplement"}:
+                context_defaults["default_type"] = "in"
+        self._annotate_merge_by_category_integration_target(row)
+        return row
+
+    @api.model
+    def _annotate_merge_by_category_integration_target(self, row):
+        source_model = _text(row.get("fact_model") or row.get("res_model"))
+        integration_model = _integration_model_from_target(row.get("integration_target")) or source_model
+        action_xmlid = MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL.get(integration_model)
+        if not action_xmlid:
+            return row
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        if not action or _text(getattr(action, "res_model", "")) != integration_model:
+            return row
+        action_id = int(action.id or 0)
+        if action_id <= 0:
+            return row
+        view_modes = [_text(item) for item in _text(getattr(action, "view_mode", "")).split(",") if _text(item)]
+        row["integration_model"] = integration_model
+        row["integration_action_xmlid"] = action_xmlid
+        row["integration_action_id"] = action_id
+        row["integration_view_modes"] = view_modes
+        row["integration_entry_target"] = {
+            "type": "compatibility",
+            "route": "/a/%s" % action_id,
+            "compatibility_refs": {
+                "action_id": action_id,
+                "model": integration_model,
+                "view_modes": view_modes,
+                "delivery_mode": "merge_by_category_integration",
+            },
+        }
+        return row
+
+    @api.model
     def _capabilities_from_user_confirmed_menu_groups(self, menu_groups):
         capabilities = []
         seen = set()
@@ -167,6 +492,13 @@ class ScProductPolicy(models.Model):
                         "menu_xmlid": _text(menu.get("menu_xmlid") or page_key),
                         "action_id": int(menu.get("action_id") or 0),
                         "res_model": _text(menu.get("res_model")),
+                        "product_domain": _text(menu.get("product_domain")),
+                        "entry_intent": _text(menu.get("entry_intent")),
+                        "disposition_policy": _text(menu.get("disposition_policy")),
+                        "integration_target": _text(menu.get("integration_target")),
+                        "default_business_category_code": _text(menu.get("default_business_category_code")),
+                        "allowed_business_category_codes": menu.get("allowed_business_category_codes") if isinstance(menu.get("allowed_business_category_codes"), list) else [],
+                        "entry_target_policy": _text(menu.get("entry_target_policy")),
                     }
                 )
         return capabilities
@@ -188,7 +520,8 @@ class ScProductPolicy(models.Model):
             return row
         action = menu_record.action
         action_id = int(action.id or 0) if action else 0
-        res_model = _text(getattr(action, "res_model", "") if action else "") or _text(row.get("res_model"))
+        locked_res_model = _text(row.get("res_model"))
+        res_model = locked_res_model or _text(getattr(action, "res_model", "") if action else "")
         view_modes = []
         if action and _text(getattr(action, "view_mode", "")):
             view_modes = [_text(item) for item in action.view_mode.split(",") if _text(item)]
@@ -211,19 +544,103 @@ class ScProductPolicy(models.Model):
         return row
 
     @api.model
-    def _formal_user_confirmed_menu_groups(self, menu_groups):
+    def _formal_user_confirmed_menu_groups(self, menu_groups, matrix_index=None):
         out = []
         for group in menu_groups or []:
             if not self._is_user_confirmed_formal_group(group):
                 continue
             next_group = dict(group)
             next_group["menus"] = [
-                self._hydrate_user_confirmed_formal_menu(menu)
+                self._annotate_user_confirmed_business_entry(
+                    self._hydrate_user_confirmed_formal_menu(menu),
+                    matrix_index or {},
+                )
                 for menu in (group.get("menus") or [])
                 if isinstance(menu, dict)
+                and _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"))
+                not in USER_CONFIRMED_FORMAL_DEPRECATED_MENU_XMLIDS
             ]
+            self._consolidate_contract_handling_menu_entries(next_group)
             out.append(next_group)
         return out
+
+    @api.model
+    def _consolidate_contract_handling_menu_entries(self, group):
+        if not isinstance(group, dict):
+            return group
+        if _text(group.get("group_label") or group.get("label")) != "合同中心":
+            return group
+
+        old_handling_menu_xmlids = {
+            "smart_construction_core.menu_sc_expense_contract_supplement",
+            "smart_construction_core.menu_sc_income_contract_execution",
+            "smart_construction_core.menu_sc_expense_contract_execution",
+        }
+        menus = [dict(menu) for menu in (group.get("menus") or []) if isinstance(menu, dict)]
+        kept = []
+        insertion_index = None
+        for idx, menu in enumerate(menus):
+            menu_xmlid = _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"))
+            category_code = _text(menu.get("default_business_category_code"))
+            if menu_xmlid in old_handling_menu_xmlids or category_code in CONTRACT_HANDLING_CATEGORY_CODES:
+                if insertion_index is None:
+                    insertion_index = len(kept)
+                continue
+            kept.append(menu)
+
+        if insertion_index is None:
+            group["menus"] = kept
+            return group
+
+        handling = self._hydrate_user_confirmed_formal_menu(
+            {
+                "label": "合同办理",
+                "page_label": "合同办理",
+                "menu_key": "smart_construction_core.menu_sc_construction_contract",
+                "menu_xmlid": "smart_construction_core.menu_sc_construction_contract",
+                "page_key": "smart_construction_core.menu_sc_construction_contract",
+                "capability_key": "construction.menu.smart_construction_core_menu_sc_construction_contract",
+                "product_key": "合同中心",
+                "scene_key": "",
+                "target_scene_key": "",
+                "visible_menu_path": "智慧施工管理平台 / 合同中心 / 合同办理",
+                "control_granularity": "user_visible_menu_page",
+                "control_object": "用户已确认正式菜单页面",
+                "source_kind": "contract_handling_product_consolidation",
+                "res_model": "construction.contract",
+            }
+        )
+        handling.update(
+            {
+                "label": "合同办理",
+                "page_label": "合同办理",
+                "res_model": "construction.contract",
+                "fact_model": "construction.contract",
+                "model": "construction.contract",
+                "product_domain": "contract",
+                "product_domain_label": "合同结算域",
+                "entry_intent": "handling",
+                "entry_intent_label": "办理",
+                "disposition_policy": "merge_by_category",
+                "integration_target": "construction.contract 合同办理",
+                "default_business_category_code": "contract.income",
+                "allowed_business_category_codes": list(CONTRACT_HANDLING_CATEGORY_CODES),
+                "required_relationships": ["project_id", "partner_id"],
+                "entry_target_policy": "merge_to_list_form_by_business_category",
+                "locked_data_policy": "read_only_source_facts_no_rewrite",
+                "productization_source": "contract_handling_product_consolidation",
+                "business_entry_contract_version": "business_entry_disposition.v1",
+                "context_defaults": {
+                    "default_business_category_code": "contract.income",
+                    "default_type": "out",
+                    "allowed_business_category_codes": list(CONTRACT_HANDLING_CATEGORY_CODES),
+                },
+            }
+        )
+        self._annotate_merge_by_category_integration_target(handling)
+        kept.insert(insertion_index, handling)
+        group["menus"] = kept
+        return group
 
     @api.model
     def _hydrate_finance_interfund_analysis_menu(self, menu_xmlid):
@@ -261,6 +678,19 @@ class ScProductPolicy(models.Model):
             "view_modes": view_modes,
             "release_domain": "finance_interfund_analysis",
             "policy_note": "released_as_finance_interfund_analysis_product_menu",
+            "product_domain": "finance",
+            "product_domain_label": "资金财务域",
+            "entry_intent": "analysis",
+            "entry_intent_label": "分析",
+            "fact_model": res_model,
+            "disposition_policy": "keep_analysis",
+            "integration_target": "资金往来分析",
+            "default_business_category_code": "",
+            "required_relationships": ["project_id", "partner_id", "fund_account_id"],
+            "locked_data_policy": "read_only_source_facts_no_rewrite",
+            "productization_source": "finance_interfund_analysis_product_overlay",
+            "business_entry_contract_version": "business_entry_disposition.v1",
+            "entry_target_policy": "keep_separate_analysis",
         }
 
     @api.model
@@ -295,6 +725,66 @@ class ScProductPolicy(models.Model):
         return out
 
     @api.model
+    def _apply_finance_cash_noncash_product_menu_overrides(self, menu_groups):
+        out = []
+        for group in menu_groups or []:
+            if not isinstance(group, dict):
+                continue
+            next_group = dict(group)
+            menus = []
+            for menu in group.get("menus") or []:
+                if not isinstance(menu, dict):
+                    continue
+                next_menu = dict(menu)
+                menu_xmlid = _text(
+                    next_menu.get("menu_xmlid")
+                    or next_menu.get("page_key")
+                    or next_menu.get("menu_key")
+                )
+                override = FINANCE_CASH_NONCASH_PRODUCT_MENU_OVERRIDES.get(menu_xmlid)
+                if override:
+                    next_menu.update(override)
+                    label = _text(override.get("label"))
+                    if label:
+                        next_menu["page_label"] = label
+                    next_menu["policy_note"] = "finance_cash_noncash_menu_split_released"
+                default_code = _text(next_menu.get("default_business_category_code"))
+                allowed_codes = next_menu.get("allowed_business_category_codes")
+                if isinstance(allowed_codes, list):
+                    if default_code in FINANCE_DEDUCTION_CATEGORY_CODES:
+                        next_menu["allowed_business_category_codes"] = [default_code]
+                    else:
+                        next_menu["allowed_business_category_codes"] = [
+                            _text(code)
+                            for code in allowed_codes
+                            if _text(code) and _text(code) not in FINANCE_DEDUCTION_CATEGORY_CODES
+                        ]
+                next_allowed_codes = next_menu.get("allowed_business_category_codes")
+                cash_codes = [
+                    _text(code)
+                    for code in (next_allowed_codes if isinstance(next_allowed_codes, list) else [default_code])
+                    if _text(code) in FINANCE_CASH_EXPENSE_DEPOSIT_CATEGORY_CODES
+                ]
+                menu_xmlid = _text(next_menu.get("menu_xmlid") or next_menu.get("page_key") or next_menu.get("menu_key"))
+                if (
+                    cash_codes
+                    and default_code not in FINANCE_DEDUCTION_CATEGORY_CODES
+                    and menu_xmlid != SELF_FUNDING_REFUND_MENU_XMLID
+                ):
+                    label = _text(next_menu.get("label") or next_menu.get("page_label"))
+                    if label:
+                        next_menu["visible_menu_path"] = "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / %s" % label
+                    next_menu["product_domain"] = "finance_cash"
+                    next_menu["product_domain_label"] = "费用/保证金现金办理"
+                    next_menu["integration_target"] = FINANCE_CASH_EXPENSE_DEPOSIT_TARGET
+                    next_menu["productization_source"] = "finance_cash_noncash_menu_split"
+                    next_menu["policy_note"] = "finance_cash_expense_deposit_entry_retargeted"
+                menus.append(next_menu)
+            next_group["menus"] = menus
+            out.append(next_group)
+        return out
+
+    @api.model
     def _sync_user_confirmed_formal_menu_overlay(self):
         Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
         Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
@@ -323,18 +813,25 @@ class ScProductPolicy(models.Model):
                 upsert(menu, False, "user_confirmed_formal_release_hide_acceptance_surface")
         for xmlid in USER_CONFIRMED_FORMAL_HIDE_MENU_XMLIDS:
             upsert(self.env.ref(xmlid, raise_if_not_found=False), False, "user_confirmed_formal_release_hide_acceptance_surface")
+        for xmlid in USER_CONFIRMED_FORMAL_DEPRECATED_MENU_XMLIDS:
+            menu = self.env.ref(xmlid, raise_if_not_found=False)
+            upsert(menu, False, "user_confirmed_formal_deprecated_self_funding_deposit_surface")
+            if menu:
+                menu.sudo().write({"active": False})
 
     @api.model
     def _sync_user_confirmed_locked_construction_product_policies(self):
         baseline = self._load_user_confirmed_policy_baseline()
         if not baseline:
             return False
+        matrix_index = self._load_user_confirmed_entry_matrix_index()
         model = self.sudo()
         for product_key in ("construction.standard", "construction.preview"):
             item = baseline.get(product_key) or {}
             baseline_menu_groups = item.get("menu_groups") if isinstance(item.get("menu_groups"), list) else []
-            menu_groups = self._formal_user_confirmed_menu_groups(baseline_menu_groups)
+            menu_groups = self._formal_user_confirmed_menu_groups(baseline_menu_groups, matrix_index=matrix_index)
             menu_groups = self._append_finance_interfund_analysis_product_menus(menu_groups)
+            menu_groups = self._apply_finance_cash_noncash_product_menu_overrides(menu_groups)
             capabilities = self._capabilities_from_user_confirmed_menu_groups(menu_groups)
             values = {
                 "active": bool(item.get("active", True)),

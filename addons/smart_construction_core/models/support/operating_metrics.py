@@ -10,7 +10,11 @@ def get_paid_states() -> Sequence[str]:
 
 
 def settlement_paid_map(env, settlement_ids: Iterable[int], paid_states: Optional[Sequence[str]] = None) -> Dict[int, float]:
-    """按结算单聚合付款金额。"""
+    """按结算单聚合付款金额。
+
+    主表关联按付款申请金额统计；历史多结算单付款申请没有主表结算单，
+    需按明细上的本次申请金额分摊到各结算单。
+    """
     ids = list(settlement_ids)
     if not ids:
         return {}
@@ -32,6 +36,24 @@ def settlement_paid_map(env, settlement_ids: Iterable[int], paid_states: Optiona
             # read_group returns the aggregated field as "amount" (17.0) but some
             # addons expect "amount_sum" style; keep both for compatibility.
             res[sid[0]] = (r.get("amount_sum") or r.get("amount") or 0.0)
+    Line = env["payment.request.line"].sudo()
+    line_rows = Line.read_group(
+        [
+            ("settlement_id", "in", ids),
+            ("request_id.settlement_id", "=", False),
+            ("request_id.type", "=", "pay"),
+            ("request_id.state", "in", states),
+            ("current_pay_amount", "!=", 0),
+        ],
+        ["current_pay_amount:sum"],
+        ["settlement_id"],
+    )
+    for r in line_rows:
+        sid = r.get("settlement_id")
+        if sid and isinstance(sid, (list, tuple)) and sid[0]:
+            res[sid[0]] = res.get(sid[0], 0.0) + (
+                r.get("current_pay_amount_sum") or r.get("current_pay_amount") or 0.0
+            )
     return res
 
 

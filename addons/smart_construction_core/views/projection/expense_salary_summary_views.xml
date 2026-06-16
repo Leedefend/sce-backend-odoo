@@ -50,6 +50,9 @@
         <field name="model">sc.expense.reimbursement.summary</field>
         <field name="arch" type="xml">
             <form string="报销统计" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_expense_claims" type="object" string="查看报销单据" class="btn-primary" invisible="claim_count == 0"/>
+                </header>
                 <sheet>
                     <group>
                         <group string="分类">
@@ -140,6 +143,9 @@
         <field name="model">sc.salary.summary</field>
         <field name="arch" type="xml">
             <form string="工资统计表" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_salary_documents" type="object" string="查看工资登记" class="btn-primary" invisible="document_count == 0"/>
+                </header>
                 <sheet>
                     <group>
                         <group string="期间">

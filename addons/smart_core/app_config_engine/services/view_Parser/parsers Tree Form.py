@@ -1121,7 +1121,7 @@ class _TreeFormParserMixin:
             chatter['actions'] = [
                 {
                     'key': 'chatter_send_message',
-                    'label': _('发送消息'),
+                    'label': _('记录沟通'),
                     'kind': 'chatter',
                     'level': 'chatter',
                     'selection': 'none',

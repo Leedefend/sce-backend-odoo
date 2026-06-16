@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models, tools
+from odoo import api, fields, models, tools
+from odoo.exceptions import UserError
 
 
 class ScExpenseReimbursementSummary(models.Model):
@@ -8,6 +9,7 @@ class ScExpenseReimbursementSummary(models.Model):
     _auto = False
     _rec_name = "display_name"
     _order = "project_id, expense_type, applicant_name"
+    _sc_readonly_navigation_button_methods = {"action_open_expense_claims"}
 
     display_name = fields.Char(string="汇总项", readonly=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
@@ -43,6 +45,79 @@ class ScExpenseReimbursementSummary(models.Model):
     first_date = fields.Date(string="最早日期", readonly=True)
     last_date = fields.Date(string="最晚日期", readonly=True)
     coverage_note = fields.Char(string="承载说明", readonly=True)
+
+    def _raise_readonly_projection(self):
+        raise UserError("报销统计是历史事实汇总结果，请从来源报销单据维护数据。")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._raise_readonly_projection()
+
+    def write(self, vals):
+        self._raise_readonly_projection()
+
+    def unlink(self):
+        self._raise_readonly_projection()
+
+    def _empty_aware_domain(self, field_name, value):
+        if value:
+            return [(field_name, "=", value)]
+        return ["|", (field_name, "=", False), (field_name, "=", "")]
+
+    def _applicant_domain(self):
+        self.ensure_one()
+        if self.applicant_name == "未填写申请人":
+            return self._empty_aware_domain("applicant_name", False)
+        return self._empty_aware_domain("applicant_name", self.applicant_name)
+
+    def _expense_type_domain(self):
+        self.ensure_one()
+        if self.expense_type == "未填写费用类型":
+            return self._empty_aware_domain("expense_type", False)
+        return self._empty_aware_domain("expense_type", self.expense_type)
+
+    def _expense_claim_domain(self):
+        self.ensure_one()
+        return (
+            [
+                ("active", "=", True),
+                ("claim_type", "=", "expense"),
+                ("state", "!=", "cancel"),
+                ("project_id", "=", self.project_id.id if self.project_id else False),
+                ("partner_id", "=", self.partner_id.id if self.partner_id else False),
+                ("source_origin", "=", self.source_origin),
+                ("state", "=", self.state),
+            ]
+            + self._applicant_domain()
+            + self._expense_type_domain()
+        )
+
+    def _open_action(self, action_xmlid, name, domain, context=None):
+        self.ensure_one()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        result = action.sudo().read()[0] if action else {"type": "ir.actions.act_window", "view_mode": "tree,form"}
+        result.update(
+            {
+                "name": "%s / %s" % (self.display_name or "报销统计", name),
+                "domain": domain,
+                "context": context or {"default_claim_type": "expense"},
+                "target": "current",
+            }
+        )
+        return result
+
+    def action_open_expense_claims(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_expense_claim",
+            "报销单据",
+            self._expense_claim_domain(),
+            {
+                "default_claim_type": "expense",
+                "default_project_id": self.project_id.id if self.project_id else False,
+                "default_partner_id": self.partner_id.id if self.partner_id else False,
+                "search_default_group_project": 1,
+            },
+        )
 
     def init(self):
         self._cr.execute(

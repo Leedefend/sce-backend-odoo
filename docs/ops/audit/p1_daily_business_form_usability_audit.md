@@ -31,8 +31,8 @@
 | DBS-031 | 项目借公司款登记 | sc.financing.loan | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 8 |  |
 | DBS-032 | 项目还公司款登记 | sc.financing.loan | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 8 |  |
 | DBS-033 | 开票申请 | sc.invoice.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 7 |  |
-| DBS-034 | 开票登记 | sc.invoice.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 7 |  |
-| DBS-035 | 预缴税款 | sc.tax.deduction.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 5 |  |
+| DBS-034 | 销项发票登记 | sc.invoice.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 7 |  |
+| DBS-035 | 预缴税款 | sc.invoice.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 7 |  |
 | DBS-036 | 抵扣登记 | sc.tax.deduction.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 5 |  |
 | DBS-037 | 账户 | sc.fund.account | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 4 |  |
 | DBS-038 | 进项上报 | sc.tax.deduction.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 5 |  |
@@ -40,7 +40,7 @@
 | DBS-040 | 入库 | sc.material.inbound | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 4 |  |
 | DBS-041 | 材料结算单 | sc.material.settlement | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 4 |  |
 | DBS-042 | 劳务合同 | sc.labor.request | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 3 |  |
-| DBS-043 | 劳务方单 | sc.labor.usage | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 6 |  |
+| DBS-043 | 劳务方单 | sc.labor.usage | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 7 |  |
 | DBS-044 | 劳务结算 | sc.labor.settlement | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 5 |  |
 | DBS-045 | 分包合同 | sc.subcontract.register | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 5 |  |
 | DBS-046 | 分包方单 | sc.subcontract.request | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 6 |  |

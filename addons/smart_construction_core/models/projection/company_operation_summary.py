@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models, tools
+from datetime import date
+
+from odoo import api, fields, models, tools
+from odoo.exceptions import UserError
 
 
 class ScCompanyOperationSummary(models.Model):
@@ -8,6 +11,14 @@ class ScCompanyOperationSummary(models.Model):
     _auto = False
     _rec_name = "period_label"
     _order = "period_year desc, period_month desc"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_deduction_paid",
+        "action_open_company_income",
+        "action_open_reimbursements",
+        "action_open_payroll_documents",
+        "action_open_deduction_refunds",
+        "action_open_company_expenses",
+    }
 
     period_label = fields.Char(string="年-月份", readonly=True)
     period_year = fields.Integer(string="年度", readonly=True, index=True)
@@ -55,6 +66,118 @@ class ScCompanyOperationSummary(models.Model):
 
     source_line_count = fields.Integer(string="来源明细数", readonly=True)
     coverage_note = fields.Char(string="承载说明", readonly=True)
+
+    def _raise_readonly_projection(self):
+        raise UserError("公司经营情况表是月度经营事实汇总结果，请从来源业务单据维护数据。")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._raise_readonly_projection()
+
+    def write(self, vals):
+        self._raise_readonly_projection()
+
+    def unlink(self):
+        self._raise_readonly_projection()
+
+    def _month_start(self):
+        self.ensure_one()
+        return date(self.period_year, self.period_month, 1)
+
+    def _next_month_start(self):
+        month_start = self._month_start()
+        if month_start.month == 12:
+            return date(month_start.year + 1, 1, 1)
+        return date(month_start.year, month_start.month + 1, 1)
+
+    def _date_month_domain(self, field_name):
+        self.ensure_one()
+        return [(field_name, ">=", self._month_start()), (field_name, "<", self._next_month_start())]
+
+    def _char_date_month_domain(self, field_name):
+        self.ensure_one()
+        return [
+            (field_name, ">=", self._month_start().isoformat()),
+            (field_name, "<", self._next_month_start().isoformat()),
+        ]
+
+    def _open_action(self, action_xmlid, name, domain, context=None):
+        self.ensure_one()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        result = action.sudo().read()[0] if action else {"type": "ir.actions.act_window", "view_mode": "tree,form"}
+        result.update(
+            {
+                "name": "%s / %s" % (self.period_label or "公司经营情况表", name),
+                "domain": domain,
+                "context": context or {"create": False},
+                "target": "current",
+            }
+        )
+        return result
+
+    def action_open_deduction_paid(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_deduction_adjustment_line_finance",
+            "扣款实缴明细",
+            [("active", "=", True)] + self._date_month_domain("document_date"),
+            {"create": False, "search_default_group_item": 1},
+        )
+
+    def action_open_company_income(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_receipt_income",
+            "公司财务收入",
+            [
+                ("active", "=", True),
+                ("legacy_source_table", "=", "C_CWSFK_GSCWSR"),
+            ]
+            + self._date_month_domain("date_receipt"),
+            {"create": False, "search_default_group_income_category": 1},
+        )
+
+    def action_open_reimbursements(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_expense_reimbursement_line_finance",
+            "历史费用报销明细",
+            [("active", "=", True)] + self._char_date_month_domain("document_date"),
+            {"create": False, "search_default_group_finance_type": 1},
+        )
+
+    def action_open_payroll_documents(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_salary_registration",
+            "工资社保来源",
+            [
+                ("active", "=", True),
+                ("period_year", "=", self.period_year),
+                ("period_month", "=", self.period_month),
+            ],
+            {"create": False, "search_default_group_fact_type": 1},
+        )
+
+    def action_open_deduction_refunds(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_account_transaction_line",
+            "扣款退回来源",
+            [
+                ("active", "=", True),
+                ("source_table", "=", "T_KK_SJTHB_CB"),
+            ]
+            + self._date_month_domain("transaction_date"),
+            {"create": False, "search_default_group_source_table": 1},
+        )
+
+    def action_open_company_expenses(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_account_transaction_line",
+            "公司财务支出",
+            [
+                ("active", "=", True),
+                ("source_table", "=", "C_CWSFK_GSCWZC"),
+            ]
+            + self._date_month_domain("transaction_date"),
+            {"create": False, "search_default_group_source_table": 1},
+        )
 
     def init(self):
         self._cr.execute(

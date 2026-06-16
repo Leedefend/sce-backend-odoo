@@ -14,6 +14,20 @@ class ScSettlementOrder(models.Model):
     _description = "结算单"
     _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
     _order = "id desc"
+    _rec_names_search = [
+        "name",
+        "title",
+        "project_id.name",
+        "partner_id.name",
+        "settlement_unit_id.name",
+        "legacy_counterparty_name",
+        "contract_id.subject",
+        "contract_id.legacy_contract_no",
+        "contract_id.legacy_document_no",
+        "legacy_contract_no",
+        "legacy_fact_model",
+        "legacy_fact_type",
+    ]
 
     name = fields.Char(string="结算单号", required=True, default="新建", copy=False)
     project_id = fields.Many2one(
@@ -33,6 +47,7 @@ class ScSettlementOrder(models.Model):
         "construction.contract",
         string="合同",
         index=True,
+        default=lambda self: self.env.context.get("default_contract_id"),
     )
     partner_id = fields.Many2one("res.partner", string="往来单位")
     legacy_counterparty_name = fields.Char(string="历史往来单位文本", index=True)
@@ -43,9 +58,17 @@ class ScSettlementOrder(models.Model):
     contractor_name = fields.Char(string="承包人", compute="_compute_party_names", store=True)
     settlement_type = fields.Selection(
         [("out", "支出结算"), ("in", "收入结算")],
-        string="结算类型",
+        string="收支类型",
         default="out",
     )
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.settlement.order')]",
+    )
+    settlement_flow_label = fields.Char(string="办理事项", compute="_compute_settlement_flow_label")
     expense_contract_category_id = fields.Many2one(
         "sc.dictionary",
         string="合同分类",
@@ -56,13 +79,13 @@ class ScSettlementOrder(models.Model):
     )
     settlement_category_id = fields.Many2one(
         "sc.dictionary",
-        string="结算类型",
+        string="结算分类",
         domain=[("type", "=", "expense_contract_category")],
         index=True,
     )
-    legacy_settlement_category = fields.Char(string="迁移结算类型", index=True)
+    legacy_settlement_category = fields.Char(string="迁移结算分类", index=True)
     settlement_category_display = fields.Char(
-        string="结算类型",
+        string="结算分类",
         compute="_compute_settlement_category_display",
         store=True,
         index=True,
@@ -79,6 +102,12 @@ class ScSettlementOrder(models.Model):
         ],
         string="结算阶段",
         default="declared",
+        index=True,
+    )
+    settlement_stage_id = fields.Many2one(
+        "sc.dictionary",
+        string="结算阶段",
+        domain=[("type", "=", "settlement_stage")],
         index=True,
     )
     date_settlement = fields.Date(string="结算日期", default=fields.Date.context_today)
@@ -169,6 +198,12 @@ class ScSettlementOrder(models.Model):
         string="付款申请",
         readonly=True,
     )
+    payment_request_line_ids = fields.One2many(
+        "payment.request.line",
+        "settlement_id",
+        string="付款申请明细",
+        readonly=True,
+    )
     paid_amount = fields.Monetary(
         string="已付款金额",
         currency_field="currency_id",
@@ -228,6 +263,10 @@ class ScSettlementOrder(models.Model):
         "payment_request_ids",
         "payment_request_ids.state",
         "payment_request_ids.amount",
+        "payment_request_line_ids",
+        "payment_request_line_ids.current_pay_amount",
+        "payment_request_line_ids.request_id.state",
+        "payment_request_line_ids.request_id.settlement_id",
     )
     def _compute_paid_amounts(self):
         """Phase7-1: 结算单的已付/可付口径，统一由 operating_metrics 提供。"""
@@ -258,16 +297,103 @@ class ScSettlementOrder(models.Model):
             if not order.partner_id and not order.legacy_fact_model:
                 raise ValidationError(_("结算单必须选择往来单位。"))
 
+    @api.constrains("project_id", "contract_id", "settlement_type")
+    def _check_contract_header_consistency(self):
+        for order in self:
+            contract = order.contract_id
+            if not contract:
+                continue
+            if order.project_id and contract.project_id and contract.project_id != order.project_id:
+                raise ValidationError(_("合同所属项目与结算单项目不一致。"))
+            expected_contract_type = order._contract_type_for_settlement_type(order.settlement_type)
+            if expected_contract_type and contract.type and contract.type != expected_contract_type:
+                raise ValidationError(_("合同类型与收支类型不一致。"))
+
     @api.depends("line_ids.amount")
     def _compute_amount_total(self):
         for order in self:
             order.amount_total = sum(order.line_ids.mapped("amount"))
+
+    @api.depends(
+        "name",
+        "title",
+        "settlement_flow_label",
+        "settlement_type",
+        "amount_payable",
+        "remaining_amount",
+        "settlement_amount",
+        "amount_total",
+        "currency_id.symbol",
+        "project_id.display_name",
+        "partner_id.display_name",
+        "settlement_unit_id.display_name",
+        "legacy_counterparty_name",
+        "contract_id.subject",
+        "contract_id.legacy_contract_no",
+        "contract_id.legacy_document_no",
+    )
+    def _compute_display_name(self):
+        for order in self:
+            flow = (
+                order.settlement_flow_label
+                or (_("收入合同结算") if order.settlement_type == "in" else _("支出合同结算"))
+            )
+            if flow and _("结算") not in flow:
+                flow = _("%s结算") % flow
+            project_name = order.project_id.display_name or ""
+            partner_name = (
+                order.settlement_unit_id.display_name
+                or order.partner_id.display_name
+                or order.legacy_counterparty_name
+                or ""
+            )
+            contract_label = ""
+            if order.contract_id:
+                contract_label = (
+                    order.contract_id.subject
+                    or order.contract_id.legacy_contract_no
+                    or order.contract_id.legacy_document_no
+                    or ""
+                )
+            amount_text = order._display_amount_label()
+            document_no = (order.name or "").strip()
+            parts = [
+                part
+                for part in (flow, project_name, partner_name, contract_label, amount_text, document_no)
+                if part
+            ]
+            order.display_name = " / ".join(parts) or document_no or _("结算单")
+
+    def _display_amount_label(self):
+        self.ensure_one()
+        amount = (
+            self.amount_payable
+            or self.remaining_amount
+            or self.settlement_amount
+            or self.amount_total
+            or 0.0
+        )
+        if not amount:
+            return ""
+        symbol = (self.currency_id.symbol or "").strip()
+        return "%s%s" % (symbol, "{:,.2f}".format(amount))
 
     @api.depends("settlement_category_id.name", "expense_contract_category_id.name")
     def _compute_settlement_category_display(self):
         for order in self:
             category = order.settlement_category_id or order.expense_contract_category_id
             order.settlement_category_display = category.name or ""
+
+    @api.depends("settlement_type", "settlement_category_id.name", "expense_contract_category_id.name", "legacy_settlement_category")
+    def _compute_settlement_flow_label(self):
+        for order in self:
+            category = order.settlement_category_display or order.legacy_settlement_category
+            if category:
+                order.settlement_flow_label = category
+            elif order.settlement_type == "in":
+                order.settlement_flow_label = _("收入合同结算")
+            else:
+                order.settlement_flow_label = _("支出合同结算")
 
     @api.depends("settlement_type", "partner_id", "legacy_counterparty_name", "company_id.partner_id")
     def _compute_party_names(self):
@@ -314,6 +440,12 @@ class ScSettlementOrder(models.Model):
             legacy_attachment = (order.legacy_visible_attachment or "").strip()
             match = re.search(r"附件\((\d+)\)", legacy_attachment)
             order.attachment_count = int(match.group(1)) if match else int(bool(legacy_attachment))
+
+    @api.onchange("settlement_stage_id")
+    def _onchange_settlement_stage_id(self):
+        for order in self:
+            if order.settlement_stage_id and order.settlement_stage_id.code:
+                order.settlement_stage = order.settlement_stage_id.code
 
     @api.constrains("purchase_order_ids", "partner_id")
     def _check_po_vendor_consistency(self):
@@ -649,30 +781,95 @@ class ScSettlementOrder(models.Model):
         return super().write(vals)
 
     # ------------------------------------------------------------------
-    # 合同联动：选合同后自动带出项目/公司/币种/往来单位/结算类型
+    # 合同联动：选合同后自动带出项目/公司/币种/往来单位/收支类型
     # ------------------------------------------------------------------
+    def _settlement_type_from_context(self):
+        code = self.env.context.get("current_business_category_code") or self.env.context.get("default_business_category_code")
+        if code == "settlement.income":
+            return "in"
+        if code == "settlement.expense":
+            return "out"
+        settlement_type = self.env.context.get("current_settlement_type") or self.env.context.get("default_settlement_type")
+        return settlement_type if settlement_type in ("in", "out") else False
+
+    def _effective_settlement_type(self, settlement_type=None):
+        return self._settlement_type_from_context() or settlement_type or self.settlement_type
+
+    def _contract_type_for_settlement_type(self, settlement_type=None):
+        settlement_type = self._effective_settlement_type(settlement_type)
+        if settlement_type == "in":
+            return "out"
+        if settlement_type == "out":
+            return "in"
+        return False
+
+    def _contract_domain_for_settlement(self):
+        self.ensure_one()
+        domain = []
+        if self.project_id:
+            domain.append(("project_id", "=", self.project_id.id))
+        contract_type = self._contract_type_for_settlement_type()
+        if contract_type:
+            domain.append(("type", "=", contract_type))
+        return domain
+
+    def _contract_matches_settlement(self, contract):
+        self.ensure_one()
+        if not contract:
+            return True
+        if self.project_id and contract.project_id and contract.project_id != self.project_id:
+            return False
+        contract_type = self._contract_type_for_settlement_type()
+        if contract_type and contract.type and contract.type != contract_type:
+            return False
+        return True
+
+    @api.onchange("project_id", "settlement_type")
+    def _onchange_project_or_settlement_type_contract_domain(self):
+        for rec in self:
+            if rec.contract_id and not rec._contract_matches_settlement(rec.contract_id):
+                rec.contract_id = False
+        return {"domain": {"contract_id": self[:1]._contract_domain_for_settlement() if self else []}}
+
     @api.onchange("contract_id")
     def _onchange_contract_id_fill_header(self):
+        values = {}
         for rec in self:
             c = rec.contract_id
             if not c:
                 continue
+            if rec.project_id and getattr(c, "project_id", False) and c.project_id != rec.project_id:
+                rec.contract_id = False
+                values["contract_id"] = False
+                continue
             # 项目/公司/币种
             if not rec.project_id and getattr(c, "project_id", False):
                 rec.project_id = c.project_id.id
+                values["project_id"] = [c.project_id.id, c.project_id.display_name]
             if not rec.company_id and getattr(c, "company_id", False):
                 rec.company_id = c.company_id.id
+                values["company_id"] = [c.company_id.id, c.company_id.display_name]
             if not rec.currency_id:
                 cur = getattr(c, "currency_id", False) or (rec.company_id.currency_id if rec.company_id else False)
                 if cur:
                     rec.currency_id = cur.id
+                    values["currency_id"] = [cur.id, cur.display_name]
             # 往来单位（合同相对方）
             partner = getattr(c, "partner_id", False)
-            if partner and not rec.partner_id:
+            if partner:
                 rec.partner_id = partner.id
-            # 结算类型：收入合同->收入结算(in)，支出合同->支出结算(out)
-            if getattr(c, "type", False) and not rec.settlement_type:
-                rec.settlement_type = "in" if c.type == "out" else "out"
+                rec.settlement_unit_id = partner.id
+                values["partner_id"] = [partner.id, partner.display_name]
+                values["settlement_unit_id"] = [partner.id, partner.display_name]
+            # 收支类型：收入合同->收入结算(in)，支出合同->支出结算(out)
+            if getattr(c, "type", False):
+                settlement_type = "in" if c.type == "out" else "out"
+                rec.settlement_type = settlement_type
+                values["settlement_type"] = settlement_type
+        return {
+            "value": values,
+            "domain": {"contract_id": self[:1]._contract_domain_for_settlement() if self else []},
+        }
 
     @api.model
     def _context_project_id(self):
@@ -682,12 +879,90 @@ class ScSettlementOrder(models.Model):
         except (TypeError, ValueError):
             return False
 
+    def _resolve_business_category_id(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        settlement_type = self._effective_settlement_type(vals.get("settlement_type")) or "out"
+        if not code:
+            code = "settlement.income" if settlement_type == "in" else "settlement.expense"
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", "sc.settlement.order")],
+            limit=1,
+        )
+        return category.id if category else False
+
+    @api.model
+    def _settlement_stage_id_by_code(self, code):
+        code = str(code or "").strip() or "declared"
+        stage = self.env["sc.dictionary"].sudo().search(
+            [("type", "=", "settlement_stage"), ("code", "=", code), ("active", "=", True)],
+            limit=1,
+        )
+        return stage.id if stage else False
+
+    @api.model
+    def _normalize_settlement_stage_defaults(self, vals, *, apply_default=False):
+        if vals.get("settlement_stage_id"):
+            stage = self.env["sc.dictionary"].sudo().browse(vals["settlement_stage_id"]).exists()
+            if stage and stage.code:
+                vals["settlement_stage"] = stage.code
+            return vals
+        if "settlement_stage_id" in vals and not vals.get("settlement_stage_id"):
+            vals["settlement_stage"] = False
+            return vals
+        if not apply_default and "settlement_stage" not in vals:
+            return vals
+        stage_code = vals.get("settlement_stage") or "declared"
+        stage_id = self._settlement_stage_id_by_code(stage_code)
+        if stage_id:
+            vals["settlement_stage_id"] = stage_id
+        return vals
+
+    @api.model
+    def _backfill_settlement_stage_ids(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_settlement_order settlement
+               SET settlement_stage_id = stage.id
+              FROM sc_dictionary stage
+             WHERE settlement.settlement_stage_id IS NULL
+               AND stage.type = 'settlement_stage'
+               AND stage.code = COALESCE(settlement.settlement_stage, 'declared')
+            """
+        )
+        self.env.cr.execute(
+            """
+            UPDATE sc_settlement_order settlement
+               SET settlement_stage_id = stage.id,
+                   settlement_stage = 'declared'
+              FROM sc_dictionary stage
+             WHERE settlement.settlement_stage_id IS NULL
+               AND (settlement.settlement_stage IS NULL OR settlement.settlement_stage = '')
+               AND stage.type = 'settlement_stage'
+               AND stage.code = 'declared'
+            """
+        )
+        return True
+
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
         project_id = res.get("project_id") or self._context_project_id()
         if project_id and "project_id" in fields_list:
             res["project_id"] = project_id
+        if "settlement_type" in fields_list:
+            settlement_type = self._settlement_type_from_context()
+            if settlement_type:
+                res["settlement_type"] = settlement_type
+        if "business_category_id" in fields_list and not res.get("business_category_id"):
+            category_id = self._resolve_business_category_id(res)
+            if category_id:
+                res["business_category_id"] = category_id
+        if "settlement_stage_id" in fields_list and not res.get("settlement_stage_id"):
+            stage_id = self._settlement_stage_id_by_code(res.get("settlement_stage") or "declared")
+            if stage_id:
+                res["settlement_stage_id"] = stage_id
         return res
 
     @api.model_create_multi
@@ -696,16 +971,37 @@ class ScSettlementOrder(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if vals.get("name", "新建") in (False, "新建"):
                 seq = self.env["ir.sequence"].next_by_code("sc.settlement.order")
                 vals["name"] = seq or _("Settlement")
+            self._normalize_settlement_stage_defaults(vals, apply_default=True)
             self._normalize_feedback_defaults(vals)
         records = super().create(vals_list)
         records._apply_contract_defaults_if_needed()
         return records
 
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_settlement_order settlement
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE settlement.business_category_id IS NULL
+               AND category.code = CASE
+                       WHEN settlement.settlement_type = 'in' THEN 'settlement.income'
+                       ELSE 'settlement.expense'
+                   END
+               AND category.target_model = 'sc.settlement.order'
+            """
+        )
+        self._backfill_settlement_stage_ids()
+
     def write(self, vals):
+        self._normalize_settlement_stage_defaults(vals)
         self._normalize_feedback_defaults(vals)
+        if vals.get("state") == "cancel":
+            self._check_payments_before_cancel()
         res = super().write(vals)
         if {"contract_id", "partner_id", "date_settlement", "document_date", "final_approved_date", "approved_date"} & set(vals):
             self._apply_contract_defaults_if_needed()

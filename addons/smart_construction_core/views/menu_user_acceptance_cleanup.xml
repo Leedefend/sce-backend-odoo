@@ -4,32 +4,201 @@
         <record id="menu_sc_receipt_payment_group" model="ir.ui.menu">
             <field name="name">收付款办理</field>
             <field name="sequence">10</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
+            <field name="active">1</field>
         </record>
         <record id="menu_sc_invoice_management_group" model="ir.ui.menu">
             <field name="name">发票台账</field>
-            <field name="sequence">20</field>
+            <field name="sequence">70</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
+            <field name="active">1</field>
         </record>
         <record id="menu_sc_invoice_tax_user_group" model="ir.ui.menu">
             <field name="name">开票与税务办理</field>
-            <field name="sequence">25</field>
+            <field name="sequence">20</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
+            <field name="active">1</field>
+        </record>
+        <record id="menu_sc_expense_reimbursement_group" model="ir.ui.menu">
+            <field name="name">费用/保证金现金办理</field>
+            <field name="sequence">30</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
+            <field name="active">1</field>
+        </record>
+        <record id="menu_sc_noncash_business_group" model="ir.ui.menu">
+            <field name="name">非现金业务管理</field>
+            <field name="sequence">35</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
+            <field name="active">1</field>
+        </record>
+        <record id="menu_sc_fund_account_group" model="ir.ui.menu">
+            <field name="name">资金往来办理</field>
+            <field name="sequence">45</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
+            <field name="active">1</field>
         </record>
 
-        <record id="menu_payment_request" model="ir.ui.menu">
+        <!-- 收付款办理：集中收入、付款申请、实付登记与到款确认。 -->
+        <record id="menu_sc_user_income" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="menu_sc_engineering_progress_income" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+            <field name="sequence">15</field>
+        </record>
+        <record id="menu_payment_request_receive" model="ir.ui.menu">
             <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
             <field name="sequence">20</field>
         </record>
-        <record id="menu_payment_request_line" model="ir.ui.menu">
-            <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
-            <field name="sequence">25</field>
-        </record>
-        <record id="menu_sc_payment_execution" model="ir.ui.menu">
-            <field name="name">实付登记</field>
+        <record id="menu_sc_user_payment_apply_acceptance" model="ir.ui.menu">
             <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
             <field name="sequence">30</field>
         </record>
         <record id="menu_sc_partner_payment" model="ir.ui.menu">
             <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="menu_sc_company_finance_expense" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="menu_sc_arrival_confirmation" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+            <field name="sequence">60</field>
+        </record>
+
+        <!-- 开票与税务办理：正式办理入口归并，发票总台账留在发票台账组。 -->
+        <record id="menu_sc_invoice_application_user" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_invoice_tax_user_group"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="menu_sc_invoice_registration_user" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_invoice_tax_user_group"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="menu_sc_invoice_prepaid_tax_user" model="ir.ui.menu">
+            <field name="sequence">30</field>
+        </record>
+        <record id="menu_sc_invoice_input_report_user" model="ir.ui.menu">
+            <field name="sequence">40</field>
+        </record>
+        <record id="menu_sc_tax_deduction_registration_user" model="ir.ui.menu">
+            <field name="sequence">50</field>
+        </record>
+        <record id="menu_sc_tax_certificate_registration_user" model="ir.ui.menu">
+            <field name="sequence">60</field>
+        </record>
+
+        <!-- 费用/保证金现金办理：只保留会形成现金流的报销、实缴、退回和保证金办理。 -->
+        <record id="menu_sc_reimbursement_request" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="menu_sc_project_expense_claim" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="menu_sc_deduction_bill" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_noncash_business_group"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="menu_sc_deduction_paid" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
             <field name="sequence">35</field>
+        </record>
+        <record id="menu_sc_deduction_paid_refund" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="menu_sc_bid_deposit_pay" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="menu_sc_bid_deposit_return" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
+            <field name="sequence">55</field>
+        </record>
+        <record id="menu_sc_contract_deposit_register" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
+            <field name="sequence">60</field>
+        </record>
+        <record id="menu_sc_contract_deposit_return" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
+            <field name="sequence">65</field>
+        </record>
+
+        <!-- 资金往来办理：借还款、项目往来、自筹、账户调拨和日报归并。 -->
+        <record id="menu_sc_borrowing_request" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="menu_sc_repayment_registration" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+            <field name="sequence">15</field>
+        </record>
+        <record id="menu_sc_contractor_project_repay" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="menu_sc_contractor_project_borrow" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+            <field name="sequence">25</field>
+        </record>
+        <record id="menu_sc_project_borrow_company" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="menu_sc_project_repay_company" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+            <field name="sequence">35</field>
+        </record>
+        <record id="menu_sc_self_funding_advance_income" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="menu_sc_self_funding_advance_refund" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+            <field name="sequence">45</field>
+        </record>
+        <record id="menu_scbs55_user_acceptance_180_自筹保证金" model="ir.ui.menu">
+            <field name="name">自筹保证金</field>
+            <field name="parent_id" ref="smart_construction_core.menu_scbs55_user_acceptance_group_资金保证金"/>
+            <field name="active">0</field>
+        </record>
+        <record id="menu_scbs55_user_acceptance_190_自筹保证金退回" model="ir.ui.menu">
+            <field name="name">自筹保证金退回</field>
+            <field name="parent_id" ref="smart_construction_core.menu_scbs55_user_acceptance_group_资金保证金"/>
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_fund_account_between_user" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="menu_sc_fund_transfer_out" model="ir.ui.menu">
+            <field name="sequence">55</field>
+        </record>
+        <record id="menu_sc_fund_transfer_between" model="ir.ui.menu">
+            <field name="sequence">60</field>
+        </record>
+        <record id="menu_sc_fund_balance_adjustment" model="ir.ui.menu">
+            <field name="sequence">65</field>
+        </record>
+        <record id="menu_sc_fund_daily_user_report" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+            <field name="sequence">70</field>
+        </record>
+
+        <record id="menu_payment_request" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_payment_request_line" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_payment_execution" model="ir.ui.menu">
+            <field name="name">实付登记</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+            <field name="sequence">45</field>
         </record>
 
         <record id="menu_sc_invoice_registration" model="ir.ui.menu">
@@ -39,6 +208,7 @@
 
         <record id="menu_sc_fund_loan_repayment_group" model="ir.ui.menu">
             <field name="name">借还款办理</field>
+            <field name="active">0</field>
         </record>
         <record id="menu_sc_expense_tax_adjustment_fact_group" model="ir.ui.menu">
             <field name="name">扣款税费核对</field>
@@ -49,6 +219,21 @@
 
         <!-- 与“付款申请”“借款申请”同模型同域的旧入口保留后台记录，但不再出现在业务菜单。 -->
         <record id="menu_sc_payment_user_group" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_income_expense_user_group" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_project_fund_user_group" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_receipt_user_group" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_fund_daily_user_group" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_deposit_management_group" model="ir.ui.menu">
             <field name="active">0</field>
         </record>
         <record id="menu_sc_user_payment_apply" model="ir.ui.menu">

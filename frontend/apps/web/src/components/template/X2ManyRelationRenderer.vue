@@ -93,7 +93,7 @@
         :disabled="adapter.busy"
         @click="adapter.addOne2manyRow(field.name)"
       >
-        {{ adapter.one2manyCreateLabel(field.name) }}
+        {{ adapter.one2manyCreateLabel(field.name, field.label) }}
       </button>
       <span v-if="adapter.one2manySummary(field.name)" class="o2m-summary">{{ adapter.one2manySummary(field.name) }}</span>
     </div>

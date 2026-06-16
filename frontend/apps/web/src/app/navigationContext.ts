@@ -14,6 +14,31 @@ export const CONTRACT_NAV_QUERY_KEYS = [
   'search',
   'ctx_source',
   'group_by_cleared',
+  'product_domain',
+  'entry_intent',
+  'disposition_policy',
+  'integration_target',
+  'entry_target_policy',
+  'business_entry_contract_version',
+  'current_business_category_code',
+  'default_business_category_code',
+  'allowed_business_category_codes',
+  'current_business_category_label',
+  'default_business_category_label',
+] as const;
+
+export const BUSINESS_ENTRY_NAV_QUERY_KEYS = [
+  'product_domain',
+  'entry_intent',
+  'disposition_policy',
+  'integration_target',
+  'entry_target_policy',
+  'business_entry_contract_version',
+  'current_business_category_code',
+  'default_business_category_code',
+  'allowed_business_category_codes',
+  'current_business_category_label',
+  'default_business_category_label',
 ] as const;
 
 export function pickContractNavQuery(
@@ -50,5 +75,60 @@ export function pickContractNavQuery(
     }
     out[key] = normalized;
   });
+  return out;
+}
+
+function asText(value: unknown): string {
+  return String(value ?? '').trim();
+}
+
+function normalizeNavValue(value: unknown): unknown {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => String(item ?? '').trim())
+      .filter((item) => item !== '');
+    return items.length ? items : undefined;
+  }
+  if (typeof value === 'boolean') {
+    return value ? '1' : '0';
+  }
+  const text = String(value).trim();
+  return text || undefined;
+}
+
+export function buildBusinessEntryNavQuery(source: Record<string, unknown> | null | undefined) {
+  const raw = source || {};
+  const categoryCode = asText(raw.current_business_category_code || raw.default_business_category_code);
+  const out: Record<string, unknown> = {};
+  BUSINESS_ENTRY_NAV_QUERY_KEYS.forEach((key) => {
+    const value = normalizeNavValue(raw[key]);
+    if (value !== undefined) out[key] = value;
+  });
+  if (categoryCode) {
+    out.current_business_category_code = asText(out.current_business_category_code) || categoryCode;
+    out.default_business_category_code = asText(out.default_business_category_code) || categoryCode;
+  }
+  return out;
+}
+
+export function buildBusinessEntryRequestContext(source: Record<string, unknown>) {
+  const raw = source || {};
+  const categoryCode = asText(raw.current_business_category_code || raw.default_business_category_code);
+  const out: Record<string, unknown> = {};
+  [
+    'product_domain',
+    'entry_intent',
+    'disposition_policy',
+    'entry_target_policy',
+    'business_entry_contract_version',
+  ].forEach((key) => {
+    const value = asText(raw[key]);
+    if (value) out[key] = value;
+  });
+  if (categoryCode) {
+    out.current_business_category_code = categoryCode;
+    out.default_business_category_code = asText(raw.default_business_category_code) || categoryCode;
+  }
   return out;
 }

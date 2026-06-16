@@ -88,7 +88,8 @@ function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainDat
   const readonly = componentConfig.readonly === true;
   const required = componentConfig.required === true;
   const componentRelation = String(componentConfig.relation || widget.relation || '').trim();
-  const relation = ['many2one', 'many2many'].includes(type) ? componentRelation : '';
+  const relation = ['many2one', 'one2many', 'many2many'].includes(type) ? componentRelation : '';
+  const relationField = String(componentConfig.relation_field || componentConfig.relationField || '').trim();
   const relationEntry = asDict(componentConfig.relationEntry || componentConfig.relation_entry);
   const descriptor: Dict = {
     name,
@@ -105,6 +106,9 @@ function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainDat
   };
   if (relation) {
     descriptor.relation = relation;
+  }
+  if (relationField) {
+    descriptor.relation_field = relationField;
   }
   if (Object.keys(relationEntry).length) {
     descriptor.relation_entry = relationEntry;
@@ -289,6 +293,12 @@ function buildLegacySubViews(fieldWidgets: UnifiedPageContractV2Widget[], mainDa
     const fieldName = stableFieldName(widget.fieldCode);
     const type = inferFieldType(widget, mainData);
     if (type !== 'one2many' && type !== 'many2many') return;
+    const componentConfig = asDict(widget.componentConfig);
+    const subview = asDict(componentConfig.subview || componentConfig.subView);
+    if (Object.keys(subview).length) {
+      out[fieldName] = subview;
+      return;
+    }
     out[fieldName] = {
       tree: { columns: ['display_name'] },
       policies: {
@@ -358,12 +368,17 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const v2Collaboration = resolveV2CollaborationContract(v2Contract);
   const legacyProjection = resolveV2LegacyContractProjection(v2Contract);
   const legacyListProfile = asDict(legacyProjection.list_profile);
+  const v2ListProfile = asDict(v2Contract.list_profile);
+  const sourceListProfile = Object.keys(legacyListProfile).length ? legacyListProfile : v2ListProfile;
   const legacyFieldGroups = Array.isArray(legacyProjection.field_groups) ? legacyProjection.field_groups : [];
   const legacyVisibleFields = Array.isArray(legacyProjection.visible_fields)
     ? legacyProjection.visible_fields.map((name) => String(name || '').trim()).filter(Boolean)
     : [];
   const legacyBusinessProfile = asDict(legacyProjection.business_operation_profile);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
+  const workflowContract = Object.keys(asDict(v2Contract.workflowContract)).length
+    ? asDict(v2Contract.workflowContract)
+    : asDict(asDict(v2Contract.runtimeContract).workflowContract);
   const layoutButtons = collectV2LayoutButtons(v2Contract);
   const statusbar = collectV2Statusbar(v2Contract);
   const model = String(pageInfo.model || '').trim();
@@ -434,21 +449,36 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const rights = asDict(asDict(head.permissions).rights);
   const activeField = fieldNames.includes('active') ? 'active' : '';
   const writeAllowed = rights.write !== false;
+  const unlinkRightAllowed = rights.unlink !== false;
   const deletePolicy = resolveV2DeletePolicy(v2Contract, model);
   const unlinkAllowed = deletePolicy.allowed === true && String(deletePolicy.delete_mode || '').trim().toLowerCase() === 'unlink';
-  const batchActions: string[] = [];
-  if (writeAllowed && activeField) {
-    batchActions.push('archive', 'activate');
-  }
-  if (writeAllowed && unlinkAllowed) {
-    batchActions.push('delete');
+  const sourceSurfacePolicies = asDict(v2Contract.surface_policies);
+  const sourceBatchPolicy = asDict(sourceSurfacePolicies.batch_policy);
+  const sourceBatchActions = Array.isArray(sourceBatchPolicy.available_actions)
+    ? sourceBatchPolicy.available_actions.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+  let batchActions: string[] = [];
+  if (sourceBatchActions.length) {
+    batchActions = sourceBatchActions;
+  } else {
+    if (writeAllowed && activeField) {
+      batchActions.push('archive', 'activate');
+    }
+    if (unlinkRightAllowed && unlinkAllowed) {
+      batchActions.push('delete');
+    }
   }
   const batchPolicy = {
-    enabled: batchActions.length > 0,
-    active_field: activeField,
-    archive_value: activeField ? false : null,
-    activate_value: activeField ? true : null,
-    delete_mode: unlinkAllowed ? 'unlink' : 'none',
+    ...sourceBatchPolicy,
+    enabled: sourceBatchPolicy.enabled === false ? false : batchActions.length > 0,
+    active_field: String(sourceBatchPolicy.active_field || activeField || '').trim(),
+    archive_value: Object.prototype.hasOwnProperty.call(sourceBatchPolicy, 'archive_value')
+      ? sourceBatchPolicy.archive_value
+      : (activeField ? false : null),
+    activate_value: Object.prototype.hasOwnProperty.call(sourceBatchPolicy, 'activate_value')
+      ? sourceBatchPolicy.activate_value
+      : (activeField ? true : null),
+    delete_mode: String(sourceBatchPolicy.delete_mode || (unlinkAllowed ? 'unlink' : 'none')).trim().toLowerCase(),
     available_actions: batchActions,
   };
   const formLayout = buildLegacyFormLayout(v2Fields, fieldLabels);
@@ -521,8 +551,8 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
     },
     ...(Object.keys(v2SearchContract).length ? { search: v2SearchContract } : {}),
     visible_fields: legacyVisibleFields.length ? legacyVisibleFields : fieldNames,
-    list_profile: Object.keys(legacyListProfile).length
-      ? legacyListProfile
+    list_profile: Object.keys(sourceListProfile).length
+      ? sourceListProfile
       : (
         !v2Fields.length
         && fallbackListColumns.length
@@ -560,6 +590,10 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
       batch_policy: batchPolicy,
     },
     surface_mapping: buildSurfaceMapping(contractSurface, renderMode, sourceMode),
+    ...(Object.keys(workflowContract).length ? {
+      workflowContract,
+      runtimeContract: { workflowContract },
+    } : {}),
     __v2_main_data: mainData,
     __v2_source_context: v2SourceContext,
   };

@@ -428,7 +428,7 @@ class LoadContractHandler(BaseIntentHandler):
                     "actions": chatter.get("actions") if isinstance(chatter.get("actions"), list) else [
                         {
                             "key": "chatter_send_message",
-                            "label": "发送消息",
+                            "label": "记录沟通",
                             "kind": "chatter",
                             "level": "chatter",
                             "selection": "none",

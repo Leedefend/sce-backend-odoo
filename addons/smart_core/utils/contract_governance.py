@@ -291,19 +291,25 @@ _PROJECT_TASK_FIELD_LABELS = {
 _PROJECT_LIST_COLUMNS = [
     "name",
     "project_code",
+    "owner_id",
+    "sc_partner_display_name",
     "operation_strategy",
-    "business_nature",
     "lifecycle_state",
-    "manager_id",
+    "user_id",
+    "contract_amount",
+    "dashboard_progress_rate",
     "write_date",
 ]
 _PROJECT_LIST_COLUMN_LABELS = {
     "name": "名称",
     "project_code": "项目编号",
+    "owner_id": "业主单位",
+    "sc_partner_display_name": "关联单位",
     "operation_strategy": "经营方式",
-    "business_nature": "经营性质",
     "lifecycle_state": "项目状态",
-    "manager_id": "项目经理",
+    "user_id": "项目负责人",
+    "contract_amount": "合同总额",
+    "dashboard_progress_rate": "进度(%)",
     "write_date": "更新时间",
 }
 _BUSINESS_FIELD_LABEL_OVERRIDES = {
@@ -983,6 +989,16 @@ def _safe_lower(value: Any) -> str:
     return _safe_text(value).lower()
 
 
+def _view_type_tokens(*values: Any) -> set[str]:
+    tokens: set[str] = set()
+    for value in values:
+        for item in _safe_lower(value).replace(";", ",").split(","):
+            token = item.strip()
+            if token:
+                tokens.add(token)
+    return tokens
+
+
 def _is_numeric_token(value: Any) -> bool:
     text = _safe_text(value)
     return bool(text) and text.isdigit()
@@ -1124,9 +1140,11 @@ def _apply_user_surface_noise_reduction(data: dict) -> None:
 
 def _apply_user_surface_policies(data: dict) -> None:
     head = _as_dict(data.get("head"))
-    view_type = _safe_lower(head.get("view_type") or data.get("view_type"))
+    view_types = _view_type_tokens(head.get("view_type"), data.get("view_type"))
     model = _safe_text(head.get("model") or data.get("model"))
     fields_map = _as_dict(data.get("fields"))
+    views = _as_dict(data.get("views"))
+    has_list_view = bool(_as_dict(views.get("tree") or views.get("list")))
     active_field = "active" if "active" in fields_map else ""
     filters_primary_max = _USER_SURFACE_PRIMARY_FILTER_MAX
     actions_primary_max = _USER_SURFACE_PRIMARY_ACTION_MAX
@@ -1143,28 +1161,28 @@ def _apply_user_surface_policies(data: dict) -> None:
         "delete_mode": "none",
         "available_actions": [],
     }
-    if view_type in {"form"}:
+    if "form" in view_types and not (view_types & {"tree", "list"} or has_list_view):
         filters_primary_max = 0
         actions_primary_max = 3
-    if view_type in {"tree", "list"}:
+    if view_types & {"tree", "list"} or has_list_view:
         permissions = _as_dict(data.get("permissions"))
         effective = _as_dict(permissions.get("effective"))
         rights = _as_dict(effective.get("rights"))
         write_allowed = bool(rights.get("write"))
+        unlink_right_allowed = bool(rights.get("unlink"))
         delete_policy = _as_dict(data.get("delete_policy"))
         unlink_allowed = bool(delete_policy.get("allowed")) and _safe_lower(delete_policy.get("delete_mode")) == "unlink"
         if model in LEGACY_RECORD_CONTEXT_CLEAR_MODELS:
             _mark_legacy_user_surface_model_policy(data, f"{model}.record_open_context")
         if model in LEGACY_DELETE_ONLY_MODELS:
             _mark_legacy_user_surface_model_policy(data, f"{model}.delete_only")
-        delete_allowed = bool(write_allowed and unlink_allowed and model not in LEGACY_RECORD_CONTEXT_CLEAR_MODELS)
+        delete_allowed = bool(unlink_right_allowed and unlink_allowed)
         delete_only_mode = bool(delete_allowed and model in LEGACY_DELETE_ONLY_MODELS)
         available_actions = []
-        if write_allowed:
-            if active_field and not delete_only_mode:
-                available_actions.extend(["archive", "activate"])
-            if delete_allowed:
-                available_actions.append("delete")
+        if write_allowed and active_field and not delete_only_mode:
+            available_actions.extend(["archive", "activate"])
+        if delete_allowed:
+            available_actions.append("delete")
         if model in LEGACY_RECORD_CONTEXT_CLEAR_MODELS:
             record_open_policy = {
                 "carry_query_mode": "clear_scene_context",
@@ -1179,7 +1197,7 @@ def _apply_user_surface_policies(data: dict) -> None:
             "delete_mode": "unlink" if delete_allowed and "delete" in available_actions else "none",
             "available_actions": available_actions,
         }
-        if not write_allowed:
+        if not write_allowed and not unlink_right_allowed:
             batch_policy["available_actions"] = []
             batch_policy["enabled"] = False
             batch_policy["delete_mode"] = "none"
@@ -2100,7 +2118,9 @@ def _govern_standard_list_for_user(
     # business orchestration was applied to the native tree block, that
     # orchestrated order is the user-facing order and standard governance only
     # appends its defaults.
-    if has_orchestrated_tree and native_columns:
+    if strict_columns:
+        selected = [name for name in columns_order if name in fields_map]
+    elif has_orchestrated_tree and native_columns:
         selected = [name for name in native_columns if name in fields_map]
         for name in columns_order:
             if name in fields_map and name not in selected:
@@ -2122,7 +2142,7 @@ def _govern_standard_list_for_user(
         schema = dict(native_schema_by_name.get(name) or {})
         schema["name"] = name
         schema["label"] = _field_label(name)
-        schema["string"] = schema.get("string") or field.get("string") or schema["label"]
+        schema["string"] = schema["label"]
         schema["type"] = schema.get("type") or field.get("type") or "char"
         schema["widget"] = schema.get("widget") or field.get("type") or "char"
         if model_name == "project.project" and name == "is_favorite":
@@ -2180,12 +2200,13 @@ def _govern_standard_list_for_user(
     effective = _as_dict(permissions.get("effective"))
     rights = _as_dict(effective.get("rights"))
     write_allowed = bool(rights.get("write"))
+    unlink_right_allowed = bool(rights.get("unlink"))
     raw_available_actions = (
         surface_batch_policy.get("available_actions")
         if isinstance(surface_batch_policy.get("available_actions"), list)
         else []
     )
-    if rights and not write_allowed:
+    if rights and not (write_allowed or unlink_right_allowed):
         raw_available_actions = []
     delete_mode = _safe_text(
         surface_policies.get("delete_mode")
@@ -2194,8 +2215,12 @@ def _govern_standard_list_for_user(
         "none",
     )
     available_actions = []
-    if active_field and write_allowed and not raw_available_actions:
-        raw_available_actions = ["archive", "activate"]
+    if (write_allowed or unlink_right_allowed) and not raw_available_actions:
+        raw_available_actions = []
+        if active_field:
+            raw_available_actions.extend(["archive", "activate"])
+        if delete_mode == "unlink":
+            raw_available_actions.append("delete")
     for raw_action in raw_available_actions:
         action = _safe_lower(raw_action)
         if action in {"archive", "activate"}:
@@ -2203,7 +2228,7 @@ def _govern_standard_list_for_user(
                 available_actions.append(action)
             continue
         if action == "delete":
-            if write_allowed and delete_mode == "unlink" and action not in available_actions:
+            if unlink_right_allowed and delete_mode == "unlink" and action not in available_actions:
                 available_actions.append(action)
     batch_policy = {
         "enabled": bool(available_actions),
@@ -3910,10 +3935,116 @@ def _build_form_validation_rules(data: dict, contract_mode: str) -> list[dict[st
     return rules
 
 
+def _normalize_profile_list(raw: Any, fallback: list[str] | None = None) -> list[str]:
+    if not isinstance(raw, list):
+        return list(fallback or [])
+    out: list[str] = []
+    for item in raw:
+        profile = _safe_text(item).lower()
+        if profile in _RENDER_PROFILES and profile not in out:
+            out.append(profile)
+    return out or list(fallback or [])
+
+
+def _apply_business_form_policy(data: dict) -> None:
+    policy_root = _as_dict(data.get("business_form_policy"))
+    if not policy_root:
+        return
+    fields_map = _as_dict(data.get("fields"))
+    field_policies = _as_dict(data.get("field_policies"))
+    required_fields = {
+        _safe_text(name)
+        for name in (policy_root.get("required_fields") if isinstance(policy_root.get("required_fields"), list) else [])
+        if _safe_text(name) in fields_map
+    }
+    rows = policy_root.get("fields") if isinstance(policy_root.get("fields"), list) else []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        name = _safe_text(row.get("name") or row.get("field") or row.get("field_name"))
+        if not name or name not in fields_map:
+            continue
+        descriptor = _as_dict(fields_map.get(name))
+        source_readonly = _to_bool(descriptor.get("readonly"), fallback=False)
+        base = _as_dict(field_policies.get(name))
+        visible_profiles = _normalize_profile_list(row.get("visible_profiles"), base.get("visible_profiles") or [
+            _RENDER_PROFILE_CREATE,
+            _RENDER_PROFILE_EDIT,
+            _RENDER_PROFILE_READONLY,
+        ])
+        readonly_profiles = _normalize_profile_list(row.get("readonly_profiles"), base.get("readonly_profiles") or [_RENDER_PROFILE_READONLY])
+        required_profiles = _normalize_profile_list(row.get("required_profiles"), base.get("required_profiles") or [])
+        if name in required_fields and not source_readonly:
+            required_profiles = _normalize_profile_list(
+                required_profiles + [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+                [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+            )
+        if source_readonly:
+            readonly_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+            required_profiles = []
+        base.update({
+            "visible_profiles": visible_profiles,
+            "required_profiles": required_profiles,
+            "readonly_profiles": readonly_profiles,
+            "source_required": bool(required_profiles),
+            "source_readonly": source_readonly or bool(row.get("source_readonly")),
+            "group": _safe_text(row.get("group"), base.get("group") or "secondary"),
+        })
+        field_policies[name] = base
+    for name in required_fields:
+        if name not in field_policies:
+            descriptor = _as_dict(fields_map.get(name))
+            readonly = _to_bool(descriptor.get("readonly"), fallback=False)
+            field_policies[name] = {
+                "visible_profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY],
+                "required_profiles": [] if readonly else [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+                "readonly_profiles": (
+                    [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+                    if readonly
+                    else [_RENDER_PROFILE_READONLY]
+                ),
+                "source_required": not readonly,
+                "source_readonly": readonly,
+                "group": "core",
+            }
+        else:
+            item = _as_dict(field_policies.get(name))
+            if not _to_bool(item.get("source_readonly"), fallback=False):
+                item["required_profiles"] = _normalize_profile_list(
+                    (item.get("required_profiles") if isinstance(item.get("required_profiles"), list) else [])
+                    + [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+                    [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+                )
+                item["source_required"] = True
+                field_policies[name] = item
+    data["field_policies"] = field_policies
+
+    validation_rules = data.get("validation_rules") if isinstance(data.get("validation_rules"), list) else []
+    existing_required = {
+        _safe_text(rule.get("field"))
+        for rule in validation_rules
+        if isinstance(rule, dict) and _safe_text(rule.get("code")).upper() == "REQUIRED"
+    }
+    for name in sorted(required_fields):
+        if name in existing_required:
+            continue
+        descriptor = _as_dict(fields_map.get(name))
+        if _to_bool(descriptor.get("readonly"), fallback=False):
+            continue
+        validation_rules.append({
+            "code": "REQUIRED",
+            "field": name,
+            "when_profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+            "message": f"{_safe_text(descriptor.get('string'), name)} 为必填字段",
+        })
+    data["validation_rules"] = validation_rules
+
+
 def _apply_form_policy_contract(data: dict, contract_mode: str) -> None:
     data["field_policies"] = _build_form_field_policies(data)
     data["action_policies"] = _build_form_action_policies(data)
     data["validation_rules"] = _build_form_validation_rules(data, contract_mode)
+    _apply_business_form_policy(data)
 
 
 def _classify_field_semantic_type(name: str, descriptor: dict) -> str:
@@ -4323,6 +4454,7 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
             row_primary="name",
             row_secondary="",
             status_field="lifecycle_state",
+            strict_columns=True,
         )
         _govern_standard_list_for_user(
             data,
@@ -4390,13 +4522,6 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
         _govern_enterprise_user_form_for_user(data)
     if contract_mode == "user" and _is_project_kanban_contract(data):
         _govern_project_kanban_contract_for_user(data)
-
-
-register_contract_domain_override(
-    "smart_core_default_contract_domain_governance",
-    apply_project_form_domain_override,
-    priority=50,
-)
 
 
 def _apply_sanitize_governance(data: dict, contract_mode: str) -> None:

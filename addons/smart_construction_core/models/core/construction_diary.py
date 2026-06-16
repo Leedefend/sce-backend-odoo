@@ -36,7 +36,17 @@ class ScConstructionDiary(models.Model):
     report_period_end = fields.Date(string="报表期间结束", index=True)
     document_no = fields.Char(string="来源单号", index=True)
     title = fields.Char(string="标题", index=True)
-    diary_type = fields.Char(string="日志类型", index=True)
+    diary_type = fields.Selection(
+        [
+            ("施工日志", "施工日志"),
+            ("日报表", "日报表"),
+            ("周报表", "周报表"),
+            ("月报表", "月报表"),
+        ],
+        string="日志类型",
+        default="施工日志",
+        index=True,
+    )
     category = fields.Char(string="分类", index=True)
     construction_unit = fields.Char(string="施工单位", index=True)
     project_manager = fields.Char(string="项目经理", index=True)
@@ -90,7 +100,45 @@ class ScConstructionDiary(models.Model):
         for vals in vals_list:
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.construction.diary") or _("Construction Diary")
+            vals.setdefault("diary_type", "施工日志")
+            vals.setdefault("handler_name", self.env.user.name)
+            self._sync_project_defaults(vals)
+            if not vals.get("title"):
+                vals["title"] = self._default_diary_title(vals)
         return super().create(vals_list)
+
+    @api.model
+    def _sync_project_defaults(self, vals):
+        project_id = vals.get("project_id")
+        if not project_id:
+            return
+        project = self.env["project.project"].browse(int(project_id)).exists()
+        if not project:
+            return
+        if not vals.get("project_manager"):
+            vals["project_manager"] = (
+                project.manager_id.name
+                or getattr(project, "legacy_project_manager_name", False)
+                or ""
+            )
+        if not vals.get("construction_unit"):
+            vals["construction_unit"] = (
+                project.company_id.name
+                or getattr(project, "legacy_company_name", False)
+                or ""
+            )
+
+    @api.model
+    def _default_diary_title(self, vals):
+        diary_type = vals.get("diary_type") or _("施工日志")
+        date_value = fields.Datetime.to_datetime(vals.get("date_diary")) if vals.get("date_diary") else fields.Datetime.context_timestamp(self, fields.Datetime.now())
+        date_label = fields.Date.to_string(date_value.date()) if date_value else fields.Date.context_today(self)
+        project_name = ""
+        if vals.get("project_id"):
+            project = self.env["project.project"].browse(int(vals["project_id"])).exists()
+            project_name = project.display_name if project else ""
+        parts = [item for item in (project_name, date_label, diary_type) if item]
+        return " - ".join(parts) or _("施工日志")
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
@@ -98,6 +146,24 @@ class ScConstructionDiary(models.Model):
             if set(vals) - allowed:
                 raise UserError(_("历史迁移施工日志已确认，只允许补充备注和出勤机械。"))
         return super().write(vals)
+
+    @api.onchange("project_id")
+    def _onchange_project_id(self):
+        for rec in self:
+            if not rec.project_id:
+                continue
+            if not rec.project_manager:
+                rec.project_manager = (
+                    rec.project_id.manager_id.name
+                    or getattr(rec.project_id, "legacy_project_manager_name", False)
+                    or ""
+                )
+            if not rec.construction_unit:
+                rec.construction_unit = (
+                    rec.project_id.company_id.name
+                    or getattr(rec.project_id, "legacy_company_name", False)
+                    or ""
+                )
 
     @api.constrains("report_period_start", "report_period_end")
     def _check_report_period_order(self):

@@ -141,7 +141,7 @@ def backfill_contracts() -> dict[str, int]:
             "project_id": project_id,
             "partner_id": partner_id,
             "company_id": env.company.id,  # noqa: F821
-            "currency_id": env.company.currency_id.id,  # noqa: F821
+            "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
             "date_contract": parse_date(row.get("f_HTDLRQ")) or False,
             "legacy_contract_id": legacy_id,
             "legacy_project_id": clean(row.get("XMID")) or False,
@@ -197,7 +197,7 @@ def backfill_receipts() -> dict[str, int]:
             "date_receipt": parse_date(row.get("DJRQ")) or parse_date(row.get("RQ")) or parse_date(row.get("LRSJ")) or False,
             "document_no": clean(row.get("DJBH")) or False,
             "amount": as_float(row.get("JE")) or as_float(row.get("SKJE")) or as_float(row.get("SJJE")),
-            "currency_id": env.company.currency_id.id,  # noqa: F821
+            "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
             "legacy_source_model": model,
             "legacy_source_table": "C_CWSFK_GSCWSR",
             "legacy_record_id": legacy_id,
@@ -230,7 +230,7 @@ def backfill_payment_requests() -> dict[str, int]:
             "state": "draft",
             "project_id": project_id,
             "partner_id": partner_id,
-            "currency_id": env.company.currency_id.id,  # noqa: F821
+            "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
             "amount": as_float(row.get("f_JHJE")) or as_float(row.get("f_SFJE")) or 0.01,
             "date_request": parse_date(row.get("f_SQRQ")) or parse_date(row.get("f_LRSJ")) or False,
             "legacy_source_table": "C_ZFSQGL",
@@ -354,7 +354,7 @@ def backfill_payment_executions() -> dict[str, int]:
             "receipt_account_no": clean(row.get("ZH")) or False,
             "planned_amount": as_nonnegative_float(row.get("f_JHJE")) or as_nonnegative_float(row.get("f_FKJE")),
             "paid_amount": as_nonnegative_float(row.get("f_FKJE")),
-            "currency_id": env.company.currency_id.id,  # noqa: F821
+            "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
             "legacy_source_model": model,
             "legacy_source_table": "T_FK_SUPPLIER",
             "legacy_record_id": legacy_id,

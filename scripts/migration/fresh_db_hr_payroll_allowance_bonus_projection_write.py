@@ -122,7 +122,7 @@ def existing_legacy_ids(source_table, fact_type):
 
 
 def currency_id():
-    return env.company.currency_id.id  # noqa: F821
+    return env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 
 
 def department_id_by_name(name):

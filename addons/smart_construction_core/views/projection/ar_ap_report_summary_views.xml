@@ -36,6 +36,13 @@
                     <field name="tax_burden_rate" optional="show"/>
                     <field name="output_surcharge_amount" sum="销项附加税额合计"/>
                     <field name="input_surcharge_amount" sum="进项附加税额合计"/>
+                    <button name="action_open_project_partner_rows" type="object" string="往来单位明细" class="btn-primary"/>
+                    <button name="action_open_income_contracts" type="object" string="收入合同" class="btn-secondary"/>
+                    <button name="action_open_expense_contracts" type="object" string="支出合同" class="btn-secondary"/>
+                    <button name="action_open_receipts" type="object" string="收款登记" class="btn-secondary"/>
+                    <button name="action_open_invoices" type="object" string="发票登记" class="btn-secondary"/>
+                    <button name="action_open_payments" type="object" string="付款台账" class="btn-secondary"/>
+                    <button name="action_open_finance_facts" type="object" string="资金事实" class="btn-secondary"/>
                     <field name="coverage_note" optional="hide"/>
                 </tree>
             </field>

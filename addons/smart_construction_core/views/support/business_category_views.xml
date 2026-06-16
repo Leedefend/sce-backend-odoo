@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_business_category_search" model="ir.ui.view">
+        <field name="name">sc.business.category.search</field>
+        <field name="model">sc.business.category</field>
+        <field name="arch" type="xml">
+            <search string="业务分类">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="target_model"/>
+                <filter name="active" string="启用" domain="[('active', '=', True)]"/>
+                <filter name="domain_finance" string="资金财务" domain="[('domain', '=', 'finance')]"/>
+                <filter name="domain_invoice_tax" string="发票税务" domain="[('domain', '=', 'invoice_tax')]"/>
+                <filter name="template_construction" string="建筑行业模板" domain="[('industry_template', '=', 'construction')]"/>
+                <group expand="0" string="分组">
+                    <filter name="group_domain" string="能力域" context="{'group_by': 'domain'}"/>
+                    <filter name="group_template" string="模板归属" context="{'group_by': 'industry_template'}"/>
+                    <filter name="group_model" string="正式模型" context="{'group_by': 'target_model'}"/>
+                    <filter name="group_direction" string="业务方向" context="{'group_by': 'direction'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_business_category_tree" model="ir.ui.view">
+        <field name="name">sc.business.category.tree</field>
+        <field name="model">sc.business.category</field>
+        <field name="arch" type="xml">
+            <tree string="业务分类字典" default_order="industry_template, domain, sequence, id">
+                <field name="sequence" widget="handle"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="domain"/>
+                <field name="target_model"/>
+                <field name="action_xmlid"/>
+                <field name="direction"/>
+                <field name="attachment_policy"/>
+                <field name="industry_template"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_business_category_form" model="ir.ui.view">
+        <field name="name">sc.business.category.form</field>
+        <field name="model">sc.business.category</field>
+        <field name="arch" type="xml">
+            <form string="业务分类字典">
+                <header>
+                    <button name="action_open_target_records" type="object" string="查看业务记录" class="oe_highlight"/>
+                    <button name="action_open_bound_entry" type="object" string="打开绑定入口"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="template_key" readonly="1"/>
+                            <field name="template_version" readonly="1"/>
+                            <field name="parent_id"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="industry_template"/>
+                            <field name="domain"/>
+                            <field name="target_model"/>
+                            <field name="action_xmlid"/>
+                            <field name="direction"/>
+                            <field name="attachment_policy"/>
+                            <field name="approval_policy_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="入口策略">
+                            <group>
+                                <field name="default_values_json" placeholder="{}"/>
+                                <field name="domain_json" placeholder="[]"/>
+                                <field name="required_fields_json" placeholder="[]"/>
+                                <field name="visible_groups_json" placeholder="[]"/>
+                            </group>
+                        </page>
+                        <page string="下游策略">
+                            <field name="ledger_policy_json" placeholder="{}"/>
+                        </page>
+                        <page string="别名和说明">
+                            <field name="source_aliases" placeholder="用户历史名称、旧系统名称、行业别名"/>
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_business_category" model="ir.actions.act_window">
+        <field name="name">业务分类字典</field>
+        <field name="res_model">sc.business.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_business_category_search"/>
+        <field name="context">{'search_default_active': 1, 'search_default_template_construction': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <menuitem id="menu_sc_business_category"
+              name="业务分类字典"
+              parent="smart_construction_core.menu_sc_business_config_center"
+              action="action_sc_business_category"
+              sequence="5"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+</odoo>

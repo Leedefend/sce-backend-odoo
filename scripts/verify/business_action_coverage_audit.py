@@ -223,6 +223,10 @@ def _run_payment_execution(failures):
             "contract_id": contract.id,
             "planned_amount": 120.0,
             "paid_amount": 120.0,
+            "payment_account_name": "BAC付款户名",
+            "payment_account_no": "BAC-PAYER-001",
+            "receipt_account_name": "BAC收款户名",
+            "receipt_account_no": "BAC-PAYEE-001",
         }
     )
     execution.action_confirm()
@@ -253,6 +257,8 @@ def _run_receipt_income(failures):
             "payment_request_id": request.id,
             "amount": 160.0,
             "income_category": "业务收入",
+            "receiving_account_name": "BAC收款账户",
+            "receiving_account_no": "BAC-RECEIVE-001",
         }
     )
     _expect_exception(
@@ -287,6 +293,11 @@ def _run_expense_claim(failures):
             "payment_request_id": request.id,
             "amount": 80.0,
             "approved_amount": 80.0,
+            "payee": "BAC费用收款人",
+            "receipt_account_name": "BAC费用收款账户",
+            "payee_account": "BAC-CLAIM-PAYEE-001",
+            "payment_account_name": "BAC费用付款账户",
+            "payer_account": "BAC-CLAIM-PAYER-001",
         }
     )
     _expect_exception("expense_claim.done_before_submit", claim.action_done, failures)

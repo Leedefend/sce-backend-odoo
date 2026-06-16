@@ -1,16 +1,34 @@
 # -*- coding: utf-8 -*-
+import ast
+
 from odoo import api, fields, models, tools
 from odoo.exceptions import UserError
 
 
 class ScInterfundMovementFact(models.Model):
     _name = "sc.interfund.movement.fact"
-    _description = "资金往来事实"
+    _description = "借款还款与调拨明细"
     _auto = False
     _rec_name = "display_name"
     _order = "document_date desc, id desc"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_source_record",
+        "action_open_business_entry",
+    }
 
-    display_name = fields.Char(string="事实摘要", readonly=True)
+    _BUSINESS_ENTRY_ACTION_BY_MOVEMENT_TYPE = {
+        "company_to_project_borrow": "smart_construction_core.action_sc_financing_loan_project_borrow_company",
+        "project_to_company_repay": "smart_construction_core.action_sc_expense_claim_project_repay_company",
+        "project_to_project_transfer": "smart_construction_core.action_sc_fund_account_between_user",
+        "same_project_account_transfer": "smart_construction_core.action_sc_fund_account_between_user",
+        "project_to_contractor_borrow": "smart_construction_core.action_sc_financing_loan_contractor_project_borrow",
+        "contractor_to_project_repay": "smart_construction_core.action_sc_expense_claim_contractor_project_repay",
+        "project_to_company_transfer": "smart_construction_core.action_sc_fund_account_between_user",
+        "company_to_project_transfer": "smart_construction_core.action_sc_fund_account_between_user",
+        "unclassified_account_transfer": "smart_construction_core.action_sc_fund_account_between_user",
+    }
+
+    display_name = fields.Char(string="业务摘要", readonly=True)
     movement_type = fields.Selection(
         [
             ("company_to_project_borrow", "公司借款给项目"),
@@ -23,7 +41,7 @@ class ScInterfundMovementFact(models.Model):
             ("company_to_project_transfer", "公司账户转项目账户"),
             ("unclassified_account_transfer", "未完全分类账户调拨"),
         ],
-        string="往来类型",
+        string="业务类型",
         readonly=True,
         index=True,
     )
@@ -33,7 +51,7 @@ class ScInterfundMovementFact(models.Model):
             ("out", "流出项目"),
             ("transfer", "账户调拨"),
         ],
-        string="项目视角方向",
+        string="项目方向",
         readonly=True,
         index=True,
     )
@@ -48,15 +66,15 @@ class ScInterfundMovementFact(models.Model):
     source_res_id = fields.Integer(string="来源记录ID", readonly=True, index=True)
     source_record_name = fields.Char(string="来源单据号", readonly=True, index=True)
     source_document_no = fields.Char(string="来源编号", readonly=True, index=True)
-    source_menu_hint = fields.Char(string="来源业务入口提示", readonly=True, index=True)
+    source_menu_hint = fields.Char(string="来源业务入口", readonly=True, index=True)
     document_date = fields.Date(string="发生日期", readonly=True, index=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
     currency_id = fields.Many2one("res.currency", string="币种", readonly=True)
     amount = fields.Monetary(string="金额", currency_field="currency_id", readonly=True)
-    source_project_id = fields.Many2one("project.project", string="资金来源项目", readonly=True, index=True)
-    source_project_name = fields.Char(string="资金来源项目名称", readonly=True)
-    target_project_id = fields.Many2one("project.project", string="资金目标项目", readonly=True, index=True)
-    target_project_name = fields.Char(string="资金目标项目名称", readonly=True)
+    source_project_id = fields.Many2one("project.project", string="付款方项目", readonly=True, index=True)
+    source_project_name = fields.Char(string="付款方项目名称", readonly=True)
+    target_project_id = fields.Many2one("project.project", string="收款方项目", readonly=True, index=True)
+    target_project_name = fields.Char(string="收款方项目名称", readonly=True)
     project_id = fields.Many2one("project.project", string="业务归属项目", readonly=True, index=True)
     partner_id = fields.Many2one("res.partner", string="往来单位/人员", readonly=True, index=True)
     partner_name = fields.Char(string="往来单位/人员名称", readonly=True, index=True)
@@ -71,7 +89,7 @@ class ScInterfundMovementFact(models.Model):
     legacy_visible_note = fields.Text(string="历史可见说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("资金往来事实是只读归一投影，请从来源业务单据维护数据。")
+        raise UserError("借款还款与调拨明细是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -82,6 +100,174 @@ class ScInterfundMovementFact(models.Model):
 
     def unlink(self):
         self._raise_readonly_projection()
+
+    def _action_domain(self, action_result):
+        raw_domain = action_result.get("domain") or []
+        if isinstance(raw_domain, str):
+            try:
+                parsed = ast.literal_eval(raw_domain)
+            except (SyntaxError, ValueError):
+                parsed = []
+            return list(parsed) if isinstance(parsed, list) else []
+        return list(raw_domain) if isinstance(raw_domain, list) else []
+
+    def _source_default_context(self, target_model):
+        self.ensure_one()
+        if not self.source_model or not self.source_res_id or self.source_model not in self.env:
+            return {}
+        source = self.env[self.source_model].browse(self.source_res_id).exists()
+        if not source:
+            return {}
+        context = {}
+
+        def put(context_key, field_name):
+            if field_name in source._fields:
+                value = source[field_name]
+                if value:
+                    context[context_key] = value.id if hasattr(value, "id") else value
+
+        put("default_document_no", "document_no")
+        put("default_document_no", "legacy_document_no")
+        if target_model == "sc.financing.loan":
+            for context_key, field_name in (
+                ("default_due_date", "due_date"),
+                ("default_rate_label", "rate_label"),
+                ("default_extra_ref", "extra_ref"),
+                ("default_extra_label", "extra_label"),
+            ):
+                put(context_key, field_name)
+        elif target_model == "sc.expense.claim":
+            for context_key, field_name in (
+                ("default_applicant_name", "applicant_name"),
+                ("default_department_name", "department_name"),
+                ("default_payee", "payee"),
+                ("default_receipt_account_name", "receipt_account_name"),
+                ("default_payee_account", "payee_account"),
+                ("default_payee_bank", "payee_bank"),
+                ("default_payment_account_name", "payment_account_name"),
+                ("default_payer_account", "payer_account"),
+                ("default_payer_bank", "payer_bank"),
+            ):
+                put(context_key, field_name)
+        elif target_model == "sc.fund.account.operation":
+            for context_key, field_name in (
+                ("default_source_account_id", "source_account_id"),
+                ("default_target_account_id", "target_account_id"),
+                ("default_fund_account_id", "fund_account_id"),
+            ):
+                put(context_key, field_name)
+        return context
+
+    def _action_context(self, action_result):
+        raw_context = action_result.get("context") or {}
+        if isinstance(raw_context, str):
+            try:
+                parsed = ast.literal_eval(raw_context)
+            except (SyntaxError, ValueError):
+                parsed = {}
+            context = dict(parsed) if isinstance(parsed, dict) else {}
+        else:
+            context = dict(raw_context) if isinstance(raw_context, dict) else {}
+        context.update(self._source_default_context(action_result.get("res_model")))
+        if self.project_id:
+            context.update(
+                {
+                    "default_project_id": self.project_id.id,
+                    "current_project_id": self.project_id.id,
+                }
+            )
+        if self.partner_id:
+            context.update(
+                {
+                    "default_partner_id": self.partner_id.id,
+                    "current_partner_id": self.partner_id.id,
+                }
+            )
+        if self.document_date:
+            context.update(
+                {
+                    "default_date_claim": self.document_date,
+                    "default_document_date": self.document_date,
+                    "default_operation_date": self.document_date,
+                    "current_document_date": self.document_date,
+                }
+            )
+        if self.amount:
+            context["default_amount"] = abs(self.amount)
+            context["current_business_amount"] = abs(self.amount)
+        if self.display_name:
+            context.setdefault("default_summary", self.display_name)
+            context.setdefault("default_purpose", self.display_name)
+            context.setdefault("default_operation_reason", self.display_name)
+        source_no = self.source_document_no or self.source_record_name
+        if source_no:
+            context["default_document_no"] = source_no
+            context["current_source_document_no"] = source_no
+        if self.partner_name:
+            context["default_partner_name"] = self.partner_name
+            context.setdefault("default_payee", self.partner_name)
+        if self.source_account_name:
+            context.setdefault("default_payment_account_name", self.source_account_name)
+        if self.target_account_name:
+            context.setdefault("default_receipt_account_name", self.target_account_name)
+        note_parts = [
+            self.display_name,
+            "来源入口：%s" % self.source_menu_hint if self.source_menu_hint else False,
+            "来源单号：%s" % source_no if source_no else False,
+            "付款账户：%s" % self.source_account_name if self.source_account_name else False,
+            "收款账户：%s" % self.target_account_name if self.target_account_name else False,
+            self.legacy_visible_note,
+        ]
+        context.setdefault("default_note", "\n".join(part for part in note_parts if part))
+        if self.source_account_id:
+            context["default_source_account_id"] = self.source_account_id.id
+        if self.target_account_id:
+            context["default_target_account_id"] = self.target_account_id.id
+        return context
+
+    def _source_record(self):
+        self.ensure_one()
+        if not self.source_model or not self.source_res_id or self.source_model not in self.env:
+            raise UserError("没有可打开的来源业务单据。")
+        source = self.env[self.source_model].browse(self.source_res_id).exists()
+        if not source:
+            raise UserError("来源业务单据不存在或已归档。")
+        return source
+
+    def action_open_source_record(self):
+        self.ensure_one()
+        source = self._source_record()
+        return {
+            "type": "ir.actions.act_window",
+            "name": self.source_menu_hint or source.display_name,
+            "res_model": self.source_model,
+            "res_id": source.id,
+            "views": [(False, "form")],
+            "view_mode": "form",
+            "target": "current",
+        }
+
+    def action_open_business_entry(self):
+        self.ensure_one()
+        action_xmlid = self._BUSINESS_ENTRY_ACTION_BY_MOVEMENT_TYPE.get(self.movement_type)
+        action = self.env.ref(action_xmlid, raise_if_not_found=False) if action_xmlid else None
+        if not action:
+            return self.action_open_source_record()
+        result = action.sudo().read()[0]
+        domain = self._action_domain(result)
+        if self.project_id and result.get("res_model") != "sc.fund.account.operation":
+            domain.append(("project_id", "=", self.project_id.id))
+        if self.partner_id and result.get("res_model") in {"sc.financing.loan", "sc.expense.claim"}:
+            domain.append(("partner_id", "=", self.partner_id.id))
+        result.update(
+            {
+                "name": "%s / 同类正式办理" % (self.source_menu_hint or result.get("name") or "资金办理"),
+                "domain": domain,
+                "context": self._action_context(result),
+                "target": "current",
+            }
+        )
+        return result
 
     def init(self):
         self._cr.execute(
@@ -188,31 +374,29 @@ class ScInterfundMovementFact(models.Model):
                         20000000 + loan.id AS id,
                         COALESCE(loan.name, '借款事实') AS display_name,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN category.code = 'finance.loan.contractor_project_borrow'
+                              OR (category.id IS NULL AND COALESCE(loan.purpose, '') ILIKE '%借%项目%款%')
                                 THEN 'project_to_contractor_borrow'
                             ELSE 'company_to_project_borrow'
                         END AS movement_type,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN category.code = 'finance.loan.contractor_project_borrow'
+                              OR (category.id IS NULL AND COALESCE(loan.purpose, '') ILIKE '%借%项目%款%')
                                 THEN 'out'
                             ELSE 'in'
                         END AS direction,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
-                                THEN 'medium'
+                            WHEN category.code IN ('finance.loan.contractor_project_borrow', 'finance.loan.project_borrow_company')
+                                THEN 'high'
                             ELSE 'medium'
                         END AS classification_confidence,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
-                                THEN 'loan_type=borrowing_request and purpose text matches contractor/project borrow pattern'
+                            WHEN category.code = 'finance.loan.contractor_project_borrow'
+                                THEN 'business_category=finance.loan.contractor_project_borrow'
+                            WHEN category.code = 'finance.loan.project_borrow_company'
+                                THEN 'business_category=finance.loan.project_borrow_company'
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
+                                THEN 'fallback: loan_type=borrowing_request and ordered purpose text matches 借...项目...款'
                             ELSE 'loan_type=borrowing_request and direction=borrowed_fund'
                         END AS classification_reason,
                         'sc.financing.loan' AS source_model,
@@ -220,9 +404,9 @@ class ScInterfundMovementFact(models.Model):
                         loan.name AS source_record_name,
                         loan.document_no AS source_document_no,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN category.id IS NOT NULL
+                                THEN COALESCE(category.name->>'zh_CN', category.name->>'en_US', category.code)
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
                                 THEN '承包人借项目款'
                             ELSE '项目借公司款登记'
                         END AS source_menu_hint,
@@ -231,30 +415,26 @@ class ScInterfundMovementFact(models.Model):
                         loan.currency_id,
                         COALESCE(loan.amount, 0.0) AS amount,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN category.code = 'finance.loan.contractor_project_borrow'
+                              OR (category.id IS NULL AND COALESCE(loan.purpose, '') ILIKE '%借%项目%款%')
                                 THEN loan.project_id
                             ELSE NULL::integer
                         END AS source_project_id,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN category.code = 'finance.loan.contractor_project_borrow'
+                              OR (category.id IS NULL AND COALESCE(loan.purpose, '') ILIKE '%借%项目%款%')
                                 THEN p.project_name
                             ELSE NULL::varchar
                         END AS source_project_name,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN category.code = 'finance.loan.contractor_project_borrow'
+                              OR (category.id IS NULL AND COALESCE(loan.purpose, '') ILIKE '%借%项目%款%')
                                 THEN NULL::integer
                             ELSE loan.project_id
                         END AS target_project_id,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN category.code = 'finance.loan.contractor_project_borrow'
+                              OR (category.id IS NULL AND COALESCE(loan.purpose, '') ILIKE '%借%项目%款%')
                                 THEN NULL::varchar
                             ELSE p.project_name
                         END AS target_project_name,
@@ -273,6 +453,7 @@ class ScInterfundMovementFact(models.Model):
                     FROM sc_financing_loan loan
                     LEFT JOIN project_names p ON p.id = loan.project_id
                     LEFT JOIN res_partner rp ON rp.id = loan.partner_id
+                    LEFT JOIN sc_business_category category ON category.id = loan.business_category_id
                     WHERE loan.active IS TRUE
                       AND loan.loan_type = 'borrowing_request'
                       AND loan.direction = 'borrowed_fund'
@@ -282,15 +463,27 @@ class ScInterfundMovementFact(models.Model):
                         30000000 + claim.id AS id,
                         COALESCE(claim.name, '还款事实') AS display_name,
                         CASE
+                            WHEN category.code = 'finance.repayment.contractor_project'
+                                THEN 'contractor_to_project_repay'
+                            WHEN category.code IN ('finance.repayment.project_company', 'finance.repayment.registration')
+                                THEN 'project_to_company_repay'
                             WHEN claim.claim_type = 'project_company_repay'
                                 THEN 'project_to_company_repay'
                             ELSE 'contractor_to_project_repay'
                         END AS movement_type,
                         CASE
+                            WHEN category.code = 'finance.repayment.contractor_project' THEN 'in'
+                            WHEN category.code IN ('finance.repayment.project_company', 'finance.repayment.registration') THEN 'out'
                             WHEN claim.claim_type = 'project_company_repay' THEN 'out'
                             ELSE 'in'
                         END AS direction,
                         CASE
+                            WHEN category.code IN (
+                                'finance.repayment.contractor_project',
+                                'finance.repayment.project_company',
+                                'finance.repayment.registration'
+                            )
+                                THEN 'high'
                             WHEN claim.claim_type = 'project_company_repay'
                              AND claim.expense_type = '项目还公司款登记'
                                 THEN 'high'
@@ -299,6 +492,12 @@ class ScInterfundMovementFact(models.Model):
                             ELSE 'high'
                         END AS classification_confidence,
                         CASE
+                            WHEN category.code IN (
+                                'finance.repayment.contractor_project',
+                                'finance.repayment.project_company',
+                                'finance.repayment.registration'
+                            )
+                                THEN 'business_category=' || category.code
                             WHEN claim.claim_type = 'project_company_repay'
                              AND claim.expense_type = '项目还公司款登记'
                                 THEN 'claim_type=project_company_repay and expense_type=项目还公司款登记'
@@ -350,6 +549,7 @@ class ScInterfundMovementFact(models.Model):
                     FROM sc_expense_claim claim
                     LEFT JOIN project_names p ON p.id = claim.project_id
                     LEFT JOIN res_partner rp ON rp.id = claim.partner_id
+                    LEFT JOIN sc_business_category category ON category.id = claim.business_category_id
                     WHERE claim.active IS TRUE
                       AND (
                             claim.claim_type = 'project_company_repay'

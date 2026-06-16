@@ -30,11 +30,31 @@ class ScFundAccount(models.Model):
         index=True,
     )
     opening_balance = fields.Monetary(string="期初余额", currency_field="currency_id")
+    current_account_balance = fields.Monetary(string="当前账面余额", currency_field="currency_id")
+    current_bank_balance = fields.Monetary(string="当前银行余额", currency_field="currency_id")
+    balance_as_of_date = fields.Date(string="余额日期", index=True)
+    current_balance_source = fields.Selection(
+        [
+            ("opening", "期初余额"),
+            ("fund_daily_report", "资金日报"),
+            ("balance_adjustment", "余额调整"),
+        ],
+        string="余额来源",
+        default="opening",
+        index=True,
+    )
+    balance_source_operation_id = fields.Many2one(
+        "sc.fund.account.operation",
+        string="余额来源单据",
+        readonly=True,
+        ondelete="set null",
+        index=True,
+    )
     currency_id = fields.Many2one(
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: (self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id).id,
     )
     is_default = fields.Boolean(string="默认账户")
     fixed_account = fields.Boolean(string="固定账户")
@@ -104,4 +124,7 @@ class ScFundAccount(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            if "current_account_balance" not in vals and vals.get("opening_balance"):
+                vals["current_account_balance"] = vals["opening_balance"]
+                vals.setdefault("current_balance_source", "opening")
         return super().create(vals_list)

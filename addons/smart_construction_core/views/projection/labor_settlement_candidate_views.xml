@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_labor_settlement_candidate_search" model="ir.ui.view">
+        <field name="name">sc.labor.settlement.candidate.search</field>
+        <field name="model">sc.labor.settlement.candidate</field>
+        <field name="arch" type="xml">
+            <search string="劳务结算候选核对">
+                <field name="display_name"/>
+                <field name="project_id"/>
+                <field name="contractor_id"/>
+                <field name="legacy_fact_type"/>
+                <filter string="可核对" name="ready" domain="[('candidate_state', '=', 'ready')]"/>
+                <filter string="需复核" name="needs_review" domain="[('candidate_state', '=', 'needs_review')]"/>
+                <filter string="方单" name="ticket" domain="[('legacy_fact_type', '=', 'direct_acceptance:方单')]"/>
+                <filter string="零星用工" name="casual" domain="[('legacy_fact_type', '=', 'direct_acceptance:零星用工')]"/>
+                <filter string="按候选状态" name="group_candidate_state" context="{'group_by': 'candidate_state'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按劳务单位" name="group_contractor" context="{'group_by': 'contractor_id'}"/>
+                <filter string="按旧单据类型" name="group_legacy_fact_type" context="{'group_by': 'legacy_fact_type'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_labor_settlement_candidate_tree" model="ir.ui.view">
+        <field name="name">sc.labor.settlement.candidate.tree</field>
+        <field name="model">sc.labor.settlement.candidate</field>
+        <field name="arch" type="xml">
+            <tree string="劳务结算候选核对" create="0" edit="0" delete="0" default_order="legacy_settlement_amount desc">
+                <field name="candidate_state"/>
+                <field name="project_id"/>
+                <field name="contractor_id"/>
+                <field name="legacy_fact_type"/>
+                <field name="legacy_settlement_state"/>
+                <field name="usage_count" sum="用工记录数合计"/>
+                <field name="legacy_settlement_amount" sum="旧系统金额合计"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="first_usage_date"/>
+                <field name="last_usage_date"/>
+                <field name="sample_usage_names" optional="show"/>
+                <field name="review_reason" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_labor_settlement_candidate_form" model="ir.ui.view">
+        <field name="name">sc.labor.settlement.candidate.form</field>
+        <field name="model">sc.labor.settlement.candidate</field>
+        <field name="arch" type="xml">
+            <form string="劳务结算候选核对" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_usage_lines" string="查看用工来源" type="object" class="btn-primary"/>
+                    <button name="action_create_draft_labor_settlement"
+                            string="生成结算草稿"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="candidate_state != 'ready'"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="display_name"/>
+                        <field name="candidate_state"/>
+                        <field name="review_reason"/>
+                    </group>
+                    <group string="业务对象">
+                        <group>
+                            <field name="project_id"/>
+                            <field name="contractor_id"/>
+                            <field name="legacy_fact_type"/>
+                            <field name="legacy_settlement_state"/>
+                        </group>
+                        <group>
+                            <field name="usage_count"/>
+                            <field name="currency_id"/>
+                            <field name="legacy_settlement_amount"/>
+                            <field name="first_usage_date"/>
+                            <field name="last_usage_date"/>
+                        </group>
+                    </group>
+                    <group string="来源样例">
+                        <field name="sample_usage_names"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_labor_settlement_candidate_pivot" model="ir.ui.view">
+        <field name="name">sc.labor.settlement.candidate.pivot</field>
+        <field name="model">sc.labor.settlement.candidate</field>
+        <field name="arch" type="xml">
+            <pivot string="劳务结算候选核对">
+                <field name="project_id" type="row"/>
+                <field name="contractor_id" type="row"/>
+                <field name="candidate_state" type="col"/>
+                <field name="legacy_settlement_amount" type="measure"/>
+                <field name="usage_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_sc_labor_settlement_candidate" model="ir.actions.act_window">
+        <field name="name">劳务结算候选核对</field>
+        <field name="res_model">sc.labor.settlement.candidate</field>
+        <field name="view_mode">tree,pivot,form</field>
+        <field name="search_view_id" ref="view_sc_labor_settlement_candidate_search"/>
+        <field name="context">{'search_default_ready': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_internal_user'))]"/>
+    </record>
+</odoo>

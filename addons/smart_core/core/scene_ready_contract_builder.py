@@ -1290,6 +1290,8 @@ def _scene_ready_entry(
             "next_scene",
             "next_scene_key",
             "next_scene_route",
+            "handling_entry_catalog",
+            "extensions",
         ):
             current = scene_payload.get(field)
             provider_value = scene_provider_payload.get(field)
@@ -1363,6 +1365,8 @@ def _scene_ready_entry(
         "next_action",
         "fallback_strategy",
         "delivery_handoff_v1",
+        "handling_entry_catalog",
+        "extensions",
     ):
         if field in compiled and compiled.get(field) not in (None, {}, []):
             continue

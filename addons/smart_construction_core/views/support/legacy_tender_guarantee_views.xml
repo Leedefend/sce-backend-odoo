@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_tender_guarantee_report_fact_search" model="ir.ui.view">
+        <field name="name">sc.legacy.tender.guarantee.report.fact.search</field>
+        <field name="model">sc.legacy.tender.guarantee.report.fact</field>
+        <field name="arch" type="xml">
+            <search string="历史投标保证金报表事实">
+                <field name="legacy_tender_project_name"/>
+                <field name="legacy_source_table"/>
+                <field name="legacy_record_id"/>
+                <filter string="自筹保证金" name="self_funding" domain="[('legacy_source_table', '=', 'ZJGL_BZJGL_Branch_SBZJDJ')]"/>
+                <filter string="自筹退回" name="self_funding_refund" domain="[('legacy_source_table', '=', 'ZJGL_BZJGL_Branch_SBZJTH')]"/>
+                <filter string="付保证金" name="pay_guarantee" domain="[('legacy_source_table', '=', 'ZJGL_BZJGL_Pay_FBZJ')]"/>
+                <filter string="付保证金退回" name="pay_guarantee_refund" domain="[('legacy_source_table', '=', 'ZJGL_BZJGL_Pay_FBZJTH')]"/>
+                <filter string="按投标项目" name="group_tender_project" context="{'group_by': 'legacy_tender_project_name'}"/>
+                <filter string="按来源表" name="group_source_table" context="{'group_by': 'legacy_source_table'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_tender_guarantee_report_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.tender.guarantee.report.fact.tree</field>
+        <field name="model">sc.legacy.tender.guarantee.report.fact</field>
+        <field name="arch" type="xml">
+            <tree string="历史投标保证金报表事实" create="false" edit="false" delete="false">
+                <field name="legacy_tender_project_name"/>
+                <field name="legacy_source_table"/>
+                <field name="source_amount" sum="金额合计"/>
+                <field name="source_amount_field"/>
+                <field name="legacy_record_id"/>
+                <field name="import_batch"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_tender_guarantee_report_fact_form" model="ir.ui.view">
+        <field name="name">sc.legacy.tender.guarantee.report.fact.form</field>
+        <field name="model">sc.legacy.tender.guarantee.report.fact</field>
+        <field name="arch" type="xml">
+            <form string="历史投标保证金报表事实" create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="legacy_tender_project_name"/>
+                            <field name="legacy_source_table"/>
+                            <field name="legacy_record_id"/>
+                        </group>
+                        <group>
+                            <field name="source_amount"/>
+                            <field name="source_amount_field"/>
+                            <field name="import_batch"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_legacy_tender_guarantee_report_fact" model="ir.actions.act_window">
+        <field name="name">历史投标保证金报表事实</field>
+        <field name="res_model">sc.legacy.tender.guarantee.report.fact</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_tender_guarantee_report_fact_search"/>
+    </record>
+</odoo>

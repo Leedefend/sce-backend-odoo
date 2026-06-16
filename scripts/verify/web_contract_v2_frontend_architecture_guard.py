@@ -300,6 +300,30 @@ FORBIDDEN_FORM_LOCAL_SELECTOR_TOKENS: tuple[str, ...] = (
     "function v2SourceContextFromStore",
 )
 
+REQUIRED_WORKFLOW_CONTRACT_PROJECTION_TOKENS: tuple[tuple[str, str], ...] = (
+    ("app/runtime/unifiedPageContractV2CompatProjection.ts", "v2Contract.workflowContract"),
+    ("app/runtime/unifiedPageContractV2CompatProjection.ts", "asDict(v2Contract.runtimeContract).workflowContract"),
+    ("app/runtime/unifiedPageContractV2CompatProjection.ts", "workflowContract,"),
+    ("app/runtime/unifiedPageContractV2CompatProjection.ts", "runtimeContract: { workflowContract }"),
+    ("app/runtime/unifiedPageContractV2CompatProjection.ts", "__unified_page_contract_v2: v2Contract"),
+    ("pages/ContractFormPage.vue", "currentWorkflowContract"),
+    ("pages/ContractFormPage.vue", "workflowContractActionRows"),
+    ("pages/ContractFormPage.vue", "workflowEvidenceGateRows"),
+    ("pages/ContractFormPage.vue", "resolveNativeActionState"),
+)
+
+REQUIRED_WORKFLOW_STATUSBAR_CONTRACT_TOKENS: tuple[tuple[Path, str], ...] = (
+    (ROOT / "addons/smart_construction_core/models/support/workflow_contract_service.py", '"statusbar": self._statusbar_projection'),
+    (ROOT / "addons/smart_construction_core/models/support/workflow_contract_service.py", 'field": "__workflow_phase"'),
+    (ROOT / "addons/smart_construction_core/models/support/workflow_contract_service.py", '"source": "workflowContract"'),
+    (WEB_ROOT / "pages/ContractFormPage.vue", "function workflowPhaseStatusbar"),
+    (WEB_ROOT / "pages/ContractFormPage.vue", "const statusbar = dictOrEmpty(workflow.statusbar)"),
+    (WEB_ROOT / "pages/ContractFormPage.vue", "if (!recordId.value)"),
+    (WEB_ROOT / "pages/ContractFormPage.vue", "return workflowPhaseStatusbar();"),
+    (ROOT / "docs/ops/audit/workflow_state_unification_plan.md", "New-record forms must not render workflow statusbar"),
+    (ROOT / "Makefile", "verify.workflow_contract.browser.create_statusbar.host"),
+)
+
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore") if path.is_file() else ""
@@ -404,6 +428,24 @@ def validate_form_store_selector_boundary() -> list[str]:
     return errors
 
 
+def validate_workflow_contract_projection() -> list[str]:
+    errors: list[str] = []
+    for relative_path, token in REQUIRED_WORKFLOW_CONTRACT_PROJECTION_TOKENS:
+        text = read(WEB_ROOT / relative_path)
+        if token not in text:
+            errors.append(f"workflow contract projection missing token in {relative_path}: {token}")
+    return errors
+
+
+def validate_workflow_statusbar_contract() -> list[str]:
+    errors: list[str] = []
+    for path, token in REQUIRED_WORKFLOW_STATUSBAR_CONTRACT_TOKENS:
+        text = read(path)
+        if token not in text:
+            errors.append(f"workflow statusbar contract missing token in {path.relative_to(ROOT)}: {token}")
+    return errors
+
+
 def write_reports(strict: bool, findings: list[dict[str, object]], errors: list[str]) -> None:
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
@@ -455,6 +497,8 @@ def main() -> int:
     errors.extend(validate_v2_boundary())
     errors.extend(validate_form_shadow_host())
     errors.extend(validate_form_store_selector_boundary())
+    errors.extend(validate_workflow_contract_projection())
+    errors.extend(validate_workflow_statusbar_contract())
     write_reports(strict, findings, errors)
 
     if errors:

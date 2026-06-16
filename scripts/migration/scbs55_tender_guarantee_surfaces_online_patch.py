@@ -256,6 +256,7 @@ def import_surface(seq: int) -> dict[str, Any]:
             "legacy_visible_project_name": clean(row.get(spec["project"])),
             "legacy_visible_creator_name": clean(row.get("LRR")),
             "legacy_visible_created_time": parse_dt(row.get("LRSJ")),
+            "legacy_visible_attachment": visible_values(seq, row).get("附件"),
             "remark": f"SCBS55 old visible surface: {spec['surface']}; old_id={old_id}; {clean(row.get('BZ') or row.get('Y_BZ') or row.get('SM'))}",
         }
         if guarantee:

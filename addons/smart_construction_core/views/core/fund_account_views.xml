@@ -38,6 +38,10 @@
                 <field name="bank_name"/>
                 <field name="account_no"/>
                 <field name="opening_balance" sum="期初余额"/>
+                <field name="current_account_balance" sum="当前账面余额"/>
+                <field name="current_bank_balance" sum="当前银行余额"/>
+                <field name="balance_as_of_date"/>
+                <field name="current_balance_source"/>
                 <field name="is_default"/>
                 <field name="fixed_account"/>
                 <field name="state"/>
@@ -70,6 +74,11 @@
                         <group string="资金信息">
                             <field name="currency_id" invisible="1"/>
                             <field name="opening_balance"/>
+                            <field name="current_account_balance" readonly="1"/>
+                            <field name="current_bank_balance" readonly="1"/>
+                            <field name="balance_as_of_date" readonly="1"/>
+                            <field name="current_balance_source" readonly="1"/>
+                            <field name="balance_source_operation_id" readonly="1"/>
                             <field name="is_default"/>
                             <field name="fixed_account"/>
                             <field name="active"/>

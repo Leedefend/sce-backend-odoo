@@ -422,45 +422,53 @@ class NavDispatcher:
                 pass
             return None
 
-        def attach_from_action(node: Dict[str, Any], act_rec):
+        def attach_from_action(node: Dict[str, Any], act_rec, *, override: bool = False):
+            def assign(key: str, value):
+                if value in (None, False, "", [], {}):
+                    return
+                if override:
+                    node[key] = value
+                else:
+                    node.setdefault(key, value)
+
             try:
-                node.setdefault("action_id", act_rec.id)
-                node.setdefault("action_type", act_rec._name)
+                assign("action_id", act_rec.id)
+                assign("action_type", act_rec._name)
                 ax = xmlid_of(act_rec)
                 if ax:
-                    node.setdefault("action_xmlid", ax)
+                    assign("action_xmlid", ax)
                 res_model = getattr(act_rec, "res_model", None)
                 if res_model:
-                    node.setdefault("model", res_model)
+                    assign("model", res_model)
                 # server action: try mapped/drilled target to expose model hint for shell routing.
                 if act_rec._name == "ir.actions.server" and not node.get("model"):
                     resolved = self.resolver.map_server_to_window(act_rec.id, ax)
                     if isinstance(resolved, dict):
                         mapped_model = resolved.get("res_model")
                         if mapped_model:
-                            node.setdefault("model", mapped_model)
+                            assign("model", mapped_model)
                         mapped_type = resolved.get("type") or resolved.get("_name")
                         if mapped_type:
-                            node.setdefault("resolved_action_type", mapped_type)
+                            assign("resolved_action_type", mapped_type)
                         mapped_id = resolved.get("id")
                         if mapped_id:
-                            node.setdefault("resolved_action_id", mapped_id)
+                            assign("resolved_action_id", mapped_id)
                 if mode == "full" and act_rec._name == "ir.actions.act_window":
                     vm = (getattr(act_rec, "view_mode", None) or "").split(",")
                     vm = [v.strip() for v in vm if v and v.strip()]
                     if vm:
-                        node.setdefault("view_modes", vm)
+                        assign("view_modes", vm)
                     try:
                         views = getattr(act_rec, "views", None) or []
                         if views:
-                            node.setdefault("views", [(vid, vtype) for (vid, vtype) in views])
+                            assign("views", [(vid, vtype) for (vid, vtype) in views])
                     except Exception:
                         pass
                     # 透传 domain/context（若有）
                     if getattr(act_rec, "domain", False):
-                        node.setdefault("domain", act_rec.domain)
+                        assign("domain", act_rec.domain)
                     if getattr(act_rec, "context", False):
-                        node.setdefault("context", act_rec.context)
+                        assign("context", act_rec.context)
             except Exception:
                 pass
 
@@ -498,12 +506,15 @@ class NavDispatcher:
                         mx = xmlid_of(menu_rec)
                         if mx:
                             node.setdefault("menu_xmlid", mx)
+                        menu_action = resolve_action_by_menu(mid)
+                        if menu_action:
+                            attach_from_action(node, menu_action, override=True)
 
                 act_dict = to_action_dict(node.get("action"))
                 act_rec = None
 
                 # action 字典内嵌 → 先填基本字段，再按 id/type 反查 action 记录
-                if act_dict:
+                if act_dict and not mid:
                     if act_dict.get("id"):
                         node.setdefault("action_id", act_dict["id"])
                     if act_dict.get("action_type") or act_dict.get("type"):
@@ -693,6 +704,7 @@ class NavDispatcher:
                 "views": n.get("views"),
                 "domain": n.get("domain"),
                 "context": n.get("context"),
+                "project_scope_policy": n.get("project_scope_policy"),
                 "groups_xmlids": n.get("groups") or n.get("groups_xmlids"),
             }
             return {k: v for k, v in m.items() if v not in (None, [], "", {})}

@@ -1,5 +1,5 @@
 import type { NavMeta, NavNode } from '@sc/schema';
-import { findActionMeta } from '../menu';
+import { findActionMeta, findActionMetaByMenu } from '../menu';
 import { loadActionContract, loadModelLitePreviewContract } from '../../api/contract';
 import {
   adaptLiteContractToActionViewContract,
@@ -101,7 +101,12 @@ export async function resolveAction(
   currentAction?: NavMeta | null,
 ): Promise<ActionResolution> {
   const currentMatches = Boolean(currentAction && Number(currentAction.action_id || 0) === Number(actionId || 0));
-  const metaFromMenu = findActionMeta(menuTree, actionId);
+  const currentMenuId = Number(currentAction?.menu_id || 0);
+  const metaFromMenu = (
+    currentMenuId > 0
+      ? findActionMetaByMenu(menuTree, currentMenuId, actionId)
+      : null
+  ) || findActionMeta(menuTree, actionId);
   // Always prefer menuTree meta to avoid stale/incomplete currentAction snapshots.
   const seedMeta = metaFromMenu || (currentMatches ? currentAction : null);
 

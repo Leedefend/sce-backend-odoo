@@ -137,6 +137,63 @@ class TestSceneReadyContractBuilderSemanticConsumption(unittest.TestCase):
         self.assertEqual(((row.get("runtime_handoff_surface") or {}).get("final_scene")), "contract.center")
         self.assertEqual(((row.get("product_delivery_surface") or {}).get("family")), "contracts")
 
+    def test_scene_ready_promotes_provider_handling_entry_catalog(self):
+        original = target._resolve_scene_provider_payload
+        catalog = {
+            "contract_version": "handling_entry_catalog.v1",
+            "domain": "finance",
+            "entry_mode": "integrated_handling",
+            "groups": [
+                {
+                    "key": "receipt_payment",
+                    "title": "收付款办理",
+                    "items": [
+                        {
+                            "key": "receipt_payment.1",
+                            "label": "付款申请",
+                            "business_category_code": "finance.payment.apply.pay",
+                            "target": {
+                                "type": "action",
+                                "action_xmlid": "smart_construction_core.action_payment_request_user_payment_apply",
+                            },
+                        },
+                    ],
+                },
+            ],
+            "group_count": 1,
+            "item_count": 1,
+        }
+        target._resolve_scene_provider_payload = lambda _scene_key, _runtime_ctx=None: {
+            "handling_entry_catalog": catalog,
+            "extensions": {"handling_entry_catalog_v1": catalog},
+        }
+        try:
+            contract = target.build_scene_ready_contract_v1(
+                scenes=[
+                    {
+                        "code": "finance.workspace",
+                        "name": "资金管理工作台",
+                        "layout": {"kind": "workspace"},
+                        "target": {"route": "/s/finance.workspace"},
+                    }
+                ],
+                role_surface={"landing_scene_key": "finance.workspace"},
+            )
+        finally:
+            target._resolve_scene_provider_payload = original
+        row = (contract.get("scenes") or [])[0]
+
+        self.assertEqual(((row.get("handling_entry_catalog") or {}).get("contract_version")), "handling_entry_catalog.v1")
+        self.assertEqual(((row.get("handling_entry_catalog") or {}).get("item_count")), 1)
+        self.assertEqual(
+            ((((row.get("handling_entry_catalog") or {}).get("groups") or [])[0].get("items") or [])[0].get("business_category_code")),
+            "finance.payment.apply.pay",
+        )
+        self.assertEqual(
+            (((row.get("extensions") or {}).get("handling_entry_catalog_v1") or {}).get("contract_version")),
+            "handling_entry_catalog.v1",
+        )
+
     def test_workspace_scene_ready_prefers_parser_semantic_view_mode(self):
         contract = target.build_scene_ready_contract_v1(
             scenes=[

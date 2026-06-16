@@ -142,7 +142,7 @@ with gzip.open(PATH, "rt", encoding="utf-8") as handle:
 
 Claim = env["sc.expense.claim"].sudo().with_context(active_test=False)  # noqa: F821
 Action = env["ir.actions.act_window"].sudo()  # noqa: F821
-Currency = env.company.currency_id  # noqa: F821
+Currency = env.ref("base.CNY", raise_if_not_found=False)  # noqa: F821
 created = updated = 0
 seen: set[str] = set()
 

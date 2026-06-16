@@ -4,6 +4,7 @@
 #   - 聚合：fields/views/search/permissions/actions/reports/workflow/validator
 #   - with_data=True 时返回首屏数据（严格遵循 views.tree.columns 顺序）
 #   - ★ 集成 P0 修复：从原始 <tree> 严格提取 columns，禁用“脏覆盖”，保证可渲染与顺序稳定
+import json
 import logging
 import re
 from odoo import _
@@ -110,6 +111,47 @@ class PageAssembler:
             return {}, raw_text
         return parsed, raw_text
 
+    @staticmethod
+    def _normalize_business_category_codes(value):
+        if value in (None, False, ""):
+            return []
+        raw_items = value if isinstance(value, (list, tuple, set)) else [value]
+        codes = []
+        seen = set()
+        for item in raw_items:
+            code = str(item or "").strip()
+            if not code or code in seen:
+                continue
+            seen.add(code)
+            codes.append(code)
+        return codes
+
+    @classmethod
+    def _extract_allowed_business_category_codes_from_domain(cls, domain):
+        codes = []
+        seen = set()
+
+        def add(value):
+            for code in cls._normalize_business_category_codes(value):
+                if code in seen:
+                    continue
+                seen.add(code)
+                codes.append(code)
+
+        def visit(node):
+            if not isinstance(node, (list, tuple)):
+                return
+            if len(node) >= 3 and str(node[0] or "").strip() == "business_category_id.code":
+                operator = str(node[1] or "").strip()
+                if operator in ("=", "==", "in"):
+                    add(node[2])
+                return
+            for child in node:
+                visit(child)
+
+        visit(domain)
+        return codes
+
     def assemble_page_contract(self, p, action=None):
         """
         页面契约主装配：
@@ -152,6 +194,13 @@ class PageAssembler:
                 effective_context[key] = env_context.get(key)
         if request_context:
             effective_context.update(request_context)
+        allowed_codes = self._normalize_business_category_codes(
+            effective_context.get("allowed_business_category_codes")
+        )
+        if not allowed_codes:
+            allowed_codes = self._extract_allowed_business_category_codes_from_domain(action_domain)
+        if allowed_codes:
+            effective_context["allowed_business_category_codes"] = allowed_codes
         current_project_id = p.get("current_project_id") or effective_context.get("current_project_id")
         if current_project_id:
             try:
@@ -317,6 +366,8 @@ class PageAssembler:
         self._inject_search_view_orchestration(data, env=env, model=model, view_context=view_context, versions=versions)
         self._apply_action_search_defaults(data, effective_context)
         self._inject_view_orchestration_summary(data)
+        data["context"] = effective_context
+        data["context_raw"] = action_context_raw
 
         # 4.x) 关系字段维护入口（many2one/many2many/one2many）
         # 由后端契约提供 relation_entry，前端禁止自行猜测 action/menu。
@@ -334,6 +385,20 @@ class PageAssembler:
             _logger.warning("app.permission.config missing; fallback permissions for model=%s", model)
             data["permissions"] = {}
             versions["perm"] = 0
+        permissions_root = data["permissions"] if isinstance(data.get("permissions"), dict) else {}
+        effective_permissions = permissions_root.get("effective") if isinstance(permissions_root.get("effective"), dict) else {}
+        effective_rights = effective_permissions.get("rights") if isinstance(effective_permissions.get("rights"), dict) else {}
+        effective_rights.update(
+            {
+                "read": env[model].check_access_rights("read", raise_exception=False),
+                "write": env[model].check_access_rights("write", raise_exception=False),
+                "create": env[model].check_access_rights("create", raise_exception=False),
+                "unlink": env[model].check_access_rights("unlink", raise_exception=False),
+            }
+        )
+        effective_permissions["rights"] = effective_rights
+        permissions_root["effective"] = effective_permissions
+        data["permissions"] = permissions_root
         if isinstance(effective_context, dict) and effective_context.get("create") is False:
             permissions_root = data["permissions"] if isinstance(data.get("permissions"), dict) else {}
             effective_permissions = permissions_root.get("effective") if isinstance(permissions_root.get("effective"), dict) else {}
@@ -449,6 +514,18 @@ class PageAssembler:
             view_id=requested_view_id,
             render_profile=requested_render_profile,
         )
+        self._inject_business_category_form_policy(
+            data,
+            model_name=model,
+            render_profile=requested_render_profile,
+        )
+        self._normalize_model_specific_form_contract(data, model_name=model)
+        self._apply_render_profile_action_visibility(
+            data,
+            render_profile=requested_render_profile,
+            record_id=requested_record_id,
+        )
+        self._sync_visible_form_required_markers(data)
 
         # 8.x) 访问策略（后端唯一决策点）：allow/degrade/block
         self._apply_access_policy(data, model_name=model)
@@ -466,6 +543,569 @@ class PageAssembler:
             data["warnings"] = warnings
         data["source_authority"] = self.source_authority_contract()
         return data, versions
+
+    def _native_action_needs_existing_record(self, action: dict) -> bool:
+        if not isinstance(action, dict):
+            return False
+        payload = action.get("payload") if isinstance(action.get("payload"), dict) else {}
+        kind = str(action.get("kind") or "").strip().lower()
+        level = str(action.get("level") or "").strip().lower()
+        intent = str(action.get("intent") or "").strip().lower()
+        button_type = str(action.get("buttonType") or action.get("button_type") or payload.get("type") or "").strip().lower()
+        method = str(action.get("method") or action.get("name") or payload.get("method") or "").strip()
+        has_open_target = bool(
+            action.get("action_id")
+            or action.get("actionId")
+            or payload.get("action_id")
+            or payload.get("ref")
+            or payload.get("url")
+            or action.get("url")
+        )
+        if kind in {"open", "url", "client"} or button_type in {"action", "url"} or intent in {"open", "url"}:
+            return False
+        if intent.startswith("ui."):
+            return False
+        if has_open_target and kind not in {"object", "server", "mutation"} and button_type not in {"object"}:
+            return False
+        if kind in {"object", "server", "mutation"} or button_type == "object":
+            return True
+        if level in {"row", "smart"}:
+            return True
+        if method:
+            return True
+        return not kind and not button_type
+
+    def _filter_render_profile_actions(self, rows, *, profile: str, record_id=None):
+        if not isinstance(rows, list):
+            return []
+        if profile != "create" or record_id:
+            return rows
+        out = []
+        for row in rows:
+            if isinstance(row, dict) and self._native_action_needs_existing_record(row):
+                continue
+            out.append(row)
+        return out
+
+    def _filter_render_profile_layout_nodes(self, nodes, *, profile: str, record_id=None):
+        if not isinstance(nodes, list):
+            return []
+        if profile != "create" or record_id:
+            return nodes
+        child_keys = ("children", "pages", "tabs", "nodes", "items")
+        out = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                out.append(node)
+                continue
+            node_type = str(node.get("type") or node.get("containerType") or "").strip().lower()
+            action = node.get("action") if isinstance(node.get("action"), dict) else {}
+            button_payload = dict(action)
+            if node.get("buttonType"):
+                button_payload["buttonType"] = node.get("buttonType")
+            if node.get("name") and "name" not in button_payload:
+                button_payload["name"] = node.get("name")
+            if node_type == "button" and self._native_action_needs_existing_record(button_payload):
+                continue
+            copied = dict(node)
+            for key in child_keys:
+                children = copied.get(key)
+                if isinstance(children, list):
+                    copied[key] = self._filter_render_profile_layout_nodes(
+                        children,
+                        profile=profile,
+                        record_id=record_id,
+                    )
+            out.append(copied)
+        return out
+
+    def _apply_render_profile_action_visibility(self, data: dict, *, render_profile: str = "", record_id=None) -> None:
+        if not isinstance(data, dict):
+            return
+        profile = str(render_profile or data.get("render_profile") or "").strip().lower()
+        if profile in {"read", "view"}:
+            profile = "readonly"
+        if profile != "create" or record_id:
+            return
+        data["buttons"] = self._filter_render_profile_actions(data.get("buttons"), profile=profile, record_id=record_id)
+        toolbar = data.get("toolbar") if isinstance(data.get("toolbar"), dict) else {}
+        for key in ("header", "sidebar", "footer"):
+            toolbar[key] = self._filter_render_profile_actions(toolbar.get(key), profile=profile, record_id=record_id)
+        data["toolbar"] = toolbar if isinstance(toolbar, dict) else {"header": [], "sidebar": [], "footer": []}
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        for key in ("header_buttons", "button_box", "stat_buttons", "business_actions"):
+            form[key] = self._filter_render_profile_actions(form.get(key), profile=profile, record_id=record_id)
+        form["layout"] = self._filter_render_profile_layout_nodes(form.get("layout"), profile=profile, record_id=record_id)
+        views["form"] = form
+        data["views"] = views
+
+    def _remove_layout_field(self, raw, field_name: str):
+        if isinstance(raw, list):
+            return [
+                item
+                for item in (self._remove_layout_field(item, field_name) for item in raw)
+                if item is not None
+            ]
+        if not isinstance(raw, dict):
+            return raw
+        node_name = str(raw.get("name") or "").strip()
+        node_type = str(raw.get("type") or raw.get("kind") or "").strip().lower()
+        if node_name == field_name and (node_type == "field" or raw.get("fieldInfo") or raw.get("field_info")):
+            return None
+        copied = dict(raw)
+        for key in ("children", "pages", "tabs", "nodes", "items", "layout"):
+            if key in copied:
+                copied[key] = self._remove_layout_field(copied.get(key), field_name)
+        return copied
+
+    def _remove_field_from_groups(self, rows, field_name: str):
+        if not isinstance(rows, list):
+            return rows
+        out = []
+        for row in rows:
+            if not isinstance(row, dict):
+                out.append(row)
+                continue
+            copied = dict(row)
+            fields = copied.get("fields")
+            if isinstance(fields, list):
+                copied["fields"] = [item for item in fields if str(item or "").strip() != field_name]
+            out.append(copied)
+        return out
+
+    def _normalize_model_specific_form_contract(self, data: dict, *, model_name: str = "") -> None:
+        if not isinstance(data, dict):
+            return
+        if str(model_name or "").strip() != "sc.general.contract":
+            return
+        fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        if "tax_id" not in fields_map or "tax_rate" not in fields_map:
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        form["layout"] = self._remove_layout_field(form.get("layout"), "tax_rate")
+        views["form"] = form
+        data["views"] = views
+        data["field_groups"] = self._remove_field_from_groups(data.get("field_groups"), "tax_rate")
+        policy = data.get("business_form_policy") if isinstance(data.get("business_form_policy"), dict) else {}
+        if policy:
+            policy["layout_fields"] = [
+                item for item in (policy.get("layout_fields") or []) if str(item or "").strip() != "tax_rate"
+            ]
+            policy["fields"] = [
+                item
+                for item in (policy.get("fields") or [])
+                if not isinstance(item, dict) or str(item.get("name") or item.get("field") or "").strip() != "tax_rate"
+            ]
+            data["business_form_policy"] = policy
+
+    def _json_value(self, raw, default):
+        if isinstance(raw, type(default)):
+            return raw
+        if not isinstance(raw, str) or not raw.strip():
+            return default
+        try:
+            parsed = json.loads(raw)
+        except Exception:
+            return default
+        return parsed if isinstance(parsed, type(default)) else default
+
+    def _business_category_from_context(self, data: dict, model_name: str):
+        if "sc.business.category" not in self.env:
+            return None
+        context = data.get("context") if isinstance(data.get("context"), dict) else {}
+        code = str(
+            context.get("default_business_category_code")
+            or context.get("current_business_category_code")
+            or ""
+        ).strip()
+        if not code:
+            return None
+        try:
+            return self.env["sc.business.category"].sudo().search(
+                [("code", "=", code), ("target_model", "=", model_name)],
+                limit=1,
+            )
+        except Exception:
+            _logger.exception("business category form policy lookup failed model=%s code=%s", model_name, code)
+            return None
+
+    def _form_policy_field_policies(self, form_policy: dict, fields_map: dict) -> dict:
+        policies = {}
+        for row in form_policy.get("fields") if isinstance(form_policy.get("fields"), list) else []:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+            if not name or name not in fields_map:
+                continue
+            policies[name] = row
+        return policies
+
+    def _form_policy_field_labels(self, form_policy: dict, fields_map: dict) -> dict:
+        labels = {}
+        for name, row in self._form_policy_field_policies(form_policy, fields_map).items():
+            label = str(row.get("label") or row.get("string") or "").strip()
+            if label:
+                labels[name] = label
+        return labels
+
+    @staticmethod
+    def _normalize_render_profile(profile: str) -> str:
+        normalized = str(profile or "").strip().lower()
+        if normalized in {"read", "view"}:
+            return "readonly"
+        return normalized if normalized in {"create", "edit", "readonly"} else ""
+
+    @classmethod
+    def _form_policy_profiles_match(cls, profiles, render_profile: str) -> bool:
+        if not isinstance(profiles, list) or not profiles:
+            return False
+        normalized_profiles = {
+            cls._normalize_render_profile(str(item or "").strip())
+            for item in profiles
+            if str(item or "").strip()
+        }
+        normalized_profiles.discard("")
+        profile = cls._normalize_render_profile(render_profile)
+        if profile:
+            return profile in normalized_profiles
+        return bool(normalized_profiles & {"create", "edit"})
+
+    @classmethod
+    def _form_policy_required_names_for_profile(cls, form_policy: dict, fields_map: dict, render_profile: str) -> list[str]:
+        required = []
+        for name in form_policy.get("required_fields") if isinstance(form_policy.get("required_fields"), list) else []:
+            field_name = str(name or "").strip()
+            if field_name and field_name in fields_map and field_name not in required:
+                required.append(field_name)
+        for row in form_policy.get("fields") if isinstance(form_policy.get("fields"), list) else []:
+            if not isinstance(row, dict):
+                continue
+            field_name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+            if (
+                field_name
+                and field_name in fields_map
+                and field_name not in required
+                and cls._form_policy_profiles_match(row.get("required_profiles"), render_profile)
+            ):
+                required.append(field_name)
+        return required
+
+    @classmethod
+    def _apply_form_policy_required_marker(
+        cls,
+        descriptor: dict,
+        field_policy: dict,
+        render_profile: str,
+        *,
+        required_field_names: set[str] | None = None,
+        field_name: str = "",
+    ) -> None:
+        if not isinstance(descriptor, dict):
+            return
+        required_by_list = field_name and required_field_names is not None and field_name in required_field_names
+        required_by_profile = cls._form_policy_profiles_match(field_policy.get("required_profiles"), render_profile)
+        if required_by_list or required_by_profile:
+            descriptor["required"] = True
+            descriptor["source_required"] = True
+
+    def _form_policy_one2many_subview(self, name: str, descriptor: dict, field_policy: dict | None = None) -> dict:
+        field_policy = field_policy if isinstance(field_policy, dict) else {}
+        columns_raw = (
+            field_policy.get("one2many_columns")
+            or field_policy.get("columns")
+            or field_policy.get("subview_columns")
+            or []
+        )
+        columns = [
+            str(column or "").strip()
+            for column in columns_raw
+            if str(column or "").strip()
+        ] if isinstance(columns_raw, list) else []
+        if not columns:
+            return {}
+        relation = str((descriptor or {}).get("relation") or "").strip()
+        if not relation or relation not in self.env:
+            return {}
+        try:
+            relation_fields = self.env[relation].sudo().fields_get(columns)
+        except Exception:
+            _logger.debug("business category one2many subview metadata skipped field=%s relation=%s", name, relation, exc_info=True)
+            relation_fields = {}
+        column_nodes = []
+        for column in columns:
+            meta = relation_fields.get(column) if isinstance(relation_fields.get(column), dict) else {}
+            if not meta:
+                continue
+            column_nodes.append({
+                "name": column,
+                "label": str(meta.get("string") or column).strip() or column,
+                "string": str(meta.get("string") or column).strip() or column,
+                "ttype": str(meta.get("type") or "char").strip() or "char",
+                "required": bool(meta.get("required")),
+                "readonly": bool(meta.get("readonly")),
+                **({"selection": meta.get("selection")} if isinstance(meta.get("selection"), list) else {}),
+            })
+        if not column_nodes:
+            return {}
+        return {
+            "tree": {
+                "columns": column_nodes,
+            },
+            "policies": {
+                "can_create": True,
+                "can_write": True,
+                "can_delete": True,
+                "ui_labels": {
+                    "add_row": "添加行",
+                },
+            },
+        }
+
+    def _make_form_policy_field_node(
+        self,
+        name: str,
+        fields_map: dict,
+        field_labels: dict | None = None,
+        field_policies: dict | None = None,
+        render_profile: str = "",
+        required_field_names: set[str] | None = None,
+    ) -> dict:
+        descriptor = dict(fields_map.get(name) if isinstance(fields_map.get(name), dict) else {})
+        field_policy = (field_policies or {}).get(name) if isinstance((field_policies or {}).get(name), dict) else {}
+        self._apply_form_policy_required_marker(
+            descriptor,
+            field_policy,
+            render_profile,
+            required_field_names=required_field_names,
+            field_name=name,
+        )
+        labels = field_labels if isinstance(field_labels, dict) else {}
+        label = str(labels.get(name) or (descriptor or {}).get("string") or (descriptor or {}).get("label") or name).strip()
+        node = {"type": "field", "name": name}
+        field_info = {"name": name}
+        if label:
+            node["string"] = label
+            node["label"] = label
+            field_info["label"] = label
+        for key in ("type", "relation", "relation_field", "selection", "required", "readonly"):
+            if key in descriptor:
+                field_info[key] = descriptor[key]
+        subview = self._form_policy_one2many_subview(name, descriptor, field_policy)
+        if subview:
+            field_info["subview"] = subview
+        if len(field_info) > 1 or subview:
+            node["fieldInfo"] = field_info
+        return node
+
+    @staticmethod
+    def _has_explicit_user_form_layout(data: dict) -> bool:
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        layout = form.get("layout")
+        user_layout_names = {
+            "sc_custom_partner_flat_fields",
+            "sc_custom_user_flat_fields",
+        }
+
+        def visit(node):
+            if isinstance(node, dict):
+                if str(node.get("name") or "").strip() in user_layout_names:
+                    return True
+                return any(visit(value) for value in node.values())
+            if isinstance(node, list):
+                return any(visit(item) for item in node)
+            return False
+
+        return visit(layout)
+
+    def _inject_business_category_form_policy(self, data: dict, *, model_name: str, render_profile: str = "") -> None:
+        if not isinstance(data, dict) or not model_name:
+            return
+        category = self._business_category_from_context(data, model_name)
+        if not category:
+            return
+        form_policy = self._json_value(getattr(category, "form_policy_json", "{}") or "{}", {})
+        required_fields = self._json_value(getattr(category, "required_fields_json", "[]") or "[]", [])
+        if not form_policy and not required_fields:
+            return
+        fields_map = dict(data.get("fields") if isinstance(data.get("fields"), dict) else {})
+        if not fields_map:
+            return
+        normalized_required = [
+            str(name or "").strip()
+            for name in required_fields
+            if str(name or "").strip() in fields_map
+        ]
+        if normalized_required:
+            form_policy = dict(form_policy or {})
+            existing_required = form_policy.get("required_fields")
+            merged = []
+            for name in (existing_required if isinstance(existing_required, list) else []) + normalized_required:
+                field_name = str(name or "").strip()
+                if field_name and field_name in fields_map and field_name not in merged:
+                    merged.append(field_name)
+            form_policy["required_fields"] = merged
+        sections = form_policy.get("sections") if isinstance(form_policy.get("sections"), list) else []
+        layout_children = []
+        field_groups = []
+        seen_fields = set()
+        one2many_subviews = {}
+        policy_field_policies = self._form_policy_field_policies(form_policy, fields_map)
+        policy_field_labels = self._form_policy_field_labels(form_policy, fields_map)
+        profile = self._normalize_render_profile(render_profile)
+        profile_required_names = self._form_policy_required_names_for_profile(form_policy, fields_map, profile)
+        profile_required_set = set(profile_required_names)
+        for name in profile_required_names:
+            descriptor = dict(fields_map.get(name) if isinstance(fields_map.get(name), dict) else {})
+            self._apply_form_policy_required_marker(
+                descriptor,
+                policy_field_policies.get(name) if isinstance(policy_field_policies.get(name), dict) else {},
+                profile,
+                required_field_names=profile_required_set,
+                field_name=name,
+            )
+            if descriptor:
+                fields_map[name] = descriptor
+        field_policies = data.get("field_policies") if isinstance(data.get("field_policies"), dict) else {}
+        field_policies = dict(field_policies or {})
+        for name, field_policy in policy_field_policies.items():
+            policy = field_policies.get(name) if isinstance(field_policies.get(name), dict) else {}
+            policy = dict(policy or {})
+            for key in ("visible_profiles", "readonly_profiles", "required_profiles"):
+                if isinstance(field_policy.get(key), list):
+                    policy[key] = list(field_policy.get(key) or [])
+            if name in profile_required_set:
+                policy["source_required"] = True
+            if policy:
+                field_policies[name] = policy
+        for name in profile_required_names:
+            policy = field_policies.get(name) if isinstance(field_policies.get(name), dict) else {}
+            policy = dict(policy or {})
+            policy["source_required"] = True
+            field_policies[name] = policy
+        if field_policies:
+            data["field_policies"] = field_policies
+
+        validation_rules = data.get("validation_rules") if isinstance(data.get("validation_rules"), list) else []
+        existing_required_rules = {
+            str(row.get("field") or "").strip()
+            for row in validation_rules
+            if isinstance(row, dict) and str(row.get("code") or "").strip().upper() == "REQUIRED"
+        }
+        for name in profile_required_names:
+            if name in existing_required_rules:
+                continue
+            validation_rules.append({
+                "code": "REQUIRED",
+                "field": name,
+                "source": "sc.business.category.form_policy_json",
+                "when_profiles": ["create", "edit"],
+            })
+            existing_required_rules.add(name)
+        if validation_rules:
+            data["validation_rules"] = validation_rules
+        for index, section in enumerate(sections):
+            if not isinstance(section, dict):
+                continue
+            visible_profiles = section.get("visible_profiles")
+            if isinstance(visible_profiles, list) and visible_profiles:
+                allowed_profiles = {str(item).strip().lower() for item in visible_profiles if str(item).strip()}
+                if profile and profile not in allowed_profiles:
+                    continue
+            title = str(section.get("title") or section.get("label") or section.get("name") or "").strip()
+            names = []
+            for raw_name in section.get("fields") if isinstance(section.get("fields"), list) else []:
+                name = str(raw_name or "").strip()
+                if name and name in fields_map and name not in names:
+                    names.append(name)
+            if not names:
+                continue
+            seen_fields.update(names)
+            group_name = str(section.get("name") or f"business_category_section_{index + 1}").strip()
+            field_nodes = [
+                self._make_form_policy_field_node(
+                    name,
+                    fields_map,
+                    policy_field_labels,
+                    policy_field_policies,
+                    render_profile=profile,
+                    required_field_names=profile_required_set,
+                )
+                for name in names
+            ]
+            for field_node in field_nodes:
+                field_name = str(field_node.get("name") or "").strip()
+                field_info = field_node.get("fieldInfo") if isinstance(field_node.get("fieldInfo"), dict) else {}
+                if not field_name or not field_info:
+                    continue
+                descriptor = dict(fields_map.get(field_name) if isinstance(fields_map.get(field_name), dict) else {})
+                self._apply_form_policy_required_marker(
+                    descriptor,
+                    policy_field_policies.get(field_name) if isinstance(policy_field_policies.get(field_name), dict) else {},
+                    profile,
+                    required_field_names=profile_required_set,
+                    field_name=field_name,
+                )
+                for key in ("type", "relation", "relation_field", "selection", "required", "readonly"):
+                    if key in field_info:
+                        descriptor[key] = field_info[key]
+                        if key == "type":
+                            descriptor.setdefault("ttype", field_info[key])
+                if field_info.get("label"):
+                    descriptor.setdefault("string", field_info["label"])
+                    descriptor.setdefault("label", field_info["label"])
+                if field_info.get("subview"):
+                    one2many_subviews[field_name] = field_info["subview"]
+                if descriptor:
+                    fields_map[field_name] = descriptor
+            layout_children.append({
+                "type": "group",
+                "name": group_name,
+                "string": title or group_name,
+                "children": field_nodes,
+            })
+            field_groups.append({
+                "name": group_name,
+                "label": title or group_name,
+                "priority": int(section.get("sequence") or (index + 1) * 10),
+                "collapsible": bool(section.get("collapsible", False)),
+                "collapsed_by_default": bool(section.get("collapsed_by_default", False)),
+                "visible_profiles": [str(item).strip() for item in visible_profiles if str(item).strip()]
+                if isinstance(visible_profiles, list) else [],
+                "fields": names,
+            })
+        if layout_children:
+            views = data.get("views") if isinstance(data.get("views"), dict) else {}
+            form = views.get("form") if isinstance(views.get("form"), dict) else {}
+            if not self._has_explicit_user_form_layout(data):
+                form["layout"] = [{
+                    "type": "sheet",
+                    "name": "business_category_form_sheet",
+                    "children": layout_children,
+                }]
+            if one2many_subviews:
+                subviews = form.get("subviews") if isinstance(form.get("subviews"), dict) else {}
+                form["subviews"] = {**subviews, **one2many_subviews}
+            views["form"] = form
+            data["views"] = views
+        data["fields"] = fields_map
+        if field_groups:
+            data["field_groups"] = field_groups
+        policy_fields = form_policy.get("fields") if isinstance(form_policy.get("fields"), list) else []
+        data["business_form_policy"] = {
+            "source": "sc.business.category.form_policy_json",
+            "category_id": category.id,
+            "category_code": str(category.code or "").strip(),
+            "category_name": str(category.name or "").strip(),
+            "target_model": model_name,
+            "render_profile": str(render_profile or "").strip(),
+            "required_fields": profile_required_names,
+            "fields": policy_fields,
+            "field_labels": policy_field_labels,
+            "layout_fields": list(seen_fields),
+        }
 
     def _include_configured_orchestrated_view_types(self, view_types, *, model_name="", action_id=None):
         normalized = self.normalize_view_types(view_types)
@@ -1046,6 +1686,159 @@ class PageAssembler:
         visit(raw)
         return names
 
+    def _collect_layout_required_field_names(self, raw):
+        names = set()
+
+        def visit(node):
+            if isinstance(node, list):
+                for item in node:
+                    visit(item)
+                return
+            if not isinstance(node, dict):
+                return
+            node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+            field_name = str(node.get("name") or "").strip()
+            field_info = node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}
+            field_info = field_info or (node.get("field_info") if isinstance(node.get("field_info"), dict) else {})
+            if field_name and (node_type == "field" or field_info):
+                if node.get("required") is True or field_info.get("required") is True:
+                    names.add(field_name)
+            for child_key in ("children", "pages", "tabs", "nodes", "items", "layout"):
+                visit(node.get(child_key))
+
+        visit(raw)
+        return names
+
+    def _mark_layout_required_field_nodes(self, raw, required_names):
+        names = {
+            str(name or "").strip()
+            for name in (required_names or [])
+            if str(name or "").strip()
+        }
+        if not names:
+            return
+
+        def visit(node):
+            if isinstance(node, list):
+                for item in node:
+                    visit(item)
+                return
+            if not isinstance(node, dict):
+                return
+            node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+            field_name = str(node.get("name") or "").strip()
+            if field_name in names and (node_type == "field" or node.get("fieldInfo") or node.get("field_info")):
+                node["required"] = True
+                field_info = node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}
+                field_info = dict(field_info or {})
+                field_info["required"] = True
+                node["fieldInfo"] = field_info
+            for child_key in ("children", "pages", "tabs", "nodes", "items", "layout"):
+                visit(node.get(child_key))
+
+        visit(raw)
+
+    @staticmethod
+    def _contract_validation_required_field_names(data):
+        names = set()
+        validation_rules = data.get("validation_rules") if isinstance(data.get("validation_rules"), list) else []
+        for row in validation_rules:
+            if not isinstance(row, dict):
+                continue
+            if str(row.get("code") or "").strip().upper() != "REQUIRED":
+                continue
+            field_name = str(row.get("field") or "").strip()
+            if field_name:
+                names.add(field_name)
+        return names
+
+    @staticmethod
+    def _contract_policy_required_field_names(data):
+        names = set()
+        field_policies = data.get("field_policies") if isinstance(data.get("field_policies"), dict) else {}
+        for name, policy in field_policies.items():
+            if not isinstance(policy, dict):
+                continue
+            field_name = str(name or "").strip()
+            if not field_name:
+                continue
+            if (
+                policy.get("source_required") is True
+                or policy.get("required") is True
+                or bool(policy.get("required_profiles") if isinstance(policy.get("required_profiles"), list) else [])
+            ):
+                names.add(field_name)
+        return names
+
+    def _sync_visible_form_required_markers(self, data):
+        if not isinstance(data, dict):
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        if not form:
+            return
+        layout = form.get("layout")
+        visible_fields = self._collect_layout_field_names(layout)
+        if not visible_fields:
+            return
+        fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        if not fields_map:
+            return
+        explicit_required = self._collect_layout_required_field_names(layout)
+        validation_required = self._contract_validation_required_field_names(data)
+        policy_required = self._contract_policy_required_field_names(data)
+        required_names = []
+        for name in sorted(visible_fields):
+            descriptor = fields_map.get(name) if isinstance(fields_map.get(name), dict) else {}
+            if not descriptor:
+                continue
+            if descriptor.get("readonly") is True:
+                continue
+            if (
+                descriptor.get("required") is True
+                or name in explicit_required
+                or name in validation_required
+                or name in policy_required
+            ):
+                required_names.append(name)
+        if not required_names:
+            return
+
+        for name in required_names:
+            descriptor = dict(fields_map.get(name) if isinstance(fields_map.get(name), dict) else {})
+            descriptor["required"] = True
+            descriptor["source_required"] = True
+            fields_map[name] = descriptor
+        data["fields"] = fields_map
+
+        field_policies = data.get("field_policies") if isinstance(data.get("field_policies"), dict) else {}
+        field_policies = dict(field_policies or {})
+        for name in required_names:
+            policy = field_policies.get(name) if isinstance(field_policies.get(name), dict) else {}
+            policy = dict(policy or {})
+            policy["source_required"] = True
+            field_policies[name] = policy
+        data["field_policies"] = field_policies
+
+        validation_rules = data.get("validation_rules") if isinstance(data.get("validation_rules"), list) else []
+        existing = {
+            str(row.get("field") or "").strip()
+            for row in validation_rules
+            if isinstance(row, dict) and str(row.get("code") or "").strip().upper() == "REQUIRED"
+        }
+        for name in required_names:
+            if name in existing:
+                continue
+            validation_rules.append({
+                "code": "REQUIRED",
+                "field": name,
+                "source": "visible_form_required_marker",
+                "when_profiles": ["create", "edit"],
+            })
+            existing.add(name)
+        data["validation_rules"] = validation_rules
+        self._mark_layout_required_field_nodes(layout, required_names)
+
     def _safe_model_can_read(self, model_name):
         name = str(model_name or "").strip()
         if not name:
@@ -1385,6 +2178,10 @@ class PageAssembler:
         if not isinstance(fields, dict) or not fields:
             return
         model_name = str(model_name or "").strip()
+        contract_context = data.get("context") if isinstance(data.get("context"), dict) else {}
+        record_defaults = data.get("record") if isinstance(data.get("record"), dict) else {}
+        if record_defaults:
+            contract_context = {**record_defaults, **contract_context}
         relation_models = set()
         for desc in fields.values():
             if not isinstance(desc, dict):
@@ -1406,6 +2203,7 @@ class PageAssembler:
                     desc,
                     relation_entry_map[relation],
                     model_name=model_name,
+                    contract_context=contract_context,
                 )
 
     def _extract_dictionary_type_from_domain(self, domain_raw):
@@ -1449,7 +2247,41 @@ class PageAssembler:
             return domain
         return None
 
-    def _build_relation_entry_for_field(self, field_name, descriptor, base_entry, model_name=""):
+    def _relation_create_disabled_by_options(self, descriptor):
+        if not isinstance(descriptor, dict):
+            return False
+        options = descriptor.get("widget_options")
+        if not isinstance(options, dict):
+            options = descriptor.get("options")
+        if not isinstance(options, dict):
+            return False
+        return any(
+            options.get(key) is True
+            for key in ("no_create", "no_create_edit", "no_quick_create")
+        )
+
+    def _relation_entry_override_from_options(self, descriptor):
+        if not isinstance(descriptor, dict):
+            return {}
+        options = descriptor.get("widget_options")
+        if not isinstance(options, dict):
+            options = descriptor.get("options")
+        if not isinstance(options, dict):
+            return {}
+        override = options.get("relation_entry")
+        return dict(override) if isinstance(override, dict) else {}
+
+    def _resolve_relation_entry_ref_id(self, xmlid):
+        xmlid = str(xmlid or "").strip()
+        if not xmlid:
+            return None
+        try:
+            record = self.env.ref(xmlid, raise_if_not_found=False)
+            return int(record.id) if record else None
+        except Exception:
+            return None
+
+    def _build_relation_entry_for_field(self, field_name, descriptor, base_entry, model_name="", contract_context=None):
         entry = dict(base_entry or {})
         relation = str(descriptor.get("relation") or "").strip()
         can_read = bool(entry.get("can_read", True))
@@ -1466,6 +2298,232 @@ class PageAssembler:
                 dict_type = self._extract_dictionary_type_from_domain(domain_hint)
             if dict_type:
                 default_vals = {"type": dict_type}
+        relation_domain = []
+        display_field = ""
+        relation_order = ""
+        can_open = True
+        switch_context = {}
+        ui_labels_extra = {}
+        is_contract_tax_field = False
+        create_disabled_by_options = self._relation_create_disabled_by_options(descriptor)
+        if create_disabled_by_options:
+            can_create = False
+            has_page = False
+        options_override = self._relation_entry_override_from_options(descriptor)
+        if relation == "sc.business.category" and str(field_name or "").strip() == "business_category_id":
+            display_field = "name"
+            relation_order = "sequence asc, id asc"
+            can_create = False
+            has_page = False
+            can_open = False
+            switch_context = {
+                "enabled": True,
+                "code_field": "code",
+                "label_field": "name",
+                "default_values_field": "default_values_json",
+            }
+            context = contract_context if isinstance(contract_context, dict) else {}
+            raw_codes = context.get("allowed_business_category_codes")
+            if not isinstance(raw_codes, list) or not raw_codes:
+                raw_codes = [
+                    context.get("default_business_category_code")
+                    or context.get("current_business_category_code")
+                ]
+            codes = [
+                str(code or "").strip()
+                for code in raw_codes
+                if str(code or "").strip()
+            ]
+            default_clear_fields = set()
+            if codes and "sc.business.category" in self.env:
+                try:
+                    rows = self.env["sc.business.category"].sudo().search([("code", "in", codes)])
+                    for row in rows:
+                        defaults = self._json_value(getattr(row, "default_values_json", "{}") or "{}", {})
+                        if isinstance(defaults, dict):
+                            default_clear_fields.update(str(key or "").strip() for key in defaults.keys() if str(key or "").strip())
+                except Exception:
+                    default_clear_fields = set()
+            if codes:
+                relation_domain.append(["code", "in", codes])
+            if model_name:
+                relation_domain.append(["target_model", "=", model_name])
+            switch_context["default_clear_fields"] = sorted(default_clear_fields)
+        if (
+            relation == "account.tax"
+            and str(field_name or "").strip() == "tax_id"
+            and str(model_name or "").strip() in {"construction.contract", "sc.general.contract"}
+        ):
+            is_contract_tax_field = True
+            display_field = "name"
+            relation_order = "amount asc, id asc"
+            has_page = False
+            can_open = False
+            can_create = True
+            try:
+                company = self.env.company
+                helper = self.env["construction.contract"].sudo().with_company(company)
+                group = helper._sc_contract_tax_group(company)
+                country = company.account_fiscal_country_id or company.partner_id.country_id or self.env.ref(
+                    "base.cn",
+                    raise_if_not_found=False,
+                )
+                default_vals = {
+                    "type_tax_use": "none",
+                    "amount_type": "percent",
+                    "price_include": False,
+                    "company_id": company.id,
+                    "tax_group_id": group.id,
+                }
+                if country:
+                    default_vals["country_id"] = country.id
+            except Exception:
+                default_vals = {
+                    "type_tax_use": "none",
+                    "amount_type": "percent",
+                    "price_include": False,
+                }
+            ui_labels_extra = {
+                "quick_create": _("新增税率..."),
+                "create_and_edit": _("新增税率..."),
+                "missing_name": _("请输入税率百分比，例如：3%、9%、13%"),
+                "quick_create_prompt": _("请输入税率百分比，例如：3%、9%、13%"),
+                "quick_create_failed": _("新增税率失败，请输入 0 到 100 之间的百分比"),
+                "inline_create": _("新增税率“%s”"),
+                "inline_create_failed": _("创建税率失败，请检查百分比格式"),
+            }
+            relation_domain.extend(
+                [
+                    ["type_tax_use", "=", "none"],
+                    ["amount_type", "=", "percent"],
+                    ["price_include", "=", False],
+                ]
+            )
+        if (
+            relation == "construction.contract"
+            and str(model_name or "").strip() == "construction.contract"
+            and str(field_name or "").strip() == "original_contract_id"
+        ):
+            has_page = False
+            can_open = False
+            can_create = False
+            display_field = "display_name"
+            relation_order = "id desc"
+            context = contract_context if isinstance(contract_context, dict) else {}
+            category_code = str(
+                context.get("current_business_category_code")
+                or context.get("default_business_category_code")
+                or ""
+            ).strip()
+            contract_type = str(context.get("default_type") or context.get("type") or "").strip()
+            if category_code == "contract.income.supplement":
+                relation_domain.append(["type", "=", "out"])
+            elif category_code == "contract.expense.supplement":
+                relation_domain.append(["type", "=", "in"])
+            elif contract_type in {"out", "in"}:
+                relation_domain.append(["type", "=", contract_type])
+            ui_labels_extra = {
+                "search_more": _("搜索原合同..."),
+                "dialog_title": _("原合同：搜索更多"),
+                "search_placeholder": _("输入原合同名称、编号、项目或往来单位搜索"),
+                "create_and_edit": _(""),
+                "quick_create": _(""),
+            }
+        if (
+            relation == "res.partner"
+            and str(model_name or "").strip() == "sc.self.funding.registration"
+            and str(field_name or "").strip() == "partner_id"
+        ):
+            context = contract_context if isinstance(contract_context, dict) else {}
+            category_code = str(
+                context.get("current_business_category_code")
+                or context.get("default_business_category_code")
+                or ""
+            ).strip()
+            if category_code == "finance.self_funding.refund":
+                contractor_ids = []
+                try:
+                    summaries = self.env["sc.company.contractor.responsibility.summary"].sudo().search(
+                        [
+                            ("partner_id", "!=", False),
+                            ("self_funding_balance", ">", 0.01),
+                        ]
+                    )
+                    partners = summaries.mapped("partner_id").filtered(
+                        lambda partner: partner.supplier_rank > 0 or partner.customer_rank > 0
+                    )
+                    contractor_ids = sorted(set(partners.ids))
+                except Exception:
+                    contractor_ids = []
+                relation_domain.append(["id", "in", contractor_ids or [0]])
+                display_field = "display_name"
+                relation_order = "name asc, id asc"
+                can_create = False
+                has_page = False
+                ui_labels_extra = {
+                    "search_more": _("搜索承包人..."),
+                    "dialog_title": _("承包人：搜索更多"),
+                    "search_placeholder": _("输入承包人名称搜索"),
+                    "create_and_edit": _(""),
+                    "quick_create": _(""),
+                }
+        if (
+            relation == "res.partner"
+            and str(model_name or "").strip() == "sc.expense.claim"
+            and str(field_name or "").strip() == "partner_id"
+        ):
+            context = contract_context if isinstance(contract_context, dict) else {}
+            category_code = str(
+                context.get("current_business_category_code")
+                or context.get("default_business_category_code")
+                or ""
+            ).strip()
+            if category_code == "finance.deduction.bill":
+                partner_ids = []
+                try:
+                    summaries = self.env["sc.company.contractor.responsibility.summary"].sudo().search(
+                        [("partner_id", "!=", False)]
+                    )
+                    partners = summaries.mapped("partner_id").filtered(
+                        lambda partner: partner.supplier_rank > 0 or partner.customer_rank > 0
+                    )
+                    partner_ids = sorted(set(partners.ids))
+                except Exception:
+                    partner_ids = []
+                relation_domain.append(["id", "in", partner_ids or [0]])
+                display_field = "display_name"
+                relation_order = "name asc, id asc"
+                can_create = False
+                has_page = False
+                ui_labels_extra = {
+                    "search_more": _("搜索责任方..."),
+                    "dialog_title": _("责任方：搜索更多"),
+                    "search_placeholder": _("输入责任方名称搜索"),
+                    "create_and_edit": _(""),
+                    "quick_create": _(""),
+                }
+        if options_override:
+            action_id = options_override.get("action_id") or self._resolve_relation_entry_ref_id(options_override.get("action_xmlid"))
+            menu_id = options_override.get("menu_id") or self._resolve_relation_entry_ref_id(options_override.get("menu_xmlid"))
+            if action_id:
+                entry["action_id"] = int(action_id)
+                has_page = True
+            if menu_id:
+                entry["menu_id"] = int(menu_id)
+            if "can_create" in options_override:
+                can_create = bool(options_override.get("can_create"))
+            if isinstance(options_override.get("default_vals"), dict):
+                default_vals.update(options_override.get("default_vals") or {})
+            if isinstance(options_override.get("default_from_fields"), dict):
+                entry["default_from_fields"] = dict(options_override.get("default_from_fields") or {})
+            if isinstance(options_override.get("domain"), list):
+                relation_domain.extend(options_override.get("domain") or [])
+            if str(options_override.get("display_field") or "").strip():
+                display_field = str(options_override.get("display_field") or "").strip()
+            if str(options_override.get("order") or "").strip():
+                relation_order = str(options_override.get("order") or "").strip()
+            if isinstance(options_override.get("ui_labels"), dict):
+                ui_labels_extra.update(options_override.get("ui_labels") or {})
         inline_create = self._build_relation_inline_create_contract(
             relation,
             can_read=can_read,
@@ -1482,12 +2540,14 @@ class PageAssembler:
                 reason_code = reason_code or "PAGE_ENTRY_READY"
             else:
                 reason_code = reason_code or "PAGE_ENTRY_READONLY"
-        elif can_create and relation == "sc.dictionary":
-            if dict_type:
+        elif can_create and (relation == "sc.dictionary" or is_contract_tax_field):
+            if dict_type or is_contract_tax_field:
                 create_mode = "quick"
                 reason_code = "QUICK_CREATE_READY"
             else:
                 reason_code = reason_code or "DICT_TYPE_UNRESOLVED"
+        elif create_disabled_by_options:
+            reason_code = reason_code or "FIELD_CREATE_DISABLED"
         else:
             reason_code = reason_code or "NO_CREATE_ENTRY"
 
@@ -1496,7 +2556,14 @@ class PageAssembler:
                 "field": str(field_name or "").strip(),
                 "create_mode": create_mode,
                 "default_vals": default_vals,
+                "default_from_fields": entry.get("default_from_fields") if isinstance(entry.get("default_from_fields"), dict) else {},
+                "domain": relation_domain,
+                "display_field": display_field,
+                "order": relation_order,
+                "can_open": can_open,
+                "switch_context": switch_context,
                 "can_read": can_read,
+                "can_create": can_create,
                 "reason_code": reason_code,
                 "inline_create": inline_create,
                 "search_dialog": self._build_relation_search_dialog_contract(relation),
@@ -1524,6 +2591,7 @@ class PageAssembler:
                     "inline_searching": _("正在搜索..."),
                     "inline_create": _("保存时创建“%s”"),
                     "inline_create_failed": _("保存时创建失败"),
+                    **ui_labels_extra,
                 },
             }
         )
@@ -1531,6 +2599,25 @@ class PageAssembler:
 
     def _build_relation_search_dialog_contract(self, relation):
         relation = str(relation or "").strip()
+        if relation == "sc.business.category":
+            return {
+                "columns": [
+                    {
+                        "name": "name",
+                        "label": _("业务类别"),
+                        "type": "char",
+                        "widget": "char",
+                        "optional": "",
+                    }
+                ],
+                "read_fields": ["id", "display_name", "name", "code", "default_values_json"],
+                "order": "sequence asc, id asc",
+                "limit": 120,
+                "search": {"filters": [], "group_by": [], "facets": {"enabled": True}},
+                "governance": {},
+                "source_trace": {},
+                "source": "business_category_relation_contract",
+            }
         columns = []
         read_fields = ["id", "display_name", "name"]
         order = "id desc"
@@ -1821,24 +2908,26 @@ class PageAssembler:
                 form_view = assembled.get("views", {}).get("form", {}) if isinstance(assembled.get("views"), dict) else {}
                 try:
                     form_layout = form_view.get("layout") if isinstance(form_view, dict) else {}
-                    form_fields = self._collect_form_fields(form_layout)
+                    form_fields = self._collect_form_fields(form_layout, fields_map=fields_map)
                     if not form_fields:
                         vcfg = self.su_env["app.view.config"].sudo().search([("model", "=", model), ("view_type", "=", "form")], limit=1)
                         form_layout = (vcfg.arch_parsed or {}).get("layout") or {}
-                        form_fields = self._collect_form_fields(form_layout)
+                        form_fields = self._collect_form_fields(form_layout, fields_map=fields_map)
                     if not form_fields:
                         form_fields = list(fields_map.keys())[:20]
                 except Exception:
                     # 兜底：取前 20 个字段，避免一次性 read 全量大字段
                     form_fields = list(fields_map.keys())[:20]
+                form_fields = [name for name in form_fields if name in fields_map]
                 out["record"] = rec.read(form_fields)[0] if form_fields else {"id": rec.id, "display_name": rec.display_name}
                 out["form_layout"] = form_layout
         return out
 
-    def _collect_form_fields(self, layout):
+    def _collect_form_fields(self, layout, fields_map=None):
         """
         从 form 布局树中递归收集字段名，用于决定 read() 的字段集合。
         """
+        fields_map = fields_map if isinstance(fields_map, dict) else {}
         names = []
 
         def walk(node):
@@ -1850,8 +2939,11 @@ class PageAssembler:
                 return
             if node.get('type') == 'field':
                 n = node.get('name')
-                if n and n not in names:
+                if n and (not fields_map or n in fields_map) and n not in names:
                     names.append(n)
+                descriptor = fields_map.get(n) if isinstance(fields_map.get(n), dict) else {}
+                if descriptor.get("type") in {"one2many", "many2many"}:
+                    return
             for ch in node.get('children', []) or []:
                 walk(ch)
 

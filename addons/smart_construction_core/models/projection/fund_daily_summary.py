@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models, tools
+from odoo import api, fields, models, tools
+from odoo.exceptions import UserError
 
 
 class ScFundDailySummary(models.Model):
@@ -8,6 +9,7 @@ class ScFundDailySummary(models.Model):
     _auto = False
     _rec_name = "display_name"
     _order = "document_date desc, business_entity_id"
+    _sc_readonly_navigation_button_methods = {"action_open_snapshot_facts"}
 
     display_name = fields.Char(string="汇总项", readonly=True)
     document_date = fields.Date(string="日期", readonly=True, index=True)
@@ -26,6 +28,43 @@ class ScFundDailySummary(models.Model):
     current_account_balance = fields.Float(string="当前账面余额", readonly=True)
     current_bank_balance = fields.Float(string="当前银行余额", readonly=True)
     bank_system_difference = fields.Float(string="账实差异", readonly=True)
+
+    def _raise_readonly_projection(self):
+        raise UserError("企业资金日报汇总是历史事实汇总结果，请从来源企业资金日报维护数据。")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._raise_readonly_projection()
+
+    def write(self, vals):
+        self._raise_readonly_projection()
+
+    def unlink(self):
+        self._raise_readonly_projection()
+
+    def _snapshot_fact_domain(self):
+        self.ensure_one()
+        return [
+            ("document_scope", "=", "enterprise"),
+            ("business_entity_id", "=", self.business_entity_id.id if self.business_entity_id else False),
+            ("snapshot_date", "=", self.document_date),
+            ("company_id", "=", self.company_id.id if self.company_id else False),
+            ("project_id", "=", self.project_id.id if self.project_id else False),
+        ]
+
+    def action_open_snapshot_facts(self):
+        self.ensure_one()
+        action = self.env.ref("smart_construction_core.action_sc_fund_daily", raise_if_not_found=False)
+        result = action.sudo().read()[0] if action else {"type": "ir.actions.act_window", "view_mode": "tree,form"}
+        result.update(
+            {
+                "name": "%s / 企业资金日报" % (self.display_name or "企业资金日报汇总"),
+                "domain": self._snapshot_fact_domain(),
+                "context": {"create": False, "search_default_scope_enterprise": 1},
+                "target": "current",
+            }
+        )
+        return result
 
     def init(self):
         self._cr.execute("SELECT to_regclass('sc_legacy_fund_daily_snapshot_fact')")

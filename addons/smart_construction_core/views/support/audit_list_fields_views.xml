@@ -61,8 +61,8 @@
         <field name="inherit_id" ref="view_work_breakdown_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" optional="hide" />
+                <field name="create_date" string="创建时间" optional="hide" />
             </xpath>
         </field>
     </record>
@@ -737,8 +737,8 @@
         <field name="inherit_id" ref="view_sc_settlement_order_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" optional="hide" />
+                <field name="create_date" string="创建时间" optional="hide" />
             </xpath>
         </field>
     </record>

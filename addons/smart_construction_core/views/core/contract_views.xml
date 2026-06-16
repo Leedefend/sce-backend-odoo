@@ -8,6 +8,7 @@
                 <field name="document_status"/>
                 <field name="legacy_document_no"/>
                 <field name="date_contract" string="合同订立日期"/>
+                <field name="business_category_id" optional="hide"/>
                 <field name="archived" string="原件是否归档"/>
                 <field name="partner_id" string="发包人"/>
                 <field name="project_id" string="项目名称"/>
@@ -56,6 +57,7 @@
                 <field name="document_status" string="单据状态"/>
                 <field name="legacy_document_no" string="单据编号"/>
                 <field name="date_contract" string="合同订立日期"/>
+                <field name="business_category_id" string="业务分类" optional="hide"/>
                 <field name="archived" string="原件是否归档"/>
                 <field name="partner_id" string="发包人"/>
                 <field name="project_id" string="项目名称"/>
@@ -88,6 +90,7 @@
                 <field name="document_status"/>
                 <field name="legacy_document_no"/>
                 <field name="date_contract"/>
+                <field name="business_category_id" optional="hide"/>
                 <field name="partner_id" string="供应商/分包方"/>
                 <field name="project_id"/>
                 <field name="subject"/>
@@ -171,6 +174,8 @@
                             <field name="document_status"/>
                             <field name="subject"/>
                             <field name="type" required="1"/>
+                            <field name="business_category_id" options="{'no_create': True}"/>
+                            <field name="original_contract_id"/>
                             <field name="project_id" required="1"/>
                             <field name="operation_strategy" readonly="1"/>
                             <field name="partner_id" required="1"/>
@@ -392,59 +397,59 @@
                 </header>
                 <sheet>
                     <field name="contract_id" invisible="1"/>
-                    <group>
-                        <group>
-                            <field name="name"/>
-                            <field name="legacy_contract_no"/>
-                            <field name="legacy_external_contract_no"/>
-                            <field name="legacy_document_no"/>
-                            <field name="document_status"/>
-                            <field name="subject"/>
-                            <field name="type" readonly="1" invisible="1"/>
-                            <field name="project_id" required="1"/>
-                            <field name="operation_strategy" readonly="1"/>
-                            <field name="partner_id" string="供应商/分包方" required="1"/>
-                            <field name="expense_contract_category_id"/>
-                            <field name="expense_contract_category_auto_id" readonly="1"/>
-                            <field name="category_id"/>
-                            <field name="contract_type_id"/>
-                            <field name="engineering_address"/>
-                            <field name="engineering_category_text"/>
-                            <field name="engineering_content"/>
-                        </group>
-                        <group>
-                            <field name="company_id" readonly="1"/>
-                            <field name="reject_reason" readonly="1" modifiers='{"invisible": [["reject_reason","=",false]]}'/>
-                            <field name="currency_id" invisible="1"/>
-                            <field name="date_contract"/>
-                            <field name="date_start"/>
-                            <field name="date_end"/>
-                            <field name="budget_id"/>
-                            <field name="analytic_id"/>
-                            <field name="handler_id"/>
-                            <field name="entry_user_id"/>
-                            <field name="entry_user_text"/>
-                            <field name="entry_time"/>
-                            <field name="legacy_visible_creator_name" readonly="1"/>
-                            <field name="legacy_visible_created_time" readonly="1"/>
-                            <field name="archived"/>
-                            <field name="legacy_status"/>
-                        </group>
-                    </group>
-                    <group string="支出金额概览" colspan="2">
-                        <field name="tax_id"/>
-                        <field name="visible_contract_amount" readonly="1"/>
-                        <field name="legacy_contract_amount" readonly="1"/>
-                        <field name="amount_untaxed" readonly="1"/>
-                        <field name="amount_tax" readonly="1"/>
-                        <field name="amount_total" readonly="1"/>
-                        <field name="amount_final" readonly="1"/>
-                        <field name="settlement_amount" readonly="1"/>
-                        <field name="paid_amount" readonly="1"/>
-                        <field name="unpaid_amount" readonly="1"/>
-                    </group>
                     <notebook>
-                        <page string="合同明细">
+                        <page string="办理类型">
+                            <group>
+                                <field name="name"/>
+                                <field name="subject"/>
+                                <field name="type" readonly="1" invisible="1"/>
+                                <field name="business_category_id" options="{'no_create': True}"/>
+                                <field name="original_contract_id"/>
+                                <field name="document_status"/>
+                                <field name="state" readonly="1"/>
+                                <field name="company_id" readonly="1"/>
+                                <field name="reject_reason" readonly="1" modifiers='{"invisible": [["reject_reason","=",false]]}'/>
+                            </group>
+                        </page>
+                        <page string="项目与供应商/分包方">
+                            <group>
+                                <field name="project_id" required="1"/>
+                                <field name="operation_strategy" readonly="1"/>
+                                <field name="partner_id" string="供应商/分包方" required="1"/>
+                                <field name="expense_contract_category_id"/>
+                                <field name="expense_contract_category_auto_id" readonly="1"/>
+                                <field name="category_id"/>
+                                <field name="contract_type_id"/>
+                                <field name="budget_id"/>
+                                <field name="analytic_id"/>
+                                <field name="handler_id"/>
+                            </group>
+                        </page>
+                        <page string="补充事项">
+                            <group>
+                                <field name="date_contract"/>
+                                <field name="date_start"/>
+                                <field name="date_end"/>
+                                <field name="engineering_address"/>
+                                <field name="engineering_category_text"/>
+                                <field name="engineering_content"/>
+                                <field name="archived"/>
+                            </group>
+                        </page>
+                        <page string="补充明细与金额">
+                            <group>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="tax_id"/>
+                                <field name="visible_contract_amount" readonly="1"/>
+                                <field name="legacy_contract_amount" readonly="1"/>
+                                <field name="amount_untaxed" readonly="1"/>
+                                <field name="amount_tax" readonly="1"/>
+                                <field name="amount_total" readonly="1"/>
+                                <field name="amount_final" readonly="1"/>
+                                <field name="settlement_amount" readonly="1"/>
+                                <field name="paid_amount" readonly="1"/>
+                                <field name="unpaid_amount" readonly="1"/>
+                            </group>
                             <field name="line_ids" context="{'default_contract_id': contract_id}">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
@@ -460,13 +465,29 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="办理说明">
+                            <group>
+                                <field name="note"/>
+                                <field name="attachment_ids" widget="many2many_binary"/>
+                            </group>
+                        </page>
+                        <page string="历史办理信息">
+                            <group>
+                                <field name="legacy_contract_no"/>
+                                <field name="legacy_external_contract_no"/>
+                                <field name="legacy_document_no"/>
+                                <field name="entry_user_id"/>
+                                <field name="entry_user_text"/>
+                                <field name="entry_time"/>
+                                <field name="legacy_visible_creator_name" readonly="1"/>
+                                <field name="legacy_visible_created_time" readonly="1"/>
+                                <field name="legacy_status"/>
+                            </group>
+                        </page>
                         <page string="审批信息">
                             <field name="approval_info"/>
                             <field name="legacy_visible_attachment" string="附件"/>
                             <field name="attachment_text" string="平台附件文本"/>
-                        </page>
-                        <page string="备注">
-                            <field name="note"/>
                         </page>
                     </notebook>
                 </sheet>
@@ -580,6 +601,18 @@
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
 
+    <record id="action_construction_contract_handling" model="ir.actions.act_window">
+        <field name="name">合同办理</field>
+        <field name="res_model">construction.contract</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_construction_contract_tree"/>
+        <field name="views" eval="[(ref('view_construction_contract_tree'), 'tree'), (ref('view_construction_contract_form'), 'form')]"/>
+        <field name="search_view_id" ref="view_construction_contract_search"/>
+        <field name="domain">[('business_category_id.code', 'in', ['contract.income', 'contract.income.supplement', 'contract.expense', 'contract.expense.supplement'])]</field>
+        <field name="context">{'create': True, 'edit': True, 'default_business_category_code': 'contract.income', 'allowed_business_category_codes': ['contract.income', 'contract.income.supplement', 'contract.expense', 'contract.expense.supplement'], 'entry_intent': 'handling', 'disposition_policy': 'merge_by_category', 'entry_target_policy': 'merge_to_list_form_by_business_category', 'business_entry_contract_version': 'business_entry_disposition.v1'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+    </record>
+
     <record id="action_construction_contract_my" model="ir.actions.act_window">
         <field name="name">我的合同</field>
         <field name="res_model">construction.contract</field>
@@ -593,10 +626,15 @@
         <field name="name">收入合同</field>
         <field name="res_model">construction.contract.income</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_construction_contract_income_tree"/>
         <field name="views" eval="[(ref('view_construction_contract_income_tree'), 'tree'), (ref('view_construction_contract_income_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_construction_contract_income_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_construction_contract_income_form')})
+        ]"/>
         <field name="search_view_id" ref="view_construction_contract_income_search"/>
-        <field name="domain">['|', ('legacy_contract_id', '=', False), ('legacy_income_surface_visible', '=', True)]</field>
-        <field name="context">{'default_type': 'out', 'search_default_visible_income': 1}</field>
+        <field name="domain">[('business_category_id.code', '=', 'contract.income')]</field>
+        <field name="context">{'default_type': 'out', 'default_business_category_code': 'contract.income', 'search_default_visible_income': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
 
@@ -604,10 +642,15 @@
         <field name="name">支出合同</field>
         <field name="res_model">construction.contract.expense</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_construction_contract_expense_tree"/>
         <field name="views" eval="[(ref('view_construction_contract_expense_tree'), 'tree'), (ref('view_construction_contract_expense_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_construction_contract_expense_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_construction_contract_expense_form')})
+        ]"/>
         <field name="search_view_id" ref="view_construction_contract_expense_search"/>
-        <field name="domain">[]</field>
-        <field name="context">{'default_type': 'in'}</field>
+        <field name="domain">[('business_category_id.code', '=', 'contract.expense')]</field>
+        <field name="context">{'default_type': 'in', 'default_business_category_code': 'contract.expense'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
 </odoo>

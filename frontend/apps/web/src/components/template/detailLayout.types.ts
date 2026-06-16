@@ -6,7 +6,7 @@ export type DetailSectionView = {
   hint?: string;
   tone?: string;
   isAdvanced?: boolean;
-  columns?: 1 | 2;
+  columns?: 1 | 2 | 3;
   shellClass?: string;
   eyebrow?: string;
   summary?: string;

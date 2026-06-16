@@ -8,6 +8,7 @@
             <tree>
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id" optional="hide"/>
                 <field name="material_name_summary"/>
                 <field name="material_spec_summary"/>
                 <field name="material_uom_summary"/>
@@ -46,7 +47,13 @@
                             invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
                     <button name="%(action_material_plan_to_rfq_wizard)d"
                             type="action"
-                            string="生成采购单"
+                            string="生成询价单"
+                            class="btn-secondary"
+                            groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"
+                            invisible="state != 'approved'"/>
+                    <button name="action_create_purchase_request"
+                            type="object"
+                            string="生成采购申请"
                             class="btn-secondary"
                             groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"
                             invisible="state != 'approved'"/>
@@ -71,6 +78,9 @@
                         <button class="oe_stat_button" type="object" name="action_view_purchase_orders" icon="fa-shopping-cart">
                             <field name="purchase_order_count" widget="statinfo" string="采购单"/>
                         </button>
+                        <button class="oe_stat_button" type="object" name="action_view_purchase_requests" icon="fa-file-text-o">
+                            <field name="purchase_request_count" widget="statinfo" string="采购申请"/>
+                        </button>
                         <button class="oe_stat_button" type="object" name="action_view_purchase_lines" icon="fa-list">
                             <field name="purchase_line_count" widget="statinfo" string="采购明细"/>
                         </button>
@@ -78,6 +88,7 @@
                     <group>
                         <field name="name" readonly="1"/>
                         <field name="project_id" required="1"/>
+                        <field name="business_category_id" readonly="1"/>
                         <field name="date_plan"/>
                     </group>
                     <group>
@@ -139,13 +150,30 @@
         </field>
     </record>
 
+    <record id="view_project_material_plan_search" model="ir.ui.view">
+        <field name="name">project.material.plan.search</field>
+        <field name="model">project.material.plan</field>
+        <field name="arch" type="xml">
+            <search string="物资计划">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="business_category_id"/>
+                <field name="submitted_by"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按业务分类" name="group_business_category" context="{'group_by': 'business_category_id'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
     <!-- 动作 -->
     <record id="action_project_material_plan" model="ir.actions.act_window">
         <field name="name">物资计划</field>
         <field name="res_model">project.material.plan</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_project_material_plan_search"/>
         <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:材料计划')]</field>
-        <field name="context">{'create': False, 'search_default_active_rows': 1}</field>
+        <field name="context">{'create': False, 'search_default_active_rows': 1, 'default_business_category_code': 'material.plan', 'current_business_category_code': 'material.plan'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
     </record>
 
@@ -153,7 +181,9 @@
         <field name="name">我的物资计划</field>
         <field name="res_model">project.material.plan</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">['|', ('create_uid', '=', uid), ('submitted_by', '=', uid)]</field>
+        <field name="search_view_id" ref="view_project_material_plan_search"/>
+        <field name="domain">['&amp;', ('business_category_id.code', '=', 'material.plan'), '|', ('create_uid', '=', uid), ('submitted_by', '=', uid)]</field>
+        <field name="context">{'default_business_category_code': 'material.plan', 'current_business_category_code': 'material.plan'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
     </record>
 

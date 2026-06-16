@@ -47,4 +47,62 @@
         <field name="sequence">60</field>
         <field name="active">1</field>
     </record>
+
+    <record id="dict_settlement_stage_plan" model="sc.dictionary">
+        <field name="name">结算计划</field>
+        <field name="code">plan</field>
+        <field name="type">settlement_stage</field>
+        <field name="sequence">10</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_settlement_stage_declared" model="sc.dictionary">
+        <field name="name">结算申报</field>
+        <field name="code">declared</field>
+        <field name="type">settlement_stage</field>
+        <field name="sequence">20</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_settlement_stage_preliminary" model="sc.dictionary">
+        <field name="name">工程初审</field>
+        <field name="code">preliminary</field>
+        <field name="type">settlement_stage</field>
+        <field name="sequence">30</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_settlement_stage_first_review" model="sc.dictionary">
+        <field name="name">一审</field>
+        <field name="code">first_review</field>
+        <field name="type">settlement_stage</field>
+        <field name="sequence">40</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_settlement_stage_second_review" model="sc.dictionary">
+        <field name="name">二审</field>
+        <field name="code">second_review</field>
+        <field name="type">settlement_stage</field>
+        <field name="sequence">50</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_settlement_stage_final" model="sc.dictionary">
+        <field name="name">结算定案</field>
+        <field name="code">final</field>
+        <field name="type">settlement_stage</field>
+        <field name="sequence">60</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_settlement_stage_spot_check" model="sc.dictionary">
+        <field name="name">结算抽查</field>
+        <field name="code">spot_check</field>
+        <field name="type">settlement_stage</field>
+        <field name="sequence">70</field>
+        <field name="active">1</field>
+    </record>
+
+    <function model="sc.settlement.order" name="_backfill_settlement_stage_ids"/>
 </odoo>

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import fields, models, tools
+from odoo.osv import expression
 
 
 class ScInvoiceCategorySummary(models.Model):
@@ -8,6 +9,9 @@ class ScInvoiceCategorySummary(models.Model):
     _auto = False
     _rec_name = "display_name"
     _order = "company_id, project_id, direction, source_kind, invoice_type, tax_rate"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_invoices",
+    }
 
     display_name = fields.Char(string="汇总项", readonly=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
@@ -61,6 +65,58 @@ class ScInvoiceCategorySummary(models.Model):
     first_invoice_date = fields.Date(string="最早发票日期", readonly=True)
     last_invoice_date = fields.Date(string="最晚发票日期", readonly=True)
     coverage_note = fields.Char(string="承载说明", readonly=True)
+
+    def _empty_aware_domain(self, field_name, value):
+        if value == "未填写":
+            return expression.OR(
+                [
+                    [(field_name, "=", False)],
+                    [(field_name, "=", "")],
+                ]
+            )
+        return [(field_name, "=", value)]
+
+    def _invoice_domain(self):
+        self.ensure_one()
+        domain = [("active", "=", True), ("state", "!=", "cancel")]
+        for field_name in ("company_id", "project_id", "partner_id"):
+            value = self[field_name]
+            domain.append((field_name, "=", value.id if value else False))
+        for field_name in ("direction", "source_kind", "state"):
+            if self[field_name]:
+                domain.append((field_name, "=", self[field_name]))
+        for field_name in ("invoice_type", "tax_rate", "cost_category_name", "invoice_content"):
+            value = self[field_name]
+            if value:
+                domain = expression.AND([domain, self._empty_aware_domain(field_name, value)])
+        return domain
+
+    def action_open_invoices(self):
+        self.ensure_one()
+        action = self.env.ref("smart_construction_core.action_sc_invoice_registration", raise_if_not_found=False)
+        if action:
+            result = action.sudo().read()[0]
+        else:
+            result = {
+                "type": "ir.actions.act_window",
+                "res_model": "sc.invoice.registration",
+                "view_mode": "tree,form",
+            }
+        result.update(
+            {
+                "name": "%s / 发票登记" % (self.display_name or "发票分类"),
+                "domain": self._invoice_domain(),
+                "context": {
+                    "search_default_group_source_kind": 1,
+                    "default_project_id": self.project_id.id if self.project_id else False,
+                    "default_partner_id": self.partner_id.id if self.partner_id else False,
+                    "default_direction": self.direction,
+                    "default_source_kind": self.source_kind,
+                },
+                "target": "current",
+            }
+        )
+        return result
 
     def init(self):
         self._cr.execute(

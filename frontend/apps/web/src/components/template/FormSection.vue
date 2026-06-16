@@ -165,6 +165,7 @@
                       :placeholder="selectPlaceholderText(field)"
                       autocomplete="off"
                       @input="emitMany2oneQuery(field, ($event.target as HTMLInputElement).value)"
+                      @focus="emitMany2oneQuery(field, many2oneTextValue(field))"
                       @change="emitMany2oneCommit(field, ($event.target as HTMLInputElement).value)"
                       @keydown.enter.prevent="emitMany2oneCommit(field, ($event.target as HTMLInputElement).value)"
                       @blur="emitMany2oneCommit(field, ($event.target as HTMLInputElement).value)"
@@ -177,7 +178,7 @@
                           type="button"
                           class="many2one-option"
                           @mousedown.prevent
-                          @click="emitFieldChange(field, option.value)"
+                          @click="emitMany2oneAction(field, option.value, $event)"
                         >
                           {{ option.label }}
                         </button>
@@ -188,7 +189,7 @@
                           type="button"
                           class="many2one-action many2one-action--record"
                           @mousedown.prevent
-                          @click="emitFieldChange(field, field.many2oneOpenToken || '')"
+                          @click="emitMany2oneAction(field, field.many2oneOpenToken || '', $event)"
                         >
                           {{ field.many2oneOpenLabel || '维护当前项' }}
                         </button>
@@ -197,16 +198,16 @@
                           type="button"
                           class="many2one-action"
                           @mousedown.prevent
-                          @click="emitFieldChange(field, field.many2oneSearchToken || '')"
+                          @click="emitMany2oneAction(field, field.many2oneSearchToken || '', $event)"
                         >
                           {{ field.many2oneSearchLabel }}
                         </button>
                         <button
-                          v-if="field.relationCreateMode && field.relationCreateMode !== 'none' && field.many2oneCreateToken"
+                          v-if="field.relationCreateMode === 'page' && field.many2oneCreateToken"
                           type="button"
                           class="many2one-action"
                           @mousedown.prevent
-                          @click="emitFieldChange(field, field.many2oneCreateToken || '')"
+                          @click="emitMany2oneAction(field, field.many2oneCreateToken || '', $event)"
                         >
                           {{ field.many2oneCreateLabel }}
                         </button>
@@ -215,7 +216,7 @@
                           type="button"
                           class="many2one-action"
                           @mousedown.prevent
-                          @click="emitMany2oneCommit(field, many2oneTextValue(field))"
+                          @click="emitMany2oneInlineCreate(field, $event)"
                         >
                           {{ field.many2oneInlineCreateLabel }}
                         </button>
@@ -293,7 +294,7 @@ import { resolveInputPlaceholder, resolveSelectPlaceholder } from './placeholder
 const props = withDefaults(defineProps<{
   title: string;
   hint?: string;
-  columns?: 1 | 2;
+  columns?: 1 | 2 | 3;
   tone?: 'core' | 'advanced';
   fields?: FormSectionFieldSchema[];
   relationAdapter?: RelationFieldAdapter;
@@ -347,7 +348,7 @@ const slots = useSlots();
 const toneClass = computed(() => (props.tone === 'advanced' ? 'template-form-section--advanced' : 'template-form-section--core'));
 const showHead = computed(() => Boolean(props.title || slots.action));
 const gridStyle = computed(() => ({
-  gridTemplateColumns: props.columns === 1 ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+  gridTemplateColumns: props.columns === 1 ? '1fr' : `repeat(${props.columns === 3 ? 3 : 2}, minmax(0, 1fr))`,
 }));
 
 function isBaseFieldType(type: TemplateFieldType) {
@@ -453,7 +454,7 @@ function hasMany2oneDropdown(field: FormSectionFieldSchema) {
     field.relationOptions?.length
     || field.many2oneOpenToken
     || field.many2oneSearchToken
-    || (field.relationCreateMode && field.relationCreateMode !== 'none' && field.many2oneCreateToken)
+    || (field.relationCreateMode === 'page' && field.many2oneCreateToken)
     || showMany2oneInlineCreate(field),
   );
 }
@@ -502,6 +503,17 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
   });
 }
 
+function collapseMany2oneDropdown(event: Event) {
+  const target = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+  const input = target?.closest('.many2one-combobox')?.querySelector('input');
+  window.setTimeout(() => input?.blur(), 0);
+}
+
+function emitMany2oneAction(field: FormSectionFieldSchema, value: string | number | boolean | null, event: Event) {
+  emitFieldChange(field, value);
+  collapseMany2oneDropdown(event);
+}
+
 function emitMany2oneQuery(field: FormSectionFieldSchema, value: string) {
   emit('field-change', {
     name: field.name,
@@ -522,6 +534,11 @@ function emitMany2oneCommit(field: FormSectionFieldSchema, value: string) {
     action: 'commit',
     descriptor: field.descriptor,
   });
+}
+
+function emitMany2oneInlineCreate(field: FormSectionFieldSchema, event: Event) {
+  emitMany2oneCommit(field, many2oneTextValue(field));
+  collapseMany2oneDropdown(event);
 }
 
 function emitDateRangeEndChange(field: FormSectionFieldSchema, value: string | number | boolean | null) {

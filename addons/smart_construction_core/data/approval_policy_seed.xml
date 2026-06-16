@@ -86,6 +86,27 @@
             <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_material_manager"/>
         </record>
 
+        <record id="approval_policy_material_outbound" model="sc.approval.policy">
+            <field name="name">材料出库/损耗</field>
+            <field name="code">material_outbound_optional_approval</field>
+            <field name="sequence">45</field>
+            <field name="target_model">sc.material.outbound</field>
+            <field name="approval_required">0</field>
+            <field name="trigger">submit</field>
+            <field name="mode">none</field>
+            <field name="runtime_state">tier_validation</field>
+            <field name="manager_scope_key">material_manager</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_material_manager"/>
+            <field name="note">默认作为材料出库登记不强制审核；启用后提交进入统一待办审批，适用于损耗、调拨等需要复核的出库业务。</field>
+        </record>
+        <record id="approval_step_material_outbound_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_material_outbound"/>
+            <field name="sequence">10</field>
+            <field name="name">物资中心审核</field>
+            <field name="approval_scope_key">material_manager</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_material_manager"/>
+        </record>
+
         <record id="approval_policy_purchase_order" model="sc.approval.policy">
             <field name="name">采购订单</field>
             <field name="code">purchase_order_approval</field>
@@ -248,6 +269,27 @@
         </record>
         <record id="approval_step_financing_loan_10" model="sc.approval.step">
             <field name="policy_id" ref="approval_policy_financing_loan"/>
+            <field name="sequence">10</field>
+            <field name="name">财务中心审核</field>
+            <field name="approval_scope_key">finance_manager</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+        </record>
+
+        <record id="approval_policy_self_funding_registration" model="sc.approval.policy">
+            <field name="name">自筹垫付/退回</field>
+            <field name="code">self_funding_registration_optional_approval</field>
+            <field name="sequence">102</field>
+            <field name="target_model">sc.self.funding.registration</field>
+            <field name="approval_required">0</field>
+            <field name="trigger">submit</field>
+            <field name="mode">none</field>
+            <field name="runtime_state">tier_validation</field>
+            <field name="manager_scope_key">finance_manager</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+            <field name="note">自筹办理默认不强制审核；启用后提交进入统一待办审批，完成后生成公司-承包人责任事实和资金台账，不生成付款申请。</field>
+        </record>
+        <record id="approval_step_self_funding_registration_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_self_funding_registration"/>
             <field name="sequence">10</field>
             <field name="name">财务中心审核</field>
             <field name="approval_scope_key">finance_manager</field>

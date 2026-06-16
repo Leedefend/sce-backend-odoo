@@ -9,7 +9,7 @@ from ..support.state_guard import raise_guard
 class ScPaymentExecution(models.Model):
     _name = "sc.payment.execution"
     _description = "付款执行"
-    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation", "sc.company.contractor.responsibility.context.mixin"]
     _order = "date_payment desc, id desc"
 
     name = fields.Char(string="单据号", required=True, default="新建", copy=False)
@@ -22,13 +22,21 @@ class ScPaymentExecution(models.Model):
     )
     source_kind = fields.Selection(
         [
-            ("outflow_request", "付款申请残余"),
-            ("actual_outflow", "实付残余"),
+            ("outflow_request", "付款申请"),
+            ("actual_outflow", "实际付款"),
         ],
         string="业务类型",
         default="outflow_request",
         required=True,
         index=True,
+    )
+    execution_flow_label = fields.Char(string="办理事项", compute="_compute_execution_flow_label")
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.payment.execution')]",
     )
     state = fields.Selection(
         [
@@ -60,8 +68,19 @@ class ScPaymentExecution(models.Model):
         index=True,
     )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
-    contract_id = fields.Many2one("construction.contract", string="合同", index=True)
-    payment_request_id = fields.Many2one("payment.request", string="付款申请", index=True, ondelete="set null")
+    contract_id = fields.Many2one(
+        "construction.contract",
+        string="合同",
+        index=True,
+        domain="[('project_id', '=', project_id)]",
+    )
+    payment_request_id = fields.Many2one(
+        "payment.request",
+        string="付款申请",
+        index=True,
+        ondelete="set null",
+        domain="[('project_id', '=', project_id), ('type', '=', 'pay')]",
+    )
     date_payment = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     document_no = fields.Char(string="来源单号", index=True)
     payment_family = fields.Char(string="付款族", index=True)
@@ -82,7 +101,7 @@ class ScPaymentExecution(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: (self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id).id,
     )
     legacy_source_model = fields.Char(string="历史来源模型", index=True, readonly=True)
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
@@ -108,6 +127,8 @@ class ScPaymentExecution(models.Model):
     legacy_visible_request_no = fields.Char(string="历史可见支付申请单号", readonly=True)
     legacy_visible_voucher_no = fields.Char(string="历史可见凭证号", readonly=True)
     legacy_visible_payment_source = fields.Char(string="历史可见付款单关联来源", readonly=True)
+    push_result = fields.Char(string="推送结果", index=True, readonly=True)
+    kingdee_document_no = fields.Char(string="金蝶单据编号", index=True, readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     legacy_visible_entry_date = fields.Char(string="历史可见录入日期", readonly=True)
@@ -134,6 +155,20 @@ class ScPaymentExecution(models.Model):
         ("invoice_amount_nonnegative", "CHECK(invoice_amount >= 0)", "Invoice amount must be non-negative."),
     ]
 
+    @api.depends("source_kind", "payment_family", "payment_method")
+    def _compute_execution_flow_label(self):
+        for record in self:
+            family = (record.payment_family or "").strip()
+            method = (record.payment_method or "").strip()
+            if family:
+                record.execution_flow_label = family
+            elif record.source_kind == "actual_outflow":
+                record.execution_flow_label = _("实际付款登记")
+            elif method:
+                record.execution_flow_label = _("付款执行：%s") % method
+            else:
+                record.execution_flow_label = _("付款执行")
+
     @api.model
     def _context_project_id(self):
         project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
@@ -153,15 +188,28 @@ class ScPaymentExecution(models.Model):
     def _payment_request_values(self, request):
         if not request:
             return {}
+        receipt_account_name = request.payment_account_name or request.partner_account_name or ""
+        receipt_bank_name = request.payment_bank_name or request.partner_bank_name or ""
+        receipt_account_no = request.payment_account_no or request.partner_bank_account or ""
+        payment_account_name = request.legacy_payment_account_name or request.payer_unit or ""
+        payment_account_no = request.legacy_payment_account_no or ""
         return {
             "project_id": request.project_id.id,
             "partner_id": request.partner_id.id,
             "contract_id": request.contract_id.id,
             "payment_request_id": request.id,
+            "source_kind": "actual_outflow",
+            "payment_family": "往来单位付款",
             "document_no": request.name,
             "planned_amount": request.amount or 0.0,
             "paid_amount": request.amount or 0.0,
             "currency_id": request.currency_id.id,
+            "receipt_account_name": receipt_account_name,
+            "receipt_bank_name": receipt_bank_name,
+            "receipt_account_no": receipt_account_no,
+            "payment_account_name": payment_account_name,
+            "payment_account_no": payment_account_no,
+            "note": request.note or request.legacy_visible_remark or "",
         }
 
     @api.onchange("payment_request_id")
@@ -183,9 +231,31 @@ class ScPaymentExecution(models.Model):
                 request = self.env["payment.request"].browse(request_id).exists()
                 for field_name, value in self._payment_request_values(request).items():
                     vals.setdefault(field_name, value)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.payment.execution") or _("Payment Execution")
         return super().create(vals_list)
+
+    @api.model
+    def _resolve_business_category_code(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        if code:
+            return code
+        payment_family = vals.get("payment_family") or self.env.context.get("default_payment_family") or ""
+        if payment_family in ("公司财务支出", "actual_outflow"):
+            return "finance.payment.execution.company"
+        return "finance.payment.execution.partner"
+
+    @api.model
+    def _resolve_business_category_id(self, vals):
+        code = self._resolve_business_category_code(vals)
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", self._name)],
+            limit=1,
+        )
+        return category.id if category else False
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
@@ -217,6 +287,8 @@ class ScPaymentExecution(models.Model):
                     reasons=[_("只有草稿状态的付款执行可以确认")],
                 )
             rec._check_business_anchor_or_raise()
+            rec._check_payment_request_scope_or_raise()
+            rec._check_company_contractor_payment_responsibility_or_raise()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 company = rec.company_id or self.env.company
                 rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
@@ -224,6 +296,7 @@ class ScPaymentExecution(models.Model):
                 rec.write({"state": "confirmed", "reject_reason": False})
 
     def action_paid(self):
+        self._assert_finance_confirm_access()
         policy = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state not in ("draft", "confirmed"):
@@ -234,16 +307,33 @@ class ScPaymentExecution(models.Model):
                     reasons=[_("只有草稿或已确认状态的付款执行可以登记付款")],
                 )
             rec._check_business_anchor_or_raise()
+            rec._check_payment_request_scope_or_raise()
+            rec._check_company_contractor_payment_responsibility_or_raise()
             if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
                 raise UserError(_("付款执行尚未完成统一审批流程。"))
             rec.state = "paid"
             rec._sync_payment_request_done()
+
+    def _has_finance_confirm_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
+    def _assert_finance_confirm_access(self):
+        if not self._has_finance_confirm_access():
+            raise UserError(_("你没有登记付款的财务确认权限。"))
+
+    def _assert_finance_cancel_access(self):
+        if not self._has_finance_confirm_access():
+            raise UserError(_("你没有取消或撤销付款执行的财务权限。"))
 
     def _sync_payment_request_done(self):
         for rec in self:
             request = rec.payment_request_id
             if not request or request.state == "done":
                 continue
+            rec._check_payment_request_scope_or_raise()
             if request.state == "approve" and request.validation_status == "validated":
                 request.action_set_approved()
                 request.invalidate_recordset()
@@ -252,34 +342,89 @@ class ScPaymentExecution(models.Model):
             rounding = request.currency_id.rounding if request.currency_id else 0.01
             if float_compare(rec.paid_amount or 0.0, request.amount or 0.0, precision_rounding=rounding) == -1:
                 raise UserError(_("实付金额低于付款申请金额，不能自动完成付款申请。"))
+            before = request._snapshot_audit_payload()
             request.with_context(payment_soft_gate=True)._ensure_payment_ledger(
                 amount=request.amount or 0.0,
                 ref=rec.name,
                 note=_("auto:payment_execution_paid"),
             )
             request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "done"})
+            after = request._snapshot_audit_payload()
+            request._audit_transition("payment_paid", before, after, action_name="payment_execution_paid")
 
     def action_cancel(self):
+        self._assert_finance_cancel_access()
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移付款执行单据不能在新系统取消。"))
-            if rec.state in ("paid", "legacy_confirmed", "cancel"):
+            if rec.state == "paid":
+                rec._reverse_paid_execution()
+                continue
+            if rec.state in ("legacy_confirmed", "cancel"):
                 raise_guard(
                     "PAYMENT_EXECUTION_INVALID_TRANSITION",
                     f"付款执行[{rec.display_name}]",
                     _("取消付款执行"),
-                    reasons=[_("已付款、历史已确认或已取消的付款执行不能取消")],
+                    reasons=[_("历史已确认或已取消的付款执行不能取消")],
                 )
             rec.state = "cancel"
 
+    def _reverse_paid_execution(self):
+        for rec in self:
+            request = rec.payment_request_id
+            if not request:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_REQUEST",
+                    f"付款执行[{rec.display_name}]",
+                    _("撤销已付款"),
+                    reasons=[_("已付款执行必须关联付款申请才能撤销")],
+                )
+            ledger = self.env["payment.ledger"].sudo().search(
+                [("payment_request_id", "=", request.id)],
+                limit=1,
+            )
+            if not ledger:
+                raise_guard(
+                    "PAYMENT_LEDGER_NOT_FOUND",
+                    f"付款执行[{rec.display_name}]",
+                    _("撤销已付款"),
+                    reasons=[_("未找到对应付款台账，不能自动撤销")],
+                )
+            before = request._snapshot_audit_payload()
+            ledger.with_context(allow_payment_reversal=True).unlink()
+            if request.state == "done":
+                request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "approved"})
+            rec.write({"state": "cancel"})
+            after = request._snapshot_audit_payload()
+            request._audit_transition("payment_reversed", before, after, action_name="payment_execution_cancel")
+            rec.message_post(body=_("已撤销付款登记，并将付款申请退回已批准状态。"))
+
     def _check_business_anchor_or_raise(self):
         for rec in self:
+            if rec.source_origin == "legacy":
+                continue
             if not rec.project_id:
                 raise_guard(
                     "PAYMENT_EXECUTION_MISSING_PROJECT",
                     f"付款执行[{rec.display_name}]",
                     _("办理付款执行"),
                     reasons=[_("付款执行必须关联项目")],
+                )
+            if not rec.payment_request_id:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_REQUEST",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("新系统付款执行必须关联已审批的付款申请")],
+                )
+            request = rec.payment_request_id
+            material_settlement = request.material_settlement_id if request else False
+            if not rec.contract_id and not material_settlement and not (request and request._has_payment_basis()):
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_CONTRACT",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("新系统付款执行必须关联合同或结算依据")],
                 )
             if not rec.partner_id:
                 raise_guard(
@@ -294,6 +439,58 @@ class ScPaymentExecution(models.Model):
                     f"付款执行[{rec.display_name}]",
                     _("办理付款执行"),
                     reasons=[_("实付金额必须大于0")],
+                )
+            payer_account = rec.payment_account_no or rec.bank_account or rec.payment_account_name
+            payee_account = rec.receipt_account_no or rec.receipt_account_name
+            if not payer_account:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_PAYER_ACCOUNT",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("新系统付款执行必须填写付款账户信息")],
+                )
+            if not payee_account:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_PAYEE_ACCOUNT",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("新系统付款执行必须填写收款账户信息")],
+                )
+
+    def _check_payment_request_scope_or_raise(self):
+        for rec in self:
+            request = rec.payment_request_id
+            if not request:
+                continue
+            if rec.source_origin == "legacy" and rec.state == "legacy_confirmed":
+                continue
+            if request.type != "pay":
+                raise UserError(_("付款登记只能关联付款类型的付款申请。"))
+            if rec.project_id and request.project_id and rec.project_id != request.project_id:
+                raise UserError(_("付款登记项目必须与付款申请项目一致。"))
+            if rec.partner_id and request.partner_id and rec.partner_id != request.partner_id:
+                raise UserError(_("付款登记往来单位必须与付款申请往来单位一致。"))
+            if rec.contract_id and request.contract_id and rec.contract_id != request.contract_id:
+                raise UserError(_("付款登记合同必须与付款申请合同一致。"))
+
+    def _company_contractor_payment_responsibility_failures(self, summary, paid_amount):
+        return self._company_contractor_responsibility_balance_failures(summary, paid_amount, _("本次实付金额"))
+
+    def _check_company_contractor_payment_responsibility_or_raise(self):
+        for rec in self:
+            if rec.source_origin == "legacy" and rec.state == "legacy_confirmed":
+                continue
+            summary = rec.company_contractor_responsibility_summary_id
+            if not summary:
+                continue
+            failures = rec._company_contractor_payment_responsibility_failures(summary, rec.paid_amount or 0.0)
+            if failures:
+                raise_guard(
+                    "PAYMENT_EXECUTION_RESPONSIBILITY_BALANCE_BLOCKED",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=failures,
+                    hints=[_("打开公司-承包人责任余额，核对到款确认、自筹、拨付和扣款明细后再继续办理。")],
                 )
 
     def _request_document_approval(self):
@@ -331,3 +528,19 @@ class ScPaymentExecution(models.Model):
                 rec.with_context(skip_validation_check=True).write(
                     {"reject_reason": reason or rec._get_tier_reject_reason()}
                 )
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_payment_execution execution
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE execution.business_category_id IS NULL
+               AND category.target_model = 'sc.payment.execution'
+               AND category.code = CASE
+                   WHEN COALESCE(execution.payment_family, '') IN ('公司财务支出', 'actual_outflow')
+                       THEN 'finance.payment.execution.company'
+                   ELSE 'finance.payment.execution.partner'
+               END
+            """
+        )

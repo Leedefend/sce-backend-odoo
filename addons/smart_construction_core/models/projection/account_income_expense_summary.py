@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models, tools
+from odoo import api, fields, models, tools
+from odoo.exceptions import UserError
+from odoo.osv import expression
 
 
 class ScAccountIncomeExpenseSummary(models.Model):
@@ -8,6 +10,11 @@ class ScAccountIncomeExpenseSummary(models.Model):
     _auto = False
     _rec_name = "display_name"
     _order = "account_type, sort_key, account_name"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_account_master",
+        "action_open_fund_daily_lines",
+        "action_open_transaction_lines",
+    }
 
     display_name = fields.Char(string="统计项", readonly=True)
     row_level = fields.Selection(
@@ -45,6 +52,96 @@ class ScAccountIncomeExpenseSummary(models.Model):
     line_count = fields.Integer(string="明细数", readonly=True)
     coverage_note = fields.Char(string="承载说明", readonly=True)
     sort_key = fields.Char(string="排序键", readonly=True)
+
+    def _raise_readonly_projection(self):
+        raise UserError("账户收支统计表是历史事实汇总结果，请从来源账户、资金日报或账户收支明细维护数据。")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._raise_readonly_projection()
+
+    def write(self, vals):
+        self._raise_readonly_projection()
+
+    def unlink(self):
+        self._raise_readonly_projection()
+
+    def _account_records(self):
+        self.ensure_one()
+        Account = self.env["sc.legacy.account.master"]
+        domain = [("active", "=", True), ("fixed_account", "=", False)]
+        if self.row_level == "account" and self.account_id:
+            return self.account_id
+        if self.account_type:
+            return Account.search(domain + [("account_type", "=", self.account_type)])
+        return Account.browse()
+
+    def _account_domain(self):
+        accounts = self._account_records()
+        if not accounts:
+            return [("id", "=", 0)]
+        return [("id", "in", accounts.ids)]
+
+    def _transaction_line_domain(self):
+        accounts = self._account_records()
+        if not accounts:
+            return [("id", "=", 0)]
+        return [("active", "=", True), ("account_id", "in", accounts.ids)]
+
+    def _fund_daily_line_domain(self):
+        accounts = self._account_records()
+        legacy_ids = [value for value in accounts.mapped("legacy_account_id") if value]
+        account_nos = [value for value in accounts.mapped("account_no") if value]
+        account_names = [value for value in accounts.mapped("name") if value]
+        if not (legacy_ids or account_nos or account_names):
+            return [("id", "=", 0)]
+        line_domain = [("active", "=", True)]
+        match_domains = []
+        if legacy_ids:
+            match_domains.append([("account_legacy_id", "in", legacy_ids)])
+        if account_nos:
+            match_domains.append([("bank_account_no", "in", account_nos)])
+        if account_names:
+            match_domains.append([("account_name", "in", account_names)])
+        return expression.AND([line_domain, expression.OR(match_domains)])
+
+    def _open_action(self, action_xmlid, name, domain, context=None):
+        self.ensure_one()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        result = action.sudo().read()[0] if action else {"type": "ir.actions.act_window", "view_mode": "tree,form"}
+        result.update(
+            {
+                "name": "%s / %s" % (self.display_name or "账户收支统计表", name),
+                "domain": domain,
+                "context": context or {"create": False},
+                "target": "current",
+            }
+        )
+        return result
+
+    def action_open_account_master(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_account_master",
+            "账户主数据",
+            self._account_domain(),
+            {"create": False, "search_default_group_account_type": 1},
+        )
+
+    def action_open_fund_daily_lines(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_fund_daily_line",
+            "资金日报明细",
+            self._fund_daily_line_domain(),
+            {"create": False, "search_default_group_document_date": 1},
+        )
+
+    def action_open_transaction_lines(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_account_transaction_line",
+            "账户收支来源明细",
+            self._transaction_line_domain(),
+            {"create": False, "search_default_group_source_table": 1},
+        )
 
     def init(self):
         self._cr.execute(

@@ -112,7 +112,6 @@ _INDUSTRY_EXTENSION_MODULES = (
     "smart_construction_core",
     "smart_construction_scene",
     "smart_construction_portal",
-    "smart_construction_demo",
 )
 LEGACY_INDUSTRY_EXTENSION_MODULES = _INDUSTRY_EXTENSION_MODULES
 
@@ -583,6 +582,15 @@ def _node_release_gate_keys(node: dict) -> set[str]:
         values.add(f"system.menu_{menu_id}")
     if action_id:
         values.add(f"/a/{action_id}")
+    for option in meta.get("business_category_options") or []:
+        if not isinstance(option, dict):
+            continue
+        option_menu_xmlid = _text(option.get("menu_xmlid"))
+        if option_menu_xmlid:
+            values.add(option_menu_xmlid)
+        option_menu_id = option.get("menu_id")
+        if option_menu_id:
+            values.add(f"system.menu_{option_menu_id}")
     return {item for item in values if item}
 
 
@@ -639,6 +647,9 @@ def _node_is_runtime_business_config_entry(node: dict) -> bool:
     if _node_is_user_acceptance_surface(node):
         return False
     meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    productization_source = _text(meta.get("productization_source"))
+    if productization_source == "smart_construction_custom.user_menu_preference":
+        return True
     if _text(node.get("delivery_bucket")) == "delivery_business_config":
         return True
     if _text(meta.get("delivery_bucket")) == "delivery_business_config":
@@ -1232,6 +1243,25 @@ def _dedupe_nav_siblings_by_identity(nav: list[dict]) -> list[dict]:
     def node_identity(node: dict) -> str:
         meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
         target = node.get("target") if isinstance(node.get("target"), dict) else {}
+        children = node.get("children") if isinstance(node.get("children"), list) else []
+        label = _text(node.get("label") or node.get("title") or node.get("name"))
+        model = _text(node.get("model") or meta.get("model"))
+        category_code = _text(meta.get("default_business_category_code"))
+        integration_target = _text(meta.get("integration_target"))
+        entry_intent = _text(meta.get("entry_intent"))
+        if (
+            not children
+            and label
+            and model
+            and (category_code or integration_target or entry_intent)
+        ):
+            return "semantic:%s:%s:%s:%s:%s" % (
+                label,
+                model,
+                category_code,
+                integration_target,
+                entry_intent,
+            )
         return _text(
             node.get("menu_id")
             or meta.get("menu_id")
@@ -1886,20 +1916,24 @@ class SystemInitHandler(BaseIntentHandler):
                 user_data_acceptance_meta = {
                     "applied": False,
                     "projected": False,
-                    "reason": "user_confirmed_formal_product_menu_locked",
+                    "reason": "delivery_engine_product_navigation_authority",
                 }
-            delivery_nav = _remove_nav_groups_by_label(delivery_nav, {"用户核对菜单"})
+            else:
+                delivery_nav = _remove_nav_groups_by_label(delivery_nav, {"用户核对菜单"})
+                user_data_acceptance_meta["source_user_check_menu_hidden"] = True
             formal_product_menu_meta = {
                 "applied": False,
-                "reason": "formal_entries_released_by_product_policy",
+                "reason": "delivery_engine_released_by_product_policy",
             }
-            delivery_nav, post_append_user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(env, delivery_nav)
-            delivery_nav = _unwrap_internal_nav_groups(delivery_nav, {"产品发布面", "正式业务菜单"})
-            delivery_nav = _rehome_business_master_data_nav_groups(delivery_nav)
-            delivery_nav = _dedupe_nav_siblings_by_identity(delivery_nav)
-            delivery_nav = _sort_business_nav_groups(delivery_nav)
-            if isinstance(user_data_acceptance_meta, dict):
-                user_data_acceptance_meta["source_user_check_menu_hidden"] = True
+            delivery_meta = delivery_payload.get("meta") if isinstance(delivery_payload.get("meta"), dict) else {}
+            delivery_user_menu_config_meta = (
+                delivery_meta.get("user_menu_config")
+                if isinstance(delivery_meta.get("user_menu_config"), dict)
+                else {
+                    "applied": False,
+                    "reason": "not_reported_by_delivery_pre_filter",
+                }
+            )
             delivery_payload["nav"] = delivery_nav
             if isinstance(data.get("delivery_engine_v1"), dict):
                 data["delivery_engine_v1"]["nav"] = delivery_nav
@@ -1911,7 +1945,16 @@ class SystemInitHandler(BaseIntentHandler):
                     data["release_navigation_v1"]["meta"] = release_meta
                 release_meta["user_data_acceptance_only"] = user_data_acceptance_meta
                 release_meta["formal_product_menu_policy"] = formal_product_menu_meta
-                release_meta["user_menu_config_post_append"] = post_append_user_menu_config_meta
+                release_meta["user_menu_config"] = delivery_user_menu_config_meta
+                release_meta["system_init_nav_boundary"] = {
+                    "authority": "delivery_engine_v1",
+                    "semantic_post_processing": False,
+                    "allowed_runtime_filters": [
+                        "platform_release_gate",
+                        "explicit_user_data_acceptance_only",
+                        "explicit_user_menu_config_overlay",
+                    ],
+                }
             data["nav_role_surface"] = data.get("nav") if isinstance(data.get("nav"), list) else []
             data["nav"] = delivery_nav
             nav_meta = data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {}
@@ -1925,7 +1968,11 @@ class SystemInitHandler(BaseIntentHandler):
             )
             nav_meta["user_data_acceptance_only"] = user_data_acceptance_meta
             nav_meta["formal_product_menu_policy"] = formal_product_menu_meta
-            nav_meta["user_menu_config_post_append"] = post_append_user_menu_config_meta
+            nav_meta["user_menu_config"] = delivery_user_menu_config_meta
+            nav_meta["system_init_nav_boundary"] = {
+                "authority": "delivery_engine_v1",
+                "semantic_post_processing": False,
+            }
             data["nav_meta"] = nav_meta
 
         default_route_payload = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}

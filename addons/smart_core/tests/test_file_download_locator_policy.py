@@ -208,6 +208,46 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
         self.assertEqual(refs.primary, ["9612cd3fe152f68af8e08aa486c82128"])
         self.assertEqual(refs.secondary, ["2"])
 
+    def test_uses_construction_diary_line_attachment_ref_as_primary_legacy_ref(self):
+        module = _load_handler()
+
+        class _Record:
+            _fields = {
+                "legacy_attachment_ref": object(),
+                "legacy_line_attachment_ref": object(),
+                "raw_payload": object(),
+            }
+            legacy_attachment_ref = "header-ref"
+            legacy_line_attachment_ref = "line-ref"
+            raw_payload = ""
+
+        handler = module.FileDownloadHandler(env=_Env())
+
+        refs = handler._legacy_attachment_refs(_Record())
+
+        self.assertEqual(refs.primary, ["header-ref", "line-ref"])
+
+    def test_legacy_file_id_reports_online_file_missing_when_index_and_old_service_miss(self):
+        module = _load_handler()
+
+        class _Attachment:
+            id = 98332
+            type = "url"
+            url = "legacy-file-id://808100ee91b3945c376c09278beb9cc1"
+            name = "历史附件"
+            mimetype = ""
+
+        old_fetch = module._fetch_online_legacy_file_by_bill_id
+        module._fetch_online_legacy_file_by_bill_id = lambda *_args, **_kwargs: None
+        try:
+            result = module.FileDownloadHandler(env=_Env())._read_legacy_file(_Attachment())
+        finally:
+            module._fetch_online_legacy_file_by_bill_id = old_fetch
+
+        self.assertTrue(result["error"])
+        self.assertEqual(result["code"], 404)
+        self.assertEqual(result["message"], "旧系统未返回该历史附件文件")
+
     def test_online_legacy_attachment_fallback_can_be_disabled(self):
         module = _load_handler()
         old_value = os.environ.get(module.LEGACY_ONLINE_ATTACHMENT_FALLBACK_ENV)
@@ -316,7 +356,86 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
             else:
                 os.environ["SC_LEGACY_FILE_HTTP_BASE"] = old_base
 
-        self.assertEqual(seen["url"], "https://files.example/legacy/UserFile/2026/a%20b.pdf")
+        self.assertEqual(seen["url"], "https://files.example/legacy/UploadFile/UserFile/2026/a%20b.pdf")
+        self.assertEqual(result["datas"], "cmVtb3Rl")
+
+    def test_reads_remote_legacy_file_from_default_old_system_base(self):
+        module = _load_handler()
+
+        class _Response:
+            headers = None
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return b"remote"
+
+        seen = []
+        old_base = os.environ.get("SC_LEGACY_FILE_HTTP_BASE")
+        old_urlopen = module.urlopen
+        os.environ.pop("SC_LEGACY_FILE_HTTP_BASE", None)
+
+        def _urlopen(request, timeout=0):
+            seen.append(request.full_url)
+            if request.full_url.startswith("https://www.builderp.cn/SCBS/UploadFile/"):
+                return _Response()
+            raise OSError("missing")
+
+        module.urlopen = _urlopen
+        try:
+            result = module._read_remote_legacy_file_path("UploadFile/UserFile/2026/a.pdf")
+        finally:
+            module.urlopen = old_urlopen
+            if old_base is not None:
+                os.environ["SC_LEGACY_FILE_HTTP_BASE"] = old_base
+
+        self.assertIn("https://www.builderp.cn/SCBS/UploadFile/UserFile/2026/a.pdf", seen)
+        self.assertEqual(result["datas"], "cmVtb3Rl")
+
+    def test_reads_remote_legacy_home_file_new_path_from_oldsystem_base(self):
+        module = _load_handler()
+
+        class _Response:
+            headers = None
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return b"remote"
+
+        seen = []
+        old_base = os.environ.get("SC_LEGACY_FILE_HTTP_BASE")
+        old_urlopen = module.urlopen
+        os.environ["SC_LEGACY_FILE_HTTP_BASE"] = "https://files.example/legacy"
+
+        def _urlopen(request, timeout=0):
+            seen.append(request.full_url)
+            if request.full_url.endswith("/UploadFile/OldSystem/File_New/SignalPic/a.jpg"):
+                return _Response()
+            raise OSError("missing")
+
+        module.urlopen = _urlopen
+        try:
+            result = module._read_remote_legacy_file_path("~/File_New/SignalPic/a.jpg")
+        finally:
+            module.urlopen = old_urlopen
+            if old_base is None:
+                os.environ.pop("SC_LEGACY_FILE_HTTP_BASE", None)
+            else:
+                os.environ["SC_LEGACY_FILE_HTTP_BASE"] = old_base
+
+        self.assertIn(
+            "https://files.example/legacy/UploadFile/OldSystem/File_New/SignalPic/a.jpg",
+            seen,
+        )
         self.assertEqual(result["datas"], "cmVtb3Rl")
 
 

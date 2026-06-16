@@ -14,6 +14,7 @@ class ScDictionary(models.Model):
       - contract_type     合同方向（收入/支出）
       - contract_category 合同类别（施工、监理、材料采购等）
       - expense_contract_category 支出合同分类（材料、劳务、机械等）
+      - settlement_stage  结算阶段（计划、申报、审核、定案等）
     """
     _name = 'sc.dictionary'
     _description = 'Smart Construction Dictionary'
@@ -35,6 +36,7 @@ class ScDictionary(models.Model):
         ('contract_type', '合同方向'),
         ('contract_category', '合同类别'),
         ('expense_contract_category', '支出合同分类'),
+        ('settlement_stage', '结算阶段'),
     ], string='字典类型', required=True, index=True)
 
     sequence = fields.Integer('排序', default=10)

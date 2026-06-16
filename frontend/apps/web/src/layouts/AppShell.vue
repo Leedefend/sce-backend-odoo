@@ -152,33 +152,66 @@
       </div>
     </aside>
 
-    <section class="content" :class="{ 'content--scene-compact': sceneHeaderMinimal }">
+    <section
+      class="content"
+      :class="{ 'content--scene-compact': sceneHeaderMinimal, 'content--with-activity-tabs': activityPages.length }"
+    >
       <header
         class="topbar sc-toolbar"
         :class="{ 'topbar--compact': activeLayout.header === 'compact', 'topbar--minimal': useMinimalTopbar, 'topbar--scene-minimal': sceneHeaderMinimal }"
       >
         <div class="topbar-main">
           <p v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="eyebrow">智能工程协作平台</p>
-          <div v-if="!sceneHeaderMinimal" class="breadcrumb">
-            <button
-              v-for="(item, index) in breadcrumb"
-              :key="`${item.label}-${index}`"
-              class="crumb"
-              :class="{ active: index === breadcrumb.length - 1 }"
-              :disabled="!item.to"
-              @click="item.to && router.push(item.to)"
-            >
-              {{ item.label }}
-            </button>
+          <div v-if="!sceneHeaderMinimal" class="topbar-title-row">
+            <div class="breadcrumb">
+              <button
+                v-for="(item, index) in displayBreadcrumb"
+                :key="`${item.label}-${index}`"
+                class="crumb"
+                :class="{ active: index === displayBreadcrumb.length - 1 }"
+                :disabled="!item.to"
+                @click="item.to && router.push(item.to)"
+              >
+                {{ item.label }}
+              </button>
+            </div>
+            <h1 v-if="showTopbarHeadline" class="headline">{{ pageTitle }}</h1>
           </div>
           <p v-if="!useMinimalTopbar && sceneHeaderMinimal && sceneHeaderAnchorLine" class="scene-anchor-line">{{ sceneHeaderAnchorLine }}</p>
-          <h1 v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="headline">{{ pageTitle }}</h1>
           <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
         </div>
         <div class="topbar-actions">
+          <GlobalMessagePanel />
           <button class="theme-switch sc-btn sc-btn-sm" type="button" @click="toggleTheme">主题：{{ themeLabel }}</button>
         </div>
       </header>
+
+      <nav v-if="activityPages.length" class="activity-tabs" aria-label="活动页面">
+        <div
+          v-for="page in activityPages"
+          :key="page.key"
+          class="activity-tab"
+          :class="{ active: page.key === activeActivityPageKey }"
+        >
+          <button
+            class="activity-tab-main"
+            type="button"
+            :title="page.title"
+            @click="activateActivityPage(page)"
+          >
+            <span>{{ page.title }}</span>
+          </button>
+          <button
+            class="activity-tab-close"
+            type="button"
+            :aria-label="`关闭 ${page.title}`"
+            :title="`关闭 ${page.title}`"
+            @click.stop="closeActivityPage(page)"
+          >
+            ×
+          </button>
+        </div>
+      </nav>
 
       <StatusPanel
         v-if="initStatus === 'loading'"
@@ -228,7 +261,8 @@ import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
-import { useSessionStore } from '../stores/session';
+import GlobalMessagePanel from '../components/GlobalMessagePanel.vue';
+import { useSessionStore, type ActivityPage } from '../stores/session';
 import { intentRequest } from '../api/intents';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { resolveMenuAction } from '../app/resolvers/menuResolver';
@@ -321,7 +355,8 @@ const roleSurface = computed(() => session.roleSurface);
 const shellLogoText = computed(() => config.appBrand.shellLogoText || 'SC');
 const rootNode = computed(() => (menuTree.value.length === 1 ? menuTree.value[0] : null));
 const menuNodes = computed(() => rootNode.value?.children ?? menuTree.value);
-const menuCount = computed(() => menuNodes.value.length);
+const visibleMenuNodes = computed(() => menuNodes.value);
+const menuCount = computed(() => visibleMenuNodes.value.length);
 const routeAllowsEmptyMenu = computed(() => route.meta?.adminOnly === true || route.path.startsWith('/admin/'));
 const rootTitle = computed(() => {
   const root = rootNode.value;
@@ -398,9 +433,8 @@ const currentProjectLabel = computed(() => {
     return projectContext.value?.message || '未启用';
   }
   const selected = selectedProject.value;
-  const scopeParts = [selectedCompanyLabel.value, selectedOperationLabel.value].filter(Boolean);
-  if (!selected) return scopeParts.length ? `全部记录 · ${scopeParts.join(' / ')}` : '全部记录';
-  return projectOptionLabel(selected);
+  if (!selected) return '全部记录';
+  return projectNameLabel(selected);
 });
 const projectSearchPlaceholder = computed(() =>
   String(projectContext.value?.selector?.placeholder || '搜索项目名称').trim() || '搜索项目名称',
@@ -485,6 +519,7 @@ const useMinimalTopbar = computed(() =>
   || route.name === 'home'
   || businessRouteUsesCompactTopbar.value,
 );
+const showTopbarHeadline = computed(() => !sceneHeaderMinimal.value && (!useMinimalTopbar.value || route.name === 'record'));
 const sidebarClass = computed(() =>
   activeLayout.value.sidebar === 'scroll' ? 'sidebar--scroll' : 'sidebar--fixed'
 );
@@ -541,9 +576,14 @@ function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
 
 function projectOptionLabel(option: ProjectContextOption | null | undefined) {
   if (!option) return '';
-  const label = String(option.display_name || option.name || `记录 ${option.id}`).trim();
+  const label = projectNameLabel(option);
   const scope = String(option.operation_strategy_label || option.operation_strategy || '').trim();
   return scope ? `${label} · ${scope}` : label;
+}
+
+function projectNameLabel(option: ProjectContextOption | null | undefined) {
+  if (!option) return '';
+  return String(option.display_name || option.name || `记录 ${option.id}`).trim();
 }
 
 function operationScopeLabel(option: BusinessScopeOperationOption | null | undefined) {
@@ -802,7 +842,15 @@ function resolveActionBusinessTitle(action: unknown) {
   return '';
 }
 
+const routeBusinessCategoryLabel = computed(() => asText(
+  route.query.current_business_category_label
+  || route.query.default_business_category_label,
+));
+
 const pageTitle = computed(() => {
+  if (routeBusinessCategoryLabel.value) {
+    return routeBusinessCategoryLabel.value;
+  }
   const sceneKey = routeSceneKey.value;
   if (sceneKey) {
     const scene = getSceneByKey(sceneKey);
@@ -1191,15 +1239,26 @@ const breadcrumb = computed(() => {
     });
   }
   if (route.name === 'action') {
-    const label = session.currentAction?.name || `动作 ${route.params.actionId ?? ''}`.trim();
+    const label = routeBusinessCategoryLabel.value || session.currentAction?.name || `动作 ${route.params.actionId ?? ''}`.trim();
     crumbs.push({ label });
   }
   if (route.name === 'record') {
-    const recordLabel = `记录 ${route.params.id ?? ''}`.trim();
+    const recordLabel = routeBusinessCategoryLabel.value || `记录 ${route.params.id ?? ''}`.trim();
     crumbs.push({ label: recordLabel });
   }
   if (!crumbs.length) {
     crumbs.push({ label: '角色首页' });
+  }
+  return crumbs;
+});
+
+const displayBreadcrumb = computed(() => {
+  const title = pageTitle.value.trim();
+  const crumbs = breadcrumb.value;
+  if (!title || !crumbs.length) return crumbs;
+  const last = crumbs[crumbs.length - 1];
+  if (!last.to && last.label.trim() === title) {
+    return crumbs.slice(0, -1);
   }
   return crumbs;
 });
@@ -1245,7 +1304,9 @@ function filterNodes(nodes: NavNode[], q: string): NavNode[] {
   return walk(nodes);
 }
 
-const filteredMenu = computed(() => filterNodes(menuNodes.value, query.value));
+const filteredMenu = computed(() => filterNodes(visibleMenuNodes.value, query.value));
+const activityPages = computed(() => session.activityPages);
+const activeActivityPageKey = computed(() => session.activeActivityPageKey);
 
 function buildMenuSelectionQuery(): LocationQueryRaw {
   const next: LocationQueryRaw = {};
@@ -1264,9 +1325,9 @@ function handleSelect(node: NavNode) {
     node.menu_id = node.id as number;
   }
   const targetMenuId = Number(node.menu_id || node.id || 0);
+  const menuQuery = buildMenuSelectionQuery();
   if (targetMenuId <= 0) return;
   const resolved = resolveMenuAction(menuTree.value, targetMenuId);
-  const menuQuery = buildMenuSelectionQuery();
   if (resolved.kind === 'redirect') {
     const entryTarget = asDict(resolved.target?.entry_target);
     if (entryTarget) {
@@ -1296,6 +1357,47 @@ function handleSelect(node: NavNode) {
 
 function openRoleLanding() {
   router.push(roleLandingPath.value).catch(() => {});
+}
+
+function resolveActivityPageRoute(page: ActivityPage): string {
+  const baseRoute = String(page.route || '').trim();
+  if (!baseRoute || !page.runtime_query || !Object.keys(page.runtime_query).length) return baseRoute;
+  const [beforeHash, hashText = ''] = baseRoute.split('#', 2);
+  const [path, queryText = ''] = beforeHash.split('?', 2);
+  const params = new URLSearchParams(queryText);
+  Object.entries(page.runtime_query).forEach(([key, raw]) => {
+    params.delete(key);
+    const values = Array.isArray(raw) ? raw : [raw];
+    values.forEach((value) => {
+      const text = String(value || '').trim();
+      if (text) params.append(key, text);
+    });
+  });
+  const nextQuery = params.toString();
+  const hash = hashText ? `#${hashText}` : '';
+  return `${path}${nextQuery ? `?${nextQuery}` : ''}${hash}`;
+}
+
+async function activateActivityPage(page: ActivityPage) {
+  if (!page?.key || !page.route) return;
+  await session.applyActivityProjectContext(page.project_context);
+  const targetRoute = resolveActivityPageRoute(page);
+  if (route.fullPath !== targetRoute) {
+    await router.push(targetRoute).catch(() => {});
+  }
+  session.markActivityPageActive(page.key);
+}
+
+async function closeActivityPage(page: ActivityPage) {
+  if (!page?.key) return;
+  const wasActive = page.key === activeActivityPageKey.value;
+  const nextPage = session.closeActivityPage(page.key);
+  if (!wasActive) return;
+  if (nextPage) {
+    await activateActivityPage(nextPage);
+    return;
+  }
+  await router.push(roleLandingPath.value || '/').catch(() => {});
 }
 
 async function refreshInit() {
@@ -1777,10 +1879,10 @@ async function logout() {
 }
 
 .content {
-  padding: 10px 20px;
+  padding: 8px 18px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   height: 100vh;
   overflow: auto;
@@ -1788,9 +1890,13 @@ async function logout() {
   background: var(--sc-app-bg);
 }
 
+.content--with-activity-tabs {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
 .content--scene-compact {
   gap: 4px;
-  padding: 10px 20px;
+  padding: 8px 18px;
 }
 
 .topbar {
@@ -1800,8 +1906,8 @@ async function logout() {
   flex-wrap: wrap;
   min-width: 0;
   background: var(--panel);
-  border-radius: 10px;
-  padding: 6px 10px;
+  border-radius: 8px;
+  padding: 5px 9px;
   border: 1px solid var(--sc-app-border);
   box-shadow: var(--sc-app-shadow);
 }
@@ -1812,7 +1918,7 @@ async function logout() {
 }
 
 .topbar--compact {
-  padding: 6px 10px;
+  padding: 5px 9px;
 }
 
 .topbar--scene-minimal {
@@ -1827,6 +1933,13 @@ async function logout() {
   margin: 0;
   font-size: 12px;
   color: var(--sc-semantic-text-muted);
+}
+
+.topbar-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .topbar--compact .breadcrumb {
@@ -1875,10 +1988,11 @@ async function logout() {
 }
 
 .headline {
-  margin: 2px 0 0;
-  font-size: 20px;
-  line-height: 1.12;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.15;
   font-weight: 700;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
@@ -1894,14 +2008,15 @@ async function logout() {
   gap: 4px;
   margin: 0;
   min-width: 0;
+  flex: 0 1 auto;
 }
 
 .crumb {
   background: transparent;
   border: 1px solid transparent;
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -1932,6 +2047,76 @@ async function logout() {
 .topbar-actions {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.activity-tabs {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0;
+  scrollbar-width: thin;
+}
+
+.activity-tab {
+  flex: 0 1 132px;
+  min-width: 78px;
+  max-width: 176px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-items: center;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 5px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
+  overflow: hidden;
+}
+
+.activity-tab.active {
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+}
+
+.activity-tab-main,
+.activity-tab-close {
+  min-width: 0;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.activity-tab-main {
+  padding: 0 4px 0 6px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.activity-tab-main span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-tab-close {
+  width: 18px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.activity-tab-close:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--sc-app-danger-bg, #fee2e2) 70%, transparent);
 }
 
 .theme-switch {

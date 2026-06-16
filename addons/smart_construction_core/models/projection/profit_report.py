@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import calendar
+
 from odoo import fields, models, tools
 
 
@@ -10,6 +12,12 @@ class ProjectProfitCompare(models.Model):
     _auto = False
     _rec_name = "project_id"
     _order = "project_id, period, wbs_id"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_actual_revenue_lines",
+        "action_open_budget_revenue_lines",
+        "action_open_actual_cost_ledger",
+        "action_open_budget_cost_allocations",
+    }
 
     project_id = fields.Many2one("project.project", string="项目", readonly=True)
     period = fields.Char("期间", readonly=True)
@@ -31,6 +39,109 @@ class ProjectProfitCompare(models.Model):
         "毛利率(%)", readonly=True,
         help="实际毛利 / 实际收入，当实际收入为 0 时显示 0%。",
     )
+
+    def _dimension_domain(self, include_period=True):
+        self.ensure_one()
+        domain = [("project_id", "=", self.project_id.id)]
+        if self.wbs_id:
+            domain.append(("wbs_id", "=", self.wbs_id.id))
+        if include_period and self.period and self.period != "TOTAL":
+            domain.extend(self._period_domain())
+        return domain
+
+    def _period_domain(self):
+        if not self.period or self.period == "TOTAL":
+            return []
+        try:
+            year, month = (int(part) for part in self.period.split("-", 1))
+            last_day = calendar.monthrange(year, month)[1]
+        except (TypeError, ValueError):
+            return [("period", "=", self.period)]
+        return [
+            ("date", ">=", "%04d-%02d-01" % (year, month)),
+            ("date", "<=", "%04d-%02d-%02d" % (year, month, last_day)),
+        ]
+
+    def _action_context(self):
+        self.ensure_one()
+        context = dict(self.env.context or {})
+        context.update(
+            {
+                "default_project_id": self.project_id.id,
+                "search_default_project_id": self.project_id.id,
+            }
+        )
+        if self.wbs_id:
+            context.update(
+                {
+                    "default_wbs_id": self.wbs_id.id,
+                    "search_default_wbs_id": self.wbs_id.id,
+                }
+            )
+        return context
+
+    def action_open_actual_cost_ledger(self):
+        self.ensure_one()
+        action = self.env.ref("smart_construction_core.action_project_cost_ledger").sudo().read()[0]
+        action.update(
+            {
+                "name": "实际成本来源 / %s" % (self.project_id.display_name or "项目"),
+                "domain": self._dimension_domain(include_period=True),
+                "context": self._action_context(),
+                "target": "current",
+            }
+        )
+        return action
+
+    def action_open_budget_cost_allocations(self):
+        self.ensure_one()
+        action = self.env.ref("smart_construction_core.action_project_budget_cost_alloc").sudo().read()[0]
+        domain = [("project_id", "=", self.project_id.id)]
+        if self.wbs_id:
+            domain.append(("budget_boq_line_id.wbs_id", "=", self.wbs_id.id))
+        action.update(
+            {
+                "name": "预算成本来源 / %s" % (self.project_id.display_name or "项目"),
+                "domain": domain,
+                "context": self._action_context(),
+                "target": "current",
+            }
+        )
+        return action
+
+    def action_open_budget_revenue_lines(self):
+        self.ensure_one()
+        domain = self._dimension_domain(include_period=False)
+        domain.append(("budget_id.is_active", "=", True))
+        return {
+            "type": "ir.actions.act_window",
+            "name": "预算收入来源 / %s" % (self.project_id.display_name or "项目"),
+            "res_model": "project.budget.boq.line",
+            "view_mode": "tree,form",
+            "domain": domain,
+            "context": self._action_context(),
+            "target": "current",
+        }
+
+    def action_open_actual_revenue_lines(self):
+        self.ensure_one()
+        domain = self._dimension_domain(include_period=True)
+        domain.extend(
+            [
+                ("move_id.state", "=", "posted"),
+                ("move_id.move_type", "in", ["out_invoice", "out_refund"]),
+                ("account_id.internal_group", "=", "income"),
+            ]
+        )
+        return {
+            "type": "ir.actions.act_window",
+            "name": "实际收入来源 / %s" % (self.project_id.display_name or "项目"),
+            "res_model": "account.move.line",
+            "view_mode": "tree,form",
+            "domain": domain,
+            "context": self._action_context(),
+            "target": "current",
+        }
 
     def init(self):
         tools.drop_view_if_exists(self._cr, self._table)

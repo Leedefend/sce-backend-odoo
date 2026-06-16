@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_p1_relationship_review_queue_search" model="ir.ui.view">
+        <field name="name">sc.p1.relationship.review.queue.search</field>
+        <field name="model">sc.p1.relationship.review.queue</field>
+        <field name="arch" type="xml">
+            <search string="P1关系人工复核队列">
+                <field name="candidate_value"/>
+                <field name="source_model"/>
+                <field name="candidate_field"/>
+                <field name="project_id"/>
+                <filter string="半自动候选" name="hybrid_candidate" domain="[('recommendation', '=', 'hybrid_candidate')]"/>
+                <filter string="人工复核" name="manual_review_candidate" domain="[('recommendation', '=', 'manual_review_candidate')]"/>
+                <filter string="证据不足" name="insufficient_evidence" domain="[('recommendation', '=', 'insufficient_evidence')]"/>
+                <filter string="有正式目标" name="has_target_match" domain="[('target_match_count', '>', 0)]"/>
+                <group expand="0" string="分组">
+                    <filter string="业务域" name="group_source_family" context="{'group_by': 'source_family'}"/>
+                    <filter string="来源模型" name="group_source_model" context="{'group_by': 'source_model'}"/>
+                    <filter string="目标字段" name="group_target_field" context="{'group_by': 'target_field'}"/>
+                    <filter string="来源字段" name="group_candidate_field" context="{'group_by': 'candidate_field'}"/>
+                    <filter string="复核等级" name="group_recommendation" context="{'group_by': 'recommendation'}"/>
+                    <filter string="项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_p1_relationship_review_queue_tree" model="ir.ui.view">
+        <field name="name">sc.p1.relationship.review.queue.tree</field>
+        <field name="model">sc.p1.relationship.review.queue</field>
+        <field name="arch" type="xml">
+            <tree string="P1关系人工复核队列" create="0" edit="0" delete="0">
+                <field name="source_family"/>
+                <field name="source_model"/>
+                <field name="target_field"/>
+                <field name="match_kind"/>
+                <field name="candidate_field"/>
+                <field name="candidate_value"/>
+                <field name="project_id"/>
+                <field name="candidate_record_count" sum="待复核记录数"/>
+                <field name="target_match_count"/>
+                <field name="recommendation"/>
+                <field name="review_reason"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_p1_relationship_review_queue_form" model="ir.ui.view">
+        <field name="name">sc.p1.relationship.review.queue.form</field>
+        <field name="model">sc.p1.relationship.review.queue</field>
+        <field name="arch" type="xml">
+            <form string="P1关系人工复核队列" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="display_name"/>
+                        <field name="review_reason"/>
+                    </group>
+                    <group string="来源口径">
+                        <field name="source_family"/>
+                        <field name="source_model"/>
+                        <field name="candidate_field"/>
+                        <field name="candidate_value"/>
+                        <field name="project_id"/>
+                        <field name="sample_record_names"/>
+                    </group>
+                    <group string="目标关系">
+                        <field name="target_model"/>
+                        <field name="target_field"/>
+                        <field name="match_kind"/>
+                        <field name="candidate_record_count"/>
+                        <field name="target_match_count"/>
+                        <field name="recommendation"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_p1_relationship_review_queue_pivot" model="ir.ui.view">
+        <field name="name">sc.p1.relationship.review.queue.pivot</field>
+        <field name="model">sc.p1.relationship.review.queue</field>
+        <field name="arch" type="xml">
+            <pivot string="P1关系人工复核队列">
+                <field name="source_family" type="row"/>
+                <field name="source_model" type="row"/>
+                <field name="recommendation" type="col"/>
+                <field name="candidate_record_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_sc_p1_relationship_review_queue" model="ir.actions.act_window">
+        <field name="name">P1关系人工复核队列</field>
+        <field name="res_model">sc.p1.relationship.review.queue</field>
+        <field name="view_mode">tree,pivot,form</field>
+        <field name="search_view_id" ref="view_sc_p1_relationship_review_queue_search"/>
+        <field name="context">{'search_default_group_source_family': 1, 'search_default_group_source_model': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin')), (4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+    </record>
+</odoo>

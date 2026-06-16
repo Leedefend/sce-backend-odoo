@@ -1,16 +1,32 @@
 # -*- coding: utf-8 -*-
+import ast
+
 from odoo import api, fields, models, tools
 from odoo.exceptions import UserError
 
 
 class ScFinanceBusinessFact(models.Model):
     _name = "sc.finance.business.fact"
-    _description = "财务业务事实"
+    _description = "项目收付款来源明细"
     _auto = False
     _rec_name = "display_name"
     _order = "document_date desc, id desc"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_source_record",
+        "action_open_business_entry",
+    }
 
-    display_name = fields.Char(string="事实摘要", readonly=True)
+    _BUSINESS_ENTRY_ACTION_BY_FACT_TYPE = {
+        "deduction_paid": "smart_construction_core.action_sc_expense_claim_deduction_paid",
+        "deduction_refund": "smart_construction_core.action_sc_expense_claim_deduction_paid_refund",
+        "tax_deducted": "smart_construction_core.action_sc_tax_deduction_registration_user",
+        "guarantee_out": "smart_construction_core.action_sc_expense_claim_deposit",
+        "guarantee_return": "smart_construction_core.action_sc_expense_claim_deposit",
+        "self_funding_income": "smart_construction_core.action_sc_self_funding_registration_income",
+        "self_funding_refund": "smart_construction_core.action_sc_self_funding_registration_refund",
+    }
+
+    display_name = fields.Char(string="业务摘要", readonly=True)
     business_domain = fields.Selection(
         [
             ("arrival_settlement", "到款确认"),
@@ -19,7 +35,7 @@ class ScFinanceBusinessFact(models.Model):
             ("self_funding", "自筹收入/退回"),
             ("guarantee_deposit", "保证金收退"),
         ],
-        string="业务域",
+        string="收付款类型",
         readonly=True,
         index=True,
     )
@@ -35,7 +51,7 @@ class ScFinanceBusinessFact(models.Model):
             ("guarantee_out", "保证金支出"),
             ("guarantee_return", "保证金退回"),
         ],
-        string="事实类型",
+        string="业务类型",
         readonly=True,
         index=True,
     )
@@ -56,11 +72,11 @@ class ScFinanceBusinessFact(models.Model):
     source_res_id = fields.Integer(string="来源记录ID", readonly=True, index=True)
     source_record_name = fields.Char(string="来源单据号", readonly=True, index=True)
     source_document_no = fields.Char(string="来源编号", readonly=True, index=True)
-    source_menu_hint = fields.Char(string="来源业务入口提示", readonly=True, index=True)
+    source_menu_hint = fields.Char(string="来源业务入口", readonly=True, index=True)
     document_date = fields.Date(string="发生日期", readonly=True, index=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
     currency_id = fields.Many2one("res.currency", string="币种", readonly=True)
-    amount = fields.Monetary(string="事实金额", currency_field="currency_id", readonly=True)
+    amount = fields.Monetary(string="业务金额", currency_field="currency_id", readonly=True)
     balance_effect = fields.Monetary(string="余额影响", currency_field="currency_id", readonly=True)
     cash_in_amount = fields.Monetary(string="现金流入", currency_field="currency_id", readonly=True)
     cash_out_amount = fields.Monetary(string="现金流出", currency_field="currency_id", readonly=True)
@@ -77,7 +93,7 @@ class ScFinanceBusinessFact(models.Model):
     legacy_visible_note = fields.Text(string="历史可见说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("财务业务事实是只读归一投影，请从来源业务单据维护数据。")
+        raise UserError("项目收付款来源明细是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -89,6 +105,174 @@ class ScFinanceBusinessFact(models.Model):
     def unlink(self):
         self._raise_readonly_projection()
 
+    def _action_domain(self, action_result):
+        raw_domain = action_result.get("domain") or []
+        if isinstance(raw_domain, str):
+            try:
+                parsed = ast.literal_eval(raw_domain)
+            except (SyntaxError, ValueError):
+                parsed = []
+            return list(parsed) if isinstance(parsed, list) else []
+        return list(raw_domain) if isinstance(raw_domain, list) else []
+
+    def _source_default_context(self, target_model):
+        self.ensure_one()
+        if not self.source_model or not self.source_res_id or self.source_model not in self.env:
+            return {}
+        source = self.env[self.source_model].browse(self.source_res_id).exists()
+        if not source:
+            return {}
+        context = {}
+
+        def put(context_key, field_name):
+            if field_name in source._fields:
+                value = source[field_name]
+                if value:
+                    context[context_key] = value.id if hasattr(value, "id") else value
+
+        put("default_document_no", "document_no")
+        put("default_document_no", "legacy_document_no")
+        if target_model == "sc.expense.claim":
+            for context_key, field_name in (
+                ("default_applicant_name", "applicant_name"),
+                ("default_department_name", "department_name"),
+                ("default_company_name_text", "company_name_text"),
+                ("default_guarantee_project_name", "guarantee_project_name"),
+                ("default_payee", "payee"),
+                ("default_receipt_account_name", "receipt_account_name"),
+                ("default_payee_account", "payee_account"),
+                ("default_payee_bank", "payee_bank"),
+                ("default_payment_account_name", "payment_account_name"),
+                ("default_payer_account", "payer_account"),
+                ("default_payer_bank", "payer_bank"),
+            ):
+                put(context_key, field_name)
+        elif target_model == "sc.tax.deduction.registration":
+            for context_key, field_name in (
+                ("default_invoice_no", "invoice_no"),
+                ("default_invoice_code", "invoice_code"),
+                ("default_invoice_date", "invoice_date"),
+                ("default_invoice_amount_untaxed", "invoice_amount_untaxed"),
+                ("default_invoice_tax_amount", "invoice_tax_amount"),
+                ("default_invoice_amount_total", "invoice_amount_total"),
+                ("default_deduction_confirm_date", "deduction_confirm_date"),
+                ("default_withholding_amount", "withholding_amount"),
+                ("default_deduction_reason", "deduction_reason"),
+            ):
+                put(context_key, field_name)
+        return context
+
+    def _action_context(self, action_result):
+        raw_context = action_result.get("context") or {}
+        if isinstance(raw_context, str):
+            try:
+                parsed = ast.literal_eval(raw_context)
+            except (SyntaxError, ValueError):
+                parsed = {}
+            context = dict(parsed) if isinstance(parsed, dict) else {}
+        else:
+            context = dict(raw_context) if isinstance(raw_context, dict) else {}
+        context.update(self._source_default_context(action_result.get("res_model")))
+        if self.project_id:
+            context.update(
+                {
+                    "default_project_id": self.project_id.id,
+                    "current_project_id": self.project_id.id,
+                }
+            )
+        if self.partner_id:
+            context.update(
+                {
+                    "default_partner_id": self.partner_id.id,
+                    "current_partner_id": self.partner_id.id,
+                }
+            )
+        if self.document_date:
+            context.update(
+                {
+                    "default_date_claim": self.document_date,
+                    "default_document_date": self.document_date,
+                    "current_document_date": self.document_date,
+                }
+            )
+        if self.amount:
+            context["default_amount"] = abs(self.amount)
+            context["current_business_amount"] = abs(self.amount)
+        if self.display_name:
+            context.setdefault("default_summary", self.display_name)
+            context.setdefault("default_purpose", self.display_name)
+        source_no = self.source_document_no or self.source_record_name
+        if source_no:
+            context["default_document_no"] = source_no
+            context["current_source_document_no"] = source_no
+        if self.partner_name:
+            context["default_partner_name"] = self.partner_name
+            context.setdefault("default_payee", self.partner_name)
+            context.setdefault("default_deduction_unit_name", self.partner_name)
+        note_parts = [
+            self.display_name,
+            "来源入口：%s" % self.source_menu_hint if self.source_menu_hint else False,
+            "来源单号：%s" % source_no if source_no else False,
+            self.legacy_visible_note,
+        ]
+        context.setdefault("default_note", "\n".join(part for part in note_parts if part))
+        if self.fact_type == "tax_deducted":
+            if self.deduction_amount:
+                context["default_deduction_amount"] = abs(self.deduction_amount)
+            if self.tax_amount:
+                context["default_deduction_tax_amount"] = abs(self.tax_amount)
+        return context
+
+    def _source_record(self):
+        self.ensure_one()
+        if not self.source_model or not self.source_res_id or self.source_model not in self.env:
+            raise UserError("没有可打开的来源业务单据。")
+        source = self.env[self.source_model].browse(self.source_res_id).exists()
+        if not source:
+            raise UserError("来源业务单据不存在或已归档。")
+        return source
+
+    def action_open_source_record(self):
+        self.ensure_one()
+        source = self._source_record()
+        return {
+            "type": "ir.actions.act_window",
+            "name": self.source_menu_hint or source.display_name,
+            "res_model": self.source_model,
+            "res_id": source.id,
+            "views": [(False, "form")],
+            "view_mode": "form",
+            "target": "current",
+        }
+
+    def action_open_business_entry(self):
+        self.ensure_one()
+        action_xmlid = self._BUSINESS_ENTRY_ACTION_BY_FACT_TYPE.get(self.fact_type)
+        if not action_xmlid:
+            return self.action_open_source_record()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        if not action:
+            return self.action_open_source_record()
+        result = action.sudo().read()[0]
+        domain = self._action_domain(result)
+        if self.project_id:
+            domain.append(("project_id", "=", self.project_id.id))
+        if self.partner_id and result.get("res_model") in {
+            "sc.expense.claim",
+            "sc.tax.deduction.registration",
+            "sc.self.funding.registration",
+        }:
+            domain.append(("partner_id", "=", self.partner_id.id))
+        result.update(
+            {
+                "name": "%s / 同类正式办理" % (self.source_menu_hint or result.get("name") or "业务办理"),
+                "domain": domain,
+                "context": self._action_context(result),
+                "target": "current",
+            }
+        )
+        return result
+
     def init(self):
         self._cr.execute(
             """
@@ -97,6 +281,7 @@ class ScFinanceBusinessFact(models.Model):
                 to_regclass('sc_expense_claim'),
                 to_regclass('sc_tax_deduction_registration'),
                 to_regclass('sc_legacy_self_funding_fact'),
+                to_regclass('sc_self_funding_registration'),
                 to_regclass('tender_guarantee'),
                 to_regclass('tender_bid'),
                 to_regclass('project_project'),
@@ -332,6 +517,42 @@ class ScFinanceBusinessFact(models.Model):
                     WHERE f.active IS TRUE
                       AND COALESCE(f.deleted_flag, '0') IN ('0', '')
                 ),
+                formal_self_funding AS (
+                    SELECT
+                        410000000 + r.id AS id,
+                        COALESCE(r.name, r.document_no, r.summary, '自筹办理') AS display_name,
+                        'self_funding' AS business_domain,
+                        CASE WHEN r.funding_type = 'refund' THEN 'self_funding_refund' ELSE 'self_funding_income' END AS fact_type,
+                        'canonical' AS balance_policy,
+                        'formal self funding handling; project is attribution and company-contractor balance constraint' AS classification_reason,
+                        'sc.self.funding.registration' AS source_model,
+                        r.id AS source_res_id,
+                        r.name AS source_record_name,
+                        COALESCE(r.document_no, r.name) AS source_document_no,
+                        CASE WHEN r.funding_type = 'refund' THEN '自筹退回办理' ELSE '自筹垫付办理' END AS source_menu_hint,
+                        r.document_date,
+                        r.company_id,
+                        r.currency_id,
+                        COALESCE(r.amount, 0.0) AS amount,
+                        CASE WHEN r.funding_type = 'refund' THEN -COALESCE(r.amount, 0.0) ELSE COALESCE(r.amount, 0.0) END AS balance_effect,
+                        CASE WHEN r.funding_type = 'income' THEN COALESCE(r.amount, 0.0) ELSE 0.0 END AS cash_in_amount,
+                        CASE WHEN r.funding_type = 'refund' THEN COALESCE(r.amount, 0.0) ELSE 0.0 END AS cash_out_amount,
+                        0.0 AS deduction_amount,
+                        0.0 AS paid_amount,
+                        0.0 AS tax_amount,
+                        r.project_id,
+                        r.partner_id,
+                        rp.name AS partner_name,
+                        r.state,
+                        CASE WHEN r.source_origin = 'legacy' THEN 'online_old_scbs:self_funding' ELSE NULL::varchar END AS legacy_source_model,
+                        r.legacy_source_table AS legacy_source_table,
+                        r.legacy_record_id AS legacy_record_id,
+                        COALESCE(r.note, r.summary) AS legacy_visible_note
+                    FROM sc_self_funding_registration r
+                    LEFT JOIN res_partner rp ON rp.id = r.partner_id
+                    WHERE r.active IS TRUE
+                      AND r.state = 'done'
+                ),
                 guarantee AS (
                     SELECT
                         500000000 + g.id AS id,
@@ -374,6 +595,7 @@ class ScFinanceBusinessFact(models.Model):
                 UNION ALL SELECT * FROM deduction_refund
                 UNION ALL SELECT * FROM tax_deduction
                 UNION ALL SELECT * FROM self_funding
+                UNION ALL SELECT * FROM formal_self_funding
                 UNION ALL SELECT * FROM guarantee
             )
             """

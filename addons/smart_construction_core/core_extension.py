@@ -1,11 +1,249 @@
 # -*- coding: utf-8 -*-
 import logging
+from copy import deepcopy
 from typing import Any, Dict, List
 
 from odoo import fields
 from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
+
+
+def _sc_text(value) -> str:
+    return str(value or "").strip()
+
+
+def _sc_field_code(node: dict) -> str:
+    return _sc_text(node.get("fieldCode") or node.get("name") or node.get("field"))
+
+
+def _sc_set_project_label(node: dict, field_name: str, label: str) -> None:
+    code = _sc_field_code(node)
+    if code != field_name:
+        return
+    node["label"] = label
+    node["string"] = label
+    field_info = node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}
+    field_info["label"] = label
+    field_info["string"] = label
+    node["fieldInfo"] = field_info
+    if isinstance(node.get("field_info"), dict):
+        node["field_info"]["label"] = label
+        node["field_info"]["string"] = label
+    component_config = node.get("componentConfig") if isinstance(node.get("componentConfig"), dict) else {}
+    relation_entry = component_config.get("relationEntry") if isinstance(component_config.get("relationEntry"), dict) else {}
+    ui_labels = relation_entry.get("ui_labels") if isinstance(relation_entry.get("ui_labels"), dict) else {}
+    if ui_labels:
+        ui_labels["dialog_title"] = "%s：搜索更多" % label
+        relation_entry["ui_labels"] = ui_labels
+        component_config["relationEntry"] = relation_entry
+        node["componentConfig"] = component_config
+
+
+def _sc_prune_and_label_project_nodes(value):
+    if isinstance(value, list):
+        out = []
+        for item in value:
+            pruned = _sc_prune_and_label_project_nodes(item)
+            if pruned is not None:
+                out.append(pruned)
+        return out
+    if not isinstance(value, dict):
+        return value
+    if _sc_field_code(value) == "user_id" or _sc_text(value.get("widgetId")) == "field.user_id":
+        return None
+    node = dict(value)
+    for field_name, label in {
+        "partner_id": "业主单位",
+        "owner_id": "业主单位",
+        "manager_id": "项目负责人",
+        "responsibility_ids": "项目责任分工",
+        "collaborator_ids": "项目协作成员",
+    }.items():
+        _sc_set_project_label(node, field_name, label)
+    for key in ("children", "tabs", "pages", "nodes", "items", "widgetList"):
+        if isinstance(node.get(key), list):
+            node[key] = _sc_prune_and_label_project_nodes(node[key])
+    return node
+
+
+def _sc_project_field_widget(field_name: str, label: str, field_type: str, *, relation: str = "") -> dict:
+    config = {"fieldType": field_type}
+    if relation:
+        config["relation"] = relation
+    return {
+        "widgetId": "field.%s" % field_name,
+        "widgetType": "table" if field_type in {"one2many", "many2many"} else "select",
+        "fieldCode": field_name,
+        "label": label,
+        "span": 12,
+        "componentKey": "sc.table.data" if field_type in {"one2many", "many2many"} else "sc.select.remote",
+        "capabilities": [],
+        "componentConfig": config,
+    }
+
+
+def _sc_project_field_node(field_name: str, label: str, field_type: str, *, relation: str = "") -> dict:
+    widget = _sc_project_field_widget(field_name, label, field_type, relation=relation)
+    return {
+        "type": "field",
+        "name": field_name,
+        "string": label,
+        "label": label,
+        "fieldInfo": {
+            "name": field_name,
+            "label": label,
+            "string": label,
+            "type": field_type,
+            "relation": relation,
+            "widget": widget["widgetType"],
+        },
+        "field_info": {
+            "name": field_name,
+            "label": label,
+            "string": label,
+            "type": field_type,
+            "relation": relation,
+            "widget": widget["widgetType"],
+        },
+        "widget": widget["widgetType"],
+        "componentKey": widget["componentKey"],
+        "componentConfig": deepcopy(widget["componentConfig"]),
+        "widgetId": widget["widgetId"],
+    }
+
+
+def _sc_node_has_field(value, field_name: str) -> bool:
+    if isinstance(value, list):
+        return any(_sc_node_has_field(item, field_name) for item in value)
+    if not isinstance(value, dict):
+        return False
+    if _sc_field_code(value) == field_name:
+        return True
+    return any(_sc_node_has_field(value.get(key), field_name) for key in ("children", "tabs", "pages", "nodes", "items", "widgetList"))
+
+
+def _sc_append_project_responsibility_group(contract: dict, *, include_collaborators: bool) -> None:
+    layout = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+    tree = layout.get("containerTree") if isinstance(layout.get("containerTree"), list) else []
+    if not tree:
+        return
+    children = []
+    if not _sc_node_has_field(tree, "responsibility_ids"):
+        children.append(_sc_project_field_node("responsibility_ids", "项目责任分工", "one2many", relation="project.responsibility"))
+    if include_collaborators and not _sc_node_has_field(tree, "collaborator_ids"):
+        children.append(_sc_project_field_node("collaborator_ids", "项目协作成员", "many2many", relation="res.users"))
+    if not children:
+        return
+    group = {
+        "type": "group",
+        "name": "sc_project_responsibility_collaboration",
+        "containerId": "sc_project_responsibility_collaboration",
+        "containerType": "group",
+        "string": "项目责任与协作",
+        "label": "项目责任与协作",
+        "children": children,
+        "widgetList": [
+            _sc_project_field_widget("responsibility_ids", "项目责任分工", "one2many", relation="project.responsibility"),
+            *(
+                [_sc_project_field_widget("collaborator_ids", "项目协作成员", "many2many", relation="res.users")]
+                if include_collaborators else []
+            ),
+        ],
+    }
+    target = tree[0] if isinstance(tree[0], dict) else None
+    if target is None:
+        return
+    if isinstance(target.get("children"), list):
+        target["children"].append(group)
+    else:
+        tree.append(group)
+    layout["containerTree"] = tree
+    registry = layout.get("componentRegistry") if isinstance(layout.get("componentRegistry"), dict) else {}
+    registry["sc.table.data"] = {"componentKey": "sc.table.data"}
+    layout["componentRegistry"] = registry
+    contract["layoutContract"] = layout
+    status = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
+    widget_status = [row for row in status.get("widgetStatus", []) if isinstance(row, dict) and _sc_text(row.get("widgetId")) != "field.user_id"]
+    field_names = ["responsibility_ids"]
+    if include_collaborators:
+        field_names.append("collaborator_ids")
+    for field_name in field_names:
+        widget_id = "field.%s" % field_name
+        if not any(_sc_text(row.get("widgetId")) == widget_id for row in widget_status):
+            widget_status.append({"widgetId": widget_id, "visible": True, "readonly": False, "required": False, "disabled": False, "auth": "edit"})
+    status["widgetStatus"] = widget_status
+    contract["statusContract"] = status
+
+
+def smart_core_finalize_unified_page_contract_v2(env, contract, context):
+    if not isinstance(contract, dict):
+        return None
+    source = context.get("source_contract") if isinstance(context, dict) and isinstance(context.get("source_contract"), dict) else {}
+    head = source.get("head") if isinstance(source.get("head"), dict) else {}
+    model = _sc_text(source.get("model") or head.get("model"))
+    view_type = _sc_text(source.get("view_type") or head.get("view_type") or (context or {}).get("view_type")).lower()
+    render_profile = _sc_text(source.get("render_profile") or head.get("render_profile") or (((context or {}).get("meta") or {}).get("params") or {}).get("render_profile")).lower()
+    out = deepcopy(contract)
+    _sc_inject_workflow_contract(env, out, source, model=model, view_type=view_type)
+    if model != "project.project" or view_type != "form":
+        return out if out != contract else None
+    layout = out.get("layoutContract") if isinstance(out.get("layoutContract"), dict) else {}
+    tree = layout.get("containerTree") if isinstance(layout.get("containerTree"), list) else []
+    layout["containerTree"] = _sc_prune_and_label_project_nodes(tree)
+    out["layoutContract"] = layout
+    status = out.get("statusContract") if isinstance(out.get("statusContract"), dict) else {}
+    if isinstance(status.get("widgetStatus"), list):
+        status["widgetStatus"] = [
+            row for row in status["widgetStatus"]
+            if not (isinstance(row, dict) and _sc_text(row.get("widgetId")) == "field.user_id")
+        ]
+        out["statusContract"] = status
+    _sc_append_project_responsibility_group(out, include_collaborators=render_profile != "create")
+    return out
+
+
+def _sc_inject_workflow_contract(env, contract, source, *, model, view_type):
+    if view_type != "form" or not model:
+        return
+    record_id = (
+        source.get("record_id")
+        or source.get("recordId")
+        or ((source.get("head") or {}).get("record_id") if isinstance(source.get("head"), dict) else None)
+    )
+    try:
+        record_id = int(record_id or 0)
+    except Exception:
+        record_id = 0
+    if record_id <= 0:
+        return
+    try:
+        if model not in env.registry:
+            return
+        record = env[model].browse(record_id).exists()
+        if not record:
+            return
+        workflow_contract = env["sc.workflow.contract.service"].describe_record(record)
+    except Exception:
+        _logger.exception("Failed to inject workflow contract for %s,%s", model, record_id)
+        return
+    if not isinstance(workflow_contract, dict) or not workflow_contract:
+        return
+    contract["workflowContract"] = workflow_contract
+    runtime = contract.get("runtimeContract") if isinstance(contract.get("runtimeContract"), dict) else {}
+    runtime["workflowContract"] = workflow_contract
+    contract["runtimeContract"] = runtime
+    status = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
+    global_status = status.get("globalStatus") if isinstance(status.get("globalStatus"), dict) else {}
+    editability = _sc_text(workflow_contract.get("editability"))
+    if editability in {"readonly", "locked"}:
+        global_status["pageAuth"] = "read"
+    elif editability == "editable":
+        global_status["pageAuth"] = "edit"
+    global_status["workflowPhase"] = workflow_contract.get("businessPhase")
+    global_status["approvalPhase"] = workflow_contract.get("approvalPhase")
+    status["globalStatus"] = global_status
+    contract["statusContract"] = status
 
 
 ROLE_SURFACE_OVERRIDES = {
@@ -166,12 +404,17 @@ API_DATA_MUTATION_POLICIES = {
 DRAFT_DELETE_ALLOWED_STATES = ("cancel", "cancelled", "draft")
 
 
-def _state_unlink_policy(model_name: str, business_label: str, allowed_states=DRAFT_DELETE_ALLOWED_STATES):
+def _state_unlink_policy(
+    model_name: str,
+    business_label: str,
+    allowed_states=DRAFT_DELETE_ALLOWED_STATES,
+    state_field: str = "state",
+):
     return {
         "allowed": True,
         "delete_mode": "unlink",
         "policy_kind": "state_limited_business_document",
-        "state_field": "state",
+        "state_field": state_field,
         "allowed_states": list(allowed_states),
         "reason_code": "DRAFT_BUSINESS_DOCUMENT_DELETE_ALLOWED",
         "message": f"允许删除未形成业务事实的{business_label}；仅限草稿/取消等未提交状态，并继续受模型 ACL 与记录规则约束。",
@@ -186,11 +429,16 @@ API_DATA_DRAFT_UNLINK_POLICIES = {
     "payment.request": _state_unlink_policy("payment.request", "付款申请"),
     "sc.general.contract": _state_unlink_policy("sc.general.contract", "综合合同"),
     "sc.expense.claim": _state_unlink_policy("sc.expense.claim", "费用与保证金单据"),
+    "sc.financing.loan": _state_unlink_policy("sc.financing.loan", "融资借款单据"),
+    "sc.invoice.registration": _state_unlink_policy("sc.invoice.registration", "发票登记单据"),
     "sc.payment.execution": _state_unlink_policy("sc.payment.execution", "付款执行单"),
     "sc.receipt.income": _state_unlink_policy("sc.receipt.income", "收款收入登记"),
     "sc.fund.account.operation": _state_unlink_policy("sc.fund.account.operation", "资金账户操作单"),
+    "sc.self.funding.registration": _state_unlink_policy("sc.self.funding.registration", "自筹资金登记"),
+    "sc.tax.deduction.registration": _state_unlink_policy("sc.tax.deduction.registration", "税票抵扣登记"),
     "sc.settlement.order": _state_unlink_policy("sc.settlement.order", "结算单"),
     "sc.settlement.adjustment": _state_unlink_policy("sc.settlement.adjustment", "结算调整单"),
+    "project.material.plan": _state_unlink_policy("project.material.plan", "材料计划"),
     "sc.material.purchase.request": _state_unlink_policy("sc.material.purchase.request", "材料采购申请"),
     "sc.material.acceptance": _state_unlink_policy("sc.material.acceptance", "材料验收单"),
     "sc.material.inbound": _state_unlink_policy("sc.material.inbound", "材料入库单"),
@@ -215,6 +463,30 @@ API_DATA_DRAFT_UNLINK_POLICIES = {
     "sc.safety.issue": _state_unlink_policy("sc.safety.issue", "安全问题"),
     "sc.safety.patrol.task": _state_unlink_policy("sc.safety.patrol.task", "安全巡检任务"),
     "sc.quality.issue": _state_unlink_policy("sc.quality.issue", "质量问题"),
+    "sc.quality.rectification": _state_unlink_policy(
+        "sc.quality.rectification",
+        "质量整改记录",
+        ("submitted", "rectifying", "rechecking", "cancel"),
+        state_field="issue_state",
+    ),
+    "sc.quality.recheck": _state_unlink_policy(
+        "sc.quality.recheck",
+        "质量复验记录",
+        ("rectifying", "rechecking", "cancel"),
+        state_field="issue_state",
+    ),
+    "sc.safety.rectification": _state_unlink_policy(
+        "sc.safety.rectification",
+        "安全整改记录",
+        ("submitted", "rectifying", "rechecking", "cancel"),
+        state_field="issue_state",
+    ),
+    "sc.safety.recheck": _state_unlink_policy(
+        "sc.safety.recheck",
+        "安全复验记录",
+        ("rectifying", "rechecking", "cancel"),
+        state_field="issue_state",
+    ),
     "sc.construction.diary": _state_unlink_policy("sc.construction.diary", "施工日志"),
     "project.progress.entry": _state_unlink_policy("project.progress.entry", "进度填报"),
     "project.risk.action": _state_unlink_policy("project.risk.action", "风险措施"),
@@ -808,21 +1080,77 @@ def get_api_data_mutation_policy_contribution(env, model_name: str, op: str):
     return out
 
 
+def _is_contract_tax_rate_quick_create(env, vals: dict) -> bool:
+    safe_vals = vals if isinstance(vals, dict) else {}
+    if (
+        safe_vals.get("type_tax_use") == "none"
+        and safe_vals.get("amount_type") == "percent"
+        and safe_vals.get("price_include") is False
+        and safe_vals.get("tax_group_id")
+    ):
+        try:
+            group = env["account.tax.group"].sudo().browse(int(safe_vals.get("tax_group_id") or 0)).exists()
+        except Exception:
+            group = env["account.tax.group"].browse()
+        if group and group.name == "合同税率":
+            return True
+    return False
+
+
+def get_intent_permission_model_acl_policy_contribution(env, intent_name: str, model_name: str, access_mode: str, params: dict):
+    if (
+        str(intent_name or "").strip() == "api.data"
+        and str(model_name or "").strip() == "account.tax"
+        and str(access_mode or "").strip() == "create"
+    ):
+        raw_params = params if isinstance(params, dict) else {}
+        payload = raw_params.get("params") if isinstance(raw_params.get("params"), dict) else raw_params
+        if isinstance(raw_params.get("payload"), dict):
+            payload = raw_params.get("payload")
+        vals = payload.get("vals") or payload.get("values") if isinstance(payload, dict) else {}
+        if _is_contract_tax_rate_quick_create(env, vals if isinstance(vals, dict) else {}):
+            return {
+                "skip_model_acl": True,
+                "reason_code": "CONTRACT_TAX_RATE_QUICK_CREATE",
+                "source": "smart_construction_core",
+            }
+    return {"skip_model_acl": False, "source": "smart_construction_core"}
+
+
+def get_api_data_create_execution_policy_contribution(env, model_name: str, vals: dict, ctx: dict, params: dict):
+    model = str(model_name or "").strip()
+    safe_vals = vals if isinstance(vals, dict) else {}
+    if model != "account.tax":
+        return {"sudo": False, "source": "smart_construction_core"}
+    if _is_contract_tax_rate_quick_create(env, safe_vals):
+        return {
+            "allowed": True,
+            "sudo": True,
+            "reason_code": "CONTRACT_TAX_RATE_QUICK_CREATE",
+            "source": "smart_construction_core",
+        }
+    return {
+        "allowed": False,
+        "sudo": False,
+        "reason_code": "ACCOUNT_TAX_NATIVE_CREATE_FORBIDDEN",
+        "message": "税率只能通过合同税率百分比快建，不能维护原生会计税种。",
+        "source": "smart_construction_core",
+    }
+
+
 def get_api_data_unlink_allowed_model_contributions(env):
     policies = {
         str(model_name): dict(policy)
         for model_name, policy in API_DATA_UNLINK_POLICIES.items()
     }
-    if env.user.has_group("smart_construction_core.group_sc_cap_business_config_admin"):
-        policies["project.project"] = {
-            "allowed": True,
-            "delete_mode": "unlink",
-            "reason_code": "PROJECT_MASTER_DELETE_ALLOWED",
-            "message": "允许业务配置管理员删除无业务依赖的项目主数据；存在业务依赖时由项目删除规则阻断。",
-            "source": "smart_construction_core",
-            "requires_group": "smart_construction_core.group_sc_cap_business_config_admin",
-            "dependency_guard": "project.project._raise_project_unlink_blockers",
-        }
+    policies["project.project"] = {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "PROJECT_MASTER_DELETE_ALLOWED",
+        "message": "允许删除无业务依赖的项目主数据；继续受模型 ACL、记录规则与项目依赖阻断约束。",
+        "source": "smart_construction_core",
+        "dependency_guard": "project.project._raise_project_unlink_blockers",
+    }
     return policies
 
 
@@ -1646,6 +1974,14 @@ def smart_core_api_data_mutation_policy(env, model_name: str, op: str):
     return get_api_data_mutation_policy_contribution(env, model_name, op)
 
 
+def smart_core_intent_permission_model_acl_policy(env, intent_name: str, model_name: str, access_mode: str, params: dict):
+    return get_intent_permission_model_acl_policy_contribution(env, intent_name, model_name, access_mode, params)
+
+
+def smart_core_api_data_create_execution_policy(env, model_name: str, vals: dict, ctx: dict, params: dict):
+    return get_api_data_create_execution_policy_contribution(env, model_name, vals, ctx, params)
+
+
 def smart_core_api_data_unlink_allowed_models(env):
     return get_api_data_unlink_allowed_model_contributions(env)
 
@@ -1680,10 +2016,23 @@ def _user_confirmed_formal_list_action_ids(env):
 
 
 def smart_core_finalize_projected_contract_data(env, data, context):
-    del context
     if not isinstance(data, dict):
         return None
     head = data.get("head") if isinstance(data.get("head"), dict) else {}
+    model = str(data.get("model") or head.get("model") or "").strip()
+    view_type = str(data.get("view_type") or head.get("view_type") or (context or {}).get("view_type") or "").strip().lower()
+    if model == "project.project" and (view_type == "form" or isinstance((data.get("views") or {}).get("form") if isinstance(data.get("views"), dict) else None, dict)):
+        projected = dict(data)
+        try:
+            from odoo.addons.smart_construction_core.services.contract_governance_overrides import (
+                _apply_project_ledger_form_surface_governance,
+            )
+
+            _apply_project_ledger_form_surface_governance(projected, "user")
+            return projected
+        except Exception:
+            _logger.exception("Failed to finalize project form contract surface")
+            return None
     try:
         action_id = int(data.get("action_id") or head.get("action_id") or 0)
     except Exception:

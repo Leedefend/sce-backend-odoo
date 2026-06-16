@@ -63,6 +63,11 @@
         <field name="model">sc.material.stock.summary</field>
         <field name="arch" type="xml">
             <form string="库存统计表（新）" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_stock_in_lines" type="object" string="入库来源" class="btn-primary" invisible="in_qty == 0 and in_amount == 0"/>
+                    <button name="action_open_stock_out_lines" type="object" string="出库来源" class="btn-secondary" invisible="out_qty == 0 and out_amount == 0"/>
+                    <button name="action_open_all_stock_lines" type="object" string="全部明细" class="btn-secondary"/>
+                </header>
                 <sheet>
                     <group>
                         <group>

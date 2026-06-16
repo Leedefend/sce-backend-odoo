@@ -45,6 +45,13 @@ class PaymentRequestLine(models.Model):
         string="供应合同",
         index=True,
     )
+    settlement_id = fields.Many2one(
+        "sc.settlement.order",
+        string="结算单",
+        index=True,
+        ondelete="set null",
+        help="历史付款申请明细关联的结算单；用于保留一张付款申请对应多张结算单的旧系统事实。",
+    )
     currency_id = fields.Many2one(
         "res.currency",
         string="币种",

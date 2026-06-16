@@ -4,7 +4,7 @@
 
 财务中心下公司与项目、项目与项目、承包人与项目之间的资金往来事实，不能由单一现有模型完整承接。当前已新增只读投影 `sc.interfund.movement.fact`，把账户调拨、借款、还款三类来源归一为资金往来事实层。
 
-该投影不改变用户已验收菜单，不修改源业务数据，不写入 `sc.treasury.ledger`。
+该投影不改变用户已验收菜单，不修改源业务数据。往来事实层仍用于项目资金归集和历史分析；新办理完成形成真实资金流入/流出时，必须另行通过 `source_model/source_res_id` 写入 `sc.treasury.ledger` 统一现金流台账，且不关联 `payment.request`。
 
 ## 来源覆盖
 
@@ -12,6 +12,12 @@
 
 ```bash
 DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfund_movement.fact.audit
+```
+
+用户数据全覆盖边界审计：
+
+```bash
+DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfund_user_data.full_coverage.audit
 ```
 
 本地开发库 `sc_demo` 审计结果：
@@ -23,15 +29,36 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 | 还款来源 `sc.expense.claim` | 671 | 491,228,204.93 |
 | 资金往来事实合计 | 1,938 | 1,259,959,601.92 |
 
+## 用户数据边界
+
+旧系统没有统一建立“往来款”概念，因此不能把旧菜单名称直接当成新系统往来款边界。当前统一规则是按公司、项目、承包人三主体识别资金责任：只要事实形成资金占用、借出、借入、归还、调拨、拨付、扣款或垫付责任，就必须进入资金责任口径。
+
+本文件中的 `sc.interfund.movement.fact` 只覆盖项目借还调拨事实层，不等于完整往来款全集。到款确认、自筹垫付/退回不进入该投影，但必须进入公司-承包人责任事实层；资金日报、余额调整、账户收支明细属于状态和台账输入，用于约束办理动作。
+
+| 用户数据/来源 | 数量 | 当前承接口径 | 是否纳入往来款 | 说明 |
+| --- | ---: | --- | --- | --- |
+| 账户间资金往来 `transfer_between` | 395 | `sc.interfund.movement.fact` | 是 | 账户/项目之间发生调拨事实 |
+| 借款申请 `borrowing_request + borrowed_fund` | 872 | `sc.interfund.movement.fact` | 是 | 覆盖项目借公司款、承包人借项目款；旧入口名只作为认知追溯 |
+| 项目/承包人还款 | 671 | `sc.interfund.movement.fact` | 是 | 覆盖全部项目还公司款、承包人还项目款，不按单一旧菜单截断 |
+| 到款确认表 | 5205 | `sc.finance.business.fact`、`sc.company.contractor.responsibility.fact` | 是，公司-承包人责任事实 | 项目回款状态约束公司对承包人的拨付、扣款、退回和后续办理 |
+| 自筹垫付收入/退回正式口径 | 2153 / 1575 | `sc.finance.business.fact`、`sc.company.contractor.responsibility.fact` | 是，公司-承包人责任事实 | 承包人与公司的资金占用和归还，项目用于归集和办理约束 |
+| 资金日报表 `fund_daily_report` | 7453 | 日报型资金台账/账户汇总 | 否 | 后续台账就是用户日报口径，不再作为往来款候选 |
+| 余额调整 `balance_adjustment` | 519 | 账户余额校准/台账口径 | 否 | 不产生对方应收应还关系 |
+| 自筹垫付收入/退回可见口径 | 2144 / 827 | 用户旧入口验收参考 | 否，参考族 | 保持用户旧入口认知，不作为余额计算事实 |
+| 融资贷款登记 | 152 | 融资债务能力域 | 否 | 不纳入当前内部往来款，应独立闭环 |
+| 账户收支/日报明细 | 430 对调拨明细、40524 累计收支明细、15316 日报明细 | 账户收支/资金日报台账 | 否 | 用于账户台账，不与正式调拨事实重复计算 |
+
+当前全覆盖审计结果为 `PASS`，但保留一个分类警戒项：用户已确认旧入口“承包人借项目款”记录数为 227，而当前事实分类按“借...项目...款”顺序语义识别为 177。872 条借款事实已全量覆盖，差异不是漏数，而是旧入口名称和事实分类规则不完全等价。后续必须把借还款分类沉淀为可维护业务分类字典，让客户确认新验收基线，不能继续把文本规则硬编码为长期产品边界。
+
 ## 事实分类
 
 | 往来类型 | 数量 | 金额 | 说明 |
 | --- | ---: | ---: | --- |
-| 公司借款给项目 | 645 | 288,955,824.03 | 借款申请、借入资金，未命中承包人借项目款文本规则 |
+| 公司借款给项目 | 695 | 313,372,157.93 | 借款申请、借入资金，且未命中“借...项目...款”借出语义 |
 | 项目归还公司款 | 246 | 162,052,925.59 | 覆盖全部 `claim_type=project_company_repay`，不只覆盖当前菜单 5 条 |
 | 项目间账户调拨 | 12 | 2,583,578.68 | 转出账户项目与转入账户项目不同 |
 | 同项目账户调拨 | 383 | 306,569,035.00 | 转出账户项目与转入账户项目相同 |
-| 项目借款给承包人 | 227 | 170,622,959.28 | 借款用途文本命中“借/项目/款” |
+| 项目借款给承包人 | 177 | 146,206,625.38 | 借款用途按顺序命中“借...项目...款”；避免把“项目借公司款”误分为借出 |
 | 承包人归还项目款 | 425 | 329,175,279.34 | `expense_type=承包人还项目款` 且正式菜单 claim_type 范围内 |
 
 ## 审计约束
@@ -42,8 +69,15 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 - 来源模型 `sc.fund.account.operation`、`sc.financing.loan`、`sc.expense.claim` 数量分别闭合。
 - 项目间账户调拨数量与金额从账户源头反算后必须完全一致。
 - `project_company_repay` 全部进入“项目归还公司款”事实，不按菜单 5 条截断。
+- 项目还公司款和承包人还项目款属于往来款闭环，不关联 `payment.request`，不借用经营收付款申请或结算单生成经营付款/收款台账；完成后通过来源模型和来源记录写入 `sc.treasury.ledger` 统一现金流台账。
 - 资金日报、余额快照不得混入资金往来事实。
+- 到款确认、自筹正式口径必须进入公司-承包人责任事实层；不得因未进入 `sc.interfund.movement.fact` 而被排除在往来责任之外。
+- 公司-承包人责任余额必须由 `sc.company.contractor.responsibility.summary` 从明细反算闭合，后续办理约束读取汇总，不从旧菜单名或临时文本规则推断。
+- 用户日报 `fund_daily_report`、余额调整 `balance_adjustment`、自筹可见参考族必须有明确承接口径，但不得被误纳入余额计算事实。
 - 同一来源模型和来源记录不得重复进入事实层。
+- 借款分类不得只按“借/项目/款”三个字无序匹配；`项目借公司款` 归入公司借款给项目，`借...项目...款` 归入项目借款给承包人。
+- 旧菜单名称只作为用户认知和来源追溯，最终分类规则必须进入业务分类字典和行业模板。
+- 公司-承包人责任事实必须由 `sc.company.contractor.responsibility.fact` 审计闭合，不能因为没有进入项目借还调拨事实层而被漏出办理约束。
 
 ## 后续判断
 
@@ -63,7 +97,7 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 - 公司借款给项目、公司账户转项目账户、承包人归还项目款：计入项目流入。
 - 项目归还公司款、项目账户转公司账户、项目借款给承包人：计入项目流出。
 - 项目间账户调拨：来源项目计流出，目标项目计流入，全局净额必须为 0。
-- 同项目账户调拨：只计项目内调拨，净额为 0。
+- 同项目账户调拨：只计项目内调拨，净额为 0；不重复写入项目流入/流出现金流台账，避免同一项目账户换户造成现金流虚增。
 - 未完全分类账户调拨：只保留为内部/待分析项目视角，不计净额。
 
 审计命令：
@@ -72,4 +106,37 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfund_movement_project.summary.audit
 ```
 
-还不建议直接把这些事实写入 `sc.treasury.ledger`。现有 `sc.treasury.ledger` 仍是支付/收款申请驱动台账，强行承接借款和账户调拨会混淆业务口径。
+边界修正：不能把往来款强行挂到 `payment.request`，但也不能让往来资金事实游离于现金流之外。当前策略是新增 `sc.treasury.ledger.source_model/source_res_id`，允许资金台账承接非收付款申请来源；往来款完成后生成 `source_kind=interfund` 的资金流水，`payment_request_id` 为空。历史往来事实是否批量回填资金台账，需要单独迁移审计，避免污染已锁定历史事实。
+
+## 历史现金流台账回填就绪审计
+
+已新增只读门禁 `scripts/ops/validate_interfund_treasury_ledger_backfill_readiness.sh`，仅审计不写入，用于判断历史往来事实是否具备正式回填 `sc.treasury.ledger` 的条件。
+
+回填候选规则：
+
+- `company_to_project_borrow`：目标项目记流入。
+- `project_to_company_repay`：来源项目记流出。
+- `project_to_project_transfer`：来源项目记流出，目标项目记流入，生成两条现金流台账。
+- `project_to_company_transfer`：来源项目记流出。
+- `company_to_project_transfer`：目标项目记流入。
+- `project_to_contractor_borrow`：来源项目记流出。
+- `contractor_to_project_repay`：目标项目记流入。
+
+不自动回填规则：
+
+- 同项目账户调拨不进入项目流入/流出台账，只保留项目内调拨口径。
+- 未分类账户调拨缺少项目锚点，不自动写历史现金流。
+- 非正金额事实不写资金台账，需先回到来源单据核实。
+
+本地开发库 `sc_demo` 当前审计结果：
+
+| 口径 | 数量 | 金额 |
+| --- | ---: | ---: |
+| 应回填现金流台账行 | 1,566 | 955,974,145.60 |
+| 其中项目流入 | 1,131 | 645,131,015.95 |
+| 其中项目流出 | 435 | 310,843,129.65 |
+| 当前缺失现金流台账行 | 1,566 | 955,974,145.60 |
+| 排除同项目账户调拨 | 383 | 306,569,035.00 |
+| 非正金额事实 | 1 | 0.00 |
+
+结论：历史往来资金事实已经具备清晰的现金流回填候选集，但本轮只建立审计门禁，不直接写历史 `sc.treasury.ledger`。正式迁移脚本必须按上述候选集幂等写入，并在写入前再次验证金额、币种、项目、方向和来源唯一键。

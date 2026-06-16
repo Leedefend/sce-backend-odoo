@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <function model="sc.business.category" name="_sync_template_action_bindings"/>
+        <function model="sc.business.category" name="_sync_seed_form_policies"/>
+        <function model="sc.financing.loan" name="_backfill_business_categories"/>
+        <function model="sc.treasury.ledger" name="_void_stale_interfund_ledgers"/>
+    </data>
+</odoo>

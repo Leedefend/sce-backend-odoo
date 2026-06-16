@@ -72,7 +72,7 @@ ensure_allowed_db()
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "project_cost_ledger_projection_write_result_v1.json"
 uid = env.uid  # noqa: F821
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 
 code_ids = {
     "payment": ensure_cost_code("SC-COST-PAYMENT", "付款执行", "other", "由付款执行业务事实投影生成"),

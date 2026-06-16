@@ -1,5 +1,26 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+import re
+
+from odoo import api, fields, models
+
+
+def _parse_legacy_amount(value):
+    text = str(value or "").replace(",", "").replace("￥", "").replace("¥", "").strip()
+    if not text:
+        return 0.0
+    match = re.search(r"-?\d+(?:\.\d+)?", text)
+    if not match:
+        return 0.0
+    return float(match.group(0))
+
+
+def _normalize_legacy_settlement_state(value):
+    text = str(value or "").strip()
+    if text == "已结算":
+        return "settled"
+    if text == "未结算":
+        return "unsettled"
+    return "unknown" if text else False
 
 
 def _add_legacy_visible_fields(namespace):
@@ -34,6 +55,97 @@ class LaborUsageDirectAcceptanceVisible(models.Model):
     _inherit = "sc.labor.usage"
 
     _add_legacy_visible_fields(locals())
+    currency_id = fields.Many2one(
+        "res.currency",
+        string="币种",
+        required=True,
+        default=lambda self: self.env.company.currency_id.id,
+    )
+    legacy_settlement_status = fields.Char(
+        string="旧系统结算状态",
+        compute="_compute_legacy_labor_settlement_fields",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    legacy_settlement_state = fields.Selection(
+        [("settled", "已结算"), ("unsettled", "未结算"), ("unknown", "未识别")],
+        string="旧系统结算状态分类",
+        compute="_compute_legacy_labor_settlement_fields",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    legacy_settlement_amount = fields.Monetary(
+        string="旧系统结算金额",
+        currency_field="currency_id",
+        compute="_compute_legacy_labor_settlement_fields",
+        store=True,
+        readonly=True,
+    )
+
+    @api.depends("legacy_fact_type", "legacy_visible_08", "legacy_visible_09", "legacy_visible_12")
+    def _compute_legacy_labor_settlement_fields(self):
+        for record in self:
+            if record.legacy_fact_type == "direct_acceptance:方单":
+                status = record.legacy_visible_08
+                amount = record.legacy_visible_09
+            elif record.legacy_fact_type == "direct_acceptance:零星用工":
+                status = record.legacy_visible_12
+                amount = record.legacy_visible_09
+            else:
+                status = False
+                amount = False
+            record.legacy_settlement_status = status or False
+            record.legacy_settlement_state = _normalize_legacy_settlement_state(status)
+            record.legacy_settlement_amount = _parse_legacy_amount(amount)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_labor_usage
+               SET currency_id = %s
+             WHERE currency_id IS NULL
+            """,
+            (self.env.company.currency_id.id,),
+        )
+        self.env.cr.execute(
+            """
+            UPDATE sc_labor_usage usage
+               SET legacy_settlement_status = CASE
+                       WHEN legacy_fact_type = 'direct_acceptance:方单' THEN NULLIF(legacy_visible_08, '')
+                       WHEN legacy_fact_type = 'direct_acceptance:零星用工' THEN NULLIF(legacy_visible_12, '')
+                       ELSE NULL
+                   END,
+                   legacy_settlement_state = CASE
+                       WHEN legacy_fact_type = 'direct_acceptance:方单' AND legacy_visible_08 = '已结算' THEN 'settled'
+                       WHEN legacy_fact_type = 'direct_acceptance:方单' AND legacy_visible_08 = '未结算' THEN 'unsettled'
+                       WHEN legacy_fact_type = 'direct_acceptance:方单' AND COALESCE(legacy_visible_08, '') != '' THEN 'unknown'
+                       WHEN legacy_fact_type = 'direct_acceptance:零星用工' AND legacy_visible_12 = '已结算' THEN 'settled'
+                       WHEN legacy_fact_type = 'direct_acceptance:零星用工' AND legacy_visible_12 = '未结算' THEN 'unsettled'
+                       WHEN legacy_fact_type = 'direct_acceptance:零星用工' AND COALESCE(legacy_visible_12, '') != '' THEN 'unknown'
+                       ELSE NULL
+                   END,
+                   legacy_settlement_amount = CASE
+                       WHEN regexp_replace(
+                                COALESCE(
+                                    CASE
+                                        WHEN legacy_fact_type IN ('direct_acceptance:方单', 'direct_acceptance:零星用工')
+                                        THEN legacy_visible_09
+                                        ELSE NULL
+                                    END,
+                                    ''
+                                ),
+                                '[^0-9\\.-]',
+                                '',
+                                'g'
+                            ) ~ '^-?[0-9]+(\\.[0-9]+)?$'
+                       THEN regexp_replace(legacy_visible_09, '[^0-9\\.-]', '', 'g')::numeric
+                       ELSE 0.0
+                   END
+             WHERE legacy_fact_type IN ('direct_acceptance:方单', 'direct_acceptance:零星用工')
+            """
+        )
 
 
 class SubcontractRequestDirectAcceptanceVisible(models.Model):

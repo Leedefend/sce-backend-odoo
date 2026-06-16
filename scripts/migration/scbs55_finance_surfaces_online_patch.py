@@ -192,7 +192,7 @@ def visible_values(seq: int, row: dict[str, Any]) -> dict[str, str]:
 def import_expense(seq: int, rows: list[dict[str, Any]]) -> dict[str, Any]:
     spec = SPECS[seq]
     Claim = env["sc.expense.claim"].sudo().with_context(active_test=False)  # noqa: F821
-    Currency = env.company.currency_id  # noqa: F821
+    Currency = env.ref("base.CNY", raise_if_not_found=False)  # noqa: F821
     created = updated = 0
     seen: set[str] = set()
     for index, row in enumerate(rows, start=1):
@@ -265,7 +265,7 @@ def import_expense(seq: int, rows: list[dict[str, Any]]) -> dict[str, Any]:
 def import_receipt(seq: int, rows: list[dict[str, Any]]) -> dict[str, Any]:
     spec = SPECS[seq]
     Receipt = env["sc.receipt.income"].sudo().with_context(active_test=False)  # noqa: F821
-    Currency = env.company.currency_id  # noqa: F821
+    Currency = env.ref("base.CNY", raise_if_not_found=False)  # noqa: F821
     created = updated = 0
     seen: set[str] = set()
     for index, row in enumerate(rows, start=1):
@@ -316,7 +316,7 @@ def import_receipt(seq: int, rows: list[dict[str, Any]]) -> dict[str, Any]:
 def import_fund_operation(seq: int, rows: list[dict[str, Any]]) -> dict[str, Any]:
     spec = SPECS[seq]
     Operation = env["sc.fund.account.operation"].sudo().with_context(active_test=False)  # noqa: F821
-    Currency = env.company.currency_id  # noqa: F821
+    Currency = env.ref("base.CNY", raise_if_not_found=False)  # noqa: F821
     created = updated = 0
     seen: set[str] = set()
     for index, row in enumerate(rows, start=1):
@@ -347,6 +347,8 @@ def import_fund_operation(seq: int, rows: list[dict[str, Any]]) -> dict[str, Any
             "legacy_visible_transfer_type": clean(row.get("f_LB")),
             "legacy_visible_reason": clean(row.get("SY")),
             "legacy_visible_note": clean(row.get("BZ")),
+            "legacy_visible_attachment": clean(row.get("f_FJ") or row.get("FJ")),
+            "legacy_attachment_ref": clean(row.get("f_FJ") or row.get("FJ")),
             "creator_legacy_user_id": clean(row.get("LRRID")),
             "creator_name": clean(row.get("LRR")),
             "created_time": parse_dt(row.get("LRSJ")),

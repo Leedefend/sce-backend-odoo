@@ -65,6 +65,14 @@
         <field name="model">sc.company.operation.summary</field>
         <field name="arch" type="xml">
             <form string="公司经营情况表" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_deduction_paid" type="object" string="扣款实缴明细" class="btn-primary" invisible="deduction_management_fee_amount == 0 and deduction_enterprise_income_tax_amount == 0 and deduction_vat_surcharge_amount == 0 and deduction_vat_surcharge_nonrefundable_amount == 0"/>
+                    <button name="action_open_company_income" type="object" string="公司财务收入" class="btn-secondary" invisible="income_amount == 0"/>
+                    <button name="action_open_reimbursements" type="object" string="费用报销明细" class="btn-secondary" invisible="reimbursement_amount == 0"/>
+                    <button name="action_open_payroll_documents" type="object" string="工资社保来源" class="btn-secondary" invisible="salary_amount == 0 and employee_social_security_amount == 0 and certificate_social_security_amount == 0"/>
+                    <button name="action_open_deduction_refunds" type="object" string="扣款退回来源" class="btn-secondary" invisible="deduction_refund_surcharge_amount == 0"/>
+                    <button name="action_open_company_expenses" type="object" string="公司财务支出" class="btn-secondary" invisible="expense_amount == 0"/>
+                </header>
                 <sheet>
                     <group>
                         <field name="period_label"/>

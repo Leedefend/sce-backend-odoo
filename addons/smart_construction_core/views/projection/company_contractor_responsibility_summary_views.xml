@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_company_contractor_responsibility_summary_search" model="ir.ui.view">
+            <field name="name">sc.company.contractor.responsibility.summary.search</field>
+            <field name="model">sc.company.contractor.responsibility.summary</field>
+            <field name="arch" type="xml">
+                <search string="公司-承包人资金责任余额">
+                    <field name="project_id"/>
+                    <field name="partner_name"/>
+                    <filter string="有待处理余额" name="state_open" domain="[('responsibility_state', '=', 'open')]"/>
+                    <filter string="到款超处理" name="state_over_processed" domain="[('responsibility_state', '=', 'over_processed')]"/>
+                    <filter string="自筹未退" name="state_self_funding_open" domain="[('responsibility_state', '=', 'self_funding_open')]"/>
+                    <filter string="已平衡" name="state_settled" domain="[('responsibility_state', '=', 'settled')]"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'responsibility_state'}"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按承包人" name="group_partner" context="{'group_by': 'partner_name'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_company_contractor_responsibility_summary_tree" model="ir.ui.view">
+            <field name="name">sc.company.contractor.responsibility.summary.tree</field>
+            <field name="model">sc.company.contractor.responsibility.summary</field>
+            <field name="arch" type="xml">
+                <tree string="公司-承包人资金责任余额" create="0" edit="0" delete="0">
+                    <field name="responsibility_state"/>
+                    <field name="project_id"/>
+                    <field name="partner_name"/>
+                    <field name="currency_id" column_invisible="1"/>
+                    <field name="source_line_count" sum="明细数合计"/>
+                    <field name="arrival_amount" sum="到款合计"/>
+                    <field name="paid_amount" sum="拨付合计"/>
+                    <field name="deducted_amount" sum="扣款合计"/>
+                    <field name="arrival_processed_amount" sum="到款已处理合计"/>
+                    <field name="arrival_unprocessed_amount" sum="到款可处理余额合计"/>
+                    <field name="arrival_over_processed_amount" sum="到款超处理合计"/>
+                    <field name="self_funding_income_amount" sum="自筹垫付合计"/>
+                    <field name="self_funding_refund_amount" sum="自筹退回合计"/>
+                    <field name="self_funding_balance" sum="自筹未退合计"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_company_contractor_responsibility_summary_form" model="ir.ui.view">
+            <field name="name">sc.company.contractor.responsibility.summary.form</field>
+            <field name="model">sc.company.contractor.responsibility.summary</field>
+            <field name="arch" type="xml">
+                <form string="公司-承包人资金责任余额" create="0" edit="0" delete="0">
+                    <header>
+                        <button name="action_open_responsibility_facts" type="object" string="查看责任明细" class="btn-primary"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group string="业务对象">
+                                <field name="display_name"/>
+                                <field name="responsibility_state"/>
+                                <field name="project_id"/>
+                                <field name="partner_id"/>
+                                <field name="partner_name"/>
+                                <field name="company_id"/>
+                                <field name="currency_id"/>
+                            </group>
+                            <group string="来源统计">
+                                <field name="source_line_count"/>
+                                <field name="arrival_line_count"/>
+                                <field name="self_funding_income_line_count"/>
+                                <field name="self_funding_refund_line_count"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="到款责任">
+                                <field name="arrival_amount"/>
+                                <field name="paid_amount"/>
+                                <field name="deducted_amount"/>
+                                <field name="arrival_processed_amount"/>
+                                <field name="arrival_unprocessed_amount"/>
+                                <field name="arrival_over_processed_amount"/>
+                            </group>
+                            <group string="自筹责任">
+                                <field name="self_funding_income_amount"/>
+                                <field name="self_funding_refund_amount"/>
+                                <field name="self_funding_balance"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="办理约束">
+                                <field name="project_fund_status_effect"/>
+                                <field name="contractor_responsibility_effect"/>
+                                <field name="coverage_note"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sc_company_contractor_responsibility_summary_pivot" model="ir.ui.view">
+            <field name="name">sc.company.contractor.responsibility.summary.pivot</field>
+            <field name="model">sc.company.contractor.responsibility.summary</field>
+            <field name="arch" type="xml">
+                <pivot string="公司-承包人资金责任余额">
+                    <field name="responsibility_state" type="row"/>
+                    <field name="project_id" type="row"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="arrival_unprocessed_amount" type="measure"/>
+                    <field name="arrival_over_processed_amount" type="measure"/>
+                    <field name="self_funding_balance" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="action_sc_company_contractor_responsibility_summary" model="ir.actions.act_window">
+            <field name="name">公司-承包人资金责任余额</field>
+            <field name="res_model">sc.company.contractor.responsibility.summary</field>
+            <field name="view_mode">tree,form,pivot</field>
+            <field name="search_view_id" ref="view_sc_company_contractor_responsibility_summary_search"/>
+            <field name="context">{'create': False, 'search_default_group_state': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+    </data>
+</odoo>

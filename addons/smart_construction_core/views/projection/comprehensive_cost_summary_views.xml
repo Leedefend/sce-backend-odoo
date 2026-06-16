@@ -55,6 +55,20 @@
         <field name="model">sc.comprehensive.cost.summary</field>
         <field name="arch" type="xml">
             <form string="成本统计表（综合）" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_income_contracts" type="object" string="收入合同" class="btn-primary" invisible="income_contract_amount == 0"/>
+                    <button name="action_open_receipts" type="object" string="收款登记" class="btn-secondary" invisible="receipt_amount == 0"/>
+                    <button name="action_open_output_invoices" type="object" string="销项发票" class="btn-secondary" invisible="output_invoice_amount == 0"/>
+                    <button name="action_open_payable_contracts" type="object" string="应付合同" class="btn-secondary" invisible="payable_contract_amount == 0"/>
+                    <button name="action_open_supplier_contracts" type="object" string="供应商合同" class="btn-secondary" invisible="supplier_contract_amount == 0"/>
+                    <button name="action_open_material_costs" type="object" string="材料成本" class="btn-secondary" invisible="material_cost_amount == 0"/>
+                    <button name="action_open_labor_costs" type="object" string="劳务分包" class="btn-secondary" invisible="labor_cost_amount == 0"/>
+                    <button name="action_open_lease_costs" type="object" string="租赁机械" class="btn-secondary" invisible="lease_cost_amount == 0"/>
+                    <button name="action_open_expenses" type="object" string="费用报销" class="btn-secondary" invisible="expense_cost_amount == 0"/>
+                    <button name="action_open_salary" type="object" string="工资登记" class="btn-secondary" invisible="salary_cost_amount == 0"/>
+                    <button name="action_open_input_invoices" type="object" string="进项发票" class="btn-secondary" invisible="input_invoice_amount == 0"/>
+                    <button name="action_open_payments" type="object" string="付款执行" class="btn-secondary" invisible="paid_amount == 0"/>
+                </header>
                 <sheet>
                     <group>
                         <group>

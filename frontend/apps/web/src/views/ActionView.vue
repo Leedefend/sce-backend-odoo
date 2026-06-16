@@ -527,11 +527,40 @@
       :title="vm.hud?.title || 'View Context'"
       :entries="vm.hud?.entries || []"
     />
+    <div
+      v-if="businessCategoryCreatePickerVisible"
+      class="business-category-picker-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="business-category-picker-title"
+      @click.self="closeBusinessCategoryCreatePicker"
+    >
+      <section class="business-category-picker">
+        <header class="business-category-picker-head">
+          <div>
+            <h3 id="business-category-picker-title">选择办理类型</h3>
+            <p>{{ actionMetaName || vm.page.title || '新建业务' }}</p>
+          </div>
+          <button class="business-category-picker-close" type="button" aria-label="关闭" @click="closeBusinessCategoryCreatePicker">×</button>
+        </header>
+        <div class="business-category-picker-list">
+          <button
+            v-for="option in businessCategoryCreateOptions"
+            :key="option.code"
+            class="business-category-picker-option"
+            type="button"
+            @click="openCreateRecordWithBusinessCategory(option.code)"
+          >
+            <span>{{ option.label }}</span>
+          </button>
+        </div>
+      </section>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
+import { computed, inject, onActivated, onBeforeUnmount, onDeactivated, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { ActionContract } from '@sc/schema';
 import { ApiError } from '../api/client';
@@ -774,6 +803,7 @@ import {
   buildWorkbenchRouteTarget,
 } from '../app/runtime/actionViewRouteRuntime';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
+import { buildBusinessEntryNavQuery, buildBusinessEntryRequestContext } from '../app/navigationContext';
 import {
   hasRoutePresetGroupPageStateChanged,
   resolveRoutePresetActiveFilterValue,
@@ -847,6 +877,12 @@ function requestLoadPage(): Promise<void> {
   return loadPageInvoker();
 }
 
+function currentActionActivityRouteKey(): string {
+  const currentActionId = String(route.params.actionId || route.query.action_id || '').trim();
+  const currentMenuId = String(route.query.menu_id || '').trim() || '0';
+  return currentActionId ? `action:${currentActionId}:menu:${currentMenuId}` : '';
+}
+
 let clearSelectionInvoker: () => void = () => {};
 function clearSelection(): void {
   clearSelectionInvoker();
@@ -867,6 +903,9 @@ const {
 const routeQueryMap = computed<Record<string, unknown>>(() => normalizeActionViewRouteQuery(route.query));
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
+const isComponentActive = ref(true);
+const instanceActivityRouteKey = ref('');
+const retainedRouteFullPath = ref('');
 const renderErrorMessage = ref('');
 const traceId = ref('');
 const lastTraceId = ref('');
@@ -1049,6 +1088,12 @@ type ContractActionGroupRaw = {
   overflow_actions?: Array<Record<string, unknown>>;
   overflow_count?: number;
 };
+type BusinessCategoryCreateOption = {
+  code: string;
+  label: string;
+  categoryId?: number;
+  defaultValues: Record<string, unknown>;
+};
 
 function stableActionContractId(value: unknown, fallback: string) {
   const raw = String(value || fallback || '').trim();
@@ -1097,6 +1142,15 @@ const actionId = computed(() => {
   return Number.isFinite(fromQuery) && fromQuery > 0 ? fromQuery : 0;
 });
 const actionMeta = computed(() => session.currentAction);
+function resolveActionProjectScopeContext(): Record<string, unknown> {
+  const policy = String(
+    (actionMeta.value as Record<string, unknown> | null)?.project_scope_policy
+      || (actionMeta.value as Record<string, unknown> | null)?.projectScopePolicy
+      || '',
+  ).trim();
+  return policy ? { project_scope_policy: policy } : {};
+}
+const businessCategoryCreatePickerVisible = ref(false);
 const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const keepSceneRoute = computed(() => String(route.name || '').toLowerCase() === 'scene');
@@ -1123,7 +1177,13 @@ const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
 const listProfile = computed<SceneListProfile | null>(() => {
   return extractListProfile(actionContract.value);
 });
-const batchPolicy = computed(() => listProfile.value?.batch_policy || actionContract.value?.surface_policies?.batch_policy || {});
+const batchPolicy = computed(() => {
+  const profilePolicy = listProfile.value?.batch_policy;
+  if (profilePolicy && Array.isArray(profilePolicy.available_actions) && profilePolicy.available_actions.length > 0) {
+    return profilePolicy;
+  }
+  return actionContract.value?.surface_policies?.batch_policy || profilePolicy || {};
+});
 const activeField = computed(() => String(batchPolicy.value.active_field || '').trim());
 const allowedBatchActions = computed(() =>
   Array.isArray(batchPolicy.value.available_actions)
@@ -1420,14 +1480,77 @@ const showGlobalEmptyNext = computed(() =>
   }),
 );
 
+const businessCategoryCreateOptions = computed<BusinessCategoryCreateOption[]>(() => {
+  const meta = actionMeta.value as Record<string, unknown> | null;
+  const rawOptions = Array.isArray(meta?.business_category_options) ? meta.business_category_options : [];
+  const seen = new Set<string>();
+  return rawOptions
+    .map((raw) => {
+      const row = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+      const code = String(row.code || '').trim();
+      const label = String(row.label || '').trim();
+      const defaultValuesRaw = row.default_values || row.defaultValues;
+      const defaultValues = defaultValuesRaw && typeof defaultValuesRaw === 'object' && !Array.isArray(defaultValuesRaw)
+        ? defaultValuesRaw as Record<string, unknown>
+        : {};
+      const categoryIdRaw = Number(row.category_id || row.categoryId || 0);
+      const categoryId = Number.isFinite(categoryIdRaw) && categoryIdRaw > 0 ? categoryIdRaw : undefined;
+      if (!code || seen.has(code)) return null;
+      seen.add(code);
+      const option: BusinessCategoryCreateOption = { code, label, defaultValues };
+      if (categoryId) option.categoryId = categoryId;
+      return option;
+    })
+    .filter((row): row is BusinessCategoryCreateOption => Boolean(row));
+});
+
+function closeBusinessCategoryCreatePicker() {
+  businessCategoryCreatePickerVisible.value = false;
+}
+
+function createRouteQueryForBusinessCategory(categoryCode = '') {
+  const code = String(categoryCode || '').trim();
+  const option = code ? businessCategoryCreateOptions.value.find((row) => row.code === code) : undefined;
+  const defaults: Record<string, string> = {};
+  if (option?.categoryId) {
+    defaults.default_business_category_id = String(option.categoryId);
+  }
+  Object.entries(option?.defaultValues || {}).forEach(([key, value]) => {
+    const normalizedKey = String(key || '').trim();
+    if (!normalizedKey || value === undefined || value === null) return;
+    if (Array.isArray(value) || typeof value === 'object') return;
+    defaults[`default_${normalizedKey}`] = String(value);
+  });
+  const label = String(option?.label || actionMeta.value?.name || currentMenuTitle.value || '办理类型').trim();
+  return resolveCarryQuery(code ? {
+    current_business_category_code: code,
+    default_business_category_code: code,
+    current_business_category_label: label,
+    default_business_category_label: label,
+    ctx_source: 'business_category_create_picker',
+    ...defaults,
+  } : undefined);
+}
+
+async function openCreateRecordWithBusinessCategory(categoryCode = '') {
+  const targetModel = (resolvedModelRef.value || model.value || '').trim();
+  if (!targetModel || !canCreateRecord.value) return;
+  closeBusinessCategoryCreatePicker();
+  await router.push({
+    path: `/f/${encodeURIComponent(targetModel)}/new`,
+    query: createRouteQueryForBusinessCategory(categoryCode),
+  } as never);
+}
+
 async function openCreateRecord() {
   const targetModel = (resolvedModelRef.value || model.value || '').trim();
   if (!targetModel || !canCreateRecord.value) return;
-  await router.push(buildModelFormRouteTarget({
-    model: targetModel,
-    id: 'new',
-    query: resolveCarryQuery(),
-  }) as never);
+  const existingCategoryCode = String(route.query.default_business_category_code || route.query.current_business_category_code || '').trim();
+  if (!existingCategoryCode && businessCategoryCreateOptions.value.length > 1) {
+    businessCategoryCreatePickerVisible.value = true;
+    return;
+  }
+  await openCreateRecordWithBusinessCategory(existingCategoryCode || businessCategoryCreateOptions.value[0]?.code || '');
 }
 const availableViewModes = computed(() =>
   resolveActionViewAvailableModes({
@@ -1575,6 +1698,15 @@ const {
   isHudEnabled,
 });
 const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
+
+watch(
+  pageTitle,
+  (title) => {
+    if (!isComponentActive.value) return;
+    session.updateActiveActivityTitle(title);
+  },
+  { immediate: true },
+);
 
 function resolveContractActionCountForHud() {
   const contract = actionContract.value;
@@ -1918,6 +2050,13 @@ const {
   routerPush: (target) => router.push(target as never),
 });
 
+function resolveMenuCarryQuery(meta?: Record<string, unknown> | null, extra?: Record<string, unknown>) {
+  return resolveCarryQuery({
+    ...buildBusinessEntryNavQuery(meta || {}),
+    ...(extra || {}),
+  });
+}
+
 const suppressNextRouteReload = ref(false);
 const routePresetRuntime = useActionViewRoutePresetRuntime({
   routeQueryMap,
@@ -1982,9 +2121,63 @@ function applyRoutePatchAndReload(patch: Record<string, unknown>): void {
   routePresetRuntime.applyRoutePatchAndReload(patch);
 }
 
+function normalizeActivityRuntimeRouteQuery(source: Record<string, unknown>): Record<string, unknown> {
+  const allowedKeys = new Set([
+    'search',
+    'q',
+    'active_filter',
+    'saved_filter',
+    'group_by',
+    'group_value',
+    'group_sample_limit',
+    'group_sort',
+    'group_collapsed',
+    'group_page',
+    'group_offset',
+    'group_fp',
+    'group_wid',
+    'group_wdg',
+    'group_wik',
+  ]);
+  const next: Record<string, unknown> = {};
+  Object.entries(source).forEach(([key, value]) => {
+    if (!allowedKeys.has(key)) return;
+    if (Array.isArray(value)) {
+      const values = value.map((item) => String(item || '').trim()).filter(Boolean);
+      if (values.length) next[key] = values;
+      return;
+    }
+    const text = String(value || '').trim();
+    if (text) next[key] = text;
+  });
+  if (next.active_filter && !['all', 'active', 'archived'].includes(String(next.active_filter))) {
+    delete next.active_filter;
+  }
+  if (next.group_sort && !['asc', 'desc'].includes(String(next.group_sort).toLowerCase())) {
+    delete next.group_sort;
+  }
+  return next;
+}
+
+function updateActivityRuntimeQueryFromRoute(): void {
+  if (route.name !== 'action') return;
+  session.updateActiveActivityRuntimeQuery(normalizeActivityRuntimeRouteQuery(route.query));
+}
+
 function syncRouteListState(extra?: Record<string, unknown>): void {
   suppressNextRouteReload.value = true;
   routePresetRuntime.syncRouteListState(extra);
+  const routeState = normalizeActivityRuntimeRouteQuery({
+    ...route.query,
+    search: searchTerm.value,
+    active_filter: filterValue.value !== 'all' ? filterValue.value : undefined,
+    saved_filter: activeSavedFilterKey.value,
+    group_by: activeGroupByField.value,
+    group_sample_limit: groupSampleLimit.value,
+    group_sort: groupSort.value,
+    ...extra,
+  });
+  session.updateActiveActivityRuntimeQuery(routeState);
 }
 
 function syncRouteStateAndReload(extra?: Record<string, unknown>): void {
@@ -2112,6 +2305,10 @@ const {
 } = useActionViewRequestContextRuntime({
   routeDomainRaw: () => String(route.query.domain_raw || '').trim(),
   routeContextRaw: () => String(route.query.context_raw || '').trim(),
+  routeContext: () => ({
+    ...buildBusinessEntryRequestContext(route.query as Record<string, unknown>),
+    ...resolveActionProjectScopeContext(),
+  }),
   menuId,
   activeField,
   filterValue,
@@ -2471,7 +2668,11 @@ const {
     buildModelFormRouteTarget,
     resolveCarryQuery,
     extractActionResId,
-    resolveAction,
+    resolveAction: (menuTree, nextActionId, currentAction) => resolveAction(
+      menuTree,
+      nextActionId,
+      { ...(currentAction || {}), menu_id: menuId.value || currentAction?.menu_id },
+    ),
     setActionMeta: (meta: Record<string, unknown>) => {
       session.setActionMeta(meta);
     },
@@ -3023,7 +3224,7 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
     session.setActionMeta(result.meta);
     if (entryTarget) {
       await router.replace(buildEntryTargetRouteTarget(entryTarget, {
-        query: resolveCarryQuery(),
+        query: resolveMenuCarryQuery(result.meta),
         menuId: currentMenuId,
         actionId: targetActionId,
         keepSceneRoute: keepSceneRoute.value,
@@ -3034,14 +3235,14 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
     await router.replace({
       name: 'action',
       params: { actionId: targetActionId },
-      query: resolveCarryQuery({ menu_id: currentMenuId, action_id: targetActionId }),
+      query: resolveMenuCarryQuery(result.meta, { menu_id: currentMenuId, action_id: targetActionId }),
     });
     return true;
   }
   if (result.kind === 'redirect') {
     if (result.target.entry_target) {
       await router.replace(buildEntryTargetRouteTarget(result.target.entry_target, {
-        query: resolveCarryQuery(),
+        query: resolveMenuCarryQuery(result.target.meta),
         menuId: result.target.menu_id || currentMenuId,
         actionId: result.target.action_id,
         keepSceneRoute: keepSceneRoute.value,
@@ -3053,7 +3254,7 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
       const sceneKey = String(result.target.scene_key || '').trim();
       await router.replace(buildCanonicalSceneRouteTarget(sceneKey, {
         scene: getSceneByKey(sceneKey),
-        query: resolveCarryQuery(),
+        query: resolveMenuCarryQuery(result.target.meta),
         menuId: result.target.menu_id || currentMenuId,
         actionId: result.target.action_id,
       }));
@@ -3067,7 +3268,7 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
       await router.replace({
         name: 'action',
         params: { actionId: targetActionId },
-        query: resolveCarryQuery({
+        query: resolveMenuCarryQuery(result.target.meta, {
           menu_id: result.target.menu_id || currentMenuId,
           action_id: targetActionId,
         }),
@@ -3079,15 +3280,25 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
 }
 
 onMounted(async () => {
+  instanceActivityRouteKey.value = currentActionActivityRouteKey();
   renderErrorMessage.value = '';
   applyRoutePreset();
   if (await redirectMenuOnlyRouteIfNeeded()) {
     return;
   }
   await requestLoadPage();
+  retainedRouteFullPath.value = route.fullPath;
   if (typeof window !== 'undefined') {
     window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
   }
+});
+
+onActivated(() => {
+  isComponentActive.value = true;
+});
+
+onDeactivated(() => {
+  isComponentActive.value = false;
 });
 
 onBeforeUnmount(() => {
@@ -3110,25 +3321,50 @@ onErrorCaptured((err) => {
 watch(
   () => route.fullPath,
   async () => {
+    const currentKey = currentActionActivityRouteKey();
+    if (instanceActivityRouteKey.value && currentKey !== instanceActivityRouteKey.value) return;
+    if (!isComponentActive.value) return;
     if (suppressNextRouteReload.value) {
       suppressNextRouteReload.value = false;
       applyRoutePreset();
+      updateActivityRuntimeQueryFromRoute();
+      retainedRouteFullPath.value = route.fullPath;
+      return;
+    }
+    if (retainedRouteFullPath.value === route.fullPath && status.value !== 'idle' && status.value !== 'loading') {
+      applyRoutePreset();
+      updateActivityRuntimeQueryFromRoute();
       return;
     }
     renderErrorMessage.value = '';
     listOffset.value = 0;
     clearSelection();
     applyRoutePreset();
+    updateActivityRuntimeQueryFromRoute();
     if (await redirectMenuOnlyRouteIfNeeded()) {
       return;
     }
-    void requestLoadPage();
+    void Promise.resolve(requestLoadPage()).then(() => {
+      retainedRouteFullPath.value = route.fullPath;
+    });
   },
+);
+
+watch(
+  () => route.query,
+  () => {
+    const currentKey = currentActionActivityRouteKey();
+    if (instanceActivityRouteKey.value && currentKey !== instanceActivityRouteKey.value) return;
+    if (!isComponentActive.value) return;
+    updateActivityRuntimeQueryFromRoute();
+  },
+  { deep: true, immediate: true },
 );
 
 watch(
   () => Number(session.projectContext?.selected?.id || 0),
   () => {
+    if (!isComponentActive.value) return;
     refreshForProjectContextChange();
   },
 );
@@ -3415,10 +3651,114 @@ function refreshForProjectContextChange(): void {
 .ledger-overview-card.tone-info { background: var(--sc-app-info-bg); border-color: var(--sc-app-info-border); color: var(--sc-app-info-text); }
 .ledger-overview-card.tone-neutral { background: var(--sc-app-muted-bg); border-color: var(--sc-app-border); color: var(--sc-app-text-secondary); }
 
+.business-category-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.business-category-picker {
+  width: min(560px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  overflow: auto;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-panel);
+  box-shadow: var(--sc-semantic-shadow-modal);
+}
+
+.business-category-picker-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.business-category-picker-head h3,
+.business-category-picker-head p {
+  margin: 0;
+}
+
+.business-category-picker-head h3 {
+  color: var(--sc-app-text-primary);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.business-category-picker-head p {
+  margin-top: 4px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.business-category-picker-close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: 999px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+}
+
+.business-category-picker-list {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.business-category-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-control-radius);
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-primary);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.business-category-picker-option:hover {
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-info-bg);
+}
+
+.business-category-picker-option span {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.business-category-picker-option small {
+  color: var(--sc-semantic-text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 @media (max-width: 760px) {
   .focus-strip {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .business-category-picker-backdrop {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  .business-category-picker-option {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

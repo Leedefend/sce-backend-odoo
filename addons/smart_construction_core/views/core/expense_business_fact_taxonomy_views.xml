@@ -283,9 +283,9 @@
             <field name="name">保证金支付</field>
             <field name="res_model">sc.expense.claim</field>
             <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_deposit_cash_search"/>
             <field name="domain">[('claim_type', '=', 'deposit_pay')]</field>
-            <field name="context">{'default_claim_type': 'deposit_pay', 'search_default_active_rows': 1, 'search_default_outflow': 1, 'search_default_group_project': 1}</field>
+            <field name="context">{'default_claim_type': 'deposit_pay', 'search_default_active_rows': 1, 'search_default_deposit_payment': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
         </record>
 
@@ -293,9 +293,9 @@
             <field name="name">保证金退回</field>
             <field name="res_model">sc.expense.claim</field>
             <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
-            <field name="domain">[('claim_type', '=', 'deposit_refund')]</field>
-            <field name="context">{'default_claim_type': 'deposit_refund', 'search_default_active_rows': 1, 'search_default_inflow': 1, 'search_default_group_project': 1}</field>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_deposit_cash_search"/>
+            <field name="domain">[('claim_type', '=', 'deposit_refund'), ('business_category_id.code', '!=', 'finance.deposit.self_funding.return')]</field>
+            <field name="context">{'default_claim_type': 'deposit_refund', 'search_default_active_rows': 1, 'search_default_deposit_refund': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
         </record>
 
@@ -303,9 +303,9 @@
             <field name="name">保证金收取</field>
             <field name="res_model">sc.expense.claim</field>
             <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_deposit_cash_search"/>
             <field name="domain">[('claim_type', '=', 'deposit_receive')]</field>
-            <field name="context">{'default_claim_type': 'deposit_receive', 'search_default_active_rows': 1, 'search_default_inflow': 1, 'search_default_group_project': 1}</field>
+            <field name="context">{'default_claim_type': 'deposit_receive', 'search_default_active_rows': 1, 'search_default_deposit_receive': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
         </record>
 
@@ -313,9 +313,9 @@
             <field name="name">自筹保证金</field>
             <field name="res_model">sc.expense.claim</field>
             <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_deposit_cash_search"/>
             <field name="domain">[('claim_type', '=', 'deposit_receive'), ('expense_type', '=', '自筹保证金')]</field>
-            <field name="context">{'default_claim_type': 'deposit_receive', 'default_expense_type': '自筹保证金', 'default_summary': '自筹保证金', 'search_default_active_rows': 1, 'search_default_inflow': 1, 'search_default_group_project': 1}</field>
+            <field name="context">{'default_claim_type': 'deposit_receive', 'default_expense_type': '自筹保证金', 'default_summary': '自筹保证金', 'search_default_active_rows': 1, 'search_default_deposit_receive': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_business_initiator'),
                 ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -328,9 +328,9 @@
             <field name="name">自筹保证金退回</field>
             <field name="res_model">sc.expense.claim</field>
             <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
-            <field name="domain">[('claim_type', '=', 'deposit_refund'), ('expense_type', '=', '自筹保证金退回')]</field>
-            <field name="context">{'default_claim_type': 'deposit_refund', 'default_expense_type': '自筹保证金退回', 'default_summary': '自筹保证金退回', 'search_default_active_rows': 1, 'search_default_inflow': 1, 'search_default_group_project': 1}</field>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_deposit_cash_search"/>
+            <field name="domain">[('business_category_id.code', '=', 'finance.deposit.self_funding.return')]</field>
+            <field name="context">{'default_claim_type': 'deposit_refund', 'default_guarantee_type': 'bid', 'default_expense_type': '自筹保证金退回', 'default_summary': '自筹保证金退回', 'default_business_category_code': 'finance.deposit.self_funding.return', 'search_default_active_rows': 1, 'search_default_deposit_self_funding_return': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_business_initiator'),
                 ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -343,9 +343,9 @@
             <field name="name">付款还保证金</field>
             <field name="res_model">sc.expense.claim</field>
             <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_deposit_cash_search"/>
             <field name="domain">[('claim_type', '=', 'deposit_pay'), ('expense_type', '=', '付款还保证金')]</field>
-            <field name="context">{'default_claim_type': 'deposit_pay', 'default_expense_type': '付款还保证金', 'default_summary': '付款还保证金', 'search_default_active_rows': 1, 'search_default_outflow': 1, 'search_default_group_project': 1}</field>
+            <field name="context">{'default_claim_type': 'deposit_pay', 'default_expense_type': '付款还保证金', 'default_summary': '付款还保证金', 'search_default_active_rows': 1, 'search_default_deposit_payment': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_business_initiator'),
                 ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -358,9 +358,15 @@
             <field name="name">付款保证金退回</field>
             <field name="res_model">sc.expense.claim</field>
             <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+            <field name="view_id" ref="smart_construction_core.view_sc_expense_claim_application_tree"/>
+            <field name="views" eval="[(ref('smart_construction_core.view_sc_expense_claim_application_tree'), 'tree'), (ref('smart_construction_core.view_sc_expense_claim_form'), 'form')]"/>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_expense_claim_application_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_expense_claim_form')})
+            ]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_deposit_cash_search"/>
             <field name="domain">[('claim_type', '=', 'deposit_refund'), ('expense_type', '=', '付款保证金退回')]</field>
-            <field name="context">{'default_claim_type': 'deposit_refund', 'default_expense_type': '付款保证金退回', 'default_summary': '付款保证金退回', 'search_default_active_rows': 1, 'search_default_inflow': 1, 'search_default_group_project': 1}</field>
+            <field name="context">{'default_claim_type': 'deposit_refund', 'default_expense_type': '付款保证金退回', 'default_summary': '付款保证金退回', 'search_default_active_rows': 1, 'search_default_deposit_refund': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_business_initiator'),
                 ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -419,19 +425,19 @@
         </record>
         <record id="menu_sc_bid_deposit_pay" model="ir.ui.menu">
             <field name="name">投标保证金支付</field>
-            <field name="action" ref="smart_construction_core.action_sc_expense_claim_deposit_pay"/>
+            <field name="action" ref="smart_construction_core.action_sc_bid_deposit_pay"/>
         </record>
         <record id="menu_sc_bid_deposit_return" model="ir.ui.menu">
             <field name="name">投标保证金退回</field>
-            <field name="action" ref="smart_construction_core.action_sc_expense_claim_deposit_refund"/>
+            <field name="action" ref="smart_construction_core.action_sc_bid_deposit_return"/>
         </record>
         <record id="menu_sc_contract_deposit_register" model="ir.ui.menu">
             <field name="name">合同保证金支付</field>
-            <field name="action" ref="smart_construction_core.action_sc_expense_claim_deposit_pay"/>
+            <field name="action" ref="smart_construction_core.action_sc_contract_deposit_pay"/>
         </record>
         <record id="menu_sc_contract_deposit_return" model="ir.ui.menu">
             <field name="name">合同保证金退回</field>
-            <field name="action" ref="smart_construction_core.action_sc_expense_claim_deposit_refund"/>
+            <field name="action" ref="smart_construction_core.action_sc_contract_deposit_return"/>
         </record>
         <menuitem id="menu_sc_deposit_receive"
                   name="保证金收取"
@@ -451,6 +457,12 @@
                   action="smart_construction_core.action_sc_self_funding_deposit_refund"
                   sequence="70"
                   groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+        <record id="menu_sc_self_funding_deposit" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="menu_sc_self_funding_deposit_refund" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
         <menuitem id="menu_sc_payment_deposit_return"
                   name="付款还保证金"
                   parent="smart_construction_core.menu_sc_deposit_management_group"

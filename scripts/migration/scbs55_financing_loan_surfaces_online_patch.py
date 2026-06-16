@@ -131,6 +131,16 @@ def visible_attachment(value: object) -> str:
     return "历史附件" if clean(value) else ""
 
 
+def surface_path(spec: dict[str, Any]) -> Path:
+    root = clean(os.getenv("SCBS55_FINANCING_SURFACE_ROOT"))
+    if root:
+        return Path(root) / Path(spec["path"]).name
+    mounted = Path("/mnt/artifacts/migration") / Path(spec["path"]).name
+    if mounted.exists():
+        return mounted
+    return Path(spec["path"])
+
+
 def state_label(value: object) -> str:
     text = clean(value)
     return {"-1": "已作废", "0": "未审核", "1": "审核中", "2": "审核通过", "3": "已驳回", "4": "已作废"}.get(text, text)
@@ -160,6 +170,38 @@ def write_payload(record, payload: dict[str, str]) -> None:
         """,
         [record._name, record.id, json.dumps(payload, ensure_ascii=False)],
     )
+
+
+def find_surface_record(Model, spec: dict[str, Any], key: str):
+    """Reuse the same old-table row even when an earlier import used another source tag."""
+    keys = [key, f"{spec['table']}:{key}"]
+    candidates = Model.search(
+        [("legacy_source_table", "=", spec["table"]), ("legacy_record_id", "in", keys)],
+        order="active desc, id",
+    )
+    if not candidates:
+        return Model.browse(), Model.browse()
+    preferred = candidates.filtered(lambda rec: rec.legacy_source_model == spec["surface"])[:1]
+    rec = preferred or candidates[:1]
+    duplicates = candidates - rec
+    return rec, duplicates
+
+
+def void_interfund_ledgers(records) -> int:
+    if not records:
+        return 0
+    Ledger = env["sc.treasury.ledger"].sudo()  # noqa: F821
+    ledgers = Ledger.search(
+        [
+            ("source_model", "=", records._name),
+            ("source_res_id", "in", records.ids),
+            ("source_kind", "=", "interfund"),
+            ("state", "!=", "void"),
+        ]
+    )
+    if ledgers:
+        ledgers.write({"state": "void", "note": "voided by SCBS55 visible surface de-duplication"})
+    return len(ledgers)
 
 
 def project_for(row: dict[str, Any]):
@@ -255,7 +297,7 @@ def loan_vals(seq: int, spec: dict[str, Any], row: dict[str, Any], key: str) -> 
         "document_date": parse_date(date_value),
         "due_date": parse_date(row.get("YJGHSJ") or row.get("YDQX") or row.get("HKRQ")),
         "amount": amount(money),
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "purpose": clean(row.get("ZYZJSYAP") or row.get("YT") or row.get("BZ")),
         "rate_label": clean(row.get("JKLX") or row.get("DKLL") or row.get("D_SCBSJS_SJNLL")),
         "extra_ref": clean(row.get("ZKZH") or row.get("DKZH") or row.get("HKZH")),
@@ -323,7 +365,7 @@ def expense_vals(spec: dict[str, Any], row: dict[str, Any], key: str) -> dict[st
         "summary": clean(row.get("YT") or row.get("BZ") or row.get("JKR")),
         "amount": amount(row.get("HKJE")),
         "approved_amount": amount(row.get("HKJE")),
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "legacy_source_model": spec["surface"],
         "legacy_source_table": spec["table"],
         "legacy_record_id": key,
@@ -363,7 +405,7 @@ def tax_vals(spec: dict[str, Any], row: dict[str, Any], key: str) -> dict[str, A
         "partner_name": clean(row.get("KKDW")),
         "deduction_amount": amount(row.get("KKJE")),
         "deduction_tax_amount": amount(row.get("KKJE")),
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "legacy_source_model": spec["surface"],
         "legacy_source_table": spec["table"],
         "legacy_record_id": key,
@@ -379,15 +421,15 @@ def tax_vals(spec: dict[str, Any], row: dict[str, Any], key: str) -> dict[str, A
 
 def import_surface(seq: int) -> dict[str, Any]:
     spec = SPECS[seq]
-    data = json.load(gzip.open(spec["path"], "rt", encoding="utf-8"))
+    data = json.load(gzip.open(surface_path(spec), "rt", encoding="utf-8"))
     rows = data.get("rows") or []
-    Model = env[spec["model"]].sudo().with_context(active_test=False)  # noqa: F821
-    created = updated = 0
+    Model = env[spec["model"]].sudo().with_context(active_test=False, legacy_visible_surface_sync=True)  # noqa: F821
+    created = updated = voided_ledgers = 0
     seen: set[str] = set()
     for index, row in enumerate(rows, start=1):
         key = row_key(row, index)
         seen.add(key)
-        rec = Model.search([("legacy_source_model", "=", spec["surface"]), ("legacy_record_id", "=", key)], limit=1)
+        rec, duplicates = find_surface_record(Model, spec, key)
         if seq == 27:
             vals = expense_vals(spec, row, key)
         elif seq == 30:
@@ -397,6 +439,14 @@ def import_surface(seq: int) -> dict[str, Any]:
         if rec:
             rec.write(vals)
             updated += 1
+            if duplicates:
+                voided_ledgers += void_interfund_ledgers(duplicates)
+                duplicates.write(
+                    {
+                        "active": False,
+                        "legacy_source_model": f"{spec['surface']}:deduped",
+                    }
+                )
         else:
             rec = Model.create(vals)
             created += 1
@@ -413,6 +463,7 @@ def import_surface(seq: int) -> dict[str, Any]:
         "old_rows": len(rows),
         "created": created,
         "updated": updated,
+        "voided_interfund_ledgers": voided_ledgers,
         "stale_hidden": stale_count,
         "new_visible": Model.search_count([("legacy_source_model", "=", spec["surface"])]),
     }
