@@ -196,7 +196,7 @@
               <h4>当前页面设计</h4>
               <p>{{ formFieldConfigScope.summary }}</p>
             </div>
-            <span class="contract-form-settings-field-count">字段 {{ activeContractModeFieldRows.length }}</span>
+            <span class="contract-form-settings-field-count">字段 {{ currentFormDesignFieldCount }}</span>
           </header>
           <div class="contract-form-design-strip" aria-label="页面设计步骤">
             <div>
@@ -2238,6 +2238,11 @@ const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; 
   };
   walk(nativeFormLayoutNodes.value);
   return Array.from(groups.values());
+});
+
+const currentFormDesignFieldCount = computed(() => {
+  if (activeContractModeFieldRows.value.length) return activeContractModeFieldRows.value.length;
+  return nativeFieldStructureGroups.value.reduce((total, group) => total + group.fieldKeys.length, 0);
 });
 
 const selectedFormSettingsFieldGroupTitle = computed(() => {
