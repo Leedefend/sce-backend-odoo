@@ -278,12 +278,14 @@
               class="contract-field-governance-audit"
               :class="{ 'contract-field-governance-audit--warning': formConfigAuditResult?.hasConflict }"
             >{{ formConfigAuditSummary }}</span>
-            <button class="ghost" type="button" :disabled="busy || formConfigAuditBusy" @click="auditCurrentFormConfiguration">检查效果</button>
+            <button class="ghost" type="button" :disabled="busy || formConfigAuditBusy" @click="auditCurrentFormConfiguration">
+              {{ formConfigAuditBusy ? '检查中...' : (formConfigAuditResult ? '重新检查' : '检查效果') }}
+            </button>
             <button class="chip-btn" type="button" :disabled="busy" @click="previewCurrentFormConfiguration">
               {{ hasCurrentFormFieldDraftChanges ? '保存并预览' : '预览当前页面' }}
             </button>
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
-            <button class="ghost" type="button" :disabled="busy" @click="returnToBusinessConfigDesigner">返回页面列表</button>
+            <button class="ghost" type="button" :disabled="busy" @click="returnToBusinessConfigDesigner">返回配置</button>
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
           </div>
         </section>
