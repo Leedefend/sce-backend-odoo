@@ -1078,6 +1078,48 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         )
         self.assertFalse(preferences.touched)
 
+    def test_business_config_list_search_set_rejects_unknown_fields(self):
+        class Company:
+            id = 7
+
+        class PartnerModel:
+            _fields = {"name": object()}
+
+        class ContractModel(list):
+            def sudo(self):
+                return self
+
+            def search(self, *args, **kwargs):
+                return None
+
+            def create(self, vals):
+                self.append(vals)
+                return vals
+
+        class Env(dict):
+            company = Company()
+
+        contracts = ContractModel()
+        env = Env({
+            "res.partner": PartnerModel(),
+            "ui.business.config.contract": contracts,
+        })
+        handler = self.module.BusinessConfigListSearchSetHandler(
+            env=env,
+            params={
+                "model": "res.partner",
+                "action_id": 11,
+                "list_columns": ["name", "missing_field"],
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertIn("missing_field", result["error"]["message"])
+        self.assertEqual(len(contracts), 0)
+
     def test_business_config_list_search_bootstrap_derives_from_runtime_view_contracts(self):
         class Company:
             id = 7
