@@ -2479,10 +2479,10 @@ async function publishSelectedLowCodeContract() {
       intent: 'ui.business_config.contract.publish',
       params: { ...base, name, model: modelName, view_type: 'form' },
     });
-    contractModeFeedback.value = '低代码契约已发布';
+    contractModeFeedback.value = '配置版本已发布';
     await loadLowCodeContractList();
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'contract publish failed';
+    errorMessage.value = err instanceof Error ? err.message : '配置版本发布失败';
     status.value = 'error';
   } finally {
     busyKind.value = null;
@@ -2500,11 +2500,11 @@ async function rollbackSelectedLowCodeContract() {
       intent: 'ui.business_config.contract.rollback',
       params: { ...base, name, model: modelName, view_type: 'form' },
     });
-    contractModeFeedback.value = '低代码契约已回滚到上一版本';
+    contractModeFeedback.value = '配置版本已回滚到上一版';
     await loadLowCodeContractList();
     await switchLowCodeContractByName();
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'contract rollback failed';
+    errorMessage.value = err instanceof Error ? err.message : '配置版本回滚失败';
     status.value = 'error';
   } finally {
     busyKind.value = null;
