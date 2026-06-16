@@ -34,10 +34,6 @@ async function visibleForbiddenTerms(page, selector = "body") {
   return DEFAULT_UI_FORBIDDEN_TERMS.filter((term) => text.includes(term));
 }
 
-function isIgnorableConsoleError(message) {
-  return String(message || "").includes("Failed to load resource: the server responded with a status of 404");
-}
-
 function consoleEntry(msg) {
   const location = typeof msg.location === "function" ? msg.location() : {};
   const url = String(location.url || "");
@@ -67,10 +63,6 @@ async function main() {
   page.on("console", (msg) => {
     if (msg.type() !== "error") return;
     const entry = consoleEntry(msg);
-    if (isIgnorableConsoleError(entry.text)) {
-      warnings.push({ type: "console", ...entry });
-      return;
-    }
     errors.push({ type: "console", ...entry });
   });
 
@@ -368,6 +360,7 @@ async function main() {
       { returnedCards },
     );
     assert(errors.length === 0, "浏览器出现未预期错误", { errors });
+    assert(warnings.length === 0, "浏览器出现未预期警告", { warnings });
 
     report.ok = true;
   } catch (err) {
