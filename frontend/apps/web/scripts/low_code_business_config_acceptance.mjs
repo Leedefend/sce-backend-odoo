@@ -84,6 +84,11 @@ async function main() {
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
     await page.getByRole("button", { name: "全部页面" }).click();
+    await page.locator(".scan-row--selected").getByRole("button", { name: "预览页面" }).click();
+    await page.waitForURL((url) => String(url).includes("/a/562"), { timeout: 20000 });
+    const previewUrl = page.url();
+    await page.goBack({ waitUntil: "domcontentloaded" });
+    await page.waitForSelector(".scan-row--selected", { timeout: 20000 });
     report.checks.defaultConfigPage = {
       defaultCards,
       selectedName,
@@ -91,6 +96,7 @@ async function main() {
       initialPageRows,
       searchedPageRows,
       formPageRows,
+      previewUrl,
     };
     assert(
       defaultCards.join("|") === "表单字段与布局|列表与搜索",
@@ -107,6 +113,7 @@ async function main() {
       "业务页面搜索或类型筛选不可用",
       { initialPageRows, searchedPageRows, formPageRows },
     );
+    assert(previewUrl.includes("/a/562"), "业务页面预览入口不可用", { previewUrl });
     assert(
       leakedDefaultTerms.length === 0,
       "默认配置页露出了治理或技术话术",
