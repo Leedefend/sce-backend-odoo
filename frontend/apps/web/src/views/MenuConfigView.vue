@@ -10,6 +10,15 @@
         <button type="button" class="ghost" @click="showGuide = !showGuide">
           {{ showGuide ? '收起说明' : '配置说明' }}
         </button>
+        <button type="button" class="ghost" :disabled="loading || auditing || saving" @click="auditMenuConfiguration">
+          {{ auditing ? '检查中...' : '生效检查' }}
+        </button>
+        <button type="button" class="ghost" :disabled="loading || versionLoading || saving" @click="toggleVersionPanel">
+          {{ versionPanelOpen ? '收起版本' : (versionLoading ? '加载中...' : '版本') }}
+        </button>
+        <button type="button" class="ghost" :disabled="loading || saving || rollingBack" @click="rollbackSelectedMenuConfiguration">
+          {{ rollingBack ? '回滚中...' : rollbackButtonText }}
+        </button>
         <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel">刷新</button>
         <button type="button" class="primary" :disabled="!dirtyCount || saving" @click="saveChanges">
           {{ saving ? '保存中...' : '保存修改' }}
@@ -52,6 +61,38 @@
 
     <div v-if="error" class="status error">{{ error }}</div>
     <div v-else-if="message" class="status ok">{{ message }}</div>
+    <section v-if="auditSummary" class="audit-panel" :class="{ 'audit-panel--warning': auditSummary.notApplicableCount > 0 }">
+      <strong>菜单配置生效检查</strong>
+      <span>
+        配置 {{ auditSummary.configuredCount }} 项，当前用户命中 {{ auditSummary.applicableCount }} 项；
+        隐藏 {{ auditSummary.hiddenCount }}，改名 {{ auditSummary.renamedCount }}，移动 {{ auditSummary.movedCount }}，排序 {{ auditSummary.reorderedCount }}。
+      </span>
+      <span v-if="auditSummary.notApplicableCount">
+        {{ auditSummary.notApplicableCount }} 项因用户组范围未命中当前用户。
+      </span>
+    </section>
+    <section v-if="versionPanelOpen" class="version-panel">
+      <div class="version-panel-header">
+        <strong>菜单配置版本</strong>
+        <span v-if="versionState?.contract">当前版本 {{ versionState.contract.version_no }}</span>
+        <span v-else>暂无菜单配置版本</span>
+      </div>
+      <div v-if="versionState?.versions.length" class="version-list">
+        <label
+          v-for="version in versionState.versions"
+          :key="version.id"
+          class="version-item"
+          :class="{ selected: selectedVersionNo === version.version_no }"
+        >
+          <input v-model.number="selectedVersionNo" type="radio" :value="version.version_no" />
+          <span class="version-title">版本 {{ version.version_no }}</span>
+          <span class="version-meta">
+            配置 {{ version.summary.policy_count }} 项，隐藏 {{ version.summary.hidden_count }}，改名 {{ version.summary.renamed_count }}，
+            移动 {{ version.summary.moved_count }}，排序 {{ version.summary.reordered_count }}
+          </span>
+        </label>
+      </div>
+    </section>
 
     <div class="menu-config-workspace">
       <aside class="menu-config-tree">
@@ -216,12 +257,17 @@
 import { computed, defineComponent, h, onMounted, reactive, ref, type PropType } from 'vue';
 import type { NavNode } from '@sc/schema';
 import {
+  loadMenuConfigurationAudit,
   loadMenuConfigurationPanel,
+  loadMenuConfigurationVersions,
+  rollbackMenuConfiguration,
   saveMenuConfigurationPanel,
+  type MenuConfigAuditPayload,
   type MenuConfigGroup,
   type MenuConfigMenu,
   type MenuConfigPolicy,
   type MenuConfigSaveRow,
+  type MenuConfigVersionsPayload,
 } from '../api/menuConfig';
 import { useSessionStore } from '../stores/session';
 
@@ -245,8 +291,15 @@ type DropPosition = 'before' | 'after';
 
 const loading = ref(false);
 const saving = ref(false);
+const auditing = ref(false);
+const rollingBack = ref(false);
+const versionLoading = ref(false);
 const error = ref('');
 const message = ref('');
+const auditResult = ref<MenuConfigAuditPayload | null>(null);
+const versionState = ref<MenuConfigVersionsPayload | null>(null);
+const versionPanelOpen = ref(false);
+const selectedVersionNo = ref(0);
 const selectedMenuId = ref(0);
 const searchText = ref('');
 const dragSourceMenuId = ref(0);
@@ -413,6 +466,24 @@ const MenuConfigTree = defineComponent({
 
 const companyLabel = computed(() => company.value?.name || '当前公司');
 
+const auditSummary = computed(() => {
+  const summary = auditResult.value?.summary;
+  if (!summary) return null;
+  return {
+    configuredCount: Number(summary.configured_policy_count || 0),
+    applicableCount: Number(summary.applicable_policy_count || 0),
+    hiddenCount: Number(summary.hidden_count || 0),
+    renamedCount: Number(summary.renamed_count || 0),
+    reorderedCount: Number(summary.reordered_count || 0),
+    movedCount: Number(summary.moved_count || 0),
+    notApplicableCount: Array.isArray(summary.not_applicable_policy_ids) ? summary.not_applicable_policy_ids.length : 0,
+  };
+});
+
+const rollbackButtonText = computed(() => (
+  selectedVersionNo.value ? `回滚到版本 ${selectedVersionNo.value}` : '回滚上一版'
+));
+
 const groupOptions = computed(() => {
   return [...groups.value].sort((a, b) => a.display_name.localeCompare(b.display_name, 'zh-Hans-CN'));
 });
@@ -565,6 +636,7 @@ function updateDraft(menuId: number, patch: Partial<DraftPolicy>) {
   if (!draft) return;
   Object.assign(draft, patch);
   message.value = '';
+  auditResult.value = null;
 }
 
 function inputValue(event: Event) {
@@ -849,6 +921,7 @@ async function loadPanel() {
   message.value = '';
   try {
     const payload = await loadMenuConfigurationPanel({ menu_ids: collectNavigationMenuIds() });
+    auditResult.value = null;
     company.value = payload.company || null;
     menus.value = payload.menus || [];
     const menuById = new Map((payload.menus || []).map((menu) => [menu.id, menu]));
@@ -881,6 +954,67 @@ async function loadPanel() {
   }
 }
 
+async function loadVersions() {
+  versionLoading.value = true;
+  error.value = '';
+  try {
+    const payload = await loadMenuConfigurationVersions({ company_id: company.value?.id || undefined });
+    versionState.value = payload;
+    const currentVersion = Number(payload.contract?.version_no || 0);
+    const fallback = payload.versions.find((version) => version.version_no < currentVersion)
+      || payload.versions.find((version) => version.version_no !== currentVersion)
+      || payload.versions[0];
+    selectedVersionNo.value = Number(fallback?.version_no || 0);
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '菜单配置版本加载失败';
+  } finally {
+    versionLoading.value = false;
+  }
+}
+
+async function toggleVersionPanel() {
+  versionPanelOpen.value = !versionPanelOpen.value;
+  if (versionPanelOpen.value) {
+    await loadVersions();
+  }
+}
+
+async function auditMenuConfiguration() {
+  auditing.value = true;
+  error.value = '';
+  message.value = '';
+  try {
+    auditResult.value = await loadMenuConfigurationAudit({ company_id: company.value?.id || undefined });
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '菜单配置生效检查失败';
+  } finally {
+    auditing.value = false;
+  }
+}
+
+async function rollbackSelectedMenuConfiguration() {
+  rollingBack.value = true;
+  error.value = '';
+  message.value = '';
+  auditResult.value = null;
+  try {
+    const result = await rollbackMenuConfiguration({
+      company_id: company.value?.id || undefined,
+      version_no: selectedVersionNo.value || undefined,
+    });
+    await session.loadAppInit();
+    await loadPanel();
+    if (versionPanelOpen.value) {
+      await loadVersions();
+    }
+    message.value = `已回滚到版本 ${result.rolled_back_to_version}，恢复 ${result.restored_count} 项菜单配置`;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '菜单配置回滚失败';
+  } finally {
+    rollingBack.value = false;
+  }
+}
+
 async function saveChanges() {
   const rows: MenuConfigSaveRow[] = Object.keys(drafts)
     .map(Number)
@@ -907,6 +1041,10 @@ async function saveChanges() {
     applySavedVisibilityToNavigation(rows);
     await session.loadAppInit();
     await loadPanel();
+    auditResult.value = null;
+    if (versionPanelOpen.value) {
+      await loadVersions();
+    }
     message.value = `已保存 ${rows.length} 项菜单配置`;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '菜单配置保存失败';
@@ -1051,6 +1189,90 @@ h1 {
   border: 1px solid var(--sc-app-success-border);
   background: var(--sc-app-success-bg);
   color: var(--sc-app-success-text);
+}
+
+.audit-panel {
+  margin: 0 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: 6px;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+  font-size: 13px;
+}
+
+.audit-panel strong {
+  color: var(--sc-app-text-primary);
+}
+
+.audit-panel--warning {
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
+}
+
+.version-panel {
+  margin: 0 18px;
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel);
+  font-size: 13px;
+}
+
+.version-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.version-panel-header span {
+  color: var(--sc-app-text-secondary);
+}
+
+.version-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 8px;
+  max-height: 142px;
+  overflow: auto;
+}
+
+.version-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(64px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-muted-bg);
+  cursor: pointer;
+}
+
+.version-item.selected {
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-info-bg);
+}
+
+.version-title {
+  font-weight: 600;
+}
+
+.version-meta {
+  min-width: 0;
+  color: var(--sc-app-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .menu-config-workspace {

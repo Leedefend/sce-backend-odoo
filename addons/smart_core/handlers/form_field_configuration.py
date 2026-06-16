@@ -94,6 +94,134 @@ def _contract_reload_hint_for_record(rec) -> dict:
     )
 
 
+def _view_orchestration_field_names(contract_json: dict, view_type: str = "form") -> list[str]:
+    payload = contract_json if isinstance(contract_json, dict) else {}
+    orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+    views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+    normalized_view_type = _normalize_view_type_scope(view_type) or "form"
+    spec = views.get(normalized_view_type)
+    if not isinstance(spec, dict) and normalized_view_type == "tree":
+        spec = views.get("list")
+    if not isinstance(spec, dict):
+        return []
+    rows = spec.get("fields") if normalized_view_type == "form" else spec.get("columns")
+    if not isinstance(rows, list):
+        rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
+    names = []
+    for row in rows:
+        if isinstance(row, str):
+            name = row.strip()
+        elif isinstance(row, dict):
+            name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+        else:
+            name = ""
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
+def _view_orchestration_search_names(contract_json: dict, key: str) -> list[str]:
+    payload = contract_json if isinstance(contract_json, dict) else {}
+    orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+    views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+    spec = views.get("search")
+    if not isinstance(spec, dict):
+        return []
+    rows = spec.get(key) if isinstance(spec.get(key), list) else []
+    names = []
+    for row in rows:
+        if isinstance(row, str):
+            name = row.strip()
+        elif isinstance(row, dict):
+            name = str(row.get("field") or row.get("name") or row.get("group_by") or row.get("groupBy") or "").strip()
+        else:
+            name = ""
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
+def _sanitize_config_name_list(value) -> list[str]:
+    rows = value if isinstance(value, list) else []
+    names = []
+    for item in rows:
+        if isinstance(item, str):
+            name = item.strip()
+        elif isinstance(item, dict):
+            name = str(item.get("name") or item.get("field") or item.get("field_name") or item.get("group_by") or "").strip()
+        else:
+            name = ""
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
+def _business_config_view_orchestration_payload(
+    *,
+    view_type: str,
+    names: list[str],
+    existing: dict | None = None,
+    search_key: str = "filters",
+) -> dict:
+    payload = dict(existing or {})
+    orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+    views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+    normalized_view_type = _normalize_view_type_scope(view_type)
+    spec = dict(views.get(normalized_view_type) or {})
+    if normalized_view_type == "tree":
+        spec["columns"] = [{"name": name, "sequence": (idx + 1) * 10} for idx, name in enumerate(names)]
+    elif normalized_view_type == "search":
+        target_key = "group_by" if search_key == "group_by" else "filters"
+        spec[target_key] = [{"field": name, "sequence": (idx + 1) * 10} for idx, name in enumerate(names)]
+    views[normalized_view_type] = spec
+    orchestration["views"] = views
+    payload["view_orchestration"] = orchestration
+    return payload
+
+
+def _business_config_contract_summary(contract_json: dict) -> dict:
+    payload = contract_json if isinstance(contract_json, dict) else {}
+    orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+    views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+    form_fields = _view_orchestration_field_names(payload, "form")
+    tree_columns = _view_orchestration_field_names(payload, "tree")
+    search_filters = _view_orchestration_search_names(payload, "filters")
+    search_group_by = _view_orchestration_search_names(payload, "group_by")
+    return {
+        "view_types": sorted(str(key) for key in views if str(key or "").strip()),
+        "form_field_count": len(form_fields),
+        "list_column_count": len(tree_columns),
+        "search_filter_count": len(search_filters),
+        "search_group_by_count": len(search_group_by),
+        "form_fields": form_fields,
+        "list_columns": tree_columns,
+        "search_filters": search_filters,
+        "search_group_by": search_group_by,
+    }
+
+
+def _search_published_view_orchestration_contracts(env, *, model: str, view_type: str, action_id: int = 0, view_id: int = 0, role_key: str = ""):
+    if "ui.business.config.contract" not in env:
+        return []
+    Contract = env["ui.business.config.contract"]
+    if hasattr(Contract, "sudo"):
+        Contract = Contract.sudo()
+    domain = [
+        ("active", "=", True),
+        ("status", "=", "published"),
+        ("model", "=", model),
+        ("view_type", "in", [False, _normalize_view_type_scope(view_type)]),
+        ("company_id", "in", [False, env.company.id]),
+        ("action_id", "in", [False, int(action_id or 0)]),
+        ("view_id", "in", [False, int(view_id or 0)]),
+        ("role_key", "in", [False, str(role_key or "").strip()]),
+    ]
+    try:
+        return Contract.search(domain, order="priority, version_no, id")
+    except TypeError:
+        return Contract.search(domain)
+
+
 def _upsert_view_orchestration_field_rows(
     env,
     *,
@@ -553,6 +681,8 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
         params = self.params if isinstance(self.params, dict) else {}
         model = str(params.get("model") or "").strip()
         visibility = params.get("field_visibility") or params.get("fieldVisibility")
+        raw_field_order = params.get("field_order") or params.get("fieldOrder")
+        has_field_order = isinstance(raw_field_order, list) and bool(raw_field_order)
         if model and isinstance(visibility, dict) and model in self.env:
             unknown = [
                 str(field_name or "").strip()
@@ -561,13 +691,50 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
             ]
             if unknown:
                 return self._err(404, "字段不存在：%s.%s" % (model, unknown[0]), REASON_NOT_FOUND)
-        order_result = super().handle(payload=payload, ctx=ctx)
-        if not order_result.get("ok"):
-            return order_result
+        if has_field_order:
+            order_result = super().handle(payload=payload, ctx=ctx)
+            if not order_result.get("ok"):
+                return order_result
+        else:
+            if not model:
+                return self._err(400, "缺少 model", REASON_MISSING_PARAMS)
+            if model not in self.env:
+                return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
+            if not isinstance(visibility, dict) or not visibility:
+                return self._err(400, "field_order 或 field_visibility 必须至少提供一项", REASON_USER_ERROR)
+            action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+            if invalid_field:
+                return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+            view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+            if invalid_field:
+                return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+            order_result = {
+                "ok": True,
+                "data": {
+                    "model": model,
+                    "field_order": [],
+                    "updated_count": 0,
+                    "business_config_mirrored_count": 0,
+                    "contract_reload": _contract_reload_hint(
+                        model=model,
+                        view_type="form",
+                        action_id=action_id,
+                        view_id=view_id,
+                    ),
+                },
+                "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
+            }
         if visibility and isinstance(visibility, dict):
             Policy = self.env["ui.form.field.policy"]
             action_id, _ = _optional_non_negative_int(params, "action_id", "actionId")
             view_id, _ = _optional_non_negative_int(params, "view_id", "viewId")
+            model_rec = self.env["ir.model"].search([("model", "=", model)], limit=1)
+            field_rows = self.env["ir.model.fields"].search([
+                ("model", "=", model),
+                ("name", "in", [str(name or "").strip() for name in visibility if str(name or "").strip()]),
+                ("ttype", "!=", "binary"),
+            ])
+            field_map = {str(row.name or "").strip(): row for row in field_rows}
             updates = 0
             mirror_rows = []
             for field_name, raw_visible in visibility.items():
@@ -585,6 +752,23 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                 ], limit=1)
                 if policy:
                     policy.write({"visible": bool(visible)})
+                    updates += 1
+                elif model_rec:
+                    field_rec = field_map.get(name)
+                    label = str((field_rec.field_description if field_rec else name) or name).strip()
+                    Policy.create({
+                        "active": True,
+                        "model_id": model_rec.id,
+                        "model": model,
+                        "field_id": field_rec.id if field_rec else False,
+                        "field_name": name,
+                        "label": label,
+                        "visible": bool(visible),
+                        "sequence": 100,
+                        "company_id": self.env.company.id,
+                        "action_id": action_id or False,
+                        "view_id": view_id or False,
+                    })
                     updates += 1
                 mirror_rows.append({"name": name, "visible": bool(visible)})
             mirrored_count = _upsert_view_orchestration_field_rows(
@@ -619,6 +803,732 @@ class BusinessConfigLowCodeApplyHandler(FormFieldConfigBatchSetHandler):
         meta["delivery_profile"] = "business_low_code_form_config"
         result["meta"] = meta
         return result
+
+
+class BusinessConfigFormAuditHandler(BaseIntentHandler):
+    INTENT_TYPE = "ui.business_config.form.audit"
+    DESCRIPTION = "Audit low-code form config consistency between business contract and legacy field policy."
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    SOURCE_KIND = "ui_business_config_form_audit"
+    SOURCE_AUTHORITIES = (
+        "ui.business.config.contract",
+        "ui.business.config.contract.version",
+        "ui.form.field.policy",
+        "ir.model.fields",
+        "ir.actions.act_window",
+        "ir.ui.view",
+    )
+
+    def _err(self, code: int, message: str, reason_code: str):
+        return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
+
+    def _source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": self.INTENT_TYPE,
+        }
+
+    def handle(self, payload=None, ctx=None):
+        params = self.params if isinstance(self.params, dict) else {}
+        model = str(params.get("model") or "").strip()
+        if not model:
+            return self._err(400, "缺少 model", REASON_MISSING_PARAMS)
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
+        if model not in self.env:
+            return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
+
+        contracts = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
+            model,
+            view_type="form",
+            action_id=action_id,
+            view_id=view_id,
+            role_key=role_key,
+        ) if "ui.business.config.contract" in self.env else []
+        contract_items = []
+        contract_fields = []
+        for rec in contracts:
+            field_names = _view_orchestration_field_names(rec.contract_json or {}, "form")
+            contract_items.append({
+                "id": int(rec.id),
+                "name": str(rec.name or ""),
+                "version_no": int(rec.version_no or 1),
+                "fields": field_names,
+            })
+            for name in field_names:
+                if name not in contract_fields:
+                    contract_fields.append(name)
+
+        policies = self.env["ui.form.field.policy"]._effective_policies(
+            model,
+            action_id=action_id,
+            view_id=view_id,
+            user=self.env.user,
+        ) if "ui.form.field.policy" in self.env else []
+        policy_items = []
+        policy_fields = []
+        for policy in policies:
+            field_name = str(policy.field_name or "").strip()
+            if not field_name:
+                continue
+            policy_items.append({
+                "id": int(policy.id),
+                "field_name": field_name,
+                "visible": bool(policy.visible),
+                "label": str(policy.label or ""),
+                "sequence": int(policy.sequence or 100),
+                "role_group_ids": [int(group_id) for group_id in policy.role_group_ids.ids],
+            })
+            if field_name not in policy_fields:
+                policy_fields.append(field_name)
+
+        contract_field_set = set(contract_fields)
+        policy_field_set = set(policy_fields)
+        skipped_legacy_policy_fields = sorted(contract_field_set & policy_field_set)
+        active_legacy_policy_fields = sorted(policy_field_set - contract_field_set)
+        return {
+            "ok": True,
+            "data": {
+                "model": model,
+                "action_id": int(action_id or 0),
+                "view_id": int(view_id or 0),
+                "role_key": role_key,
+                "business_config_contracts": contract_items,
+                "business_config_form_fields": sorted(contract_fields),
+                "legacy_policy_fields": sorted(policy_fields),
+                "skipped_legacy_policy_fields": skipped_legacy_policy_fields,
+                "active_legacy_policy_fields": active_legacy_policy_fields,
+                "has_conflict": bool(skipped_legacy_policy_fields),
+                "policies": policy_items,
+            },
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
+        }
+
+
+class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
+    INTENT_TYPE = "ui.business_config.list_search.audit"
+    DESCRIPTION = "Audit business list/search config boundary against UI-only user preferences."
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    SOURCE_KIND = "ui_business_config_list_search_audit"
+    SOURCE_AUTHORITIES = (
+        "ui.business.config.contract",
+        "ui.business.config.contract.version",
+        "sc.user.view.preference",
+        "ir.actions.act_window",
+        "ir.ui.view",
+    )
+
+    def _err(self, code: int, message: str, reason_code: str):
+        return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
+
+    def _source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": self.INTENT_TYPE,
+        }
+
+    def _user_preference_count(self, *, model: str, action_id: int) -> int:
+        if "sc.user.view.preference" not in self.env:
+            return 0
+        Preference = self.env["sc.user.view.preference"].sudo()
+        domain = self._user_preference_domain(model=model, action_id=action_id)
+        try:
+            return int(Preference.search_count(domain))
+        except Exception:
+            return len(Preference.search(domain, limit=100))
+
+    def _user_preference_domain(self, *, model: str, action_id: int) -> list:
+        domain = [
+            ("preference_key", "=", "list_columns"),
+            ("view_type", "in", ["list", "tree"]),
+        ]
+        if model:
+            domain.append(("model_name", "=", model))
+        if action_id:
+            domain.append(("action_id", "=", action_id))
+        return domain
+
+    def _user_preference_items(self, *, model: str, action_id: int, limit: int = 20) -> list[dict]:
+        if "sc.user.view.preference" not in self.env:
+            return []
+        Preference = self.env["sc.user.view.preference"].sudo()
+        domain = self._user_preference_domain(model=model, action_id=action_id)
+        try:
+            rows = Preference.search(domain, order="id desc", limit=limit)
+        except TypeError:
+            rows = Preference.search(domain, limit=limit)
+        items = []
+        for rec in rows:
+            value = rec.value_json if isinstance(getattr(rec, "value_json", None), dict) else {}
+            columns = value.get("columns") if isinstance(value.get("columns"), list) else []
+            visible_columns = value.get("visible_columns") if isinstance(value.get("visible_columns"), list) else []
+            user = getattr(rec, "user_id", None)
+            action = getattr(rec, "action_id", None)
+            items.append({
+                "id": int(getattr(rec, "id", 0) or 0),
+                "user_id": int(getattr(user, "id", 0) or 0),
+                "user_name": str(getattr(user, "name", "") or getattr(user, "login", "") or ""),
+                "scope_key": str(getattr(rec, "scope_key", "") or ""),
+                "action_id": int(getattr(action, "id", 0) or 0),
+                "model": str(getattr(rec, "model_name", "") or ""),
+                "view_type": str(getattr(rec, "view_type", "") or ""),
+                "preference_key": str(getattr(rec, "preference_key", "") or ""),
+                "column_count": len(columns or visible_columns),
+            })
+        return items
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        params = self.params if isinstance(self.params, dict) else {}
+        model = str(params.get("model") or "").strip()
+        if not model:
+            return self._err(400, "缺少 model", REASON_MISSING_PARAMS)
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
+        if model not in self.env:
+            return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
+
+        contract_model = self.env["ui.business.config.contract"] if "ui.business.config.contract" in self.env else None
+        if contract_model and hasattr(contract_model, "sudo"):
+            contract_model = contract_model.sudo()
+        list_contracts = contract_model._effective_view_orchestration_contracts(
+            model,
+            view_type="tree",
+            action_id=action_id,
+            view_id=view_id,
+            role_key=role_key,
+        ) if contract_model else []
+        search_contracts = contract_model._effective_view_orchestration_contracts(
+            model,
+            view_type="search",
+            action_id=action_id,
+            view_id=view_id,
+            role_key=role_key,
+        ) if contract_model else []
+        if not list_contracts:
+            list_contracts = _search_published_view_orchestration_contracts(
+                self.env,
+                model=model,
+                view_type="tree",
+                action_id=int(action_id or 0),
+                view_id=int(view_id or 0),
+                role_key=role_key,
+            )
+        if not search_contracts:
+            search_contracts = _search_published_view_orchestration_contracts(
+                self.env,
+                model=model,
+                view_type="search",
+                action_id=int(action_id or 0),
+                view_id=int(view_id or 0),
+                role_key=role_key,
+            )
+
+        list_columns = []
+        list_items = []
+        for rec in list_contracts:
+            columns = _view_orchestration_field_names(rec.contract_json or {}, "tree")
+            list_items.append({
+                "id": int(rec.id),
+                "name": str(rec.name or ""),
+                "version_no": int(rec.version_no or 1),
+                "columns": columns,
+            })
+            for name in columns:
+                if name not in list_columns:
+                    list_columns.append(name)
+
+        search_filters = []
+        search_group_by = []
+        search_items = []
+        for rec in search_contracts:
+            filters = _view_orchestration_search_names(rec.contract_json or {}, "filters")
+            group_by = _view_orchestration_search_names(rec.contract_json or {}, "group_by")
+            search_items.append({
+                "id": int(rec.id),
+                "name": str(rec.name or ""),
+                "version_no": int(rec.version_no or 1),
+                "filters": filters,
+                "group_by": group_by,
+            })
+            for name in filters:
+                if name not in search_filters:
+                    search_filters.append(name)
+            for name in group_by:
+                if name not in search_group_by:
+                    search_group_by.append(name)
+
+        preference_count = self._user_preference_count(model=model, action_id=action_id)
+        preference_items = self._user_preference_items(model=model, action_id=action_id)
+        return {
+            "ok": True,
+            "data": {
+                "model": model,
+                "action_id": int(action_id or 0),
+                "view_id": int(view_id or 0),
+                "role_key": role_key,
+                "business_config_list_contracts": list_items,
+                "business_config_search_contracts": search_items,
+                "business_config_list_columns": sorted(list_columns),
+                "business_config_search_filters": sorted(search_filters),
+                "business_config_search_group_by": sorted(search_group_by),
+                "user_preference_count": preference_count,
+                "user_preferences": preference_items,
+                "user_preference_boundary": "ui_only",
+                "has_business_list_config": bool(list_columns),
+                "has_business_search_config": bool(search_filters or search_group_by),
+            },
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
+        }
+
+
+class BusinessConfigListSearchSetHandler(BaseIntentHandler):
+    INTENT_TYPE = "ui.business_config.list_search.set"
+    DESCRIPTION = "Save business list columns and search filters into view_orchestration contracts."
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    ACL_MODE = "explicit_check"
+    SOURCE_KIND = "ui_business_config_list_search_set"
+    SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
+    NON_IDEMPOTENT_ALLOWED = "business list/search config is mutable authoring state"
+
+    def _err(self, code: int, message: str, reason_code: str):
+        return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
+
+    def _source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": False,
+            "write_proxy": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": self.INTENT_TYPE,
+        }
+
+    def _upsert_contract(self, *, model: str, view_type: str, action_id: int, view_id: int, role_key: str, payload: dict, publish: bool):
+        Contract = self.env["ui.business.config.contract"].sudo()
+        name = _business_config_contract_name(model, view_type, action_id, view_id)
+        domain = [
+            ("name", "=", name),
+            ("company_id", "=", self.env.company.id),
+            ("view_type", "=", view_type or False),
+            ("action_id", "=", action_id or False),
+            ("view_id", "=", view_id or False),
+            ("role_key", "=", role_key or False),
+        ]
+        vals = {
+            "name": name,
+            "model": model,
+            "view_type": view_type or False,
+            "action_id": action_id or False,
+            "view_id": view_id or False,
+            "role_key": role_key or False,
+            "contract_json": payload,
+            "status": "published" if publish else "draft",
+        }
+        rec = Contract.search(domain, limit=1)
+        if rec:
+            rec.write(vals)
+        else:
+            rec = Contract.create(vals)
+        if publish:
+            rec.action_publish()
+        return rec
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        params = self.params if isinstance(self.params, dict) else {}
+        model = str(params.get("model") or "").strip()
+        if not model:
+            return self._err(400, "缺少 model", REASON_MISSING_PARAMS)
+        if model not in self.env:
+            return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
+        publish = params.get("publish") is not False
+        list_columns = _sanitize_config_name_list(params.get("list_columns") or params.get("listColumns"))
+        search_filters = _sanitize_config_name_list(params.get("search_filters") or params.get("searchFilters"))
+        search_group_by = _sanitize_config_name_list(params.get("search_group_by") or params.get("searchGroupBy"))
+        if not list_columns and not search_filters and not search_group_by:
+            return self._err(400, "缺少列表列或搜索配置", REASON_MISSING_PARAMS)
+
+        model_fields = set(getattr(self.env[model], "_fields", {}) or {})
+        unknown = sorted(set(list_columns + search_filters + search_group_by) - model_fields)
+        if unknown:
+            return self._err(400, "配置引用不存在字段：%s" % ", ".join(unknown), REASON_USER_ERROR)
+
+        saved = []
+        try:
+            if list_columns:
+                tree_payload = _business_config_view_orchestration_payload(view_type="tree", names=list_columns)
+                rec = self._upsert_contract(
+                    model=model,
+                    view_type="tree",
+                    action_id=action_id,
+                    view_id=view_id,
+                    role_key=role_key,
+                    payload=tree_payload,
+                    publish=publish,
+                )
+                saved.append({
+                    "id": int(rec.id),
+                    "name": str(rec.name or ""),
+                    "view_type": str(rec.view_type or ""),
+                    "status": str(rec.status or ""),
+                    "version_no": int(rec.version_no or 1),
+                    "columns": list_columns,
+                    "contract_reload": _contract_reload_hint_for_record(rec),
+                })
+            if search_filters or search_group_by:
+                search_payload = {}
+                if search_filters:
+                    search_payload = _business_config_view_orchestration_payload(
+                        view_type="search",
+                        names=search_filters,
+                        existing=search_payload,
+                        search_key="filters",
+                    )
+                if search_group_by:
+                    search_payload = _business_config_view_orchestration_payload(
+                        view_type="search",
+                        names=search_group_by,
+                        existing=search_payload,
+                        search_key="group_by",
+                    )
+                rec = self._upsert_contract(
+                    model=model,
+                    view_type="search",
+                    action_id=action_id,
+                    view_id=view_id,
+                    role_key=role_key,
+                    payload=search_payload,
+                    publish=publish,
+                )
+                saved.append({
+                    "id": int(rec.id),
+                    "name": str(rec.name or ""),
+                    "view_type": str(rec.view_type or ""),
+                    "status": str(rec.status or ""),
+                    "version_no": int(rec.version_no or 1),
+                    "filters": search_filters,
+                    "group_by": search_group_by,
+                    "contract_reload": _contract_reload_hint_for_record(rec),
+                })
+        except ValidationError as exc:
+            return self._err(400, str(exc), REASON_USER_ERROR)
+        return {
+            "ok": True,
+            "data": {
+                "model": model,
+                "action_id": int(action_id or 0),
+                "view_id": int(view_id or 0),
+                "role_key": role_key,
+                "saved": saved,
+                "saved_count": len(saved),
+            },
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
+        }
+
+
+class BusinessConfigListSearchBootstrapHandler(BaseIntentHandler):
+    INTENT_TYPE = "ui.business_config.list_search.bootstrap"
+    DESCRIPTION = "Bootstrap business list/search contracts from current backend view contracts."
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    ACL_MODE = "explicit_check"
+    SOURCE_KIND = "ui_business_config_list_search_bootstrap"
+    SOURCE_AUTHORITIES = (
+        "app.view.config",
+        "app.search.config",
+        "ir.actions.act_window",
+        "ui.business.config.contract",
+        "ui.business.config.contract.version",
+    )
+    NON_IDEMPOTENT_ALLOWED = "business list/search bootstrap publishes official low-code contracts"
+
+    def _err(self, code: int, message: str, reason_code: str):
+        return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
+
+    def _source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": False,
+            "write_proxy": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": self.INTENT_TYPE,
+            "personal_preference_boundary": "not_a_source",
+        }
+
+    def _resolve_action_model(self, action_id: int) -> str:
+        if not action_id or "ir.actions.act_window" not in self.env:
+            return ""
+        Action = self.env["ir.actions.act_window"].sudo()
+        action = None
+        if hasattr(Action, "browse"):
+            action = Action.browse(action_id)
+            if action and hasattr(action, "exists") and not action.exists():
+                action = None
+        if not action:
+            rows = Action.search([("id", "=", action_id)], limit=1)
+            action = rows[0] if isinstance(rows, list) and rows else rows
+        return str(getattr(action, "res_model", "") or "").strip() if action else ""
+
+    def _view_context(self, *, action_id: int, view_id: int) -> dict:
+        context = {"contract_projection_readonly": True}
+        if action_id:
+            context["contract_action_id"] = action_id
+        if view_id:
+            context["contract_view_id"] = view_id
+        return context
+
+    def _runtime_view_contract(self, *, model: str, view_type: str, action_id: int, view_id: int) -> dict:
+        if "app.view.config" not in self.env:
+            return {}
+        context = self._view_context(action_id=action_id, view_id=view_id)
+        ViewConfig = self.env["app.view.config"]
+        if hasattr(ViewConfig, "with_context"):
+            ViewConfig = ViewConfig.with_context(**context)
+        cfg = ViewConfig._generate_from_fields_view_get(model, view_type)
+        if hasattr(cfg, "with_user"):
+            cfg = cfg.with_user(self.env.user)
+        if hasattr(cfg, "sudo"):
+            cfg = cfg.sudo()
+        if hasattr(cfg, "with_context"):
+            cfg = cfg.with_context(**context)
+        return cfg.get_contract_api(filter_runtime=True, check_model_acl=True) or {}
+
+    def _bootstrap_columns(self, *, model: str, action_id: int, view_id: int) -> list[str]:
+        contract = self._runtime_view_contract(model=model, view_type="tree", action_id=action_id, view_id=view_id)
+        columns = _sanitize_config_name_list(contract.get("columns"))
+        if columns:
+            return columns
+        return _sanitize_config_name_list(contract.get("columns_schema"))
+
+    def _bootstrap_search(self, *, model: str, action_id: int, view_id: int) -> tuple[list[str], list[str]]:
+        filters = []
+        group_by = []
+        try:
+            contract = self._runtime_view_contract(model=model, view_type="search", action_id=action_id, view_id=view_id)
+            search = contract.get("search") if isinstance(contract.get("search"), dict) else {}
+            filters = _sanitize_config_name_list(search.get("filters"))
+            group_by = _sanitize_config_name_list(search.get("group_by") or search.get("groupBys"))
+        except Exception:
+            filters = []
+            group_by = []
+        if (filters or group_by) or "app.search.config" not in self.env:
+            return filters, group_by
+        SearchConfig = self.env["app.search.config"]
+        cfg = SearchConfig._generate_from_search(model)
+        contract = cfg.get_search_contract(filter_runtime=True, include_user_filters=False) or {}
+        return (
+            _sanitize_config_name_list(contract.get("filters")),
+            _sanitize_config_name_list(contract.get("group_by") or contract.get("groupBys")),
+        )
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        params = self.params if isinstance(self.params, dict) else {}
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        model = str(params.get("model") or "").strip() or self._resolve_action_model(int(action_id or 0))
+        if not model:
+            return self._err(400, "缺少 model 或有效 action_id", REASON_MISSING_PARAMS)
+        if model not in self.env:
+            return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
+        role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
+        publish = params.get("publish") is not False
+        raw_view_types = params.get("view_types") or params.get("viewTypes") or ["tree", "search"]
+        target_view_types = {_normalize_view_type_scope(item) for item in raw_view_types if str(item or "").strip()} if isinstance(raw_view_types, list) else {"tree", "search"}
+
+        try:
+            list_columns = self._bootstrap_columns(model=model, action_id=int(action_id or 0), view_id=int(view_id or 0)) if "tree" in target_view_types else []
+            search_filters, search_group_by = self._bootstrap_search(model=model, action_id=int(action_id or 0), view_id=int(view_id or 0)) if "search" in target_view_types else ([], [])
+        except Exception as exc:
+            return self._err(400, "无法从当前视图生成列表/搜索契约：%s" % type(exc).__name__, REASON_USER_ERROR)
+
+        model_fields = set(getattr(self.env[model], "_fields", {}) or {})
+        if model_fields:
+            list_columns = [name for name in list_columns if name in model_fields]
+            search_filters = [name for name in search_filters if name in model_fields]
+            search_group_by = [name for name in search_group_by if name in model_fields]
+        if not list_columns and not search_filters and not search_group_by:
+            return self._err(400, "当前视图没有可固化的列表列或搜索配置", REASON_USER_ERROR)
+
+        setter = BusinessConfigListSearchSetHandler(
+            env=self.env,
+            payload={"params": {
+                "model": model,
+                "action_id": int(action_id or 0),
+                "view_id": int(view_id or 0),
+                "role_key": role_key,
+                "list_columns": list_columns,
+                "search_filters": search_filters,
+                "search_group_by": search_group_by,
+                "publish": publish,
+            }},
+        )
+        result = setter.handle()
+        if not result.get("ok"):
+            return result
+        data = dict(result.get("data") or {})
+        data.update({
+            "bootstrapped_from": "runtime_backend_view_contract",
+            "personal_preference_boundary": "not_a_source",
+            "list_columns": list_columns,
+            "search_filters": search_filters,
+            "search_group_by": search_group_by,
+        })
+        return {
+            "ok": True,
+            "data": data,
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
+        }
+
+
+class BusinessConfigFormBootstrapHandler(BusinessConfigListSearchBootstrapHandler):
+    INTENT_TYPE = "ui.business_config.form.bootstrap"
+    DESCRIPTION = "Bootstrap business form contract from current backend form view contract."
+    SOURCE_KIND = "ui_business_config_form_bootstrap"
+    SOURCE_AUTHORITIES = (
+        "app.view.config",
+        "ir.actions.act_window",
+        "ui.business.config.contract",
+        "ui.business.config.contract.version",
+    )
+    NON_IDEMPOTENT_ALLOWED = "business form bootstrap publishes official low-code contract"
+
+    def _collect_layout_field_names(self, value) -> list[str]:
+        names = []
+
+        def visit(node):
+            if isinstance(node, list):
+                for child in node:
+                    visit(child)
+                return
+            if not isinstance(node, dict):
+                return
+            node_type = str(node.get("type") or "").strip().lower()
+            field_name = str(node.get("name") or node.get("field") or "").strip()
+            if node_type == "field" and field_name and field_name not in names:
+                names.append(field_name)
+            for child_key in ("children", "pages", "tabs", "nodes", "items"):
+                children = node.get(child_key)
+                if isinstance(children, list):
+                    visit(children)
+
+        visit(value)
+        return names
+
+    def _bootstrap_form_payload(self, *, model: str, action_id: int, view_id: int) -> dict:
+        contract = self._runtime_view_contract(model=model, view_type="form", action_id=action_id, view_id=view_id)
+        layout = contract.get("layout") if isinstance(contract.get("layout"), list) else []
+        field_names = self._collect_layout_field_names(layout)
+        model_fields = set(getattr(self.env[model], "_fields", {}) or {})
+        if model_fields:
+            field_names = [name for name in field_names if name in model_fields]
+        if not field_names:
+            raise ValidationError("当前表单视图没有可固化的字段布局")
+        fields = [{"name": name, "sequence": (idx + 1) * 10} for idx, name in enumerate(field_names)]
+        form_spec = {
+            "fields": fields,
+        }
+        if layout:
+            form_spec["layout"] = layout
+        title = str(contract.get("title") or "").strip()
+        if title:
+            form_spec["title"] = title
+        for key in ("defaults", "context", "domain"):
+            value = contract.get(key)
+            if isinstance(value, dict):
+                form_spec[key] = value
+        return {
+            "view_orchestration": {
+                "views": {
+                    "form": form_spec,
+                },
+                "context": {
+                    "source": "runtime_backend_form_view_contract",
+                    "action_id": int(action_id or 0),
+                    "view_id": int(view_id or 0),
+                },
+            }
+        }
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        params = self.params if isinstance(self.params, dict) else {}
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        model = str(params.get("model") or "").strip() or self._resolve_action_model(int(action_id or 0))
+        if not model:
+            return self._err(400, "缺少 model 或有效 action_id", REASON_MISSING_PARAMS)
+        if model not in self.env:
+            return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
+        role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
+        publish = params.get("publish") is not False
+        try:
+            contract_json = self._bootstrap_form_payload(model=model, action_id=int(action_id or 0), view_id=int(view_id or 0))
+        except ValidationError as exc:
+            return self._err(400, str(exc), REASON_USER_ERROR)
+        except Exception as exc:
+            return self._err(400, "无法从当前表单生成表单契约：%s" % type(exc).__name__, REASON_USER_ERROR)
+        saver = BusinessConfigContractSaveHandler(
+            env=self.env,
+            payload={"params": {
+                "name": _business_config_contract_name(model, "form", int(action_id or 0), int(view_id or 0)),
+                "model": model,
+                "view_type": "form",
+                "action_id": int(action_id or 0),
+                "view_id": int(view_id or 0),
+                "role_key": role_key,
+                "contract_json": contract_json,
+                "publish": publish,
+            }},
+        )
+        result = saver.handle()
+        if not result.get("ok"):
+            return result
+        data = dict(result.get("data") or {})
+        field_names = _view_orchestration_field_names(contract_json, "form")
+        data.update({
+            "bootstrapped_from": "runtime_backend_form_view_contract",
+            "personal_preference_boundary": "not_a_source",
+            "form_fields": field_names,
+            "field_count": len(field_names),
+        })
+        return {
+            "ok": True,
+            "data": data,
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
+        }
 
 
 class BusinessConfigContractSaveHandler(BaseIntentHandler):
@@ -714,8 +1624,12 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
     def _precheck_contract_payload(self, payload: dict) -> dict:
         warnings = []
         errors = []
+        view_orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+        legacy_draft = payload.get("legacy_lowcode_draft") if isinstance(payload.get("legacy_lowcode_draft"), dict) else {}
         objects = payload.get("objects") if isinstance(payload.get("objects"), list) else []
-        if not objects:
+        if not objects and isinstance(legacy_draft.get("objects"), list):
+            objects = legacy_draft.get("objects") or []
+        if not objects and not view_orchestration:
             warnings.append("objects 为空，契约不会产生业务对象配置。")
         for obj in objects:
             if not isinstance(obj, dict):
@@ -728,6 +1642,8 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             if not fields_rows:
                 warnings.append("业务对象 %s 未配置字段。" % (obj_name or "<unknown>"))
         rules = payload.get("rules") if isinstance(payload.get("rules"), list) else []
+        if not rules and isinstance(legacy_draft.get("rules"), list):
+            rules = legacy_draft.get("rules") or []
         for idx, rule in enumerate(rules):
             if not isinstance(rule, dict):
                 errors.append("rules[%s] 非对象。" % idx)
@@ -840,6 +1756,81 @@ class BusinessConfigContractListHandler(BaseIntentHandler):
         }
 
 
+class BusinessConfigContractVersionsHandler(BaseIntentHandler):
+    INTENT_TYPE = "ui.business_config.contract.versions"
+    DESCRIPTION = "List low-code business config contract versions in current scope."
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    SOURCE_KIND = "ui_business_config_contract_versions"
+    SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
+
+    def _err(self, code: int, message: str, reason_code: str):
+        return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
+
+    def _source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": self.INTENT_TYPE,
+        }
+
+    def _version_item(self, version) -> dict:
+        snapshot = version.snapshot_json if isinstance(version.snapshot_json, dict) else {}
+        return {
+            "id": int(version.id),
+            "version_no": int(version.version_no or 1),
+            "status": str(version.status or "draft"),
+            "created_by": getattr(getattr(version, "created_by", None), "display_name", "") or "",
+            "summary": _business_config_contract_summary(snapshot),
+        }
+
+    def _contract_item(self, rec) -> dict:
+        versions = self.env["ui.business.config.contract.version"].search(
+            [("contract_id", "=", rec.id)], order="version_no desc, id desc", limit=20
+        )
+        return {
+            "id": int(rec.id),
+            "name": str(rec.name or ""),
+            "model": str(rec.model or ""),
+            "view_type": str(rec.view_type or ""),
+            "action_id": int(rec.action_id.id or 0),
+            "view_id": int(rec.view_id.id or 0),
+            "role_key": str(rec.role_key or ""),
+            "status": str(rec.status or "draft"),
+            "version_no": int(rec.version_no or 1),
+            "summary": _business_config_contract_summary(rec.contract_json or {}),
+            "versions": [self._version_item(version) for version in versions],
+        }
+
+    def handle(self, payload=None, ctx=None):
+        params = self.params if isinstance(self.params, dict) else {}
+        name = str(params.get("name") or "").strip()
+        model = str(params.get("model") or "").strip()
+        if not name and not model:
+            return self._err(400, "name 或 model 至少提供一个", REASON_MISSING_PARAMS)
+        domain = [("company_id", "=", self.env.company.id)]
+        if name:
+            domain.append(("name", "=", name))
+        if model:
+            domain.append(("model", "=", model))
+        invalid_field = _append_business_config_scope_domain(params, domain, include_status=True)
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        rows = self.env["ui.business.config.contract"].search(domain, limit=100, order="write_date desc, id desc")
+        contracts = [self._contract_item(rec) for rec in rows]
+        return {
+            "ok": True,
+            "data": {
+                "model": model,
+                "contracts": contracts,
+                "contract_count": len(contracts),
+                "version_count": sum(len(item["versions"]) for item in contracts),
+            },
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
+        }
+
+
 class BusinessConfigContractPublishHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.publish"
     DESCRIPTION = "Publish a low-code business config contract by name/model."
@@ -896,7 +1887,7 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
 
 class BusinessConfigContractRollbackHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.rollback"
-    DESCRIPTION = "Rollback a low-code business config contract to previous snapshot."
+    DESCRIPTION = "Rollback a low-code business config contract to a previous or specified snapshot."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
     SOURCE_KIND = "ui_business_config_contract_rollback"
@@ -922,6 +1913,9 @@ class BusinessConfigContractRollbackHandler(BaseIntentHandler):
         model = str(params.get("model") or "").strip()
         if not name and not model:
             return self._err(400, "name 或 model 至少提供一个", REASON_MISSING_PARAMS)
+        target_version_no, invalid_version_field = _optional_non_negative_int(params, "version_no", "versionNo")
+        if invalid_version_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_version_field, REASON_USER_ERROR)
         domain = [("company_id", "=", self.env.company.id)]
         if name:
             domain.append(("name", "=", name))
@@ -933,12 +1927,19 @@ class BusinessConfigContractRollbackHandler(BaseIntentHandler):
         rec = self.env["ui.business.config.contract"].search(domain, limit=1)
         if not rec:
             return self._err(404, "未找到业务配置契约", REASON_NOT_FOUND)
+        version_domain = [("contract_id", "=", rec.id)]
+        version_limit = 2
+        if target_version_no:
+            version_domain.append(("version_no", "=", target_version_no))
+            version_limit = 1
         versions = self.env["ui.business.config.contract.version"].search(
-            [("contract_id", "=", rec.id)], order="version_no desc, id desc", limit=2
+            version_domain, order="version_no desc, id desc", limit=version_limit
         )
-        if len(versions) < 2:
+        if not versions:
+            return self._err(404, "未找到目标版本", REASON_NOT_FOUND)
+        if not target_version_no and len(versions) < 2:
             return self._err(400, "无可回滚版本", REASON_USER_ERROR)
-        target = versions[1]
+        target = versions[0] if target_version_no else versions[1]
         rec.write({
             "contract_json": target.snapshot_json or {},
             "status": "draft",

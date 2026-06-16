@@ -745,6 +745,61 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         governance = (scoped.get("governance") or {}).get("form_field_policy") or {}
         self.assertEqual(governance.get("hidden_fields"), ["phone"])
 
+    def test_form_field_policy_role_group_scope_overrides_global_policy(self):
+        group = self.env["res.groups"].sudo().create({"name": "Form Policy Role Scope Probe"})
+        Policy = self.env["ui.form.field.policy"].sudo()
+        Policy.create({
+            "model": "res.partner",
+            "field_name": "phone",
+            "visible": False,
+            "sequence": 10,
+        })
+        Policy.create({
+            "model": "res.partner",
+            "field_name": "phone",
+            "visible": True,
+            "sequence": 20,
+            "role_group_ids": [(6, 0, [group.id])],
+        })
+        base_contract = {
+            "layout": [
+                {
+                    "type": "sheet",
+                    "children": [
+                        {
+                            "type": "group",
+                            "children": [
+                                {"type": "field", "name": "name"},
+                                {"type": "field", "name": "phone", "invisible": True},
+                            ],
+                        }
+                    ],
+                }
+            ],
+            "field_modifiers": {"phone": {"invisible": True}},
+        }
+
+        without_group = self.env["ui.form.field.policy"].apply_to_view_contract(
+            dict(base_contract),
+            model_name="res.partner",
+            view_type="form",
+        )
+        self.assertNotIn("phone", Policy._collect_contract_field_nodes(without_group.get("layout") or []))
+
+        self.env.user.write({"groups_id": [(4, group.id)]})
+        with_group = self.env["ui.form.field.policy"].apply_to_view_contract(
+            dict(base_contract),
+            model_name="res.partner",
+            view_type="form",
+        )
+
+        fields = Policy._collect_contract_field_nodes(with_group.get("layout") or [])
+        self.assertIn("phone", fields)
+        self.assertFalse(Policy._contract_node_has_invisible(fields["phone"]))
+        governance = (with_group.get("governance") or {}).get("form_field_policy") or {}
+        self.assertEqual(governance.get("visible_fields"), ["phone"])
+        self.assertTrue(governance.get("role_group_scoped"))
+
     def test_form_field_policy_appends_missing_visible_fields_by_group_title(self):
         Policy = self.env["ui.form.field.policy"].sudo()
         Policy.create({

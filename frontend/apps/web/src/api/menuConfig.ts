@@ -48,6 +48,80 @@ export interface MenuConfigPayload {
   groups: MenuConfigGroup[];
 }
 
+export interface MenuConfigAuditPolicy extends MenuConfigPolicy {
+  menu_label: string;
+  menu_complete_name: string;
+  target_parent_label: string;
+  role_group_names: string[];
+  applicable: boolean;
+  flags: {
+    hidden: boolean;
+    renamed: boolean;
+    reordered: boolean;
+    moved: boolean;
+  };
+}
+
+export interface MenuConfigAuditPayload {
+  company?: { id: number; name: string } | null;
+  summary: {
+    configured_policy_count: number;
+    applicable_policy_count: number;
+    hidden_count: number;
+    renamed_count: number;
+    reordered_count: number;
+    moved_count: number;
+    inactive_policy_count: number;
+    not_applicable_policy_ids: number[];
+  };
+  policies: MenuConfigAuditPolicy[];
+  applicable_policies: MenuConfigAuditPolicy[];
+}
+
+export interface MenuConfigRollbackPayload {
+  company?: { id: number; name: string } | null;
+  contract: {
+    id: number;
+    name: string;
+    model: string;
+    status: string;
+    version_no: number;
+  };
+  rolled_back_to_version: number;
+  restored_count: number;
+  restored: MenuConfigPolicy[];
+}
+
+export interface MenuConfigVersionSummary {
+  policy_count: number;
+  hidden_count: number;
+  renamed_count: number;
+  reordered_count: number;
+  moved_count: number;
+  active_count: number;
+}
+
+export interface MenuConfigVersionItem {
+  id: number;
+  version_no: number;
+  status: string;
+  created_by?: { id: number; name: string } | null;
+  summary: MenuConfigVersionSummary;
+}
+
+export interface MenuConfigVersionsPayload {
+  company?: { id: number; name: string } | null;
+  contract?: {
+    id: number;
+    name: string;
+    model: string;
+    status: string;
+    version_no: number;
+    summary: MenuConfigVersionSummary;
+  } | null;
+  versions: MenuConfigVersionItem[];
+}
+
 export interface MenuConfigSaveRow {
   policy_id?: number;
   menu_id: number;
@@ -60,6 +134,18 @@ export interface MenuConfigSaveRow {
   note?: string;
 }
 
+export interface MenuConfigSavePayload {
+  saved: MenuConfigPolicy[];
+  saved_count: number;
+  contract?: {
+    id: number;
+    name: string;
+    model: string;
+    status: string;
+    version_no: number;
+  } | null;
+}
+
 export async function loadMenuConfigurationPanel(params: { company_id?: number; menu_ids?: number[] } = {}) {
   return intentRequest<MenuConfigPayload>({
     intent: 'ui.menu_config.panel.get',
@@ -68,8 +154,29 @@ export async function loadMenuConfigurationPanel(params: { company_id?: number; 
 }
 
 export async function saveMenuConfigurationPanel(params: { company_id?: number; rows: MenuConfigSaveRow[] }) {
-  return intentRequest<{ saved: MenuConfigPolicy[]; saved_count: number }>({
+  return intentRequest<MenuConfigSavePayload>({
     intent: 'ui.menu_config.panel.set',
+    params,
+  });
+}
+
+export async function loadMenuConfigurationAudit(params: { company_id?: number; include_inactive?: boolean } = {}) {
+  return intentRequest<MenuConfigAuditPayload>({
+    intent: 'ui.menu_config.audit',
+    params,
+  });
+}
+
+export async function rollbackMenuConfiguration(params: { company_id?: number; version_no?: number } = {}) {
+  return intentRequest<MenuConfigRollbackPayload>({
+    intent: 'ui.menu_config.rollback',
+    params,
+  });
+}
+
+export async function loadMenuConfigurationVersions(params: { company_id?: number } = {}) {
+  return intentRequest<MenuConfigVersionsPayload>({
+    intent: 'ui.menu_config.versions',
     params,
   });
 }

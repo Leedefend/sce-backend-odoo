@@ -131,6 +131,19 @@
         </div>
       </div>
 
+      <div v-if="showAdminShortcuts" class="admin-shortcuts">
+        <div class="admin-shortcuts__header">配置工作台</div>
+        <button
+          class="published-app"
+          :class="{ active: route.name === 'business-config' }"
+          type="button"
+          @click="pushRoute('/admin/business-config')"
+        >
+          <span class="published-app__mark">配</span>
+          <span class="published-app__label">业务配置工作台</span>
+        </button>
+      </div>
+
       <div class="nav-shell">
         <div class="search">
           <input v-model="query" type="search" placeholder="搜索菜单..." />
@@ -458,6 +471,7 @@ const showRoleLandingAction = computed(() => roleLandingActionLabel.value !== '�
 const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
 const isPlatformAdmin = computed(() => session.user?.is_platform_admin === true);
+const showAdminShortcuts = computed(() => isPlatformAdmin.value);
 const visiblePublishedApps = computed(() => (isPlatformAdmin.value ? appCatalog.value : []));
 const showPublishedApps = computed(() => isPlatformAdmin.value && (visiblePublishedApps.value.length > 0 || appCatalogLoading.value));
 const activeAppId = computed(() => {
@@ -1750,11 +1764,26 @@ async function logout() {
   min-width: 0;
 }
 
+.admin-shortcuts {
+  display: grid;
+  gap: 4px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--layout-divider);
+  min-width: 0;
+}
+
 .published-apps__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding: 0 2px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-shortcuts__header {
   padding: 0 2px;
   color: var(--sc-app-text-secondary);
   font-size: 12px;

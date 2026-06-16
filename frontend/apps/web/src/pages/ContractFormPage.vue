@@ -280,6 +280,12 @@
           </section>
           <div class="contract-field-governance-footer">
             <span v-if="hasCurrentFormFieldDraftChanges" class="contract-field-governance-dirty">表单设置已调整，保存后生效</span>
+            <span
+              v-if="formConfigAuditSummary"
+              class="contract-field-governance-audit"
+              :class="{ 'contract-field-governance-audit--warning': formConfigAuditResult?.hasConflict }"
+            >{{ formConfigAuditSummary }}</span>
+            <button class="ghost" type="button" :disabled="busy || formConfigAuditBusy" @click="auditCurrentFormConfiguration">生效检查</button>
             <button class="chip-btn" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
           </div>
@@ -1241,6 +1247,14 @@ type ContractFieldGovernanceRow = {
   actions: ContractFieldGovernanceAction[];
 };
 
+type FormConfigAuditResult = {
+  businessConfigFormFields: string[];
+  legacyPolicyFields: string[];
+  skippedLegacyPolicyFields: string[];
+  activeLegacyPolicyFields: string[];
+  hasConflict: boolean;
+};
+
 class ContractAccessPolicyError extends Error {
   reasonCode: string;
 
@@ -1904,6 +1918,8 @@ const isContractFieldOrderEditable = computed(() => (
 const fieldVisibilityBase = ref<Record<string, boolean>>({});
 const fieldVisibilityDirty = ref(false);
 const fieldVisibilityDraft = reactive<Record<string, boolean>>({});
+const formConfigAuditBusy = ref(false);
+const formConfigAuditResult = ref<FormConfigAuditResult | null>(null);
 const lowCodeFieldCreateDialog = reactive({
   open: false,
   afterFieldKey: '',
@@ -1930,6 +1946,25 @@ const lowCodeObjectsDraft = ref<Array<{
 }>>([]);
 const lowCodeLayoutDraft = ref<Array<{ section: 'form' | 'list' | 'kanban'; object: string; field: string }>>([]);
 const lowCodeRulesDraft = ref<Array<{ name: string; trigger: 'on_create' | 'on_update' | 'scheduled'; object: string; field: string; cron?: string }>>([]);
+
+function lowCodeLegacyDraftFromContract(json: unknown) {
+  const root = parseMaybeJsonRecord(json);
+  const compatibility = parseMaybeJsonRecord(root.compatibility || root.low_code_compatibility);
+  const nested = parseMaybeJsonRecord(root.legacy_lowcode_draft || compatibility.legacy_lowcode_draft || compatibility.low_code_draft);
+  const objects = Array.isArray(root.objects)
+    ? root.objects
+    : (Array.isArray(nested.objects) ? nested.objects : []);
+  const objectRows = objects
+    .filter((row) => row && typeof row === 'object' && !Array.isArray(row))
+    .map((row) => row as Record<string, unknown>);
+  const layout = root.layout && typeof root.layout === 'object' && !Array.isArray(root.layout)
+    ? root.layout as Record<string, unknown>
+    : parseMaybeJsonRecord(nested.layout);
+  const rules = Array.isArray(root.rules)
+    ? root.rules
+    : (Array.isArray(nested.rules) ? nested.rules : []);
+  return { objects: objectRows, layout, rules };
+}
 
 function parseSelectionOptions(raw: string): Array<{ value: string; label: string }> {
   return String(raw || '')
@@ -2033,6 +2068,7 @@ watch(isContractFieldOrderEditable, (enabled) => {
     selectedFormSettingsFieldLabel.value = '';
     selectedFormSettingsFieldGroupTitleDraft.value = '';
     fieldVisibilityDirty.value = false;
+    formConfigAuditResult.value = null;
     return;
   }
   formSettingsActiveTab.value = 'fields';
@@ -2056,6 +2092,57 @@ const hasFieldVisibilityChanges = computed(() => contractModeBaseFieldRows.value
 const hasCurrentFormFieldDraftChanges = computed(() => (
   hasFieldOrderChanges.value || hasFieldVisibilityChanges.value || fieldVisibilityDirty.value
 ));
+
+function changedFieldVisibilityDraft() {
+  return contractModeBaseFieldRows.value.reduce<Record<string, boolean>>((acc, row) => {
+    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)) return acc;
+    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, row.fieldKey)) return acc;
+    if (fieldVisibilityDraft[row.fieldKey] !== fieldVisibilityBase.value[row.fieldKey]) {
+      acc[row.fieldKey] = fieldVisibilityDraft[row.fieldKey];
+    }
+    return acc;
+  }, {});
+}
+
+async function auditCurrentFormConfiguration() {
+  if (formConfigAuditBusy.value || busy.value) return;
+  const params = lowCodeApplyBaseParams();
+  const modelName = String(params.model || model.value || '').trim();
+  if (!modelName) return;
+  formConfigAuditBusy.value = true;
+  try {
+    const result = await intentRequest<{
+      business_config_form_fields?: unknown[];
+      legacy_policy_fields?: unknown[];
+      skipped_legacy_policy_fields?: unknown[];
+      active_legacy_policy_fields?: unknown[];
+      has_conflict?: boolean;
+    }>({
+      intent: 'ui.business_config.form.audit',
+      params: {
+        ...params,
+        model: modelName,
+        view_type: 'form',
+      },
+      context: { view: 'form' },
+    });
+    const normalizeNames = (value: unknown[]) => value
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
+    formConfigAuditResult.value = {
+      businessConfigFormFields: normalizeNames(Array.isArray(result.business_config_form_fields) ? result.business_config_form_fields : []),
+      legacyPolicyFields: normalizeNames(Array.isArray(result.legacy_policy_fields) ? result.legacy_policy_fields : []),
+      skippedLegacyPolicyFields: normalizeNames(Array.isArray(result.skipped_legacy_policy_fields) ? result.skipped_legacy_policy_fields : []),
+      activeLegacyPolicyFields: normalizeNames(Array.isArray(result.active_legacy_policy_fields) ? result.active_legacy_policy_fields : []),
+      hasConflict: Boolean(result.has_conflict),
+    };
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'form config audit failed';
+    status.value = 'error';
+  } finally {
+    formConfigAuditBusy.value = false;
+  }
+}
 
 const formFieldSettingsGovernance = computed(() => {
   const root = contract.value && typeof contract.value === 'object'
@@ -2092,6 +2179,18 @@ const formFieldConfigScope = computed(() => {
 const formSettingsTabs = computed(() => [
   { key: 'fields' as const, label: `字段 ${activeContractModeFieldRows.value.length}` },
 ]);
+
+const formConfigAuditSummary = computed(() => {
+  const result = formConfigAuditResult.value;
+  if (!result) return '';
+  const conflictText = result.skippedLegacyPolicyFields.length
+    ? `冲突字段：${result.skippedLegacyPolicyFields.join('、')}`
+    : '无冲突字段';
+  const activeLegacyText = result.activeLegacyPolicyFields.length
+    ? `兼容生效：${result.activeLegacyPolicyFields.join('、')}`
+    : '无兼容字段生效';
+  return `契约字段 ${result.businessConfigFormFields.length} / legacy policy ${result.legacyPolicyFields.length}，${conflictText}，${activeLegacyText}`;
+});
 
 const selectedFormSettingsFieldRow = computed(() => {
   const fieldKey = selectedFormSettingsFieldKey.value;
@@ -2175,35 +2274,19 @@ async function hydrateLowCodeDraftFromContract() {
       }).catch(() => null);
     }
     if (!res) return;
-    const objects = Array.isArray(res?.contract_json?.objects) ? res.contract_json?.objects || [] : [];
+    const legacyDraft = lowCodeLegacyDraftFromContract(res?.contract_json);
+    const objects = legacyDraft.objects;
     const viewOrchestration = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
       ? (res.contract_json as { view_orchestration?: Record<string, unknown> }).view_orchestration || {}
       : {};
     const orchestrationViews = viewOrchestration && typeof viewOrchestration === 'object' && !Array.isArray(viewOrchestration)
       ? ((viewOrchestration as Record<string, unknown>).views || {}) as Record<string, unknown>
       : {};
-    const matched = objects.find((row) => String(row?.name || '').trim() === modelName) || objects[0];
-    const fields = Array.isArray(matched?.fields) ? matched?.fields || [] : [];
-    if (fields.length) {
-      const orderNames = fields
-        .map((row) => ({ name: String(row?.name || '').trim(), order: Number(row?.order || 0) }))
-        .filter((row) => row.name)
-        .sort((a, b) => a.order - b.order)
-        .map((row) => row.name);
-      if (orderNames.length) fieldOrderDraft.value = orderNames;
-      fields.forEach((row) => {
-        const key = String(row?.name || '').trim();
-        if (!key) return;
-        const visible = row?.visible !== false;
-        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
-        fieldVisibilityDraft[key] = visible;
-      });
-    }
-    if (!fields.length) {
-      const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
-        ? orchestrationViews.form as Record<string, unknown>
-        : {};
-      const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
+    const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
+      ? orchestrationViews.form as Record<string, unknown>
+      : {};
+    const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
+    if (formFields.length) {
       const orderNames = formFields
         .map((row) => ({ name: String(row?.name || row?.field || '').trim(), sequence: Number(row?.sequence || row?.order || 0) }))
         .filter((row) => row.name)
@@ -2212,6 +2295,22 @@ async function hydrateLowCodeDraftFromContract() {
       if (orderNames.length) fieldOrderDraft.value = orderNames;
       formFields.forEach((row) => {
         const key = String(row?.name || row?.field || '').trim();
+        if (!key) return;
+        const visible = row?.visible !== false;
+        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
+        fieldVisibilityDraft[key] = visible;
+      });
+    } else {
+      const matched = objects.find((row) => String(row?.name || '').trim() === modelName) || objects[0];
+      const fields = Array.isArray(matched?.fields) ? matched?.fields || [] : [];
+      const orderNames = fields
+        .map((row) => ({ name: String(row?.name || '').trim(), order: Number(row?.order || 0) }))
+        .filter((row) => row.name)
+        .sort((a, b) => a.order - b.order)
+        .map((row) => row.name);
+      if (orderNames.length) fieldOrderDraft.value = orderNames;
+      fields.forEach((row) => {
+        const key = String(row?.name || '').trim();
         if (!key) return;
         const visible = row?.visible !== false;
         fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
@@ -2233,9 +2332,7 @@ async function hydrateLowCodeDraftFromContract() {
         }))
         : [],
     })).filter((obj) => obj.name);
-    const layout = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
-      ? (res.contract_json as { layout?: Record<string, unknown> }).layout || {}
-      : {};
+    const layout = legacyDraft.layout;
     const collectLayout = (section: 'form' | 'list' | 'kanban') => (
       Array.isArray((layout as Record<string, unknown>)[section])
         ? ((layout as Record<string, unknown>)[section] as unknown[])
@@ -2249,11 +2346,10 @@ async function hydrateLowCodeDraftFromContract() {
           .filter((node) => node.object && node.field)
         : []
     );
+    const orchestrationLayoutDraft = collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
     const legacyLayoutDraft = [...collectLayout('form'), ...collectLayout('list'), ...collectLayout('kanban')];
-    lowCodeLayoutDraft.value = legacyLayoutDraft.length ? legacyLayoutDraft : collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
-    const rules = Array.isArray((res?.contract_json as { rules?: unknown[] } | undefined)?.rules)
-      ? ((res?.contract_json as { rules?: unknown[] }).rules || [])
-      : [];
+    lowCodeLayoutDraft.value = orchestrationLayoutDraft.length ? orchestrationLayoutDraft : legacyLayoutDraft;
+    const rules = legacyDraft.rules;
     lowCodeRulesDraft.value = rules
       .filter((row) => row && typeof row === 'object')
       .map((row) => row as Record<string, unknown>)
@@ -2315,6 +2411,7 @@ async function switchLowCodeContractByName() {
         objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number; type?: string; required?: boolean; readonly?: boolean; default?: string; options?: unknown[] }> }>;
         layout?: Record<string, unknown>;
         rules?: unknown[];
+        legacy_lowcode_draft?: Record<string, unknown>;
       }
     }>({
       intent: 'ui.business_config.contract.get',
@@ -2327,7 +2424,27 @@ async function switchLowCodeContractByName() {
     const orchestrationViews = viewOrchestration && typeof viewOrchestration === 'object' && !Array.isArray(viewOrchestration)
       ? ((viewOrchestration as Record<string, unknown>).views || {}) as Record<string, unknown>
       : {};
-    const objects = Array.isArray(json.objects) ? json.objects : [];
+    const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
+      ? orchestrationViews.form as Record<string, unknown>
+      : {};
+    const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
+    if (formFields.length) {
+      const orderNames = formFields
+        .map((row) => ({ name: String(row?.name || row?.field || '').trim(), sequence: Number(row?.sequence || row?.order || 0) }))
+        .filter((row) => row.name)
+        .sort((a, b) => a.sequence - b.sequence)
+        .map((row) => row.name);
+      if (orderNames.length) fieldOrderDraft.value = orderNames;
+      formFields.forEach((row) => {
+        const key = String(row?.name || row?.field || '').trim();
+        if (!key) return;
+        const visible = row?.visible !== false;
+        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
+        fieldVisibilityDraft[key] = visible;
+      });
+    }
+    const legacyDraft = lowCodeLegacyDraftFromContract(json);
+    const objects = legacyDraft.objects;
     lowCodeObjectsDraft.value = objects
       .filter((obj) => obj && typeof obj === 'object')
       .map((obj) => ({
@@ -7370,12 +7487,20 @@ const viewOrchestrationHudSummary = computed(() => {
   const contracts = Array.isArray(current.business_config_contracts)
     ? current.business_config_contracts as Array<Record<string, unknown>>
     : [];
+  const businessConfigFormFields = Array.isArray(current.business_config_form_fields)
+    ? current.business_config_form_fields.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+  const skippedLegacyPolicyFields = Array.isArray(current.skipped_legacy_policy_fields)
+    ? current.skipped_legacy_policy_fields.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
   return {
     applied: Boolean(orchestration.applied || current.applied || contracts.length),
     owner: String(orchestration.owner_layer || current.owner_layer || '-'),
     contractCount: contracts.length,
     contractNames: contracts.map((row) => String(row.name || row.id || '').trim()).filter(Boolean).join(',') || '-',
     legacyOverlay: Boolean(current.legacy_field_policy_overlay),
+    businessConfigFieldCount: businessConfigFormFields.length,
+    skippedLegacyPolicyFields: skippedLegacyPolicyFields.join(',') || '-',
   };
 });
 
@@ -7407,6 +7532,8 @@ const hudEntries = computed(() => [
   { label: 'view_orchestration_owner', value: viewOrchestrationHudSummary.value.owner },
   { label: 'view_orchestration_contracts', value: viewOrchestrationHudSummary.value.contractCount },
   { label: 'view_orchestration_names', value: viewOrchestrationHudSummary.value.contractNames },
+  { label: 'view_orchestration_form_fields', value: viewOrchestrationHudSummary.value.businessConfigFieldCount },
+  { label: 'view_orchestration_skipped_policy_fields', value: viewOrchestrationHudSummary.value.skippedLegacyPolicyFields },
   { label: 'legacy_policy_overlay', value: viewOrchestrationHudSummary.value.legacyOverlay },
   { label: 'render_profile', value: renderProfile.value },
   { label: 'fields_count', value: Object.keys(contract.value?.fields || {}).length },
@@ -8248,6 +8375,13 @@ function applyClientMode(mode: string, toggle = true) {
   return true;
 }
 
+function applyRouteConfigMode(rawMode: unknown) {
+  const mode = String(rawMode || '').trim();
+  if (mode === 'form_field_configuration' || mode === 'business_config_lowcode') {
+    applyClientMode(mode, false);
+  }
+}
+
 function promptContractActionParams(rule: Record<string, unknown>, providedValues?: Record<string, string>) {
   const target = parseMaybeJsonRecord(rule.target);
   const params = { ...parseMaybeJsonRecord(target.params || rule.params) };
@@ -8672,15 +8806,24 @@ async function saveContractFieldOrder() {
   const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
   const target = parseMaybeJsonRecord(configAction?.target);
   const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
+  const changedVisibility = changedFieldVisibilityDraft();
+  const applyParams: Record<string, unknown> = { ...baseParams };
+  if (hasFieldOrderChanges.value) {
+    applyParams.field_order = [...fieldOrderDraft.value];
+  }
+  if (Object.keys(changedVisibility).length) {
+    applyParams.field_visibility = changedVisibility;
+  }
+  if (!('field_order' in applyParams) && !('field_visibility' in applyParams)) {
+    fieldVisibilityDirty.value = false;
+    contractModeFeedback.value = '';
+    return;
+  }
   busyKind.value = 'action';
   try {
     await intentRequest({
       intent: 'ui.business_config.lowcode.apply',
-      params: {
-        ...baseParams,
-        field_order: [...fieldOrderDraft.value],
-        field_visibility: { ...fieldVisibilityDraft },
-      },
+      params: applyParams,
       context: { view: 'form' },
     });
     const saveResult = await intentRequest<{
@@ -8694,19 +8837,21 @@ async function saveContractFieldOrder() {
         view_type: 'form',
         publish: false,
         contract_json: {
-          objects: buildLowCodeContractObjects(),
-          layout: {
-            form: lowCodeLayoutDraft.value.filter((row) => row.section === 'form').map((row) => ({ object: row.object, field: row.field })),
-            list: lowCodeLayoutDraft.value.filter((row) => row.section === 'list').map((row) => ({ object: row.object, field: row.field })),
-            kanban: lowCodeLayoutDraft.value.filter((row) => row.section === 'kanban').map((row) => ({ object: row.object, field: row.field })),
-          },
           view_orchestration: buildLowCodeViewOrchestration(),
-          rules: lowCodeRulesDraft.value.map((rule) => ({
-            name: rule.name,
-            trigger: rule.trigger,
-            cron: rule.trigger === 'scheduled' ? (rule.cron || '') : '',
-            action: { object: rule.object, field: rule.field },
-          })),
+          legacy_lowcode_draft: {
+            objects: buildLowCodeContractObjects(),
+            layout: {
+              form: lowCodeLayoutDraft.value.filter((row) => row.section === 'form').map((row) => ({ object: row.object, field: row.field })),
+              list: lowCodeLayoutDraft.value.filter((row) => row.section === 'list').map((row) => ({ object: row.object, field: row.field })),
+              kanban: lowCodeLayoutDraft.value.filter((row) => row.section === 'kanban').map((row) => ({ object: row.object, field: row.field })),
+            },
+            rules: lowCodeRulesDraft.value.map((rule) => ({
+              name: rule.name,
+              trigger: rule.trigger,
+              cron: rule.trigger === 'scheduled' ? (rule.cron || '') : '',
+              action: { object: rule.object, field: rule.field },
+            })),
+          },
         },
       },
     });
@@ -9216,6 +9361,14 @@ watch(
     }
     if (identity && identity === retainedRouteIdentity.value && status.value === 'ok') return;
     void reload();
+  },
+  { immediate: true },
+);
+
+watch(
+  () => route.query.config_mode,
+  (mode) => {
+    applyRouteConfigMode(mode);
   },
   { immediate: true },
 );
@@ -10341,6 +10494,20 @@ onBeforeUnmount(() => {
   margin-right: auto;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
+}
+
+.contract-field-governance-audit {
+  flex: 1 1 280px;
+  min-width: 0;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contract-field-governance-audit--warning {
+  color: var(--sc-app-warning-text);
 }
 
 .contract-lowcode-warnings {

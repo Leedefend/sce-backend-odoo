@@ -1533,6 +1533,7 @@ class PageAssembler:
             model,
             action_id=int(action_id or 0),
             view_id=int(view_id or 0),
+            user=self.env.user,
         )
         policy_by_field = {
             str(policy.field_name or "").strip(): policy
@@ -2069,6 +2070,9 @@ class PageAssembler:
             trace = source_trace.get("view_orchestration") if isinstance(source_trace.get("view_orchestration"), dict) else {}
             business_contracts = trace.get("business_config_contracts") or orchestration.get("business_config_contracts") or []
             legacy_overlay = bool(trace.get("legacy_field_policy_overlay") or orchestration.get("legacy_field_policy_overlay"))
+            business_config_form_fields = trace.get("business_config_form_fields") or orchestration.get("business_config_form_fields") or []
+            form_field_policy = governance.get("form_field_policy") if isinstance(governance.get("form_field_policy"), dict) else {}
+            skipped_policy_fields = form_field_policy.get("skipped_by_business_config_fields") or []
             applied = bool(orchestration.get("applied") or business_contracts or legacy_overlay)
             if applied:
                 any_applied = True
@@ -2077,6 +2081,8 @@ class PageAssembler:
                 "owner_layer": str(trace.get("owner_layer") or orchestration.get("owner_layer") or "business_view_orchestration"),
                 "business_config_contracts": business_contracts if isinstance(business_contracts, list) else [],
                 "legacy_field_policy_overlay": legacy_overlay,
+                "business_config_form_fields": business_config_form_fields if isinstance(business_config_form_fields, list) else [],
+                "skipped_legacy_policy_fields": skipped_policy_fields if isinstance(skipped_policy_fields, list) else [],
             }
         if not view_rows:
             return
