@@ -113,6 +113,13 @@ async function main() {
     await selectableField.click();
     const selectedFieldCount = await page.locator(".field--selected").count();
     const selectedPanelText = await page.locator(".contract-field-selection-card").innerText();
+    await page.locator(".contract-field-selection-card").getByRole("button", { name: "新增字段" }).click();
+    await page.waitForSelector(".contract-field-create-dialog", { timeout: 10000 });
+    const createFieldDialogText = await page.locator(".contract-field-create-dialog").innerText();
+    const createFieldLabelInputCount = await page.locator(".contract-field-create-dialog input[required]").count();
+    const createFieldTypeOptionCount = await page.locator(".contract-field-create-dialog select option").count();
+    await page.locator(".contract-field-create-dialog").getByRole("button", { name: "取消" }).click();
+    const createFieldDialogClosed = await page.locator(".contract-field-create-dialog").count() === 0;
     report.checks.formDesigner = {
       designTitle,
       designFieldCount,
@@ -120,6 +127,10 @@ async function main() {
       dragHandleCount,
       selectedFieldCount,
       selectedPanelText,
+      createFieldDialogText,
+      createFieldLabelInputCount,
+      createFieldTypeOptionCount,
+      createFieldDialogClosed,
       returnButtonCount,
       legacyPanelCount,
     };
@@ -131,6 +142,16 @@ async function main() {
       selectedFieldCount,
       selectedPanelText,
     });
+    assert(
+      createFieldDialogText.includes("字段标题")
+        && createFieldDialogText.includes("字段类型")
+        && createFieldDialogText.includes("创建字段")
+        && createFieldLabelInputCount === 1
+        && createFieldTypeOptionCount >= 6
+        && createFieldDialogClosed,
+      "新增字段弹窗不可用",
+      { createFieldDialogText, createFieldLabelInputCount, createFieldTypeOptionCount, createFieldDialogClosed },
+    );
     assert(returnButtonCount >= 1, "表单设计器缺少返回配置入口", { returnButtonCount });
     assert(legacyPanelCount === 0, "默认表单设计器不应显示技术配置面板", { legacyPanelCount });
 
