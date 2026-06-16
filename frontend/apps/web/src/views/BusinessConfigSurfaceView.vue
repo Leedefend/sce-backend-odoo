@@ -303,9 +303,14 @@
           <h2>列表/搜索业务配置</h2>
           <p>这些配置写入正式业务契约，不写入个人列偏好。</p>
         </div>
-        <button type="button" class="ghost small" :disabled="listSearchSaving" @click="saveListSearchConfig">
-          {{ listSearchSaving ? '保存中...' : '保存业务默认' }}
-        </button>
+        <div class="edit-panel-actions">
+          <button type="button" class="ghost small" :disabled="!previewRouteTarget.path" @click="previewSelectedRuntimeRoute">
+            预览页面
+          </button>
+          <button type="button" class="ghost small primary" :disabled="listSearchSaving" @click="saveListSearchConfig">
+            {{ listSearchSaving ? '保存中...' : '保存业务默认' }}
+          </button>
+        </div>
       </div>
       <div class="edit-grid">
         <section class="field-chip-editor">
@@ -465,6 +470,7 @@ const showOnlyIssues = ref(false);
 const pageSearch = ref('');
 const listSearchAudit = ref<BusinessConfigListSearchAuditPayload | null>(null);
 const listSearchPanelOpen = ref(false);
+const selectedRuntimeRoute = ref<BusinessConfigCoverageScanItem['runtime_route'] | null>(null);
 const versionsLoading = ref(false);
 const versionsPanelOpen = ref(false);
 const advancedPanelOpen = ref(false);
@@ -547,6 +553,18 @@ const availableModelFields = computed(() => (listSearchAudit.value?.available_mo
 const availableListFieldOptions = computed(() => fieldOptionsNotIn('list'));
 const availableFilterFieldOptions = computed(() => fieldOptionsNotIn('filter'));
 const availableGroupFieldOptions = computed(() => fieldOptionsNotIn('group'));
+const previewRouteTarget = computed(() => {
+  const runtimeRoute = selectedRuntimeRoute.value || {};
+  const runtimePath = String(runtimeRoute.path || '').trim();
+  if (runtimePath) return { path: runtimePath, query: runtimeRoute.query || {} };
+  if (scopeAction.value) {
+    const query: Record<string, string> = {};
+    const menuId = String(route.query.menu_id || '').trim();
+    if (menuId) query.menu_id = menuId;
+    return { path: `/a/${scopeAction.value}`, query };
+  }
+  return { path: '', query: {} };
+});
 
 function numericQuery(name: string) {
   const parsed = Number(route.query[name] || 0);
@@ -813,6 +831,7 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
   scopeModel.value = row.model;
   scopeActionId.value = row.action_id;
   scopeViewId.value = 0;
+  selectedRuntimeRoute.value = row.runtime_route || null;
   listSearchPanelOpen.value = false;
   listSearchAudit.value = null;
   versionsPanelOpen.value = false;
@@ -842,6 +861,16 @@ async function openRuntimeRoute(row: BusinessConfigCoverageScanItem) {
   await router.push({
     path,
     query: runtimeRoute.query || {},
+  });
+}
+
+async function previewSelectedRuntimeRoute() {
+  const target = previewRouteTarget.value;
+  const path = String(target.path || '').trim();
+  if (!path) return;
+  await router.push({
+    path,
+    query: target.query || {},
   });
 }
 
@@ -1614,6 +1643,13 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.edit-panel-actions {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .edit-panel p {
