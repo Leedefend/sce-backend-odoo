@@ -322,7 +322,7 @@
             <span>{{ parseNames(listColumnsText).length }} 项</span>
           </header>
           <div class="field-chip-list">
-            <span v-for="(name, index) in parseNames(listColumnsText)" :key="`list-${name}`" class="field-chip">
+            <span v-for="(name, index) in parseNames(listColumnsText)" :key="`list-${name}`" class="field-chip" :title="fieldHelpText(name)">
               {{ fieldDisplayLabel(name) }}
               <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('list', name, -1)">↑</button>
               <button type="button" title="下移" :disabled="index === parseNames(listColumnsText).length - 1" @click="moveListSearchName('list', name, 1)">↓</button>
@@ -345,9 +345,10 @@
               v-for="field in availableListFieldOptions"
               :key="`list-option-${field.name}`"
               type="button"
+              :title="fieldOptionHelpText(field)"
               @click="addListSearchName('list', field.name)"
             >
-              {{ field.label }}
+              {{ fieldOptionLabel(field) }}
             </button>
           </div>
         </section>
@@ -357,7 +358,7 @@
             <span>{{ parseNames(searchFiltersText).length }} 项</span>
           </header>
           <div class="field-chip-list">
-            <span v-for="(name, index) in parseNames(searchFiltersText)" :key="`filter-${name}`" class="field-chip">
+            <span v-for="(name, index) in parseNames(searchFiltersText)" :key="`filter-${name}`" class="field-chip" :title="fieldHelpText(name)">
               {{ fieldDisplayLabel(name) }}
               <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('filter', name, -1)">↑</button>
               <button type="button" title="下移" :disabled="index === parseNames(searchFiltersText).length - 1" @click="moveListSearchName('filter', name, 1)">↓</button>
@@ -380,9 +381,10 @@
               v-for="field in availableFilterFieldOptions"
               :key="`filter-option-${field.name}`"
               type="button"
+              :title="fieldOptionHelpText(field)"
               @click="addListSearchName('filter', field.name)"
             >
-              {{ field.label }}
+              {{ fieldOptionLabel(field) }}
             </button>
           </div>
         </section>
@@ -392,7 +394,7 @@
             <span>{{ parseNames(searchGroupByText).length }} 项</span>
           </header>
           <div class="field-chip-list">
-            <span v-for="(name, index) in parseNames(searchGroupByText)" :key="`group-${name}`" class="field-chip">
+            <span v-for="(name, index) in parseNames(searchGroupByText)" :key="`group-${name}`" class="field-chip" :title="fieldHelpText(name)">
               {{ fieldDisplayLabel(name) }}
               <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('group', name, -1)">↑</button>
               <button type="button" title="下移" :disabled="index === parseNames(searchGroupByText).length - 1" @click="moveListSearchName('group', name, 1)">↓</button>
@@ -415,9 +417,10 @@
               v-for="field in availableGroupFieldOptions"
               :key="`group-option-${field.name}`"
               type="button"
+              :title="fieldOptionHelpText(field)"
               @click="addListSearchName('group', field.name)"
             >
-              {{ field.label }}
+              {{ fieldOptionLabel(field) }}
             </button>
           </div>
         </section>
@@ -555,6 +558,14 @@ const availableModelFields = computed(() => (listSearchAudit.value?.available_mo
   }))
   .filter((field) => field.name)
 );
+const duplicatedFieldLabels = computed(() => {
+  const counts = new Map<string, number>();
+  availableModelFields.value.forEach((field) => {
+    const label = field.label || field.name;
+    counts.set(label, (counts.get(label) || 0) + 1);
+  });
+  return new Set([...counts.entries()].filter(([, count]) => count > 1).map(([label]) => label));
+});
 const availableListFieldOptions = computed(() => fieldOptionsNotIn('list'));
 const availableFilterFieldOptions = computed(() => fieldOptionsNotIn('filter'));
 const availableGroupFieldOptions = computed(() => fieldOptionsNotIn('group'));
@@ -1102,7 +1113,23 @@ function fieldOptionsNotIn(kind: ListSearchEditorKind) {
 function fieldDisplayLabel(name: string) {
   const fieldName = String(name || '').trim();
   const field = availableModelFields.value.find((item) => item.name === fieldName);
-  return field?.label || fieldName;
+  if (!field) return fieldName;
+  return fieldOptionLabel(field);
+}
+
+function fieldOptionLabel(field: { name: string; label: string; type: string }) {
+  const label = field.label || field.name;
+  return duplicatedFieldLabels.value.has(label) ? `${label}（${field.name}）` : label;
+}
+
+function fieldOptionHelpText(field: { name: string; label: string; type: string }) {
+  return [field.label || field.name, field.name, field.type].filter(Boolean).join(' · ');
+}
+
+function fieldHelpText(name: string) {
+  const fieldName = String(name || '').trim();
+  const field = availableModelFields.value.find((item) => item.name === fieldName);
+  return field ? fieldOptionHelpText(field) : fieldName;
 }
 
 function addListSearchName(kind: ListSearchEditorKind, explicitName = '') {
