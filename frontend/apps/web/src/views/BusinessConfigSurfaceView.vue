@@ -544,6 +544,7 @@ const selectedPageLabel = ref(String(route.query.page_label || '').trim());
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || '').trim());
 const shouldOpenPageList = computed(() => String(route.query.open_pages || '').trim() === '1');
 const shouldOpenListSearch = computed(() => String(route.query.open_list_search || '').trim() === '1');
+const shouldOpenFormConfig = computed(() => String(route.query.open_form_config || '').trim() === '1');
 const designerTitle = computed(() => {
   const model = currentModel.value || scopeModel.value.trim();
   const pageLabel = selectedPageLabel.value.trim();
@@ -1436,6 +1437,7 @@ function openFormConfig() {
       root_menu_xmlid: route.query.root_menu_xmlid || undefined,
       view_id: scopeView.value ? String(scopeView.value) : undefined,
       role_key: scopeRole.value || undefined,
+      page_label: selectedPageLabel.value || undefined,
       config_mode: 'business_config_lowcode',
     },
   });
@@ -1446,6 +1448,14 @@ onMounted(() => {
     await loadSurface();
     if (shouldOpenPageList.value) {
       await scanSystemRootCoverage();
+    }
+    if (shouldOpenFormConfig.value && currentModel.value && scopeAction.value) {
+      const matched = (coverageScan.value?.items || []).find((row) => row.action_id === scopeAction.value);
+      if (matched) {
+        await focusScanRow(matched);
+      } else {
+        await loadSurface();
+      }
     }
     if (shouldOpenListSearch.value && currentModel.value) {
       await loadListSearchConfig();

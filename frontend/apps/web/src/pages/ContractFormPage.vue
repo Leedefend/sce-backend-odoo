@@ -8778,6 +8778,9 @@ function lowCodeReturnQuery() {
   if (model.value) query.model = model.value;
   if (actionId.value) query.action_id = String(actionId.value);
   query.open_pages = '1';
+  query.open_form_config = '1';
+  const pageLabel = routeQueryText('page_label');
+  if (pageLabel) query.page_label = pageLabel;
   const viewId = routeQueryText('view_id');
   if (viewId) query.view_id = viewId;
   const roleKey = routeQueryText('role_key');
