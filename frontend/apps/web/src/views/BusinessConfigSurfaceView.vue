@@ -13,7 +13,7 @@
           {{ scanLoading ? '读取中...' : '选择业务页面' }}
         </button>
         <button type="button" class="ghost" :disabled="loading" @click="advancedPanelOpen = !advancedPanelOpen">
-          高级作用域
+          高级设置
         </button>
       </div>
     </header>
@@ -187,14 +187,14 @@
       </div>
     </section>
     <section v-if="!loading && currentModel" class="section-grid">
-      <article v-for="section in sections" :key="section.key" class="config-card">
+      <article v-for="section in visibleSections" :key="section.key" class="config-card">
         <div class="config-card-head">
-          <h2>{{ section.label }}</h2>
-          <strong>{{ section.contract_count }}</strong>
+          <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
+          <strong :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.contract_count) }}</strong>
         </div>
-        <p>{{ boundaryLabel(section.boundary) }}</p>
+        <p>{{ sectionPrimaryCopy(section.key) }}</p>
         <div class="config-card-meta">
-          <span>{{ sectionHelpLabel(section.key) }}</span>
+          <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
         </div>
         <div class="config-card-actions">
           <button
@@ -517,6 +517,7 @@ const designerTitle = computed(() => {
 });
 
 const sections = computed(() => surface.value?.sections || []);
+const visibleSections = computed(() => sections.value.filter((section) => advancedPanelOpen.value || section.key !== 'menu'));
 const currentModel = computed(() => String(scopeModel.value || surface.value?.model || '').trim());
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value));
 function isCoverageIssue(row: BusinessConfigCoverageScanItem) {
@@ -628,6 +629,24 @@ function sectionHelpLabel(sectionKey: string) {
   if (sectionKey === 'list_search') return '列表列、搜索条件、默认分组';
   if (sectionKey === 'menu') return '菜单入口、显示范围、发布状态';
   return '业务配置';
+}
+
+function sectionDisplayLabel(sectionKey: string, fallback: string) {
+  if (sectionKey === 'form') return '表单字段与布局';
+  if (sectionKey === 'list_search') return '列表与搜索';
+  if (sectionKey === 'menu') return '菜单入口';
+  return fallback || '业务配置';
+}
+
+function sectionPrimaryCopy(sectionKey: string) {
+  if (sectionKey === 'form') return '调整字段显示、必填、顺序和页面布局。';
+  if (sectionKey === 'list_search') return '调整列表列、搜索条件和默认分组。';
+  if (sectionKey === 'menu') return '调整这个页面在菜单中的显示方式。';
+  return '调整当前业务页面配置。';
+}
+
+function sectionStatusLabel(contractCount: number) {
+  return contractCount > 0 ? '已配置' : '未配置';
 }
 
 function viewTypeLabel(viewType: string) {
@@ -1708,7 +1727,22 @@ h1 {
 }
 
 .config-card strong {
-  font-size: 22px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--sc-app-success-border);
+  border-radius: 999px;
+  padding: 0 9px;
+  background: var(--sc-app-success-bg);
+  color: var(--sc-app-success-text);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.config-card strong.config-status--empty {
+  border-color: var(--sc-app-border);
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
 }
 
 .config-card p {
