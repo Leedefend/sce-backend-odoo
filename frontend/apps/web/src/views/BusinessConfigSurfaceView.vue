@@ -343,7 +343,7 @@
           :key="tab.key"
           type="button"
           :class="{ active: activeListSearchEditor === tab.key }"
-          @click="activeListSearchEditor = tab.key"
+          @click="setActiveListSearchEditor(tab.key)"
         >
           <span>{{ tab.label }}</span>
           <em>{{ listSearchEditorCount(tab.key) }}</em>
@@ -548,6 +548,10 @@ const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || '').t
 const shouldOpenPageList = computed(() => String(route.query.open_pages || '').trim() === '1');
 const shouldOpenListSearch = computed(() => String(route.query.open_list_search || '').trim() === '1');
 const shouldOpenFormConfig = computed(() => String(route.query.open_form_config || '').trim() === '1');
+const requestedListSearchTab = computed<ListSearchEditorKind>(() => {
+  const value = String(route.query.list_search_tab || '').trim();
+  return value === 'filter' || value === 'group' ? value : 'list';
+});
 const designerTitle = computed(() => {
   const model = currentModel.value || scopeModel.value.trim();
   const pageLabel = selectedPageLabel.value.trim();
@@ -1015,6 +1019,7 @@ async function openListSearchForRow(row: BusinessConfigCoverageScanItem) {
       role_key: scopeRole.value || undefined,
       page_label: row.name || undefined,
       open_list_search: '1',
+      list_search_tab: route.query.list_search_tab || undefined,
     },
   });
   await loadSurface();
@@ -1243,6 +1248,18 @@ function fieldOptionSearchState(kind: ListSearchEditorKind) {
   return groupFieldOptionSearch;
 }
 
+async function setActiveListSearchEditor(kind: ListSearchEditorKind) {
+  activeListSearchEditor.value = kind;
+  if (!listSearchPanelOpen.value) return;
+  await router.replace({
+    path: route.path,
+    query: {
+      ...route.query,
+      list_search_tab: kind === 'list' ? undefined : kind,
+    },
+  });
+}
+
 function setListSearchNames(kind: ListSearchEditorKind, names: string[]) {
   const state = listSearchEditorState(kind);
   state.text.value = namesToText(names);
@@ -1344,7 +1361,7 @@ async function loadListSearchConfig() {
       filter: normalizeNamesText(searchFiltersText.value),
       group: normalizeNamesText(searchGroupByText.value),
     };
-    activeListSearchEditor.value = 'list';
+    activeListSearchEditor.value = requestedListSearchTab.value;
     listSearchPanelOpen.value = true;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '列表/搜索配置读取失败';
