@@ -19,7 +19,10 @@
     </header>
 
     <div v-if="error" class="status error">{{ error }}</div>
-    <div v-else-if="message" class="status ok">{{ message }}</div>
+    <div v-else-if="message.text" class="status ok">
+      <span>{{ message.text }}</span>
+      <small v-if="advancedPanelOpen && message.detail">{{ message.detail }}</small>
+    </div>
 
     <section v-if="!coverageScan" class="workbench-flow">
       <article class="flow-card flow-card--primary">
@@ -510,7 +513,7 @@ const scanLoading = ref(false);
 const listSearchBusy = ref(false);
 const listSearchSaving = ref(false);
 const error = ref('');
-const message = ref('');
+const message = ref({ text: '', detail: '' });
 const surface = ref<BusinessConfigSurfacePayload | null>(null);
 const coverageScan = ref<BusinessConfigCoverageScanPayload | null>(null);
 const showOnlyIssues = ref(false);
@@ -682,6 +685,14 @@ const scopeView = computed(() => {
 
 const scopeRole = computed(() => String(scopeRoleKey.value || '').trim() || undefined);
 
+function clearMessage() {
+  message.value = { text: '', detail: '' };
+}
+
+function setMessage(text: string, detail = '') {
+  message.value = { text, detail };
+}
+
 function boundaryLabel(boundary: string) {
   if (boundary === 'business_contract') return '业务默认配置';
   if (boundary === 'business_contract_not_user_preference') return '业务默认配置';
@@ -811,7 +822,7 @@ function remediationActionLabel(code: string) {
 async function loadSurface() {
   loading.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     surface.value = await loadBusinessConfigSurface({
       model: currentModel.value || undefined,
@@ -829,7 +840,7 @@ async function loadSurface() {
 async function scanCoverage() {
   scanLoading.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     coverageScan.value = await scanBusinessConfigCoverage({
       model: currentModel.value || undefined,
@@ -848,7 +859,7 @@ async function scanCoverage() {
 async function scanSystemRootCoverage() {
   scanLoading.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     coverageScan.value = await scanBusinessConfigCoverage({
       model: currentModel.value || undefined,
@@ -868,7 +879,7 @@ async function scanCurrentModel() {
   if (!currentModel.value) return;
   scanLoading.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     coverageScan.value = await scanBusinessConfigCoverage({
       model: currentModel.value,
@@ -929,9 +940,9 @@ async function copyCoverageSummary() {
   if (!text) return;
   try {
     await navigator.clipboard.writeText(text);
-    message.value = '已复制验收摘要';
+    setMessage('已复制验收摘要');
   } catch {
-    message.value = text;
+    setMessage('复制摘要失败', '浏览器未允许写入剪贴板，请稍后重试');
   }
 }
 
@@ -1057,7 +1068,7 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
   if (!row.model) return;
   listSearchSaving.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   let savedCount = 0;
   let formFieldCount = 0;
   try {
@@ -1087,9 +1098,10 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
     }
     await loadSurface();
     await scanCurrentModel();
-    message.value = formFieldCount
-      ? `已生成并发布 ${savedCount} 个业务契约，表单字段 ${formFieldCount}`
-      : `已生成并发布 ${savedCount} 个业务契约`;
+    setMessage(
+      '已生成基础配置',
+      formFieldCount ? `已发布 ${savedCount} 个业务配置，表单字段 ${formFieldCount}` : `已发布 ${savedCount} 个业务配置`,
+    );
   } catch (err) {
     error.value = err instanceof Error ? err.message : '业务契约自动生成失败，已打开手工配置';
     if (row.runtime_missing_view_types.includes('form')) {
@@ -1106,7 +1118,7 @@ async function bootstrapFormConfig(row: BusinessConfigCoverageScanItem) {
   if (!row.model) return;
   listSearchSaving.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     const result = await bootstrapBusinessFormConfig({
       model: row.model,
@@ -1117,7 +1129,7 @@ async function bootstrapFormConfig(row: BusinessConfigCoverageScanItem) {
     });
     await loadSurface();
     await scanCurrentModel();
-    message.value = `已生成并发布表单业务契约，字段 ${result.field_count}`;
+    setMessage('已生成表单基础配置', `字段 ${result.field_count}`);
   } catch (err) {
     error.value = err instanceof Error ? err.message : '表单契约自动生成失败，已打开手工配置';
     openFormConfig();
@@ -1130,7 +1142,7 @@ async function bootstrapListSearchConfig(row: BusinessConfigCoverageScanItem) {
   if (!row.model) return;
   listSearchSaving.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     const viewTypes = row.runtime_missing_view_types
       .filter((viewType) => viewType === 'tree' || viewType === 'search');
@@ -1144,7 +1156,7 @@ async function bootstrapListSearchConfig(row: BusinessConfigCoverageScanItem) {
     });
     await loadSurface();
     await scanCurrentModel();
-    message.value = `已生成并发布 ${result.saved_count} 个列表/搜索业务契约`;
+    setMessage('已生成列表/搜索基础配置', `已发布 ${result.saved_count} 个业务配置`);
   } catch (err) {
     error.value = err instanceof Error ? err.message : '列表/搜索契约自动生成失败';
     await loadListSearchConfig();
@@ -1157,7 +1169,7 @@ async function bootstrapCoverageMissing() {
   if (!coverageBatchBootstrapRows.value.length) return;
   listSearchSaving.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     const result = await bootstrapCoverageMissingConfig({
       model: currentModel.value || undefined,
@@ -1174,9 +1186,12 @@ async function bootstrapCoverageMissing() {
       .filter(Boolean)
       .slice(0, 5)
       .join('、');
-    message.value = result.failed_count
-      ? `已生成并发布 ${result.saved_count} 个业务契约，${result.failed_count} 个动作需手工处理${failedNames ? `：${failedNames}` : ''}`
-      : `已生成并发布 ${result.saved_count} 个业务契约`;
+    setMessage(
+      result.failed_count ? '已生成基础配置，部分页面需手工处理' : '已生成基础配置',
+      result.failed_count
+        ? `已发布 ${result.saved_count} 个业务配置，${result.failed_count} 个页面需手工处理${failedNames ? `：${failedNames}` : ''}`
+        : `已发布 ${result.saved_count} 个业务配置`,
+    );
   } catch (err) {
     error.value = err instanceof Error ? err.message : '批量补齐业务契约失败';
   } finally {
@@ -1304,7 +1319,7 @@ async function loadListSearchConfig() {
   if (!currentModel.value) return;
   listSearchBusy.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     const result = await auditBusinessListSearchConfig({
       model: currentModel.value,
@@ -1334,7 +1349,7 @@ async function saveListSearchConfig() {
   if (!currentModel.value || !hasListSearchDraftChanges.value) return false;
   listSearchSaving.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     const result = await saveBusinessListSearchConfig({
       model: currentModel.value,
@@ -1348,7 +1363,7 @@ async function saveListSearchConfig() {
     });
     await loadSurface();
     await loadListSearchConfig();
-    message.value = `已保存 ${result.saved_count} 个业务配置契约`;
+    setMessage('列表与搜索配置已保存', `已保存 ${result.saved_count} 个业务配置`);
     return true;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '列表/搜索配置保存失败';
@@ -1380,7 +1395,7 @@ async function loadVersions(sectionKey: string) {
   if (!currentModel.value) return;
   versionsLoading.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     if (sectionKey === 'form') {
       const result = await loadBusinessConfigContractVersions(versionParams('form'));
@@ -1412,7 +1427,7 @@ async function rollbackContractFromWorkbench(
   if (!confirmed) return;
   listSearchSaving.value = true;
   error.value = '';
-  message.value = '';
+  clearMessage();
   try {
     const result = await rollbackBusinessConfigContract({
       name: contract.name,
@@ -1428,7 +1443,7 @@ async function rollbackContractFromWorkbench(
     if (coverageScan.value) {
       await rescanCoverageAfterBootstrap();
     }
-    message.value = `已回滚到 v${result.rolled_back_to_version}`;
+    setMessage('配置已回滚', `已回滚到 v${result.rolled_back_to_version}`);
   } catch (err) {
     error.value = err instanceof Error ? err.message : '业务配置回滚失败';
   } finally {
@@ -1551,9 +1566,16 @@ h1 {
 }
 
 .status {
+  display: grid;
+  gap: 3px;
   padding: 10px 12px;
   border-radius: 6px;
   font-size: 13px;
+}
+
+.status small {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
 }
 
 .status.error {
