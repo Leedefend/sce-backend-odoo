@@ -71,7 +71,7 @@ class ScBusinessEntity(models.Model):
 
     @api.depends("map_ids")
     def _compute_map_count(self):
-        grouped = self.env["sc.legacy.business.entity.map"].read_group(
+        grouped = self.env["sc.legacy.business.entity.map"].sudo().read_group(
             [("business_entity_id", "in", self.ids)],
             ["business_entity_id"],
             ["business_entity_id"],

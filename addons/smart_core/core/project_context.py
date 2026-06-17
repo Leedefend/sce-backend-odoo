@@ -349,9 +349,16 @@ def _company_scope_domain(env_model, company_id: int) -> list:
         return [("id", "=", selected_id)]
     fields = getattr(env_model, "_fields", {}) or {}
     company_field = fields.get("company_id")
+    project_field = fields.get("project_id")
+    if (
+        company_field
+        and str(getattr(company_field, "comodel_name", "") or "") == "res.company"
+        and project_field
+        and str(getattr(project_field, "comodel_name", "") or "") == PROJECT_MODEL
+    ):
+        return ["|", ("company_id", "=", selected_id), ("project_id.company_id", "=", selected_id)]
     if company_field and str(getattr(company_field, "comodel_name", "") or "") == "res.company":
         return [("company_id", "=", selected_id)]
-    project_field = fields.get("project_id")
     if project_field and str(getattr(project_field, "comodel_name", "") or "") == PROJECT_MODEL:
         return [("project_id.company_id", "=", selected_id)]
     projects_field = fields.get("project_ids")

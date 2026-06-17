@@ -363,6 +363,7 @@ export type NativeFormLayoutNode = {
   tabs?: NativeFormLayoutNode[];
   nodes?: NativeFormLayoutNode[];
   items?: NativeFormLayoutNode[];
+  widgetList?: NativeFormLayoutNode[];
 };
 
 const props = withDefaults(defineProps<{

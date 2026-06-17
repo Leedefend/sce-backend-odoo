@@ -252,6 +252,16 @@ USER_FORM_PREFERENCE_EXCLUDED_MODELS = {
     "sc.scene",
     "sc.scene.version",
 }
+USER_FORM_PREFERENCE_EXCLUDED_FIELDS = {
+    "message_ids",
+    "message_follower_ids",
+    "message_partner_ids",
+    "activity_ids",
+    "map_ids",
+}
+USER_FORM_PREFERENCE_EXCLUDED_FIELD_SUFFIXES = (
+    "_map_ids",
+)
 
 USER_SPLIT_HANDLING_MENU_RULES = {
     "smart_construction_core.menu_sc_reimbursement_request": {
@@ -1036,7 +1046,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
         layout_children = []
         for index, name in enumerate(ordered, start=1):
             descriptor = fields_map.get(name)
-            if not descriptor or visible.get(name) is False:
+            if not descriptor or visible.get(name) is False or self._is_user_form_preference_excluded_field(name, descriptor):
                 continue
             label = labels.get(name) or str(descriptor.get("string") or name)
             field_rows.append({
@@ -1067,6 +1077,8 @@ class ScUserPreferenceInitialization(models.TransientModel):
             name = str(node.get("name") or "").strip()
             if not name or name in ordered or name not in fields_map:
                 continue
+            if self._is_user_form_preference_excluded_field(name, fields_map.get(name) or {}):
+                continue
             if str(node.get("invisible") or "").strip() in {"1", "True", "true"}:
                 continue
             ordered.append(name)
@@ -1084,6 +1096,20 @@ class ScUserPreferenceInitialization(models.TransientModel):
             })
             layout_children.append(self._field_layout_node(name, label, descriptor))
         return field_rows, layout_children
+
+    @api.model
+    def _is_user_form_preference_excluded_field(self, name, descriptor):
+        field_name = str(name or "").strip()
+        if not field_name:
+            return True
+        if field_name in USER_FORM_PREFERENCE_EXCLUDED_FIELDS:
+            return True
+        if any(field_name.endswith(suffix) for suffix in USER_FORM_PREFERENCE_EXCLUDED_FIELD_SUFFIXES):
+            return True
+        relation = str((descriptor or {}).get("relation") or (descriptor or {}).get("comodel_name") or "").strip()
+        if relation.startswith("sc.legacy.") and relation.endswith(".map"):
+            return True
+        return False
 
     @api.model
     def _action_form_view_id(self, action):

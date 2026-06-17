@@ -1011,7 +1011,9 @@ import {
   resolveContractV2SourceContext,
   resolveContractV2ValueSource,
   type ContractV2ButtonStatus,
+  type ContractV2Container,
   type ContractV2NormalizedStore,
+  type ContractV2Widget,
 } from '../app/contracts/v2';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
@@ -1424,6 +1426,8 @@ const attachmentViewerRef = ref<InstanceType<typeof AttachmentViewer> | null>(nu
 const pendingNativeAttachments = ref<Array<{ key: string; name: string; size: number; file: File }>>([]);
 const nativeChatterAutoLoadKey = ref('');
 let activeReloadToken = 0;
+let activeReloadIdentity = '';
+let activeReloadPromise: Promise<void> | null = null;
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const menuId = computed(() => Number(route.query.menu_id || 0) || 0);
@@ -5995,13 +5999,72 @@ const rawNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
     ? storeContainers
     : (Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : []);
   if (containers.length > 0) {
-    return containers as unknown as NativeFormLayoutNode[];
+    return normalizeContractV2ContainersForNativeForm(containers as unknown as ContractV2Container[]);
   }
   const legacyLayout = Array.isArray(contract.value?.views?.form?.layout)
     ? contract.value?.views?.form?.layout
     : [];
   return legacyLayout as unknown as NativeFormLayoutNode[];
 });
+
+function contractV2WidgetToNativeFieldNode(widget: ContractV2Widget): NativeFormLayoutNode | null {
+  const fieldName = String(widget?.fieldCode || '').trim();
+  if (!fieldName) return null;
+  const componentConfig = widget.componentConfig && typeof widget.componentConfig === 'object'
+    ? widget.componentConfig as Record<string, unknown>
+    : {};
+  const fieldInfo: Record<string, unknown> = {
+    name: fieldName,
+    label: widget.label || fieldName,
+    string: widget.label || fieldName,
+    type: widget.fieldType || componentConfig.fieldType || componentConfig.ttype || 'char',
+    ...(widget.relation || componentConfig.relation ? { relation: widget.relation || componentConfig.relation } : {}),
+    ...(typeof componentConfig.required === 'boolean' ? { required: componentConfig.required } : {}),
+    ...(typeof componentConfig.readonly === 'boolean' ? { readonly: componentConfig.readonly } : {}),
+    ...(Array.isArray(componentConfig.selection) ? { selection: componentConfig.selection } : {}),
+  };
+  return {
+    type: 'field',
+    name: fieldName,
+    string: widget.label || fieldName,
+    label: widget.label || fieldName,
+    widget: widget.widgetType,
+    fieldInfo,
+    field_info: fieldInfo,
+  };
+}
+
+function normalizeContractV2ContainersForNativeForm(containers: ContractV2Container[]): NativeFormLayoutNode[] {
+  const walk = (node: ContractV2Container): NativeFormLayoutNode => {
+    const next = { ...(node as unknown as Record<string, unknown>) } as NativeFormLayoutNode;
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const value = next[key];
+      if (Array.isArray(value)) {
+        next[key] = (value as ContractV2Container[]).map(walk);
+      }
+    });
+    const widgetFields = Array.isArray(node.widgetList)
+      ? node.widgetList
+        .map((widget) => contractV2WidgetToNativeFieldNode(widget))
+        .filter((item): item is NativeFormLayoutNode => Boolean(item))
+      : [];
+    if (widgetFields.length) {
+      const children = Array.isArray(next.children) ? next.children : [];
+      const existingFieldNames = new Set(
+        children
+          .filter((child) => String(child?.type || '').trim().toLowerCase() === 'field')
+          .map((child) => String(child?.name || '').trim())
+          .filter(Boolean),
+      );
+      next.children = [
+        ...children,
+        ...widgetFields.filter((child) => !existingFieldNames.has(String(child.name || '').trim())),
+      ];
+    }
+    return next;
+  };
+  return containers.map(walk);
+}
 
 const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   nativeLayoutVisibilityRevision.value;
@@ -6036,7 +6099,7 @@ const nativeFormRootColumns = computed<1 | 2 | 3>(() => {
     }
     return null;
   };
-  return walk(nativeFormLayoutNodes.value) || 2;
+  return walk(nativeFormLayoutNodes.value) || 3;
 });
 
 watch(nativeFormLayoutNodes, (nodes) => {
@@ -8421,37 +8484,60 @@ async function openNativeAttachment(att: { id?: number; name?: string; mimetype?
 }
 
 async function reload() {
-  const reloadToken = activeReloadToken + 1;
-  activeReloadToken = reloadToken;
-  renderErrorMessage.value = '';
-  status.value = 'loading';
-  errorMessage.value = '';
-  validationErrors.value = [];
-  showOne2manyErrors.value = false;
-  try {
-    await loadContract();
-    if (reloadToken !== activeReloadToken) return;
-    await loadRecord();
-    if (reloadToken !== activeReloadToken) return;
-    status.value = 'ok';
-    retainedRouteIdentity.value = formRouteIdentity();
-    void preloadFormAuxiliaryData(reloadToken);
-  } catch (err) {
-    if (reloadToken !== activeReloadToken) return;
-    if (err instanceof ContractAccessPolicyError) {
-      await router.push({
-        name: 'workbench',
-        query: pickContractNavQuery(route.query as Record<string, unknown>, {
-          reason: ErrorCodes.CAPABILITY_MISSING,
-          action_id: actionId.value || undefined,
-          menu_id: Number(route.query.menu_id || 0) || undefined,
-          diag: showHud.value ? (err.reasonCode || 'CONTRACT_ACCESS_BLOCKED') : undefined,
-        }),
-      });
-      return;
+  const reloadIdentity = formRouteIdentity();
+  if (activeReloadPromise && reloadIdentity && reloadIdentity === activeReloadIdentity) {
+    return activeReloadPromise;
+  }
+  const run = (async () => {
+    const reloadToken = activeReloadToken + 1;
+    activeReloadToken = reloadToken;
+    renderErrorMessage.value = '';
+    status.value = 'loading';
+    errorMessage.value = '';
+    validationErrors.value = [];
+    showOne2manyErrors.value = false;
+    try {
+      await loadContract();
+      if (reloadToken !== activeReloadToken) return;
+      await loadRecord();
+      if (reloadToken !== activeReloadToken) return;
+      status.value = 'ok';
+      retainedRouteIdentity.value = formRouteIdentity();
+      void preloadFormAuxiliaryData(reloadToken);
+    } catch (err) {
+      if (reloadToken !== activeReloadToken) return;
+      if (err instanceof ContractAccessPolicyError) {
+        await router.push({
+          name: 'workbench',
+          query: pickContractNavQuery(route.query as Record<string, unknown>, {
+            reason: ErrorCodes.CAPABILITY_MISSING,
+            action_id: actionId.value || undefined,
+            menu_id: Number(route.query.menu_id || 0) || undefined,
+            diag: showHud.value ? (err.reasonCode || 'CONTRACT_ACCESS_BLOCKED') : undefined,
+          }),
+        });
+        return;
+      }
+      errorMessage.value = err instanceof Error ? err.message : 'load failed';
+      status.value = 'error';
+    } finally {
+      if (activeReloadIdentity === reloadIdentity) {
+        activeReloadPromise = null;
+        activeReloadIdentity = '';
+      }
     }
-    errorMessage.value = err instanceof Error ? err.message : 'load failed';
-    status.value = 'error';
+  })();
+  activeReloadIdentity = reloadIdentity;
+  activeReloadPromise = run;
+  return run;
+}
+
+function ensureFormInitialReload() {
+  const identity = formRouteIdentity();
+  if (!identity) return;
+  if (identity === retainedRouteIdentity.value && status.value === 'ok') return;
+  if (status.value === 'loading' || !contract.value) {
+    void reload();
   }
 }
 
@@ -9677,6 +9763,7 @@ onMounted(() => {
   if (typeof document !== 'undefined') {
     document.addEventListener('keydown', onRelationDialogDocumentKeydown);
   }
+  void nextTick(() => ensureFormInitialReload());
 });
 
 onActivated(() => {
@@ -9685,6 +9772,7 @@ onActivated(() => {
   if (identity && identity !== retainedRouteIdentity.value) {
     void reload();
   }
+  void nextTick(() => ensureFormInitialReload());
 });
 
 onDeactivated(() => {

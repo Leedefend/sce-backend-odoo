@@ -284,7 +284,7 @@ class UiContractHandler(BaseIntentHandler):
             "model": model,
             "view_type": _VIEW_INV.get(view_type, view_type),
             "view_id": view_id,
-            "with_data": bool(record_id and str(view_type or "").strip().lower() == "form"),
+            "with_data": False,
         }
         if action_id:
             payload["action_id"] = action_id
@@ -327,7 +327,8 @@ class UiContractHandler(BaseIntentHandler):
 
     def _finalize_data(self, data, *, subject, meta=None):
         cs = ContractService(self.env)
-        envelope = {"ok": True, "data": data or {}, "meta": {"subject": subject}}
+        safe_data = self._drop_unknown_view_columns(data or {})
+        envelope = {"ok": True, "data": safe_data, "meta": {"subject": subject}}
         if isinstance(meta, Mapping):
             envelope["meta"].update(meta)
         fixed = cs.finalize_contract(envelope)
@@ -335,7 +336,36 @@ class UiContractHandler(BaseIntentHandler):
             out = fixed.get("data")
             if isinstance(out, Mapping):
                 return dict(out)
-        return data or {}
+        return safe_data
+
+    def _drop_unknown_view_columns(self, data):
+        if not isinstance(data, Mapping):
+            return data or {}
+        out = dict(data)
+        fields = out.get("fields") if isinstance(out.get("fields"), Mapping) else {}
+        if not fields:
+            return out
+        views = out.get("views") if isinstance(out.get("views"), Mapping) else {}
+        if not views:
+            return out
+        fixed_views = dict(views)
+        changed = False
+        for view_key, view in views.items():
+            if not isinstance(view, Mapping):
+                continue
+            columns = view.get("columns")
+            if not isinstance(columns, list):
+                continue
+            filtered = [name for name in columns if str(name or "").strip() in fields]
+            if len(filtered) == len(columns):
+                continue
+            fixed_view = dict(view)
+            fixed_view["columns"] = filtered
+            fixed_views[view_key] = fixed_view
+            changed = True
+        if changed:
+            out["views"] = fixed_views
+        return out
 
     def _shape_delivery_data(self, data, *, payload, contract_mode, contract_surface, source_mode):
         cs = ContractService(self.env)

@@ -3078,7 +3078,28 @@ class UiContractV2Handler(BaseIntentHandler):
         if record_id_int <= 0:
             return dict(current_record or {}) if isinstance(current_record, dict) else {}
         field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
-        field_names = [str(name).strip() for name in field_map.keys() if str(name).strip()]
+        record_snapshot_fields = {
+            "id",
+            "display_name",
+            "name",
+            "document_no",
+            "state",
+            "company_id",
+            "project_id",
+            "business_category_id",
+            "operation_strategy",
+        }
+        field_names = []
+        for name in field_map.keys():
+            field_name = str(name).strip()
+            if not field_name:
+                continue
+            field = self.env[model]._fields.get(field_name) if model in self.env else None
+            field_type = str(getattr(field, "type", "") or "")
+            if field_name not in record_snapshot_fields and field_type in {"one2many", "many2many", "binary", "html"}:
+                continue
+            if field_name in record_snapshot_fields or len(field_names) < 80:
+                field_names.append(field_name)
         if "id" not in field_names:
             field_names.insert(0, "id")
         if not field_names:
