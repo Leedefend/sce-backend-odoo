@@ -2663,7 +2663,10 @@ function buildLowCodeViewOrchestration() {
     .filter((row) => row.section === section)
     .map((row) => String(row.field || '').trim())
     .filter((name) => name && availableFields[name]);
-  const formNames = sectionFields('form').length ? sectionFields('form') : fieldOrderDraft.value.filter((name) => availableFields[name]);
+  const formDraftNames = fieldOrderDraft.value.filter((name) => availableFields[name]);
+  const formNames = isContractFieldOrderEditable.value && formDraftNames.length
+    ? formDraftNames
+    : (sectionFields('form').length ? sectionFields('form') : formDraftNames);
   const listNames = sectionFields('list');
   const kanbanNames = sectionFields('kanban');
   const views: Record<string, unknown> = {};
