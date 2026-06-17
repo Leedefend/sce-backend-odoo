@@ -166,6 +166,12 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["data"]["ttype"], "text")
         self.assertEqual(result["data"]["group_title"], "基础信息")
         self.assertEqual(result["data"]["action_id"], 11)
+        self.assertEqual(result["data"]["field_metadata_boundary"], {
+            "metadata_authority": "ir.model.fields",
+            "placement_authority": "ui.business.config.contract.view_orchestration",
+            "compatibility_write": "ui.form.field.policy",
+            "rollback_boundary": "contract_rollback_does_not_delete_model_field",
+        })
         self.assertEqual(wizard.created, [])
         self.assertEqual(wizard.checked, "create")
         self.assertEqual(fields.search_count_calls, [[("model", "=", "res.partner"), ("name", "=", "x_internal_note")]])

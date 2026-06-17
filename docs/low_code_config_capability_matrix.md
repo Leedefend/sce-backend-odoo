@@ -5,7 +5,7 @@
 | 表单字段显示/隐藏 | `ui.form.field.policy` + `ui.business.config.contract.view_orchestration` | 当前表单“表单设置” | `ui.business.config.contract` | 可用，正式归属为 `view_orchestration`，`ui.form.field.policy` 作为兼容写入并在返回值中标明边界 | P1 继续压缩 legacy policy 兼容层 |
 | 表单字段顺序 | `ui.form.field.policy.sequence` + `view_orchestration.views.form.fields` | 当前表单“保存表单设置” | `ui.business.config.contract` | 可用，保存时写正式 `fields` 和 `layout`，兼容写入 policy 并返回正式归属边界 | P1 统一运行时契约输入 |
 | 表单字段标签 | `ui.form.field.policy.label` + `view_orchestration.views.form.fields[].label` | 当前表单内联修改 | `ui.business.config.contract` | 可用，写入已镜像契约，版本摘要和差异按业务标签对比 | P1 继续压缩 legacy policy 兼容层 |
-| 表单字段新增 | `ui.form.custom.field.wizard` + `ir.model.fields` + field policy | 当前表单“添加字段” | 平台元数据 + `ui.business.config.contract` | 可用，intent 支持 dry-run 预检且正式执行后镜像契约 | P1 明确字段元数据回滚边界 |
+| 表单字段新增 | `ui.form.custom.field.wizard` + `ir.model.fields` + field policy | 当前表单“添加字段” | 平台元数据 + `ui.business.config.contract` | 可用，intent 支持 dry-run 预检且正式执行后镜像契约，返回字段元数据回滚边界：契约回滚不删除 `ir.model.fields` | P1 补字段元数据清理工具前置评估 |
 | 表单布局/分组 | `view_orchestration.views.form.layout` + 前端草稿 | 当前表单低代码区域 | `ui.business.config.contract` | 可用，保存表单设置会写入正式 layout，预检约束正式 layout schema，表单检查会输出正式布局字段数和字段顺序是否对齐 | P1 继续压缩 legacy 草稿兼容展示 |
 | 菜单显隐 | `ui.menu.config.policy.visible` + `ui.business.config.contract.menu_orchestration` | 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，运行时仍读 policy | P4 纳入统一配置工作台 |
 | 菜单改名 | `ui.menu.config.policy.custom_label` + `ui.business.config.contract.menu_orchestration` | 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，运行时仍读 policy | P4 纳入统一配置工作台 |

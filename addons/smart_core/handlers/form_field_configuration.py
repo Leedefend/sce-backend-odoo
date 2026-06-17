@@ -101,6 +101,15 @@ def _contract_reload_hint_for_record(rec) -> dict:
     )
 
 
+def _custom_field_metadata_boundary() -> dict:
+    return {
+        "metadata_authority": "ir.model.fields",
+        "placement_authority": "ui.business.config.contract.view_orchestration",
+        "compatibility_write": "ui.form.field.policy",
+        "rollback_boundary": "contract_rollback_does_not_delete_model_field",
+    }
+
+
 def _view_orchestration_field_names(contract_json: dict, view_type: str = "form") -> list[str]:
     payload = contract_json if isinstance(contract_json, dict) else {}
     orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
@@ -631,6 +640,7 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
                     "sequence": sequence if sequence > 0 else 100,
                     "action_id": action_id,
                     "view_id": view_id,
+                    "field_metadata_boundary": _custom_field_metadata_boundary(),
                 },
                 "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
             }
@@ -680,6 +690,7 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
                 "field_name": effective_field_name,
                 "model": model,
                 "business_config_mirrored_count": mirrored_count,
+                "field_metadata_boundary": _custom_field_metadata_boundary(),
                 "contract_reload": _contract_reload_hint(
                     model=model,
                     view_type="form",
