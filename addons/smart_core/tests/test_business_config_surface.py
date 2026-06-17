@@ -524,6 +524,38 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
         self.assertTrue(rows[11]["has_menu"])
         self.assertFalse(rows[12]["has_menu"])
 
+    def test_coverage_scan_includes_analysis_view_gaps(self):
+        action_model = _ActionModel([
+            _Action(11, "经营分析", "res.partner", "pivot,graph"),
+        ])
+        env = _Env({
+            "ir.actions.act_window": action_model,
+            "ir.ui.menu": _MenuModel(["ir.actions.act_window,11"]),
+            "sc.user.view.preference": _PreferenceModel([]),
+            "ui.business.config.contract": _ContractModel([
+                _Contract("res.partner", "pivot", action_id=11),
+            ]),
+        })
+        handler = self.module.BusinessConfigCoverageScanHandler(
+            env=env,
+            params={"model": "res.partner", "limit": 50},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        summary = result["data"]["summary"]
+        self.assertEqual(summary["missing_analysis_count"], 1)
+        self.assertEqual(summary["runtime_missing_analysis_count"], 1)
+        self.assertEqual(summary["missing_count"], 1)
+        self.assertEqual(summary["runtime_missing_count"], 1)
+        row = result["data"]["items"][0]
+        self.assertEqual(row["target_view_types"], ["pivot", "graph"])
+        self.assertEqual(row["missing_view_types"], ["graph"])
+        self.assertEqual(row["runtime_missing_view_types"], ["graph"])
+        self.assertEqual(row["runtime_gap_reasons"], {"graph": "missing_contract"})
+        self.assertEqual(row["severity"], "error")
+
     def test_coverage_scan_can_include_all_root_menu_actions_for_system_remediation(self):
         action_model = _ActionModel([
             _Action(11, "客户", "res.partner", "tree,form"),
@@ -690,8 +722,12 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
                     },
                 }
 
+        class FakeAnalysisBootstrapHandler(FakeListSearchBootstrapHandler):
+            pass
+
         _install_module(
             "odoo.addons.smart_core.handlers.form_field_configuration",
+            BusinessConfigAnalysisBootstrapHandler=FakeAnalysisBootstrapHandler,
             BusinessConfigFormBootstrapHandler=FakeFormBootstrapHandler,
             BusinessConfigListSearchBootstrapHandler=FakeListSearchBootstrapHandler,
         )
@@ -740,6 +776,66 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
             ],
         )
         self.assertEqual(result["data"]["results"][0]["view_types"], ["form", "tree", "search"])
+
+    def test_coverage_bootstrap_missing_batches_analysis_gaps(self):
+        calls = []
+
+        class FakeFormBootstrapHandler:
+            def __init__(self, env=None, payload=None, **kwargs):
+                self.env = env
+                self.payload = payload or {}
+                self.params = self.payload.get("params") or {}
+
+            def handle(self, payload=None, ctx=None):
+                del payload, ctx
+                calls.append(("form", dict(self.params)))
+                return {"ok": True, "data": {"field_count": 5}}
+
+        class FakeListSearchBootstrapHandler(FakeFormBootstrapHandler):
+            def handle(self, payload=None, ctx=None):
+                del payload, ctx
+                calls.append(("list_search", dict(self.params)))
+                return {"ok": True, "data": {"saved_count": len(self.params.get("view_types") or [])}}
+
+        class FakeAnalysisBootstrapHandler(FakeFormBootstrapHandler):
+            def handle(self, payload=None, ctx=None):
+                del payload, ctx
+                calls.append(("analysis", dict(self.params)))
+                return {"ok": True, "data": {"saved_count": len(self.params.get("view_types") or [])}}
+
+        _install_module(
+            "odoo.addons.smart_core.handlers.form_field_configuration",
+            BusinessConfigAnalysisBootstrapHandler=FakeAnalysisBootstrapHandler,
+            BusinessConfigFormBootstrapHandler=FakeFormBootstrapHandler,
+            BusinessConfigListSearchBootstrapHandler=FakeListSearchBootstrapHandler,
+        )
+        action_model = _ActionModel([
+            _Action(11, "经营分析", "res.partner", "pivot,graph"),
+        ])
+        env = _Env({
+            "ir.actions.act_window": action_model,
+            "ir.ui.menu": _MenuModel(["ir.actions.act_window,11"]),
+            "sc.user.view.preference": _PreferenceModel([]),
+            "ui.business.config.contract": _ContractModel([]),
+        })
+        handler = self.module.BusinessConfigCoverageBootstrapMissingHandler(
+            env=env,
+            params={"limit": 50, "batch_limit": 10, "role_key": "finance_user"},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["candidate_count"], 1)
+        self.assertEqual(result["data"]["saved_count"], 2)
+        self.assertEqual(calls, [("analysis", {
+            "model": "res.partner",
+            "action_id": 11,
+            "role_key": "finance_user",
+            "view_types": ["pivot", "graph"],
+            "publish": True,
+        })])
+        self.assertEqual(result["data"]["results"][0]["view_types"], ["pivot", "graph"])
 
 
 if __name__ == "__main__":

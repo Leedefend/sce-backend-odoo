@@ -1483,6 +1483,220 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertIn("missing_field", result["error"]["message"])
         self.assertEqual(len(contracts), 0)
 
+    def test_business_config_analysis_bootstrap_derives_from_runtime_view_contracts(self):
+        class Company:
+            id = 7
+
+        class User:
+            id = 42
+
+        class PartnerModel:
+            _fields = {"amount_total": object(), "company_id": object(), "state": object()}
+
+        class EmptyRef:
+            id = 0
+
+        class Contract:
+            def __init__(self, ident, vals):
+                self.id = ident
+                self.version_no = 1
+                self.action_id = EmptyRef()
+                self.view_id = EmptyRef()
+                self.write(vals)
+
+            def write(self, vals):
+                for key, value in vals.items():
+                    if key == "action_id":
+                        self.action_id = type("Ref", (), {"id": int(value or 0)})()
+                    elif key == "view_id":
+                        self.view_id = type("Ref", (), {"id": int(value or 0)})()
+                    else:
+                        setattr(self, key, value)
+                return True
+
+            def action_publish(self):
+                self.status = "published"
+                self.version_no += 1
+
+        class ContractModel(list):
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None, order=None):
+                name = next((value for field, op, value in domain if field == "name" and op == "="), "")
+                rows = [row for row in self if row.name == name]
+                if limit == 1:
+                    return rows[0] if rows else None
+                return rows
+
+            def create(self, vals):
+                rec = Contract(len(self) + 1, vals)
+                self.append(rec)
+                return rec
+
+        class RuntimeViewContract:
+            def __init__(self, view_type):
+                self.view_type = view_type
+
+            def with_user(self, user):
+                return self
+
+            def sudo(self):
+                return self
+
+            def with_context(self, **context):
+                return self
+
+            def get_contract_api(self, filter_runtime=True, check_model_acl=False):
+                if self.view_type == "pivot":
+                    return {
+                        "pivot": {
+                            "measures": [{"name": "amount_total"}, {"name": "missing_measure"}],
+                            "dimensions": [{"name": "company_id"}],
+                        }
+                    }
+                return {
+                    "graph": {
+                        "type_default": "line",
+                        "measures": [{"name": "amount_total"}],
+                        "dimensions": [{"name": "state"}, {"name": "missing_dimension"}],
+                    }
+                }
+
+        class ViewConfigModel:
+            def with_context(self, **context):
+                return self
+
+            def _generate_from_fields_view_get(self, model, view_type):
+                self.last_model = model
+                return RuntimeViewContract(view_type)
+
+        class Env(dict):
+            company = Company()
+            user = User()
+
+        contracts = ContractModel()
+        env = Env({
+            "res.partner": PartnerModel(),
+            "app.view.config": ViewConfigModel(),
+            "ui.business.config.contract": contracts,
+        })
+        handler = self.module.BusinessConfigAnalysisBootstrapHandler(
+            env=env,
+            params={"model": "res.partner", "action_id": 11, "publish": True},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["saved_count"], 2)
+        self.assertEqual(result["data"]["personal_preference_boundary"], "not_a_source")
+        self.assertEqual(result["data"]["pivot_measures"], ["amount_total"])
+        self.assertEqual(result["data"]["pivot_dimensions"], ["company_id"])
+        self.assertEqual(result["data"]["graph_measures"], ["amount_total"])
+        self.assertEqual(result["data"]["graph_dimensions"], ["state"])
+        self.assertEqual(result["data"]["graph_type"], "line")
+        self.assertEqual({row.view_type for row in contracts}, {"pivot", "graph"})
+
+    def test_business_config_analysis_bootstrap_falls_back_to_model_fields(self):
+        class Company:
+            id = 7
+
+        class User:
+            id = 42
+
+        class Field:
+            def __init__(self, field_type):
+                self.type = field_type
+
+        class PartnerModel:
+            _fields = {
+                "amount_total": Field("float"),
+                "company_id": Field("many2one"),
+                "state": Field("selection"),
+                "name": Field("char"),
+                "line_ids": Field("one2many"),
+            }
+
+        class EmptyRef:
+            id = 0
+
+        class Contract:
+            def __init__(self, ident, vals):
+                self.id = ident
+                self.version_no = 1
+                self.action_id = EmptyRef()
+                self.view_id = EmptyRef()
+                self.write(vals)
+
+            def write(self, vals):
+                for key, value in vals.items():
+                    if key == "action_id":
+                        self.action_id = type("Ref", (), {"id": int(value or 0)})()
+                    elif key == "view_id":
+                        self.view_id = type("Ref", (), {"id": int(value or 0)})()
+                    else:
+                        setattr(self, key, value)
+                return True
+
+            def action_publish(self):
+                self.status = "published"
+                self.version_no += 1
+
+        class ContractModel(list):
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None, order=None):
+                return None
+
+            def create(self, vals):
+                rec = Contract(len(self) + 1, vals)
+                self.append(rec)
+                return rec
+
+        class RuntimeViewContract:
+            def with_user(self, user):
+                return self
+
+            def sudo(self):
+                return self
+
+            def with_context(self, **context):
+                return self
+
+            def get_contract_api(self, filter_runtime=True, check_model_acl=False):
+                return {}
+
+        class ViewConfigModel:
+            def with_context(self, **context):
+                return self
+
+            def _generate_from_fields_view_get(self, model, view_type):
+                return RuntimeViewContract()
+
+        class Env(dict):
+            company = Company()
+            user = User()
+
+        contracts = ContractModel()
+        env = Env({
+            "res.partner": PartnerModel(),
+            "app.view.config": ViewConfigModel(),
+            "ui.business.config.contract": contracts,
+        })
+        handler = self.module.BusinessConfigAnalysisBootstrapHandler(
+            env=env,
+            params={"model": "res.partner", "action_id": 11, "view_types": ["pivot"], "publish": True},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["pivot_measures"], ["amount_total"])
+        self.assertEqual(result["data"]["pivot_dimensions"][:2], ["company_id", "state"])
+        self.assertEqual(len(contracts), 1)
+
     def test_business_config_list_search_bootstrap_derives_from_runtime_view_contracts(self):
         class Company:
             id = 7

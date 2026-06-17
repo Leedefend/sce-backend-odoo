@@ -627,6 +627,9 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
             targets.append("tree")
         if modes.intersection({"tree", "form", "kanban"}):
             targets.append("search")
+        for view_type in ANALYSIS_VIEW_TYPES:
+            if view_type in modes:
+                targets.append(view_type)
         return targets
 
     def _menu_ids_for_action(self, action_id: int) -> list[int]:
@@ -873,9 +876,17 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
             "missing_form_count": len([row for row in rows if "form" in row["missing_view_types"]]),
             "missing_list_count": len([row for row in rows if "tree" in row["missing_view_types"]]),
             "missing_search_count": len([row for row in rows if "search" in row["missing_view_types"]]),
+            "missing_analysis_count": len([
+                row for row in rows
+                if set(row["missing_view_types"]).intersection(ANALYSIS_VIEW_TYPES)
+            ]),
             "runtime_missing_form_count": len([row for row in rows if "form" in row["runtime_missing_view_types"]]),
             "runtime_missing_list_count": len([row for row in rows if "tree" in row["runtime_missing_view_types"]]),
             "runtime_missing_search_count": len([row for row in rows if "search" in row["runtime_missing_view_types"]]),
+            "runtime_missing_analysis_count": len([
+                row for row in rows
+                if set(row["runtime_missing_view_types"]).intersection(ANALYSIS_VIEW_TYPES)
+            ]),
             "not_published_gap_count": sum(
                 len([reason for reason in row["runtime_gap_reasons"].values() if reason == "not_published"])
                 for row in rows
@@ -1034,10 +1045,10 @@ class BusinessConfigCoverageBootstrapListSearchHandler(BusinessConfigCoverageSca
 
 class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootstrapListSearchHandler):
     INTENT_TYPE = "ui.business_config.coverage.bootstrap_missing"
-    DESCRIPTION = "批量从运行态后端视图固化缺失的表单、列表、搜索业务配置契约"
+    DESCRIPTION = "批量从运行态后端视图固化缺失的表单、列表、搜索、分析业务配置契约"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_coverage_missing_bootstrap"
-    NON_IDEMPOTENT_ALLOWED = "coverage remediation publishes official form/list/search business contracts"
+    NON_IDEMPOTENT_ALLOWED = "coverage remediation publishes official form/list/search/analysis business contracts"
 
     @classmethod
     def source_authority_contract(cls) -> dict:
@@ -1047,11 +1058,15 @@ class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootst
         return contract
 
     def _bootstrap_row(self, row: dict, *, role_key: str) -> dict:
-        from .form_field_configuration import BusinessConfigFormBootstrapHandler, BusinessConfigListSearchBootstrapHandler
+        from .form_field_configuration import (
+            BusinessConfigAnalysisBootstrapHandler,
+            BusinessConfigFormBootstrapHandler,
+            BusinessConfigListSearchBootstrapHandler,
+        )
 
         missing = [
             view_type for view_type in (row.get("runtime_missing_view_types") or [])
-            if view_type in {"form", "tree", "search"}
+            if view_type in {"form", "tree", "search", "pivot", "graph"}
         ]
         if not missing:
             return {"ok": True, "skipped": True, "saved_count": 0}
@@ -1112,6 +1127,33 @@ class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootst
                 saved_count += item_saved
             else:
                 failed = True
+        analysis_types = [view_type for view_type in missing if view_type in {"pivot", "graph"}]
+        if analysis_types:
+            analysis_result = BusinessConfigAnalysisBootstrapHandler(
+                env=self.env,
+                payload={
+                    "params": {
+                        "model": model,
+                        "action_id": action_id,
+                        "role_key": role_key,
+                        "view_types": analysis_types,
+                        "publish": True,
+                    }
+                },
+            ).handle()
+            data = analysis_result.get("data") if isinstance(analysis_result, dict) else {}
+            ok = bool(isinstance(analysis_result, dict) and analysis_result.get("ok"))
+            item_saved = int((data or {}).get("saved_count") or 0) if ok else 0
+            result_items.append({
+                "view_type": ",".join(analysis_types),
+                "ok": ok,
+                "saved_count": item_saved,
+                "error": (analysis_result.get("error") if isinstance(analysis_result, dict) else None),
+            })
+            if ok:
+                saved_count += item_saved
+            else:
+                failed = True
         return {
             "ok": not failed,
             "action_id": action_id,
@@ -1134,7 +1176,7 @@ class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootst
         rows = (scan.get("data") or {}).get("items") if isinstance(scan, dict) else []
         candidates = [
             row for row in (rows or [])
-            if any(view_type in {"form", "tree", "search"} for view_type in (row.get("runtime_missing_view_types") or []))
+            if any(view_type in {"form", "tree", "search", "pivot", "graph"} for view_type in (row.get("runtime_missing_view_types") or []))
         ][:batch_limit]
         results = []
         saved_count = 0

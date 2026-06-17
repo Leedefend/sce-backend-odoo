@@ -620,6 +620,7 @@ import { useRoute, useRouter } from 'vue-router';
 import {
   auditBusinessAnalysisConfig,
   auditBusinessListSearchConfig,
+  bootstrapBusinessAnalysisConfig,
   bootstrapBusinessFormConfig,
   bootstrapBusinessListSearchConfig,
   bootstrapCoverageMissingConfig,
@@ -799,7 +800,7 @@ const coverageIssueRows = computed(() => (
 const coverageBatchBootstrapRows = computed(() => (
   coverageScan.value?.items || []
 ).filter((row) => (
-  row.runtime_missing_view_types.some((viewType) => viewType === 'form' || viewType === 'tree' || viewType === 'search')
+  row.runtime_missing_view_types.some((viewType) => ['form', 'tree', 'search', 'pivot', 'graph'].includes(viewType))
 )));
 const coverageScopeLabel = computed(() => {
   const scan = coverageScan.value;
@@ -1244,7 +1245,7 @@ function buildCoverageSummaryText() {
     `低代码配置覆盖验收：${overallStatusLabel(summary.overall_status)}`,
     `${coverageScopeLabel.value}；范围：${scan.model || '全部模型'}，动作 ${summary.action_count}`,
     `严重级别：阻断 ${summary.severity_counts.error || 0}，警告 ${summary.severity_counts.warning || 0}，提示 ${summary.severity_counts.notice || 0}`,
-    `缺口：配置缺口 ${summary.missing_count}，运行时缺口 ${summary.runtime_missing_count}，无菜单 ${summary.no_menu_count}，个人偏好 ${summary.user_preference_count}`,
+    `缺口：配置缺口 ${summary.missing_count}，运行时缺口 ${summary.runtime_missing_count}，分析缺口 ${summary.runtime_missing_analysis_count || 0}，无菜单 ${summary.no_menu_count}，个人偏好 ${summary.user_preference_count}`,
     `原因：未发布 ${summary.not_published_gap_count}，作用域未命中 ${summary.not_runtime_applicable_gap_count}`,
     `整改：${actions}`,
     `运行页面证据：\n${routeEvidence}`,
@@ -1432,12 +1433,21 @@ async function previewSelectedRuntimeRoute() {
 async function runRemediationAction(row: BusinessConfigCoverageScanItem, action: BusinessConfigRemediationAction) {
   await focusScanRow(row);
   if (action.code === 'configure_contract' || action.code === 'fix_scope') {
+    if (
+      row.runtime_missing_view_types.some((viewType) => ['calendar', 'dashboard'].includes(viewType))
+      && !row.runtime_missing_view_types.some((viewType) => ['form', 'tree', 'search', 'pivot', 'graph'].includes(viewType))
+    ) {
+      await loadAnalysisConfig();
+      return;
+    }
     await bootstrapMissingContracts(row);
     return;
   }
   if (action.code === 'publish_contract') {
     if (row.runtime_missing_view_types.some((viewType) => viewType === 'tree' || viewType === 'search')) {
       await loadVersions('list_search');
+    } else if (row.runtime_missing_view_types.some((viewType) => ['pivot', 'graph', 'calendar', 'dashboard'].includes(viewType))) {
+      await loadVersions('analysis');
     } else {
       await loadVersions('form');
     }
@@ -1483,6 +1493,19 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
         publish: true,
       });
       savedCount += listResult.saved_count || 0;
+    }
+    const analysisTypes = row.runtime_missing_view_types
+      .filter((viewType) => viewType === 'pivot' || viewType === 'graph');
+    if (analysisTypes.length) {
+      const analysisResult = await bootstrapBusinessAnalysisConfig({
+        model: row.model,
+        action_id: row.action_id || undefined,
+        view_id: scopeView.value,
+        role_key: scopeRole.value,
+        view_types: analysisTypes,
+        publish: true,
+      });
+      savedCount += analysisResult.saved_count || 0;
     }
     await loadSurface();
     await scanCurrentModel();

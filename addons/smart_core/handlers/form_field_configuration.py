@@ -1887,6 +1887,152 @@ class BusinessConfigListSearchBootstrapHandler(BaseIntentHandler):
         }
 
 
+class BusinessConfigAnalysisBootstrapHandler(BusinessConfigListSearchBootstrapHandler):
+    INTENT_TYPE = "ui.business_config.analysis.bootstrap"
+    DESCRIPTION = "Bootstrap business analysis contracts from current backend pivot/graph view contracts."
+    SOURCE_KIND = "ui_business_config_analysis_bootstrap"
+    SOURCE_AUTHORITIES = (
+        "app.view.config",
+        "ir.model.fields",
+        "ir.actions.act_window",
+        "ui.business.config.contract",
+        "ui.business.config.contract.version",
+    )
+    NON_IDEMPOTENT_ALLOWED = "business analysis bootstrap publishes official low-code contracts"
+
+    def _source_authority_contract(self):
+        contract = super()._source_authority_contract()
+        contract["kind"] = self.SOURCE_KIND
+        contract["runtime_carrier"] = self.INTENT_TYPE
+        return contract
+
+    def _bootstrap_analysis(self, *, model: str, view_type: str, action_id: int, view_id: int) -> tuple[list[str], list[str], str]:
+        contract = self._runtime_view_contract(model=model, view_type=view_type, action_id=action_id, view_id=view_id)
+        view = contract.get(view_type) if isinstance(contract.get(view_type), dict) else {}
+        measures = _sanitize_config_name_list(view.get("measures"))
+        dimensions = _sanitize_config_name_list(view.get("dimensions"))
+        graph_type = str(view.get("type") or view.get("type_default") or "bar").strip() or "bar"
+        if not measures and not dimensions:
+            measures, dimensions = self._fallback_analysis_fields(model)
+        return measures, dimensions, graph_type
+
+    def _fallback_analysis_fields(self, model: str) -> tuple[list[str], list[str]]:
+        technical_names = {"id", "display_name", "create_uid", "create_date", "write_uid", "write_date", "__last_update"}
+        measure_types = {"monetary", "float", "integer"}
+        dimension_types = {"many2one", "selection", "date", "datetime", "boolean", "char"}
+        preferred_dimension_names = (
+            "project_id", "company_id", "partner_id", "contract_id", "department_id",
+            "user_id", "state", "status", "date", "month", "year",
+        )
+        try:
+            fields_meta = self.env[model].sudo().fields_get() if hasattr(self.env[model], "sudo") else self.env[model].fields_get()
+        except Exception:
+            fields_meta = {}
+        if not isinstance(fields_meta, dict) or not fields_meta:
+            fields_meta = {
+                name: {"type": getattr(field, "type", "")}
+                for name, field in (getattr(self.env[model], "_fields", {}) or {}).items()
+            }
+        measures = []
+        dimensions = []
+        for name, meta in sorted(fields_meta.items()):
+            field_name = str(name or "").strip()
+            if not field_name or field_name in technical_names or field_name.startswith("__"):
+                continue
+            field_meta = meta if isinstance(meta, dict) else {}
+            field_type = str(field_meta.get("type") or getattr((getattr(self.env[model], "_fields", {}) or {}).get(name), "type", "") or "").strip()
+            if field_type in measure_types and field_name not in measures:
+                measures.append(field_name)
+            if field_type in dimension_types and field_name not in dimensions:
+                dimensions.append(field_name)
+        dimensions.sort(key=lambda item: (
+            next((idx for idx, prefix in enumerate(preferred_dimension_names) if item == prefix or item.endswith("_%s" % prefix)), 99),
+            item,
+        ))
+        return measures[:8], dimensions[:8]
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        params = self.params if isinstance(self.params, dict) else {}
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        model = str(params.get("model") or "").strip() or self._resolve_action_model(int(action_id or 0))
+        if not model:
+            return self._err(400, "缺少 model 或有效 action_id", REASON_MISSING_PARAMS)
+        if model not in self.env:
+            return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
+        role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
+        publish = params.get("publish") is not False
+        raw_view_types = params.get("view_types") or params.get("viewTypes") or ["pivot", "graph"]
+        target_view_types = {_normalize_view_type_scope(item) for item in raw_view_types if str(item or "").strip()} if isinstance(raw_view_types, list) else {"pivot", "graph"}
+        target_view_types = target_view_types.intersection({"pivot", "graph"})
+        if not target_view_types:
+            return self._err(400, "缺少可自动固化的分析视图类型", REASON_MISSING_PARAMS)
+
+        try:
+            pivot_measures, pivot_dimensions, pivot_chart_type = self._bootstrap_analysis(
+                model=model,
+                view_type="pivot",
+                action_id=int(action_id or 0),
+                view_id=int(view_id or 0),
+            ) if "pivot" in target_view_types else ([], [], "")
+            graph_measures, graph_dimensions, graph_type = self._bootstrap_analysis(
+                model=model,
+                view_type="graph",
+                action_id=int(action_id or 0),
+                view_id=int(view_id or 0),
+            ) if "graph" in target_view_types else ([], [], "")
+        except Exception as exc:
+            return self._err(400, "无法从当前分析视图生成分析契约：%s" % type(exc).__name__, REASON_USER_ERROR)
+
+        model_fields = set(getattr(self.env[model], "_fields", {}) or {})
+        if model_fields:
+            pivot_measures = [name for name in pivot_measures if name in model_fields]
+            pivot_dimensions = [name for name in pivot_dimensions if name in model_fields]
+            graph_measures = [name for name in graph_measures if name in model_fields]
+            graph_dimensions = [name for name in graph_dimensions if name in model_fields]
+        if not pivot_measures and not pivot_dimensions and not graph_measures and not graph_dimensions:
+            return self._err(400, "当前分析视图没有可固化的指标或维度配置", REASON_USER_ERROR)
+
+        setter = BusinessConfigAnalysisSetHandler(
+            env=self.env,
+            payload={"params": {
+                "model": model,
+                "action_id": int(action_id or 0),
+                "view_id": int(view_id or 0),
+                "role_key": role_key,
+                "pivot_measures": pivot_measures,
+                "pivot_dimensions": pivot_dimensions,
+                "graph_measures": graph_measures,
+                "graph_dimensions": graph_dimensions,
+                "graph_type": graph_type or pivot_chart_type or "bar",
+                "publish": publish,
+            }},
+        )
+        result = setter.handle()
+        if not result.get("ok"):
+            return result
+        data = dict(result.get("data") or {})
+        data.update({
+            "bootstrapped_from": "runtime_backend_analysis_view_contract",
+            "personal_preference_boundary": "not_a_source",
+            "pivot_measures": pivot_measures,
+            "pivot_dimensions": pivot_dimensions,
+            "graph_measures": graph_measures,
+            "graph_dimensions": graph_dimensions,
+            "graph_type": graph_type or pivot_chart_type or "bar",
+        })
+        return {
+            "ok": True,
+            "data": data,
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
+        }
+
+
 class BusinessConfigFormBootstrapHandler(BusinessConfigListSearchBootstrapHandler):
     INTENT_TYPE = "ui.business_config.form.bootstrap"
     DESCRIPTION = "Bootstrap business form contract from current backend form view contract."

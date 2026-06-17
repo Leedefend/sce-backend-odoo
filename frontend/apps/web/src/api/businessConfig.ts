@@ -120,6 +120,16 @@ export interface BusinessConfigListSearchBootstrapPayload extends BusinessConfig
   search_group_by: string[];
 }
 
+export interface BusinessConfigAnalysisBootstrapPayload extends BusinessConfigAnalysisSetPayload {
+  bootstrapped_from: string;
+  personal_preference_boundary: string;
+  pivot_measures: string[];
+  pivot_dimensions: string[];
+  graph_measures: string[];
+  graph_dimensions: string[];
+  graph_type: string;
+}
+
 export interface BusinessConfigFormBootstrapPayload {
   id: number;
   name: string;
@@ -259,9 +269,11 @@ export interface BusinessConfigCoverageScanPayload {
     missing_form_count: number;
     missing_list_count: number;
     missing_search_count: number;
+    missing_analysis_count?: number;
     runtime_missing_form_count: number;
     runtime_missing_list_count: number;
     runtime_missing_search_count: number;
+    runtime_missing_analysis_count?: number;
     not_published_gap_count: number;
     not_runtime_applicable_gap_count: number;
     no_menu_count: number;
@@ -407,6 +419,20 @@ export async function bootstrapBusinessListSearchConfig(params: {
 }) {
   return intentRequest<BusinessConfigListSearchBootstrapPayload>({
     intent: 'ui.business_config.list_search.bootstrap',
+    params,
+  });
+}
+
+export async function bootstrapBusinessAnalysisConfig(params: {
+  model: string;
+  action_id?: number;
+  view_id?: number;
+  role_key?: string;
+  view_types?: string[];
+  publish?: boolean;
+}) {
+  return intentRequest<BusinessConfigAnalysisBootstrapPayload>({
+    intent: 'ui.business_config.analysis.bootstrap',
     params,
   });
 }
