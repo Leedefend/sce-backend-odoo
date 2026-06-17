@@ -227,13 +227,24 @@
                 </td>
                 <td>
                   <div class="group-cell">
+                    <div v-if="draftFor(row.menu.id).role_group_ids.length" class="group-chip-list">
+                      <span
+                        v-for="groupId in draftFor(row.menu.id).role_group_ids"
+                        :key="`${row.menu.id}-${groupId}`"
+                        class="group-chip"
+                        :title="roleGroupName(groupId)"
+                      >
+                        {{ roleGroupName(groupId) }}
+                        <button type="button" title="移除用户组" @click="removeRoleGroup(row.menu.id, groupId)">×</button>
+                      </span>
+                    </div>
                     <select
                       class="cell-input group-select"
-                      multiple
-                      :value="draftFor(row.menu.id).role_group_ids.map(String)"
-                      @change="updateDraft(row.menu.id, { role_group_ids: selectedValues($event) })"
+                      :value="0"
+                      @change="addRoleGroupFromEvent(row.menu.id, $event)"
                     >
-                      <option v-for="group in groupOptions" :key="group.id" :value="group.id">
+                      <option :value="0">{{ draftFor(row.menu.id).role_group_ids.length ? '添加用户组' : '所有用户组（不限制）' }}</option>
+                      <option v-for="group in availableRoleGroupOptions(row.menu.id)" :key="group.id" :value="group.id">
                         {{ group.display_name }}
                       </option>
                     </select>
@@ -640,6 +651,16 @@ function roleScopeSummary(menuId: number) {
   return count ? `限 ${count} 个用户组` : '所有用户组';
 }
 
+function roleGroupName(groupId: number) {
+  const group = groupOptions.value.find((item) => Number(item.id) === Number(groupId));
+  return group?.display_name || `用户组 ${groupId}`;
+}
+
+function availableRoleGroupOptions(menuId: number) {
+  const selected = new Set((draftFor(menuId)?.role_group_ids || []).map(Number));
+  return groupOptions.value.filter((group) => !selected.has(Number(group.id)));
+}
+
 function updateDraft(menuId: number, patch: Partial<DraftPolicy>) {
   const draft = drafts[menuId];
   if (!draft) return;
@@ -660,10 +681,20 @@ function checkedValue(event: Event) {
   return Boolean((event.target as HTMLInputElement).checked);
 }
 
-function selectedValues(event: Event) {
-  return Array.from((event.target as HTMLSelectElement).selectedOptions)
-    .map((option) => Number(option.value || 0))
-    .filter(Boolean);
+function addRoleGroupFromEvent(menuId: number, event: Event) {
+  const target = event.target as HTMLSelectElement;
+  const groupId = Number(target.value || 0);
+  target.value = '0';
+  if (!groupId) return;
+  const draft = draftFor(menuId);
+  if (!draft || draft.role_group_ids.includes(groupId)) return;
+  updateDraft(menuId, { role_group_ids: [...draft.role_group_ids, groupId] });
+}
+
+function removeRoleGroup(menuId: number, groupId: number) {
+  const draft = draftFor(menuId);
+  if (!draft) return;
+  updateDraft(menuId, { role_group_ids: draft.role_group_ids.filter((item) => Number(item) !== Number(groupId)) });
 }
 
 function parentOptions(menuId: number) {
@@ -1602,14 +1633,52 @@ tr.dirty td:first-child {
 
 .group-select {
   min-width: 0;
-  height: 54px;
-  padding: 4px 6px;
+  height: 30px;
+  padding: 0 6px;
 }
 
 .group-cell {
   display: grid;
   gap: 3px;
   min-width: 0;
+}
+
+.group-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 64px;
+  overflow: auto;
+}
+
+.group-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  gap: 4px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 2px 4px 2px 6px;
+}
+
+.group-chip button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.group-chip button:hover {
+  color: var(--sc-app-danger-text);
 }
 
 .group-cell small {
