@@ -460,7 +460,7 @@ function currentDbScope(): string {
 }
 
 function sessionStorageKey(): string {
-  return `sc_frontend_session_v0_5:${currentDbScope()}`;
+  return `sc_frontend_session_v0_6:${currentDbScope()}`;
 }
 
 function scopedTokenStorageKey(): string {
