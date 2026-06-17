@@ -311,7 +311,7 @@
           :field-config-editable="false"
           :field-selection-mode="isContractFieldOrderEditable"
           :selected-field-key="selectedFormSettingsFieldKey"
-          :columns="2"
+          :columns="nativeFormRootColumns"
           @field-change="onTemplateFieldChange"
           @field-action="onContractFieldAction"
           @field-order-move="onContractInlineFieldOrderMove"
@@ -6006,6 +6006,37 @@ const rawNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
 const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   nativeLayoutVisibilityRevision.value;
   return filterVisibleNativeLayoutNodes(rawNativeFormLayoutNodes.value);
+});
+
+function normalizeNativeLayoutColumns(value: unknown): 1 | 2 | 3 | null {
+  const columns = Number(value);
+  return columns === 1 || columns === 2 || columns === 3 ? columns : null;
+}
+
+const nativeFormRootColumns = computed<1 | 2 | 3>(() => {
+  const walk = (nodes: NativeFormLayoutNode[]): 1 | 2 | 3 | null => {
+    for (const node of nodes) {
+      const attrs = node && typeof node.attributes === 'object' && node.attributes
+        ? node.attributes as Record<string, unknown>
+        : {};
+      const direct = normalizeNativeLayoutColumns(
+        attrs.col
+        ?? attrs.columns
+        ?? (node as { cols?: unknown; columns?: unknown }).cols
+        ?? (node as { cols?: unknown; columns?: unknown }).columns,
+      );
+      if (direct) return direct;
+      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+        const children = node?.[key];
+        if (Array.isArray(children)) {
+          const nested = walk(children as NativeFormLayoutNode[]);
+          if (nested) return nested;
+        }
+      }
+    }
+    return null;
+  };
+  return walk(nativeFormLayoutNodes.value) || 2;
 });
 
 watch(nativeFormLayoutNodes, (nodes) => {
