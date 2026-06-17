@@ -7,9 +7,9 @@
 | 表单字段标签 | `ui.form.field.policy.label` + `view_orchestration.views.form.fields[].label` | 当前表单内联修改 | `ui.business.config.contract` | 可用，写入已镜像契约，版本摘要和差异按业务标签对比 | P1 继续压缩 legacy policy 兼容层 |
 | 表单字段新增 | `ui.form.custom.field.wizard` + `ir.model.fields` + field policy | 当前表单“添加字段” | 平台元数据 + `ui.business.config.contract` | 可用，intent 支持 dry-run 预检且正式执行后镜像契约，返回字段元数据回滚边界：契约回滚不删除 `ir.model.fields` | P1 补字段元数据清理工具前置评估 |
 | 表单布局/分组 | `view_orchestration.views.form.layout` + 前端草稿 | 当前表单低代码区域 | `ui.business.config.contract` | 可用，保存表单设置会写入正式 layout，预检约束正式 layout schema，表单检查会输出正式布局字段数和字段顺序是否对齐 | P1 继续压缩 legacy 草稿兼容展示 |
-| 菜单显隐 | `ui.menu.config.policy.visible` + `ui.business.config.contract.menu_orchestration` | 统一配置工作台菜单卡片 / 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，工作台可进入并返回，运行时仍读 policy | P4 继续收敛运行时读契约 |
-| 菜单改名 | `ui.menu.config.policy.custom_label` + `ui.business.config.contract.menu_orchestration` | 统一配置工作台菜单卡片 / 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，工作台可进入并返回，运行时仍读 policy | P4 继续收敛运行时读契约 |
-| 菜单排序/移动 | `ui.menu.config.policy.sequence_override/target_parent_menu_id` + `ui.business.config.contract.menu_orchestration` | 统一配置工作台菜单卡片 / 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，工作台可进入并返回，运行时仍读 policy | P4 继续收敛运行时读契约 |
+| 菜单显隐 | `ui.menu.config.policy.visible` + `ui.business.config.contract.menu_orchestration` | 统一配置工作台菜单卡片 / 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，工作台可进入并返回，运行时优先读 `menu_orchestration` 契约，policy 作为兼容回退 | P4 继续压缩 policy 回退层 |
+| 菜单改名 | `ui.menu.config.policy.custom_label` + `ui.business.config.contract.menu_orchestration` | 统一配置工作台菜单卡片 / 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，工作台可进入并返回，运行时优先读 `menu_orchestration` 契约，policy 作为兼容回退 | P4 继续压缩 policy 回退层 |
+| 菜单排序/移动 | `ui.menu.config.policy.sequence_override/target_parent_menu_id` + `ui.business.config.contract.menu_orchestration` | 统一配置工作台菜单卡片 / 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，工作台可进入并返回，运行时优先读 `menu_orchestration` 契约，policy 作为兼容回退 | P4 继续压缩 policy 回退层 |
 | 列表个人列偏好 | `sc.user.view.preference` | 列表选择列 | 用户个人偏好 | 可用 | 保持 UI-only |
 | 业务默认列表列 | `view_orchestration.views.tree.columns` | `/admin/business-config` / `ui.business_config.list_search.audit/set` | `ui.business.config.contract` | 可用，工作台可按作用域查看/保存，已纳入覆盖扫描、批量补齐、升级迁移固化、运行页面跳转和 `make verify.business_config.full_acceptance` 浏览器批量验收证据，版本差异显示具体新增/减少列摘要 | P5 继续扩展跨环境配置差异分析 |
 | 搜索筛选配置 | `view_orchestration.views.search.filters/group_by` | `/admin/business-config` / `ui.business_config.list_search.audit/set` | `ui.business.config.contract` | 可用，工作台可按作用域查看/保存，已纳入覆盖扫描、批量补齐、升级迁移固化、运行页面跳转和 `make verify.business_config.full_acceptance` 浏览器批量验收证据，版本差异显示具体新增/减少筛选和分组摘要 | P5 继续扩展跨环境配置差异分析 |
@@ -37,7 +37,7 @@
 3. 保存表单设置时，避免无变化字段被重写，防止“只改布局导致字段顺序变化”。已开始收敛：前端只提交变化项，后端支持 visibility-only 保存。
 4. 运行时配置差异需要可追踪。已开始收敛：page governance 会透传正式契约字段数和被正式契约跳过的 legacy policy 字段，前端 HUD 可直接显示。
 5. 表单配置需要后端审计接口。已开始收敛：`ui.business_config.form.audit` 输出正式契约字段、正式 layout 字段、字段顺序对齐状态、legacy policy 字段、跳过字段和仍生效字段。
-6. 菜单配置补版本和生效报告。已开始收敛：`ui.menu_config.audit` 可输出当前公司/用户组实际命中的菜单 policy 和统计；菜单保存会镜像 `menu_orchestration.v1` 到正式契约并发布版本；`ui.menu_config.versions` 可读取版本摘要；`ui.menu_config.rollback` 可从指定历史版本恢复 policy。
+6. 菜单配置补版本和生效报告。已开始收敛：`ui.menu_config.audit` 可输出当前公司/用户组实际命中的菜单 policy 和统计；菜单保存会镜像 `menu_orchestration.v1` 到正式契约并发布版本；`ui.menu_config.versions` 可读取版本摘要；`ui.menu_config.rollback` 可从指定历史版本恢复 policy；运行时 overlay 优先从已发布 `ui.business.config.contract.menu_orchestration` 读取，缺失时回退 policy。
 7. 列表/搜索配置新增业务级配置入口，严格区别个人偏好。
    已开始收敛：`ui.business_config.list_search.audit` 可报告业务列表列、搜索筛选、搜索分组契约，并明确个人偏好是 `ui_only`；`ui.business_config.list_search.set` 可写入业务默认列表/搜索契约。
 8. 配置覆盖需要系统扫描入口。
