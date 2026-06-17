@@ -335,6 +335,9 @@
             <span>分组 {{ contract.summary.search_group_by_count }}</span>
             <span v-if="contract.summary.analysis_item_count">分析项 {{ contract.summary.analysis_item_count }}</span>
           </div>
+          <div v-if="contract.summary.analysis_items?.length" class="analysis-summary-list">
+            <span v-for="item in contract.summary.analysis_items.slice(0, 12)" :key="item">{{ analysisItemLabel(item) }}</span>
+          </div>
           <div class="version-rows">
             <div v-for="version in contract.versions" :key="version.id" class="version-row">
               <span>v{{ version.version_no }}</span>
@@ -900,6 +903,14 @@ function versionSummaryNames(summary: BusinessConfigContractVersionsPayload['con
     viewTypes: summary.view_types || [],
     analysis: summary.analysis_items || [],
   };
+}
+
+function analysisItemLabel(item: string) {
+  const text = String(item || '').trim();
+  if (!text) return '';
+  const [viewType, ...rest] = text.split('.');
+  const label = viewTypeLabel(viewType);
+  return rest.length ? `${label}：${rest.join(' / ')}` : label;
 }
 
 function countDiff(left: string[], right: string[]) {
@@ -2389,6 +2400,25 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 12px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.analysis-summary-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.analysis-summary-list span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  background: var(--sc-app-panel-muted);
   color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
