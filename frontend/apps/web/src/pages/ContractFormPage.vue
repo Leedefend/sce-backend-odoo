@@ -8997,7 +8997,7 @@ async function saveContractFieldOrder() {
         name: lowCodeScopedContractName(String(model.value || 'unknown'), baseParams),
         model: String(model.value || ''),
         view_type: 'form',
-        publish: false,
+        publish: true,
         contract_json: {
           view_orchestration: buildLowCodeViewOrchestration(),
           legacy_lowcode_draft: {

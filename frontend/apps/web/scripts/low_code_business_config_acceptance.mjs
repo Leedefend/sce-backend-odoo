@@ -65,6 +65,18 @@ async function login(page) {
   await page.waitForURL((url) => !String(url).includes("/login"), { timeout: 20000 });
 }
 
+async function formDesignerFieldTexts(page) {
+  return page.locator(".field--selectable").evaluateAll((nodes) => (
+    nodes.map((node) => node.textContent?.replace(/\s+/g, " ").trim()).filter(Boolean)
+  ));
+}
+
+async function dragDesignerField(page, fromIndex, toIndex) {
+  const source = page.locator(".field--selectable").nth(fromIndex).locator(".field-order-handle");
+  const target = page.locator(".field--selectable").nth(toIndex);
+  await source.dragTo(target);
+}
+
 async function clickFirstAvailableAnalysisField(page, tabLabels) {
   const panel = page.locator(".edit-panel").filter({ hasText: "分析视图设置" });
   for (const label of tabLabels) {
@@ -487,6 +499,36 @@ async function main() {
     await page.getByRole("button", { name: "重置" }).click();
     const formDirtyAfterMoveReset = await page.locator(".contract-field-governance-dirty").count();
     const saveFormEnabledAfterMoveReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
+    const formOrderBeforeDragPersist = await formDesignerFieldTexts(page);
+    await dragDesignerField(page, 0, 3);
+    await page.waitForFunction((before) => {
+      const rows = Array.from(document.querySelectorAll(".field--selectable"))
+        .map((node) => node.textContent?.replace(/\s+/g, " ").trim())
+        .filter(Boolean);
+      return rows.length >= 4 && rows[0] !== before[0] && rows[3] === before[0];
+    }, formOrderBeforeDragPersist);
+    const formOrderAfterDrag = await formDesignerFieldTexts(page);
+    const saveFormEnabledAfterDrag = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
+    await page.getByRole("button", { name: "保存表单设置" }).click();
+    await page.waitForFunction(() => !document.body.innerText.includes("表单设置已调整，保存后生效"), { timeout: 20000 });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
+    const formOrderAfterPersistReload = await formDesignerFieldTexts(page);
+    await dragDesignerField(page, 3, 0);
+    await page.waitForFunction((before) => {
+      const rows = Array.from(document.querySelectorAll(".field--selectable"))
+        .map((node) => node.textContent?.replace(/\s+/g, " ").trim())
+        .filter(Boolean);
+      return rows.length >= 4 && rows[0] === before[0];
+    }, formOrderBeforeDragPersist);
+    const saveFormEnabledAfterRestoreDrag = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
+    await page.getByRole("button", { name: "保存表单设置" }).click();
+    await page.waitForFunction(() => !document.body.innerText.includes("表单设置已调整，保存后生效"), { timeout: 20000 });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
+    const formOrderAfterRestoreReload = await formDesignerFieldTexts(page);
+    await page.locator(".field--selectable").first().click();
+    await page.waitForSelector(".contract-field-selection-card", { timeout: 10000 });
     await page.locator(".contract-field-selection-card").getByRole("button", { name: "新增字段" }).click();
     await page.waitForSelector(".contract-field-create-dialog", { timeout: 10000 });
     const createFieldDialogText = await page.locator(".contract-field-create-dialog").innerText();
@@ -512,6 +554,12 @@ async function main() {
       saveFormEnabledAfterMove,
       formDirtyAfterMoveReset,
       saveFormEnabledAfterMoveReset,
+      formOrderBeforeDragPersist,
+      formOrderAfterDrag,
+      saveFormEnabledAfterDrag,
+      formOrderAfterPersistReload,
+      saveFormEnabledAfterRestoreDrag,
+      formOrderAfterRestoreReload,
       createFieldDialogText,
       createFieldLabelInputCount,
       createFieldTypeOptionCount,
@@ -561,6 +609,25 @@ async function main() {
         saveFormEnabledAfterMove,
         formDirtyAfterMoveReset,
         saveFormEnabledAfterMoveReset,
+      },
+    );
+    assert(
+      saveFormEnabledAfterDrag
+        && formOrderAfterDrag[0] === formOrderBeforeDragPersist[1]
+        && formOrderAfterDrag[3] === formOrderBeforeDragPersist[0]
+        && formOrderAfterPersistReload[0] === formOrderAfterDrag[0]
+        && formOrderAfterPersistReload[3] === formOrderAfterDrag[3]
+        && saveFormEnabledAfterRestoreDrag
+        && formOrderAfterRestoreReload[0] === formOrderBeforeDragPersist[0]
+        && formOrderAfterRestoreReload[1] === formOrderBeforeDragPersist[1],
+      "表单字段拖拽保存刷新后没有保持，或恢复原顺序失败",
+      {
+        formOrderBeforeDragPersist,
+        formOrderAfterDrag,
+        saveFormEnabledAfterDrag,
+        formOrderAfterPersistReload,
+        saveFormEnabledAfterRestoreDrag,
+        formOrderAfterRestoreReload,
       },
     );
     assert(
