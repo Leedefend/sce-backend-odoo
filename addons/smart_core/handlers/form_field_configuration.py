@@ -570,19 +570,42 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
         field_name = str(params.get("field_name") or params.get("fieldName") or "").strip()
         if not field_name or field_name in {"x_", "x_custom_field"}:
             field_name = self._suggest_field_name(model, label)
+        Field = self.env["ir.model.fields"].sudo()
+        if field_name in self.env[model]._fields or Field.search_count([("model", "=", model), ("name", "=", field_name)]):
+            return self._err(400, "字段已存在：%s.%s" % (model, field_name), REASON_USER_ERROR)
+        ttype = str(params.get("ttype") or "char").strip() or "char"
+        group_title = str(params.get("group_title") or "业务配置字段").strip() or "业务配置字段"
+        dry_run = params.get("dry_run") is True or params.get("dryRun") is True
         Wizard = self.env["ui.form.custom.field.wizard"]
         Wizard.check_access_rights("create")
+        if dry_run:
+            return {
+                "ok": True,
+                "data": {
+                    "dry_run": True,
+                    "would_create": True,
+                    "model": model,
+                    "field_name": field_name,
+                    "label": label,
+                    "ttype": ttype,
+                    "group_title": group_title,
+                    "sequence": sequence if sequence > 0 else 100,
+                    "action_id": action_id,
+                    "view_id": view_id,
+                },
+                "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
+            }
         wizard = Wizard.create({
             "model_id": model_rec.id,
             "field_name": field_name,
             "label": label,
-            "ttype": str(params.get("ttype") or "char").strip() or "char",
+            "ttype": ttype,
             "help": str(params.get("help") or "").strip(),
             "required": bool(params.get("required") is True),
             "index": bool(params.get("index") is True),
             "action_id": action_id or False,
             "view_id": view_id or False,
-            "group_title": str(params.get("group_title") or "业务配置字段").strip() or "业务配置字段",
+            "group_title": group_title,
             "sequence": sequence if sequence > 0 else 100,
             "active_policy": True,
             "company_id": self.env.company.id,

@@ -95,6 +95,81 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertIn("view_id", result["error"]["message"])
 
+    def test_custom_field_create_dry_run_prechecks_without_writing(self):
+        class Company:
+            id = 7
+
+        class PartnerModel:
+            _fields = {"name": object()}
+
+        class ModelRecord:
+            id = 9
+            transient = False
+
+        class ModelRegistry:
+            def search(self, domain, limit=None):
+                self.domain = domain
+                return ModelRecord()
+
+        class FieldRegistry:
+            def __init__(self):
+                self.search_count_calls = []
+
+            def sudo(self):
+                return self
+
+            def search_count(self, domain):
+                self.search_count_calls.append(domain)
+                return 0
+
+        class WizardRegistry:
+            def __init__(self):
+                self.created = []
+
+            def check_access_rights(self, mode):
+                self.checked = mode
+
+            def create(self, vals):
+                self.created.append(vals)
+                raise AssertionError("dry_run must not create wizard")
+
+        class Env(dict):
+            company = Company()
+
+        fields = FieldRegistry()
+        wizard = WizardRegistry()
+        env = Env({
+            "res.partner": PartnerModel(),
+            "ir.model": ModelRegistry(),
+            "ir.model.fields": fields,
+            "ui.form.custom.field.wizard": wizard,
+        })
+        handler = self.module.FormCustomFieldCreateHandler(
+            env=env,
+            params={
+                "model": "res.partner",
+                "label": "内部备注",
+                "field_name": "x_internal_note",
+                "ttype": "text",
+                "group_title": "基础信息",
+                "action_id": 11,
+                "dry_run": True,
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["data"]["dry_run"])
+        self.assertTrue(result["data"]["would_create"])
+        self.assertEqual(result["data"]["field_name"], "x_internal_note")
+        self.assertEqual(result["data"]["ttype"], "text")
+        self.assertEqual(result["data"]["group_title"], "基础信息")
+        self.assertEqual(result["data"]["action_id"], 11)
+        self.assertEqual(wizard.created, [])
+        self.assertEqual(wizard.checked, "create")
+        self.assertEqual(fields.search_count_calls, [[("model", "=", "res.partner"), ("name", "=", "x_internal_note")]])
+
     def test_field_order_set_rejects_invalid_field_order_payload(self):
         handler = self.module.FormFieldOrderSetHandler(
             env={},
