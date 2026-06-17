@@ -29,6 +29,7 @@
         'data/project_stage_requirement_items.xml',
         'data/cron_signup_throttle_gc.xml',
         'data/sc_extension_params.xml',
+        'data/menu_config_runtime_params.xml',
         'data/supplier_type_data.xml',
         'data/project_dictionary_data.xml',
         'data/expense_contract_category_data.xml',

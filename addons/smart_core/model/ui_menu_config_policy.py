@@ -292,9 +292,12 @@ class UiMenuConfigPolicy(models.Model):
     @api.model
     def _runtime_menu_config_source_for_user(self, user=None):
         contract_policies = self._runtime_contract_policies_for_user(user=user)
+        policy_policies = self._runtime_policies_for_user(user=user)
         if contract_policies:
-            return contract_policies, "ui.business.config.contract.menu_orchestration"
-        return self._runtime_policies_for_user(user=user), "ui.menu.config.policy"
+            merged = dict(contract_policies)
+            merged.update(policy_policies)
+            return merged, "ui.business.config.contract.menu_orchestration"
+        return policy_policies, "ui.menu.config.policy"
 
     @api.model
     def apply_runtime_overlay(self, nav_fact: dict, user=None) -> tuple[dict, dict]:

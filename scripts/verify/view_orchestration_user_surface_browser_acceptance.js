@@ -20,7 +20,7 @@ const ODOO_CONTAINER = process.env.ODOO_CONTAINER || 'sc-backend-odoo-dev-odoo-1
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const MARKER = process.env.VIEW_ORCH_BROWSER_MARKER || `codex_view_orch_surface_${Date.now()}`;
 const ACTION_ID = Number(process.env.ACTION_ID || 506);
-const MENU_ID = Number(process.env.MENU_ID || 353);
+const MENU_ID = Number(process.env.MENU_ID || 379);
 const MODEL_NAME = process.env.MVP_MODEL || 'project.project';
 
 const ts = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -109,7 +109,7 @@ for view_type, payload in payloads.items():
         'model': model_name,
         'view_type': view_type,
         'action_id': action_id,
-        'priority': 1,
+        'priority': 99999,
         'status': 'published',
         'contract_json': payload,
     })

@@ -1610,6 +1610,7 @@ const {
 const kanbanFieldLabels = computed<Record<string, string>>(() => ({
   ...contractColumnLabels.value,
   ...extractViewFieldLabels(actionContract.value, 'kanban'),
+  ...(listProfile.value?.column_labels || {}),
 }));
 const {
   sortLabel,
@@ -2672,6 +2673,10 @@ const {
       menuTree,
       nextActionId,
       { ...(currentAction || {}), menu_id: menuId.value || currentAction?.menu_id },
+      {
+        menuId: menuId.value || currentAction?.menu_id,
+        viewType: String(route.query.view_mode || '').trim() || undefined,
+      },
     ),
     setActionMeta: (meta: Record<string, unknown>) => {
       session.setActionMeta(meta);

@@ -2118,13 +2118,13 @@ def _govern_standard_list_for_user(
     # business orchestration was applied to the native tree block, that
     # orchestrated order is the user-facing order and standard governance only
     # appends its defaults.
-    if strict_columns:
-        selected = [name for name in columns_order if name in fields_map]
-    elif has_orchestrated_tree and native_columns:
+    if has_orchestrated_tree and native_columns:
         selected = [name for name in native_columns if name in fields_map]
         for name in columns_order:
             if name in fields_map and name not in selected:
                 selected.append(name)
+    elif strict_columns:
+        selected = [name for name in columns_order if name in fields_map]
     else:
         for name in native_columns:
             if name in fields_map and name not in selected:
@@ -2794,10 +2794,6 @@ def _business_field_label(field_name: str, current_label: Any = "") -> str:
     label = _safe_text(current_label)
     if not name:
         return label
-    if label == "CODEX_PARTNER_COLUMN":
-        return "关联单位"
-    if label == "CODEX_NAME_COLUMN":
-        return "名称"
     override = _BUSINESS_FIELD_LABEL_OVERRIDES.get(name)
     if override:
         return override

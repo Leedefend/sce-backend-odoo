@@ -19,6 +19,7 @@
         "security/ir.model.access.csv",
         "data/security_policy_actions.xml",
         "data/user_preferences.xml",
+        "data/user_menu_preferences.xml",
     ],
     "post_init_hook": "post_init_hook",
     "installable": True,
