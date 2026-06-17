@@ -274,7 +274,11 @@ async function main() {
         && (defaultVersionRowCount > 0
           ? defaultVersionPanelText.includes("当前版本")
           : defaultVersionPanelText.includes("当前页面暂无版本记录"))
-        && (defaultHistoricalVersionRowCount === 0 || defaultVersionPanelText.includes("与当前相比"))
+        && (
+          defaultHistoricalVersionRowCount === 0
+          || defaultVersionPanelText.includes("与当前相比")
+          || defaultVersionPanelText.includes("与当前一致")
+        )
         && leakedDefaultVersionTerms.length === 0,
       "默认版本记录面板不可用或露出了治理话术",
       {
