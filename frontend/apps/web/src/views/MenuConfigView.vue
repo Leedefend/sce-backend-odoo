@@ -1119,7 +1119,7 @@ async function rollbackSelectedMenuConfiguration() {
       company_id: company.value?.id || undefined,
       version_no: selectedVersionNo.value || undefined,
     });
-    await session.loadAppInit();
+    await session.loadAppInit({ force: true });
     await loadPanel();
     if (versionPanelOpen.value) {
       await loadVersions();
@@ -1156,7 +1156,7 @@ async function saveChanges() {
   try {
     await saveMenuConfigurationPanel({ rows });
     applySavedVisibilityToNavigation(rows);
-    await session.loadAppInit();
+    await session.loadAppInit({ force: true });
     await loadPanel();
     auditResult.value = null;
     if (versionPanelOpen.value) {

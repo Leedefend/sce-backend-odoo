@@ -1429,9 +1429,17 @@ export const useSessionStore = defineStore('session', {
       }
       this.clearSession();
     },
-    async loadAppInit() {
-      if (appInitInFlight) {
+    async loadAppInit(options: { force?: boolean } = {}) {
+      if (appInitInFlight && !options.force) {
         return appInitInFlight;
+      }
+      if (appInitInFlight && options.force) {
+        try {
+          await appInitInFlight;
+        } catch {
+          // A forced refresh must fetch the latest runtime state even if the
+          // previous bootstrap request failed.
+        }
       }
       const run = (async () => {
       this.initStatus = 'loading';

@@ -386,31 +386,38 @@ class UiMenuConfigPolicy(models.Model):
                 normalized_menu_id = 0
             children = node.get("children")
             policy = policies_by_menu.get(normalized_menu_id)
-            if not policy and not (isinstance(children, list) and children):
+            policy_matched_by_label = False
+            if not policy:
                 labels = [
                     str(node.get("name") or "").strip(),
                     str(node.get("label") or "").strip(),
                     str(node.get("title") or "").strip(),
                 ]
                 policy = next((policies_by_label.get(label) for label in labels if label in policies_by_label), None)
+                policy_matched_by_label = bool(policy)
             if policy:
                 stats["applied_count"] += 1
+                skip_policy_effects = False
                 if not policy_visible(policy):
-                    if is_protected_runtime_config_node(node):
+                    if policy_matched_by_label and isinstance(children, list) and children:
                         stats["protected_count"] += 1
+                    elif is_protected_runtime_config_node(node):
+                        stats["protected_count"] += 1
+                        skip_policy_effects = True
                     else:
                         stats["hidden_count"] += 1
                         return None
-                custom_label = policy_custom_label(policy)
-                if custom_label:
-                    node["name"] = custom_label
-                    node["label"] = custom_label
-                    node["title"] = custom_label
-                    stats["renamed_count"] += 1
-                sequence = policy_sequence_override(policy)
-                if sequence:
-                    node["sequence"] = sequence
-                    stats["reordered_count"] += 1
+                if not skip_policy_effects:
+                    custom_label = policy_custom_label(policy)
+                    if custom_label:
+                        node["name"] = custom_label
+                        node["label"] = custom_label
+                        node["title"] = custom_label
+                        stats["renamed_count"] += 1
+                    sequence = policy_sequence_override(policy)
+                    if sequence:
+                        node["sequence"] = sequence
+                        stats["reordered_count"] += 1
             if isinstance(children, list):
                 next_children = []
                 for child in children:

@@ -1743,8 +1743,14 @@ const pageDisplaySubtitle = computed(() => {
   return recordId.value ? `记录 #${recordId.value}` : '';
 });
 
+const activityPageTitle = computed(() => {
+  const recordTitle = String(formData.display_name || formData.name || '').trim();
+  if (recordId.value && recordTitle) return recordTitle;
+  return pageDisplayTitle.value;
+});
+
 watch(
-  pageDisplayTitle,
+  activityPageTitle,
   (title) => {
     if (!isComponentActive.value) return;
     session.updateActiveActivityTitle(title);
