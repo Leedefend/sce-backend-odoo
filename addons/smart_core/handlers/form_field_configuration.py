@@ -37,7 +37,14 @@ def _normalize_view_type_scope(view_type: str | None) -> str:
     return "tree" if normalized == "list" else normalized
 
 
+def _reject_legacy_role_group_scope(params: dict):
+    return "role_group_ids" if _has_param(params, "role_group_ids", "roleGroupIds") else None
+
+
 def _append_business_config_scope_domain(params: dict, domain: list, *, include_status: bool = False):
+    legacy_role_scope = _reject_legacy_role_group_scope(params)
+    if legacy_role_scope:
+        return legacy_role_scope
     view_type = _normalize_view_type_scope(params.get("view_type") or params.get("viewType"))
     role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
     if view_type:
@@ -1699,6 +1706,9 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
         publish = bool(params.get("publish") is True)
         if not name or not model:
             return self._err(400, "缺少 name 或 model", REASON_MISSING_PARAMS)
+        legacy_role_scope = _reject_legacy_role_group_scope(params)
+        if legacy_role_scope:
+            return self._err(400, "%s 不属于业务配置契约作用域，请使用 role_key" % legacy_role_scope, REASON_USER_ERROR)
         action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
         if invalid_field:
             return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)

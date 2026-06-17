@@ -27,12 +27,12 @@
 | 动作 | `action_id` | `action_id` | 当前页面配置必须带 action |
 | 视图 | `view_id` | `view_id` | 有明确视图时必须保留 |
 | 公司 | `company_id` | `company_id` | 默认当前公司，可为空表示全局 |
-| 角色 | `role_key` | `role_group_ids` | 需要统一策略，短期保留兼容 |
+| 角色 | `role_key` | `role_group_ids` | 业务配置契约接口拒绝旧 `role_group_ids`，必须使用 `role_key`；旧字段只保留在 legacy policy 审计输出 |
 | 用户 | 不进入业务契约 | `sc.user.view.preference.user_id` | 只用于个人 UI 偏好 |
 
 ## 优先修复缺口
 
-1. 表单配置写入时统一处理 `role_group_ids` 与正式契约 `role_key` 的边界。
+1. 表单配置写入时统一处理 `role_group_ids` 与正式契约 `role_key` 的边界。已收敛：业务配置契约保存、查询、版本、回滚等统一作用域入口拒绝 `role_group_ids`，避免旧角色组输入被误认为正式契约作用域。
 2. 表单低代码草稿输入统一从当前运行时契约读取，不再混用 legacy `objects/layout/rules` 作为主输入。已开始收敛：字段顺序/可见性优先使用 `view_orchestration.views.form.fields`，legacy `objects` 只做兜底和历史草稿兼容；新保存的兼容草稿下沉到 `legacy_lowcode_draft`。
 3. 保存表单设置时，避免无变化字段被重写，防止“只改布局导致字段顺序变化”。已开始收敛：前端只提交变化项，后端支持 visibility-only 保存。
 4. 运行时配置差异需要可追踪。已开始收敛：page governance 会透传正式契约字段数和被正式契约跳过的 legacy policy 字段，前端 HUD 可直接显示。

@@ -486,6 +486,25 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertIn(("role_key", "=", False), contract_model.domain)
         self.assertFalse(contract_model.vals["role_key"])
 
+    def test_business_config_contract_save_rejects_legacy_role_group_scope(self):
+        handler = self.module.BusinessConfigContractSaveHandler(
+            env={},
+            params={
+                "name": "demo",
+                "model": "res.partner",
+                "view_type": "form",
+                "role_group_ids": [1, 2],
+                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertIn("role_key", result["error"]["message"])
+
     def test_business_config_contract_get_requires_name_or_model(self):
         handler = self.module.BusinessConfigContractGetHandler(
             env={},
@@ -942,6 +961,25 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(contract["versions"][1]["summary"]["form_field_count"], 1)
         self.assertEqual(contract["versions"][1]["summary"]["form_field_labels"], ["name:旧客户名称"])
         self.assertEqual(contract["versions"][1]["summary"]["analysis_item_count"], 0)
+
+    def test_business_config_contract_versions_rejects_legacy_role_group_scope(self):
+        class Company:
+            id = 7
+
+        class Env(dict):
+            company = Company()
+
+        handler = self.module.BusinessConfigContractVersionsHandler(
+            env=Env({"_": object()}),
+            params={"model": "res.partner", "view_type": "form", "role_group_ids": [1]},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertIn("role_group_ids", result["error"]["message"])
 
     def test_business_config_form_audit_reports_contract_policy_overlap(self):
         class Company:
