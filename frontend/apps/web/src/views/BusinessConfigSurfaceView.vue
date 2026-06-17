@@ -289,10 +289,10 @@
             v-else-if="section.key === 'analysis'"
             type="button"
             class="ghost small"
-            :disabled="!previewRouteTarget.path"
-            @click="previewSelectedRuntimeRoute"
+            :disabled="!currentModel || listSearchBusy"
+            @click="loadAnalysisConfig"
           >
-            预览页面
+            {{ listSearchBusy ? '读取中...' : '配置分析视图' }}
           </button>
         </div>
       </article>
@@ -356,6 +356,95 @@
             </div>
           </div>
         </article>
+      </div>
+    </section>
+
+    <section v-if="analysisPanelOpen" class="edit-panel">
+      <div class="edit-panel-head">
+        <div>
+          <h2>分析视图设置</h2>
+          <p>选择这个页面默认用于统计分析的指标和维度。</p>
+        </div>
+        <div class="edit-panel-actions">
+          <button type="button" class="ghost small primary" :disabled="listSearchSaving || !previewRouteTarget.path" @click="previewAnalysisConfig">
+            {{ hasAnalysisDraftChanges ? (listSearchSaving ? '保存中...' : '保存并预览') : '预览页面' }}
+          </button>
+          <button type="button" class="ghost small" :disabled="listSearchSaving || !hasAnalysisDraftChanges" @click="saveAnalysisConfig">
+            {{ listSearchSaving ? '保存中...' : '保存设置' }}
+          </button>
+          <button type="button" class="ghost small" :disabled="listSearchSaving || !hasAnalysisDraftChanges" @click="resetAnalysisDraft">
+            放弃调整
+          </button>
+        </div>
+      </div>
+      <div class="list-search-tabs" role="group" aria-label="分析视图配置类型">
+        <button
+          v-for="tab in analysisEditorTabs"
+          :key="tab.key"
+          type="button"
+          :class="{ active: activeAnalysisEditor === tab.key }"
+          @click="activeAnalysisEditor = tab.key"
+        >
+          <span>{{ tab.label }}</span>
+          <em>{{ analysisEditorCount(tab.key) }}</em>
+        </button>
+      </div>
+      <div class="edit-grid edit-grid--single">
+        <section class="field-chip-editor">
+          <header>
+            <strong>{{ analysisEditorLabel(activeAnalysisEditor) }}</strong>
+            <span>{{ analysisEditorCount(activeAnalysisEditor) }} 项</span>
+          </header>
+          <label v-if="activeAnalysisEditor === 'graphMeasure' || activeAnalysisEditor === 'graphDimension'" class="inline-select">
+            图表类型
+            <select v-model="graphType">
+              <option value="bar">柱状图</option>
+              <option value="line">折线图</option>
+              <option value="pie">饼图</option>
+            </select>
+          </label>
+          <div class="field-chip-list">
+            <span v-for="(name, index) in parseNames(analysisEditorState(activeAnalysisEditor).text.value)" :key="`analysis-${activeAnalysisEditor}-${name}`" class="field-chip" :title="fieldHelpText(name)">
+              {{ fieldDisplayLabel(name) }}
+              <button type="button" title="上移" :disabled="index === 0" @click="moveAnalysisName(activeAnalysisEditor, name, -1)">↑</button>
+              <button type="button" title="下移" :disabled="index === parseNames(analysisEditorState(activeAnalysisEditor).text.value).length - 1" @click="moveAnalysisName(activeAnalysisEditor, name, 1)">↓</button>
+              <button type="button" title="移除" @click="removeAnalysisName(activeAnalysisEditor, name)">×</button>
+            </span>
+          </div>
+          <input
+            v-model="analysisFieldOptionSearch"
+            class="field-option-search"
+            type="search"
+            placeholder="搜索可选字段"
+          />
+          <div class="field-option-summary">
+            可添加字段 {{ analysisFieldOptionCandidates().length }}，当前显示 {{ availableAnalysisFieldOptions.length }}
+          </div>
+          <div v-if="availableAnalysisFieldOptions.length" class="field-option-pool">
+            <button
+              v-for="field in availableAnalysisFieldOptions"
+              :key="`analysis-option-${activeAnalysisEditor}-${field.name}`"
+              type="button"
+              :title="fieldOptionHelpText(field)"
+              @click="addAnalysisName(activeAnalysisEditor, field.name)"
+            >
+              {{ fieldOptionLabel(field) }}
+            </button>
+          </div>
+          <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addAnalysisName(activeAnalysisEditor)">
+            <input
+              :value="analysisEditorState(activeAnalysisEditor).draft.value"
+              type="text"
+              placeholder="输入字段名"
+              @input="setAnalysisDraftFromEvent(activeAnalysisEditor, $event)"
+            />
+            <button type="submit" class="ghost small">添加</button>
+          </form>
+        </section>
+      </div>
+      <div class="edit-meta">
+        <span v-if="hasAnalysisDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
+        <span v-if="advancedPanelOpen">边界：{{ analysisAudit?.business_config_boundary || 'business_contract' }}</span>
       </div>
     </section>
 
@@ -529,6 +618,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
+  auditBusinessAnalysisConfig,
   auditBusinessListSearchConfig,
   bootstrapBusinessFormConfig,
   bootstrapBusinessListSearchConfig,
@@ -538,8 +628,10 @@ import {
   loadBusinessConfigContractVersions,
   loadBusinessConfigSurface,
   rollbackBusinessConfigContract,
+  saveBusinessAnalysisConfig,
   saveBusinessListSearchConfig,
   scanBusinessConfigCoverage,
+  type BusinessConfigAnalysisAuditPayload,
   type BusinessConfigContractVersionsPayload,
   type BusinessConfigCoverageScanItem,
   type BusinessConfigCoverageScanPayload,
@@ -564,7 +656,9 @@ const showOnlyIssues = ref(false);
 const pageSearch = ref('');
 const pageTypeFilter = ref<'all' | 'form' | 'list' | 'analysis'>('all');
 const listSearchAudit = ref<BusinessConfigListSearchAuditPayload | null>(null);
+const analysisAudit = ref<BusinessConfigAnalysisAuditPayload | null>(null);
 const listSearchPanelOpen = ref(false);
+const analysisPanelOpen = ref(false);
 const selectedRuntimeRoute = ref<BusinessConfigCoverageScanItem['runtime_route'] | null>(null);
 const versionsLoading = ref(false);
 const versionsPanelOpen = ref(false);
@@ -578,15 +672,28 @@ const snapshotCompareResult = ref<BusinessConfigSnapshotComparePayload | null>(n
 const listColumnsText = ref('');
 const searchFiltersText = ref('');
 const searchGroupByText = ref('');
+const pivotMeasuresText = ref('');
+const pivotDimensionsText = ref('');
+const graphMeasuresText = ref('');
+const graphDimensionsText = ref('');
+const graphType = ref('bar');
 const listSearchBase = ref({ list: '', filter: '', group: '' });
+const analysisBase = ref({ pivotMeasures: '', pivotDimensions: '', graphMeasures: '', graphDimensions: '', graphType: 'bar' });
 const listColumnDraft = ref('');
 const searchFilterDraft = ref('');
 const searchGroupDraft = ref('');
+const pivotMeasureDraft = ref('');
+const pivotDimensionDraft = ref('');
+const graphMeasureDraft = ref('');
+const graphDimensionDraft = ref('');
 type ListSearchEditorKind = 'list' | 'filter' | 'group';
+type AnalysisEditorKind = 'pivotMeasure' | 'pivotDimension' | 'graphMeasure' | 'graphDimension';
 const activeListSearchEditor = ref<ListSearchEditorKind>('list');
+const activeAnalysisEditor = ref<AnalysisEditorKind>('pivotMeasure');
 const listFieldOptionSearch = ref('');
 const filterFieldOptionSearch = ref('');
 const groupFieldOptionSearch = ref('');
+const analysisFieldOptionSearch = ref('');
 const scopeModel = ref(String(route.query.model || '').trim());
 const scopeActionId = ref(numericQuery('action_id') || 0);
 const scopeViewId = ref(numericQuery('view_id') || 0);
@@ -610,7 +717,7 @@ const designerTitle = computed(() => {
 const sections = computed(() => surface.value?.sections || []);
 const visibleSections = computed(() => sections.value.filter((section) => {
   if (advancedPanelOpen.value) return true;
-  return section.key === 'form' || section.key === 'list_search';
+  return section.key === 'form' || section.key === 'list_search' || section.key === 'analysis';
 }));
 const selectedCoverageRow = computed(() => (coverageScan.value?.items || []).find((row) => row.action_id === scopeAction.value));
 const selectedPageHasFormConfig = computed(() => {
@@ -662,6 +769,12 @@ const listSearchEditorTabs: Array<{ key: ListSearchEditorKind; label: string }> 
   { key: 'list', label: '列表列' },
   { key: 'filter', label: '搜索条件' },
   { key: 'group', label: '默认分组' },
+];
+const analysisEditorTabs: Array<{ key: AnalysisEditorKind; label: string }> = [
+  { key: 'pivotMeasure', label: '透视指标' },
+  { key: 'pivotDimension', label: '透视维度' },
+  { key: 'graphMeasure', label: '图表指标' },
+  { key: 'graphDimension', label: '图表维度' },
 ];
 const listSearchPanelDescription = computed(() => (
   advancedPanelOpen.value
@@ -726,12 +839,14 @@ const remediationSummaryItems = computed(() => {
     .sort((left, right) => left.label.localeCompare(right.label, 'zh-Hans-CN'));
 });
 const availableModelFields = computed(() => (listSearchAudit.value?.available_model_fields || [])
+  .concat(analysisAudit.value?.available_model_fields || [])
   .map((field) => ({
     name: String(field.name || '').trim(),
     label: String(field.label || field.name || '').trim(),
     type: String(field.type || '').trim(),
   }))
   .filter((field) => field.name)
+  .filter((field, index, rows) => rows.findIndex((row) => row.name === field.name) === index)
 );
 const duplicatedFieldLabels = computed(() => {
   const counts = new Map<string, number>();
@@ -744,6 +859,7 @@ const duplicatedFieldLabels = computed(() => {
 const availableListFieldOptions = computed(() => fieldOptionsNotIn('list'));
 const availableFilterFieldOptions = computed(() => fieldOptionsNotIn('filter'));
 const availableGroupFieldOptions = computed(() => fieldOptionsNotIn('group'));
+const availableAnalysisFieldOptions = computed(() => analysisFieldOptionCandidates().slice(0, analysisFieldOptionSearch.value.trim() ? 80 : 24));
 const previewRouteTarget = computed(() => {
   const runtimeRoute = selectedRuntimeRoute.value || {};
   const runtimePath = String(runtimeRoute.path || '').trim();
@@ -760,6 +876,13 @@ const hasListSearchDraftChanges = computed(() => (
   normalizeNamesText(listColumnsText.value) !== listSearchBase.value.list
   || normalizeNamesText(searchFiltersText.value) !== listSearchBase.value.filter
   || normalizeNamesText(searchGroupByText.value) !== listSearchBase.value.group
+));
+const hasAnalysisDraftChanges = computed(() => (
+  normalizeNamesText(pivotMeasuresText.value) !== analysisBase.value.pivotMeasures
+  || normalizeNamesText(pivotDimensionsText.value) !== analysisBase.value.pivotDimensions
+  || normalizeNamesText(graphMeasuresText.value) !== analysisBase.value.graphMeasures
+  || normalizeNamesText(graphDimensionsText.value) !== analysisBase.value.graphDimensions
+  || String(graphType.value || 'bar') !== analysisBase.value.graphType
 ));
 
 function numericQuery(name: string) {
@@ -1188,6 +1311,8 @@ async function compareSnapshot() {
 async function applyScopeAndLoad() {
   listSearchPanelOpen.value = false;
   listSearchAudit.value = null;
+  analysisPanelOpen.value = false;
+  analysisAudit.value = null;
   versionsPanelOpen.value = false;
   versionContracts.value = [];
   coverageScan.value = null;
@@ -1214,6 +1339,8 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
   selectedRuntimeRoute.value = row.runtime_route || null;
   listSearchPanelOpen.value = false;
   listSearchAudit.value = null;
+  analysisPanelOpen.value = false;
+  analysisAudit.value = null;
   versionsPanelOpen.value = false;
   versionContracts.value = [];
   await router.replace({
@@ -1253,6 +1380,8 @@ async function openListSearchForRow(row: BusinessConfigCoverageScanItem) {
   scopeViewId.value = 0;
   selectedPageLabel.value = row.name || row.model;
   selectedRuntimeRoute.value = row.runtime_route || null;
+  analysisPanelOpen.value = false;
+  analysisAudit.value = null;
   versionsPanelOpen.value = false;
   versionContracts.value = [];
   await router.replace({
@@ -1541,6 +1670,43 @@ function fieldOptionCandidates(kind: ListSearchEditorKind) {
     });
 }
 
+function analysisEditorState(kind: AnalysisEditorKind) {
+  if (kind === 'pivotMeasure') return { text: pivotMeasuresText, draft: pivotMeasureDraft };
+  if (kind === 'pivotDimension') return { text: pivotDimensionsText, draft: pivotDimensionDraft };
+  if (kind === 'graphMeasure') return { text: graphMeasuresText, draft: graphMeasureDraft };
+  return { text: graphDimensionsText, draft: graphDimensionDraft };
+}
+
+function analysisEditorLabel(kind: AnalysisEditorKind) {
+  const tab = analysisEditorTabs.find((item) => item.key === kind);
+  return tab?.label || '分析字段';
+}
+
+function setAnalysisDraft(kind: AnalysisEditorKind, value: string) {
+  analysisEditorState(kind).draft.value = value;
+}
+
+function setAnalysisDraftFromEvent(kind: AnalysisEditorKind, event: Event) {
+  const target = event.target as HTMLInputElement | null;
+  setAnalysisDraft(kind, target?.value || '');
+}
+
+function analysisEditorCount(kind: AnalysisEditorKind) {
+  return parseNames(analysisEditorState(kind).text.value).length;
+}
+
+function analysisFieldOptionCandidates() {
+  const selected = new Set(parseNames(analysisEditorState(activeAnalysisEditor.value).text.value));
+  const keyword = analysisFieldOptionSearch.value.trim().toLowerCase();
+  return availableModelFields.value
+    .filter((field) => !selected.has(field.name))
+    .filter((field) => {
+      if (!keyword) return true;
+      return [field.name, field.label, field.type]
+        .some((text) => String(text || '').toLowerCase().includes(keyword));
+    });
+}
+
 function fieldDisplayLabel(name: string) {
   const fieldName = String(name || '').trim();
   const field = availableModelFields.value.find((item) => item.name === fieldName);
@@ -1587,6 +1753,35 @@ function moveListSearchName(kind: ListSearchEditorKind, name: string, delta: num
   setListSearchNames(kind, names);
 }
 
+function setAnalysisNames(kind: AnalysisEditorKind, names: string[]) {
+  analysisEditorState(kind).text.value = namesToText(names);
+  clearMessage();
+}
+
+function addAnalysisName(kind: AnalysisEditorKind, explicitName = '') {
+  const state = analysisEditorState(kind);
+  const name = String(explicitName || state.draft.value || '').trim();
+  if (!name) return;
+  const names = parseNames(state.text.value);
+  if (!names.includes(name)) names.push(name);
+  setAnalysisNames(kind, names);
+  if (!explicitName) state.draft.value = '';
+}
+
+function removeAnalysisName(kind: AnalysisEditorKind, name: string) {
+  setAnalysisNames(kind, parseNames(analysisEditorState(kind).text.value).filter((item) => item !== name));
+}
+
+function moveAnalysisName(kind: AnalysisEditorKind, name: string, delta: number) {
+  const names = parseNames(analysisEditorState(kind).text.value);
+  const index = names.indexOf(name);
+  const nextIndex = index + delta;
+  if (index < 0 || nextIndex < 0 || nextIndex >= names.length) return;
+  const [moved] = names.splice(index, 1);
+  names.splice(nextIndex, 0, moved);
+  setAnalysisNames(kind, names);
+}
+
 async function loadListSearchConfig() {
   if (!currentModel.value) return;
   listSearchBusy.value = true;
@@ -1609,9 +1804,56 @@ async function loadListSearchConfig() {
       group: normalizeNamesText(searchGroupByText.value),
     };
     activeListSearchEditor.value = requestedListSearchTab.value;
+    analysisPanelOpen.value = false;
     listSearchPanelOpen.value = true;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '列表与搜索设置读取失败';
+  } finally {
+    listSearchBusy.value = false;
+  }
+}
+
+function resetAnalysisDraft() {
+  pivotMeasuresText.value = analysisBase.value.pivotMeasures;
+  pivotDimensionsText.value = analysisBase.value.pivotDimensions;
+  graphMeasuresText.value = analysisBase.value.graphMeasures;
+  graphDimensionsText.value = analysisBase.value.graphDimensions;
+  graphType.value = analysisBase.value.graphType || 'bar';
+  pivotMeasureDraft.value = '';
+  pivotDimensionDraft.value = '';
+  graphMeasureDraft.value = '';
+  graphDimensionDraft.value = '';
+}
+
+async function loadAnalysisConfig() {
+  if (!currentModel.value) return;
+  listSearchBusy.value = true;
+  error.value = '';
+  clearMessage();
+  try {
+    const result = await auditBusinessAnalysisConfig({
+      model: currentModel.value,
+      action_id: scopeAction.value,
+      view_id: scopeView.value,
+      role_key: scopeRole.value,
+    });
+    analysisAudit.value = result;
+    pivotMeasuresText.value = namesToText(result.pivot_measures || []);
+    pivotDimensionsText.value = namesToText(result.pivot_dimensions || []);
+    graphMeasuresText.value = namesToText(result.graph_measures || []);
+    graphDimensionsText.value = namesToText(result.graph_dimensions || []);
+    graphType.value = result.graph_type || 'bar';
+    analysisBase.value = {
+      pivotMeasures: normalizeNamesText(pivotMeasuresText.value),
+      pivotDimensions: normalizeNamesText(pivotDimensionsText.value),
+      graphMeasures: normalizeNamesText(graphMeasuresText.value),
+      graphDimensions: normalizeNamesText(graphDimensionsText.value),
+      graphType: graphType.value || 'bar',
+    };
+    listSearchPanelOpen.value = false;
+    analysisPanelOpen.value = true;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '分析视图设置读取失败';
   } finally {
     listSearchBusy.value = false;
   }
@@ -1645,9 +1887,47 @@ async function saveListSearchConfig() {
   }
 }
 
+async function saveAnalysisConfig() {
+  if (!currentModel.value || !hasAnalysisDraftChanges.value) return false;
+  listSearchSaving.value = true;
+  error.value = '';
+  clearMessage();
+  try {
+    const result = await saveBusinessAnalysisConfig({
+      model: currentModel.value,
+      action_id: scopeAction.value,
+      view_id: scopeView.value,
+      role_key: scopeRole.value,
+      pivot_measures: parseNames(pivotMeasuresText.value),
+      pivot_dimensions: parseNames(pivotDimensionsText.value),
+      graph_measures: parseNames(graphMeasuresText.value),
+      graph_dimensions: parseNames(graphDimensionsText.value),
+      graph_type: graphType.value || 'bar',
+      publish: true,
+    });
+    await loadSurface();
+    await loadAnalysisConfig();
+    setMessage('分析视图配置已保存', `已保存 ${result.saved_count} 个业务配置`);
+    return true;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '分析视图设置保存失败';
+    return false;
+  } finally {
+    listSearchSaving.value = false;
+  }
+}
+
 async function previewListSearchConfig() {
   if (hasListSearchDraftChanges.value) {
     const saved = await saveListSearchConfig();
+    if (!saved) return;
+  }
+  await previewSelectedRuntimeRoute();
+}
+
+async function previewAnalysisConfig() {
+  if (hasAnalysisDraftChanges.value) {
+    const saved = await saveAnalysisConfig();
     if (!saved) return;
   }
   await previewSelectedRuntimeRoute();
@@ -2466,6 +2746,23 @@ h1 {
 .field-chip-editor strong {
   color: var(--sc-app-text-primary);
   font-size: 14px;
+}
+
+.inline-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--sc-app-text-secondary);
+}
+
+.inline-select select {
+  min-height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 0 8px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  font: inherit;
 }
 
 .field-chip-list {

@@ -1341,6 +1341,148 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertIn("missing_field", result["error"]["message"])
         self.assertEqual(len(contracts), 0)
 
+    def test_business_config_analysis_set_writes_contracts_not_preferences(self):
+        class Company:
+            id = 7
+
+        class PartnerModel:
+            _fields = {"amount_total": object(), "company_id": object(), "state": object()}
+
+        class EmptyRef:
+            id = 0
+
+        class Contract:
+            def __init__(self, ident, vals):
+                self.id = ident
+                self.version_no = 1
+                self.action_id = EmptyRef()
+                self.view_id = EmptyRef()
+                self.write(vals)
+
+            def write(self, vals):
+                for key, value in vals.items():
+                    if key == "action_id":
+                        self.action_id = type("Ref", (), {"id": int(value or 0)})()
+                    elif key == "view_id":
+                        self.view_id = type("Ref", (), {"id": int(value or 0)})()
+                    else:
+                        setattr(self, key, value)
+                return True
+
+            def action_publish(self):
+                self.status = "published"
+                self.version_no += 1
+
+        class ContractModel(list):
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None, order=None):
+                name = next((value for field, op, value in domain if field == "name" and op == "="), "")
+                rows = [row for row in self if row.name == name]
+                if limit == 1:
+                    return rows[0] if rows else None
+                return rows
+
+            def create(self, vals):
+                rec = Contract(len(self) + 1, vals)
+                self.append(rec)
+                return rec
+
+        class PreferenceModel:
+            touched = False
+
+            def search(self, *args, **kwargs):
+                self.touched = True
+                return []
+
+        class Env(dict):
+            company = Company()
+
+        preferences = PreferenceModel()
+        contracts = ContractModel()
+        env = Env({
+            "res.partner": PartnerModel(),
+            "ui.business.config.contract": contracts,
+            "sc.user.view.preference": preferences,
+        })
+        handler = self.module.BusinessConfigAnalysisSetHandler(
+            env=env,
+            params={
+                "model": "res.partner",
+                "action_id": 11,
+                "pivot_measures": ["amount_total"],
+                "pivot_dimensions": ["company_id"],
+                "graph_measures": ["amount_total"],
+                "graph_dimensions": ["state"],
+                "graph_type": "line",
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["saved_count"], 2)
+        self.assertEqual(result["data"]["business_config_boundary"], "business_contract")
+        self.assertEqual(result["data"]["user_preference_boundary"], "not_a_source")
+        self.assertEqual(len(contracts), 2)
+        pivot_contract = next(row for row in contracts if row.view_type == "pivot")
+        graph_contract = next(row for row in contracts if row.view_type == "graph")
+        self.assertEqual(
+            [row["name"] for row in pivot_contract.contract_json["view_orchestration"]["views"]["pivot"]["measures"]],
+            ["amount_total"],
+        )
+        self.assertEqual(
+            [row["name"] for row in pivot_contract.contract_json["view_orchestration"]["views"]["pivot"]["dimensions"]],
+            ["company_id"],
+        )
+        self.assertEqual(graph_contract.contract_json["view_orchestration"]["views"]["graph"]["type"], "line")
+        self.assertEqual(graph_contract.contract_json["view_orchestration"]["views"]["graph"]["dimension"], "state")
+        self.assertFalse(preferences.touched)
+
+    def test_business_config_analysis_set_rejects_unknown_fields(self):
+        class Company:
+            id = 7
+
+        class PartnerModel:
+            _fields = {"amount_total": object()}
+
+        class ContractModel(list):
+            def sudo(self):
+                return self
+
+            def search(self, *args, **kwargs):
+                return None
+
+            def create(self, vals):
+                self.append(vals)
+                return vals
+
+        class Env(dict):
+            company = Company()
+
+        contracts = ContractModel()
+        env = Env({
+            "res.partner": PartnerModel(),
+            "ui.business.config.contract": contracts,
+        })
+        handler = self.module.BusinessConfigAnalysisSetHandler(
+            env=env,
+            params={
+                "model": "res.partner",
+                "action_id": 11,
+                "pivot_measures": ["amount_total"],
+                "pivot_dimensions": ["missing_field"],
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertIn("missing_field", result["error"]["message"])
+        self.assertEqual(len(contracts), 0)
+
     def test_business_config_list_search_bootstrap_derives_from_runtime_view_contracts(self):
         class Company:
             id = 7

@@ -330,6 +330,62 @@ def _view_orchestration_analysis_names(views: dict) -> list[str]:
     return sorted(dict.fromkeys(items))
 
 
+def _view_orchestration_analysis_config(contract_json: dict, view_type: str) -> dict:
+    payload = contract_json if isinstance(contract_json, dict) else {}
+    orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+    views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+    view = views.get(view_type) if isinstance(views.get(view_type), dict) else {}
+    if view_type in {"pivot", "graph"}:
+        measures = []
+        dimensions = []
+        for row in view.get("measures") if isinstance(view.get("measures"), list) else []:
+            name = _analysis_item_name(row)
+            if name and name not in measures:
+                measures.append(name)
+        for row in view.get("dimensions") if isinstance(view.get("dimensions"), list) else []:
+            name = _analysis_item_name(row)
+            if name and name not in dimensions:
+                dimensions.append(name)
+        scalar_measure = _analysis_item_name(view.get("measure"))
+        scalar_dimension = _analysis_item_name(view.get("dimension"))
+        if scalar_measure and scalar_measure not in measures:
+            measures.insert(0, scalar_measure)
+        if scalar_dimension and scalar_dimension not in dimensions:
+            dimensions.insert(0, scalar_dimension)
+        return {
+            "measures": measures,
+            "dimensions": dimensions,
+            "type": str(view.get("type") or "").strip(),
+        }
+    return {}
+
+
+def _business_config_analysis_payload(*, view_type: str, measures: list[str], dimensions: list[str], chart_type: str = "") -> dict:
+    sequence = lambda idx: (idx + 1) * 10
+    spec = {
+        "measures": [{"name": name, "sequence": sequence(idx)} for idx, name in enumerate(measures)],
+        "dimensions": [{"name": name, "sequence": sequence(idx)} for idx, name in enumerate(dimensions)],
+    }
+    if measures:
+        spec["measure"] = measures[0]
+    if dimensions:
+        spec["dimension"] = dimensions[0]
+    if view_type == "graph":
+        spec["type"] = chart_type or "bar"
+    elif chart_type:
+        spec["chart_policy"] = {"type": chart_type}
+    return {
+        "view_orchestration": {
+            "views": {
+                view_type: spec,
+            },
+            "context": {
+                "source": "business_config_analysis_editor",
+            },
+        }
+    }
+
+
 def _search_published_view_orchestration_contracts(env, *, model: str, view_type: str, action_id: int = 0, view_id: int = 0, role_key: str = ""):
     if "ui.business.config.contract" not in env:
         return []
@@ -1458,6 +1514,215 @@ class BusinessConfigListSearchSetHandler(BaseIntentHandler):
                 "role_key": role_key,
                 "saved": saved,
                 "saved_count": len(saved),
+            },
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
+        }
+
+
+class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
+    INTENT_TYPE = "ui.business_config.analysis.audit"
+    DESCRIPTION = "Audit business analysis view config from view_orchestration contracts."
+    SOURCE_KIND = "ui_business_config_analysis_audit"
+    SOURCE_AUTHORITIES = (
+        "ui.business.config.contract",
+        "ui.business.config.contract.version",
+        "ir.actions.act_window",
+        "ir.ui.view",
+    )
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        params = self.params if isinstance(self.params, dict) else {}
+        model = str(params.get("model") or "").strip()
+        if not model:
+            return self._err(400, "缺少 model", REASON_MISSING_PARAMS)
+        if model not in self.env:
+            return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
+        contract_model = self.env["ui.business.config.contract"] if "ui.business.config.contract" in self.env else None
+        if contract_model and hasattr(contract_model, "sudo"):
+            contract_model = contract_model.sudo()
+        view_types = ["pivot", "graph"]
+        configs = {}
+        contract_items = []
+        for view_type in view_types:
+            contracts = contract_model._effective_view_orchestration_contracts(
+                model,
+                view_type=view_type,
+                action_id=action_id,
+                view_id=view_id,
+                role_key=role_key,
+            ) if contract_model else []
+            if not contracts:
+                contracts = _search_published_view_orchestration_contracts(
+                    self.env,
+                    model=model,
+                    view_type=view_type,
+                    action_id=int(action_id or 0),
+                    view_id=int(view_id or 0),
+                    role_key=role_key,
+                )
+            measures = []
+            dimensions = []
+            chart_type = ""
+            for rec in contracts:
+                config = _view_orchestration_analysis_config(rec.contract_json or {}, view_type)
+                for name in config.get("measures") or []:
+                    if name not in measures:
+                        measures.append(name)
+                for name in config.get("dimensions") or []:
+                    if name not in dimensions:
+                        dimensions.append(name)
+                if not chart_type and config.get("type"):
+                    chart_type = str(config.get("type") or "")
+                contract_items.append({
+                    "id": int(getattr(rec, "id", 0) or 0),
+                    "name": str(getattr(rec, "name", "") or ""),
+                    "view_type": view_type,
+                    "version_no": int(getattr(rec, "version_no", 1) or 1),
+                    "measures": measures,
+                    "dimensions": dimensions,
+                    "type": chart_type,
+                })
+            configs[view_type] = {
+                "measures": measures,
+                "dimensions": dimensions,
+                "type": chart_type,
+            }
+        return {
+            "ok": True,
+            "data": {
+                "model": model,
+                "action_id": int(action_id or 0),
+                "view_id": int(view_id or 0),
+                "role_key": role_key,
+                "business_config_analysis_contracts": contract_items,
+                "pivot_measures": configs["pivot"]["measures"],
+                "pivot_dimensions": configs["pivot"]["dimensions"],
+                "graph_measures": configs["graph"]["measures"],
+                "graph_dimensions": configs["graph"]["dimensions"],
+                "graph_type": configs["graph"]["type"] or "bar",
+                "available_model_fields": self._available_model_fields(model),
+                "business_config_boundary": "business_contract",
+                "user_preference_boundary": "not_a_source",
+                "has_business_analysis_config": any(
+                    configs[item]["measures"] or configs[item]["dimensions"] for item in view_types
+                ),
+            },
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
+        }
+
+
+class BusinessConfigAnalysisSetHandler(BusinessConfigListSearchSetHandler):
+    INTENT_TYPE = "ui.business_config.analysis.set"
+    DESCRIPTION = "Save business analysis view config into view_orchestration contracts."
+    SOURCE_KIND = "ui_business_config_analysis_set"
+    SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
+    NON_IDEMPOTENT_ALLOWED = "business analysis config is mutable authoring state"
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        params = self.params if isinstance(self.params, dict) else {}
+        model = str(params.get("model") or "").strip()
+        if not model:
+            return self._err(400, "缺少 model", REASON_MISSING_PARAMS)
+        if model not in self.env:
+            return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
+        publish = params.get("publish") is not False
+        pivot_measures = _sanitize_config_name_list(params.get("pivot_measures") or params.get("pivotMeasures"))
+        pivot_dimensions = _sanitize_config_name_list(params.get("pivot_dimensions") or params.get("pivotDimensions"))
+        graph_measures = _sanitize_config_name_list(params.get("graph_measures") or params.get("graphMeasures"))
+        graph_dimensions = _sanitize_config_name_list(params.get("graph_dimensions") or params.get("graphDimensions"))
+        graph_type = str(params.get("graph_type") or params.get("graphType") or "bar").strip() or "bar"
+        if not pivot_measures and not pivot_dimensions and not graph_measures and not graph_dimensions:
+            return self._err(400, "缺少分析指标或维度配置", REASON_MISSING_PARAMS)
+
+        model_fields = set(getattr(self.env[model], "_fields", {}) or {})
+        unknown = sorted(set(pivot_measures + pivot_dimensions + graph_measures + graph_dimensions) - model_fields)
+        if unknown:
+            return self._err(400, "配置引用不存在字段：%s" % ", ".join(unknown), REASON_USER_ERROR)
+
+        saved = []
+        try:
+            if pivot_measures or pivot_dimensions:
+                pivot_payload = _business_config_analysis_payload(
+                    view_type="pivot",
+                    measures=pivot_measures,
+                    dimensions=pivot_dimensions,
+                    chart_type=graph_type,
+                )
+                rec = self._upsert_contract(
+                    model=model,
+                    view_type="pivot",
+                    action_id=action_id,
+                    view_id=view_id,
+                    role_key=role_key,
+                    payload=pivot_payload,
+                    publish=publish,
+                )
+                saved.append({
+                    "id": int(rec.id),
+                    "name": str(rec.name or ""),
+                    "view_type": str(rec.view_type or ""),
+                    "status": str(rec.status or ""),
+                    "version_no": int(rec.version_no or 1),
+                    "measures": pivot_measures,
+                    "dimensions": pivot_dimensions,
+                    "contract_reload": _contract_reload_hint_for_record(rec),
+                })
+            if graph_measures or graph_dimensions:
+                graph_payload = _business_config_analysis_payload(
+                    view_type="graph",
+                    measures=graph_measures,
+                    dimensions=graph_dimensions,
+                    chart_type=graph_type,
+                )
+                rec = self._upsert_contract(
+                    model=model,
+                    view_type="graph",
+                    action_id=action_id,
+                    view_id=view_id,
+                    role_key=role_key,
+                    payload=graph_payload,
+                    publish=publish,
+                )
+                saved.append({
+                    "id": int(rec.id),
+                    "name": str(rec.name or ""),
+                    "view_type": str(rec.view_type or ""),
+                    "status": str(rec.status or ""),
+                    "version_no": int(rec.version_no or 1),
+                    "measures": graph_measures,
+                    "dimensions": graph_dimensions,
+                    "type": graph_type,
+                    "contract_reload": _contract_reload_hint_for_record(rec),
+                })
+        except ValidationError as exc:
+            return self._err(400, str(exc), REASON_USER_ERROR)
+        return {
+            "ok": True,
+            "data": {
+                "model": model,
+                "action_id": int(action_id or 0),
+                "view_id": int(view_id or 0),
+                "role_key": role_key,
+                "saved": saved,
+                "saved_count": len(saved),
+                "business_config_boundary": "business_contract",
+                "user_preference_boundary": "not_a_source",
             },
             "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
         }

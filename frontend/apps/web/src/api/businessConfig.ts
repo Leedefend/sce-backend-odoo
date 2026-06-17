@@ -43,6 +43,35 @@ export interface BusinessConfigListSearchAuditPayload {
   has_business_search_config: boolean;
 }
 
+export interface BusinessConfigAnalysisAuditPayload {
+  model: string;
+  action_id: number;
+  view_id: number;
+  role_key: string;
+  business_config_analysis_contracts: Array<{
+    id: number;
+    name: string;
+    view_type: 'pivot' | 'graph' | string;
+    version_no: number;
+    measures: string[];
+    dimensions: string[];
+    type?: string;
+  }>;
+  pivot_measures: string[];
+  pivot_dimensions: string[];
+  graph_measures: string[];
+  graph_dimensions: string[];
+  graph_type: string;
+  available_model_fields?: Array<{
+    name: string;
+    label: string;
+    type: string;
+  }>;
+  business_config_boundary: 'business_contract' | string;
+  user_preference_boundary: 'not_a_source' | string;
+  has_business_analysis_config: boolean;
+}
+
 export interface BusinessConfigListSearchSetPayload {
   model: string;
   action_id: number;
@@ -60,6 +89,27 @@ export interface BusinessConfigListSearchSetPayload {
     group_by?: string[];
     contract_reload?: Record<string, unknown>;
   }>;
+}
+
+export interface BusinessConfigAnalysisSetPayload {
+  model: string;
+  action_id: number;
+  view_id: number;
+  role_key: string;
+  saved_count: number;
+  saved: Array<{
+    id: number;
+    name: string;
+    view_type: 'pivot' | 'graph' | string;
+    status: string;
+    version_no: number;
+    measures?: string[];
+    dimensions?: string[];
+    type?: string;
+    contract_reload?: Record<string, unknown>;
+  }>;
+  business_config_boundary: 'business_contract' | string;
+  user_preference_boundary: 'not_a_source' | string;
 }
 
 export interface BusinessConfigListSearchBootstrapPayload extends BusinessConfigListSearchSetPayload {
@@ -301,6 +351,18 @@ export async function auditBusinessListSearchConfig(params: {
   });
 }
 
+export async function auditBusinessAnalysisConfig(params: {
+  model: string;
+  action_id?: number;
+  view_id?: number;
+  role_key?: string;
+}) {
+  return intentRequest<BusinessConfigAnalysisAuditPayload>({
+    intent: 'ui.business_config.analysis.audit',
+    params,
+  });
+}
+
 export async function saveBusinessListSearchConfig(params: {
   model: string;
   action_id?: number;
@@ -313,6 +375,24 @@ export async function saveBusinessListSearchConfig(params: {
 }) {
   return intentRequest<BusinessConfigListSearchSetPayload>({
     intent: 'ui.business_config.list_search.set',
+    params,
+  });
+}
+
+export async function saveBusinessAnalysisConfig(params: {
+  model: string;
+  action_id?: number;
+  view_id?: number;
+  role_key?: string;
+  pivot_measures?: string[];
+  pivot_dimensions?: string[];
+  graph_measures?: string[];
+  graph_dimensions?: string[];
+  graph_type?: string;
+  publish?: boolean;
+}) {
+  return intentRequest<BusinessConfigAnalysisSetPayload>({
+    intent: 'ui.business_config.analysis.set',
     params,
   });
 }
