@@ -750,8 +750,10 @@ class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
             "authorities": [
                 "ui.business.config.contract",
                 "ui.business.config.contract.version",
+                "ui.menu.config.policy",
             ],
             "projection_only": True,
+            "bootstraps_missing_contract_from_current_policies": True,
             "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
             "runtime_carrier": cls.INTENT_TYPE,
         }
@@ -769,6 +771,32 @@ class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
             ("role_key", "=", False),
         ], limit=1)
 
+    def _bootstrap_contract_from_current_policies(self, company_id: int):
+        if "ui.business.config.contract" not in self.env:
+            return None
+        Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
+        policies = Policy.search([
+            ("company_id", "=", company_id),
+            ("menu_id", "!=", False),
+        ], order="menu_id, id desc")
+        if not policies:
+            return None
+        Contract = self.env["ui.business.config.contract"].sudo()
+        contract_json = _menu_config_contract_json(company_id, policies)
+        rec = Contract.create({
+            "name": _menu_config_contract_name(company_id),
+            "model": "ir.ui.menu",
+            "view_type": False,
+            "action_id": False,
+            "view_id": False,
+            "role_key": False,
+            "company_id": company_id,
+            "contract_json": contract_json,
+            "status": "published",
+        })
+        rec.action_publish()
+        return rec
+
     def _serialize_version(self, version) -> dict:
         snapshot = version.snapshot_json or {}
         return {
@@ -785,6 +813,10 @@ class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
         params = self.params if isinstance(self.params, dict) else {}
         company_id = self._company_id(params)
         contract = self._contract_for_company(company_id)
+        bootstrapped = False
+        if not contract:
+            contract = self._bootstrap_contract_from_current_policies(company_id)
+            bootstrapped = bool(contract)
         if not contract:
             return {
                 "ok": True,
@@ -815,5 +847,6 @@ class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "source_authority": self.source_authority_contract(),
+                "bootstrapped_from_current_policies": bootstrapped,
             },
         }

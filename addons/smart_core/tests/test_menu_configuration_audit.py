@@ -511,6 +511,38 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(version_two["summary"]["moved_count"], 1)
         self.assertEqual(version_two["summary"]["reordered_count"], 1)
 
+    def test_menu_config_versions_bootstraps_contract_from_existing_policies(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        menu = _Menu(11, "合同中心")
+        hidden_menu = _Menu(12, "费用申请")
+        policies = _PolicyModel([
+            _Policy(1, menu, company=company, custom_label="合同办理", sequence_override=30),
+            _Policy(2, hidden_menu, company=company, visible=False),
+        ], user=user)
+        contracts = _ContractModel([])
+        env = _Env(
+            {
+                "ui.menu.config.policy": policies,
+                "ui.business.config.contract": contracts,
+                "ui.business.config.contract.version": _ContractVersionModel([]),
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationVersionsHandler(env=env, params={"company_id": 7})
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(len(contracts), 1)
+        self.assertEqual(result["data"]["contract"]["model"], "ir.ui.menu")
+        self.assertEqual(result["data"]["contract"]["summary"]["policy_count"], 2)
+        self.assertEqual(result["data"]["contract"]["summary"]["hidden_count"], 1)
+        self.assertEqual(result["data"]["contract"]["summary"]["renamed_count"], 1)
+        self.assertTrue(result["meta"]["bootstrapped_from_current_policies"])
+
 
 if __name__ == "__main__":
     unittest.main()
