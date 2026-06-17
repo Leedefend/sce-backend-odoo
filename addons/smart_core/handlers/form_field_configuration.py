@@ -1738,6 +1738,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
         warnings = []
         errors = []
         view_orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+        self._precheck_view_orchestration_layout(view_orchestration, warnings, errors)
         legacy_draft = payload.get("legacy_lowcode_draft") if isinstance(payload.get("legacy_lowcode_draft"), dict) else {}
         objects = payload.get("objects") if isinstance(payload.get("objects"), list) else []
         if not objects and isinstance(legacy_draft.get("objects"), list):
@@ -1766,6 +1767,41 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             if str(rule.get("trigger") or "").strip() == "scheduled" and not rule.get("cron"):
                 warnings.append("rules[%s] 为 scheduled 但未配置 cron。" % idx)
         return {"warnings": warnings, "errors": errors}
+
+    def _precheck_view_orchestration_layout(self, view_orchestration: dict, warnings: list[str], errors: list[str]) -> None:
+        views = view_orchestration.get("views") if isinstance(view_orchestration.get("views"), dict) else {}
+        form_spec = views.get("form") if isinstance(views.get("form"), dict) else {}
+        if "layout" not in form_spec:
+            return
+        layout = form_spec.get("layout")
+        if not isinstance(layout, list):
+            errors.append("view_orchestration.views.form.layout 必须是数组。")
+            return
+
+        child_keys = ("children", "pages", "tabs", "nodes", "items")
+
+        def visit(nodes, path):
+            for index, node in enumerate(nodes):
+                node_path = "%s[%s]" % (path, index)
+                if not isinstance(node, dict):
+                    errors.append("%s 必须是对象。" % node_path)
+                    continue
+                node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+                field_name = str(node.get("name") or node.get("field") or "").strip()
+                if not node_type:
+                    warnings.append("%s 缺少 type/kind。" % node_path)
+                if node_type == "field" and not field_name:
+                    errors.append("%s 字段节点缺少 name。" % node_path)
+                for child_key in child_keys:
+                    if child_key not in node:
+                        continue
+                    children = node.get(child_key)
+                    if not isinstance(children, list):
+                        errors.append("%s.%s 必须是数组。" % (node_path, child_key))
+                        continue
+                    visit(children, "%s.%s" % (node_path, child_key))
+
+        visit(layout, "view_orchestration.views.form.layout")
 
 
 class BusinessConfigContractGetHandler(BaseIntentHandler):

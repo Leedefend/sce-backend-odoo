@@ -260,6 +260,49 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["errors"], [])
         self.assertNotIn("objects 为空，契约不会产生业务对象配置。", result["warnings"])
 
+    def test_business_config_contract_precheck_accepts_form_layout_schema(self):
+        handler = self.module.BusinessConfigContractSaveHandler(env={}, params={})
+
+        result = handler._precheck_contract_payload({
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "fields": [{"name": "name", "visible": True, "sequence": 10}],
+                        "layout": [
+                            {
+                                "type": "group",
+                                "children": [
+                                    {"type": "field", "name": "name"},
+                                ],
+                            }
+                        ],
+                    },
+                },
+            },
+        })
+
+        self.assertEqual(result["errors"], [])
+
+    def test_business_config_contract_precheck_rejects_invalid_form_layout_schema(self):
+        handler = self.module.BusinessConfigContractSaveHandler(env={}, params={})
+
+        result = handler._precheck_contract_payload({
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "fields": [{"name": "name", "visible": True, "sequence": 10}],
+                        "layout": [
+                            {"type": "field"},
+                            {"type": "group", "children": {"type": "field", "name": "name"}},
+                        ],
+                    },
+                },
+            },
+        })
+
+        self.assertIn("view_orchestration.views.form.layout[0] 字段节点缺少 name。", result["errors"])
+        self.assertIn("view_orchestration.views.form.layout[1].children 必须是数组。", result["errors"])
+
     def test_business_config_contract_save_uses_full_scope_domain(self):
         class Company:
             id = 7

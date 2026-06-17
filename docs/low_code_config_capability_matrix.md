@@ -6,7 +6,7 @@
 | 表单字段顺序 | `ui.form.field.policy.sequence` + `view_orchestration.views.form.fields` | 当前表单“保存表单设置” | `ui.business.config.contract` | 可用但易受输入源影响 | P1 统一运行时契约输入 |
 | 表单字段标签 | `ui.form.field.policy.label` + `view_orchestration.views.form.fields[].label` | 当前表单内联修改 | `ui.business.config.contract` | 可用，写入已镜像契约，版本摘要和差异按业务标签对比 | P1 继续压缩 legacy policy 兼容层 |
 | 表单字段新增 | `ui.form.custom.field.wizard` + `ir.model.fields` + field policy | 当前表单“添加字段” | 平台元数据 + `ui.business.config.contract` | 可用 | P1 增加预检和回滚边界 |
-| 表单布局/分组 | `view_orchestration.views.form.layout` + 前端草稿 | 当前表单低代码区域 | `ui.business.config.contract` | 部分可用 | P1 明确布局 schema |
+| 表单布局/分组 | `view_orchestration.views.form.layout` + 前端草稿 | 当前表单低代码区域 | `ui.business.config.contract` | 部分可用，保存预检已约束正式 layout schema | P1 继续把编辑入口收敛到正式 layout |
 | 菜单显隐 | `ui.menu.config.policy.visible` + `ui.business.config.contract.menu_orchestration` | 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，运行时仍读 policy | P4 纳入统一配置工作台 |
 | 菜单改名 | `ui.menu.config.policy.custom_label` + `ui.business.config.contract.menu_orchestration` | 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，运行时仍读 policy | P4 纳入统一配置工作台 |
 | 菜单排序/移动 | `ui.menu.config.policy.sequence_override/target_parent_menu_id` + `ui.business.config.contract.menu_orchestration` | 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，运行时仍读 policy | P4 纳入统一配置工作台 |
