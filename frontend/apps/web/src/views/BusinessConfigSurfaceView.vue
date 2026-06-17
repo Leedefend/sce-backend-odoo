@@ -834,10 +834,18 @@ function versionSummaryNames(summary: BusinessConfigContractVersionsPayload['con
 function countDiff(left: string[], right: string[]) {
   const leftSet = new Set(left);
   const rightSet = new Set(right);
+  const added = right.filter((name) => !leftSet.has(name));
+  const removed = left.filter((name) => !rightSet.has(name));
   return {
-    added: right.filter((name) => !leftSet.has(name)).length,
-    removed: left.filter((name) => !rightSet.has(name)).length,
+    added,
+    removed,
   };
+}
+
+function formatDiffNames(names: string[]) {
+  const visible = names.slice(0, 3).join('、');
+  if (!visible) return '';
+  return names.length > 3 ? `${visible} 等 ${names.length} 项` : visible;
 }
 
 function versionDeltaText(
@@ -858,8 +866,8 @@ function versionDeltaText(
   ]
     .map((item) => {
       const changes = [
-        item.diff.added ? `多 ${item.diff.added}` : '',
-        item.diff.removed ? `少 ${item.diff.removed}` : '',
+        item.diff.added.length ? `多 ${item.diff.added.length}：${formatDiffNames(item.diff.added)}` : '',
+        item.diff.removed.length ? `少 ${item.diff.removed.length}：${formatDiffNames(item.diff.removed)}` : '',
       ].filter(Boolean).join('、');
       return changes ? `${item.label}${changes}` : '';
     })
