@@ -59,7 +59,18 @@ class _User:
 
 
 class _Contract:
-    def __init__(self, model, view_type, *, action_id=0, view_id=0, role_key="", status="published"):
+    def __init__(
+        self,
+        model,
+        view_type,
+        *,
+        action_id=0,
+        view_id=0,
+        role_key="",
+        status="published",
+        contract_json=None,
+        version_no=1,
+    ):
         self.model = model
         self.view_type = view_type
         self.action_id = types.SimpleNamespace(id=action_id) if action_id else False
@@ -70,6 +81,8 @@ class _Contract:
         self.status = status
         self.name = "%s:%s:%s" % (model, view_type, action_id)
         self.id = action_id or view_id or 1
+        self.contract_json = contract_json if isinstance(contract_json, dict) else {"views": {view_type or "all": []}}
+        self.version_no = version_no
 
 
 class _ContractModel(list):
@@ -301,6 +314,61 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
         self.assertEqual(data["view_type_counts"], {"form": 2, "search": 1, "tree": 1})
         self.assertEqual(data["role_scope_count"], 1)
         self.assertEqual(data["action_scope_count"], 3)
+
+    def test_snapshot_compare_reports_added_removed_and_changed_contracts(self):
+        env = _Env({
+            "ui.business.config.contract": _ContractModel([
+                _Contract("res.partner", "form", action_id=11, contract_json={"fields": ["name", "phone"]}, version_no=2),
+                _Contract("project.project", "tree", action_id=12, contract_json={"columns": ["name"]}),
+            ]),
+        })
+        previous_hash = self.module._hash_payload({"fields": ["name"]})
+        removed_hash = self.module._hash_payload({"columns": ["name"]})
+        baseline = {
+            "database": "sc_dev",
+            "contracts": [
+                {
+                    "name": "res.partner:form:11",
+                    "model": "res.partner",
+                    "view_type": "form",
+                    "action_id": 11,
+                    "view_id": 0,
+                    "role_key": "",
+                    "status": "published",
+                    "version_no": 1,
+                    "payload_hash": previous_hash,
+                },
+                {
+                    "name": "sale.order:tree:99",
+                    "model": "sale.order",
+                    "view_type": "tree",
+                    "action_id": 99,
+                    "view_id": 0,
+                    "role_key": "",
+                    "status": "published",
+                    "version_no": 1,
+                    "payload_hash": removed_hash,
+                },
+            ],
+        }
+        handler = self.module.BusinessConfigSnapshotCompareHandler(env=env, params={"snapshot": baseline})
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        data = result["data"]
+        self.assertEqual(data["current_database"], "sc_demo")
+        self.assertEqual(data["baseline_database"], "sc_dev")
+        self.assertEqual(data["current_contract_count"], 2)
+        self.assertEqual(data["baseline_contract_count"], 2)
+        self.assertEqual(data["added_count"], 1)
+        self.assertEqual(data["removed_count"], 1)
+        self.assertEqual(data["changed_count"], 1)
+        self.assertEqual(data["added"][0]["model"], "project.project")
+        self.assertEqual(data["removed"][0]["model"], "sale.order")
+        self.assertEqual(data["changed"][0]["model"], "res.partner")
+        self.assertEqual(data["changed"][0]["previous_version_no"], 1)
+        self.assertEqual(data["changed"][0]["current_version_no"], 2)
 
     def test_coverage_scan_reports_action_contract_gaps(self):
         action_model = _ActionModel([

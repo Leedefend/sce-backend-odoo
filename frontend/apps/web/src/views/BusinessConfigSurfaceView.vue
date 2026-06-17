@@ -201,6 +201,41 @@
         </div>
       </div>
     </section>
+    <section v-if="advancedPanelOpen" class="scan-panel snapshot-compare-panel">
+      <div class="scan-toolbar">
+        <strong>跨环境快照对比</strong>
+        <span v-if="snapshotCompareResult">{{ snapshotCompareSummary }}</span>
+        <button type="button" class="ghost small" :disabled="snapshotCompareLoading || !snapshotCompareText.trim()" @click="compareSnapshot">
+          {{ snapshotCompareLoading ? '对比中...' : '对比快照' }}
+        </button>
+      </div>
+      <textarea
+        v-model="snapshotCompareText"
+        class="snapshot-input"
+        rows="5"
+        placeholder="粘贴 make verify.business_config.snapshot 导出的 JSON"
+      ></textarea>
+      <div v-if="snapshotCompareResult" class="snapshot-diff-list">
+        <div v-for="item in snapshotCompareChangedRows" :key="item.key" class="snapshot-diff-row">
+          <strong>{{ item.name || item.model }}</strong>
+          <span>{{ viewTypeLabel(item.view_type) }}</span>
+          <span>版本 {{ item.previous_version_no }} -> {{ item.current_version_no }}</span>
+          <span>{{ item.previous_status || '-' }} -> {{ item.current_status || '-' }}</span>
+        </div>
+        <div v-for="item in snapshotCompareAddedRows" :key="`added-${item.model}-${item.view_type}-${item.action_id}-${item.name}`" class="snapshot-diff-row">
+          <strong>{{ item.name || item.model }}</strong>
+          <span>新增</span>
+          <span>{{ viewTypeLabel(item.view_type) }}</span>
+          <span>版本 {{ item.version_no }}</span>
+        </div>
+        <div v-for="item in snapshotCompareRemovedRows" :key="`removed-${item.model}-${item.view_type}-${item.action_id}-${item.name}`" class="snapshot-diff-row">
+          <strong>{{ item.name || item.model }}</strong>
+          <span>移除</span>
+          <span>{{ viewTypeLabel(item.view_type) }}</span>
+          <span>版本 {{ item.version_no }}</span>
+        </div>
+      </div>
+    </section>
     <section v-if="!loading && currentModel" class="section-grid">
       <article v-for="section in visibleConfigSections" :key="section.key" class="config-card">
         <div class="config-card-head">
@@ -492,6 +527,7 @@ import {
   bootstrapBusinessFormConfig,
   bootstrapBusinessListSearchConfig,
   bootstrapCoverageMissingConfig,
+  compareBusinessConfigSnapshot,
   loadBusinessConfigContractVersions,
   loadBusinessConfigSurface,
   rollbackBusinessConfigContract,
@@ -502,6 +538,7 @@ import {
   type BusinessConfigCoverageScanPayload,
   type BusinessConfigListSearchAuditPayload,
   type BusinessConfigRemediationAction,
+  type BusinessConfigSnapshotComparePayload,
   type BusinessConfigSnapshotSummaryPayload,
   type BusinessConfigSurfacePayload,
 } from '../api/businessConfig';
@@ -527,6 +564,9 @@ const versionsPanelOpen = ref(false);
 const advancedPanelOpen = ref(false);
 const versionTitle = ref('配置版本');
 const versionContracts = ref<BusinessConfigContractVersionsPayload['contracts']>([]);
+const snapshotCompareText = ref('');
+const snapshotCompareLoading = ref(false);
+const snapshotCompareResult = ref<BusinessConfigSnapshotComparePayload | null>(null);
 const listColumnsText = ref('');
 const searchFiltersText = ref('');
 const searchGroupByText = ref('');
@@ -590,6 +630,20 @@ const snapshotSummaryText = computed(() => {
     .join('、');
   return `契约快照 ${summary.contract_count}，已发布 ${published}，按动作 ${summary.action_scope_count}${viewTypes ? `，${viewTypes}` : ''}`;
 });
+const snapshotCompareSummary = computed(() => {
+  const result = snapshotCompareResult.value;
+  if (!result) return '';
+  return [
+    `当前 ${result.current_contract_count}`,
+    `基线 ${result.baseline_contract_count}`,
+    `变化 ${result.changed_count}`,
+    `新增 ${result.added_count}`,
+    `移除 ${result.removed_count}`,
+  ].join('，');
+});
+const snapshotCompareChangedRows = computed(() => (snapshotCompareResult.value?.changed || []).slice(0, 8));
+const snapshotCompareAddedRows = computed(() => (snapshotCompareResult.value?.added || []).slice(0, 6));
+const snapshotCompareRemovedRows = computed(() => (snapshotCompareResult.value?.removed || []).slice(0, 6));
 const pageTypeOptions = [
   { key: 'all' as const, label: '全部页面' },
   { key: 'form' as const, label: '表单页面' },
@@ -1066,6 +1120,28 @@ async function copyCoverageSummary() {
     setMessage('已复制验收摘要');
   } catch {
     setMessage('复制摘要失败', '浏览器未允许写入剪贴板，请稍后重试');
+  }
+}
+
+async function compareSnapshot() {
+  const text = snapshotCompareText.value.trim();
+  if (!text) return;
+  snapshotCompareLoading.value = true;
+  error.value = '';
+  clearMessage();
+  try {
+    const snapshot = JSON.parse(text) as Record<string, unknown>;
+    snapshotCompareResult.value = await compareBusinessConfigSnapshot({ snapshot });
+    const result = snapshotCompareResult.value;
+    setMessage(
+      '已完成快照对比',
+      `变化 ${result.changed_count}，新增 ${result.added_count}，移除 ${result.removed_count}`,
+    );
+  } catch (err) {
+    snapshotCompareResult.value = null;
+    error.value = err instanceof Error ? err.message : '快照 JSON 解析或对比失败';
+  } finally {
+    snapshotCompareLoading.value = false;
   }
 }
 
@@ -2015,6 +2091,42 @@ h1 {
 .scan-panel--admin .scan-row {
   display: flex;
   flex-wrap: wrap;
+}
+
+.snapshot-input {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 10px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.snapshot-diff-list {
+  display: grid;
+  gap: 6px;
+}
+
+.snapshot-diff-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.snapshot-diff-row strong {
+  color: var(--sc-app-text-primary);
 }
 
 .link-button {

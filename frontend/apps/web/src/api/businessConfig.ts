@@ -107,6 +107,41 @@ export interface BusinessConfigSnapshotSummaryPayload {
   action_scope_count: number;
 }
 
+export interface BusinessConfigSnapshotComparePayload {
+  current_database: string;
+  baseline_database: string;
+  current_contract_count: number;
+  baseline_contract_count: number;
+  added_count: number;
+  removed_count: number;
+  changed_count: number;
+  added: BusinessConfigSnapshotContractRow[];
+  removed: BusinessConfigSnapshotContractRow[];
+  changed: Array<{
+    key: string;
+    name: string;
+    model: string;
+    view_type: string;
+    previous_status: string;
+    current_status: string;
+    previous_version_no: number;
+    current_version_no: number;
+  }>;
+}
+
+export interface BusinessConfigSnapshotContractRow {
+  id?: number;
+  name: string;
+  model: string;
+  view_type: string;
+  action_id: number;
+  view_id: number;
+  role_key: string;
+  status: string;
+  version_no: number;
+  payload_hash?: string;
+}
+
 export interface BusinessConfigContractVersionsPayload {
   model: string;
   contract_count: number;
@@ -317,6 +352,15 @@ export async function loadBusinessConfigSurface(params: {
 } = {}) {
   return intentRequest<BusinessConfigSurfacePayload>({
     intent: 'ui.business_config.surface.get',
+    params,
+  });
+}
+
+export async function compareBusinessConfigSnapshot(params: {
+  snapshot: Record<string, unknown>;
+}) {
+  return intentRequest<BusinessConfigSnapshotComparePayload>({
+    intent: 'ui.business_config.snapshot.compare',
     params,
   });
 }

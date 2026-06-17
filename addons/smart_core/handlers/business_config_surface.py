@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any
 
 from odoo.exceptions import AccessError
@@ -23,6 +25,27 @@ def _to_int(value: Any) -> int:
 
 def _to_text(value: Any) -> str:
     return str(value or "").strip()
+
+
+def _ref_id(value: Any) -> int:
+    return _to_int(getattr(value, "id", value))
+
+
+def _hash_payload(payload: Any) -> str:
+    value = payload if isinstance(payload, dict) else {}
+    text = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _snapshot_contract_key(row: dict) -> str:
+    return "|".join([
+        str(row.get("model") or ""),
+        str(row.get("view_type") or ""),
+        str(row.get("action_id") or 0),
+        str(row.get("view_id") or 0),
+        str(row.get("role_key") or ""),
+        str(row.get("name") or ""),
+    ])
 
 
 class _BusinessConfigSurfaceBase(BaseIntentHandler):
@@ -189,6 +212,97 @@ class _BusinessConfigSurfaceBase(BaseIntentHandler):
             "action_scope_count": action_scope_count,
         }
 
+    def _snapshot_contract_row(self, rec) -> dict:
+        payload = getattr(rec, "contract_json", {}) or {}
+        return {
+            "id": _to_int(getattr(rec, "id", 0)),
+            "name": _to_text(getattr(rec, "name", "")),
+            "model": _to_text(getattr(rec, "model", "")),
+            "view_type": _to_text(getattr(rec, "view_type", "")),
+            "action_id": _ref_id(getattr(rec, "action_id", 0)),
+            "view_id": _ref_id(getattr(rec, "view_id", 0)),
+            "role_key": _to_text(getattr(rec, "role_key", "")),
+            "status": _to_text(getattr(rec, "status", "")),
+            "version_no": _to_int(getattr(rec, "version_no", 0)),
+            "payload_hash": _hash_payload(payload),
+        }
+
+    def _snapshot_contract_rows(self) -> list[dict]:
+        if "ui.business.config.contract" not in self.env:
+            return []
+        rows = self.env["ui.business.config.contract"].sudo().search(
+            [], order="model, view_type, action_id, view_id, role_key, name, id"
+        )
+        return sorted([self._snapshot_contract_row(rec) for rec in rows], key=_snapshot_contract_key)
+
+    def _snapshot_report(self) -> dict:
+        rows = self._snapshot_contract_rows()
+        summary = self._snapshot_summary()
+        return {
+            **summary,
+            "contracts": rows,
+        }
+
+    def _load_snapshot_payload(self, value: Any) -> dict:
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except Exception:
+                value = {}
+        if not isinstance(value, dict):
+            return {}
+        contracts = value.get("contracts")
+        if not isinstance(contracts, list):
+            return {}
+        return value
+
+    def _compare_snapshot(self, previous_snapshot: dict) -> dict:
+        current = self._snapshot_report()
+        previous_rows = {
+            _snapshot_contract_key(row): row
+            for row in previous_snapshot.get("contracts", [])
+            if isinstance(row, dict)
+        }
+        current_rows = {
+            _snapshot_contract_key(row): row
+            for row in current.get("contracts", [])
+            if isinstance(row, dict)
+        }
+        added_keys = sorted(set(current_rows) - set(previous_rows))
+        removed_keys = sorted(set(previous_rows) - set(current_rows))
+        common_keys = sorted(set(current_rows) & set(previous_rows))
+        changed = []
+        for key in common_keys:
+            previous = previous_rows[key]
+            current_row = current_rows[key]
+            if (
+                previous.get("payload_hash") == current_row.get("payload_hash")
+                and previous.get("status") == current_row.get("status")
+            ):
+                continue
+            changed.append({
+                "key": key,
+                "name": current_row.get("name") or previous.get("name") or "",
+                "model": current_row.get("model") or previous.get("model") or "",
+                "view_type": current_row.get("view_type") or previous.get("view_type") or "",
+                "previous_status": previous.get("status") or "",
+                "current_status": current_row.get("status") or "",
+                "previous_version_no": _to_int(previous.get("version_no")),
+                "current_version_no": _to_int(current_row.get("version_no")),
+            })
+        return {
+            "current_database": current.get("database") or "",
+            "baseline_database": _to_text(previous_snapshot.get("database")),
+            "current_contract_count": len(current_rows),
+            "baseline_contract_count": len(previous_rows),
+            "added_count": len(added_keys),
+            "removed_count": len(removed_keys),
+            "changed_count": len(changed),
+            "added": [current_rows[key] for key in added_keys[:30]],
+            "removed": [previous_rows[key] for key in removed_keys[:30]],
+            "changed": changed[:50],
+        }
+
 
 class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
     INTENT_TYPE = "ui.business_config.surface.get"
@@ -317,6 +431,39 @@ class BusinessConfigSnapshotSummaryHandler(_BusinessConfigSurfaceBase):
         return {
             "ok": True,
             "data": self._snapshot_summary(),
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "source_authority": self.source_authority_contract(),
+            },
+        }
+
+
+class BusinessConfigSnapshotCompareHandler(_BusinessConfigSurfaceBase):
+    INTENT_TYPE = "ui.business_config.snapshot.compare"
+    DESCRIPTION = "对比业务配置契约快照"
+    VERSION = "1.0.0"
+    SOURCE_KIND = "ui_business_config_snapshot_compare"
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": ["ui.business.config.contract"],
+            "projection_only": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        self._ensure_access()
+        params = self.params if isinstance(self.params, dict) else {}
+        snapshot = self._load_snapshot_payload(params.get("snapshot") or params.get("snapshot_json") or params.get("snapshotJson"))
+        if not snapshot:
+            return self._err(400, "snapshot 必须是 make verify.business_config.snapshot 导出的 JSON 对象", "USER_ERROR")
+        return {
+            "ok": True,
+            "data": self._compare_snapshot(snapshot),
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "source_authority": self.source_authority_contract(),
