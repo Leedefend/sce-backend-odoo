@@ -164,6 +164,7 @@
     <section v-if="advancedPanelOpen && coverageScan" class="scan-panel scan-panel--admin">
       <div class="scan-toolbar">
         <strong>高级治理视图</strong>
+        <span v-if="snapshotSummary">{{ snapshotSummaryText }}</span>
       </div>
       <div class="scan-list">
         <div v-for="row in visibleCoverageRows" :key="`admin-${row.action_id}`" class="scan-row">
@@ -501,6 +502,7 @@ import {
   type BusinessConfigCoverageScanPayload,
   type BusinessConfigListSearchAuditPayload,
   type BusinessConfigRemediationAction,
+  type BusinessConfigSnapshotSummaryPayload,
   type BusinessConfigSurfacePayload,
 } from '../api/businessConfig';
 
@@ -578,6 +580,16 @@ const visibleConfigSections = computed(() => visibleSections.value.filter((secti
 }));
 const currentModel = computed(() => String(scopeModel.value || surface.value?.model || '').trim());
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value));
+const snapshotSummary = computed<BusinessConfigSnapshotSummaryPayload | null>(() => surface.value?.snapshot_summary || null);
+const snapshotSummaryText = computed(() => {
+  const summary = snapshotSummary.value;
+  if (!summary) return '';
+  const published = summary.status_counts?.published || 0;
+  const viewTypes = Object.entries(summary.view_type_counts || {})
+    .map(([key, count]) => `${viewTypeLabel(key)} ${count}`)
+    .join('、');
+  return `契约快照 ${summary.contract_count}，已发布 ${published}，按动作 ${summary.action_scope_count}${viewTypes ? `，${viewTypes}` : ''}`;
+});
 const pageTypeOptions = [
   { key: 'all' as const, label: '全部页面' },
   { key: 'form' as const, label: '表单页面' },

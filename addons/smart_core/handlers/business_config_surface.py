@@ -161,6 +161,34 @@ class _BusinessConfigSurfaceBase(BaseIntentHandler):
         view_mode = _to_text(getattr(action, "view_mode", "")) if action else ""
         return {item.strip() for item in view_mode.split(",") if item.strip()}
 
+    def _snapshot_summary(self) -> dict:
+        if "ui.business.config.contract" not in self.env:
+            return {}
+        rows = self.env["ui.business.config.contract"].sudo().search(
+            [], order="model, view_type, action_id, view_id, role_key, name, id"
+        )
+        status_counts = {}
+        view_type_counts = {}
+        role_scope_count = 0
+        action_scope_count = 0
+        for rec in rows:
+            status = _to_text(getattr(rec, "status", "")) or "unknown"
+            view_type = _to_text(getattr(rec, "view_type", "")) or "all"
+            status_counts[status] = status_counts.get(status, 0) + 1
+            view_type_counts[view_type] = view_type_counts.get(view_type, 0) + 1
+            if _to_text(getattr(rec, "role_key", "")):
+                role_scope_count += 1
+            if _to_int(getattr(getattr(rec, "action_id", None), "id", getattr(rec, "action_id", 0))):
+                action_scope_count += 1
+        return {
+            "database": _to_text(getattr(getattr(self.env, "cr", None), "dbname", "")),
+            "contract_count": len(rows),
+            "status_counts": dict(sorted(status_counts.items())),
+            "view_type_counts": dict(sorted(view_type_counts.items())),
+            "role_scope_count": role_scope_count,
+            "action_scope_count": action_scope_count,
+        }
+
 
 class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
     INTENT_TYPE = "ui.business_config.surface.get"
@@ -258,7 +286,37 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
                 "view_id": view_id,
                 "role_key": role_key,
                 "sections": sections,
+                "snapshot_summary": self._snapshot_summary(),
             },
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "source_authority": self.source_authority_contract(),
+            },
+        }
+
+
+class BusinessConfigSnapshotSummaryHandler(_BusinessConfigSurfaceBase):
+    INTENT_TYPE = "ui.business_config.snapshot.summary"
+    DESCRIPTION = "读取业务配置契约快照摘要"
+    VERSION = "1.0.0"
+    SOURCE_KIND = "ui_business_config_snapshot_summary"
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": ["ui.business.config.contract"],
+            "projection_only": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        self._ensure_access()
+        return {
+            "ok": True,
+            "data": self._snapshot_summary(),
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "source_authority": self.source_authority_contract(),

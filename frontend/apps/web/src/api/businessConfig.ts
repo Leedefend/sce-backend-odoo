@@ -88,6 +88,7 @@ export interface BusinessConfigSurfacePayload {
   action_id: number;
   view_id: number;
   role_key: string;
+  snapshot_summary?: BusinessConfigSnapshotSummaryPayload;
   sections: Array<{
     key: 'form' | 'list_search' | 'menu' | string;
     label: string;
@@ -95,6 +96,15 @@ export interface BusinessConfigSurfacePayload {
     intent: string;
     boundary: string;
   }>;
+}
+
+export interface BusinessConfigSnapshotSummaryPayload {
+  database: string;
+  contract_count: number;
+  status_counts: Record<string, number>;
+  view_type_counts: Record<string, number>;
+  role_scope_count: number;
+  action_scope_count: number;
 }
 
 export interface BusinessConfigContractVersionsPayload {

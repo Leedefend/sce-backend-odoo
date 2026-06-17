@@ -62,10 +62,14 @@ class _Contract:
     def __init__(self, model, view_type, *, action_id=0, view_id=0, role_key="", status="published"):
         self.model = model
         self.view_type = view_type
-        self.action_id = action_id
-        self.view_id = view_id
+        self.action_id = types.SimpleNamespace(id=action_id) if action_id else False
+        self.view_id = types.SimpleNamespace(id=view_id) if view_id else False
+        self.action_id_value = action_id
+        self.view_id_value = view_id
         self.role_key = role_key
         self.status = status
+        self.name = "%s:%s:%s" % (model, view_type, action_id)
+        self.id = action_id or view_id or 1
 
 
 class _ContractModel(list):
@@ -81,7 +85,7 @@ class _ContractModel(list):
             if row.status == "published"
             and row.model == model
             and (not view_type or row.view_type == view_type)
-            and (not action_id or row.action_id in {0, action_id})
+            and (not action_id or row.action_id_value in {0, action_id})
             and (not role_key or row.role_key in {"", role_key})
         ]
 
@@ -96,11 +100,18 @@ class _ContractModel(list):
             row for row in self
             if (not model or row.model == model)
             and (not view_types or row.view_type in view_types)
-            and (not action_ids or row.action_id in action_ids)
-            and (not view_ids or row.view_id in view_ids)
+            and (not action_ids or (row.action_id_value or False) in action_ids)
+            and (not view_ids or (row.view_id_value or False) in view_ids)
             and (not role_keys or (row.role_key or False) in role_keys)
             and (not status or row.status == status)
         ])
+
+    def search(self, domain, limit=None, order=None):
+        self.domain = domain
+        self.limit = limit
+        self.order = order
+        rows = list(self)
+        return rows[:limit] if limit else rows
 
 
 class _Action:
@@ -214,6 +225,7 @@ class _Env(dict):
     company = types.SimpleNamespace(id=7)
     user = _User()
     context = {}
+    cr = types.SimpleNamespace(dbname="sc_demo")
 
 
 class BusinessConfigSurfaceTests(unittest.TestCase):
@@ -267,6 +279,28 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
         sections = {row["key"]: row for row in result["data"]["sections"]}
         self.assertIn("analysis", sections)
         self.assertEqual(sections["analysis"]["contract_count"], 0)
+
+    def test_snapshot_summary_reports_contract_distribution(self):
+        env = _Env({
+            "ui.business.config.contract": _ContractModel([
+                _Contract("res.partner", "form", action_id=11, role_key="sales"),
+                _Contract("res.partner", "tree", action_id=11),
+                _Contract("res.partner", "search", status="draft"),
+                _Contract("project.project", "form", action_id=12),
+            ]),
+        })
+        handler = self.module.BusinessConfigSnapshotSummaryHandler(env=env, params={})
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        data = result["data"]
+        self.assertEqual(data["database"], "sc_demo")
+        self.assertEqual(data["contract_count"], 4)
+        self.assertEqual(data["status_counts"], {"draft": 1, "published": 3})
+        self.assertEqual(data["view_type_counts"], {"form": 2, "search": 1, "tree": 1})
+        self.assertEqual(data["role_scope_count"], 1)
+        self.assertEqual(data["action_scope_count"], 3)
 
     def test_coverage_scan_reports_action_contract_gaps(self):
         action_model = _ActionModel([
