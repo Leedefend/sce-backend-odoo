@@ -151,6 +151,8 @@ async function main() {
     ));
     const advancedText = await page.locator("body").innerText();
     const advancedPanelVisible = await page.locator(".scan-panel--admin").count();
+    const snapshotDownloadButtonCount = await page.getByRole("button", { name: "下载当前快照" }).count();
+    const snapshotCompareButtonCount = await page.getByRole("button", { name: "对比快照" }).count();
     await page.getByRole("button", { name: "高级设置" }).click();
     await page.waitForSelector(".scope-panel", { state: "detached", timeout: 10000 });
     await page.locator(".scan-row--selected").getByRole("button", { name: "预览页面" }).click();
@@ -183,6 +185,8 @@ async function main() {
       advancedPanelVisible,
       advancedHasUnwiredCopy: advancedText.includes("编辑入口待接入"),
       advancedHasGovernanceText: advancedText.includes("高级治理视图") && advancedText.includes("治理结论"),
+      snapshotDownloadButtonCount,
+      snapshotCompareButtonCount,
       previewUrl,
     };
     report.artifacts.defaultConfigPage = await captureStep(page, "default-config-page");
@@ -220,9 +224,11 @@ async function main() {
       advancedScopeLabels.join("|") === "业务对象|页面ID|视图ID|角色编码"
         && advancedPanelVisible === 1
         && advancedText.includes("高级治理视图")
-        && advancedText.includes("治理结论"),
+        && advancedText.includes("治理结论")
+        && snapshotDownloadButtonCount === 1
+        && snapshotCompareButtonCount === 1,
       "高级设置边界不可用",
-      { advancedScopeLabels, advancedPanelVisible },
+      { advancedScopeLabels, advancedPanelVisible, snapshotDownloadButtonCount, snapshotCompareButtonCount },
     );
     assert(!advancedText.includes("编辑入口待接入"), "高级设置中出现未接入编辑入口", { advancedText });
     assert(previewUrl.includes("/a/562"), "业务页面预览入口不可用", { previewUrl });
