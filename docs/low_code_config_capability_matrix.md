@@ -2,8 +2,8 @@
 
 | 能力 | 当前承载 | 当前入口 | 正式归属 | 当前状态 | 下一步 |
 | --- | --- | --- | --- | --- | --- |
-| 表单字段显示/隐藏 | `ui.form.field.policy` + `ui.business.config.contract.view_orchestration` | 当前表单“表单设置” | `ui.business.config.contract` | 可用但双写 | P1 收敛为契约为准 |
-| 表单字段顺序 | `ui.form.field.policy.sequence` + `view_orchestration.views.form.fields` | 当前表单“保存表单设置” | `ui.business.config.contract` | 可用但易受输入源影响 | P1 统一运行时契约输入 |
+| 表单字段显示/隐藏 | `ui.form.field.policy` + `ui.business.config.contract.view_orchestration` | 当前表单“表单设置” | `ui.business.config.contract` | 可用，正式归属为 `view_orchestration`，`ui.form.field.policy` 作为兼容写入并在返回值中标明边界 | P1 继续压缩 legacy policy 兼容层 |
+| 表单字段顺序 | `ui.form.field.policy.sequence` + `view_orchestration.views.form.fields` | 当前表单“保存表单设置” | `ui.business.config.contract` | 可用，保存时写正式 `fields` 和 `layout`，兼容写入 policy 并返回正式归属边界 | P1 统一运行时契约输入 |
 | 表单字段标签 | `ui.form.field.policy.label` + `view_orchestration.views.form.fields[].label` | 当前表单内联修改 | `ui.business.config.contract` | 可用，写入已镜像契约，版本摘要和差异按业务标签对比 | P1 继续压缩 legacy policy 兼容层 |
 | 表单字段新增 | `ui.form.custom.field.wizard` + `ir.model.fields` + field policy | 当前表单“添加字段” | 平台元数据 + `ui.business.config.contract` | 可用，intent 支持 dry-run 预检且正式执行后镜像契约 | P1 明确字段元数据回滚边界 |
 | 表单布局/分组 | `view_orchestration.views.form.layout` + 前端草稿 | 当前表单低代码区域 | `ui.business.config.contract` | 可用，保存表单设置会写入正式 layout，预检约束正式 layout schema，表单检查会输出正式布局字段数和字段顺序是否对齐 | P1 继续压缩 legacy 草稿兼容展示 |
@@ -32,7 +32,7 @@
 
 ## 优先修复缺口
 
-1. 表单配置写入时统一处理 `role_group_ids` 与正式契约 `role_key` 的边界。已收敛：业务配置契约保存、查询、版本、回滚等统一作用域入口拒绝 `role_group_ids`，避免旧角色组输入被误认为正式契约作用域。
+1. 表单配置写入时统一处理 `role_group_ids` 与正式契约 `role_key` 的边界。已收敛：业务配置契约保存、查询、版本、回滚等统一作用域入口拒绝 `role_group_ids`，避免旧角色组输入被误认为正式契约作用域；低代码表单批量保存返回 `business_config_boundary`，明确正式归属、兼容写入和非用户偏好边界。
 2. 表单低代码草稿输入统一从当前运行时契约读取，不再混用 legacy `objects/layout/rules` 作为主输入。已开始收敛：字段顺序/可见性优先使用 `view_orchestration.views.form.fields`，保存时同步写入 `view_orchestration.views.form.layout`；legacy `objects` 只做兜底和历史草稿兼容；新保存的兼容草稿下沉到 `legacy_lowcode_draft`。
 3. 保存表单设置时，避免无变化字段被重写，防止“只改布局导致字段顺序变化”。已开始收敛：前端只提交变化项，后端支持 visibility-only 保存。
 4. 运行时配置差异需要可追踪。已开始收敛：page governance 会透传正式契约字段数和被正式契约跳过的 legacy policy 字段，前端 HUD 可直接显示。

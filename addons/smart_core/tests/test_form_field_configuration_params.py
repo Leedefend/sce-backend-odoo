@@ -301,6 +301,15 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["data"]["updated_count"], 0)
         self.assertEqual(result["data"]["visibility_updated_count"], 1)
+        self.assertEqual(result["data"]["business_config_boundary"], {
+            "formal_authority": "ui.business.config.contract.view_orchestration",
+            "compatibility_write": "ui.form.field.policy",
+            "user_preference_boundary": "not_user_preference",
+            "runtime_scope": "current_form",
+        })
+        self.assertEqual(result["meta"]["low_code_config"]["formal_authority"], "ui.business.config.contract.view_orchestration")
+        self.assertEqual(result["meta"]["low_code_config"]["compatibility_write"], "ui.form.field.policy")
+        self.assertEqual(result["meta"]["low_code_config"]["user_preference_boundary"], "not_user_preference")
         self.assertEqual(len(policy_model.created), 1)
         self.assertFalse(policy_model.created[0]["visible"])
         fields = contract_model.record.contract_json["view_orchestration"]["views"]["form"]["fields"]

@@ -925,11 +925,20 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
             )
             order_result["data"]["visibility_updated_count"] = updates
             order_result["data"]["business_config_visibility_mirrored_count"] = mirrored_count
+        order_result["data"]["business_config_boundary"] = {
+            "formal_authority": "ui.business.config.contract.view_orchestration",
+            "compatibility_write": "ui.form.field.policy",
+            "user_preference_boundary": "not_user_preference",
+            "runtime_scope": "current_form",
+        }
         order_result["meta"]["intent"] = self.INTENT_TYPE
         order_result["meta"]["low_code_config"] = {
             "enabled": True,
             "scope": "current_form",
             "capabilities": ["field_order", "field_visibility"],
+            "formal_authority": "ui.business.config.contract.view_orchestration",
+            "compatibility_write": "ui.form.field.policy",
+            "user_preference_boundary": "not_user_preference",
         }
         return order_result
 
