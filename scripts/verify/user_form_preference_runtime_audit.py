@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Audit user form preferences on confirmed formal handling forms.
+"""Audit user form preferences on discovered business forms.
 
 Run inside Odoo shell:
     bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_form_preference_runtime_audit.py
@@ -7,7 +7,6 @@ Run inside Odoo shell:
 
 from odoo.addons.smart_core.app_config_engine.services.assemblers.page_assembler import PageAssembler
 from odoo.addons.smart_construction_custom.models import user_preferences
-
 
 def _walk_layout(layout):
     names = []
@@ -56,16 +55,11 @@ def _required_rule_fields(data):
 failures = []
 checked = 0
 assembler = PageAssembler(env)
+initializer = env["sc.user.preference.initialization"]
 
-for xmlid in user_preferences.FORMAL_HANDLING_MENU_XMLIDS:
-    menu = env.ref(xmlid, raise_if_not_found=False)
-    if not menu or not menu.action:
-        failures.append((xmlid, "missing_menu_or_action"))
-        continue
-    action_rec = menu.action
-    if action_rec._name != "ir.actions.act_window" or not action_rec.res_model:
-        failures.append((xmlid, "invalid_action"))
-        continue
+for item in initializer._formal_handling_form_targets():
+    xmlid = item.get("menu_xmlid") or "menu:%s" % item.get("menu_id")
+    action_rec = item["action"]
 
     data, _versions = assembler.assemble_page_contract(
         {

@@ -221,6 +221,38 @@ FORMAL_HANDLING_MENU_CATEGORY_CODES = {
     "smart_construction_core.menu_sc_user_payment_apply_acceptance": "finance.payment.apply.pay",
 }
 
+USER_FORM_PREFERENCE_ROOT_MENU_XMLID = "smart_construction_core.menu_sc_root"
+USER_FORM_PREFERENCE_EXCLUDED_MENU_KEYWORDS = (
+    "首页",
+    "配置",
+    "设置",
+    "字典",
+    "权限",
+    "工作流",
+    "审批配置",
+    "菜单配置",
+    "字段配置",
+    "低代码",
+    "报表",
+    "统计",
+    "分析",
+)
+USER_FORM_PREFERENCE_EXCLUDED_MODEL_PREFIXES = (
+    "ir.",
+    "ui.",
+    "bus.",
+    "mail.",
+)
+USER_FORM_PREFERENCE_EXCLUDED_MODELS = {
+    "res.config.settings",
+    "res.groups",
+    "res.users",
+    "sc.product.policy",
+    "sc.product.policy.version",
+    "sc.scene",
+    "sc.scene.version",
+}
+
 USER_SPLIT_HANDLING_MENU_RULES = {
     "smart_construction_core.menu_sc_reimbursement_request": {
         "label": "报销申请",
@@ -785,34 +817,99 @@ class ScUserPreferenceInitialization(models.TransientModel):
 
     @api.model
     def _formal_handling_form_targets(self):
-        targets = []
+        targets_by_key = {}
         seen = set()
-        for menu_xmlid in FORMAL_HANDLING_MENU_XMLIDS:
-            menu = self.env.ref(menu_xmlid, raise_if_not_found=False)
+        for menu, menu_xmlid, source in self._user_form_preference_menu_entries():
             action = self._act_window_from_menu(menu)
-            if not action or not action.res_model:
+            if not self._is_user_business_form_action(menu, action):
                 continue
             action_key = (int(action.id), str(action.res_model))
             if action_key in seen:
                 continue
             seen.add(action_key)
-            if str(action.res_model) == "res.partner":
-                continue
             context = self._action_context(action)
             category_code = str(
                 context.get("default_business_category_code")
                 or FORMAL_HANDLING_MENU_CATEGORY_CODES.get(menu_xmlid)
                 or ""
             ).strip()
-            targets.append({
+            targets_by_key[action_key] = {
                 "menu_xmlid": menu_xmlid,
+                "menu_id": int(menu.id),
                 "action": action,
                 "model": str(action.res_model),
                 "title": str(menu.name or action.name or action.res_model),
                 "category_code": category_code,
                 "context": context,
-            })
-        return targets
+                "source": source,
+            }
+        return list(targets_by_key.values())
+
+    @api.model
+    def _user_form_preference_menu_entries(self):
+        entries = []
+        seen_menu_ids = set()
+        for menu_xmlid in FORMAL_HANDLING_MENU_XMLIDS:
+            menu = self.env.ref(menu_xmlid, raise_if_not_found=False)
+            if not menu or not menu.exists():
+                continue
+            entries.append((menu, menu_xmlid, "confirmed_formal_menu"))
+            seen_menu_ids.add(int(menu.id))
+
+        root = self.env.ref(USER_FORM_PREFERENCE_ROOT_MENU_XMLID, raise_if_not_found=False)
+        if not root:
+            return entries
+        menus = self.env["ir.ui.menu"].sudo().search(
+            [("id", "child_of", int(root.id)), ("id", "!=", int(root.id))],
+            order="sequence,id",
+        )
+        xmlids_by_id = menus.get_external_id()
+        for menu in menus:
+            if int(menu.id) in seen_menu_ids:
+                continue
+            menu_xmlid = str(xmlids_by_id.get(menu.id) or "").strip()
+            action = self._act_window_from_menu(menu)
+            if not self._is_user_business_form_action(menu, action):
+                continue
+            entries.append((menu, menu_xmlid, "business_menu_discovery"))
+            seen_menu_ids.add(int(menu.id))
+        return entries
+
+    @api.model
+    def _is_user_business_form_action(self, menu, action):
+        if not action or not action.exists() or not action.res_model:
+            return False
+        model_name = str(action.res_model)
+        if model_name == "res.partner":
+            return False
+        if model_name in USER_FORM_PREFERENCE_EXCLUDED_MODELS:
+            return False
+        if any(model_name.startswith(prefix) for prefix in USER_FORM_PREFERENCE_EXCLUDED_MODEL_PREFIXES):
+            return False
+        if model_name not in self.env:
+            return False
+        model = self.env[model_name]
+        if getattr(model, "_transient", False):
+            return False
+        path = self._menu_path_label(menu)
+        if any(keyword in path for keyword in USER_FORM_PREFERENCE_EXCLUDED_MENU_KEYWORDS):
+            return False
+        view_modes = {
+            str(item or "").strip()
+            for item in str(getattr(action, "view_mode", "") or "").split(",")
+            if str(item or "").strip()
+        }
+        return "form" in view_modes or bool(self._action_form_view_id(action))
+
+    @api.model
+    def _menu_path_label(self, menu):
+        names = []
+        current = menu
+        while current and current.exists():
+            if current.name:
+                names.append(str(current.name))
+            current = current.parent_id
+        return " / ".join(reversed(names))
 
     @api.model
     def _act_window_from_menu(self, menu):
