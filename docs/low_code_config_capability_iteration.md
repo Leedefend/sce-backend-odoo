@@ -185,6 +185,7 @@
 - 已补第十一步：新增 `make verify.business_config.snapshot`，导出当前数据库 `ui.business.config.contract` 快照到 `artifacts/backend/business_config_contract_snapshot.json`；可通过 `BUSINESS_CONFIG_SNAPSHOT_COMPARE_PATH=/mnt/artifacts/backend/<baseline>.json` 对比另一个环境快照，输出新增、删除和 payload/status 变化摘要。
 - 已补第十二步：`ui.business_config.surface.get` 输出当前库契约快照摘要，工作台高级治理视图展示契约总数、发布数、按动作作用域数和视图类型分布；默认用户路径不展示该治理信息。
 - 已补第十三步：新增只读 `ui.business_config.snapshot.compare`，工作台高级设置可粘贴 `make verify.business_config.snapshot` 导出的 JSON 与当前库对比，展示新增、删除和变化明细；该能力只读，不写入业务契约、不覆盖个人偏好、不进入默认低代码用户路径。
+- 已补第十四步：新增只读 `ui.business_config.snapshot.export`，工作台高级设置可下载当前库契约快照 JSON，与命令行快照对比输入保持同一结构。
 
 验收：
 - 每次升级前后能生成覆盖报告，不能只靠样本浏览器验收。

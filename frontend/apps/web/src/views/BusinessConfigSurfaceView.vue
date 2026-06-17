@@ -205,6 +205,9 @@
       <div class="scan-toolbar">
         <strong>跨环境快照对比</strong>
         <span v-if="snapshotCompareResult">{{ snapshotCompareSummary }}</span>
+        <button type="button" class="ghost small" :disabled="snapshotExportLoading" @click="downloadSnapshot">
+          {{ snapshotExportLoading ? '导出中...' : '下载当前快照' }}
+        </button>
         <button type="button" class="ghost small" :disabled="snapshotCompareLoading || !snapshotCompareText.trim()" @click="compareSnapshot">
           {{ snapshotCompareLoading ? '对比中...' : '对比快照' }}
         </button>
@@ -528,6 +531,7 @@ import {
   bootstrapBusinessListSearchConfig,
   bootstrapCoverageMissingConfig,
   compareBusinessConfigSnapshot,
+  exportBusinessConfigSnapshot,
   loadBusinessConfigContractVersions,
   loadBusinessConfigSurface,
   rollbackBusinessConfigContract,
@@ -566,6 +570,7 @@ const versionTitle = ref('配置版本');
 const versionContracts = ref<BusinessConfigContractVersionsPayload['contracts']>([]);
 const snapshotCompareText = ref('');
 const snapshotCompareLoading = ref(false);
+const snapshotExportLoading = ref(false);
 const snapshotCompareResult = ref<BusinessConfigSnapshotComparePayload | null>(null);
 const listColumnsText = ref('');
 const searchFiltersText = ref('');
@@ -1120,6 +1125,30 @@ async function copyCoverageSummary() {
     setMessage('已复制验收摘要');
   } catch {
     setMessage('复制摘要失败', '浏览器未允许写入剪贴板，请稍后重试');
+  }
+}
+
+async function downloadSnapshot() {
+  snapshotExportLoading.value = true;
+  error.value = '';
+  clearMessage();
+  try {
+    const snapshot = await exportBusinessConfigSnapshot();
+    const database = String(snapshot.database || 'business-config').replace(/[^a-zA-Z0-9_-]+/g, '-');
+    const blob = new Blob([`${JSON.stringify(snapshot, null, 2)}\n`], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `business-config-contract-snapshot-${database}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    setMessage('已生成当前快照');
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '当前快照导出失败';
+  } finally {
+    snapshotExportLoading.value = false;
   }
 }
 

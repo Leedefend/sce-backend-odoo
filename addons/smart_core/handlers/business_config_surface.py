@@ -438,6 +438,35 @@ class BusinessConfigSnapshotSummaryHandler(_BusinessConfigSurfaceBase):
         }
 
 
+class BusinessConfigSnapshotExportHandler(_BusinessConfigSurfaceBase):
+    INTENT_TYPE = "ui.business_config.snapshot.export"
+    DESCRIPTION = "导出业务配置契约快照"
+    VERSION = "1.0.0"
+    SOURCE_KIND = "ui_business_config_snapshot_export"
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": ["ui.business.config.contract"],
+            "projection_only": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        self._ensure_access()
+        return {
+            "ok": True,
+            "data": self._snapshot_report(),
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "source_authority": self.source_authority_contract(),
+            },
+        }
+
+
 class BusinessConfigSnapshotCompareHandler(_BusinessConfigSurfaceBase):
     INTENT_TYPE = "ui.business_config.snapshot.compare"
     DESCRIPTION = "对比业务配置契约快照"

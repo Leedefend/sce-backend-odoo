@@ -315,6 +315,25 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
         self.assertEqual(data["role_scope_count"], 1)
         self.assertEqual(data["action_scope_count"], 3)
 
+    def test_snapshot_export_returns_contract_rows_for_download(self):
+        env = _Env({
+            "ui.business.config.contract": _ContractModel([
+                _Contract("res.partner", "form", action_id=11, contract_json={"fields": ["name"]}),
+                _Contract("res.partner", "tree", action_id=11, status="draft", contract_json={"columns": ["name"]}),
+            ]),
+        })
+        handler = self.module.BusinessConfigSnapshotExportHandler(env=env, params={})
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        data = result["data"]
+        self.assertEqual(data["database"], "sc_demo")
+        self.assertEqual(data["contract_count"], 2)
+        self.assertEqual(data["status_counts"], {"draft": 1, "published": 1})
+        self.assertEqual([row["view_type"] for row in data["contracts"]], ["form", "tree"])
+        self.assertTrue(data["contracts"][0]["payload_hash"])
+
     def test_snapshot_compare_reports_added_removed_and_changed_contracts(self):
         env = _Env({
             "ui.business.config.contract": _ContractModel([

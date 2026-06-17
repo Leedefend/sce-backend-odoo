@@ -365,6 +365,13 @@ export async function compareBusinessConfigSnapshot(params: {
   });
 }
 
+export async function exportBusinessConfigSnapshot() {
+  return intentRequest<Record<string, unknown>>({
+    intent: 'ui.business_config.snapshot.export',
+    params: {},
+  });
+}
+
 export async function loadBusinessConfigContractVersions(params: {
   name?: string;
   model?: string;
