@@ -822,7 +822,7 @@ function versionStatusLabel(status: string) {
 
 function versionSummaryNames(summary: BusinessConfigContractVersionsPayload['contracts'][number]['summary']) {
   return {
-    form: summary.form_fields || [],
+    form: (summary.form_field_labels && summary.form_field_labels.length ? summary.form_field_labels : summary.form_fields) || [],
     list: summary.list_columns || [],
     filter: summary.search_filters || [],
     group: summary.search_group_by || [],

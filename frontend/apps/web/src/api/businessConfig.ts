@@ -140,6 +140,7 @@ export interface BusinessConfigContractVersionSummary {
   search_group_by_count: number;
   analysis_item_count: number;
   form_fields: string[];
+  form_field_labels: string[];
   list_columns: string[];
   search_filters: string[];
   search_group_by: string[];

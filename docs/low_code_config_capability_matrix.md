@@ -4,7 +4,7 @@
 | --- | --- | --- | --- | --- | --- |
 | 表单字段显示/隐藏 | `ui.form.field.policy` + `ui.business.config.contract.view_orchestration` | 当前表单“表单设置” | `ui.business.config.contract` | 可用但双写 | P1 收敛为契约为准 |
 | 表单字段顺序 | `ui.form.field.policy.sequence` + `view_orchestration.views.form.fields` | 当前表单“保存表单设置” | `ui.business.config.contract` | 可用但易受输入源影响 | P1 统一运行时契约输入 |
-| 表单字段标签 | `ui.form.field.policy.label` | 当前表单内联修改 | `ui.business.config.contract` | 可用但镜像不足 | P1 统一写契约 |
+| 表单字段标签 | `ui.form.field.policy.label` + `view_orchestration.views.form.fields[].label` | 当前表单内联修改 | `ui.business.config.contract` | 可用，写入已镜像契约，版本摘要和差异按业务标签对比 | P1 继续压缩 legacy policy 兼容层 |
 | 表单字段新增 | `ui.form.custom.field.wizard` + `ir.model.fields` + field policy | 当前表单“添加字段” | 平台元数据 + `ui.business.config.contract` | 可用 | P1 增加预检和回滚边界 |
 | 表单布局/分组 | `view_orchestration.views.form.layout` + 前端草稿 | 当前表单低代码区域 | `ui.business.config.contract` | 部分可用 | P1 明确布局 schema |
 | 菜单显隐 | `ui.menu.config.policy.visible` + `ui.business.config.contract.menu_orchestration` | 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，运行时仍读 policy | P4 纳入统一配置工作台 |

@@ -120,6 +120,36 @@ def _view_orchestration_field_names(contract_json: dict, view_type: str = "form"
     return names
 
 
+def _view_orchestration_field_labels(contract_json: dict, view_type: str = "form") -> list[str]:
+    payload = contract_json if isinstance(contract_json, dict) else {}
+    orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+    views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+    normalized_view_type = _normalize_view_type_scope(view_type) or "form"
+    spec = views.get(normalized_view_type)
+    if not isinstance(spec, dict) and normalized_view_type == "tree":
+        spec = views.get("list")
+    if not isinstance(spec, dict):
+        return []
+    rows = spec.get("fields") if normalized_view_type == "form" else spec.get("columns")
+    if not isinstance(rows, list):
+        rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
+    labels = []
+    for row in rows:
+        if isinstance(row, str):
+            name = row.strip()
+            label = name
+        elif isinstance(row, dict):
+            name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+            label = str(row.get("label") or row.get("string") or name).strip()
+        else:
+            name = ""
+            label = ""
+        item = f"{name}:{label or name}" if name else ""
+        if item and item not in labels:
+            labels.append(item)
+    return labels
+
+
 def _view_orchestration_search_names(contract_json: dict, key: str) -> list[str]:
     payload = contract_json if isinstance(contract_json, dict) else {}
     orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
@@ -184,6 +214,7 @@ def _business_config_contract_summary(contract_json: dict) -> dict:
     orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
     views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
     form_fields = _view_orchestration_field_names(payload, "form")
+    form_field_labels = _view_orchestration_field_labels(payload, "form")
     tree_columns = _view_orchestration_field_names(payload, "tree")
     search_filters = _view_orchestration_search_names(payload, "filters")
     search_group_by = _view_orchestration_search_names(payload, "group_by")
@@ -196,6 +227,7 @@ def _business_config_contract_summary(contract_json: dict) -> dict:
         "search_group_by_count": len(search_group_by),
         "analysis_item_count": len(analysis_items),
         "form_fields": form_fields,
+        "form_field_labels": form_field_labels,
         "list_columns": tree_columns,
         "search_filters": search_filters,
         "search_group_by": search_group_by,

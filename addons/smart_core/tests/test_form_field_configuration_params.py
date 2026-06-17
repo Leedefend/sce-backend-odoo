@@ -717,7 +717,12 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
             contract_json = {
                 "view_orchestration": {
                     "views": {
-                        "form": {"fields": [{"name": "name"}, {"name": "email"}]},
+                        "form": {
+                            "fields": [
+                                {"name": "name", "label": "客户名称"},
+                                {"name": "email", "label": "联系邮箱"},
+                            ]
+                        },
                         "tree": {"columns": [{"name": "name"}]},
                         "search": {"filters": [{"field": "state"}], "group_by": [{"field": "partner_id"}]},
                         "pivot": {
@@ -757,7 +762,13 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                 self.limit = limit
                 return [
                     Version(20, 3, Contract.contract_json),
-                    Version(19, 2, {"view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}}}),
+                    Version(19, 2, {
+                        "view_orchestration": {
+                            "views": {
+                                "form": {"fields": [{"name": "name", "label": "旧客户名称"}]}
+                            }
+                        }
+                    }),
                 ]
 
         class Env(dict):
@@ -794,6 +805,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(data["version_count"], 2)
         contract = data["contracts"][0]
         self.assertEqual(contract["summary"]["form_field_count"], 2)
+        self.assertEqual(contract["summary"]["form_field_labels"], ["name:客户名称", "email:联系邮箱"])
         self.assertEqual(contract["summary"]["list_column_count"], 1)
         self.assertEqual(contract["summary"]["search_filter_count"], 1)
         self.assertEqual(contract["summary"]["search_group_by_count"], 1)
@@ -810,6 +822,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
             "pivot.measures.amount_total",
         ])
         self.assertEqual(contract["versions"][1]["summary"]["form_field_count"], 1)
+        self.assertEqual(contract["versions"][1]["summary"]["form_field_labels"], ["name:旧客户名称"])
         self.assertEqual(contract["versions"][1]["summary"]["analysis_item_count"], 0)
 
     def test_business_config_form_audit_reports_contract_policy_overlap(self):
