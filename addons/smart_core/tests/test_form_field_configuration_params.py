@@ -1002,7 +1002,13 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                             "fields": [
                                 {"name": "email", "sequence": 10},
                                 {"name": "name", "sequence": 20},
-                            ]
+                            ],
+                            "layout": [
+                                {"type": "group", "children": [
+                                    {"type": "field", "name": "email"},
+                                    {"type": "field", "name": "name"},
+                                ]},
+                            ],
                         }
                     }
                 }
@@ -1051,6 +1057,13 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertTrue(result["ok"])
         data = result["data"]
         self.assertEqual(data["business_config_form_fields"], ["email", "name"])
+        self.assertEqual(data["business_config_form_layout_fields"], ["email", "name"])
+        self.assertEqual(data["business_config_form_layout_field_count"], 2)
+        self.assertTrue(data["has_business_config_form_layout"])
+        self.assertTrue(data["layout_matches_fields"])
+        self.assertEqual(data["layout_mismatch_contracts"], [])
+        self.assertTrue(data["business_config_contracts"][0]["has_layout"])
+        self.assertTrue(data["business_config_contracts"][0]["layout_matches_fields"])
         self.assertEqual(data["legacy_policy_fields"], ["email", "phone"])
         self.assertEqual(data["skipped_legacy_policy_fields"], ["email"])
         self.assertEqual(data["active_legacy_policy_fields"], ["phone"])

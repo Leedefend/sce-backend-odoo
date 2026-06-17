@@ -127,6 +127,38 @@ def _view_orchestration_field_names(contract_json: dict, view_type: str = "form"
     return names
 
 
+def _collect_view_orchestration_layout_field_names(value) -> list[str]:
+    names = []
+
+    def visit(node):
+        if isinstance(node, list):
+            for child in node:
+                visit(child)
+            return
+        if not isinstance(node, dict):
+            return
+        node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+        field_name = str(node.get("name") or node.get("field") or "").strip()
+        if node_type == "field" and field_name and field_name not in names:
+            names.append(field_name)
+        for child_key in ("children", "pages", "tabs", "nodes", "items"):
+            children = node.get(child_key)
+            if isinstance(children, list):
+                visit(children)
+
+    visit(value)
+    return names
+
+
+def _view_orchestration_form_layout_fields(contract_json: dict) -> list[str]:
+    payload = contract_json if isinstance(contract_json, dict) else {}
+    orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+    views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+    form_spec = views.get("form") if isinstance(views.get("form"), dict) else {}
+    layout = form_spec.get("layout") if isinstance(form_spec.get("layout"), list) else []
+    return _collect_view_orchestration_layout_field_names(layout)
+
+
 def _view_orchestration_field_labels(contract_json: dict, view_type: str = "form") -> list[str]:
     payload = contract_json if isinstance(contract_json, dict) else {}
     orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
@@ -967,17 +999,30 @@ class BusinessConfigFormAuditHandler(BaseIntentHandler):
         ) if "ui.business.config.contract" in self.env else []
         contract_items = []
         contract_fields = []
+        contract_layout_fields = []
+        contract_layout_mismatch_names = []
         for rec in contracts:
-            field_names = _view_orchestration_field_names(rec.contract_json or {}, "form")
+            contract_json = rec.contract_json or {}
+            field_names = _view_orchestration_field_names(contract_json, "form")
+            layout_fields = _view_orchestration_form_layout_fields(contract_json)
+            layout_matches_fields = bool(layout_fields) and layout_fields == field_names
             contract_items.append({
                 "id": int(rec.id),
                 "name": str(rec.name or ""),
                 "version_no": int(rec.version_no or 1),
                 "fields": field_names,
+                "layout_fields": layout_fields,
+                "has_layout": bool(layout_fields),
+                "layout_matches_fields": layout_matches_fields,
             })
             for name in field_names:
                 if name not in contract_fields:
                     contract_fields.append(name)
+            for name in layout_fields:
+                if name not in contract_layout_fields:
+                    contract_layout_fields.append(name)
+            if layout_fields and not layout_matches_fields:
+                contract_layout_mismatch_names.append(str(rec.name or ""))
 
         policies = self.env["ui.form.field.policy"]._effective_policies(
             model,
@@ -1015,6 +1060,11 @@ class BusinessConfigFormAuditHandler(BaseIntentHandler):
                 "role_key": role_key,
                 "business_config_contracts": contract_items,
                 "business_config_form_fields": sorted(contract_fields),
+                "business_config_form_layout_fields": contract_layout_fields,
+                "business_config_form_layout_field_count": len(contract_layout_fields),
+                "has_business_config_form_layout": bool(contract_layout_fields),
+                "layout_matches_fields": bool(contract_layout_fields) and contract_layout_fields == contract_fields,
+                "layout_mismatch_contracts": sorted(contract_layout_mismatch_names),
                 "legacy_policy_fields": sorted(policy_fields),
                 "skipped_legacy_policy_fields": skipped_legacy_policy_fields,
                 "active_legacy_policy_fields": active_legacy_policy_fields,

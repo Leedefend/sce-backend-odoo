@@ -1248,6 +1248,9 @@ type ContractFieldGovernanceRow = {
 
 type FormConfigAuditResult = {
   businessConfigFormFields: string[];
+  businessConfigFormLayoutFields: string[];
+  hasBusinessConfigFormLayout: boolean;
+  layoutMatchesFields: boolean;
   legacyPolicyFields: string[];
   skippedLegacyPolicyFields: string[];
   activeLegacyPolicyFields: string[];
@@ -2132,6 +2135,9 @@ async function auditCurrentFormConfiguration() {
   try {
     const result = await intentRequest<{
       business_config_form_fields?: unknown[];
+      business_config_form_layout_fields?: unknown[];
+      has_business_config_form_layout?: boolean;
+      layout_matches_fields?: boolean;
       legacy_policy_fields?: unknown[];
       skipped_legacy_policy_fields?: unknown[];
       active_legacy_policy_fields?: unknown[];
@@ -2150,6 +2156,9 @@ async function auditCurrentFormConfiguration() {
       .filter(Boolean);
     formConfigAuditResult.value = {
       businessConfigFormFields: normalizeNames(Array.isArray(result.business_config_form_fields) ? result.business_config_form_fields : []),
+      businessConfigFormLayoutFields: normalizeNames(Array.isArray(result.business_config_form_layout_fields) ? result.business_config_form_layout_fields : []),
+      hasBusinessConfigFormLayout: Boolean(result.has_business_config_form_layout),
+      layoutMatchesFields: Boolean(result.layout_matches_fields),
       legacyPolicyFields: normalizeNames(Array.isArray(result.legacy_policy_fields) ? result.legacy_policy_fields : []),
       skippedLegacyPolicyFields: normalizeNames(Array.isArray(result.skipped_legacy_policy_fields) ? result.skipped_legacy_policy_fields : []),
       activeLegacyPolicyFields: normalizeNames(Array.isArray(result.active_legacy_policy_fields) ? result.active_legacy_policy_fields : []),
@@ -2193,7 +2202,10 @@ const formConfigAuditSummary = computed(() => {
     if (result.skippedLegacyPolicyFields.length) {
       return `发现 ${result.skippedLegacyPolicyFields.length} 个字段被旧规则覆盖，请联系管理员处理。`;
     }
-    return `检查通过，当前页面 ${result.businessConfigFormFields.length} 个字段配置可生效。`;
+    const layoutText = result.hasBusinessConfigFormLayout
+      ? (result.layoutMatchesFields ? '，布局已对齐' : '，布局需要重新保存')
+      : '';
+    return `检查通过，当前页面 ${result.businessConfigFormFields.length} 个字段配置可生效${layoutText}。`;
   }
   const conflictText = result.skippedLegacyPolicyFields.length
     ? `冲突字段：${result.skippedLegacyPolicyFields.join('、')}`
@@ -2201,7 +2213,10 @@ const formConfigAuditSummary = computed(() => {
   const activeLegacyText = result.activeLegacyPolicyFields.length
     ? `兼容生效：${result.activeLegacyPolicyFields.join('、')}`
     : '无兼容字段生效';
-  return `契约字段 ${result.businessConfigFormFields.length} / legacy policy ${result.legacyPolicyFields.length}，${conflictText}，${activeLegacyText}`;
+  const layoutText = result.hasBusinessConfigFormLayout
+    ? `正式布局 ${result.businessConfigFormLayoutFields.length}，${result.layoutMatchesFields ? '字段顺序一致' : '字段顺序不一致'}`
+    : '未固化正式布局';
+  return `契约字段 ${result.businessConfigFormFields.length} / legacy policy ${result.legacyPolicyFields.length}，${layoutText}，${conflictText}，${activeLegacyText}`;
 });
 
 const selectedFormSettingsFieldRow = computed(() => {
