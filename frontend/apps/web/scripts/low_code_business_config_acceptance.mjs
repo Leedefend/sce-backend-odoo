@@ -15,6 +15,11 @@ const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
 
 const CONFIG_URL = `${BASE_URL}/admin/business-config?root_menu_xmlid=smart_construction_core.menu_sc_root&db=${encodeURIComponent(DB_NAME)}&model=construction.contract&action_id=562&page_label=${encodeURIComponent("项目合同汇总")}&open_pages=1`;
 const LIST_SEARCH_URL = `${CONFIG_URL}&open_list_search=1`;
+const ANALYSIS_MODEL = process.env.LOW_CODE_ANALYSIS_MODEL || "sc.account.income.expense.summary";
+const ANALYSIS_ACTION_ID = process.env.LOW_CODE_ANALYSIS_ACTION_ID || "681";
+const ANALYSIS_MENU_ID = process.env.LOW_CODE_ANALYSIS_MENU_ID || "372";
+const ANALYSIS_PAGE_LABEL = process.env.LOW_CODE_ANALYSIS_PAGE_LABEL || "账户收支统计表";
+const ANALYSIS_CONFIG_URL = `${BASE_URL}/admin/business-config?root_menu_xmlid=smart_construction_core.menu_sc_root&db=${encodeURIComponent(DB_NAME)}&model=${encodeURIComponent(ANALYSIS_MODEL)}&action_id=${encodeURIComponent(ANALYSIS_ACTION_ID)}&menu_id=${encodeURIComponent(ANALYSIS_MENU_ID)}&page_label=${encodeURIComponent(ANALYSIS_PAGE_LABEL)}&open_pages=1`;
 const DEFAULT_UI_FORBIDDEN_TERMS = ["已有个人配置", "个人偏好", "契约", "缺口", "治理", "legacy policy"];
 
 function assert(condition, message, details = {}) {
@@ -58,6 +63,19 @@ async function login(page) {
   await page.locator("input").nth(1).fill(PASSWORD);
   await page.getByRole("button", { name: /登录|Log in/i }).click();
   await page.waitForURL((url) => !String(url).includes("/login"), { timeout: 20000 });
+}
+
+async function clickFirstAvailableAnalysisField(page, tabLabels) {
+  const panel = page.locator(".edit-panel").filter({ hasText: "分析视图设置" });
+  for (const label of tabLabels) {
+    await panel.getByRole("button", { name: new RegExp(label) }).click();
+    const optionCount = await panel.locator(".field-option-pool button").count();
+    if (optionCount > 0) {
+      await panel.locator(".field-option-pool button").first().click();
+      return { editedTab: label, optionCount };
+    }
+  }
+  return { editedTab: "", optionCount: 0 };
 }
 
 async function main() {
@@ -255,6 +273,84 @@ async function main() {
         defaultVersionRowCount,
         defaultHistoricalVersionRowCount,
         leakedDefaultVersionTerms,
+      },
+    );
+
+    await page.goto(ANALYSIS_CONFIG_URL, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector(".scan-row--selected", { timeout: 20000 });
+    const analysisSelectedName = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
+    const analysisCards = await page.locator(".config-card h2").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    await page.getByRole("button", { name: "配置分析视图" }).click();
+    await page.waitForSelector(".edit-panel", { timeout: 20000 });
+    const analysisPanel = page.locator(".edit-panel").filter({ hasText: "分析视图设置" });
+    const analysisTitle = await analysisPanel.locator("h2").innerText();
+    const leakedAnalysisTerms = await visibleForbiddenTerms(page, ".edit-panel");
+    const analysisTabs = await analysisPanel.locator(".list-search-tabs button span").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    const analysisOptionSummary = await analysisPanel.locator(".field-option-summary").innerText();
+    const analysisInitialChipCount = await analysisPanel.locator(".field-chip").count();
+    const analysisEditAttempt = await clickFirstAvailableAnalysisField(page, analysisTabs);
+    const analysisChangedChipCount = await analysisPanel.locator(".field-chip").count();
+    const analysisDirtyVisible = await analysisPanel.locator(".edit-dirty").count();
+    const analysisSaveEnabledAfterEdit = await analysisPanel.getByRole("button", { name: "保存设置" }).isEnabled();
+    const analysisResetEnabledAfterEdit = await analysisPanel.getByRole("button", { name: "放弃调整" }).isEnabled();
+    if (analysisEditAttempt.optionCount > 0) {
+      await analysisPanel.getByRole("button", { name: "放弃调整" }).click();
+    }
+    const analysisResetChipCount = await analysisPanel.locator(".field-chip").count();
+    report.checks.analysisPanel = {
+      analysisSelectedName,
+      analysisCards,
+      analysisTitle,
+      leakedAnalysisTerms,
+      analysisTabs,
+      analysisOptionSummary,
+      analysisInitialChipCount,
+      analysisEditAttempt,
+      analysisChangedChipCount,
+      analysisDirtyVisible,
+      analysisSaveEnabledAfterEdit,
+      analysisResetEnabledAfterEdit,
+      analysisResetChipCount,
+      url: page.url(),
+    };
+    report.artifacts.analysisPanel = await captureStep(page, "analysis-panel");
+    assert(analysisSelectedName === ANALYSIS_PAGE_LABEL, "分析配置页没有选中目标页面", {
+      analysisSelectedName,
+      expected: ANALYSIS_PAGE_LABEL,
+    });
+    assert(analysisCards.includes("分析视图"), "分析页面没有展示分析视图配置卡片", { analysisCards });
+    assert(analysisTitle === "分析视图设置", "分析视图面板标题不正确", { analysisTitle });
+    assert(
+      analysisTabs.join("|") === "透视指标|透视维度|图表指标|图表维度",
+      "分析视图配置类型切换不完整",
+      { analysisTabs },
+    );
+    assert(analysisOptionSummary.includes("可添加字段"), "分析视图字段池说明不正确", { analysisOptionSummary });
+    assert(
+      leakedAnalysisTerms.length === 0,
+      "分析视图默认面板露出了治理或技术话术",
+      { leakedAnalysisTerms },
+    );
+    assert(
+      analysisEditAttempt.optionCount > 0
+        && analysisChangedChipCount === analysisInitialChipCount + 1
+        && analysisDirtyVisible > 0
+        && analysisSaveEnabledAfterEdit
+        && analysisResetEnabledAfterEdit
+        && analysisResetChipCount === analysisInitialChipCount,
+      "分析视图草稿编辑或放弃调整不可用",
+      {
+        analysisInitialChipCount,
+        analysisEditAttempt,
+        analysisChangedChipCount,
+        analysisDirtyVisible,
+        analysisSaveEnabledAfterEdit,
+        analysisResetEnabledAfterEdit,
+        analysisResetChipCount,
       },
     );
 

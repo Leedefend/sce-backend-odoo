@@ -729,11 +729,31 @@ const selectedPageHasListSearchConfig = computed(() => {
   const row = selectedCoverageRow.value;
   return row ? rowHasListSearchConfig(row) : true;
 });
-const visibleConfigSections = computed(() => visibleSections.value.filter((section) => {
-  if (section.key === 'form') return selectedPageHasFormConfig.value;
-  if (section.key === 'list_search') return selectedPageHasListSearchConfig.value;
-  return true;
-}));
+const selectedPageHasAnalysisConfig = computed(() => {
+  const row = selectedCoverageRow.value;
+  return row ? rowHasAnalysisConfig(row) : false;
+});
+const visibleConfigSections = computed(() => {
+  const result = visibleSections.value.filter((section) => {
+    if (section.key === 'form') return selectedPageHasFormConfig.value;
+    if (section.key === 'list_search') return selectedPageHasListSearchConfig.value;
+    return true;
+  });
+  if (
+    !advancedPanelOpen.value
+    && selectedPageHasAnalysisConfig.value
+    && !result.some((section) => section.key === 'analysis')
+  ) {
+    result.push({
+      key: 'analysis',
+      label: '分析视图配置',
+      contract_count: 0,
+      intent: 'ui.business_config.analysis.audit',
+      boundary: 'business_contract',
+    });
+  }
+  return result;
+});
 const currentModel = computed(() => String(scopeModel.value || surface.value?.model || '').trim());
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value));
 const snapshotSummary = computed<BusinessConfigSnapshotSummaryPayload | null>(() => surface.value?.snapshot_summary || null);
