@@ -182,6 +182,7 @@
 - 已补第八步：低代码用户路径验收补 390px 移动宽度检查，要求配置工作台无横向溢出，并落盘移动截图；`make verify.business_config.full_acceptance` 已串联该验收。
 - 已补第九步：低代码用户路径验收补高级设置边界检查，默认路径不展示治理/技术话术，显式打开高级设置后必须出现作用域字段和高级治理视图。
 - 已补第十步：新增 `make verify.business_config.unit`，串联表单/列表/搜索配置 handler 和业务配置工作台单测，并纳入 full acceptance。
+- 已补第十一步：新增 `make verify.business_config.snapshot`，导出当前数据库 `ui.business.config.contract` 快照到 `artifacts/backend/business_config_contract_snapshot.json`；可通过 `BUSINESS_CONFIG_SNAPSHOT_COMPARE_PATH=/mnt/artifacts/backend/<baseline>.json` 对比另一个环境快照，输出新增、删除和 payload/status 变化摘要。
 
 验收：
 - 每次升级前后能生成覆盖报告，不能只靠样本浏览器验收。

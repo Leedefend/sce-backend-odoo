@@ -619,7 +619,7 @@ verify.business_config.coverage: guard.prod.forbid check-compose-project check-c
 
 verify.business_config.snapshot: guard.prod.forbid check-compose-project check-compose-env
 	@mkdir -p artifacts/backend
-	@$(RUN_ENV) BUSINESS_CONFIG_SNAPSHOT_PATH=/tmp/business_config_contract_snapshot.json DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_config_contract_snapshot.py
+	@$(RUN_ENV) BUSINESS_CONFIG_SNAPSHOT_PATH=/tmp/business_config_contract_snapshot.json BUSINESS_CONFIG_SNAPSHOT_COMPARE_PATH="$(BUSINESS_CONFIG_SNAPSHOT_COMPARE_PATH)" DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_config_contract_snapshot.py
 	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/business_config_contract_snapshot.json artifacts/backend/business_config_contract_snapshot.json >/dev/null
 
 verify.business_config.browser_acceptance: guard.prod.forbid
