@@ -151,7 +151,7 @@ class ScApprovalPolicy(models.Model):
 
     name = fields.Char(required=True, tracking=True, string="业务名称")
     code = fields.Char(required=True, index=True, tracking=True, string="规则编码")
-    active = fields.Boolean(default=True, tracking=True, string="启用")
+    active = fields.Boolean(default=True, tracking=True, string="规则有效")
     sequence = fields.Integer(default=10, index=True, string="顺序")
     company_id = fields.Many2one("res.company", default=lambda self: self.env.company, index=True, string="公司")
 
@@ -163,7 +163,7 @@ class ScApprovalPolicy(models.Model):
         string="业务单据",
     )
     model_name = fields.Char(compute="_compute_model_name", store=True, index=True, string="技术模型")
-    approval_required = fields.Boolean(default=True, tracking=True, string="需要审核")
+    approval_required = fields.Boolean(default=True, tracking=True, string="启用审批")
     trigger = fields.Selection(
         [("submit", "提交时"), ("confirm", "确认时"), ("sign", "签署时"), ("manual", "手动触发")],
         default="submit",
@@ -247,6 +247,38 @@ class ScApprovalPolicy(models.Model):
         for rec in self:
             group = rec._group_for_approval_scope(rec.manager_scope_key)
             rec.manager_group_id = group.id if group else False
+
+    @api.model
+    def _normalize_approval_toggle_vals(self, vals, current_mode=None):
+        normalized = dict(vals)
+        if "approval_required" in normalized:
+            approval_required = bool(normalized.get("approval_required"))
+            if not approval_required:
+                normalized["mode"] = "none"
+            elif normalized.get("mode") in (None, False, "none") and current_mode in (None, False, "none"):
+                normalized["mode"] = "single"
+        elif "mode" in normalized:
+            if normalized.get("mode") == "none":
+                normalized["approval_required"] = False
+            elif normalized.get("mode") in ("single", "linear"):
+                normalized["approval_required"] = True
+        return normalized
+
+    @api.onchange("approval_required")
+    def _onchange_approval_required(self):
+        for rec in self:
+            if not rec.approval_required:
+                rec.mode = "none"
+            elif rec.mode == "none":
+                rec.mode = "single"
+
+    @api.onchange("mode")
+    def _onchange_mode(self):
+        for rec in self:
+            if rec.mode == "none":
+                rec.approval_required = False
+            elif rec.mode in ("single", "linear"):
+                rec.approval_required = True
 
     @api.constrains("approval_required", "mode")
     def _check_approval_mode(self):
@@ -515,6 +547,7 @@ class ScApprovalPolicy(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            vals.update(self._normalize_approval_toggle_vals(vals))
             scope_key = vals.get("manager_scope_key")
             if scope_key and not vals.get("manager_group_id"):
                 group = self._group_for_approval_scope(scope_key)
@@ -528,6 +561,20 @@ class ScApprovalPolicy(models.Model):
         if "manager_scope_key" in vals and "manager_group_id" not in vals:
             group = self._group_for_approval_scope(vals.get("manager_scope_key"))
             vals = dict(vals, manager_group_id=group.id if group else False)
+        if vals.get("approval_required") is True and "mode" not in vals:
+            records_with_none_mode = self.filtered(lambda rec: rec.mode == "none")
+            records_with_active_mode = self - records_with_none_mode
+            res = True
+            if records_with_none_mode:
+                none_mode_vals = records_with_none_mode._normalize_approval_toggle_vals(vals, current_mode="none")
+                res = super(ScApprovalPolicy, records_with_none_mode).write(none_mode_vals) and res
+            if records_with_active_mode:
+                active_mode_vals = records_with_active_mode._normalize_approval_toggle_vals(vals, current_mode="single")
+                res = super(ScApprovalPolicy, records_with_active_mode).write(active_mode_vals) and res
+            if not self.env.context.get("skip_tier_sync"):
+                self.sync_tier_definitions()
+            return res
+        vals = self._normalize_approval_toggle_vals(vals, current_mode=self[:1].mode if len(self) == 1 else None)
         res = super().write(vals)
         if not self.env.context.get("skip_tier_sync"):
             self.sync_tier_definitions()

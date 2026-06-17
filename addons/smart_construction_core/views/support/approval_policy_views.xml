@@ -8,7 +8,7 @@
                 <field name="name"/>
                 <field name="code"/>
                 <field name="target_model"/>
-                <filter name="filter_required" string="需要审核" domain="[('approval_required', '=', True)]"/>
+                <filter name="filter_required" string="已启用审批" domain="[('approval_required', '=', True)]"/>
                 <filter name="filter_configurable" string="业务可配置" domain="[('runtime_state', 'in', ['tier_validation', 'document_state', 'policy_only'])]"/>
                 <filter name="filter_active" string="启用" domain="[('active', '=', True)]"/>
                 <group expand="0" string="分组">
@@ -28,13 +28,13 @@
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="target_model"/>
-                <field name="approval_required"/>
+                <field name="approval_required" string="启用审批"/>
                 <field name="trigger"/>
                 <field name="mode"/>
                 <field name="runtime_state"/>
                 <field name="manager_scope_key"/>
                 <field name="step_count"/>
-                <field name="active"/>
+                <field name="active" string="规则有效"/>
             </tree>
         </field>
     </record>
@@ -49,8 +49,7 @@
                         <group string="适用业务">
                             <field name="name" string="规则名称"/>
                             <field name="target_model" string="业务单据"/>
-                            <field name="approval_required" string="需要审批"/>
-                            <field name="active" string="启用"/>
+                            <field name="approval_required" string="启用审批"/>
                         </group>
                         <group string="执行方式">
                             <field name="trigger" string="触发时点"/>
@@ -62,6 +61,7 @@
                     <group string="系统承载">
                         <group>
                             <field name="runtime_state" string="执行状态"/>
+                            <field name="active" string="规则有效"/>
                         </group>
                         <group>
                             <field name="company_id" groups="base.group_multi_company" string="公司"/>

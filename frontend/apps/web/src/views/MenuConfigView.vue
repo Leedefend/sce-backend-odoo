@@ -53,7 +53,7 @@
         </article>
         <article>
           <strong>适用用户组</strong>
-          <span>留空表示当前公司所有用户；选择用户组后仅对这些用户组生效。</span>
+          <span>留空表示当前公司所有用户；先按业务域筛选，再选择具体业务角色。</span>
         </article>
         <article>
           <strong>保存生效</strong>
@@ -239,15 +239,37 @@
                       </span>
                     </div>
                     <select
-                      class="cell-input group-select"
-                      :value="0"
-                      @change="addRoleGroupFromEvent(row.menu.id, $event)"
+                      class="cell-input group-domain-select"
+                      :value="roleGroupDomainForMenu(row.menu.id)"
+                      @change="setRoleGroupDomain(row.menu.id, inputValue($event))"
                     >
-                      <option :value="0">{{ draftFor(row.menu.id).role_group_ids.length ? '添加用户组' : '所有用户组（不限制）' }}</option>
-                      <option v-for="group in availableRoleGroupOptions(row.menu.id)" :key="group.id" :value="group.id">
-                        {{ group.display_name }}
+                      <option v-for="domain in roleGroupDomainOptions" :key="domain" :value="domain">
+                        {{ domain }}
                       </option>
                     </select>
+                    <div class="group-check-list">
+                      <label
+                        v-for="group in scopedRoleGroupOptions(row.menu.id)"
+                        :key="`${row.menu.id}-scope-${group.id}`"
+                        class="group-check-item"
+                        :title="group.display_name"
+                      >
+                        <input
+                          type="checkbox"
+                          :checked="isRoleGroupSelected(row.menu.id, group.id)"
+                          @change="toggleRoleGroup(row.menu.id, group.id, checkedValue($event))"
+                        />
+                        <span>{{ group.display_name }}</span>
+                      </label>
+                    </div>
+                    <button
+                      v-if="draftFor(row.menu.id).role_group_ids.length"
+                      type="button"
+                      class="link-button group-clear"
+                      @click="clearRoleGroups(row.menu.id)"
+                    >
+                      恢复所有用户可见
+                    </button>
                     <small>{{ roleScopeSummary(row.menu.id) }}</small>
                   </div>
                 </td>
@@ -330,6 +352,7 @@ const collapsedMenuIds = ref<Set<number>>(new Set());
 const groups = ref<MenuConfigGroup[]>([]);
 const originalPolicies = ref<Record<number, DraftPolicy>>({});
 const drafts = reactive<Record<number, DraftPolicy>>({});
+const roleGroupDomainSelections = reactive<Record<number, string>>({});
 const session = useSessionStore();
 const route = useRoute();
 const router = useRouter();
@@ -508,6 +531,16 @@ const groupOptions = computed(() => {
   return [...groups.value].sort((a, b) => a.display_name.localeCompare(b.display_name, 'zh-Hans-CN'));
 });
 
+const ALL_ROLE_GROUP_DOMAINS = '全部业务域';
+
+const roleGroupDomainOptions = computed(() => {
+  const domains = new Set(groupOptions.value.map((group) => roleGroupDomain(group.display_name)));
+  return [
+    ALL_ROLE_GROUP_DOMAINS,
+    ...Array.from(domains).sort((a, b) => a.localeCompare(b, 'zh-Hans-CN')),
+  ];
+});
+
 const flatRows = computed<FlatRow[]>(() => {
   const out: FlatRow[] = [];
   const walk = (items: MenuConfigMenu[], level = 1) => {
@@ -656,9 +689,49 @@ function roleGroupName(groupId: number) {
   return group?.display_name || `用户组 ${groupId}`;
 }
 
-function availableRoleGroupOptions(menuId: number) {
-  const selected = new Set((draftFor(menuId)?.role_group_ids || []).map(Number));
-  return groupOptions.value.filter((group) => !selected.has(Number(group.id)));
+function roleGroupDomain(label: string) {
+  if (/项目|业主/.test(label)) return '项目中心';
+  if (/合同/.test(label)) return '合同中心';
+  if (/结算/.test(label)) return '结算中心';
+  if (/付款|财务|资金|费用|保证金/.test(label)) return '财务/付款';
+  if (/物资|采购|供应/.test(label)) return '物资/采购';
+  if (/经营|管理层|业务配置|通用/.test(label)) return '管理/通用';
+  return '其他';
+}
+
+function roleGroupDomainForMenu(menuId: number) {
+  return roleGroupDomainSelections[menuId] || ALL_ROLE_GROUP_DOMAINS;
+}
+
+function setRoleGroupDomain(menuId: number, value: string) {
+  roleGroupDomainSelections[menuId] = value || ALL_ROLE_GROUP_DOMAINS;
+}
+
+function scopedRoleGroupOptions(menuId: number) {
+  const domain = roleGroupDomainForMenu(menuId);
+  return groupOptions.value.filter((group) => {
+    return domain === ALL_ROLE_GROUP_DOMAINS || roleGroupDomain(group.display_name) === domain;
+  });
+}
+
+function isRoleGroupSelected(menuId: number, groupId: number) {
+  return (draftFor(menuId)?.role_group_ids || []).map(Number).includes(Number(groupId));
+}
+
+function toggleRoleGroup(menuId: number, groupId: number, selected: boolean) {
+  const draft = draftFor(menuId);
+  if (!draft) return;
+  const existing = new Set(draft.role_group_ids.map(Number));
+  if (selected) {
+    existing.add(Number(groupId));
+  } else {
+    existing.delete(Number(groupId));
+  }
+  updateDraft(menuId, { role_group_ids: Array.from(existing).sort((a, b) => a - b) });
+}
+
+function clearRoleGroups(menuId: number) {
+  updateDraft(menuId, { role_group_ids: [] });
 }
 
 function updateDraft(menuId: number, patch: Partial<DraftPolicy>) {
@@ -679,16 +752,6 @@ function numericValue(event: Event) {
 
 function checkedValue(event: Event) {
   return Boolean((event.target as HTMLInputElement).checked);
-}
-
-function addRoleGroupFromEvent(menuId: number, event: Event) {
-  const target = event.target as HTMLSelectElement;
-  const groupId = Number(target.value || 0);
-  target.value = '0';
-  if (!groupId) return;
-  const draft = draftFor(menuId);
-  if (!draft || draft.role_group_ids.includes(groupId)) return;
-  updateDraft(menuId, { role_group_ids: [...draft.role_group_ids, groupId] });
 }
 
 function removeRoleGroup(menuId: number, groupId: number) {
@@ -1598,7 +1661,7 @@ tr.dirty td:first-child {
 }
 
 .groups-col {
-  width: 124px;
+  width: 220px;
 }
 
 .note-col {
@@ -1631,7 +1694,7 @@ tr.dirty td:first-child {
   text-align: center;
 }
 
-.group-select {
+.group-domain-select {
   min-width: 0;
   height: 30px;
   padding: 0 6px;
@@ -1649,6 +1712,45 @@ tr.dirty td:first-child {
   gap: 4px;
   max-height: 64px;
   overflow: auto;
+}
+
+.group-check-list {
+  display: grid;
+  gap: 2px;
+  max-height: 96px;
+  overflow: auto;
+  padding: 3px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+}
+
+.group-check-item {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  gap: 4px;
+  color: var(--sc-app-text-primary);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.group-check-item input {
+  margin: 0;
+}
+
+.group-check-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-clear {
+  justify-self: start;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .group-chip {

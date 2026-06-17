@@ -55,25 +55,6 @@ def _menu_config_contract_name(company_id: int) -> str:
     return "menu.config.company.%s" % int(company_id or 0)
 
 
-def _group_xmlids(env, group) -> set[str]:
-    if not group:
-        return set()
-    rows = env["ir.model.data"].sudo().search([
-        ("model", "=", "res.groups"),
-        ("res_id", "=", int(group.id or 0)),
-    ])
-    return {"%s.%s" % (row.module, row.name) for row in rows}
-
-
-def _is_business_menu_scope_group(env, group) -> bool:
-    xmlids = _group_xmlids(env, group)
-    return any(
-        xmlid.startswith("smart_construction_core.group_sc_role_")
-        or xmlid.startswith("smart_construction_custom.group_sc_role_")
-        for xmlid in xmlids
-    )
-
-
 def _business_menu_scope_group_label(group) -> str:
     label = _to_text(group.display_name or group.name)
     for prefix in (
@@ -288,9 +269,8 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         }
 
     def _group_option_records(self, menus, policies):
-        del menus
-        groups = self.env["res.groups"].sudo().search([])
-        groups = groups.filtered(lambda group: _is_business_menu_scope_group(self.env, group))
+        del menus, policies
+        groups = self.env["res.groups"].sudo().search([("sc_assignable_user_permission", "=", True)])
         return groups.sorted(key=lambda group: (
             _to_text(group.category_id.display_name or group.category_id.name) if group.category_id else "",
             _to_text(group.display_name or group.name),
