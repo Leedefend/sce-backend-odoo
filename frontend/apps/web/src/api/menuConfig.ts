@@ -65,6 +65,7 @@ export interface MenuConfigAuditPolicy extends MenuConfigPolicy {
 export interface MenuConfigAuditPayload {
   company?: { id: number; name: string } | null;
   summary: {
+    runtime_source?: string;
     configured_policy_count: number;
     applicable_policy_count: number;
     hidden_count: number;

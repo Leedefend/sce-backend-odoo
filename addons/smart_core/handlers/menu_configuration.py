@@ -543,15 +543,29 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
         if not include_inactive:
             domain.append(("active", "=", True))
         policies = Policy.search(domain, order="menu_id, id desc")
-        applicable_by_menu = self.env["ui.menu.config.policy"]._runtime_policies_for_user(user=self.env.user)
-        applicable_policy_ids = {int(policy.id) for policy in applicable_by_menu.values()}
+        runtime_model = self.env["ui.menu.config.policy"]
+        if hasattr(runtime_model, "_runtime_menu_config_source_for_user"):
+            applicable_by_menu, runtime_source = runtime_model._runtime_menu_config_source_for_user(user=self.env.user)
+        else:
+            applicable_by_menu = runtime_model._runtime_policies_for_user(user=self.env.user)
+            runtime_source = "ui.menu.config.policy"
+        applicable_menu_ids = {int(menu_id or 0) for menu_id in applicable_by_menu}
+        applicable_policy_ids = {
+            _to_int(policy.get("policy_id")) if isinstance(policy, dict) else int(policy.id)
+            for policy in applicable_by_menu.values()
+        }
 
         policy_rows = [
             self._serialize_audit_policy(policy, applicable_policy_ids=applicable_policy_ids)
             for policy in policies
         ]
-        applicable_rows = [row for row in policy_rows if row["applicable"]]
+        applicable_rows = [
+            row for row in policy_rows
+            if row["applicable"]
+            or (runtime_source == "ui.business.config.contract.menu_orchestration" and row["menu_id"] in applicable_menu_ids)
+        ]
         summary = {
+            "runtime_source": runtime_source,
             "configured_policy_count": len(policy_rows),
             "applicable_policy_count": len(applicable_rows),
             "hidden_count": sum(1 for row in applicable_rows if row["flags"]["hidden"]),

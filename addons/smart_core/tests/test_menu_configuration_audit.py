@@ -325,6 +325,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         summary = result["data"]["summary"]
+        self.assertEqual(summary["runtime_source"], "ui.menu.config.policy")
         self.assertEqual(summary["configured_policy_count"], 3)
         self.assertEqual(summary["applicable_policy_count"], 2)
         self.assertEqual(summary["hidden_count"], 1)

@@ -73,6 +73,7 @@
       <span v-if="auditSummary.notApplicableCount">
         {{ auditSummary.notApplicableCount }} 项因用户组范围未命中当前用户。
       </span>
+      <span>运行来源：{{ auditSummary.runtimeSourceLabel }}</span>
     </section>
     <section v-if="versionPanelOpen" class="version-panel">
       <div class="version-panel-header">
@@ -484,6 +485,7 @@ const auditSummary = computed(() => {
     reorderedCount: Number(summary.reordered_count || 0),
     movedCount: Number(summary.moved_count || 0),
     notApplicableCount: Array.isArray(summary.not_applicable_policy_ids) ? summary.not_applicable_policy_ids.length : 0,
+    runtimeSourceLabel: summary.runtime_source === 'ui.business.config.contract.menu_orchestration' ? '已发布配置' : '兼容配置',
   };
 });
 
