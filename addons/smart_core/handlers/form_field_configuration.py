@@ -187,17 +187,67 @@ def _business_config_contract_summary(contract_json: dict) -> dict:
     tree_columns = _view_orchestration_field_names(payload, "tree")
     search_filters = _view_orchestration_search_names(payload, "filters")
     search_group_by = _view_orchestration_search_names(payload, "group_by")
+    analysis_items = _view_orchestration_analysis_names(views)
     return {
         "view_types": sorted(str(key) for key in views if str(key or "").strip()),
         "form_field_count": len(form_fields),
         "list_column_count": len(tree_columns),
         "search_filter_count": len(search_filters),
         "search_group_by_count": len(search_group_by),
+        "analysis_item_count": len(analysis_items),
         "form_fields": form_fields,
         "list_columns": tree_columns,
         "search_filters": search_filters,
         "search_group_by": search_group_by,
+        "analysis_items": analysis_items,
     }
+
+
+def _analysis_item_name(value, fallback_prefix: str = "") -> str:
+    if isinstance(value, dict):
+        return str(value.get("name") or value.get("field") or value.get("intent") or value.get("type") or "").strip()
+    text = str(value or "").strip()
+    return f"{fallback_prefix}:{text}" if fallback_prefix and text else text
+
+
+def _append_analysis_list_items(items: list[str], view_type: str, key: str, value):
+    values = value if isinstance(value, list) else [value]
+    for row in values:
+        name = _analysis_item_name(row)
+        if name:
+            items.append(f"{view_type}.{key}.{name}")
+
+
+def _append_analysis_mapping_items(items: list[str], view_type: str, key: str, value):
+    if not isinstance(value, dict):
+        return
+    for slot, row in sorted(value.items()):
+        rows = row if isinstance(row, list) else [row]
+        for item in rows:
+            name = _analysis_item_name(item)
+            if name:
+                items.append(f"{view_type}.{key}.{slot}.{name}")
+
+
+def _view_orchestration_analysis_names(views: dict) -> list[str]:
+    items: list[str] = []
+    for view_type in ("pivot", "graph"):
+        view = views.get(view_type) if isinstance(views.get(view_type), dict) else {}
+        for key in ("measures", "dimensions"):
+            _append_analysis_list_items(items, view_type, key, view.get(key) or [])
+        for key in ("measure", "dimension", "type"):
+            name = _analysis_item_name(view.get(key))
+            if name:
+                items.append(f"{view_type}.{key}.{name}")
+    calendar = views.get("calendar") if isinstance(views.get("calendar"), dict) else {}
+    for key in ("date_slots", "resource_slots", "color_slots"):
+        _append_analysis_mapping_items(items, "calendar", key, calendar.get(key) or {})
+    dashboard = views.get("dashboard") if isinstance(views.get("dashboard"), dict) else {}
+    for key in ("metric_slots", "chart_slots", "navigation_slots"):
+        _append_analysis_mapping_items(items, "dashboard", key, dashboard.get(key) or {})
+    for key in ("cards", "kpis"):
+        _append_analysis_list_items(items, "dashboard", key, dashboard.get(key) or [])
+    return sorted(dict.fromkeys(items))
 
 
 def _search_published_view_orchestration_contracts(env, *, model: str, view_type: str, action_id: int = 0, view_id: int = 0, role_key: str = ""):

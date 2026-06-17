@@ -294,6 +294,7 @@
             <span>列表列 {{ contract.summary.list_column_count }}</span>
             <span>筛选 {{ contract.summary.search_filter_count }}</span>
             <span>分组 {{ contract.summary.search_group_by_count }}</span>
+            <span v-if="contract.summary.analysis_item_count">分析项 {{ contract.summary.analysis_item_count }}</span>
           </div>
           <div class="version-rows">
             <div v-for="version in contract.versions" :key="version.id" class="version-row">
@@ -826,6 +827,7 @@ function versionSummaryNames(summary: BusinessConfigContractVersionsPayload['con
     filter: summary.search_filters || [],
     group: summary.search_group_by || [],
     viewTypes: summary.view_types || [],
+    analysis: summary.analysis_items || [],
   };
 }
 
@@ -851,6 +853,7 @@ function versionDeltaText(
     { label: '列', diff: countDiff(currentNames.list, targetNames.list) },
     { label: '筛选', diff: countDiff(currentNames.filter, targetNames.filter) },
     { label: '分组', diff: countDiff(currentNames.group, targetNames.group) },
+    { label: '分析项', diff: countDiff(currentNames.analysis, targetNames.analysis) },
     { label: '视图', diff: countDiff(currentNames.viewTypes, targetNames.viewTypes) },
   ]
     .map((item) => {
@@ -870,6 +873,7 @@ function versionSummaryText(summary: BusinessConfigContractVersionsPayload['cont
     summary.list_column_count ? `列 ${summary.list_column_count}` : '',
     summary.search_filter_count ? `筛选 ${summary.search_filter_count}` : '',
     summary.search_group_by_count ? `分组 ${summary.search_group_by_count}` : '',
+    summary.analysis_item_count ? `分析项 ${summary.analysis_item_count}` : '',
   ].filter(Boolean);
   if (counts.length) return counts.join(' / ');
   const viewTypes = (summary.view_types || []).map(viewTypeLabel).filter(Boolean);

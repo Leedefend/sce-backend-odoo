@@ -720,6 +720,17 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                         "form": {"fields": [{"name": "name"}, {"name": "email"}]},
                         "tree": {"columns": [{"name": "name"}]},
                         "search": {"filters": [{"field": "state"}], "group_by": [{"field": "partner_id"}]},
+                        "pivot": {
+                            "measures": [{"name": "amount_total"}],
+                            "dimensions": [{"name": "company_id"}],
+                        },
+                        "graph": {"measure": "amount_total", "dimension": "company_id", "type": "bar"},
+                        "calendar": {"date_slots": {"start": "start_date"}},
+                        "dashboard": {
+                            "metric_slots": {"primary": ["amount_total"]},
+                            "chart_slots": {"trend": {"type": "line"}},
+                            "navigation_slots": {"next": "project.dashboard.enter"},
+                        },
                     }
                 }
             }
@@ -786,7 +797,20 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(contract["summary"]["list_column_count"], 1)
         self.assertEqual(contract["summary"]["search_filter_count"], 1)
         self.assertEqual(contract["summary"]["search_group_by_count"], 1)
+        self.assertEqual(contract["summary"]["analysis_item_count"], 9)
+        self.assertEqual(contract["summary"]["analysis_items"], [
+            "calendar.date_slots.start.start_date",
+            "dashboard.chart_slots.trend.line",
+            "dashboard.metric_slots.primary.amount_total",
+            "dashboard.navigation_slots.next.project.dashboard.enter",
+            "graph.dimension.company_id",
+            "graph.measure.amount_total",
+            "graph.type.bar",
+            "pivot.dimensions.company_id",
+            "pivot.measures.amount_total",
+        ])
         self.assertEqual(contract["versions"][1]["summary"]["form_field_count"], 1)
+        self.assertEqual(contract["versions"][1]["summary"]["analysis_item_count"], 0)
 
     def test_business_config_form_audit_reports_contract_policy_overlap(self):
         class Company:

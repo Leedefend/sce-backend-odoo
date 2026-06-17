@@ -138,10 +138,12 @@ export interface BusinessConfigContractVersionSummary {
   list_column_count: number;
   search_filter_count: number;
   search_group_by_count: number;
+  analysis_item_count: number;
   form_fields: string[];
   list_columns: string[];
   search_filters: string[];
   search_group_by: string[];
+  analysis_items: string[];
 }
 
 export interface BusinessConfigCoverageScanPayload {
