@@ -589,6 +589,34 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
             [11, 12],
         )
 
+    def test_coverage_scan_can_skip_unavailable_models_for_migration_remediation(self):
+        action_model = _ActionModel([
+            _Action(11, "客户", "res.partner", "tree,form"),
+            _Action(12, "场景治理", "sc.scene.governance.wizard", "form"),
+        ])
+        env = _Env({
+            "ir.actions.act_window": action_model,
+            "ir.ui.menu": _MenuModel(["ir.actions.act_window,11", "ir.actions.act_window,12"]),
+            "sc.user.view.preference": _PreferenceModel([]),
+            "ui.business.config.contract": _ContractModel([]),
+            "res.partner": object(),
+        })
+        handler = self.module.BusinessConfigCoverageScanHandler(
+            env=env,
+            params={
+                "limit": 50,
+                "include_all_root_menu_actions": True,
+                "skip_unavailable_models": True,
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["data"]["skip_unavailable_models"])
+        self.assertEqual(result["data"]["summary"]["action_count"], 1)
+        self.assertEqual([row["action_id"] for row in result["data"]["items"]], [11])
+
     def test_coverage_scan_treats_user_preferences_as_audit_signal_not_gap(self):
         action_model = _ActionModel([
             _Action(11, "客户", "res.partner", "tree,form"),

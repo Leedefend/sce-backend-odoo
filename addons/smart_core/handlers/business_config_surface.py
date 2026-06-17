@@ -847,6 +847,7 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
         model = _to_text(params.get("model"))
         include_unreachable_actions = bool(params.get("include_unreachable_actions") or params.get("includeUnreachableActions"))
         include_all_root_menu_actions = bool(params.get("include_all_root_menu_actions") or params.get("includeAllRootMenuActions"))
+        skip_unavailable_models = bool(params.get("skip_unavailable_models") or params.get("skipUnavailableModels"))
         root_menu_xmlid = _to_text(params.get("root_menu_xmlid") or params.get("rootMenuXmlid"))
         raw_limit = _to_int(params.get("limit")) or 1000
         limit = max(1, min(raw_limit, 2000))
@@ -859,6 +860,10 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
                 root_menu_xmlid=root_menu_xmlid,
             )
             if _to_text(getattr(action, "res_model", ""))
+            and (
+                not skip_unavailable_models
+                or _to_text(getattr(action, "res_model", "")) in self.env
+            )
         ]
         rows = sorted(
             [self._action_item(action, role_key) for action in actions],
@@ -909,6 +914,7 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
                 "limit": limit,
                 "include_unreachable_actions": include_unreachable_actions,
                 "include_all_root_menu_actions": include_all_root_menu_actions,
+                "skip_unavailable_models": skip_unavailable_models,
                 "root_menu_xmlid": root_menu_xmlid,
                 "runtime_evidence_source": "ui.business.config.contract._effective_view_orchestration_contracts",
                 "summary": summary,

@@ -60,6 +60,7 @@ def migrate(cr, version):
         "limit": 1000,
         "batch_limit": 300,
         "root_menu_xmlid": ROOT_MENU_XMLID,
+        "skip_unavailable_models": True,
     }
     _remediate(
         _system_env(env),
