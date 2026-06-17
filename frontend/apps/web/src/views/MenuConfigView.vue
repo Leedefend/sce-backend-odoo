@@ -7,6 +7,9 @@
       </div>
       <div class="header-actions">
         <span v-if="dirtyCount" class="dirty-count">{{ dirtyCount }} 项未保存</span>
+        <button v-if="canReturnToBusinessConfig" type="button" class="ghost" @click="returnToBusinessConfig">
+          返回配置工作台
+        </button>
         <button type="button" class="ghost" @click="showGuide = !showGuide">
           {{ showGuide ? '收起说明' : '配置说明' }}
         </button>
@@ -255,6 +258,7 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, reactive, ref, type PropType } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import type { NavNode } from '@sc/schema';
 import {
   loadMenuConfigurationAudit,
@@ -315,6 +319,9 @@ const groups = ref<MenuConfigGroup[]>([]);
 const originalPolicies = ref<Record<number, DraftPolicy>>({});
 const drafts = reactive<Record<number, DraftPolicy>>({});
 const session = useSessionStore();
+const route = useRoute();
+const router = useRouter();
+const canReturnToBusinessConfig = computed(() => String(route.query.return_to_business_config || '').trim() === '1');
 
 const MenuConfigTree = defineComponent({
   name: 'MenuConfigTree',
@@ -913,6 +920,20 @@ function applySavedVisibilityToNavigation(rows: MenuConfigSaveRow[]) {
   session.menuTree = removeMenuIdsFromNavigation(session.menuTree as NavNode[], hiddenMenuIds);
   session.menuExpandedKeys = session.menuExpandedKeys.filter((key) => !hiddenMenuIds.has(Number(String(key).replace(/^menu:/, ''))));
   session.persist();
+}
+
+function returnToBusinessConfig() {
+  router.push({
+    path: '/admin/business-config',
+    query: {
+      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
+      model: route.query.model || undefined,
+      action_id: route.query.action_id || undefined,
+      menu_id: route.query.menu_id || undefined,
+      page_label: route.query.page_label || undefined,
+      open_pages: route.query.open_pages || '1',
+    },
+  });
 }
 
 async function loadPanel() {

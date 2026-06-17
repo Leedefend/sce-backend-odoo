@@ -1733,6 +1733,11 @@ function openMenuConfig() {
     query: {
       menu_id: route.query.menu_id || undefined,
       action_id: scopeAction.value ? String(scopeAction.value) : undefined,
+      model: currentModel.value || undefined,
+      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
+      page_label: selectedPageLabel.value || undefined,
+      return_to_business_config: '1',
+      open_pages: '1',
     },
   });
 }
