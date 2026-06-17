@@ -55,6 +55,39 @@ def _menu_config_contract_name(company_id: int) -> str:
     return "menu.config.company.%s" % int(company_id or 0)
 
 
+def _group_xmlids(env, group) -> set[str]:
+    if not group:
+        return set()
+    rows = env["ir.model.data"].sudo().search([
+        ("model", "=", "res.groups"),
+        ("res_id", "=", int(group.id or 0)),
+    ])
+    return {"%s.%s" % (row.module, row.name) for row in rows}
+
+
+def _is_business_menu_scope_group(env, group) -> bool:
+    xmlids = _group_xmlids(env, group)
+    return any(
+        xmlid.startswith("smart_construction_core.group_sc_role_")
+        or xmlid.startswith("smart_construction_custom.group_sc_role_")
+        for xmlid in xmlids
+    )
+
+
+def _business_menu_scope_group_label(group) -> str:
+    label = _to_text(group.display_name or group.name)
+    for prefix in (
+        "Smart Construction / SC 角色 - ",
+        "Smart Construction / 角色-",
+        "Smart Construction / ",
+        "SC 角色 - ",
+        "角色-",
+    ):
+        if label.startswith(prefix):
+            label = label[len(prefix):].strip()
+    return label or _to_text(group.name)
+
+
 def _menu_policy_contract_row(policy) -> dict:
     menu = policy.menu_id
     target_parent = policy.target_parent_menu_id
@@ -255,13 +288,9 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         }
 
     def _group_option_records(self, menus, policies):
-        groups = self.env["res.groups"].sudo()
-        groups |= menus.mapped("groups_id")
-        groups |= policies.mapped("role_group_ids")
-        for xmlid in (BUSINESS_CONFIG_GROUP, PLATFORM_ADMIN_GROUP):
-            group = _xmlid_record(self.env, xmlid)
-            if group:
-                groups |= group.sudo()
+        del menus
+        groups = self.env["res.groups"].sudo().search([])
+        groups = groups.filtered(lambda group: _is_business_menu_scope_group(self.env, group))
         return groups.sorted(key=lambda group: (
             _to_text(group.category_id.display_name or group.category_id.name) if group.category_id else "",
             _to_text(group.display_name or group.name),
@@ -312,8 +341,8 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             {
                 "id": int(group.id),
                 "name": _to_text(group.name),
-                "display_name": _to_text(group.display_name or group.name),
-                "category": _to_text(group.category_id.display_name or group.category_id.name) if group.category_id else "",
+                "display_name": _business_menu_scope_group_label(group),
+                "category": "业务角色",
             }
             for group in groups
         ]
