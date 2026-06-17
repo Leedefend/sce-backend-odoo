@@ -2675,6 +2675,13 @@ function buildLowCodeViewOrchestration() {
         visible: fieldVisibilityDraft[name] !== false,
         sequence: (index + 1) * 10,
       })),
+      layout: [{
+        type: 'group',
+        children: formNames.map((name) => ({
+          type: 'field',
+          name,
+        })),
+      }],
     };
   }
   if (listNames.length) {

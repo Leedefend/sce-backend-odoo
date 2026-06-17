@@ -6,7 +6,7 @@
 | 表单字段顺序 | `ui.form.field.policy.sequence` + `view_orchestration.views.form.fields` | 当前表单“保存表单设置” | `ui.business.config.contract` | 可用但易受输入源影响 | P1 统一运行时契约输入 |
 | 表单字段标签 | `ui.form.field.policy.label` + `view_orchestration.views.form.fields[].label` | 当前表单内联修改 | `ui.business.config.contract` | 可用，写入已镜像契约，版本摘要和差异按业务标签对比 | P1 继续压缩 legacy policy 兼容层 |
 | 表单字段新增 | `ui.form.custom.field.wizard` + `ir.model.fields` + field policy | 当前表单“添加字段” | 平台元数据 + `ui.business.config.contract` | 可用，intent 支持 dry-run 预检且正式执行后镜像契约 | P1 明确字段元数据回滚边界 |
-| 表单布局/分组 | `view_orchestration.views.form.layout` + 前端草稿 | 当前表单低代码区域 | `ui.business.config.contract` | 部分可用，保存预检已约束正式 layout schema，表单检查会输出正式布局字段数和字段顺序是否对齐 | P1 继续把编辑入口收敛到正式 layout |
+| 表单布局/分组 | `view_orchestration.views.form.layout` + 前端草稿 | 当前表单低代码区域 | `ui.business.config.contract` | 可用，保存表单设置会写入正式 layout，预检约束正式 layout schema，表单检查会输出正式布局字段数和字段顺序是否对齐 | P1 继续压缩 legacy 草稿兼容展示 |
 | 菜单显隐 | `ui.menu.config.policy.visible` + `ui.business.config.contract.menu_orchestration` | 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，运行时仍读 policy | P4 纳入统一配置工作台 |
 | 菜单改名 | `ui.menu.config.policy.custom_label` + `ui.business.config.contract.menu_orchestration` | 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，运行时仍读 policy | P4 纳入统一配置工作台 |
 | 菜单排序/移动 | `ui.menu.config.policy.sequence_override/target_parent_menu_id` + `ui.business.config.contract.menu_orchestration` | 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、版本列表、指定版本回滚，运行时仍读 policy | P4 纳入统一配置工作台 |
@@ -33,7 +33,7 @@
 ## 优先修复缺口
 
 1. 表单配置写入时统一处理 `role_group_ids` 与正式契约 `role_key` 的边界。已收敛：业务配置契约保存、查询、版本、回滚等统一作用域入口拒绝 `role_group_ids`，避免旧角色组输入被误认为正式契约作用域。
-2. 表单低代码草稿输入统一从当前运行时契约读取，不再混用 legacy `objects/layout/rules` 作为主输入。已开始收敛：字段顺序/可见性优先使用 `view_orchestration.views.form.fields`，legacy `objects` 只做兜底和历史草稿兼容；新保存的兼容草稿下沉到 `legacy_lowcode_draft`。
+2. 表单低代码草稿输入统一从当前运行时契约读取，不再混用 legacy `objects/layout/rules` 作为主输入。已开始收敛：字段顺序/可见性优先使用 `view_orchestration.views.form.fields`，保存时同步写入 `view_orchestration.views.form.layout`；legacy `objects` 只做兜底和历史草稿兼容；新保存的兼容草稿下沉到 `legacy_lowcode_draft`。
 3. 保存表单设置时，避免无变化字段被重写，防止“只改布局导致字段顺序变化”。已开始收敛：前端只提交变化项，后端支持 visibility-only 保存。
 4. 运行时配置差异需要可追踪。已开始收敛：page governance 会透传正式契约字段数和被正式契约跳过的 legacy policy 字段，前端 HUD 可直接显示。
 5. 表单配置需要后端审计接口。已开始收敛：`ui.business_config.form.audit` 输出正式契约字段、正式 layout 字段、字段顺序对齐状态、legacy policy 字段、跳过字段和仍生效字段。
