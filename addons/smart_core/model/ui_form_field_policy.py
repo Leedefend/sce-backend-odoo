@@ -32,8 +32,8 @@ class UIFormFieldPolicy(models.Model):
         "ui_form_field_policy_group_rel",
         "policy_id",
         "group_id",
-        string="适用用户组",
-        help="留空表示对当前公司所有用户生效；填写后仅对这些用户组中的用户生效。",
+        string="适用业务角色",
+        help="留空表示对当前公司所有用户生效；填写后仅对这些业务角色中的用户生效。",
     )
     visible = fields.Boolean(string="显示", default=True)
     label = fields.Char(string="显示名称")
@@ -70,7 +70,7 @@ class UIFormFieldPolicy(models.Model):
             if rec.view_id:
                 scope.append("视图：%s" % rec.view_id.display_name)
             groups = rec.role_group_ids.mapped("display_name")
-            scope.append("用户组：%s" % "、".join(groups) if groups else "用户组：全部")
+            scope.append("业务角色：%s" % "、".join(groups) if groups else "业务角色：全部")
             if not rec.action_id and not rec.view_id:
                 scope.append("全部表单")
             rec.scope_summary = " / ".join(scope)
@@ -169,9 +169,9 @@ class UIFormFieldPolicy(models.Model):
             for other in same_scope:
                 other_group_ids = set(other.role_group_ids.ids)
                 if not rec_group_ids and not other_group_ids:
-                    raise ValidationError("同一模型/字段/公司/动作/视图/用户组范围内只能保留一条启用的字段策略。")
+                    raise ValidationError("同一模型/字段/公司/动作/视图/业务角色范围内只能保留一条启用的字段策略。")
                 if rec_group_ids and other_group_ids and rec_group_ids & other_group_ids:
-                    raise ValidationError("同一模型/字段/公司/动作/视图/用户组范围内只能保留一条启用的字段策略。")
+                    raise ValidationError("同一模型/字段/公司/动作/视图/业务角色范围内只能保留一条启用的字段策略。")
 
     @api.model_create_multi
     def create(self, vals_list):

@@ -411,7 +411,7 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
 
 class BusinessConfigSnapshotSummaryHandler(_BusinessConfigSurfaceBase):
     INTENT_TYPE = "ui.business_config.snapshot.summary"
-    DESCRIPTION = "读取业务配置契约快照摘要"
+    DESCRIPTION = "读取业务配置快照摘要"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_snapshot_summary"
 
@@ -440,7 +440,7 @@ class BusinessConfigSnapshotSummaryHandler(_BusinessConfigSurfaceBase):
 
 class BusinessConfigSnapshotExportHandler(_BusinessConfigSurfaceBase):
     INTENT_TYPE = "ui.business_config.snapshot.export"
-    DESCRIPTION = "导出业务配置契约快照"
+    DESCRIPTION = "导出业务配置快照"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_snapshot_export"
 
@@ -469,7 +469,7 @@ class BusinessConfigSnapshotExportHandler(_BusinessConfigSurfaceBase):
 
 class BusinessConfigSnapshotCompareHandler(_BusinessConfigSurfaceBase):
     INTENT_TYPE = "ui.business_config.snapshot.compare"
-    DESCRIPTION = "对比业务配置契约快照"
+    DESCRIPTION = "对比业务配置快照"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_snapshot_compare"
 
@@ -502,7 +502,7 @@ class BusinessConfigSnapshotCompareHandler(_BusinessConfigSurfaceBase):
 
 class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
     INTENT_TYPE = "ui.business_config.coverage.scan"
-    DESCRIPTION = "扫描 action 维度的业务配置契约覆盖情况"
+    DESCRIPTION = "扫描 action 维度的业务配置覆盖情况"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_coverage_scan"
 
@@ -697,7 +697,7 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
         except Exception:
             return len(Preference.search(domain, limit=100))
 
-    def _action_item(self, action, role_key: str) -> dict:
+    def _action_item(self, action, role_key: str, view_id: int = 0) -> dict:
         model = _to_text(getattr(action, "res_model", ""))
         action_id = int(getattr(action, "id", 0) or 0)
         targets = self._target_view_types(action)
@@ -709,9 +709,9 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
         missing = []
         runtime_missing = []
         for view_type in targets:
-            count = self._contract_count(model=model, view_type=view_type, action_id=action_id, role_key=role_key)
-            published_count = self._published_contract_count(model=model, view_type=view_type, action_id=action_id, role_key=role_key)
-            runtime_count = self._runtime_contract_count(model=model, view_type=view_type, action_id=action_id, role_key=role_key)
+            count = self._contract_count(model=model, view_type=view_type, action_id=action_id, view_id=view_id, role_key=role_key)
+            published_count = self._published_contract_count(model=model, view_type=view_type, action_id=action_id, view_id=view_id, role_key=role_key)
+            runtime_count = self._runtime_contract_count(model=model, view_type=view_type, action_id=action_id, view_id=view_id, role_key=role_key)
             coverage[view_type] = count
             published_coverage[view_type] = published_count
             runtime_coverage[view_type] = runtime_count
@@ -749,6 +749,7 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
             "action_id": action_id,
             "name": _to_text(getattr(action, "name", "")),
             "model": model,
+            "view_id": view_id,
             "view_mode": _to_text(getattr(action, "view_mode", "")),
             "severity": severity,
             "sort_priority": sort_priority,
@@ -844,6 +845,7 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
         self._ensure_access()
         params = self.params if isinstance(self.params, dict) else {}
         role_key = _to_text(params.get("role_key") or params.get("roleKey"))
+        view_id = _to_int(params.get("view_id") or params.get("viewId"))
         model = _to_text(params.get("model"))
         include_unreachable_actions = bool(params.get("include_unreachable_actions") or params.get("includeUnreachableActions"))
         include_all_root_menu_actions = bool(params.get("include_all_root_menu_actions") or params.get("includeAllRootMenuActions"))
@@ -866,7 +868,7 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
             )
         ]
         rows = sorted(
-            [self._action_item(action, role_key) for action in actions],
+            [self._action_item(action, role_key, view_id=view_id) for action in actions],
             key=lambda row: (int(row.get("sort_priority") or 9999), _to_text(row.get("model")), _to_text(row.get("name"))),
         )
         missing_rows = [row for row in rows if not row["is_complete"]]
@@ -910,6 +912,7 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
             "ok": True,
             "data": {
                 "model": model,
+                "view_id": view_id,
                 "role_key": role_key,
                 "limit": limit,
                 "include_unreachable_actions": include_unreachable_actions,
@@ -945,7 +948,7 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
 
 class BusinessConfigCoverageBootstrapListSearchHandler(BusinessConfigCoverageScanHandler):
     INTENT_TYPE = "ui.business_config.coverage.bootstrap_list_search"
-    DESCRIPTION = "批量从运行态后端视图固化缺失的列表/搜索业务配置契约"
+    DESCRIPTION = "批量从运行态后端视图固化缺失的列表/搜索业务配置"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_coverage_list_search_bootstrap"
     NON_IDEMPOTENT_ALLOWED = "coverage remediation publishes official list/search business contracts"
@@ -969,13 +972,19 @@ class BusinessConfigCoverageBootstrapListSearchHandler(BusinessConfigCoverageSca
             "personal_preference_boundary": "not_a_source",
         }
 
-    def _bootstrap_row(self, row: dict, *, role_key: str) -> dict:
+    @staticmethod
+    def _bootstrap_view_types(row: dict, allowed_view_types: set[str]) -> list[str]:
+        runtime_gap_reasons = row.get("runtime_gap_reasons") if isinstance(row.get("runtime_gap_reasons"), dict) else {}
+        return [
+            view_type for view_type in (row.get("runtime_missing_view_types") or [])
+            if view_type in allowed_view_types
+            and _to_text(runtime_gap_reasons.get(view_type)) == "missing_contract"
+        ]
+
+    def _bootstrap_row(self, row: dict, *, role_key: str, view_id: int = 0) -> dict:
         from .form_field_configuration import BusinessConfigListSearchBootstrapHandler
 
-        view_types = [
-            view_type for view_type in (row.get("runtime_missing_view_types") or [])
-            if view_type in {"tree", "search"}
-        ]
+        view_types = self._bootstrap_view_types(row, {"tree", "search"})
         if not view_types:
             return {"ok": True, "skipped": True, "saved_count": 0}
         result = BusinessConfigListSearchBootstrapHandler(
@@ -984,6 +993,7 @@ class BusinessConfigCoverageBootstrapListSearchHandler(BusinessConfigCoverageSca
                 "params": {
                     "model": _to_text(row.get("model")),
                     "action_id": _to_int(row.get("action_id")),
+                    **({"view_id": view_id} if view_id else {}),
                     "role_key": role_key,
                     "view_types": view_types,
                     "publish": True,
@@ -1006,20 +1016,21 @@ class BusinessConfigCoverageBootstrapListSearchHandler(BusinessConfigCoverageSca
         self._ensure_access()
         params = self.params if isinstance(self.params, dict) else {}
         role_key = _to_text(params.get("role_key") or params.get("roleKey"))
+        view_id = _to_int(params.get("view_id") or params.get("viewId"))
         raw_batch_limit = _to_int(params.get("batch_limit") or params.get("batchLimit")) or 100
         batch_limit = max(1, min(raw_batch_limit, 300))
         scan = super().handle()
         rows = (scan.get("data") or {}).get("items") if isinstance(scan, dict) else []
         candidates = [
             row for row in (rows or [])
-            if any(view_type in {"tree", "search"} for view_type in (row.get("runtime_missing_view_types") or []))
+            if self._bootstrap_view_types(row, {"tree", "search"})
         ][:batch_limit]
         results = []
         saved_count = 0
         failed_count = 0
         skipped_count = 0
         for row in candidates:
-            item = self._bootstrap_row(row, role_key=role_key)
+            item = self._bootstrap_row(row, role_key=role_key, view_id=view_id)
             results.append(item)
             if item.get("skipped"):
                 skipped_count += 1
@@ -1031,6 +1042,7 @@ class BusinessConfigCoverageBootstrapListSearchHandler(BusinessConfigCoverageSca
             "ok": failed_count == 0,
             "data": {
                 "model": _to_text((scan.get("data") or {}).get("model")) if isinstance(scan, dict) else "",
+                "view_id": view_id,
                 "role_key": role_key,
                 "limit": _to_int((scan.get("data") or {}).get("limit")) if isinstance(scan, dict) else 0,
                 "batch_limit": batch_limit,
@@ -1051,7 +1063,7 @@ class BusinessConfigCoverageBootstrapListSearchHandler(BusinessConfigCoverageSca
 
 class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootstrapListSearchHandler):
     INTENT_TYPE = "ui.business_config.coverage.bootstrap_missing"
-    DESCRIPTION = "批量从运行态后端视图固化缺失的表单、列表、搜索、分析业务配置契约"
+    DESCRIPTION = "批量从运行态后端视图固化缺失的表单、列表、搜索、分析业务配置"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_coverage_missing_bootstrap"
     NON_IDEMPOTENT_ALLOWED = "coverage remediation publishes official form/list/search/analysis business contracts"
@@ -1063,17 +1075,14 @@ class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootst
         contract["runtime_carrier"] = cls.INTENT_TYPE
         return contract
 
-    def _bootstrap_row(self, row: dict, *, role_key: str) -> dict:
+    def _bootstrap_row(self, row: dict, *, role_key: str, view_id: int = 0) -> dict:
         from .form_field_configuration import (
             BusinessConfigAnalysisBootstrapHandler,
             BusinessConfigFormBootstrapHandler,
             BusinessConfigListSearchBootstrapHandler,
         )
 
-        missing = [
-            view_type for view_type in (row.get("runtime_missing_view_types") or [])
-            if view_type in {"form", "tree", "search", "pivot", "graph"}
-        ]
+        missing = self._bootstrap_view_types(row, {"form", "tree", "search", "pivot", "graph"})
         if not missing:
             return {"ok": True, "skipped": True, "saved_count": 0}
         result_items = []
@@ -1088,6 +1097,7 @@ class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootst
                     "params": {
                         "model": model,
                         "action_id": action_id,
+                        **({"view_id": view_id} if view_id else {}),
                         "role_key": role_key,
                         "publish": True,
                     }
@@ -1114,6 +1124,7 @@ class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootst
                     "params": {
                         "model": model,
                         "action_id": action_id,
+                        **({"view_id": view_id} if view_id else {}),
                         "role_key": role_key,
                         "view_types": list_search_types,
                         "publish": True,
@@ -1141,6 +1152,7 @@ class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootst
                     "params": {
                         "model": model,
                         "action_id": action_id,
+                        **({"view_id": view_id} if view_id else {}),
                         "role_key": role_key,
                         "view_types": analysis_types,
                         "publish": True,
@@ -1176,20 +1188,21 @@ class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootst
         self._ensure_access()
         params = self.params if isinstance(self.params, dict) else {}
         role_key = _to_text(params.get("role_key") or params.get("roleKey"))
+        view_id = _to_int(params.get("view_id") or params.get("viewId"))
         raw_batch_limit = _to_int(params.get("batch_limit") or params.get("batchLimit")) or 100
         batch_limit = max(1, min(raw_batch_limit, 300))
         scan = BusinessConfigCoverageScanHandler.handle(self)
         rows = (scan.get("data") or {}).get("items") if isinstance(scan, dict) else []
         candidates = [
             row for row in (rows or [])
-            if any(view_type in {"form", "tree", "search", "pivot", "graph"} for view_type in (row.get("runtime_missing_view_types") or []))
+            if self._bootstrap_view_types(row, {"form", "tree", "search", "pivot", "graph"})
         ][:batch_limit]
         results = []
         saved_count = 0
         failed_count = 0
         skipped_count = 0
         for row in candidates:
-            item = self._bootstrap_row(row, role_key=role_key)
+            item = self._bootstrap_row(row, role_key=role_key, view_id=view_id)
             results.append(item)
             if item.get("skipped"):
                 skipped_count += 1
@@ -1202,6 +1215,7 @@ class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootst
             "ok": failed_count == 0,
             "data": {
                 "model": _to_text((scan.get("data") or {}).get("model")) if isinstance(scan, dict) else "",
+                "view_id": view_id,
                 "role_key": role_key,
                 "limit": _to_int((scan.get("data") or {}).get("limit")) if isinstance(scan, dict) else 0,
                 "batch_limit": batch_limit,

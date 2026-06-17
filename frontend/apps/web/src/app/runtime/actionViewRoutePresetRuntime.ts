@@ -16,7 +16,7 @@ export function resolveRoutePresetAppliedLabel(options: {
   text: (key: string, fallback: string) => string;
 }): string {
   if (!options.preset && options.presetFilter) {
-    return `${options.text('preset_label_contract_filter_prefix', '契约筛选: ')}${options.presetFilter}`;
+    return `${options.text('preset_label_contract_filter_prefix', '配置筛选: ')}${options.presetFilter}`;
   }
   if (options.savedFilter) {
     return `${options.text('preset_label_saved_filter_prefix', '保存筛选: ')}${options.savedFilter}`;

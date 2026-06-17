@@ -105,7 +105,7 @@
           :disabled="scanLoading || listSearchSaving || !coverageBatchBootstrapRows.length"
           @click="bootstrapCoverageMissing"
         >
-          {{ listSearchSaving ? '生成中...' : '生成基础配置' }}
+          {{ listSearchSaving ? '生成中...' : '批量补缺配置' }}
         </button>
       </div>
       <div class="scan-summary">
@@ -120,13 +120,15 @@
         </span>
       </div>
       <div v-if="visibleCoverageRows.length" class="scan-list">
-        <div v-for="row in visibleCoverageRows" :key="row.action_id" class="scan-row" :class="{ 'scan-row--selected': row.action_id === scopeAction }">
+        <div v-for="row in visibleCoverageRows" :key="coverageRowKey(row)" class="scan-row" :class="{ 'scan-row--selected': coverageRowMatchesScope(row) }">
           <div class="scan-row-main">
             <strong>{{ row.name || row.model }}</strong>
             <span v-if="advancedPanelOpen">{{ row.model }}</span>
           </div>
           <div class="scan-row-meta">
             <span>{{ pageViewModeText(row) }}</span>
+            <span>{{ rowCoverageProgressText(row) }}</span>
+            <span v-if="rowActionHintText(row)">{{ rowActionHintText(row) }}</span>
             <span>{{ pageDesignStatus(row) }}</span>
             <span v-if="advancedPanelOpen && row.user_preference_count">已有个人配置 {{ row.user_preference_count }}</span>
             <span v-if="advancedPanelOpen">{{ runtimeEvidenceText(row) }}</span>
@@ -155,6 +157,16 @@
             >
               预览页面
             </button>
+            <button
+              v-for="action in visibleRowRemediationActions(row)"
+              :key="`row-remediation-${coverageRowKey(row)}-${action.code}`"
+              type="button"
+              class="ghost small"
+              :disabled="listSearchSaving || versionsLoading"
+              @click="runRemediationAction(row, action)"
+            >
+              {{ action.label }}
+            </button>
             <button type="button" class="ghost small" @click="focusScanRow(row)">选择</button>
           </div>
         </div>
@@ -167,7 +179,7 @@
         <span v-if="snapshotSummary">{{ snapshotSummaryText }}</span>
       </div>
       <div class="scan-list">
-        <div v-for="row in visibleCoverageRows" :key="`admin-${row.action_id}`" class="scan-row">
+        <div v-for="row in visibleCoverageRows" :key="`admin-${coverageRowKey(row)}`" class="scan-row">
           <strong>{{ row.name || row.model }}</strong>
           <span>{{ severityLabel(row.severity) }}</span>
           <span>{{ row.model }}</span>
@@ -182,7 +194,7 @@
           <span v-if="runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
           <button
             v-for="action in row.remediation_actions"
-            :key="`admin-${row.action_id}-${action.code}`"
+            :key="`admin-${coverageRowKey(row)}-${action.code}`"
             type="button"
             class="link-button"
             @click="runRemediationAction(row, action)"
@@ -243,11 +255,12 @@
       <article v-for="section in visibleConfigSections" :key="section.key" class="config-card">
         <div class="config-card-head">
           <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
-          <strong :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.contract_count) }}</strong>
+          <strong :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
         </div>
         <p>{{ sectionPrimaryCopy(section.key) }}</p>
         <div class="config-card-meta">
           <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
+          <span v-if="sectionConfigProgressText(section.key, section.contract_count)">{{ sectionConfigProgressText(section.key, section.contract_count) }}</span>
         </div>
         <div class="config-card-actions">
           <button
@@ -314,7 +327,7 @@
           <div class="version-card-head">
             <div class="version-card-title">
               <strong>{{ viewTypeLabel(contract.view_type) }}</strong>
-              <span>{{ contract.name }}</span>
+              <span>{{ versionContractDisplayName(contract) }}</span>
             </div>
             <div class="version-card-actions">
               <em>当前 v{{ contract.version_no }}</em>
@@ -383,7 +396,7 @@
           :key="tab.key"
           type="button"
           :class="{ active: activeAnalysisEditor === tab.key }"
-          @click="activeAnalysisEditor = tab.key"
+          @click="setActiveAnalysisEditor(tab.key)"
         >
           <span>{{ tab.label }}</span>
           <em>{{ analysisEditorCount(tab.key) }}</em>
@@ -404,7 +417,28 @@
             </select>
           </label>
           <div class="field-chip-list">
-            <span v-for="(name, index) in parseNames(analysisEditorState(activeAnalysisEditor).text.value)" :key="`analysis-${activeAnalysisEditor}-${name}`" class="field-chip" :title="fieldHelpText(name)">
+            <span
+              v-for="(name, index) in parseNames(analysisEditorState(activeAnalysisEditor).text.value)"
+              :key="`analysis-${activeAnalysisEditor}-${name}`"
+              class="field-chip"
+              :class="{
+                'field-chip--dragging': isAnalysisChipDragging(activeAnalysisEditor, name),
+                'field-chip--drop-target': isAnalysisChipDropTarget(activeAnalysisEditor, name),
+              }"
+              :title="fieldHelpText(name)"
+              @dragover.prevent="hoverAnalysisChipDrop(activeAnalysisEditor, name)"
+              @drop.prevent="dropAnalysisChip(activeAnalysisEditor, name)"
+              @dragend="clearChipDrag"
+            >
+              <span
+                class="field-chip-handle"
+                draggable="true"
+                role="button"
+                tabindex="0"
+                :aria-label="`拖动${fieldDisplayLabel(name)}调整顺序`"
+                @dragstart.stop="startAnalysisChipDrag(activeAnalysisEditor, name, $event)"
+                @dragend.stop="clearChipDrag"
+              >⋮⋮</span>
               {{ fieldDisplayLabel(name) }}
               <button type="button" title="上移" :disabled="index === 0" @click="moveAnalysisName(activeAnalysisEditor, name, -1)">↑</button>
               <button type="button" title="下移" :disabled="index === parseNames(analysisEditorState(activeAnalysisEditor).text.value).length - 1" @click="moveAnalysisName(activeAnalysisEditor, name, 1)">↓</button>
@@ -418,7 +452,15 @@
             placeholder="搜索可选字段"
           />
           <div class="field-option-summary">
-            可添加字段 {{ analysisFieldOptionCandidates().length }}，当前显示 {{ availableAnalysisFieldOptions.length }}
+            <span>可添加字段 {{ analysisFieldOptionCandidates().length }}，当前显示 {{ availableAnalysisFieldOptions.length }}</span>
+            <button
+              type="button"
+              class="link-button"
+              :disabled="!availableAnalysisFieldOptions.length"
+              @click="addVisibleAnalysisOptions(activeAnalysisEditor)"
+            >
+              添加当前显示字段
+            </button>
           </div>
           <div v-if="availableAnalysisFieldOptions.length" class="field-option-pool">
             <button
@@ -485,7 +527,28 @@
             <span>{{ parseNames(listColumnsText).length }} 项</span>
           </header>
           <div class="field-chip-list">
-            <span v-for="(name, index) in parseNames(listColumnsText)" :key="`list-${name}`" class="field-chip" :title="fieldHelpText(name)">
+            <span
+              v-for="(name, index) in parseNames(listColumnsText)"
+              :key="`list-${name}`"
+              class="field-chip"
+              :class="{
+                'field-chip--dragging': isListSearchChipDragging('list', name),
+                'field-chip--drop-target': isListSearchChipDropTarget('list', name),
+              }"
+              :title="fieldHelpText(name)"
+              @dragover.prevent="hoverListSearchChipDrop('list', name)"
+              @drop.prevent="dropListSearchChip('list', name)"
+              @dragend="clearChipDrag"
+            >
+              <span
+                class="field-chip-handle"
+                draggable="true"
+                role="button"
+                tabindex="0"
+                :aria-label="`拖动${fieldDisplayLabel(name)}调整顺序`"
+                @dragstart.stop="startListSearchChipDrag('list', name, $event)"
+                @dragend.stop="clearChipDrag"
+              >⋮⋮</span>
               {{ fieldDisplayLabel(name) }}
               <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('list', name, -1)">↑</button>
               <button type="button" title="下移" :disabled="index === parseNames(listColumnsText).length - 1" @click="moveListSearchName('list', name, 1)">↓</button>
@@ -504,7 +567,15 @@
             placeholder="搜索可选字段"
           />
           <div class="field-option-summary">
-            可添加字段 {{ fieldOptionAvailableCount('list') }}，当前显示 {{ availableListFieldOptions.length }}
+            <span>可添加字段 {{ fieldOptionAvailableCount('list') }}，当前显示 {{ availableListFieldOptions.length }}</span>
+            <button
+              type="button"
+              class="link-button"
+              :disabled="!availableListFieldOptions.length"
+              @click="addVisibleListSearchOptions('list')"
+            >
+              添加当前显示字段
+            </button>
           </div>
           <div v-if="availableListFieldOptions.length" class="field-option-pool">
             <button
@@ -524,7 +595,28 @@
             <span>{{ parseNames(searchFiltersText).length }} 项</span>
           </header>
           <div class="field-chip-list">
-            <span v-for="(name, index) in parseNames(searchFiltersText)" :key="`filter-${name}`" class="field-chip" :title="fieldHelpText(name)">
+            <span
+              v-for="(name, index) in parseNames(searchFiltersText)"
+              :key="`filter-${name}`"
+              class="field-chip"
+              :class="{
+                'field-chip--dragging': isListSearchChipDragging('filter', name),
+                'field-chip--drop-target': isListSearchChipDropTarget('filter', name),
+              }"
+              :title="fieldHelpText(name)"
+              @dragover.prevent="hoverListSearchChipDrop('filter', name)"
+              @drop.prevent="dropListSearchChip('filter', name)"
+              @dragend="clearChipDrag"
+            >
+              <span
+                class="field-chip-handle"
+                draggable="true"
+                role="button"
+                tabindex="0"
+                :aria-label="`拖动${fieldDisplayLabel(name)}调整顺序`"
+                @dragstart.stop="startListSearchChipDrag('filter', name, $event)"
+                @dragend.stop="clearChipDrag"
+              >⋮⋮</span>
               {{ fieldDisplayLabel(name) }}
               <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('filter', name, -1)">↑</button>
               <button type="button" title="下移" :disabled="index === parseNames(searchFiltersText).length - 1" @click="moveListSearchName('filter', name, 1)">↓</button>
@@ -543,7 +635,15 @@
             placeholder="搜索可选字段"
           />
           <div class="field-option-summary">
-            可添加字段 {{ fieldOptionAvailableCount('filter') }}，当前显示 {{ availableFilterFieldOptions.length }}
+            <span>可添加字段 {{ fieldOptionAvailableCount('filter') }}，当前显示 {{ availableFilterFieldOptions.length }}</span>
+            <button
+              type="button"
+              class="link-button"
+              :disabled="!availableFilterFieldOptions.length"
+              @click="addVisibleListSearchOptions('filter')"
+            >
+              添加当前显示字段
+            </button>
           </div>
           <div v-if="availableFilterFieldOptions.length" class="field-option-pool">
             <button
@@ -563,7 +663,28 @@
             <span>{{ parseNames(searchGroupByText).length }} 项</span>
           </header>
           <div class="field-chip-list">
-            <span v-for="(name, index) in parseNames(searchGroupByText)" :key="`group-${name}`" class="field-chip" :title="fieldHelpText(name)">
+            <span
+              v-for="(name, index) in parseNames(searchGroupByText)"
+              :key="`group-${name}`"
+              class="field-chip"
+              :class="{
+                'field-chip--dragging': isListSearchChipDragging('group', name),
+                'field-chip--drop-target': isListSearchChipDropTarget('group', name),
+              }"
+              :title="fieldHelpText(name)"
+              @dragover.prevent="hoverListSearchChipDrop('group', name)"
+              @drop.prevent="dropListSearchChip('group', name)"
+              @dragend="clearChipDrag"
+            >
+              <span
+                class="field-chip-handle"
+                draggable="true"
+                role="button"
+                tabindex="0"
+                :aria-label="`拖动${fieldDisplayLabel(name)}调整顺序`"
+                @dragstart.stop="startListSearchChipDrag('group', name, $event)"
+                @dragend.stop="clearChipDrag"
+              >⋮⋮</span>
               {{ fieldDisplayLabel(name) }}
               <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('group', name, -1)">↑</button>
               <button type="button" title="下移" :disabled="index === parseNames(searchGroupByText).length - 1" @click="moveListSearchName('group', name, 1)">↓</button>
@@ -582,7 +703,15 @@
             placeholder="搜索可选字段"
           />
           <div class="field-option-summary">
-            可添加字段 {{ fieldOptionAvailableCount('group') }}，当前显示 {{ availableGroupFieldOptions.length }}
+            <span>可添加字段 {{ fieldOptionAvailableCount('group') }}，当前显示 {{ availableGroupFieldOptions.length }}</span>
+            <button
+              type="button"
+              class="link-button"
+              :disabled="!availableGroupFieldOptions.length"
+              @click="addVisibleListSearchOptions('group')"
+            >
+              添加当前显示字段
+            </button>
           </div>
           <div v-if="availableGroupFieldOptions.length" class="field-option-pool">
             <button
@@ -665,6 +794,7 @@ const versionsLoading = ref(false);
 const versionsPanelOpen = ref(false);
 const advancedPanelOpen = ref(false);
 const versionTitle = ref('配置版本');
+const activeVersionSection = ref<'form' | 'list_search' | 'analysis' | ''>('');
 const versionContracts = ref<BusinessConfigContractVersionsPayload['contracts']>([]);
 const snapshotCompareText = ref('');
 const snapshotCompareLoading = ref(false);
@@ -691,6 +821,16 @@ type ListSearchEditorKind = 'list' | 'filter' | 'group';
 type AnalysisEditorKind = 'pivotMeasure' | 'pivotDimension' | 'graphMeasure' | 'graphDimension';
 const activeListSearchEditor = ref<ListSearchEditorKind>('list');
 const activeAnalysisEditor = ref<AnalysisEditorKind>('pivotMeasure');
+const chipDrag = ref<{
+  area: 'list_search' | 'analysis';
+  kind: ListSearchEditorKind | AnalysisEditorKind;
+  name: string;
+} | null>(null);
+const chipDropTarget = ref<{
+  area: 'list_search' | 'analysis';
+  kind: ListSearchEditorKind | AnalysisEditorKind;
+  name: string;
+} | null>(null);
 const listFieldOptionSearch = ref('');
 const filterFieldOptionSearch = ref('');
 const groupFieldOptionSearch = ref('');
@@ -703,10 +843,16 @@ const selectedPageLabel = ref(String(route.query.page_label || '').trim());
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || '').trim());
 const shouldOpenPageList = computed(() => String(route.query.open_pages || '').trim() === '1');
 const shouldOpenListSearch = computed(() => String(route.query.open_list_search || '').trim() === '1');
+const shouldOpenAnalysis = computed(() => String(route.query.open_analysis || '').trim() === '1');
 const shouldOpenFormConfig = computed(() => String(route.query.open_form_config || '').trim() === '1');
 const requestedListSearchTab = computed<ListSearchEditorKind>(() => {
   const value = String(route.query.list_search_tab || '').trim();
   return value === 'filter' || value === 'group' ? value : 'list';
+});
+const requestedAnalysisTab = computed<AnalysisEditorKind>(() => {
+  const value = String(route.query.analysis_tab || '').trim();
+  if (value === 'pivotDimension' || value === 'graphMeasure' || value === 'graphDimension') return value;
+  return 'pivotMeasure';
 });
 const designerTitle = computed(() => {
   const model = currentModel.value || scopeModel.value.trim();
@@ -720,7 +866,7 @@ const visibleSections = computed(() => sections.value.filter((section) => {
   if (advancedPanelOpen.value) return true;
   return section.key === 'form' || section.key === 'list_search' || section.key === 'analysis';
 }));
-const selectedCoverageRow = computed(() => (coverageScan.value?.items || []).find((row) => row.action_id === scopeAction.value));
+const selectedCoverageRow = computed(() => (coverageScan.value?.items || []).find(coverageRowMatchesScope));
 const selectedPageHasFormConfig = computed(() => {
   const row = selectedCoverageRow.value;
   return row ? rowHasFormConfig(row) : true;
@@ -764,7 +910,7 @@ const snapshotSummaryText = computed(() => {
   const viewTypes = Object.entries(summary.view_type_counts || {})
     .map(([key, count]) => `${viewTypeLabel(key)} ${count}`)
     .join('、');
-  return `契约快照 ${summary.contract_count}，已发布 ${published}，按动作 ${summary.action_scope_count}${viewTypes ? `，${viewTypes}` : ''}`;
+  return `配置快照 ${summary.contract_count}，已发布 ${published}，按动作 ${summary.action_scope_count}${viewTypes ? `，${viewTypes}` : ''}`;
 });
 const snapshotCompareSummary = computed(() => {
   const result = snapshotCompareResult.value;
@@ -799,12 +945,12 @@ const analysisEditorTabs: Array<{ key: AnalysisEditorKind; label: string }> = [
 ];
 const listSearchPanelDescription = computed(() => (
   advancedPanelOpen.value
-    ? '这些配置写入正式业务契约，不写入个人列偏好。'
+    ? '这些配置写入正式业务配置，不写入个人列偏好。'
     : '保存为这个页面的默认列表、搜索和分组设置，不覆盖个人列宽和排序偏好。'
 ));
 const versionPanelDescription = computed(() => (
   advancedPanelOpen.value
-    ? '按当前模型、动作、视图、角色作用域读取正式业务契约版本。'
+    ? '按当前模型、动作、视图、角色作用域读取正式业务配置版本。'
     : '查看这个页面的配置保存记录，可在需要时回滚到历史版本。'
 ));
 const versionEmptyText = computed(() => (
@@ -820,7 +966,7 @@ const coverageIssueRows = computed(() => (
 const coverageBatchBootstrapRows = computed(() => (
   coverageScan.value?.items || []
 ).filter((row) => (
-  row.runtime_missing_view_types.some((viewType) => ['form', 'tree', 'search', 'pivot', 'graph'].includes(viewType))
+  rowBootstrapMissingViewTypes(row, ['form', 'tree', 'search', 'pivot', 'graph']).length > 0
 )));
 const coverageScopeLabel = computed(() => {
   const scan = coverageScan.value;
@@ -923,6 +1069,31 @@ const scopeView = computed(() => {
 
 const scopeRole = computed(() => String(scopeRoleKey.value || '').trim() || undefined);
 
+function coverageRowKey(row: Pick<BusinessConfigCoverageScanItem, 'model' | 'action_id' | 'view_id'>) {
+  return [
+    String(row.model || '').trim(),
+    Number(row.action_id || 0),
+    Number(row.view_id || 0),
+  ].join(':');
+}
+
+function coverageRowMatchesScope(row: Pick<BusinessConfigCoverageScanItem, 'model' | 'action_id' | 'view_id'>) {
+  const actionId = Number(scopeAction.value || 0);
+  if (!actionId || Number(row.action_id || 0) !== actionId) return false;
+  const rowModel = String(row.model || '').trim();
+  const model = String(currentModel.value || '').trim();
+  if (model && rowModel && rowModel !== model) return false;
+  return Number(row.view_id || 0) === Number(scopeView.value || 0);
+}
+
+function coverageRowActionId(row: Pick<BusinessConfigCoverageScanItem, 'action_id'>) {
+  return Number(row.action_id || 0) || undefined;
+}
+
+function coverageRowViewId(row: Pick<BusinessConfigCoverageScanItem, 'view_id'>) {
+  return Number(row.view_id || 0) || undefined;
+}
+
 function clearMessage() {
   message.value = { text: '', detail: '' };
 }
@@ -962,8 +1133,46 @@ function sectionPrimaryCopy(sectionKey: string) {
   return '调整当前业务页面配置。';
 }
 
-function sectionStatusLabel(contractCount: number) {
-  return contractCount > 0 ? '已配置' : '未配置';
+function selectedPageViewTypes() {
+  const row = selectedCoverageRow.value;
+  const fromTarget = (row?.target_view_types || []).map((item) => String(item || '').trim()).filter(Boolean);
+  const fromMode = String(row?.view_mode || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return new Set([...fromTarget, ...fromMode]);
+}
+
+function sectionExpectedContractCount(sectionKey: string) {
+  const viewTypes = selectedPageViewTypes();
+  if (sectionKey === 'list_search') {
+    const expected = [
+      viewTypes.has('tree') || viewTypes.has('list') ? 'tree' : '',
+      viewTypes.has('search') ? 'search' : '',
+    ].filter(Boolean).length;
+    return expected || 2;
+  }
+  if (sectionKey === 'analysis') {
+    const expected = ['pivot', 'graph', 'calendar', 'dashboard'].filter((viewType) => viewTypes.has(viewType)).length;
+    return expected || 1;
+  }
+  return 1;
+}
+
+function sectionStatusLabel(sectionKey: string, contractCount: number) {
+  const count = Number(contractCount || 0);
+  if (sectionKey === 'menu') return count > 0 ? '已配置' : '未调整';
+  const expected = sectionExpectedContractCount(sectionKey);
+  if (count <= 0) return '未配置';
+  if (count < expected) return '部分配置';
+  return '已配置';
+}
+
+function sectionConfigProgressText(sectionKey: string, contractCount: number) {
+  if (sectionKey === 'menu') return '';
+  const expected = sectionExpectedContractCount(sectionKey);
+  const count = Math.max(0, Math.min(Number(contractCount || 0), expected));
+  return `${count}/${expected}`;
 }
 
 function viewTypeLabel(viewType: string) {
@@ -992,6 +1201,44 @@ function pageDesignStatus(row: BusinessConfigCoverageScanItem) {
   return '可打开页面';
 }
 
+function rowCoverageProgressText(row: BusinessConfigCoverageScanItem) {
+  const targets = (row.target_view_types || []).map((item) => String(item || '').trim()).filter(Boolean);
+  const expected = targets.length || 1;
+  const configured = targets.filter((viewType) => Number(row.coverage?.[viewType] || 0) > 0).length;
+  const runtime = targets.filter((viewType) => Number(row.runtime_coverage?.[viewType] || 0) > 0).length;
+  return `配置 ${configured}/${expected}，生效 ${runtime}/${expected}`;
+}
+
+function rowActionHintText(row: BusinessConfigCoverageScanItem) {
+  if (!row.has_menu) return '需配置菜单入口';
+  const reasons = new Set(Object.values(row.runtime_gap_reasons || {}).map((item) => String(item || '').trim()).filter(Boolean));
+  if (reasons.has('missing_contract')) {
+    const missingContractTypes = rowMissingContractViewTypes(row);
+    return `需补 ${missingContractTypes.map(viewTypeLabel).join('、')}`;
+  }
+  if (reasons.has('not_published')) return '需发布配置版本';
+  if (reasons.has('not_runtime_applicable')) return '需检查作用域';
+  if (row.user_preference_count > 0) return '存在个人配置';
+  return '';
+}
+
+function rowMissingContractViewTypes(row: BusinessConfigCoverageScanItem) {
+  return (row.runtime_missing_view_types || [])
+    .filter((viewType) => String(row.runtime_gap_reasons?.[viewType] || '').trim() === 'missing_contract');
+}
+
+function rowBootstrapMissingViewTypes(row: BusinessConfigCoverageScanItem, allowedViewTypes: string[]) {
+  const allowed = new Set(allowedViewTypes);
+  return rowMissingContractViewTypes(row)
+    .filter((viewType) => allowed.has(viewType))
+}
+
+function visibleRowRemediationActions(row: BusinessConfigCoverageScanItem) {
+  return (row.remediation_actions || [])
+    .filter((action) => ['configure_contract', 'publish_contract', 'fix_scope', 'configure_menu', 'review_user_preference_boundary'].includes(action.code))
+    .slice(0, 2);
+}
+
 function rowHasListSearchConfig(row: BusinessConfigCoverageScanItem) {
   return row.target_view_types.some((viewType) => viewType === 'tree' || viewType === 'search')
     || String(row.view_mode || '').split(',').some((viewType) => ['tree', 'list', 'search'].includes(viewType.trim()));
@@ -1009,7 +1256,7 @@ function rowHasAnalysisConfig(row: BusinessConfigCoverageScanItem) {
 }
 
 function runtimeReasonLabel(reason: string) {
-  if (reason === 'missing_contract') return '缺契约';
+  if (reason === 'missing_contract') return '缺配置';
   if (reason === 'not_published') return '未发布';
   if (reason === 'not_runtime_applicable') return '作用域未命中';
   if (reason === 'not_published_or_not_runtime_applicable') return '未发布/作用域未命中';
@@ -1036,6 +1283,13 @@ function versionStatusLabel(status: string) {
   if (status === 'draft') return '草稿';
   if (status === 'archived') return '已归档';
   return status || '未知';
+}
+
+function versionContractDisplayName(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
+  if (advancedPanelOpen.value) return contract.name || contract.model || '业务配置';
+  const page = selectedPageLabel.value || surface.value?.model || contract.model || '当前页面';
+  const view = viewTypeLabel(contract.view_type);
+  return view ? `${page} · ${view}` : page;
 }
 
 function versionSummaryNames(summary: BusinessConfigContractVersionsPayload['contracts'][number]['summary']) {
@@ -1178,6 +1432,7 @@ async function scanCoverage() {
   try {
     coverageScan.value = await scanBusinessConfigCoverage({
       model: currentModel.value || undefined,
+      view_id: scopeView.value,
       role_key: scopeRole.value,
       root_menu_xmlid: rootMenuXmlid.value || undefined,
       include_all_root_menu_actions: false,
@@ -1198,6 +1453,7 @@ async function scanSystemRootCoverage() {
   try {
     coverageScan.value = await scanBusinessConfigCoverage({
       model: currentModel.value || undefined,
+      view_id: scopeView.value,
       role_key: scopeRole.value,
       root_menu_xmlid: rootMenuXmlid.value || undefined,
       include_all_root_menu_actions: true,
@@ -1219,6 +1475,7 @@ async function scanCurrentModel() {
   try {
     coverageScan.value = await scanBusinessConfigCoverage({
       model: currentModel.value,
+      view_id: scopeView.value,
       role_key: scopeRole.value,
       root_menu_xmlid: rootMenuXmlid.value || undefined,
       include_all_root_menu_actions: Boolean(coverageScan.value?.include_all_root_menu_actions),
@@ -1355,7 +1612,7 @@ async function applyScopeAndLoad() {
 async function focusScanRow(row: BusinessConfigCoverageScanItem) {
   scopeModel.value = row.model;
   scopeActionId.value = row.action_id;
-  scopeViewId.value = 0;
+  scopeViewId.value = Number(row.view_id || 0);
   selectedPageLabel.value = row.name || row.model;
   selectedRuntimeRoute.value = row.runtime_route || null;
   listSearchPanelOpen.value = false;
@@ -1370,7 +1627,7 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
       ...route.query,
       model: row.model || undefined,
       action_id: row.action_id ? String(row.action_id) : undefined,
-      view_id: undefined,
+      view_id: row.view_id ? String(row.view_id) : undefined,
       role_key: scopeRole.value || undefined,
       page_label: row.name || undefined,
       open_list_search: undefined,
@@ -1380,12 +1637,11 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
 }
 
 function hydrateSelectedCoverageRowFromScan() {
-  const actionId = scopeAction.value;
-  if (!actionId) return;
-  const matched = (coverageScan.value?.items || []).find((row) => row.action_id === actionId);
+  const matched = (coverageScan.value?.items || []).find(coverageRowMatchesScope);
   if (!matched) return;
   scopeModel.value = matched.model || scopeModel.value;
   scopeActionId.value = matched.action_id || scopeActionId.value;
+  scopeViewId.value = Number(matched.view_id || scopeViewId.value || 0);
   selectedPageLabel.value = matched.name || selectedPageLabel.value || matched.model;
   selectedRuntimeRoute.value = matched.runtime_route || selectedRuntimeRoute.value;
 }
@@ -1398,7 +1654,7 @@ async function openDesignerForRow(row: BusinessConfigCoverageScanItem) {
 async function openListSearchForRow(row: BusinessConfigCoverageScanItem) {
   scopeModel.value = row.model;
   scopeActionId.value = row.action_id;
-  scopeViewId.value = 0;
+  scopeViewId.value = Number(row.view_id || 0);
   selectedPageLabel.value = row.name || row.model;
   selectedRuntimeRoute.value = row.runtime_route || null;
   analysisPanelOpen.value = false;
@@ -1411,7 +1667,7 @@ async function openListSearchForRow(row: BusinessConfigCoverageScanItem) {
       ...route.query,
       model: row.model || undefined,
       action_id: row.action_id ? String(row.action_id) : undefined,
-      view_id: undefined,
+      view_id: row.view_id ? String(row.view_id) : undefined,
       role_key: scopeRole.value || undefined,
       page_label: row.name || undefined,
       open_list_search: '1',
@@ -1428,8 +1684,34 @@ async function openRuntimeRoute(row: BusinessConfigCoverageScanItem) {
   if (!path) return;
   await router.push({
     path,
-    query: runtimeRoute.query || {},
+    query: buildPreviewRuntimeQuery(runtimeRoute.query || {}, {
+      model: row.model,
+      actionId: row.action_id,
+      viewId: row.view_id,
+      pageLabel: row.name || row.model,
+    }),
   });
+}
+
+function buildPreviewRuntimeQuery(
+  baseQuery: Record<string, string> = {},
+  options: { model?: string; actionId?: number; viewId?: number; pageLabel?: string; preserveEditorContext?: boolean } = {},
+) {
+  const preserveEditorContext = Boolean(options.preserveEditorContext);
+  return {
+    ...baseQuery,
+    root_menu_xmlid: route.query.root_menu_xmlid || undefined,
+    page_label: options.pageLabel || selectedPageLabel.value || undefined,
+    return_to_business_config: '1',
+    open_pages: '1',
+    model: options.model || currentModel.value || undefined,
+    action_id: options.actionId ? String(options.actionId) : (scopeAction.value ? String(scopeAction.value) : undefined),
+    view_id: options.viewId ? String(options.viewId) : (scopeView.value ? String(scopeView.value) : undefined),
+    list_search_tab: preserveEditorContext && listSearchPanelOpen.value && activeListSearchEditor.value !== 'list' ? activeListSearchEditor.value : undefined,
+    open_list_search: preserveEditorContext && listSearchPanelOpen.value ? '1' : undefined,
+    analysis_tab: preserveEditorContext && analysisPanelOpen.value && activeAnalysisEditor.value !== 'pivotMeasure' ? activeAnalysisEditor.value : undefined,
+    open_analysis: preserveEditorContext && analysisPanelOpen.value ? '1' : undefined,
+  };
 }
 
 async function previewSelectedRuntimeRoute() {
@@ -1438,21 +1720,13 @@ async function previewSelectedRuntimeRoute() {
   if (!path) return;
   await router.push({
     path,
-    query: {
-      ...(target.query || {}),
-      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
-      page_label: selectedPageLabel.value || undefined,
-      return_to_business_config: '1',
-      open_pages: '1',
-      model: currentModel.value || undefined,
-      action_id: scopeAction.value ? String(scopeAction.value) : undefined,
-    },
+    query: buildPreviewRuntimeQuery(target.query || {}, { preserveEditorContext: true }),
   });
 }
 
 async function runRemediationAction(row: BusinessConfigCoverageScanItem, action: BusinessConfigRemediationAction) {
   await focusScanRow(row);
-  if (action.code === 'configure_contract' || action.code === 'fix_scope') {
+  if (action.code === 'configure_contract') {
     if (
       row.runtime_missing_view_types.some((viewType) => ['calendar', 'dashboard'].includes(viewType))
       && !row.runtime_missing_view_types.some((viewType) => ['form', 'tree', 'search', 'pivot', 'graph'].includes(viewType))
@@ -1463,14 +1737,13 @@ async function runRemediationAction(row: BusinessConfigCoverageScanItem, action:
     await bootstrapMissingContracts(row);
     return;
   }
+  if (action.code === 'fix_scope') {
+    await openVersionsForRuntimeGaps(row);
+    setMessage('请检查配置作用域', '当前配置已存在但未命中这个业务页面，请确认页面、视图或角色范围。');
+    return;
+  }
   if (action.code === 'publish_contract') {
-    if (row.runtime_missing_view_types.some((viewType) => viewType === 'tree' || viewType === 'search')) {
-      await loadVersions('list_search');
-    } else if (row.runtime_missing_view_types.some((viewType) => ['pivot', 'graph', 'calendar', 'dashboard'].includes(viewType))) {
-      await loadVersions('analysis');
-    } else {
-      await loadVersions('form');
-    }
+    await openVersionsForRuntimeGaps(row);
     return;
   }
   if (action.code === 'configure_menu') {
@@ -1482,45 +1755,61 @@ async function runRemediationAction(row: BusinessConfigCoverageScanItem, action:
   }
 }
 
+async function openVersionsForRuntimeGaps(row: BusinessConfigCoverageScanItem) {
+  if (row.runtime_missing_view_types.some((viewType) => viewType === 'tree' || viewType === 'search')) {
+    await loadVersions('list_search');
+  } else if (row.runtime_missing_view_types.some((viewType) => ['pivot', 'graph', 'calendar', 'dashboard'].includes(viewType))) {
+    await loadVersions('analysis');
+  } else {
+    await loadVersions('form');
+  }
+}
+
 async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
   if (!row.model) return;
+  const missingContractTypes = rowBootstrapMissingViewTypes(row, ['form', 'tree', 'search', 'pivot', 'graph']);
+  if (!missingContractTypes.length) {
+    await openVersionsForRuntimeGaps(row);
+    setMessage('没有可自动补齐的缺配置项', '当前缺口需要检查发布状态或配置作用域。');
+    return;
+  }
   listSearchSaving.value = true;
   error.value = '';
   clearMessage();
   let savedCount = 0;
   let formFieldCount = 0;
   try {
-    if (row.runtime_missing_view_types.includes('form')) {
+    if (missingContractTypes.includes('form')) {
       const formResult = await bootstrapBusinessFormConfig({
         model: row.model,
-        action_id: row.action_id || undefined,
-        view_id: scopeView.value,
+        action_id: coverageRowActionId(row),
+        view_id: coverageRowViewId(row),
         role_key: scopeRole.value,
         publish: true,
       });
       savedCount += 1;
       formFieldCount = formResult.field_count || 0;
     }
-    const listSearchTypes = row.runtime_missing_view_types
+    const listSearchTypes = missingContractTypes
       .filter((viewType) => viewType === 'tree' || viewType === 'search');
     if (listSearchTypes.length) {
       const listResult = await bootstrapBusinessListSearchConfig({
         model: row.model,
-        action_id: row.action_id || undefined,
-        view_id: scopeView.value,
+        action_id: coverageRowActionId(row),
+        view_id: coverageRowViewId(row),
         role_key: scopeRole.value,
         view_types: listSearchTypes,
         publish: true,
       });
       savedCount += listResult.saved_count || 0;
     }
-    const analysisTypes = row.runtime_missing_view_types
+    const analysisTypes = missingContractTypes
       .filter((viewType) => viewType === 'pivot' || viewType === 'graph');
     if (analysisTypes.length) {
       const analysisResult = await bootstrapBusinessAnalysisConfig({
         model: row.model,
-        action_id: row.action_id || undefined,
-        view_id: scopeView.value,
+        action_id: coverageRowActionId(row),
+        view_id: coverageRowViewId(row),
         role_key: scopeRole.value,
         view_types: analysisTypes,
         publish: true,
@@ -1530,12 +1819,12 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
     await loadSurface();
     await scanCurrentModel();
     setMessage(
-      '已生成基础配置',
+      '已补齐缺配置',
       formFieldCount ? `已发布 ${savedCount} 个业务配置，表单字段 ${formFieldCount}` : `已发布 ${savedCount} 个业务配置`,
     );
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '业务契约自动生成失败，已打开手工配置';
-    if (row.runtime_missing_view_types.includes('form')) {
+    error.value = err instanceof Error ? err.message : '业务配置补齐失败，已打开手工配置';
+    if (missingContractTypes.includes('form')) {
       openFormConfig();
     } else {
       await loadListSearchConfig();
@@ -1547,22 +1836,27 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
 
 async function bootstrapFormConfig(row: BusinessConfigCoverageScanItem) {
   if (!row.model) return;
+  if (!rowBootstrapMissingViewTypes(row, ['form']).length) {
+    await openVersionsForRuntimeGaps(row);
+    setMessage('没有可自动补齐的表单缺配置项', '当前缺口需要检查发布状态或配置作用域。');
+    return;
+  }
   listSearchSaving.value = true;
   error.value = '';
   clearMessage();
   try {
     const result = await bootstrapBusinessFormConfig({
       model: row.model,
-      action_id: row.action_id || undefined,
-      view_id: scopeView.value,
+      action_id: coverageRowActionId(row),
+      view_id: coverageRowViewId(row),
       role_key: scopeRole.value,
       publish: true,
     });
     await loadSurface();
     await scanCurrentModel();
-    setMessage('已生成表单基础配置', `字段 ${result.field_count}`);
+    setMessage('已补齐表单缺配置', `字段 ${result.field_count}`);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '表单契约自动生成失败，已打开手工配置';
+    error.value = err instanceof Error ? err.message : '表单缺配置补齐失败，已打开手工配置';
     openFormConfig();
   } finally {
     listSearchSaving.value = false;
@@ -1571,25 +1865,29 @@ async function bootstrapFormConfig(row: BusinessConfigCoverageScanItem) {
 
 async function bootstrapListSearchConfig(row: BusinessConfigCoverageScanItem) {
   if (!row.model) return;
+  const viewTypes = rowBootstrapMissingViewTypes(row, ['tree', 'search']);
+  if (!viewTypes.length) {
+    await openVersionsForRuntimeGaps(row);
+    setMessage('没有可自动补齐的列表/搜索缺配置项', '当前缺口需要检查发布状态或配置作用域。');
+    return;
+  }
   listSearchSaving.value = true;
   error.value = '';
   clearMessage();
   try {
-    const viewTypes = row.runtime_missing_view_types
-      .filter((viewType) => viewType === 'tree' || viewType === 'search');
     const result = await bootstrapBusinessListSearchConfig({
       model: row.model,
-      action_id: row.action_id || undefined,
-      view_id: scopeView.value,
+      action_id: coverageRowActionId(row),
+      view_id: coverageRowViewId(row),
       role_key: scopeRole.value,
-      view_types: viewTypes.length ? viewTypes : ['tree', 'search'],
+      view_types: viewTypes,
       publish: true,
     });
     await loadSurface();
     await scanCurrentModel();
-    setMessage('已生成列表/搜索基础配置', `已发布 ${result.saved_count} 个业务配置`);
+    setMessage('已补齐列表/搜索缺配置', `已发布 ${result.saved_count} 个业务配置`);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '列表与搜索基础配置生成失败';
+    error.value = err instanceof Error ? err.message : '列表与搜索缺配置补齐失败';
     await loadListSearchConfig();
   } finally {
     listSearchSaving.value = false;
@@ -1604,6 +1902,7 @@ async function bootstrapCoverageMissing() {
   try {
     const result = await bootstrapCoverageMissingConfig({
       model: currentModel.value || undefined,
+      view_id: scopeView.value,
       role_key: scopeRole.value,
       root_menu_xmlid: rootMenuXmlid.value || undefined,
       include_all_root_menu_actions: Boolean(coverageScan.value?.include_all_root_menu_actions),
@@ -1618,13 +1917,13 @@ async function bootstrapCoverageMissing() {
       .slice(0, 5)
       .join('、');
     setMessage(
-      result.failed_count ? '已生成基础配置，部分页面需手工处理' : '已生成基础配置',
+      result.failed_count ? '已批量补缺配置，部分页面需手工处理' : '已批量补缺配置',
       result.failed_count
         ? `已发布 ${result.saved_count} 个业务配置，${result.failed_count} 个页面需手工处理${failedNames ? `：${failedNames}` : ''}`
         : `已发布 ${result.saved_count} 个业务配置`,
     );
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '批量补齐业务契约失败';
+    error.value = err instanceof Error ? err.message : '批量补齐业务配置失败';
   } finally {
     listSearchSaving.value = false;
   }
@@ -1678,6 +1977,18 @@ async function setActiveListSearchEditor(kind: ListSearchEditorKind) {
   });
 }
 
+async function setActiveAnalysisEditor(kind: AnalysisEditorKind) {
+  activeAnalysisEditor.value = kind;
+  if (!analysisPanelOpen.value) return;
+  await router.replace({
+    path: route.path,
+    query: {
+      ...route.query,
+      analysis_tab: kind === 'pivotMeasure' ? undefined : kind,
+    },
+  });
+}
+
 function setListSearchNames(kind: ListSearchEditorKind, names: string[]) {
   const state = listSearchEditorState(kind);
   state.text.value = namesToText(names);
@@ -1691,6 +2002,7 @@ function resetListSearchDraft() {
   listColumnDraft.value = '';
   searchFilterDraft.value = '';
   searchGroupDraft.value = '';
+  setMessage('已放弃列表与搜索调整');
 }
 
 function fieldOptionsNotIn(kind: ListSearchEditorKind) {
@@ -1759,6 +2071,7 @@ function fieldDisplayLabel(name: string) {
 
 function fieldOptionLabel(field: { name: string; label: string; type: string }) {
   const label = field.label || field.name;
+  if (!advancedPanelOpen.value) return label;
   return duplicatedFieldLabels.value.has(label) ? `${label}（${field.name}）` : label;
 }
 
@@ -1782,6 +2095,21 @@ function addListSearchName(kind: ListSearchEditorKind, explicitName = '') {
   if (!explicitName) state.draft.value = '';
 }
 
+function addVisibleListSearchOptions(kind: ListSearchEditorKind) {
+  const names = parseNames(listSearchEditorState(kind).text.value);
+  const existing = new Set(names);
+  let addedCount = 0;
+  fieldOptionsNotIn(kind).forEach((field) => {
+    if (!existing.has(field.name)) {
+      names.push(field.name);
+      existing.add(field.name);
+      addedCount += 1;
+    }
+  });
+  setListSearchNames(kind, names);
+  setMessage(addedCount ? `已添加 ${addedCount} 个字段` : '当前显示字段已全部添加');
+}
+
 function removeListSearchName(kind: ListSearchEditorKind, name: string) {
   setListSearchNames(kind, parseNames(listSearchEditorState(kind).text.value).filter((item) => item !== name));
 }
@@ -1794,6 +2122,72 @@ function moveListSearchName(kind: ListSearchEditorKind, name: string, delta: num
   const [moved] = names.splice(index, 1);
   names.splice(nextIndex, 0, moved);
   setListSearchNames(kind, names);
+}
+
+function reorderNamesByDrop(names: string[], sourceName: string, targetName: string) {
+  const sourceIndex = names.indexOf(sourceName);
+  const targetIndex = names.indexOf(targetName);
+  if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return names;
+  const next = [...names];
+  const [moved] = next.splice(sourceIndex, 1);
+  next.splice(targetIndex, 0, moved);
+  return next;
+}
+
+function startChipDrag(
+  area: 'list_search' | 'analysis',
+  kind: ListSearchEditorKind | AnalysisEditorKind,
+  name: string,
+  event: DragEvent,
+) {
+  chipDrag.value = { area, kind, name };
+  chipDropTarget.value = null;
+  event.dataTransfer?.setData('text/plain', name);
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+}
+
+function hoverChipDrop(
+  area: 'list_search' | 'analysis',
+  kind: ListSearchEditorKind | AnalysisEditorKind,
+  name: string,
+) {
+  const current = chipDrag.value;
+  if (!current || current.area !== area || current.kind !== kind || current.name === name) {
+    chipDropTarget.value = null;
+    return;
+  }
+  chipDropTarget.value = { area, kind, name };
+}
+
+function clearChipDrag() {
+  chipDrag.value = null;
+  chipDropTarget.value = null;
+}
+
+function startListSearchChipDrag(kind: ListSearchEditorKind, name: string, event: DragEvent) {
+  startChipDrag('list_search', kind, name, event);
+}
+
+function hoverListSearchChipDrop(kind: ListSearchEditorKind, name: string) {
+  hoverChipDrop('list_search', kind, name);
+}
+
+function dropListSearchChip(kind: ListSearchEditorKind, targetName: string) {
+  const current = chipDrag.value;
+  if (!current || current.area !== 'list_search' || current.kind !== kind) return;
+  const names = parseNames(listSearchEditorState(kind).text.value);
+  setListSearchNames(kind, reorderNamesByDrop(names, current.name, targetName));
+  clearChipDrag();
+}
+
+function isListSearchChipDragging(kind: ListSearchEditorKind, name: string) {
+  const current = chipDrag.value;
+  return current?.area === 'list_search' && current.kind === kind && current.name === name;
+}
+
+function isListSearchChipDropTarget(kind: ListSearchEditorKind, name: string) {
+  const current = chipDropTarget.value;
+  return current?.area === 'list_search' && current.kind === kind && current.name === name;
 }
 
 function setAnalysisNames(kind: AnalysisEditorKind, names: string[]) {
@@ -1811,6 +2205,21 @@ function addAnalysisName(kind: AnalysisEditorKind, explicitName = '') {
   if (!explicitName) state.draft.value = '';
 }
 
+function addVisibleAnalysisOptions(kind: AnalysisEditorKind) {
+  const names = parseNames(analysisEditorState(kind).text.value);
+  const existing = new Set(names);
+  let addedCount = 0;
+  availableAnalysisFieldOptions.value.forEach((field) => {
+    if (!existing.has(field.name)) {
+      names.push(field.name);
+      existing.add(field.name);
+      addedCount += 1;
+    }
+  });
+  setAnalysisNames(kind, names);
+  setMessage(addedCount ? `已添加 ${addedCount} 个分析字段` : '当前显示字段已全部添加');
+}
+
 function removeAnalysisName(kind: AnalysisEditorKind, name: string) {
   setAnalysisNames(kind, parseNames(analysisEditorState(kind).text.value).filter((item) => item !== name));
 }
@@ -1823,6 +2232,32 @@ function moveAnalysisName(kind: AnalysisEditorKind, name: string, delta: number)
   const [moved] = names.splice(index, 1);
   names.splice(nextIndex, 0, moved);
   setAnalysisNames(kind, names);
+}
+
+function startAnalysisChipDrag(kind: AnalysisEditorKind, name: string, event: DragEvent) {
+  startChipDrag('analysis', kind, name, event);
+}
+
+function hoverAnalysisChipDrop(kind: AnalysisEditorKind, name: string) {
+  hoverChipDrop('analysis', kind, name);
+}
+
+function dropAnalysisChip(kind: AnalysisEditorKind, targetName: string) {
+  const current = chipDrag.value;
+  if (!current || current.area !== 'analysis' || current.kind !== kind) return;
+  const names = parseNames(analysisEditorState(kind).text.value);
+  setAnalysisNames(kind, reorderNamesByDrop(names, current.name, targetName));
+  clearChipDrag();
+}
+
+function isAnalysisChipDragging(kind: AnalysisEditorKind, name: string) {
+  const current = chipDrag.value;
+  return current?.area === 'analysis' && current.kind === kind && current.name === name;
+}
+
+function isAnalysisChipDropTarget(kind: AnalysisEditorKind, name: string) {
+  const current = chipDropTarget.value;
+  return current?.area === 'analysis' && current.kind === kind && current.name === name;
 }
 
 async function loadListSearchConfig() {
@@ -1838,17 +2273,26 @@ async function loadListSearchConfig() {
       role_key: scopeRole.value,
     });
     listSearchAudit.value = result;
-    listColumnsText.value = namesToText(result.business_config_list_columns || []);
-    searchFiltersText.value = namesToText(result.business_config_search_filters || []);
-    searchGroupByText.value = namesToText(result.business_config_search_group_by || []);
+    const configuredListColumns = result.business_config_list_columns || [];
+    const configuredSearchFilters = result.business_config_search_filters || [];
+    const configuredSearchGroupBy = result.business_config_search_group_by || [];
+    const suggestedListColumns = configuredListColumns.length ? [] : result.suggested_list_columns || [];
+    const suggestedSearchFilters = (configuredSearchFilters.length || configuredSearchGroupBy.length) ? [] : result.suggested_search_filters || [];
+    const suggestedSearchGroupBy = (configuredSearchFilters.length || configuredSearchGroupBy.length) ? [] : result.suggested_search_group_by || [];
+    listColumnsText.value = namesToText(configuredListColumns.length ? configuredListColumns : suggestedListColumns);
+    searchFiltersText.value = namesToText(configuredSearchFilters.length ? configuredSearchFilters : suggestedSearchFilters);
+    searchGroupByText.value = namesToText(configuredSearchGroupBy.length ? configuredSearchGroupBy : suggestedSearchGroupBy);
     listSearchBase.value = {
-      list: normalizeNamesText(listColumnsText.value),
-      filter: normalizeNamesText(searchFiltersText.value),
-      group: normalizeNamesText(searchGroupByText.value),
+      list: normalizeNamesText(namesToText(configuredListColumns)),
+      filter: normalizeNamesText(namesToText(configuredSearchFilters)),
+      group: normalizeNamesText(namesToText(configuredSearchGroupBy)),
     };
     activeListSearchEditor.value = requestedListSearchTab.value;
     analysisPanelOpen.value = false;
     listSearchPanelOpen.value = true;
+    if (!configuredListColumns.length && suggestedListColumns.length) {
+      setMessage('已按当前页面生成列表草稿', '调整后点击保存设置，才会发布为正式业务配置');
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : '列表与搜索设置读取失败';
   } finally {
@@ -1866,6 +2310,7 @@ function resetAnalysisDraft() {
   pivotDimensionDraft.value = '';
   graphMeasureDraft.value = '';
   graphDimensionDraft.value = '';
+  setMessage('已放弃分析视图调整');
 }
 
 async function loadAnalysisConfig() {
@@ -1881,20 +2326,36 @@ async function loadAnalysisConfig() {
       role_key: scopeRole.value,
     });
     analysisAudit.value = result;
-    pivotMeasuresText.value = namesToText(result.pivot_measures || []);
-    pivotDimensionsText.value = namesToText(result.pivot_dimensions || []);
-    graphMeasuresText.value = namesToText(result.graph_measures || []);
-    graphDimensionsText.value = namesToText(result.graph_dimensions || []);
-    graphType.value = result.graph_type || 'bar';
+    const configuredPivotMeasures = result.pivot_measures || [];
+    const configuredPivotDimensions = result.pivot_dimensions || [];
+    const configuredGraphMeasures = result.graph_measures || [];
+    const configuredGraphDimensions = result.graph_dimensions || [];
+    const suggestedPivotMeasures = (configuredPivotMeasures.length || configuredPivotDimensions.length) ? [] : result.suggested_pivot_measures || [];
+    const suggestedPivotDimensions = (configuredPivotMeasures.length || configuredPivotDimensions.length) ? [] : result.suggested_pivot_dimensions || [];
+    const suggestedGraphMeasures = (configuredGraphMeasures.length || configuredGraphDimensions.length) ? [] : result.suggested_graph_measures || [];
+    const suggestedGraphDimensions = (configuredGraphMeasures.length || configuredGraphDimensions.length) ? [] : result.suggested_graph_dimensions || [];
+    const configuredGraphType = (configuredGraphMeasures.length || configuredGraphDimensions.length) ? result.graph_type || 'bar' : '';
+    pivotMeasuresText.value = namesToText(configuredPivotMeasures.length ? configuredPivotMeasures : suggestedPivotMeasures);
+    pivotDimensionsText.value = namesToText(configuredPivotDimensions.length ? configuredPivotDimensions : suggestedPivotDimensions);
+    graphMeasuresText.value = namesToText(configuredGraphMeasures.length ? configuredGraphMeasures : suggestedGraphMeasures);
+    graphDimensionsText.value = namesToText(configuredGraphDimensions.length ? configuredGraphDimensions : suggestedGraphDimensions);
+    graphType.value = configuredGraphType || result.suggested_graph_type || result.graph_type || 'bar';
     analysisBase.value = {
-      pivotMeasures: normalizeNamesText(pivotMeasuresText.value),
-      pivotDimensions: normalizeNamesText(pivotDimensionsText.value),
-      graphMeasures: normalizeNamesText(graphMeasuresText.value),
-      graphDimensions: normalizeNamesText(graphDimensionsText.value),
-      graphType: graphType.value || 'bar',
+      pivotMeasures: normalizeNamesText(namesToText(configuredPivotMeasures)),
+      pivotDimensions: normalizeNamesText(namesToText(configuredPivotDimensions)),
+      graphMeasures: normalizeNamesText(namesToText(configuredGraphMeasures)),
+      graphDimensions: normalizeNamesText(namesToText(configuredGraphDimensions)),
+      graphType: configuredGraphType || 'bar',
     };
     listSearchPanelOpen.value = false;
     analysisPanelOpen.value = true;
+    activeAnalysisEditor.value = requestedAnalysisTab.value;
+    if (
+      (!configuredPivotMeasures.length && !configuredPivotDimensions.length && (suggestedPivotMeasures.length || suggestedPivotDimensions.length))
+      || (!configuredGraphMeasures.length && !configuredGraphDimensions.length && (suggestedGraphMeasures.length || suggestedGraphDimensions.length))
+    ) {
+      setMessage('已按当前页面生成分析草稿', '调整后点击保存设置，才会发布为正式业务配置');
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : '分析视图设置读取失败';
   } finally {
@@ -1920,7 +2381,13 @@ async function saveListSearchConfig() {
     });
     await loadSurface();
     await loadListSearchConfig();
-    setMessage('列表与搜索配置已保存', `已保存 ${result.saved_count} 个业务配置`);
+    if (coverageScan.value) {
+      await rescanCoverageAfterBootstrap();
+    }
+    if (versionsPanelOpen.value && activeVersionSection.value === 'list_search') {
+      await loadVersions('list_search');
+    }
+    setMessage('列表与搜索配置已保存并发布', `已保存 ${result.saved_count} 个业务配置，刷新页面后按新配置生效`);
     return true;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '列表与搜索设置保存失败';
@@ -1950,7 +2417,13 @@ async function saveAnalysisConfig() {
     });
     await loadSurface();
     await loadAnalysisConfig();
-    setMessage('分析视图配置已保存', `已保存 ${result.saved_count} 个业务配置`);
+    if (coverageScan.value) {
+      await rescanCoverageAfterBootstrap();
+    }
+    if (versionsPanelOpen.value && activeVersionSection.value === 'analysis') {
+      await loadVersions('analysis');
+    }
+    setMessage('分析视图配置已保存并发布', `已保存 ${result.saved_count} 个业务配置，刷新页面后按新配置生效`);
     return true;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '分析视图设置保存失败';
@@ -1988,6 +2461,9 @@ function versionParams(viewType?: string) {
 
 async function loadVersions(sectionKey: string) {
   if (!currentModel.value) return;
+  activeVersionSection.value = sectionKey === 'form' || sectionKey === 'list_search' || sectionKey === 'analysis'
+    ? sectionKey
+    : '';
   versionsLoading.value = true;
   error.value = '';
   clearMessage();
@@ -2046,7 +2522,7 @@ async function rollbackContractFromWorkbench(
     if (coverageScan.value) {
       await rescanCoverageAfterBootstrap();
     }
-    setMessage('配置已回滚', `已回滚到 v${result.rolled_back_to_version}`);
+    setMessage('配置已回滚并发布', `已回滚到 v${result.rolled_back_to_version}，刷新页面后按该版本生效`);
   } catch (err) {
     error.value = err instanceof Error ? err.message : '业务配置回滚失败';
   } finally {
@@ -2070,6 +2546,8 @@ function openMenuConfig() {
       model: currentModel.value || undefined,
       root_menu_xmlid: route.query.root_menu_xmlid || undefined,
       page_label: selectedPageLabel.value || undefined,
+      view_id: scopeView.value ? String(scopeView.value) : undefined,
+      role_key: scopeRole.value || undefined,
       return_to_business_config: '1',
       open_pages: '1',
     },
@@ -2111,13 +2589,14 @@ onMounted(() => {
     const openPageListOnMount = shouldOpenPageList.value;
     const openFormConfigOnMount = shouldOpenFormConfig.value;
     const openListSearchOnMount = shouldOpenListSearch.value;
+    const openAnalysisOnMount = shouldOpenAnalysis.value;
     await loadSurface();
     if (openPageListOnMount) {
       await scanSystemRootCoverage();
     }
     if (openFormConfigOnMount && currentModel.value && scopeAction.value) {
       await clearConsumedOpenIntent(['open_form_config']);
-      const matched = (coverageScan.value?.items || []).find((row) => row.action_id === scopeAction.value);
+      const matched = (coverageScan.value?.items || []).find(coverageRowMatchesScope);
       if (matched) {
         await focusScanRow(matched);
       } else {
@@ -2127,6 +2606,10 @@ onMounted(() => {
     if (openListSearchOnMount && currentModel.value) {
       await clearConsumedOpenIntent(['open_list_search']);
       await loadListSearchConfig();
+    }
+    if (openAnalysisOnMount && currentModel.value) {
+      await clearConsumedOpenIntent(['open_analysis']);
+      await loadAnalysisConfig();
     }
   })();
 });
@@ -2829,6 +3312,30 @@ h1 {
   color: var(--sc-app-text-primary);
   font-size: 12px;
   line-height: 1;
+  cursor: default;
+  user-select: none;
+}
+
+.field-chip--dragging {
+  opacity: 0.45;
+}
+
+.field-chip--drop-target {
+  border-color: var(--sc-app-accent);
+  box-shadow: inset 0 -2px 0 var(--sc-app-accent);
+}
+
+.field-chip-handle {
+  display: inline-flex;
+  align-items: center;
+  color: var(--sc-app-text-secondary);
+  cursor: grab;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.field-chip-handle:active {
+  cursor: grabbing;
 }
 
 .field-chip button {
@@ -2884,8 +3391,18 @@ h1 {
 }
 
 .field-option-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
+}
+
+.field-option-summary .link-button {
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 .field-option-pool {

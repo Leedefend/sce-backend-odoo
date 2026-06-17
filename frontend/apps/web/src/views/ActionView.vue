@@ -491,7 +491,7 @@
         <p>{{ vm.content.advanced?.hint }}</p>
       </header>
       <div class="advanced-contract">
-        <p class="contract-label">{{ t('label.contract_summary', '契约摘要') }}</p>
+        <p class="contract-label">{{ t('label.contract_summary', '配置摘要') }}</p>
         <p>view_type={{ contractViewType || '-' }} · mode={{ vm.page.viewMode || '-' }} · records={{ records.length }}</p>
       </div>
       <div v-if="vm.content.advanced?.rows.length" class="advanced-list">
@@ -2010,7 +2010,7 @@ const { vm } = useActionPageModel({
   strict: {
     missingSummary: strictContractMissingSummary,
     defaultsSummary: strictContractDefaultsSummary,
-    title: computed(() => t('strict_contract_missing_title', '契约缺口提示')),
+    title: computed(() => t('strict_contract_missing_title', '配置缺口提示')),
   },
   groupSummary: {
     items: groupSummaryItems,

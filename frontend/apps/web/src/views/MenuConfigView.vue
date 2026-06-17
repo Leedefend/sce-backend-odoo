@@ -19,7 +19,7 @@
         <button type="button" class="ghost" :disabled="loading || versionLoading || saving" @click="toggleVersionPanel">
           {{ versionPanelOpen ? '收起版本' : (versionLoading ? '加载中...' : '版本') }}
         </button>
-        <button type="button" class="ghost" :disabled="loading || saving || rollingBack" @click="rollbackSelectedMenuConfiguration">
+        <button type="button" class="ghost" :disabled="rollbackButtonDisabled" @click="rollbackSelectedMenuConfiguration">
           {{ rollingBack ? '回滚中...' : rollbackButtonText }}
         </button>
         <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel">刷新</button>
@@ -52,8 +52,8 @@
           <span>关闭“显示”会对适用范围隐藏菜单；重新勾选后恢复显示。</span>
         </article>
         <article>
-          <strong>适用用户组</strong>
-          <span>留空表示当前公司所有用户；先按业务域筛选，再选择具体业务角色。</span>
+          <strong>可见业务角色</strong>
+          <span>留空表示所有业务角色可见；按业务域筛选后，可勾选需要保留菜单的角色。</span>
         </article>
         <article>
           <strong>保存生效</strong>
@@ -71,7 +71,7 @@
         隐藏 {{ auditSummary.hiddenCount }}，改名 {{ auditSummary.renamedCount }}，移动 {{ auditSummary.movedCount }}，排序 {{ auditSummary.reorderedCount }}。
       </span>
       <span v-if="auditSummary.notApplicableCount">
-        {{ auditSummary.notApplicableCount }} 项因用户组范围未命中当前用户。
+        {{ auditSummary.notApplicableCount }} 项因业务角色范围未命中当前用户。
       </span>
       <span>运行来源：{{ auditSummary.runtimeSourceLabel }}</span>
     </section>
@@ -79,7 +79,7 @@
       <div class="version-panel-header">
         <strong>菜单配置版本</strong>
         <span v-if="versionState?.contract">当前版本 {{ versionState.contract.version_no }}</span>
-        <span v-else>暂无菜单配置版本</span>
+        <span v-else>保存后生成版本</span>
       </div>
       <div v-if="versionState?.versions.length" class="version-list">
         <label
@@ -95,6 +95,9 @@
             移动 {{ version.summary.moved_count }}，排序 {{ version.summary.reordered_count }}
           </span>
         </label>
+      </div>
+      <div v-else class="version-empty">
+        保存菜单配置后会自动生成已发布版本；没有历史版本时，当前菜单配置不能回滚。
       </div>
     </section>
 
@@ -170,7 +173,7 @@
                 <th class="sequence-col">顺序</th>
                 <th>移动到上级</th>
                 <th class="check-col">显示</th>
-                <th>适用用户组</th>
+                <th>可见业务角色</th>
                 <th>备注</th>
               </tr>
             </thead>
@@ -235,7 +238,7 @@
                         :title="roleGroupName(groupId)"
                       >
                         {{ roleGroupName(groupId) }}
-                        <button type="button" title="移除用户组" @click="removeRoleGroup(row.menu.id, groupId)">×</button>
+                        <button type="button" title="移除业务角色" @click="removeRoleGroup(row.menu.id, groupId)">×</button>
                       </span>
                     </div>
                     <select
@@ -262,13 +265,32 @@
                         <span>{{ group.display_name }}</span>
                       </label>
                     </div>
+                    <div class="group-scope-actions">
+                      <span class="group-scope-count">{{ scopedRoleGroupSelectionText(row.menu.id) }}</span>
+                      <button
+                        type="button"
+                        class="link-button"
+                        :disabled="!scopedUnselectedRoleGroupCount(row.menu.id)"
+                        @click="selectScopedRoleGroups(row.menu.id)"
+                      >
+                        勾选当前分组
+                      </button>
+                      <button
+                        type="button"
+                        class="link-button"
+                        :disabled="!scopedSelectedRoleGroupCount(row.menu.id)"
+                        @click="clearScopedRoleGroups(row.menu.id)"
+                      >
+                        清空当前分组
+                      </button>
+                    </div>
                     <button
                       v-if="draftFor(row.menu.id).role_group_ids.length"
                       type="button"
                       class="link-button group-clear"
                       @click="clearRoleGroups(row.menu.id)"
                     >
-                      恢复所有用户可见
+                      恢复所有角色可见
                     </button>
                     <small>{{ roleScopeSummary(row.menu.id) }}</small>
                   </div>
@@ -523,15 +545,33 @@ const auditSummary = computed(() => {
   };
 });
 
-const rollbackButtonText = computed(() => (
-  selectedVersionNo.value ? `回滚到版本 ${selectedVersionNo.value}` : '回滚上一版'
+const canRollbackMenuConfiguration = computed(() => {
+  const currentVersion = Number(versionState.value?.contract?.version_no || 0);
+  return Boolean(
+    currentVersion
+    && (versionState.value?.versions || []).some((version) => Number(version.version_no || 0) !== currentVersion),
+  );
+});
+
+const rollbackButtonText = computed(() => {
+  if (!versionState.value?.contract) return '先查看版本';
+  if (!canRollbackMenuConfiguration.value) return '暂无可回滚版本';
+  return selectedVersionNo.value ? `回滚到版本 ${selectedVersionNo.value}` : '回滚上一版';
+});
+
+const rollbackButtonDisabled = computed(() => (
+  loading.value
+  || saving.value
+  || rollingBack.value
+  || versionLoading.value
+  || Boolean(versionState.value?.contract && !canRollbackMenuConfiguration.value)
 ));
 
 const groupOptions = computed(() => {
   return [...groups.value].sort((a, b) => a.display_name.localeCompare(b.display_name, 'zh-Hans-CN'));
 });
 
-const ALL_ROLE_GROUP_DOMAINS = '全部业务域';
+const ALL_ROLE_GROUP_DOMAINS = '全部业务角色';
 
 const roleGroupDomainOptions = computed(() => {
   const domains = new Set(groupOptions.value.map((group) => roleGroupDomain(group.display_name)));
@@ -681,12 +721,12 @@ function hasConfiguration(menuId: number) {
 
 function roleScopeSummary(menuId: number) {
   const count = draftFor(menuId)?.role_group_ids.length || 0;
-  return count ? `限 ${count} 个用户组` : '所有用户组';
+  return count ? `限 ${count} 个业务角色可见` : '所有业务角色可见';
 }
 
 function roleGroupName(groupId: number) {
   const group = groupOptions.value.find((item) => Number(item.id) === Number(groupId));
-  return group?.display_name || `用户组 ${groupId}`;
+  return group?.display_name || `业务角色 ${groupId}`;
 }
 
 function roleGroupDomain(label: string) {
@@ -728,6 +768,41 @@ function toggleRoleGroup(menuId: number, groupId: number, selected: boolean) {
     existing.delete(Number(groupId));
   }
   updateDraft(menuId, { role_group_ids: Array.from(existing).sort((a, b) => a - b) });
+}
+
+function scopedSelectedRoleGroupCount(menuId: number) {
+  const scopedIds = new Set(scopedRoleGroupOptions(menuId).map((group) => Number(group.id)));
+  return (draftFor(menuId)?.role_group_ids || []).filter((groupId) => scopedIds.has(Number(groupId))).length;
+}
+
+function scopedUnselectedRoleGroupCount(menuId: number) {
+  return Math.max(0, scopedRoleGroupOptions(menuId).length - scopedSelectedRoleGroupCount(menuId));
+}
+
+function scopedRoleGroupSelectionText(menuId: number) {
+  const total = scopedRoleGroupOptions(menuId).length;
+  if (!total) return '当前分组 0/0';
+  return `当前分组 ${scopedSelectedRoleGroupCount(menuId)}/${total}`;
+}
+
+function selectScopedRoleGroups(menuId: number) {
+  const draft = draftFor(menuId);
+  if (!draft) return;
+  const existing = new Set(draft.role_group_ids.map(Number));
+  scopedRoleGroupOptions(menuId).forEach((group) => existing.add(Number(group.id)));
+  updateDraft(menuId, { role_group_ids: Array.from(existing).sort((a, b) => a - b) });
+}
+
+function clearScopedRoleGroups(menuId: number) {
+  const draft = draftFor(menuId);
+  if (!draft) return;
+  const scopedIds = new Set(scopedRoleGroupOptions(menuId).map((group) => Number(group.id)));
+  updateDraft(menuId, {
+    role_group_ids: draft.role_group_ids
+      .map(Number)
+      .filter((groupId) => !scopedIds.has(groupId))
+      .sort((a, b) => a - b),
+  });
 }
 
 function clearRoleGroups(menuId: number) {
@@ -999,25 +1074,6 @@ function collectNavigationMenuIds() {
   return ids;
 }
 
-function removeMenuIdsFromNavigation(nodes: NavNode[], hiddenMenuIds: Set<number>): NavNode[] {
-  return nodes
-    .filter((node) => !hiddenMenuIds.has(Number(node.menu_id || node.id || 0)))
-    .map((node) => ({
-      ...node,
-      children: Array.isArray(node.children)
-        ? removeMenuIdsFromNavigation(node.children as NavNode[], hiddenMenuIds)
-        : node.children,
-    }));
-}
-
-function applySavedVisibilityToNavigation(rows: MenuConfigSaveRow[]) {
-  const hiddenMenuIds = new Set(rows.filter((row) => row.visible === false).map((row) => Number(row.menu_id || 0)).filter(Boolean));
-  if (!hiddenMenuIds.size) return;
-  session.menuTree = removeMenuIdsFromNavigation(session.menuTree as NavNode[], hiddenMenuIds);
-  session.menuExpandedKeys = session.menuExpandedKeys.filter((key) => !hiddenMenuIds.has(Number(String(key).replace(/^menu:/, ''))));
-  session.persist();
-}
-
 function returnToBusinessConfig() {
   router.push({
     path: '/admin/business-config',
@@ -1027,6 +1083,8 @@ function returnToBusinessConfig() {
       action_id: route.query.action_id || undefined,
       menu_id: route.query.menu_id || undefined,
       page_label: route.query.page_label || undefined,
+      view_id: route.query.view_id || undefined,
+      role_key: route.query.role_key || undefined,
       open_pages: route.query.open_pages || '1',
     },
   });
@@ -1110,6 +1168,12 @@ async function auditMenuConfiguration() {
 }
 
 async function rollbackSelectedMenuConfiguration() {
+  if (!versionState.value?.contract) {
+    versionPanelOpen.value = true;
+    await loadVersions();
+    return;
+  }
+  if (!canRollbackMenuConfiguration.value) return;
   rollingBack.value = true;
   error.value = '';
   message.value = '';
@@ -1124,7 +1188,7 @@ async function rollbackSelectedMenuConfiguration() {
     if (versionPanelOpen.value) {
       await loadVersions();
     }
-    message.value = `已回滚到版本 ${result.rolled_back_to_version}，恢复 ${result.restored_count} 项菜单配置`;
+    message.value = `已回滚到版本 ${result.rolled_back_to_version}，恢复 ${result.restored_count} 项菜单配置，导航已刷新`;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '菜单配置回滚失败';
   } finally {
@@ -1155,14 +1219,13 @@ async function saveChanges() {
   message.value = '';
   try {
     await saveMenuConfigurationPanel({ rows });
-    applySavedVisibilityToNavigation(rows);
     await session.loadAppInit({ force: true });
     await loadPanel();
     auditResult.value = null;
     if (versionPanelOpen.value) {
       await loadVersions();
     }
-    message.value = `已保存 ${rows.length} 项菜单配置`;
+    message.value = `已保存 ${rows.length} 项菜单配置，导航已刷新`;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '菜单配置保存失败';
   } finally {
@@ -1360,6 +1423,14 @@ h1 {
   gap: 8px;
   max-height: 142px;
   overflow: auto;
+}
+
+.version-empty {
+  padding: 8px;
+  border: 1px dashed var(--sc-app-border);
+  border-radius: 6px;
+  color: var(--sc-app-text-secondary);
+  background: var(--sc-app-muted-bg);
 }
 
 .version-item {
@@ -1744,6 +1815,25 @@ tr.dirty td:first-child {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.group-scope-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-scope-count {
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.group-scope-actions .link-button {
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .group-clear {

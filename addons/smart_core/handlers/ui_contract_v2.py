@@ -885,6 +885,55 @@ class UiContractV2Handler(BaseIntentHandler):
         ]
         if not columns or not all(name.startswith("legacy_visible_") for name in columns):
             return
+        model_name = str(
+            source_contract.get("model")
+            or ((source_contract.get("pageInfo") or {}).get("model") if isinstance(source_contract.get("pageInfo"), dict) else "")
+            or ((source_contract.get("head") or {}).get("model") if isinstance(source_contract.get("head"), dict) else "")
+            or ""
+        ).strip()
+        direct_order: list[str] = []
+        if model_name and "ui.business.config.contract" in self.env:
+            try:
+                view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
+                configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
+                    model_name,
+                    view_type="form",
+                    action_id=self._source_action_id(source_contract),
+                    view_id=view_ids.get("form"),
+                )
+            except Exception:
+                configs = []
+            for config in configs:
+                payload = config.contract_json if isinstance(config.contract_json, dict) else {}
+                orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+                views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+                form_spec = views.get("form") if isinstance(views.get("form"), dict) else {}
+                rows = form_spec.get("fields") if isinstance(form_spec.get("fields"), list) else []
+                normalized_rows: list[tuple[int, str, bool]] = []
+                for row in rows:
+                    if isinstance(row, str):
+                        normalized_rows.append((100, str(row or "").strip(), True))
+                        continue
+                    if not isinstance(row, dict):
+                        continue
+                    try:
+                        sequence = int(row.get("sequence") or row.get("order") or 100)
+                    except Exception:
+                        sequence = 100
+                    normalized_rows.append((
+                        sequence,
+                        str(row.get("name") or row.get("field") or row.get("field_name") or "").strip(),
+                        row.get("visible") is not False,
+                    ))
+                for _sequence, name, visible in sorted(normalized_rows, key=lambda item: (item[0], item[1])):
+                    if not name or not visible:
+                        continue
+                    if name.startswith("legacy_visible_") and name in columns and name not in direct_order:
+                        direct_order.append(name)
+        if direct_order:
+            ordered = list(direct_order)
+            ordered.extend([name for name in columns if name not in set(ordered)])
+            columns = ordered
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
         field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
 
@@ -3024,7 +3073,13 @@ class UiContractV2Handler(BaseIntentHandler):
         form["header_buttons"] = header_buttons
 
     def _inject_record_business_category_context(self, source_contract: dict[str, Any], *, model: str, record_id: Any) -> None:
-        if not model or model not in self.env:
+        if not model:
+            return
+        try:
+            model_available = model in self.env
+        except Exception:
+            return
+        if not model_available:
             return
         record_id_int, _record_id_error = parse_positive_int(record_id, allow_empty=True)
         record_id_int = int(record_id_int or 0)

@@ -73,8 +73,8 @@ class UiMenuConfigPolicy(models.Model):
         "ui_menu_config_policy_group_rel",
         "policy_id",
         "group_id",
-        string="适用用户组",
-        help="留空表示对当前公司所有用户生效；填写后仅对这些用户组中的用户生效。",
+        string="可见业务角色",
+        help="留空表示对当前公司所有用户生效；填写后仅对这些业务角色中的用户生效。",
     )
     note = fields.Text(string="说明")
     active = fields.Boolean(string="启用", default=True, index=True)

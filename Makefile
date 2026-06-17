@@ -609,8 +609,10 @@ verify.business.oca_runtime_smoke: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_oca_runtime_smoke.py
 
 verify.business_config.unit: guard.prod.forbid
+	@python3 scripts/verify/business_config_user_language_guard.py
 	@python3 addons/smart_core/tests/test_form_field_configuration_params.py
 	@python3 addons/smart_core/tests/test_business_config_surface.py
+	@python3 addons/smart_core/tests/test_menu_configuration_audit.py
 
 verify.business_config.coverage: guard.prod.forbid check-compose-project check-compose-env
 	@mkdir -p artifacts/backend

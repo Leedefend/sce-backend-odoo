@@ -599,6 +599,9 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                 self.status = vals["status"]
                 self.version_no = vals["version_no"]
 
+            def action_publish(self):
+                self.status = "published"
+
         class Version:
             id = 8
             version_no = 2
@@ -638,6 +641,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(version_model.domain, [("contract_id", "=", 3), ("version_no", "=", 2)])
         self.assertEqual(version_model.limit, 1)
         self.assertEqual(result["data"]["rolled_back_to_version"], 2)
+        self.assertEqual(result["data"]["status"], "published")
 
     def test_business_config_contract_rollback_specific_version_not_found(self):
         class Company:
@@ -1092,7 +1096,16 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
             groups_id = []
 
         class PartnerModel:
-            _fields = {"name": object(), "email": object(), "state": object(), "partner_id": object()}
+            _fields = {
+                "name": object(),
+                "email": object(),
+                "state": object(),
+                "partner_id": object(),
+                "activity_state": object(),
+                "alias_name": object(),
+                "message_ids": object(),
+                "access_token": object(),
+            }
 
         class Contract:
             def __init__(self, ident, name, payload):
@@ -1175,7 +1188,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         data = result["data"]
-        self.assertEqual(data["business_config_list_columns"], ["email", "name"])
+        self.assertEqual(data["business_config_list_columns"], ["name", "email"])
         self.assertEqual(data["business_config_search_filters"], ["state"])
         self.assertEqual(data["business_config_search_group_by"], ["partner_id"])
         self.assertEqual(
@@ -1197,6 +1210,115 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(data["user_preference_boundary"], "ui_only")
         self.assertTrue(data["has_business_list_config"])
         self.assertTrue(data["has_business_search_config"])
+
+    def test_business_config_list_search_audit_suggests_runtime_view_defaults(self):
+        class Company:
+            id = 7
+
+        class User:
+            groups_id = []
+
+        class PartnerModel:
+            _fields = {
+                "name": object(),
+                "email": object(),
+                "state": object(),
+                "partner_id": object(),
+                "manager_id": object(),
+                "user_id": object(),
+                "legacy_source_created_by": object(),
+                "access_token": object(),
+                "activity_state": object(),
+            }
+
+            def fields_get(self):
+                return {
+                    "name": {"string": "名称", "type": "char"},
+                    "email": {"string": "邮箱", "type": "char"},
+                    "state": {"string": "状态", "type": "selection"},
+                    "partner_id": {"string": "往来单位", "type": "many2one"},
+                    "manager_id": {"string": "项目经理", "type": "many2one"},
+                    "user_id": {"string": "Project Manager", "type": "many2one"},
+                    "legacy_source_created_by": {"string": "原始录入人", "type": "char"},
+                    "access_token": {"string": "Security Token", "type": "char"},
+                    "activity_state": {"string": "Activity State", "type": "selection"},
+                }
+
+        class ContractModel:
+            def _effective_view_orchestration_contracts(self, model, **kwargs):
+                return []
+
+            def search(self, domain, order=None, limit=None):
+                return []
+
+        class RuntimeViewContract:
+            def __init__(self, view_type):
+                self.view_type = view_type
+
+            def with_user(self, user):
+                return self
+
+            def sudo(self):
+                return self
+
+            def with_context(self, **context):
+                self.context = context
+                return self
+
+            def get_contract_api(self, filter_runtime=True, check_model_acl=False):
+                if self.view_type == "tree":
+                    return {
+                        "columns": [
+                            "name",
+                            {"name": "email"},
+                            "manager_id",
+                            "user_id",
+                            "legacy_source_created_by",
+                            "access_token",
+                            "missing_field",
+                        ],
+                    }
+                return {
+                    "search": {
+                        "filters": [{"field": "state"}, {"field": "activity_state"}],
+                        "group_by": [{"field": "partner_id"}, {"field": "missing_group"}],
+                    }
+                }
+
+        class ViewConfigModel:
+            def with_context(self, **context):
+                self.context = context
+                return self
+
+            def _generate_from_fields_view_get(self, model, view_type):
+                return RuntimeViewContract(view_type)
+
+        class Env(dict):
+            company = Company()
+            user = User()
+
+        env = Env({
+            "res.partner": PartnerModel(),
+            "ui.business.config.contract": ContractModel(),
+            "app.view.config": ViewConfigModel(),
+        })
+        handler = self.module.BusinessConfigListSearchAuditHandler(
+            env=env,
+            params={"model": "res.partner", "action_id": 11},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        data = result["data"]
+        self.assertEqual(data["business_config_list_columns"], [])
+        self.assertEqual(data["business_config_search_filters"], [])
+        self.assertEqual(data["business_config_search_group_by"], [])
+        self.assertEqual(data["suggested_list_columns"], ["name", "email", "manager_id"])
+        self.assertEqual(data["suggested_search_filters"], ["state"])
+        self.assertEqual(data["suggested_search_group_by"], ["partner_id"])
+        self.assertFalse(data["has_business_list_config"])
+        self.assertFalse(data["has_business_search_config"])
 
     def test_business_config_list_search_set_writes_contracts_not_preferences(self):
         class Company:
@@ -1482,6 +1604,160 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertIn("missing_field", result["error"]["message"])
         self.assertEqual(len(contracts), 0)
+
+    def test_business_config_analysis_set_rejects_internal_lowcode_fields(self):
+        class Company:
+            id = 7
+
+        class PartnerModel:
+            _fields = {
+                "amount_total": object(),
+                "message_ids": object(),
+                "legacy_source_created_by": object(),
+            }
+
+            def fields_get(self):
+                return {
+                    "amount_total": {"string": "金额", "type": "float"},
+                    "message_ids": {"string": "Messages", "type": "one2many"},
+                    "legacy_source_created_by": {"string": "原始录入人", "type": "char"},
+                }
+
+        class ContractModel(list):
+            def sudo(self):
+                return self
+
+            def search(self, *args, **kwargs):
+                return None
+
+            def create(self, vals):
+                self.append(vals)
+                return vals
+
+        class Env(dict):
+            company = Company()
+
+        contracts = ContractModel()
+        env = Env({
+            "res.partner": PartnerModel(),
+            "ui.business.config.contract": contracts,
+        })
+        handler = self.module.BusinessConfigAnalysisSetHandler(
+            env=env,
+            params={
+                "model": "res.partner",
+                "action_id": 11,
+                "pivot_measures": ["amount_total"],
+                "pivot_dimensions": ["legacy_source_created_by"],
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertIn("legacy_source_created_by", result["error"]["message"])
+        self.assertEqual(len(contracts), 0)
+
+    def test_business_config_analysis_audit_suggests_runtime_view_defaults(self):
+        class Company:
+            id = 7
+
+        class User:
+            groups_id = []
+
+        class PartnerModel:
+            _fields = {
+                "amount_total": object(),
+                "company_id": object(),
+                "state": object(),
+                "message_ids": object(),
+                "legacy_source_created_by": object(),
+            }
+
+            def fields_get(self):
+                return {
+                    "amount_total": {"string": "金额", "type": "float"},
+                    "company_id": {"string": "公司", "type": "many2one"},
+                    "state": {"string": "状态", "type": "selection"},
+                    "message_ids": {"string": "Messages", "type": "one2many"},
+                    "legacy_source_created_by": {"string": "原始录入人", "type": "char"},
+                }
+
+        class ContractModel:
+            def sudo(self):
+                return self
+
+            def _effective_view_orchestration_contracts(self, model, **kwargs):
+                return []
+
+            def search(self, domain, order=None, limit=None):
+                return []
+
+        class RuntimeViewContract:
+            def __init__(self, view_type):
+                self.view_type = view_type
+
+            def with_user(self, user):
+                return self
+
+            def sudo(self):
+                return self
+
+            def with_context(self, **context):
+                return self
+
+            def get_contract_api(self, filter_runtime=True, check_model_acl=False):
+                if self.view_type == "pivot":
+                    return {
+                        "pivot": {
+                            "measures": [{"name": "amount_total"}, {"name": "missing_measure"}],
+                            "dimensions": [{"name": "company_id"}, {"name": "legacy_source_created_by"}],
+                        }
+                    }
+                return {
+                    "graph": {
+                        "type_default": "line",
+                        "measures": [{"name": "amount_total"}],
+                        "dimensions": [{"name": "state"}, {"name": "message_ids"}],
+                    }
+                }
+
+        class ViewConfigModel:
+            def with_context(self, **context):
+                return self
+
+            def _generate_from_fields_view_get(self, model, view_type):
+                return RuntimeViewContract(view_type)
+
+        class Env(dict):
+            company = Company()
+            user = User()
+
+        env = Env({
+            "res.partner": PartnerModel(),
+            "ui.business.config.contract": ContractModel(),
+            "app.view.config": ViewConfigModel(),
+        })
+        handler = self.module.BusinessConfigAnalysisAuditHandler(
+            env=env,
+            params={"model": "res.partner", "action_id": 11},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        data = result["data"]
+        self.assertEqual(data["pivot_measures"], [])
+        self.assertEqual(data["pivot_dimensions"], [])
+        self.assertEqual(data["graph_measures"], [])
+        self.assertEqual(data["graph_dimensions"], [])
+        self.assertEqual(data["suggested_pivot_measures"], ["amount_total"])
+        self.assertEqual(data["suggested_pivot_dimensions"], ["company_id"])
+        self.assertEqual(data["suggested_graph_measures"], ["amount_total"])
+        self.assertEqual(data["suggested_graph_dimensions"], ["state"])
+        self.assertEqual(data["suggested_graph_type"], "line")
+        self.assertFalse(data["has_business_analysis_config"])
 
     def test_business_config_analysis_bootstrap_derives_from_runtime_view_contracts(self):
         class Company:
@@ -1850,7 +2126,26 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
             id = 42
 
         class PartnerModel:
-            _fields = {"name": object(), "email": object(), "missing_kept_out": object()}
+            _fields = {
+                "name": object(),
+                "email": object(),
+                "manager_id": object(),
+                "user_id": object(),
+                "legacy_source_created_by": object(),
+                "access_token": object(),
+                "missing_kept_out": object(),
+            }
+
+            def fields_get(self):
+                return {
+                    "name": {"string": "名称", "type": "char"},
+                    "email": {"string": "邮箱", "type": "char"},
+                    "manager_id": {"string": "项目经理", "type": "many2one"},
+                    "user_id": {"string": "Project Manager", "type": "many2one"},
+                    "legacy_source_created_by": {"string": "原始录入人", "type": "char"},
+                    "access_token": {"string": "Security Token", "type": "char"},
+                    "missing_kept_out": {"string": "Missing", "type": "char"},
+                }
 
         class EmptyRef:
             id = 0
@@ -1914,6 +2209,10 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                                     "children": [
                                         {"type": "field", "name": "name"},
                                         {"type": "field", "name": "email"},
+                                        {"type": "field", "name": "manager_id"},
+                                        {"type": "field", "name": "user_id"},
+                                        {"type": "field", "name": "legacy_source_created_by"},
+                                        {"type": "field", "name": "access_token"},
                                         {"type": "field", "name": "not_a_field"},
                                     ],
                                 }
@@ -1949,13 +2248,15 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         result = handler.handle()
 
         self.assertTrue(result["ok"])
-        self.assertEqual(result["data"]["field_count"], 2)
-        self.assertEqual(result["data"]["form_fields"], ["name", "email"])
+        self.assertEqual(result["data"]["field_count"], 3)
+        self.assertEqual(result["data"]["form_fields"], ["name", "email", "manager_id"])
         self.assertEqual(result["data"]["bootstrapped_from"], "runtime_backend_form_view_contract")
         self.assertEqual(len(contracts), 1)
         rec = contracts[0]
         form_spec = rec.contract_json["view_orchestration"]["views"]["form"]
-        self.assertEqual([row["name"] for row in form_spec["fields"]], ["name", "email"])
+        self.assertEqual([row["name"] for row in form_spec["fields"]], ["name", "email", "manager_id"])
+        layout_fields = self.module._collect_view_orchestration_layout_field_names(form_spec["layout"])
+        self.assertEqual(layout_fields, ["name", "email", "manager_id"])
         self.assertEqual(form_spec["title"], "客户")
         self.assertEqual(rec.status, "published")
         self.assertEqual(rec.action_id.id, 11)

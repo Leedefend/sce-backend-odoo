@@ -92,6 +92,7 @@ class _ContractModel(list):
     def _effective_view_orchestration_contracts(self, model, **kwargs):
         view_type = kwargs.get("view_type")
         action_id = kwargs.get("action_id") or 0
+        view_id = kwargs.get("view_id") or 0
         role_key = kwargs.get("role_key") or ""
         return [
             row for row in self
@@ -99,6 +100,7 @@ class _ContractModel(list):
             and row.model == model
             and (not view_type or row.view_type == view_type)
             and (not action_id or row.action_id_value in {0, action_id})
+            and (not view_id or row.view_id_value in {0, view_id})
             and (not role_key or row.role_key in {"", role_key})
         ]
 
@@ -498,6 +500,35 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
         self.assertEqual(rows[11]["user_preference_count"], 2)
         self.assertEqual(rows[11]["user_preference_boundary"], "ui_only")
 
+    def test_coverage_scan_honors_view_scope(self):
+        action_model = _ActionModel([
+            _Action(11, "客户", "res.partner", "tree,form"),
+        ])
+        env = _Env({
+            "ir.actions.act_window": action_model,
+            "ir.ui.menu": _MenuModel(["ir.actions.act_window,11"]),
+            "sc.user.view.preference": _PreferenceModel([]),
+            "ui.business.config.contract": _ContractModel([
+                _Contract("res.partner", "form", action_id=11, view_id=99, role_key="sales"),
+                _Contract("res.partner", "tree", action_id=11, view_id=22, role_key="sales"),
+                _Contract("res.partner", "search", action_id=11, view_id=22, role_key="sales"),
+            ]),
+        })
+        handler = self.module.BusinessConfigCoverageScanHandler(
+            env=env,
+            params={"role_key": "sales", "model": "res.partner", "view_id": 22, "limit": 50},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["view_id"], 22)
+        row = result["data"]["items"][0]
+        self.assertEqual(row["view_id"], 22)
+        self.assertEqual(row["missing_view_types"], ["form"])
+        self.assertEqual(row["runtime_missing_view_types"], ["form"])
+        self.assertEqual(row["runtime_gap_reasons"], {"form": "missing_contract"})
+
     def test_coverage_scan_can_include_unreachable_actions_for_audit(self):
         action_model = _ActionModel([
             _Action(11, "客户", "res.partner", "tree,form"),
@@ -713,6 +744,30 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
                 ("project.project", 12, ["tree"]),
                 ("res.partner", 11, ["tree", "search"]),
             ],
+        )
+
+    def test_coverage_bootstrap_only_batches_missing_contract_gaps(self):
+        row = {
+            "runtime_missing_view_types": ["form", "tree", "search", "pivot", "graph"],
+            "runtime_gap_reasons": {
+                "form": "missing_contract",
+                "tree": "not_published",
+                "search": "not_runtime_applicable",
+                "pivot": "missing_contract",
+                "graph": "not_published",
+            },
+        }
+
+        self.assertEqual(
+            self.module.BusinessConfigCoverageBootstrapListSearchHandler._bootstrap_view_types(row, {"tree", "search"}),
+            [],
+        )
+        self.assertEqual(
+            self.module.BusinessConfigCoverageBootstrapMissingHandler._bootstrap_view_types(
+                row,
+                {"form", "tree", "search", "pivot", "graph"},
+            ),
+            ["form", "pivot"],
         )
 
     def test_coverage_bootstrap_missing_batches_form_list_and_search_gaps(self):

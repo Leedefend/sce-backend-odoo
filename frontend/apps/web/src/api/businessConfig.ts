@@ -21,6 +21,9 @@ export interface BusinessConfigListSearchAuditPayload {
   business_config_list_columns: string[];
   business_config_search_filters: string[];
   business_config_search_group_by: string[];
+  suggested_list_columns?: string[];
+  suggested_search_filters?: string[];
+  suggested_search_group_by?: string[];
   available_model_fields?: Array<{
     name: string;
     label: string;
@@ -62,6 +65,11 @@ export interface BusinessConfigAnalysisAuditPayload {
   graph_measures: string[];
   graph_dimensions: string[];
   graph_type: string;
+  suggested_pivot_measures?: string[];
+  suggested_pivot_dimensions?: string[];
+  suggested_graph_measures?: string[];
+  suggested_graph_dimensions?: string[];
+  suggested_graph_type?: string;
   available_model_fields?: Array<{
     name: string;
     label: string;
@@ -254,6 +262,7 @@ export interface BusinessConfigContractVersionSummary {
 
 export interface BusinessConfigCoverageScanPayload {
   model: string;
+  view_id: number;
   role_key: string;
   limit: number;
   include_unreachable_actions: boolean;
@@ -287,6 +296,7 @@ export interface BusinessConfigCoverageScanPayload {
 
 export interface BusinessConfigCoverageBootstrapListSearchPayload {
   model: string;
+  view_id: number;
   role_key: string;
   limit: number;
   batch_limit: number;
@@ -314,6 +324,7 @@ export interface BusinessConfigCoverageScanItem {
   action_id: number;
   name: string;
   model: string;
+  view_id: number;
   view_mode: string;
   severity: 'error' | 'warning' | 'notice' | 'ok' | string;
   sort_priority: number;
@@ -510,6 +521,7 @@ export async function rollbackBusinessConfigContract(params: {
 
 export async function scanBusinessConfigCoverage(params: {
   model?: string;
+  view_id?: number;
   role_key?: string;
   limit?: number;
   include_unreachable_actions?: boolean;
@@ -524,6 +536,7 @@ export async function scanBusinessConfigCoverage(params: {
 
 export async function bootstrapCoverageListSearchConfig(params: {
   model?: string;
+  view_id?: number;
   role_key?: string;
   limit?: number;
   batch_limit?: number;
@@ -539,6 +552,7 @@ export async function bootstrapCoverageListSearchConfig(params: {
 
 export async function bootstrapCoverageMissingConfig(params: {
   model?: string;
+  view_id?: number;
   role_key?: string;
   limit?: number;
   batch_limit?: number;

@@ -14,6 +14,94 @@ from ..utils.reason_codes import REASON_MISSING_PARAMS, REASON_NOT_FOUND, REASON
 
 BUSINESS_CONFIG_ADMIN_GROUP = "smart_core.group_smart_core_business_config_admin"
 BUSINESS_CONFIG_CONTRACT_AUTHORITIES = ("ui.business.config.contract", "ui.business.config.contract.version")
+LOWCODE_BUSINESS_FIELD_TYPES = {
+    "boolean",
+    "char",
+    "date",
+    "datetime",
+    "float",
+    "html",
+    "integer",
+    "many2one",
+    "monetary",
+    "selection",
+    "text",
+}
+LOWCODE_TECHNICAL_FIELD_NAMES = {
+    "access_instruction_message",
+    "access_token",
+    "access_url",
+    "access_warning",
+    "activity_exception_decoration",
+    "activity_exception_icon",
+    "activity_ids",
+    "activity_state",
+    "activity_summary",
+    "activity_type_icon",
+    "activity_type_id",
+    "activity_user_id",
+    "activity_date_deadline",
+    "alias_bounced_content",
+    "alias_contact",
+    "alias_defaults",
+    "alias_domain",
+    "alias_domain_id",
+    "alias_email",
+    "alias_force_thread_id",
+    "alias_id",
+    "alias_name",
+    "alias_parent_model_id",
+    "alias_parent_thread_id",
+    "alias_status",
+    "alias_user_id",
+    "message_attachment_count",
+    "message_bounce",
+    "message_channel_ids",
+    "message_follower_ids",
+    "message_has_error",
+    "message_has_error_counter",
+    "message_has_sms_error",
+    "message_ids",
+    "message_is_follower",
+    "message_main_attachment_id",
+    "message_needaction",
+    "message_needaction_counter",
+    "message_partner_ids",
+    "message_unread",
+    "message_unread_counter",
+    "my_activity_date_deadline",
+    "rating_ids",
+    "rating_last_feedback",
+    "rating_last_image",
+    "rating_last_value",
+    "rating_percentage_satisfaction",
+    "rating_status",
+    "rating_status_period",
+    "website_message_ids",
+}
+LOWCODE_TECHNICAL_FIELD_PREFIXES = (
+    "activity_",
+    "alias_",
+    "message_",
+    "rating_",
+    "website_",
+    "legacy_source_",
+)
+LOWCODE_TECHNICAL_FIELD_LABEL_KEYWORDS = (
+    "access",
+    "activity",
+    "alias",
+    "bounce",
+    "bounced",
+    "followers",
+    "message",
+    "milestones",
+    "portal",
+    "project manager",
+    "rating",
+    "security token",
+    "task dependencies",
+)
 
 
 def _optional_non_negative_int(params: dict, *keys: str):
@@ -30,6 +118,58 @@ def _optional_non_negative_int(params: dict, *keys: str):
 
 def _has_param(params: dict, *keys: str) -> bool:
     return any(key in params for key in keys)
+
+
+def _is_lowcode_business_field_candidate(field_name: str, field_type: str, label: str = "") -> bool:
+    name = str(field_name or "").strip()
+    normalized_type = str(field_type or "").strip()
+    label_text = str(label or "").strip().lower()
+    if not name:
+        return False
+    if name in LOWCODE_TECHNICAL_FIELD_NAMES:
+        return False
+    if name.startswith(LOWCODE_TECHNICAL_FIELD_PREFIXES):
+        return False
+    if normalized_type and normalized_type not in LOWCODE_BUSINESS_FIELD_TYPES:
+        return False
+    if any(keyword in label_text for keyword in LOWCODE_TECHNICAL_FIELD_LABEL_KEYWORDS):
+        return False
+    return True
+
+
+def _available_lowcode_model_fields(env, model: str) -> list[dict]:
+    Model = env[model]
+    technical_prefixes = ("__",)
+    technical_names = {"id", "display_name", "create_uid", "create_date", "write_uid", "write_date", "__last_update"}
+    try:
+        fields_meta = Model.sudo().fields_get() if hasattr(Model, "sudo") else Model.fields_get()
+    except Exception:
+        fields_meta = {}
+    if not isinstance(fields_meta, dict) or not fields_meta:
+        fields_meta = {
+            name: {}
+            for name in sorted(getattr(Model, "_fields", {}) or {})
+        }
+    out = []
+    for name in sorted(fields_meta):
+        field_name = str(name or "").strip()
+        if not field_name or field_name in technical_names or field_name.startswith(technical_prefixes):
+            continue
+        meta = fields_meta.get(name) if isinstance(fields_meta.get(name), dict) else {}
+        field_type = str(meta.get("type") or getattr((getattr(Model, "_fields", {}) or {}).get(name), "type", "") or "").strip()
+        label = str(meta.get("string") or getattr((getattr(Model, "_fields", {}) or {}).get(name), "string", "") or field_name).strip()
+        if not _is_lowcode_business_field_candidate(field_name, field_type, label):
+            continue
+        out.append({
+            "name": field_name,
+            "label": label or field_name,
+            "type": field_type or "unknown",
+        })
+    return out
+
+
+def _lowcode_business_field_name_set(env, model: str) -> set[str]:
+    return {item["name"] for item in _available_lowcode_model_fields(env, model)}
 
 
 def _normalize_view_type_scope(view_type: str | None) -> str:
@@ -1227,34 +1367,78 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
         return items
 
     def _available_model_fields(self, model: str) -> list[dict]:
-        Model = self.env[model]
-        technical_prefixes = ("__",)
-        technical_names = {"id", "display_name", "create_uid", "create_date", "write_uid", "write_date", "__last_update"}
+        return _available_lowcode_model_fields(self.env, model)
+
+    def _business_field_name_set(self, model: str) -> set[str]:
+        return _lowcode_business_field_name_set(self.env, model)
+
+    def _view_context(self, *, action_id: int, view_id: int) -> dict:
+        context = {"contract_projection_readonly": True}
+        if action_id:
+            context["contract_action_id"] = action_id
+        if view_id:
+            context["contract_view_id"] = view_id
+        return context
+
+    def _runtime_view_contract(self, *, model: str, view_type: str, action_id: int, view_id: int) -> dict:
+        if "app.view.config" not in self.env:
+            return {}
+        context = self._view_context(action_id=action_id, view_id=view_id)
+        ViewConfig = self.env["app.view.config"]
+        if hasattr(ViewConfig, "with_context"):
+            ViewConfig = ViewConfig.with_context(**context)
+        cfg = ViewConfig._generate_from_fields_view_get(model, view_type)
+        if hasattr(cfg, "with_user"):
+            cfg = cfg.with_user(self.env.user)
+        if hasattr(cfg, "sudo"):
+            cfg = cfg.sudo()
+        if hasattr(cfg, "with_context"):
+            cfg = cfg.with_context(**context)
+        return cfg.get_contract_api(filter_runtime=True, check_model_acl=True) or {}
+
+    def _suggested_columns(self, *, model: str, action_id: int, view_id: int) -> list[str]:
         try:
-            fields_meta = Model.sudo().fields_get() if hasattr(Model, "sudo") else Model.fields_get()
+            contract = self._runtime_view_contract(model=model, view_type="tree", action_id=action_id, view_id=view_id)
         except Exception:
-            fields_meta = {}
-        if not isinstance(fields_meta, dict) or not fields_meta:
-            fields_meta = {
-                name: {}
-                for name in sorted(getattr(Model, "_fields", {}) or {})
-            }
-        out = []
-        for name in sorted(fields_meta):
-            field_name = str(name or "").strip()
-            if not field_name or field_name in technical_names or field_name.startswith(technical_prefixes):
-                continue
-            meta = fields_meta.get(name) if isinstance(fields_meta.get(name), dict) else {}
-            field_type = str(meta.get("type") or getattr((getattr(Model, "_fields", {}) or {}).get(name), "type", "") or "").strip()
-            if field_type in {"binary", "one2many", "many2many"}:
-                continue
-            label = str(meta.get("string") or getattr((getattr(Model, "_fields", {}) or {}).get(name), "string", "") or field_name).strip()
-            out.append({
-                "name": field_name,
-                "label": label or field_name,
-                "type": field_type or "unknown",
-            })
-        return out
+            return []
+        columns = _sanitize_config_name_list(contract.get("columns"))
+        if not columns:
+            columns = _sanitize_config_name_list(contract.get("columns_schema"))
+        business_fields = self._business_field_name_set(model)
+        if business_fields:
+            columns = [name for name in columns if name in business_fields]
+        return columns
+
+    def _suggested_search(self, *, model: str, action_id: int, view_id: int) -> tuple[list[str], list[str]]:
+        filters = []
+        group_by = []
+        try:
+            contract = self._runtime_view_contract(model=model, view_type="search", action_id=action_id, view_id=view_id)
+            search = contract.get("search") if isinstance(contract.get("search"), dict) else {}
+            filters = _sanitize_config_name_list(search.get("filters"))
+            group_by = _sanitize_config_name_list(search.get("group_by") or search.get("groupBys"))
+        except Exception:
+            filters = []
+            group_by = []
+        if (filters or group_by) or "app.search.config" not in self.env:
+            business_fields = self._business_field_name_set(model)
+            if business_fields:
+                filters = [name for name in filters if name in business_fields]
+                group_by = [name for name in group_by if name in business_fields]
+            return filters, group_by
+        try:
+            SearchConfig = self.env["app.search.config"]
+            cfg = SearchConfig._generate_from_search(model)
+            contract = cfg.get_search_contract(filter_runtime=True, include_user_filters=False) or {}
+        except Exception:
+            return [], []
+        business_fields = self._business_field_name_set(model)
+        filters = _sanitize_config_name_list(contract.get("filters"))
+        group_by = _sanitize_config_name_list(contract.get("group_by") or contract.get("groupBys"))
+        if business_fields:
+            filters = [name for name in filters if name in business_fields]
+            group_by = [name for name in group_by if name in business_fields]
+        return filters, group_by
 
     def handle(self, payload=None, ctx=None):
         del payload, ctx
@@ -1344,6 +1528,18 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
 
         preference_count = self._user_preference_count(model=model, action_id=action_id)
         preference_items = self._user_preference_items(model=model, action_id=action_id)
+        suggested_columns = [] if list_columns else self._suggested_columns(
+            model=model,
+            action_id=int(action_id or 0),
+            view_id=int(view_id or 0),
+        )
+        suggested_filters, suggested_group_by = ([], [])
+        if not search_filters and not search_group_by:
+            suggested_filters, suggested_group_by = self._suggested_search(
+                model=model,
+                action_id=int(action_id or 0),
+                view_id=int(view_id or 0),
+            )
         return {
             "ok": True,
             "data": {
@@ -1353,9 +1549,12 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
                 "role_key": role_key,
                 "business_config_list_contracts": list_items,
                 "business_config_search_contracts": search_items,
-                "business_config_list_columns": sorted(list_columns),
-                "business_config_search_filters": sorted(search_filters),
-                "business_config_search_group_by": sorted(search_group_by),
+                "business_config_list_columns": list_columns,
+                "business_config_search_filters": search_filters,
+                "business_config_search_group_by": search_group_by,
+                "suggested_list_columns": suggested_columns,
+                "suggested_search_filters": suggested_filters,
+                "suggested_search_group_by": suggested_group_by,
                 "available_model_fields": self._available_model_fields(model),
                 "user_preference_count": preference_count,
                 "user_preferences": preference_items,
@@ -1388,6 +1587,9 @@ class BusinessConfigListSearchSetHandler(BaseIntentHandler):
             "no_business_fact_authority": True,
             "runtime_carrier": self.INTENT_TYPE,
         }
+
+    def _business_field_name_set(self, model: str) -> set[str]:
+        return _lowcode_business_field_name_set(self.env, model)
 
     def _upsert_contract(self, *, model: str, view_type: str, action_id: int, view_id: int, role_key: str, payload: dict, publish: bool):
         Contract = self.env["ui.business.config.contract"].sudo()
@@ -1442,9 +1644,11 @@ class BusinessConfigListSearchSetHandler(BaseIntentHandler):
             return self._err(400, "缺少列表列或搜索配置", REASON_MISSING_PARAMS)
 
         model_fields = set(getattr(self.env[model], "_fields", {}) or {})
-        unknown = sorted(set(list_columns + search_filters + search_group_by) - model_fields)
+        business_fields = self._business_field_name_set(model)
+        valid_fields = business_fields or model_fields
+        unknown = sorted(set(list_columns + search_filters + search_group_by) - valid_fields)
         if unknown:
-            return self._err(400, "配置引用不存在字段：%s" % ", ".join(unknown), REASON_USER_ERROR)
+            return self._err(400, "配置引用不存在或不可用于低代码业务配置字段：%s" % ", ".join(unknown), REASON_USER_ERROR)
 
         saved = []
         try:
@@ -1530,6 +1734,21 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
         "ir.ui.view",
     )
 
+    def _suggested_analysis(self, *, model: str, view_type: str, action_id: int, view_id: int) -> tuple[list[str], list[str], str]:
+        try:
+            contract = self._runtime_view_contract(model=model, view_type=view_type, action_id=action_id, view_id=view_id)
+        except Exception:
+            contract = {}
+        view = contract.get(view_type) if isinstance(contract.get(view_type), dict) else {}
+        measures = _sanitize_config_name_list(view.get("measures"))
+        dimensions = _sanitize_config_name_list(view.get("dimensions"))
+        chart_type = str(view.get("type") or view.get("type_default") or "bar").strip() or "bar"
+        business_fields = self._business_field_name_set(model)
+        if business_fields:
+            measures = [name for name in measures if name in business_fields]
+            dimensions = [name for name in dimensions if name in business_fields]
+        return measures, dimensions, chart_type
+
     def handle(self, payload=None, ctx=None):
         del payload, ctx
         params = self.params if isinstance(self.params, dict) else {}
@@ -1551,6 +1770,7 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
         view_types = ["pivot", "graph"]
         configs = {}
         contract_items = []
+        business_fields = self._business_field_name_set(model)
         for view_type in view_types:
             contracts = contract_model._effective_view_orchestration_contracts(
                 model,
@@ -1574,10 +1794,10 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
             for rec in contracts:
                 config = _view_orchestration_analysis_config(rec.contract_json or {}, view_type)
                 for name in config.get("measures") or []:
-                    if name not in measures:
+                    if (not business_fields or name in business_fields) and name not in measures:
                         measures.append(name)
                 for name in config.get("dimensions") or []:
-                    if name not in dimensions:
+                    if (not business_fields or name in business_fields) and name not in dimensions:
                         dimensions.append(name)
                 if not chart_type and config.get("type"):
                     chart_type = str(config.get("type") or "")
@@ -1595,6 +1815,22 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
                 "dimensions": dimensions,
                 "type": chart_type,
             }
+        suggested_pivot_measures, suggested_pivot_dimensions, suggested_pivot_type = ([], [], "")
+        suggested_graph_measures, suggested_graph_dimensions, suggested_graph_type = ([], [], "")
+        if not configs["pivot"]["measures"] and not configs["pivot"]["dimensions"]:
+            suggested_pivot_measures, suggested_pivot_dimensions, suggested_pivot_type = self._suggested_analysis(
+                model=model,
+                view_type="pivot",
+                action_id=int(action_id or 0),
+                view_id=int(view_id or 0),
+            )
+        if not configs["graph"]["measures"] and not configs["graph"]["dimensions"]:
+            suggested_graph_measures, suggested_graph_dimensions, suggested_graph_type = self._suggested_analysis(
+                model=model,
+                view_type="graph",
+                action_id=int(action_id or 0),
+                view_id=int(view_id or 0),
+            )
         return {
             "ok": True,
             "data": {
@@ -1608,6 +1844,11 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
                 "graph_measures": configs["graph"]["measures"],
                 "graph_dimensions": configs["graph"]["dimensions"],
                 "graph_type": configs["graph"]["type"] or "bar",
+                "suggested_pivot_measures": suggested_pivot_measures,
+                "suggested_pivot_dimensions": suggested_pivot_dimensions,
+                "suggested_graph_measures": suggested_graph_measures,
+                "suggested_graph_dimensions": suggested_graph_dimensions,
+                "suggested_graph_type": suggested_graph_type or suggested_pivot_type or "bar",
                 "available_model_fields": self._available_model_fields(model),
                 "business_config_boundary": "business_contract",
                 "user_preference_boundary": "not_a_source",
@@ -1651,9 +1892,11 @@ class BusinessConfigAnalysisSetHandler(BusinessConfigListSearchSetHandler):
             return self._err(400, "缺少分析指标或维度配置", REASON_MISSING_PARAMS)
 
         model_fields = set(getattr(self.env[model], "_fields", {}) or {})
-        unknown = sorted(set(pivot_measures + pivot_dimensions + graph_measures + graph_dimensions) - model_fields)
+        business_fields = self._business_field_name_set(model)
+        valid_fields = business_fields or model_fields
+        unknown = sorted(set(pivot_measures + pivot_dimensions + graph_measures + graph_dimensions) - valid_fields)
         if unknown:
-            return self._err(400, "配置引用不存在字段：%s" % ", ".join(unknown), REASON_USER_ERROR)
+            return self._err(400, "配置引用不存在或不可用于低代码业务配置字段：%s" % ", ".join(unknown), REASON_USER_ERROR)
 
         saved = []
         try:
@@ -1756,6 +1999,12 @@ class BusinessConfigListSearchBootstrapHandler(BaseIntentHandler):
             "runtime_carrier": self.INTENT_TYPE,
             "personal_preference_boundary": "not_a_source",
         }
+
+    def _available_model_fields(self, model: str) -> list[dict]:
+        return _available_lowcode_model_fields(self.env, model)
+
+    def _business_field_name_set(self, model: str) -> set[str]:
+        return _lowcode_business_field_name_set(self.env, model)
 
     def _resolve_action_model(self, action_id: int) -> str:
         if not action_id or "ir.actions.act_window" not in self.env:
@@ -2067,6 +2316,35 @@ class BusinessConfigFormBootstrapHandler(BusinessConfigListSearchBootstrapHandle
         visit(value)
         return names
 
+    def _filter_layout_to_fields(self, value, allowed_fields: set[str]):
+        def clean(node):
+            if isinstance(node, list):
+                out = []
+                for child in node:
+                    cleaned = clean(child)
+                    if cleaned is None:
+                        continue
+                    if isinstance(cleaned, list):
+                        out.extend(cleaned)
+                    else:
+                        out.append(cleaned)
+                return out
+            if not isinstance(node, dict):
+                return node
+            node_type = str(node.get("type") or "").strip().lower()
+            field_name = str(node.get("name") or node.get("field") or "").strip()
+            if node_type == "field" and field_name and field_name not in allowed_fields:
+                return None
+            next_node = dict(node)
+            for child_key in ("children", "pages", "tabs", "nodes", "items"):
+                children = next_node.get(child_key)
+                if isinstance(children, list):
+                    next_node[child_key] = clean(children)
+            return next_node
+
+        cleaned = clean(value)
+        return cleaned if isinstance(cleaned, list) else []
+
     def _bootstrap_form_payload(self, *, model: str, action_id: int, view_id: int) -> dict:
         contract = self._runtime_view_contract(model=model, view_type="form", action_id=action_id, view_id=view_id)
         layout = contract.get("layout") if isinstance(contract.get("layout"), list) else []
@@ -2074,8 +2352,12 @@ class BusinessConfigFormBootstrapHandler(BusinessConfigListSearchBootstrapHandle
         model_fields = set(getattr(self.env[model], "_fields", {}) or {})
         if model_fields:
             field_names = [name for name in field_names if name in model_fields]
+        business_fields = self._business_field_name_set(model)
+        if business_fields:
+            field_names = [name for name in field_names if name in business_fields]
         if not field_names:
             raise ValidationError("当前表单视图没有可固化的字段布局")
+        layout = self._filter_layout_to_fields(layout, set(field_names)) if layout else []
         fields = [{"name": name, "sequence": (idx + 1) * 10} for idx, name in enumerate(field_names)]
         form_spec = {
             "fields": fields,
@@ -2189,7 +2471,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             return self._err(400, "缺少 name 或 model", REASON_MISSING_PARAMS)
         legacy_role_scope = _reject_legacy_role_group_scope(params)
         if legacy_role_scope:
-            return self._err(400, "%s 不属于业务配置契约作用域，请使用 role_key" % legacy_role_scope, REASON_USER_ERROR)
+            return self._err(400, "%s 不属于业务配置作用域，请使用 role_key" % legacy_role_scope, REASON_USER_ERROR)
         action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
         if invalid_field:
             return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
@@ -2353,7 +2635,7 @@ class BusinessConfigContractGetHandler(BaseIntentHandler):
             return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         rec = self.env["ui.business.config.contract"].search(domain, limit=1)
         if not rec:
-            return self._err(404, "未找到业务配置契约", REASON_NOT_FOUND)
+            return self._err(404, "未找到业务配置", REASON_NOT_FOUND)
         return {
             "ok": True,
             "data": {
@@ -2532,7 +2814,7 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
             return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         rec = self.env["ui.business.config.contract"].search(domain, limit=1)
         if not rec:
-            return self._err(404, "未找到业务配置契约", REASON_NOT_FOUND)
+            return self._err(404, "未找到业务配置", REASON_NOT_FOUND)
         rec.action_publish()
         return {
             "ok": True,
@@ -2589,7 +2871,7 @@ class BusinessConfigContractRollbackHandler(BaseIntentHandler):
             return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         rec = self.env["ui.business.config.contract"].search(domain, limit=1)
         if not rec:
-            return self._err(404, "未找到业务配置契约", REASON_NOT_FOUND)
+            return self._err(404, "未找到业务配置", REASON_NOT_FOUND)
         version_domain = [("contract_id", "=", rec.id)]
         version_limit = 2
         if target_version_no:
@@ -2605,9 +2887,10 @@ class BusinessConfigContractRollbackHandler(BaseIntentHandler):
         target = versions[0] if target_version_no else versions[1]
         rec.write({
             "contract_json": target.snapshot_json or {},
-            "status": "draft",
+            "status": "published",
             "version_no": int(target.version_no or rec.version_no or 1),
         })
+        rec.action_publish()
         return {
             "ok": True,
             "data": {

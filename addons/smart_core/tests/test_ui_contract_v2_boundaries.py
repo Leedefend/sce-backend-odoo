@@ -146,6 +146,72 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertEqual(trim_kwargs["max_actions"], 3)
         self.assertEqual(trim_kwargs["max_containers"], 2)
 
+    def test_form_orchestration_reorders_legacy_visible_widget_list(self):
+        class _Config:
+            contract_json = {
+                "view_orchestration": {
+                    "views": {
+                        "form": {
+                            "fields": [
+                                {"name": "legacy_visible_02", "sequence": 10},
+                                {"name": "legacy_visible_01", "sequence": 20},
+                            ]
+                        }
+                    }
+                }
+            }
+
+        class _ContractModel:
+            def _effective_view_orchestration_contracts(self, *args, **kwargs):
+                return [_Config()]
+
+        class _Env:
+            def __contains__(self, key):
+                return key == "ui.business.config.contract"
+
+            def __getitem__(self, key):
+                if key == "ui.business.config.contract":
+                    return _ContractModel()
+                raise KeyError(key)
+
+        handler = self.module.UiContractV2Handler(env=_Env())
+        contract = {
+            "layoutContract": {
+                "containerTree": [
+                    {
+                        "type": "header",
+                        "widgetList": [],
+                        "children": [],
+                    }
+                ]
+            }
+        }
+        source = {
+            "model": "project.material.plan",
+            "action_id": 525,
+            "list_profile": {
+                "columns": ["legacy_visible_01", "legacy_visible_02", "legacy_visible_03"],
+                "column_labels": {
+                    "legacy_visible_01": "单据状态",
+                    "legacy_visible_02": "单据编号",
+                    "legacy_visible_03": "单据日期",
+                },
+            },
+            "fields": {
+                "legacy_visible_01": {"type": "char"},
+                "legacy_visible_02": {"type": "char"},
+                "legacy_visible_03": {"type": "char"},
+            },
+        }
+
+        handler._apply_legacy_visible_list_layout(contract, source)
+
+        widgets = contract["layoutContract"]["containerTree"][0]["widgetList"]
+        self.assertEqual(
+            [widget["fieldCode"] for widget in widgets],
+            ["legacy_visible_02", "legacy_visible_01", "legacy_visible_03"],
+        )
+
     def test_scene_contract_rejects_invalid_trim_limit(self):
         handler = self.module.UiContractV2Handler(env=object())
 
@@ -293,7 +359,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         )
 
         profile_columns = source_contract["list_profile"]["columns"]
-        self.assertEqual(len(profile_columns), 24)
+        self.assertEqual(len(profile_columns), 31)
         self.assertIn("operation_strategy", profile_columns)
         self.assertIn("entry_user_text", profile_columns)
         self.assertIn("entry_time", profile_columns)

@@ -11,18 +11,15 @@
           v-for="field in fields"
           :key="field.key"
           :class="fieldClass(field)"
-          :draggable="fieldOrderEditable"
           :tabindex="fieldSelectionMode ? 0 : undefined"
           :role="fieldSelectionMode ? 'button' : undefined"
           :aria-pressed="fieldSelectionMode ? selectedFieldKey === fieldIdentity(field) : undefined"
           @click.capture="emitFieldSelect(field, $event)"
           @keydown.enter="emitFieldSelect(field, $event)"
           @keydown.space="emitFieldSelect(field, $event)"
-          @dragstart="emitFieldOrderDragStart(field, $event)"
           @dragover.prevent="emitFieldOrderDragOver(field)"
           @dragleave="emitFieldOrderDragLeave(field)"
           @drop.prevent="emitFieldOrderDrop(field)"
-          @dragend="emitFieldOrderDragEnd(field)"
         >
           <div class="field-label-row">
             <label v-if="!fieldConfigEditable" class="label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
@@ -37,7 +34,16 @@
             />
             <div v-if="fieldOrderEditable || fieldActionsFor(field).length" class="field-inline-config">
               <div v-if="fieldOrderEditable" class="field-order-inline-tools" :aria-label="`${field.label}字段排序`">
-                <span class="field-order-handle" aria-hidden="true" title="按住字段拖动调整顺序">⋮⋮</span>
+                <span
+                  class="field-order-handle"
+                  role="button"
+                  tabindex="0"
+                  :draggable="fieldOrderEditable"
+                  :aria-label="`拖动${field.label}调整顺序`"
+                  title="按住拖动调整顺序"
+                  @dragstart.stop="emitFieldOrderDragStart(field, $event)"
+                  @dragend.stop="emitFieldOrderDragEnd(field)"
+                >⋮⋮</span>
                 <button
                   class="field-order-btn"
                   type="button"
@@ -611,8 +617,15 @@ function emitFieldAddAfter(field: FormSectionFieldSchema) {
   emit('field-add-after', { field, groupTitle: props.fieldGroupTitle || '' });
 }
 
+function isInteractiveFieldTarget(event?: Event) {
+  const target = event?.target;
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest('button, input, select, textarea, a, .field-inline-config, .field-control-row'));
+}
+
 function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   if (!props.fieldSelectionMode) return;
+  if (isInteractiveFieldTarget(event)) return;
   event?.preventDefault();
   event?.stopPropagation();
   emit('field-select', { field, groupTitle: props.fieldGroupTitle || '' });
@@ -684,12 +697,8 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 .field--order-editable {
   padding: 6px;
   margin: -6px;
-  cursor: grab;
+  cursor: default;
   background: color-mix(in srgb, var(--sc-app-info-bg) 42%, transparent);
-}
-
-.field--order-editable:active {
-  cursor: grabbing;
 }
 
 .field--order-dragging {

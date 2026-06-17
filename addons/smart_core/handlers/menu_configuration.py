@@ -488,7 +488,7 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
 
 class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
     INTENT_TYPE = "ui.menu_config.audit"
-    DESCRIPTION = "审计当前公司和用户组命中的菜单配置"
+    DESCRIPTION = "审计当前公司和业务角色命中的菜单配置"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]
     ACL_MODE = "explicit_check"
@@ -601,7 +601,7 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
 
 class MenuConfigurationRollbackHandler(MenuConfigurationLoadHandler):
     INTENT_TYPE = "ui.menu_config.rollback"
-    DESCRIPTION = "按菜单配置契约版本恢复菜单运行时 policy"
+    DESCRIPTION = "按菜单配置版本恢复菜单运行时 policy"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]
     ACL_MODE = "explicit_check"
@@ -707,14 +707,14 @@ class MenuConfigurationRollbackHandler(MenuConfigurationLoadHandler):
         version_no = _to_int(params.get("version_no") or params.get("versionNo"))
         contract = self._contract_for_company(company_id)
         if not contract:
-            return self._err(404, "未找到菜单配置契约", "NOT_FOUND")
+            return self._err(404, "未找到菜单配置", "NOT_FOUND")
         target = self._target_version(contract, version_no)
         if not target:
             return self._err(400, "无可回滚的菜单配置版本")
         snapshot = target.snapshot_json or {}
         rows = _menu_orchestration_policies(snapshot)
         if not rows:
-            return self._err(400, "目标版本不是 menu_orchestration.v1 菜单配置契约")
+            return self._err(400, "目标版本不是可恢复的菜单配置")
         restored = self._restore_policy_rows(company_id, snapshot)
         contract.write({
             "contract_json": snapshot,
@@ -746,7 +746,7 @@ class MenuConfigurationRollbackHandler(MenuConfigurationLoadHandler):
 
 class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
     INTENT_TYPE = "ui.menu_config.versions"
-    DESCRIPTION = "读取菜单配置契约版本列表和摘要"
+    DESCRIPTION = "读取菜单配置版本列表和摘要"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]
     ACL_MODE = "explicit_check"
