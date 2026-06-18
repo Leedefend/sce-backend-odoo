@@ -196,7 +196,9 @@ def xml_id_for_model(model: str) -> str:
 def build_record_xml(model: str, field_names: list[str], sequence: int) -> str:
     fields = [{"name": name, "sequence": (index + 1) * 10} for index, name in enumerate(field_names)]
     payload = {"view_orchestration": {"views": {"form": {"fields": fields}}}}
-    eval_payload = quoteattr(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    # Odoo XML ``eval`` uses Python safe_eval, not JSON parsing.  Keep this as a
+    # Python literal so booleans are emitted as True/False instead of true/false.
+    eval_payload = quoteattr(repr(payload))
     xml_id = escape(xml_id_for_model(model))
     name = escape(f"{model.replace('.', '_')}_form_structure_generated_v1")
     priority = 60 + sequence

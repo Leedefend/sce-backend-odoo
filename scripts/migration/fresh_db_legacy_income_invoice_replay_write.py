@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import csv
 from pathlib import Path
 
 
@@ -32,10 +33,17 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
 
 
 def bulk_load(csv_path: Path, temp_table: str, columns: list[str]) -> None:
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.reader(handle)
+        header = next(reader)
+    unknown_columns = sorted(set(header) - set(columns))
+    if unknown_columns:
+        raise RuntimeError({"unexpected_income_invoice_payload_columns": unknown_columns})
+
     env.cr.execute(f"DROP TABLE IF EXISTS {temp_table}")  # noqa: F821
     env.cr.execute(f"CREATE TEMP TABLE {temp_table} ({', '.join(f'{col} text' for col in columns)}) ON COMMIT DROP")  # noqa: F821
     with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
-        env.cr.copy_expert(f"COPY {temp_table} ({', '.join(columns)}) FROM STDIN WITH CSV HEADER", handle)  # noqa: F821
+        env.cr.copy_expert(f"COPY {temp_table} ({', '.join(header)}) FROM STDIN WITH CSV HEADER", handle)  # noqa: F821
 
 
 REPO_ROOT = repo_root()

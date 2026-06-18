@@ -8,7 +8,6 @@ EXTRA_REQUIRED_REPLAY_ARTIFACTS = {
     # packaged replay but are not discoverable by the legacy direct regex.
     "artifacts/migration/fresh_db_project_anchor_replay_rollback_targets_v1.csv",
     "artifacts/migration/fresh_db_replay_manifest_v1.json",
-    "artifacts/migration/project_member_neutral_34_write_result_v1.json",
 }
 
 BASELINE_EXCLUDED_REQUIRED_ARTIFACTS = {
@@ -38,4 +37,7 @@ BASELINE_EXCLUDED_REQUIRED_ARTIFACTS = {
     "artifacts/migration/history_receipt_parent_recovery_adapter_result_v1.json",
     "artifacts/migration/history_receipt_parent_recovery_payload_v1.csv",
     "artifacts/migration/history_receipt_partner_targeted_replay_payload_v1.csv",
+    # Adapter-only bootstrap evidence. Packaged replay skips adapters and uses
+    # fresh_db_project_member_neutral_replay_payload_v1.csv directly.
+    "artifacts/migration/project_member_neutral_34_write_result_v1.json",
 }

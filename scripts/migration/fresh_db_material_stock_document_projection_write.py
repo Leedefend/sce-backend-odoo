@@ -69,6 +69,7 @@ RESULT_JSON = ARTIFACT_DIR / "fresh_db_material_stock_document_projection_write_
 
 uid = env.uid  # noqa: F821
 company_id = env.company.id  # noqa: F821
+currency_id = (env.ref("base.CNY", raise_if_not_found=False) or env.company.currency_id).id  # noqa: F821
 MaterialLine = env["sc.material.inbound.line"].sudo()  # noqa: F821
 
 product_id = MaterialLine._sc_default_product_id()
@@ -141,6 +142,7 @@ env.cr.execute(  # noqa: F821
         f.document_no,
         f.project_id,
         p.company_id,
+        COALESCE(rc.currency_id, %s) AS currency_id,
         COALESCE(f.document_date, f.created_time)::date AS business_date,
         f.qty AS material_qty,
         f.amount_total,
@@ -150,6 +152,7 @@ env.cr.execute(  # noqa: F821
         f.note
       FROM sc_legacy_material_stock_fact f
       JOIN project_project p ON p.id = f.project_id
+      LEFT JOIN res_company rc ON rc.id = p.company_id
       WHERE f.active IS TRUE
         AND f.fact_type IN ('stock_in', 'scbs_stock_in')
         AND f.project_id IS NOT NULL
@@ -163,7 +166,7 @@ env.cr.execute(  # noqa: F821
         warehouse_id = %s,
         dest_location_id = %s,
         keeper_id = %s,
-        currency_id = rc.currency_id,
+        currency_id = source.currency_id,
         operation_strategy = p.operation_strategy,
         note = CONCAT_WS(
           E'\n',
@@ -202,7 +205,7 @@ env.cr.execute(  # noqa: F821
         %s,
         %s,
         %s,
-        rc.currency_id,
+        source.currency_id,
         p.operation_strategy,
         'draft',
         CONCAT_WS(
@@ -237,7 +240,7 @@ env.cr.execute(  # noqa: F821
     )
     SELECT (SELECT COUNT(*) FROM source), (SELECT COUNT(*) FROM inserted), (SELECT COUNT(*) FROM updated)
     """,
-    [warehouse_id, location_id, uid, uid, warehouse_id, location_id, uid, uid, uid],
+    [currency_id, warehouse_id, location_id, uid, uid, warehouse_id, location_id, uid, uid, uid],
 )
 inbound_source, inbound_created, inbound_updated = env.cr.fetchone()  # noqa: F821
 
@@ -402,6 +405,7 @@ env.cr.execute(  # noqa: F821
         f.document_no,
         f.project_id,
         p.company_id,
+        COALESCE(rc.currency_id, %s) AS currency_id,
         COALESCE(f.document_date, f.created_time)::date AS business_date,
         f.partner_name,
         f.department_name,
@@ -409,6 +413,7 @@ env.cr.execute(  # noqa: F821
         f.note
       FROM sc_legacy_material_stock_fact f
       JOIN project_project p ON p.id = f.project_id
+      LEFT JOIN res_company rc ON rc.id = p.company_id
       WHERE f.active IS TRUE
         AND f.fact_type = 'stock_out'
         AND f.project_id IS NOT NULL
@@ -422,6 +427,8 @@ env.cr.execute(  # noqa: F821
         warehouse_id = %s,
         source_location_id = %s,
         keeper_id = %s,
+        currency_id = source.currency_id,
+        outbound_type = 'issue',
         purpose = NULLIF(source.note, ''),
         note = CONCAT_WS(
           E'\n',
@@ -445,7 +452,7 @@ env.cr.execute(  # noqa: F821
     inserted AS (
       INSERT INTO sc_material_outbound (
         name, project_id, outbound_date, warehouse_id, source_location_id, keeper_id,
-        state, purpose, note,
+        currency_id, outbound_type, state, purpose, note,
         legacy_fact_model, legacy_fact_id, legacy_fact_type,
         sc_has_system_default, sc_system_default_fields, sc_system_default_note,
         create_uid, create_date, write_uid, write_date
@@ -457,6 +464,8 @@ env.cr.execute(  # noqa: F821
         %s,
         %s,
         %s,
+        source.currency_id,
+        'issue',
         'draft',
         NULLIF(source.note, ''),
         CONCAT_WS(
@@ -488,7 +497,7 @@ env.cr.execute(  # noqa: F821
     )
     SELECT (SELECT COUNT(*) FROM source), (SELECT COUNT(*) FROM inserted), (SELECT COUNT(*) FROM updated)
     """,
-    [warehouse_id, location_id, uid, uid, warehouse_id, location_id, uid, uid, uid],
+    [currency_id, warehouse_id, location_id, uid, uid, warehouse_id, location_id, uid, uid, uid],
 )
 outbound_source, outbound_created, outbound_updated = env.cr.fetchone()  # noqa: F821
 

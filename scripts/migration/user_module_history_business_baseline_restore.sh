@@ -47,7 +47,13 @@ if [[ "$APPLY" != "1" ]]; then
 fi
 
 HISTORY_CONTINUITY_MODE=replay run_make history.continuity.replay
+run_make migration.assets.scbsly_direct_project_direct_acceptance_replay.write
+run_make direct_acceptance.construction_contract.income_execution.write
+run_make joint_acceptance.contract.income_execution.write
+run_make income_contract.settlement_surface.write
+run_make direct_acceptance.engineering_settlement.income_projection.write
+run_make prod.sim.partner.semantic.normalize.write
 run_make history.business.usable.init
-run_make verify.user_module.data_baseline.runtime_audit
+USER_MODULE_DATA_BASELINE_REQUIRE_BUSINESS_ROWS=1 run_make verify.user_module.data_baseline.runtime_audit
 
 echo "[user_module.history_business_baseline] PASS db=${DB_NAME} artifact_root=${ARTIFACT_ROOT}"

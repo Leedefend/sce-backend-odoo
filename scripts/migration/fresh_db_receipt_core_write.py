@@ -37,7 +37,7 @@ OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_receipt_core_write_result_v1.json"
 ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_rollback_targets_v1.csv"
 PRE_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_pre_write_snapshot_v1.csv"
 POST_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_post_write_snapshot_v1.csv"
-EXPECTED_ROWS = int(os.getenv("FRESH_DB_RECEIPT_CORE_EXPECTED_ROWS", "1480"))
+ASSET_MANIFEST = REPO_ROOT / "migration_assets/manifest/receipt_asset_manifest_v1.json"
 MIGRATION_MARKER = "[migration:receipt_core]"
 LEGACY_SOURCE_TABLE_DELETED = "C_JFHKLR_DELETED"
 LEGACY_SOURCE_TABLE_ROUTED_OUT = "C_JFHKLR_ROUTED_OUT"
@@ -76,6 +76,16 @@ def clean(value: object) -> str:
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return [dict(row) for row in csv.DictReader(handle)]
+
+
+def expected_rows() -> int:
+    override = os.getenv("FRESH_DB_RECEIPT_CORE_EXPECTED_ROWS")
+    if override:
+        return int(override)
+    if ASSET_MANIFEST.exists():
+        manifest = json.loads(ASSET_MANIFEST.read_text(encoding="utf-8"))
+        return int((manifest.get("counts") or {}).get("loadable_records") or 0)
+    return 1480
 
 
 def field_map(record: ET.Element) -> dict[str, str]:
@@ -321,6 +331,7 @@ Contract = env["construction.contract"].sudo()  # noqa: F821
 Partner = env["res.partner"].sudo()  # noqa: F821
 
 rows = read_csv(PAYLOAD_CSV) if PAYLOAD_CSV.exists() else load_asset_rows(ASSET_XML)
+EXPECTED_ROWS = expected_rows()
 source_input_rows = len(rows)
 deleted_receipt_ids = raw_deleted_receipt_ids()
 discarded_deleted_rows = [

@@ -714,10 +714,10 @@
         <field name="name">支付申请</field>
         <field name="res_model">payment.request</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" ref="smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree"/>
-        <field name="views" eval="[(ref('smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree'), 'tree'), (ref('smart_construction_core.view_payment_request_form'), 'form')]"/>
+        <field name="view_id" ref="smart_construction_core.view_payment_request_tree"/>
+        <field name="views" eval="[(ref('smart_construction_core.view_payment_request_tree'), 'tree'), (ref('smart_construction_core.view_payment_request_form'), 'form')]"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree')}),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_payment_request_tree')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_payment_request_form')})
         ]"/>
         <field name="search_view_id" ref="smart_construction_core.view_payment_request_search"/>

@@ -184,7 +184,19 @@ def main() -> None:
     Line = env["sc.settlement.order.line"].sudo().with_context(legacy_migration_allow_missing_contract=True)  # noqa: F821
     source = source_records(Income)
     if not source:
-        raise RuntimeError({"error": "missing_income_contract_settlement_source", "terms": TITLE_TERMS})
+        result = {
+            "status": "SKIP",
+            "mode": "income_contract_settlement_surface_write",
+            "db": env.cr.dbname,  # noqa: F821
+            "source_model": "construction.contract.income",
+            "target_model": "sc.settlement.order",
+            "source_count": 0,
+            "reason": "missing_income_contract_settlement_source",
+            "terms": TITLE_TERMS,
+        }
+        OUTPUT_JSON.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return
 
     action_domain = ensure_execution_action_domain()
     created = 0

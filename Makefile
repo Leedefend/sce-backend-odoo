@@ -1308,7 +1308,7 @@ migration.assets.delivery_audit: guard.prod.forbid check-compose-project check-c
 user_module.history_business_baseline.restore: guard.prod.forbid check-compose-project check-compose-env
 	@DB_NAME="$(DB_NAME)" MIGRATION_ASSET_ROOT="$(MIGRATION_ASSET_ROOT)" MIGRATION_ASSET_LOCK="$(MIGRATION_ASSET_LOCK)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/migration/user_module_history_business_baseline_restore.sh
 
-.PHONY: migration.assets.user_acceptance_manifest_guard migration.assets.user_acceptance_manifest_guard.evidence migration.assets.user_acceptance_online_probe migration.assets.user_acceptance_browser_field_guard migration.assets.scbs_55_browser_full_visible_data_coverage migration.assets.scbsly_direct_project_menu_probe migration.assets.scbsly_direct_project_new_system_alignment_probe migration.assets.scbsly_direct_project_browser_menu_acceptance migration.assets.scbsly_direct_project_gap_matrix migration.assets.scbsly_direct_project_old_row_dump migration.assets.scbsly_direct_project_old_identity_lock migration.assets.scbsly_direct_project_replay_carrier_plan migration.assets.scbsly_direct_project_fuel_replay.write migration.assets.scbsly_direct_project_engineering_progress_replay.write migration.assets.scbsly_direct_project_rental_return_replay.write migration.assets.user_acceptance_replay.write migration.assets.live_old_system_business_data_strict_parity_gate verify.online_visible_surface.strict migration.assets.full_inventory migration.assets.replay_payload_gap_report migration.assets.payload_promotion_queue migration.assets.delivery_replay_requirement_lock migration.assets.full_scope_guard migration.assets.full_scope_refresh migration.assets.release_package migration.assets.release_package.verify
+.PHONY: migration.assets.user_acceptance_manifest_guard migration.assets.user_acceptance_manifest_guard.evidence migration.assets.user_acceptance_online_probe migration.assets.user_acceptance_browser_field_guard migration.assets.scbs_55_browser_full_visible_data_coverage migration.assets.scbsly_direct_project_menu_probe migration.assets.scbsly_direct_project_new_system_alignment_probe migration.assets.scbsly_direct_project_browser_menu_acceptance migration.assets.scbsly_direct_project_gap_matrix migration.assets.scbsly_direct_project_old_row_dump migration.assets.scbsly_direct_project_old_identity_lock migration.assets.scbsly_direct_project_replay_carrier_plan migration.assets.scbsly_direct_project_direct_acceptance_replay.write migration.assets.scbsly_direct_project_fuel_replay.write migration.assets.scbsly_direct_project_engineering_progress_replay.write migration.assets.scbsly_direct_project_rental_return_replay.write migration.assets.user_acceptance_replay.write migration.assets.live_old_system_business_data_strict_parity_gate verify.online_visible_surface.strict migration.assets.full_inventory migration.assets.replay_payload_gap_report migration.assets.payload_promotion_queue migration.assets.delivery_replay_requirement_lock migration.assets.full_scope_guard migration.assets.full_scope_refresh migration.assets.release_package migration.assets.release_package.verify
 migration.assets.user_acceptance_manifest_guard: guard.prod.forbid
 	@python3 scripts/verify/scbs55_user_acceptance_asset_manifest_guard.py
 
@@ -1344,6 +1344,9 @@ migration.assets.scbsly_direct_project_old_identity_lock: guard.prod.forbid
 
 migration.assets.scbsly_direct_project_replay_carrier_plan: guard.prod.forbid
 	@python3 scripts/verify/scbsly_direct_project_replay_carrier_plan.py
+
+migration.assets.scbsly_direct_project_direct_acceptance_replay.write: guard.prod.forbid
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" MIGRATION_SCBSLY_OLD_ROWS_DIR="$${MIGRATION_SCBSLY_OLD_ROWS_DIR:-$${SCBSLY_OLD_ROWS_DIR:-/mnt/artifacts/migration/live_old_system_strict_parity_gate/20260601T130457Z/scbsly_direct_project_old_rows}}" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/scbsly_direct_project_direct_acceptance_replay.py
 
 migration.assets.scbsly_direct_project_fuel_replay.write: guard.prod.forbid
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" MIGRATION_SCBSLY_OLD_ROWS_DIR="$${MIGRATION_SCBSLY_OLD_ROWS_DIR:-$${SCBSLY_OLD_ROWS_DIR:-/tmp/scbsly_direct_project_old_pages_20260530}}" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/scbsly_direct_project_fuel_card_replay.py
@@ -4349,7 +4352,9 @@ verify.docs.product_boundary: guard.prod.forbid
 .PHONY: verify.user_module.product_boundary
 verify.user_module.product_boundary: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/user_module_product_boundary_guard.py
+	@python3 -m py_compile scripts/verify/user_module_data_rebaseline_contract_guard.py
 	@python3 scripts/verify/user_module_product_boundary_guard.py
+	@python3 scripts/verify/user_module_data_rebaseline_contract_guard.py
 
 .PHONY: verify.user_module.data_baseline.runtime_audit
 verify.user_module.data_baseline.runtime_audit: guard.prod.forbid check-compose-project check-compose-env verify.user_module.product_boundary

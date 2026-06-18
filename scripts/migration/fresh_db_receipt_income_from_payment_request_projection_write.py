@@ -15,7 +15,7 @@ def resolve_repo_root() -> Path:
     candidates = [Path(env_root)] if env_root else []
     candidates.extend([Path("/mnt"), Path.cwd()])
     for candidate in candidates:
-        if (candidate / "addons/smart_construction_core").exists():
+        if (candidate / "addons/smart_construction_core").exists() or (candidate / "tmp/raw/receipt/receipt.csv").exists():
             return candidate
     return Path.cwd()
 

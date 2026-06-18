@@ -12,6 +12,9 @@ from psycopg2 import sql
 
 
 INCLUDE_PREFIXES = ("sc.", "project.", "construction.", "payment.", "tender.")
+EXCLUDE_MODELS = {
+    "sc.business.category",
+}
 EXCLUDE_PREFIXES = (
     "sc.legacy.",
     "sc.scene",
@@ -113,12 +116,12 @@ def collect_user_models():
     Action = env["ir.actions.act_window"].sudo()  # noqa: F821
     for action in Action.search([("res_model", "!=", False)]):
         model = action.res_model
-        if model and model.startswith(INCLUDE_PREFIXES) and not model.startswith(EXCLUDE_PREFIXES):
+        if model and model not in EXCLUDE_MODELS and model.startswith(INCLUDE_PREFIXES) and not model.startswith(EXCLUDE_PREFIXES):
             user_models.add(model)
     View = env["ir.ui.view"].sudo()  # noqa: F821
     for view in View.search([("model", "!=", False), ("type", "in", ["tree", "form"])]):
         model = view.model
-        if model and model.startswith(INCLUDE_PREFIXES) and not model.startswith(EXCLUDE_PREFIXES):
+        if model and model not in EXCLUDE_MODELS and model.startswith(INCLUDE_PREFIXES) and not model.startswith(EXCLUDE_PREFIXES):
             user_models.add(model)
     return sorted(user_models)
 

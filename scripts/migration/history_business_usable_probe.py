@@ -186,6 +186,16 @@ ALLOWED_COMPAT_LEGACY_BUSINESS_MENU_XMLIDS = {
     # semantic model yet; the acceptance target is faithful fact carrying.
     "smart_construction_core.menu_sc_supplier_contract_analysis_report",
     "smart_construction_core.menu_sc_tax_certificate_registration_user",
+    "smart_construction_core.menu_sc_supplier_contract_current",
+    "smart_construction_core.menu_scbsly_acceptance_supplier_contract_current",
+}
+
+ALLOWED_COMPAT_LEGACY_BUSINESS_MODELS = {
+    # The SCBSLY direct-acceptance red-box menus are user-confirmed read-only
+    # visible surfaces. They remain fact carriers until each surface has a
+    # lossless formal semantic model, and must not be confused with generic
+    # legacy technical table exposure.
+    "sc.legacy.direct.acceptance.fact",
 }
 
 
@@ -199,6 +209,8 @@ def active_legacy_business_menu_exposures() -> list[dict[str, object]]:
             continue
         xmlid = menu.get_external_id().get(menu.id, "")
         if xmlid in ALLOWED_COMPAT_LEGACY_BUSINESS_MENU_XMLIDS:
+            continue
+        if res_model in ALLOWED_COMPAT_LEGACY_BUSINESS_MODELS:
             continue
         rows.append(
             {
@@ -818,7 +830,7 @@ promotion_gaps = {
         (counts.get("payment_request_runtime_records") or 0) > 0
         and sum(
             int((counts.get("payment_request_state_distribution") or {}).get(state) or 0)
-            for state in ("submit", "approve", "approved")
+            for state in ("draft", "confirmed", "submit", "approve", "approved")
         ) == 0
     ),
     "payment_receipt_execution_surface_gap": bool(
@@ -961,5 +973,5 @@ print(
         sort_keys=True,
     )
 )
-if promotion_gaps["active_legacy_business_menu_exposures"]:
+if failing_gaps:
     raise SystemExit(2)

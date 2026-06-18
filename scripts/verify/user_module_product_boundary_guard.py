@@ -23,6 +23,9 @@ MODELS_INIT = MODULE / "models/__init__.py"
 USER_DATA_BASELINE_XML = MODULE / "data/user_data_baseline.xml"
 LEGACY_USER_MASTER_XML = MODULE / "data/user_master_v1.xml"
 HISTORY_BUSINESS_BASELINE_MANIFEST = MODULE / "data/user_history_business_data_baseline_manifest_v1.json"
+USER_DATA_REBASELINE_SOURCE_MANIFEST = MODULE / "data/user_data_rebaseline_source_manifest_v1.json"
+USER_DATA_REBASELINE_REPLAY_PREFLIGHT = MODULE / "data/user_data_rebaseline_replay_asset_preflight_v1.json"
+USER_MODULE_DATA_BASELINE_CONTRACT = MODULE / "data/user_module_data_baseline_contract_v1.json"
 USER_PREFERENCES_XML = MODULE / "data/user_preferences.xml"
 BUSINESS_CAPABILITY_BASELINE = ROOT / "docs/product/business_capability_productization_baseline_v1.json"
 MIGRATION_ASSET_PACKAGE_LOCK = ROOT / "docs/migration_alignment/migration_asset_package_lock_v1.json"
@@ -211,6 +214,93 @@ def verify_history_business_data_baseline_manifest() -> list[str]:
     return failures
 
 
+def verify_user_data_rebaseline_contract() -> list[str]:
+    failures: list[str] = []
+    for path in [
+        USER_DATA_REBASELINE_SOURCE_MANIFEST,
+        USER_DATA_REBASELINE_REPLAY_PREFLIGHT,
+        USER_MODULE_DATA_BASELINE_CONTRACT,
+    ]:
+        if not path.exists():
+            failures.append(f"user module must carry {path.relative_to(MODULE).as_posix()}")
+    if failures:
+        return failures
+
+    source = json.loads(USER_DATA_REBASELINE_SOURCE_MANIFEST.read_text(encoding="utf-8"))
+    preflight = json.loads(USER_DATA_REBASELINE_REPLAY_PREFLIGHT.read_text(encoding="utf-8"))
+    contract = json.loads(USER_MODULE_DATA_BASELINE_CONTRACT.read_text(encoding="utf-8"))
+
+    if source.get("status") != "PASS":
+        failures.append("rebaseline source manifest must be PASS")
+    policy = source.get("policy") if isinstance(source.get("policy"), dict) else {}
+    if policy.get("attachment_policy") != "link_only_until_prod_attachment_ready":
+        failures.append("rebaseline source manifest must keep link-only attachment policy")
+    forbidden_inputs = set(policy.get("forbidden_inputs") or [])
+    for required in ["obsolete_20260513_release_package", "manual_development_database_residue"]:
+        if required not in forbidden_inputs:
+            failures.append(f"rebaseline source manifest must forbid {required}")
+
+    online_sources = source.get("online_sources") if isinstance(source.get("online_sources"), dict) else {}
+    scbs55 = online_sources.get("scbs55") if isinstance(online_sources.get("scbs55"), dict) else {}
+    scbsly = online_sources.get("scbsly_v2") if isinstance(online_sources.get("scbsly_v2"), dict) else {}
+    if int(scbs55.get("surface_count") or 0) != 42:
+        failures.append("SCBS55 source must keep 42 locked surfaces")
+    if int(scbs55.get("total_row_count") or 0) < 140000:
+        failures.append("SCBS55 source rows are below locked baseline")
+    if int(scbsly.get("surface_count") or 0) != 32:
+        failures.append("SCBSLY_V2 source must keep 32 locked surfaces")
+    if int(scbsly.get("total_row_count") or 0) < 76000:
+        failures.append("SCBSLY_V2 source rows are below locked baseline")
+
+    structured_sources = source.get("structured_db_sources")
+    structured_sources = structured_sources if isinstance(structured_sources, dict) else {}
+    legacy_counts = structured_sources.get("legacy_counts") if isinstance(structured_sources.get("legacy_counts"), list) else []
+    if len(legacy_counts) < 9:
+        failures.append("rebaseline source manifest must include core legacy MSSQL counts")
+
+    if preflight.get("status") != "PASS":
+        failures.append("rebaseline replay asset preflight must be PASS")
+    checks = preflight.get("checks") if isinstance(preflight.get("checks"), dict) else {}
+    history_payloads = checks.get("history_payloads") if isinstance(checks.get("history_payloads"), dict) else {}
+    if int(history_payloads.get("present") or 0) != 52 or int(history_payloads.get("required") or 0) != 52:
+        failures.append("rebaseline replay preflight must lock history payloads at 52/52")
+    core_assets = checks.get("core_replay_assets") if isinstance(checks.get("core_replay_assets"), list) else []
+    if len(core_assets) != 7 or any(not item.get("exists") for item in core_assets if isinstance(item, dict)):
+        failures.append("rebaseline replay preflight must lock core replay assets at 7/7")
+    for key, expected in [("scbs55", 42), ("scbsly_v2", 32)]:
+        link_check = checks.get(f"stable_online_dump_links_{key}")
+        link_check = link_check if isinstance(link_check, dict) else {}
+        if int(link_check.get("entries") or 0) != expected:
+            failures.append(f"rebaseline replay preflight must lock {key} stable links at {expected}/{expected}")
+        if link_check.get("broken_links"):
+            failures.append(f"rebaseline replay preflight must not contain broken {key} links")
+
+    if contract.get("version") != "user_module_data_baseline_contract.v1":
+        failures.append("user module data baseline contract version mismatch")
+    if contract.get("status") != "READY_FOR_USER_MODULE_PACKAGING":
+        failures.append("user module data baseline contract must be ready for packaging")
+    boundary = contract.get("module_boundary") if isinstance(contract.get("module_boundary"), dict) else {}
+    if boundary.get("target_module") != "smart_construction_custom":
+        failures.append("user module data baseline contract must target smart_construction_custom")
+    attachment_policy = contract.get("attachment_policy") if isinstance(contract.get("attachment_policy"), dict) else {}
+    if attachment_policy.get("mode") != "link_only":
+        failures.append("user module data baseline contract must keep attachment policy link_only")
+    standard = contract.get("installation_standard") if isinstance(contract.get("installation_standard"), dict) else {}
+    acceptance = standard.get("fresh_database_acceptance") or []
+    for required in [
+        "source manifest status PASS",
+        "replay asset preflight PASS",
+        "SCBS55 online rows linked 42/42",
+        "SCBSLY_V2 online rows linked 32/32",
+        "history payloads present 52/52",
+        "core replay assets present 7/7",
+        "attachments remain link-only until production attachment source is prepared",
+    ]:
+        if required not in acceptance:
+            failures.append(f"user module data baseline contract missing acceptance: {required}")
+    return failures
+
+
 def verify_xml_boundary() -> list[str]:
     failures: list[str] = []
     if not USER_DATA_BASELINE_XML.exists():
@@ -301,6 +391,8 @@ def verify_user_data_baseline_boundary() -> list[str]:
         "apply_legacy_user_master_data_baseline",
         "apply_partner_business_data_baseline",
         "apply_history_business_data_baseline_manifest",
+        "apply_user_data_rebaseline_contract",
+        "_load_user_data_baseline_json",
         "_find_existing_legacy_user",
         "_ensure_user_baseline_xmlid",
     }
@@ -314,6 +406,7 @@ def verify_user_data_baseline_boundary() -> list[str]:
         "apply_legacy_user_master_data_baseline",
         "apply_partner_business_data_baseline",
         "apply_history_business_data_baseline_manifest",
+        "apply_user_data_rebaseline_contract",
     ]:
         if required not in calls:
             failures.append(f"apply_user_data_baseline must call {required}")
@@ -327,6 +420,9 @@ def verify_user_data_baseline_boundary() -> list[str]:
         "demote_no_fact=False",
         "locked_user_visible_business_surface",
         "not_complete_if_only_legacy_asset_catalog",
+        "USER_DATA_REBASELINE_SOURCE_MANIFEST",
+        "history_payloads_must_be_52_of_52",
+        "contract_attachment_policy_must_be_link_only",
     ]
     for snippet in required_snippets:
         if snippet not in source:
@@ -368,6 +464,7 @@ def main() -> int:
     failures = (
         verify_manifest_boundary()
         + verify_history_business_data_baseline_manifest()
+        + verify_user_data_rebaseline_contract()
         + verify_xml_boundary()
         + verify_hook_boundary()
         + verify_partner_location_boundary()

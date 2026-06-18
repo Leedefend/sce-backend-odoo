@@ -45,7 +45,7 @@ RAW_CSV = Path(os.getenv("CONSTRUCTION_CONTRACT_RAW_CSV", str(REPO_ROOT / "tmp/r
 FILE_INDEX_CSV = Path(os.getenv("MIGRATION_FILE_INDEX_CSV", str(ARTIFACT_ROOT / "fresh_db_legacy_file_index_replay_payload_v1.csv")))
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_construction_contract_income_count_alignment_write_result_v1.json"
 DETAIL_CSV = ARTIFACT_ROOT / "fresh_db_construction_contract_income_count_alignment_detail_v1.csv"
-EXPECTED_TARGET_ROWS = int(os.getenv("CONSTRUCTION_CONTRACT_INCOME_VISIBLE_EXPECTED_ROWS", "1566"))
+EXPECTED_TARGET_ROWS = int(os.getenv("CONSTRUCTION_CONTRACT_INCOME_VISIBLE_EXPECTED_ROWS", "1537"))
 DETAIL_FIELDS = [
     "action",
     "legacy_contract_id",

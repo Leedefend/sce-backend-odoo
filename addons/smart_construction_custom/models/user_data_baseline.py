@@ -8,6 +8,9 @@ from odoo.tools.misc import file_path
 
 LEGACY_USER_MASTER_XML = "user_master_v1.xml"
 HISTORY_BUSINESS_BASELINE_MANIFEST = "user_history_business_data_baseline_manifest_v1.json"
+USER_DATA_REBASELINE_SOURCE_MANIFEST = "user_data_rebaseline_source_manifest_v1.json"
+USER_DATA_REBASELINE_REPLAY_PREFLIGHT = "user_data_rebaseline_replay_asset_preflight_v1.json"
+USER_MODULE_DATA_BASELINE_CONTRACT = "user_module_data_baseline_contract_v1.json"
 
 
 def _clean_text(value):
@@ -31,6 +34,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
             "legacy_users": self.apply_legacy_user_master_data_baseline(),
             "partner_business_data": self.apply_partner_business_data_baseline(),
             "history_business_data": self.apply_history_business_data_baseline_manifest(),
+            "rebaseline_contract": self.apply_user_data_rebaseline_contract(),
         }
         self.env["ir.config_parameter"].sudo().set_param(
             "sc.custom.user_data_baseline_summary",
@@ -59,6 +63,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
         reused_by_login = 0
         bound_xmlids = 0
         skipped = 0
+        inactive_applied = 0
         for node in root.findall(".//record"):
             if node.attrib.get("model") != "res.users":
                 continue
@@ -75,10 +80,10 @@ class ScUserPreferenceInitialization(models.TransientModel):
                 continue
 
             user = self._find_existing_legacy_user(Imd, User, xmlid_name, login)
+            desired_active = _bool_text(fields.get("active"))
             vals = {
                 "name": name,
                 "login": login,
-                "active": _bool_text(fields.get("active")),
             }
             email = _clean_text(fields.get("email"))
             if email:
@@ -94,6 +99,10 @@ class ScUserPreferenceInitialization(models.TransientModel):
                 created += 1
             if self._ensure_user_baseline_xmlid(Imd, xmlid_name, user.id):
                 bound_xmlids += 1
+            if bool(user.active) != desired_active:
+                user.write({"active": desired_active})
+                if not desired_active:
+                    inactive_applied += 1
 
         return {
             "status": "PASS",
@@ -102,6 +111,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
             "updated": updated,
             "reused_by_login": reused_by_login,
             "bound_xmlids": bound_xmlids,
+            "inactive_applied": inactive_applied,
             "skipped": skipped,
         }
 
@@ -166,6 +176,102 @@ class ScUserPreferenceInitialization(models.TransientModel):
             "unavailable_targets": unavailable_targets,
             "errors": errors,
         }
+
+    @api.model
+    def apply_user_data_rebaseline_contract(self):
+        source_manifest = self._load_user_data_baseline_json(USER_DATA_REBASELINE_SOURCE_MANIFEST)
+        preflight = self._load_user_data_baseline_json(USER_DATA_REBASELINE_REPLAY_PREFLIGHT)
+        contract = self._load_user_data_baseline_json(USER_MODULE_DATA_BASELINE_CONTRACT)
+        errors = []
+
+        if source_manifest.get("status") != "PASS":
+            errors.append("source_manifest_must_be_pass")
+        policy = source_manifest.get("policy") if isinstance(source_manifest.get("policy"), dict) else {}
+        if policy.get("attachment_policy") != "link_only_until_prod_attachment_ready":
+            errors.append("source_attachment_policy_must_be_link_only_until_prod_attachment_ready")
+        forbidden_inputs = set(policy.get("forbidden_inputs") or [])
+        for forbidden in ("obsolete_20260513_release_package", "manual_development_database_residue"):
+            if forbidden not in forbidden_inputs:
+                errors.append("source_manifest_missing_forbidden_input_%s" % forbidden)
+
+        online_sources = source_manifest.get("online_sources") if isinstance(source_manifest.get("online_sources"), dict) else {}
+        scbs55 = online_sources.get("scbs55") if isinstance(online_sources.get("scbs55"), dict) else {}
+        scbsly = online_sources.get("scbsly_v2") if isinstance(online_sources.get("scbsly_v2"), dict) else {}
+        if int(scbs55.get("surface_count") or 0) != 42:
+            errors.append("scbs55_surface_count_must_be_42")
+        if int(scbs55.get("total_row_count") or 0) < 140000:
+            errors.append("scbs55_total_rows_too_small")
+        if int(scbsly.get("surface_count") or 0) != 32:
+            errors.append("scbsly_v2_surface_count_must_be_32")
+        if int(scbsly.get("total_row_count") or 0) < 76000:
+            errors.append("scbsly_v2_total_rows_too_small")
+
+        structured_sources = source_manifest.get("structured_db_sources")
+        structured_sources = structured_sources if isinstance(structured_sources, dict) else {}
+        legacy_counts = structured_sources.get("legacy_counts") if isinstance(structured_sources.get("legacy_counts"), list) else []
+        if len(legacy_counts) < 9:
+            errors.append("legacy_mssql_counts_must_include_core_tables")
+
+        if preflight.get("status") != "PASS":
+            errors.append("replay_asset_preflight_must_be_pass")
+        checks = preflight.get("checks") if isinstance(preflight.get("checks"), dict) else {}
+        history_payloads = checks.get("history_payloads") if isinstance(checks.get("history_payloads"), dict) else {}
+        if int(history_payloads.get("present") or 0) != 52 or int(history_payloads.get("required") or 0) != 52:
+            errors.append("history_payloads_must_be_52_of_52")
+        core_assets = checks.get("core_replay_assets") if isinstance(checks.get("core_replay_assets"), list) else []
+        if len(core_assets) != 7 or any(not item.get("exists") for item in core_assets if isinstance(item, dict)):
+            errors.append("core_replay_assets_must_be_7_of_7")
+        for source_key, expected_entries in (("scbs55", 42), ("scbsly_v2", 32)):
+            link_check = checks.get("stable_online_dump_links_%s" % source_key)
+            link_check = link_check if isinstance(link_check, dict) else {}
+            if int(link_check.get("entries") or 0) != expected_entries:
+                errors.append("stable_online_dump_links_%s_mismatch" % source_key)
+            if link_check.get("broken_links"):
+                errors.append("stable_online_dump_links_%s_has_broken_links" % source_key)
+
+        if contract.get("version") != "user_module_data_baseline_contract.v1":
+            errors.append("user_module_contract_version_mismatch")
+        if contract.get("status") != "READY_FOR_USER_MODULE_PACKAGING":
+            errors.append("user_module_contract_must_be_ready_for_packaging")
+        contract_attachment_policy = contract.get("attachment_policy")
+        contract_attachment_policy = contract_attachment_policy if isinstance(contract_attachment_policy, dict) else {}
+        if contract_attachment_policy.get("mode") != "link_only":
+            errors.append("contract_attachment_policy_must_be_link_only")
+        installation_standard = contract.get("installation_standard")
+        installation_standard = installation_standard if isinstance(installation_standard, dict) else {}
+        acceptance = installation_standard.get("fresh_database_acceptance") or []
+        for required in (
+            "source manifest status PASS",
+            "replay asset preflight PASS",
+            "history payloads present 52/52",
+            "attachments remain link-only until production attachment source is prepared",
+        ):
+            if required not in acceptance:
+                errors.append("fresh_database_acceptance_missing_%s" % required)
+
+        return {
+            "status": "PASS" if not errors else "FAIL",
+            "source_manifest": "smart_construction_custom/data/%s" % USER_DATA_REBASELINE_SOURCE_MANIFEST,
+            "replay_asset_preflight": "smart_construction_custom/data/%s" % USER_DATA_REBASELINE_REPLAY_PREFLIGHT,
+            "contract": "smart_construction_custom/data/%s" % USER_MODULE_DATA_BASELINE_CONTRACT,
+            "scbs55_surface_count": int(scbs55.get("surface_count") or 0),
+            "scbs55_total_row_count": int(scbs55.get("total_row_count") or 0),
+            "scbsly_v2_surface_count": int(scbsly.get("surface_count") or 0),
+            "scbsly_v2_total_row_count": int(scbsly.get("total_row_count") or 0),
+            "legacy_count_table_count": len(legacy_counts),
+            "history_payload_count": int(history_payloads.get("present") or 0),
+            "core_replay_asset_count": len(core_assets),
+            "attachment_policy": contract_attachment_policy.get("mode"),
+            "errors": errors,
+        }
+
+    @api.model
+    def _load_user_data_baseline_json(self, filename):
+        json_path = file_path("smart_construction_custom/data/%s" % filename)
+        if not json_path:
+            raise ValueError("missing user data baseline JSON: %s" % filename)
+        with open(json_path, encoding="utf-8") as handle:
+            return json.load(handle)
 
     @api.model
     def _find_existing_legacy_user(self, Imd, User, xmlid_name, login):

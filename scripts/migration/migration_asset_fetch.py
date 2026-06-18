@@ -91,6 +91,12 @@ def safe_members(tar: tarfile.TarFile) -> list[tarfile.TarInfo]:
             or str(target).startswith("artifacts/migration/")
             or member.name == "migration_asset_release_manifest_v1.json"
         )
+        # Newer release packages also carry replay scripts and Makefile as
+        # operator evidence. Fetch must materialize data only and must not
+        # overwrite the working tree runtime code.
+        deployment_runtime = member.name == "Makefile" or str(target).startswith("scripts/")
+        if deployment_runtime:
+            continue
         if not allowed:
             raise SystemExit(f"unexpected tar member: {member.name}")
         members.append(member)
@@ -104,9 +110,22 @@ def copy_tree(src: Path, dst: Path) -> int:
             continue
         target = dst / path.relative_to(src)
         target.parent.mkdir(parents=True, exist_ok=True)
+        if target.exists():
+            target.unlink()
         shutil.copy2(path, target)
         count += 1
     return count
+
+
+def clear_directory_contents(path: Path) -> None:
+    if not path.exists():
+        path.mkdir(parents=True, exist_ok=True)
+        return
+    for child in path.iterdir():
+        if child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
 
 
 def extract_package(package_path: Path, asset_root: Path, artifact_root: Path) -> dict[str, int]:
@@ -118,10 +137,9 @@ def extract_package(package_path: Path, asset_root: Path, artifact_root: Path) -
         extracted_assets = tmp_root / "migration_assets"
         if not extracted_assets.is_dir():
             raise SystemExit("package does not contain migration_assets/")
-        if asset_root.exists():
-            shutil.rmtree(asset_root)
         asset_root.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(extracted_assets), str(asset_root))
+        clear_directory_contents(asset_root)
+        copy_tree(extracted_assets, asset_root)
         (asset_root / "README.md").write_text(README_TEXT, encoding="utf-8")
 
         artifact_count = 0

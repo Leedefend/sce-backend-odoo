@@ -43,12 +43,13 @@ if allowlist and env.cr.dbname not in allowlist:  # noqa: F821
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_general_contract_projection_write_result_v1.json"
 currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
+company_id = env.company.id  # noqa: F821
 before = int(scalar("SELECT COUNT(*) FROM sc_general_contract") or 0)
 
 env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_general_contract (
-      name, source_origin, state, project_id, partner_name_text, credit_code,
+      name, source_origin, state, company_id, project_id, partner_name_text, credit_code,
       handler_id,
       contact_name, contact_phone, bank_name, bank_account, document_no,
       contract_no, contract_name, submitted_time, contract_type, contract_attribute,
@@ -66,6 +67,7 @@ env.cr.execute(  # noqa: F821
       COALESCE(NULLIF(f.document_no, ''), NULLIF(f.contract_no, ''), 'LEGACY-GENERAL-CONTRACT-' || f.legacy_record_id),
       'legacy',
       CASE WHEN COALESCE(f.document_state, '') = '2' THEN 'legacy_confirmed' ELSE 'draft' END,
+      COALESCE(project.company_id, %s),
       f.project_id,
       NULLIF(f.partner_name, ''),
       NULLIF(f.credit_code, ''),
@@ -147,6 +149,8 @@ env.cr.execute(  # noqa: F821
     LEFT JOIN sc_legacy_user_profile AS creator_profile
       ON creator_profile.legacy_user_id = f.creator_legacy_user_id
      AND creator_profile.user_id IS NOT NULL
+    LEFT JOIN project_project AS project
+      ON project.id = f.project_id
     WHERE f.active
       AND f.project_id IS NOT NULL
       AND GREATEST(COALESCE(f.total_amount, 0), 0) > 0
@@ -154,6 +158,7 @@ env.cr.execute(  # noqa: F821
     ON CONFLICT (legacy_source_model, legacy_record_id)
     DO UPDATE SET
       state = EXCLUDED.state,
+      company_id = EXCLUDED.company_id,
       project_id = EXCLUDED.project_id,
       partner_name_text = EXCLUDED.partner_name_text,
       credit_code = EXCLUDED.credit_code,
@@ -195,7 +200,7 @@ env.cr.execute(  # noqa: F821
       write_uid = 1,
       write_date = NOW()
     """,
-    [currency_id],
+    [company_id, currency_id],
 )
 
 env.cr.commit()  # noqa: F821

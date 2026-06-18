@@ -10,13 +10,13 @@
     "required_install_behavior": "installing/upgrading smart_construction_custom must replay user data baseline and publish this complete visible-surface contract summary"
   },
   "external_payload_lock": {
-    "materializes": "migration_assets/ and artifacts/migration/",
-    "package_id": "migration_assets_release_20260429T135959Z_baseline",
-    "package_size_bytes": 231163588,
+    "materializes": "migration_assets/ and artifacts/migration/; deployment runtime files in the package are evidence-only and must not overwrite the working tree",
+    "package_id": "migration_assets_release_20260618T104314Z",
+    "package_size_bytes": 634798244,
     "path": "docs/migration_alignment/migration_asset_package_lock_v1.json",
     "payload_mode": "packaged_artifacts",
     "privacy_policy": "private_authenticated_delivery_only",
-    "sha256": "e51b3f6781e1e78069f0d5afe0a9937e58e6320125c7b9c39b2273a72ac6bbcf"
+    "sha256": "b8ba1f85cf084679655015b8d5f763b47c8d7c964e1e9920ca2f3fb1e76b84f0"
   },
   "legacy_asset_catalog": {
     "package_order": [
@@ -613,6 +613,10 @@
       },
       {
         "available_in_makefile": true,
+        "target": "migration.assets.scbsly_direct_project_direct_acceptance_replay.write"
+      },
+      {
+        "available_in_makefile": true,
         "target": "formal_entry_metadata.surface.write"
       },
       {
@@ -630,6 +634,10 @@
       {
         "available_in_makefile": true,
         "target": "direct_acceptance.engineering_settlement.income_projection.write"
+      },
+      {
+        "available_in_makefile": true,
+        "target": "prod.sim.partner.semantic.normalize.write"
       },
       {
         "available_in_makefile": true,

@@ -174,7 +174,6 @@ def verify_validation_manifest(validation_manifest: dict[str, Any]) -> None:
     required = {
         "legacy_receipt_invoice_line_id_unique",
         "receipt_external_id_resolves",
-        "invoice_amount_signed_nonzero",
         "source_table_preserved",
         "account_move_not_written",
         "settlement_not_written",
@@ -182,6 +181,12 @@ def verify_validation_manifest(validation_manifest: dict[str, Any]) -> None:
     }
     missing = sorted(required - gates)
     require(not missing, f"validation manifest missing gates: {missing}")
+    amount_gate_aliases = {"invoice_amount_signed_nonzero", "invoice_amount_positive"}
+    require(
+        bool(gates & amount_gate_aliases),
+        "validation manifest missing equivalent invoice amount gate: "
+        f"{sorted(amount_gate_aliases)}",
+    )
     boundary = validation_manifest.get("business_boundary", {})
     require(boundary.get("receipt_invoice_line_fact") == "included", "invoice line fact must be included")
     require(boundary.get("parent_receipt_anchor") == "required", "parent receipt anchor policy drift")
