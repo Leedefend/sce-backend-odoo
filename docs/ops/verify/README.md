@@ -54,14 +54,19 @@
   - Ensures `smart_construction_custom` loads user data baseline before user preference contracts.
   - Ensures the real legacy user master payload is carried by the user module and loaded only through an idempotent loader.
   - Ensures the user module carries a locked user-visible historical business data baseline manifest, covering all 11 productized business families plus post-asset replay/write/projection closure targets.
+  - Ensures the baseline manifest pins the private external asset package lock and exposes `user_module.history_business_baseline.restore` as the official restore entry.
   - Rejects treating the original 23 migration asset packages as the full user data baseline.
   - Ensures P1 industry modules do not carry P2 real-user data payloads such as `legacy_user_sc_*` or `user_master_v1.xml`.
   - Ensures form preference initializers do not perform hidden data dictionary creation or partner backfill.
 - `make verify.user_module.data_baseline.runtime_audit`
   - Runtime acceptance after installing/upgrading `smart_construction_custom` on a target database.
   - Replays the legacy user data baseline twice and verifies user count, XMLID count, and duplicate-login safety remain stable.
-  - Verifies the runtime user module summary includes the historical business visible-surface baseline contract.
+  - Verifies the runtime user module summary includes the historical business visible-surface baseline contract, external package lock, and restore target.
   - Emits `user_module_data_baseline_runtime_audit.json` under `MIGRATION_ARTIFACT_ROOT` or `/tmp/user_module_data_baseline/<db>`.
+- `make user_module.history_business_baseline.restore DB_NAME=<target_db>`
+  - Official P2 user-module restore entry for the locked historical business visible-surface baseline.
+  - Fetches the private external migration asset package, verifies it, runs continuity rehearsal, and stops by default.
+  - Set `USER_MODULE_HISTORY_BASELINE_APPLY=1` to replay into the target DB, refresh the user-visible business surface, and run the runtime audit.
 - `make verify.backend.guard`
   - Compatibility alias for the backend boundary guard chain used by Codex verification workflows.
 - `make codex.snapshot.export`

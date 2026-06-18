@@ -126,8 +126,10 @@ class ScUserPreferenceInitialization(models.TransientModel):
             payload = json.load(handle)
 
         standard = payload.get("completeness_standard") or {}
+        external_lock = payload.get("external_payload_lock") or {}
         legacy_catalog = payload.get("legacy_asset_catalog") or {}
         post_asset = payload.get("post_asset_closure") or {}
+        restore_entry = payload.get("restore_entry") or {}
         families = payload.get("visible_business_families") or []
         targets = post_asset.get("targets") or []
         unavailable_targets = [
@@ -157,6 +159,10 @@ class ScUserPreferenceInitialization(models.TransientModel):
             "required_family_count": int(standard.get("required_family_count") or 0),
             "legacy_asset_package_count": int(legacy_catalog.get("source_asset_package_count") or 0),
             "post_asset_closure_target_count": int(post_asset.get("target_count") or 0),
+            "external_payload_lock": external_lock.get("path"),
+            "external_payload_package_id": external_lock.get("package_id"),
+            "restore_target": restore_entry.get("make_target"),
+            "restore_default_mode": restore_entry.get("default_mode"),
             "unavailable_targets": unavailable_targets,
             "errors": errors,
         }

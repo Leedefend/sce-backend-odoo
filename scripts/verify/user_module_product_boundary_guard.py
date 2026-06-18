@@ -25,6 +25,9 @@ LEGACY_USER_MASTER_XML = MODULE / "data/user_master_v1.xml"
 HISTORY_BUSINESS_BASELINE_MANIFEST = MODULE / "data/user_history_business_data_baseline_manifest_v1.json"
 USER_PREFERENCES_XML = MODULE / "data/user_preferences.xml"
 BUSINESS_CAPABILITY_BASELINE = ROOT / "docs/product/business_capability_productization_baseline_v1.json"
+MIGRATION_ASSET_PACKAGE_LOCK = ROOT / "docs/migration_alignment/migration_asset_package_lock_v1.json"
+MAKEFILE = ROOT / "Makefile"
+HISTORY_BASELINE_RESTORE_SCRIPT = ROOT / "scripts/migration/user_module_history_business_baseline_restore.sh"
 
 
 def _parse_python(path: Path) -> ast.Module:
@@ -103,12 +106,19 @@ def verify_history_business_data_baseline_manifest() -> list[str]:
         return ["user module must carry the locked user-visible history business data baseline manifest"]
     if not BUSINESS_CAPABILITY_BASELINE.exists():
         return ["product family baseline is missing"]
+    if not MIGRATION_ASSET_PACKAGE_LOCK.exists():
+        return ["migration asset package lock is missing"]
+    if not HISTORY_BASELINE_RESTORE_SCRIPT.exists():
+        return ["user module history business baseline restore script is missing"]
 
     payload = json.loads(HISTORY_BUSINESS_BASELINE_MANIFEST.read_text(encoding="utf-8"))
     product = json.loads(BUSINESS_CAPABILITY_BASELINE.read_text(encoding="utf-8"))
+    lock = json.loads(MIGRATION_ASSET_PACKAGE_LOCK.read_text(encoding="utf-8"))
     standard = payload.get("completeness_standard") if isinstance(payload.get("completeness_standard"), dict) else {}
+    external_lock = payload.get("external_payload_lock") if isinstance(payload.get("external_payload_lock"), dict) else {}
     legacy_catalog = payload.get("legacy_asset_catalog") if isinstance(payload.get("legacy_asset_catalog"), dict) else {}
     post_asset = payload.get("post_asset_closure") if isinstance(payload.get("post_asset_closure"), dict) else {}
+    restore_entry = payload.get("restore_entry") if isinstance(payload.get("restore_entry"), dict) else {}
     families = payload.get("visible_business_families") if isinstance(payload.get("visible_business_families"), list) else []
     targets = post_asset.get("targets") if isinstance(post_asset.get("targets"), list) else []
     product_families = product.get("families") if isinstance(product.get("families"), list) else []
@@ -134,6 +144,39 @@ def verify_history_business_data_baseline_manifest() -> list[str]:
         failures.append("history business baseline legacy asset package_order is incomplete")
     if int(post_asset.get("target_count") or 0) < 70 or len(targets) < 70:
         failures.append("history business baseline must include post-asset replay/write/projection closure targets")
+    if external_lock.get("path") != "docs/migration_alignment/migration_asset_package_lock_v1.json":
+        failures.append("history business baseline must pin the external migration asset package lock")
+    if external_lock.get("package_id") != lock.get("package_id") or external_lock.get("sha256") is None:
+        failures.append("history business baseline external payload lock must match package lock identity and include sha256")
+    if external_lock.get("payload_mode") != "packaged_artifacts":
+        failures.append("history business baseline external payload must use packaged_artifacts mode")
+    if external_lock.get("privacy_policy") != "private_authenticated_delivery_only":
+        failures.append("history business baseline must keep private authenticated payload delivery policy")
+    if restore_entry.get("make_target") != "user_module.history_business_baseline.restore":
+        failures.append("history business baseline must expose user_module.history_business_baseline.restore")
+    if restore_entry.get("script") != "scripts/migration/user_module_history_business_baseline_restore.sh":
+        failures.append("history business baseline restore_entry must point to the restore script")
+    if restore_entry.get("default_mode") != "rehearsal_only":
+        failures.append("history business baseline restore must default to rehearsal_only")
+    if restore_entry.get("apply_env") != "USER_MODULE_HISTORY_BASELINE_APPLY=1":
+        failures.append("history business baseline restore must require explicit apply env")
+
+    make_source = MAKEFILE.read_text(encoding="utf-8")
+    if "user_module.history_business_baseline.restore:" not in make_source:
+        failures.append("Makefile must publish user_module.history_business_baseline.restore")
+    script_source = HISTORY_BASELINE_RESTORE_SCRIPT.read_text(encoding="utf-8")
+    for snippet in [
+        "migration.assets.fetch",
+        "migration.assets.verify_all",
+        "migration.assets.delivery_audit",
+        "history.continuity.rehearse",
+        "history.continuity.replay",
+        "history.business.usable.init",
+        "verify.user_module.data_baseline.runtime_audit",
+        "USER_MODULE_HISTORY_BASELINE_APPLY",
+    ]:
+        if snippet not in script_source:
+            failures.append(f"history baseline restore script must include {snippet}")
 
     required_targets = {
         "history.legacy_user_visible_surface.overlay.write",

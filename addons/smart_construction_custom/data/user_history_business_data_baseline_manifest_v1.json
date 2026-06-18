@@ -9,6 +9,15 @@
     "required_family_count": 11,
     "required_install_behavior": "installing/upgrading smart_construction_custom must replay user data baseline and publish this complete visible-surface contract summary"
   },
+  "external_payload_lock": {
+    "materializes": "migration_assets/ and artifacts/migration/",
+    "package_id": "migration_assets_release_20260429T135959Z_baseline",
+    "package_size_bytes": 231163588,
+    "path": "docs/migration_alignment/migration_asset_package_lock_v1.json",
+    "payload_mode": "packaged_artifacts",
+    "privacy_policy": "private_authenticated_delivery_only",
+    "sha256": "e51b3f6781e1e78069f0d5afe0a9937e58e6320125c7b9c39b2273a72ac6bbcf"
+  },
   "legacy_asset_catalog": {
     "package_order": [
       "project_sc_v1",
@@ -632,10 +641,32 @@
     "path": "docs/product/business_capability_productization_baseline_v1.json",
     "sha256": "da7ba72268648c4ca3560413b7819b669d2a760c1c813b7bde1a148a49a850a9"
   },
+  "restore_entry": {
+    "apply_env": "USER_MODULE_HISTORY_BASELINE_APPLY=1",
+    "default_mode": "rehearsal_only",
+    "make_target": "user_module.history_business_baseline.restore",
+    "requires": [
+      "DB_NAME=<target_db>",
+      "MIGRATION_ASSET_PACKAGE_PATH=/path/to/locked.tar.gz or MIGRATION_ASSET_PACKAGE_URL=<private-url>"
+    ],
+    "script": "scripts/migration/user_module_history_business_baseline_restore.sh",
+    "script_sha256": "36e1c2dbb4bb2519ce940df73ac4beb48b7bfbae443aef94397e1ce84ae60b3c",
+    "steps": [
+      "verify.user_module.product_boundary",
+      "migration.assets.fetch",
+      "migration.assets.verify_all",
+      "migration.assets.delivery_audit",
+      "history.continuity.rehearse",
+      "history.continuity.replay when USER_MODULE_HISTORY_BASELINE_APPLY=1",
+      "history.business.usable.init when USER_MODULE_HISTORY_BASELINE_APPLY=1",
+      "verify.user_module.data_baseline.runtime_audit when USER_MODULE_HISTORY_BASELINE_APPLY=1"
+    ]
+  },
   "runtime_audit": {
     "idempotency": "baseline replays must update/reuse existing business data and must not duplicate payload rows",
     "required_guard": "verify.user_module.product_boundary",
     "required_portrait_guard": "verify.business.capability_baseline.guard",
+    "required_restore_target": "user_module.history_business_baseline.restore",
     "required_runtime_audit": "verify.user_module.data_baseline.runtime_audit"
   },
   "visible_business_families": [

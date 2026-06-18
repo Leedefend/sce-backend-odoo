@@ -103,6 +103,10 @@ def main() -> int:
         errors.append(f"legacy asset package count too small: {history_business}")
     if int(history_business.get("post_asset_closure_target_count") or 0) < 70:
         errors.append(f"post-asset closure target count too small: {history_business}")
+    if history_business.get("restore_target") != "user_module.history_business_baseline.restore":
+        errors.append(f"history business restore target missing: {history_business}")
+    if history_business.get("external_payload_lock") != "docs/migration_alignment/migration_asset_package_lock_v1.json":
+        errors.append(f"history business external payload lock missing: {history_business}")
 
     payload = {
         "status": "PASS" if not errors else "FAIL",
