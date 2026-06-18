@@ -4347,6 +4347,11 @@ verify.user_module.product_boundary: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/user_module_product_boundary_guard.py
 	@python3 scripts/verify/user_module_product_boundary_guard.py
 
+.PHONY: verify.user_module.data_baseline.runtime_audit
+verify.user_module.data_baseline.runtime_audit: guard.prod.forbid check-compose-project check-compose-env verify.user_module.product_boundary
+	@python3 -m py_compile scripts/verify/user_module_data_baseline_runtime_audit.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_module_data_baseline_runtime_audit.py
+
 verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.product_boundary
 	@echo "[OK] verify.docs.all done"
 
