@@ -57,6 +57,17 @@ class PageAssembler:
         "res.groups",
     }
 
+    _BUSINESS_CONFIG_RUNTIME_MODELS = {
+        "sc.approval.policy",
+        "sc.approval.step",
+        "sc.approval.scope",
+        "sc.approval.scope.user.wizard",
+        "ui.business.config.contract",
+        "ui.form.field.policy",
+        "ui.form.custom.field.wizard",
+        "ui.menu.config.policy",
+    }
+
     def __init__(self, env, su_env=None):
         """
         env:  运行态环境（必须带当前用户，用于 ORM 自动应用记录规则、用户筛选等）
@@ -1357,7 +1368,7 @@ class PageAssembler:
         model = str(model_name or "").strip()
         if not model or model not in self.env:
             return
-        if model in {"ui.form.field.policy", "ui.form.custom.field.wizard"}:
+        if model in self._BUSINESS_CONFIG_RUNTIME_MODELS:
             return
         if str(render_profile or data.get("render_profile") or "").strip().lower() not in {"create", "edit", "readonly"}:
             return

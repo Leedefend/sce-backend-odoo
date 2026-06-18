@@ -341,9 +341,9 @@ const emit = defineEmits<{
   (e: 'field-action', payload: FormSectionFieldActionPayload): void;
   (e: 'field-order-move', payload: { field: FormSectionFieldSchema; delta: number }): void;
   (e: 'field-order-drag-start', payload: { field: FormSectionFieldSchema; event: DragEvent }): void;
-  (e: 'field-order-drag-over', payload: { field: FormSectionFieldSchema }): void;
-  (e: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema }): void;
-  (e: 'field-order-drop', payload: { field: FormSectionFieldSchema }): void;
+  (e: 'field-order-drag-over', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
+  (e: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
+  (e: 'field-order-drop', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
   (e: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (e: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
   (e: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
@@ -587,17 +587,17 @@ function emitFieldOrderDragStart(field: FormSectionFieldSchema, event: DragEvent
 
 function emitFieldOrderDragOver(field: FormSectionFieldSchema) {
   if (!props.fieldOrderEditable) return;
-  emit('field-order-drag-over', { field });
+  emit('field-order-drag-over', { field, groupTitle: props.fieldGroupTitle || '' });
 }
 
 function emitFieldOrderDragLeave(field: FormSectionFieldSchema) {
   if (!props.fieldOrderEditable) return;
-  emit('field-order-drag-leave', { field });
+  emit('field-order-drag-leave', { field, groupTitle: props.fieldGroupTitle || '' });
 }
 
 function emitFieldOrderDrop(field: FormSectionFieldSchema) {
   if (!props.fieldOrderEditable) return;
-  emit('field-order-drop', { field });
+  emit('field-order-drop', { field, groupTitle: props.fieldGroupTitle || '' });
 }
 
 function emitFieldOrderDragEnd(field: FormSectionFieldSchema) {

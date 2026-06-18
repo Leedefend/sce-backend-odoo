@@ -7,7 +7,7 @@
       </div>
       <div class="header-actions">
         <button type="button" class="ghost primary" :disabled="!canOpenDesigner" @click="openFormConfig">
-          {{ canOpenDesigner ? '进入拖拽设计' : '先选择页面' }}
+          {{ headerDesignerButtonLabel }}
         </button>
         <button type="button" class="ghost" :disabled="scanLoading" @click="scanSystemRootCoverage">
           {{ scanLoading ? '读取中...' : '选择业务页面' }}
@@ -38,10 +38,12 @@
       <article class="flow-card">
         <span class="flow-step">2</span>
         <div>
-          <h2>拖拽设计表单</h2>
-          <p>进入设计器后拖动字段、隐藏字段、调整分组。</p>
+          <h2>{{ currentModelIsRuntimeConfig ? '使用专用配置' : '拖拽设计表单' }}</h2>
+          <p>{{ currentModelIsRuntimeConfig ? '审批、菜单等配置对象使用对应的专用配置面板。' : '进入设计器后拖动字段、隐藏字段、调整分组。' }}</p>
         </div>
-        <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">进入设计</button>
+        <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">
+          {{ currentModelIsRuntimeConfig ? '使用专用配置' : '进入设计' }}
+        </button>
       </article>
       <article class="flow-card">
         <span class="flow-step">3</span>
@@ -930,6 +932,7 @@ import {
   type BusinessConfigSnapshotSummaryPayload,
   type BusinessConfigSurfacePayload,
 } from '../api/businessConfig';
+import { isBusinessConfigRuntimeModel } from '../app/businessConfigBoundaries';
 
 const route = useRoute();
 const router = useRouter();
@@ -1065,6 +1068,7 @@ const selectedPageHasAnalysisConfig = computed(() => {
 });
 const visibleConfigSections = computed(() => {
   const result = visibleSections.value.filter((section) => {
+    if (section.key === 'form' && currentModelIsRuntimeConfig.value) return false;
     if (section.key === 'form') return selectedPageHasFormConfig.value;
     if (section.key === 'list_search') return selectedPageHasListSearchConfig.value;
     return true;
@@ -1085,6 +1089,7 @@ const visibleConfigSections = computed(() => {
   return result;
 });
 const currentModel = computed(() => String(scopeModel.value || surface.value?.model || '').trim());
+const currentModelIsRuntimeConfig = computed(() => isBusinessConfigRuntimeModel(currentModel.value));
 const approvalSection = computed(() => visibleConfigSections.value.find((section) => section.key === 'approval') || null);
 const approvalModeOptions = computed(() => approvalAudit.value?.mode_options?.length
   ? approvalAudit.value.mode_options
@@ -1103,7 +1108,12 @@ const approvalRuntimeText = computed(() => {
   if (!approvalAudit.value) return '未读取';
   return approvalAudit.value.runtime_approval_required ? '当前需要审批' : '当前无需审批';
 });
-const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value));
+const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value && !currentModelIsRuntimeConfig.value));
+const headerDesignerButtonLabel = computed(() => {
+  if (canOpenDesigner.value) return '进入拖拽设计';
+  if (currentModelIsRuntimeConfig.value) return '使用专用配置';
+  return '先选择页面';
+});
 const snapshotSummary = computed<BusinessConfigSnapshotSummaryPayload | null>(() => surface.value?.snapshot_summary || null);
 const snapshotSummaryText = computed(() => {
   const summary = snapshotSummary.value;

@@ -578,11 +578,39 @@ def _upsert_view_orchestration_field_rows(
         if not field_name:
             continue
         current = by_name.get(field_name, {"name": field_name})
-        for key in ("label", "visible", "sequence"):
+        for key in ("label", "visible", "sequence", "group_title"):
             if key in row and row.get(key) is not None:
                 current[key] = row.get(key)
         by_name[field_name] = current
     spec["fields"] = sorted(by_name.values(), key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or "")))
+    grouped: dict[str, list[dict]] = {}
+    for row in spec["fields"]:
+        if not isinstance(row, dict):
+            continue
+        field_name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+        if not field_name or row.get("visible") is False:
+            continue
+        group_title = str(row.get("group_title") or "").strip()
+        if not group_title:
+            continue
+        grouped.setdefault(group_title, []).append(row)
+    if grouped:
+        spec["sections"] = [
+            {
+                "name": "business_config_section_%s" % (index + 1),
+                "title": title,
+                "sequence": (index + 1) * 10,
+                "fields": [
+                    str(item.get("name") or item.get("field") or item.get("field_name") or "").strip()
+                    for item in sorted(items, key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or "")))
+                    if str(item.get("name") or item.get("field") or item.get("field_name") or "").strip()
+                ],
+            }
+            for index, (title, items) in enumerate(sorted(
+                grouped.items(),
+                key=lambda item: (min(int(row.get("sequence") or 100) for row in item[1]), item[0]),
+            ))
+        ]
     views[view_type] = spec
     orchestration["views"] = views
     payload["view_orchestration"] = orchestration
@@ -715,6 +743,7 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
                 "label": label,
                 "visible": bool(visible),
                 "sequence": int(policy.sequence or sequence or 100),
+                **({"group_title": str(policy.group_title or group_title or "").strip()} if str(policy.group_title or group_title or "").strip() else {}),
             }],
         )
         return {
@@ -950,6 +979,15 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
         unknown = [name for name in field_order if name not in self.env[model]._fields]
         if unknown:
             return self._err(404, "字段不存在：%s.%s" % (model, unknown[0]), REASON_NOT_FOUND)
+        raw_field_groups = params.get("field_groups") or params.get("fieldGroups") or {}
+        field_groups = {
+            str(name or "").strip(): str(group_title or "").strip()
+            for name, group_title in (raw_field_groups.items() if isinstance(raw_field_groups, dict) else [])
+            if str(name or "").strip() and str(group_title or "").strip()
+        }
+        unknown_groups = [name for name in field_groups if name not in self.env[model]._fields]
+        if unknown_groups:
+            return self._err(404, "字段不存在：%s.%s" % (model, unknown_groups[0]), REASON_NOT_FOUND)
         model_rec = self.env["ir.model"].search([("model", "=", model)], limit=1)
         if not model_rec or model_rec.transient:
             return self._err(400, "临时模型不能配置表单字段：%s" % model, REASON_USER_ERROR)
@@ -971,13 +1009,17 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
         for index, field_name in enumerate(field_order):
             sequence = (index + 1) * 10
             policy = policy_map.get(field_name)
+            group_title = field_groups.get(field_name)
             if policy:
                 policy.check_access_rights("write")
-                policy.write({"sequence": sequence})
+                vals = {"sequence": sequence}
+                if group_title:
+                    vals["group_title"] = group_title
+                policy.write(vals)
                 continue
             field_rec = field_map.get(field_name)
             label = str((field_rec.field_description if field_rec else field_name) or field_name).strip()
-            Policy.create({
+            vals = {
                 "active": True,
                 "model_id": model_rec.id,
                 "model": model,
@@ -989,7 +1031,10 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
                 "company_id": self.env.company.id,
                 "action_id": action_id or False,
                 "view_id": view_id or False,
-            })
+            }
+            if group_title:
+                vals["group_title"] = group_title
+            Policy.create(vals)
         mirrored_count = _upsert_view_orchestration_field_rows(
             self.env,
             model=model,
@@ -1002,6 +1047,7 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
                     "label": str((field_map.get(field_name).field_description if field_map.get(field_name) else field_name) or field_name),
                     "visible": True,
                     "sequence": (index + 1) * 10,
+                    **({"group_title": field_groups[field_name]} if field_groups.get(field_name) else {}),
                 }
                 for index, field_name in enumerate(field_order)
             ],
@@ -1033,11 +1079,24 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
         model = str(params.get("model") or "").strip()
         visibility = params.get("field_visibility") or params.get("fieldVisibility")
         raw_field_order = params.get("field_order") or params.get("fieldOrder")
+        raw_field_groups = params.get("field_groups") or params.get("fieldGroups") or {}
         has_field_order = isinstance(raw_field_order, list) and bool(raw_field_order)
+        has_field_groups = isinstance(raw_field_groups, dict) and any(
+            str(name or "").strip() and str(value or "").strip()
+            for name, value in raw_field_groups.items()
+        )
         if model and isinstance(visibility, dict) and model in self.env:
             unknown = [
                 str(field_name or "").strip()
                 for field_name in visibility
+                if str(field_name or "").strip() and str(field_name or "").strip() not in self.env[model]._fields
+            ]
+            if unknown:
+                return self._err(404, "字段不存在：%s.%s" % (model, unknown[0]), REASON_NOT_FOUND)
+        if model and has_field_groups and model in self.env:
+            unknown = [
+                str(field_name or "").strip()
+                for field_name in raw_field_groups
                 if str(field_name or "").strip() and str(field_name or "").strip() not in self.env[model]._fields
             ]
             if unknown:
@@ -1051,8 +1110,8 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                 return self._err(400, "缺少 model", REASON_MISSING_PARAMS)
             if model not in self.env:
                 return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
-            if not isinstance(visibility, dict) or not visibility:
-                return self._err(400, "field_order 或 field_visibility 必须至少提供一项", REASON_USER_ERROR)
+            if (not isinstance(visibility, dict) or not visibility) and not has_field_groups:
+                return self._err(400, "field_order、field_visibility 或 field_groups 必须至少提供一项", REASON_USER_ERROR)
             action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
             if invalid_field:
                 return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
@@ -1075,6 +1134,78 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                 },
                 "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
             }
+        if has_field_groups:
+            Policy = self.env["ui.form.field.policy"]
+            action_id, _ = _optional_non_negative_int(params, "action_id", "actionId")
+            view_id, _ = _optional_non_negative_int(params, "view_id", "viewId")
+            model_rec = self.env["ir.model"].search([("model", "=", model)], limit=1)
+            group_names = {
+                str(field_name or "").strip(): str(group_title or "").strip()
+                for field_name, group_title in raw_field_groups.items()
+                if str(field_name or "").strip() and str(group_title or "").strip()
+            }
+            field_rows = self.env["ir.model.fields"].search([
+                ("model", "=", model),
+                ("name", "in", list(group_names)),
+                ("ttype", "!=", "binary"),
+            ])
+            field_map = {str(row.name or "").strip(): row for row in field_rows}
+            updates = 0
+            mirror_rows = []
+            for name, group_title in group_names.items():
+                policy = Policy.search([
+                    ("active", "=", True),
+                    ("model", "=", model),
+                    ("field_name", "=", name),
+                    ("company_id", "=", self.env.company.id),
+                    ("action_id", "=", action_id or False),
+                    ("view_id", "=", view_id or False),
+                ], limit=1)
+                if policy:
+                    policy.write({"group_title": group_title})
+                    sequence = int(policy.sequence or 100)
+                    label = str(policy.label or "")
+                    visible = bool(policy.visible)
+                    updates += 1
+                elif model_rec:
+                    field_rec = field_map.get(name)
+                    label = str((field_rec.field_description if field_rec else name) or name).strip()
+                    sequence = 100
+                    visible = True
+                    Policy.create({
+                        "active": True,
+                        "model_id": model_rec.id,
+                        "model": model,
+                        "field_id": field_rec.id if field_rec else False,
+                        "field_name": name,
+                        "label": label,
+                        "visible": True,
+                        "sequence": sequence,
+                        "group_title": group_title,
+                        "company_id": self.env.company.id,
+                        "action_id": action_id or False,
+                        "view_id": view_id or False,
+                    })
+                    updates += 1
+                else:
+                    continue
+                mirror_rows.append({
+                    "name": name,
+                    "label": label or name,
+                    "visible": visible,
+                    "sequence": sequence,
+                    "group_title": group_title,
+                })
+            mirrored_count = _upsert_view_orchestration_field_rows(
+                self.env,
+                model=model,
+                view_type="form",
+                action_id=action_id,
+                view_id=view_id,
+                rows=mirror_rows,
+            )
+            order_result["data"]["group_updated_count"] = updates
+            order_result["data"]["business_config_group_mirrored_count"] = mirrored_count
         if visibility and isinstance(visibility, dict):
             Policy = self.env["ui.form.field.policy"]
             action_id, _ = _optional_non_negative_int(params, "action_id", "actionId")
@@ -2541,11 +2672,13 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
         view_orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
         self._precheck_view_orchestration_layout(view_orchestration, warnings, errors)
         legacy_draft = payload.get("legacy_lowcode_draft") if isinstance(payload.get("legacy_lowcode_draft"), dict) else {}
-        objects = payload.get("objects") if isinstance(payload.get("objects"), list) else []
+        explicit_objects = isinstance(payload.get("objects"), list)
+        objects = payload.get("objects") if explicit_objects else []
         if not objects and isinstance(legacy_draft.get("objects"), list):
             objects = legacy_draft.get("objects") or []
         if not objects and not view_orchestration:
             warnings.append("objects 为空，契约不会产生业务对象配置。")
+        has_view_fields = bool(_view_orchestration_field_names(payload, "form"))
         for obj in objects:
             if not isinstance(obj, dict):
                 errors.append("objects 包含非对象节点。")
@@ -2554,7 +2687,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             if not obj_name:
                 errors.append("存在未命名业务对象。")
             fields_rows = obj.get("fields") if isinstance(obj.get("fields"), list) else []
-            if not fields_rows:
+            if not fields_rows and (explicit_objects or not has_view_fields):
                 warnings.append("业务对象 %s 未配置字段。" % (obj_name or "<unknown>"))
         rules = payload.get("rules") if isinstance(payload.get("rules"), list) else []
         if not rules and isinstance(legacy_draft.get("rules"), list):

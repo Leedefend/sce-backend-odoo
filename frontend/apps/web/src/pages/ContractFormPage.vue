@@ -1028,6 +1028,7 @@ import {
 } from '../app/contracts/v2';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
+import { isBusinessConfigRuntimeModel } from '../app/businessConfigBoundaries';
 import {
   collectUnifiedPageContractV2ButtonStatus,
   collectUnifiedPageContractV2FieldContainerStatus,
@@ -1931,14 +1932,20 @@ const fieldOrderDraft = ref<string[]>([]);
 const fieldOrderPreviewActive = ref(false);
 const nativeFormDesignFieldKeys = ref<string[]>([]);
 const nativeFormDesignFieldLabels = ref<Record<string, string>>({});
+const fieldGroupBase = ref<Record<string, string>>({});
+const fieldGroupDraft = reactive<Record<string, string>>({});
+const fieldMoveTargetDraft = reactive<Record<string, string>>({});
 const draggingFieldKey = ref('');
 const dropTargetFieldKey = ref('');
 const selectedFormSettingsFieldKey = ref('');
 const selectedFormSettingsFieldLabel = ref('');
 const selectedFormSettingsFieldGroupTitleDraft = ref('');
 const isContractFieldOrderEditable = computed(() => (
-  activeContractMode.value === 'form_field_configuration'
-  || activeContractMode.value === 'business_config_lowcode'
+  !isBusinessConfigRuntimeModel(model.value)
+  && (
+    activeContractMode.value === 'form_field_configuration'
+    || activeContractMode.value === 'business_config_lowcode'
+  )
 ));
 const showReturnToBusinessConfigAction = computed(() => (
   routeQueryText('return_to_business_config') === '1'
@@ -2068,6 +2075,9 @@ watch(contractModeBaseFieldRows, (rows) => {
   if (!isContractFieldOrderEditable.value || !keys.length) {
     fieldOrderDraft.value = [];
     fieldVisibilityBase.value = {};
+    fieldGroupBase.value = {};
+    Object.keys(fieldGroupDraft).forEach((key) => delete fieldGroupDraft[key]);
+    Object.keys(fieldMoveTargetDraft).forEach((key) => delete fieldMoveTargetDraft[key]);
     return;
   }
   if (!fieldOrderDraft.value.length) {
@@ -2159,8 +2169,14 @@ const hasFieldVisibilityChanges = computed(() => formVisibilityDraftFieldKeys.va
   return fieldVisibilityDraft[fieldKey] !== fieldVisibilityBase.value[fieldKey];
 }));
 
+const hasFieldGroupChanges = computed(() => Object.keys(fieldGroupDraft).some((fieldKey) => {
+  const draft = normalizeFieldGroupTitle(fieldGroupDraft[fieldKey]);
+  const base = normalizeFieldGroupTitle(fieldGroupBase.value[fieldKey]);
+  return Boolean(draft) && draft !== base;
+}));
+
 const hasCurrentFormFieldDraftChanges = computed(() => (
-  hasFieldOrderChanges.value || hasFieldVisibilityChanges.value || fieldVisibilityDirty.value
+  hasFieldOrderChanges.value || hasFieldVisibilityChanges.value || hasFieldGroupChanges.value || fieldVisibilityDirty.value
 ));
 
 function isSuggestedInternalFormField(fieldKey: string, label = '') {
@@ -2211,6 +2227,27 @@ function changedFieldVisibilityDraft() {
     ) {
       acc[fieldKey] = fieldVisibilityDraft[fieldKey];
     }
+    return acc;
+  }, {});
+}
+
+function normalizeFieldGroupTitle(value: unknown) {
+  return String(value || '').trim();
+}
+
+function isReadableFieldGroupTitle(value: unknown) {
+  const text = normalizeFieldGroupTitle(value);
+  if (!text) return false;
+  if (/^[a-z][a-z0-9_:. -]*$/i.test(text) && /[_:.]/.test(text)) return false;
+  return true;
+}
+
+function changedFieldGroupDraft() {
+  return Object.keys(fieldGroupDraft).reduce<Record<string, string>>((acc, fieldKey) => {
+    const key = String(fieldKey || '').trim();
+    const draft = normalizeFieldGroupTitle(fieldGroupDraft[key]);
+    const base = normalizeFieldGroupTitle(fieldGroupBase.value[key]);
+    if (key && draft && draft !== base) acc[key] = draft;
     return acc;
   }, {});
 }
@@ -2288,17 +2325,17 @@ const formConfigAuditSummary = computed(() => {
   const result = formConfigAuditResult.value;
   if (!result) return '';
   if (!showLowCodeTechnicalDetails.value) {
-    if (result.skippedLegacyPolicyFields.length) {
-      return `发现 ${result.skippedLegacyPolicyFields.length} 个字段被旧规则覆盖，请联系管理员处理。`;
-    }
     const layoutText = result.hasBusinessConfigFormLayout
       ? (result.layoutMatchesFields ? '，布局已对齐' : '，布局需要重新保存')
       : '';
-    return `检查通过，当前页面 ${result.businessConfigFormFields.length} 个字段配置可生效${layoutText}。`;
+    const takeoverText = result.skippedLegacyPolicyFields.length
+      ? `，${result.skippedLegacyPolicyFields.length} 个旧字段规则已由当前页面配置接管`
+      : '';
+    return `检查通过，当前页面 ${result.businessConfigFormFields.length} 个字段配置可生效${layoutText}${takeoverText}。`;
   }
   const conflictText = result.skippedLegacyPolicyFields.length
-    ? `冲突字段：${result.skippedLegacyPolicyFields.join('、')}`
-    : '无冲突字段';
+    ? `业务配置已接管旧规则字段：${result.skippedLegacyPolicyFields.join('、')}`
+    : '无被接管的旧规则字段';
   const activeLegacyText = result.activeLegacyPolicyFields.length
     ? `兼容生效：${result.activeLegacyPolicyFields.join('、')}`
     : '无兼容字段生效';
@@ -2358,6 +2395,7 @@ function fieldStructureTitle(pageTitle: string, groupTitle: string) {
 const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; fieldKeys: string[] }>>(() => {
   const groups = new Map<string, { key: string; title: string; fieldKeys: string[] }>();
   const fieldSeen = new Set<string>();
+  let anonymousGroupIndex = 0;
   const addField = (title: string, fieldKey: string) => {
     const normalizedField = String(fieldKey || '').trim();
     if (!normalizedField || fieldSeen.has(normalizedField)) return;
@@ -2367,12 +2405,35 @@ const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; 
     if (!groups.has(groupKey)) groups.set(groupKey, { key: groupKey, title: groupTitle, fieldKeys: [] });
     groups.get(groupKey)?.fieldKeys.push(normalizedField);
   };
+  const rawChildren = (node: NativeFormLayoutNode) => {
+    const rows: NativeFormLayoutNode[] = [];
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) rows.push(...children as NativeFormLayoutNode[]);
+    });
+    return rows;
+  };
+  const directVisibleFieldNames = (node: NativeFormLayoutNode) => rawChildren(node)
+    .filter((child) => nativeLayoutNodeType(child) === 'field')
+    .map((child) => String(child?.name || '').trim())
+    .filter(Boolean);
+  const groupTitleForNode = (node: NativeFormLayoutNode, pageTitle: string, groupTitle: string) => {
+    const type = nativeLayoutNodeType(node);
+    const title = String(node?.string || node?.label || '').trim();
+    if (type === 'page' && isReadableFieldGroupTitle(title)) return title;
+    if (type === 'group' && isReadableFieldGroupTitle(title)) return fieldStructureTitle(pageTitle, title);
+    if (type === 'group' && directVisibleFieldNames(node).length) {
+      anonymousGroupIndex += 1;
+      return fieldStructureTitle(pageTitle, `默认分组 ${anonymousGroupIndex}`);
+    }
+    return groupTitle;
+  };
   const walk = (nodes: NativeFormLayoutNode[], pageTitle = '', groupTitle = '') => {
     nodes.forEach((node) => {
-      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      const type = nativeLayoutNodeType(node);
       const title = String(node?.string || node?.label || '').trim();
       const nextPage = type === 'page' && title ? title : pageTitle;
-      const nextGroup = type === 'group' && title ? title : groupTitle;
+      const nextGroup = groupTitleForNode(node, nextPage, groupTitle);
       const name = String(node?.name || '').trim();
       if (type === 'field' && name) addField(fieldStructureTitle(nextPage, nextGroup), name);
       (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
@@ -2381,9 +2442,30 @@ const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; 
       });
     });
   };
-  walk(nativeFormLayoutNodes.value);
+  const baseLayout = Array.isArray(contract.value?.views?.form?.layout)
+    ? contract.value?.views?.form?.layout as unknown as NativeFormLayoutNode[]
+    : [];
+  walk(baseLayout);
   return Array.from(groups.values());
 });
+
+watch(nativeFieldStructureGroups, (groups) => {
+  const nextBase: Record<string, string> = {};
+  groups.forEach((group) => {
+    const title = normalizeFieldGroupTitle(group.title || '主表区域');
+    group.fieldKeys.forEach((fieldKey) => {
+      if (fieldKey && !nextBase[fieldKey]) nextBase[fieldKey] = title;
+    });
+  });
+  fieldGroupBase.value = nextBase;
+  currentFormDesignFieldKeys.value.forEach((fieldKey) => {
+    if (!fieldKey) return;
+    const title = nextBase[fieldKey];
+    if (title && (!Object.prototype.hasOwnProperty.call(fieldGroupDraft, fieldKey) || !isReadableFieldGroupTitle(fieldGroupDraft[fieldKey]))) {
+      fieldGroupDraft[fieldKey] = title;
+    }
+  });
+}, { immediate: true });
 
 const currentFormDesignFieldCount = computed(() => {
   if (activeContractModeFieldRows.value.length) return activeContractModeFieldRows.value.length;
@@ -2393,6 +2475,8 @@ const currentFormDesignFieldCount = computed(() => {
 const selectedFormSettingsFieldGroupTitle = computed(() => {
   const fieldKey = selectedFormSettingsFieldKey.value;
   if (!fieldKey) return '';
+  const draftTitle = normalizeFieldGroupTitle(fieldGroupDraft[fieldKey]);
+  if (draftTitle) return draftTitle;
   const nativeGroup = nativeFieldStructureGroups.value.find((group) => group.fieldKeys.includes(fieldKey));
   return nativeGroup?.title || selectedFormSettingsFieldGroupTitleDraft.value || '业务配置字段';
 });
@@ -2453,8 +2537,14 @@ async function hydrateLowCodeDraftFromContract() {
         const key = String(row?.name || row?.field || '').trim();
         if (!key) return;
         const visible = row?.visible !== false;
+        const rawGroupTitle = row?.group_title || row?.groupTitle || row?.section_title || row?.sectionTitle;
+        const groupTitle = isReadableFieldGroupTitle(rawGroupTitle) ? normalizeFieldGroupTitle(rawGroupTitle) : '';
         fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
         fieldVisibilityDraft[key] = visible;
+        if (groupTitle) {
+          fieldGroupBase.value = { ...fieldGroupBase.value, [key]: groupTitle };
+          fieldGroupDraft[key] = groupTitle;
+        }
       });
     } else {
       const matched = objects.find((row) => String(row?.name || '').trim() === modelName) || objects[0];
@@ -2596,8 +2686,14 @@ async function switchLowCodeContractByName() {
         const key = String(row?.name || row?.field || '').trim();
         if (!key) return;
         const visible = row?.visible !== false;
+        const rawGroupTitle = row?.group_title || row?.groupTitle || row?.section_title || row?.sectionTitle;
+        const groupTitle = isReadableFieldGroupTitle(rawGroupTitle) ? normalizeFieldGroupTitle(rawGroupTitle) : '';
         fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
         fieldVisibilityDraft[key] = visible;
+        if (groupTitle) {
+          fieldGroupBase.value = { ...fieldGroupBase.value, [key]: groupTitle };
+          fieldGroupDraft[key] = groupTitle;
+        }
       });
     }
     const legacyDraft = lowCodeLegacyDraftFromContract(json);
@@ -6090,16 +6186,120 @@ function isNativeFieldLayoutNode(node: NativeFormLayoutNode) {
 function applyNativeFieldOrderPreview(nodes: NativeFormLayoutNode[]): NativeFormLayoutNode[] {
   if (!fieldOrderDraft.value.length) return nodes;
   const rank = new Map(fieldOrderDraft.value.map((fieldName, index) => [fieldName, index]));
-  const withChildren = nodes.map((node) => {
+  const movedGroups = changedFieldGroupDraft();
+  const movedNames = new Set(Object.keys(movedGroups));
+  const movedNodes = new Map<string, NativeFormLayoutNode>();
+  const collectMoved = (rows: NativeFormLayoutNode[]) => {
+    rows.forEach((node) => {
+      const name = String(node?.name || '').trim();
+      if (isNativeFieldLayoutNode(node) && movedNames.has(name)) {
+        movedNodes.set(name, node);
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const value = node?.[key];
+        if (Array.isArray(value)) collectMoved(value as NativeFormLayoutNode[]);
+      });
+    });
+  };
+  collectMoved(nodes);
+
+  const sortDirectFields = (rows: NativeFormLayoutNode[]) => {
+    const fields = rows.filter(isNativeFieldLayoutNode).sort((left, right) => {
+      const leftRank = rank.get(String(left.name || '').trim()) ?? Number.MAX_SAFE_INTEGER;
+      const rightRank = rank.get(String(right.name || '').trim()) ?? Number.MAX_SAFE_INTEGER;
+      return leftRank - rightRank;
+    });
+    let index = 0;
+    return rows.map((row) => (isNativeFieldLayoutNode(row) ? fields[index++] : row));
+  };
+  const cloneWithoutMoved = (rows: NativeFormLayoutNode[]): NativeFormLayoutNode[] => rows.flatMap((node) => {
+    const name = String(node?.name || '').trim();
+    if (isNativeFieldLayoutNode(node) && movedNames.has(name)) return [];
     const next = { ...(node as Record<string, unknown>) } as Record<string, unknown>;
     (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
       const value = next[key];
       if (Array.isArray(value)) {
-        next[key] = applyNativeFieldOrderPreview(value as NativeFormLayoutNode[]);
+        next[key] = cloneWithoutMoved(value as NativeFormLayoutNode[]);
       }
     });
-    return next as NativeFormLayoutNode;
+    return [next as NativeFormLayoutNode];
   });
+
+  const withChildren = movedNodes.size
+    ? cloneWithoutMoved(nodes)
+    : nodes.map((node) => {
+      const next = { ...(node as Record<string, unknown>) } as Record<string, unknown>;
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const value = next[key];
+        if (Array.isArray(value)) {
+          next[key] = applyNativeFieldOrderPreview(value as NativeFormLayoutNode[]);
+        }
+      });
+      return next as NativeFormLayoutNode;
+    });
+
+  if (movedNodes.size) {
+    const injected = new Set<string>();
+    const injectIntoTarget = (rows: NativeFormLayoutNode[]): NativeFormLayoutNode[] => rows.map((node) => {
+      const next = { ...(node as Record<string, unknown>) } as Record<string, unknown>;
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const value = next[key];
+        if (Array.isArray(value)) {
+          next[key] = injectIntoTarget(value as NativeFormLayoutNode[]);
+        }
+      });
+      const directFieldGroupTitle = () => {
+        const children = Array.isArray(next.children) ? next.children as NativeFormLayoutNode[] : [];
+        for (const child of children) {
+          const fieldName = String(child?.name || '').trim();
+          if (isNativeFieldLayoutNode(child) && fieldName) {
+            const title = normalizeFieldGroupTitle(fieldGroupBase.value[fieldName] || fieldGroupDraft[fieldName]);
+            if (title) return title;
+          }
+        }
+        return '';
+      };
+      const nodeTitle = isReadableFieldGroupTitle(next.string || next.label)
+        ? normalizeFieldGroupTitle(next.string || next.label)
+        : '';
+      const title = directFieldGroupTitle() || nodeTitle;
+      const directFieldNames = Array.isArray(next.children)
+        ? (next.children as NativeFormLayoutNode[])
+          .filter(isNativeFieldLayoutNode)
+          .map((child) => String(child.name || '').trim())
+          .filter(Boolean)
+        : [];
+      const toAppend = Array.from(movedNodes.entries())
+        .filter(([name]) => (
+          !injected.has(name)
+          && (
+            normalizeFieldGroupTitle(movedGroups[name]) === title
+            || directFieldNames.includes(String(fieldMoveTargetDraft[name] || '').trim())
+          )
+        ))
+        .map(([name, nodeValue]) => {
+          injected.add(name);
+          return nodeValue;
+        });
+      if (toAppend.length) {
+        const children = Array.isArray(next.children) ? next.children as NativeFormLayoutNode[] : [];
+        next.children = sortDirectFields([...children, ...toAppend]);
+      }
+      return next as NativeFormLayoutNode;
+    });
+    const injectedTree = injectIntoTarget(withChildren);
+    const fallback = Array.from(movedNodes.entries())
+      .filter(([name]) => !injected.has(name))
+      .map(([name, nodeValue]) => {
+        injected.add(name);
+        return nodeValue;
+      });
+    if (fallback.length) {
+      return [...injectedTree, ...sortDirectFields(fallback)];
+    }
+    return injectedTree;
+  }
+
   const fieldNodes = withChildren.filter(isNativeFieldLayoutNode);
   if (fieldNodes.length <= 1) return withChildren;
   const sortedFields = [...fieldNodes].sort((left, right) => {
@@ -8731,6 +8931,12 @@ function applyClientMode(mode: string, toggle = true) {
 
 function applyRouteConfigMode(rawMode: unknown) {
   const mode = String(rawMode || '').trim();
+  if (isBusinessConfigRuntimeModel(model.value)) {
+    if (activeContractMode.value === 'form_field_configuration' || activeContractMode.value === 'business_config_lowcode') {
+      activeContractMode.value = '';
+    }
+    return;
+  }
   if (mode === 'form_field_configuration' || mode === 'business_config_lowcode') {
     applyClientMode(mode, false);
   }
@@ -8930,22 +9136,22 @@ function onContractInlineFieldOrderDragStart(payload: { field: FormSectionFieldS
   onFieldOrderDragStart(fieldKey, payload.event);
 }
 
-function onContractInlineFieldOrderDragOver(payload: { field: FormSectionFieldSchema }) {
+function onContractInlineFieldOrderDragOver(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
   onFieldOrderDragOver(fieldKey);
 }
 
-function onContractInlineFieldOrderDragLeave(payload: { field: FormSectionFieldSchema }) {
+function onContractInlineFieldOrderDragLeave(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
   onFieldOrderDragLeave(fieldKey);
 }
 
-function onContractInlineFieldOrderDrop(payload: { field: FormSectionFieldSchema }) {
+function onContractInlineFieldOrderDrop(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
-  onFieldOrderDrop(fieldKey);
+  onFieldOrderDrop(fieldKey, payload.groupTitle);
 }
 
 function onContractInlineFieldOrderDragEnd() {
@@ -8956,11 +9162,11 @@ function lowCodeApplyBaseParams() {
   const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
   const target = parseMaybeJsonRecord(configAction?.target);
   return normalizeLowCodeApplyParams({
-    model: String(model.value || ''),
     action_id: Number(actionId.value || route.query.action_id || 0) || 0,
     view_id: Number(routeQueryText('view_id') || routeQueryText('viewId') || 0) || 0,
     view_type: 'form',
     ...parseMaybeJsonRecord(target.params),
+    model: String(model.value || ''),
   });
 }
 
@@ -9124,9 +9330,16 @@ function onFieldOrderDragLeave(fieldKey: string) {
   if (dropTargetFieldKey.value === fieldKey) dropTargetFieldKey.value = '';
 }
 
-function onFieldOrderDrop(targetFieldKey: string) {
+function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '') {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === targetFieldKey) return;
+  const sourceFieldKey = draggingFieldKey.value;
   moveFieldOrderTo(draggingFieldKey.value, targetFieldKey);
+  const normalizedTargetGroup = normalizeFieldGroupTitle(fieldGroupDraft[targetFieldKey] || fieldGroupBase.value[targetFieldKey] || targetGroupTitle);
+  if (normalizedTargetGroup) {
+    fieldGroupDraft[sourceFieldKey] = normalizedTargetGroup;
+    fieldMoveTargetDraft[sourceFieldKey] = targetFieldKey;
+    selectedFormSettingsFieldGroupTitleDraft.value = normalizedTargetGroup;
+  }
   dropTargetFieldKey.value = '';
 }
 
@@ -9165,6 +9378,11 @@ function onFieldOrderDragEnd() {
 function resetContractFieldOrder() {
   fieldOrderDraft.value = currentFormDesignFieldKeys.value;
   fieldOrderPreviewActive.value = false;
+  Object.keys(fieldGroupDraft).forEach((key) => delete fieldGroupDraft[key]);
+  Object.keys(fieldMoveTargetDraft).forEach((key) => delete fieldMoveTargetDraft[key]);
+  Object.entries(fieldGroupBase.value).forEach(([key, value]) => {
+    if (value) fieldGroupDraft[key] = value;
+  });
   formVisibilityDraftFieldKeys.value.forEach((fieldKey) => {
     if (Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) {
       fieldVisibilityDraft[fieldKey] = fieldVisibilityBase.value[fieldKey];
@@ -9244,14 +9462,18 @@ async function saveContractFieldOrder() {
   const target = parseMaybeJsonRecord(configAction?.target);
   const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
   const changedVisibility = changedFieldVisibilityDraft();
+  const changedGroups = changedFieldGroupDraft();
   const applyParams: Record<string, unknown> = { ...baseParams };
   if (hasFieldOrderChanges.value) {
     applyParams.field_order = [...fieldOrderDraft.value];
   }
+  if (Object.keys(changedGroups).length) {
+    applyParams.field_groups = changedGroups;
+  }
   if (Object.keys(changedVisibility).length) {
     applyParams.field_visibility = changedVisibility;
   }
-  if (!('field_order' in applyParams) && !('field_visibility' in applyParams)) {
+  if (!('field_order' in applyParams) && !('field_visibility' in applyParams) && !('field_groups' in applyParams)) {
     fieldVisibilityDirty.value = false;
     contractModeFeedback.value = '';
     return true;
@@ -9302,6 +9524,12 @@ async function saveContractFieldOrder() {
       Object.keys(changedVisibility).forEach((key) => {
         delete fieldVisibilityDirtyKeys[key];
       });
+    }
+    if (Object.keys(changedGroups).length) {
+      fieldGroupBase.value = {
+        ...fieldGroupBase.value,
+        ...changedGroups,
+      };
     }
     fieldVisibilityDirty.value = false;
     lowCodeContractLoaded.value = false;

@@ -2136,6 +2136,7 @@ class UiContractV2Handler(BaseIntentHandler):
         field_names: list[str] = []
         field_labels: dict[str, str] = {}
         section_titles: list[str] = []
+        field_groups: dict[str, list[str]] = {}
         config_summaries: list[dict[str, Any]] = []
         try:
             view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
@@ -2184,10 +2185,21 @@ class UiContractV2Handler(BaseIntentHandler):
             for row in sections:
                 if isinstance(row, dict):
                     title = str(row.get("title") or row.get("label") or row.get("name") or "").strip()
+                    fields = [
+                        str(item or "").strip()
+                        for item in (row.get("fields") if isinstance(row.get("fields"), list) else [])
+                        if str(item or "").strip()
+                    ]
                 else:
                     title = str(row or "").strip()
+                    fields = []
                 if title and title not in section_titles:
                     section_titles.append(title)
+                if title and fields:
+                    existing = field_groups.setdefault(title, [])
+                    for name in fields:
+                        if name not in existing:
+                            existing.append(name)
         applied = bool(view_governance.get("applied") or business_contracts or legacy_overlay or field_names)
         if not applied:
             return {}
@@ -2200,6 +2212,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "field_names": field_names,
             "field_labels": field_labels,
             "section_titles": section_titles,
+            "field_groups": field_groups,
         }
 
     def _build_form_structure_contract(
@@ -2277,6 +2290,76 @@ class UiContractV2Handler(BaseIntentHandler):
                 return str(field_label(name) or "").strip()
             except Exception:
                 return str(name or "").strip()
+
+        configured_field_groups = (
+            governance.get("field_groups")
+            if isinstance(governance, dict) and isinstance(governance.get("field_groups"), dict)
+            else {}
+        )
+        if configured_field_groups:
+            group_rows: list[dict[str, Any]] = []
+            configured_roles: dict[str, dict[str, Any]] = {}
+            assigned_configured_fields: set[str] = set()
+            for index, (raw_title, raw_fields) in enumerate(configured_field_groups.items(), start=1):
+                title = str(raw_title or "").strip() or "业务配置字段"
+                names = [
+                    str(item or "").strip()
+                    for item in (raw_fields if isinstance(raw_fields, list) else [])
+                    if str(item or "").strip()
+                ]
+                refs = [
+                    name
+                    for name in fields_for(names)
+                    if name not in assigned_configured_fields
+                ]
+                if not refs:
+                    continue
+                assigned_configured_fields.update(refs)
+                group_name = "configured_group_%s" % index
+                for name in refs:
+                    configured_roles[name] = {
+                        "role": "configured_field",
+                        "slot": "configured_form",
+                        "group": group_name,
+                    }
+                group_rows.append({
+                    "name": group_name,
+                    "title": title,
+                    "role": "configured_field_group",
+                    "fieldRefs": refs,
+                    "fieldLabels": {name: field_display_label(name) for name in refs},
+                })
+            if group_rows:
+                return {
+                    "source": "ui.contract.v2.form_structure_contract",
+                    "structureVersion": "1.0",
+                    "model": model,
+                    "viewType": "form",
+                    "mode": "business_task_form",
+                    "layoutPolicy": "business_config_sections",
+                    "objectProfile": {
+                        "model": model,
+                        "kind": "business_form",
+                        "factAuthority": "business_object_model_and_view",
+                    },
+                    "navigation": {"title": "业务办理"},
+                    "sourceSectionTitles": [row.get("title") for row in group_rows if row.get("title")],
+                    "slots": [{
+                        "slot": "configured_form",
+                        "title": "表单字段",
+                        "role": "configured_form",
+                        "groups": group_rows,
+                    }],
+                    "fieldRoles": configured_roles,
+                    "sourceAuthority": {
+                        "kind": self.SOURCE_KIND,
+                        "runtime_carrier": "ui.contract.v2.form_structure_contract",
+                        "projection_only": True,
+                        "no_business_fact_authority": True,
+                        "governed_form_structure": True,
+                        "governance_source": dict(governance or {}),
+                    },
+                }
 
         def is_migration_history_field(name: str) -> bool:
             value = str(name or "").strip()
