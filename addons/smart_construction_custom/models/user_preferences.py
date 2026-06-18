@@ -6,6 +6,9 @@ from odoo import api, models
 from odoo.tools.safe_eval import safe_eval
 
 
+PARTNER_FORM_PREFERENCE_SOURCE = "smart_construction_custom.partner_form_preference"
+USER_FORM_PREFERENCE_SOURCE = "smart_construction_custom.user_form_preference"
+
 PARTNER_ACTIONS = {
     "customer": {
         "xmlid": "smart_construction_core.action_sc_customer_partner",
@@ -799,7 +802,11 @@ class ScUserPreferenceInitialization(models.TransientModel):
                             }
                         ],
                     }
-                }
+                },
+                "context": {
+                    "source": PARTNER_FORM_PREFERENCE_SOURCE,
+                    "scope": "partner_master_form_preference",
+                },
             }
         }
         if required_names:
@@ -811,7 +818,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
                 {
                     "code": "REQUIRED",
                     "field": name,
-                    "source": "smart_construction_custom.partner_form_preference",
+                    "source": PARTNER_FORM_PREFERENCE_SOURCE,
                     "when_profiles": ["create", "edit"],
                 }
                 for name in required_names
@@ -979,7 +986,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
                     }
                 },
                 "context": {
-                    "source": "smart_construction_custom.user_form_preference",
+                    "source": USER_FORM_PREFERENCE_SOURCE,
                     "scope": "user_confirmed_formal_handling",
                     "field_order_source": source,
                     "menu_xmlid": item.get("menu_xmlid"),

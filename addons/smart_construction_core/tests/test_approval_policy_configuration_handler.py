@@ -225,6 +225,11 @@ class ApprovalPolicyConfigurationHandlerTests(unittest.TestCase):
         self.assertEqual([step["id"] for step in data["policy"]["steps"]], [21, 22])
         self.assertEqual(data["policy"]["steps"][0]["approval_scope_label"], "管理层/总经理终审")
         self.assertIn({"value": "finance_manager", "label": "财务审核人"}, data["scope_options"])
+        authority = result["meta"]["source_authority"]
+        self.assertTrue(authority["projection_only"])
+        self.assertEqual(authority["lowcode_boundary"], "approval_policy")
+        self.assertEqual(authority["policy_source"], "sc.approval.policy")
+        self.assertEqual(authority["lowcode_source"], "smart_construction_core.lowcode.approval_policy")
 
     def test_set_creates_policy_and_normalizes_disabled_mode(self):
         model = _PolicyModel([])
@@ -248,6 +253,11 @@ class ApprovalPolicyConfigurationHandlerTests(unittest.TestCase):
         self.assertEqual(model.created[0]["mode"], "none")
         self.assertEqual(result["data"]["policy"]["mode"], "none")
         self.assertFalse(result["data"]["runtime_approval_required"])
+        authority = result["meta"]["source_authority"]
+        self.assertTrue(authority["write_proxy"])
+        self.assertFalse(authority["projection_only"])
+        self.assertEqual(authority["lowcode_boundary"], "approval_policy")
+        self.assertEqual(authority["policy_source"], "sc.approval.policy")
 
     def test_set_updates_existing_policy_and_syncs_runtime(self):
         policy = _PolicyRecord(target_model="payment.request", approval_required=False, mode="none")

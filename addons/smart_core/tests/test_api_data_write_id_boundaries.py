@@ -258,6 +258,34 @@ class TestApiDataWriteIdBoundaries(unittest.TestCase):
         self.assertIn(("company_id", "=", 17), policy_rows.search_domains[0])
         self.assertNotIn(("company_id", "in", [17, 23]), policy_rows.search_domains[0])
 
+    def test_runtime_config_models_cannot_use_generic_write_proxy(self):
+        self.module.ApiDataWriteHandler.ALLOWED_MODELS = {"ui.form.field.policy": {"field_name"}}
+        handler = self.module.ApiDataWriteHandler(
+            env={"ui.form.field.policy": _Model()},
+            params={"model": "ui.form.field.policy", "id": 9, "vals": {"field_name": "x_bad"}},
+        )
+
+        result = handler.handle(payload={"intent": "api.data.write"})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 403)
+        self.assertEqual(result["error"]["reason_code"], "UNSUPPORTED_SOURCE")
+        self.assertIn("专用配置入口", result["error"]["message"])
+
+    def test_approval_policy_cannot_use_generic_create_proxy(self):
+        self.module.ApiDataWriteHandler.ALLOWED_MODELS = {"sc.approval.policy": {"name"}}
+        handler = self.module.ApiDataWriteHandler(
+            env={"sc.approval.policy": _Model()},
+            params={"model": "sc.approval.policy", "vals": {"name": "Bad Policy"}},
+        )
+
+        result = handler.handle(payload={"intent": "api.data.create"})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 403)
+        self.assertEqual(result["error"]["reason_code"], "UNSUPPORTED_SOURCE")
+        self.assertIn("专用配置入口", result["error"]["message"])
+
 
 if __name__ == "__main__":
     unittest.main()

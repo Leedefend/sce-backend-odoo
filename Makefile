@@ -610,6 +610,11 @@ verify.business.oca_runtime_smoke: check-compose-project check-compose-env
 
 verify.business_config.unit: guard.prod.forbid
 	@python3 scripts/verify/business_config_user_language_guard.py
+	@python3 scripts/verify/backend_contract_boundary_guard.py
+	@python3 addons/smart_core/tests/test_backend_contract_boundaries.py
+	@python3 addons/smart_core/tests/test_backend_contract_boundary_guard.py
+	@python3 addons/smart_core/tests/test_business_config_contract_schema.py
+	@python3 addons/smart_core/tests/test_api_data_write_id_boundaries.py
 	@python3 addons/smart_core/tests/test_form_field_configuration_params.py
 	@python3 addons/smart_core/tests/test_business_config_surface.py
 	@python3 addons/smart_core/tests/test_menu_configuration_audit.py

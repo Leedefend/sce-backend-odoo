@@ -10,6 +10,11 @@ from odoo.exceptions import ValidationError
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.request_params import parse_non_negative_int
+from ..utils.backend_contract_boundaries import (
+    VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY,
+    VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+    ensure_view_orchestration_source,
+)
 from ..utils.reason_codes import REASON_MISSING_PARAMS, REASON_NOT_FOUND, REASON_OK, REASON_USER_ERROR
 
 BUSINESS_CONFIG_ADMIN_GROUP = "smart_core.group_smart_core_business_config_admin"
@@ -526,6 +531,23 @@ def _business_config_analysis_payload(*, view_type: str, measures: list[str], di
     }
 
 
+def _lowcode_view_orchestration_payload(payload: dict, *, source: str = VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING) -> dict:
+    return ensure_view_orchestration_source(payload, source)
+
+
+def _lowcode_form_source_authority(handler) -> dict:
+    return {
+        "kind": handler.SOURCE_KIND,
+        "authorities": list(handler.SOURCE_AUTHORITIES),
+        "projection_only": True,
+        "write_proxy": True,
+        "no_business_fact_authority": True,
+        "runtime_carrier": handler.INTENT_TYPE,
+        "lowcode_boundary": "form_config",
+        "contract_source": VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY,
+    }
+
+
 def _search_published_view_orchestration_contracts(env, *, model: str, view_type: str, action_id: int = 0, view_id: int = 0, role_key: str = ""):
     if "ui.business.config.contract" not in env:
         return []
@@ -614,6 +636,7 @@ def _upsert_view_orchestration_field_rows(
     views[view_type] = spec
     orchestration["views"] = views
     payload["view_orchestration"] = orchestration
+    payload = _lowcode_view_orchestration_payload(payload, source=VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY)
     vals = {
         "name": name,
         "model": model,
@@ -652,14 +675,7 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
         return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
 
     def _source_authority_contract(self):
-        return {
-            "kind": self.SOURCE_KIND,
-            "authorities": list(self.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "write_proxy": True,
-            "no_business_fact_authority": True,
-            "runtime_carrier": self.INTENT_TYPE,
-        }
+        return _lowcode_form_source_authority(self)
 
     def _model_record(self, model_name: str):
         return self.env["ir.model"].search([("model", "=", model_name)], limit=1)
@@ -787,14 +803,7 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
         return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
 
     def _source_authority_contract(self):
-        return {
-            "kind": self.SOURCE_KIND,
-            "authorities": list(self.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "write_proxy": True,
-            "no_business_fact_authority": True,
-            "runtime_carrier": self.INTENT_TYPE,
-        }
+        return _lowcode_form_source_authority(self)
 
     def _suggest_field_name(self, model: str, label: str) -> str:
         ascii_slug = re.sub(r"[^a-z0-9_]+", "_", str(label or "").lower()).strip("_")
@@ -947,14 +956,7 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
         return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
 
     def _source_authority_contract(self):
-        return {
-            "kind": self.SOURCE_KIND,
-            "authorities": list(self.SOURCE_AUTHORITIES),
-            "projection_only": True,
-            "write_proxy": True,
-            "no_business_fact_authority": True,
-            "runtime_carrier": self.INTENT_TYPE,
-        }
+        return _lowcode_form_source_authority(self)
 
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
@@ -2616,6 +2618,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         if not isinstance(contract_json, dict):
             return self._err(400, "contract_json 必须是对象", REASON_USER_ERROR)
+        contract_json = _lowcode_view_orchestration_payload(contract_json)
         precheck = self._precheck_contract_payload(contract_json)
         if precheck["errors"]:
             return self._err(400, "contract_json 预检失败", REASON_USER_ERROR)

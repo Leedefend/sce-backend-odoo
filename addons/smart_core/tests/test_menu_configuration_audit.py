@@ -420,6 +420,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
 
         orchestration = payload["menu_orchestration"]
         self.assertEqual(orchestration["schema_version"], "menu_orchestration.v1")
+        self.assertEqual(orchestration["source"], "smart_core.lowcode.menu_config")
         self.assertEqual(orchestration["runtime_source"], "ui.menu.config.policy")
         self.assertEqual(orchestration["policy_count"], 1)
         self.assertEqual(orchestration["policies"][0]["menu_id"], 11)
@@ -468,6 +469,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(contract.status, "published")
         self.assertEqual(contract.version_no, 2)
         self.assertEqual(contract.contract_json["menu_orchestration"]["policy_count"], 1)
+        self.assertEqual(contract.contract_json["menu_orchestration"]["source"], "smart_core.lowcode.menu_config")
         self.assertTrue(result["meta"]["contract_mirrored"])
 
     def test_menu_config_create_adds_menu_policy_and_contract_version(self):
@@ -520,7 +522,9 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(policies[0].sequence_override, 30)
         self.assertEqual(len(contracts), 1)
         self.assertEqual(contracts[0].contract_json["menu_orchestration"]["policy_count"], 1)
+        self.assertEqual(contracts[0].contract_json["menu_orchestration"]["source"], "smart_core.lowcode.menu_config")
         self.assertEqual(result["meta"]["source_authority"]["kind"], "ui_menu_config_menu_create_write_proxy")
+        self.assertEqual(result["meta"]["source_authority"]["lowcode_boundary"], "menu_config")
 
     def test_menu_config_rollback_restores_policy_rows_from_contract_version(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")

@@ -7,6 +7,10 @@ from typing import Any
 from odoo.exceptions import AccessError, ValidationError
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    APPROVAL_POLICY_RUNTIME_SOURCE,
+    APPROVAL_POLICY_SOURCE_TENANT_LOWCODING,
+)
 
 
 BUSINESS_CONFIG_GROUPS = [
@@ -14,7 +18,6 @@ BUSINESS_CONFIG_GROUPS = [
     "smart_core.group_smart_core_admin",
     "smart_construction_core.group_sc_cap_business_config_admin",
 ]
-
 
 def _to_text(value: Any) -> str:
     return str(value or "").strip()
@@ -79,6 +82,9 @@ class ApprovalPolicyConfigGetHandler(BaseIntentHandler):
             "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
             "runtime_carrier": cls.INTENT_TYPE,
             "boundary": "industry_policy_runtime",
+            "lowcode_boundary": "approval_policy",
+            "policy_source": APPROVAL_POLICY_RUNTIME_SOURCE,
+            "lowcode_source": APPROVAL_POLICY_SOURCE_TENANT_LOWCODING,
         }
 
     def _ensure_access(self):

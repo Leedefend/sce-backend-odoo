@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    classify_view_orchestration_contract,
+    view_orchestration_apply_order_key,
+)
 
 
 class UIBusinessConfigContract(models.Model):
@@ -344,26 +348,7 @@ class UIBusinessConfigContract(models.Model):
 
         effective = [contract for contract in records if applies(contract)]
 
-        def apply_order(contract):
-            # Historical user-flat compatibility contracts are retained for old data,
-            # but formal business view-orchestration contracts must be the final
-            # authority when both exist in the same runtime scope.
-            name = str(contract.name or "")
-            legacy_flat = name.endswith(":custom_user_flat") or name.endswith(".custom_user_flat")
-            action_specific = 1 if int(contract.action_id.id or 0) else 0
-            view_specific = 1 if int(contract.view_id.id or 0) else 0
-            role_specific = 1 if str(contract.role_key or "").strip() else 0
-            return (
-                0 if legacy_flat else 1,
-                int(contract.priority or 100),
-                int(contract.version_no or 1),
-                int(contract.id or 0),
-                action_specific,
-                view_specific,
-                role_specific,
-            )
-
-        effective = sorted(effective, key=apply_order)
+        effective = sorted(effective, key=view_orchestration_apply_order_key)
         return self.browse([contract.id for contract in effective])
 
     @api.model
@@ -375,7 +360,12 @@ class UIBusinessConfigContract(models.Model):
             "rebuildable": True,
             "no_business_fact_authority": True,
             "runtime_carrier": "ui.business.config.contract",
+            "boundary_classifier": "smart_core.utils.backend_contract_boundaries",
         }
+
+    def boundary_contract(self) -> dict:
+        self.ensure_one()
+        return classify_view_orchestration_contract(self.name, self.contract_json or {})
 
     def action_publish(self):
         for rec in self:

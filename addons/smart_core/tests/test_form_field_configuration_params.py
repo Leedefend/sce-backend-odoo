@@ -800,6 +800,10 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(fields[0]["label"], "New")
         self.assertFalse(fields[0]["visible"])
         self.assertEqual(fields[0]["sequence"], 10)
+        self.assertEqual(
+            contract_model.record.contract_json["view_orchestration"]["context"]["source"],
+            "smart_core.lowcode.form_field_policy",
+        )
         self.assertTrue(contract_model.record.published)
 
     def test_low_code_write_intents_declare_business_config_authority(self):
@@ -812,6 +816,8 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
             self.assertIn("ui.business.config.contract", contract["authorities"])
             self.assertIn("ui.business.config.contract.version", contract["authorities"])
             self.assertIn("ui.form.field.policy", contract["authorities"])
+            self.assertEqual(contract["lowcode_boundary"], "form_config")
+            self.assertEqual(contract["contract_source"], "smart_core.lowcode.form_field_policy")
 
     def test_business_config_contract_list_uses_full_view_scope_domain(self):
         class Company:

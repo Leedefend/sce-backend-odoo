@@ -11,6 +11,7 @@ from odoo import _
 from odoo.http import request
 from odoo.addons.smart_core.utils.delete_policy import resolve_unlink_policy
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+from odoo.addons.smart_core.utils.backend_contract_boundaries import is_business_config_runtime_model
 from ...utils.misc import safe_eval
 from ...utils.view_utils import extract_tree_columns_strict, normalize_cols_safely
 
@@ -55,17 +56,6 @@ class PageAssembler:
         "ir.config_parameter",
         "res.users",
         "res.groups",
-    }
-
-    _BUSINESS_CONFIG_RUNTIME_MODELS = {
-        "sc.approval.policy",
-        "sc.approval.step",
-        "sc.approval.scope",
-        "sc.approval.scope.user.wizard",
-        "ui.business.config.contract",
-        "ui.form.field.policy",
-        "ui.form.custom.field.wizard",
-        "ui.menu.config.policy",
     }
 
     def __init__(self, env, su_env=None):
@@ -1368,7 +1358,7 @@ class PageAssembler:
         model = str(model_name or "").strip()
         if not model or model not in self.env:
             return
-        if model in self._BUSINESS_CONFIG_RUNTIME_MODELS:
+        if is_business_config_runtime_model(model):
             return
         if str(render_profile or data.get("render_profile") or "").strip().lower() not in {"create", "edit", "readonly"}:
             return

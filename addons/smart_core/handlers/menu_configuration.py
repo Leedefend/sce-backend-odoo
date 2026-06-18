@@ -6,6 +6,7 @@ from typing import Any
 from odoo.exceptions import AccessError, ValidationError
 
 from ..core.base_handler import BaseIntentHandler
+from ..utils.backend_contract_boundaries import MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING
 
 
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
@@ -107,6 +108,7 @@ def _menu_config_contract_json(company_id: int, policies) -> dict:
     return {
         "menu_orchestration": {
             "schema_version": "menu_orchestration.v1",
+            "source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
             "runtime_source": "ui.menu.config.policy",
             "company_id": int(company_id or 0),
             "policies": rows,
@@ -385,6 +387,8 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
             "kind": "ui_menu_config_panel_write_proxy",
             "write_proxy": True,
             "runtime_carrier": cls.INTENT_TYPE,
+            "lowcode_boundary": "menu_config",
+            "contract_source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
         })
         return source
 
@@ -531,6 +535,8 @@ class MenuConfigurationCreateHandler(MenuConfigurationSaveHandler):
             "write_proxy": True,
             "runtime_carrier": cls.INTENT_TYPE,
             "boundary": "runtime_menu_entry_creation",
+            "lowcode_boundary": "menu_config",
+            "contract_source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
             "delivery_baseline_note": "长期菜单入口需沉淀到用户模块或行业模块。",
         })
         return source
