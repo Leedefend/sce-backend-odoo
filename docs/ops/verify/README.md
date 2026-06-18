@@ -49,6 +49,10 @@
   - Checks P0-P4 product layers, required boundary sections, and delivery acceptance terms remain present.
   - Emits report:
     - `artifacts/docs/product_boundary_catalog_guard.json`
+- `make verify.user_module.product_boundary`
+  - Verifies the P2 user module keeps user data baseline, user preferences, and replay hooks as separate carriers.
+  - Ensures `smart_construction_custom` loads user data baseline before user preference contracts.
+  - Ensures form preference initializers do not perform hidden data dictionary creation or partner backfill.
 - `make verify.backend.guard`
   - Compatibility alias for the backend boundary guard chain used by Codex verification workflows.
 - `make codex.snapshot.export`

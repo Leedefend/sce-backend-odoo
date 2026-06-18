@@ -4081,6 +4081,7 @@ verify.product.sla.baseline: guard.prod.forbid verify.platform.performance.smoke
 
 verify.product.release.ready: guard.prod.forbid \
 	verify.docs.product_boundary \
+	verify.user_module.product_boundary \
 	verify.product.surface.clean \
 	verify.product.complexity.bound \
 	verify.product.bundle.isolation \
@@ -4159,6 +4160,7 @@ verify.platform.governance.ready: guard.prod.forbid \
 
 verify.productization.ready: guard.prod.forbid \
 	verify.docs.product_boundary \
+	verify.user_module.product_boundary \
 	verify.product.surface.clean \
 	verify.product.bundle.isolation \
 	verify.product.tier.enforcement \
@@ -4339,6 +4341,11 @@ verify.docs.contract_sync: guard.prod.forbid
 verify.docs.product_boundary: guard.prod.forbid
 	@python3 scripts/verify/test_product_boundary_catalog_guard.py
 	@python3 scripts/verify/product_boundary_catalog_guard.py
+
+.PHONY: verify.user_module.product_boundary
+verify.user_module.product_boundary: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/user_module_product_boundary_guard.py
+	@python3 scripts/verify/user_module_product_boundary_guard.py
 
 verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.product_boundary
 	@echo "[OK] verify.docs.all done"
