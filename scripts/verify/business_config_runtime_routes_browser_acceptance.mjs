@@ -19,6 +19,7 @@ const artifactRoot = path.resolve(
 );
 const reportPath = path.join(artifactRoot, 'report.json');
 const maxRoutes = Number(process.env.BUSINESS_CONFIG_BROWSER_ROUTE_LIMIT || 60);
+const analysisViewTypes = new Set(['pivot', 'graph', 'calendar', 'dashboard']);
 
 function slug(value) {
   return String(value || '')
@@ -35,20 +36,42 @@ function routeToUrl(route) {
   return url.toString();
 }
 
+function sampleViewType(sample) {
+  const viewType = String(sample?.view_type || '').trim().toLowerCase();
+  if (viewType) return viewType;
+  const targets = Array.isArray(sample?.target_view_types) ? sample.target_view_types : [];
+  return targets.map((item) => String(item || '').trim().toLowerCase()).find((item) => item) || '';
+}
+
+function runtimeRouteForSample(sample) {
+  const route = String(sample?.runtime_route || '').trim();
+  const viewType = sampleViewType(sample);
+  if (!route || !analysisViewTypes.has(viewType)) return route;
+  const url = new URL(route.startsWith('http') ? route : `${baseUrl}${route}`);
+  url.searchParams.set('view_mode', viewType);
+  return `${url.pathname}${url.search}`;
+}
+
 function collectSamples(report) {
   const rows = [];
   const seen = new Set();
   for (const scope of report?.scopes || []) {
     for (const sample of scope?.runtime_route_samples || []) {
-      const route = String(sample?.runtime_route || '').trim();
-      if (!route || seen.has(route)) continue;
-      seen.add(route);
+      const route = runtimeRouteForSample(sample);
+      const viewType = sampleViewType(sample);
+      const seenKey = `${route}|${viewType}`;
+      if (!route || seen.has(seenKey)) continue;
+      seen.add(seenKey);
       rows.push({
         scope: String(scope?.scope || ''),
         action_id: Number(sample?.action_id || 0),
         name: String(sample?.name || ''),
         model: String(sample?.model || ''),
         severity: String(sample?.severity || ''),
+        view_mode: String(sample?.view_mode || ''),
+        view_type: viewType,
+        target_view_types: Array.isArray(sample?.target_view_types) ? sample.target_view_types : [],
+        sample_reason: String(sample?.sample_reason || ''),
         runtime_route: route,
       });
       if (maxRoutes > 0 && rows.length >= maxRoutes) return rows;
@@ -102,13 +125,20 @@ async function validateRoute(page, sample, index) {
     const tableHeaderCount = await page.locator('thead th').count().catch(() => 0);
     const rowCount = await page.locator('tbody tr').count().catch(() => 0);
     const formInputCount = await page.locator('input, textarea, select').count().catch(() => 0);
+    const advancedViewCount = await page.locator('.advanced-view').count().catch(() => 0);
+    const advancedItemCount = await page.locator('.advanced-item').count().catch(() => 0);
     const failures = [];
     if (page.url().includes('/login')) failures.push('redirected to login');
     if (!bodyText.trim()) failures.push('empty body');
     if (/Request failed|BAD_REQUEST|order 无效|页面加载失败|加载失败|发生错误|Traceback|Cannot read/i.test(bodyText)) {
       failures.push('visible runtime error');
     }
-    if (!tableHeaderCount && !formInputCount && !rowCount) failures.push('no list or form content detected');
+    if (!tableHeaderCount && !formInputCount && !rowCount && !advancedViewCount) {
+      failures.push('no list, form, or advanced content detected');
+    }
+    if (analysisViewTypes.has(sample.view_type) && !advancedViewCount) {
+      failures.push('analysis runtime did not render advanced view');
+    }
     await page.screenshot({ path: screenshotPath, fullPage: true });
     return {
       ...row,
@@ -118,6 +148,8 @@ async function validateRoute(page, sample, index) {
       table_header_count: tableHeaderCount,
       row_count: rowCount,
       form_input_count: formInputCount,
+      advanced_view_count: advancedViewCount,
+      advanced_item_count: advancedItemCount,
       failures,
     };
   } catch (err) {
@@ -171,6 +203,15 @@ async function main() {
   await browser.close();
 
   const failures = results.filter((item) => !item.ok);
+  const analysisRouteCount = results.filter((item) => analysisViewTypes.has(item.view_type)).length;
+  if (!analysisRouteCount) {
+    failures.push({
+      ok: false,
+      failures: ['no analysis runtime route sampled'],
+      runtime_route: '',
+      view_type: 'analysis',
+    });
+  }
   const report = {
     ok: failures.length === 0 && consoleErrors.length === 0 && failedResponses.length === 0,
     base_url: baseUrl,
@@ -178,6 +219,7 @@ async function main() {
     login: loginName,
     coverage_report_path: coverageReportPath,
     route_count: samples.length,
+    analysis_route_count: analysisRouteCount,
     failure_count: failures.length,
     console_error_count: consoleErrors.length,
     failed_response_count: failedResponses.length,

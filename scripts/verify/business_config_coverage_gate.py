@@ -65,7 +65,35 @@ def _runtime_route_text(row):
     return "%s?%s" % (path, "&".join(pairs)) if pairs else path
 
 
-def _route_samples(result, limit=10):
+def _sample_view_type(row, preferred_view_type=""):
+    preferred = str(preferred_view_type or "").strip()
+    if preferred and preferred in (row.get("target_view_types") or []):
+        return preferred
+    for view_type in ("pivot", "graph", "calendar", "dashboard", "form", "tree", "search"):
+        if view_type in (row.get("target_view_types") or []):
+            return view_type
+    return ""
+
+
+def _route_sample(row, scope_reason, preferred_view_type=""):
+    route = _runtime_route_text(row)
+    if not route:
+        return None
+    return {
+        "action_id": int(row.get("action_id") or 0),
+        "name": str(row.get("name") or row.get("model") or ""),
+        "model": str(row.get("model") or ""),
+        "severity": str(row.get("severity") or ""),
+        "view_mode": str(row.get("view_mode") or ""),
+        "view_type": _sample_view_type(row, preferred_view_type),
+        "target_view_types": list(row.get("target_view_types") or []),
+        "menu_ids": list(row.get("menu_ids") or []),
+        "runtime_route": route,
+        "sample_reason": scope_reason,
+    }
+
+
+def _route_samples(result, limit=20):
     data = result.get("data") if isinstance(result, dict) else {}
     items = data.get("items") if isinstance(data, dict) else []
     if not isinstance(items, list):
@@ -75,19 +103,37 @@ def _route_samples(result, limit=10):
         if isinstance(row, dict)
         and (not row.get("is_runtime_complete") or not row.get("is_complete") or not row.get("has_menu"))
     ]
-    rows = issue_rows or [row for row in items if isinstance(row, dict)]
+    rows = [row for row in items if isinstance(row, dict)]
     samples = []
+    seen = set()
+
+    def add(row, reason, preferred_view_type=""):
+        if not isinstance(row, dict):
+            return
+        sample = _route_sample(row, reason, preferred_view_type)
+        if not sample:
+            return
+        key = "%s:%s" % (sample["runtime_route"], sample["view_type"])
+        if key in seen:
+            return
+        seen.add(key)
+        samples.append(sample)
+
+    for row in issue_rows:
+        add(row, "issue")
+        if len(samples) >= limit:
+            return samples
+
+    for required_view_type in ("pivot", "graph", "form", "tree", "search"):
+        for row in rows:
+            if required_view_type in (row.get("target_view_types") or []):
+                add(row, "representative:%s" % required_view_type, required_view_type)
+                break
+        if len(samples) >= limit:
+            return samples
+
     for row in rows:
-        route = _runtime_route_text(row)
-        if not route:
-            continue
-        samples.append({
-            "action_id": int(row.get("action_id") or 0),
-            "name": str(row.get("name") or row.get("model") or ""),
-            "model": str(row.get("model") or ""),
-            "severity": str(row.get("severity") or ""),
-            "runtime_route": route,
-        })
+        add(row, "sample")
         if len(samples) >= limit:
             break
     return samples
@@ -104,6 +150,7 @@ def _scope_result(name, env_obj, params):
         "runtime_missing_form_count": int(summary.get("runtime_missing_form_count") or 0),
         "runtime_missing_list_count": int(summary.get("runtime_missing_list_count") or 0),
         "runtime_missing_search_count": int(summary.get("runtime_missing_search_count") or 0),
+        "runtime_missing_analysis_count": int(summary.get("runtime_missing_analysis_count") or 0),
         "severity_counts": summary.get("severity_counts") or {},
         "remediation_action_counts": summary.get("remediation_action_counts") or {},
         "runtime_route_samples": _route_samples(result),

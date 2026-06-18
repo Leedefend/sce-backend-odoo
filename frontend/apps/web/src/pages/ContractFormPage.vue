@@ -9165,7 +9165,7 @@ function onFieldOrderDragEnd() {
 function resetContractFieldOrder() {
   fieldOrderDraft.value = currentFormDesignFieldKeys.value;
   fieldOrderPreviewActive.value = false;
-  currentFormDesignFieldKeys.value.forEach((fieldKey) => {
+  formVisibilityDraftFieldKeys.value.forEach((fieldKey) => {
     if (Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) {
       fieldVisibilityDraft[fieldKey] = fieldVisibilityBase.value[fieldKey];
       return;
