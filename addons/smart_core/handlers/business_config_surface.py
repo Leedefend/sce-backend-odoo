@@ -184,6 +184,46 @@ class _BusinessConfigSurfaceBase(BaseIntentHandler):
         view_mode = _to_text(getattr(action, "view_mode", "")) if action else ""
         return {item.strip() for item in view_mode.split(",") if item.strip()}
 
+    def _xmlid_record_id(self, xmlid: str) -> int:
+        xmlid = _to_text(xmlid)
+        if not xmlid or "." not in xmlid or not hasattr(self.env, "ref"):
+            return 0
+        try:
+            record = self.env.ref(xmlid, raise_if_not_found=False)
+        except Exception:
+            record = None
+        return _ref_id(record)
+
+    def _approval_policy_section(self, model: str) -> dict:
+        action_id = self._xmlid_record_id("smart_construction_core.action_sc_approval_policy")
+        menu_id = self._xmlid_record_id("smart_construction_core.menu_sc_approval_policy")
+        count = 0
+        if "sc.approval.policy" in self.env:
+            domain = [("active", "=", True)]
+            if model:
+                domain.append(("target_model", "=", model))
+            try:
+                count = int(self.env["sc.approval.policy"].sudo().search_count(domain))
+            except Exception:
+                count = 0
+        route_query = {}
+        if menu_id:
+            route_query["menu_id"] = str(menu_id)
+        if model:
+            route_query["target_model"] = model
+            route_query["domain_raw"] = "[('target_model', '=', '%s')]" % model.replace("'", "\\'")
+        return {
+            "key": "approval",
+            "label": "审批规则",
+            "contract_count": count,
+            "intent": "sc.approval.policy",
+            "boundary": "industry_policy_runtime",
+            "route": {
+                "path": "/a/%s" % action_id if action_id else "",
+                "query": route_query,
+            },
+        }
+
     def _snapshot_summary(self) -> dict:
         if "ui.business.config.contract" not in self.env:
             return {}
@@ -392,6 +432,7 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
             "intent": "ui.menu_config.audit",
             "boundary": "business_contract_with_policy_runtime",
         })
+        sections.append(self._approval_policy_section(model))
         return {
             "ok": True,
             "data": {

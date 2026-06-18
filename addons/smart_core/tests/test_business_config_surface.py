@@ -188,6 +188,21 @@ class _MenuModel:
         return len([ref for ref in self.action_refs if ref == action_ref])
 
 
+class _ApprovalPolicyModel(list):
+    def sudo(self):
+        return self
+
+    def search_count(self, domain):
+        self.domain = domain
+        target_model = next((value for field, op, value in domain if field == "target_model" and op == "="), "")
+        active = next((value for field, op, value in domain if field == "active" and op == "="), None)
+        return len([
+            row for row in self
+            if (not target_model or row.get("target_model") == target_model)
+            and (active is None or bool(row.get("active", True)) is bool(active))
+        ])
+
+
 class _VisibleMenuModel(_MenuModel):
     def __init__(self, action_refs, visible_ids):
         super().__init__(action_refs)
@@ -242,6 +257,16 @@ class _Env(dict):
     context = {}
     cr = types.SimpleNamespace(dbname="sc_demo")
 
+    def ref(self, xmlid, raise_if_not_found=True):
+        refs = {
+            "smart_construction_core.action_sc_approval_policy": types.SimpleNamespace(id=901),
+            "smart_construction_core.menu_sc_approval_policy": types.SimpleNamespace(id=902),
+        }
+        record = refs.get(xmlid)
+        if record or not raise_if_not_found:
+            return record
+        raise ValueError(xmlid)
+
 
 class BusinessConfigSurfaceTests(unittest.TestCase):
     def setUp(self):
@@ -249,6 +274,10 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
 
     def test_surface_reports_business_config_sections(self):
         env = _Env({
+            "sc.approval.policy": _ApprovalPolicyModel([
+                {"target_model": "res.partner", "active": True},
+                {"target_model": "project.project", "active": True},
+            ]),
             "ui.business.config.contract": _ContractModel([
                 _Contract("res.partner", "form", action_id=11, view_id=22, role_key="sales"),
                 _Contract("res.partner", "tree", action_id=11, view_id=22, role_key="sales"),
@@ -272,6 +301,12 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
         self.assertEqual(sections["list_search"]["contract_count"], 2)
         self.assertEqual(sections["analysis"]["contract_count"], 2)
         self.assertEqual(sections["menu"]["contract_count"], 1)
+        self.assertEqual(sections["approval"]["contract_count"], 1)
+        self.assertEqual(sections["approval"]["boundary"], "industry_policy_runtime")
+        self.assertEqual(sections["approval"]["route"]["path"], "/a/901")
+        self.assertEqual(sections["approval"]["route"]["query"]["menu_id"], "902")
+        self.assertEqual(sections["approval"]["route"]["query"]["target_model"], "res.partner")
+        self.assertEqual(sections["approval"]["route"]["query"]["domain_raw"], "[('target_model', '=', 'res.partner')]")
         self.assertEqual(result["data"]["role_key"], "sales")
         self.assertEqual(sections["list_search"]["boundary"], "business_contract_not_user_preference")
         self.assertEqual(sections["analysis"]["boundary"], "business_contract")

@@ -67,7 +67,10 @@ async function login(page) {
 
 async function formDesignerFieldTexts(page) {
   return page.locator(".field--selectable").evaluateAll((nodes) => (
-    nodes.map((node) => node.textContent?.replace(/\s+/g, " ").trim()).filter(Boolean)
+    nodes.map((node) => {
+      const text = node.textContent?.replace(/\s+/g, " ").trim() || "";
+      return text.split("⋮⋮")[0].split("↑")[0].trim();
+    }).filter(Boolean)
   ));
 }
 
@@ -75,6 +78,31 @@ async function dragDesignerField(page, fromIndex, toIndex) {
   const source = page.locator(".field--selectable").nth(fromIndex).locator(".field-order-handle");
   const target = page.locator(".field--selectable").nth(toIndex);
   await source.dragTo(target);
+}
+
+async function approvalStepNames(page) {
+  return page.locator(".approval-step-row input[type='text']").evaluateAll((nodes) => (
+    nodes.map((node) => node.value || "")
+  ));
+}
+
+async function dragApprovalStep(page, fromIndex, toIndex) {
+  const source = page.locator(".approval-step-row").nth(fromIndex).locator(".approval-step-drag");
+  const target = page.locator(".approval-step-row").nth(toIndex);
+  await source.dragTo(target);
+}
+
+async function selectDesignerField(page, index = 0) {
+  const fields = page.locator(".field--selectable");
+  await fields.nth(index).waitFor({ timeout: 10000 });
+  await fields.nth(index).scrollIntoViewIfNeeded();
+  await fields.nth(index).click({ position: { x: 24, y: 24 } });
+  await page.waitForFunction((targetIndex) => {
+    const selected = document.querySelector(".contract-field-selection-card");
+    const selectedCount = document.querySelectorAll(".field--selected").length;
+    const selectableCount = document.querySelectorAll(".field--selectable").length;
+    return Boolean(selected) && selectedCount > 0 && selectableCount > targetIndex;
+  }, index, { timeout: 10000 });
 }
 
 async function clickFirstAvailableAnalysisField(page, tabLabels) {
@@ -139,6 +167,59 @@ async function main() {
     const leakedDefaultVersionTerms = await visibleForbiddenTerms(page, ".version-panel");
     await page.locator(".version-panel").getByRole("button", { name: "关闭" }).click();
     await page.waitForSelector(".version-panel", { state: "detached", timeout: 10000 });
+    const approvalCard = page.locator(".config-card").filter({ hasText: "审批规则" });
+    await approvalCard.getByRole("button", { name: "设置审批" }).click();
+    await page.waitForSelector(".approval-panel", { timeout: 10000 });
+    const approvalPanel = page.locator(".approval-panel");
+    const approvalPanelTitle = await approvalPanel.locator("h2").innerText();
+    const approvalPanelText = await approvalPanel.innerText();
+    const approvalFieldLabels = await approvalPanel.locator(".approval-config-grid label span").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    const approvalModeOptionLabels = await approvalPanel.locator("select").first().locator("option").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
+    const approvalScopeOptionCount = await approvalPanel.locator("select").nth(1).locator("option").count();
+    const approvalSaveDisabledInitially = await approvalPanel.getByRole("button", { name: "保存审批设置" }).isDisabled();
+    const approvalAdvancedButtonCount = await approvalPanel.getByRole("button", { name: "高级规则" }).count();
+    const approvalStepText = await approvalPanel.locator(".approval-steps").innerText();
+    const approvalStepDragHandleCount = await approvalPanel.locator(".approval-step-drag").count();
+    const approvalStepHeaderText = await approvalPanel.locator(".approval-step-table-head").innerText().catch(() => "");
+    const approvalAddStepButtonCount = await approvalPanel.getByRole("button", { name: "添加一行" }).count();
+    const approvalStepRowCount = await approvalPanel.locator(".approval-step-row").count();
+    const approvalDragProbeSuffix = String(Date.now());
+    let approvalDragOrderBefore = [];
+    let approvalDragOrderAfter = [];
+    let approvalDragResetOrder = [];
+    let approvalDragSaveEnabled = false;
+    let approvalDragResetSaveDisabled = false;
+    if (approvalStepRowCount >= 2) {
+      const firstProbeName = `验收步骤A-${approvalDragProbeSuffix}`;
+      const secondProbeName = `验收步骤B-${approvalDragProbeSuffix}`;
+      await approvalPanel.locator(".approval-step-row").nth(0).locator("input[type='text']").fill(firstProbeName);
+      await approvalPanel.locator(".approval-step-row").nth(1).locator("input[type='text']").fill(secondProbeName);
+      approvalDragOrderBefore = await approvalStepNames(page);
+      await dragApprovalStep(page, 0, 1);
+      await page.waitForFunction((expectedFirst) => {
+        const firstInput = document.querySelector(".approval-step-row input[type='text']");
+        return firstInput?.value === expectedFirst;
+      }, secondProbeName, { timeout: 10000 });
+      approvalDragOrderAfter = await approvalStepNames(page);
+      approvalDragSaveEnabled = await approvalPanel.getByRole("button", { name: "保存审批设置" }).isEnabled();
+      report.artifacts.approvalPanelDragged = await captureStep(page, "approval-panel-dragged");
+      await approvalPanel.getByRole("button", { name: "还原" }).click();
+      await page.waitForFunction((probeSuffix) => {
+        const names = Array.from(document.querySelectorAll(".approval-step-row input[type='text']"))
+          .map((node) => node.value || "");
+        return names.every((name) => !name.includes(probeSuffix));
+      }, approvalDragProbeSuffix, { timeout: 10000 });
+      approvalDragResetOrder = await approvalStepNames(page);
+      approvalDragResetSaveDisabled = await approvalPanel.getByRole("button", { name: "保存审批设置" }).isDisabled();
+    }
+    const leakedApprovalTerms = await visibleForbiddenTerms(page, ".approval-panel");
+    report.artifacts.approvalPanel = await captureStep(page, "approval-panel");
+    await approvalPanel.getByRole("button", { name: "关闭" }).click();
+    await page.waitForSelector(".approval-panel", { state: "detached", timeout: 10000 });
     const initialPageRows = await page.locator(".scan-row-main strong").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
@@ -203,6 +284,20 @@ async function main() {
       defaultVersionRowCount,
       defaultHistoricalVersionRowCount,
       leakedDefaultVersionTerms,
+      approvalPanelTitle,
+      approvalPanelText,
+      approvalFieldLabels,
+      approvalModeOptionLabels,
+      approvalScopeOptionCount,
+      approvalSaveDisabledInitially,
+      approvalAdvancedButtonCount,
+      approvalStepRowCount,
+      approvalDragOrderBefore,
+      approvalDragOrderAfter,
+      approvalDragResetOrder,
+      approvalDragSaveEnabled,
+      approvalDragResetSaveDisabled,
+      leakedApprovalTerms,
       initialPageRows,
       searchedPageRows,
       formPageRows,
@@ -221,7 +316,7 @@ async function main() {
     };
     report.artifacts.defaultConfigPage = await captureStep(page, "default-config-page");
     assert(
-      defaultCards.join("|") === "表单字段与布局|列表与搜索",
+      defaultCards.join("|") === "表单字段与布局|列表与搜索|菜单入口|审批规则",
       "默认配置卡片不符合用户配置边界",
       { defaultCards },
     );
@@ -289,6 +384,50 @@ async function main() {
         defaultVersionRowCount,
         defaultHistoricalVersionRowCount,
         leakedDefaultVersionTerms,
+      },
+    );
+    assert(
+      approvalPanelTitle === "审批规则"
+        && approvalFieldLabels.join("|") === "启用审批|审批方式|默认审批岗位"
+        && approvalModeOptionLabels.includes("无需审核")
+        && approvalModeOptionLabels.includes("单级审核")
+        && approvalModeOptionLabels.includes("多级顺序审核")
+        && approvalScopeOptionCount >= 1
+        && approvalSaveDisabledInitially
+        && approvalAdvancedButtonCount === 1
+        && approvalStepText.includes("审批步骤")
+        && approvalStepHeaderText.includes("步骤名称")
+        && approvalStepHeaderText.includes("审批岗位")
+        && approvalAddStepButtonCount === 1
+        && approvalStepDragHandleCount > 0
+        && approvalStepRowCount >= 2
+        && approvalDragOrderBefore.length >= 2
+        && approvalDragOrderAfter[0] === approvalDragOrderBefore[1]
+        && approvalDragOrderAfter[1] === approvalDragOrderBefore[0]
+        && approvalDragSaveEnabled
+        && approvalDragResetSaveDisabled
+        && approvalDragResetOrder.every((name) => !name.includes(approvalDragProbeSuffix))
+        && leakedApprovalTerms.length === 0,
+      "审批设置面板不可用或露出了治理话术",
+      {
+        approvalPanelTitle,
+        approvalPanelText,
+        approvalFieldLabels,
+        approvalModeOptionLabels,
+        approvalScopeOptionCount,
+        approvalSaveDisabledInitially,
+        approvalAdvancedButtonCount,
+        approvalStepText,
+        approvalStepHeaderText,
+        approvalStepDragHandleCount,
+        approvalAddStepButtonCount,
+        approvalStepRowCount,
+        approvalDragOrderBefore,
+        approvalDragOrderAfter,
+        approvalDragResetOrder,
+        approvalDragSaveEnabled,
+        approvalDragResetSaveDisabled,
+        leakedApprovalTerms,
       },
     );
 
@@ -481,11 +620,12 @@ async function main() {
     const designFieldCountText = await page.locator(".contract-form-settings-field-count").innerText();
     const designFieldCount = Number((designFieldCountText.match(/\d+/) || ["0"])[0]);
     const dragHandleCount = await page.locator(".field-order-handle").count();
-    const selectableField = page.locator(".field--selectable").first();
     const selectableFieldCount = await page.locator(".field--selectable").count();
     const returnButtonCount = await page.getByRole("button", { name: "返回配置" }).count();
     const legacyPanelCount = await page.locator(".contract-lowcode-objects").count();
-    await selectableField.click();
+    const initialFormDirtyCount = await page.locator(".contract-field-governance-dirty").count();
+    const initialSaveFormEnabled = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
+    await selectDesignerField(page, 0);
     const selectedFieldCount = await page.locator(".field--selected").count();
     const selectedPanelText = await page.locator(".contract-field-selection-card").innerText();
     await page.locator(".contract-field-selection-card").getByText("隐藏", { exact: true }).click();
@@ -495,7 +635,7 @@ async function main() {
     await page.getByRole("button", { name: "重置" }).click();
     const formDirtyAfterReset = await page.locator(".contract-field-governance-dirty").count();
     const saveFormEnabledAfterReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
-    await page.locator(".field--selectable").nth(1).click();
+    await selectDesignerField(page, 1);
     const selectedPanelBeforeMove = await page.locator(".contract-field-selection-card").innerText();
     await page.locator(".contract-field-selection-card button[title='上移']").click();
     const formDirtyAfterMove = await page.locator(".contract-field-governance-dirty").count();
@@ -507,7 +647,10 @@ async function main() {
     await dragDesignerField(page, 0, 3);
     await page.waitForFunction((before) => {
       const rows = Array.from(document.querySelectorAll(".field--selectable"))
-        .map((node) => node.textContent?.replace(/\s+/g, " ").trim())
+        .map((node) => {
+          const text = node.textContent?.replace(/\s+/g, " ").trim() || "";
+          return text.split("⋮⋮")[0].split("↑")[0].trim();
+        })
         .filter(Boolean);
       return rows.length >= 4 && rows[0] !== before[0] && rows[3] === before[0];
     }, formOrderBeforeDragPersist);
@@ -521,7 +664,10 @@ async function main() {
     await dragDesignerField(page, 3, 0);
     await page.waitForFunction((before) => {
       const rows = Array.from(document.querySelectorAll(".field--selectable"))
-        .map((node) => node.textContent?.replace(/\s+/g, " ").trim())
+        .map((node) => {
+          const text = node.textContent?.replace(/\s+/g, " ").trim() || "";
+          return text.split("⋮⋮")[0].split("↑")[0].trim();
+        })
         .filter(Boolean);
       return rows.length >= 4 && rows[0] === before[0];
     }, formOrderBeforeDragPersist);
@@ -531,8 +677,7 @@ async function main() {
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
     const formOrderAfterRestoreReload = await formDesignerFieldTexts(page);
-    await page.locator(".field--selectable").first().click();
-    await page.waitForSelector(".contract-field-selection-card", { timeout: 10000 });
+    await selectDesignerField(page, 0);
     await page.locator(".contract-field-selection-card").getByRole("button", { name: "新增字段" }).click();
     await page.waitForSelector(".contract-field-create-dialog", { timeout: 10000 });
     const createFieldDialogText = await page.locator(".contract-field-create-dialog").innerText();
@@ -548,6 +693,8 @@ async function main() {
       dragHandleCount,
       selectedFieldCount,
       selectedPanelText,
+      initialFormDirtyCount,
+      initialSaveFormEnabled,
       formDirtyAfterHide,
       saveFormEnabledAfterHide,
       resetFormEnabledAfterHide,
@@ -589,10 +736,12 @@ async function main() {
       formDirtyAfterHide > 0
         && saveFormEnabledAfterHide
         && resetFormEnabledAfterHide
-        && formDirtyAfterReset === 0
-        && !saveFormEnabledAfterReset,
+        && formDirtyAfterReset === initialFormDirtyCount
+        && saveFormEnabledAfterReset === initialSaveFormEnabled,
       "表单字段显示隐藏草稿或重置不可用",
       {
+        initialFormDirtyCount,
+        initialSaveFormEnabled,
         formDirtyAfterHide,
         saveFormEnabledAfterHide,
         resetFormEnabledAfterHide,
@@ -604,10 +753,12 @@ async function main() {
       selectedPanelBeforeMove.includes("已选字段")
         && formDirtyAfterMove > 0
         && saveFormEnabledAfterMove
-        && formDirtyAfterMoveReset === 0
-        && !saveFormEnabledAfterMoveReset,
+        && formDirtyAfterMoveReset === initialFormDirtyCount
+        && saveFormEnabledAfterMoveReset === initialSaveFormEnabled,
       "表单字段顺序调整或重置不可用",
       {
+        initialFormDirtyCount,
+        initialSaveFormEnabled,
         selectedPanelBeforeMove,
         formDirtyAfterMove,
         saveFormEnabledAfterMove,

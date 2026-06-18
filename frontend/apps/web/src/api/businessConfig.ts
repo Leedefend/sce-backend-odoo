@@ -120,6 +120,41 @@ export interface BusinessConfigAnalysisSetPayload {
   user_preference_boundary: 'not_a_source' | string;
 }
 
+export interface ApprovalPolicyConfigPayload {
+  model: string;
+  policy: {
+    id: number;
+    name: string;
+    target_model: string;
+    target_model_label: string;
+    approval_required: boolean;
+    mode: string;
+    trigger: string;
+    runtime_state: string;
+    manager_scope_key: string;
+    step_count: number;
+    steps: Array<{
+      id: number;
+      name: string;
+      approval_scope_key: string;
+      approval_scope_label: string;
+      sequence: number;
+      active: boolean;
+      amount_min: number | false;
+      amount_max: number | false;
+      condition_note: string;
+      note: string;
+    }>;
+    active: boolean;
+    exists: boolean;
+  };
+  runtime_approval_required: boolean;
+  mode_options: Array<{ value: string; label: string }>;
+  trigger_options: Array<{ value: string; label: string }>;
+  scope_options: Array<{ value: string; label: string }>;
+  boundary: string;
+}
+
 export interface BusinessConfigListSearchBootstrapPayload extends BusinessConfigListSearchSetPayload {
   bootstrapped_from: string;
   personal_preference_boundary: string;
@@ -163,6 +198,10 @@ export interface BusinessConfigSurfacePayload {
     contract_count: number;
     intent: string;
     boundary: string;
+    route?: {
+      path?: string;
+      query?: Record<string, string>;
+    };
   }>;
 }
 
@@ -382,6 +421,47 @@ export async function auditBusinessAnalysisConfig(params: {
 }) {
   return intentRequest<BusinessConfigAnalysisAuditPayload>({
     intent: 'ui.business_config.analysis.audit',
+    params,
+  });
+}
+
+export async function loadApprovalPolicyConfig(params: {
+  model: string;
+}) {
+  return intentRequest<ApprovalPolicyConfigPayload>({
+    intent: 'sc.approval_policy.config.get',
+    params,
+  });
+}
+
+export async function saveApprovalPolicyConfig(params: {
+  model: string;
+  approval_required: boolean;
+  mode?: string;
+  trigger?: string;
+  manager_scope_key?: string;
+}) {
+  return intentRequest<ApprovalPolicyConfigPayload>({
+    intent: 'sc.approval_policy.config.set',
+    params,
+  });
+}
+
+export async function saveApprovalPolicySteps(params: {
+  model: string;
+  steps: Array<{
+    id?: number;
+    name: string;
+    approval_scope_key: string;
+    active?: boolean;
+    amount_min?: number | string | false;
+    amount_max?: number | string | false;
+    condition_note?: string;
+    note?: string;
+  }>;
+}) {
+  return intentRequest<ApprovalPolicyConfigPayload>({
+    intent: 'sc.approval_policy.steps.set',
     params,
   });
 }

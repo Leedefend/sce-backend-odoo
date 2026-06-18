@@ -307,8 +307,155 @@
           >
             {{ listSearchBusy ? '读取中...' : '配置分析视图' }}
           </button>
+          <button
+            v-else-if="section.key === 'approval'"
+            type="button"
+            class="ghost small"
+            :disabled="!currentModel || approvalLoading"
+            @click="loadApprovalConfig"
+          >
+            {{ approvalLoading ? '读取中...' : '设置审批' }}
+          </button>
+          <button
+            v-if="section.key === 'approval' && section.route?.path"
+            type="button"
+            class="ghost small"
+            @click="openApprovalConfig(section)"
+          >
+            高级规则
+          </button>
         </div>
       </article>
+    </section>
+
+    <section v-if="approvalPanelOpen" class="edit-panel approval-panel">
+      <div class="edit-panel-head">
+        <div>
+          <h2>审批规则</h2>
+          <p>{{ approvalPolicyLabel }}</p>
+        </div>
+        <button type="button" class="ghost small" :disabled="approvalLoading" @click="approvalPanelOpen = false">
+          关闭
+        </button>
+      </div>
+      <div class="approval-config-grid">
+        <label class="approval-toggle">
+          <input v-model="approvalForm.approval_required" type="checkbox" @change="onApprovalRequiredChange" />
+          <span>启用审批</span>
+        </label>
+        <label>
+          <span>审批方式</span>
+          <select v-model="approvalForm.mode" :disabled="!approvalForm.approval_required">
+            <option
+              v-for="option in approvalModeOptions"
+              :key="option.value"
+              :value="option.value"
+              :disabled="approvalForm.approval_required && option.value === 'none'"
+            >
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>默认审批岗位</span>
+          <select v-model="approvalForm.manager_scope_key" :disabled="!approvalForm.approval_required">
+            <option value="">暂不指定</option>
+            <option v-for="option in approvalScopeOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+      </div>
+      <section class="approval-steps">
+        <header>
+          <div>
+            <strong>审批步骤</strong>
+            <span>{{ activeApprovalStepCount }} 个启用步骤，可拖动排序</span>
+          </div>
+        </header>
+        <div v-if="approvalSteps.length" class="approval-step-table" role="table" aria-label="审批步骤">
+          <div class="approval-step-table-head" role="row">
+            <span></span>
+            <span>序号</span>
+            <span>步骤名称</span>
+            <span>审批岗位</span>
+            <span>金额下限</span>
+            <span>金额上限</span>
+            <span>操作</span>
+          </div>
+          <div
+            v-for="(step, index) in approvalSteps"
+            :key="step.key"
+            class="approval-step-row"
+            :class="{
+              'approval-step-row--dragging': approvalStepDragIndex === index,
+              'approval-step-row--drop-target': approvalStepDropIndex === index && approvalStepDragIndex !== index,
+            }"
+            role="row"
+            @dragover.prevent
+            @dragenter.prevent="approvalStepDropIndex = index"
+            @drop.prevent="dropApprovalStep(index)"
+            @dragend="clearApprovalStepDrag"
+          >
+            <span
+              class="approval-step-drag"
+              title="拖动排序"
+              role="button"
+              tabindex="0"
+              draggable="true"
+              :aria-label="`拖动第${index + 1}步调整顺序`"
+              @dragstart.stop="startApprovalStepDrag(index, $event)"
+              @dragend.stop="clearApprovalStepDrag"
+            >⋮⋮</span>
+            <span class="approval-step-seq">{{ index + 1 }}</span>
+            <div class="approval-step-cell">
+              <input v-model="step.name" type="text" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步名称`" />
+            </div>
+            <div class="approval-step-cell">
+              <select v-model="step.approval_scope_key" :disabled="!approvalForm.approval_required">
+                <option value="">请选择</option>
+                <option v-for="option in approvalScopeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+            <div class="approval-step-cell">
+              <input v-model="step.amount_min" type="number" min="0" step="0.01" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额下限`" />
+            </div>
+            <div class="approval-step-cell">
+              <input v-model="step.amount_max" type="number" min="0" step="0.01" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额上限`" />
+            </div>
+            <div class="approval-step-actions">
+              <button type="button" title="上移" :disabled="index === 0 || approvalLoading || !approvalForm.approval_required" @click="moveApprovalStep(index, -1)">↑</button>
+              <button type="button" title="下移" :disabled="index === approvalSteps.length - 1 || approvalLoading || !approvalForm.approval_required" @click="moveApprovalStep(index, 1)">↓</button>
+              <button type="button" title="移除" :disabled="approvalLoading || !approvalForm.approval_required" @click="removeApprovalStep(index)">×</button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="approval-step-empty">
+          当前没有审批步骤，启用审批后可添加办理节点。
+        </div>
+        <button type="button" class="approval-step-add-line" :disabled="approvalLoading || !approvalForm.approval_required" @click="addApprovalStep">
+          添加一行
+        </button>
+      </section>
+      <div class="edit-meta">
+        <span>运行状态：{{ approvalRuntimeText }}</span>
+        <span>步骤数：{{ approvalAudit?.policy.step_count ?? 0 }}</span>
+        <span v-if="advancedPanelOpen">边界：{{ approvalAudit?.boundary || 'industry_policy_runtime' }}</span>
+        <span v-if="hasApprovalDraftChanges" class="edit-dirty">配置已调整，可保存</span>
+      </div>
+      <div class="edit-panel-actions">
+        <button type="button" class="ghost small primary" :disabled="approvalLoading || !hasApprovalDraftChanges" @click="saveApprovalConfig">
+          {{ approvalLoading ? '保存中...' : '保存审批设置' }}
+        </button>
+        <button type="button" class="ghost small" :disabled="approvalLoading || !hasApprovalDraftChanges" @click="resetApprovalDraft">
+          还原
+        </button>
+        <button type="button" class="ghost small" :disabled="!approvalSection?.route?.path" @click="approvalSection && openApprovalConfig(approvalSection)">
+          高级规则
+        </button>
+      </div>
     </section>
 
     <section v-if="versionsPanelOpen" class="version-panel">
@@ -755,12 +902,16 @@ import {
   bootstrapCoverageMissingConfig,
   compareBusinessConfigSnapshot,
   exportBusinessConfigSnapshot,
+  loadApprovalPolicyConfig,
   loadBusinessConfigContractVersions,
   loadBusinessConfigSurface,
   rollbackBusinessConfigContract,
+  saveApprovalPolicyConfig,
+  saveApprovalPolicySteps,
   saveBusinessAnalysisConfig,
   saveBusinessListSearchConfig,
   scanBusinessConfigCoverage,
+  type ApprovalPolicyConfigPayload,
   type BusinessConfigAnalysisAuditPayload,
   type BusinessConfigContractVersionsPayload,
   type BusinessConfigCoverageScanItem,
@@ -778,6 +929,7 @@ const loading = ref(false);
 const scanLoading = ref(false);
 const listSearchBusy = ref(false);
 const listSearchSaving = ref(false);
+const approvalLoading = ref(false);
 const error = ref('');
 const message = ref({ text: '', detail: '' });
 const surface = ref<BusinessConfigSurfacePayload | null>(null);
@@ -787,8 +939,10 @@ const pageSearch = ref('');
 const pageTypeFilter = ref<'all' | 'form' | 'list' | 'analysis'>('all');
 const listSearchAudit = ref<BusinessConfigListSearchAuditPayload | null>(null);
 const analysisAudit = ref<BusinessConfigAnalysisAuditPayload | null>(null);
+const approvalAudit = ref<ApprovalPolicyConfigPayload | null>(null);
 const listSearchPanelOpen = ref(false);
 const analysisPanelOpen = ref(false);
+const approvalPanelOpen = ref(false);
 const selectedRuntimeRoute = ref<BusinessConfigCoverageScanItem['runtime_route'] | null>(null);
 const versionsLoading = ref(false);
 const versionsPanelOpen = ref(false);
@@ -810,6 +964,24 @@ const graphDimensionsText = ref('');
 const graphType = ref('bar');
 const listSearchBase = ref({ list: '', filter: '', group: '' });
 const analysisBase = ref({ pivotMeasures: '', pivotDimensions: '', graphMeasures: '', graphDimensions: '', graphType: 'bar' });
+const approvalForm = ref({ approval_required: false, mode: 'none', manager_scope_key: '' });
+const approvalBase = ref({ approval_required: false, mode: 'none', manager_scope_key: '' });
+type ApprovalStepDraft = {
+  key: string;
+  id: number;
+  name: string;
+  approval_scope_key: string;
+  active: boolean;
+  amount_min: string;
+  amount_max: string;
+  condition_note: string;
+  note: string;
+};
+const approvalSteps = ref<ApprovalStepDraft[]>([]);
+const approvalStepsBaseJson = ref('[]');
+const approvalStepDragIndex = ref<number | null>(null);
+const approvalStepDropIndex = ref<number | null>(null);
+let approvalStepTempId = 0;
 const listColumnDraft = ref('');
 const searchFilterDraft = ref('');
 const searchGroupDraft = ref('');
@@ -864,7 +1036,11 @@ const designerTitle = computed(() => {
 const sections = computed(() => surface.value?.sections || []);
 const visibleSections = computed(() => sections.value.filter((section) => {
   if (advancedPanelOpen.value) return true;
-  return section.key === 'form' || section.key === 'list_search' || section.key === 'analysis';
+  return section.key === 'form'
+    || section.key === 'list_search'
+    || section.key === 'analysis'
+    || section.key === 'menu'
+    || section.key === 'approval';
 }));
 const selectedCoverageRow = computed(() => (coverageScan.value?.items || []).find(coverageRowMatchesScope));
 const selectedPageHasFormConfig = computed(() => {
@@ -901,6 +1077,24 @@ const visibleConfigSections = computed(() => {
   return result;
 });
 const currentModel = computed(() => String(scopeModel.value || surface.value?.model || '').trim());
+const approvalSection = computed(() => visibleConfigSections.value.find((section) => section.key === 'approval') || null);
+const approvalModeOptions = computed(() => approvalAudit.value?.mode_options?.length
+  ? approvalAudit.value.mode_options
+  : [
+      { value: 'none', label: '无需审核' },
+      { value: 'single', label: '单级审核' },
+      { value: 'linear', label: '多级顺序审核' },
+    ]);
+const approvalScopeOptions = computed(() => approvalAudit.value?.scope_options || []);
+const approvalPolicyLabel = computed(() => {
+  const policy = approvalAudit.value?.policy;
+  const target = policy?.target_model_label || selectedPageLabel.value || currentModel.value || '当前业务';
+  return policy?.exists ? `${target}：${policy.name || '已配置规则'}` : `${target}：尚未建立审批规则，保存后自动创建。`;
+});
+const approvalRuntimeText = computed(() => {
+  if (!approvalAudit.value) return '未读取';
+  return approvalAudit.value.runtime_approval_required ? '当前需要审批' : '当前无需审批';
+});
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value));
 const snapshotSummary = computed<BusinessConfigSnapshotSummaryPayload | null>(() => surface.value?.snapshot_summary || null);
 const snapshotSummaryText = computed(() => {
@@ -1051,6 +1245,23 @@ const hasAnalysisDraftChanges = computed(() => (
   || normalizeNamesText(graphDimensionsText.value) !== analysisBase.value.graphDimensions
   || String(graphType.value || 'bar') !== analysisBase.value.graphType
 ));
+const hasApprovalDraftChanges = computed(() => (
+  approvalForm.value.approval_required !== approvalBase.value.approval_required
+  || String(approvalForm.value.mode || 'none') !== approvalBase.value.mode
+  || String(approvalForm.value.manager_scope_key || '') !== approvalBase.value.manager_scope_key
+  || approvalStepsJson.value !== approvalStepsBaseJson.value
+));
+const activeApprovalStepCount = computed(() => approvalSteps.value.filter((step) => step.active).length);
+const approvalStepsJson = computed(() => JSON.stringify(approvalSteps.value.map((step) => ({
+  id: Number(step.id || 0),
+  name: String(step.name || '').trim(),
+  approval_scope_key: String(step.approval_scope_key || '').trim(),
+  active: Boolean(step.active),
+  amount_min: normalizeAmountText(step.amount_min),
+  amount_max: normalizeAmountText(step.amount_max),
+  condition_note: String(step.condition_note || '').trim(),
+  note: String(step.note || '').trim(),
+}))));
 
 function numericQuery(name: string) {
   const parsed = Number(route.query[name] || 0);
@@ -1106,6 +1317,7 @@ function boundaryLabel(boundary: string) {
   if (boundary === 'business_contract') return '业务默认配置';
   if (boundary === 'business_contract_not_user_preference') return '业务默认配置';
   if (boundary === 'business_contract_with_policy_runtime') return '菜单显示规则';
+  if (boundary === 'industry_policy_runtime') return '行业业务规则';
   return boundary || '未声明边界';
 }
 
@@ -1114,6 +1326,7 @@ function sectionHelpLabel(sectionKey: string) {
   if (sectionKey === 'list_search') return '列表列、搜索条件、默认分组';
   if (sectionKey === 'analysis') return '透视、图表、日历、看板';
   if (sectionKey === 'menu') return '菜单入口、显示范围、发布状态';
+  if (sectionKey === 'approval') return '启用审批、审批方式、审批岗位';
   return '业务配置';
 }
 
@@ -1122,6 +1335,7 @@ function sectionDisplayLabel(sectionKey: string, fallback: string) {
   if (sectionKey === 'list_search') return '列表与搜索';
   if (sectionKey === 'analysis') return '分析视图';
   if (sectionKey === 'menu') return '菜单入口';
+  if (sectionKey === 'approval') return '审批规则';
   return fallback || '业务配置';
 }
 
@@ -1130,6 +1344,7 @@ function sectionPrimaryCopy(sectionKey: string) {
   if (sectionKey === 'list_search') return '调整列表列、搜索条件和默认分组。';
   if (sectionKey === 'analysis') return '查看透视、图表、日历和看板配置版本。';
   if (sectionKey === 'menu') return '调整这个页面在菜单中的显示方式。';
+  if (sectionKey === 'approval') return '设置这个业务是否需要审批、审批方式和审批岗位。';
   return '调整当前业务页面配置。';
 }
 
@@ -2289,6 +2504,7 @@ async function loadListSearchConfig() {
     };
     activeListSearchEditor.value = requestedListSearchTab.value;
     analysisPanelOpen.value = false;
+    approvalPanelOpen.value = false;
     listSearchPanelOpen.value = true;
     if (!configuredListColumns.length && suggestedListColumns.length) {
       setMessage('已按当前页面生成列表草稿', '调整后点击保存设置，才会发布为正式业务配置');
@@ -2348,6 +2564,7 @@ async function loadAnalysisConfig() {
       graphType: configuredGraphType || 'bar',
     };
     listSearchPanelOpen.value = false;
+    approvalPanelOpen.value = false;
     analysisPanelOpen.value = true;
     activeAnalysisEditor.value = requestedAnalysisTab.value;
     if (
@@ -2361,6 +2578,182 @@ async function loadAnalysisConfig() {
   } finally {
     listSearchBusy.value = false;
   }
+}
+
+function applyApprovalAudit(result: ApprovalPolicyConfigPayload) {
+  approvalAudit.value = result;
+  const policy = result.policy;
+  const form = {
+    approval_required: Boolean(policy.approval_required),
+    mode: String(policy.mode || 'none'),
+    manager_scope_key: String(policy.manager_scope_key || ''),
+  };
+  approvalForm.value = { ...form };
+  approvalBase.value = { ...form };
+  approvalSteps.value = (policy.steps || [])
+    .filter((step) => step.active !== false)
+    .map((step) => approvalStepFromPayload(step));
+  approvalStepsBaseJson.value = approvalStepsJson.value;
+}
+
+function resetApprovalDraft() {
+  approvalForm.value = { ...approvalBase.value };
+  const steps = approvalAudit.value?.policy.steps || [];
+  approvalSteps.value = steps.filter((step) => step.active !== false).map((step) => approvalStepFromPayload(step));
+  approvalStepsBaseJson.value = approvalStepsJson.value;
+  setMessage('已放弃审批设置调整');
+}
+
+function onApprovalRequiredChange() {
+  if (!approvalForm.value.approval_required) {
+    approvalForm.value.mode = 'none';
+    return;
+  }
+  if (!approvalForm.value.mode || approvalForm.value.mode === 'none') {
+    approvalForm.value.mode = 'single';
+  }
+}
+
+async function loadApprovalConfig() {
+  if (!currentModel.value) return;
+  approvalLoading.value = true;
+  error.value = '';
+  clearMessage();
+  try {
+    const result = await loadApprovalPolicyConfig({ model: currentModel.value });
+    applyApprovalAudit(result);
+    listSearchPanelOpen.value = false;
+    analysisPanelOpen.value = false;
+    approvalPanelOpen.value = true;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '审批设置读取失败';
+  } finally {
+    approvalLoading.value = false;
+  }
+}
+
+async function saveApprovalConfig() {
+  if (!currentModel.value || !hasApprovalDraftChanges.value) return false;
+  approvalLoading.value = true;
+  error.value = '';
+  clearMessage();
+  try {
+    const stepDraftChanged = approvalStepsJson.value !== approvalStepsBaseJson.value;
+    const stepPayload: Parameters<typeof saveApprovalPolicySteps>[0]['steps'] = approvalSteps.value.map((step) => ({
+      id: step.id > 0 ? step.id : undefined,
+      name: String(step.name || '').trim(),
+      approval_scope_key: String(step.approval_scope_key || '').trim(),
+      active: true,
+      amount_min: normalizeAmountText(step.amount_min) || false,
+      amount_max: normalizeAmountText(step.amount_max) || false,
+      condition_note: String(step.condition_note || '').trim(),
+      note: String(step.note || '').trim(),
+    }));
+    const nextMode = approvalForm.value.approval_required
+      ? String(approvalForm.value.mode || 'single')
+      : 'none';
+    let result = await saveApprovalPolicyConfig({
+      model: currentModel.value,
+      approval_required: approvalForm.value.approval_required,
+      mode: nextMode,
+      manager_scope_key: approvalForm.value.manager_scope_key || '',
+    });
+    if (stepDraftChanged) {
+      result = await saveApprovalPolicySteps({
+        model: currentModel.value,
+        steps: approvalForm.value.approval_required ? stepPayload : [],
+      });
+    }
+    applyApprovalAudit(result);
+    await loadSurface();
+    setMessage('审批设置已保存', result.runtime_approval_required ? '当前业务提交后会进入审批。' : '当前业务提交后无需审批。');
+    return true;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '审批设置保存失败';
+    return false;
+  } finally {
+    approvalLoading.value = false;
+  }
+}
+
+function normalizeAmountText(value: unknown): string {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  const parsed = Number(text);
+  if (!Number.isFinite(parsed) || parsed < 0) return text;
+  return String(parsed);
+}
+
+function approvalStepFromPayload(step: ApprovalPolicyConfigPayload['policy']['steps'][number]): ApprovalStepDraft {
+  return {
+    key: `step-${step.id || `tmp-${approvalStepTempId += 1}`}`,
+    id: Number(step.id || 0),
+    name: String(step.name || ''),
+    approval_scope_key: String(step.approval_scope_key || ''),
+    active: step.active !== false,
+    amount_min: step.amount_min ? String(step.amount_min) : '',
+    amount_max: step.amount_max ? String(step.amount_max) : '',
+    condition_note: String(step.condition_note || ''),
+    note: String(step.note || ''),
+  };
+}
+
+function defaultApprovalScopeKey() {
+  return approvalForm.value.manager_scope_key || approvalScopeOptions.value[0]?.value || '';
+}
+
+function addApprovalStep() {
+  approvalSteps.value.push({
+    key: `new-step-${approvalStepTempId += 1}`,
+    id: 0,
+    name: `审批步骤${approvalSteps.value.length + 1}`,
+    approval_scope_key: defaultApprovalScopeKey(),
+    active: true,
+    amount_min: '',
+    amount_max: '',
+    condition_note: '',
+    note: '',
+  });
+}
+
+function removeApprovalStep(index: number) {
+  approvalSteps.value.splice(index, 1);
+}
+
+function moveApprovalStep(index: number, delta: number) {
+  const targetIndex = index + delta;
+  if (targetIndex < 0 || targetIndex >= approvalSteps.value.length) return;
+  const next = [...approvalSteps.value];
+  const [item] = next.splice(index, 1);
+  next.splice(targetIndex, 0, item);
+  approvalSteps.value = next;
+}
+
+function startApprovalStepDrag(index: number, event: DragEvent) {
+  approvalStepDragIndex.value = index;
+  approvalStepDropIndex.value = index;
+  event.dataTransfer?.setData('text/plain', String(index));
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+  }
+}
+
+function dropApprovalStep(index: number) {
+  const from = approvalStepDragIndex.value;
+  if (from === null || from === index) {
+    clearApprovalStepDrag();
+    return;
+  }
+  const next = [...approvalSteps.value];
+  const [item] = next.splice(from, 1);
+  next.splice(index, 0, item);
+  approvalSteps.value = next;
+  clearApprovalStepDrag();
+}
+
+function clearApprovalStepDrag() {
+  approvalStepDragIndex.value = null;
+  approvalStepDropIndex.value = null;
 }
 
 async function saveListSearchConfig() {
@@ -2550,6 +2943,20 @@ function openMenuConfig() {
       role_key: scopeRole.value || undefined,
       return_to_business_config: '1',
       open_pages: '1',
+    },
+  });
+}
+
+function openApprovalConfig(section: BusinessConfigSurfacePayload['sections'][number]) {
+  const path = String(section.route?.path || '').trim();
+  if (!path) return;
+  router.push({
+    path,
+    query: {
+      ...(section.route?.query || {}),
+      return_to_business_config: '1',
+      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
+      page_label: selectedPageLabel.value || undefined,
     },
   });
 }
@@ -3098,6 +3505,173 @@ h1 {
   font-size: 13px;
 }
 
+.approval-config-grid {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.6fr) repeat(2, minmax(180px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.approval-config-grid label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.approval-config-grid select,
+.approval-step-row input,
+.approval-step-row select {
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 0 8px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+}
+
+.approval-steps {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.approval-steps header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.approval-steps header div {
+  display: grid;
+  gap: 2px;
+}
+
+.approval-steps header strong {
+  font-size: 14px;
+}
+
+.approval-steps header span,
+.approval-step-empty {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.approval-step-table {
+  overflow: hidden;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-surface);
+}
+
+.approval-step-table-head,
+.approval-step-row {
+  display: grid;
+  grid-template-columns: 34px 44px minmax(150px, 1.2fr) minmax(170px, 1.1fr) minmax(106px, 0.7fr) minmax(106px, 0.7fr) 106px;
+  gap: 8px;
+  align-items: center;
+}
+
+.approval-step-table-head {
+  min-height: 34px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.approval-step-row {
+  min-height: 46px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-bg);
+}
+
+.approval-step-row:last-child {
+  border-bottom: 0;
+}
+
+.approval-step-row--dragging {
+  opacity: 0.65;
+  box-shadow: inset 3px 0 0 var(--sc-app-accent);
+}
+
+.approval-step-row--drop-target {
+  background: var(--sc-app-panel);
+  box-shadow: inset 0 2px 0 var(--sc-app-accent);
+}
+
+.approval-step-cell {
+  min-width: 0;
+}
+
+.approval-step-seq {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.approval-step-drag,
+.approval-step-actions button {
+  min-width: 30px;
+  min-height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-secondary);
+}
+
+.approval-step-drag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+
+.approval-step-drag:active {
+  cursor: grabbing;
+}
+
+.approval-step-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.approval-step-add-line {
+  justify-self: start;
+  min-height: 30px;
+  border: 0;
+  padding: 0 2px;
+  background: transparent;
+  color: var(--sc-app-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.approval-step-add-line:disabled {
+  color: var(--sc-app-text-muted);
+  cursor: not-allowed;
+}
+
+.approval-toggle {
+  min-height: 34px;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  align-self: end;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+}
+
 .list-search-tabs {
   display: inline-flex;
   align-items: center;
@@ -3479,8 +4053,30 @@ h1 {
 
   .workbench-flow,
   .scope-panel,
+  .approval-config-grid,
   .edit-grid {
     grid-template-columns: 1fr;
+  }
+
+  .approval-step-table {
+    border: 0;
+    background: transparent;
+  }
+
+  .approval-step-table-head {
+    display: none;
+  }
+
+  .approval-step-row {
+    grid-template-columns: 34px 44px minmax(0, 1fr);
+    border: 1px solid var(--sc-app-border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+
+  .approval-step-cell,
+  .approval-step-actions {
+    grid-column: 2 / -1;
   }
 
   .flow-card {
