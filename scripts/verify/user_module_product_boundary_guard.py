@@ -12,7 +12,10 @@ MODULE = ROOT / "addons/smart_construction_custom"
 MANIFEST = MODULE / "__manifest__.py"
 HOOKS = MODULE / "hooks.py"
 PARTNER_LOCATION = MODULE / "models/partner_location.py"
+USER_DATA_BASELINE_PY = MODULE / "models/user_data_baseline.py"
+MODELS_INIT = MODULE / "models/__init__.py"
 USER_DATA_BASELINE_XML = MODULE / "data/user_data_baseline.xml"
+LEGACY_USER_MASTER_XML = MODULE / "data/user_master_v1.xml"
 USER_PREFERENCES_XML = MODULE / "data/user_preferences.xml"
 
 
@@ -73,6 +76,8 @@ def verify_manifest_boundary() -> list[str]:
     for item in [baseline, preferences, menu_preferences]:
         if item not in data_files:
             failures.append(f"smart_construction_custom manifest must include {item}")
+    if "data/user_master_v1.xml" in data_files:
+        failures.append("legacy user master payload must be loaded by the idempotent data baseline loader, not direct XML data")
 
     baseline_index = _index(data_files, baseline)
     preference_index = _index(data_files, preferences)
@@ -86,11 +91,26 @@ def verify_xml_boundary() -> list[str]:
     failures: list[str] = []
     if not USER_DATA_BASELINE_XML.exists():
         failures.append("user data baseline XML must exist as an explicit P2 data carrier")
-    elif _xml_function_names(USER_DATA_BASELINE_XML) != ["apply_user_data_baseline"]:
-        failures.append("user data baseline XML may only call apply_user_data_baseline")
+    else:
+        source = USER_DATA_BASELINE_XML.read_text(encoding="utf-8")
+        if 'noupdate="1"' in source or "noupdate='1'" in source:
+            failures.append("user data baseline XML must be upgrade-replayable; noupdate=1 is forbidden")
+        if _xml_function_names(USER_DATA_BASELINE_XML) != ["apply_user_data_baseline"]:
+            failures.append("user data baseline XML may only call apply_user_data_baseline")
 
     if _xml_function_names(USER_PREFERENCES_XML) != ["apply_user_form_preferences"]:
         failures.append("user preference XML may only call apply_user_form_preferences")
+    if not LEGACY_USER_MASTER_XML.exists():
+        failures.append("user module must carry the real legacy user master payload")
+    else:
+        root = ET.parse(LEGACY_USER_MASTER_XML).getroot()
+        user_records = [
+            node
+            for node in root.iter("record")
+            if str(node.attrib.get("model") or "").strip() == "res.users"
+        ]
+        if len(user_records) < 100:
+            failures.append(f"legacy user master payload is too small: {len(user_records)} < 100")
     return failures
 
 
@@ -146,12 +166,55 @@ def verify_partner_location_boundary() -> list[str]:
     return failures
 
 
+def verify_user_data_baseline_boundary() -> list[str]:
+    failures: list[str] = []
+    if not USER_DATA_BASELINE_PY.exists():
+        return ["user module must provide models/user_data_baseline.py"]
+
+    tree = _parse_python(USER_DATA_BASELINE_PY)
+    required_functions = {
+        "apply_user_data_baseline",
+        "apply_legacy_user_master_data_baseline",
+        "apply_partner_business_data_baseline",
+        "_find_existing_legacy_user",
+        "_ensure_user_baseline_xmlid",
+    }
+    missing = sorted(name for name in required_functions if _function_by_name(tree, name) is None)
+    if missing:
+        failures.append(f"user data baseline missing required functions: {missing}")
+
+    apply_data = _function_by_name(tree, "apply_user_data_baseline")
+    calls = set(_call_names(apply_data))
+    for required in ["apply_legacy_user_master_data_baseline", "apply_partner_business_data_baseline"]:
+        if required not in calls:
+            failures.append(f"apply_user_data_baseline must call {required}")
+
+    source = USER_DATA_BASELINE_PY.read_text(encoding="utf-8")
+    required_snippets = [
+        '("smart_construction_custom", "migration_assets")',
+        '("login", "=", login)',
+        "no_reset_password=True",
+        '"noupdate": True',
+        "demote_no_fact=False",
+    ]
+    for snippet in required_snippets:
+        if snippet not in source:
+            failures.append(f"user data baseline must keep idempotent/non-destructive rule: {snippet}")
+    if ".create(vals)" not in source or ".write(vals)" not in source:
+        failures.append("legacy user baseline loader must update existing users and create only missing users")
+    init_source = MODELS_INIT.read_text(encoding="utf-8")
+    if "user_data_baseline" not in init_source:
+        failures.append("models/__init__.py must import user_data_baseline")
+    return failures
+
+
 def main() -> int:
     failures = (
         verify_manifest_boundary()
         + verify_xml_boundary()
         + verify_hook_boundary()
         + verify_partner_location_boundary()
+        + verify_user_data_baseline_boundary()
     )
     if failures:
         print("[user_module_product_boundary_guard] FAIL")

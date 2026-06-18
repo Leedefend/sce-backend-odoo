@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
-    <function model="sc.user.preference.initialization" name="apply_user_data_baseline"/>
+<odoo>
+    <data noupdate="0">
+        <function model="sc.user.preference.initialization" name="apply_user_data_baseline"/>
+    </data>
 </odoo>
