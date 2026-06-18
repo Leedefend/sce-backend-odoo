@@ -251,7 +251,7 @@
         </div>
       </div>
     </section>
-    <section v-if="!loading && currentModel" class="section-grid">
+    <section v-if="!loading && (currentModel || visibleConfigSections.length)" class="section-grid">
       <article v-for="section in visibleConfigSections" :key="section.key" class="config-card">
         <div class="config-card-head">
           <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
@@ -297,6 +297,14 @@
             @click="openMenuConfig"
           >
             调整菜单入口
+          </button>
+          <button
+            v-if="section.key === 'menu'"
+            type="button"
+            class="ghost small primary"
+            @click="openCreateMenuConfig"
+          >
+            新增菜单
           </button>
           <button
             v-else-if="section.key === 'analysis'"
@@ -2943,6 +2951,24 @@ function openMenuConfig() {
       role_key: scopeRole.value || undefined,
       return_to_business_config: '1',
       open_pages: '1',
+    },
+  });
+}
+
+function openCreateMenuConfig() {
+  router.push({
+    path: '/admin/menu-config',
+    query: {
+      menu_id: route.query.menu_id || undefined,
+      action_id: scopeAction.value ? String(scopeAction.value) : undefined,
+      model: currentModel.value || undefined,
+      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
+      page_label: selectedPageLabel.value || undefined,
+      view_id: scopeView.value ? String(scopeView.value) : undefined,
+      role_key: scopeRole.value || undefined,
+      return_to_business_config: '1',
+      open_pages: route.query.open_pages || '1',
+      create_menu: '1',
     },
   });
 }

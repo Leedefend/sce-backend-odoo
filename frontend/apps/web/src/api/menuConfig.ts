@@ -159,7 +159,7 @@ export interface MenuConfigCreatePayload {
   } | null;
 }
 
-export async function loadMenuConfigurationPanel(params: { company_id?: number; menu_ids?: number[] } = {}) {
+export async function loadMenuConfigurationPanel(params: { company_id?: number; menu_ids?: number[]; root_menu_xmlid?: string } = {}) {
   return intentRequest<MenuConfigPayload>({
     intent: 'ui.menu_config.panel.get',
     params,

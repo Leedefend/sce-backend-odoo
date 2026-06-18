@@ -121,9 +121,9 @@
         <label>
           <span>上级菜单</span>
           <select v-model.number="createForm.parent_menu_id" class="cell-input">
-            <option :value="0">顶层菜单</option>
+            <option v-if="!createParentOptions.length" :value="0" disabled>暂无可选业务父级</option>
             <option v-for="target in createParentOptions" :key="target.id" :value="target.id">
-              {{ target.complete_name || target.name }}
+              {{ parentOptionLabel(target) }}
             </option>
           </select>
         </label>
@@ -387,6 +387,7 @@ import {
   type MenuConfigVersionsPayload,
 } from '../api/menuConfig';
 import { useSessionStore } from '../stores/session';
+import { config } from '../config';
 
 type DraftPolicy = {
   policy_id: number;
@@ -728,8 +729,28 @@ const filteredRows = computed(() => {
 
 const dirtyCount = computed(() => Object.keys(drafts).filter((key) => isDirty(Number(key))).length);
 const selectedMenu = computed(() => menus.value.find((menu) => Number(menu.id) === Number(selectedMenuId.value)) || null);
-const createParentOptions = computed(() => [...menus.value].sort((a, b) => (a.complete_name || a.name).localeCompare(b.complete_name || b.name, 'zh-Hans-CN')));
-const copySourceOptions = computed(() => [...menus.value]
+const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || config.startupRootXmlid || '').trim());
+const rootMenu = computed(() => (
+  rootMenuXmlid.value
+    ? menus.value.find((menu) => menu.xmlid === rootMenuXmlid.value) || null
+    : null
+));
+const navigationMenus = computed(() => flattenMenuTree(tree.value));
+const navigationParentMenus = computed(() => navigationMenus.value.filter((menu) => (
+  Boolean(menu.children?.length) || !String(menu.action || '').trim()
+)));
+const createParentOptions = computed(() => {
+  const byId = new Map<number, MenuConfigMenu>();
+  if (rootMenu.value) byId.set(Number(rootMenu.value.id), rootMenu.value);
+  navigationParentMenus.value.forEach((menu) => byId.set(Number(menu.id), menu));
+  return Array.from(byId.values()).sort((a, b) => parentOptionSortKey(a).localeCompare(parentOptionSortKey(b), 'zh-Hans-CN'));
+});
+const defaultCreateParentId = computed(() => (
+  rootMenu.value?.id
+  || createParentOptions.value[0]?.id
+  || 0
+));
+const copySourceOptions = computed(() => navigationMenus.value
   .filter((menu) => Boolean(String(menu.action || '').trim()))
   .sort((a, b) => (a.complete_name || a.name).localeCompare(b.complete_name || b.name, 'zh-Hans-CN')));
 
@@ -910,9 +931,9 @@ function removeRoleGroup(menuId: number, groupId: number) {
 function parentOptions(menuId: number) {
   const excluded = descendantsFor(menuId);
   excluded.add(menuId);
-  return menus.value
+  return createParentOptions.value
     .filter((item) => !excluded.has(item.id))
-    .sort((a, b) => (a.complete_name || a.name).localeCompare(b.complete_name || b.name, 'zh-Hans-CN'));
+    .sort((a, b) => parentOptionSortKey(a).localeCompare(parentOptionSortKey(b), 'zh-Hans-CN'));
 }
 
 function descendantsFor(menuId: number) {
@@ -937,9 +958,62 @@ function selectMenu(menuId: number) {
   selectedMenuId.value = menuId;
 }
 
+function upsertCreatedMenu(menu: MenuConfigMenu, policy?: MenuConfigPolicy) {
+  if (!menu?.id) return;
+  const nextMenu = { ...menu, children: menu.children || [] };
+  const menuIndex = menus.value.findIndex((item) => Number(item.id) === Number(nextMenu.id));
+  if (menuIndex >= 0) {
+    menus.value.splice(menuIndex, 1, nextMenu);
+  } else {
+    menus.value.push(nextMenu);
+  }
+
+  const draft = defaultDraft(nextMenu, policy);
+  drafts[nextMenu.id] = cloneDraft(draft);
+  originalPolicies.value = {
+    ...originalPolicies.value,
+    [nextMenu.id]: cloneDraft(draft),
+  };
+
+  const insertIntoBranch = (items: MenuConfigMenu[]): { rows: MenuConfigMenu[]; inserted: boolean } => {
+    let inserted = false;
+    const rows = items.map((item) => {
+      if (Number(item.id) === Number(nextMenu.parent_id || 0)) {
+        const existing = item.children || [];
+        if (existing.some((child) => Number(child.id) === Number(nextMenu.id))) {
+          inserted = true;
+          return {
+            ...item,
+            children: existing.map((child) => (Number(child.id) === Number(nextMenu.id) ? nextMenu : child)),
+          };
+        }
+        inserted = true;
+        return {
+          ...item,
+          children: [...existing, nextMenu].sort((a, b) => (
+            Number(a.sequence || 0) - Number(b.sequence || 0)
+            || Number(a.id || 0) - Number(b.id || 0)
+          )),
+        };
+      }
+      if (!item.children?.length) return item;
+      const result = insertIntoBranch(item.children);
+      if (result.inserted) {
+        inserted = true;
+        return { ...item, children: result.rows };
+      }
+      return item;
+    });
+    return { rows, inserted };
+  };
+
+  const result = insertIntoBranch(tree.value);
+  tree.value = result.inserted ? result.rows : [...tree.value, nextMenu];
+}
+
 function resetCreateForm() {
   createForm.name = '';
-  createForm.parent_menu_id = selectedMenu.value?.id || 0;
+  createForm.parent_menu_id = selectedMenu.value?.id || defaultCreateParentId.value;
   createForm.source_menu_id = 0;
   createForm.sequence = 0;
   createForm.visible = true;
@@ -950,14 +1024,17 @@ function openCreateMenu(mode: 'custom' | 'sibling' | 'child' | 'copy') {
   const current = selectedMenu.value;
   resetCreateForm();
   if (mode === 'sibling' && current) {
-    createForm.parent_menu_id = Number(current.parent_id || 0);
+    createForm.parent_menu_id = Number(current.parent_id || defaultCreateParentId.value);
     createForm.name = `${current.name}（同级）`;
   } else if (mode === 'child' && current) {
     createForm.parent_menu_id = current.id;
   } else if (mode === 'copy' && current) {
-    createForm.parent_menu_id = Number(current.parent_id || 0);
+    createForm.parent_menu_id = Number(current.parent_id || defaultCreateParentId.value);
     createForm.source_menu_id = current.id;
     createForm.name = `${current.name}副本`;
+  }
+  if (!createParentOptions.value.some((menu) => Number(menu.id) === Number(createForm.parent_menu_id))) {
+    createForm.parent_menu_id = defaultCreateParentId.value;
   }
   createPanelOpen.value = true;
   message.value = '';
@@ -979,13 +1056,14 @@ async function createMenuEntry() {
       visible: createForm.visible,
       note: createForm.note.trim(),
     });
-    await session.loadAppInit({ force: true });
-    await loadPanel();
-    selectedMenuId.value = Number(result.menu?.id || 0);
+    const createdMenu = result.menu;
+    const createdPolicy = result.policy;
+    const createdName = createdMenu?.name || createForm.name.trim();
+    upsertCreatedMenu(result.menu, result.policy);
+    selectedMenuId.value = Number(createdMenu?.id || 0);
     createPanelOpen.value = false;
     auditResult.value = null;
-    if (versionPanelOpen.value) await loadVersions();
-    message.value = `已创建菜单“${result.menu?.name || createForm.name}”，导航已刷新`;
+    message.value = `已创建菜单“${createdName}”，可继续新增下级菜单；刷新页面后导航按配置生效`;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '菜单创建失败';
   } finally {
@@ -1004,6 +1082,31 @@ function selectedMenuPath(items: MenuConfigMenu[], menuId: number): Set<number> 
   });
   walk(items);
   return new Set(path);
+}
+
+function flattenMenuTree(items: MenuConfigMenu[]): MenuConfigMenu[] {
+  const out: MenuConfigMenu[] = [];
+  const walk = (rows: MenuConfigMenu[]) => {
+    rows.forEach((item) => {
+      out.push(item);
+      if (item.children?.length) walk(item.children);
+    });
+  };
+  walk(items);
+  return out;
+}
+
+function parentOptionSortKey(menu: MenuConfigMenu) {
+  const isRoot = rootMenu.value && Number(menu.id) === Number(rootMenu.value.id);
+  return `${isRoot ? '0' : '1'}:${menu.complete_name || menu.name}`;
+}
+
+function parentOptionLabel(menu: MenuConfigMenu) {
+  const label = menu.complete_name || menu.name;
+  if (rootMenu.value && Number(menu.id) === Number(rootMenu.value.id)) {
+    return `业务根菜单：${menu.name || label}（新增一级分组）`;
+  }
+  return label;
 }
 
 function initializeTreeCollapse(items: MenuConfigMenu[]) {
@@ -1183,6 +1286,45 @@ function buildTreeFromNavigation(
   });
 }
 
+function attachMissingConfiguredMenus(
+  baseTree: MenuConfigMenu[],
+  allMenus: MenuConfigMenu[],
+  usedMenuIds: Set<number>,
+): MenuConfigMenu[] {
+  const rootIds = new Set(baseTree.map((item) => Number(item.id)));
+  const byParent = new Map<number, MenuConfigMenu[]>();
+  allMenus.forEach((menu) => {
+    if (usedMenuIds.has(Number(menu.id))) return;
+    const parentId = Number(menu.parent_id || 0);
+    if (!parentId && !rootIds.size) return;
+    const list = byParent.get(parentId) || [];
+    list.push({ ...menu, children: [] });
+    byParent.set(parentId, list);
+  });
+
+  const sortBranch = (items: MenuConfigMenu[]) => [...items].sort((a, b) => (
+    Number(a.sequence || 0) - Number(b.sequence || 0)
+    || Number(a.id || 0) - Number(b.id || 0)
+  ));
+
+  const buildMissingBranch = (parentId: number): MenuConfigMenu[] => sortBranch(byParent.get(parentId) || []).map((menu) => ({
+    ...menu,
+    children: buildMissingBranch(Number(menu.id)),
+  }));
+
+  const attach = (items: MenuConfigMenu[]): MenuConfigMenu[] => sortBranch(items.map((item) => ({
+    ...item,
+    children: sortBranch([
+      ...(item.children?.length ? attach(item.children) : []),
+      ...buildMissingBranch(Number(item.id)),
+    ]),
+  })));
+
+  const attached = attach(baseTree);
+  if (attached.length) return attached;
+  return buildMissingBranch(0);
+}
+
 function collectNavigationMenuIds() {
   const ids: number[] = [];
   const seen = new Set<number>();
@@ -1223,7 +1365,10 @@ async function loadPanel() {
   error.value = '';
   message.value = '';
   try {
-    const payload = await loadMenuConfigurationPanel({ menu_ids: collectNavigationMenuIds() });
+    const payload = await loadMenuConfigurationPanel({
+      menu_ids: collectNavigationMenuIds(),
+      root_menu_xmlid: rootMenuXmlid.value || undefined,
+    });
     auditResult.value = null;
     company.value = payload.company || null;
     menus.value = payload.menus || [];
@@ -1237,9 +1382,11 @@ async function loadPanel() {
         menuByLabel.set(label, list);
       });
     });
-    const navOrderedTree = buildTreeFromNavigation(session.menuTree as NavNode[], menuById, menuByLabel);
-    tree.value = navOrderedTree;
-    initializeTreeCollapse(navOrderedTree);
+    const usedMenuIds = new Set<number>();
+    const navOrderedTree = buildTreeFromNavigation(session.menuTree as NavNode[], menuById, menuByLabel, usedMenuIds);
+    const completeTree = attachMissingConfiguredMenus(navOrderedTree, payload.menus || [], usedMenuIds);
+    tree.value = completeTree;
+    initializeTreeCollapse(completeTree);
     groups.value = payload.groups || [];
     Object.keys(drafts).forEach((key) => delete drafts[Number(key)]);
     const nextOriginal: Record<number, DraftPolicy> = {};
@@ -1361,8 +1508,19 @@ async function saveChanges() {
   }
 }
 
-onMounted(() => {
-  void loadPanel();
+function clearCreateMenuRouteFlag() {
+  if (String(route.query.create_menu || '').trim() !== '1') return;
+  const url = new URL(window.location.href);
+  url.searchParams.delete('create_menu');
+  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
+onMounted(async () => {
+  await loadPanel();
+  if (String(route.query.create_menu || '').trim() === '1') {
+    openCreateMenu('custom');
+    clearCreateMenuRouteFlag();
+  }
 });
 </script>
 

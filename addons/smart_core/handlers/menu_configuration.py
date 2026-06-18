@@ -177,6 +177,16 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 ids.append(menu_id)
         return ids
 
+    def _root_menu_id(self, params: dict) -> int:
+        root_menu_id = _to_int(params.get("root_menu_id") or params.get("rootMenuId"))
+        if root_menu_id:
+            return root_menu_id
+        root_menu_xmlid = _to_text(params.get("root_menu_xmlid") or params.get("rootMenuXmlid"))
+        if not root_menu_xmlid:
+            return 0
+        menu = _xmlid_record(self.env, root_menu_xmlid)
+        return int(menu.id or 0) if menu and getattr(menu, "_name", "") == "ir.ui.menu" else 0
+
     def _expand_with_parent_ids(self, menus) -> list[int]:
         ids = set(int(menu.id) for menu in menus)
         parent = menus.mapped("parent_id")
@@ -299,6 +309,9 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         Menu = self.env["ir.ui.menu"].sudo()
         MenuAll = Menu.with_context(active_test=False)
         requested_menu_ids = self._requested_menu_ids(params)
+        root_menu_id = self._root_menu_id(params)
+        if root_menu_id and root_menu_id not in requested_menu_ids:
+            requested_menu_ids.append(root_menu_id)
         if requested_menu_ids:
             policy_records = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False).search([
                 ("company_id", "=", company_id),
