@@ -182,6 +182,8 @@ async function main() {
     const approvalScopeOptionCount = await approvalPanel.locator("select").nth(1).locator("option").count();
     const approvalSaveDisabledInitially = await approvalPanel.getByRole("button", { name: "保存审批设置" }).isDisabled();
     const approvalAdvancedButtonCount = await approvalPanel.getByRole("button", { name: "高级规则" }).count();
+    const approvalRequiredToggle = approvalPanel.locator(".approval-toggle input[type='checkbox']");
+    const approvalWasEnabledInitially = await approvalRequiredToggle.isChecked();
     const approvalStepText = await approvalPanel.locator(".approval-steps").innerText();
     const approvalStepDragHandleCount = await approvalPanel.locator(".approval-step-drag").count();
     const approvalStepHeaderText = await approvalPanel.locator(".approval-step-table-head").innerText().catch(() => "");
@@ -194,6 +196,13 @@ async function main() {
     let approvalDragSaveEnabled = false;
     let approvalDragResetSaveDisabled = false;
     if (approvalStepRowCount >= 2) {
+      if (!approvalWasEnabledInitially) {
+        await approvalRequiredToggle.check();
+        await page.waitForFunction(() => {
+          const firstInput = document.querySelector(".approval-step-row input[type='text']");
+          return firstInput && !firstInput.disabled;
+        }, null, { timeout: 10000 });
+      }
       const firstProbeName = `验收步骤A-${approvalDragProbeSuffix}`;
       const secondProbeName = `验收步骤B-${approvalDragProbeSuffix}`;
       await approvalPanel.locator(".approval-step-row").nth(0).locator("input[type='text']").fill(firstProbeName);
@@ -290,6 +299,7 @@ async function main() {
       approvalModeOptionLabels,
       approvalScopeOptionCount,
       approvalSaveDisabledInitially,
+      approvalWasEnabledInitially,
       approvalAdvancedButtonCount,
       approvalStepRowCount,
       approvalDragOrderBefore,
