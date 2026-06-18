@@ -53,11 +53,14 @@
   - Verifies the P2 user module keeps user data baseline, user preferences, and replay hooks as separate carriers.
   - Ensures `smart_construction_custom` loads user data baseline before user preference contracts.
   - Ensures the real legacy user master payload is carried by the user module and loaded only through an idempotent loader.
+  - Ensures the user module carries a locked user-visible historical business data baseline manifest, covering all 11 productized business families plus post-asset replay/write/projection closure targets.
+  - Rejects treating the original 23 migration asset packages as the full user data baseline.
   - Ensures P1 industry modules do not carry P2 real-user data payloads such as `legacy_user_sc_*` or `user_master_v1.xml`.
   - Ensures form preference initializers do not perform hidden data dictionary creation or partner backfill.
 - `make verify.user_module.data_baseline.runtime_audit`
   - Runtime acceptance after installing/upgrading `smart_construction_custom` on a target database.
   - Replays the legacy user data baseline twice and verifies user count, XMLID count, and duplicate-login safety remain stable.
+  - Verifies the runtime user module summary includes the historical business visible-surface baseline contract.
   - Emits `user_module_data_baseline_runtime_audit.json` under `MIGRATION_ARTIFACT_ROOT` or `/tmp/user_module_data_baseline/<db>`.
 - `make verify.backend.guard`
   - Compatibility alias for the backend boundary guard chain used by Codex verification workflows.

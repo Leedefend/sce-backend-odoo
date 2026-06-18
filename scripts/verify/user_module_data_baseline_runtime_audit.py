@@ -74,6 +74,7 @@ def main() -> int:
     mid_users = _legacy_user_count()
     mid_xmlids = _custom_xmlid_count()
     second = Initializer.apply_legacy_user_master_data_baseline()
+    history_business = Initializer.apply_history_business_data_baseline_manifest()
     after_users = _legacy_user_count()
     after_xmlids = _custom_xmlid_count()
     duplicates = _duplicate_legacy_logins()
@@ -94,6 +95,14 @@ def main() -> int:
         )
     if duplicates:
         errors.append(f"duplicate legacy logins: {duplicates[:10]}")
+    if history_business.get("status") != "PASS":
+        errors.append(f"history business baseline manifest failed: {history_business}")
+    if int(history_business.get("visible_business_family_count") or 0) < 11:
+        errors.append(f"history business family count too small: {history_business}")
+    if int(history_business.get("legacy_asset_package_count") or 0) < 23:
+        errors.append(f"legacy asset package count too small: {history_business}")
+    if int(history_business.get("post_asset_closure_target_count") or 0) < 70:
+        errors.append(f"post-asset closure target count too small: {history_business}")
 
     payload = {
         "status": "PASS" if not errors else "FAIL",
@@ -102,6 +111,7 @@ def main() -> int:
         "before": {"legacy_users": before_users, "custom_xmlids": before_xmlids},
         "after_first_run": {"legacy_users": mid_users, "custom_xmlids": mid_xmlids, "result": first},
         "after_second_run": {"legacy_users": after_users, "custom_xmlids": after_xmlids, "result": second},
+        "history_business_data": history_business,
         "duplicate_legacy_logins": duplicates,
         "errors": errors,
     }

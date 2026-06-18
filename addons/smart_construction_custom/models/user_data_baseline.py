@@ -7,6 +7,7 @@ from odoo.tools.misc import file_path
 
 
 LEGACY_USER_MASTER_XML = "user_master_v1.xml"
+HISTORY_BUSINESS_BASELINE_MANIFEST = "user_history_business_data_baseline_manifest_v1.json"
 
 
 def _clean_text(value):
@@ -29,6 +30,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
         summary = {
             "legacy_users": self.apply_legacy_user_master_data_baseline(),
             "partner_business_data": self.apply_partner_business_data_baseline(),
+            "history_business_data": self.apply_history_business_data_baseline_manifest(),
         }
         self.env["ir.config_parameter"].sudo().set_param(
             "sc.custom.user_data_baseline_summary",
@@ -111,6 +113,53 @@ class ScUserPreferenceInitialization(models.TransientModel):
         summary = Partner.action_sc_align_partner_roles_from_business_facts(demote_no_fact=False)
         summary["demote_no_fact"] = False
         return summary
+
+    @api.model
+    def apply_history_business_data_baseline_manifest(self):
+        manifest_path = file_path(
+            "smart_construction_custom/data/%s" % HISTORY_BUSINESS_BASELINE_MANIFEST
+        )
+        if not manifest_path:
+            return {"status": "SKIP", "reason": "missing_history_business_baseline_manifest"}
+
+        with open(manifest_path, encoding="utf-8") as handle:
+            payload = json.load(handle)
+
+        standard = payload.get("completeness_standard") or {}
+        legacy_catalog = payload.get("legacy_asset_catalog") or {}
+        post_asset = payload.get("post_asset_closure") or {}
+        families = payload.get("visible_business_families") or []
+        targets = post_asset.get("targets") or []
+        unavailable_targets = [
+            item.get("target")
+            for item in targets
+            if isinstance(item, dict) and not item.get("available_in_makefile")
+        ]
+        errors = []
+        if standard.get("basis") != "locked_user_visible_business_surface":
+            errors.append("basis_must_be_locked_user_visible_business_surface")
+        if not standard.get("not_complete_if_only_legacy_asset_catalog"):
+            errors.append("must_reject_legacy_asset_catalog_only_completion")
+        if len(families) != int(standard.get("required_family_count") or 0):
+            errors.append("visible_business_family_count_mismatch")
+        if int(legacy_catalog.get("source_asset_package_count") or 0) < 23:
+            errors.append("legacy_asset_catalog_package_count_too_small")
+        if int(post_asset.get("target_count") or 0) < 70:
+            errors.append("post_asset_closure_target_count_too_small")
+        if unavailable_targets:
+            errors.append("post_asset_closure_target_missing_in_makefile")
+
+        return {
+            "status": "PASS" if not errors else "FAIL",
+            "source": "smart_construction_custom/data/%s" % HISTORY_BUSINESS_BASELINE_MANIFEST,
+            "basis": standard.get("basis"),
+            "visible_business_family_count": len(families),
+            "required_family_count": int(standard.get("required_family_count") or 0),
+            "legacy_asset_package_count": int(legacy_catalog.get("source_asset_package_count") or 0),
+            "post_asset_closure_target_count": int(post_asset.get("target_count") or 0),
+            "unavailable_targets": unavailable_targets,
+            "errors": errors,
+        }
 
     @api.model
     def _find_existing_legacy_user(self, Imd, User, xmlid_name, login):

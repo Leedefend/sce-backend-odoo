@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ast
+import json
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -21,7 +22,9 @@ USER_DATA_BASELINE_PY = MODULE / "models/user_data_baseline.py"
 MODELS_INIT = MODULE / "models/__init__.py"
 USER_DATA_BASELINE_XML = MODULE / "data/user_data_baseline.xml"
 LEGACY_USER_MASTER_XML = MODULE / "data/user_master_v1.xml"
+HISTORY_BUSINESS_BASELINE_MANIFEST = MODULE / "data/user_history_business_data_baseline_manifest_v1.json"
 USER_PREFERENCES_XML = MODULE / "data/user_preferences.xml"
+BUSINESS_CAPABILITY_BASELINE = ROOT / "docs/product/business_capability_productization_baseline_v1.json"
 
 
 def _parse_python(path: Path) -> ast.Module:
@@ -83,12 +86,85 @@ def verify_manifest_boundary() -> list[str]:
             failures.append(f"smart_construction_custom manifest must include {item}")
     if "data/user_master_v1.xml" in data_files:
         failures.append("legacy user master payload must be loaded by the idempotent data baseline loader, not direct XML data")
+    if "data/user_history_business_data_baseline_manifest_v1.json" in data_files:
+        failures.append("history business baseline manifest must be read by the idempotent loader, not direct XML data")
 
     baseline_index = _index(data_files, baseline)
     preference_index = _index(data_files, preferences)
     if baseline_index >= 0 and preference_index >= 0 and baseline_index > preference_index:
         failures.append("user data baseline must load before user preference contracts")
 
+    return failures
+
+
+def verify_history_business_data_baseline_manifest() -> list[str]:
+    failures: list[str] = []
+    if not HISTORY_BUSINESS_BASELINE_MANIFEST.exists():
+        return ["user module must carry the locked user-visible history business data baseline manifest"]
+    if not BUSINESS_CAPABILITY_BASELINE.exists():
+        return ["product family baseline is missing"]
+
+    payload = json.loads(HISTORY_BUSINESS_BASELINE_MANIFEST.read_text(encoding="utf-8"))
+    product = json.loads(BUSINESS_CAPABILITY_BASELINE.read_text(encoding="utf-8"))
+    standard = payload.get("completeness_standard") if isinstance(payload.get("completeness_standard"), dict) else {}
+    legacy_catalog = payload.get("legacy_asset_catalog") if isinstance(payload.get("legacy_asset_catalog"), dict) else {}
+    post_asset = payload.get("post_asset_closure") if isinstance(payload.get("post_asset_closure"), dict) else {}
+    families = payload.get("visible_business_families") if isinstance(payload.get("visible_business_families"), list) else []
+    targets = post_asset.get("targets") if isinstance(post_asset.get("targets"), list) else []
+    product_families = product.get("families") if isinstance(product.get("families"), list) else []
+    product_keys = {str(item.get("key") or "").strip() for item in product_families if isinstance(item, dict)}
+    manifest_keys = {str(item.get("key") or "").strip() for item in families if isinstance(item, dict)}
+
+    if payload.get("manifest_id") != "scbs_user_visible_business_data_stable_baseline_v1":
+        failures.append("history business baseline manifest_id must identify the stable user-visible baseline")
+    if standard.get("basis") != "locked_user_visible_business_surface":
+        failures.append("history business baseline must be based on the locked user-visible business surface")
+    if not standard.get("not_complete_if_only_legacy_asset_catalog"):
+        failures.append("history business baseline must explicitly reject legacy asset catalog only completion")
+    if not standard.get("legacy_asset_package_count_is_not_completion_standard"):
+        failures.append("history business baseline must state that the 23 legacy packages are not the completion standard")
+    required_family_count = int((product.get("policy") or {}).get("required_family_count") or 0)
+    if len(families) != required_family_count:
+        failures.append(f"history business baseline family count mismatch: {len(families)} != {required_family_count}")
+    if product_keys != manifest_keys:
+        failures.append("history business baseline families must match product business capability baseline")
+    if int(legacy_catalog.get("source_asset_package_count") or 0) < 23:
+        failures.append("history business baseline must retain the original migration asset catalog as one source")
+    if len(legacy_catalog.get("package_order") or []) < 23:
+        failures.append("history business baseline legacy asset package_order is incomplete")
+    if int(post_asset.get("target_count") or 0) < 70 or len(targets) < 70:
+        failures.append("history business baseline must include post-asset replay/write/projection closure targets")
+
+    required_targets = {
+        "history.legacy_user_visible_surface.overlay.write",
+        "history.daily_business_visible_surface.p0.write",
+        "fresh_db.legacy_tax_deduction.replay.write",
+        "fresh_db.legacy_self_funding.replay.write",
+        "fresh_db.deduction_paid.projection.write",
+        "fresh_db.arrival_confirmation.projection.write",
+        "fresh_db.payment_execution.projection.write",
+        "fresh_db.invoice_registration.projection.write",
+        "fresh_db.fund_account_between.projection.write",
+        "formal_entry_metadata.surface.write",
+        "prod.sim.business.usable.init",
+    }
+    target_names = {str(item.get("target") or "").strip() for item in targets if isinstance(item, dict)}
+    missing_targets = sorted(required_targets - target_names)
+    if missing_targets:
+        failures.append(f"history business baseline missing post-asset closure targets: {missing_targets}")
+    unavailable_targets = sorted(
+        str(item.get("target") or "").strip()
+        for item in targets
+        if isinstance(item, dict) and not item.get("available_in_makefile")
+    )
+    if unavailable_targets:
+        failures.append(f"history business baseline references targets absent from Makefile: {unavailable_targets}")
+    for family in families:
+        if not isinstance(family, dict):
+            failures.append("history business baseline contains non-object family")
+            continue
+        if not family.get("baseline_sources"):
+            failures.append(f"history business family has no baseline_sources: {family.get('key')}")
     return failures
 
 
@@ -181,6 +257,7 @@ def verify_user_data_baseline_boundary() -> list[str]:
         "apply_user_data_baseline",
         "apply_legacy_user_master_data_baseline",
         "apply_partner_business_data_baseline",
+        "apply_history_business_data_baseline_manifest",
         "_find_existing_legacy_user",
         "_ensure_user_baseline_xmlid",
     }
@@ -190,7 +267,11 @@ def verify_user_data_baseline_boundary() -> list[str]:
 
     apply_data = _function_by_name(tree, "apply_user_data_baseline")
     calls = set(_call_names(apply_data))
-    for required in ["apply_legacy_user_master_data_baseline", "apply_partner_business_data_baseline"]:
+    for required in [
+        "apply_legacy_user_master_data_baseline",
+        "apply_partner_business_data_baseline",
+        "apply_history_business_data_baseline_manifest",
+    ]:
         if required not in calls:
             failures.append(f"apply_user_data_baseline must call {required}")
 
@@ -201,6 +282,8 @@ def verify_user_data_baseline_boundary() -> list[str]:
         "no_reset_password=True",
         '"noupdate": True',
         "demote_no_fact=False",
+        "locked_user_visible_business_surface",
+        "not_complete_if_only_legacy_asset_catalog",
     ]
     for snippet in required_snippets:
         if snippet not in source:
@@ -241,6 +324,7 @@ def verify_industry_modules_do_not_carry_user_data() -> list[str]:
 def main() -> int:
     failures = (
         verify_manifest_boundary()
+        + verify_history_business_data_baseline_manifest()
         + verify_xml_boundary()
         + verify_hook_boundary()
         + verify_partner_location_boundary()
