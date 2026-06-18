@@ -53,6 +53,7 @@
   - Verifies the P2 user module keeps user data baseline, user preferences, and replay hooks as separate carriers.
   - Ensures `smart_construction_custom` loads user data baseline before user preference contracts.
   - Ensures the real legacy user master payload is carried by the user module and loaded only through an idempotent loader.
+  - Ensures P1 industry modules do not carry P2 real-user data payloads such as `legacy_user_sc_*` or `user_master_v1.xml`.
   - Ensures form preference initializers do not perform hidden data dictionary creation or partner backfill.
 - `make verify.backend.guard`
   - Compatibility alias for the backend boundary guard chain used by Codex verification workflows.

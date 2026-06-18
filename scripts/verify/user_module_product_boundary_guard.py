@@ -9,6 +9,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE = ROOT / "addons/smart_construction_custom"
+INDUSTRY_MODULES = [
+    ROOT / "addons/smart_construction_core",
+    ROOT / "addons/smart_construction_scene",
+    ROOT / "addons/smart_construction_bootstrap",
+]
 MANIFEST = MODULE / "__manifest__.py"
 HOOKS = MODULE / "hooks.py"
 PARTNER_LOCATION = MODULE / "models/partner_location.py"
@@ -208,6 +213,31 @@ def verify_user_data_baseline_boundary() -> list[str]:
     return failures
 
 
+def verify_industry_modules_do_not_carry_user_data() -> list[str]:
+    failures: list[str] = []
+    forbidden_names = {"user_master_v1.xml"}
+    forbidden_text = ("legacy_user_sc_",)
+    for module_path in INDUSTRY_MODULES:
+        if not module_path.exists():
+            continue
+        for path in module_path.rglob("*"):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(ROOT).as_posix()
+            if path.name in forbidden_names:
+                failures.append(f"P1 industry module must not carry P2 real-user payload file: {rel}")
+                continue
+            if path.suffix.lower() not in {".xml", ".csv", ".json", ".py", ".md"}:
+                continue
+            try:
+                source = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            if any(token in source for token in forbidden_text):
+                failures.append(f"P1 industry module must not carry P2 real-user payload token in {rel}")
+    return failures
+
+
 def main() -> int:
     failures = (
         verify_manifest_boundary()
@@ -215,6 +245,7 @@ def main() -> int:
         + verify_hook_boundary()
         + verify_partner_location_boundary()
         + verify_user_data_baseline_boundary()
+        + verify_industry_modules_do_not_carry_user_data()
     )
     if failures:
         print("[user_module_product_boundary_guard] FAIL")
