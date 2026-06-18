@@ -76,11 +76,75 @@ class _Group:
 
 
 class _Menu:
-    def __init__(self, ident, name, complete_name=None):
+    def __init__(self, ident, name, complete_name=None, parent=None, sequence=10, action="", web_icon=""):
         self.id = ident
         self.name = name
         self.display_name = name
         self.complete_name = complete_name or name
+        self.parent_id = parent
+        self.sequence = sequence
+        self.action = action
+        self.web_icon = web_icon
+        self.groups_id = _RecordSet([])
+
+    def exists(self):
+        return self
+
+
+class _MenuModel(_RecordSet):
+    def sudo(self):
+        return self
+
+    def with_context(self, **kwargs):
+        self.context = kwargs
+        return self
+
+    def browse(self, record_id):
+        for record in self:
+            if int(record.id or 0) == int(record_id or 0):
+                return record
+        return _RecordSet([])
+
+    def search(self, domain, order=None, limit=None):
+        parent_filter = None
+        id_values = None
+        for field, op, value in domain:
+            if field == "parent_id" and op == "=":
+                parent_filter = int(value or 0)
+            if field == "id" and op == "in":
+                id_values = {int(item or 0) for item in value}
+        rows = list(self)
+        if parent_filter is not None:
+            rows = [row for row in rows if int(getattr(getattr(row, "parent_id", None), "id", 0) or 0) == parent_filter]
+        if id_values is not None:
+            rows = [row for row in rows if int(row.id or 0) in id_values]
+        rows.sort(key=lambda row: (int(getattr(row, "sequence", 0) or 0), int(row.id or 0)), reverse=bool(order and "desc" in order))
+        if limit == 1:
+            return rows[0] if rows else _RecordSet([])
+        return _RecordSet(rows[:limit] if limit else rows)
+
+    def create(self, vals):
+        parent_id = vals.get("parent_id")
+        parent = self.browse(parent_id).exists() if parent_id else None
+        menu = _Menu(
+            max([int(getattr(row, "id", 0) or 0) for row in self] + [0]) + 1,
+            vals.get("name"),
+            vals.get("name"),
+            parent=parent if parent else None,
+            sequence=int(vals.get("sequence") or 0),
+            action=vals.get("action") or "",
+            web_icon=vals.get("web_icon") or "",
+        )
+        self.append(menu)
+        return menu
+
+
+class _ModelDataModel(_RecordSet):
+    def sudo(self):
+        return self
+
+    def search(self, domain):
+        return _RecordSet([])
 
 
 class _Policy:
@@ -405,6 +469,58 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(contract.version_no, 2)
         self.assertEqual(contract.contract_json["menu_orchestration"]["policy_count"], 1)
         self.assertTrue(result["meta"]["contract_mirrored"])
+
+    def test_menu_config_create_adds_menu_policy_and_contract_version(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        parent = _Menu(20, "业务配置", "智慧施工 / 业务配置")
+        source = _Menu(
+            30,
+            "菜单配置",
+            "智慧施工 / 业务配置 / 菜单配置",
+            parent=parent,
+            sequence=20,
+            action="ir.actions.act_window,88",
+        )
+        menus = _MenuModel([parent, source])
+        policies = _PolicyModel([], user=user)
+        contracts = _ContractModel([])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([]),
+                "ui.menu.config.policy": policies,
+                "ui.business.config.contract": contracts,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationCreateHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "name": "菜单配置副本",
+                "parent_menu_id": 20,
+                "source_menu_id": 30,
+                "visible": True,
+            },
+        )
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(len(menus), 3)
+        created = menus[-1]
+        self.assertEqual(created.name, "菜单配置副本")
+        self.assertEqual(created.parent_id.id, 20)
+        self.assertEqual(created.action, "ir.actions.act_window,88")
+        self.assertEqual(len(policies), 1)
+        self.assertEqual(policies[0].menu_id.id, created.id)
+        self.assertEqual(policies[0].sequence_override, 30)
+        self.assertEqual(len(contracts), 1)
+        self.assertEqual(contracts[0].contract_json["menu_orchestration"]["policy_count"], 1)
+        self.assertEqual(result["meta"]["source_authority"]["kind"], "ui_menu_config_menu_create_write_proxy")
 
     def test_menu_config_rollback_restores_policy_rows_from_contract_version(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")

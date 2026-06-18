@@ -44,6 +44,18 @@ def _m2o_payload(record) -> dict | None:
     return {"id": int(record.id), "name": _to_text(record.display_name or record.name)}
 
 
+def _menu_action_value(action: Any) -> str:
+    if not action:
+        return ""
+    if isinstance(action, str):
+        return _to_text(action)
+    model_name = _to_text(getattr(action, "_name", ""))
+    action_id = _to_int(getattr(action, "id", 0))
+    if model_name and action_id:
+        return "%s,%s" % (model_name, action_id)
+    return _to_text(action)
+
+
 def _xmlid_record(env, xmlid: str):
     try:
         return env.ref(xmlid, raise_if_not_found=False)
@@ -194,7 +206,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         return out
 
     def _serialize_menu(self, menu, xmlids: dict[int, str]) -> dict:
-        action = _to_text(getattr(menu, "action", ""))
+        action = _menu_action_value(getattr(menu, "action", ""))
         return {
             "id": int(menu.id),
             "menu_id": int(menu.id),
@@ -470,6 +482,131 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
             "data": {
                 "saved": saved,
                 "saved_count": len(saved),
+                "contract": {
+                    "id": int(contract.id),
+                    "name": str(contract.name or ""),
+                    "model": str(contract.model or ""),
+                    "status": str(contract.status or ""),
+                    "version_no": int(contract.version_no or 1),
+                } if contract else None,
+            },
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "source_authority": self.source_authority_contract(),
+                "contract_mirrored": bool(contract),
+            },
+        }
+
+
+class MenuConfigurationCreateHandler(MenuConfigurationSaveHandler):
+    INTENT_TYPE = "ui.menu_config.menu.create"
+    DESCRIPTION = "新增菜单入口"
+    VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "menu creation creates ir.ui.menu records"
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        source = super().source_authority_contract()
+        source.update({
+            "kind": "ui_menu_config_menu_create_write_proxy",
+            "authorities": [
+                "ir.ui.menu",
+                "ui.menu.config.policy",
+                "ui.business.config.contract",
+                "res.groups",
+            ],
+            "write_proxy": True,
+            "runtime_carrier": cls.INTENT_TYPE,
+            "boundary": "runtime_menu_entry_creation",
+            "delivery_baseline_note": "长期菜单入口需沉淀到用户模块或行业模块。",
+        })
+        return source
+
+    def _err(self, code: int, message: str, reason_code: str = "USER_ERROR"):
+        return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
+
+    def _parent_menu(self, parent_menu_id: int):
+        if not parent_menu_id:
+            return False
+        parent = self.env["ir.ui.menu"].sudo().browse(parent_menu_id).exists()
+        if not parent:
+            raise ValidationError("请选择有效的上级菜单。")
+        return parent
+
+    def _source_menu(self, source_menu_id: int):
+        if not source_menu_id:
+            return False
+        source = self.env["ir.ui.menu"].sudo().browse(source_menu_id).exists()
+        if not source:
+            raise ValidationError("请选择有效的复制来源菜单。")
+        return source
+
+    def _next_sequence(self, parent_menu_id: int) -> int:
+        domain = [("parent_id", "=", parent_menu_id or False)]
+        siblings = self.env["ir.ui.menu"].sudo().with_context(active_test=False).search(domain, order="sequence desc, id desc", limit=1)
+        if not siblings:
+            return 10
+        return int((siblings.sequence or 0) + 10)
+
+    def handle(self, payload=None, ctx=None):
+        del ctx
+        self._ensure_access()
+        params = (payload or {}).get("params") if isinstance(payload, dict) else {}
+        params = params if isinstance(params, dict) else {}
+        company_id = self._company_id(params)
+        name = _to_text(params.get("name"))
+        if not name:
+            return self._err(400, "请输入菜单名称。")
+
+        parent_menu_id = _to_int(params.get("parent_menu_id") or params.get("parent_id"))
+        source_menu_id = _to_int(params.get("source_menu_id") or params.get("copy_from_menu_id"))
+        role_group_ids = [_to_int(item) for item in (params.get("role_group_ids") or []) if _to_int(item)]
+        custom_label = _to_text(params.get("custom_label"))
+        note = _to_text(params.get("note"))
+        visible = _to_bool(params.get("visible"), True)
+        sequence = _to_int(params.get("sequence")) or self._next_sequence(parent_menu_id)
+
+        try:
+            parent = self._parent_menu(parent_menu_id)
+            source = self._source_menu(source_menu_id)
+            action = _to_text(params.get("action"))
+            if not action and source:
+                action = _menu_action_value(getattr(source, "action", ""))
+            web_icon = _to_text(params.get("web_icon"))
+            if not web_icon and source:
+                web_icon = _to_text(getattr(source, "web_icon", ""))
+            menu_vals = {
+                "name": name,
+                "parent_id": int(parent.id) if parent else False,
+                "sequence": sequence,
+            }
+            if action:
+                menu_vals["action"] = action
+            if web_icon:
+                menu_vals["web_icon"] = web_icon
+            menu = self.env["ir.ui.menu"].sudo().create(menu_vals)
+
+            Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
+            policy_vals = self._values_for_row({
+                "menu_id": int(menu.id),
+                "target_parent_menu_id": 0,
+                "custom_label": custom_label,
+                "sequence_override": sequence,
+                "visible": visible,
+                "role_group_ids": role_group_ids,
+                "note": note or ("由菜单配置新增；长期使用需沉淀到用户模块。"),
+            }, company_id)
+            policy = Policy.create(policy_vals)
+            contract = self._mirror_menu_config_contract(company_id)
+        except ValidationError as exc:
+            return self._err(400, str(exc))
+
+        xmlids = self._xmlids_by_id("ir.ui.menu", [int(menu.id)])
+        return {
+            "ok": True,
+            "data": {
+                "menu": self._serialize_menu(menu, xmlids),
+                "policy": self._serialize_policy(policy),
                 "contract": {
                     "id": int(contract.id),
                     "name": str(contract.name or ""),

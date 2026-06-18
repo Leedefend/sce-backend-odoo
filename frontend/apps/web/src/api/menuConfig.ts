@@ -147,6 +147,18 @@ export interface MenuConfigSavePayload {
   } | null;
 }
 
+export interface MenuConfigCreatePayload {
+  menu: MenuConfigMenu;
+  policy: MenuConfigPolicy;
+  contract?: {
+    id: number;
+    name: string;
+    model: string;
+    status: string;
+    version_no: number;
+  } | null;
+}
+
 export async function loadMenuConfigurationPanel(params: { company_id?: number; menu_ids?: number[] } = {}) {
   return intentRequest<MenuConfigPayload>({
     intent: 'ui.menu_config.panel.get',
@@ -157,6 +169,22 @@ export async function loadMenuConfigurationPanel(params: { company_id?: number; 
 export async function saveMenuConfigurationPanel(params: { company_id?: number; rows: MenuConfigSaveRow[] }) {
   return intentRequest<MenuConfigSavePayload>({
     intent: 'ui.menu_config.panel.set',
+    params,
+  });
+}
+
+export async function createMenuConfigurationEntry(params: {
+  company_id?: number;
+  name: string;
+  parent_menu_id?: number;
+  source_menu_id?: number;
+  sequence?: number;
+  visible?: boolean;
+  role_group_ids?: number[];
+  note?: string;
+}) {
+  return intentRequest<MenuConfigCreatePayload>({
+    intent: 'ui.menu_config.menu.create',
     params,
   });
 }

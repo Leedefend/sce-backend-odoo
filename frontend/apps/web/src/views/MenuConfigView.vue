@@ -23,6 +23,9 @@
           {{ rollingBack ? '回滚中...' : rollbackButtonText }}
         </button>
         <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel">刷新</button>
+        <button type="button" class="ghost" :disabled="loading || saving || creatingMenu" @click="openCreateMenu('custom')">
+          新增菜单
+        </button>
         <button type="button" class="primary" :disabled="!dirtyCount || saving" @click="saveChanges">
           {{ saving ? '保存中...' : '保存修改' }}
         </button>
@@ -98,6 +101,59 @@
       </div>
       <div v-else class="version-empty">
         保存菜单配置后会自动生成已发布版本；没有历史版本时，当前菜单配置不能回滚。
+      </div>
+    </section>
+    <section v-if="createPanelOpen" class="create-panel">
+      <div class="create-panel-header">
+        <strong>新增菜单入口</strong>
+        <div class="create-shortcuts">
+          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('sibling')">新增同级</button>
+          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('child')">新增下级</button>
+          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('copy')">复制当前入口</button>
+          <button type="button" class="link-button" @click="createPanelOpen = false">关闭</button>
+        </div>
+      </div>
+      <div class="create-form">
+        <label>
+          <span>菜单名称</span>
+          <input v-model="createForm.name" class="cell-input" type="text" placeholder="输入业务菜单名称" />
+        </label>
+        <label>
+          <span>上级菜单</span>
+          <select v-model.number="createForm.parent_menu_id" class="cell-input">
+            <option :value="0">顶层菜单</option>
+            <option v-for="target in createParentOptions" :key="target.id" :value="target.id">
+              {{ target.complete_name || target.name }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>复制已有入口</span>
+          <select v-model.number="createForm.source_menu_id" class="cell-input">
+            <option :value="0">只创建分组菜单</option>
+            <option v-for="source in copySourceOptions" :key="source.id" :value="source.id">
+              {{ source.complete_name || source.name }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>排序号</span>
+          <input v-model.number="createForm.sequence" class="cell-input" type="number" placeholder="自动" />
+        </label>
+        <label class="create-check">
+          <input v-model="createForm.visible" type="checkbox" />
+          <span>创建后显示</span>
+        </label>
+        <label>
+          <span>备注</span>
+          <input v-model="createForm.note" class="cell-input" type="text" placeholder="可选" />
+        </label>
+      </div>
+      <div class="create-panel-footer">
+        <span>复制入口会沿用已有菜单打开的页面；长期固定入口需沉淀到用户模块。</span>
+        <button type="button" class="primary" :disabled="creatingMenu || !createForm.name.trim()" @click="createMenuEntry">
+          {{ creatingMenu ? '创建中...' : '创建菜单' }}
+        </button>
       </div>
     </section>
 
@@ -322,6 +378,7 @@ import {
   loadMenuConfigurationVersions,
   rollbackMenuConfiguration,
   saveMenuConfigurationPanel,
+  createMenuConfigurationEntry,
   type MenuConfigAuditPayload,
   type MenuConfigGroup,
   type MenuConfigMenu,
@@ -354,6 +411,7 @@ const saving = ref(false);
 const auditing = ref(false);
 const rollingBack = ref(false);
 const versionLoading = ref(false);
+const creatingMenu = ref(false);
 const error = ref('');
 const message = ref('');
 const auditResult = ref<MenuConfigAuditPayload | null>(null);
@@ -367,6 +425,7 @@ const dragTargetMenuId = ref(0);
 const dragDropPosition = ref<DropPosition>('after');
 const onlyConfigured = ref(false);
 const showGuide = ref(false);
+const createPanelOpen = ref(false);
 const company = ref<{ id: number; name: string } | null>(null);
 const menus = ref<MenuConfigMenu[]>([]);
 const tree = ref<MenuConfigMenu[]>([]);
@@ -379,6 +438,14 @@ const session = useSessionStore();
 const route = useRoute();
 const router = useRouter();
 const canReturnToBusinessConfig = computed(() => String(route.query.return_to_business_config || '').trim() === '1');
+const createForm = reactive({
+  name: '',
+  parent_menu_id: 0,
+  source_menu_id: 0,
+  sequence: 0,
+  visible: true,
+  note: '',
+});
 
 const MenuConfigTree = defineComponent({
   name: 'MenuConfigTree',
@@ -660,6 +727,11 @@ const filteredRows = computed(() => {
 });
 
 const dirtyCount = computed(() => Object.keys(drafts).filter((key) => isDirty(Number(key))).length);
+const selectedMenu = computed(() => menus.value.find((menu) => Number(menu.id) === Number(selectedMenuId.value)) || null);
+const createParentOptions = computed(() => [...menus.value].sort((a, b) => (a.complete_name || a.name).localeCompare(b.complete_name || b.name, 'zh-Hans-CN')));
+const copySourceOptions = computed(() => [...menus.value]
+  .filter((menu) => Boolean(String(menu.action || '').trim()))
+  .sort((a, b) => (a.complete_name || a.name).localeCompare(b.complete_name || b.name, 'zh-Hans-CN')));
 
 function defaultDraft(menu: MenuConfigMenu, policy?: MenuConfigPolicy): DraftPolicy {
   return {
@@ -863,6 +935,62 @@ function descendantsFor(menuId: number) {
 
 function selectMenu(menuId: number) {
   selectedMenuId.value = menuId;
+}
+
+function resetCreateForm() {
+  createForm.name = '';
+  createForm.parent_menu_id = selectedMenu.value?.id || 0;
+  createForm.source_menu_id = 0;
+  createForm.sequence = 0;
+  createForm.visible = true;
+  createForm.note = '';
+}
+
+function openCreateMenu(mode: 'custom' | 'sibling' | 'child' | 'copy') {
+  const current = selectedMenu.value;
+  resetCreateForm();
+  if (mode === 'sibling' && current) {
+    createForm.parent_menu_id = Number(current.parent_id || 0);
+    createForm.name = `${current.name}（同级）`;
+  } else if (mode === 'child' && current) {
+    createForm.parent_menu_id = current.id;
+  } else if (mode === 'copy' && current) {
+    createForm.parent_menu_id = Number(current.parent_id || 0);
+    createForm.source_menu_id = current.id;
+    createForm.name = `${current.name}副本`;
+  }
+  createPanelOpen.value = true;
+  message.value = '';
+  error.value = '';
+}
+
+async function createMenuEntry() {
+  if (!createForm.name.trim()) return;
+  creatingMenu.value = true;
+  error.value = '';
+  message.value = '';
+  try {
+    const result = await createMenuConfigurationEntry({
+      company_id: company.value?.id || undefined,
+      name: createForm.name.trim(),
+      parent_menu_id: createForm.parent_menu_id || 0,
+      source_menu_id: createForm.source_menu_id || 0,
+      sequence: Number(createForm.sequence || 0),
+      visible: createForm.visible,
+      note: createForm.note.trim(),
+    });
+    await session.loadAppInit({ force: true });
+    await loadPanel();
+    selectedMenuId.value = Number(result.menu?.id || 0);
+    createPanelOpen.value = false;
+    auditResult.value = null;
+    if (versionPanelOpen.value) await loadVersions();
+    message.value = `已创建菜单“${result.menu?.name || createForm.name}”，导航已刷新`;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '菜单创建失败';
+  } finally {
+    creatingMenu.value = false;
+  }
 }
 
 function selectedMenuPath(items: MenuConfigMenu[], menuId: number): Set<number> {
@@ -1461,6 +1589,55 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.create-panel {
+  margin: 0 18px;
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel);
+  font-size: 13px;
+}
+
+.create-panel-header,
+.create-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.create-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.create-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.create-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.create-check {
+  grid-template-columns: auto 1fr;
+  align-items: end;
+  align-content: end;
+  min-height: 58px;
+}
+
+.create-panel-footer {
+  color: var(--sc-app-text-secondary);
 }
 
 .menu-config-workspace {
