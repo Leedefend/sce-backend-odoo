@@ -5,7 +5,7 @@
 兼容模型 project.budget.line 已移动至 budget_compat.py，
 避免 cost_domain.py 里同时承担“领域服务 + 兼容层”的职责。
 """
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 from ..support.state_guard import raise_guard

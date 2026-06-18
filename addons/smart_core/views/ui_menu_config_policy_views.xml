@@ -43,7 +43,7 @@
       <form string="菜单配置" create="1" edit="1" delete="1">
         <sheet>
           <div class="alert alert-info" role="alert">
-            按三步配置：先选择要调整的菜单，再设置显示方式，最后选择适用用户组。适用用户组留空时，对当前公司所有用户生效；保存后刷新页面即可看到结果。
+            按三步配置：先选择要调整的菜单，再设置显示方式，最后选择可见业务角色。业务角色留空时，对当前公司所有用户生效；保存后刷新页面即可看到结果。
           </div>
           <group>
             <group string="第一步：选择要调整的菜单">
@@ -63,11 +63,11 @@
               <field name="effect_summary" readonly="1"/>
             </group>
           </group>
-          <group string="第三步：选择对哪些用户组生效">
+          <group string="第三步：选择对哪些业务角色生效">
             <field name="role_group_ids"
                    widget="many2many_tags"
                    options="{'no_create': True, 'no_open': True}"
-                   placeholder="留空表示所有用户组"/>
+                   placeholder="留空表示所有业务角色"/>
             <field name="scope_summary" readonly="1"/>
           </group>
           <group string="保存前确认">

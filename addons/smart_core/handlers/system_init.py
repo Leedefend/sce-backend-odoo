@@ -730,11 +730,12 @@ def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[
         raw = env["ir.config_parameter"].sudo().get_param("smart_core.nav.user_menu_config.enabled", "")
     except Exception:
         raw = ""
-    if str(raw or "").strip().lower() not in {"1", "true", "yes", "on"}:
+    normalized = str(raw or "").strip().lower()
+    if normalized in {"0", "false", "no", "off"}:
         return nav, {
             "applied": False,
             "reason": "disabled",
-            "smart_core.nav.user_menu_config.enabled": str(raw or "").strip() or "0",
+            "smart_core.nav.user_menu_config.enabled": normalized,
             "applied_count": 0,
             "hidden_count": 0,
             "renamed_count": 0,

@@ -17,6 +17,7 @@ ALLOWED_PARTNER_XMLIDS = {
 }
 
 MIN_FORMAL_MENU_COUNT = 40
+REQUIRED_DISCOVERED_MENU_XMLID = "smart_construction_core.menu_sc_project_project"
 
 
 class Failure(Exception):
@@ -75,9 +76,9 @@ def verify_python_boundary() -> list[str]:
     tree = ast.parse(PREFERENCE_PY.read_text(encoding="utf-8"), filename=str(PREFERENCE_PY))
 
     if _function_by_name(tree, "apply_all_user_form_preferences"):
-        failures.append("apply_all_user_form_preferences must not exist; user preference is not all-form governance")
+        failures.append("apply_all_user_form_preferences must not exist; user preference is business user-form governance")
     if _function_by_name(tree, "apply_generic_user_form_preferences"):
-        failures.append("apply_generic_user_form_preferences must not exist; user preference must be explicit by business request")
+        failures.append("apply_generic_user_form_preferences must not exist; user preference must stay inside business menu discovery")
 
     partner_actions = None
     for node in tree.body:
@@ -132,6 +133,29 @@ def verify_python_boundary() -> list[str]:
                     formal_menu_xmlids = _literal(node.value)
     if not isinstance(formal_menu_xmlids, tuple) or len(formal_menu_xmlids) < MIN_FORMAL_MENU_COUNT:
         failures.append("FORMAL_HANDLING_MENU_XMLIDS must list the user-confirmed formal handling menus")
+    elif REQUIRED_DISCOVERED_MENU_XMLID in formal_menu_xmlids:
+        failures.append(
+            f"{REQUIRED_DISCOVERED_MENU_XMLID} must be covered by business menu discovery, not patched into FORMAL_HANDLING_MENU_XMLIDS"
+        )
+
+    discovery_fn = _function_by_name(tree, "_user_form_preference_menu_entries")
+    if not discovery_fn:
+        failures.append("_user_form_preference_menu_entries must exist so user form preferences discover business menus")
+    else:
+        found_calls = {
+            _call_name(node)
+            for node in ast.walk(discovery_fn)
+            if isinstance(node, ast.Call)
+        }
+        if "search" not in found_calls:
+            failures.append("_user_form_preference_menu_entries must search root business menus, not rely only on static xmlids")
+        discovery_text = ast.get_source_segment(PREFERENCE_PY.read_text(encoding="utf-8"), discovery_fn) or ""
+        if "child_of" not in discovery_text or "USER_FORM_PREFERENCE_ROOT_MENU_XMLID" not in discovery_text:
+            failures.append("_user_form_preference_menu_entries must discover menus under USER_FORM_PREFERENCE_ROOT_MENU_XMLID")
+
+    business_filter_fn = _function_by_name(tree, "_is_user_business_form_action")
+    if not business_filter_fn:
+        failures.append("_is_user_business_form_action must exist to keep preference coverage inside user business forms")
 
     deactivate_fn = _function_by_name(tree, "_deactivate_generic_user_form_preferences")
     if not deactivate_fn:

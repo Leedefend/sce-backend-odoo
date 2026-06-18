@@ -8,7 +8,7 @@ export function resolveActionViewAdvancedTitle(options: {
 }): string {
   if (options.strictContractMode) {
     const title = String(options.strictAdvancedViewContract.title || '').trim();
-    return title || options.pageText('advanced_view_title_contract_missing', '高级视图（契约缺失）');
+    return title || options.pageText('advanced_view_title_contract_missing', '高级视图（配置缺失）');
   }
   const labels: Record<string, string> = {
     pivot: options.pageText('advanced_title_pivot', '数据透视视图'),
@@ -29,7 +29,7 @@ export function resolveActionViewAdvancedHint(options: {
 }): string {
   if (options.strictContractMode) {
     const hint = String(options.strictAdvancedViewContract.hint || '').trim();
-    return hint || options.pageText('advanced_view_hint_contract_missing', '当前场景未提供 advanced_view 提示，请补齐契约。');
+    return hint || options.pageText('advanced_view_hint_contract_missing', '当前场景未提供 advanced_view 提示，请补齐配置。');
   }
   const hints: Record<string, string> = {
     pivot: options.pageText('advanced_hint_pivot', '当前为可读降级视图，可查看核心统计记录并继续下钻到列表/表单。'),

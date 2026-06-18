@@ -7,10 +7,25 @@
       </div>
       <div class="header-actions">
         <span v-if="dirtyCount" class="dirty-count">{{ dirtyCount }} 项未保存</span>
+        <button v-if="canReturnToBusinessConfig" type="button" class="ghost" @click="returnToBusinessConfig">
+          返回配置工作台
+        </button>
         <button type="button" class="ghost" @click="showGuide = !showGuide">
           {{ showGuide ? '收起说明' : '配置说明' }}
         </button>
+        <button type="button" class="ghost" :disabled="loading || auditing || saving" @click="auditMenuConfiguration">
+          {{ auditing ? '检查中...' : '生效检查' }}
+        </button>
+        <button type="button" class="ghost" :disabled="loading || versionLoading || saving" @click="toggleVersionPanel">
+          {{ versionPanelOpen ? '收起版本' : (versionLoading ? '加载中...' : '版本') }}
+        </button>
+        <button type="button" class="ghost" :disabled="rollbackButtonDisabled" @click="rollbackSelectedMenuConfiguration">
+          {{ rollingBack ? '回滚中...' : rollbackButtonText }}
+        </button>
         <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel">刷新</button>
+        <button type="button" class="ghost" :disabled="loading || saving || creatingMenu" @click="openCreateMenu('custom')">
+          新增菜单
+        </button>
         <button type="button" class="primary" :disabled="!dirtyCount || saving" @click="saveChanges">
           {{ saving ? '保存中...' : '保存修改' }}
         </button>
@@ -40,8 +55,8 @@
           <span>关闭“显示”会对适用范围隐藏菜单；重新勾选后恢复显示。</span>
         </article>
         <article>
-          <strong>适用用户组</strong>
-          <span>留空表示当前公司所有用户；选择用户组后仅对这些用户组生效。</span>
+          <strong>可见业务角色</strong>
+          <span>留空表示所有业务角色可见；按业务域筛选后，可勾选需要保留菜单的角色。</span>
         </article>
         <article>
           <strong>保存生效</strong>
@@ -52,6 +67,95 @@
 
     <div v-if="error" class="status error">{{ error }}</div>
     <div v-else-if="message" class="status ok">{{ message }}</div>
+    <section v-if="auditSummary" class="audit-panel" :class="{ 'audit-panel--warning': auditSummary.notApplicableCount > 0 }">
+      <strong>菜单配置生效检查</strong>
+      <span>
+        配置 {{ auditSummary.configuredCount }} 项，当前用户命中 {{ auditSummary.applicableCount }} 项；
+        隐藏 {{ auditSummary.hiddenCount }}，改名 {{ auditSummary.renamedCount }}，移动 {{ auditSummary.movedCount }}，排序 {{ auditSummary.reorderedCount }}。
+      </span>
+      <span v-if="auditSummary.notApplicableCount">
+        {{ auditSummary.notApplicableCount }} 项因业务角色范围未命中当前用户。
+      </span>
+      <span>运行来源：{{ auditSummary.runtimeSourceLabel }}</span>
+    </section>
+    <section v-if="versionPanelOpen" class="version-panel">
+      <div class="version-panel-header">
+        <strong>菜单配置版本</strong>
+        <span v-if="versionState?.contract">当前版本 {{ versionState.contract.version_no }}</span>
+        <span v-else>保存后生成版本</span>
+      </div>
+      <div v-if="versionState?.versions.length" class="version-list">
+        <label
+          v-for="version in versionState.versions"
+          :key="version.id"
+          class="version-item"
+          :class="{ selected: selectedVersionNo === version.version_no }"
+        >
+          <input v-model.number="selectedVersionNo" type="radio" :value="version.version_no" />
+          <span class="version-title">版本 {{ version.version_no }}</span>
+          <span class="version-meta">
+            配置 {{ version.summary.policy_count }} 项，隐藏 {{ version.summary.hidden_count }}，改名 {{ version.summary.renamed_count }}，
+            移动 {{ version.summary.moved_count }}，排序 {{ version.summary.reordered_count }}
+          </span>
+        </label>
+      </div>
+      <div v-else class="version-empty">
+        保存菜单配置后会自动生成已发布版本；没有历史版本时，当前菜单配置不能回滚。
+      </div>
+    </section>
+    <section v-if="createPanelOpen" class="create-panel">
+      <div class="create-panel-header">
+        <strong>新增菜单入口</strong>
+        <div class="create-shortcuts">
+          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('sibling')">新增同级</button>
+          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('child')">新增下级</button>
+          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('copy')">复制当前入口</button>
+          <button type="button" class="link-button" @click="createPanelOpen = false">关闭</button>
+        </div>
+      </div>
+      <div class="create-form">
+        <label>
+          <span>菜单名称</span>
+          <input v-model="createForm.name" class="cell-input" type="text" placeholder="输入业务菜单名称" />
+        </label>
+        <label>
+          <span>上级菜单</span>
+          <select v-model.number="createForm.parent_menu_id" class="cell-input">
+            <option v-if="!createParentOptions.length" :value="0" disabled>暂无可选业务父级</option>
+            <option v-for="target in createParentOptions" :key="target.id" :value="target.id">
+              {{ parentOptionLabel(target) }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>复制已有入口</span>
+          <select v-model.number="createForm.source_menu_id" class="cell-input">
+            <option :value="0">只创建分组菜单</option>
+            <option v-for="source in copySourceOptions" :key="source.id" :value="source.id">
+              {{ source.complete_name || source.name }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>排序号</span>
+          <input v-model.number="createForm.sequence" class="cell-input" type="number" placeholder="自动" />
+        </label>
+        <label class="create-check">
+          <input v-model="createForm.visible" type="checkbox" />
+          <span>创建后显示</span>
+        </label>
+        <label>
+          <span>备注</span>
+          <input v-model="createForm.note" class="cell-input" type="text" placeholder="可选" />
+        </label>
+      </div>
+      <div class="create-panel-footer">
+        <span>复制入口会沿用已有菜单打开的页面；长期固定入口需沉淀到用户模块。</span>
+        <button type="button" class="primary" :disabled="creatingMenu || !createForm.name.trim()" @click="createMenuEntry">
+          {{ creatingMenu ? '创建中...' : '创建菜单' }}
+        </button>
+      </div>
+    </section>
 
     <div class="menu-config-workspace">
       <aside class="menu-config-tree">
@@ -125,7 +229,7 @@
                 <th class="sequence-col">顺序</th>
                 <th>移动到上级</th>
                 <th class="check-col">显示</th>
-                <th>适用用户组</th>
+                <th>可见业务角色</th>
                 <th>备注</th>
               </tr>
             </thead>
@@ -182,16 +286,68 @@
                 </td>
                 <td>
                   <div class="group-cell">
+                    <div v-if="draftFor(row.menu.id).role_group_ids.length" class="group-chip-list">
+                      <span
+                        v-for="groupId in draftFor(row.menu.id).role_group_ids"
+                        :key="`${row.menu.id}-${groupId}`"
+                        class="group-chip"
+                        :title="roleGroupName(groupId)"
+                      >
+                        {{ roleGroupName(groupId) }}
+                        <button type="button" title="移除业务角色" @click="removeRoleGroup(row.menu.id, groupId)">×</button>
+                      </span>
+                    </div>
                     <select
-                      class="cell-input group-select"
-                      multiple
-                      :value="draftFor(row.menu.id).role_group_ids.map(String)"
-                      @change="updateDraft(row.menu.id, { role_group_ids: selectedValues($event) })"
+                      class="cell-input group-domain-select"
+                      :value="roleGroupDomainForMenu(row.menu.id)"
+                      @change="setRoleGroupDomain(row.menu.id, inputValue($event))"
                     >
-                      <option v-for="group in groupOptions" :key="group.id" :value="group.id">
-                        {{ group.display_name }}
+                      <option v-for="domain in roleGroupDomainOptions" :key="domain" :value="domain">
+                        {{ domain }}
                       </option>
                     </select>
+                    <div class="group-check-list">
+                      <label
+                        v-for="group in scopedRoleGroupOptions(row.menu.id)"
+                        :key="`${row.menu.id}-scope-${group.id}`"
+                        class="group-check-item"
+                        :title="group.display_name"
+                      >
+                        <input
+                          type="checkbox"
+                          :checked="isRoleGroupSelected(row.menu.id, group.id)"
+                          @change="toggleRoleGroup(row.menu.id, group.id, checkedValue($event))"
+                        />
+                        <span>{{ group.display_name }}</span>
+                      </label>
+                    </div>
+                    <div class="group-scope-actions">
+                      <span class="group-scope-count">{{ scopedRoleGroupSelectionText(row.menu.id) }}</span>
+                      <button
+                        type="button"
+                        class="link-button"
+                        :disabled="!scopedUnselectedRoleGroupCount(row.menu.id)"
+                        @click="selectScopedRoleGroups(row.menu.id)"
+                      >
+                        勾选当前分组
+                      </button>
+                      <button
+                        type="button"
+                        class="link-button"
+                        :disabled="!scopedSelectedRoleGroupCount(row.menu.id)"
+                        @click="clearScopedRoleGroups(row.menu.id)"
+                      >
+                        清空当前分组
+                      </button>
+                    </div>
+                    <button
+                      v-if="draftFor(row.menu.id).role_group_ids.length"
+                      type="button"
+                      class="link-button group-clear"
+                      @click="clearRoleGroups(row.menu.id)"
+                    >
+                      恢复所有角色可见
+                    </button>
                     <small>{{ roleScopeSummary(row.menu.id) }}</small>
                   </div>
                 </td>
@@ -214,16 +370,24 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, reactive, ref, type PropType } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import type { NavNode } from '@sc/schema';
 import {
+  loadMenuConfigurationAudit,
   loadMenuConfigurationPanel,
+  loadMenuConfigurationVersions,
+  rollbackMenuConfiguration,
   saveMenuConfigurationPanel,
+  createMenuConfigurationEntry,
+  type MenuConfigAuditPayload,
   type MenuConfigGroup,
   type MenuConfigMenu,
   type MenuConfigPolicy,
   type MenuConfigSaveRow,
+  type MenuConfigVersionsPayload,
 } from '../api/menuConfig';
 import { useSessionStore } from '../stores/session';
+import { config } from '../config';
 
 type DraftPolicy = {
   policy_id: number;
@@ -245,8 +409,16 @@ type DropPosition = 'before' | 'after';
 
 const loading = ref(false);
 const saving = ref(false);
+const auditing = ref(false);
+const rollingBack = ref(false);
+const versionLoading = ref(false);
+const creatingMenu = ref(false);
 const error = ref('');
 const message = ref('');
+const auditResult = ref<MenuConfigAuditPayload | null>(null);
+const versionState = ref<MenuConfigVersionsPayload | null>(null);
+const versionPanelOpen = ref(false);
+const selectedVersionNo = ref(0);
 const selectedMenuId = ref(0);
 const searchText = ref('');
 const dragSourceMenuId = ref(0);
@@ -254,6 +426,7 @@ const dragTargetMenuId = ref(0);
 const dragDropPosition = ref<DropPosition>('after');
 const onlyConfigured = ref(false);
 const showGuide = ref(false);
+const createPanelOpen = ref(false);
 const company = ref<{ id: number; name: string } | null>(null);
 const menus = ref<MenuConfigMenu[]>([]);
 const tree = ref<MenuConfigMenu[]>([]);
@@ -261,7 +434,19 @@ const collapsedMenuIds = ref<Set<number>>(new Set());
 const groups = ref<MenuConfigGroup[]>([]);
 const originalPolicies = ref<Record<number, DraftPolicy>>({});
 const drafts = reactive<Record<number, DraftPolicy>>({});
+const roleGroupDomainSelections = reactive<Record<number, string>>({});
 const session = useSessionStore();
+const route = useRoute();
+const router = useRouter();
+const canReturnToBusinessConfig = computed(() => String(route.query.return_to_business_config || '').trim() === '1');
+const createForm = reactive({
+  name: '',
+  parent_menu_id: 0,
+  source_menu_id: 0,
+  sequence: 0,
+  visible: true,
+  note: '',
+});
 
 const MenuConfigTree = defineComponent({
   name: 'MenuConfigTree',
@@ -413,8 +598,55 @@ const MenuConfigTree = defineComponent({
 
 const companyLabel = computed(() => company.value?.name || '当前公司');
 
+const auditSummary = computed(() => {
+  const summary = auditResult.value?.summary;
+  if (!summary) return null;
+  return {
+    configuredCount: Number(summary.configured_policy_count || 0),
+    applicableCount: Number(summary.applicable_policy_count || 0),
+    hiddenCount: Number(summary.hidden_count || 0),
+    renamedCount: Number(summary.renamed_count || 0),
+    reorderedCount: Number(summary.reordered_count || 0),
+    movedCount: Number(summary.moved_count || 0),
+    notApplicableCount: Array.isArray(summary.not_applicable_policy_ids) ? summary.not_applicable_policy_ids.length : 0,
+    runtimeSourceLabel: summary.runtime_source === 'ui.business.config.contract.menu_orchestration' ? '已发布配置' : '兼容配置',
+  };
+});
+
+const canRollbackMenuConfiguration = computed(() => {
+  const currentVersion = Number(versionState.value?.contract?.version_no || 0);
+  return Boolean(
+    currentVersion
+    && (versionState.value?.versions || []).some((version) => Number(version.version_no || 0) !== currentVersion),
+  );
+});
+
+const rollbackButtonText = computed(() => {
+  if (!versionState.value?.contract) return '先查看版本';
+  if (!canRollbackMenuConfiguration.value) return '暂无可回滚版本';
+  return selectedVersionNo.value ? `回滚到版本 ${selectedVersionNo.value}` : '回滚上一版';
+});
+
+const rollbackButtonDisabled = computed(() => (
+  loading.value
+  || saving.value
+  || rollingBack.value
+  || versionLoading.value
+  || Boolean(versionState.value?.contract && !canRollbackMenuConfiguration.value)
+));
+
 const groupOptions = computed(() => {
   return [...groups.value].sort((a, b) => a.display_name.localeCompare(b.display_name, 'zh-Hans-CN'));
+});
+
+const ALL_ROLE_GROUP_DOMAINS = '全部业务角色';
+
+const roleGroupDomainOptions = computed(() => {
+  const domains = new Set(groupOptions.value.map((group) => roleGroupDomain(group.display_name)));
+  return [
+    ALL_ROLE_GROUP_DOMAINS,
+    ...Array.from(domains).sort((a, b) => a.localeCompare(b, 'zh-Hans-CN')),
+  ];
 });
 
 const flatRows = computed<FlatRow[]>(() => {
@@ -496,6 +728,31 @@ const filteredRows = computed(() => {
 });
 
 const dirtyCount = computed(() => Object.keys(drafts).filter((key) => isDirty(Number(key))).length);
+const selectedMenu = computed(() => menus.value.find((menu) => Number(menu.id) === Number(selectedMenuId.value)) || null);
+const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || config.startupRootXmlid || '').trim());
+const rootMenu = computed(() => (
+  rootMenuXmlid.value
+    ? menus.value.find((menu) => menu.xmlid === rootMenuXmlid.value) || null
+    : null
+));
+const navigationMenus = computed(() => flattenMenuTree(tree.value));
+const navigationParentMenus = computed(() => navigationMenus.value.filter((menu) => (
+  Boolean(menu.children?.length) || !String(menu.action || '').trim()
+)));
+const createParentOptions = computed(() => {
+  const byId = new Map<number, MenuConfigMenu>();
+  if (rootMenu.value) byId.set(Number(rootMenu.value.id), rootMenu.value);
+  navigationParentMenus.value.forEach((menu) => byId.set(Number(menu.id), menu));
+  return Array.from(byId.values()).sort((a, b) => parentOptionSortKey(a).localeCompare(parentOptionSortKey(b), 'zh-Hans-CN'));
+});
+const defaultCreateParentId = computed(() => (
+  rootMenu.value?.id
+  || createParentOptions.value[0]?.id
+  || 0
+));
+const copySourceOptions = computed(() => navigationMenus.value
+  .filter((menu) => Boolean(String(menu.action || '').trim()))
+  .sort((a, b) => (a.complete_name || a.name).localeCompare(b.complete_name || b.name, 'zh-Hans-CN')));
 
 function defaultDraft(menu: MenuConfigMenu, policy?: MenuConfigPolicy): DraftPolicy {
   return {
@@ -557,7 +814,92 @@ function hasConfiguration(menuId: number) {
 
 function roleScopeSummary(menuId: number) {
   const count = draftFor(menuId)?.role_group_ids.length || 0;
-  return count ? `限 ${count} 个用户组` : '所有用户组';
+  return count ? `限 ${count} 个业务角色可见` : '所有业务角色可见';
+}
+
+function roleGroupName(groupId: number) {
+  const group = groupOptions.value.find((item) => Number(item.id) === Number(groupId));
+  return group?.display_name || `业务角色 ${groupId}`;
+}
+
+function roleGroupDomain(label: string) {
+  if (/项目|业主/.test(label)) return '项目中心';
+  if (/合同/.test(label)) return '合同中心';
+  if (/结算/.test(label)) return '结算中心';
+  if (/付款|财务|资金|费用|保证金/.test(label)) return '财务/付款';
+  if (/物资|采购|供应/.test(label)) return '物资/采购';
+  if (/经营|管理层|业务配置|通用/.test(label)) return '管理/通用';
+  return '其他';
+}
+
+function roleGroupDomainForMenu(menuId: number) {
+  return roleGroupDomainSelections[menuId] || ALL_ROLE_GROUP_DOMAINS;
+}
+
+function setRoleGroupDomain(menuId: number, value: string) {
+  roleGroupDomainSelections[menuId] = value || ALL_ROLE_GROUP_DOMAINS;
+}
+
+function scopedRoleGroupOptions(menuId: number) {
+  const domain = roleGroupDomainForMenu(menuId);
+  return groupOptions.value.filter((group) => {
+    return domain === ALL_ROLE_GROUP_DOMAINS || roleGroupDomain(group.display_name) === domain;
+  });
+}
+
+function isRoleGroupSelected(menuId: number, groupId: number) {
+  return (draftFor(menuId)?.role_group_ids || []).map(Number).includes(Number(groupId));
+}
+
+function toggleRoleGroup(menuId: number, groupId: number, selected: boolean) {
+  const draft = draftFor(menuId);
+  if (!draft) return;
+  const existing = new Set(draft.role_group_ids.map(Number));
+  if (selected) {
+    existing.add(Number(groupId));
+  } else {
+    existing.delete(Number(groupId));
+  }
+  updateDraft(menuId, { role_group_ids: Array.from(existing).sort((a, b) => a - b) });
+}
+
+function scopedSelectedRoleGroupCount(menuId: number) {
+  const scopedIds = new Set(scopedRoleGroupOptions(menuId).map((group) => Number(group.id)));
+  return (draftFor(menuId)?.role_group_ids || []).filter((groupId) => scopedIds.has(Number(groupId))).length;
+}
+
+function scopedUnselectedRoleGroupCount(menuId: number) {
+  return Math.max(0, scopedRoleGroupOptions(menuId).length - scopedSelectedRoleGroupCount(menuId));
+}
+
+function scopedRoleGroupSelectionText(menuId: number) {
+  const total = scopedRoleGroupOptions(menuId).length;
+  if (!total) return '当前分组 0/0';
+  return `当前分组 ${scopedSelectedRoleGroupCount(menuId)}/${total}`;
+}
+
+function selectScopedRoleGroups(menuId: number) {
+  const draft = draftFor(menuId);
+  if (!draft) return;
+  const existing = new Set(draft.role_group_ids.map(Number));
+  scopedRoleGroupOptions(menuId).forEach((group) => existing.add(Number(group.id)));
+  updateDraft(menuId, { role_group_ids: Array.from(existing).sort((a, b) => a - b) });
+}
+
+function clearScopedRoleGroups(menuId: number) {
+  const draft = draftFor(menuId);
+  if (!draft) return;
+  const scopedIds = new Set(scopedRoleGroupOptions(menuId).map((group) => Number(group.id)));
+  updateDraft(menuId, {
+    role_group_ids: draft.role_group_ids
+      .map(Number)
+      .filter((groupId) => !scopedIds.has(groupId))
+      .sort((a, b) => a - b),
+  });
+}
+
+function clearRoleGroups(menuId: number) {
+  updateDraft(menuId, { role_group_ids: [] });
 }
 
 function updateDraft(menuId: number, patch: Partial<DraftPolicy>) {
@@ -565,6 +907,7 @@ function updateDraft(menuId: number, patch: Partial<DraftPolicy>) {
   if (!draft) return;
   Object.assign(draft, patch);
   message.value = '';
+  auditResult.value = null;
 }
 
 function inputValue(event: Event) {
@@ -579,18 +922,18 @@ function checkedValue(event: Event) {
   return Boolean((event.target as HTMLInputElement).checked);
 }
 
-function selectedValues(event: Event) {
-  return Array.from((event.target as HTMLSelectElement).selectedOptions)
-    .map((option) => Number(option.value || 0))
-    .filter(Boolean);
+function removeRoleGroup(menuId: number, groupId: number) {
+  const draft = draftFor(menuId);
+  if (!draft) return;
+  updateDraft(menuId, { role_group_ids: draft.role_group_ids.filter((item) => Number(item) !== Number(groupId)) });
 }
 
 function parentOptions(menuId: number) {
   const excluded = descendantsFor(menuId);
   excluded.add(menuId);
-  return menus.value
+  return createParentOptions.value
     .filter((item) => !excluded.has(item.id))
-    .sort((a, b) => (a.complete_name || a.name).localeCompare(b.complete_name || b.name, 'zh-Hans-CN'));
+    .sort((a, b) => parentOptionSortKey(a).localeCompare(parentOptionSortKey(b), 'zh-Hans-CN'));
 }
 
 function descendantsFor(menuId: number) {
@@ -615,6 +958,119 @@ function selectMenu(menuId: number) {
   selectedMenuId.value = menuId;
 }
 
+function upsertCreatedMenu(menu: MenuConfigMenu, policy?: MenuConfigPolicy) {
+  if (!menu?.id) return;
+  const nextMenu = { ...menu, children: menu.children || [] };
+  const menuIndex = menus.value.findIndex((item) => Number(item.id) === Number(nextMenu.id));
+  if (menuIndex >= 0) {
+    menus.value.splice(menuIndex, 1, nextMenu);
+  } else {
+    menus.value.push(nextMenu);
+  }
+
+  const draft = defaultDraft(nextMenu, policy);
+  drafts[nextMenu.id] = cloneDraft(draft);
+  originalPolicies.value = {
+    ...originalPolicies.value,
+    [nextMenu.id]: cloneDraft(draft),
+  };
+
+  const insertIntoBranch = (items: MenuConfigMenu[]): { rows: MenuConfigMenu[]; inserted: boolean } => {
+    let inserted = false;
+    const rows = items.map((item) => {
+      if (Number(item.id) === Number(nextMenu.parent_id || 0)) {
+        const existing = item.children || [];
+        if (existing.some((child) => Number(child.id) === Number(nextMenu.id))) {
+          inserted = true;
+          return {
+            ...item,
+            children: existing.map((child) => (Number(child.id) === Number(nextMenu.id) ? nextMenu : child)),
+          };
+        }
+        inserted = true;
+        return {
+          ...item,
+          children: [...existing, nextMenu].sort((a, b) => (
+            Number(a.sequence || 0) - Number(b.sequence || 0)
+            || Number(a.id || 0) - Number(b.id || 0)
+          )),
+        };
+      }
+      if (!item.children?.length) return item;
+      const result = insertIntoBranch(item.children);
+      if (result.inserted) {
+        inserted = true;
+        return { ...item, children: result.rows };
+      }
+      return item;
+    });
+    return { rows, inserted };
+  };
+
+  const result = insertIntoBranch(tree.value);
+  tree.value = result.inserted ? result.rows : [...tree.value, nextMenu];
+}
+
+function resetCreateForm() {
+  createForm.name = '';
+  createForm.parent_menu_id = selectedMenu.value?.id || defaultCreateParentId.value;
+  createForm.source_menu_id = 0;
+  createForm.sequence = 0;
+  createForm.visible = true;
+  createForm.note = '';
+}
+
+function openCreateMenu(mode: 'custom' | 'sibling' | 'child' | 'copy') {
+  const current = selectedMenu.value;
+  resetCreateForm();
+  if (mode === 'sibling' && current) {
+    createForm.parent_menu_id = Number(current.parent_id || defaultCreateParentId.value);
+    createForm.name = `${current.name}（同级）`;
+  } else if (mode === 'child' && current) {
+    createForm.parent_menu_id = current.id;
+  } else if (mode === 'copy' && current) {
+    createForm.parent_menu_id = Number(current.parent_id || defaultCreateParentId.value);
+    createForm.source_menu_id = current.id;
+    createForm.name = `${current.name}副本`;
+  }
+  if (!createParentOptions.value.some((menu) => Number(menu.id) === Number(createForm.parent_menu_id))) {
+    createForm.parent_menu_id = defaultCreateParentId.value;
+  }
+  createPanelOpen.value = true;
+  message.value = '';
+  error.value = '';
+}
+
+async function createMenuEntry() {
+  if (!createForm.name.trim()) return;
+  creatingMenu.value = true;
+  error.value = '';
+  message.value = '';
+  try {
+    const result = await createMenuConfigurationEntry({
+      company_id: company.value?.id || undefined,
+      name: createForm.name.trim(),
+      parent_menu_id: createForm.parent_menu_id || 0,
+      source_menu_id: createForm.source_menu_id || 0,
+      sequence: Number(createForm.sequence || 0),
+      visible: createForm.visible,
+      note: createForm.note.trim(),
+    });
+    const createdMenu = result.menu;
+    const createdPolicy = result.policy;
+    const createdName = createdMenu?.name || createForm.name.trim();
+    upsertCreatedMenu(result.menu, result.policy);
+    selectedMenuId.value = Number(createdMenu?.id || 0);
+    createPanelOpen.value = false;
+    auditResult.value = null;
+    message.value = `已创建菜单“${createdName}”，可继续新增下级菜单；刷新页面后导航按配置生效`;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '菜单创建失败';
+  } finally {
+    creatingMenu.value = false;
+  }
+}
+
 function selectedMenuPath(items: MenuConfigMenu[], menuId: number): Set<number> {
   if (!menuId) return new Set();
   const path: number[] = [];
@@ -626,6 +1082,31 @@ function selectedMenuPath(items: MenuConfigMenu[], menuId: number): Set<number> 
   });
   walk(items);
   return new Set(path);
+}
+
+function flattenMenuTree(items: MenuConfigMenu[]): MenuConfigMenu[] {
+  const out: MenuConfigMenu[] = [];
+  const walk = (rows: MenuConfigMenu[]) => {
+    rows.forEach((item) => {
+      out.push(item);
+      if (item.children?.length) walk(item.children);
+    });
+  };
+  walk(items);
+  return out;
+}
+
+function parentOptionSortKey(menu: MenuConfigMenu) {
+  const isRoot = rootMenu.value && Number(menu.id) === Number(rootMenu.value.id);
+  return `${isRoot ? '0' : '1'}:${menu.complete_name || menu.name}`;
+}
+
+function parentOptionLabel(menu: MenuConfigMenu) {
+  const label = menu.complete_name || menu.name;
+  if (rootMenu.value && Number(menu.id) === Number(rootMenu.value.id)) {
+    return `业务根菜单：${menu.name || label}（新增一级分组）`;
+  }
+  return label;
 }
 
 function initializeTreeCollapse(items: MenuConfigMenu[]) {
@@ -805,6 +1286,45 @@ function buildTreeFromNavigation(
   });
 }
 
+function attachMissingConfiguredMenus(
+  baseTree: MenuConfigMenu[],
+  allMenus: MenuConfigMenu[],
+  usedMenuIds: Set<number>,
+): MenuConfigMenu[] {
+  const rootIds = new Set(baseTree.map((item) => Number(item.id)));
+  const byParent = new Map<number, MenuConfigMenu[]>();
+  allMenus.forEach((menu) => {
+    if (usedMenuIds.has(Number(menu.id))) return;
+    const parentId = Number(menu.parent_id || 0);
+    if (!parentId && !rootIds.size) return;
+    const list = byParent.get(parentId) || [];
+    list.push({ ...menu, children: [] });
+    byParent.set(parentId, list);
+  });
+
+  const sortBranch = (items: MenuConfigMenu[]) => [...items].sort((a, b) => (
+    Number(a.sequence || 0) - Number(b.sequence || 0)
+    || Number(a.id || 0) - Number(b.id || 0)
+  ));
+
+  const buildMissingBranch = (parentId: number): MenuConfigMenu[] => sortBranch(byParent.get(parentId) || []).map((menu) => ({
+    ...menu,
+    children: buildMissingBranch(Number(menu.id)),
+  }));
+
+  const attach = (items: MenuConfigMenu[]): MenuConfigMenu[] => sortBranch(items.map((item) => ({
+    ...item,
+    children: sortBranch([
+      ...(item.children?.length ? attach(item.children) : []),
+      ...buildMissingBranch(Number(item.id)),
+    ]),
+  })));
+
+  const attached = attach(baseTree);
+  if (attached.length) return attached;
+  return buildMissingBranch(0);
+}
+
 function collectNavigationMenuIds() {
   const ids: number[] = [];
   const seen = new Set<number>();
@@ -824,23 +1344,20 @@ function collectNavigationMenuIds() {
   return ids;
 }
 
-function removeMenuIdsFromNavigation(nodes: NavNode[], hiddenMenuIds: Set<number>): NavNode[] {
-  return nodes
-    .filter((node) => !hiddenMenuIds.has(Number(node.menu_id || node.id || 0)))
-    .map((node) => ({
-      ...node,
-      children: Array.isArray(node.children)
-        ? removeMenuIdsFromNavigation(node.children as NavNode[], hiddenMenuIds)
-        : node.children,
-    }));
-}
-
-function applySavedVisibilityToNavigation(rows: MenuConfigSaveRow[]) {
-  const hiddenMenuIds = new Set(rows.filter((row) => row.visible === false).map((row) => Number(row.menu_id || 0)).filter(Boolean));
-  if (!hiddenMenuIds.size) return;
-  session.menuTree = removeMenuIdsFromNavigation(session.menuTree as NavNode[], hiddenMenuIds);
-  session.menuExpandedKeys = session.menuExpandedKeys.filter((key) => !hiddenMenuIds.has(Number(String(key).replace(/^menu:/, ''))));
-  session.persist();
+function returnToBusinessConfig() {
+  router.push({
+    path: '/admin/business-config',
+    query: {
+      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
+      model: route.query.model || undefined,
+      action_id: route.query.action_id || undefined,
+      menu_id: route.query.menu_id || undefined,
+      page_label: route.query.page_label || undefined,
+      view_id: route.query.view_id || undefined,
+      role_key: route.query.role_key || undefined,
+      open_pages: route.query.open_pages || '1',
+    },
+  });
 }
 
 async function loadPanel() {
@@ -848,7 +1365,11 @@ async function loadPanel() {
   error.value = '';
   message.value = '';
   try {
-    const payload = await loadMenuConfigurationPanel({ menu_ids: collectNavigationMenuIds() });
+    const payload = await loadMenuConfigurationPanel({
+      menu_ids: collectNavigationMenuIds(),
+      root_menu_xmlid: rootMenuXmlid.value || undefined,
+    });
+    auditResult.value = null;
     company.value = payload.company || null;
     menus.value = payload.menus || [];
     const menuById = new Map((payload.menus || []).map((menu) => [menu.id, menu]));
@@ -861,9 +1382,11 @@ async function loadPanel() {
         menuByLabel.set(label, list);
       });
     });
-    const navOrderedTree = buildTreeFromNavigation(session.menuTree as NavNode[], menuById, menuByLabel);
-    tree.value = navOrderedTree;
-    initializeTreeCollapse(navOrderedTree);
+    const usedMenuIds = new Set<number>();
+    const navOrderedTree = buildTreeFromNavigation(session.menuTree as NavNode[], menuById, menuByLabel, usedMenuIds);
+    const completeTree = attachMissingConfiguredMenus(navOrderedTree, payload.menus || [], usedMenuIds);
+    tree.value = completeTree;
+    initializeTreeCollapse(completeTree);
     groups.value = payload.groups || [];
     Object.keys(drafts).forEach((key) => delete drafts[Number(key)]);
     const nextOriginal: Record<number, DraftPolicy> = {};
@@ -878,6 +1401,73 @@ async function loadPanel() {
     error.value = err instanceof Error ? err.message : '菜单配置加载失败';
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadVersions() {
+  versionLoading.value = true;
+  error.value = '';
+  try {
+    const payload = await loadMenuConfigurationVersions({ company_id: company.value?.id || undefined });
+    versionState.value = payload;
+    const currentVersion = Number(payload.contract?.version_no || 0);
+    const fallback = payload.versions.find((version) => version.version_no < currentVersion)
+      || payload.versions.find((version) => version.version_no !== currentVersion)
+      || payload.versions[0];
+    selectedVersionNo.value = Number(fallback?.version_no || 0);
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '菜单配置版本加载失败';
+  } finally {
+    versionLoading.value = false;
+  }
+}
+
+async function toggleVersionPanel() {
+  versionPanelOpen.value = !versionPanelOpen.value;
+  if (versionPanelOpen.value) {
+    await loadVersions();
+  }
+}
+
+async function auditMenuConfiguration() {
+  auditing.value = true;
+  error.value = '';
+  message.value = '';
+  try {
+    auditResult.value = await loadMenuConfigurationAudit({ company_id: company.value?.id || undefined });
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '菜单配置生效检查失败';
+  } finally {
+    auditing.value = false;
+  }
+}
+
+async function rollbackSelectedMenuConfiguration() {
+  if (!versionState.value?.contract) {
+    versionPanelOpen.value = true;
+    await loadVersions();
+    return;
+  }
+  if (!canRollbackMenuConfiguration.value) return;
+  rollingBack.value = true;
+  error.value = '';
+  message.value = '';
+  auditResult.value = null;
+  try {
+    const result = await rollbackMenuConfiguration({
+      company_id: company.value?.id || undefined,
+      version_no: selectedVersionNo.value || undefined,
+    });
+    await session.loadAppInit({ force: true });
+    await loadPanel();
+    if (versionPanelOpen.value) {
+      await loadVersions();
+    }
+    message.value = `已回滚到版本 ${result.rolled_back_to_version}，恢复 ${result.restored_count} 项菜单配置，导航已刷新`;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '菜单配置回滚失败';
+  } finally {
+    rollingBack.value = false;
   }
 }
 
@@ -904,10 +1494,13 @@ async function saveChanges() {
   message.value = '';
   try {
     await saveMenuConfigurationPanel({ rows });
-    applySavedVisibilityToNavigation(rows);
-    await session.loadAppInit();
+    await session.loadAppInit({ force: true });
     await loadPanel();
-    message.value = `已保存 ${rows.length} 项菜单配置`;
+    auditResult.value = null;
+    if (versionPanelOpen.value) {
+      await loadVersions();
+    }
+    message.value = `已保存 ${rows.length} 项菜单配置，导航已刷新`;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '菜单配置保存失败';
   } finally {
@@ -915,8 +1508,19 @@ async function saveChanges() {
   }
 }
 
-onMounted(() => {
-  void loadPanel();
+function clearCreateMenuRouteFlag() {
+  if (String(route.query.create_menu || '').trim() !== '1') return;
+  const url = new URL(window.location.href);
+  url.searchParams.delete('create_menu');
+  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
+onMounted(async () => {
+  await loadPanel();
+  if (String(route.query.create_menu || '').trim() === '1') {
+    openCreateMenu('custom');
+    clearCreateMenuRouteFlag();
+  }
 });
 </script>
 
@@ -1051,6 +1655,147 @@ h1 {
   border: 1px solid var(--sc-app-success-border);
   background: var(--sc-app-success-bg);
   color: var(--sc-app-success-text);
+}
+
+.audit-panel {
+  margin: 0 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: 6px;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+  font-size: 13px;
+}
+
+.audit-panel strong {
+  color: var(--sc-app-text-primary);
+}
+
+.audit-panel--warning {
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
+}
+
+.version-panel {
+  margin: 0 18px;
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel);
+  font-size: 13px;
+}
+
+.version-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.version-panel-header span {
+  color: var(--sc-app-text-secondary);
+}
+
+.version-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 8px;
+  max-height: 142px;
+  overflow: auto;
+}
+
+.version-empty {
+  padding: 8px;
+  border: 1px dashed var(--sc-app-border);
+  border-radius: 6px;
+  color: var(--sc-app-text-secondary);
+  background: var(--sc-app-muted-bg);
+}
+
+.version-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(64px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-muted-bg);
+  cursor: pointer;
+}
+
+.version-item.selected {
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-info-bg);
+}
+
+.version-title {
+  font-weight: 600;
+}
+
+.version-meta {
+  min-width: 0;
+  color: var(--sc-app-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.create-panel {
+  margin: 0 18px;
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel);
+  font-size: 13px;
+}
+
+.create-panel-header,
+.create-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.create-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.create-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.create-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.create-check {
+  grid-template-columns: auto 1fr;
+  align-items: end;
+  align-content: end;
+  min-height: 58px;
+}
+
+.create-panel-footer {
+  color: var(--sc-app-text-secondary);
 }
 
 .menu-config-workspace {
@@ -1322,7 +2067,7 @@ tr.dirty td:first-child {
 }
 
 .groups-col {
-  width: 124px;
+  width: 220px;
 }
 
 .note-col {
@@ -1355,16 +2100,112 @@ tr.dirty td:first-child {
   text-align: center;
 }
 
-.group-select {
+.group-domain-select {
   min-width: 0;
-  height: 54px;
-  padding: 4px 6px;
+  height: 30px;
+  padding: 0 6px;
 }
 
 .group-cell {
   display: grid;
   gap: 3px;
   min-width: 0;
+}
+
+.group-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 64px;
+  overflow: auto;
+}
+
+.group-check-list {
+  display: grid;
+  gap: 2px;
+  max-height: 96px;
+  overflow: auto;
+  padding: 3px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+}
+
+.group-check-item {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  gap: 4px;
+  color: var(--sc-app-text-primary);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.group-check-item input {
+  margin: 0;
+}
+
+.group-check-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-scope-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-scope-count {
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.group-scope-actions .link-button {
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.group-clear {
+  justify-self: start;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.group-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  gap: 4px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 2px 4px 2px 6px;
+}
+
+.group-chip button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.group-chip button:hover {
+  color: var(--sc-app-danger-text);
 }
 
 .group-cell small {

@@ -131,6 +131,19 @@
         </div>
       </div>
 
+      <div v-if="showAdminShortcuts" class="admin-shortcuts">
+        <div class="admin-shortcuts__header">配置工作台</div>
+        <button
+          class="published-app"
+          :class="{ active: route.name === 'business-config' }"
+          type="button"
+          @click="openBusinessConfigWorkbench"
+        >
+          <span class="published-app__mark">配</span>
+          <span class="published-app__label">业务配置工作台</span>
+        </button>
+      </div>
+
       <div class="nav-shell">
         <div class="search">
           <input v-model="query" type="search" placeholder="搜索菜单..." />
@@ -294,6 +307,7 @@ type PublishedApp = {
   badges: Record<string, unknown>;
 };
 const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
+const BUSINESS_CONFIG_ROOT_MENU_XMLID = 'smart_construction_core.menu_sc_root';
 
 function asDict(value: unknown): UnknownDict | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -458,6 +472,7 @@ const showRoleLandingAction = computed(() => roleLandingActionLabel.value !== '�
 const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
 const isPlatformAdmin = computed(() => session.user?.is_platform_admin === true);
+const showAdminShortcuts = computed(() => isPlatformAdmin.value);
 const visiblePublishedApps = computed(() => (isPlatformAdmin.value ? appCatalog.value : []));
 const showPublishedApps = computed(() => isPlatformAdmin.value && (visiblePublishedApps.value.length > 0 || appCatalogLoading.value));
 const activeAppId = computed(() => {
@@ -695,6 +710,25 @@ function appBadge(app: PublishedApp) {
 function pushRoute(path: string) {
   if (!path) return;
   router.push(path).catch(() => {});
+}
+
+function openBusinessConfigWorkbench() {
+  router.push(businessConfigWorkbenchRoute()).catch(() => {});
+}
+
+function businessConfigWorkbenchRoute(queryOverride: LocationQueryRaw = {}) {
+  return {
+    path: '/admin/business-config',
+    query: {
+      ...queryOverride,
+      root_menu_xmlid: BUSINESS_CONFIG_ROOT_MENU_XMLID,
+    },
+  };
+}
+
+function isBusinessConfigWorkbenchNode(node: NavNode) {
+  const label = String(node.title || node.name || node.label || '').trim();
+  return label === '业务配置工作台';
 }
 
 function openAppTarget(target: unknown, fallbackAppId: string) {
@@ -1327,6 +1361,10 @@ function handleSelect(node: NavNode) {
   const targetMenuId = Number(node.menu_id || node.id || 0);
   const menuQuery = buildMenuSelectionQuery();
   if (targetMenuId <= 0) return;
+  if (isBusinessConfigWorkbenchNode(node)) {
+    router.push(businessConfigWorkbenchRoute(menuQuery)).catch(() => {});
+    return;
+  }
   const resolved = resolveMenuAction(menuTree.value, targetMenuId);
   if (resolved.kind === 'redirect') {
     const entryTarget = asDict(resolved.target?.entry_target);
@@ -1750,11 +1788,26 @@ async function logout() {
   min-width: 0;
 }
 
+.admin-shortcuts {
+  display: grid;
+  gap: 4px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--layout-divider);
+  min-width: 0;
+}
+
 .published-apps__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding: 0 2px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-shortcuts__header {
   padding: 0 2px;
   color: var(--sc-app-text-secondary);
   font-size: 12px;

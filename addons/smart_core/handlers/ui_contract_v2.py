@@ -885,6 +885,55 @@ class UiContractV2Handler(BaseIntentHandler):
         ]
         if not columns or not all(name.startswith("legacy_visible_") for name in columns):
             return
+        model_name = str(
+            source_contract.get("model")
+            or ((source_contract.get("pageInfo") or {}).get("model") if isinstance(source_contract.get("pageInfo"), dict) else "")
+            or ((source_contract.get("head") or {}).get("model") if isinstance(source_contract.get("head"), dict) else "")
+            or ""
+        ).strip()
+        direct_order: list[str] = []
+        if model_name and "ui.business.config.contract" in self.env:
+            try:
+                view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
+                configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
+                    model_name,
+                    view_type="form",
+                    action_id=self._source_action_id(source_contract),
+                    view_id=view_ids.get("form"),
+                )
+            except Exception:
+                configs = []
+            for config in configs:
+                payload = config.contract_json if isinstance(config.contract_json, dict) else {}
+                orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+                views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+                form_spec = views.get("form") if isinstance(views.get("form"), dict) else {}
+                rows = form_spec.get("fields") if isinstance(form_spec.get("fields"), list) else []
+                normalized_rows: list[tuple[int, str, bool]] = []
+                for row in rows:
+                    if isinstance(row, str):
+                        normalized_rows.append((100, str(row or "").strip(), True))
+                        continue
+                    if not isinstance(row, dict):
+                        continue
+                    try:
+                        sequence = int(row.get("sequence") or row.get("order") or 100)
+                    except Exception:
+                        sequence = 100
+                    normalized_rows.append((
+                        sequence,
+                        str(row.get("name") or row.get("field") or row.get("field_name") or "").strip(),
+                        row.get("visible") is not False,
+                    ))
+                for _sequence, name, visible in sorted(normalized_rows, key=lambda item: (item[0], item[1])):
+                    if not name or not visible:
+                        continue
+                    if name.startswith("legacy_visible_") and name in columns and name not in direct_order:
+                        direct_order.append(name)
+        if direct_order:
+            ordered = list(direct_order)
+            ordered.extend([name for name in columns if name not in set(ordered)])
+            columns = ordered
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
         field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
 
@@ -1921,6 +1970,12 @@ class UiContractV2Handler(BaseIntentHandler):
                 label_for=field_label,
                 type_for=field_type,
             )
+        elif view_type == "kanban":
+            self._merge_business_kanban_profile(
+                source_contract,
+                label_for=field_label,
+                type_for=field_type,
+            )
 
         if form_structure_governance and not form_structure_governance.get("form_layout_overlay"):
             source_contract["form_structure_contract"] = self._build_form_structure_contract(
@@ -1949,6 +2004,121 @@ class UiContractV2Handler(BaseIntentHandler):
                 })
                 form["attachments"] = attachments
 
+    def _merge_business_kanban_profile(
+        self,
+        source_contract: dict[str, Any],
+        *,
+        label_for,
+        type_for,
+    ) -> None:
+        views = source_contract.get("views") if isinstance(source_contract.get("views"), dict) else {}
+        kanban = views.get("kanban") if isinstance(views.get("kanban"), dict) else {}
+        raw_rows = kanban.get("fields") if isinstance(kanban.get("fields"), list) else []
+        model_name = str(
+            source_contract.get("model")
+            or ((source_contract.get("pageInfo") or {}).get("model") if isinstance(source_contract.get("pageInfo"), dict) else "")
+            or ((source_contract.get("head") or {}).get("model") if isinstance(source_contract.get("head"), dict) else "")
+            or ""
+        ).strip()
+        try:
+            model_fields = getattr(self.env[model_name], "_fields", {}) if model_name and model_name in self.env else {}
+        except Exception:
+            model_fields = {}
+
+        def normalize_row(row: Any) -> tuple[int, str, str, bool]:
+            if isinstance(row, str):
+                return 100, str(row or "").strip(), "", True
+            if not isinstance(row, dict):
+                return 100, "", "", True
+            try:
+                sequence = int(row.get("sequence") or row.get("order") or 100)
+            except Exception:
+                sequence = 100
+            name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+            label = str(row.get("label") or row.get("string") or row.get("display_label") or "").strip()
+            return sequence, name, label, row.get("visible") is not False
+
+        direct_rows: list[tuple[int, str, str, bool]] = []
+        if model_name and "ui.business.config.contract" in self.env:
+            try:
+                configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
+                    model_name,
+                    view_type="kanban",
+                    action_id=self._source_action_id(source_contract),
+                )
+            except Exception:
+                configs = []
+            for config in configs:
+                payload = config.contract_json if isinstance(config.contract_json, dict) else {}
+                orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+                cfg_views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+                spec = cfg_views.get("kanban") if isinstance(cfg_views.get("kanban"), dict) else {}
+                rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
+                direct_rows.extend(normalize_row(row) for row in rows)
+
+        rows = direct_rows or [normalize_row(row) for row in raw_rows]
+        if not rows:
+            return
+        hidden: set[str] = set()
+        fields: list[str] = []
+        labels: dict[str, str] = {}
+        for _sequence, name, label, visible in sorted(rows, key=lambda item: (item[0], item[1])):
+            if not name or (model_fields and name not in model_fields):
+                continue
+            if not visible:
+                hidden.add(name)
+                fields = [item for item in fields if item != name]
+                labels.pop(name, None)
+                continue
+            if name in hidden:
+                hidden.remove(name)
+            if name not in fields:
+                fields.append(name)
+            if label:
+                labels[name] = label
+        if not fields and not labels:
+            return
+
+        existing_fields = []
+        for row in raw_rows:
+            _sequence, name, _label, visible = normalize_row(row)
+            if name and visible and name not in hidden and name not in fields and (not model_fields or name in model_fields):
+                existing_fields.append(name)
+        fields.extend(existing_fields)
+        labels = {name: labels.get(name) or label_for(name) for name in fields}
+
+        fields_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
+        fields_map = dict(fields_map)
+        for name in fields:
+            descriptor = fields_map.get(name) if isinstance(fields_map.get(name), dict) else {}
+            descriptor = dict(descriptor)
+            descriptor["name"] = descriptor.get("name") or name
+            descriptor["string"] = labels.get(name) or label_for(name)
+            descriptor["label"] = labels.get(name) or label_for(name)
+            descriptor["type"] = descriptor.get("type") or type_for(name) or "char"
+            fields_map[name] = descriptor
+        source_contract["fields"] = fields_map
+
+        kanban.update({
+            "fields": [
+                {
+                    "name": name,
+                    "label": labels.get(name) or label_for(name),
+                    "string": labels.get(name) or label_for(name),
+                    "type": type_for(name) or "char",
+                }
+                for name in fields
+            ],
+            "field_labels": labels,
+        })
+        views["kanban"] = kanban
+        source_contract["views"] = views
+
+        profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
+        profile_labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
+        profile["column_labels"] = {**profile_labels, **labels}
+        source_contract["list_profile"] = profile
+
     def _form_structure_governance(self, source_contract: dict[str, Any], *, model: str, view_type: str) -> dict[str, Any]:
         if view_type != "form":
             return {}
@@ -1966,6 +2136,7 @@ class UiContractV2Handler(BaseIntentHandler):
         field_names: list[str] = []
         field_labels: dict[str, str] = {}
         section_titles: list[str] = []
+        field_groups: dict[str, list[str]] = {}
         config_summaries: list[dict[str, Any]] = []
         try:
             view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
@@ -2014,10 +2185,21 @@ class UiContractV2Handler(BaseIntentHandler):
             for row in sections:
                 if isinstance(row, dict):
                     title = str(row.get("title") or row.get("label") or row.get("name") or "").strip()
+                    fields = [
+                        str(item or "").strip()
+                        for item in (row.get("fields") if isinstance(row.get("fields"), list) else [])
+                        if str(item or "").strip()
+                    ]
                 else:
                     title = str(row or "").strip()
+                    fields = []
                 if title and title not in section_titles:
                     section_titles.append(title)
+                if title and fields:
+                    existing = field_groups.setdefault(title, [])
+                    for name in fields:
+                        if name not in existing:
+                            existing.append(name)
         applied = bool(view_governance.get("applied") or business_contracts or legacy_overlay or field_names)
         if not applied:
             return {}
@@ -2030,6 +2212,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "field_names": field_names,
             "field_labels": field_labels,
             "section_titles": section_titles,
+            "field_groups": field_groups,
         }
 
     def _build_form_structure_contract(
@@ -2107,6 +2290,76 @@ class UiContractV2Handler(BaseIntentHandler):
                 return str(field_label(name) or "").strip()
             except Exception:
                 return str(name or "").strip()
+
+        configured_field_groups = (
+            governance.get("field_groups")
+            if isinstance(governance, dict) and isinstance(governance.get("field_groups"), dict)
+            else {}
+        )
+        if configured_field_groups:
+            group_rows: list[dict[str, Any]] = []
+            configured_roles: dict[str, dict[str, Any]] = {}
+            assigned_configured_fields: set[str] = set()
+            for index, (raw_title, raw_fields) in enumerate(configured_field_groups.items(), start=1):
+                title = str(raw_title or "").strip() or "业务配置字段"
+                names = [
+                    str(item or "").strip()
+                    for item in (raw_fields if isinstance(raw_fields, list) else [])
+                    if str(item or "").strip()
+                ]
+                refs = [
+                    name
+                    for name in fields_for(names)
+                    if name not in assigned_configured_fields
+                ]
+                if not refs:
+                    continue
+                assigned_configured_fields.update(refs)
+                group_name = "configured_group_%s" % index
+                for name in refs:
+                    configured_roles[name] = {
+                        "role": "configured_field",
+                        "slot": "configured_form",
+                        "group": group_name,
+                    }
+                group_rows.append({
+                    "name": group_name,
+                    "title": title,
+                    "role": "configured_field_group",
+                    "fieldRefs": refs,
+                    "fieldLabels": {name: field_display_label(name) for name in refs},
+                })
+            if group_rows:
+                return {
+                    "source": "ui.contract.v2.form_structure_contract",
+                    "structureVersion": "1.0",
+                    "model": model,
+                    "viewType": "form",
+                    "mode": "business_task_form",
+                    "layoutPolicy": "business_config_sections",
+                    "objectProfile": {
+                        "model": model,
+                        "kind": "business_form",
+                        "factAuthority": "business_object_model_and_view",
+                    },
+                    "navigation": {"title": "业务办理"},
+                    "sourceSectionTitles": [row.get("title") for row in group_rows if row.get("title")],
+                    "slots": [{
+                        "slot": "configured_form",
+                        "title": "表单字段",
+                        "role": "configured_form",
+                        "groups": group_rows,
+                    }],
+                    "fieldRoles": configured_roles,
+                    "sourceAuthority": {
+                        "kind": self.SOURCE_KIND,
+                        "runtime_carrier": "ui.contract.v2.form_structure_contract",
+                        "projection_only": True,
+                        "no_business_fact_authority": True,
+                        "governed_form_structure": True,
+                        "governance_source": dict(governance or {}),
+                    },
+                }
 
         def is_migration_history_field(name: str) -> bool:
             value = str(name or "").strip()
@@ -2330,7 +2583,75 @@ class UiContractV2Handler(BaseIntentHandler):
         tree = views.get("tree") if isinstance(views.get("tree"), dict) else views.get("list") if isinstance(views.get("list"), dict) else {}
         raw_columns = tree.get("columns") if isinstance(tree.get("columns"), list) else []
         tree_schema_rows = tree.get("columns_schema") if isinstance(tree.get("columns_schema"), list) else []
-        action_view_override = self._action_scoped_visible_list_columns(source_contract)
+        direct_orchestration_columns: list[str] = []
+        direct_orchestration_labels: dict[str, str] = {}
+        direct_orchestration_hidden: set[str] = set()
+        model_name = str(
+            source_contract.get("model")
+            or ((source_contract.get("pageInfo") or {}).get("model") if isinstance(source_contract.get("pageInfo"), dict) else "")
+            or ((source_contract.get("head") or {}).get("model") if isinstance(source_contract.get("head"), dict) else "")
+            or ""
+        ).strip()
+        if model_name and "ui.business.config.contract" in self.env:
+            try:
+                direct_configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
+                    model_name,
+                    view_type="tree",
+                    action_id=self._source_action_id(source_contract),
+                )
+            except Exception:
+                direct_configs = []
+            for config in direct_configs:
+                payload = config.contract_json if isinstance(config.contract_json, dict) else {}
+                orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+                cfg_views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+                spec = cfg_views.get("tree") if isinstance(cfg_views.get("tree"), dict) else cfg_views.get("list")
+                if not isinstance(spec, dict):
+                    continue
+                rows = spec.get("columns") if isinstance(spec.get("columns"), list) else spec.get("fields")
+                if not isinstance(rows, list):
+                    continue
+                normalized_rows = []
+                for row in rows:
+                    if isinstance(row, str):
+                        name = str(row or "").strip()
+                        label = ""
+                        visible = True
+                        sequence = 100
+                    elif isinstance(row, dict):
+                        name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+                        label = str(row.get("label") or row.get("string") or row.get("display_label") or "").strip()
+                        visible = row.get("visible") is not False
+                        try:
+                            sequence = int(row.get("sequence") or row.get("order") or 100)
+                        except Exception:
+                            sequence = 100
+                    else:
+                        continue
+                    if not name:
+                        continue
+                    normalized_rows.append((sequence, name, label, visible))
+                for _sequence, name, label, visible in sorted(normalized_rows, key=lambda item: (item[0], item[1])):
+                    if not visible:
+                        direct_orchestration_hidden.add(name)
+                        direct_orchestration_columns = [item for item in direct_orchestration_columns if item != name]
+                        continue
+                    if name not in direct_orchestration_columns:
+                        direct_orchestration_columns.append(name)
+                    if label:
+                        direct_orchestration_labels[name] = label
+        governance = source_contract.get("governance") if isinstance(source_contract.get("governance"), dict) else {}
+        view_governance = governance.get("view_orchestration") if isinstance(governance.get("view_orchestration"), dict) else {}
+        source_trace = source_contract.get("source_trace") if isinstance(source_contract.get("source_trace"), dict) else {}
+        view_trace = source_trace.get("view_orchestration") if isinstance(source_trace.get("view_orchestration"), dict) else {}
+        business_view_orchestration_applied = bool(
+            view_governance.get("applied")
+            or view_governance.get("business_config_contracts")
+            or view_trace.get("business_config_contracts")
+            or direct_orchestration_columns
+            or direct_orchestration_labels
+        )
+        action_view_override = None if business_view_orchestration_applied else self._action_scoped_visible_list_columns(source_contract)
         action_view_columns = list(action_view_override.get("columns") or []) if action_view_override else []
         action_view_labels = dict(action_view_override.get("column_labels") or {}) if action_view_override else {}
         legacy_view_columns = []
@@ -2350,6 +2671,11 @@ class UiContractV2Handler(BaseIntentHandler):
                 columns.append(name)
                 explicit_view_columns.append(name)
                 has_explicit_view_columns = True
+        if direct_orchestration_columns:
+            tail = [name for name in columns if name and name not in set(direct_orchestration_columns) and name not in direct_orchestration_hidden]
+            columns = list(direct_orchestration_columns) + tail
+            explicit_view_columns = list(direct_orchestration_columns)
+            has_explicit_view_columns = True
         profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
         for name in profile.get("columns") if isinstance(profile.get("columns"), list) else []:
             normalized = str(name or "").strip()
@@ -2421,12 +2747,14 @@ class UiContractV2Handler(BaseIntentHandler):
             if not isinstance(row, dict):
                 continue
             name = str(row.get("name") or "").strip()
-            if not name.startswith("legacy_visible_"):
+            if not name:
+                continue
+            if not business_view_orchestration_applied and not name.startswith("legacy_visible_"):
                 continue
             label = str(row.get("label") or row.get("string") or "").strip()
             if label:
                 view_column_labels[name] = label
-        labels = {**{name: label_for(name) for name in columns}, **labels, **view_column_labels, **override_labels}
+        labels = {**{name: label_for(name) for name in columns}, **labels, **view_column_labels, **direct_orchestration_labels, **override_labels}
         deduped_columns: list[str] = []
         preserve_duplicate_labels = bool(columns) and all(str(name or "").startswith("legacy_visible_") for name in columns)
         seen_keys: set[str] = set()
@@ -2439,6 +2767,18 @@ class UiContractV2Handler(BaseIntentHandler):
             deduped_columns.append(name)
         columns = deduped_columns
         labels = {name: labels.get(name) or label_for(name) for name in columns}
+        fields_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
+        if fields_map:
+            fields_map = dict(fields_map)
+            for name, label in labels.items():
+                field = fields_map.get(name)
+                if not isinstance(field, dict):
+                    continue
+                descriptor = dict(field)
+                descriptor["string"] = label
+                descriptor["label"] = label
+                fields_map[name] = descriptor
+            source_contract["fields"] = fields_map
         derived_status_field = str(profile.get("status_field") or status_field or "").strip()
         if not derived_status_field:
             derived_status_field = next(
@@ -2816,7 +3156,13 @@ class UiContractV2Handler(BaseIntentHandler):
         form["header_buttons"] = header_buttons
 
     def _inject_record_business_category_context(self, source_contract: dict[str, Any], *, model: str, record_id: Any) -> None:
-        if not model or model not in self.env:
+        if not model:
+            return
+        try:
+            model_available = model in self.env
+        except Exception:
+            return
+        if not model_available:
             return
         record_id_int, _record_id_error = parse_positive_int(record_id, allow_empty=True)
         record_id_int = int(record_id_int or 0)
@@ -2870,7 +3216,28 @@ class UiContractV2Handler(BaseIntentHandler):
         if record_id_int <= 0:
             return dict(current_record or {}) if isinstance(current_record, dict) else {}
         field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
-        field_names = [str(name).strip() for name in field_map.keys() if str(name).strip()]
+        record_snapshot_fields = {
+            "id",
+            "display_name",
+            "name",
+            "document_no",
+            "state",
+            "company_id",
+            "project_id",
+            "business_category_id",
+            "operation_strategy",
+        }
+        field_names = []
+        for name in field_map.keys():
+            field_name = str(name).strip()
+            if not field_name:
+                continue
+            field = self.env[model]._fields.get(field_name) if model in self.env else None
+            field_type = str(getattr(field, "type", "") or "")
+            if field_name not in record_snapshot_fields and field_type in {"one2many", "many2many", "binary", "html"}:
+                continue
+            if field_name in record_snapshot_fields or len(field_names) < 80:
+                field_names.append(field_name)
         if "id" not in field_names:
             field_names.insert(0, "id")
         if not field_names:

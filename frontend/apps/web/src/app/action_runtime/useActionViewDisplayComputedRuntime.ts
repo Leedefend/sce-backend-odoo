@@ -15,7 +15,7 @@ export function useActionViewDisplayComputedRuntime(options: UseActionViewDispla
     return options.buildListSortOptions(
       options.actionContract.value,
       options.sortLabel.value,
-      options.pageText('sort_option_contract_default', '契约默认排序'),
+      options.pageText('sort_option_contract_default', '配置默认排序'),
     );
   });
 

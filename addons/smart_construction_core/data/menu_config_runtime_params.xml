@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <function model="ir.config_parameter" name="set_param">
+            <value>smart_core.nav.user_menu_config.enabled</value>
+            <value>1</value>
+        </function>
+    </data>
+</odoo>

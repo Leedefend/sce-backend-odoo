@@ -53,6 +53,14 @@
       </template>
       <template #actions>
         <button
+          v-if="showReturnToBusinessConfigAction"
+          class="sc-btn sc-btn-ghost sc-btn-sm"
+          :disabled="busy"
+          @click="returnToBusinessConfigDesigner"
+        >
+          返回配置
+        </button>
+        <button
           v-if="showDraftSaveAction"
           class="sc-btn sc-btn-ghost sc-btn-sm"
           :disabled="draftSaveDisabled"
@@ -120,7 +128,7 @@
         </ul>
       </section>
       <section v-if="strictContractMissingSummary && !isProjectIntakeCreateMode" class="block contract-missing-block">
-        <h3>契约缺口提示</h3>
+        <h3>配置缺口提示</h3>
         <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
         <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
       </section>
@@ -185,44 +193,40 @@
         <section v-if="showCurrentFormFieldConfigScope" class="contract-form-settings">
           <header class="contract-form-settings-head">
             <div>
-              <h4>当前表单设置</h4>
+              <h4>当前页面设计</h4>
               <p>{{ formFieldConfigScope.summary }}</p>
             </div>
-            <nav class="contract-form-settings-tabs" aria-label="表单设置范围">
-              <button
-                v-for="tab in formSettingsTabs"
-                :key="tab.key"
-                type="button"
-                class="contract-form-settings-tab"
-                :class="{ 'contract-form-settings-tab--active': formSettingsActiveTab === tab.key }"
-                @click="formSettingsActiveTab = tab.key"
-              >
-                {{ tab.label }}
-              </button>
-            </nav>
+            <span class="contract-form-settings-field-count">字段 {{ currentFormDesignFieldCount }}</span>
           </header>
-          <dl class="contract-form-settings-scope">
+          <div class="contract-form-design-strip" aria-label="页面设计步骤">
             <div>
-              <dt>配置范围</dt>
-              <dd>{{ formFieldConfigScope.scope }}</dd>
+              <span>当前页面</span>
+              <strong>{{ formFieldConfigScope.scope }}</strong>
             </div>
             <div>
-              <dt>字段来源</dt>
-              <dd>{{ formFieldConfigScope.fieldSource }}</dd>
+              <span>可配置项</span>
+              <strong>字段顺序、显示隐藏、新增字段</strong>
             </div>
             <div>
-              <dt>保存位置</dt>
-              <dd>{{ formFieldConfigScope.saveTarget }}</dd>
+              <span>影响范围</span>
+              <strong>{{ formFieldConfigScope.saveTarget }}</strong>
             </div>
-            <div>
-              <dt>系统标识</dt>
-              <dd>{{ formFieldConfigScope.systemKey }}</dd>
-            </div>
-          </dl>
+          </div>
           <section v-if="formSettingsActiveTab === 'fields'" class="contract-form-settings-fields">
             <header class="contract-form-settings-section-head">
-              <strong>字段</strong>
-              <span>在下方表单里点选字段，然后调整这个字段。</span>
+              <div>
+                <strong>字段设计</strong>
+                <span>在下方表单点选字段，或按住字段左侧拖拽把手调整顺序。</span>
+              </div>
+              <button
+                v-if="suggestedHiddenFieldRows.length"
+                class="ghost small"
+                type="button"
+                :disabled="busy"
+                @click="hideSuggestedInternalFields"
+              >
+                隐藏内部字段 {{ suggestedHiddenFieldRows.length }}
+              </button>
             </header>
             <section class="contract-field-selection-panel">
               <div v-if="selectedFormSettingsFieldRow" class="contract-field-selection-card">
@@ -273,14 +277,26 @@
                 </div>
               </div>
               <div v-else class="contract-field-selection-empty">
-                <strong>先在表单中选择一个字段</strong>
-                <span>被选中的字段会高亮显示，再调整显示、隐藏、顺序或新增字段。</span>
+                <strong>选择字段后开始配置</strong>
+                <span>在下方表单点选字段后，可在这里调整显示、隐藏、顺序或新增字段。</span>
               </div>
             </section>
           </section>
           <div class="contract-field-governance-footer">
             <span v-if="hasCurrentFormFieldDraftChanges" class="contract-field-governance-dirty">表单设置已调整，保存后生效</span>
-            <button class="chip-btn" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
+            <span
+              v-if="formConfigAuditSummary"
+              class="contract-field-governance-audit"
+              :class="{ 'contract-field-governance-audit--warning': formConfigAuditResult?.hasConflict }"
+            >{{ formConfigAuditSummary }}</span>
+            <button class="ghost" type="button" :disabled="busy || formConfigAuditBusy" @click="auditCurrentFormConfiguration">
+              {{ formConfigAuditBusy ? '检查中...' : (formConfigAuditResult ? '重新检查' : '检查效果') }}
+            </button>
+            <button class="chip-btn" type="button" :disabled="busy" @click="previewCurrentFormConfiguration">
+              {{ hasCurrentFormFieldDraftChanges ? '保存并预览' : '预览当前页面' }}
+            </button>
+            <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
+            <button class="ghost" type="button" :disabled="busy" @click="returnToBusinessConfigDesigner">返回配置</button>
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
           </div>
         </section>
@@ -298,7 +314,7 @@
           :native-action-state-resolver="resolveNativeActionState"
           :relation-adapter="relationFieldAdapter"
           :field-actions="isContractFieldOrderEditable ? undefined : contractFieldActions"
-          :field-order-editable="false"
+          :field-order-editable="isContractFieldOrderEditable"
           :field-order-index="contractInlineFieldOrderIndex"
           :field-order-count="fieldOrderDraft.length"
           :field-order-dragging-key="draggingFieldKey"
@@ -306,7 +322,7 @@
           :field-config-editable="false"
           :field-selection-mode="isContractFieldOrderEditable"
           :selected-field-key="selectedFormSettingsFieldKey"
-          :columns="2"
+          :columns="nativeFormRootColumns"
           @field-change="onTemplateFieldChange"
           @field-action="onContractFieldAction"
           @field-order-move="onContractInlineFieldOrderMove"
@@ -566,7 +582,7 @@
         <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
           <li v-for="(warning, index) in lowCodePrecheckWarnings" :key="`lowcode-warning-${index}`">{{ warning }}</li>
         </ul>
-        <section v-if="isContractFieldOrderEditable && !useNativeFormTree" class="contract-lowcode-objects">
+        <section v-if="showLegacyLowCodeTechnicalPanels" class="contract-lowcode-objects">
           <header class="contract-lowcode-objects-head">
             <h4>业务对象配置</h4>
             <div class="contract-lowcode-contract-switch">
@@ -577,7 +593,7 @@
                 </option>
               </select>
             </div>
-            <button type="button" class="chip-btn" :disabled="busy || !lowCodeSelectedContractName" @click="publishSelectedLowCodeContract">发布契约</button>
+            <button type="button" class="chip-btn" :disabled="busy || !lowCodeSelectedContractName" @click="publishSelectedLowCodeContract">发布配置</button>
             <button type="button" class="ghost" :disabled="busy || !lowCodeSelectedContractName" @click="rollbackSelectedLowCodeContract">回滚版本</button>
             <button type="button" class="ghost" :disabled="busy" @click="addLowCodeObject">新增对象</button>
           </header>
@@ -605,7 +621,7 @@
             </div>
           </div>
         </section>
-        <section v-if="isContractFieldOrderEditable && !useNativeFormTree" class="contract-lowcode-objects">
+        <section v-if="showLegacyLowCodeTechnicalPanels" class="contract-lowcode-objects">
           <header class="contract-lowcode-objects-head">
             <h4>布局配置</h4>
             <div class="chips">
@@ -625,7 +641,7 @@
             <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeLayoutNode(nodeIndex)">删除</button>
           </div>
         </section>
-        <section v-if="isContractFieldOrderEditable && !useNativeFormTree" class="contract-lowcode-objects">
+        <section v-if="showLegacyLowCodeTechnicalPanels" class="contract-lowcode-objects">
           <header class="contract-lowcode-objects-head">
             <h4>规则配置</h4>
             <button type="button" class="ghost" :disabled="busy" @click="addLowCodeRule">新增规则</button>
@@ -1006,10 +1022,13 @@ import {
   resolveContractV2SourceContext,
   resolveContractV2ValueSource,
   type ContractV2ButtonStatus,
+  type ContractV2Container,
   type ContractV2NormalizedStore,
+  type ContractV2Widget,
 } from '../app/contracts/v2';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
+import { isBusinessConfigRuntimeModel } from '../app/businessConfigBoundaries';
 import {
   collectUnifiedPageContractV2ButtonStatus,
   collectUnifiedPageContractV2FieldContainerStatus,
@@ -1241,6 +1260,17 @@ type ContractFieldGovernanceRow = {
   actions: ContractFieldGovernanceAction[];
 };
 
+type FormConfigAuditResult = {
+  businessConfigFormFields: string[];
+  businessConfigFormLayoutFields: string[];
+  hasBusinessConfigFormLayout: boolean;
+  layoutMatchesFields: boolean;
+  legacyPolicyFields: string[];
+  skippedLegacyPolicyFields: string[];
+  activeLegacyPolicyFields: string[];
+  hasConflict: boolean;
+};
+
 class ContractAccessPolicyError extends Error {
   reasonCode: string;
 
@@ -1408,6 +1438,8 @@ const attachmentViewerRef = ref<InstanceType<typeof AttachmentViewer> | null>(nu
 const pendingNativeAttachments = ref<Array<{ key: string; name: string; size: number; file: File }>>([]);
 const nativeChatterAutoLoadKey = ref('');
 let activeReloadToken = 0;
+let activeReloadIdentity = '';
+let activeReloadPromise: Promise<void> | null = null;
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const menuId = computed(() => Number(route.query.menu_id || 0) || 0);
@@ -1633,7 +1665,7 @@ const intakeRequiredSummary = computed(() => {
   if (!isProjectIntakeCreateMode.value) return '';
   const total = intakeRequiredFields.value.length;
   const done = intakeRequiredReadyCount.value;
-  if (total <= 0) return '当前契约未提供必填字段约束。';
+  if (total <= 0) return '当前页面未提供必填字段约束。';
   return `${done}/${total}`;
 });
 
@@ -1723,8 +1755,14 @@ const pageDisplaySubtitle = computed(() => {
   return recordId.value ? `记录 #${recordId.value}` : '';
 });
 
+const activityPageTitle = computed(() => {
+  const recordTitle = String(formData.display_name || formData.name || '').trim();
+  if (recordId.value && recordTitle) return recordTitle;
+  return pageDisplayTitle.value;
+});
+
 watch(
-  pageDisplayTitle,
+  activityPageTitle,
   (title) => {
     if (!isComponentActive.value) return;
     session.updateActiveActivityTitle(title);
@@ -1892,18 +1930,33 @@ const activeContractModeActions = computed(() => {
 
 const fieldOrderDraft = ref<string[]>([]);
 const fieldOrderPreviewActive = ref(false);
+const nativeFormDesignFieldKeys = ref<string[]>([]);
+const nativeFormDesignFieldLabels = ref<Record<string, string>>({});
+const fieldGroupBase = ref<Record<string, string>>({});
+const fieldGroupDraft = reactive<Record<string, string>>({});
+const fieldMoveTargetDraft = reactive<Record<string, string>>({});
 const draggingFieldKey = ref('');
 const dropTargetFieldKey = ref('');
 const selectedFormSettingsFieldKey = ref('');
 const selectedFormSettingsFieldLabel = ref('');
 const selectedFormSettingsFieldGroupTitleDraft = ref('');
 const isContractFieldOrderEditable = computed(() => (
-  activeContractMode.value === 'form_field_configuration'
+  !isBusinessConfigRuntimeModel(model.value)
+  && (
+    activeContractMode.value === 'form_field_configuration'
+    || activeContractMode.value === 'business_config_lowcode'
+  )
+));
+const showReturnToBusinessConfigAction = computed(() => (
+  routeQueryText('return_to_business_config') === '1'
   || activeContractMode.value === 'business_config_lowcode'
 ));
 const fieldVisibilityBase = ref<Record<string, boolean>>({});
 const fieldVisibilityDirty = ref(false);
 const fieldVisibilityDraft = reactive<Record<string, boolean>>({});
+const fieldVisibilityDirtyKeys = reactive<Record<string, boolean>>({});
+const formConfigAuditBusy = ref(false);
+const formConfigAuditResult = ref<FormConfigAuditResult | null>(null);
 const lowCodeFieldCreateDialog = reactive({
   open: false,
   afterFieldKey: '',
@@ -1930,6 +1983,25 @@ const lowCodeObjectsDraft = ref<Array<{
 }>>([]);
 const lowCodeLayoutDraft = ref<Array<{ section: 'form' | 'list' | 'kanban'; object: string; field: string }>>([]);
 const lowCodeRulesDraft = ref<Array<{ name: string; trigger: 'on_create' | 'on_update' | 'scheduled'; object: string; field: string; cron?: string }>>([]);
+
+function lowCodeLegacyDraftFromContract(json: unknown) {
+  const root = parseMaybeJsonRecord(json);
+  const compatibility = parseMaybeJsonRecord(root.compatibility || root.low_code_compatibility);
+  const nested = parseMaybeJsonRecord(root.legacy_lowcode_draft || compatibility.legacy_lowcode_draft || compatibility.low_code_draft);
+  const objects = Array.isArray(root.objects)
+    ? root.objects
+    : (Array.isArray(nested.objects) ? nested.objects : []);
+  const objectRows = objects
+    .filter((row) => row && typeof row === 'object' && !Array.isArray(row))
+    .map((row) => row as Record<string, unknown>);
+  const layout = root.layout && typeof root.layout === 'object' && !Array.isArray(root.layout)
+    ? root.layout as Record<string, unknown>
+    : parseMaybeJsonRecord(nested.layout);
+  const rules = Array.isArray(root.rules)
+    ? root.rules
+    : (Array.isArray(nested.rules) ? nested.rules : []);
+  return { objects: objectRows, layout, rules };
+}
 
 function parseSelectionOptions(raw: string): Array<{ value: string; label: string }> {
   return String(raw || '')
@@ -2003,6 +2075,9 @@ watch(contractModeBaseFieldRows, (rows) => {
   if (!isContractFieldOrderEditable.value || !keys.length) {
     fieldOrderDraft.value = [];
     fieldVisibilityBase.value = {};
+    fieldGroupBase.value = {};
+    Object.keys(fieldGroupDraft).forEach((key) => delete fieldGroupDraft[key]);
+    Object.keys(fieldMoveTargetDraft).forEach((key) => delete fieldMoveTargetDraft[key]);
     return;
   }
   if (!fieldOrderDraft.value.length) {
@@ -2018,7 +2093,9 @@ watch(contractModeBaseFieldRows, (rows) => {
     const selected = row.actions.find((action) => Boolean(action.checked));
     if (!selected) return;
     const visible = selected.value === 'show';
-    nextVisibilityBase[row.fieldKey] = visible;
+    if (!Object.prototype.hasOwnProperty.call(nextVisibilityBase, row.fieldKey)) {
+      nextVisibilityBase[row.fieldKey] = visible;
+    }
     if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)) {
       fieldVisibilityDraft[row.fieldKey] = visible;
     }
@@ -2033,71 +2110,275 @@ watch(isContractFieldOrderEditable, (enabled) => {
     selectedFormSettingsFieldLabel.value = '';
     selectedFormSettingsFieldGroupTitleDraft.value = '';
     fieldVisibilityDirty.value = false;
+    formConfigAuditResult.value = null;
     return;
   }
   formSettingsActiveTab.value = 'fields';
+  syncFieldOrderDraftWithDesignKeys();
   void loadLowCodeContractList();
   void hydrateLowCodeDraftFromContract();
 }, { immediate: true });
 
+const currentFormDesignFieldKeys = computed(() => {
+  const keys = new Set<string>();
+  contractModeBaseFieldRows.value.forEach((row) => {
+    if (row.fieldKey) keys.add(row.fieldKey);
+  });
+  nativeFormDesignFieldKeys.value.forEach((fieldKey) => {
+    if (fieldKey) keys.add(fieldKey);
+  });
+  return Array.from(keys);
+});
+
+function syncFieldOrderDraftWithDesignKeys(rawKeys = currentFormDesignFieldKeys.value) {
+  if (!isContractFieldOrderEditable.value) return;
+  const keys = Array.from(new Set(rawKeys.map((key) => String(key || '').trim()).filter(Boolean)));
+  if (!keys.length) return;
+  if (!fieldOrderPreviewActive.value) {
+    const same = keys.length === fieldOrderDraft.value.length
+      && keys.every((key, index) => fieldOrderDraft.value[index] === key);
+    if (!same) fieldOrderDraft.value = keys;
+    return;
+  }
+  const keySet = new Set(keys);
+  const kept = fieldOrderDraft.value.filter((key) => keySet.has(key));
+  const missing = keys.filter((key) => !kept.includes(key));
+  fieldOrderDraft.value = [...kept, ...missing];
+}
+
+watch(currentFormDesignFieldKeys, (keys) => {
+  syncFieldOrderDraftWithDesignKeys(keys);
+}, { immediate: true });
+
 const hasFieldOrderChanges = computed(() => {
   if (!fieldOrderPreviewActive.value) return false;
-  const rows = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
+  const rows = currentFormDesignFieldKeys.value;
   if (!rows.length || !fieldOrderDraft.value.length) return false;
   return rows.some((key, index) => fieldOrderDraft.value[index] !== key);
 });
 
-const hasFieldVisibilityChanges = computed(() => contractModeBaseFieldRows.value.some((row) => {
-  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)) return false;
-  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, row.fieldKey)) return false;
-  return fieldVisibilityDraft[row.fieldKey] !== fieldVisibilityBase.value[row.fieldKey];
+const formVisibilityDraftFieldKeys = computed(() => Array.from(new Set([
+  ...currentFormDesignFieldKeys.value,
+  ...Object.keys(fieldVisibilityDraft),
+  ...Object.keys(fieldVisibilityBase.value),
+].map((key) => String(key || '').trim()).filter(Boolean))));
+
+const hasFieldVisibilityChanges = computed(() => formVisibilityDraftFieldKeys.value.some((fieldKey) => {
+  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)) return false;
+  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) return false;
+  return fieldVisibilityDraft[fieldKey] !== fieldVisibilityBase.value[fieldKey];
+}));
+
+const hasFieldGroupChanges = computed(() => Object.keys(fieldGroupDraft).some((fieldKey) => {
+  const draft = normalizeFieldGroupTitle(fieldGroupDraft[fieldKey]);
+  const base = normalizeFieldGroupTitle(fieldGroupBase.value[fieldKey]);
+  return Boolean(draft) && draft !== base;
 }));
 
 const hasCurrentFormFieldDraftChanges = computed(() => (
-  hasFieldOrderChanges.value || hasFieldVisibilityChanges.value || fieldVisibilityDirty.value
+  hasFieldOrderChanges.value || hasFieldVisibilityChanges.value || hasFieldGroupChanges.value || fieldVisibilityDirty.value
 ));
 
-const formFieldSettingsGovernance = computed(() => {
-  const root = contract.value && typeof contract.value === 'object'
-    ? (contract.value as Record<string, unknown>).governance
-    : undefined;
-  const governance = root && typeof root === 'object' && !Array.isArray(root)
-    ? root as Record<string, unknown>
-    : {};
-  const settings = governance.current_form_field_settings;
-  return settings && typeof settings === 'object' && !Array.isArray(settings)
-    ? settings as Record<string, unknown>
-    : {};
+function isSuggestedInternalFormField(fieldKey: string, label = '') {
+  const name = String(fieldKey || '').trim();
+  const text = `${name} ${String(label || '').trim()}`.toLowerCase();
+  if (!name) return false;
+  if (name.startsWith('legacy_source_')) return true;
+  if (name.startsWith('activity_') || name.startsWith('alias_') || name.startsWith('message_') || name.startsWith('rating_')) return true;
+  if (['access_token', 'access_url', 'access_warning', 'website_message_ids'].includes(name)) return true;
+  return [
+    'last updated on',
+    'project manager',
+    '原始录入',
+    '录入时间',
+    '来源',
+    '协作成员',
+    'collaborator',
+  ].some((keyword) => text.includes(keyword));
+}
+
+function formDesignFieldLabel(fieldKey: string) {
+  const key = String(fieldKey || '').trim();
+  if (!key) return '';
+  const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === key);
+  return row?.label || nativeFormDesignFieldLabels.value[key] || key;
+}
+
+const suggestedHiddenFieldRows = computed(() => currentFormDesignFieldKeys.value
+  .map((fieldKey) => ({ fieldKey, label: formDesignFieldLabel(fieldKey) }))
+  .filter((row) => {
+    if (!isSuggestedInternalFormField(row.fieldKey, row.label)) return false;
+    return fieldVisibilityDraft[row.fieldKey] !== false;
+  }));
+
+watch(hasCurrentFormFieldDraftChanges, (changed) => {
+  if (changed) formConfigAuditResult.value = null;
 });
 
-const showCurrentFormFieldConfigScope = computed(() => (
-  isContractFieldOrderEditable.value && activeContractModeFieldRows.value.length > 0
+function changedFieldVisibilityDraft() {
+  return formVisibilityDraftFieldKeys.value.reduce<Record<string, boolean>>((acc, fieldKey) => {
+    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)) return acc;
+    if (
+      fieldVisibilityDirtyKeys[fieldKey]
+      || (
+        Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)
+        && fieldVisibilityDraft[fieldKey] !== fieldVisibilityBase.value[fieldKey]
+      )
+    ) {
+      acc[fieldKey] = fieldVisibilityDraft[fieldKey];
+    }
+    return acc;
+  }, {});
+}
+
+function normalizeFieldGroupTitle(value: unknown) {
+  return String(value || '').trim();
+}
+
+function isReadableFieldGroupTitle(value: unknown) {
+  const text = normalizeFieldGroupTitle(value);
+  if (!text) return false;
+  if (/^[a-z][a-z0-9_:. -]*$/i.test(text) && /[_:.]/.test(text)) return false;
+  return true;
+}
+
+function changedFieldGroupDraft() {
+  return Object.keys(fieldGroupDraft).reduce<Record<string, string>>((acc, fieldKey) => {
+    const key = String(fieldKey || '').trim();
+    const draft = normalizeFieldGroupTitle(fieldGroupDraft[key]);
+    const base = normalizeFieldGroupTitle(fieldGroupBase.value[key]);
+    if (key && draft && draft !== base) acc[key] = draft;
+    return acc;
+  }, {});
+}
+
+async function auditCurrentFormConfiguration() {
+  if (formConfigAuditBusy.value || busy.value) return;
+  const params = lowCodeApplyBaseParams();
+  const modelName = String(params.model || model.value || '').trim();
+  if (!modelName) return;
+  formConfigAuditBusy.value = true;
+  try {
+    const result = await intentRequest<{
+      business_config_form_fields?: unknown[];
+      business_config_form_layout_fields?: unknown[];
+      has_business_config_form_layout?: boolean;
+      layout_matches_fields?: boolean;
+      legacy_policy_fields?: unknown[];
+      skipped_legacy_policy_fields?: unknown[];
+      active_legacy_policy_fields?: unknown[];
+      has_conflict?: boolean;
+    }>({
+      intent: 'ui.business_config.form.audit',
+      params: {
+        ...params,
+        model: modelName,
+        view_type: 'form',
+      },
+      context: { view: 'form' },
+    });
+    const normalizeNames = (value: unknown[]) => value
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
+    formConfigAuditResult.value = {
+      businessConfigFormFields: normalizeNames(Array.isArray(result.business_config_form_fields) ? result.business_config_form_fields : []),
+      businessConfigFormLayoutFields: normalizeNames(Array.isArray(result.business_config_form_layout_fields) ? result.business_config_form_layout_fields : []),
+      hasBusinessConfigFormLayout: Boolean(result.has_business_config_form_layout),
+      layoutMatchesFields: Boolean(result.layout_matches_fields),
+      legacyPolicyFields: normalizeNames(Array.isArray(result.legacy_policy_fields) ? result.legacy_policy_fields : []),
+      skippedLegacyPolicyFields: normalizeNames(Array.isArray(result.skipped_legacy_policy_fields) ? result.skipped_legacy_policy_fields : []),
+      activeLegacyPolicyFields: normalizeNames(Array.isArray(result.active_legacy_policy_fields) ? result.active_legacy_policy_fields : []),
+      hasConflict: Boolean(result.has_conflict),
+    };
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'form config audit failed';
+    status.value = 'error';
+  } finally {
+    formConfigAuditBusy.value = false;
+  }
+}
+
+const showCurrentFormFieldConfigScope = computed(() => isContractFieldOrderEditable.value);
+const showLowCodeTechnicalDetails = computed(() => {
+  if (activeContractMode.value !== 'business_config_lowcode') return showHud.value;
+  const hudFlag = routeQueryText('hud').toLowerCase();
+  const surface = routeQueryText('surface').toLowerCase();
+  return hudFlag === '1' || hudFlag === 'true' || surface === 'hud';
+});
+const showLegacyLowCodeTechnicalPanels = computed(() => (
+  isContractFieldOrderEditable.value
+  && !useNativeFormTree.value
+  && showDebugActionsVisible.value
+  && showLowCodeTechnicalDetails.value
 ));
 
 const formFieldConfigScope = computed(() => {
-  const settings = formFieldSettingsGovernance.value;
-  const action = Number(settings.action_id || actionId.value || 0) || 0;
   const page = pageDisplayTitle.value || '当前表单';
-  const objectLabel = String(settings.model_label || '').trim();
-  const modelName = String(settings.model || model.value || '-');
   return {
     scope: `${page}这个页面`,
-    fieldSource: '当前页面已有字段和管理员新增字段',
-    saveTarget: '当前页面的表单设置',
-    systemKey: action > 0 ? `${objectLabel || modelName} / action_id=${action}` : (objectLabel || modelName),
+    saveTarget: '只影响当前页面，不影响其它页面',
     summary: `本页只调整${page}的字段显示、顺序和新增字段，保存后只影响这个页面。`,
   };
 });
 
-const formSettingsTabs = computed(() => [
-  { key: 'fields' as const, label: `字段 ${activeContractModeFieldRows.value.length}` },
-]);
+const formConfigAuditSummary = computed(() => {
+  const result = formConfigAuditResult.value;
+  if (!result) return '';
+  if (!showLowCodeTechnicalDetails.value) {
+    const layoutText = result.hasBusinessConfigFormLayout
+      ? (result.layoutMatchesFields ? '，布局已对齐' : '，布局需要重新保存')
+      : '';
+    const takeoverText = result.skippedLegacyPolicyFields.length
+      ? `，${result.skippedLegacyPolicyFields.length} 个旧字段规则已由当前页面配置接管`
+      : '';
+    return `检查通过，当前页面 ${result.businessConfigFormFields.length} 个字段配置可生效${layoutText}${takeoverText}。`;
+  }
+  const conflictText = result.skippedLegacyPolicyFields.length
+    ? `业务配置已接管旧规则字段：${result.skippedLegacyPolicyFields.join('、')}`
+    : '无被接管的旧规则字段';
+  const activeLegacyText = result.activeLegacyPolicyFields.length
+    ? `兼容生效：${result.activeLegacyPolicyFields.join('、')}`
+    : '无兼容字段生效';
+  const layoutText = result.hasBusinessConfigFormLayout
+    ? `正式布局 ${result.businessConfigFormLayoutFields.length}，${result.layoutMatchesFields ? '字段顺序一致' : '字段顺序不一致'}`
+    : '未固化正式布局';
+  return `配置字段 ${result.businessConfigFormFields.length} / legacy policy ${result.legacyPolicyFields.length}，${layoutText}，${conflictText}，${activeLegacyText}`;
+});
 
 const selectedFormSettingsFieldRow = computed(() => {
   const fieldKey = selectedFormSettingsFieldKey.value;
   if (!fieldKey) return undefined;
   const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === fieldKey);
-  if (!row) return undefined;
+  if (!row) {
+    const label = selectedFormSettingsFieldLabel.value || fieldKey;
+    const visible = Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)
+      ? fieldVisibilityDraft[fieldKey]
+      : true;
+    return {
+      fieldKey,
+      label,
+      actions: [
+        {
+          key: `${fieldKey}:show`,
+          label: '显示',
+          value: 'show',
+          checked: visible,
+          disabled: busy.value,
+          title: '在当前页面显示这个字段',
+          raw: {},
+        },
+        {
+          key: `${fieldKey}:hide`,
+          label: '隐藏',
+          value: 'hide',
+          checked: !visible,
+          disabled: busy.value,
+          title: '在当前页面隐藏这个字段',
+          raw: {},
+        },
+      ],
+    };
+  }
   return {
     ...row,
     label: selectedFormSettingsFieldLabel.value || row.label || fieldKey,
@@ -2114,6 +2395,7 @@ function fieldStructureTitle(pageTitle: string, groupTitle: string) {
 const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; fieldKeys: string[] }>>(() => {
   const groups = new Map<string, { key: string; title: string; fieldKeys: string[] }>();
   const fieldSeen = new Set<string>();
+  let anonymousGroupIndex = 0;
   const addField = (title: string, fieldKey: string) => {
     const normalizedField = String(fieldKey || '').trim();
     if (!normalizedField || fieldSeen.has(normalizedField)) return;
@@ -2123,12 +2405,35 @@ const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; 
     if (!groups.has(groupKey)) groups.set(groupKey, { key: groupKey, title: groupTitle, fieldKeys: [] });
     groups.get(groupKey)?.fieldKeys.push(normalizedField);
   };
+  const rawChildren = (node: NativeFormLayoutNode) => {
+    const rows: NativeFormLayoutNode[] = [];
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) rows.push(...children as NativeFormLayoutNode[]);
+    });
+    return rows;
+  };
+  const directVisibleFieldNames = (node: NativeFormLayoutNode) => rawChildren(node)
+    .filter((child) => nativeLayoutNodeType(child) === 'field')
+    .map((child) => String(child?.name || '').trim())
+    .filter(Boolean);
+  const groupTitleForNode = (node: NativeFormLayoutNode, pageTitle: string, groupTitle: string) => {
+    const type = nativeLayoutNodeType(node);
+    const title = String(node?.string || node?.label || '').trim();
+    if (type === 'page' && isReadableFieldGroupTitle(title)) return title;
+    if (type === 'group' && isReadableFieldGroupTitle(title)) return fieldStructureTitle(pageTitle, title);
+    if (type === 'group' && directVisibleFieldNames(node).length) {
+      anonymousGroupIndex += 1;
+      return fieldStructureTitle(pageTitle, `默认分组 ${anonymousGroupIndex}`);
+    }
+    return groupTitle;
+  };
   const walk = (nodes: NativeFormLayoutNode[], pageTitle = '', groupTitle = '') => {
     nodes.forEach((node) => {
-      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      const type = nativeLayoutNodeType(node);
       const title = String(node?.string || node?.label || '').trim();
       const nextPage = type === 'page' && title ? title : pageTitle;
-      const nextGroup = type === 'group' && title ? title : groupTitle;
+      const nextGroup = groupTitleForNode(node, nextPage, groupTitle);
       const name = String(node?.name || '').trim();
       if (type === 'field' && name) addField(fieldStructureTitle(nextPage, nextGroup), name);
       (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
@@ -2137,13 +2442,41 @@ const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; 
       });
     });
   };
-  walk(nativeFormLayoutNodes.value);
+  const baseLayout = Array.isArray(contract.value?.views?.form?.layout)
+    ? contract.value?.views?.form?.layout as unknown as NativeFormLayoutNode[]
+    : [];
+  walk(baseLayout);
   return Array.from(groups.values());
+});
+
+watch(nativeFieldStructureGroups, (groups) => {
+  const nextBase: Record<string, string> = {};
+  groups.forEach((group) => {
+    const title = normalizeFieldGroupTitle(group.title || '主表区域');
+    group.fieldKeys.forEach((fieldKey) => {
+      if (fieldKey && !nextBase[fieldKey]) nextBase[fieldKey] = title;
+    });
+  });
+  fieldGroupBase.value = nextBase;
+  currentFormDesignFieldKeys.value.forEach((fieldKey) => {
+    if (!fieldKey) return;
+    const title = nextBase[fieldKey];
+    if (title && (!Object.prototype.hasOwnProperty.call(fieldGroupDraft, fieldKey) || !isReadableFieldGroupTitle(fieldGroupDraft[fieldKey]))) {
+      fieldGroupDraft[fieldKey] = title;
+    }
+  });
+}, { immediate: true });
+
+const currentFormDesignFieldCount = computed(() => {
+  if (activeContractModeFieldRows.value.length) return activeContractModeFieldRows.value.length;
+  return nativeFieldStructureGroups.value.reduce((total, group) => total + group.fieldKeys.length, 0);
 });
 
 const selectedFormSettingsFieldGroupTitle = computed(() => {
   const fieldKey = selectedFormSettingsFieldKey.value;
   if (!fieldKey) return '';
+  const draftTitle = normalizeFieldGroupTitle(fieldGroupDraft[fieldKey]);
+  if (draftTitle) return draftTitle;
   const nativeGroup = nativeFieldStructureGroups.value.find((group) => group.fieldKeys.includes(fieldKey));
   return nativeGroup?.title || selectedFormSettingsFieldGroupTitleDraft.value || '业务配置字段';
 });
@@ -2152,58 +2485,48 @@ async function hydrateLowCodeDraftFromContract() {
   if (!isContractFieldOrderEditable.value || lowCodeContractLoaded.value) return;
   const modelName = String(model.value || '').trim();
   if (!modelName) return;
+  let hydrated = false;
   try {
     const base = lowCodeApplyBaseParams();
     const scopedName = lowCodeScopedContractName(modelName, base);
     const legacyName = legacyLowCodeContractName(modelName);
-    let res = await intentRequest<{
+    const listResult = await intentRequest<{
+      items?: Array<{ name?: string }>;
+    }>({
+      intent: 'ui.business_config.contract.list',
+      params: { ...base, model: modelName, view_type: 'form' },
+    }).catch(() => null);
+    const availableNames = new Set((Array.isArray(listResult?.items) ? listResult?.items || [] : [])
+      .map((row) => String(row?.name || '').trim())
+      .filter(Boolean));
+    const contractName = availableNames.has(scopedName)
+      ? scopedName
+      : (scopedName !== legacyName && availableNames.has(legacyName) ? legacyName : '');
+    if (!contractName) return;
+    const res = await intentRequest<{
       contract_json?: {
         objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number }> }>;
       }
     }>({
       intent: 'ui.business_config.contract.get',
-      params: { ...base, model: modelName, name: scopedName, view_type: 'form' },
+      params: contractName === scopedName
+        ? { ...base, model: modelName, name: contractName, view_type: 'form' }
+        : { model: modelName, name: contractName },
     }).catch(() => null);
-    if (!res && scopedName !== legacyName) {
-      res = await intentRequest<{
-        contract_json?: {
-          objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number }> }>;
-        }
-      }>({
-        intent: 'ui.business_config.contract.get',
-        params: { model: modelName, name: legacyName },
-      }).catch(() => null);
-    }
     if (!res) return;
-    const objects = Array.isArray(res?.contract_json?.objects) ? res.contract_json?.objects || [] : [];
+    const legacyDraft = lowCodeLegacyDraftFromContract(res?.contract_json);
+    const objects = legacyDraft.objects;
     const viewOrchestration = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
       ? (res.contract_json as { view_orchestration?: Record<string, unknown> }).view_orchestration || {}
       : {};
     const orchestrationViews = viewOrchestration && typeof viewOrchestration === 'object' && !Array.isArray(viewOrchestration)
       ? ((viewOrchestration as Record<string, unknown>).views || {}) as Record<string, unknown>
       : {};
-    const matched = objects.find((row) => String(row?.name || '').trim() === modelName) || objects[0];
-    const fields = Array.isArray(matched?.fields) ? matched?.fields || [] : [];
-    if (fields.length) {
-      const orderNames = fields
-        .map((row) => ({ name: String(row?.name || '').trim(), order: Number(row?.order || 0) }))
-        .filter((row) => row.name)
-        .sort((a, b) => a.order - b.order)
-        .map((row) => row.name);
-      if (orderNames.length) fieldOrderDraft.value = orderNames;
-      fields.forEach((row) => {
-        const key = String(row?.name || '').trim();
-        if (!key) return;
-        const visible = row?.visible !== false;
-        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
-        fieldVisibilityDraft[key] = visible;
-      });
-    }
-    if (!fields.length) {
-      const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
-        ? orchestrationViews.form as Record<string, unknown>
-        : {};
-      const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
+    const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
+      ? orchestrationViews.form as Record<string, unknown>
+      : {};
+    const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
+    if (formFields.length) {
       const orderNames = formFields
         .map((row) => ({ name: String(row?.name || row?.field || '').trim(), sequence: Number(row?.sequence || row?.order || 0) }))
         .filter((row) => row.name)
@@ -2212,6 +2535,28 @@ async function hydrateLowCodeDraftFromContract() {
       if (orderNames.length) fieldOrderDraft.value = orderNames;
       formFields.forEach((row) => {
         const key = String(row?.name || row?.field || '').trim();
+        if (!key) return;
+        const visible = row?.visible !== false;
+        const rawGroupTitle = row?.group_title || row?.groupTitle || row?.section_title || row?.sectionTitle;
+        const groupTitle = isReadableFieldGroupTitle(rawGroupTitle) ? normalizeFieldGroupTitle(rawGroupTitle) : '';
+        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
+        fieldVisibilityDraft[key] = visible;
+        if (groupTitle) {
+          fieldGroupBase.value = { ...fieldGroupBase.value, [key]: groupTitle };
+          fieldGroupDraft[key] = groupTitle;
+        }
+      });
+    } else {
+      const matched = objects.find((row) => String(row?.name || '').trim() === modelName) || objects[0];
+      const fields = Array.isArray(matched?.fields) ? matched?.fields || [] : [];
+      const orderNames = fields
+        .map((row) => ({ name: String(row?.name || '').trim(), order: Number(row?.order || 0) }))
+        .filter((row) => row.name)
+        .sort((a, b) => a.order - b.order)
+        .map((row) => row.name);
+      if (orderNames.length) fieldOrderDraft.value = orderNames;
+      fields.forEach((row) => {
+        const key = String(row?.name || '').trim();
         if (!key) return;
         const visible = row?.visible !== false;
         fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
@@ -2233,9 +2578,7 @@ async function hydrateLowCodeDraftFromContract() {
         }))
         : [],
     })).filter((obj) => obj.name);
-    const layout = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
-      ? (res.contract_json as { layout?: Record<string, unknown> }).layout || {}
-      : {};
+    const layout = legacyDraft.layout;
     const collectLayout = (section: 'form' | 'list' | 'kanban') => (
       Array.isArray((layout as Record<string, unknown>)[section])
         ? ((layout as Record<string, unknown>)[section] as unknown[])
@@ -2249,11 +2592,10 @@ async function hydrateLowCodeDraftFromContract() {
           .filter((node) => node.object && node.field)
         : []
     );
+    const orchestrationLayoutDraft = collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
     const legacyLayoutDraft = [...collectLayout('form'), ...collectLayout('list'), ...collectLayout('kanban')];
-    lowCodeLayoutDraft.value = legacyLayoutDraft.length ? legacyLayoutDraft : collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
-    const rules = Array.isArray((res?.contract_json as { rules?: unknown[] } | undefined)?.rules)
-      ? ((res?.contract_json as { rules?: unknown[] }).rules || [])
-      : [];
+    lowCodeLayoutDraft.value = orchestrationLayoutDraft.length ? orchestrationLayoutDraft : legacyLayoutDraft;
+    const rules = legacyDraft.rules;
     lowCodeRulesDraft.value = rules
       .filter((row) => row && typeof row === 'object')
       .map((row) => row as Record<string, unknown>)
@@ -2266,10 +2608,11 @@ async function hydrateLowCodeDraftFromContract() {
         field: String((row.action as Record<string, unknown> | undefined)?.field || '').trim(),
         cron: String(row.cron || '').trim(),
       }));
+    hydrated = true;
   } catch {
     // ignore low-code contract hydrate failure in form runtime
   } finally {
-    lowCodeContractLoaded.value = true;
+    if (hydrated) lowCodeContractLoaded.value = true;
   }
 }
 
@@ -2315,6 +2658,7 @@ async function switchLowCodeContractByName() {
         objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number; type?: string; required?: boolean; readonly?: boolean; default?: string; options?: unknown[] }> }>;
         layout?: Record<string, unknown>;
         rules?: unknown[];
+        legacy_lowcode_draft?: Record<string, unknown>;
       }
     }>({
       intent: 'ui.business_config.contract.get',
@@ -2327,7 +2671,33 @@ async function switchLowCodeContractByName() {
     const orchestrationViews = viewOrchestration && typeof viewOrchestration === 'object' && !Array.isArray(viewOrchestration)
       ? ((viewOrchestration as Record<string, unknown>).views || {}) as Record<string, unknown>
       : {};
-    const objects = Array.isArray(json.objects) ? json.objects : [];
+    const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
+      ? orchestrationViews.form as Record<string, unknown>
+      : {};
+    const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
+    if (formFields.length) {
+      const orderNames = formFields
+        .map((row) => ({ name: String(row?.name || row?.field || '').trim(), sequence: Number(row?.sequence || row?.order || 0) }))
+        .filter((row) => row.name)
+        .sort((a, b) => a.sequence - b.sequence)
+        .map((row) => row.name);
+      if (orderNames.length) fieldOrderDraft.value = orderNames;
+      formFields.forEach((row) => {
+        const key = String(row?.name || row?.field || '').trim();
+        if (!key) return;
+        const visible = row?.visible !== false;
+        const rawGroupTitle = row?.group_title || row?.groupTitle || row?.section_title || row?.sectionTitle;
+        const groupTitle = isReadableFieldGroupTitle(rawGroupTitle) ? normalizeFieldGroupTitle(rawGroupTitle) : '';
+        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
+        fieldVisibilityDraft[key] = visible;
+        if (groupTitle) {
+          fieldGroupBase.value = { ...fieldGroupBase.value, [key]: groupTitle };
+          fieldGroupDraft[key] = groupTitle;
+        }
+      });
+    }
+    const legacyDraft = lowCodeLegacyDraftFromContract(json);
+    const objects = legacyDraft.objects;
     lowCodeObjectsDraft.value = objects
       .filter((obj) => obj && typeof obj === 'object')
       .map((obj) => ({
@@ -2366,10 +2736,10 @@ async function publishSelectedLowCodeContract() {
       intent: 'ui.business_config.contract.publish',
       params: { ...base, name, model: modelName, view_type: 'form' },
     });
-    contractModeFeedback.value = '低代码契约已发布';
+    contractModeFeedback.value = '配置版本已发布，刷新页面后按新配置生效';
     await loadLowCodeContractList();
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'contract publish failed';
+    errorMessage.value = err instanceof Error ? err.message : '配置版本发布失败';
     status.value = 'error';
   } finally {
     busyKind.value = null;
@@ -2387,11 +2757,11 @@ async function rollbackSelectedLowCodeContract() {
       intent: 'ui.business_config.contract.rollback',
       params: { ...base, name, model: modelName, view_type: 'form' },
     });
-    contractModeFeedback.value = '低代码契约已回滚到上一版本';
+    contractModeFeedback.value = '配置版本已回滚到上一版并发布生效';
     await loadLowCodeContractList();
     await switchLowCodeContractByName();
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'contract rollback failed';
+    errorMessage.value = err instanceof Error ? err.message : '配置版本回滚失败';
     status.value = 'error';
   } finally {
     busyKind.value = null;
@@ -2480,7 +2850,10 @@ function buildLowCodeViewOrchestration() {
     .filter((row) => row.section === section)
     .map((row) => String(row.field || '').trim())
     .filter((name) => name && availableFields[name]);
-  const formNames = sectionFields('form').length ? sectionFields('form') : fieldOrderDraft.value.filter((name) => availableFields[name]);
+  const formDraftNames = fieldOrderDraft.value.filter((name) => availableFields[name]);
+  const formNames = isContractFieldOrderEditable.value && formDraftNames.length
+    ? formDraftNames
+    : (sectionFields('form').length ? sectionFields('form') : formDraftNames);
   const listNames = sectionFields('list');
   const kanbanNames = sectionFields('kanban');
   const views: Record<string, unknown> = {};
@@ -2492,6 +2865,13 @@ function buildLowCodeViewOrchestration() {
         visible: fieldVisibilityDraft[name] !== false,
         sequence: (index + 1) * 10,
       })),
+      layout: [{
+        type: 'group',
+        children: formNames.map((name) => ({
+          type: 'field',
+          name,
+        })),
+      }],
     };
   }
   if (listNames.length) {
@@ -5583,7 +5963,7 @@ const strictContractMissingSummary = computed(() => {
   if (!Array.isArray(raw) || !raw.length) return '';
   const missing = raw.map((item) => String(item || '').trim()).filter(Boolean);
   if (!missing.length) return '';
-  return `严格模式检测到后端契约缺口：${missing.join(', ')}`;
+  return `严格模式检测到后端配置缺口：${missing.join(', ')}`;
 });
 const strictContractDefaultsSummary = computed(() => {
   if (!strictContractMode.value) return '';
@@ -5795,6 +6175,142 @@ function filterVisibleNativeLayoutNodes(nodes: NativeFormLayoutNode[]): NativeFo
     });
 }
 
+function nativeLayoutNodeType(node: NativeFormLayoutNode) {
+  return String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+}
+
+function isNativeFieldLayoutNode(node: NativeFormLayoutNode) {
+  return nativeLayoutNodeType(node) === 'field' && Boolean(String(node?.name || '').trim());
+}
+
+function applyNativeFieldOrderPreview(nodes: NativeFormLayoutNode[]): NativeFormLayoutNode[] {
+  if (!fieldOrderDraft.value.length) return nodes;
+  const rank = new Map(fieldOrderDraft.value.map((fieldName, index) => [fieldName, index]));
+  const movedGroups = changedFieldGroupDraft();
+  const movedNames = new Set(Object.keys(movedGroups));
+  const movedNodes = new Map<string, NativeFormLayoutNode>();
+  const collectMoved = (rows: NativeFormLayoutNode[]) => {
+    rows.forEach((node) => {
+      const name = String(node?.name || '').trim();
+      if (isNativeFieldLayoutNode(node) && movedNames.has(name)) {
+        movedNodes.set(name, node);
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const value = node?.[key];
+        if (Array.isArray(value)) collectMoved(value as NativeFormLayoutNode[]);
+      });
+    });
+  };
+  collectMoved(nodes);
+
+  const sortDirectFields = (rows: NativeFormLayoutNode[]) => {
+    const fields = rows.filter(isNativeFieldLayoutNode).sort((left, right) => {
+      const leftRank = rank.get(String(left.name || '').trim()) ?? Number.MAX_SAFE_INTEGER;
+      const rightRank = rank.get(String(right.name || '').trim()) ?? Number.MAX_SAFE_INTEGER;
+      return leftRank - rightRank;
+    });
+    let index = 0;
+    return rows.map((row) => (isNativeFieldLayoutNode(row) ? fields[index++] : row));
+  };
+  const cloneWithoutMoved = (rows: NativeFormLayoutNode[]): NativeFormLayoutNode[] => rows.flatMap((node) => {
+    const name = String(node?.name || '').trim();
+    if (isNativeFieldLayoutNode(node) && movedNames.has(name)) return [];
+    const next = { ...(node as Record<string, unknown>) } as Record<string, unknown>;
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const value = next[key];
+      if (Array.isArray(value)) {
+        next[key] = cloneWithoutMoved(value as NativeFormLayoutNode[]);
+      }
+    });
+    return [next as NativeFormLayoutNode];
+  });
+
+  const withChildren = movedNodes.size
+    ? cloneWithoutMoved(nodes)
+    : nodes.map((node) => {
+      const next = { ...(node as Record<string, unknown>) } as Record<string, unknown>;
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const value = next[key];
+        if (Array.isArray(value)) {
+          next[key] = applyNativeFieldOrderPreview(value as NativeFormLayoutNode[]);
+        }
+      });
+      return next as NativeFormLayoutNode;
+    });
+
+  if (movedNodes.size) {
+    const injected = new Set<string>();
+    const injectIntoTarget = (rows: NativeFormLayoutNode[]): NativeFormLayoutNode[] => rows.map((node) => {
+      const next = { ...(node as Record<string, unknown>) } as Record<string, unknown>;
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const value = next[key];
+        if (Array.isArray(value)) {
+          next[key] = injectIntoTarget(value as NativeFormLayoutNode[]);
+        }
+      });
+      const directFieldGroupTitle = () => {
+        const children = Array.isArray(next.children) ? next.children as NativeFormLayoutNode[] : [];
+        for (const child of children) {
+          const fieldName = String(child?.name || '').trim();
+          if (isNativeFieldLayoutNode(child) && fieldName) {
+            const title = normalizeFieldGroupTitle(fieldGroupBase.value[fieldName] || fieldGroupDraft[fieldName]);
+            if (title) return title;
+          }
+        }
+        return '';
+      };
+      const nodeTitle = isReadableFieldGroupTitle(next.string || next.label)
+        ? normalizeFieldGroupTitle(next.string || next.label)
+        : '';
+      const title = directFieldGroupTitle() || nodeTitle;
+      const directFieldNames = Array.isArray(next.children)
+        ? (next.children as NativeFormLayoutNode[])
+          .filter(isNativeFieldLayoutNode)
+          .map((child) => String(child.name || '').trim())
+          .filter(Boolean)
+        : [];
+      const toAppend = Array.from(movedNodes.entries())
+        .filter(([name]) => (
+          !injected.has(name)
+          && (
+            normalizeFieldGroupTitle(movedGroups[name]) === title
+            || directFieldNames.includes(String(fieldMoveTargetDraft[name] || '').trim())
+          )
+        ))
+        .map(([name, nodeValue]) => {
+          injected.add(name);
+          return nodeValue;
+        });
+      if (toAppend.length) {
+        const children = Array.isArray(next.children) ? next.children as NativeFormLayoutNode[] : [];
+        next.children = sortDirectFields([...children, ...toAppend]);
+      }
+      return next as NativeFormLayoutNode;
+    });
+    const injectedTree = injectIntoTarget(withChildren);
+    const fallback = Array.from(movedNodes.entries())
+      .filter(([name]) => !injected.has(name))
+      .map(([name, nodeValue]) => {
+        injected.add(name);
+        return nodeValue;
+      });
+    if (fallback.length) {
+      return [...injectedTree, ...sortDirectFields(fallback)];
+    }
+    return injectedTree;
+  }
+
+  const fieldNodes = withChildren.filter(isNativeFieldLayoutNode);
+  if (fieldNodes.length <= 1) return withChildren;
+  const sortedFields = [...fieldNodes].sort((left, right) => {
+    const leftRank = rank.get(String(left.name || '').trim()) ?? Number.MAX_SAFE_INTEGER;
+    const rightRank = rank.get(String(right.name || '').trim()) ?? Number.MAX_SAFE_INTEGER;
+    return leftRank - rightRank;
+  });
+  let fieldIndex = 0;
+  return withChildren.map((node) => (isNativeFieldLayoutNode(node) ? sortedFields[fieldIndex++] : node));
+}
+
 const rawNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   const storeContainers = resolveContractV2ContainerTree(v2ContractStore.value);
   const v2 = storeContainers.length ? null : resolveUnifiedPageContractV2(contract.value);
@@ -5802,7 +6318,7 @@ const rawNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
     ? storeContainers
     : (Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : []);
   if (containers.length > 0) {
-    return containers as unknown as NativeFormLayoutNode[];
+    return normalizeContractV2ContainersForNativeForm(containers as unknown as ContractV2Container[]);
   }
   const legacyLayout = Array.isArray(contract.value?.views?.form?.layout)
     ? contract.value?.views?.form?.layout
@@ -5810,10 +6326,132 @@ const rawNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   return legacyLayout as unknown as NativeFormLayoutNode[];
 });
 
-const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
+function contractV2WidgetToNativeFieldNode(widget: ContractV2Widget): NativeFormLayoutNode | null {
+  const fieldName = String(widget?.fieldCode || '').trim();
+  if (!fieldName) return null;
+  const componentConfig = widget.componentConfig && typeof widget.componentConfig === 'object'
+    ? widget.componentConfig as Record<string, unknown>
+    : {};
+  const fieldInfo: Record<string, unknown> = {
+    name: fieldName,
+    label: widget.label || fieldName,
+    string: widget.label || fieldName,
+    type: widget.fieldType || componentConfig.fieldType || componentConfig.ttype || 'char',
+    ...(widget.relation || componentConfig.relation ? { relation: widget.relation || componentConfig.relation } : {}),
+    ...(typeof componentConfig.required === 'boolean' ? { required: componentConfig.required } : {}),
+    ...(typeof componentConfig.readonly === 'boolean' ? { readonly: componentConfig.readonly } : {}),
+    ...(Array.isArray(componentConfig.selection) ? { selection: componentConfig.selection } : {}),
+  };
+  return {
+    type: 'field',
+    name: fieldName,
+    string: widget.label || fieldName,
+    label: widget.label || fieldName,
+    widget: widget.widgetType,
+    fieldInfo,
+    field_info: fieldInfo,
+  };
+}
+
+function normalizeContractV2ContainersForNativeForm(containers: ContractV2Container[]): NativeFormLayoutNode[] {
+  const walk = (node: ContractV2Container): NativeFormLayoutNode => {
+    const next = { ...(node as unknown as Record<string, unknown>) } as NativeFormLayoutNode;
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const value = next[key];
+      if (Array.isArray(value)) {
+        next[key] = (value as ContractV2Container[]).map(walk);
+      }
+    });
+    const widgetFields = Array.isArray(node.widgetList)
+      ? node.widgetList
+        .map((widget) => contractV2WidgetToNativeFieldNode(widget))
+        .filter((item): item is NativeFormLayoutNode => Boolean(item))
+      : [];
+    if (widgetFields.length) {
+      const children = Array.isArray(next.children) ? next.children : [];
+      const existingFieldNames = new Set(
+        children
+          .filter((child) => String(child?.type || '').trim().toLowerCase() === 'field')
+          .map((child) => String(child?.name || '').trim())
+          .filter(Boolean),
+      );
+      next.children = [
+        ...children,
+        ...widgetFields.filter((child) => !existingFieldNames.has(String(child.name || '').trim())),
+      ];
+    }
+    return next;
+  };
+  return containers.map(walk);
+}
+
+const baseNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   nativeLayoutVisibilityRevision.value;
   return filterVisibleNativeLayoutNodes(rawNativeFormLayoutNodes.value);
 });
+
+const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
+  const nodes = baseNativeFormLayoutNodes.value;
+  if (isContractFieldOrderEditable.value && fieldOrderPreviewActive.value && fieldOrderDraft.value.length) {
+    return applyNativeFieldOrderPreview(nodes);
+  }
+  return nodes;
+});
+
+function normalizeNativeLayoutColumns(value: unknown): 1 | 2 | 3 | null {
+  const columns = Number(value);
+  return columns === 1 || columns === 2 || columns === 3 ? columns : null;
+}
+
+const nativeFormRootColumns = computed<1 | 2 | 3>(() => {
+  const walk = (nodes: NativeFormLayoutNode[]): 1 | 2 | 3 | null => {
+    for (const node of nodes) {
+      const attrs = node && typeof node.attributes === 'object' && node.attributes
+        ? node.attributes as Record<string, unknown>
+        : {};
+      const direct = normalizeNativeLayoutColumns(
+        attrs.col
+        ?? attrs.columns
+        ?? (node as { cols?: unknown; columns?: unknown }).cols
+        ?? (node as { cols?: unknown; columns?: unknown }).columns,
+      );
+      if (direct) return direct;
+      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+        const children = node?.[key];
+        if (Array.isArray(children)) {
+          const nested = walk(children as NativeFormLayoutNode[]);
+          if (nested) return nested;
+        }
+      }
+    }
+    return null;
+  };
+  return walk(nativeFormLayoutNodes.value) || 3;
+});
+
+watch(baseNativeFormLayoutNodes, (nodes) => {
+  const keys: string[] = [];
+  const seen = new Set<string>();
+  const labels: Record<string, string> = {};
+  const walk = (items: NativeFormLayoutNode[]) => {
+    items.forEach((node) => {
+      const type = nativeLayoutNodeType(node);
+      const name = String(node?.name || '').trim();
+      if (type === 'field' && name && !seen.has(name)) {
+        seen.add(name);
+        keys.push(name);
+        labels[name] = String(node?.string || node?.label || name).trim() || name;
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
+      });
+    });
+  };
+  walk(nodes);
+  nativeFormDesignFieldKeys.value = keys;
+  nativeFormDesignFieldLabels.value = labels;
+}, { immediate: true });
 
 function countNativeNodesByType(nodes: NativeFormLayoutNode[], targetType: string): number {
   const target = String(targetType || '').trim().toLowerCase();
@@ -6191,7 +6829,17 @@ function evaluateNativeActionVisibility(row: Record<string, unknown>) {
 function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
   if (evaluateNativeModifierValue(nativeModifierValue(nodeRaw, 'invisible'))) return false;
   const node = nodeRaw as Record<string, unknown>;
-  if (String(node.type || '').trim().toLowerCase() === 'button') {
+  const nodeType = String(node.type || '').trim().toLowerCase();
+  const fieldName = String(nodeRaw.name || '').trim();
+  if (
+    nodeType === 'field'
+    && fieldName
+    && Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldName)
+    && fieldVisibilityDraft[fieldName] === false
+  ) {
+    return false;
+  }
+  if (nodeType === 'button') {
     return Boolean(contractActionFromNativeRow(node));
   }
   return true;
@@ -7370,12 +8018,20 @@ const viewOrchestrationHudSummary = computed(() => {
   const contracts = Array.isArray(current.business_config_contracts)
     ? current.business_config_contracts as Array<Record<string, unknown>>
     : [];
+  const businessConfigFormFields = Array.isArray(current.business_config_form_fields)
+    ? current.business_config_form_fields.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+  const skippedLegacyPolicyFields = Array.isArray(current.skipped_legacy_policy_fields)
+    ? current.skipped_legacy_policy_fields.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
   return {
     applied: Boolean(orchestration.applied || current.applied || contracts.length),
     owner: String(orchestration.owner_layer || current.owner_layer || '-'),
     contractCount: contracts.length,
     contractNames: contracts.map((row) => String(row.name || row.id || '').trim()).filter(Boolean).join(',') || '-',
     legacyOverlay: Boolean(current.legacy_field_policy_overlay),
+    businessConfigFieldCount: businessConfigFormFields.length,
+    skippedLegacyPolicyFields: skippedLegacyPolicyFields.join(',') || '-',
   };
 });
 
@@ -7407,6 +8063,8 @@ const hudEntries = computed(() => [
   { label: 'view_orchestration_owner', value: viewOrchestrationHudSummary.value.owner },
   { label: 'view_orchestration_contracts', value: viewOrchestrationHudSummary.value.contractCount },
   { label: 'view_orchestration_names', value: viewOrchestrationHudSummary.value.contractNames },
+  { label: 'view_orchestration_form_fields', value: viewOrchestrationHudSummary.value.businessConfigFieldCount },
+  { label: 'view_orchestration_skipped_policy_fields', value: viewOrchestrationHudSummary.value.skippedLegacyPolicyFields },
   { label: 'legacy_policy_overlay', value: viewOrchestrationHudSummary.value.legacyOverlay },
   { label: 'render_profile', value: renderProfile.value },
   { label: 'fields_count', value: Object.keys(contract.value?.fields || {}).length },
@@ -7950,7 +8608,7 @@ async function openNativeChatterAction(action: NativeChatterAction) {
   }
   activeChatterMode.value = '';
   activeChatterLabel.value = action.label;
-  chatterError.value = `${action.label} 缺少可执行调度契约`;
+  chatterError.value = `${action.label} 缺少可执行调度配置`;
 }
 
 function handleSceneBlockAction(payload: { action?: { target?: Record<string, unknown> } }) {
@@ -8166,37 +8824,60 @@ async function openNativeAttachment(att: { id?: number; name?: string; mimetype?
 }
 
 async function reload() {
-  const reloadToken = activeReloadToken + 1;
-  activeReloadToken = reloadToken;
-  renderErrorMessage.value = '';
-  status.value = 'loading';
-  errorMessage.value = '';
-  validationErrors.value = [];
-  showOne2manyErrors.value = false;
-  try {
-    await loadContract();
-    if (reloadToken !== activeReloadToken) return;
-    await loadRecord();
-    if (reloadToken !== activeReloadToken) return;
-    status.value = 'ok';
-    retainedRouteIdentity.value = formRouteIdentity();
-    void preloadFormAuxiliaryData(reloadToken);
-  } catch (err) {
-    if (reloadToken !== activeReloadToken) return;
-    if (err instanceof ContractAccessPolicyError) {
-      await router.push({
-        name: 'workbench',
-        query: pickContractNavQuery(route.query as Record<string, unknown>, {
-          reason: ErrorCodes.CAPABILITY_MISSING,
-          action_id: actionId.value || undefined,
-          menu_id: Number(route.query.menu_id || 0) || undefined,
-          diag: showHud.value ? (err.reasonCode || 'CONTRACT_ACCESS_BLOCKED') : undefined,
-        }),
-      });
-      return;
+  const reloadIdentity = formRouteIdentity();
+  if (activeReloadPromise && reloadIdentity && reloadIdentity === activeReloadIdentity) {
+    return activeReloadPromise;
+  }
+  const run = (async () => {
+    const reloadToken = activeReloadToken + 1;
+    activeReloadToken = reloadToken;
+    renderErrorMessage.value = '';
+    status.value = 'loading';
+    errorMessage.value = '';
+    validationErrors.value = [];
+    showOne2manyErrors.value = false;
+    try {
+      await loadContract();
+      if (reloadToken !== activeReloadToken) return;
+      await loadRecord();
+      if (reloadToken !== activeReloadToken) return;
+      status.value = 'ok';
+      retainedRouteIdentity.value = formRouteIdentity();
+      void preloadFormAuxiliaryData(reloadToken);
+    } catch (err) {
+      if (reloadToken !== activeReloadToken) return;
+      if (err instanceof ContractAccessPolicyError) {
+        await router.push({
+          name: 'workbench',
+          query: pickContractNavQuery(route.query as Record<string, unknown>, {
+            reason: ErrorCodes.CAPABILITY_MISSING,
+            action_id: actionId.value || undefined,
+            menu_id: Number(route.query.menu_id || 0) || undefined,
+            diag: showHud.value ? (err.reasonCode || 'CONTRACT_ACCESS_BLOCKED') : undefined,
+          }),
+        });
+        return;
+      }
+      errorMessage.value = err instanceof Error ? err.message : 'load failed';
+      status.value = 'error';
+    } finally {
+      if (activeReloadIdentity === reloadIdentity) {
+        activeReloadPromise = null;
+        activeReloadIdentity = '';
+      }
     }
-    errorMessage.value = err instanceof Error ? err.message : 'load failed';
-    status.value = 'error';
+  })();
+  activeReloadIdentity = reloadIdentity;
+  activeReloadPromise = run;
+  return run;
+}
+
+function ensureFormInitialReload() {
+  const identity = formRouteIdentity();
+  if (!identity) return;
+  if (identity === retainedRouteIdentity.value && status.value === 'ok') return;
+  if (status.value === 'loading' || !contract.value) {
+    void reload();
   }
 }
 
@@ -8246,6 +8927,19 @@ function applyClientMode(mode: string, toggle = true) {
   contractModeFeedback.value = '';
   if (!activeContractMode.value) closeContractPromptAction();
   return true;
+}
+
+function applyRouteConfigMode(rawMode: unknown) {
+  const mode = String(rawMode || '').trim();
+  if (isBusinessConfigRuntimeModel(model.value)) {
+    if (activeContractMode.value === 'form_field_configuration' || activeContractMode.value === 'business_config_lowcode') {
+      activeContractMode.value = '';
+    }
+    return;
+  }
+  if (mode === 'form_field_configuration' || mode === 'business_config_lowcode') {
+    applyClientMode(mode, false);
+  }
 }
 
 function promptContractActionParams(rule: Record<string, unknown>, providedValues?: Record<string, string>) {
@@ -8346,6 +9040,8 @@ async function onContractFieldAction(payload: FormSectionFieldActionPayload) {
   const actionValue = String(payload.action.value || '').trim();
   if (isContractFieldOrderEditable.value && fieldKey && ['show', 'hide'].includes(actionValue)) {
     fieldVisibilityDraft[fieldKey] = actionValue === 'show';
+    fieldVisibilityDirtyKeys[fieldKey] = true;
+    formConfigAuditResult.value = null;
     contractModeFeedback.value = '字段显示设置已调整，保存后生效';
     return;
   }
@@ -8356,7 +9052,9 @@ async function onContractFieldAction(payload: FormSectionFieldActionPayload) {
 
 function onFieldVisibilityDraftChange(fieldKey: string, value: string) {
   fieldVisibilityDraft[fieldKey] = value === 'show';
+  fieldVisibilityDirtyKeys[fieldKey] = true;
   fieldVisibilityDirty.value = true;
+  formConfigAuditResult.value = null;
   contractModeFeedback.value = '字段显示设置已调整，保存后生效';
 }
 
@@ -8367,11 +9065,12 @@ function onFormSettingsFieldSelect(payload: { field: FormSectionFieldSchema; gro
   if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) {
     const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === fieldKey);
     const checkedAction = row?.actions.find((action) => Boolean(action.checked));
-    if (checkedAction) {
-      fieldVisibilityBase.value = {
-        ...fieldVisibilityBase.value,
-        [fieldKey]: checkedAction.value === 'show',
-      };
+    fieldVisibilityBase.value = {
+      ...fieldVisibilityBase.value,
+      [fieldKey]: checkedAction ? checkedAction.value === 'show' : true,
+    };
+    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)) {
+      fieldVisibilityDraft[fieldKey] = checkedAction ? checkedAction.value === 'show' : true;
     }
   }
   selectedFormSettingsFieldKey.value = fieldKey;
@@ -8407,6 +9106,18 @@ function onSelectedFormSettingsFieldVisibilityChange(value: string) {
   onFieldVisibilityDraftChange(fieldKey, value);
 }
 
+function hideSuggestedInternalFields() {
+  const rows = suggestedHiddenFieldRows.value;
+  if (!rows.length) return;
+  rows.forEach((row) => {
+    fieldVisibilityDraft[row.fieldKey] = false;
+    fieldVisibilityDirtyKeys[row.fieldKey] = true;
+  });
+  fieldVisibilityDirty.value = true;
+  formConfigAuditResult.value = null;
+  contractModeFeedback.value = `已标记隐藏 ${rows.length} 个内部字段，保存后生效`;
+}
+
 function contractInlineFieldOrderIndex(field: FormSectionFieldSchema) {
   const fieldKey = String(field.name || '').trim();
   if (!fieldKey) return -1;
@@ -8425,22 +9136,22 @@ function onContractInlineFieldOrderDragStart(payload: { field: FormSectionFieldS
   onFieldOrderDragStart(fieldKey, payload.event);
 }
 
-function onContractInlineFieldOrderDragOver(payload: { field: FormSectionFieldSchema }) {
+function onContractInlineFieldOrderDragOver(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
   onFieldOrderDragOver(fieldKey);
 }
 
-function onContractInlineFieldOrderDragLeave(payload: { field: FormSectionFieldSchema }) {
+function onContractInlineFieldOrderDragLeave(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
   onFieldOrderDragLeave(fieldKey);
 }
 
-function onContractInlineFieldOrderDrop(payload: { field: FormSectionFieldSchema }) {
+function onContractInlineFieldOrderDrop(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
-  onFieldOrderDrop(fieldKey);
+  onFieldOrderDrop(fieldKey, payload.groupTitle);
 }
 
 function onContractInlineFieldOrderDragEnd() {
@@ -8451,8 +9162,11 @@ function lowCodeApplyBaseParams() {
   const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
   const target = parseMaybeJsonRecord(configAction?.target);
   return normalizeLowCodeApplyParams({
-    model: String(model.value || ''),
+    action_id: Number(actionId.value || route.query.action_id || 0) || 0,
+    view_id: Number(routeQueryText('view_id') || routeQueryText('viewId') || 0) || 0,
+    view_type: 'form',
     ...parseMaybeJsonRecord(target.params),
+    model: String(model.value || ''),
   });
 }
 
@@ -8616,9 +9330,16 @@ function onFieldOrderDragLeave(fieldKey: string) {
   if (dropTargetFieldKey.value === fieldKey) dropTargetFieldKey.value = '';
 }
 
-function onFieldOrderDrop(targetFieldKey: string) {
+function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '') {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === targetFieldKey) return;
+  const sourceFieldKey = draggingFieldKey.value;
   moveFieldOrderTo(draggingFieldKey.value, targetFieldKey);
+  const normalizedTargetGroup = normalizeFieldGroupTitle(fieldGroupDraft[targetFieldKey] || fieldGroupBase.value[targetFieldKey] || targetGroupTitle);
+  if (normalizedTargetGroup) {
+    fieldGroupDraft[sourceFieldKey] = normalizedTargetGroup;
+    fieldMoveTargetDraft[sourceFieldKey] = targetFieldKey;
+    selectedFormSettingsFieldGroupTitleDraft.value = normalizedTargetGroup;
+  }
   dropTargetFieldKey.value = '';
 }
 
@@ -8632,6 +9353,7 @@ function moveFieldOrderTo(sourceFieldKey: string, targetFieldKey: string) {
   draft.splice(to, 0, moved);
   fieldOrderDraft.value = draft;
   fieldOrderPreviewActive.value = true;
+  formConfigAuditResult.value = null;
 }
 
 function moveFieldOrder(fieldKey: string, delta: number) {
@@ -8645,6 +9367,7 @@ function moveFieldOrder(fieldKey: string, delta: number) {
   draft.splice(to, 0, moved);
   fieldOrderDraft.value = draft;
   fieldOrderPreviewActive.value = true;
+  formConfigAuditResult.value = null;
 }
 
 function onFieldOrderDragEnd() {
@@ -8653,34 +9376,113 @@ function onFieldOrderDragEnd() {
 }
 
 function resetContractFieldOrder() {
-  fieldOrderDraft.value = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
+  fieldOrderDraft.value = currentFormDesignFieldKeys.value;
   fieldOrderPreviewActive.value = false;
-  contractModeBaseFieldRows.value.forEach((row) => {
-    if (Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, row.fieldKey)) {
-      fieldVisibilityDraft[row.fieldKey] = fieldVisibilityBase.value[row.fieldKey];
+  Object.keys(fieldGroupDraft).forEach((key) => delete fieldGroupDraft[key]);
+  Object.keys(fieldMoveTargetDraft).forEach((key) => delete fieldMoveTargetDraft[key]);
+  Object.entries(fieldGroupBase.value).forEach(([key, value]) => {
+    if (value) fieldGroupDraft[key] = value;
+  });
+  formVisibilityDraftFieldKeys.value.forEach((fieldKey) => {
+    if (Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) {
+      fieldVisibilityDraft[fieldKey] = fieldVisibilityBase.value[fieldKey];
       return;
     }
-    const selected = row.actions.find((action) => Boolean(action.checked));
-    if (selected) fieldVisibilityDraft[row.fieldKey] = selected.value === 'show';
+    const row = contractModeBaseFieldRows.value.find((item) => item.fieldKey === fieldKey);
+    const selected = row?.actions.find((action) => Boolean(action.checked));
+    fieldVisibilityDraft[fieldKey] = selected ? selected.value === 'show' : true;
   });
   fieldVisibilityDirty.value = false;
+  Object.keys(fieldVisibilityDirtyKeys).forEach((key) => {
+    delete fieldVisibilityDirtyKeys[key];
+  });
+  formConfigAuditResult.value = null;
   contractModeFeedback.value = '';
 }
 
+function routeQueryText(key: string) {
+  const value = route.query[key];
+  if (Array.isArray(value)) return String(value[0] || '').trim();
+  return String(value || '').trim();
+}
+
+function lowCodeReturnQuery() {
+  const query: Record<string, string> = {};
+  ['root_menu_xmlid', 'db', 'menu_id'].forEach((key) => {
+    const value = routeQueryText(key);
+    if (value) query[key] = value;
+  });
+  if (model.value) query.model = model.value;
+  if (actionId.value) query.action_id = String(actionId.value);
+  query.open_pages = '1';
+  const pageLabel = routeQueryText('page_label');
+  if (pageLabel) query.page_label = pageLabel;
+  const viewId = routeQueryText('view_id');
+  if (viewId) query.view_id = viewId;
+  const roleKey = routeQueryText('role_key');
+  if (roleKey) query.role_key = roleKey;
+  return query;
+}
+
+function previewLowCodeConfiguredPage() {
+  const query: Record<string, string | string[]> = {};
+  Object.entries(route.query as Record<string, unknown>).forEach(([key, raw]) => {
+    if (['config_mode', 'activity_page_id'].includes(key)) return;
+    if (Array.isArray(raw)) {
+      const values = raw.map((item) => String(item || '').trim()).filter(Boolean);
+      if (values.length) query[key] = values;
+      return;
+    }
+    const value = String(raw || '').trim();
+    if (value) query[key] = value;
+  });
+  query.return_to_business_config = '1';
+  query.open_pages = '1';
+  router.push({ path: route.path, query });
+}
+
+async function previewCurrentFormConfiguration() {
+  if (hasCurrentFormFieldDraftChanges.value) {
+    const saved = await saveContractFieldOrder();
+    if (!saved) return;
+  }
+  previewLowCodeConfiguredPage();
+}
+
+function returnToBusinessConfigDesigner() {
+  router.push({
+    path: '/admin/business-config',
+    query: lowCodeReturnQuery(),
+  });
+}
+
 async function saveContractFieldOrder() {
-  if (!hasCurrentFormFieldDraftChanges.value) return;
+  if (!hasCurrentFormFieldDraftChanges.value) return true;
   const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
   const target = parseMaybeJsonRecord(configAction?.target);
   const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
+  const changedVisibility = changedFieldVisibilityDraft();
+  const changedGroups = changedFieldGroupDraft();
+  const applyParams: Record<string, unknown> = { ...baseParams };
+  if (hasFieldOrderChanges.value) {
+    applyParams.field_order = [...fieldOrderDraft.value];
+  }
+  if (Object.keys(changedGroups).length) {
+    applyParams.field_groups = changedGroups;
+  }
+  if (Object.keys(changedVisibility).length) {
+    applyParams.field_visibility = changedVisibility;
+  }
+  if (!('field_order' in applyParams) && !('field_visibility' in applyParams) && !('field_groups' in applyParams)) {
+    fieldVisibilityDirty.value = false;
+    contractModeFeedback.value = '';
+    return true;
+  }
   busyKind.value = 'action';
   try {
     await intentRequest({
       intent: 'ui.business_config.lowcode.apply',
-      params: {
-        ...baseParams,
-        field_order: [...fieldOrderDraft.value],
-        field_visibility: { ...fieldVisibilityDraft },
-      },
+      params: applyParams,
       context: { view: 'form' },
     });
     const saveResult = await intentRequest<{
@@ -8692,32 +9494,54 @@ async function saveContractFieldOrder() {
         name: lowCodeScopedContractName(String(model.value || 'unknown'), baseParams),
         model: String(model.value || ''),
         view_type: 'form',
-        publish: false,
+        publish: true,
         contract_json: {
-          objects: buildLowCodeContractObjects(),
-          layout: {
-            form: lowCodeLayoutDraft.value.filter((row) => row.section === 'form').map((row) => ({ object: row.object, field: row.field })),
-            list: lowCodeLayoutDraft.value.filter((row) => row.section === 'list').map((row) => ({ object: row.object, field: row.field })),
-            kanban: lowCodeLayoutDraft.value.filter((row) => row.section === 'kanban').map((row) => ({ object: row.object, field: row.field })),
-          },
           view_orchestration: buildLowCodeViewOrchestration(),
-          rules: lowCodeRulesDraft.value.map((rule) => ({
-            name: rule.name,
-            trigger: rule.trigger,
-            cron: rule.trigger === 'scheduled' ? (rule.cron || '') : '',
-            action: { object: rule.object, field: rule.field },
-          })),
+          legacy_lowcode_draft: {
+            objects: buildLowCodeContractObjects(),
+            layout: {
+              form: lowCodeLayoutDraft.value.filter((row) => row.section === 'form').map((row) => ({ object: row.object, field: row.field })),
+              list: lowCodeLayoutDraft.value.filter((row) => row.section === 'list').map((row) => ({ object: row.object, field: row.field })),
+              kanban: lowCodeLayoutDraft.value.filter((row) => row.section === 'kanban').map((row) => ({ object: row.object, field: row.field })),
+            },
+            rules: lowCodeRulesDraft.value.map((rule) => ({
+              name: rule.name,
+              trigger: rule.trigger,
+              cron: rule.trigger === 'scheduled' ? (rule.cron || '') : '',
+              action: { object: rule.object, field: rule.field },
+            })),
+          },
         },
       },
     });
     const warnings = Array.isArray(saveResult?.precheck?.warnings) ? saveResult.precheck?.warnings || [] : [];
     lowCodePrecheckWarnings.value = warnings.map((item) => String(item || '').trim()).filter(Boolean);
+    if (Object.keys(changedVisibility).length) {
+      fieldVisibilityBase.value = {
+        ...fieldVisibilityBase.value,
+        ...changedVisibility,
+      };
+      Object.keys(changedVisibility).forEach((key) => {
+        delete fieldVisibilityDirtyKeys[key];
+      });
+    }
+    if (Object.keys(changedGroups).length) {
+      fieldGroupBase.value = {
+        ...fieldGroupBase.value,
+        ...changedGroups,
+      };
+    }
     fieldVisibilityDirty.value = false;
-    contractModeFeedback.value = '表单设置已保存';
+    lowCodeContractLoaded.value = false;
+    formConfigAuditResult.value = null;
+    contractModeFeedback.value = '表单设置已保存并发布，刷新页面后按新配置生效';
     await reload();
+    await hydrateLowCodeDraftFromContract();
+    return true;
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'field order update failed';
     status.value = 'error';
+    return false;
   } finally {
     busyKind.value = null;
   }
@@ -9221,6 +10045,14 @@ watch(
 );
 
 watch(
+  () => route.query.config_mode,
+  (mode) => {
+    applyRouteConfigMode(mode);
+  },
+  { immediate: true },
+);
+
+watch(
   () => ({
     label: currentBusinessCategoryLabel.value,
     code: currentBusinessCategoryCode.value,
@@ -9328,6 +10160,7 @@ onMounted(() => {
   if (typeof document !== 'undefined') {
     document.addEventListener('keydown', onRelationDialogDocumentKeydown);
   }
+  void nextTick(() => ensureFormInitialReload());
 });
 
 onActivated(() => {
@@ -9336,6 +10169,7 @@ onActivated(() => {
   if (identity && identity !== retainedRouteIdentity.value) {
     void reload();
   }
+  void nextTick(() => ensureFormInitialReload());
 });
 
 onDeactivated(() => {
@@ -9968,41 +10802,28 @@ onBeforeUnmount(() => {
   line-height: 1.45;
 }
 
-.contract-form-settings-tabs {
+.contract-form-settings-field-count {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 0 10px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px;
   border: 1px solid var(--sc-app-border);
-  border-radius: 6px;
+  border-radius: 999px;
   background: var(--sc-app-panel-muted);
-}
-
-.contract-form-settings-tab {
-  min-height: 30px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
-  cursor: pointer;
 }
 
-.contract-form-settings-tab--active {
-  background: var(--sc-app-panel);
-  color: var(--sc-app-text-primary);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
-}
-
-.contract-form-settings-scope {
+.contract-form-design-strip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 8px;
-  margin: 0;
 }
 
-.contract-form-settings-scope > div {
+.contract-form-design-strip > div {
+  display: grid;
+  gap: 3px;
   min-width: 0;
   padding: 8px 10px;
   border: 1px solid var(--sc-app-border);
@@ -10010,16 +10831,15 @@ onBeforeUnmount(() => {
   background: var(--sc-app-panel-muted);
 }
 
-.contract-form-settings-scope dt {
-  margin: 0 0 3px;
+.contract-form-design-strip span {
   color: var(--sc-app-text-secondary);
   font-size: 11px;
 }
 
-.contract-form-settings-scope dd {
-  margin: 0;
+.contract-form-design-strip strong {
   color: var(--sc-app-text-primary);
   font-size: 12px;
+  font-weight: 650;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -10038,10 +10858,20 @@ onBeforeUnmount(() => {
   font-size: 12px;
 }
 
+.contract-form-settings-section-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
 .contract-form-settings-section-head strong,
 .contract-form-settings-placeholder strong {
   color: var(--sc-app-text-primary);
   font-size: 13px;
+}
+
+.contract-form-settings-section-head .ghost {
+  flex: 0 0 auto;
 }
 
 .contract-form-settings-fields {
@@ -10341,6 +11171,20 @@ onBeforeUnmount(() => {
   margin-right: auto;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
+}
+
+.contract-field-governance-audit {
+  flex: 1 1 280px;
+  min-width: 0;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contract-field-governance-audit--warning {
+  color: var(--sc-app-warning-text);
 }
 
 .contract-lowcode-warnings {

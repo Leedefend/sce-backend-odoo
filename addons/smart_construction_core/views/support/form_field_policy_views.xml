@@ -16,6 +16,7 @@
                 <field name="visible" string="显示"/>
                 <field name="effect_summary" string="效果"/>
                 <field name="scope_summary" string="生效范围"/>
+                <field name="role_group_ids" widget="many2many_tags" optional="hide"/>
                 <field name="view_id" optional="hide"/>
                 <field name="company_id"/>
             </tree>
@@ -47,6 +48,7 @@
                             <field name="visible"/>
                             <field name="sequence"/>
                             <field name="group_title" string="显示分组"/>
+                            <field name="role_group_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True}"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
@@ -75,6 +77,7 @@
                 <field name="model_id"/>
                 <field name="field_name"/>
                 <field name="label"/>
+                <field name="role_group_ids"/>
                 <filter name="active_rows" string="启用" domain="[('active', '=', True)]"/>
                 <filter name="visible_rows" string="显示字段" domain="[('visible', '=', True)]"/>
                 <filter name="hidden_rows" string="隐藏字段" domain="[('visible', '=', False)]"/>

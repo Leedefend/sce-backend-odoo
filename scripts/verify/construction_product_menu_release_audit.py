@@ -26,9 +26,9 @@ def _assert_product_navigation_mode():
         raise AssertionError(
             "smart_core.nav.user_data_acceptance_only must be disabled for full product menu release"
         )
-    if _text(user_menu_config).lower() in TRUTHY_VALUES:
+    if _text(user_menu_config).lower() not in TRUTHY_VALUES:
         raise AssertionError(
-            "smart_core.nav.user_menu_config.enabled must be disabled for full product menu release"
+            "smart_core.nav.user_menu_config.enabled must be enabled so low-code menu configuration can apply"
         )
     return {
         "smart_core.nav.user_data_acceptance_only": _text(acceptance_only) or "0",

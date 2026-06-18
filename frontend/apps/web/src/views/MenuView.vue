@@ -47,7 +47,7 @@ import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
-import { isMenuConfigurationAction } from '../services/action_service';
+import { isBusinessConfigurationAction, isMenuConfigurationAction, resolveActionWebRoute, resolveActionWebRouteQuery } from '../services/action_service';
 
 const route = useRoute();
 const router = useRouter();
@@ -123,6 +123,17 @@ async function resolve() {
         });
         return;
       }
+      if (isBusinessConfigurationAction(result.meta)) {
+        await router.replace({
+          path: resolveActionWebRoute(result.meta) || '/admin/business-config',
+          query: resolveMenuCarryQuery(result.meta, {
+            ...resolveActionWebRouteQuery(result.meta),
+            menu_id: menuId,
+            action_id: result.meta.action_id,
+          }),
+        });
+        return;
+      }
       if (entryTarget) {
         await router.replace(buildEntryTargetRouteTarget(entryTarget, {
           query: resolveMenuCarryQuery(result.meta),
@@ -162,6 +173,17 @@ async function resolve() {
           await router.replace({
             path: '/admin/menu-config',
             query: resolveMenuCarryQuery(result.target.meta, { menu_id: result.target.menu_id, action_id: result.target.action_id }),
+          });
+          return;
+        }
+        if (isBusinessConfigurationAction(result.target.meta)) {
+          await router.replace({
+            path: resolveActionWebRoute(result.target.meta) || '/admin/business-config',
+            query: resolveMenuCarryQuery(result.target.meta, {
+              ...resolveActionWebRouteQuery(result.target.meta),
+              menu_id: result.target.menu_id,
+              action_id: result.target.action_id,
+            }),
           });
           return;
         }

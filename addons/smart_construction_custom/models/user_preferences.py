@@ -6,6 +6,9 @@ from odoo import api, models
 from odoo.tools.safe_eval import safe_eval
 
 
+PARTNER_FORM_PREFERENCE_SOURCE = "smart_construction_custom.partner_form_preference"
+USER_FORM_PREFERENCE_SOURCE = "smart_construction_custom.user_form_preference"
+
 PARTNER_ACTIONS = {
     "customer": {
         "xmlid": "smart_construction_core.action_sc_customer_partner",
@@ -220,6 +223,48 @@ FORMAL_HANDLING_MENU_CATEGORY_CODES = {
     "smart_construction_core.menu_sc_user_income": "finance.receipt.income.project",
     "smart_construction_core.menu_sc_user_payment_apply_acceptance": "finance.payment.apply.pay",
 }
+
+USER_FORM_PREFERENCE_ROOT_MENU_XMLID = "smart_construction_core.menu_sc_root"
+USER_FORM_PREFERENCE_EXCLUDED_MENU_KEYWORDS = (
+    "首页",
+    "配置",
+    "设置",
+    "字典",
+    "权限",
+    "工作流",
+    "审批配置",
+    "菜单配置",
+    "字段配置",
+    "低代码",
+    "报表",
+    "统计",
+    "分析",
+)
+USER_FORM_PREFERENCE_EXCLUDED_MODEL_PREFIXES = (
+    "ir.",
+    "ui.",
+    "bus.",
+    "mail.",
+)
+USER_FORM_PREFERENCE_EXCLUDED_MODELS = {
+    "res.config.settings",
+    "res.groups",
+    "res.users",
+    "sc.product.policy",
+    "sc.product.policy.version",
+    "sc.scene",
+    "sc.scene.version",
+}
+USER_FORM_PREFERENCE_EXCLUDED_FIELDS = {
+    "message_ids",
+    "message_follower_ids",
+    "message_partner_ids",
+    "activity_ids",
+    "map_ids",
+}
+USER_FORM_PREFERENCE_EXCLUDED_FIELD_SUFFIXES = (
+    "_map_ids",
+)
 
 USER_SPLIT_HANDLING_MENU_RULES = {
     "smart_construction_core.menu_sc_reimbursement_request": {
@@ -757,7 +802,11 @@ class ScUserPreferenceInitialization(models.TransientModel):
                             }
                         ],
                     }
-                }
+                },
+                "context": {
+                    "source": PARTNER_FORM_PREFERENCE_SOURCE,
+                    "scope": "partner_master_form_preference",
+                },
             }
         }
         if required_names:
@@ -769,7 +818,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
                 {
                     "code": "REQUIRED",
                     "field": name,
-                    "source": "smart_construction_custom.partner_form_preference",
+                    "source": PARTNER_FORM_PREFERENCE_SOURCE,
                     "when_profiles": ["create", "edit"],
                 }
                 for name in required_names
@@ -785,34 +834,99 @@ class ScUserPreferenceInitialization(models.TransientModel):
 
     @api.model
     def _formal_handling_form_targets(self):
-        targets = []
+        targets_by_key = {}
         seen = set()
-        for menu_xmlid in FORMAL_HANDLING_MENU_XMLIDS:
-            menu = self.env.ref(menu_xmlid, raise_if_not_found=False)
+        for menu, menu_xmlid, source in self._user_form_preference_menu_entries():
             action = self._act_window_from_menu(menu)
-            if not action or not action.res_model:
+            if not self._is_user_business_form_action(menu, action):
                 continue
             action_key = (int(action.id), str(action.res_model))
             if action_key in seen:
                 continue
             seen.add(action_key)
-            if str(action.res_model) == "res.partner":
-                continue
             context = self._action_context(action)
             category_code = str(
                 context.get("default_business_category_code")
                 or FORMAL_HANDLING_MENU_CATEGORY_CODES.get(menu_xmlid)
                 or ""
             ).strip()
-            targets.append({
+            targets_by_key[action_key] = {
                 "menu_xmlid": menu_xmlid,
+                "menu_id": int(menu.id),
                 "action": action,
                 "model": str(action.res_model),
                 "title": str(menu.name or action.name or action.res_model),
                 "category_code": category_code,
                 "context": context,
-            })
-        return targets
+                "source": source,
+            }
+        return list(targets_by_key.values())
+
+    @api.model
+    def _user_form_preference_menu_entries(self):
+        entries = []
+        seen_menu_ids = set()
+        for menu_xmlid in FORMAL_HANDLING_MENU_XMLIDS:
+            menu = self.env.ref(menu_xmlid, raise_if_not_found=False)
+            if not menu or not menu.exists():
+                continue
+            entries.append((menu, menu_xmlid, "confirmed_formal_menu"))
+            seen_menu_ids.add(int(menu.id))
+
+        root = self.env.ref(USER_FORM_PREFERENCE_ROOT_MENU_XMLID, raise_if_not_found=False)
+        if not root:
+            return entries
+        menus = self.env["ir.ui.menu"].sudo().search(
+            [("id", "child_of", int(root.id)), ("id", "!=", int(root.id))],
+            order="sequence,id",
+        )
+        xmlids_by_id = menus.get_external_id()
+        for menu in menus:
+            if int(menu.id) in seen_menu_ids:
+                continue
+            menu_xmlid = str(xmlids_by_id.get(menu.id) or "").strip()
+            action = self._act_window_from_menu(menu)
+            if not self._is_user_business_form_action(menu, action):
+                continue
+            entries.append((menu, menu_xmlid, "business_menu_discovery"))
+            seen_menu_ids.add(int(menu.id))
+        return entries
+
+    @api.model
+    def _is_user_business_form_action(self, menu, action):
+        if not action or not action.exists() or not action.res_model:
+            return False
+        model_name = str(action.res_model)
+        if model_name == "res.partner":
+            return False
+        if model_name in USER_FORM_PREFERENCE_EXCLUDED_MODELS:
+            return False
+        if any(model_name.startswith(prefix) for prefix in USER_FORM_PREFERENCE_EXCLUDED_MODEL_PREFIXES):
+            return False
+        if model_name not in self.env:
+            return False
+        model = self.env[model_name]
+        if getattr(model, "_transient", False):
+            return False
+        path = self._menu_path_label(menu)
+        if any(keyword in path for keyword in USER_FORM_PREFERENCE_EXCLUDED_MENU_KEYWORDS):
+            return False
+        view_modes = {
+            str(item or "").strip()
+            for item in str(getattr(action, "view_mode", "") or "").split(",")
+            if str(item or "").strip()
+        }
+        return "form" in view_modes or bool(self._action_form_view_id(action))
+
+    @api.model
+    def _menu_path_label(self, menu):
+        names = []
+        current = menu
+        while current and current.exists():
+            if current.name:
+                names.append(str(current.name))
+            current = current.parent_id
+        return " / ".join(reversed(names))
 
     @api.model
     def _act_window_from_menu(self, menu):
@@ -872,7 +986,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
                     }
                 },
                 "context": {
-                    "source": "smart_construction_custom.user_form_preference",
+                    "source": USER_FORM_PREFERENCE_SOURCE,
                     "scope": "user_confirmed_formal_handling",
                     "field_order_source": source,
                     "menu_xmlid": item.get("menu_xmlid"),
@@ -939,7 +1053,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
         layout_children = []
         for index, name in enumerate(ordered, start=1):
             descriptor = fields_map.get(name)
-            if not descriptor or visible.get(name) is False:
+            if not descriptor or visible.get(name) is False or self._is_user_form_preference_excluded_field(name, descriptor):
                 continue
             label = labels.get(name) or str(descriptor.get("string") or name)
             field_rows.append({
@@ -970,6 +1084,8 @@ class ScUserPreferenceInitialization(models.TransientModel):
             name = str(node.get("name") or "").strip()
             if not name or name in ordered or name not in fields_map:
                 continue
+            if self._is_user_form_preference_excluded_field(name, fields_map.get(name) or {}):
+                continue
             if str(node.get("invisible") or "").strip() in {"1", "True", "true"}:
                 continue
             ordered.append(name)
@@ -987,6 +1103,20 @@ class ScUserPreferenceInitialization(models.TransientModel):
             })
             layout_children.append(self._field_layout_node(name, label, descriptor))
         return field_rows, layout_children
+
+    @api.model
+    def _is_user_form_preference_excluded_field(self, name, descriptor):
+        field_name = str(name or "").strip()
+        if not field_name:
+            return True
+        if field_name in USER_FORM_PREFERENCE_EXCLUDED_FIELDS:
+            return True
+        if any(field_name.endswith(suffix) for suffix in USER_FORM_PREFERENCE_EXCLUDED_FIELD_SUFFIXES):
+            return True
+        relation = str((descriptor or {}).get("relation") or (descriptor or {}).get("comodel_name") or "").strip()
+        if relation.startswith("sc.legacy.") and relation.endswith(".map"):
+            return True
+        return False
 
     @api.model
     def _action_form_view_id(self, action):

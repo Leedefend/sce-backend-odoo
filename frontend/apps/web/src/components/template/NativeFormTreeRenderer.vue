@@ -164,7 +164,7 @@
             :field-config-editable="fieldConfigEditable"
             :field-selection-mode="fieldSelectionMode"
             :selected-field-key="selectedFieldKey"
-            :field-group-title="containerPolicyTitle(node)"
+            :field-group-title="containerPolicyTitle(node, index)"
             tone="core"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
@@ -363,6 +363,7 @@ export type NativeFormLayoutNode = {
   tabs?: NativeFormLayoutNode[];
   nodes?: NativeFormLayoutNode[];
   items?: NativeFormLayoutNode[];
+  widgetList?: NativeFormLayoutNode[];
 };
 
 const props = withDefaults(defineProps<{
@@ -405,9 +406,9 @@ const emit = defineEmits<{
   (event: 'field-action', payload: FormSectionFieldActionPayload): void;
   (event: 'field-order-move', payload: { field: FormSectionFieldSchema; delta: number }): void;
   (event: 'field-order-drag-start', payload: { field: FormSectionFieldSchema; event: DragEvent }): void;
-  (event: 'field-order-drag-over', payload: { field: FormSectionFieldSchema }): void;
-  (event: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema }): void;
-  (event: 'field-order-drop', payload: { field: FormSectionFieldSchema }): void;
+  (event: 'field-order-drag-over', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
+  (event: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
+  (event: 'field-order-drop', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
   (event: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (event: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
   (event: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
@@ -446,8 +447,18 @@ function containerTitle(node: NativeFormLayoutNode) {
   return raw;
 }
 
-function containerPolicyTitle(node: NativeFormLayoutNode) {
-  return String(node?.string || node?.label || '').trim();
+function isReadablePolicyTitle(value: unknown) {
+  const text = String(value || '').trim();
+  if (!text) return false;
+  if (/^[a-z][a-z0-9_:. -]*$/i.test(text) && /[_:.]/.test(text)) return false;
+  return true;
+}
+
+function containerPolicyTitle(node: NativeFormLayoutNode, index = 0) {
+  const raw = String(node?.string || node?.label || '').trim();
+  if (isReadablePolicyTitle(raw)) return raw;
+  if (nodeType(node) === 'group' && fieldChildren(node).length) return `默认分组 ${index + 1}`;
+  return '';
 }
 
 function nodeText(node: NativeFormLayoutNode) {

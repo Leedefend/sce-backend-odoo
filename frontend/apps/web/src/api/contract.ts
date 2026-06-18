@@ -8,6 +8,8 @@ import { adaptUnifiedPageContractV2Raw } from '../app/runtime/unifiedPageContrac
 
 type LoadActionContractOptions = {
   viewId?: number | null;
+  menuId?: number | null;
+  viewType?: 'form' | 'tree' | 'list' | 'kanban' | 'pivot' | 'graph' | 'calendar' | 'gantt' | 'activity' | 'dashboard' | null;
   recordId?: number | null;
   renderProfile?: 'create' | 'edit' | 'readonly' | null;
   surface?: 'user' | 'native' | 'hud' | null;
@@ -84,6 +86,14 @@ function rethrowContractError(err: unknown, context: { op: 'action_open' | 'mode
 
 function buildActionContractParams(actionId: number, options?: LoadActionContractOptions) {
   const params: Record<string, unknown> = { op: 'action_open', action_id: actionId };
+  const menuId = Number(options?.menuId || 0);
+  if (Number.isFinite(menuId) && menuId > 0) {
+    params.menu_id = menuId;
+  }
+  const viewType = String(options?.viewType || '').trim().toLowerCase();
+  if (viewType) {
+    params.view_type = viewType === 'list' ? 'tree' : viewType;
+  }
   const viewId = Number(options?.viewId || 0);
   if (Number.isFinite(viewId) && viewId > 0) {
     params.view_id = viewId;

@@ -1317,6 +1317,11 @@ def get_intent_handler_contributions():
         from odoo.addons.smart_construction_core.handlers.capability_visibility_report import (
             CapabilityVisibilityReportHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.approval_policy_configuration import (
+            ApprovalPolicyConfigGetHandler,
+            ApprovalPolicyConfigSetHandler,
+            ApprovalPolicyStepsSetHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.payment_request_approval import (
             PaymentRequestApproveHandler,
             PaymentRequestDoneHandler,
@@ -1444,6 +1449,9 @@ def get_intent_handler_contributions():
         ("my.work.complete_batch", MyWorkCompleteBatchHandler),
         ("telemetry.track", TelemetryTrackHandler),
         ("capability.visibility.report", CapabilityVisibilityReportHandler),
+        ("sc.approval_policy.config.get", ApprovalPolicyConfigGetHandler),
+        ("sc.approval_policy.config.set", ApprovalPolicyConfigSetHandler),
+        ("sc.approval_policy.steps.set", ApprovalPolicyStepsSetHandler),
         ("payment.request.submit", PaymentRequestSubmitHandler),
         ("payment.request.approve", PaymentRequestApproveHandler),
         ("payment.request.reject", PaymentRequestRejectHandler),

@@ -213,7 +213,7 @@ class ScProductPolicy(models.Model):
     def _ensure_formal_product_navigation_runtime_params(self):
         Param = self.env["ir.config_parameter"].sudo()
         Param.set_param("smart_core.nav.user_data_acceptance_only", "0")
-        Param.set_param("smart_core.nav.user_menu_config.enabled", "0")
+        Param.set_param("smart_core.nav.user_menu_config.enabled", "1")
         return True
 
     @api.model

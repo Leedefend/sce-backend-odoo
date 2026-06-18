@@ -60,9 +60,19 @@ def _install_odoo_stubs() -> None:
     odoo_mod.api = _Api()
     odoo_mod.fields = _Fields()
     odoo_mod.models = types.SimpleNamespace(Model=object)
+    odoo_mod.__path__ = []
+    addons_mod = types.ModuleType("odoo.addons")
+    addons_mod.__path__ = [str(ROOT / "addons")]
+    smart_core_mod = types.ModuleType("odoo.addons.smart_core")
+    smart_core_mod.__path__ = [str(ROOT / "addons/smart_core")]
+    utils_mod = types.ModuleType("odoo.addons.smart_core.utils")
+    utils_mod.__path__ = [str(ROOT / "addons/smart_core/utils")]
     exceptions_mod = types.ModuleType("odoo.exceptions")
     exceptions_mod.ValidationError = type("ValidationError", (Exception,), {})
     sys.modules["odoo"] = odoo_mod
+    sys.modules["odoo.addons"] = addons_mod
+    sys.modules["odoo.addons.smart_core"] = smart_core_mod
+    sys.modules["odoo.addons.smart_core.utils"] = utils_mod
     sys.modules["odoo.exceptions"] = exceptions_mod
 
 
@@ -139,6 +149,12 @@ class BusinessConfigContractSchemaTests(unittest.TestCase):
             self.contract._unknown_view_orchestration_fields(payload, {"name"}),
             [],
         )
+
+    def test_source_authority_declares_boundary_classifier(self):
+        source = self.contract.source_authority_contract(self.contract)
+
+        self.assertEqual(source.get("kind"), "ui_business_config_contract_orchestration_config")
+        self.assertEqual(source.get("boundary_classifier"), "smart_core.utils.backend_contract_boundaries")
 
     def test_form_layout_unknown_fields_are_reported(self):
         payload = {

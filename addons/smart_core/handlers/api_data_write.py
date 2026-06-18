@@ -43,6 +43,7 @@ from ..utils.reason_codes import (
     failure_meta_for_reason,
 )
 from ..utils.extension_hooks import call_extension_hook_first
+from ..utils.backend_contract_boundaries import is_business_config_runtime_model
 
 _logger = logging.getLogger(__name__)
 
@@ -319,6 +320,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
 
         if not model:
             return self._err(400, "缺少参数 model", REASON_MISSING_PARAMS)
+        if is_business_config_runtime_model(model):
+            return self._err(403, f"运行时配置模型必须通过专用配置入口写入: {model}", REASON_UNSUPPORTED_SOURCE)
         allowed_fields = self._allowed_models().get(model)
         if not allowed_fields:
             return self._err(403, f"模型不允许写入: {model}", REASON_UNSUPPORTED_SOURCE)

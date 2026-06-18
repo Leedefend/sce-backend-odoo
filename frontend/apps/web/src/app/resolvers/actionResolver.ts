@@ -99,9 +99,16 @@ export async function resolveAction(
   menuTree: NavNode[],
   actionId: number,
   currentAction?: NavMeta | null,
+  options?: { menuId?: number | null; viewType?: string | null },
 ): Promise<ActionResolution> {
   const currentMatches = Boolean(currentAction && Number(currentAction.action_id || 0) === Number(actionId || 0));
-  const currentMenuId = Number(currentAction?.menu_id || 0);
+  const currentMenuId = Number(options?.menuId || currentAction?.menu_id || 0);
+  const contractOptions = {
+    menuId: currentMenuId > 0 ? currentMenuId : undefined,
+    viewType: String(options?.viewType || '').trim().toLowerCase() as Parameters<typeof loadActionContract>[1] extends infer T
+      ? T extends { viewType?: infer V } ? V : never
+      : never,
+  };
   const metaFromMenu = (
     currentMenuId > 0
       ? findActionMetaByMenu(menuTree, currentMenuId, actionId)
@@ -113,7 +120,7 @@ export async function resolveAction(
   let legacyContract: Awaited<ReturnType<typeof loadActionContract>> | null = null;
   let candidateMeta = seedMeta;
   if (needsLiteContractAllTreeViewPreflight(seedMeta)) {
-    legacyContract = await loadActionContract(actionId);
+    legacyContract = await loadActionContract(actionId, contractOptions);
     candidateMeta = mergeMeta(seedMeta, resolveMetaFromContract(legacyContract, actionId));
   }
 
@@ -142,7 +149,7 @@ export async function resolveAction(
     }
   }
 
-  const contract = legacyContract || await loadActionContract(actionId);
+  const contract = legacyContract || await loadActionContract(actionId, contractOptions);
   const fallbackMeta = resolveMetaFromContract(contract, actionId);
   const meta = mergeMeta(seedMeta, fallbackMeta);
   if (!meta.action_id) {

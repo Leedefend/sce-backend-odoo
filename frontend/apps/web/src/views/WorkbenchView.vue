@@ -310,7 +310,7 @@ const reasonLabel = computed(() => {
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
       return pageText('reason_act_unsupported_type', '动作类型暂不支持');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
-      return pageText('reason_contract_context_missing', '契约上下文缺失');
+      return pageText('reason_contract_context_missing', '页面上下文缺失');
     case ErrorCodes.CAPABILITY_MISSING:
       return pageText('reason_capability_missing', '缺少能力权限');
     default:
@@ -327,7 +327,7 @@ const message = computed(() => {
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
       return pageText('message_act_unsupported_type', '');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
-      return pageText('message_contract_context_missing', '页面缺少契约必需上下文（例如 action_id）。');
+      return pageText('message_contract_context_missing', '当前入口缺少页面所需上下文（例如 action_id）。');
     case ErrorCodes.CAPABILITY_MISSING:
       return pageText('message_capability_missing', '');
     default:

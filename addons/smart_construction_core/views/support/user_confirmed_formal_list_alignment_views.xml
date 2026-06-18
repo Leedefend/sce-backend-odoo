@@ -50,7 +50,6 @@
                 <field name="p1_visible_06fa8c6f628f" string="单据状态" readonly="1"/>
                 <field name="p1_visible_f22832ce4781" string="推送结果" readonly="1"/>
                 <field name="p1_visible_8fa8662ad38f" string="单据编号" readonly="1"/>
-                <field name="p1_visible_334ddb69d3cf" string="付款时间" readonly="1"/>
                 <field name="p1_visible_d890d302f7f7" string="付款金额" readonly="1"/>
                 <field name="p1_visible_80e3d15acaa8" string="成本类别" readonly="1"/>
                 <field name="p1_visible_533775096e5b" string="收款单位名称" readonly="1"/>

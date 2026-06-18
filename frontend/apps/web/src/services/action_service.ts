@@ -4,6 +4,9 @@ import { useSessionStore } from '../stores/session';
 import { recordTrace, digestParams, createTraceId } from './trace';
 import { buildEntryTargetRouteTarget } from '../app/routeQuery';
 
+const BUSINESS_CONFIG_ACTION_XMLID = 'smart_construction_core.action_sc_business_config_workbench';
+const BUSINESS_CONFIG_ROOT_MENU_XMLID = 'smart_construction_core.menu_sc_root';
+
 function normalizeDomain(domain: unknown) {
   return Array.isArray(domain) ? domain : [];
 }
@@ -15,9 +18,59 @@ function normalizeContext(context: unknown) {
   return {} as Record<string, unknown>;
 }
 
+function contextValue(action: NavMeta | null | undefined, key: string): string {
+  const context = action?.context;
+  if (context && typeof context === 'object' && !Array.isArray(context)) {
+    return String((context as Record<string, unknown>)[key] || '').trim();
+  }
+  if (typeof context === 'string') {
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = context.match(new RegExp(`['"]${escaped}['"]\\s*:\\s*['"]([^'"]+)['"]`));
+    return String(match?.[1] || '').trim();
+  }
+  return '';
+}
+
 export function isMenuConfigurationAction(action: NavMeta | null | undefined) {
   const model = String(action?.model || action?.res_model || '').trim();
   return model === 'ui.menu.config.policy';
+}
+
+export function resolveActionWebRoute(action: NavMeta | null | undefined): string {
+  const entryTarget = action?.entry_target && typeof action.entry_target === 'object' && !Array.isArray(action.entry_target)
+    ? action.entry_target as Record<string, unknown>
+    : {};
+  const entryRoute = String(entryTarget.route || '').trim();
+  if (entryRoute.startsWith('/admin/')) return entryRoute;
+
+  const context = action?.context;
+  if (context && typeof context === 'object' && !Array.isArray(context)) {
+    const route = contextValue(action, 'sc_web_route');
+    return route.startsWith('/admin/') ? route : '';
+  }
+  if (typeof context === 'string') {
+    const route = contextValue(action, 'sc_web_route');
+    return route.startsWith('/admin/') ? route : '';
+  }
+  return '';
+}
+
+export function resolveActionWebRouteQuery(action: NavMeta | null | undefined): Record<string, string> {
+  const rootMenuXmlid = contextValue(action, 'business_config_root_menu_xmlid');
+  if (rootMenuXmlid) return { root_menu_xmlid: rootMenuXmlid };
+  if (isBusinessConfigurationAction(action)) return { root_menu_xmlid: BUSINESS_CONFIG_ROOT_MENU_XMLID };
+  return {};
+}
+
+export function isBusinessConfigurationAction(action: NavMeta | null | undefined) {
+  const model = String(action?.model || action?.res_model || '').trim();
+  const name = String(action?.name || action?.title || '').trim();
+  const actionXmlid = String(action?.action_xmlid || action?.xmlid || '').trim();
+  const route = resolveActionWebRoute(action);
+  return route === '/admin/business-config'
+    || actionXmlid === BUSINESS_CONFIG_ACTION_XMLID
+    || model === 'ui.business.config.contract'
+    || (model === 'ui.business.config.contract' && /业务配置工作台|低代码配置|配置工作台/.test(name));
 }
 
 export function openAction(router: Router, action: NavMeta, menuId?: number) {
@@ -38,6 +91,14 @@ export function openAction(router: Router, action: NavMeta, menuId?: number) {
 
   if (isMenuConfigurationAction(action)) {
     router.push({ path: '/admin/menu-config', query });
+    return;
+  }
+
+  if (isBusinessConfigurationAction(action)) {
+    router.push({
+      path: resolveActionWebRoute(action) || '/admin/business-config',
+      query: { ...query, ...resolveActionWebRouteQuery(action) },
+    });
     return;
   }
 

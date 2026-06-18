@@ -51,7 +51,7 @@ function normalizeFieldNames(rows: unknown): string[] {
       const row = (item || {}) as Dict;
       return String(row.field || row.name || row.field_name || '').trim();
     })
-    .filter(Boolean);
+    .filter((name) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(name));
 }
 
 function collectSlotFieldNames(value: unknown): string[] {
@@ -83,24 +83,27 @@ function collectDisplayRowLabels(rows: unknown, labels: Record<string, string>) 
 
 export function extractKanbanFieldsFromContract(contract: unknown): string[] {
   const typed = (contract || {}) as Dict;
-  const v2 = resolveUnifiedPageContractV2(typed);
-  if (String(v2?.pageInfo?.viewType || '').trim() === 'kanban') {
-    const fields = collectUnifiedPageContractV2FieldWidgets(typed)
-      .map((widget) => widget.fieldCode)
-      .filter(Boolean);
+  const directViews = typed.views as Dict | undefined;
+  if (directViews) {
+    const kanbanBlock = (directViews.kanban || {}) as Dict;
+    const nestedKanban = (kanbanBlock.kanban || {}) as Dict;
+    const fields = uniqueFields([
+      ...normalizeFieldNames(kanbanBlock.fields),
+      ...normalizeFieldNames(nestedKanban.fields),
+      ...collectSlotFieldNames(kanbanBlock.slots),
+      ...collectSlotFieldNames(nestedKanban.slots),
+    ]);
     if (fields.length) return fields;
   }
-  const directViews = typed.views as Dict | undefined;
-  if (!directViews) return [];
-  const kanbanBlock = (directViews.kanban || {}) as Dict;
-  const nestedKanban = (kanbanBlock.kanban || {}) as Dict;
-  const fields = [
-    ...normalizeFieldNames(kanbanBlock.fields),
-    ...normalizeFieldNames(nestedKanban.fields),
-    ...collectSlotFieldNames(kanbanBlock.slots),
-    ...collectSlotFieldNames(nestedKanban.slots),
-  ];
-  return uniqueFields(fields);
+  const v2 = resolveUnifiedPageContractV2(typed);
+  if (String(v2?.pageInfo?.viewType || '').trim() === 'kanban') {
+    return uniqueFields(
+      collectUnifiedPageContractV2FieldWidgets(typed)
+        .map((widget) => String(widget.fieldCode || '').trim())
+        .filter((name) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(name)),
+    );
+  }
+  return [];
 }
 
 export function extractAdvancedViewFieldsFromContract(contract: unknown, mode: string): string[] {

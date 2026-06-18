@@ -27,6 +27,14 @@ class UIFormFieldPolicy(models.Model):
     action_id = fields.Many2one("ir.actions.act_window", string="业务页面", ondelete="cascade")
     view_id = fields.Many2one("ir.ui.view", string="限定表单视图", ondelete="cascade")
     company_id = fields.Many2one("res.company", string="公司", default=lambda self: self.env.company)
+    role_group_ids = fields.Many2many(
+        "res.groups",
+        "ui_form_field_policy_group_rel",
+        "policy_id",
+        "group_id",
+        string="适用业务角色",
+        help="留空表示对当前公司所有用户生效；填写后仅对这些业务角色中的用户生效。",
+    )
     visible = fields.Boolean(string="显示", default=True)
     label = fields.Char(string="显示名称")
     sequence = fields.Integer(string="显示顺序", default=100)
@@ -44,7 +52,7 @@ class UIFormFieldPolicy(models.Model):
             title = rec.label or rec.field_label or rec.field_name or "-"
             rec.name = "%s.%s %s" % (rec.model or "-", title, state)
 
-    @api.depends("model", "field_name", "field_id", "label", "visible", "company_id", "action_id", "view_id")
+    @api.depends("model", "field_name", "field_id", "label", "visible", "company_id", "action_id", "view_id", "role_group_ids")
     def _compute_policy_summary(self):
         for rec in self:
             field = rec.field_id
@@ -61,6 +69,8 @@ class UIFormFieldPolicy(models.Model):
                 scope.append("动作：%s" % rec.action_id.display_name)
             if rec.view_id:
                 scope.append("视图：%s" % rec.view_id.display_name)
+            groups = rec.role_group_ids.mapped("display_name")
+            scope.append("业务角色：%s" % "、".join(groups) if groups else "业务角色：全部")
             if not rec.action_id and not rec.view_id:
                 scope.append("全部表单")
             rec.scope_summary = " / ".join(scope)
@@ -140,7 +150,7 @@ class UIFormFieldPolicy(models.Model):
             if rec.view_id and (rec.view_id.model != rec.model or rec.view_id.type != "form"):
                 raise ValidationError("视图必须是当前模型的表单视图：%s" % rec.view_id.display_name)
 
-    @api.constrains("active", "model", "field_name", "company_id", "action_id", "view_id")
+    @api.constrains("active", "model", "field_name", "company_id", "action_id", "view_id", "role_group_ids")
     def _check_unique_effective_policy(self):
         for rec in self:
             if not rec.active or not rec.model or not rec.field_name:
@@ -154,8 +164,14 @@ class UIFormFieldPolicy(models.Model):
                 ("action_id", "=", rec.action_id.id or False),
                 ("view_id", "=", rec.view_id.id or False),
             ]
-            if self.search_count(domain):
-                raise ValidationError("同一模型/字段/公司/动作/视图范围内只能保留一条启用的字段策略。")
+            same_scope = self.search(domain)
+            rec_group_ids = set(rec.role_group_ids.ids)
+            for other in same_scope:
+                other_group_ids = set(other.role_group_ids.ids)
+                if not rec_group_ids and not other_group_ids:
+                    raise ValidationError("同一模型/字段/公司/动作/视图/业务角色范围内只能保留一条启用的字段策略。")
+                if rec_group_ids and other_group_ids and rec_group_ids & other_group_ids:
+                    raise ValidationError("同一模型/字段/公司/动作/视图/业务角色范围内只能保留一条启用的字段策略。")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -289,22 +305,32 @@ class UIFormFieldPolicy(models.Model):
         view_type: str,
         action_id: int | None = None,
         view_id: int | None = None,
+        excluded_field_names: set[str] | list[str] | tuple[str, ...] | None = None,
     ) -> dict:
         if view_type != "form" or not isinstance(contract, dict) or not model_name:
             return contract or {}
         if model_name not in self.env:
             return contract
 
-        policies = self._effective_policies(model_name, action_id=action_id, view_id=view_id)
+        policies = self._effective_policies(model_name, action_id=action_id, view_id=view_id, user=self.env.user)
         if not policies:
             return contract
 
         fields_meta = self.env[model_name].fields_get()
         available_fields = set(fields_meta.keys())
+        excluded_fields = {
+            str(name or "").strip()
+            for name in (excluded_field_names or [])
+            if str(name or "").strip()
+        }
         effective: dict[str, dict[str, Any]] = {}
+        skipped_by_business_config = []
         for policy in policies:
             field_name = str(policy.field_name or "").strip()
             if not field_name or field_name not in available_fields:
+                continue
+            if field_name in excluded_fields:
+                skipped_by_business_config.append(field_name)
                 continue
             label = str(policy.label or "").strip()
             effective[field_name] = {
@@ -313,9 +339,19 @@ class UIFormFieldPolicy(models.Model):
                 "sequence": int(policy.sequence or 100),
                 "group_title": str(policy.group_title or "业务配置字段").strip() or "业务配置字段",
                 "policy_id": int(policy.id),
+                "role_group_ids": [int(group_id) for group_id in policy.role_group_ids.ids],
                 "field_info": self._field_contract_info(fields_meta.get(field_name) or {}, label),
             }
         if not effective:
+            if skipped_by_business_config:
+                meta = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
+                meta["form_field_policy"] = {
+                    "applied": False,
+                    "source_authority": self.source_authority_contract(),
+                    "model": model_name,
+                    "skipped_by_business_config_fields": sorted(set(skipped_by_business_config)),
+                }
+                contract["governance"] = meta
             return contract
 
         visible = {name for name, rule in effective.items() if rule.get("visible")}
@@ -342,11 +378,13 @@ class UIFormFieldPolicy(models.Model):
             "model": model_name,
             "visible_fields": sorted(visible),
             "hidden_fields": sorted(hidden),
+            "role_group_scoped": any(bool(rule.get("role_group_ids")) for rule in effective.values()),
+            "skipped_by_business_config_fields": sorted(set(skipped_by_business_config)),
         }
         contract["governance"] = meta
         return contract
 
-    def _effective_policies(self, model_name: str, *, action_id: int | None = None, view_id: int | None = None):
+    def _effective_policies(self, model_name: str, *, action_id: int | None = None, view_id: int | None = None, user=None):
         domain = [
             ("active", "=", True),
             ("model", "=", model_name),
@@ -355,21 +393,27 @@ class UIFormFieldPolicy(models.Model):
             ("company_id", "=", self.env.company.id),
         ]
         records = self.sudo().search(domain, order="sequence, id")
+        user = user or self.env.user
+        user_group_ids = set(user.groups_id.ids) if user else set()
 
         def applies(policy) -> bool:
             policy_action = int(policy.action_id.id or 0)
             policy_view = int(policy.view_id.id or 0)
+            policy_group_ids = set(policy.role_group_ids.ids)
             if policy_action and policy_action != int(action_id or 0):
                 return False
             if policy_view and policy_view != int(view_id or 0):
                 return False
+            if policy_group_ids and not (policy_group_ids & user_group_ids):
+                return False
             return True
 
-        def scope_weight(policy) -> tuple[int, int, int]:
+        def scope_weight(policy) -> tuple[int, int, int, int]:
             return (
                 1 if policy.action_id else 0,
                 1 if policy.view_id else 0,
                 1 if policy.company_id else 0,
+                len(policy.role_group_ids),
             )
 
         return sorted([rec for rec in records if applies(rec)], key=lambda rec: (*scope_weight(rec), rec.sequence or 0, rec.id))

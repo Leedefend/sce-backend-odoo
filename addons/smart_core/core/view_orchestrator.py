@@ -38,6 +38,7 @@ class ViewOrchestrator:
         normalized_view_type = "tree" if view_type == "list" else str(view_type or "").strip()
         applied_contracts = []
         form_layout_overlay_applied = False
+        business_config_form_fields: set[str] = set()
         if "ui.business.config.contract" in self.env:
             configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
                 model_name,
@@ -52,6 +53,8 @@ class ViewOrchestrator:
                     normalized_view_type == "form"
                     and self._config_declares_layout_overlay(config, normalized_view_type, model_name)
                 )
+                if normalized_view_type == "form":
+                    business_config_form_fields.update(self._config_declared_field_names(config, normalized_view_type, model_name))
                 out = self._apply_business_config_contract(out, config, normalized_view_type, model_name)
                 if out != before:
                     applied_contracts.append({
@@ -72,6 +75,7 @@ class ViewOrchestrator:
                 view_type=normalized_view_type,
                 action_id=action_id,
                 view_id=view_id,
+                excluded_field_names=business_config_form_fields,
             )
             legacy_policy_applied = out != before
 
@@ -83,6 +87,7 @@ class ViewOrchestrator:
             "business_config_contracts": applied_contracts,
             "legacy_field_policy_overlay": bool(legacy_policy_applied),
             "form_layout_overlay": bool(form_layout_overlay_applied),
+            "business_config_form_fields": sorted(business_config_form_fields),
         }
         out["governance"] = governance
         source_trace = out.get("source_trace") if isinstance(out.get("source_trace"), dict) else {}
@@ -95,6 +100,7 @@ class ViewOrchestrator:
             "business_config_contracts": applied_contracts,
             "legacy_field_policy_overlay": bool(legacy_policy_applied),
             "form_layout_overlay": bool(form_layout_overlay_applied),
+            "business_config_form_fields": sorted(business_config_form_fields),
         }
         out["source_trace"] = source_trace
         return out
@@ -125,6 +131,25 @@ class ViewOrchestrator:
             return False
         spec = self._sanitize_spec_field_refs(spec, model_name)
         return isinstance(spec.get("layout"), list) and bool(spec.get("layout"))
+
+    def _config_declared_field_names(self, config, view_type: str, model_name: str) -> set[str]:
+        payload = config.contract_json if isinstance(config.contract_json, dict) else {}
+        spec = self._view_spec(payload, view_type)
+        if not isinstance(spec, dict):
+            return set()
+        spec = self._sanitize_spec_field_refs(spec, model_name)
+        rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
+        names = set()
+        for row in rows:
+            if isinstance(row, str):
+                field_name = row.strip()
+            elif isinstance(row, dict):
+                field_name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+            else:
+                field_name = ""
+            if field_name:
+                names.add(field_name)
+        return names
 
     def _view_spec(self, payload: dict, view_type: str) -> dict:
         orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}

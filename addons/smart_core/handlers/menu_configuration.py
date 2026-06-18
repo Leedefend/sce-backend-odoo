@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, ValidationError
 
 from ..core.base_handler import BaseIntentHandler
+from ..utils.backend_contract_boundaries import MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING
 
 
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
@@ -44,11 +45,100 @@ def _m2o_payload(record) -> dict | None:
     return {"id": int(record.id), "name": _to_text(record.display_name or record.name)}
 
 
+def _menu_action_value(action: Any) -> str:
+    if not action:
+        return ""
+    if isinstance(action, str):
+        return _to_text(action)
+    model_name = _to_text(getattr(action, "_name", ""))
+    action_id = _to_int(getattr(action, "id", 0))
+    if model_name and action_id:
+        return "%s,%s" % (model_name, action_id)
+    return _to_text(action)
+
+
 def _xmlid_record(env, xmlid: str):
     try:
         return env.ref(xmlid, raise_if_not_found=False)
     except Exception:
         return None
+
+
+def _menu_config_contract_name(company_id: int) -> str:
+    return "menu.config.company.%s" % int(company_id or 0)
+
+
+def _business_menu_scope_group_label(group) -> str:
+    label = _to_text(group.display_name or group.name)
+    for prefix in (
+        "Smart Construction / SC 角色 - ",
+        "Smart Construction / 角色-",
+        "Smart Construction / ",
+        "SC 角色 - ",
+        "角色-",
+    ):
+        if label.startswith(prefix):
+            label = label[len(prefix):].strip()
+    return label or _to_text(group.name)
+
+
+def _menu_policy_contract_row(policy) -> dict:
+    menu = policy.menu_id
+    target_parent = policy.target_parent_menu_id
+    return {
+        "policy_id": int(policy.id),
+        "menu_id": int(menu.id or 0) if menu else 0,
+        "menu_label": _to_text(getattr(menu, "name", "")) if menu else "",
+        "menu_complete_name": _to_text(getattr(menu, "complete_name", "")) if menu else "",
+        "target_parent_menu_id": int(target_parent.id or 0) if target_parent else 0,
+        "target_parent_label": _to_text(getattr(target_parent, "complete_name", "")) if target_parent else "",
+        "custom_label": _to_text(policy.custom_label),
+        "sequence_override": int(policy.sequence_override or 0),
+        "visible": bool(policy.visible),
+        "active": bool(policy.active),
+        "role_group_ids": [int(group.id) for group in policy.role_group_ids],
+        "role_group_names": [_to_text(group.display_name or group.name) for group in policy.role_group_ids],
+        "effect_summary": _to_text(policy.effect_summary),
+        "scope_summary": _to_text(policy.scope_summary),
+    }
+
+
+def _menu_config_contract_json(company_id: int, policies) -> dict:
+    rows = [_menu_policy_contract_row(policy) for policy in policies]
+    return {
+        "menu_orchestration": {
+            "schema_version": "menu_orchestration.v1",
+            "source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+            "runtime_source": "ui.menu.config.policy",
+            "company_id": int(company_id or 0),
+            "policies": rows,
+            "policy_count": len(rows),
+        }
+    }
+
+
+def _menu_orchestration_policies(contract_json: dict) -> list[dict]:
+    if not isinstance(contract_json, dict):
+        return []
+    orchestration = contract_json.get("menu_orchestration")
+    if not isinstance(orchestration, dict):
+        return []
+    if str(orchestration.get("schema_version") or "").strip() != "menu_orchestration.v1":
+        return []
+    policies = orchestration.get("policies")
+    return policies if isinstance(policies, list) else []
+
+
+def _menu_orchestration_summary(contract_json: dict) -> dict:
+    rows = [row for row in _menu_orchestration_policies(contract_json) if isinstance(row, dict)]
+    return {
+        "policy_count": len(rows),
+        "hidden_count": sum(1 for row in rows if not _to_bool(row.get("visible"), True)),
+        "renamed_count": sum(1 for row in rows if bool(_to_text(row.get("custom_label")))),
+        "reordered_count": sum(1 for row in rows if bool(_to_int(row.get("sequence_override")))),
+        "moved_count": sum(1 for row in rows if bool(_to_int(row.get("target_parent_menu_id")))),
+        "active_count": sum(1 for row in rows if _to_bool(row.get("active"), True)),
+    }
 
 
 class MenuConfigurationLoadHandler(BaseIntentHandler):
@@ -89,6 +179,16 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 ids.append(menu_id)
         return ids
 
+    def _root_menu_id(self, params: dict) -> int:
+        root_menu_id = _to_int(params.get("root_menu_id") or params.get("rootMenuId"))
+        if root_menu_id:
+            return root_menu_id
+        root_menu_xmlid = _to_text(params.get("root_menu_xmlid") or params.get("rootMenuXmlid"))
+        if not root_menu_xmlid:
+            return 0
+        menu = _xmlid_record(self.env, root_menu_xmlid)
+        return int(menu.id or 0) if menu and getattr(menu, "_name", "") == "ir.ui.menu" else 0
+
     def _expand_with_parent_ids(self, menus) -> list[int]:
         ids = set(int(menu.id) for menu in menus)
         parent = menus.mapped("parent_id")
@@ -118,7 +218,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         return out
 
     def _serialize_menu(self, menu, xmlids: dict[int, str]) -> dict:
-        action = _to_text(getattr(menu, "action", ""))
+        action = _menu_action_value(getattr(menu, "action", ""))
         return {
             "id": int(menu.id),
             "menu_id": int(menu.id),
@@ -193,13 +293,8 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         }
 
     def _group_option_records(self, menus, policies):
-        groups = self.env["res.groups"].sudo()
-        groups |= menus.mapped("groups_id")
-        groups |= policies.mapped("role_group_ids")
-        for xmlid in (BUSINESS_CONFIG_GROUP, PLATFORM_ADMIN_GROUP):
-            group = _xmlid_record(self.env, xmlid)
-            if group:
-                groups |= group.sudo()
+        del menus, policies
+        groups = self.env["res.groups"].sudo().search([("sc_assignable_user_permission", "=", True)])
         return groups.sorted(key=lambda group: (
             _to_text(group.category_id.display_name or group.category_id.name) if group.category_id else "",
             _to_text(group.display_name or group.name),
@@ -216,6 +311,9 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         Menu = self.env["ir.ui.menu"].sudo()
         MenuAll = Menu.with_context(active_test=False)
         requested_menu_ids = self._requested_menu_ids(params)
+        root_menu_id = self._root_menu_id(params)
+        if root_menu_id and root_menu_id not in requested_menu_ids:
+            requested_menu_ids.append(root_menu_id)
         if requested_menu_ids:
             policy_records = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False).search([
                 ("company_id", "=", company_id),
@@ -250,8 +348,8 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             {
                 "id": int(group.id),
                 "name": _to_text(group.name),
-                "display_name": _to_text(group.display_name or group.name),
-                "category": _to_text(group.category_id.display_name or group.category_id.name) if group.category_id else "",
+                "display_name": _business_menu_scope_group_label(group),
+                "category": "业务角色",
             }
             for group in groups
         ]
@@ -289,6 +387,8 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
             "kind": "ui_menu_config_panel_write_proxy",
             "write_proxy": True,
             "runtime_carrier": cls.INTENT_TYPE,
+            "lowcode_boundary": "menu_config",
+            "contract_source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
         })
         return source
 
@@ -320,6 +420,45 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
         }
         return vals
 
+    def _mirror_menu_config_contract(self, company_id: int):
+        if "ui.business.config.contract" not in self.env:
+            return None
+        Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
+        policies = Policy.search([
+            ("company_id", "=", company_id),
+            ("menu_id", "!=", False),
+        ], order="menu_id, id desc")
+        Contract = self.env["ui.business.config.contract"].sudo()
+        name = _menu_config_contract_name(company_id)
+        domain = [
+            ("name", "=", name),
+            ("company_id", "=", company_id),
+            ("model", "=", "ir.ui.menu"),
+            ("view_type", "=", False),
+            ("action_id", "=", False),
+            ("view_id", "=", False),
+            ("role_key", "=", False),
+        ]
+        contract_json = _menu_config_contract_json(company_id, policies)
+        vals = {
+            "name": name,
+            "model": "ir.ui.menu",
+            "view_type": False,
+            "action_id": False,
+            "view_id": False,
+            "role_key": False,
+            "company_id": company_id,
+            "contract_json": contract_json,
+            "status": "published",
+        }
+        rec = Contract.search(domain, limit=1)
+        if rec:
+            rec.write(vals)
+        else:
+            rec = Contract.create(vals)
+        rec.action_publish()
+        return rec
+
     def handle(self, payload=None, ctx=None):
         del ctx
         self._ensure_access()
@@ -346,14 +485,533 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
                 if existing:
                     policy.write(vals)
             saved.append(self._serialize_policy(policy))
+        try:
+            contract = self._mirror_menu_config_contract(company_id)
+        except ValidationError as exc:
+            return {
+                "ok": False,
+                "error": {"code": "USER_ERROR", "message": str(exc), "reason_code": "USER_ERROR"},
+                "code": 400,
+            }
 
         return {
+            "ok": True,
             "data": {
                 "saved": saved,
                 "saved_count": len(saved),
+                "contract": {
+                    "id": int(contract.id),
+                    "name": str(contract.name or ""),
+                    "model": str(contract.model or ""),
+                    "status": str(contract.status or ""),
+                    "version_no": int(contract.version_no or 1),
+                } if contract else None,
             },
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "source_authority": self.source_authority_contract(),
+                "contract_mirrored": bool(contract),
+            },
+        }
+
+
+class MenuConfigurationCreateHandler(MenuConfigurationSaveHandler):
+    INTENT_TYPE = "ui.menu_config.menu.create"
+    DESCRIPTION = "新增菜单入口"
+    VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "menu creation creates ir.ui.menu records"
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        source = super().source_authority_contract()
+        source.update({
+            "kind": "ui_menu_config_menu_create_write_proxy",
+            "authorities": [
+                "ir.ui.menu",
+                "ui.menu.config.policy",
+                "ui.business.config.contract",
+                "res.groups",
+            ],
+            "write_proxy": True,
+            "runtime_carrier": cls.INTENT_TYPE,
+            "boundary": "runtime_menu_entry_creation",
+            "lowcode_boundary": "menu_config",
+            "contract_source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+            "delivery_baseline_note": "长期菜单入口需沉淀到用户模块或行业模块。",
+        })
+        return source
+
+    def _err(self, code: int, message: str, reason_code: str = "USER_ERROR"):
+        return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
+
+    def _parent_menu(self, parent_menu_id: int):
+        if not parent_menu_id:
+            return False
+        parent = self.env["ir.ui.menu"].sudo().browse(parent_menu_id).exists()
+        if not parent:
+            raise ValidationError("请选择有效的上级菜单。")
+        return parent
+
+    def _source_menu(self, source_menu_id: int):
+        if not source_menu_id:
+            return False
+        source = self.env["ir.ui.menu"].sudo().browse(source_menu_id).exists()
+        if not source:
+            raise ValidationError("请选择有效的复制来源菜单。")
+        return source
+
+    def _next_sequence(self, parent_menu_id: int) -> int:
+        domain = [("parent_id", "=", parent_menu_id or False)]
+        siblings = self.env["ir.ui.menu"].sudo().with_context(active_test=False).search(domain, order="sequence desc, id desc", limit=1)
+        if not siblings:
+            return 10
+        return int((siblings.sequence or 0) + 10)
+
+    def handle(self, payload=None, ctx=None):
+        del ctx
+        self._ensure_access()
+        params = (payload or {}).get("params") if isinstance(payload, dict) else {}
+        params = params if isinstance(params, dict) else {}
+        company_id = self._company_id(params)
+        name = _to_text(params.get("name"))
+        if not name:
+            return self._err(400, "请输入菜单名称。")
+
+        parent_menu_id = _to_int(params.get("parent_menu_id") or params.get("parent_id"))
+        source_menu_id = _to_int(params.get("source_menu_id") or params.get("copy_from_menu_id"))
+        role_group_ids = [_to_int(item) for item in (params.get("role_group_ids") or []) if _to_int(item)]
+        custom_label = _to_text(params.get("custom_label"))
+        note = _to_text(params.get("note"))
+        visible = _to_bool(params.get("visible"), True)
+        sequence = _to_int(params.get("sequence")) or self._next_sequence(parent_menu_id)
+
+        try:
+            parent = self._parent_menu(parent_menu_id)
+            source = self._source_menu(source_menu_id)
+            action = _to_text(params.get("action"))
+            if not action and source:
+                action = _menu_action_value(getattr(source, "action", ""))
+            web_icon = _to_text(params.get("web_icon"))
+            if not web_icon and source:
+                web_icon = _to_text(getattr(source, "web_icon", ""))
+            menu_vals = {
+                "name": name,
+                "parent_id": int(parent.id) if parent else False,
+                "sequence": sequence,
+            }
+            if action:
+                menu_vals["action"] = action
+            if web_icon:
+                menu_vals["web_icon"] = web_icon
+            menu = self.env["ir.ui.menu"].sudo().create(menu_vals)
+
+            Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
+            policy_vals = self._values_for_row({
+                "menu_id": int(menu.id),
+                "target_parent_menu_id": 0,
+                "custom_label": custom_label,
+                "sequence_override": sequence,
+                "visible": visible,
+                "role_group_ids": role_group_ids,
+                "note": note or ("由菜单配置新增；长期使用需沉淀到用户模块。"),
+            }, company_id)
+            policy = Policy.create(policy_vals)
+            contract = self._mirror_menu_config_contract(company_id)
+        except ValidationError as exc:
+            return self._err(400, str(exc))
+
+        xmlids = self._xmlids_by_id("ir.ui.menu", [int(menu.id)])
+        return {
+            "ok": True,
+            "data": {
+                "menu": self._serialize_menu(menu, xmlids),
+                "policy": self._serialize_policy(policy),
+                "contract": {
+                    "id": int(contract.id),
+                    "name": str(contract.name or ""),
+                    "model": str(contract.model or ""),
+                    "status": str(contract.status or ""),
+                    "version_no": int(contract.version_no or 1),
+                } if contract else None,
+            },
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "source_authority": self.source_authority_contract(),
+                "contract_mirrored": bool(contract),
+            },
+        }
+
+
+class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
+    INTENT_TYPE = "ui.menu_config.audit"
+    DESCRIPTION = "审计当前公司和业务角色命中的菜单配置"
+    VERSION = "1.0.0"
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]
+    ACL_MODE = "explicit_check"
+    SOURCE_KIND = "ui_menu_config_audit"
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": list(cls.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
+
+    def _policy_flag_summary(self, policy) -> dict:
+        return {
+            "hidden": not bool(policy.visible),
+            "renamed": bool(_to_text(policy.custom_label)),
+            "reordered": bool(int(policy.sequence_override or 0)),
+            "moved": bool(policy.target_parent_menu_id),
+        }
+
+    def _serialize_audit_policy(self, policy, *, applicable_policy_ids: set[int]) -> dict:
+        flags = self._policy_flag_summary(policy)
+        menu = policy.menu_id
+        target_parent = policy.target_parent_menu_id
+        return {
+            "id": int(policy.id),
+            "menu_id": int(menu.id or 0) if menu else 0,
+            "menu_label": _to_text(getattr(menu, "name", "")) if menu else "",
+            "menu_complete_name": _to_text(getattr(menu, "complete_name", "")) if menu else "",
+            "company_id": int(policy.company_id.id or 0) if policy.company_id else 0,
+            "active": bool(policy.active),
+            "visible": bool(policy.visible),
+            "custom_label": _to_text(policy.custom_label),
+            "sequence_override": int(policy.sequence_override or 0),
+            "target_parent_menu_id": int(target_parent.id or 0) if target_parent else 0,
+            "target_parent_label": _to_text(getattr(target_parent, "complete_name", "")) if target_parent else "",
+            "role_group_ids": [int(group.id) for group in policy.role_group_ids],
+            "role_group_names": [_to_text(group.display_name or group.name) for group in policy.role_group_ids],
+            "scope_summary": _to_text(policy.scope_summary),
+            "effect_summary": _to_text(policy.effect_summary),
+            "preview_summary": _to_text(policy.preview_summary),
+            "applicable": int(policy.id) in applicable_policy_ids,
+            "flags": flags,
+        }
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        self._ensure_access()
+        params = self.params if isinstance(self.params, dict) else {}
+        company_id = self._company_id(params)
+        include_inactive = _to_bool(params.get("include_inactive") or params.get("includeInactive"), False)
+
+        Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
+        domain = [
+            ("company_id", "=", company_id),
+            ("menu_id", "!=", False),
+        ]
+        if not include_inactive:
+            domain.append(("active", "=", True))
+        policies = Policy.search(domain, order="menu_id, id desc")
+        runtime_model = self.env["ui.menu.config.policy"]
+        if hasattr(runtime_model, "_runtime_menu_config_source_for_user"):
+            applicable_by_menu, runtime_source = runtime_model._runtime_menu_config_source_for_user(user=self.env.user)
+        else:
+            applicable_by_menu = runtime_model._runtime_policies_for_user(user=self.env.user)
+            runtime_source = "ui.menu.config.policy"
+        applicable_menu_ids = {int(menu_id or 0) for menu_id in applicable_by_menu}
+        applicable_policy_ids = {
+            _to_int(policy.get("policy_id")) if isinstance(policy, dict) else int(policy.id)
+            for policy in applicable_by_menu.values()
+        }
+
+        policy_rows = [
+            self._serialize_audit_policy(policy, applicable_policy_ids=applicable_policy_ids)
+            for policy in policies
+        ]
+        applicable_rows = [
+            row for row in policy_rows
+            if row["applicable"]
+            or (runtime_source == "ui.business.config.contract.menu_orchestration" and row["menu_id"] in applicable_menu_ids)
+        ]
+        summary = {
+            "runtime_source": runtime_source,
+            "configured_policy_count": len(policy_rows),
+            "applicable_policy_count": len(applicable_rows),
+            "hidden_count": sum(1 for row in applicable_rows if row["flags"]["hidden"]),
+            "renamed_count": sum(1 for row in applicable_rows if row["flags"]["renamed"]),
+            "reordered_count": sum(1 for row in applicable_rows if row["flags"]["reordered"]),
+            "moved_count": sum(1 for row in applicable_rows if row["flags"]["moved"]),
+            "inactive_policy_count": sum(1 for row in policy_rows if not row["active"]),
+            "not_applicable_policy_ids": [row["id"] for row in policy_rows if not row["applicable"]],
+        }
+        return {
+            "ok": True,
+            "data": {
+                "company": _m2o_payload(self.env["res.company"].sudo().browse(company_id)),
+                "summary": summary,
+                "policies": policy_rows,
+                "applicable_policies": applicable_rows,
+            },
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "source_authority": self.source_authority_contract(),
+            },
+        }
+
+
+class MenuConfigurationRollbackHandler(MenuConfigurationLoadHandler):
+    INTENT_TYPE = "ui.menu_config.rollback"
+    DESCRIPTION = "按菜单配置版本恢复菜单运行时 policy"
+    VERSION = "1.0.0"
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]
+    ACL_MODE = "explicit_check"
+    SOURCE_KIND = "ui_menu_config_rollback"
+    NON_IDEMPOTENT_ALLOWED = "menu config rollback restores mutable policy rows"
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": [
+                "ui.business.config.contract",
+                "ui.business.config.contract.version",
+                "ui.menu.config.policy",
+                "ir.ui.menu",
+                "res.groups",
+            ],
+            "projection_only": False,
+            "write_proxy": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
+
+    def _err(self, code: int, message: str, reason_code: str = "USER_ERROR"):
+        return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
+
+    def _contract_for_company(self, company_id: int):
+        if "ui.business.config.contract" not in self.env:
+            return None
+        return self.env["ui.business.config.contract"].sudo().search([
+            ("name", "=", _menu_config_contract_name(company_id)),
+            ("company_id", "=", company_id),
+            ("model", "=", "ir.ui.menu"),
+            ("view_type", "=", False),
+            ("action_id", "=", False),
+            ("view_id", "=", False),
+            ("role_key", "=", False),
+        ], limit=1)
+
+    def _target_version(self, contract, version_no: int):
+        Version = self.env["ui.business.config.contract.version"].sudo()
+        if version_no:
+            return Version.search([
+                ("contract_id", "=", contract.id),
+                ("version_no", "=", version_no),
+            ], order="id desc", limit=1)
+        versions = Version.search([
+            ("contract_id", "=", contract.id),
+        ], order="version_no desc, id desc", limit=2)
+        return versions[1] if len(versions) >= 2 else None
+
+    def _restore_policy_rows(self, company_id: int, contract_json: dict) -> list[dict]:
+        rows = _menu_orchestration_policies(contract_json)
+        Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
+        restored = []
+        restored_ids: set[int] = set()
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            menu_id = _to_int(row.get("menu_id"))
+            if not menu_id:
+                continue
+            policy_id = _to_int(row.get("policy_id"))
+            role_group_ids = [_to_int(item) for item in (row.get("role_group_ids") or []) if _to_int(item)]
+            vals = {
+                "company_id": company_id,
+                "menu_id": menu_id,
+                "target_parent_menu_id": _to_int(row.get("target_parent_menu_id")) or False,
+                "custom_label": _to_text(row.get("custom_label")) or False,
+                "sequence_override": int(row.get("sequence_override") or 0),
+                "visible": _to_bool(row.get("visible"), True),
+                "active": _to_bool(row.get("active"), True),
+                "role_group_ids": [(6, 0, role_group_ids)],
+                "note": _to_text(row.get("note")) or False,
+            }
+            policy = Policy.browse(policy_id).exists() if policy_id else Policy
+            if not policy:
+                policy = Policy.search([
+                    ("company_id", "=", company_id),
+                    ("menu_id", "=", menu_id),
+                ], order="id desc", limit=1)
+            if policy:
+                policy.write(vals)
+            else:
+                policy = Policy.create(vals)
+            restored_ids.add(int(policy.id))
+            restored.append(self._serialize_policy(policy))
+
+        current = Policy.search([
+            ("company_id", "=", company_id),
+            ("menu_id", "!=", False),
+        ])
+        for policy in current:
+            if int(policy.id) not in restored_ids and policy.active:
+                policy.write({"active": False})
+        return restored
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        self._ensure_access()
+        params = self.params if isinstance(self.params, dict) else {}
+        company_id = self._company_id(params)
+        version_no = _to_int(params.get("version_no") or params.get("versionNo"))
+        contract = self._contract_for_company(company_id)
+        if not contract:
+            return self._err(404, "未找到菜单配置", "NOT_FOUND")
+        target = self._target_version(contract, version_no)
+        if not target:
+            return self._err(400, "无可回滚的菜单配置版本")
+        snapshot = target.snapshot_json or {}
+        rows = _menu_orchestration_policies(snapshot)
+        if not rows:
+            return self._err(400, "目标版本不是可恢复的菜单配置")
+        restored = self._restore_policy_rows(company_id, snapshot)
+        contract.write({
+            "contract_json": snapshot,
+            "status": "published",
+            "version_no": int(target.version_no or contract.version_no or 1),
+        })
+        contract.action_publish()
+        return {
+            "ok": True,
+            "data": {
+                "company": _m2o_payload(self.env["res.company"].sudo().browse(company_id)),
+                "contract": {
+                    "id": int(contract.id),
+                    "name": str(contract.name or ""),
+                    "model": str(contract.model or ""),
+                    "status": str(contract.status or ""),
+                    "version_no": int(contract.version_no or 1),
+                },
+                "rolled_back_to_version": int(target.version_no or 0),
+                "restored_count": len(restored),
+                "restored": restored,
+            },
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "source_authority": self.source_authority_contract(),
+            },
+        }
+
+
+class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
+    INTENT_TYPE = "ui.menu_config.versions"
+    DESCRIPTION = "读取菜单配置版本列表和摘要"
+    VERSION = "1.0.0"
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]
+    ACL_MODE = "explicit_check"
+    SOURCE_KIND = "ui_menu_config_versions_projection"
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        return {
+            "kind": cls.SOURCE_KIND,
+            "authorities": [
+                "ui.business.config.contract",
+                "ui.business.config.contract.version",
+                "ui.menu.config.policy",
+            ],
+            "projection_only": True,
+            "bootstraps_missing_contract_from_current_policies": True,
+            "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
+            "runtime_carrier": cls.INTENT_TYPE,
+        }
+
+    def _contract_for_company(self, company_id: int):
+        if "ui.business.config.contract" not in self.env:
+            return None
+        return self.env["ui.business.config.contract"].sudo().search([
+            ("name", "=", _menu_config_contract_name(company_id)),
+            ("company_id", "=", company_id),
+            ("model", "=", "ir.ui.menu"),
+            ("view_type", "=", False),
+            ("action_id", "=", False),
+            ("view_id", "=", False),
+            ("role_key", "=", False),
+        ], limit=1)
+
+    def _bootstrap_contract_from_current_policies(self, company_id: int):
+        if "ui.business.config.contract" not in self.env:
+            return None
+        Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
+        policies = Policy.search([
+            ("company_id", "=", company_id),
+            ("menu_id", "!=", False),
+        ], order="menu_id, id desc")
+        if not policies:
+            return None
+        Contract = self.env["ui.business.config.contract"].sudo()
+        contract_json = _menu_config_contract_json(company_id, policies)
+        rec = Contract.create({
+            "name": _menu_config_contract_name(company_id),
+            "model": "ir.ui.menu",
+            "view_type": False,
+            "action_id": False,
+            "view_id": False,
+            "role_key": False,
+            "company_id": company_id,
+            "contract_json": contract_json,
+            "status": "published",
+        })
+        rec.action_publish()
+        return rec
+
+    def _serialize_version(self, version) -> dict:
+        snapshot = version.snapshot_json or {}
+        return {
+            "id": int(version.id),
+            "version_no": int(version.version_no or 0),
+            "status": str(version.status or ""),
+            "created_by": _m2o_payload(version.created_by),
+            "summary": _menu_orchestration_summary(snapshot),
+        }
+
+    def handle(self, payload=None, ctx=None):
+        del payload, ctx
+        self._ensure_access()
+        params = self.params if isinstance(self.params, dict) else {}
+        company_id = self._company_id(params)
+        contract = self._contract_for_company(company_id)
+        bootstrapped = False
+        if not contract:
+            contract = self._bootstrap_contract_from_current_policies(company_id)
+            bootstrapped = bool(contract)
+        if not contract:
+            return {
+                "ok": True,
+                "data": {
+                    "company": _m2o_payload(self.env["res.company"].sudo().browse(company_id)),
+                    "contract": None,
+                    "versions": [],
+                },
+                "meta": {"intent": self.INTENT_TYPE, "source_authority": self.source_authority_contract()},
+            }
+        versions = self.env["ui.business.config.contract.version"].sudo().search([
+            ("contract_id", "=", contract.id),
+        ], order="version_no desc, id desc", limit=20)
+        return {
+            "ok": True,
+            "data": {
+                "company": _m2o_payload(self.env["res.company"].sudo().browse(company_id)),
+                "contract": {
+                    "id": int(contract.id),
+                    "name": str(contract.name or ""),
+                    "model": str(contract.model or ""),
+                    "status": str(contract.status or ""),
+                    "version_no": int(contract.version_no or 1),
+                    "summary": _menu_orchestration_summary(contract.contract_json or {}),
+                },
+                "versions": [self._serialize_version(version) for version in versions],
+            },
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "source_authority": self.source_authority_contract(),
+                "bootstrapped_from_current_policies": bootstrapped,
             },
         }

@@ -24,7 +24,7 @@ class MenuService:
         ("ledger_query", "台账查询", 20, {"query", "master_data"}),
         ("analysis", "分析报表", 30, {"analysis"}),
         ("source_fact", "来源明细", 40, {"source_fact"}),
-        ("config", "基础配置", 50, {"config"}),
+        ("config", "配置管理", 50, {"config"}),
     )
     BUSINESS_GROUP_DISPLAY_ORDER = {
         "基础资料": 5,

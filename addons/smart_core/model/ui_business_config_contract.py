@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    classify_view_orchestration_contract,
+    view_orchestration_apply_order_key,
+)
 
 
 class UIBusinessConfigContract(models.Model):
@@ -342,7 +346,10 @@ class UIBusinessConfigContract(models.Model):
                 return False
             return True
 
-        return self.browse([contract.id for contract in records if applies(contract)])
+        effective = [contract for contract in records if applies(contract)]
+
+        effective = sorted(effective, key=view_orchestration_apply_order_key)
+        return self.browse([contract.id for contract in effective])
 
     @api.model
     def source_authority_contract(self) -> dict:
@@ -353,7 +360,12 @@ class UIBusinessConfigContract(models.Model):
             "rebuildable": True,
             "no_business_fact_authority": True,
             "runtime_carrier": "ui.business.config.contract",
+            "boundary_classifier": "smart_core.utils.backend_contract_boundaries",
         }
+
+    def boundary_contract(self) -> dict:
+        self.ensure_one()
+        return classify_view_orchestration_contract(self.name, self.contract_json or {})
 
     def action_publish(self):
         for rec in self:

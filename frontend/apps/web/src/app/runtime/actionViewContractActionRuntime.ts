@@ -92,7 +92,7 @@ export function resolveContractActionRunIds(execIds: number[]): number[] {
 }
 
 export function resolveContractActionMissingOpenTargetMessage(text: (key: string, fallback: string) => string): string {
-  return text('batch_msg_contract_action_missing_action_id', '契约动作缺少 action_id，无法打开目标页面');
+  return text('batch_msg_contract_action_missing_action_id', '页面动作缺少 action_id，无法打开目标页面');
 }
 
 export function resolveContractActionRequiresRecordContextMessage(text: (key: string, fallback: string) => string): string {
@@ -100,7 +100,7 @@ export function resolveContractActionRequiresRecordContextMessage(text: (key: st
 }
 
 export function resolveContractActionMissingModelMessage(text: (key: string, fallback: string) => string): string {
-  return text('batch_msg_contract_action_missing_model', '契约动作缺少 model，无法执行');
+  return text('batch_msg_contract_action_missing_model', '页面动作缺少 model，无法执行');
 }
 
 export function resolveContractActionDoneMessage(options: {
@@ -108,7 +108,7 @@ export function resolveContractActionDoneMessage(options: {
   failureCount: number;
   text: (key: string, fallback: string) => string;
 }): string {
-  return `${options.text('batch_msg_contract_action_done_prefix', '契约动作执行完成：成功 ')}${options.successCount}${options.text('batch_msg_contract_action_done_middle', '，失败 ')}${options.failureCount}`;
+  return `${options.text('batch_msg_contract_action_done_prefix', '页面动作执行完成：成功 ')}${options.successCount}${options.text('batch_msg_contract_action_done_middle', '，失败 ')}${options.failureCount}`;
 }
 
 export function buildContractActionRouteTarget(options: {

@@ -57,6 +57,30 @@ class _ConfigModel:
         return [_Config(self.payload)]
 
 
+class _LegacyPolicyModel:
+    def apply_to_view_contract(self, contract, *, model_name, view_type, action_id=None, view_id=None, excluded_field_names=None):
+        excluded = {str(name or "").strip() for name in (excluded_field_names or []) if str(name or "").strip()}
+        out = dict(contract or {})
+        layout = out.get("layout")
+        if isinstance(layout, list):
+            out["layout"] = self._filter_layout(layout, excluded)
+        return out
+
+    def _filter_layout(self, nodes, excluded):
+        result = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            row = dict(node)
+            if row.get("type") == "field" and row.get("name") == "email" and "email" not in excluded:
+                continue
+            children = row.get("children")
+            if isinstance(children, list):
+                row["children"] = self._filter_layout(children, excluded)
+            result.append(row)
+        return result
+
+
 class _Env(dict):
     pass
 
@@ -84,8 +108,10 @@ class TestViewOrchestrator(unittest.TestCase):
     def setUp(self):
         self.ViewOrchestrator = _load_orchestrator()
 
-    def _compose(self, payload, contract, view_type):
+    def _compose(self, payload, contract, view_type, *, legacy_policy=False):
         env = _Env({"ui.business.config.contract": _ConfigModel(payload), "res.partner": _Model()})
+        if legacy_policy:
+            env["ui.form.field.policy"] = _LegacyPolicyModel()
         result = self.ViewOrchestrator(env).compose(
             contract,
             model_name="res.partner",
@@ -366,6 +392,64 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual(field["help"], "Shown to the customer")
         self.assertEqual(field["widget"], "email")
         self.assertEqual(field["fieldInfo"]["label"], "Contact Email")
+
+    def test_business_config_declared_form_fields_are_not_overridden_by_legacy_policy(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "fields": [{"name": "email", "label": "Contract Email", "sequence": 10}]
+                    }
+                }
+            }
+        }
+        contract = {
+            "layout": [
+                {
+                    "type": "sheet",
+                    "children": [
+                        {"type": "field", "name": "email", "fieldInfo": {"name": "email", "label": "Email"}},
+                    ],
+                }
+            ]
+        }
+
+        result, _calls = self._compose(payload, contract, "form", legacy_policy=True)
+
+        fields = result["layout"][0]["children"]
+        self.assertEqual([field["name"] for field in fields], ["email"])
+        self.assertEqual(fields[0]["label"], "Contract Email")
+        governance = result["governance"]["view_orchestration"]
+        self.assertEqual(governance["business_config_form_fields"], ["email"])
+        self.assertFalse(governance["legacy_field_policy_overlay"])
+
+    def test_legacy_policy_still_applies_to_fields_not_declared_by_business_config(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "fields": [{"name": "name", "label": "Partner", "sequence": 10}]
+                    }
+                }
+            }
+        }
+        contract = {
+            "layout": [
+                {
+                    "type": "sheet",
+                    "children": [
+                        {"type": "field", "name": "name"},
+                        {"type": "field", "name": "email"},
+                    ],
+                }
+            ]
+        }
+
+        result, _calls = self._compose(payload, contract, "form", legacy_policy=True)
+
+        fields = result["layout"][0]["children"]
+        self.assertEqual([field["name"] for field in fields], ["name"])
+        self.assertTrue(result["governance"]["view_orchestration"]["legacy_field_policy_overlay"])
 
     def test_form_view_uses_business_config_field_order_in_native_layout(self):
         payload = {

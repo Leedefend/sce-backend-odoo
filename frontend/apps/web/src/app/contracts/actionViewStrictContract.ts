@@ -59,7 +59,7 @@ export function useActionViewStrictContractBundle(options: StrictContractBundleO
     if (!strictContractMode.value) return '';
     const missing = strictContractMissingPaths.value;
     if (!missing.length) return '';
-    return `${options.pageText('strict_contract_missing_summary_prefix', '严格模式检测到后端契约缺口：')}${missing.join(', ')}`;
+    return `${options.pageText('strict_contract_missing_summary_prefix', '严格模式检测到后端配置缺口：')}${missing.join(', ')}`;
   });
 
   const strictContractDefaultsSummary = computed(() => {
