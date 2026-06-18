@@ -1987,6 +1987,8 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                 "state": object(),
                 "partner_id": object(),
                 "x_technical": object(),
+                "create_date": object(),
+                "write_uid": object(),
             }
 
         class EmptyRef:
@@ -2048,13 +2050,13 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
             def get_contract_api(self, filter_runtime=True, check_model_acl=False):
                 if self.view_type == "tree":
                     return {
-                        "columns": ["name", {"name": "email"}, "missing_field"],
+                        "columns": ["name", {"name": "email"}, "create_date", "missing_field"],
                         "columns_schema": [],
                     }
                 return {
                     "search": {
-                        "filters": [{"field": "state"}, {"field": "missing_filter"}],
-                        "group_by": [{"field": "partner_id"}],
+                        "filters": [{"field": "state"}, {"field": "write_uid"}, {"field": "missing_filter"}],
+                        "group_by": [{"field": "partner_id"}, {"field": "create_date"}],
                     }
                 }
 

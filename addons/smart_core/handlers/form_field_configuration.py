@@ -2102,6 +2102,11 @@ class BusinessConfigListSearchBootstrapHandler(BaseIntentHandler):
             list_columns = [name for name in list_columns if name in model_fields]
             search_filters = [name for name in search_filters if name in model_fields]
             search_group_by = [name for name in search_group_by if name in model_fields]
+        business_fields = self._business_field_name_set(model)
+        if business_fields:
+            list_columns = [name for name in list_columns if name in business_fields]
+            search_filters = [name for name in search_filters if name in business_fields]
+            search_group_by = [name for name in search_group_by if name in business_fields]
         if not list_columns and not search_filters and not search_group_by:
             return self._err(400, "当前视图没有可固化的列表列或搜索配置", REASON_USER_ERROR)
 
