@@ -13,6 +13,7 @@
   ],
   "required_docs": [
     "docs/product/system_capability_baseline_v1.md",
+    "docs/product/formal_product_boundary_v1.md",
     "docs/product/delivery/v1/module_scene_capability_map.md",
     "docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md",
     "docs/ops/verify/README.md",

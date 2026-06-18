@@ -39,6 +39,16 @@
     - `artifacts/backend/delivery_mainline_run_summary.md`
 - `make verify.boundary.guard`
   - Aggregates scene runtime boundary + legacy contract path checks.
+- `make verify.docs.product_boundary`
+  - Runs the product-boundary guard unit tests first, then checks the live repository catalog.
+  - Verifies `docs/product/formal_product_boundary_v1.md` is structurally complete.
+  - Checks every `addons/*/__manifest__.py` module appears in the formal product boundary module table.
+  - Checks the same addon module is not listed more than once.
+  - Checks each module row has an explicit formal product layer assignment such as `P0`, `P1`, or `P1/P4`.
+  - Checks P0-P4 product layer names match the canonical formal product names.
+  - Checks P0-P4 product layers, required boundary sections, and delivery acceptance terms remain present.
+  - Emits report:
+    - `artifacts/docs/product_boundary_catalog_guard.json`
 - `make verify.backend.guard`
   - Compatibility alias for the backend boundary guard chain used by Codex verification workflows.
 - `make codex.snapshot.export`
