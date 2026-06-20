@@ -47,6 +47,10 @@
       "path": "docs/product/product_capability_matrix_v2.md"
     },
     {
+      "id": "formal_product_boundary_v1",
+      "path": "docs/product/formal_product_boundary_v1.md"
+    },
+    {
       "id": "performance_baseline_governance",
       "path": "docs/ops/audit/performance_baseline_governance.md"
     }

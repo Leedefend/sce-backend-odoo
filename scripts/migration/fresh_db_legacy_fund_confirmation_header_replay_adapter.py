@@ -19,6 +19,12 @@ SQL_CONTAINER = os.getenv("LEGACY_MSSQL_CONTAINER", "legacy-mssql-restore")
 SQLCMD = os.getenv("LEGACY_SQLCMD", "/opt/mssql-tools18/bin/sqlcmd")
 SQL_PASSWORD = os.getenv("LEGACY_MSSQL_SA_PASSWORD", "LegacyRestore!2026")
 SQL_DATABASE = os.getenv("LEGACY_MSSQL_DATABASE", "LegacyDb")
+FROZEN_VISIBLE_CSV = Path(
+    os.getenv(
+        "LEGACY_FUND_CONFIRMATION_HEADER_VISIBLE_CSV",
+        str(REPO_ROOT / "tmp/zjgl_szqr_dkqrb_header_visible.csv"),
+    )
+)
 
 FIELDS = [
     "legacy_header_id", "legacy_pid", "project_legacy_id", "project_name",
@@ -91,6 +97,22 @@ ORDER BY h.Id;
 
 
 def write_csv_payload() -> int:
+    if FROZEN_VISIBLE_CSV.is_file():
+        rows = 0
+        ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+        with FROZEN_VISIBLE_CSV.open("r", encoding="utf-8-sig", newline="") as source:
+            reader = csv.DictReader(source)
+            missing = sorted(set(FIELDS) - set(reader.fieldnames or []))
+            if missing:
+                raise RuntimeError({"frozen_visible_csv_missing_fields": missing, "path": str(FROZEN_VISIBLE_CSV)})
+            with OUTPUT_CSV.open("w", encoding="utf-8-sig", newline="") as target:
+                writer = csv.DictWriter(target, fieldnames=FIELDS)
+                writer.writeheader()
+                for row in reader:
+                    writer.writerow({field: row.get(field, "") for field in FIELDS})
+                    rows += 1
+        return rows
+
     count = 0
     ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
     with subprocess.Popen(sqlcmd(header_sql()), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as proc:
@@ -115,6 +137,13 @@ def write_csv_payload() -> int:
 
 
 def scalar(sql: str) -> str:
+    if FROZEN_VISIBLE_CSV.is_file():
+        if "WHERE ISNULL(DEL,0)=0" in sql:
+            with FROZEN_VISIBLE_CSV.open("r", encoding="utf-8-sig", newline="") as handle:
+                return str(sum(1 for row in csv.DictReader(handle) if str(row.get("active") or "").strip() == "1"))
+        with FROZEN_VISIBLE_CSV.open("r", encoding="utf-8-sig", newline="") as handle:
+            return str(sum(1 for _ in csv.DictReader(handle)))
+
     raw = run_sql(sql)
     for line in raw.splitlines():
         stripped = line.strip()
@@ -137,6 +166,7 @@ def main() -> int:
         "header_rows": scalar("SET NOCOUNT ON; SELECT COUNT_BIG(*) FROM dbo.ZJGL_SZQR_DKQRB;"),
         "active_header_rows": scalar("SET NOCOUNT ON; SELECT COUNT_BIG(*) FROM dbo.ZJGL_SZQR_DKQRB WHERE ISNULL(DEL,0)=0;"),
         "payload_csv": str(OUTPUT_CSV),
+        "source_csv": str(FROZEN_VISIBLE_CSV) if FROZEN_VISIBLE_CSV.is_file() else "",
         "decision": "legacy_fund_confirmation_header_payload_ready",
     }
     write_json(OUTPUT_JSON, payload)

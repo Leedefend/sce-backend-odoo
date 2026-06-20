@@ -86,45 +86,13 @@ result_json = artifact_root / "partner_semantic_normalize_result_v2.json"
 rollback_csv = artifact_root / "partner_semantic_normalize_rollback_targets_v2.csv"
 discard_csv = artifact_root / "partner_semantic_normalize_discard_targets_v2.csv"
 
-customer_ids = ids_from_sql(
-    """
-    SELECT DISTINCT partner_id AS id
-    FROM construction_contract
-    WHERE type = 'out'
-      AND partner_id IS NOT NULL
-    UNION
-    SELECT DISTINCT partner_id AS id
-    FROM sc_receipt_income
-    WHERE partner_id IS NOT NULL
-      AND state IN ('received', 'legacy_confirmed')
-      AND COALESCE(amount, 0) > 0
-    UNION
-    SELECT DISTINCT partner_id AS id
-    FROM sc_legacy_receipt_income_fact
-    WHERE partner_id IS NOT NULL
-      AND COALESCE(source_amount, 0) > 0
-    """
-)
-
-supplier_ids = ids_from_sql(
-    """
-    SELECT DISTINCT partner_id AS id
-    FROM construction_contract
-    WHERE type = 'in'
-      AND partner_id IS NOT NULL
-    UNION
-    SELECT DISTINCT partner_id AS id
-    FROM sc_general_contract
-    WHERE partner_id IS NOT NULL
-    UNION
-    SELECT DISTINCT partner_id AS id
-    FROM sc_payment_execution
-    WHERE partner_id IS NOT NULL
-      AND source_kind = 'actual_outflow'
-      AND state IN ('paid', 'legacy_confirmed')
-      AND COALESCE(paid_amount, 0) > 0
-    """
-)
+facts = Partner._sc_collect_partner_business_facts()
+customer_ids = {partner_id for partner_id, data in facts.items() if data and data["customer"]}
+supplier_ids = {
+    partner_id
+    for partner_id, data in facts.items()
+    if data and data["supplier"] and Partner._sc_is_supplier_business_counterparty(Partner.browse(partner_id))
+}
 
 keep_ids = customer_ids | supplier_ids
 all_partner_ids = set(Partner.search([]).ids)
@@ -279,7 +247,7 @@ result = {
     "mode": "prod_sim_partner_semantic_normalize_write",
     "database": env.cr.dbname,  # noqa: F821
     "run_id": run_id,
-    "policy": "contract_or_cash_fact_income_or_receipt_is_customer_outflow_or_general_contract_or_payment_is_supplier_allow_dual_role_discard_no_fact",
+    "policy": "partner_business_fact_collection_is_source_of_truth_allow_dual_role_discard_no_fact",
     "customer_ids": len(customer_ids),
     "supplier_ids": len(supplier_ids),
     "both_customer_supplier_ids": len(customer_ids & supplier_ids),

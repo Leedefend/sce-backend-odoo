@@ -34,4 +34,8 @@
               name="发票税务"
               parent="smart_construction_core.menu_sc_data_center"
               sequence="40"/>
+    <menuitem id="menu_sc_cost_report_group"
+              name="成本报表"
+              parent="smart_construction_core.menu_sc_data_center"
+              sequence="15"/>
 </odoo>

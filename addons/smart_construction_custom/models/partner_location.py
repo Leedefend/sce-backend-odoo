@@ -140,10 +140,16 @@ class ScUserPreferenceInitialization(models.TransientModel):
     _inherit = "sc.user.preference.initialization"
 
     @api.model
-    def apply_partner_form_preferences(self):
+    def apply_user_data_baseline(self):
+        super().apply_user_data_baseline()
+        self.apply_partner_location_data_baseline()
+        return True
+
+    @api.model
+    def apply_partner_location_data_baseline(self):
         self._ensure_partner_city_data()
         self._backfill_partner_sc_city_ids()
-        return super().apply_partner_form_preferences()
+        return True
 
     @api.model
     def _ensure_partner_city_data(self):

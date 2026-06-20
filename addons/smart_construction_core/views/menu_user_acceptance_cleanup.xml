@@ -163,12 +163,12 @@
         </record>
         <record id="menu_scbs55_user_acceptance_180_自筹保证金" model="ir.ui.menu">
             <field name="name">自筹保证金</field>
-            <field name="parent_id" ref="smart_construction_core.menu_scbs55_user_acceptance_group_资金保证金"/>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
             <field name="active">0</field>
         </record>
         <record id="menu_scbs55_user_acceptance_190_自筹保证金退回" model="ir.ui.menu">
             <field name="name">自筹保证金退回</field>
-            <field name="parent_id" ref="smart_construction_core.menu_scbs55_user_acceptance_group_资金保证金"/>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_fund_account_between_user" model="ir.ui.menu">

@@ -343,6 +343,10 @@ class ScUserPreferenceInitialization(models.TransientModel):
     _description = "SC User Preference Initialization"
 
     @api.model
+    def apply_user_data_baseline(self):
+        return True
+
+    @api.model
     def apply_partner_form_preferences(self):
         if "ui.business.config.contract" not in self.env:
             return False

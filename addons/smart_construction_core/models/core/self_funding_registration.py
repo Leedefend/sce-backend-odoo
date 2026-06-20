@@ -81,6 +81,8 @@ class ScSelfFundingRegistration(models.Model):
     bank_account = fields.Char(string="账号")
     summary = fields.Char(string="摘要")
     note = fields.Text(string="备注")
+    source_created_by = fields.Char(string="录入人", readonly=True, index=True)
+    source_created_at = fields.Datetime(string="录入时间", readonly=True, index=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     attachment_ids = fields.Many2many(
         "ir.attachment",
@@ -207,6 +209,8 @@ class ScSelfFundingRegistration(models.Model):
                     "partner_account_name": fact.partner_name or "",
                     "summary": title,
                     "note": fact.note or fact.document_state_label or fact.document_state or "",
+                    "source_created_by": fact.entry_user or "",
+                    "source_created_at": fact.entry_time or False,
                     "active": True,
                 }
             )
@@ -226,7 +230,7 @@ class ScSelfFundingRegistration(models.Model):
 
     def write(self, vals):
         if any(rec.state == "done" for rec in self) and not self.env.context.get("allow_done_self_funding_write"):
-            allowed = {"note", "active", "attachment_ids", "write_uid", "write_date"}
+            allowed = {"note", "active", "attachment_ids", "source_created_by", "source_created_at", "write_uid", "write_date"}
             blocked = set(vals) - allowed
             if blocked:
                 raise UserError(_("已完成的自筹办理只允许补充备注、附件或归档。"))

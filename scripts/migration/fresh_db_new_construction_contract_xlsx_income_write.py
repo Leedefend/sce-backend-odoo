@@ -143,7 +143,9 @@ def read_source_rows() -> list[dict[str, str]]:
     if SOURCE_JSON and SOURCE_JSON.exists():
         return json.loads(SOURCE_JSON.read_text(encoding="utf-8"))
     if not SOURCE_XLSX.exists():
-        raise RuntimeError({"missing_source_xlsx": str(SOURCE_XLSX)})
+        if os.getenv("CONSTRUCTION_CONTRACT_NEW_XLSX") or os.getenv("CONSTRUCTION_CONTRACT_NEW_XLSX_JSON"):
+            raise RuntimeError({"missing_source_xlsx": str(SOURCE_XLSX)})
+        return []
     return read_xlsx(SOURCE_XLSX)
 
 
@@ -294,6 +296,20 @@ def sync_amount_line(contract, row: dict[str, str]) -> str:
 
 
 rows = read_source_rows()
+if not rows:
+    payload = {
+        "status": "SKIP",
+        "mode": "fresh_db_new_construction_contract_xlsx_income_write",
+        "database": env.cr.dbname,  # noqa: F821
+        "decision": "source_not_configured_or_missing",
+        "source_xlsx": str(SOURCE_XLSX),
+        "source_json": str(SOURCE_JSON) if SOURCE_JSON else "",
+        "db_writes": 0,
+    }
+    write_json(OUTPUT_JSON, payload)
+    print("FRESH_DB_NEW_CONSTRUCTION_CONTRACT_XLSX_INCOME_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    raise SystemExit(0)
+
 docs = [clean(row.get("单据编号")) for row in rows if clean(row.get("单据编号"))]
 source_legacy_ids = {
     f"new_construction_contract_xlsx:{doc}"

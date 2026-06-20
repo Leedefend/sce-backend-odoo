@@ -41,6 +41,9 @@ make verify.release.v2_0_0.product_hardening
 
 This target expands to `make verify.product.release.ready` and must be green
 before the final tag.
+The readiness chain includes `make verify.docs.product_boundary`, so new addon
+modules and product-boundary edits must keep the formal product boundary
+catalog complete before release.
 
 The platform performance sub-gate must measure the Web boot path with
 `scene_ready_mode=registry`; full scene hydration remains a deep-link/runtime

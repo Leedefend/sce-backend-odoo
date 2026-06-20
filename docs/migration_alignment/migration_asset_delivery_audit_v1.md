@@ -10,12 +10,12 @@ connect to Odoo, execute replay writes, or mutate migration assets.
 ## Summary
 
 - catalog packages: `23`
-- asset files: `97`
+- asset files: `95`
 - referenced files: `93`
-- unreferenced files: `4`
-- total asset size MB: `324.69`
-- replay steps: `219`
-- required replay artifacts: `106`
+- unreferenced files: `2`
+- total asset size MB: `347.97`
+- replay steps: `221`
+- required replay artifacts: `110`
 - missing required replay artifacts: `0`
 - mandatory business scopes: `1`
 - missing business-scope artifacts: `0`
@@ -44,15 +44,13 @@ connect to Odoo, execute replay writes, or mutate migration assets.
 
 ## Unreferenced Asset Files
 
-- `migration_assets/10_master/project/user_project_master_review_decisions_20260521.csv`
-- `migration_assets/10_master/project/user_project_name_strategy_20260520.csv`
 - `migration_assets/manifest/migration_asset_coverage_snapshot_v1.json`
 - `migration_assets/manifest/receipt_blocker_policy_snapshot_v1.json`
 
 ## Large Files
 
-- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml`: `109.62 MB`
-- `migration_assets/manifest/legacy_workflow_audit_external_id_manifest_v1.json`: `28.39 MB`
+- `migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml`: `120.01 MB`
+- `migration_assets/manifest/legacy_workflow_audit_external_id_manifest_v1.json`: `31.06 MB`
 - `migration_assets/20_business/outflow_request_line/outflow_request_line_v1.xml`: `18.34 MB`
 - `migration_assets/30_relation/project_member/project_member_neutral_v1.xml`: `16.82 MB`
 - `migration_assets/30_relation/legacy_attachment_backfill/legacy_attachment_backfill_v1.xml`: `14.52 MB`
