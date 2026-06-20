@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-06-20T22:22:05+08:00
+- blocker_key: `lowcode_menu_config_runtime_effectiveness_and_user_baseline_aliases`
+- layer_target: `P3 low-code runtime configuration + P2 customer user data baseline`
+- module: `addons/smart_core menu configuration/runtime overlay + frontend/apps/web menu configuration surface + addons/smart_construction_custom user data baseline + scripts/verify`
+- reason: `继续推进 feature/lowcode-config-function-fixes：菜单配置保存后必须去重同作用域旧 policy、运行时契约需跳过已删除菜单并容忍已删除目标父级，前端菜单配置需支持跨父级拖拽和保存后刷新反馈；客户确认的历史登录别名需作为 P2 用户数据基线复用真实账号并由 runtime audit 验证。`
+- completed_step: `修复菜单配置加载顺序、同 scope superseded policy 失活、contract runtime overlay 缺失菜单/缺失父级处理和缺失节点补建；菜单配置页支持拖入父级/跨父级前后移动、持久保存反馈和 root missing branch 展示；用户基线增加 legacy login aliases 并调整 runtime audit 以 XMLID baseline count 和必需别名登录校验为准；清理前端 lint 阻塞的无引用代码。`
+- verification: `pnpm -C frontend run gate PASS；make verify.business_config.unit PASS；make verify.user_module.product_boundary PASS；python3 -m py_compile scripts/verify/user_module_data_baseline_runtime_audit.py addons/smart_construction_custom/models/user_data_baseline.py addons/smart_core/model/ui_menu_config_policy.py addons/smart_core/handlers/menu_configuration.py PASS；git diff --check PASS。`
+- active_commit: `4d082405`
+- next_step: `进入最终 diff 审阅；如需要发布分支，按 allowlist 使用 git commit 或 Makefile PR 通道收口。`
+
 ### 2026-05-15T15:30:39+08:00
 - blocker_key: `frontend_style_system_productization_batch_m_zero_baseline_closeout`
 - layer_target: `Frontend Layer`

@@ -424,19 +424,9 @@ const operationOptions = computed(() => projectContext.value?.operation_options 
 const selectedCompanyId = computed(() =>
   Number(projectContext.value?.company_id || selectedProject.value?.company_id || 0) || 0,
 );
-const selectedCompanyLabel = computed(() => {
-  const companyId = selectedCompanyId.value;
-  const match = companyOptions.value.find((item) => Number(item.company_id || 0) === companyId);
-  return String(match?.company_name || projectContext.value?.company_name || selectedProject.value?.company_name || '').trim();
-});
 const selectedOperationStrategy = computed(() =>
   String(projectContext.value?.operation_strategy || '').trim(),
 );
-const selectedOperationLabel = computed(() => {
-  const strategy = selectedOperationStrategy.value;
-  const match = operationOptions.value.find((item) => String(item.operation_strategy || '') === strategy);
-  return String(match?.operation_strategy_label || projectContext.value?.operation_strategy_label || '').trim();
-});
 const recordContextLabel = computed(() =>
   String(projectContext.value?.selector?.label || '当前记录').trim() || '当前记录'
 );

@@ -2067,66 +2067,6 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
   }
 }
 
-async function bootstrapFormConfig(row: BusinessConfigCoverageScanItem) {
-  if (!row.model) return;
-  if (!rowBootstrapMissingViewTypes(row, ['form']).length) {
-    await openVersionsForRuntimeGaps(row);
-    setMessage('没有可自动补齐的表单缺配置项', '当前缺口需要检查发布状态或配置作用域。');
-    return;
-  }
-  listSearchSaving.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const result = await bootstrapBusinessFormConfig({
-      model: row.model,
-      action_id: coverageRowActionId(row),
-      view_id: coverageRowViewId(row),
-      role_key: scopeRole.value,
-      publish: true,
-    });
-    await loadSurface();
-    await scanCurrentModel();
-    setMessage('已补齐表单缺配置', `字段 ${result.field_count}`);
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '表单缺配置补齐失败，已打开手工配置';
-    openFormConfig();
-  } finally {
-    listSearchSaving.value = false;
-  }
-}
-
-async function bootstrapListSearchConfig(row: BusinessConfigCoverageScanItem) {
-  if (!row.model) return;
-  const viewTypes = rowBootstrapMissingViewTypes(row, ['tree', 'search']);
-  if (!viewTypes.length) {
-    await openVersionsForRuntimeGaps(row);
-    setMessage('没有可自动补齐的列表/搜索缺配置项', '当前缺口需要检查发布状态或配置作用域。');
-    return;
-  }
-  listSearchSaving.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const result = await bootstrapBusinessListSearchConfig({
-      model: row.model,
-      action_id: coverageRowActionId(row),
-      view_id: coverageRowViewId(row),
-      role_key: scopeRole.value,
-      view_types: viewTypes,
-      publish: true,
-    });
-    await loadSurface();
-    await scanCurrentModel();
-    setMessage('已补齐列表/搜索缺配置', `已发布 ${result.saved_count} 个业务配置`);
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '列表与搜索缺配置补齐失败';
-    await loadListSearchConfig();
-  } finally {
-    listSearchSaving.value = false;
-  }
-}
-
 async function bootstrapCoverageMissing() {
   if (!coverageBatchBootstrapRows.value.length) return;
   listSearchSaving.value = true;

@@ -330,6 +330,7 @@
           @field-order-drag-over="onContractInlineFieldOrderDragOver"
           @field-order-drag-leave="onContractInlineFieldOrderDragLeave"
           @field-order-drop="onContractInlineFieldOrderDrop"
+          @field-order-group-drop="onContractInlineFieldOrderGroupDrop"
           @field-order-drag-end="onContractInlineFieldOrderDragEnd"
           @field-label-change="onContractInlineFieldLabelChange"
           @field-add-after="onContractInlineFieldAddAfter"
@@ -9154,6 +9155,10 @@ function onContractInlineFieldOrderDrop(payload: { field: FormSectionFieldSchema
   onFieldOrderDrop(fieldKey, payload.groupTitle);
 }
 
+function onContractInlineFieldOrderGroupDrop(payload: { groupTitle: string }) {
+  onFieldOrderGroupDrop(payload.groupTitle);
+}
+
 function onContractInlineFieldOrderDragEnd() {
   onFieldOrderDragEnd();
 }
@@ -9340,6 +9345,39 @@ function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '') {
     fieldMoveTargetDraft[sourceFieldKey] = targetFieldKey;
     selectedFormSettingsFieldGroupTitleDraft.value = normalizedTargetGroup;
   }
+  dropTargetFieldKey.value = '';
+}
+
+function fieldGroupTitleMatches(value: unknown, target: string) {
+  const current = normalizeFieldGroupTitle(value);
+  const normalizedTarget = normalizeFieldGroupTitle(target);
+  if (!current || !normalizedTarget) return false;
+  return current === normalizedTarget
+    || current.endsWith(` / ${normalizedTarget}`)
+    || normalizedTarget.endsWith(` / ${current}`);
+}
+
+function fieldGroupTitleForDraft(fieldKey: string) {
+  return normalizeFieldGroupTitle(fieldGroupDraft[fieldKey] || fieldGroupBase.value[fieldKey]);
+}
+
+function onFieldOrderGroupDrop(groupTitle: string) {
+  if (!isContractFieldOrderEditable.value || !draggingFieldKey.value) return;
+  const sourceFieldKey = draggingFieldKey.value;
+  const normalizedTargetGroup = normalizeFieldGroupTitle(groupTitle);
+  if (!sourceFieldKey || !normalizedTargetGroup) return;
+  ensureFieldOrderDraftStartsFromCurrentLayout();
+  const draft = fieldOrderDraft.value.filter((fieldKey) => fieldKey !== sourceFieldKey);
+  const targetGroupFieldKeys = draft.filter((fieldKey) => fieldGroupTitleMatches(fieldGroupTitleForDraft(fieldKey), normalizedTargetGroup));
+  const anchorFieldKey = targetGroupFieldKeys[targetGroupFieldKeys.length - 1] || '';
+  const anchorIndex = anchorFieldKey ? draft.indexOf(anchorFieldKey) : -1;
+  draft.splice(anchorIndex >= 0 ? anchorIndex + 1 : draft.length, 0, sourceFieldKey);
+  fieldOrderDraft.value = draft;
+  fieldOrderPreviewActive.value = true;
+  fieldGroupDraft[sourceFieldKey] = normalizedTargetGroup;
+  fieldMoveTargetDraft[sourceFieldKey] = anchorFieldKey;
+  selectedFormSettingsFieldGroupTitleDraft.value = normalizedTargetGroup;
+  formConfigAuditResult.value = null;
   dropTargetFieldKey.value = '';
 }
 

@@ -324,7 +324,13 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             target_parent_ids = policy_records.mapped("target_parent_menu_id").ids
             requested_menus = MenuAll.browse(sorted(set(requested_menu_ids + policy_menu_ids + target_parent_ids))).exists()
             menu_ids_with_parents = self._expand_with_parent_ids(requested_menus)
-            menus = MenuAll.search([("id", "in", menu_ids_with_parents)], order="parent_id, sequence, id")
+            menus = MenuAll.browse(menu_ids_with_parents).exists().sorted(
+                key=lambda menu: (
+                    int(menu.parent_id.id or 0) if menu.parent_id else 0,
+                    int(menu.sequence or 0),
+                    int(menu.id or 0),
+                )
+            )
         else:
             visible_ids = list(Menu.with_user(self.env.user)._visible_menu_ids())
             menus = Menu.search([("id", "in", visible_ids)], order="parent_id, sequence, id")
@@ -420,6 +426,22 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
         }
         return vals
 
+    def _deactivate_superseded_policies(self, policy, company_id: int) -> None:
+        if not policy or not policy.exists():
+            return
+        current_role_ids = set(int(group.id) for group in policy.role_group_ids)
+        siblings = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False).search([
+            ("company_id", "=", company_id),
+            ("menu_id", "=", int(policy.menu_id.id or 0)),
+            ("active", "=", True),
+        ])
+        for sibling in siblings:
+            if int(sibling.id or 0) == int(policy.id or 0):
+                continue
+            sibling_role_ids = set(int(group.id) for group in sibling.role_group_ids)
+            if sibling_role_ids == current_role_ids:
+                sibling.write({"active": False})
+
     def _mirror_menu_config_contract(self, company_id: int):
         if "ui.business.config.contract" not in self.env:
             return None
@@ -484,6 +506,7 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
                 policy = existing or Policy.create(vals)
                 if existing:
                     policy.write(vals)
+            self._deactivate_superseded_policies(policy, company_id)
             saved.append(self._serialize_policy(policy))
         try:
             contract = self._mirror_menu_config_contract(company_id)

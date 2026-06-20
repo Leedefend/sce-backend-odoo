@@ -12,6 +12,14 @@ USER_DATA_REBASELINE_SOURCE_MANIFEST = "user_data_rebaseline_source_manifest_v1.
 USER_DATA_REBASELINE_REPLAY_PREFLIGHT = "user_data_rebaseline_replay_asset_preflight_v1.json"
 USER_MODULE_DATA_BASELINE_CONTRACT = "user_module_data_baseline_contract_v1.json"
 
+LEGACY_LOGIN_ALIASES = {
+    "legacy_10000007": "chenshuai",
+    "legacy_10000009": "wutao",
+    "legacy_10000020": "yangdesheng",
+    "legacy_10000063": "zhaowei",
+    "legacy_10000077": "caisiqi",
+}
+
 
 def _clean_text(value):
     text = str(value or "").strip()
@@ -73,13 +81,14 @@ class ScUserPreferenceInitialization(models.TransientModel):
                 for field in node.findall("field")
                 if field.attrib.get("name")
             }
-            login = _clean_text(fields.get("login"))
+            legacy_login = _clean_text(fields.get("login"))
+            login = LEGACY_LOGIN_ALIASES.get(legacy_login, legacy_login)
             name = _clean_text(fields.get("name"))
             if not xmlid_name or not login or not name:
                 skipped += 1
                 continue
 
-            user = self._find_existing_legacy_user(Imd, User, xmlid_name, login)
+            user = self._find_existing_legacy_user(Imd, User, xmlid_name, login, legacy_login)
             desired_active = _bool_text(fields.get("active"))
             vals = {
                 "name": name,
@@ -112,6 +121,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
             "reused_by_login": reused_by_login,
             "bound_xmlids": bound_xmlids,
             "inactive_applied": inactive_applied,
+            "login_aliases_applied": len(LEGACY_LOGIN_ALIASES),
             "skipped": skipped,
         }
 
@@ -274,7 +284,10 @@ class ScUserPreferenceInitialization(models.TransientModel):
             return json.load(handle)
 
     @api.model
-    def _find_existing_legacy_user(self, Imd, User, xmlid_name, login):
+    def _find_existing_legacy_user(self, Imd, User, xmlid_name, login, legacy_login=None):
+        aliased_user = User.search([("login", "=", login)], limit=1)
+        if aliased_user:
+            return aliased_user
         for module in ("smart_construction_custom", "migration_assets"):
             row = Imd.search(
                 [
@@ -288,6 +301,8 @@ class ScUserPreferenceInitialization(models.TransientModel):
                 user = User.browse(row.res_id).exists()
                 if user:
                     return user
+        if legacy_login and legacy_login != login:
+            return User.search([("login", "=", legacy_login)], limit=1)
         return User.search([("login", "=", login)], limit=1)
 
     @api.model

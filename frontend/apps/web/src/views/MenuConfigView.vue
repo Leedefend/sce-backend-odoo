@@ -22,7 +22,7 @@
         <button type="button" class="ghost" :disabled="rollbackButtonDisabled" @click="rollbackSelectedMenuConfiguration">
           {{ rollingBack ? '回滚中...' : rollbackButtonText }}
         </button>
-        <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel">刷新</button>
+        <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel()">刷新</button>
         <button type="button" class="ghost" :disabled="loading || saving || creatingMenu" @click="openCreateMenu('custom')">
           新增菜单
         </button>
@@ -48,7 +48,7 @@
         </article>
         <article>
           <strong>移动到上级</strong>
-          <span>选择新的上级菜单；不移动表示保留当前父级，不能移动到自己或自己的下级。</span>
+          <span>可在表格选择新的上级菜单，也可在左侧树拖到目标分组；不能移动到自己或自己的下级。</span>
         </article>
         <article>
           <strong>显示</strong>
@@ -66,7 +66,7 @@
     </section>
 
     <div v-if="error" class="status error">{{ error }}</div>
-    <div v-else-if="message" class="status ok">{{ message }}</div>
+    <div v-else-if="statusMessage" class="status ok">{{ statusMessage }}</div>
     <section v-if="auditSummary" class="audit-panel" :class="{ 'audit-panel--warning': auditSummary.notApplicableCount > 0 }">
       <strong>菜单配置生效检查</strong>
       <span>
@@ -405,7 +405,24 @@ type FlatRow = {
   level: number;
 };
 
-type DropPosition = 'before' | 'after';
+type DropPosition = 'before' | 'after' | 'inside';
+
+const MENU_CONFIG_SAVE_NOTICE_KEY = 'sc_menu_config_save_notice';
+
+function storedSaveNotice() {
+  if (typeof window === 'undefined') return '';
+  return String(window.sessionStorage.getItem(MENU_CONFIG_SAVE_NOTICE_KEY) || '').trim();
+}
+
+function setSaveNotice(value: string) {
+  saveNotice.value = value;
+  if (typeof window === 'undefined') return;
+  if (value) {
+    window.sessionStorage.setItem(MENU_CONFIG_SAVE_NOTICE_KEY, value);
+  } else {
+    window.sessionStorage.removeItem(MENU_CONFIG_SAVE_NOTICE_KEY);
+  }
+}
 
 const loading = ref(false);
 const saving = ref(false);
@@ -415,6 +432,7 @@ const versionLoading = ref(false);
 const creatingMenu = ref(false);
 const error = ref('');
 const message = ref('');
+const saveNotice = ref(storedSaveNotice());
 const auditResult = ref<MenuConfigAuditPayload | null>(null);
 const versionState = ref<MenuConfigVersionsPayload | null>(null);
 const versionPanelOpen = ref(false);
@@ -428,6 +446,7 @@ const onlyConfigured = ref(false);
 const showGuide = ref(false);
 const createPanelOpen = ref(false);
 const company = ref<{ id: number; name: string } | null>(null);
+const statusMessage = computed(() => message.value || saveNotice.value);
 const menus = ref<MenuConfigMenu[]>([]);
 const tree = ref<MenuConfigMenu[]>([]);
 const collapsedMenuIds = ref<Set<number>>(new Set());
@@ -479,6 +498,7 @@ const MenuConfigTree = defineComponent({
             dragging: node.id === props.dragSourceMenuId,
             'drop-before': node.id === props.dragTargetMenuId && props.dragDropPosition === 'before',
             'drop-after': node.id === props.dragTargetMenuId && props.dragDropPosition === 'after',
+            'drop-inside': node.id === props.dragTargetMenuId && props.dragDropPosition === 'inside',
           },
         ],
         style: { paddingLeft: `${8 + props.level * 14}px` },
@@ -907,6 +927,7 @@ function updateDraft(menuId: number, patch: Partial<DraftPolicy>) {
   if (!draft) return;
   Object.assign(draft, patch);
   message.value = '';
+  setSaveNotice('');
   auditResult.value = null;
 }
 
@@ -934,6 +955,14 @@ function parentOptions(menuId: number) {
   return createParentOptions.value
     .filter((item) => !excluded.has(item.id))
     .sort((a, b) => parentOptionSortKey(a).localeCompare(parentOptionSortKey(b), 'zh-Hans-CN'));
+}
+
+function parentOptionIds(menuId: number) {
+  return new Set(parentOptions(menuId).map((item) => Number(item.id)));
+}
+
+function menuById(menuId: number) {
+  return menus.value.find((menu) => Number(menu.id) === Number(menuId)) || null;
 }
 
 function descendantsFor(menuId: number) {
@@ -1057,7 +1086,6 @@ async function createMenuEntry() {
       note: createForm.note.trim(),
     });
     const createdMenu = result.menu;
-    const createdPolicy = result.policy;
     const createdName = createdMenu?.name || createForm.name.trim();
     upsertCreatedMenu(result.menu, result.policy);
     selectedMenuId.value = Number(createdMenu?.id || 0);
@@ -1141,11 +1169,33 @@ function startTreeDrag(menuId: number) {
 function updateTreeDragTarget(payload: { menuId: number; position: DropPosition }) {
   if (!dragSourceMenuId.value || payload.menuId === dragSourceMenuId.value) return;
   if (!areVisualSiblings(tree.value, dragSourceMenuId.value, payload.menuId)) {
-    dragTargetMenuId.value = 0;
+    const allowedParentIds = parentOptionIds(dragSourceMenuId.value);
+    const targetMenu = menuById(payload.menuId);
+    if (allowedParentIds.has(Number(payload.menuId))) {
+      dragTargetMenuId.value = payload.menuId;
+      dragDropPosition.value = 'inside';
+      return;
+    }
+    if (!targetMenu || !allowedParentIds.has(Number(targetMenu.parent_id || 0))) {
+      dragTargetMenuId.value = 0;
+      return;
+    }
+    dragTargetMenuId.value = payload.menuId;
+    dragDropPosition.value = payload.position;
     return;
   }
   dragTargetMenuId.value = payload.menuId;
   dragDropPosition.value = payload.position;
+}
+
+function resequenceBranch(items: MenuConfigMenu[]) {
+  return items.map((item, index) => {
+    const draft = draftFor(item.id);
+    if (draft) {
+      draft.sequence_override = (index + 1) * 10;
+    }
+    return item;
+  });
 }
 
 function reorderSiblingBranch(items: MenuConfigMenu[], sourceId: number, targetId: number, position: DropPosition): MenuConfigMenu[] {
@@ -1157,19 +1207,108 @@ function reorderSiblingBranch(items: MenuConfigMenu[], sourceId: number, targetI
     const targetIndex = next.findIndex((item) => item.id === targetId);
     if (targetIndex < 0) return items;
     next.splice(position === 'before' ? targetIndex : targetIndex + 1, 0, source);
-    return next.map((item, index) => {
-      const draft = draftFor(item.id);
-      if (draft) {
-        draft.sequence_override = (index + 1) * 10;
-      }
-      return item;
-    });
+    return resequenceBranch(next);
   }
 
   return items.map((item) => {
     if (!item.children?.length) return item;
     return { ...item, children: reorderSiblingBranch(item.children, sourceId, targetId, position) };
   });
+}
+
+function removeTreeNode(items: MenuConfigMenu[], sourceId: number): { rows: MenuConfigMenu[]; removed: MenuConfigMenu | null } {
+  let removed: MenuConfigMenu | null = null;
+  const rows = items.flatMap((item) => {
+    if (Number(item.id) === Number(sourceId)) {
+      removed = item;
+      return [];
+    }
+    if (!item.children?.length) return [item];
+    const result = removeTreeNode(item.children, sourceId);
+    if (result.removed) {
+      removed = result.removed;
+      return [{ ...item, children: resequenceBranch(result.rows) }];
+    }
+    return [item];
+  });
+  return { rows, removed };
+}
+
+function insertTreeNodeInside(items: MenuConfigMenu[], parentId: number, source: MenuConfigMenu): { rows: MenuConfigMenu[]; inserted: boolean } {
+  let inserted = false;
+  const rows = items.map((item) => {
+    if (Number(item.id) === Number(parentId)) {
+      inserted = true;
+      const nextChild = { ...source, parent_id: parentId, parent_name: item.complete_name || item.name };
+      const children = resequenceBranch([...(item.children || []), nextChild]);
+      return { ...item, children };
+    }
+    if (!item.children?.length) return item;
+    const result = insertTreeNodeInside(item.children, parentId, source);
+    inserted = inserted || result.inserted;
+    return result.inserted ? { ...item, children: result.rows } : item;
+  });
+  return { rows, inserted };
+}
+
+function moveTreeNodeToParent(sourceId: number, parentId: number): boolean {
+  if (!sourceId || !parentId || sourceId === parentId || !parentOptionIds(sourceId).has(parentId)) return false;
+  const result = removeTreeNode(tree.value, sourceId);
+  if (!result.removed) return false;
+  const inserted = insertTreeNodeInside(result.rows, parentId, result.removed);
+  if (!inserted.inserted) return false;
+  const draft = draftFor(sourceId);
+  if (draft) {
+    draft.target_parent_menu_id = parentId;
+  }
+  tree.value = inserted.rows;
+  setSaveNotice('');
+  return true;
+}
+
+function insertTreeNodeRelative(
+  items: MenuConfigMenu[],
+  source: MenuConfigMenu,
+  targetId: number,
+  parentId: number,
+  position: Exclude<DropPosition, 'inside'>,
+): { rows: MenuConfigMenu[]; inserted: boolean } {
+  const ids = items.map((item) => Number(item.id));
+  if (ids.includes(Number(targetId))) {
+    const target = items.find((item) => Number(item.id) === Number(targetId));
+    const nextSource = { ...source, parent_id: parentId, parent_name: target?.parent_name || source.parent_name };
+    const withoutSource = items.filter((item) => Number(item.id) !== Number(source.id));
+    const targetIndex = withoutSource.findIndex((item) => Number(item.id) === Number(targetId));
+    if (targetIndex < 0) return { rows: items, inserted: false };
+    withoutSource.splice(position === 'before' ? targetIndex : targetIndex + 1, 0, nextSource);
+    return { rows: resequenceBranch(withoutSource), inserted: true };
+  }
+  let inserted = false;
+  const rows = items.map((item) => {
+    if (!item.children?.length) return item;
+    const result = insertTreeNodeRelative(item.children, source, targetId, parentId, position);
+    inserted = inserted || result.inserted;
+    return result.inserted ? { ...item, children: result.rows } : item;
+  });
+  return { rows, inserted };
+}
+
+function moveTreeNodeRelative(sourceId: number, targetId: number, position: Exclude<DropPosition, 'inside'>): boolean {
+  if (!sourceId || !targetId || sourceId === targetId) return false;
+  const target = menuById(targetId);
+  const parentId = Number(target?.parent_id || 0);
+  if (!target || !parentId || !parentOptionIds(sourceId).has(parentId)) return false;
+  const result = removeTreeNode(tree.value, sourceId);
+  if (!result.removed) return false;
+  const inserted = insertTreeNodeRelative(result.rows, result.removed, targetId, parentId, position);
+  if (!inserted.inserted) return false;
+  const draft = draftFor(sourceId);
+  if (draft) {
+    draft.target_parent_menu_id = parentId;
+  }
+  tree.value = inserted.rows;
+  setSaveNotice('');
+  return true;
 }
 
 function moveTreeNodeOrder(payload: { menuId: number; delta: number }) {
@@ -1200,6 +1339,7 @@ function moveTreeNodeOrder(payload: { menuId: number; delta: number }) {
   if (!result.moved) return;
   tree.value = result.rows;
   message.value = '';
+  setSaveNotice('');
 }
 
 function applyTreeReorder(payload: { sourceId: number; targetId: number; position: DropPosition }) {
@@ -1208,11 +1348,19 @@ function applyTreeReorder(payload: { sourceId: number; targetId: number; positio
     return;
   }
   if (!areVisualSiblings(tree.value, payload.sourceId, payload.targetId)) {
+    const moved = payload.position === 'inside'
+      ? moveTreeNodeToParent(payload.sourceId, payload.targetId)
+      : moveTreeNodeRelative(payload.sourceId, payload.targetId, payload.position);
+    if (moved) {
+      message.value = '';
+      setSaveNotice('');
+    }
     clearTreeDrag();
     return;
   }
   tree.value = reorderSiblingBranch(tree.value, payload.sourceId, payload.targetId, payload.position);
   message.value = '';
+  setSaveNotice('');
   clearTreeDrag();
 }
 
@@ -1222,8 +1370,19 @@ function applyTreeDrop(targetId: number) {
     clearTreeDrag();
     return;
   }
-  tree.value = reorderSiblingBranch(tree.value, sourceId, targetId, dragDropPosition.value);
-  message.value = '';
+  let moved = false;
+  if (dragDropPosition.value === 'inside') {
+    moved = moveTreeNodeToParent(sourceId, targetId);
+  } else if (areVisualSiblings(tree.value, sourceId, targetId)) {
+    tree.value = reorderSiblingBranch(tree.value, sourceId, targetId, dragDropPosition.value);
+    moved = true;
+  } else {
+    moved = moveTreeNodeRelative(sourceId, targetId, dragDropPosition.value);
+  }
+  if (moved) {
+    message.value = '';
+    setSaveNotice('');
+  }
   clearTreeDrag();
 }
 
@@ -1290,6 +1449,7 @@ function attachMissingConfiguredMenus(
   baseTree: MenuConfigMenu[],
   allMenus: MenuConfigMenu[],
   usedMenuIds: Set<number>,
+  rootMenuId = 0,
 ): MenuConfigMenu[] {
   const rootIds = new Set(baseTree.map((item) => Number(item.id)));
   const byParent = new Map<number, MenuConfigMenu[]>();
@@ -1321,7 +1481,10 @@ function attachMissingConfiguredMenus(
   })));
 
   const attached = attach(baseTree);
-  if (attached.length) return attached;
+  const rootMissing = rootMenuId
+    ? buildMissingBranch(rootMenuId).filter((menu) => !rootIds.has(Number(menu.id)))
+    : [];
+  if (attached.length) return sortBranch([...attached, ...rootMissing]);
   return buildMissingBranch(0);
 }
 
@@ -1360,10 +1523,14 @@ function returnToBusinessConfig() {
   });
 }
 
-async function loadPanel() {
+async function loadPanel(options: { preserveStatus?: boolean } = {}) {
   loading.value = true;
-  error.value = '';
-  message.value = '';
+  const shouldKeepSaveFeedback = String(message.value || saveNotice.value || '').startsWith('已保存');
+  if (!options.preserveStatus && !shouldKeepSaveFeedback) {
+    error.value = '';
+    message.value = '';
+    setSaveNotice('');
+  }
   try {
     const payload = await loadMenuConfigurationPanel({
       menu_ids: collectNavigationMenuIds(),
@@ -1384,7 +1551,12 @@ async function loadPanel() {
     });
     const usedMenuIds = new Set<number>();
     const navOrderedTree = buildTreeFromNavigation(session.menuTree as NavNode[], menuById, menuByLabel, usedMenuIds);
-    const completeTree = attachMissingConfiguredMenus(navOrderedTree, payload.menus || [], usedMenuIds);
+    const completeTree = attachMissingConfiguredMenus(
+      navOrderedTree,
+      payload.menus || [],
+      usedMenuIds,
+      rootMenu.value?.id || 0,
+    );
     tree.value = completeTree;
     initializeTreeCollapse(completeTree);
     groups.value = payload.groups || [];
@@ -1459,7 +1631,7 @@ async function rollbackSelectedMenuConfiguration() {
       version_no: selectedVersionNo.value || undefined,
     });
     await session.loadAppInit({ force: true });
-    await loadPanel();
+    await loadPanel({ preserveStatus: true });
     if (versionPanelOpen.value) {
       await loadVersions();
     }
@@ -1492,15 +1664,24 @@ async function saveChanges() {
   saving.value = true;
   error.value = '';
   message.value = '';
+  setSaveNotice('');
   try {
     await saveMenuConfigurationPanel({ rows });
-    await session.loadAppInit({ force: true });
-    await loadPanel();
     auditResult.value = null;
-    if (versionPanelOpen.value) {
-      await loadVersions();
+    setSaveNotice(`已保存 ${rows.length} 项菜单配置，正在刷新导航`);
+    saving.value = false;
+    try {
+      await session.loadAppInit({ force: true });
+      await loadPanel({ preserveStatus: true });
+      if (versionPanelOpen.value) {
+        await loadVersions();
+      }
+      setSaveNotice(`已保存 ${rows.length} 项菜单配置，导航已刷新`);
+    } catch (refreshErr) {
+      error.value = refreshErr instanceof Error
+        ? `菜单配置已保存，刷新导航失败：${refreshErr.message}`
+        : '菜单配置已保存，刷新导航失败';
     }
-    message.value = `已保存 ${rows.length} 项菜单配置，导航已刷新`;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '菜单配置保存失败';
   } finally {
@@ -1902,6 +2083,11 @@ h1 {
 
 :deep(.tree-node.drop-after) {
   box-shadow: inset 0 -2px 0 var(--sc-semantic-surface-interactive);
+}
+
+:deep(.tree-node.drop-inside) {
+  background: var(--sc-app-info-bg);
+  box-shadow: inset 0 0 0 1px var(--sc-semantic-surface-interactive);
 }
 
 .branch-marker {

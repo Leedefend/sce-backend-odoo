@@ -2,7 +2,12 @@
 <template>
   <div class="native-form-tree">
     <template v-for="(node, index) in visibleNodes" :key="nodeKey(node, index)">
-      <section v-if="isContainerNode(node)" :class="containerClass(node)">
+      <section
+        v-if="isContainerNode(node)"
+        :class="containerClass(node)"
+        @dragover.prevent
+        @drop.prevent.stop="emitGroupFieldOrderDrop(node, $event)"
+      >
         <header v-if="containerTitle(node)" class="native-container-head">
           <input
             v-if="fieldConfigEditable && isEditableGroupNode(node)"
@@ -63,6 +68,7 @@
               @field-order-drag-over="emit('field-order-drag-over', $event)"
               @field-order-drag-leave="emit('field-order-drag-leave', $event)"
               @field-order-drop="emit('field-order-drop', $event)"
+              @field-order-group-drop="emit('field-order-group-drop', $event)"
               @field-order-drag-end="emit('field-order-drag-end', $event)"
               @field-label-change="emit('field-label-change', $event)"
               @field-add-after="emit('field-add-after', $event)"
@@ -131,6 +137,7 @@
             @field-order-drag-over="emit('field-order-drag-over', $event)"
             @field-order-drag-leave="emit('field-order-drag-leave', $event)"
             @field-order-drop="emit('field-order-drop', $event)"
+            @field-order-group-drop="emit('field-order-group-drop', $event)"
             @field-order-drag-end="emit('field-order-drag-end', $event)"
             @field-label-change="emit('field-label-change', $event)"
             @field-add-after="emit('field-add-after', $event)"
@@ -173,6 +180,7 @@
             @field-order-drag-over="emit('field-order-drag-over', $event)"
             @field-order-drag-leave="emit('field-order-drag-leave', $event)"
             @field-order-drop="emit('field-order-drop', $event)"
+            @field-order-group-drop="emit('field-order-group-drop', $event)"
             @field-order-drag-end="emit('field-order-drag-end', $event)"
             @field-label-change="emit('field-label-change', $event)"
             @field-add-after="emit('field-add-after', $event)"
@@ -251,6 +259,7 @@
             @field-order-drag-over="emit('field-order-drag-over', $event)"
             @field-order-drag-leave="emit('field-order-drag-leave', $event)"
             @field-order-drop="emit('field-order-drop', $event)"
+            @field-order-group-drop="emit('field-order-group-drop', $event)"
             @field-order-drag-end="emit('field-order-drag-end', $event)"
             @field-label-change="emit('field-label-change', $event)"
             @field-add-after="emit('field-add-after', $event)"
@@ -292,6 +301,7 @@
         @field-order-drag-over="emit('field-order-drag-over', $event)"
         @field-order-drag-leave="emit('field-order-drag-leave', $event)"
         @field-order-drop="emit('field-order-drop', $event)"
+        @field-order-group-drop="emit('field-order-group-drop', $event)"
         @field-order-drag-end="emit('field-order-drag-end', $event)"
         @field-label-change="emit('field-label-change', $event)"
         @field-add-after="emit('field-add-after', $event)"
@@ -409,6 +419,7 @@ const emit = defineEmits<{
   (event: 'field-order-drag-over', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
   (event: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
   (event: 'field-order-drop', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
+  (event: 'field-order-group-drop', payload: { groupTitle: string }): void;
   (event: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (event: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
   (event: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
@@ -592,8 +603,27 @@ function emitGroupAddField(node: NativeFormLayoutNode) {
   emit('group-add-field', { groupTitle });
 }
 
+function emitGroupFieldOrderDrop(node: NativeFormLayoutNode, event: DragEvent) {
+  if (!props.fieldOrderEditable || !props.fieldOrderDraggingKey) return;
+  const target = event.target instanceof HTMLElement ? event.target : null;
+  if (target?.closest('.field')) return;
+  const groupTitle = containerPolicyTitle(node);
+  if (!groupTitle) return;
+  emit('field-order-group-drop', { groupTitle });
+}
+
 function containerClass(node: NativeFormLayoutNode) {
-  return ['native-container', `native-container--${nodeType(node) || 'node'}`];
+  return [
+    'native-container',
+    `native-container--${nodeType(node) || 'node'}`,
+    {
+      'native-container--field-drop-target': Boolean(
+        props.fieldOrderEditable
+        && props.fieldOrderDraggingKey
+        && containerPolicyTitle(node),
+      ),
+    },
+  ];
 }
 
 function nodeAttributes(node: NativeFormLayoutNode) {
@@ -756,6 +786,12 @@ function closeMore(node: NativeFormLayoutNode) {
 .native-container--group {
   border-top: 1px solid var(--sc-app-border);
   padding-top: 14px;
+}
+
+.native-container--field-drop-target.native-container--group,
+.native-container--field-drop-target.native-container--page {
+  outline: 1px dashed var(--sc-semantic-surface-interactive);
+  outline-offset: 4px;
 }
 
 .native-container--group > .native-container-head {

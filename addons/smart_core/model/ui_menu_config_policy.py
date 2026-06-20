@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import re
+
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
@@ -270,6 +272,7 @@ class UiMenuConfigPolicy(models.Model):
             return {}
         rows = orchestration.get("policies") if isinstance(orchestration.get("policies"), list) else []
         applicable = {}
+        Menu = self.env["ir.ui.menu"].sudo()
         for row in rows:
             if not isinstance(row, dict) or not _to_bool(row.get("active"), True):
                 continue
@@ -279,6 +282,12 @@ class UiMenuConfigPolicy(models.Model):
             menu_id = _to_int(row.get("menu_id"))
             if not menu_id:
                 continue
+            if not Menu.browse(menu_id).exists():
+                continue
+            parent_id = _to_int(row.get("target_parent_menu_id"))
+            if parent_id and not Menu.browse(parent_id).exists():
+                row = dict(row)
+                row["target_parent_menu_id"] = 0
             existing = applicable.get(menu_id)
             existing_specific = bool(existing and existing.get("role_group_ids"))
             current_specific = bool(role_group_ids)
@@ -319,11 +328,20 @@ class UiMenuConfigPolicy(models.Model):
         def policy_menu_name(policy) -> str:
             return str(policy.get("menu_label") or "").strip() if isinstance(policy, dict) else str(policy.menu_id.name or "").strip()
 
+        def policy_menu_record(policy):
+            if not isinstance(policy, dict):
+                return policy.menu_id
+            menu_id = _to_int(policy.get("menu_id"))
+            return self.env["ir.ui.menu"].browse(menu_id) if menu_id else self.env["ir.ui.menu"]
+
         def policy_target_parent(policy):
             if not isinstance(policy, dict):
                 return policy.target_parent_menu_id
             parent_id = _to_int(policy.get("target_parent_menu_id"))
             return self.env["ir.ui.menu"].browse(parent_id) if parent_id else self.env["ir.ui.menu"]
+
+        def policy_menu_exists(policy) -> bool:
+            return bool(policy_menu_record(policy).exists())
 
         stats = {
             "source_authority": self._source_contract(runtime_source=runtime_source),
@@ -335,11 +353,20 @@ class UiMenuConfigPolicy(models.Model):
             "reordered_count": 0,
             "moved_count": 0,
         }
-        move_targets = {
-            menu_id: policy_target_parent(policy)
+        move_targets = [
+            {
+                "menu_id": int(menu_id),
+                "source_menu": policy_menu_record(policy),
+                "source_label": policy_menu_name(policy),
+                "target_menu": policy_target_parent(policy),
+            }
             for menu_id, policy in policies_by_menu.items()
-            if policy_visible(policy) and policy_target_parent(policy) and int(policy_target_parent(policy).id or 0) != int(menu_id)
-        }
+            if policy_visible(policy)
+            and policy_menu_exists(policy)
+            and policy_target_parent(policy)
+            and policy_target_parent(policy).exists()
+            and int(policy_target_parent(policy).id or 0) != int(menu_id)
+        ]
         policies_by_label = {}
         for policy in policies_by_menu.values():
             label = policy_menu_name(policy)
@@ -452,22 +479,116 @@ class UiMenuConfigPolicy(models.Model):
             }
             return bool(str(menu.name or "").strip() in labels)
 
-        def remove_node(nodes: list[dict], menu_id: int) -> tuple[list[dict], dict | None]:
+        def node_matches_policy_source(node: dict, menu_id: int, source_menu, source_label: str) -> bool:
+            try:
+                if int(node.get("menu_id") or 0) == int(menu_id or 0):
+                    return True
+            except Exception:
+                pass
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            try:
+                if int(meta.get("menu_id") or 0) == int(menu_id or 0):
+                    return True
+            except Exception:
+                pass
+            if node_matches_menu(node, source_menu):
+                return True
+            labels = {
+                str(node.get("name") or "").strip(),
+                str(node.get("label") or "").strip(),
+                str(node.get("title") or "").strip(),
+            }
+            return bool(source_label and source_label in labels)
+
+        def menu_action_metadata(menu) -> dict:
+            action_ref = str(menu.action or "").strip()
+            if not action_ref:
+                return {
+                    "route": "/m/%s" % int(menu.id),
+                }
+            action_model = ""
+            action_id = 0
+            match = re.match(r"^([a-zA-Z0-9_.]+)\((\d+),?\)$", action_ref)
+            if match:
+                action_model = match.group(1)
+                action_id = _to_int(match.group(2))
+            elif "," in action_ref:
+                action_model, action_id_text = action_ref.split(",", 1)
+                action_id = _to_int(action_id_text)
+            if not action_model:
+                return {
+                    "action_ref": action_ref,
+                    "route": "/m/%s" % int(menu.id),
+                }
+            meta = {
+                "action_ref": action_ref,
+                "action_type": action_model,
+            }
+            if action_model == "ir.actions.act_window" and action_id:
+                action = self.env["ir.actions.act_window"].sudo().browse(action_id).exists()
+                meta.update({
+                    "route": "/a/%s?menu_id=%s" % (action_id, int(menu.id)),
+                    "action_id": action_id,
+                    "model": str(action.res_model or "") if action else "",
+                    "view_modes": [item.strip() for item in str(action.view_mode or "").split(",") if item.strip()] if action else [],
+                })
+            else:
+                meta["route"] = "/m/%s" % int(menu.id)
+            return meta
+
+        def build_missing_menu_node(menu, policy=None) -> dict | None:
+            menu = menu.exists()
+            if not menu:
+                return None
+            label = policy_custom_label(policy) if policy else ""
+            label = label or str(menu.name or "").strip()
+            if not label:
+                return None
+            action_meta = menu_action_metadata(menu)
+            sequence = policy_sequence_override(policy) if policy else 0
+            sequence = sequence or int(menu.sequence or 0)
+            meta = {
+                "source": "ui.menu.config.policy",
+                "menu_id": int(menu.id),
+                "menu_xmlid": "",
+                "parent_menu_id": int(menu.parent_id.id or 0),
+                "parent_menu_label": str(menu.parent_id.name or "") if menu.parent_id else "",
+                "source_authority": self._source_contract(runtime_source=runtime_source),
+                **action_meta,
+            }
+            node = {
+                "key": "menu_config_policy:%s" % int(menu.id),
+                "label": label,
+                "title": label,
+                "name": label,
+                "menu_id": int(menu.id),
+                "parent_id": int(menu.parent_id.id or 0),
+                "sequence": sequence,
+                "children": [],
+                "meta": meta,
+            }
+            if action_meta.get("route"):
+                node["route"] = action_meta["route"]
+            if action_meta.get("action_id"):
+                node["action_id"] = action_meta["action_id"]
+            if action_meta.get("model"):
+                node["model"] = action_meta["model"]
+            if action_meta.get("view_modes"):
+                node["view_modes"] = action_meta["view_modes"]
+            return node
+
+        def remove_node(nodes: list[dict], menu_id: int, source_menu=None, source_label: str = "") -> tuple[list[dict], dict | None]:
             removed = None
             next_nodes = []
             for node in nodes:
                 if not isinstance(node, dict):
                     continue
-                try:
-                    current_id = int(node.get("menu_id") or 0)
-                except Exception:
-                    current_id = 0
-                if current_id == menu_id and removed is None:
+                if node_matches_policy_source(node, menu_id, source_menu, source_label) and removed is None:
                     removed = node
                     continue
                 children = node.get("children") if isinstance(node.get("children"), list) else []
                 if children:
-                    next_children, child_removed = remove_node(children, menu_id)
+                    next_children, child_removed = remove_node(children, menu_id, source_menu, source_label)
                     if child_removed is not None and removed is None:
                         removed = child_removed
                     node = dict(node)
@@ -499,12 +620,39 @@ class UiMenuConfigPolicy(models.Model):
                 next_nodes.append(node)
             return next_nodes, inserted
 
+        def contains_policy_source(nodes: list[dict], menu_id: int, source_menu=None, source_label: str = "") -> bool:
+            for node in nodes:
+                if not isinstance(node, dict):
+                    continue
+                if node_matches_policy_source(node, menu_id, source_menu, source_label):
+                    return True
+                children = node.get("children") if isinstance(node.get("children"), list) else []
+                if children and contains_policy_source(children, menu_id, source_menu, source_label):
+                    return True
+            return False
+
         def apply_moves(nodes: list[dict]) -> list[dict]:
             next_nodes = nodes
-            for menu_id, target_menu in move_targets.items():
-                next_nodes, moved_node = remove_node(next_nodes, int(menu_id))
+            for move in move_targets:
+                target_menu = move["target_menu"]
+                next_nodes, moved_node = remove_node(
+                    next_nodes,
+                    int(move["menu_id"]),
+                    move["source_menu"],
+                    str(move["source_label"] or ""),
+                )
                 if moved_node is None:
-                    continue
+                    if contains_policy_source(
+                        next_nodes,
+                        int(move["menu_id"]),
+                        move["source_menu"],
+                        str(move["source_label"] or ""),
+                    ):
+                        continue
+                    policy = policies_by_menu.get(int(move["menu_id"]))
+                    moved_node = build_missing_menu_node(move["source_menu"], policy)
+                    if moved_node is None:
+                        continue
                 next_nodes, inserted = insert_node(next_nodes, target_menu, moved_node)
                 if inserted:
                     stats["moved_count"] += 1

@@ -50,7 +50,47 @@ def _load_handler():
     return module
 
 
+def _load_policy_model():
+    root = Path(__file__).resolve().parents[1]
+    api_mod = types.SimpleNamespace(
+        model=lambda fn: fn,
+        model_create_multi=lambda fn: fn,
+        depends=lambda *args, **kwargs: (lambda fn: fn),
+        onchange=lambda *args, **kwargs: (lambda fn: fn),
+        constrains=lambda *args, **kwargs: (lambda fn: fn),
+    )
+    fields_mod = types.SimpleNamespace(
+        Char=lambda *args, **kwargs: None,
+        Many2one=lambda *args, **kwargs: None,
+        Many2many=lambda *args, **kwargs: None,
+        Integer=lambda *args, **kwargs: None,
+        Boolean=lambda *args, **kwargs: None,
+        Text=lambda *args, **kwargs: None,
+    )
+    models_mod = types.SimpleNamespace(Model=object)
+    exc_mod = _install_module(
+        "odoo.exceptions",
+        AccessError=type("AccessError", (Exception,), {}),
+        ValidationError=type("ValidationError", (Exception,), {}),
+    )
+    _install_module("odoo", api=api_mod, fields=fields_mod, models=models_mod, exceptions=exc_mod)
+
+    sys.modules.pop("odoo.addons.smart_core.model.ui_menu_config_policy", None)
+    spec = importlib.util.spec_from_file_location(
+        "odoo.addons.smart_core.model.ui_menu_config_policy",
+        root / "model" / "ui_menu_config_policy.py",
+    )
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 class _RecordSet(list):
+    @property
+    def ids(self):
+        return [int(getattr(record, "id", 0) or 0) for record in self]
+
     def sudo(self):
         return self
 
@@ -214,14 +254,23 @@ class _PolicyModel(_RecordSet):
         self.domain = domain
         self.order = order
         company_id = next((value for field, op, value in domain if field == "company_id" and op == "="), 0)
+        menu_id = next((value for field, op, value in domain if field == "menu_id" and op == "="), 0)
         active_required = any(field == "active" and op == "=" and value is True for field, op, value in domain)
         rows = [
             policy
             for policy in self
             if int(policy.company_id.id or 0) == int(company_id or 0)
             and policy.menu_id
+            and (not menu_id or int(policy.menu_id.id or 0) == int(menu_id or 0))
             and (not active_required or policy.active)
         ]
+        if order and "menu_id" in order:
+            rows.sort(key=lambda policy: (
+                int(policy.menu_id.id or 0),
+                -int(policy.id or 0) if "id desc" in order else int(policy.id or 0),
+            ))
+        elif order:
+            rows.sort(key=lambda policy: int(policy.id or 0), reverse="desc" in order)
         result = _RecordSet(rows)
         return _RecordSet(result[:limit]) if limit else result
 
@@ -306,6 +355,27 @@ class _ContractModel(_RecordSet):
         contract = _Contract(max([int(getattr(row, "id", 0) or 0) for row in self] + [0]) + 1, vals)
         self.append(contract)
         return contract
+
+
+class _RuntimeContractModel(_RecordSet):
+    def sudo(self):
+        return self
+
+    def search(self, domain, order=None, limit=None):
+        name = next((value for field, op, value in domain if field == "name" and op == "="), "")
+        model = next((value for field, op, value in domain if field == "model" and op == "="), "")
+        rows = [
+            contract
+            for contract in self
+            if getattr(contract, "name", "") == name
+            and getattr(contract, "model", "") == model
+            and getattr(contract, "active", True)
+            and getattr(contract, "status", "") == "published"
+        ]
+        rows.sort(key=lambda row: (int(getattr(row, "version_no", 0) or 0), int(getattr(row, "id", 0) or 0)), reverse=True)
+        if limit == 1:
+            return rows[0] if rows else _RecordSet([])
+        return _RecordSet(rows[:limit] if limit else rows)
 
 
 class _ContractVersion:
@@ -471,6 +541,53 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(contract.contract_json["menu_orchestration"]["policy_count"], 1)
         self.assertEqual(contract.contract_json["menu_orchestration"]["source"], "smart_core.lowcode.menu_config")
         self.assertTrue(result["meta"]["contract_mirrored"])
+
+    def test_menu_config_save_deactivates_superseded_same_scope_policy(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        menu = _Menu(11, "合同中心")
+        old_parent = _Menu(20, "旧分组")
+        new_parent = _Menu(21, "新分组")
+        old_policy = _Policy(1, menu, company=company, target_parent=old_parent)
+        current_policy = _Policy(2, menu, company=company, target_parent=old_parent)
+        policies = _PolicyModel([old_policy, current_policy], user=user)
+        contracts = _ContractModel([])
+        env = _Env(
+            {
+                "ui.menu.config.policy": policies,
+                "ui.business.config.contract": contracts,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationSaveHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "rows": [
+                    {
+                        "policy_id": 2,
+                        "menu_id": 11,
+                        "target_parent_menu_id": 21,
+                        "visible": True,
+                    }
+                ],
+            },
+        )
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertTrue(result["ok"])
+        self.assertFalse(old_policy.active)
+        self.assertTrue(current_policy.active)
+        self.assertEqual(current_policy.target_parent_menu_id.id, new_parent.id)
+        active_rows = [
+            row for row in contracts[0].contract_json["menu_orchestration"]["policies"]
+            if row["menu_id"] == 11 and row["active"]
+        ]
+        self.assertEqual(len(active_rows), 1)
+        self.assertEqual(active_rows[0]["target_parent_menu_id"], 21)
 
     def test_menu_config_create_adds_menu_policy_and_contract_version(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
@@ -662,6 +779,62 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(result["data"]["contract"]["summary"]["hidden_count"], 1)
         self.assertEqual(result["data"]["contract"]["summary"]["renamed_count"], 1)
         self.assertTrue(result["meta"]["bootstrapped_from_current_policies"])
+
+    def test_runtime_contract_policy_skips_deleted_menu_and_ignores_deleted_target_parent(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(10, "智慧施工管理平台")
+        menu = _Menu(11, "施工管理", parent=root)
+        menus = _MenuModel([root, menu])
+        contract_json = {
+            "menu_orchestration": {
+                "schema_version": "menu_orchestration.v1",
+                "policies": [
+                    {
+                        "active": True,
+                        "menu_id": 845,
+                        "menu_label": "已删除临时菜单",
+                        "visible": True,
+                        "target_parent_menu_id": 10,
+                    },
+                    {
+                        "active": True,
+                        "menu_id": 11,
+                        "menu_label": "施工管理",
+                        "visible": True,
+                        "target_parent_menu_id": 999,
+                        "sequence_override": 40,
+                    },
+                ],
+            },
+        }
+        contract = types.SimpleNamespace(
+            id=1,
+            active=True,
+            status="published",
+            name="menu.config.company.7",
+            model="ir.ui.menu",
+            company_id=company,
+            version_no=3,
+            contract_json=contract_json,
+        )
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ui.business.config.contract": _RuntimeContractModel([contract]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+
+        result = policy_model._runtime_contract_policies_for_user(user=user)
+
+        self.assertNotIn(845, result)
+        self.assertIn(11, result)
+        self.assertEqual(result[11]["target_parent_menu_id"], 0)
 
 
 if __name__ == "__main__":

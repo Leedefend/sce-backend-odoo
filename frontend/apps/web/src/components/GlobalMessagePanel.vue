@@ -61,8 +61,8 @@
               <span>接收人</span>
               <input
                 ref="recipientInputRef"
-                class="sc-search"
                 v-model="userQuery"
+                class="sc-search"
                 type="search"
                 placeholder="搜索姓名、账号或邮箱"
                 @focus="loadUsers"

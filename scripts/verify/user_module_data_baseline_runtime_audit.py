@@ -38,6 +38,21 @@ def _legacy_user_count() -> int:
     return env["res.users"].sudo().with_context(active_test=False).search_count([("login", "=like", "legacy_%")])  # noqa: F821
 
 
+def _baseline_user_count() -> int:
+    Imd = env["ir.model.data"].sudo()  # noqa: F821
+    rows = Imd.search(
+        [
+            ("module", "=", "smart_construction_custom"),
+            ("name", "=like", "legacy_user_sc_%"),
+            ("model", "=", "res.users"),
+        ]
+    )
+    user_ids = [row.res_id for row in rows if row.res_id]
+    if not user_ids:
+        return 0
+    return env["res.users"].sudo().with_context(active_test=False).search_count([("id", "in", user_ids)])  # noqa: F821
+
+
 def _custom_xmlid_count() -> int:
     return env["ir.model.data"].sudo().search_count(  # noqa: F821
         [
@@ -63,6 +78,13 @@ def _duplicate_legacy_logins() -> list[dict[str, object]]:
         if login and count > 1:
             duplicates.append({"login": login, "count": count})
     return duplicates
+
+
+def _missing_required_login_aliases() -> list[str]:
+    required = ["wutao", "chenshuai", "caisiqi", "zhaowei", "yangdesheng"]
+    User = env["res.users"].sudo().with_context(active_test=False)  # noqa: F821
+    existing = set(User.search([("login", "in", required)]).mapped("login"))
+    return [login for login in required if login not in existing]
 
 
 def _table_count(table: str, where: str = "") -> int | None:
@@ -121,31 +143,40 @@ def main() -> int:
     Initializer = env["sc.user.preference.initialization"].sudo()  # noqa: F821
     payload_count = _payload_user_count()
     before_users = _legacy_user_count()
+    before_baseline_users = _baseline_user_count()
     before_xmlids = _custom_xmlid_count()
     first = Initializer.apply_legacy_user_master_data_baseline()
     mid_users = _legacy_user_count()
+    mid_baseline_users = _baseline_user_count()
     mid_xmlids = _custom_xmlid_count()
     second = Initializer.apply_legacy_user_master_data_baseline()
     history_business = Initializer.apply_history_business_data_baseline_manifest()
     rebaseline_contract = Initializer.apply_user_data_rebaseline_contract()
     business_data_counts = _business_data_counts()
     after_users = _legacy_user_count()
+    after_baseline_users = _baseline_user_count()
     after_xmlids = _custom_xmlid_count()
     duplicates = _duplicate_legacy_logins()
+    missing_aliases = _missing_required_login_aliases()
 
     errors = []
     if payload_count < 100:
         errors.append(f"payload_count too small: {payload_count} < 100")
-    if mid_users != payload_count or after_users != payload_count:
-        errors.append(f"legacy user count mismatch: payload={payload_count} mid={mid_users} after={after_users}")
+    if mid_baseline_users != payload_count or after_baseline_users != payload_count:
+        errors.append(
+            "baseline user XMLID binding mismatch: "
+            f"payload={payload_count} mid={mid_baseline_users} after={after_baseline_users}"
+        )
     if mid_xmlids != payload_count or after_xmlids != payload_count:
         errors.append(f"custom XMLID count mismatch: payload={payload_count} mid={mid_xmlids} after={after_xmlids}")
+    if missing_aliases:
+        errors.append(f"required login aliases missing: {missing_aliases}")
     if second.get("created") != 0:
         errors.append(f"second run created users: {second.get('created')}")
-    if after_users != mid_users or after_xmlids != mid_xmlids:
+    if after_baseline_users != mid_baseline_users or after_xmlids != mid_xmlids:
         errors.append(
             "second run is not idempotent: "
-            f"users {mid_users}->{after_users}, xmlids {mid_xmlids}->{after_xmlids}"
+            f"users {mid_baseline_users}->{after_baseline_users}, xmlids {mid_xmlids}->{after_xmlids}"
         )
     if duplicates:
         errors.append(f"duplicate legacy logins: {duplicates[:10]}")
@@ -180,13 +211,28 @@ def main() -> int:
         "status": "PASS" if not errors else "FAIL",
         "database": env.cr.dbname,  # noqa: F821
         "payload_user_count": payload_count,
-        "before": {"legacy_users": before_users, "custom_xmlids": before_xmlids},
-        "after_first_run": {"legacy_users": mid_users, "custom_xmlids": mid_xmlids, "result": first},
-        "after_second_run": {"legacy_users": after_users, "custom_xmlids": after_xmlids, "result": second},
+        "before": {
+            "legacy_users": before_users,
+            "baseline_users": before_baseline_users,
+            "custom_xmlids": before_xmlids,
+        },
+        "after_first_run": {
+            "legacy_users": mid_users,
+            "baseline_users": mid_baseline_users,
+            "custom_xmlids": mid_xmlids,
+            "result": first,
+        },
+        "after_second_run": {
+            "legacy_users": after_users,
+            "baseline_users": after_baseline_users,
+            "custom_xmlids": after_xmlids,
+            "result": second,
+        },
         "history_business_data": history_business,
         "rebaseline_contract": rebaseline_contract,
         "business_data_counts": business_data_counts,
         "duplicate_legacy_logins": duplicates,
+        "missing_required_login_aliases": missing_aliases,
         "errors": errors,
     }
     out = _artifact_root() / "user_module_data_baseline_runtime_audit.json"
