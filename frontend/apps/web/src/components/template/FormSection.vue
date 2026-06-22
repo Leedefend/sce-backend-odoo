@@ -64,14 +64,6 @@
                   title="下移"
                   @click.stop="emitFieldOrderMove(field, 1)"
                 >↓</button>
-                <button
-                  v-if="fieldConfigEditable"
-                  class="field-order-btn"
-                  type="button"
-                  :aria-label="`在${field.label}后新增字段`"
-                  title="新增字段"
-                  @click.stop="emitFieldAddAfter(field)"
-                >新增</button>
               </div>
               <div
                 v-if="fieldActionsFor(field).length"
@@ -629,11 +621,6 @@ function emitFieldLabelChange(field: FormSectionFieldSchema, label: string) {
   const normalized = String(label || '').trim();
   if (!normalized || normalized === field.label) return;
   emit('field-label-change', { field, label: normalized });
-}
-
-function emitFieldAddAfter(field: FormSectionFieldSchema) {
-  if (!props.fieldConfigEditable) return;
-  emit('field-add-after', { field, groupTitle: props.fieldGroupTitle || '' });
 }
 
 function isInteractiveFieldTarget(event?: Event) {

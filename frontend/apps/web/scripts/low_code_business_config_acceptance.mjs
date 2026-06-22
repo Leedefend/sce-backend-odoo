@@ -211,6 +211,8 @@ async function ensureCrossGroupDesignerBaseline(page) {
 async function formDesignerFieldTexts(page) {
   return page.locator(".field--selectable").evaluateAll((nodes) => (
     nodes.map((node) => {
+      const editorValue = node.querySelector(".field-label-editor")?.value?.trim() || "";
+      if (editorValue) return editorValue;
       const text = node.textContent?.replace(/\s+/g, " ").trim() || "";
       return text.split("⋮⋮")[0].split("↑")[0].trim();
     }).filter(Boolean)
@@ -236,10 +238,11 @@ async function formDesignerFieldGroups(page) {
         .filter((fieldNode) => fieldNode.closest(".native-container--group") === node)
         .map((fieldNode) => {
           const allFields = Array.from(document.querySelectorAll(".field--selectable"));
+          const editorValue = fieldNode.querySelector(".field-label-editor")?.value?.trim() || "";
           const text = fieldNode.textContent?.replace(/\s+/g, " ").trim() || "";
           return {
             index: allFields.indexOf(fieldNode),
-            label: text.split("⋮⋮")[0].split("↑")[0].trim(),
+            label: editorValue || text.split("⋮⋮")[0].split("↑")[0].trim(),
           };
         })
         .filter((field) => field.index >= 0 && field.label);
@@ -280,7 +283,9 @@ async function selectDesignerField(page, index = 0) {
   const fields = page.locator(".field--selectable");
   await fields.nth(index).waitFor({ timeout: 10000 });
   await fields.nth(index).scrollIntoViewIfNeeded();
-  await fields.nth(index).click({ position: { x: 24, y: 24 } });
+  await fields.nth(index).evaluate((field) => {
+    field.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+  });
   await page.waitForFunction((targetIndex) => {
     const selected = document.querySelector(".contract-field-selection-card");
     const selectedCount = document.querySelectorAll(".field--selected").length;
@@ -822,6 +827,8 @@ async function main() {
     await selectDesignerField(page, 0);
     const selectedFieldCount = await page.locator(".field--selected").count();
     const selectedPanelText = await page.locator(".contract-field-selection-card").innerText();
+    const inlineAddButtonCount = await page.locator(".field-order-btn", { hasText: "新增" }).count();
+    const inlineVisibilityActionCount = await page.locator(".field-inline-actions .field-inline-action").count();
     await page.locator(".contract-field-selection-card").getByText("隐藏", { exact: true }).click();
     const formDirtyAfterHide = await page.locator(".contract-field-governance-dirty").count();
     const saveFormEnabledAfterHide = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
@@ -935,7 +942,7 @@ async function main() {
       }
     }
     await selectDesignerField(page, 0);
-    await page.locator(".contract-field-selection-card").getByRole("button", { name: "新增字段" }).click();
+    await page.locator(".contract-field-central-create").click();
     await page.waitForSelector(".contract-field-create-dialog", { timeout: 10000 });
     const createFieldDialogText = await page.locator(".contract-field-create-dialog").innerText();
     const createFieldLabelInputCount = await page.locator(".contract-field-create-dialog input[required]").count();
@@ -1076,6 +1083,8 @@ async function main() {
     );
     assert(returnButtonCount >= 1, "表单设计器缺少返回配置入口", { returnButtonCount });
     assert(legacyPanelCount === 0, "默认表单设计器不应显示技术配置面板", { legacyPanelCount });
+    assert(inlineAddButtonCount === 0, "字段行不应显示分散新增字段按钮", { inlineAddButtonCount });
+    assert(inlineVisibilityActionCount > 0, "字段行缺少显示隐藏操作", { inlineVisibilityActionCount });
 
     await page.getByRole("button", { name: "检查效果" }).click();
     await page.waitForSelector(".contract-field-governance-audit", { timeout: 20000 });

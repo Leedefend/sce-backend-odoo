@@ -21,14 +21,6 @@
             @keydown.enter.prevent="emitGroupRename(node, ($event.target as HTMLInputElement).value)"
           />
           <h3 v-else>{{ containerTitle(node) }}</h3>
-          <button
-            v-if="fieldConfigEditable && isEditableGroupNode(node)"
-            class="native-container-add-field"
-            type="button"
-            :aria-label="`在${containerTitle(node)}新增字段`"
-            title="新增字段"
-            @click="emitGroupAddField(node)"
-          >+</button>
         </header>
         <div
           v-else-if="fieldOrderEditable && nodeType(node) === 'group'"
@@ -611,12 +603,6 @@ function emitGroupRename(node: NativeFormLayoutNode, rawTitle: string) {
   emit('group-rename', { oldTitle, newTitle });
 }
 
-function emitGroupAddField(node: NativeFormLayoutNode) {
-  const groupTitle = containerPolicyTitle(node);
-  if (!props.fieldConfigEditable || !groupTitle) return;
-  emit('group-add-field', { groupTitle });
-}
-
 function emitGroupFieldOrderDrop(node: NativeFormLayoutNode, event: DragEvent, index = 0) {
   if (!props.fieldOrderEditable || !props.fieldOrderDraggingKey) return;
   const target = event.target;
@@ -872,23 +858,6 @@ function closeMore(node: NativeFormLayoutNode) {
   padding: 4px 8px;
   font-size: 14px;
   font-weight: 600;
-}
-
-.native-container-add-field {
-  width: 28px;
-  height: 28px;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 5px;
-  background: var(--sc-app-bg);
-  color: var(--sc-app-text-secondary);
-  cursor: pointer;
-}
-
-.native-container-add-field:hover {
-  background: var(--sc-app-hover-bg);
-  color: var(--sc-app-text-primary);
 }
 
 .native-static-text {

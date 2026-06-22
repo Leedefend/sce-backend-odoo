@@ -218,15 +218,25 @@
                 <strong>字段配置</strong>
                 <span>按旧表单分区点选字段，或按住字段左侧把手调整顺序和分组。</span>
               </div>
-              <button
-                v-if="suggestedHiddenFieldRows.length"
-                class="ghost small"
-                type="button"
-                :disabled="busy"
-                @click="hideSuggestedInternalFields"
-              >
-                隐藏内部字段 {{ suggestedHiddenFieldRows.length }}
-              </button>
+              <div class="contract-form-settings-section-actions">
+                <button
+                  class="ghost small contract-field-central-create"
+                  type="button"
+                  :disabled="busy"
+                  @click="openCentralCustomFieldCreate"
+                >
+                  新增字段
+                </button>
+                <button
+                  v-if="suggestedHiddenFieldRows.length"
+                  class="ghost small"
+                  type="button"
+                  :disabled="busy"
+                  @click="hideSuggestedInternalFields"
+                >
+                  隐藏内部字段 {{ suggestedHiddenFieldRows.length }}
+                </button>
+              </div>
             </header>
             <section class="contract-field-selection-panel">
               <div v-if="selectedFormSettingsFieldRow" class="contract-field-selection-card">
@@ -260,12 +270,6 @@
                     title="下移"
                     @click="moveSelectedFormSettingsField(1)"
                   >↓</button>
-                  <button
-                    class="ghost"
-                    type="button"
-                    :disabled="busy"
-                    @click="addFieldAfterSelectedFormSettingsField"
-                  >新增字段</button>
                   <label class="contract-field-group-move">
                     <span>移动到分组</span>
                     <select
@@ -304,7 +308,7 @@
               </div>
               <div v-else class="contract-field-selection-empty">
                 <strong>选择字段后开始配置</strong>
-                <span>在下方表单点选字段后，可在这里调整显示、隐藏、顺序、分组或新增字段。</span>
+                <span>在下方表单点选字段后，可在这里调整显示、隐藏、顺序和分组。</span>
               </div>
             </section>
           </section>
@@ -339,7 +343,7 @@
           :native-action-handler="runNativeLayoutAction"
           :native-action-state-resolver="resolveNativeActionState"
           :relation-adapter="relationFieldAdapter"
-          :field-actions="isContractFieldOrderEditable ? undefined : contractFieldActions"
+          :field-actions="isContractFieldOrderEditable ? formSettingsFieldActions : contractFieldActions"
           :field-order-editable="isContractFieldOrderEditable"
           :field-order-index="contractInlineFieldOrderIndex"
           :field-order-count="fieldOrderDraft.length"
@@ -1931,6 +1935,44 @@ function contractFieldActions(field: FormSectionFieldSchema) {
         raw: rule,
       };
     });
+}
+
+function formSettingsFieldActions(field: FormSectionFieldSchema) {
+  const fieldKey = String(field.name || '').trim();
+  if (!fieldKey) return [];
+  const existingRow = activeContractModeFieldRows.value.find((row) => row.fieldKey === fieldKey);
+  if (existingRow?.actions.length) {
+    return existingRow.actions.map((action) => ({
+      ...action,
+      checked: Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)
+        ? fieldVisibilityDraft[fieldKey] === (action.value === 'show')
+        : Boolean(action.checked),
+      disabled: Boolean(action.disabled) || busy.value,
+    }));
+  }
+  const visible = Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)
+    ? fieldVisibilityDraft[fieldKey]
+    : true;
+  return [
+    {
+      key: `${fieldKey}:show`,
+      label: '显示',
+      value: 'show',
+      checked: visible,
+      disabled: busy.value,
+      title: '在当前页面显示这个字段',
+      raw: {},
+    },
+    {
+      key: `${fieldKey}:hide`,
+      label: '隐藏',
+      value: 'hide',
+      checked: !visible,
+      disabled: busy.value,
+      title: '在当前页面隐藏这个字段',
+      raw: {},
+    },
+  ];
 }
 
 const contractPromptFields = computed(() => (contractPromptRule.value ? rulePromptFields(contractPromptRule.value) : []));
@@ -9355,10 +9397,12 @@ function moveSelectedFormSettingsField(delta: number) {
   moveFieldOrder(fieldKey, delta);
 }
 
-function addFieldAfterSelectedFormSettingsField() {
-  const fieldKey = selectedFormSettingsFieldKey.value;
-  if (!fieldKey) return;
-  openInlineCustomFieldCreate(selectedFormSettingsFieldGroupTitle.value || '业务配置字段', fieldKey);
+function openCentralCustomFieldCreate() {
+  const selectedFieldKey = selectedFormSettingsFieldKey.value;
+  const groupTitle = selectedFormSettingsFieldGroupTitle.value
+    || currentFormGroupOptions.value[0]
+    || '业务配置字段';
+  openInlineCustomFieldCreate(groupTitle, selectedFieldKey);
 }
 
 function moveFieldToGroupEnd(fieldKey: string, groupTitle: string) {
@@ -11206,6 +11250,15 @@ onBeforeUnmount(() => {
 
 .contract-form-settings-section-head .ghost {
   flex: 0 0 auto;
+}
+
+.contract-form-settings-section-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .contract-form-settings-fields {
