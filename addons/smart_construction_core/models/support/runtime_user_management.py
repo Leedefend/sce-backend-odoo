@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
+from odoo.osv import expression
 
 
 class ResGroups(models.Model):
@@ -11,10 +12,20 @@ class ResGroups(models.Model):
 class ResUsers(models.Model):
     _inherit = "res.users"
 
-    login = fields.Char(string="用户名")
+    login = fields.Char(string="登录账号")
     name = fields.Char(string="姓名")
     phone = fields.Char(string="手机号")
     email = fields.Char(string="邮箱")
+    sc_runtime_source_login = fields.Char(
+        string="用户名",
+        compute="_compute_sc_runtime_profile_fields",
+        search="_search_sc_runtime_source_login",
+    )
+    sc_runtime_legacy_user_id = fields.Char(
+        string="原用户编号",
+        compute="_compute_sc_runtime_profile_fields",
+        search="_search_sc_runtime_legacy_user_id",
+    )
     sc_runtime_company_real_user = fields.Boolean(
         string="公司真实用户",
         compute="_compute_sc_runtime_company_real_user",
@@ -52,6 +63,67 @@ class ResUsers(models.Model):
     @api.model
     def _sc_assignable_groups(self):
         return self.env["res.groups"].sudo().search([("sc_assignable_user_permission", "=", True)])
+
+    @api.model
+    def _sc_legacy_profiles_by_user_id(self, user_ids):
+        if "sc.legacy.user.profile" not in self.env.registry or not user_ids:
+            return {}
+        profiles = self.env["sc.legacy.user.profile"].sudo().with_context(active_test=False).search(
+            [("user_id", "in", list(user_ids))],
+            order="id asc",
+        )
+        profiles_by_user_id = {}
+        for profile in profiles:
+            profiles_by_user_id.setdefault(profile.user_id.id, profile)
+        return profiles_by_user_id
+
+    def _compute_sc_runtime_profile_fields(self):
+        profiles_by_user_id = self._sc_legacy_profiles_by_user_id(self.ids)
+        for user in self:
+            profile = profiles_by_user_id.get(user.id)
+            source_login = ""
+            legacy_user_id = ""
+            if profile:
+                source_login = (
+                    (profile.source_login or "").strip()
+                    or (profile.generated_login or "").strip()
+                    or (profile.legacy_user_id or "").strip()
+                )
+                legacy_user_id = (profile.legacy_user_id or "").strip()
+            user.sc_runtime_source_login = source_login or (user.login or "").strip()
+            user.sc_runtime_legacy_user_id = legacy_user_id
+
+    @api.model
+    def _search_sc_runtime_source_login(self, operator, value):
+        if operator not in ("=", "!=", "like", "not like", "ilike", "not ilike"):
+            operator = "ilike"
+        domain = [("login", operator, value)]
+        if "sc.legacy.user.profile" not in self.env.registry:
+            return domain
+        profile_domain = expression.OR(
+            [
+                [("source_login", operator, value)],
+                [("generated_login", operator, value)],
+                [("legacy_user_id", operator, value)],
+            ]
+        )
+        user_ids = self.env["sc.legacy.user.profile"].sudo().with_context(active_test=False).search(profile_domain).mapped(
+            "user_id"
+        ).ids
+        if not user_ids:
+            return domain
+        return expression.OR([[("id", "in", user_ids)], domain])
+
+    @api.model
+    def _search_sc_runtime_legacy_user_id(self, operator, value):
+        if "sc.legacy.user.profile" not in self.env.registry:
+            return [("id", "=", 0)]
+        if operator not in ("=", "!=", "like", "not like", "ilike", "not ilike"):
+            operator = "ilike"
+        user_ids = self.env["sc.legacy.user.profile"].sudo().with_context(active_test=False).search(
+            [("legacy_user_id", operator, value)]
+        ).mapped("user_id").ids
+        return [("id", "in", user_ids)]
 
     @api.model
     def _sc_runtime_company_real_user_ids(self):
