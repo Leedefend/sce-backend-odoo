@@ -75,7 +75,7 @@ class ResUsers(models.Model):
             display_name = str(profile.display_name or user.name or "")
             if not user.active or user.share or not login:
                 continue
-            if login.startswith(("demo_", "legacy_", "history_system_user_")) or login == "default":
+            if login.startswith(("demo_", "history_system_user_")) or login == "default":
                 continue
             if any(token in display_name for token in blocked_name_tokens):
                 continue
