@@ -47,6 +47,40 @@ async function selectedFieldGroup(page) {
   });
 }
 
+async function selectedFieldLabel(page) {
+  return page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first().evaluate((el) => {
+    const editor = el.querySelector(".field-label-editor");
+    if (editor) return editor.value?.trim() || "";
+    return el.querySelector(".label")?.textContent?.trim() || el.textContent?.trim() || "";
+  });
+}
+
+async function renameFieldInDesigner(page, targetLabel, stage) {
+  const field = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
+  await field.scrollIntoViewIfNeeded();
+  const input = field.locator(".field-label-editor").first();
+  await input.waitFor({ timeout: 10000 });
+  const responsePromise = page.waitForResponse((response) => {
+    if (!response.url().includes("/api/v1/intent")) return false;
+    const post = response.request().postData() || "";
+    return post.includes('"ui.form_field_policy.set"') || post.includes("ui.form_field_policy.set");
+  }, { timeout: 30000 });
+  await input.evaluate((el, label) => {
+    el.value = label;
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }, targetLabel);
+  await responsePromise;
+  await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
+  await page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first().waitFor({ timeout: 30000 });
+  await page.waitForFunction(({ fieldName, label }) => {
+    const fieldNode = document.querySelector(`.field--selectable[data-field-name="${fieldName}"]`);
+    const editor = fieldNode?.querySelector(".field-label-editor");
+    return editor && editor.value?.trim() === label;
+  }, { fieldName: FIELD_NAME, label: targetLabel }, { timeout: 30000 });
+  const actual = await selectedFieldLabel(page);
+  assert(actual === targetLabel, "配置页字段改名未生效", { stage, targetLabel, actual });
+}
+
 async function moveFieldInDesigner(page, targetGroup) {
   const field = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
   await field.scrollIntoViewIfNeeded();
@@ -117,7 +151,7 @@ async function businessRuntimeEvidence(page) {
   return evidence;
 }
 
-async function assertRuntimeGroup(page, expectedGroup, stage) {
+async function assertRuntimeGroup(page, expectedGroup, stage, expectedLabel = FIELD_LABEL) {
   const configGroup = await selectedFieldGroup(page);
   assert(configGroup === expectedGroup, "配置页字段分组不符合预期", { stage, expectedGroup, configGroup });
   const evidence = await businessRuntimeEvidence(page);
@@ -135,10 +169,10 @@ async function assertRuntimeGroup(page, expectedGroup, stage) {
     domGroup,
     dom: evidence.dom,
   });
-  assert(String(evidence.dom?.label || "").includes(FIELD_LABEL), "办理页字段标签不符合预期", {
+  assert(String(evidence.dom?.label || "").includes(expectedLabel), "办理页字段标签不符合预期", {
     stage,
     label: evidence.dom?.label,
-    expectedLabel: FIELD_LABEL,
+    expectedLabel,
   });
   return { configGroup, runtimeGroup, dom: evidence.dom };
 }
@@ -168,6 +202,15 @@ async function main() {
     await openFormDesigner(page);
     await moveFieldInDesigner(page, HOME_GROUP);
     report.checks.afterRestoreHome = await assertRuntimeGroup(page, HOME_GROUP, "afterRestoreHome");
+
+    const renamedLabel = `${FIELD_LABEL}验收`;
+    await openFormDesigner(page);
+    await renameFieldInDesigner(page, renamedLabel, "rename");
+    report.checks.afterRename = await assertRuntimeGroup(page, HOME_GROUP, "afterRename", renamedLabel);
+
+    await openFormDesigner(page);
+    await renameFieldInDesigner(page, FIELD_LABEL, "renameRestore");
+    report.checks.afterRenameRestore = await assertRuntimeGroup(page, HOME_GROUP, "afterRenameRestore", FIELD_LABEL);
 
     report.ok = true;
     console.log(JSON.stringify(report, null, 2));

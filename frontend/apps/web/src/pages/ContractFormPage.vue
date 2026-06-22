@@ -205,7 +205,7 @@
             </div>
             <div>
               <span>可配置项</span>
-              <strong>字段顺序、显示隐藏、新增字段</strong>
+              <strong>字段名称、顺序、显示隐藏、新增字段</strong>
             </div>
             <div>
               <span>影响范围</span>
@@ -335,7 +335,7 @@
           :field-order-count="fieldOrderDraft.length"
           :field-order-dragging-key="draggingFieldKey"
           :field-order-drop-target-key="dropTargetFieldKey"
-          :field-config-editable="false"
+          :field-config-editable="isContractFieldOrderEditable"
           :field-selection-mode="isContractFieldOrderEditable"
           :selected-field-key="selectedFormSettingsFieldKey"
           :columns="nativeFormRootColumns"
@@ -2384,7 +2384,7 @@ const formFieldConfigScope = computed(() => {
   return {
     scope: `${page}这个页面`,
     saveTarget: '只影响当前页面，不影响其它页面',
-    summary: `本页按旧表单分区调整${page}的字段显示、顺序、分组和新增字段，保存后只影响这个页面。`,
+    summary: `本页按旧表单分区调整${page}的字段名称、显示、顺序、分组和新增字段，保存后只影响这个页面。`,
   };
 });
 
@@ -2997,10 +2997,7 @@ function normalizedLowCodeDefault(field: { type?: string; default?: string }): u
 
 function buildLowCodeViewOrchestration() {
   const availableFields = contract.value?.fields || {};
-  const fieldLabel = (name: string) => {
-    const descriptor = availableFields[name];
-    return String(descriptor?.string || name).trim() || name;
-  };
+  const fieldLabel = (name: string) => effectiveLowCodeFieldLabel(name, availableFields[name]);
   const fieldGroupTitle = (name: string) => (
     effectiveFieldGroupTitleForDraft(name)
   );
@@ -3073,6 +3070,48 @@ function buildLowCodeViewOrchestration() {
     };
   }
   return Object.keys(views).length ? { views } : undefined;
+}
+
+function lowCodeLayoutFieldLabel(name: string) {
+  const targetName = String(name || '').trim();
+  if (!targetName) return '';
+  const walk = (nodes: NativeFormLayoutNode[]): string => {
+    for (const node of nodes) {
+      if (!node || typeof node !== 'object') continue;
+      const nodeType = String(node.type || (node as { containerType?: string }).containerType || '').trim().toLowerCase();
+      const nodeName = String(node.name || '').trim();
+      if (nodeType === 'field' && nodeName === targetName) {
+        const nodeRecord = node as Record<string, unknown>;
+        const fieldInfo = nativeNodeFieldInfo(nodeRecord);
+        const label = String(
+          nodeRecord.string
+          || nodeRecord.label
+          || fieldInfo.string
+          || fieldInfo.label
+          || '',
+        ).trim();
+        if (label) return label;
+      }
+      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+        const children = node[key];
+        if (!Array.isArray(children)) continue;
+        const found = walk(children as NativeFormLayoutNode[]);
+        if (found) return found;
+      }
+    }
+    return '';
+  };
+  return walk(rawNativeFormLayoutNodes.value) || walk(lowCodeFormLayoutBase.value);
+}
+
+function effectiveLowCodeFieldLabel(name: string, descriptor?: FieldDescriptor) {
+  const fieldName = String(name || '').trim();
+  return String(
+    contractFieldLabel(fieldName)
+    || lowCodeLayoutFieldLabel(fieldName)
+    || descriptor?.string
+    || fieldName,
+  ).trim() || fieldName;
 }
 
 function normalizeLowCodeFieldDraft(field: {
