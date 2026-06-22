@@ -832,6 +832,8 @@ async function main() {
     const inlineAddButtonCount = await page.locator(".field-order-btn", { hasText: "新增" }).count();
     const inlineVisibilityActionCount = await page.locator(".field-inline-actions .field-inline-action").count();
     await page.locator(".contract-field-selection-card").getByText("隐藏", { exact: true }).click();
+    const operationLogTextAfterHide = await page.locator(".contract-form-operation-log").innerText();
+    const operationLogEntryCountAfterHide = await page.locator(".contract-form-operation-log-list li").count();
     const formDirtyAfterHide = await page.locator(".contract-field-governance-dirty").count();
     const saveFormEnabledAfterHide = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     const resetFormEnabledAfterHide = await page.getByRole("button", { name: "重置" }).isEnabled();
@@ -955,6 +957,8 @@ async function main() {
       draggableFieldCount,
       selectedFieldCount,
       selectedPanelText,
+      operationLogTextAfterHide,
+      operationLogEntryCountAfterHide,
       initialFormDirtyCount,
       initialSaveFormEnabled,
       formDirtyAfterHide,
@@ -993,6 +997,13 @@ async function main() {
       selectedFieldCount,
       selectedPanelText,
     });
+    assert(
+      operationLogEntryCountAfterHide > 0
+        && operationLogTextAfterHide.includes("本次操作记录")
+        && operationLogTextAfterHide.includes("隐藏字段"),
+      "表单配置没有记录当前用户操作",
+      { operationLogTextAfterHide, operationLogEntryCountAfterHide },
+    );
     assert(
       formDirtyAfterHide > 0
         && saveFormEnabledAfterHide

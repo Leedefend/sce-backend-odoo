@@ -216,7 +216,7 @@
             <header class="contract-form-settings-section-head">
               <div>
                 <strong>字段配置</strong>
-                <span>按旧表单分区点选字段，或按住字段左侧把手调整顺序和分组。</span>
+                <span>按旧表单分区点选字段，或按住字段拖拽调整顺序和分组。</span>
               </div>
               <div class="contract-form-settings-section-actions">
                 <button
@@ -297,6 +297,30 @@
                 <span>在下方表单点选字段后，可在这里调整显示、隐藏、顺序和分组。</span>
               </div>
             </section>
+          </section>
+          <section class="contract-form-operation-log" aria-label="本次操作记录">
+            <header>
+              <div>
+                <strong>本次操作记录</strong>
+                <span>{{ formConfigOperatorName }}</span>
+              </div>
+              <button
+                class="ghost small"
+                type="button"
+                :disabled="!formConfigOperationLog.length"
+                @click="clearFormConfigOperationLog"
+              >
+                清空记录
+              </button>
+            </header>
+            <ol v-if="formConfigOperationLog.length" class="contract-form-operation-log-list">
+              <li v-for="entry in formConfigOperationLog.slice(0, 8)" :key="entry.id">
+                <time>{{ formatFormConfigOperationTime(entry.at) }}</time>
+                <strong>{{ entry.action }}</strong>
+                <span>{{ entry.summary }}</span>
+              </li>
+            </ol>
+            <p v-else class="contract-form-operation-log-empty">暂无操作记录</p>
           </section>
           <div class="contract-field-governance-footer">
             <span v-if="hasCurrentFormFieldDraftChanges" class="contract-field-governance-dirty">表单设置已调整，保存后生效</span>
@@ -1288,6 +1312,14 @@ type FormConfigAuditResult = {
   hasConflict: boolean;
 };
 
+type FormConfigOperationLogEntry = {
+  id: string;
+  at: string;
+  operator: string;
+  action: string;
+  summary: string;
+};
+
 class ContractAccessPolicyError extends Error {
   reasonCode: string;
 
@@ -2013,6 +2045,8 @@ const fieldVisibilityDraft = reactive<Record<string, boolean>>({});
 const fieldVisibilityDirtyKeys = reactive<Record<string, boolean>>({});
 const formConfigAuditBusy = ref(false);
 const formConfigAuditResult = ref<FormConfigAuditResult | null>(null);
+const formConfigOperationLog = ref<FormConfigOperationLogEntry[]>([]);
+const formConfigOperationLogHydrated = ref(false);
 const lowCodeFieldCreateDialog = reactive({
   open: false,
   afterFieldKey: '',
@@ -2246,6 +2280,102 @@ const hasCurrentFormFieldDraftChanges = computed(() => (
   hasFieldOrderChanges.value || hasFieldVisibilityChanges.value || hasFieldGroupChanges.value || fieldVisibilityDirty.value
 ));
 
+const formConfigOperatorName = computed(() => {
+  const user = session.user || {};
+  return String(user.name || user.login || user.email || user.id || '当前用户').trim();
+});
+
+const formConfigOperationLogStorageKey = computed(() => {
+  const modelName = String(model.value || route.params.model || '').trim() || 'unknown';
+  const action = Number(actionId.value || route.query.action_id || 0) || 0;
+  const view = String(routeQueryText('view_id') || routeQueryText('viewId') || '0').trim() || '0';
+  const page = String(routeQueryText('page_label') || routeQueryText('pageLabel') || route.fullPath || '').trim();
+  const userId = String(session.user?.id || session.user?.login || formConfigOperatorName.value || '').trim() || 'anonymous';
+  const db = String(route.query.db || '').trim() || 'default';
+  return `sc_form_config_operation_log:${db}:${modelName}:action:${action}:view:${view}:page:${page}:user:${userId}`;
+});
+
+function normalizeFormConfigOperationLogEntries(raw: unknown) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => {
+      const row = item && typeof item === 'object' && !Array.isArray(item)
+        ? item as Record<string, unknown>
+        : {};
+      const id = String(row.id || '').trim();
+      const at = String(row.at || '').trim();
+      const action = String(row.action || '').trim();
+      const summary = String(row.summary || '').trim();
+      if (!id || !at || !action || !summary) return null;
+      return {
+        id,
+        at,
+        operator: String(row.operator || formConfigOperatorName.value || '当前用户').trim(),
+        action,
+        summary,
+      };
+    })
+    .filter((item): item is FormConfigOperationLogEntry => Boolean(item));
+}
+
+function persistFormConfigOperationLog() {
+  if (typeof window === 'undefined') return;
+  const key = formConfigOperationLogStorageKey.value;
+  if (!key) return;
+  try {
+    window.sessionStorage.setItem(key, JSON.stringify(formConfigOperationLog.value.slice(0, 50)));
+  } catch {
+    // ignore session storage failures
+  }
+}
+
+function hydrateFormConfigOperationLog() {
+  if (typeof window === 'undefined') return;
+  const key = formConfigOperationLogStorageKey.value;
+  if (!key) return;
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    formConfigOperationLog.value = normalizeFormConfigOperationLogEntries(raw ? JSON.parse(raw) : []);
+    formConfigOperationLogHydrated.value = true;
+  } catch {
+    formConfigOperationLog.value = [];
+    formConfigOperationLogHydrated.value = true;
+  }
+}
+
+function appendFormConfigOperation(action: string, summary: string) {
+  const normalizedAction = String(action || '').trim();
+  const normalizedSummary = String(summary || '').trim();
+  if (!normalizedAction || !normalizedSummary) return;
+  const now = new Date();
+  formConfigOperationLog.value = [
+    {
+      id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+      at: now.toISOString(),
+      operator: formConfigOperatorName.value,
+      action: normalizedAction,
+      summary: normalizedSummary,
+    },
+    ...formConfigOperationLog.value,
+  ].slice(0, 50);
+  persistFormConfigOperationLog();
+}
+
+function clearFormConfigOperationLog() {
+  formConfigOperationLog.value = [];
+  persistFormConfigOperationLog();
+}
+
+function formatFormConfigOperationTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+}
+
+watch(formConfigOperationLogStorageKey, () => {
+  hydrateFormConfigOperationLog();
+}, { immediate: true });
+
 function isSuggestedInternalFormField(fieldKey: string, label = '') {
   const name = String(fieldKey || '').trim();
   const text = `${name} ${String(label || '').trim()}`.toLowerCase();
@@ -2267,8 +2397,16 @@ function isSuggestedInternalFormField(fieldKey: string, label = '') {
 function formDesignFieldLabel(fieldKey: string) {
   const key = String(fieldKey || '').trim();
   if (!key) return '';
+  const selectedLabel = selectedFormSettingsFieldKey.value === key
+    ? String(selectedFormSettingsFieldLabel.value || '').trim()
+    : '';
+  if (selectedLabel && selectedLabel !== key) return selectedLabel;
   const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === key);
-  return row?.label || nativeFormDesignFieldLabels.value[key] || key;
+  const rowLabel = String(row?.label || '').trim();
+  const nativeLabel = String(nativeFormDesignFieldLabels.value[key] || '').trim();
+  if (nativeLabel && nativeLabel !== key) return nativeLabel;
+  if (rowLabel && rowLabel !== key) return rowLabel;
+  return rowLabel || key;
 }
 
 const suggestedHiddenFieldRows = computed(() => currentFormDesignFieldKeys.value
@@ -9328,6 +9466,7 @@ async function onContractFieldAction(payload: FormSectionFieldActionPayload) {
     fieldVisibilityDraft[fieldKey] = actionValue === 'show';
     fieldVisibilityDirtyKeys[fieldKey] = true;
     formConfigAuditResult.value = null;
+    appendFormConfigOperation(actionValue === 'show' ? '显示字段' : '隐藏字段', `${formDesignFieldLabel(fieldKey)} 设置为${actionValue === 'show' ? '显示' : '隐藏'}`);
     contractModeFeedback.value = '字段显示设置已调整，保存后生效';
     return;
   }
@@ -9341,6 +9480,7 @@ function onFieldVisibilityDraftChange(fieldKey: string, value: string) {
   fieldVisibilityDirtyKeys[fieldKey] = true;
   fieldVisibilityDirty.value = true;
   formConfigAuditResult.value = null;
+  appendFormConfigOperation(value === 'show' ? '显示字段' : '隐藏字段', `${formDesignFieldLabel(fieldKey)} 设置为${value === 'show' ? '显示' : '隐藏'}`);
   contractModeFeedback.value = '字段显示设置已调整，保存后生效';
 }
 
@@ -9395,6 +9535,7 @@ function moveFieldToGroupEnd(fieldKey: string, groupTitle: string) {
   selectedFormSettingsFieldKey.value = sourceFieldKey;
   selectedFormSettingsFieldGroupTitleDraft.value = normalizedTargetGroup;
   formConfigAuditResult.value = null;
+  appendFormConfigOperation('移动分组', `${formDesignFieldLabel(sourceFieldKey)} 移动到 ${normalizedTargetGroup}`);
 }
 
 function moveSelectedFormSettingsFieldToGroup(groupTitle: string) {
@@ -9436,6 +9577,7 @@ function hideSuggestedInternalFields() {
   });
   fieldVisibilityDirty.value = true;
   formConfigAuditResult.value = null;
+  appendFormConfigOperation('批量隐藏字段', `隐藏 ${rows.length} 个内部字段`);
   contractModeFeedback.value = `已标记隐藏 ${rows.length} 个内部字段，保存后生效`;
 }
 
@@ -9503,6 +9645,8 @@ function contractFieldSequence(fieldKey: string, fallback = 100) {
 async function setInlineFieldPolicy(fieldKey: string, params: Record<string, unknown>) {
   const base = lowCodeApplyBaseParams();
   if (!fieldKey || busy.value) return;
+  const label = String(params.label || '').trim();
+  const groupTitle = normalizeFieldGroupTitle(params.group_title);
   busyKind.value = 'action';
   try {
     await intentRequest({
@@ -9515,6 +9659,12 @@ async function setInlineFieldPolicy(fieldKey: string, params: Record<string, unk
       },
       context: { view: 'form' },
     });
+    if (label) {
+      appendFormConfigOperation('修改字段名称', `${formDesignFieldLabel(fieldKey)} 改为 ${label}`);
+    }
+    if (groupTitle) {
+      appendFormConfigOperation('移动分组', `${label || formDesignFieldLabel(fieldKey)} 移动到 ${groupTitle}`);
+    }
     contractModeFeedback.value = '字段配置已更新';
     await reload();
   } catch (err) {
@@ -9577,6 +9727,7 @@ async function onContractInlineGroupRename(payload: { oldTitle: string; newTitle
         context: { view: 'form' },
       });
     }
+    appendFormConfigOperation('修改分组名称', `${oldTitle} 改为 ${newTitle}`);
     contractModeFeedback.value = '区域名称已更新';
     await reload();
   } catch (err) {
@@ -9626,6 +9777,7 @@ async function submitInlineCustomFieldCreate() {
       context: { view: 'form' },
     });
     contractModeFeedback.value = '字段已添加';
+    appendFormConfigOperation('新增字段', `${label} 添加到 ${lowCodeFieldCreateDialog.groupTitle || '业务配置字段'}`);
     closeInlineCustomFieldCreate();
     await reload();
   } catch (err) {
@@ -9699,6 +9851,7 @@ function moveFieldOrderTo(sourceFieldKey: string, targetFieldKey: string) {
   fieldOrderDraft.value = draft;
   fieldOrderPreviewActive.value = true;
   formConfigAuditResult.value = null;
+  appendFormConfigOperation('拖拽排序', `${formDesignFieldLabel(sourceFieldKey)} 调整到 ${formDesignFieldLabel(targetFieldKey)} 前`);
 }
 
 function moveFieldOrder(fieldKey: string, delta: number) {
@@ -9742,6 +9895,7 @@ function resetContractFieldOrder() {
     delete fieldVisibilityDirtyKeys[key];
   });
   formConfigAuditResult.value = null;
+  appendFormConfigOperation('重置表单设置', '撤销当前页面未保存的表单配置调整');
   contractModeFeedback.value = '';
 }
 
@@ -9801,6 +9955,16 @@ function returnToBusinessConfigDesigner() {
   });
 }
 
+function formConfigSaveOperationSummary(changedVisibility: Record<string, boolean>, changedGroups: Record<string, string>) {
+  const parts: string[] = [];
+  if (hasFieldOrderChanges.value) parts.push('字段顺序');
+  const groupCount = Object.keys(changedGroups).length;
+  if (groupCount) parts.push(`${groupCount} 个字段分组`);
+  const visibilityCount = Object.keys(changedVisibility).length;
+  if (visibilityCount) parts.push(`${visibilityCount} 个字段显示状态`);
+  return parts.length ? `保存并发布：${parts.join('、')}` : '保存并发布表单设置';
+}
+
 async function saveContractFieldOrder() {
   if (!hasCurrentFormFieldDraftChanges.value) return true;
   const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
@@ -9808,6 +9972,7 @@ async function saveContractFieldOrder() {
   const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
   const changedVisibility = changedFieldVisibilityDraft();
   const changedGroups = changedFieldGroupDraft();
+  const saveOperationSummary = formConfigSaveOperationSummary(changedVisibility, changedGroups);
   const applyParams: Record<string, unknown> = { ...baseParams };
   if (hasFieldOrderChanges.value) {
     applyParams.field_order = [...fieldOrderDraft.value];
@@ -9884,6 +10049,7 @@ async function saveContractFieldOrder() {
     lowCodeContractLoaded.value = false;
     formConfigAuditResult.value = null;
     contractModeFeedback.value = '表单设置已保存并发布，刷新页面后按新配置生效';
+    appendFormConfigOperation('保存发布', saveOperationSummary);
     await reload();
     await hydrateLowCodeDraftFromContract();
     return true;
@@ -11543,6 +11709,73 @@ onBeforeUnmount(() => {
 }
 
 .contract-field-governance-action input {
+  margin: 0;
+}
+
+.contract-form-operation-log {
+  display: grid;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-bg);
+}
+
+.contract-form-operation-log header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.contract-form-operation-log header > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.contract-form-operation-log strong {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+}
+
+.contract-form-operation-log header span,
+.contract-form-operation-log-empty {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-form-operation-log-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contract-form-operation-log-list li {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-form-operation-log-list time {
+  color: var(--sc-semantic-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.contract-form-operation-log-list span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contract-form-operation-log-empty {
   margin: 0;
 }
 
