@@ -58,7 +58,8 @@ async function selectedFieldLabel(page) {
 async function renameFieldInDesigner(page, targetLabel, stage) {
   const field = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
   await field.scrollIntoViewIfNeeded();
-  const input = field.locator(".field-label-editor").first();
+  await field.click({ force: true });
+  const input = page.locator(".contract-field-label-edit input").first();
   await input.waitFor({ timeout: 10000 });
   const responsePromise = page.waitForResponse((response) => {
     if (!response.url().includes("/api/v1/intent")) return false;

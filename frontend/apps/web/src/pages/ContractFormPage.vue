@@ -236,6 +236,16 @@
                   <small>{{ selectedFormSettingsFieldGroupTitle }}</small>
                 </div>
                 <div class="contract-field-selection-tools">
+                  <label class="contract-field-label-edit">
+                    <span>字段显示名称</span>
+                    <input
+                      type="text"
+                      :value="selectedFormSettingsFieldRow.label"
+                      :disabled="busy"
+                      @change="onSelectedFormSettingsFieldLabelChange"
+                      @keydown.enter.prevent="onSelectedFormSettingsFieldLabelChange"
+                    />
+                  </label>
                   <button
                     class="ghost contract-field-selection-order-btn"
                     type="button"
@@ -9393,6 +9403,15 @@ function onSelectedFormSettingsFieldVisibilityChange(value: string) {
   onFieldVisibilityDraftChange(fieldKey, value);
 }
 
+async function onSelectedFormSettingsFieldLabelChange(event: Event) {
+  const fieldKey = selectedFormSettingsFieldKey.value;
+  const target = event.target as HTMLInputElement | null;
+  const label = String(target?.value || '').trim();
+  if (!fieldKey || !label || label === selectedFormSettingsFieldRow.value?.label) return;
+  selectedFormSettingsFieldLabel.value = label;
+  await setInlineFieldPolicy(fieldKey, { label });
+}
+
 function hideSuggestedInternalFields() {
   const rows = suggestedHiddenFieldRows.value;
   if (!rows.length) return;
@@ -11254,6 +11273,25 @@ onBeforeUnmount(() => {
   display: inline-grid;
   place-items: center;
   line-height: 1;
+}
+
+.contract-field-label-edit {
+  display: inline-grid;
+  gap: 4px;
+  min-width: 180px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-field-label-edit input {
+  width: 180px;
+  max-width: 100%;
+  height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 5px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  padding: 0 8px;
 }
 
 .contract-field-group-move {
