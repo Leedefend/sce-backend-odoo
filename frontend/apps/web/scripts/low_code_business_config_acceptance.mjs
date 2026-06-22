@@ -220,7 +220,7 @@ async function formDesignerFieldTexts(page) {
 }
 
 async function dragDesignerField(page, fromIndex, toIndex) {
-  const source = page.locator(".field--selectable").nth(fromIndex).locator(".field-order-handle");
+  const source = page.locator(".field--selectable").nth(fromIndex);
   const target = page.locator(".field--selectable").nth(toIndex);
   await source.scrollIntoViewIfNeeded();
   await target.scrollIntoViewIfNeeded();
@@ -252,7 +252,7 @@ async function formDesignerFieldGroups(page) {
 }
 
 async function dragDesignerFieldToGroup(page, fromFieldIndex, targetGroupIndex) {
-  const source = page.locator(".field--selectable").nth(fromFieldIndex).locator(".field-order-handle");
+  const source = page.locator(".field--selectable").nth(fromFieldIndex);
   const targetGroup = page.locator(".native-container--group").nth(targetGroupIndex);
   const targetField = targetGroup.locator(".field--selectable").first();
   const targetHead = targetGroup.locator(":scope > .native-container-head").first();
@@ -819,6 +819,8 @@ async function main() {
     const designFieldCountText = await page.locator(".contract-form-settings-field-count").innerText();
     const designFieldCount = Number((designFieldCountText.match(/\d+/) || ["0"])[0]);
     const dragHandleCount = await page.locator(".field-order-handle").count();
+    const orderButtonCount = await page.locator(".field-order-btn, .contract-field-selection-order-btn").count();
+    const draggableFieldCount = await page.locator(".field--order-editable[draggable='true']").count();
     const selectableFieldCount = await page.locator(".field--selectable").count();
     const returnButtonCount = await page.getByRole("button", { name: "返回配置" }).count();
     const legacyPanelCount = await page.locator(".contract-lowcode-objects").count();
@@ -838,12 +840,6 @@ async function main() {
     const saveFormEnabledAfterReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     await selectDesignerField(page, 1);
     const selectedPanelBeforeMove = await page.locator(".contract-field-selection-card").innerText();
-    await page.locator(".contract-field-selection-card button[title='上移']").click();
-    const formDirtyAfterMove = await page.locator(".contract-field-governance-dirty").count();
-    const saveFormEnabledAfterMove = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
-    await page.getByRole("button", { name: "重置" }).click();
-    const formDirtyAfterMoveReset = await page.locator(".contract-field-governance-dirty").count();
-    const saveFormEnabledAfterMoveReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     const formOrderBeforeDragPersist = await formDesignerFieldTexts(page);
     const sameGroupOrderProbe = (await formDesignerFieldGroups(page)).find((group) => group.fields.length >= 2);
     const orderSourceField = sameGroupOrderProbe?.fields?.[0] || { index: 0, label: formOrderBeforeDragPersist[0] || "" };
@@ -955,6 +951,8 @@ async function main() {
       designFieldCount,
       selectableFieldCount,
       dragHandleCount,
+      orderButtonCount,
+      draggableFieldCount,
       selectedFieldCount,
       selectedPanelText,
       initialFormDirtyCount,
@@ -965,10 +963,6 @@ async function main() {
       formDirtyAfterReset,
       saveFormEnabledAfterReset,
       selectedPanelBeforeMove,
-      formDirtyAfterMove,
-      saveFormEnabledAfterMove,
-      formDirtyAfterMoveReset,
-      saveFormEnabledAfterMoveReset,
       formOrderBeforeDragPersist,
       formOrderAfterDrag,
       saveFormEnabledAfterDrag,
@@ -992,7 +986,9 @@ async function main() {
     );
     assert(designFieldCount > 0, "表单设计器没有显示可配置字段数量", { designFieldCountText });
     assert(selectableFieldCount > 0, "表单设计器没有可点选字段", { selectableFieldCount });
-    assert(dragHandleCount > 0, "表单设计器没有可拖拽字段把手", { dragHandleCount });
+    assert(dragHandleCount === 0, "表单设计器不应再显示六点拖拽把手", { dragHandleCount });
+    assert(orderButtonCount === 0, "表单设计器不应再显示上下箭头排序按钮", { orderButtonCount });
+    assert(draggableFieldCount > 0, "表单设计器字段块不可直接拖拽", { draggableFieldCount });
     assert(selectedFieldCount > 0 && selectedPanelText.includes("已选字段"), "表单字段点选后没有进入配置状态", {
       selectedFieldCount,
       selectedPanelText,
@@ -1014,23 +1010,7 @@ async function main() {
         saveFormEnabledAfterReset,
       },
     );
-    assert(
-      selectedPanelBeforeMove.includes("已选字段")
-        && formDirtyAfterMove > 0
-        && saveFormEnabledAfterMove
-        && formDirtyAfterMoveReset === initialFormDirtyCount
-        && saveFormEnabledAfterMoveReset === initialSaveFormEnabled,
-      "表单字段顺序调整或重置不可用",
-      {
-        initialFormDirtyCount,
-        initialSaveFormEnabled,
-        selectedPanelBeforeMove,
-        formDirtyAfterMove,
-        saveFormEnabledAfterMove,
-        formDirtyAfterMoveReset,
-        saveFormEnabledAfterMoveReset,
-      },
-    );
+    assert(selectedPanelBeforeMove.includes("已选字段"), "表单字段点选状态不可用", { selectedPanelBeforeMove });
     assert(
       formOrderAfterDrag.indexOf(nextFieldLabel) >= 0
         && formOrderAfterDrag.indexOf(draggedFieldLabel) > formOrderAfterDrag.indexOf(nextFieldLabel)

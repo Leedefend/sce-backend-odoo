@@ -16,9 +16,12 @@
           :tabindex="fieldSelectionMode ? 0 : undefined"
           :role="fieldSelectionMode ? 'button' : undefined"
           :aria-pressed="fieldSelectionMode ? selectedFieldKey === fieldIdentity(field) : undefined"
+          :draggable="fieldOrderEditable"
           @click.capture="emitFieldSelect(field, $event)"
           @keydown.enter="emitFieldSelect(field, $event)"
           @keydown.space="emitFieldSelect(field, $event)"
+          @dragstart.stop="emitFieldOrderDragStart(field, $event)"
+          @dragend.stop="emitFieldOrderDragEnd(field)"
           @dragover.prevent="emitFieldOrderDragOver(field)"
           @dragleave="emitFieldOrderDragLeave(field)"
           @drop.prevent="emitFieldOrderDrop(field)"
@@ -35,36 +38,7 @@
               @change="emitFieldLabelChange(field, ($event.target as HTMLInputElement).value)"
               @keydown.enter.prevent="emitFieldLabelChange(field, ($event.target as HTMLInputElement).value)"
             />
-            <div v-if="fieldOrderEditable || fieldActionsFor(field).length" class="field-inline-config">
-              <div v-if="fieldOrderEditable" class="field-order-inline-tools" :aria-label="`${field.label}字段排序`">
-                <span
-                  class="field-order-handle"
-                  role="button"
-                  tabindex="0"
-                  :draggable="fieldOrderEditable"
-                  :aria-label="`拖动${field.label}调整顺序`"
-                  title="按住拖动调整顺序"
-                  @dragstart.stop="emitFieldOrderDragStart(field, $event)"
-                  @dragend.stop="emitFieldOrderDragEnd(field)"
-                  @mousedown.stop="emitFieldOrderPointerStart(field)"
-                >⋮⋮</span>
-                <button
-                  class="field-order-btn"
-                  type="button"
-                  :disabled="!canMoveFieldOrder(field, -1)"
-                  :aria-label="`上移${field.label}`"
-                  title="上移"
-                  @click.stop="emitFieldOrderMove(field, -1)"
-                >↑</button>
-                <button
-                  class="field-order-btn"
-                  type="button"
-                  :disabled="!canMoveFieldOrder(field, 1)"
-                  :aria-label="`下移${field.label}`"
-                  title="下移"
-                  @click.stop="emitFieldOrderMove(field, 1)"
-                >↓</button>
-              </div>
+            <div v-if="fieldActionsFor(field).length" class="field-inline-config">
               <div
                 v-if="fieldActionsFor(field).length"
                 class="field-inline-actions"
@@ -482,19 +456,6 @@ function fieldActionsFor(field: FormSectionFieldSchema) {
   return props.fieldActions?.(field) || [];
 }
 
-function resolveFieldOrderIndex(field: FormSectionFieldSchema) {
-  return props.fieldOrderIndex?.(field) ?? -1;
-}
-
-function canMoveFieldOrder(field: FormSectionFieldSchema, delta: number) {
-  if (!props.fieldOrderEditable) return false;
-  const index = resolveFieldOrderIndex(field);
-  const count = Number(props.fieldOrderCount || 0);
-  if (index < 0 || count <= 0) return false;
-  const nextIndex = index + delta;
-  return nextIndex >= 0 && nextIndex < count;
-}
-
 function emitFieldChange(field: FormSectionFieldSchema, value: string | number | boolean | null) {
   emit('field-change', {
     name: field.name,
@@ -575,19 +536,9 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
   emit('field-action', { field, action });
 }
 
-function emitFieldOrderMove(field: FormSectionFieldSchema, delta: number) {
-  if (!canMoveFieldOrder(field, delta)) return;
-  emit('field-order-move', { field, delta });
-}
-
 function emitFieldOrderDragStart(field: FormSectionFieldSchema, event: DragEvent) {
   if (!props.fieldOrderEditable) return;
   emit('field-order-drag-start', { field, event });
-}
-
-function emitFieldOrderPointerStart(field: FormSectionFieldSchema) {
-  if (!props.fieldOrderEditable) return;
-  emit('field-order-drag-start', { field, event: undefined as unknown as DragEvent });
 }
 
 function emitFieldOrderDragOver(field: FormSectionFieldSchema) {
@@ -824,57 +775,12 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   min-width: 0;
 }
 
-.field-order-inline-tools {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-}
-
-.field-order-handle,
-.field-order-btn {
-  flex: 0 0 auto;
-  min-width: 26px;
-  height: 28px;
-  padding: 0 7px;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 5px;
-  background: var(--sc-app-bg);
-  color: var(--sc-app-text-secondary);
-  font-size: 13px;
-  line-height: 1;
-}
-
-.field-order-handle {
-  min-width: 28px;
-  border-color: var(--sc-app-border-strong);
-  background: var(--sc-app-panel-muted);
-  color: var(--sc-semantic-surface-interactive);
-  font-size: 15px;
-  font-weight: 700;
+.field--order-editable {
   cursor: grab;
-  letter-spacing: 0;
 }
 
-.field-order-handle:active {
+.field--order-editable:active {
   cursor: grabbing;
-}
-
-.field-order-btn {
-  cursor: pointer;
-}
-
-.field-order-btn:hover:not(:disabled) {
-  border-color: var(--sc-app-border-strong);
-  background: var(--sc-app-hover-bg);
-  color: var(--sc-app-text-primary);
-}
-
-.field-order-btn:disabled {
-  cursor: default;
-  opacity: 0.42;
 }
 
 .field-inline-actions {

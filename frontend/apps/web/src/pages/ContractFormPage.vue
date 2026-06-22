@@ -256,20 +256,6 @@
                       @keydown.enter.prevent="onSelectedFormSettingsFieldLabelChange"
                     />
                   </label>
-                  <button
-                    class="ghost contract-field-selection-order-btn"
-                    type="button"
-                    :disabled="busy || !canMoveSelectedFormSettingsField(-1)"
-                    title="上移"
-                    @click="moveSelectedFormSettingsField(-1)"
-                  >↑</button>
-                  <button
-                    class="ghost contract-field-selection-order-btn"
-                    type="button"
-                    :disabled="busy || !canMoveSelectedFormSettingsField(1)"
-                    title="下移"
-                    @click="moveSelectedFormSettingsField(1)"
-                  >↓</button>
                   <label class="contract-field-group-move">
                     <span>移动到分组</span>
                     <select
@@ -9382,21 +9368,6 @@ function onFormSettingsFieldSelect(payload: { field: FormSectionFieldSchema; gro
   formSettingsActiveTab.value = 'fields';
 }
 
-function canMoveSelectedFormSettingsField(delta: number) {
-  const fieldKey = selectedFormSettingsFieldKey.value;
-  if (!fieldKey) return false;
-  const index = fieldOrderDraft.value.indexOf(fieldKey);
-  if (index < 0) return false;
-  const nextIndex = index + delta;
-  return nextIndex >= 0 && nextIndex < fieldOrderDraft.value.length;
-}
-
-function moveSelectedFormSettingsField(delta: number) {
-  const fieldKey = selectedFormSettingsFieldKey.value;
-  if (!fieldKey || !canMoveSelectedFormSettingsField(delta)) return;
-  moveFieldOrder(fieldKey, delta);
-}
-
 function openCentralCustomFieldCreate() {
   const selectedFieldKey = selectedFormSettingsFieldKey.value;
   const groupTitle = selectedFormSettingsFieldGroupTitle.value
@@ -11317,15 +11288,6 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
-}
-
-.contract-field-selection-order-btn {
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  display: inline-grid;
-  place-items: center;
-  line-height: 1;
 }
 
 .contract-field-label-edit {
