@@ -11,6 +11,8 @@
           v-for="field in fields"
           :key="field.key"
           :class="fieldClass(field)"
+          :data-field-name="field.name"
+          :data-field-key="field.key"
           :tabindex="fieldSelectionMode ? 0 : undefined"
           :role="fieldSelectionMode ? 'button' : undefined"
           :aria-pressed="fieldSelectionMode ? selectedFieldKey === fieldIdentity(field) : undefined"
@@ -20,6 +22,7 @@
           @dragover.prevent="emitFieldOrderDragOver(field)"
           @dragleave="emitFieldOrderDragLeave(field)"
           @drop.prevent="emitFieldOrderDrop(field)"
+          @mouseup="emitFieldOrderPointerDrop(field)"
         >
           <div class="field-label-row">
             <label v-if="!fieldConfigEditable" class="label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
@@ -43,6 +46,7 @@
                   title="按住拖动调整顺序"
                   @dragstart.stop="emitFieldOrderDragStart(field, $event)"
                   @dragend.stop="emitFieldOrderDragEnd(field)"
+                  @mousedown.stop="emitFieldOrderPointerStart(field)"
                 >⋮⋮</span>
                 <button
                   class="field-order-btn"
@@ -510,8 +514,12 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
 }
 
 function collapseMany2oneDropdown(event: Event) {
-  const target = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
-  const input = target?.closest('.many2one-combobox')?.querySelector('input');
+  const target = event.currentTarget;
+  const targetElement = target as unknown as { closest?: (selector: string) => { querySelector?: (selector: string) => HTMLInputElement | null } | null };
+  const closest = target && typeof targetElement.closest === 'function'
+    ? targetElement.closest.bind(target)
+    : null;
+  const input = closest?.('.many2one-combobox')?.querySelector?.('input') || null;
   window.setTimeout(() => input?.blur(), 0);
 }
 
@@ -585,6 +593,11 @@ function emitFieldOrderDragStart(field: FormSectionFieldSchema, event: DragEvent
   emit('field-order-drag-start', { field, event });
 }
 
+function emitFieldOrderPointerStart(field: FormSectionFieldSchema) {
+  if (!props.fieldOrderEditable) return;
+  emit('field-order-drag-start', { field, event: undefined as unknown as DragEvent });
+}
+
 function emitFieldOrderDragOver(field: FormSectionFieldSchema) {
   if (!props.fieldOrderEditable) return;
   emit('field-order-drag-over', { field, groupTitle: props.fieldGroupTitle || '' });
@@ -598,6 +611,12 @@ function emitFieldOrderDragLeave(field: FormSectionFieldSchema) {
 function emitFieldOrderDrop(field: FormSectionFieldSchema) {
   if (!props.fieldOrderEditable) return;
   emit('field-order-drop', { field, groupTitle: props.fieldGroupTitle || '' });
+}
+
+function emitFieldOrderPointerDrop(field: FormSectionFieldSchema) {
+  if (!props.fieldOrderEditable || !props.fieldOrderDraggingKey) return;
+  emitFieldOrderDrop(field);
+  emitFieldOrderDragEnd(field);
 }
 
 function emitFieldOrderDragEnd(field: FormSectionFieldSchema) {
@@ -619,8 +638,12 @@ function emitFieldAddAfter(field: FormSectionFieldSchema) {
 
 function isInteractiveFieldTarget(event?: Event) {
   const target = event?.target;
-  if (!(target instanceof Element)) return false;
-  return Boolean(target.closest('button, input, select, textarea, a, .field-inline-config, .field-control-row'));
+  const targetElement = target as unknown as { closest?: (selector: string) => unknown };
+  if (!target || typeof targetElement.closest !== 'function') return false;
+  if (props.fieldSelectionMode) {
+    return Boolean(targetElement.closest('button, a, .field-inline-config, .field-label-editor'));
+  }
+  return Boolean(targetElement.closest('button, input, select, textarea, a, .field-inline-config, .field-control-row'));
 }
 
 function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {

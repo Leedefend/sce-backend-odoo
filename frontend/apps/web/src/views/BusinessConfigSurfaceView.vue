@@ -38,11 +38,11 @@
       <article class="flow-card">
         <span class="flow-step">2</span>
         <div>
-          <h2>{{ currentModelIsRuntimeConfig ? '使用专用配置' : '拖拽设计表单' }}</h2>
-          <p>{{ currentModelIsRuntimeConfig ? '审批、菜单等配置对象使用对应的专用配置面板。' : '进入设计器后拖动字段、隐藏字段、调整分组。' }}</p>
+          <h2>{{ currentModelIsRuntimeConfig ? '使用专用配置' : '配置表单字段' }}</h2>
+          <p>{{ currentModelIsRuntimeConfig ? '审批、菜单等配置对象使用对应的专用配置面板。' : '按旧表单分区调整字段显示、顺序和分组。' }}</p>
         </div>
         <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">
-          {{ currentModelIsRuntimeConfig ? '使用专用配置' : '进入设计' }}
+          {{ currentModelIsRuntimeConfig ? '使用专用配置' : '配置表单字段' }}
         </button>
       </article>
       <article class="flow-card">
@@ -121,8 +121,60 @@
           {{ item.label }} {{ item.count }}
         </span>
       </div>
+      <div v-if="selectedCoverageRow" class="selected-config-toolbar" aria-label="已选页面配置操作">
+        <div class="selected-config-toolbar-main">
+          <span>已选页面</span>
+          <strong>{{ selectedCoverageRow.name || selectedCoverageRow.model }}</strong>
+        </div>
+        <div class="selected-config-toolbar-actions">
+          <button
+            v-if="rowHasFormConfig(selectedCoverageRow)"
+            type="button"
+            class="ghost small primary"
+            :disabled="!canOpenDesigner"
+            @click="openFormConfig"
+          >
+            编辑表单字段
+          </button>
+          <button
+            v-if="rowHasListSearchConfig(selectedCoverageRow)"
+            type="button"
+            class="ghost small"
+            :disabled="listSearchBusy"
+            @click="loadListSearchConfig"
+          >
+            配置列表与搜索
+          </button>
+          <button
+            type="button"
+            class="ghost small"
+            :disabled="approvalLoading"
+            @click="loadApprovalConfig"
+          >
+            设置审批
+          </button>
+          <button
+            type="button"
+            class="ghost small"
+            :disabled="!previewRouteTarget.path"
+            @click="previewSelectedRuntimeRoute"
+          >
+            预览页面
+          </button>
+        </div>
+      </div>
       <div v-if="visibleCoverageRows.length" class="scan-list">
-        <div v-for="row in visibleCoverageRows" :key="coverageRowKey(row)" class="scan-row" :class="{ 'scan-row--selected': coverageRowMatchesScope(row) }">
+        <div
+          v-for="row in visibleCoverageRows"
+          :key="coverageRowKey(row)"
+          class="scan-row"
+          :class="{ 'scan-row--selected': coverageRowMatchesScope(row), 'scan-row--clickable': !coverageRowMatchesScope(row) }"
+          role="button"
+          tabindex="0"
+          @click="focusScanRow(row)"
+          @keydown.enter.prevent="focusScanRow(row)"
+          @keydown.space.prevent="focusScanRow(row)"
+        >
           <div class="scan-row-main">
             <strong>{{ row.name || row.model }}</strong>
             <span v-if="advancedPanelOpen">{{ row.model }}</span>
@@ -142,12 +194,12 @@
             <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
           </div>
           <div class="scan-row-actions">
-            <button v-if="rowHasFormConfig(row)" type="button" class="ghost small primary" @click="openDesignerForRow(row)">设计表单</button>
+            <button v-if="rowHasFormConfig(row)" type="button" class="ghost small primary" @click.stop="openDesignerForRow(row)">编辑表单</button>
             <button
               v-if="rowHasListSearchConfig(row)"
               type="button"
               class="ghost small"
-              @click="openListSearchForRow(row)"
+              @click.stop="openListSearchForRow(row)"
             >
               配置列表与搜索
             </button>
@@ -155,7 +207,7 @@
               type="button"
               class="ghost small"
               :disabled="!row.runtime_route?.path"
-              @click="openRuntimeRoute(row)"
+              @click.stop="openRuntimeRoute(row)"
             >
               预览页面
             </button>
@@ -165,11 +217,11 @@
               type="button"
               class="ghost small"
               :disabled="listSearchSaving || versionsLoading"
-              @click="runRemediationAction(row, action)"
+              @click.stop="runRemediationAction(row, action)"
             >
               {{ action.label }}
             </button>
-            <button type="button" class="ghost small" @click="focusScanRow(row)">选择</button>
+            <button type="button" class="ghost small" @click.stop="focusScanRow(row)">选择</button>
           </div>
         </div>
       </div>
@@ -290,7 +342,7 @@
             :disabled="!canOpenDesigner"
             @click="openFormConfig"
           >
-            拖拽设计表单
+            配置表单字段
           </button>
           <button
             v-else-if="section.key === 'menu'"
@@ -1110,7 +1162,7 @@ const approvalRuntimeText = computed(() => {
 });
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value && !currentModelIsRuntimeConfig.value));
 const headerDesignerButtonLabel = computed(() => {
-  if (canOpenDesigner.value) return '进入拖拽设计';
+  if (canOpenDesigner.value) return '配置表单字段';
   if (currentModelIsRuntimeConfig.value) return '使用专用配置';
   return '先选择页面';
 });
@@ -3251,6 +3303,42 @@ h1 {
   color: var(--sc-app-text-primary);
 }
 
+.selected-config-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel-muted);
+}
+
+.selected-config-toolbar-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.selected-config-toolbar-main span {
+  color: var(--sc-app-text-muted);
+  font-size: 12px;
+}
+
+.selected-config-toolbar-main strong {
+  color: var(--sc-app-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-config-toolbar-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 .scan-list {
   display: grid;
   gap: 8px;
@@ -3272,6 +3360,15 @@ h1 {
 .scan-row--selected {
   border-color: var(--sc-app-accent);
   box-shadow: inset 3px 0 0 var(--sc-app-accent);
+}
+
+.scan-row--clickable {
+  cursor: pointer;
+}
+
+.scan-row--clickable:hover {
+  border-color: var(--sc-app-accent);
+  background: var(--sc-app-panel-muted);
 }
 
 .scan-row-main {

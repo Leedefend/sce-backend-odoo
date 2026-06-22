@@ -205,6 +205,40 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertNotIn("native_group", str(result["layout"]))
         self.assertNotIn("missing_field", str(result["layout"]))
 
+    def test_form_view_appends_missing_fields_to_declared_group(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "layout": [
+                            {
+                                "type": "sheet",
+                                "children": [
+                                    {
+                                        "type": "group",
+                                        "name": "primary",
+                                        "string": "Primary",
+                                        "children": [{"type": "field", "name": "name"}],
+                                    }
+                                ],
+                            }
+                        ],
+                        "fields": [
+                            {"name": "name", "label": "Partner Name", "sequence": 10, "group_title": "Primary"},
+                            {"name": "email", "label": "Email Alias", "sequence": 20, "group_title": "Primary"},
+                        ],
+                    }
+                }
+            }
+        }
+
+        result, _calls = self._compose(payload, {"layout": []}, "form")
+
+        group = result["layout"][0]["children"][0]
+        self.assertEqual(group.get("string"), "Primary")
+        self.assertEqual([row.get("name") for row in group.get("children")], ["name", "email"])
+        self.assertNotIn("business_config_orchestration_fields", str(result["layout"]))
+
     def test_pivot_view_uses_business_config_measures_dimensions_and_defaults(self):
         payload = {
             "view_orchestration": {

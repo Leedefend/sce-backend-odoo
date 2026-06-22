@@ -378,6 +378,7 @@ class UiContractV2Handler(BaseIntentHandler):
         self._normalize_general_contract_tax_contract(contract_v2, source_contract=source_contract)
         self._normalize_general_contract_company_form(contract_v2, source_contract=source_contract)
         self._normalize_construction_diary_form(contract_v2, source_contract=source_contract)
+        self._apply_business_config_form_groups_to_v2(contract_v2, source_contract=source_contract)
         if isinstance(source_contract.get("delete_policy"), dict):
             contract_v2["delete_policy"] = dict(source_contract.get("delete_policy") or {})
         if isinstance(source_contract.get("surface_policies"), dict):
@@ -572,6 +573,122 @@ class UiContractV2Handler(BaseIntentHandler):
         if append_after_amount_node(container_tree):
             layout_contract["containerTree"] = container_tree
             contract["layoutContract"] = layout_contract
+
+    def _apply_business_config_form_groups_to_v2(
+        self,
+        contract: dict[str, Any],
+        *,
+        source_contract: dict[str, Any] | None = None,
+    ) -> None:
+        if not isinstance(contract, dict):
+            return
+        view_type = str(
+            contract.get("viewType")
+            or ((contract.get("pageInfo") or {}).get("viewType") if isinstance(contract.get("pageInfo"), dict) else "")
+            or (source_contract or {}).get("view_type")
+            or ""
+        ).strip().lower()
+        if view_type != "form":
+            return
+        layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+        container_tree = layout_contract.get("containerTree") if isinstance(layout_contract.get("containerTree"), list) else []
+        if not container_tree:
+            return
+        profile = (source_contract or {}).get("business_operation_profile") if isinstance((source_contract or {}).get("business_operation_profile"), dict) else {}
+        governance = profile.get("form_structure_governance") if isinstance(profile.get("form_structure_governance"), dict) else {}
+        field_groups = governance.get("field_groups") if isinstance(governance.get("field_groups"), dict) else {}
+        if not field_groups:
+            return
+        configured_groups: list[tuple[str, list[str]]] = []
+        configured_names: set[str] = set()
+        for raw_title, raw_names in field_groups.items():
+            title = str(raw_title or "").strip()
+            names = [
+                str(name or "").strip()
+                for name in (raw_names if isinstance(raw_names, list) else [])
+                if str(name or "").strip()
+            ]
+            names = [name for name in names if name not in configured_names]
+            if not title or not names:
+                continue
+            configured_names.update(names)
+            configured_groups.append((title, names))
+        if not configured_groups:
+            return
+
+        moved_nodes: dict[str, dict[str, Any]] = {}
+
+        def node_field_name(node: Any) -> str:
+            if not isinstance(node, dict):
+                return ""
+            return str(node.get("name") or node.get("field") or node.get("fieldCode") or "").strip()
+
+        def remove_configured_fields(nodes: list[Any]) -> list[Any]:
+            out: list[Any] = []
+            for node in nodes:
+                if not isinstance(node, dict):
+                    out.append(node)
+                    continue
+                node_type = str(node.get("type") or node.get("containerType") or "").strip().lower()
+                name = node_field_name(node)
+                if node_type == "field" and name in configured_names:
+                    moved_nodes.setdefault(name, deepcopy(node))
+                    continue
+                next_node = node
+                for key in ("children", "pages", "tabs", "nodes", "items", "widgetList"):
+                    children = next_node.get(key)
+                    if isinstance(children, list):
+                        cleaned = remove_configured_fields(children)
+                        if cleaned is not children:
+                            next_node = dict(next_node)
+                            next_node[key] = cleaned
+                out.append(next_node)
+            return out
+
+        container_tree = remove_configured_fields(container_tree)
+
+        def group_title(node: Any) -> str:
+            if not isinstance(node, dict):
+                return ""
+            if str(node.get("type") or node.get("containerType") or "").strip().lower() != "group":
+                return ""
+            return str(node.get("string") or node.get("label") or node.get("title") or "").strip()
+
+        def find_group(nodes: list[Any], title: str) -> dict[str, Any] | None:
+            for node in nodes:
+                if not isinstance(node, dict):
+                    continue
+                if group_title(node) == title:
+                    return node
+                for key in ("children", "pages", "tabs", "nodes", "items"):
+                    children = node.get(key)
+                    if isinstance(children, list):
+                        found = find_group(children, title)
+                        if found is not None:
+                            return found
+            return None
+
+        for index, (title, names) in enumerate(configured_groups, start=1):
+            group = find_group(container_tree, title)
+            if group is None:
+                group = {
+                    "type": "group",
+                    "name": "business_config_group_%s" % index,
+                    "string": title,
+                    "label": title,
+                    "children": [],
+                    "widgetList": [],
+                }
+                container_tree.append(group)
+            children = group.get("children") if isinstance(group.get("children"), list) else []
+            for name in names:
+                node = moved_nodes.get(name)
+                if isinstance(node, dict):
+                    children.append(deepcopy(node))
+            group["children"] = children
+
+        layout_contract["containerTree"] = container_tree
+        contract["layoutContract"] = layout_contract
 
     def _normalize_general_contract_company_form(self, contract: dict[str, Any], source_contract: dict[str, Any] | None = None) -> None:
         if not isinstance(contract, dict):

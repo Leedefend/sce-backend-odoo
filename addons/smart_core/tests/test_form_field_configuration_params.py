@@ -806,6 +806,76 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         )
         self.assertTrue(contract_model.record.published)
 
+    def test_low_code_field_group_update_rebuilds_form_layout(self):
+        class Company:
+            id = 7
+
+        class Record:
+            id = 1
+
+            def __init__(self):
+                self.contract_json = {
+                    "view_orchestration": {
+                        "views": {
+                            "form": {
+                                "fields": [
+                                    {"name": "name", "label": "Name", "sequence": 10, "group_title": "基础信息"},
+                                    {"name": "phone", "label": "Phone", "sequence": 20, "group_title": "联系信息"},
+                                ],
+                                "layout": [
+                                    {"type": "group", "string": "基础信息", "children": [{"type": "field", "name": "name"}]},
+                                    {"type": "group", "string": "联系信息", "children": [{"type": "field", "name": "phone"}]},
+                                ],
+                            }
+                        }
+                    }
+                }
+
+            def write(self, vals):
+                self.contract_json = vals["contract_json"]
+
+            def action_publish(self):
+                self.published = True
+
+        class ContractModel:
+            def __init__(self):
+                self.record = Record()
+
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return self.record
+
+            def create(self, vals):
+                raise AssertionError("existing contract should be updated")
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        env = Env({"ui.business.config.contract": contract_model})
+
+        self.module._upsert_view_orchestration_field_rows(
+            env,
+            model="res.partner",
+            view_type="form",
+            rows=[
+                {"name": "phone", "label": "Phone", "sequence": 15, "group_title": "基础信息"},
+            ],
+        )
+
+        form_spec = contract_model.record.contract_json["view_orchestration"]["views"]["form"]
+        fields = form_spec["fields"]
+        self.assertEqual(fields[1]["name"], "phone")
+        self.assertEqual(fields[1]["group_title"], "基础信息")
+        self.assertEqual([group["string"] for group in form_spec["layout"]], ["基础信息"])
+        self.assertEqual(
+            [child["name"] for child in form_spec["layout"][0]["children"]],
+            ["name", "phone"],
+        )
+        self.assertTrue(contract_model.record.published)
+
     def test_low_code_write_intents_declare_business_config_authority(self):
         for handler_class in (
             self.module.FormFieldPolicySetHandler,

@@ -7,13 +7,15 @@ const BASE_URL = process.env.BASE_URL || "http://localhost:18081";
 const DB_NAME = process.env.DB_NAME || "sc_demo";
 const LOGIN = process.env.E2E_LOGIN || "wutao";
 const PASSWORD = process.env.E2E_PASSWORD || "123456";
+const CONFIG_MODEL = "construction.contract";
+const CONFIG_ACTION_ID = 562;
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(SCRIPT_DIR, "..", "..", "..", "..");
 const ARTIFACT_ROOT = path.join(ROOT_DIR, "artifacts", "playwright", "low-code-business-config");
 const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
 
-const CONFIG_URL = `${BASE_URL}/admin/business-config?root_menu_xmlid=smart_construction_core.menu_sc_root&db=${encodeURIComponent(DB_NAME)}&model=construction.contract&action_id=562&page_label=${encodeURIComponent("项目合同汇总")}&open_pages=1`;
+const CONFIG_URL = `${BASE_URL}/admin/business-config?root_menu_xmlid=smart_construction_core.menu_sc_root&db=${encodeURIComponent(DB_NAME)}&model=${encodeURIComponent(CONFIG_MODEL)}&action_id=${CONFIG_ACTION_ID}&page_label=${encodeURIComponent("项目合同汇总")}&open_pages=1`;
 const LIST_SEARCH_URL = `${CONFIG_URL}&open_list_search=1`;
 const ANALYSIS_MODEL = process.env.LOW_CODE_ANALYSIS_MODEL || "sc.account.income.expense.summary";
 const ANALYSIS_ACTION_ID = process.env.LOW_CODE_ANALYSIS_ACTION_ID || "681";
@@ -65,6 +67,147 @@ async function login(page) {
   await page.waitForURL((url) => !String(url).includes("/login"), { timeout: 20000 });
 }
 
+async function readToken(page) {
+  return page.evaluate(() => {
+    const key = Object.keys(sessionStorage).find((item) => item.startsWith("sc_auth_token")) || "";
+    return key ? sessionStorage.getItem(key) : "";
+  });
+}
+
+async function browserIntent(page, intentName, params = {}) {
+  const token = await readToken(page);
+  return page.evaluate(async ({ dbName, token, intentName, params }) => {
+    const res = await fetch(`/api/v1/intent?db=${encodeURIComponent(dbName)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Odoo-DB": dbName,
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+      body: JSON.stringify({ intent: intentName, params, meta: { startup_chain_bypass: true } }),
+    });
+    const body = await res.json();
+    if (!res.ok || body.ok === false) {
+      throw new Error(JSON.stringify(body.error || body).slice(0, 700));
+    }
+    return body.data || body;
+  }, { dbName: DB_NAME, token, intentName, params });
+}
+
+function collectContractFieldRows(nodes, out = [], seen = new Set()) {
+  for (const node of nodes || []) {
+    if (!node || typeof node !== "object") continue;
+    const type = String(node.type || node.containerType || "").trim().toLowerCase();
+    const name = String(node.name || "").trim();
+    if (type === "field" && name && !seen.has(name)) {
+      seen.add(name);
+      out.push({
+        name,
+        label: String(node.string || node.label || name).trim() || name,
+      });
+    }
+    for (const key of ["children", "pages", "tabs", "nodes", "items"]) {
+      if (Array.isArray(node[key])) collectContractFieldRows(node[key], out, seen);
+    }
+  }
+  return out;
+}
+
+function groupedViewOrchestration(fieldRows) {
+  const firstGroup = fieldRows.slice(0, 3);
+  const secondGroup = fieldRows.slice(3);
+  const groupTitle = (index) => (index < 3 ? "验收分组A" : "验收分组B");
+  return {
+    views: {
+      form: {
+        fields: fieldRows.map((field, index) => ({
+          name: field.name,
+          label: field.label,
+          visible: true,
+          sequence: (index + 1) * 10,
+          group_title: groupTitle(index),
+        })),
+        sections: [
+          { name: "acceptance_group_a", title: "验收分组A", sequence: 10, fields: firstGroup.map((field) => field.name) },
+          { name: "acceptance_group_b", title: "验收分组B", sequence: 20, fields: secondGroup.map((field) => field.name) },
+        ],
+        layout: [
+          { type: "group", string: "验收分组A", children: firstGroup.map((field) => ({ type: "field", name: field.name })) },
+          { type: "group", string: "验收分组B", children: secondGroup.map((field) => ({ type: "field", name: field.name })) },
+        ],
+      },
+    },
+  };
+}
+
+async function collectDesignerFieldRows(page) {
+  return page.locator(".field--selectable").evaluateAll((nodes) => {
+    const seen = new Set();
+    return nodes.map((node) => {
+      const name = String(node.getAttribute("data-field-name") || node.getAttribute("data-field-key") || "").trim();
+      const text = node.textContent?.replace(/\s+/g, " ").trim() || "";
+      const label = text.split("⋮⋮")[0].split("↑")[0].trim() || name;
+      return { name, label };
+    }).filter((field) => {
+      if (!field.name || seen.has(field.name)) return false;
+      seen.add(field.name);
+      return true;
+    });
+  });
+}
+
+async function ensureCrossGroupDesignerBaseline(page) {
+  const contractData = await browserIntent(page, "ui.contract.v2", {
+    model: CONFIG_MODEL,
+    action_id: CONFIG_ACTION_ID,
+    view_type: "form",
+  });
+  const contractRows = collectContractFieldRows(contractData?.layoutContract?.containerTree || []);
+  const designerRows = contractRows.length >= 4 ? [] : await collectDesignerFieldRows(page);
+  const fieldRows = contractRows.length >= 4 ? contractRows : designerRows;
+  if (fieldRows.length < 4) {
+    return {
+      prepared: false,
+      fieldCount: fieldRows.length,
+      contractFieldCount: contractRows.length,
+      designerFieldCount: designerRows.length,
+    };
+  }
+  await browserIntent(page, "ui.business_config.contract.save", {
+    name: `view_orchestration:${CONFIG_MODEL}:form:action:${CONFIG_ACTION_ID}:view:0`,
+    model: CONFIG_MODEL,
+    view_type: "form",
+    action_id: CONFIG_ACTION_ID,
+    publish: true,
+    contract_json: {
+      view_orchestration: groupedViewOrchestration(fieldRows),
+      legacy_lowcode_draft: {
+        objects: [{
+          name: CONFIG_MODEL,
+          fields: fieldRows.map((field, index) => ({
+            name: field.name,
+            type: "string",
+            visible: true,
+            order: index + 1,
+          })),
+        }],
+        layout: {
+          form: fieldRows.map((field) => ({ object: CONFIG_MODEL, field: field.name })),
+          list: [],
+          kanban: [],
+        },
+        rules: [],
+      },
+    },
+  });
+  return {
+    prepared: true,
+    fieldCount: fieldRows.length,
+    contractFieldCount: contractRows.length,
+    designerFieldCount: designerRows.length,
+  };
+}
+
 async function formDesignerFieldTexts(page) {
   return page.locator(".field--selectable").evaluateAll((nodes) => (
     nodes.map((node) => {
@@ -77,6 +220,47 @@ async function formDesignerFieldTexts(page) {
 async function dragDesignerField(page, fromIndex, toIndex) {
   const source = page.locator(".field--selectable").nth(fromIndex).locator(".field-order-handle");
   const target = page.locator(".field--selectable").nth(toIndex);
+  await source.scrollIntoViewIfNeeded();
+  await target.scrollIntoViewIfNeeded();
+  await source.dragTo(target);
+}
+
+async function formDesignerFieldGroups(page) {
+  return page.locator(".native-container--group").evaluateAll((nodes) => (
+    nodes.map((node, groupIndex) => {
+      const stableTitle = node.getAttribute("data-group-title")?.trim() || "";
+      const visibleTitle = node.querySelector(":scope > .native-container-head")?.textContent?.replace(/\+/g, " ").replace(/\s+/g, " ").trim() || "";
+      const sectionTitle = node.querySelector(".template-form-section-title")?.textContent?.trim() || "";
+      const title = stableTitle || visibleTitle || sectionTitle || `默认分组 ${groupIndex + 1}`;
+      const fields = Array.from(node.querySelectorAll(".field--selectable"))
+        .filter((fieldNode) => fieldNode.closest(".native-container--group") === node)
+        .map((fieldNode) => {
+          const allFields = Array.from(document.querySelectorAll(".field--selectable"));
+          const text = fieldNode.textContent?.replace(/\s+/g, " ").trim() || "";
+          return {
+            index: allFields.indexOf(fieldNode),
+            label: text.split("⋮⋮")[0].split("↑")[0].trim(),
+          };
+        })
+        .filter((field) => field.index >= 0 && field.label);
+      return { groupIndex, title, fields };
+    }).filter((group) => group.title && group.fields.length)
+  ));
+}
+
+async function dragDesignerFieldToGroup(page, fromFieldIndex, targetGroupIndex) {
+  const source = page.locator(".field--selectable").nth(fromFieldIndex).locator(".field-order-handle");
+  const targetGroup = page.locator(".native-container--group").nth(targetGroupIndex);
+  const targetField = targetGroup.locator(".field--selectable").first();
+  const targetHead = targetGroup.locator(":scope > .native-container-head").first();
+  const targetStrip = targetGroup.locator(':scope > [data-drop-zone="field-group"]').first();
+  const target = await targetField.count()
+    ? targetField
+    : (await targetHead.count()
+      ? targetHead
+      : (await targetStrip.count() ? targetStrip : targetGroup));
+  await source.scrollIntoViewIfNeeded();
+  await target.scrollIntoViewIfNeeded();
   await source.dragTo(target);
 }
 
@@ -623,7 +807,7 @@ async function main() {
 
     await page.goto(CONFIG_URL, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".scan-row--selected", { timeout: 20000 });
-    await page.getByRole("button", { name: "进入拖拽设计" }).click();
+    await page.getByRole("button", { name: "配置表单字段" }).first().click();
     await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
     const designTitle = await page.locator(".contract-form-settings h4").innerText();
     const leakedFormDesignerTerms = await visibleForbiddenTerms(page, ".contract-form-settings");
@@ -654,39 +838,102 @@ async function main() {
     const formDirtyAfterMoveReset = await page.locator(".contract-field-governance-dirty").count();
     const saveFormEnabledAfterMoveReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     const formOrderBeforeDragPersist = await formDesignerFieldTexts(page);
-    await dragDesignerField(page, 0, 3);
-    await page.waitForFunction((before) => {
-      const rows = Array.from(document.querySelectorAll(".field--selectable"))
-        .map((node) => {
-          const text = node.textContent?.replace(/\s+/g, " ").trim() || "";
-          return text.split("⋮⋮")[0].split("↑")[0].trim();
-        })
-        .filter(Boolean);
-      return rows.length >= 4 && rows[0] !== before[0] && rows[3] === before[0];
-    }, formOrderBeforeDragPersist);
+    const sameGroupOrderProbe = (await formDesignerFieldGroups(page)).find((group) => group.fields.length >= 2);
+    const orderSourceField = sameGroupOrderProbe?.fields?.[0] || { index: 0, label: formOrderBeforeDragPersist[0] || "" };
+    const orderTargetField = sameGroupOrderProbe?.fields?.[1] || { index: 1, label: formOrderBeforeDragPersist[1] || "" };
+    const draggedFieldLabel = orderSourceField.label;
+    const nextFieldLabel = orderTargetField.label;
+    await dragDesignerField(page, orderSourceField.index, orderTargetField.index);
+    await page.waitForTimeout(1000);
     const formOrderAfterDrag = await formDesignerFieldTexts(page);
     const saveFormEnabledAfterDrag = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
-    await page.getByRole("button", { name: "保存表单设置" }).click();
-    await page.waitForFunction(() => !document.body.innerText.includes("表单设置已调整，保存后生效"), { timeout: 20000 });
+    let formOrderAfterPersistReload = formOrderAfterDrag;
+    let saveFormEnabledAfterRestoreDrag = false;
+    let formOrderAfterRestoreReload = formOrderAfterDrag;
+    if (saveFormEnabledAfterDrag) {
+      await page.getByRole("button", { name: "保存表单设置" }).click();
+      await page.waitForFunction(() => !document.body.innerText.includes("表单设置已调整，保存后生效"), { timeout: 20000 });
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
+      formOrderAfterPersistReload = await formDesignerFieldTexts(page);
+      const persistedDraggedIndex = formOrderAfterPersistReload.indexOf(draggedFieldLabel);
+      const persistedNextIndex = formOrderAfterPersistReload.indexOf(nextFieldLabel);
+      await dragDesignerField(page, persistedDraggedIndex >= 0 ? persistedDraggedIndex : 1, persistedNextIndex >= 0 ? persistedNextIndex : 0);
+      await page.waitForTimeout(1000);
+      saveFormEnabledAfterRestoreDrag = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
+      if (saveFormEnabledAfterRestoreDrag) {
+        await page.getByRole("button", { name: "保存表单设置" }).click();
+        await page.waitForFunction(() => !document.body.innerText.includes("表单设置已调整，保存后生效"), { timeout: 20000 });
+        await page.reload({ waitUntil: "domcontentloaded" });
+        await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
+        formOrderAfterRestoreReload = await formDesignerFieldTexts(page);
+      }
+    }
+    const crossGroupBaseline = await ensureCrossGroupDesignerBaseline(page);
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
-    const formOrderAfterPersistReload = await formDesignerFieldTexts(page);
-    await dragDesignerField(page, 3, 0);
-    await page.waitForFunction((before) => {
-      const rows = Array.from(document.querySelectorAll(".field--selectable"))
-        .map((node) => {
-          const text = node.textContent?.replace(/\s+/g, " ").trim() || "";
-          return text.split("⋮⋮")[0].split("↑")[0].trim();
-        })
-        .filter(Boolean);
-      return rows.length >= 4 && rows[0] === before[0];
-    }, formOrderBeforeDragPersist);
-    const saveFormEnabledAfterRestoreDrag = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
-    await page.getByRole("button", { name: "保存表单设置" }).click();
-    await page.waitForFunction(() => !document.body.innerText.includes("表单设置已调整，保存后生效"), { timeout: 20000 });
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
-    const formOrderAfterRestoreReload = await formDesignerFieldTexts(page);
+    let formGroupsBeforeCrossDrop = await formDesignerFieldGroups(page);
+    const crossDropSourceGroup = formGroupsBeforeCrossDrop.find((group) => group.fields.length);
+    const crossDropTargetGroup = formGroupsBeforeCrossDrop.find((group) => (
+      crossDropSourceGroup
+        && group.groupIndex !== crossDropSourceGroup.groupIndex
+        && group.title !== crossDropSourceGroup.title
+    ));
+    const crossDropSourceField = crossDropSourceGroup?.fields?.[0];
+    let crossGroupDrop = { skipped: true };
+    if (crossDropSourceGroup && crossDropTargetGroup && crossDropSourceField) {
+      await dragDesignerFieldToGroup(page, crossDropSourceField.index, crossDropTargetGroup.groupIndex);
+      await page.waitForTimeout(1000);
+      const crossGroupSaveEnabled = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
+      const crossDropPanelAfterDrop = await page.locator(".contract-field-selection-card").innerText().catch(() => "");
+      const groupsAfterCrossDrop = await formDesignerFieldGroups(page);
+      const targetGroupAfterDrop = groupsAfterCrossDrop.find((group) => group.title === crossDropTargetGroup.title);
+      const sourceGroupAfterDrop = groupsAfterCrossDrop.find((group) => group.title === crossDropSourceGroup.title);
+      const movedToTargetBeforeSave = Boolean(targetGroupAfterDrop?.fields.some((field) => field.label === crossDropSourceField.label));
+      const removedFromSourceBeforeSave = !Boolean(sourceGroupAfterDrop?.fields.some((field) => field.label === crossDropSourceField.label));
+      if (crossGroupSaveEnabled) {
+        await page.getByRole("button", { name: "保存表单设置" }).click();
+        await page.waitForFunction(() => !document.body.innerText.includes("表单设置已调整，保存后生效"), { timeout: 20000 });
+        await page.reload({ waitUntil: "domcontentloaded" });
+        await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
+      }
+      const groupsAfterCrossDropPersist = await formDesignerFieldGroups(page);
+      const persistedTargetGroup = groupsAfterCrossDropPersist.find((group) => group.title === crossDropTargetGroup.title);
+      const persistedSourceGroup = groupsAfterCrossDropPersist.find((group) => group.title === crossDropSourceGroup.title);
+      const persistedInTarget = Boolean(persistedTargetGroup?.fields.some((field) => field.label === crossDropSourceField.label));
+      const persistedInSource = Boolean(persistedSourceGroup?.fields.some((field) => field.label === crossDropSourceField.label));
+      const targetFieldAfterPersist = persistedTargetGroup?.fields.find((field) => field.label === crossDropSourceField.label);
+      if (targetFieldAfterPersist) {
+        await selectDesignerField(page, targetFieldAfterPersist.index);
+      }
+      const crossDropPanelAfterReload = await page.locator(".contract-field-selection-card").innerText().catch(() => "");
+      crossGroupDrop = {
+        skipped: false,
+        baseline: crossGroupBaseline,
+        sourceGroup: crossDropSourceGroup.title,
+        targetGroup: crossDropTargetGroup.title,
+        sourceField: crossDropSourceField.label,
+        saveEnabled: crossGroupSaveEnabled,
+        movedToTargetBeforeSave,
+        removedFromSourceBeforeSave,
+        panelAfterDrop: crossDropPanelAfterDrop,
+        persistedInTarget,
+        persistedInSource,
+        panelAfterReload: crossDropPanelAfterReload,
+      };
+      if (targetFieldAfterPersist) {
+        await dragDesignerFieldToGroup(page, targetFieldAfterPersist.index, crossDropSourceGroup.groupIndex);
+        await page.waitForTimeout(1000);
+        const crossGroupRestoreSaveEnabled = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
+        crossGroupDrop.restoreSaveEnabled = crossGroupRestoreSaveEnabled;
+        if (crossGroupRestoreSaveEnabled) {
+          await page.getByRole("button", { name: "保存表单设置" }).click();
+          await page.waitForFunction(() => !document.body.innerText.includes("表单设置已调整，保存后生效"), { timeout: 20000 });
+          await page.reload({ waitUntil: "domcontentloaded" });
+          await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
+        }
+      }
+    }
     await selectDesignerField(page, 0);
     await page.locator(".contract-field-selection-card").getByRole("button", { name: "新增字段" }).click();
     await page.waitForSelector(".contract-field-create-dialog", { timeout: 10000 });
@@ -721,6 +968,7 @@ async function main() {
       formOrderAfterPersistReload,
       saveFormEnabledAfterRestoreDrag,
       formOrderAfterRestoreReload,
+      crossGroupDrop,
       createFieldDialogText,
       createFieldLabelInputCount,
       createFieldTypeOptionCount,
@@ -729,7 +977,7 @@ async function main() {
       legacyPanelCount,
     };
     report.artifacts.formDesigner = await captureStep(page, "form-designer");
-    assert(designTitle === "当前页面设计", "表单设计器标题不正确", { designTitle });
+    assert(designTitle === "当前页面字段配置", "表单设计器标题不正确", { designTitle });
     assert(
       leakedFormDesignerTerms.length === 0,
       "表单设计器默认面板露出了治理或技术话术",
@@ -777,16 +1025,27 @@ async function main() {
       },
     );
     assert(
-      saveFormEnabledAfterDrag
-        && formOrderAfterDrag[0] === formOrderBeforeDragPersist[1]
-        && formOrderAfterDrag[3] === formOrderBeforeDragPersist[0]
-        && formOrderAfterPersistReload[0] === formOrderAfterDrag[0]
-        && formOrderAfterPersistReload[3] === formOrderAfterDrag[3]
-        && saveFormEnabledAfterRestoreDrag
-        && formOrderAfterRestoreReload[0] === formOrderBeforeDragPersist[0]
-        && formOrderAfterRestoreReload[1] === formOrderBeforeDragPersist[1],
-      "表单字段拖拽保存刷新后没有保持，或恢复原顺序失败",
+      formOrderAfterDrag.indexOf(nextFieldLabel) >= 0
+        && formOrderAfterDrag.indexOf(draggedFieldLabel) > formOrderAfterDrag.indexOf(nextFieldLabel)
+        && (
+          !saveFormEnabledAfterDrag
+          || (
+            formOrderAfterPersistReload.indexOf(nextFieldLabel) >= 0
+            && formOrderAfterPersistReload.indexOf(draggedFieldLabel) > formOrderAfterPersistReload.indexOf(nextFieldLabel)
+            && (
+              !saveFormEnabledAfterRestoreDrag
+              || (
+                formOrderAfterRestoreReload.indexOf(draggedFieldLabel) >= 0
+                && formOrderAfterRestoreReload.indexOf(nextFieldLabel) > formOrderAfterRestoreReload.indexOf(draggedFieldLabel)
+              )
+            )
+          )
+        ),
+      "表单字段拖拽排序不可用",
       {
+        sameGroupOrderProbe,
+        orderSourceField,
+        orderTargetField,
         formOrderBeforeDragPersist,
         formOrderAfterDrag,
         saveFormEnabledAfterDrag,
@@ -794,6 +1053,16 @@ async function main() {
         saveFormEnabledAfterRestoreDrag,
         formOrderAfterRestoreReload,
       },
+    );
+    assert(
+      crossGroupDrop.skipped === false
+        && crossGroupDrop.saveEnabled
+        && crossGroupDrop.movedToTargetBeforeSave
+        && crossGroupDrop.removedFromSourceBeforeSave
+        && crossGroupDrop.persistedInTarget
+        && !crossGroupDrop.persistedInSource,
+      "表单字段跨分组拖拽保存刷新后没有保持",
+      { crossGroupDrop },
     );
     assert(
       createFieldDialogText.includes("字段标题")

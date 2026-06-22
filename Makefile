@@ -636,10 +636,19 @@ verify.business_config.browser_acceptance: guard.prod.forbid
 verify.business_config.low_code_acceptance: guard.prod.forbid
 	@cd frontend/apps/web && BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node scripts/low_code_business_config_acceptance.mjs
 
+verify.business_config.low_code_runtime_consistency: guard.prod.forbid
+	@cd frontend/apps/web && BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node scripts/low_code_form_runtime_consistency_acceptance.mjs
+
+verify.business_config.low_code_group_matrix: guard.prod.forbid
+	@cd frontend/apps/web && BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node scripts/low_code_form_group_matrix_acceptance.mjs
+
+verify.business_config.low_code_global_stability: guard.prod.forbid
+	@cd frontend/apps/web && BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node scripts/low_code_global_stability_acceptance.mjs
+
 verify.business_config.approval_runtime: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_config_approval_runtime_smoke.py
 
-verify.business_config.full_acceptance: verify.business_config.unit verify.frontend.build verify.business_config.coverage verify.business_config.approval_runtime verify.business_config.browser_acceptance verify.business_config.low_code_acceptance
+verify.business_config.full_acceptance: verify.business_config.unit verify.frontend.build verify.business_config.coverage verify.business_config.approval_runtime verify.business_config.browser_acceptance verify.business_config.low_code_acceptance verify.business_config.low_code_runtime_consistency verify.business_config.low_code_group_matrix verify.business_config.low_code_global_stability
 
 verify.business.finance_document_tier_runtime_smoke: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_finance_document_tier_runtime_smoke.py

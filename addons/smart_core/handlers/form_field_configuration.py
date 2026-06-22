@@ -590,6 +590,22 @@ def _upsert_view_orchestration_field_rows(
     views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
     spec = views.get(view_type) if isinstance(views.get(view_type), dict) else {}
     fields_rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
+    layout_group_by_field: dict[str, str] = {}
+
+    def collect_layout_groups(nodes, group_title: str = "") -> None:
+        for node in nodes if isinstance(nodes, list) else []:
+            if not isinstance(node, dict):
+                continue
+            node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+            title = str(node.get("string") or node.get("label") or node.get("title") or "").strip()
+            next_group = title if node_type == "group" and title else group_title
+            field_name = str(node.get("name") or node.get("field") or "").strip()
+            if node_type == "field" and field_name and next_group:
+                layout_group_by_field[field_name] = next_group
+            for child_key in ("children", "pages", "tabs", "nodes", "items"):
+                collect_layout_groups(node.get(child_key), next_group)
+
+    collect_layout_groups(spec.get("layout"))
     by_name = {
         str(row.get("name") or row.get("field") or row.get("field_name") or "").strip(): dict(row)
         for row in fields_rows
@@ -604,6 +620,9 @@ def _upsert_view_orchestration_field_rows(
             if key in row and row.get(key) is not None:
                 current[key] = row.get(key)
         by_name[field_name] = current
+    for field_name, current in by_name.items():
+        if not str(current.get("group_title") or "").strip() and layout_group_by_field.get(field_name):
+            current["group_title"] = layout_group_by_field[field_name]
     spec["fields"] = sorted(by_name.values(), key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or "")))
     grouped: dict[str, list[dict]] = {}
     for row in spec["fields"]:
@@ -614,7 +633,7 @@ def _upsert_view_orchestration_field_rows(
             continue
         group_title = str(row.get("group_title") or "").strip()
         if not group_title:
-            continue
+            group_title = "业务配置字段"
         grouped.setdefault(group_title, []).append(row)
     if grouped:
         spec["sections"] = [
@@ -632,6 +651,24 @@ def _upsert_view_orchestration_field_rows(
                 grouped.items(),
                 key=lambda item: (min(int(row.get("sequence") or 100) for row in item[1]), item[0]),
             ))
+        ]
+        spec["layout"] = [
+            {
+                "type": "group",
+                "string": title,
+                "children": [
+                    {
+                        "type": "field",
+                        "name": str(item.get("name") or item.get("field") or item.get("field_name") or "").strip(),
+                    }
+                    for item in sorted(items, key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or "")))
+                    if str(item.get("name") or item.get("field") or item.get("field_name") or "").strip()
+                ],
+            }
+            for title, items in sorted(
+                grouped.items(),
+                key=lambda item: (min(int(row.get("sequence") or 100) for row in item[1]), item[0]),
+            )
         ]
     views[view_type] = spec
     orchestration["views"] = views

@@ -172,10 +172,15 @@ def _resolve_action(env, action_id, action_type=None):
     return None
 
 
-def _is_ui_only_user_preference_intent(intent_name):
+def _is_ui_only_config_intent(intent_name):
     return str(intent_name or "").strip() in {
         "user.view.preference.get",
         "user.view.preference.set",
+        "ui.business_config.list_search.set",
+        "ui.business_config.analysis.set",
+        "ui.business_config.contract.save",
+        "ui.business_config.contract.publish",
+        "ui.business_config.contract.rollback",
     }
 
 
@@ -271,7 +276,7 @@ def check_intent_permission(ctx):
 
         # ✅ 校验模型访问权限
         model_obj = _resolve_model(env, model) if model else None
-        skip_model_acl = _is_ui_only_user_preference_intent(intent_name)
+        skip_model_acl = _is_ui_only_config_intent(intent_name)
         if model and not skip_model_acl:
             model_acl_policy = _model_acl_policy(
                 env,

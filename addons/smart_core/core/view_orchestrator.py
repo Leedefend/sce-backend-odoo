@@ -518,6 +518,7 @@ class ViewOrchestrator:
                 "widget": str(row.get("widget") or "").strip(),
                 "width": str(row.get("width") or "").strip(),
                 "class": str(row.get("class") or row.get("className") or "").strip(),
+                "group_title": str(row.get("group_title") or row.get("groupTitle") or "").strip(),
             })
         return sorted(normalized, key=lambda item: (item["sequence"], item["name"]))
 
@@ -708,28 +709,70 @@ class ViewOrchestrator:
             return
         target = self._find_sheet(layout)
         parent = target.setdefault("children", []) if target is not None else layout
-        parent.append({
-            "type": "group",
-            "name": "business_config_orchestration_fields",
-            "children": [
-                {
-                    "type": "field",
-                    "name": name,
-                    "fieldInfo": {
-                        "name": name,
-                        "label": effective[name].get("label") or fields_meta.get(name, {}).get("string") or name,
-                        "type": fields_meta.get(name, {}).get("type") or "char",
-                    },
-                    **({"string": effective[name]["label"], "label": effective[name]["label"]} if effective[name].get("label") else {}),
-                    **({"readonly": bool(effective[name]["readonly"])} if isinstance(effective[name].get("readonly"), bool) else {}),
-                    **({"required": bool(effective[name]["required"])} if isinstance(effective[name].get("required"), bool) else {}),
-                    **({"help": effective[name]["help"]} if effective[name].get("help") else {}),
-                    **({"widget": effective[name]["widget"]} if effective[name].get("widget") else {}),
-                    **({"class": effective[name]["class"]} if effective[name].get("class") else {}),
+        grouped: dict[str, list[str]] = {}
+        for name in missing:
+            group_title = str(effective[name].get("group_title") or "").strip()
+            grouped.setdefault(group_title, []).append(name)
+
+        for group_title, names in grouped.items():
+            names = sorted(names, key=lambda value: (effective[value].get("sequence") or 100, value))
+            group = self._find_group_by_title(parent, group_title) if group_title else None
+            if group is None:
+                group = {
+                    "type": "group",
+                    "name": self._missing_fields_group_name(group_title),
+                    **({"string": group_title, "label": group_title} if group_title else {}),
+                    "children": [],
                 }
-                for name in sorted(missing, key=lambda value: (effective[value].get("sequence") or 100, value))
-            ],
-        })
+                parent.append(group)
+            children = group.setdefault("children", [])
+            if not isinstance(children, list):
+                children = []
+                group["children"] = children
+            children.extend(self._form_field_node(name, effective[name], fields_meta) for name in names)
+
+    def _form_field_node(self, name: str, row: dict[str, Any], fields_meta: dict) -> dict:
+        label = row.get("label") or fields_meta.get(name, {}).get("string") or name
+        return {
+            "type": "field",
+            "name": name,
+            "fieldInfo": {
+                "name": name,
+                "label": label,
+                "type": fields_meta.get(name, {}).get("type") or "char",
+            },
+            **({"string": row["label"], "label": row["label"]} if row.get("label") else {}),
+            **({"readonly": bool(row["readonly"])} if isinstance(row.get("readonly"), bool) else {}),
+            **({"required": bool(row["required"])} if isinstance(row.get("required"), bool) else {}),
+            **({"help": row["help"]} if row.get("help") else {}),
+            **({"widget": row["widget"]} if row.get("widget") else {}),
+            **({"class": row["class"]} if row.get("class") else {}),
+        }
+
+    def _missing_fields_group_name(self, group_title: str) -> str:
+        if not group_title:
+            return "business_config_orchestration_fields"
+        suffix = "".join(char.lower() if char.isalnum() else "_" for char in group_title).strip("_")
+        return f"business_config_orchestration_{suffix or 'fields'}"
+
+    def _find_group_by_title(self, nodes: list, group_title: str) -> dict | None:
+        target = str(group_title or "").strip()
+        if not target:
+            return None
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            node_type = str(node.get("type") or "").strip().lower()
+            title = str(node.get("string") or node.get("label") or node.get("title") or "").strip()
+            if node_type == "group" and title == target:
+                return node
+            for key in ("children", "pages", "tabs", "nodes", "items"):
+                children = node.get(key)
+                if isinstance(children, list):
+                    found = self._find_group_by_title(children, target)
+                    if found is not None:
+                        return found
+        return None
 
     def _find_sheet(self, nodes: list) -> dict | None:
         for node in nodes:

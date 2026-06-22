@@ -5,8 +5,10 @@
       <section
         v-if="isContainerNode(node)"
         :class="containerClass(node)"
+        :data-group-title="containerPolicyTitle(node, index)"
         @dragover.prevent
-        @drop.prevent.stop="emitGroupFieldOrderDrop(node, $event)"
+        @drop.prevent.stop="emitGroupFieldOrderDrop(node, $event, index)"
+        @mouseup.self="emitGroupFieldOrderPointerDrop(node, index)"
       >
         <header v-if="containerTitle(node)" class="native-container-head">
           <input
@@ -28,6 +30,17 @@
             @click="emitGroupAddField(node)"
           >+</button>
         </header>
+        <div
+          v-else-if="fieldOrderEditable && nodeType(node) === 'group'"
+          class="native-container-drop-strip"
+          :data-group-title="containerPolicyTitle(node, index)"
+          data-drop-zone="field-group"
+          @dragover.prevent.stop
+          @drop.prevent.stop="emitGroupFieldOrderDrop(node, $event, index)"
+          @mouseup.stop="emitGroupFieldOrderPointerDrop(node, index)"
+        >
+          <span v-if="fieldOrderDraggingKey">拖到这里加入此分组</span>
+        </div>
         <p v-if="nodeText(node)" class="native-static-text">{{ nodeText(node) }}</p>
 
         <template v-if="nodeType(node) === 'notebook'">
@@ -158,7 +171,7 @@
         <template v-else>
           <FormSection
             v-if="fieldSchemasForNodes(fieldChildren(node)).length"
-            :title="fieldSectionTitle(node)"
+            :title="fieldSectionTitle(node, index)"
             :columns="nodeColumns(node)"
             :fields="fieldSchemasForNodes(fieldChildren(node))"
             :relation-adapter="relationAdapter"
@@ -419,7 +432,7 @@ const emit = defineEmits<{
   (event: 'field-order-drag-over', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
   (event: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
   (event: 'field-order-drop', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
-  (event: 'field-order-group-drop', payload: { groupTitle: string }): void;
+  (event: 'field-order-group-drop', payload: { groupTitle: string; groupIndex: number }): void;
   (event: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (event: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
   (event: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
@@ -461,6 +474,7 @@ function containerTitle(node: NativeFormLayoutNode) {
 function isReadablePolicyTitle(value: unknown) {
   const text = String(value || '').trim();
   if (!text) return false;
+  if (['group', 'page', 'notebook', 'sheet', 'container'].includes(text.toLowerCase())) return false;
   if (/^[a-z][a-z0-9_:. -]*$/i.test(text) && /[_:.]/.test(text)) return false;
   return true;
 }
@@ -567,8 +581,8 @@ function activeNotebookChildren(node: NativeFormLayoutNode) {
   return page ? rawChildren(page) : [];
 }
 
-function fieldSectionTitle(node?: NativeFormLayoutNode) {
-  if (node && nodeType(node) === 'group' && containerTitle(node)) return '';
+function fieldSectionTitle(node?: NativeFormLayoutNode, index = 0) {
+  if (node && nodeType(node) === 'group') return containerPolicyTitle(node, index);
   const semanticTitle = String(node?.semanticTitle || '').trim();
   if (semanticTitle) return semanticTitle;
   return node ? containerTitle(node) : '';
@@ -603,13 +617,25 @@ function emitGroupAddField(node: NativeFormLayoutNode) {
   emit('group-add-field', { groupTitle });
 }
 
-function emitGroupFieldOrderDrop(node: NativeFormLayoutNode, event: DragEvent) {
+function emitGroupFieldOrderDrop(node: NativeFormLayoutNode, event: DragEvent, index = 0) {
   if (!props.fieldOrderEditable || !props.fieldOrderDraggingKey) return;
-  const target = event.target instanceof HTMLElement ? event.target : null;
-  if (target?.closest('.field')) return;
-  const groupTitle = containerPolicyTitle(node);
+  const target = event.target;
+  const targetElement = target as unknown as { closest?: (selector: string) => unknown };
+  const closest = target && typeof targetElement.closest === 'function'
+    ? targetElement.closest.bind(target)
+    : null;
+  if (closest?.('.field')) return;
+  const groupTitle = containerPolicyTitle(node, index);
   if (!groupTitle) return;
-  emit('field-order-group-drop', { groupTitle });
+  emit('field-order-group-drop', { groupTitle, groupIndex: index });
+}
+
+function emitGroupFieldOrderPointerDrop(node: NativeFormLayoutNode, index = 0) {
+  if (!props.fieldOrderEditable || !props.fieldOrderDraggingKey) return;
+  const groupTitle = containerPolicyTitle(node, index);
+  if (!groupTitle) return;
+  emit('field-order-group-drop', { groupTitle, groupIndex: index });
+  emit('field-order-drag-end', { field: { name: props.fieldOrderDraggingKey } as FormSectionFieldSchema });
 }
 
 function containerClass(node: NativeFormLayoutNode) {
@@ -816,6 +842,23 @@ function closeMore(node: NativeFormLayoutNode) {
   align-items: center;
   gap: 6px;
   min-width: 0;
+}
+
+.native-container-drop-strip {
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed transparent;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  color: var(--sc-app-text-muted);
+  font-size: 12px;
+  pointer-events: auto;
+}
+
+.native-container--field-drop-target > .native-container-drop-strip {
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-panel-muted);
 }
 
 .native-container-title-editor {
