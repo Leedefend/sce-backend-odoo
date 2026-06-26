@@ -2204,6 +2204,7 @@ const fieldGroupSavedBase = ref<Record<string, string>>({});
 const fieldGroupDraft = reactive<Record<string, string>>({});
 const formLayoutColumnsBase = ref<1 | 2 | 3>(3);
 const formLayoutColumnsDraft = ref<1 | 2 | 3>(3);
+const formLayoutColumnsConfigured = ref(false);
 const groupVisibilityBase = ref<Record<string, boolean>>({});
 const groupVisibilityDraft = reactive<Record<string, boolean>>({});
 const groupColumnsBase = ref<Record<string, 1 | 2 | 3>>({});
@@ -2368,6 +2369,7 @@ watch(contractModeBaseFieldRows, (rows) => {
     fieldGroupSavedBase.value = {};
     formLayoutColumnsBase.value = 3;
     formLayoutColumnsDraft.value = 3;
+    formLayoutColumnsConfigured.value = false;
     groupVisibilityBase.value = {};
     Object.keys(groupVisibilityDraft).forEach((key) => delete groupVisibilityDraft[key]);
     groupColumnsBase.value = {};
@@ -2421,6 +2423,14 @@ watch(isContractFieldOrderEditable, (enabled) => {
   void hydrateLowCodeDraftFromContract();
   void refreshLowCodeFormLayoutBase();
 }, { immediate: true });
+
+watch(
+  () => [v2ContractStore.value, contract.value, isContractFieldOrderEditable.value],
+  () => {
+    applyRuntimeInferredFormColumns();
+  },
+  { flush: 'post' },
+);
 
 const currentFormDesignFieldKeys = computed(() => {
   const keys = new Set<string>();
@@ -3236,7 +3246,9 @@ watch(selectedFormSettingsFieldGroupTitle, (title) => {
 
 function syncLayoutDraftFromFormSpec(formSpec: Record<string, unknown>) {
   const runtimeColumns = inferLowCodeLayoutColumns(runtimeNativeFormLayoutNodes()) || inferLowCodeLayoutColumns(rawNativeFormLayoutNodes.value) || 3;
-  const specColumns = normalizeLowCodeColumns(formSpec.columns ?? (formSpec as { cols?: unknown }).cols, runtimeColumns);
+  const explicitColumns = normalizeLowCodeColumnsOrNull(formSpec.columns ?? (formSpec as { cols?: unknown }).cols);
+  const specColumns = explicitColumns || runtimeColumns;
+  formLayoutColumnsConfigured.value = Boolean(explicitColumns);
   formLayoutColumnsBase.value = specColumns;
   if (!formLayoutDirty.value) {
     formLayoutColumnsDraft.value = specColumns;
@@ -3311,6 +3323,16 @@ function syncLayoutDraftFromFormSpec(formSpec: Record<string, unknown>) {
       fieldSizeDraft[key] = value;
     });
   }
+}
+
+function applyRuntimeInferredFormColumns() {
+  if (!isContractFieldOrderEditable.value || formLayoutColumnsConfigured.value || formLayoutDirty.value) return;
+  const runtimeColumns = inferLowCodeLayoutColumns(runtimeNativeFormLayoutNodes());
+  if (!runtimeColumns || runtimeColumns === formLayoutColumnsBase.value) return;
+  formLayoutColumnsBase.value = runtimeColumns;
+  formLayoutColumnsDraft.value = runtimeColumns;
+  Object.keys(groupColumnsDraft).forEach((key) => delete groupColumnsDraft[key]);
+  groupColumnsBase.value = {};
 }
 
 async function hydrateLowCodeDraftFromContract() {
