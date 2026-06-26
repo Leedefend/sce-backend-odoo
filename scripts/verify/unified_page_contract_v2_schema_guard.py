@@ -81,6 +81,7 @@ FORBIDDEN_FORMAL_SCHEMA_KEYS = {
     "visible_fields",
     "field_groups",
     "legacyContractProjection",
+    "legacy_contract_projection",
 }
 
 FORBIDDEN_SCHEMA_ALIAS_CASES = {
@@ -89,6 +90,7 @@ FORBIDDEN_SCHEMA_ALIAS_CASES = {
     "$.list_profile": ("list_profile",),
     "$.form_structure_contract": ("form_structure_contract",),
     "$.legacyContractProjection": ("legacyContractProjection",),
+    "$.legacy_contract_projection": ("legacy_contract_projection",),
     "$.layoutContract.list_profile": ("layoutContract", "list_profile"),
     "$.actionContract.delete_policy": ("actionContract", "delete_policy"),
     "$.actionContract.surface_policies": ("actionContract", "surface_policies"),
@@ -103,6 +105,11 @@ FORBIDDEN_SCHEMA_ALIAS_CASES = {
         "dataContract",
         "dataMeta",
         "legacyContractProjection",
+    ),
+    "$.dataContract.dataMeta.legacy_contract_projection": (
+        "dataContract",
+        "dataMeta",
+        "legacy_contract_projection",
     ),
 }
 

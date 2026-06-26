@@ -215,7 +215,7 @@ def find_metadata_projection_issues(data_contract: dict[str, Any]) -> list[str]:
     issues: list[str] = []
     data_meta = _dict(data_contract.get("dataMeta"))
     legacy_projection = _dict(data_meta.get("legacyContractProjection") or data_meta.get("legacy_contract_projection"))
-    if legacy_projection:
+    if "legacyContractProjection" in data_meta or "legacy_contract_projection" in data_meta:
         issues.append("dataContract.dataMeta.legacyContractProjection must not be emitted in stable V2 contract")
     for key in ("business_operation_profile", "visible_fields", "field_groups"):
         if key in data_meta:

@@ -163,6 +163,18 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
             issues,
         )
 
+    def test_metadata_projection_rejects_legacy_projection_alias_presence(self):
+        issues = runtime.find_metadata_projection_issues({
+            "dataMeta": {
+                "legacy_contract_projection": {},
+            }
+        })
+
+        self.assertIn(
+            "dataContract.dataMeta.legacyContractProjection must not be emitted in stable V2 contract",
+            issues,
+        )
+
     def test_metadata_projection_accepts_formal_v2_metadata(self):
         issues = runtime.find_metadata_projection_issues({
             "dataMeta": {

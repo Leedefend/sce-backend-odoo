@@ -743,7 +743,8 @@
             "business_operation_profile",
             "visible_fields",
             "field_groups",
-            "legacyContractProjection"
+            "legacyContractProjection",
+            "legacy_contract_projection"
           ]
         }
       },
