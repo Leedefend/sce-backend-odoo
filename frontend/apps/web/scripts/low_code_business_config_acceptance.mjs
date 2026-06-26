@@ -579,7 +579,10 @@ async function main() {
     const menuHeaderHasUtilityActions = /生效检查|版本记录|回滚/.test(menuHeaderText);
     const menuBulkPanelCount = await page.locator(".menu-bulk-panel").count();
     const menuBulkCollapsedCount = await page.locator(".bulk-collapsed-state").count();
+    const menuBulkToolbarText = await page.locator(".menu-bulk-panel .table-toolbar").innerText();
     const menuTreeCount = await page.locator(".menu-config-tree").count();
+    const menuTreeHeadCount = await page.locator(".menu-config-tree .tree-panel-head").count();
+    const menuTreeHeadText = await page.locator(".menu-config-tree .tree-panel-head").innerText();
     const menuTreeOrderToolCount = await page.locator(".tree-node-order-tools").count();
     const menuFirstTreeNode = page.locator(".menu-config-tree .tree-scroll .tree-node").first();
     const menuFirstTreeNodeCount = await menuFirstTreeNode.count();
@@ -699,7 +702,10 @@ async function main() {
       menuHeaderHasUtilityActions,
       menuBulkPanelCount,
       menuBulkCollapsedCount,
+      menuBulkToolbarText,
       menuTreeCount,
+      menuTreeHeadCount,
+      menuTreeHeadText,
       menuTreeOrderToolCount,
       menuFirstTreeNodeCount,
       menuSelectedTitle,
@@ -869,7 +875,12 @@ async function main() {
         && !menuHeaderHasUtilityActions
         && menuBulkPanelCount === 1
         && menuBulkCollapsedCount === 1
+        && menuBulkToolbarText.includes("批量维护")
+        && menuBulkToolbarText.includes("未保存")
         && menuTreeCount === 1
+        && menuTreeHeadCount === 1
+        && menuTreeHeadText.includes("菜单目录")
+        && menuTreeHeadText.includes("直接拖拽排序")
         && menuTreeOrderToolCount === 0
         && menuFirstTreeNodeCount >= 1
         && menuSelectedTitle !== "全部菜单"
@@ -890,7 +901,10 @@ async function main() {
         menuHeaderHasUtilityActions,
         menuBulkPanelCount,
         menuBulkCollapsedCount,
+        menuBulkToolbarText,
         menuTreeCount,
+        menuTreeHeadCount,
+        menuTreeHeadText,
         menuTreeOrderToolCount,
         menuFirstTreeNodeCount,
         menuSelectedTitle,

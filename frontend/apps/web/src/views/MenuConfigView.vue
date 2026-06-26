@@ -147,17 +147,26 @@
 
     <div class="menu-config-workspace">
       <aside class="menu-config-tree">
+        <div class="tree-panel-head">
+          <div>
+            <span class="panel-kicker">菜单目录</span>
+            <strong>{{ flatRows.length }} 个菜单</strong>
+          </div>
+          <span class="tree-panel-hint">{{ treeDragEnabled ? '直接拖拽排序' : '搜索时暂停拖拽' }}</span>
+        </div>
         <div class="tree-search">
           <input v-model="searchText" type="search" placeholder="搜索菜单名称或路径" />
         </div>
-        <button
-          type="button"
-          class="tree-node all"
-          :class="{ active: selectedMenuId === 0 }"
-          @click="selectMenu(0)"
-        >
-          全部菜单
-        </button>
+        <div class="tree-shortcuts">
+          <button
+            type="button"
+            class="tree-node all"
+            :class="{ active: selectedMenuId === 0 }"
+            @click="selectMenu(0)"
+          >
+            全部菜单
+          </button>
+        </div>
         <div class="tree-scroll">
           <MenuConfigTree
             :nodes="visibleTree"
@@ -386,29 +395,31 @@
         </aside>
 
         <section class="menu-bulk-panel" aria-label="批量菜单配置">
-        <div class="table-toolbar">
-          <div>
-            <strong>{{ filteredRows.length }}</strong>
-            <span>条菜单</span>
+          <div class="table-toolbar">
+            <div class="bulk-toolbar-title">
+              <span class="panel-kicker">批量维护</span>
+              <strong>{{ filteredRows.length }} 条菜单</strong>
+              <span>用于连续校对名称、显示范围和可见角色</span>
+            </div>
+            <div class="table-toolbar-actions">
+              <span class="bulk-stat">未保存 {{ dirtyCount }}</span>
+              <label class="toggle-filter">
+                <input v-model="onlyConfigured" type="checkbox" />
+                只看已配置
+              </label>
+              <button type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
+                {{ bulkPanelOpen ? '收起' : '展开' }}
+              </button>
+            </div>
           </div>
-          <div class="table-toolbar-actions">
-            <label class="toggle-filter">
-              <input v-model="onlyConfigured" type="checkbox" />
-              只看已配置
-            </label>
-            <button type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
-              {{ bulkPanelOpen ? '收起' : '展开' }}
-            </button>
-          </div>
-        </div>
 
-        <div v-if="loading" class="loading-state">正在加载菜单配置...</div>
-        <div v-else-if="!bulkPanelOpen" class="bulk-collapsed-state">
-          <span>批量调整已收起</span>
-          <button type="button" class="link-button" @click="bulkPanelOpen = true">展开批量编辑表格</button>
-        </div>
-        <div v-else class="table-wrap">
-          <table>
+          <div v-if="loading" class="loading-state">正在加载菜单配置...</div>
+          <div v-else-if="!bulkPanelOpen" class="bulk-collapsed-state">
+            <span>批量维护已收起，日常调整建议使用当前菜单主编辑区。</span>
+            <button type="button" class="link-button" @click="bulkPanelOpen = true">展开批量编辑表格</button>
+          </div>
+          <div v-else class="table-wrap">
+            <table>
             <colgroup>
               <col class="index-col" />
               <col class="name-col" />
@@ -2204,6 +2215,34 @@ h1 {
   background: var(--sc-app-panel);
 }
 
+.tree-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.tree-panel-head strong {
+  display: block;
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+}
+
+.tree-panel-hint {
+  flex: 0 0 auto;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
 .tree-search {
   padding: 10px;
   border-bottom: 1px solid var(--sc-app-border);
@@ -2256,9 +2295,14 @@ h1 {
   cursor: pointer;
 }
 
+.tree-shortcuts {
+  padding: 6px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
 .tree-node.all {
   padding: 8px 12px;
-  border-bottom: 1px solid var(--sc-app-border);
+  border-radius: 4px;
   font-weight: 600;
 }
 
@@ -2539,19 +2583,45 @@ h1 {
 }
 
 .table-toolbar {
-  min-height: 42px;
+  min-height: 58px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 12px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--sc-app-border);
+}
+
+.bulk-toolbar-title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bulk-toolbar-title strong {
+  color: var(--sc-app-text-primary);
+  font-size: 16px;
+}
+
+.bulk-toolbar-title span:not(.panel-kicker) {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
 }
 
 .table-toolbar-actions {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+}
+
+.bulk-stat {
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .toggle-filter {
@@ -2849,6 +2919,16 @@ tr.dirty td:first-child {
   .menu-role-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .table-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .table-toolbar-actions {
+    width: 100%;
+    flex-wrap: wrap;
   }
 
   .tree-scroll,
