@@ -836,6 +836,70 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertIn(11, result)
         self.assertEqual(result[11]["target_parent_menu_id"], 0)
 
+    def test_runtime_overlay_creates_parent_before_child_move(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        tax_center = _Menu(840, "税务中心", parent=root, sequence=50)
+        tax_group = _Menu(527, "开票与税务办理", parent=tax_center, sequence=25)
+        prepaid_tax = _Menu(530, "预缴税款", parent=tax_group, sequence=30)
+        menus = _MenuModel([root, tax_center, tax_group, prepaid_tax])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                530: {
+                    "active": True,
+                    "menu_id": 530,
+                    "menu_label": "预缴税款",
+                    "visible": True,
+                    "target_parent_menu_id": 840,
+                    "sequence_override": 110,
+                },
+                840: {
+                    "active": True,
+                    "menu_id": 840,
+                    "menu_label": "税务中心",
+                    "visible": True,
+                    "target_parent_menu_id": 291,
+                    "sequence_override": 50,
+                },
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "sequence": 30,
+                        "children": [],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        tax_node = next(child for child in root_node["children"] if child["menu_id"] == 840)
+        prepaid_node = next(child for child in tax_node["children"] if child["menu_id"] == 530)
+        self.assertEqual(tax_node["name"], "税务中心")
+        self.assertEqual(prepaid_node["name"], "预缴税款")
+        self.assertEqual(prepaid_node["sequence"], 110)
+        self.assertEqual(prepaid_node["parent_id"], 840)
+        self.assertEqual(stats["moved_count"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()

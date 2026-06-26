@@ -367,6 +367,22 @@ class UiMenuConfigPolicy(models.Model):
             and policy_target_parent(policy).exists()
             and int(policy_target_parent(policy).id or 0) != int(menu_id)
         ]
+
+        def menu_depth(menu) -> int:
+            depth = 0
+            seen = set()
+            current = menu.exists() if menu else None
+            while current and int(current.id or 0) not in seen:
+                seen.add(int(current.id or 0))
+                depth += 1
+                current = current.parent_id
+            return depth
+
+        move_targets.sort(key=lambda move: (
+            menu_depth(move["source_menu"]),
+            menu_depth(move["target_menu"]),
+            int(move["menu_id"] or 0),
+        ))
         policies_by_label = {}
         for policy in policies_by_menu.values():
             label = policy_menu_name(policy)
