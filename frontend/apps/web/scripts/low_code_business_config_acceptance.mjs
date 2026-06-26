@@ -982,6 +982,9 @@ async function main() {
     const designerControlGridCount = await page.locator(".contract-form-designer-control-grid").count();
     const designerInspectorCount = await page.locator(".contract-form-inspector").count();
     const designerCanvasCount = await page.locator(".contract-form-designer-canvas").count();
+    const designerWorkspaceCount = await page.locator(".form-grid--designer-workspace").count();
+    const designerFieldNavigatorCount = await page.locator(".contract-form-field-navigator").count();
+    const designerFieldNavigatorItemCount = await page.locator(".contract-form-field-nav-item").count();
     const designerLayoutToolText = await page.locator(".contract-form-layout-tools").innerText();
     const initialFormDirtyCount = await page.locator(".contract-field-governance-dirty").count();
     const initialHiddenFieldDesignCount = await page.locator(".field--config-hidden").count();
@@ -1284,6 +1287,9 @@ async function main() {
       designerControlGridCount,
       designerInspectorCount,
       designerCanvasCount,
+      designerWorkspaceCount,
+      designerFieldNavigatorCount,
+      designerFieldNavigatorItemCount,
       designerLayoutToolText,
     };
     report.artifacts.formDesigner = await captureStep(page, "form-designer");
@@ -1298,9 +1304,20 @@ async function main() {
       designerControlGridCount === 1
         && designerInspectorCount === 1
         && designerCanvasCount === 1
+        && designerWorkspaceCount === 1
+        && designerFieldNavigatorCount === 1
+        && designerFieldNavigatorItemCount > 0
         && designerLayoutToolText.includes("页面布局"),
       "表单设计器没有形成专业配置面板结构",
-      { designerControlGridCount, designerInspectorCount, designerCanvasCount, designerLayoutToolText },
+      {
+        designerControlGridCount,
+        designerInspectorCount,
+        designerCanvasCount,
+        designerWorkspaceCount,
+        designerFieldNavigatorCount,
+        designerFieldNavigatorItemCount,
+        designerLayoutToolText,
+      },
     );
     assert(selectableFieldCount > 0, "表单设计器没有可点选字段", { selectableFieldCount });
     assert(dragHandleCount === 0, "表单设计器不应再显示六点拖拽把手", { dragHandleCount });

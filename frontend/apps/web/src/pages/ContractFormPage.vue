@@ -165,7 +165,7 @@
         </div>
       </section>
 
-      <section class="form-grid">
+      <section class="form-grid" :class="{ 'form-grid--designer-workspace': showCurrentFormFieldConfigScope }">
         <StatusPanel
           v-if="sceneValidationPanel"
           title="表单校验失败"
@@ -239,6 +239,23 @@
               </div>
             </header>
             <div class="contract-form-designer-control-grid">
+              <aside class="contract-form-field-navigator" aria-label="字段分组导航">
+                <header>
+                  <strong>字段分组</strong>
+                  <span>{{ formDesignerGroupNavigatorItems.length }} 个分组</span>
+                </header>
+                <button
+                  v-for="item in formDesignerGroupNavigatorItems"
+                  :key="item.title"
+                  type="button"
+                  class="contract-form-field-nav-item"
+                  :class="{ 'contract-form-field-nav-item--active': item.active }"
+                  @click="selectFormDesignerGroup(item.title)"
+                >
+                  <span>{{ item.title }}</span>
+                  <em>{{ item.count }}</em>
+                </button>
+              </aside>
               <section class="contract-form-layout-tools" aria-label="表单布局配置">
                 <header>
                   <strong>页面布局</strong>
@@ -3092,6 +3109,32 @@ const currentFormGroupOptions = computed(() => {
   });
   const businessGroupTitles = groupTitles.filter((title) => title !== '主表区域');
   return Array.from(new Set(businessGroupTitles.length ? businessGroupTitles : groupTitles));
+});
+
+const formDesignerGroupNavigatorItems = computed(() => {
+  const configurableFields = new Set(currentFormDesignFieldKeys.value);
+  const selectedGroupTitle = selectedFormSettingsFieldGroupTitle.value;
+  const byTitle = new Map<string, { title: string; fieldKeys: string[] }>();
+  nativeFieldStructureGroups.value.forEach((group) => {
+    const title = normalizeFieldGroupTitle(group.title);
+    if (!title || title === '主表区域') return;
+    const fieldKeys = group.fieldKeys.filter((fieldKey) => configurableFields.has(fieldKey));
+    if (!fieldKeys.length) return;
+    if (!byTitle.has(title)) byTitle.set(title, { title, fieldKeys: [] });
+    byTitle.get(title)?.fieldKeys.push(...fieldKeys);
+  });
+  currentFormDesignFieldKeys.value.forEach((fieldKey) => {
+    const title = effectiveFieldGroupTitleForDraft(fieldKey);
+    if (!title || title === '主表区域') return;
+    if (!byTitle.has(title)) byTitle.set(title, { title, fieldKeys: [] });
+    const entry = byTitle.get(title);
+    if (entry && !entry.fieldKeys.includes(fieldKey)) entry.fieldKeys.push(fieldKey);
+  });
+  return Array.from(byTitle.values()).map((item) => ({
+    ...item,
+    count: item.fieldKeys.length,
+    active: Boolean(selectedGroupTitle && fieldGroupTitleMatches(item.title, selectedGroupTitle)),
+  }));
 });
 
 const selectedFormSettingsFieldGroupTitle = computed(() => {
@@ -9989,6 +10032,23 @@ function onFormSettingsFieldSelect(payload: { field: FormSectionFieldSchema; gro
   formSettingsActiveTab.value = 'fields';
 }
 
+function selectFormDesignerGroup(title: string) {
+  const normalizedTitle = normalizeFieldGroupTitle(title);
+  if (!normalizedTitle) return;
+  const group = formDesignerGroupNavigatorItems.value.find((item) => fieldGroupTitleMatches(item.title, normalizedTitle));
+  const orderedKeys = currentFormOrderedFieldKeys.value.length ? currentFormOrderedFieldKeys.value : currentFormDesignFieldKeys.value;
+  const fieldKey = orderedKeys.find((key) => group?.fieldKeys.includes(key)) || group?.fieldKeys[0] || '';
+  if (!fieldKey) return;
+  onFormSettingsFieldSelect({
+    field: {
+      name: fieldKey,
+      key: fieldKey,
+      label: formDesignFieldLabel(fieldKey),
+    } as FormSectionFieldSchema,
+    groupTitle: normalizedTitle,
+  });
+}
+
 function openCentralCustomFieldCreate() {
   const selectedFieldKey = selectedFormSettingsFieldKey.value;
   const groupTitle = selectedFormSettingsFieldGroupTitle.value
@@ -11785,6 +11845,12 @@ onBeforeUnmount(() => {
   gap: 14px;
 }
 
+.form-grid--designer-workspace {
+  grid-template-columns: 240px minmax(0, 1fr) 360px;
+  align-items: start;
+  gap: 12px;
+}
+
 .card--flow .form-grid {
   max-width: 100%;
   margin: 0;
@@ -12005,7 +12071,14 @@ onBeforeUnmount(() => {
   background: var(--sc-app-panel);
 }
 
+.form-grid--designer-workspace .contract-form-settings,
+.form-grid--designer-workspace .contract-form-settings-fields,
+.form-grid--designer-workspace .contract-form-designer-control-grid {
+  display: contents;
+}
+
 .contract-form-settings-head {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -12047,6 +12120,7 @@ onBeforeUnmount(() => {
 }
 
 .contract-form-design-strip {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 8px;
@@ -12077,6 +12151,7 @@ onBeforeUnmount(() => {
 
 .contract-form-settings-section-head,
 .contract-form-settings-placeholder {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -12126,6 +12201,86 @@ onBeforeUnmount(() => {
   gap: 10px;
 }
 
+.contract-form-field-navigator {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  max-height: calc(100vh - 220px);
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-bg);
+}
+
+.contract-form-field-navigator header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.contract-form-field-navigator strong {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+}
+
+.contract-form-field-navigator header span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-form-field-nav-item {
+  min-width: 0;
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.contract-form-field-nav-item:hover {
+  border-color: var(--sc-app-border);
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-primary);
+}
+
+.contract-form-field-nav-item--active {
+  border-color: var(--sc-app-accent);
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-primary);
+  box-shadow: inset 3px 0 0 var(--sc-app-accent);
+}
+
+.contract-form-field-nav-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contract-form-field-nav-item em {
+  min-width: 24px;
+  min-height: 20px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  font-style: normal;
+}
+
 .contract-form-layout-tools {
   display: grid;
   gap: 10px;
@@ -12134,6 +12289,10 @@ onBeforeUnmount(() => {
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
   background: var(--sc-app-bg);
+}
+
+.form-grid--designer-workspace .contract-form-layout-tools {
+  grid-column: 1;
 }
 
 .contract-form-layout-tools header {
@@ -12174,6 +12333,15 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 10px;
   align-content: start;
+}
+
+.form-grid--designer-workspace .contract-form-inspector {
+  grid-column: 3;
+  grid-row: 4 / span 2;
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow: auto;
 }
 
 .contract-field-selection-panel {
@@ -12633,6 +12801,13 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   background: var(--sc-app-bg);
   box-shadow: inset 0 0 0 1px rgb(148 163 184 / 6%);
+}
+
+.form-grid--designer-workspace .contract-form-designer-canvas {
+  grid-column: 2;
+  grid-row: 4 / span 2;
+  min-width: 0;
+  min-height: 520px;
 }
 
 .contract-form-operation-log-list time {
