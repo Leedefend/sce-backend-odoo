@@ -603,8 +603,10 @@ Make frontend default path consume `UnifiedPageContract v2+`.
 
 ### Verification
 
+- `make verify.unified_page_contract.v2`
 - frontend typecheck
 - frontend contract consumer guard
+- stable projection guard for backend formal V2 slots and frontend compatibility boundaries
 - Playwright smoke for selected pages
 - restricted backend gate if API response shape touched
 
