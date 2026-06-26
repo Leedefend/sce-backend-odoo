@@ -3235,7 +3235,7 @@ watch(selectedFormSettingsFieldGroupTitle, (title) => {
 });
 
 function syncLayoutDraftFromFormSpec(formSpec: Record<string, unknown>) {
-  const runtimeColumns = inferLowCodeLayoutColumns(rawNativeFormLayoutNodes.value) || 3;
+  const runtimeColumns = inferLowCodeLayoutColumns(runtimeNativeFormLayoutNodes()) || inferLowCodeLayoutColumns(rawNativeFormLayoutNodes.value) || 3;
   const specColumns = normalizeLowCodeColumns(formSpec.columns ?? (formSpec as { cols?: unknown }).cols, runtimeColumns);
   formLayoutColumnsBase.value = specColumns;
   if (!formLayoutDirty.value) {
@@ -7310,6 +7310,20 @@ function applyNativeFieldOrderPreview(nodes: NativeFormLayoutNode[]): NativeForm
   });
   let fieldIndex = 0;
   return withChildren.map((node) => (isNativeFieldLayoutNode(node) ? sortedFields[fieldIndex++] : node));
+}
+
+function runtimeNativeFormLayoutNodes(): NativeFormLayoutNode[] {
+  const storeContainers = resolveContractV2ContainerTree(v2ContractStore.value);
+  const v2 = storeContainers.length ? null : resolveUnifiedPageContractV2(contract.value);
+  const containers = storeContainers.length
+    ? storeContainers
+    : (Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : []);
+  if (containers.length > 0) {
+    return normalizeContractV2ContainersForNativeForm(containers as unknown as ContractV2Container[]);
+  }
+  return Array.isArray(contract.value?.views?.form?.layout)
+    ? contract.value?.views?.form?.layout as unknown as NativeFormLayoutNode[]
+    : [];
 }
 
 const rawNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
