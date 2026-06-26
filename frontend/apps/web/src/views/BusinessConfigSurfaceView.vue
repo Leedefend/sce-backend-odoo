@@ -143,7 +143,7 @@
               @keydown.space.prevent="focusScanRow(row)"
             >
               <div class="scan-row-main">
-                <strong>{{ row.name || row.model }}</strong>
+                <strong :title="row.name || row.model">{{ row.name || row.model }}</strong>
                 <span v-if="advancedPanelOpen">{{ row.model }}</span>
               </div>
               <div class="scan-row-meta">
@@ -3385,6 +3385,12 @@ h1 {
   gap: 0;
 }
 
+.page-picker-panel .scan-list {
+  max-height: clamp(260px, calc(100vh - 360px), 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .scan-row {
   display: grid;
   grid-template-columns: minmax(220px, 1.2fr) minmax(220px, 1fr) auto;
@@ -3488,8 +3494,12 @@ h1 {
 }
 
 .page-picker-panel .scan-row-main strong {
-  overflow: visible;
-  text-overflow: clip;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  text-overflow: ellipsis;
   white-space: normal;
   word-break: break-word;
 }

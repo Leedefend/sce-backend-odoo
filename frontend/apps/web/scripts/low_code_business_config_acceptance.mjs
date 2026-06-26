@@ -478,6 +478,14 @@ async function main() {
     const pagePickerNameWhiteSpace = await page.locator(".page-picker-panel .scan-row-main strong").first().evaluate((node) => (
       window.getComputedStyle(node).whiteSpace
     ));
+    const pagePickerNameTitle = await page.locator(".page-picker-panel .scan-row-main strong").first().getAttribute("title");
+    const pagePickerListStyles = await page.locator(".page-picker-panel .scan-list").first().evaluate((node) => {
+      const style = window.getComputedStyle(node);
+      return {
+        maxHeight: style.maxHeight,
+        overflowY: style.overflowY,
+      };
+    });
     const defaultPageText = await page.locator("body").innerText();
     const pageTypeLabels = await page.locator(".page-type-tabs button").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
@@ -672,6 +680,8 @@ async function main() {
       defaultNonSelectedChooseButtonCount,
       selectedName,
       pagePickerNameWhiteSpace,
+      pagePickerNameTitle,
+      pagePickerListStyles,
       pageTypeLabels,
       leakedDefaultTerms,
       defaultHasUnwiredCopy: defaultPageText.includes("编辑入口待接入"),
@@ -757,7 +767,10 @@ async function main() {
         && defaultSelectedRowActionLabels.length === 0
         && defaultSelectedRowCurrentText === "当前配置"
         && defaultNonSelectedChooseButtonCount >= 1
-        && pagePickerNameWhiteSpace === "normal",
+        && pagePickerNameWhiteSpace === "normal"
+        && pagePickerNameTitle === selectedName
+        && pagePickerListStyles.overflowY === "auto"
+        && pagePickerListStyles.maxHeight !== "none",
       "配置页面没有形成左侧页面列表和右侧配置面板结构",
       {
         configWorkspaceCount,
@@ -769,6 +782,8 @@ async function main() {
         defaultSelectedRowCurrentText,
         defaultNonSelectedChooseButtonCount,
         pagePickerNameWhiteSpace,
+        pagePickerNameTitle,
+        pagePickerListStyles,
       },
     );
     assert(selectedName === "项目合同汇总", "配置页没有恢复选中页面", { selectedName });
