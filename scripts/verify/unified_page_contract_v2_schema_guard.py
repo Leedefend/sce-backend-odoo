@@ -83,11 +83,27 @@ FORBIDDEN_FORMAL_SCHEMA_KEYS = {
     "legacyContractProjection",
 }
 
-FORBIDDEN_DATA_META_ALIASES = {
-    "business_operation_profile",
-    "visible_fields",
-    "field_groups",
-    "legacyContractProjection",
+FORBIDDEN_SCHEMA_ALIAS_CASES = {
+    "$.delete_policy": ("delete_policy",),
+    "$.surface_policies": ("surface_policies",),
+    "$.list_profile": ("list_profile",),
+    "$.form_structure_contract": ("form_structure_contract",),
+    "$.legacyContractProjection": ("legacyContractProjection",),
+    "$.layoutContract.list_profile": ("layoutContract", "list_profile"),
+    "$.actionContract.delete_policy": ("actionContract", "delete_policy"),
+    "$.actionContract.surface_policies": ("actionContract", "surface_policies"),
+    "$.dataContract.dataMeta.business_operation_profile": (
+        "dataContract",
+        "dataMeta",
+        "business_operation_profile",
+    ),
+    "$.dataContract.dataMeta.visible_fields": ("dataContract", "dataMeta", "visible_fields"),
+    "$.dataContract.dataMeta.field_groups": ("dataContract", "dataMeta", "field_groups"),
+    "$.dataContract.dataMeta.legacyContractProjection": (
+        "dataContract",
+        "dataMeta",
+        "legacyContractProjection",
+    ),
 }
 
 ID_KEYS = {
@@ -251,16 +267,23 @@ def validate_schema_rejects_compatibility_aliases(
     validator: Draft202012Validator,
     errors: list[str],
 ) -> None:
-    for alias in sorted(FORBIDDEN_DATA_META_ALIASES):
+    for alias_path, path_parts in sorted(FORBIDDEN_SCHEMA_ALIAS_CASES.items()):
         mutated = copy.deepcopy(payload)
-        data_contract = mutated.setdefault("dataContract", {})
-        data_meta = data_contract.setdefault("dataMeta", {})
-        if not isinstance(data_meta, dict):
-            fail(errors, f"{path}: dataContract.dataMeta must be an object before alias rejection check")
+        parent: Any = mutated
+        for part in path_parts[:-1]:
+            if not isinstance(parent, dict):
+                fail(errors, f"{path}: {alias_path} parent must be an object before alias rejection check")
+                parent = None
+                break
+            parent = parent.setdefault(part, {})
+        if parent is None:
             continue
-        data_meta[alias] = {}
+        if not isinstance(parent, dict):
+            fail(errors, f"{path}: {alias_path} parent must be an object before alias rejection check")
+            continue
+        parent[path_parts[-1]] = {}
         if not list(validator.iter_errors(mutated)):
-            fail(errors, f"{path}: schema must reject dataContract.dataMeta.{alias}")
+            fail(errors, f"{path}: schema must reject compatibility alias {alias_path}")
 
 
 def main() -> int:
