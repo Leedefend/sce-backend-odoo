@@ -226,7 +226,11 @@ def main() -> int:
     runtime_source = runtime_path.read_text(encoding="utf-8")
     if "def find_data_source_authority_issues(" not in runtime_source or "issues.extend(find_data_source_authority_issues(data))" not in runtime_source:
         violations.append(
-            f"{runtime_path.relative_to(ROOT)}: runtime guard must validate dataSource and legacy projection authority"
+            f"{runtime_path.relative_to(ROOT)}: runtime guard must validate dataSource authority"
+        )
+    if "legacyContractProjection must not be emitted in stable V2 contract" not in runtime_source:
+        violations.append(
+            f"{runtime_path.relative_to(ROOT)}: runtime guard must reject legacyContractProjection in stable V2 contract"
         )
     if "def find_policy_contract_issues(" not in runtime_source or "issues.extend(find_policy_contract_issues(contract))" not in runtime_source:
         violations.append(

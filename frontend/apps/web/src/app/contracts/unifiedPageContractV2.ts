@@ -505,16 +505,12 @@ function resolveUnifiedPageContractV2DataMeta(contract: unknown): Dict {
   return readDictAlias(data, 'dataMeta', 'data_meta');
 }
 
-function resolveUnifiedPageContractV2LegacyProjection(contract: unknown): Dict {
-  const dataMeta = resolveUnifiedPageContractV2DataMeta(contract);
-  return readDictAlias(dataMeta, 'legacyContractProjection', 'legacy_contract_projection');
-}
-
 export function resolveUnifiedPageContractV2BusinessOperationProfile(contract: unknown): Record<string, unknown> {
+  const root = asDict(contract);
   const dataMeta = resolveUnifiedPageContractV2DataMeta(contract);
   const formal = readDictAlias(dataMeta, 'businessOperationProfile', 'business_operation_profile');
   if (Object.keys(formal).length) return formal;
-  return asDict(resolveUnifiedPageContractV2LegacyProjection(contract).business_operation_profile);
+  return asDict(root.business_operation_profile);
 }
 
 export function resolveUnifiedPageContractV2VisibleFields(contract: unknown): string[] {
@@ -527,9 +523,10 @@ export function resolveUnifiedPageContractV2VisibleFields(contract: unknown): st
   if (formalFields.length) {
     return formalFields.map((item) => asText(item)).filter(Boolean);
   }
-  const legacy = asList(resolveUnifiedPageContractV2LegacyProjection(contract).visible_fields);
-  if (legacy.length) {
-    return legacy.map((item) => asText(item)).filter(Boolean);
+  const root = asDict(contract);
+  const rootFields = asList(root.visible_fields);
+  if (rootFields.length) {
+    return rootFields.map((item) => asText(item)).filter(Boolean);
   }
   return collectUnifiedPageContractV2FieldWidgets(contract)
     .map((widget) => asText(widget.fieldCode))
@@ -546,8 +543,9 @@ export function resolveUnifiedPageContractV2FieldGroups(contract: unknown): Arra
   if (groups.length) {
     return groups.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item));
   }
-  const legacy = asList(resolveUnifiedPageContractV2LegacyProjection(contract).field_groups);
-  return legacy.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item));
+  const root = asDict(contract);
+  return asList(root.field_groups)
+    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item));
 }
 
 export function resolveUnifiedPageContractV2FormStructureContract(contract: unknown): Record<string, unknown> {
@@ -556,6 +554,5 @@ export function resolveUnifiedPageContractV2FormStructureContract(contract: unkn
   const source = v2 ? asDict(v2) : root;
   const formal = readDictAlias(source, 'formStructureContract', 'form_structure_contract');
   if (Object.keys(formal).length) return formal;
-  const legacy = resolveUnifiedPageContractV2LegacyProjection(contract);
-  return readDictAlias(legacy, 'formStructureContract', 'form_structure_contract');
+  return {};
 }

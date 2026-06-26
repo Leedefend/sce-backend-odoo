@@ -325,31 +325,14 @@ function buildSurfaceMapping(surface: string, renderMode: string, sourceMode: st
   };
 }
 
-function collectV2DeletePolicyCandidates(value: unknown, out: Dict[] = []): Dict[] {
-  if (!value) return out;
-  if (Array.isArray(value)) {
-    value.forEach((item) => collectV2DeletePolicyCandidates(item, out));
-    return out;
-  }
-  if (typeof value !== 'object') return out;
-  const node = asDict(value);
-  const candidate = asDict(node.delete_policy);
-  if (candidate.model) {
-    out.push(candidate);
-  }
-  Object.values(node).forEach((child) => collectV2DeletePolicyCandidates(child, out));
-  return out;
-}
-
 function resolveV2DeletePolicy(v2Contract: Dict, model: string): Dict {
   const targetModel = String(model || '').trim();
   if (!targetModel) return {};
   const topLevel = resolveUnifiedPageContractV2DeletePolicy(v2Contract);
-  if (String(topLevel.model || '').trim() === targetModel) {
+  if (Object.keys(topLevel).length && (!String(topLevel.model || '').trim() || String(topLevel.model || '').trim() === targetModel)) {
     return topLevel;
   }
-  const candidates = collectV2DeletePolicyCandidates(v2Contract, []);
-  return candidates.find((item) => String(item.model || '').trim() === targetModel) || {};
+  return {};
 }
 
 function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}): Dict {

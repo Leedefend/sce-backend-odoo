@@ -208,14 +208,6 @@ def find_data_source_authority_issues(data_contract: dict[str, Any]) -> list[str
             issues.append(f"dataContract.dataSource.{key}.sourceAuthority.no_business_fact_authority must be true")
         if not _text(source_authority.get("fact_authority")):
             issues.append(f"dataContract.dataSource.{key}.sourceAuthority.fact_authority is required")
-    data_meta = _dict(data_contract.get("dataMeta"))
-    legacy_projection = _dict(data_meta.get("legacyContractProjection") or data_meta.get("legacy_contract_projection"))
-    if legacy_projection:
-        source_authority = _dict(legacy_projection.get("sourceAuthority") or legacy_projection.get("source_authority"))
-        if not source_authority:
-            issues.append("dataContract.dataMeta.legacyContractProjection.sourceAuthority is required")
-        elif source_authority.get("compatibility_projection") is not True:
-            issues.append("dataContract.dataMeta.legacyContractProjection.sourceAuthority.compatibility_projection must be true")
     return issues
 
 

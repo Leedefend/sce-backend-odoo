@@ -104,15 +104,9 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
                     "params": {"model": "project.project"},
                 }
             },
-            "dataMeta": {
-                "legacyContractProjection": {
-                    "business_operation_profile": {"source": "test"},
-                }
-            },
         })
 
         self.assertIn("dataContract.dataSource.primary.sourceAuthority is required", issues)
-        self.assertIn("dataContract.dataMeta.legacyContractProjection.sourceAuthority is required", issues)
 
     def test_data_source_authority_accepts_projected_sources(self):
         issues = runtime.find_data_source_authority_issues({
@@ -124,13 +118,6 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
                         "projection_only": True,
                         "no_business_fact_authority": True,
                         "fact_authority": "odoo.model",
-                    },
-                }
-            },
-            "dataMeta": {
-                "legacyContractProjection": {
-                    "sourceAuthority": {
-                        "compatibility_projection": True,
                     },
                 }
             },
