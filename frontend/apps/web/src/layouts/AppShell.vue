@@ -871,7 +871,17 @@ const routeBusinessCategoryLabel = computed(() => asText(
   || route.query.default_business_category_label,
 ));
 
+const configurationRouteTitle = computed(() => {
+  if (route.name === 'menu-config') return '菜单配置';
+  if (route.name === 'business-config') return '业务配置工作台';
+  if (route.path.startsWith('/admin/')) return '配置中心';
+  return '';
+});
+
 const pageTitle = computed(() => {
+  if (configurationRouteTitle.value) {
+    return configurationRouteTitle.value;
+  }
   if (routeBusinessCategoryLabel.value) {
     return routeBusinessCategoryLabel.value;
   }
@@ -1251,6 +1261,11 @@ function isRootContainerMenuId(menuId?: number): boolean {
 
 const breadcrumb = computed(() => {
   const crumbs: Array<{ label: string; to?: string }> = [];
+  if (configurationRouteTitle.value) {
+    crumbs.push({ label: '配置中心', to: route.name === 'business-config' ? undefined : '/admin/business-config' });
+    crumbs.push({ label: configurationRouteTitle.value });
+    return crumbs;
+  }
   const menuId = activeMenuId.value;
   const menuPath = findMenuPath(menuTree.value, menuId);
   if (menuPath.length) {
