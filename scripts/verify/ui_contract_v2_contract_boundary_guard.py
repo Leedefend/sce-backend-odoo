@@ -16,6 +16,8 @@ ALLOWED_FINAL_CONTRACT_WRITERS = {
     "_set_v2_widget_status",
     "_set_v2_data_meta",
     "_replace_v2_contract_content",
+    "_set_v2_governance_patch",
+    "_copy_v2_source_passthroughs",
 }
 
 ALLOWED_SOURCE_PROJECTION_WRITERS = {
@@ -35,6 +37,10 @@ FINAL_CONTRACT_KEYS = {
     "buttonStatus",
     "dataContract",
     "dataMeta",
+    "governance",
+    "delete_policy",
+    "surface_policies",
+    "list_profile",
 }
 
 SOURCE_PROJECTION_KEYS = {
@@ -66,6 +72,15 @@ def _subscript_keys(node: ast.AST) -> list[str]:
         current = current.value
     keys.reverse()
     return keys
+
+
+def _subscript_root(node: ast.AST) -> str:
+    current = node
+    while isinstance(current, ast.Subscript):
+        current = current.value
+    if isinstance(current, ast.Name):
+        return current.id
+    return ""
 
 
 def _assigned_keys(node: ast.AST) -> set[str]:
@@ -130,8 +145,9 @@ def main() -> int:
             continue
         function = _function_for(target, parents)
         line = getattr(target, "lineno", 0)
+        root = _subscript_root(target)
 
-        if FINAL_CONTRACT_KEYS & keys and function not in ALLOWED_FINAL_CONTRACT_WRITERS:
+        if root in {"contract", "contract_v2"} and FINAL_CONTRACT_KEYS & keys and function not in ALLOWED_FINAL_CONTRACT_WRITERS:
             violations.append(
                 f"{HANDLER.relative_to(ROOT)}:{line}: {function} writes final V2 contract keys "
                 f"{sorted(FINAL_CONTRACT_KEYS & keys)} outside centralized V2 contract patch helpers"

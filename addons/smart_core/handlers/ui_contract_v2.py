@@ -220,6 +220,23 @@ class UiContractV2Handler(BaseIntentHandler):
         contract.clear()
         contract.update(replacement)
 
+    def _set_v2_governance_patch(self, contract: dict[str, Any], key: str, patch: dict[str, Any]) -> None:
+        if not isinstance(contract, dict) or not key or not isinstance(patch, dict):
+            return
+        governance = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
+        governance[key] = patch
+        contract["governance"] = governance
+
+    def _copy_v2_source_passthroughs(self, contract: dict[str, Any], source_contract: dict[str, Any]) -> None:
+        if not isinstance(contract, dict) or not isinstance(source_contract, dict):
+            return
+        if isinstance(source_contract.get("delete_policy"), dict):
+            contract["delete_policy"] = dict(source_contract.get("delete_policy") or {})
+        if isinstance(source_contract.get("surface_policies"), dict):
+            contract["surface_policies"] = deepcopy(source_contract.get("surface_policies") or {})
+        if isinstance(source_contract.get("list_profile"), dict):
+            contract["list_profile"] = deepcopy(source_contract.get("list_profile") or {})
+
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         params = self._params(payload)
         client_type = resolve_client_type(self._headers(), params)
@@ -408,12 +425,7 @@ class UiContractV2Handler(BaseIntentHandler):
         self._normalize_general_contract_company_form(contract_v2, source_contract=source_contract)
         self._normalize_construction_diary_form(contract_v2, source_contract=source_contract)
         self._apply_business_config_form_groups_to_v2(contract_v2, source_contract=source_contract)
-        if isinstance(source_contract.get("delete_policy"), dict):
-            contract_v2["delete_policy"] = dict(source_contract.get("delete_policy") or {})
-        if isinstance(source_contract.get("surface_policies"), dict):
-            contract_v2["surface_policies"] = deepcopy(source_contract.get("surface_policies") or {})
-        if isinstance(source_contract.get("list_profile"), dict):
-            contract_v2["list_profile"] = deepcopy(source_contract.get("list_profile") or {})
+        self._copy_v2_source_passthroughs(contract_v2, source_contract)
         contract_v2 = trim_unified_page_contract_v2(
             contract_v2,
             client_type=client_type,
@@ -847,14 +859,12 @@ class UiContractV2Handler(BaseIntentHandler):
                 })
         self._set_v2_widget_status(contract, widget_status)
 
-        governance = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
-        governance["general_contract_company_form"] = {
+        self._set_v2_governance_patch(contract, "general_contract_company_form", {
             "applied": True,
             "model": model,
             "visible_fields": ordered_fields,
             "hidden_reason": "company_general_contract_handling_projection",
-        }
-        contract["governance"] = governance
+        })
 
         def replace_amount_label(value: Any) -> Any:
             if isinstance(value, str):
@@ -1063,14 +1073,12 @@ class UiContractV2Handler(BaseIntentHandler):
                 })
         self._set_v2_widget_status(contract, widget_status)
 
-        governance = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
-        governance["construction_diary_form"] = {
+        self._set_v2_governance_patch(contract, "construction_diary_form", {
             "applied": True,
             "model": model,
             "visible_fields": ordered_fields,
             "hidden_reason": "construction_diary_handling_projection",
-        }
-        contract["governance"] = governance
+        })
 
     def _apply_legacy_visible_list_layout(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
         profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
