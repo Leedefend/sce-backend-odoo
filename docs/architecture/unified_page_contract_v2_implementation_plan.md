@@ -492,6 +492,7 @@ Add the v2+ runtime control plane without turning the contract into a DSL VM.
 
 - `make verify.unified_page_contract.v2`
 - `make verify.unified_page_contract.v2.runtime`
+- runtime pure unit tests and mobile compact contract tests
 - runtime contract snapshot baseline
 - anti-DSL VM guard
 - schema parse check through Makefile
