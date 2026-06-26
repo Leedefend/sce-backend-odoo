@@ -117,6 +117,19 @@ def _menu_config_contract_json(company_id: int, policies) -> dict:
     }
 
 
+def _menu_config_contract_json_from_rows(company_id: int, rows: list[dict]) -> dict:
+    return {
+        "menu_orchestration": {
+            "schema_version": "menu_orchestration.v1",
+            "source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+            "runtime_source": "ui.menu.config.policy",
+            "company_id": int(company_id or 0),
+            "policies": rows,
+            "policy_count": len(rows),
+        }
+    }
+
+
 def _menu_orchestration_policies(contract_json: dict) -> list[dict]:
     if not isinstance(contract_json, dict):
         return []
@@ -258,6 +271,25 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False).browse(menu_id).exists()
         if not menu or not self._menu_under_root(menu, root_menu_id):
             raise ValidationError("%s超出菜单配置范围，只能配置“智慧施工管理平台”下的业务办理菜单。" % field_label)
+
+    def _scope_contract_json(self, company_id: int, contract_json: dict) -> dict:
+        root_menu_id = self._scope_root_menu_id({})
+        scoped_rows = []
+        for row in _menu_orchestration_policies(contract_json):
+            if not isinstance(row, dict):
+                continue
+            menu_id = _to_int(row.get("menu_id"))
+            if not menu_id:
+                continue
+            try:
+                self._ensure_menu_config_scope(menu_id, root_menu_id)
+                target_parent_id = _to_int(row.get("target_parent_menu_id"))
+                if target_parent_id:
+                    self._ensure_menu_config_scope(target_parent_id, root_menu_id, field_label="上级菜单")
+            except ValidationError:
+                continue
+            scoped_rows.append(dict(row))
+        return _menu_config_contract_json_from_rows(company_id, scoped_rows)
 
     def _expand_with_parent_ids(self, menus) -> list[int]:
         ids = set(int(menu.id) for menu in menus)
@@ -1178,9 +1210,10 @@ class MenuConfigurationRollbackHandler(MenuConfigurationLoadHandler):
         rows = _menu_orchestration_policies(snapshot)
         if not rows:
             return self._err(400, "目标版本不是可恢复的菜单配置")
-        restored = self._restore_policy_rows(company_id, snapshot)
+        scoped_snapshot = self._scope_contract_json(company_id, snapshot)
+        restored = self._restore_policy_rows(company_id, scoped_snapshot)
         contract.write({
-            "contract_json": snapshot,
+            "contract_json": scoped_snapshot,
             "status": "published",
             "version_no": int(target.version_no or contract.version_no or 1),
         })
@@ -1271,7 +1304,10 @@ class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
         return rec
 
     def _serialize_version(self, version) -> dict:
-        snapshot = version.snapshot_json or {}
+        contract = getattr(version, "contract_id", None)
+        company = getattr(contract, "company_id", None)
+        company_id = int(getattr(company, "id", 0) or getattr(self.env.company, "id", 0) or 0)
+        snapshot = self._scope_contract_json(company_id, version.snapshot_json or {})
         return {
             "id": int(version.id),
             "version_no": int(version.version_no or 0),
@@ -1313,7 +1349,7 @@ class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
                     "model": str(contract.model or ""),
                     "status": str(contract.status or ""),
                     "version_no": int(contract.version_no or 1),
-                    "summary": _menu_orchestration_summary(contract.contract_json or {}),
+                    "summary": _menu_orchestration_summary(self._scope_contract_json(company_id, contract.contract_json or {})),
                 },
                 "versions": [self._serialize_version(version) for version in versions],
             },
