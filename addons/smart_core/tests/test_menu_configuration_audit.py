@@ -1120,6 +1120,94 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(office_node["sequence"], 70)
         self.assertEqual(stats["moved_count"], 1)
 
+    def test_runtime_overlay_moves_node_when_real_menu_id_is_in_meta(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=root, sequence=20)
+        tender_group = _Menu(299, "投标管理", parent=project_center, sequence=30)
+        tender_fee = _Menu(477, "投标报名费申请", parent=tender_group, sequence=40)
+        menus = _MenuModel([root, project_center, tender_group, tender_fee])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                292: {
+                    "active": True,
+                    "menu_id": 292,
+                    "menu_label": "项目中心",
+                    "visible": True,
+                    "target_parent_menu_id": 291,
+                    "sequence_override": 20,
+                },
+                299: {
+                    "active": True,
+                    "menu_id": 299,
+                    "menu_label": "投标管理",
+                    "visible": True,
+                    "target_parent_menu_id": 292,
+                    "sequence_override": 30,
+                },
+                477: {
+                    "active": True,
+                    "menu_id": 477,
+                    "menu_label": "投标报名费申请",
+                    "visible": True,
+                    "target_parent_menu_id": 299,
+                    "sequence_override": 40,
+                },
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "sequence": 30,
+                        "children": [
+                            {
+                                "menu_id": 292,
+                                "name": "项目中心",
+                                "sequence": 20,
+                                "children": [],
+                            },
+                            {
+                                "menu_id": 900477,
+                                "name": "投标报名费申请",
+                                "sequence": 5,
+                                "meta": {"menu_id": 477},
+                                "children": [],
+                            },
+                        ],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        top_ids = [child["menu_id"] for child in root_node["children"]]
+        project_node = next(child for child in root_node["children"] if child["menu_id"] == 292)
+        tender_node = next(child for child in project_node["children"] if child["menu_id"] == 299)
+        fee_node = next(child for child in tender_node["children"] if child.get("meta", {}).get("menu_id") == 477)
+        self.assertNotIn(900477, top_ids)
+        self.assertEqual(fee_node["parent_id"], 299)
+        self.assertEqual(fee_node["sequence"], 40)
+        self.assertEqual(fee_node["meta"]["parent_menu_id"], 299)
+        self.assertEqual(stats["moved_count"], 3)
+
     def test_runtime_overlay_builds_children_for_missing_moved_group(self):
         module = _load_policy_model()
         company = types.SimpleNamespace(id=7)

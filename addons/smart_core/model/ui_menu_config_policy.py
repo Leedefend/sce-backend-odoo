@@ -401,9 +401,21 @@ class UiMenuConfigPolicy(models.Model):
             if label:
                 policies_by_label.setdefault(label, policy)
 
+        def node_menu_id(node: dict) -> int:
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            candidates = []
+            for candidate in (node.get("menu_id"), meta.get("menu_id"), node.get("id")):
+                try:
+                    value = int(candidate or 0)
+                except Exception:
+                    value = 0
+                if value:
+                    candidates.append(value)
+            return next((value for value in candidates if value in policies_by_menu), candidates[0] if candidates else 0)
+
         def is_protected_runtime_config_node(node: dict) -> bool:
             meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
-            menu_id = node.get("menu_id") or meta.get("menu_id")
+            menu_id = node_menu_id(node)
             try:
                 if int(menu_id or 0) in {727, 729, 735, 770}:
                     return False
@@ -434,11 +446,7 @@ class UiMenuConfigPolicy(models.Model):
             return False
 
         def apply_node(node: dict) -> dict | None:
-            menu_id = node.get("menu_id")
-            try:
-                normalized_menu_id = int(menu_id or 0)
-            except Exception:
-                normalized_menu_id = 0
+            normalized_menu_id = node_menu_id(node)
             children = node.get("children")
             policy = policies_by_menu.get(normalized_menu_id)
             policy_matched_by_label = False
@@ -486,10 +494,7 @@ class UiMenuConfigPolicy(models.Model):
             return node
 
         def policy_for_node(node: dict):
-            try:
-                normalized_menu_id = int((node.get("menu_id") or (node.get("meta") or {}).get("menu_id") or 0))
-            except Exception:
-                normalized_menu_id = 0
+            normalized_menu_id = node_menu_id(node)
             policy = policies_by_menu.get(normalized_menu_id)
             if policy:
                 return policy
@@ -541,13 +546,8 @@ class UiMenuConfigPolicy(models.Model):
             if not menu:
                 return False
             menu_id = int(menu.id)
-            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
-            for candidate in (node.get("menu_id"), meta.get("menu_id")):
-                try:
-                    if int(candidate or 0) == menu_id:
-                        return True
-                except Exception:
-                    continue
+            if node_menu_id(node) == menu_id:
+                return True
             labels = {
                 str(node.get("name") or "").strip(),
                 str(node.get("label") or "").strip(),
@@ -556,17 +556,8 @@ class UiMenuConfigPolicy(models.Model):
             return bool(str(menu.name or "").strip() in labels)
 
         def node_matches_policy_source(node: dict, menu_id: int, source_menu, source_label: str) -> bool:
-            try:
-                if int(node.get("menu_id") or 0) == int(menu_id or 0):
-                    return True
-            except Exception:
-                pass
-            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
-            try:
-                if int(meta.get("menu_id") or 0) == int(menu_id or 0):
-                    return True
-            except Exception:
-                pass
+            if node_menu_id(node) == int(menu_id or 0):
+                return True
             if node_matches_menu(node, source_menu):
                 return True
             labels = {
@@ -723,8 +714,9 @@ class UiMenuConfigPolicy(models.Model):
             for node in nodes:
                 if not isinstance(node, dict):
                     continue
-                if node_matches_policy_source(node, menu_id, source_menu, source_label) and removed is None:
-                    removed = node
+                if node_matches_policy_source(node, menu_id, source_menu, source_label):
+                    if removed is None:
+                        removed = node
                     continue
                 children = node.get("children") if isinstance(node.get("children"), list) else []
                 if children:
