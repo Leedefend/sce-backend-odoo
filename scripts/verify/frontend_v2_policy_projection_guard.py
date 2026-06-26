@@ -296,6 +296,40 @@ FORBIDDEN_STRICT_STATUS_CONTRACT_ALIASES = (
     "raw.container_id",
 )
 
+ALLOWED_STRICT_SCHEMA_EXTENSION_FIELDS = {
+    # Native form shadow rendering still consumes these container presentation
+    # fields while formal V2 fields remain containerId/containerType/title/etc.
+    "ContractV2Container": {
+        "action",
+        "attributes",
+        "buttonType",
+        "cols",
+        "columns",
+        "fieldInfo",
+        "field_info",
+        "formStructure",
+        "formStructureRole",
+        "invisible",
+        "items",
+        "label",
+        "modifiers",
+        "name",
+        "nodes",
+        "pages",
+        "readonly",
+        "required",
+        "string",
+        "tabs",
+        "type",
+        "widget",
+    },
+    # These are display/runtime conveniences for current native-field widgets.
+    "ContractV2Widget": {"fieldType", "relation"},
+    # Action presentation keeps UI/navigation metadata outside the formal rule
+    # execution contract.
+    "ContractV2ActionRule": {"actionKey", "button", "intent", "label", "target"},
+}
+
 
 def _relative(path: Path) -> str:
     return str(path.relative_to(ROOT))
@@ -516,6 +550,19 @@ def main() -> int:
             violations.append(
                 f"{_relative(STRICT_TYPES)}: {interface_name} must cover schema {schema_name} fields; "
                 f"missing={sorted(missing)}"
+            )
+        allowed_extra = ALLOWED_STRICT_SCHEMA_EXTENSION_FIELDS.get(interface_name, set())
+        extra = type_fields - schema_fields
+        unexpected_extra = extra - allowed_extra
+        if unexpected_extra:
+            violations.append(
+                f"{_relative(STRICT_TYPES)}: {interface_name} declares schema-external fields outside the strict V2 whitelist; "
+                f"extra={sorted(unexpected_extra)}"
+            )
+        if interface_name in ALLOWED_STRICT_SCHEMA_EXTENSION_FIELDS and extra != allowed_extra:
+            violations.append(
+                f"{_relative(STRICT_TYPES)}: {interface_name} schema-extension whitelist drift; "
+                f"extra={sorted(extra)} expected={sorted(allowed_extra)}"
             )
 
     for path in CONSUMER_FILES:
