@@ -218,7 +218,7 @@
             :drag-target-menu-id="dragTargetMenuId"
             :drag-drop-position="dragDropPosition"
             :drag-enabled="treeDragEnabled"
-            :search-active="Boolean(normalizedSearchText)"
+            :search-active="treeViewFiltered"
             :collapsed-menu-ids="collapsedMenuIds"
             @select="selectMenu"
             @drag-start="startTreeDrag"
@@ -993,7 +993,8 @@ const treeCountLabel = computed(() => {
 });
 
 const normalizedSearchText = computed(() => searchText.value.trim().toLowerCase());
-const treeDragEnabled = computed(() => !normalizedSearchText.value);
+const treeViewFiltered = computed(() => Boolean(normalizedSearchText.value) || menuStateFilter.value !== 'all');
+const treeDragEnabled = computed(() => !treeViewFiltered.value);
 
 const menuStateFilterOptions = computed(() => {
   const counts = flatRows.value.reduce((acc, row) => {
