@@ -570,6 +570,9 @@ async function main() {
     const menuConfigEditorCount = await page.locator(".menu-config-editor").count();
     const menuSelectedPanelCount = await page.locator(".menu-selected-panel").count();
     const menuSidePanelCount = await page.locator(".menu-side-panel").count();
+    const menuUtilitySectionCount = await page.locator(".menu-utility-section").count();
+    const menuHeaderText = await page.locator(".menu-config-header").innerText();
+    const menuHeaderHasUtilityActions = /生效检查|版本记录|回滚/.test(menuHeaderText);
     const menuBulkPanelCount = await page.locator(".menu-bulk-panel").count();
     const menuBulkCollapsedCount = await page.locator(".bulk-collapsed-state").count();
     const menuTreeCount = await page.locator(".menu-config-tree").count();
@@ -683,6 +686,8 @@ async function main() {
       menuConfigEditorCount,
       menuSelectedPanelCount,
       menuSidePanelCount,
+      menuUtilitySectionCount,
+      menuHeaderHasUtilityActions,
       menuBulkPanelCount,
       menuBulkCollapsedCount,
       menuTreeCount,
@@ -848,6 +853,8 @@ async function main() {
         && menuConfigEditorCount === 1
         && menuSelectedPanelCount === 1
         && menuSidePanelCount === 1
+        && menuUtilitySectionCount === 1
+        && !menuHeaderHasUtilityActions
         && menuBulkPanelCount === 1
         && menuBulkCollapsedCount === 1
         && menuTreeCount === 1
@@ -864,6 +871,8 @@ async function main() {
         menuConfigEditorCount,
         menuSelectedPanelCount,
         menuSidePanelCount,
+        menuUtilitySectionCount,
+        menuHeaderHasUtilityActions,
         menuBulkPanelCount,
         menuBulkCollapsedCount,
         menuTreeCount,

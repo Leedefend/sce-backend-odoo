@@ -10,18 +10,6 @@
         <button v-if="canReturnToBusinessConfig" type="button" class="ghost" @click="returnToBusinessConfig">
           返回配置工作台
         </button>
-        <button type="button" class="ghost" @click="showGuide = !showGuide">
-          {{ showGuide ? '收起说明' : '配置说明' }}
-        </button>
-        <button type="button" class="ghost" :disabled="loading || auditing || saving" @click="auditMenuConfiguration">
-          {{ auditing ? '检查中...' : '生效检查' }}
-        </button>
-        <button type="button" class="ghost" :disabled="loading || versionLoading || saving" @click="toggleVersionPanel">
-          {{ versionPanelOpen ? '收起版本' : (versionLoading ? '加载中...' : '版本') }}
-        </button>
-        <button type="button" class="ghost" :disabled="rollbackButtonDisabled" @click="rollbackSelectedMenuConfiguration">
-          {{ rollingBack ? '回滚中...' : rollbackButtonText }}
-        </button>
         <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel()">刷新</button>
         <button type="button" class="ghost" :disabled="loading || saving || creatingMenu" @click="openCreateMenu('custom')">
           新增菜单
@@ -35,7 +23,7 @@
     <section v-if="showGuide" class="guide-panel">
       <div>
         <h2>配置口径</h2>
-        <p>这里只配置当前导航中实际出现的菜单；没有进入导航的技术菜单不进入配置范围。</p>
+        <p>这里只配置当前导航中实际出现的菜单；未面向业务用户开放的入口不进入配置范围。</p>
       </div>
       <div class="guide-grid">
         <article>
@@ -48,7 +36,7 @@
         </article>
         <article>
           <strong>移动到上级</strong>
-          <span>可在表格选择新的上级菜单，也可在左侧树拖到目标分组；不能移动到自己或自己的下级。</span>
+          <span>可在当前菜单面板选择新的上级菜单，也可在左侧树拖到目标分组；不能移动到自己或自己的下级。</span>
         </article>
         <article>
           <strong>显示</strong>
@@ -364,6 +352,21 @@
             <p>批量区用于连续维护多条菜单；日常配置优先使用当前菜单面板。</p>
             <button type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
               {{ bulkPanelOpen ? '收起批量调整' : '展开批量调整' }}
+            </button>
+          </div>
+          <div class="menu-side-section menu-utility-section">
+            <span class="panel-kicker">检查与版本</span>
+            <button type="button" class="ghost" @click="showGuide = !showGuide">
+              {{ showGuide ? '收起配置说明' : '查看配置说明' }}
+            </button>
+            <button type="button" class="ghost" :disabled="loading || auditing || saving" @click="auditMenuConfiguration">
+              {{ auditing ? '检查中...' : '生效检查' }}
+            </button>
+            <button type="button" class="ghost" :disabled="loading || versionLoading || saving" @click="toggleVersionPanel">
+              {{ versionPanelOpen ? '收起版本记录' : (versionLoading ? '加载中...' : '版本记录') }}
+            </button>
+            <button type="button" class="ghost" :disabled="rollbackButtonDisabled" @click="rollbackSelectedMenuConfiguration">
+              {{ rollingBack ? '回滚中...' : rollbackButtonText }}
             </button>
           </div>
         </aside>
@@ -2459,6 +2462,15 @@ h1 {
   color: var(--sc-app-text-secondary);
   font-size: 12px;
   line-height: 1.45;
+}
+
+.menu-side-section .ghost {
+  width: 100%;
+  justify-content: center;
+}
+
+.menu-utility-section {
+  gap: 8px;
 }
 
 .menu-state-list {
