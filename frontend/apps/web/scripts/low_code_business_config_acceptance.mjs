@@ -570,6 +570,10 @@ async function main() {
     const menuConfigEditorCount = await page.locator(".menu-config-editor").count();
     const menuSelectedPanelCount = await page.locator(".menu-selected-panel").count();
     const menuSidePanelCount = await page.locator(".menu-side-panel").count();
+    const menuSidePanelHeadCount = await page.locator(".menu-side-panel-head").count();
+    const menuSideActionGroupLabels = await page.locator(".menu-side-action-group .menu-side-section-title").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
     const menuUtilitySectionCount = await page.locator(".menu-utility-section").count();
     const menuHeaderText = await page.locator(".menu-config-header").innerText();
     const menuHeaderHasUtilityActions = /生效检查|版本记录|回滚/.test(menuHeaderText);
@@ -689,6 +693,8 @@ async function main() {
       menuConfigEditorCount,
       menuSelectedPanelCount,
       menuSidePanelCount,
+      menuSidePanelHeadCount,
+      menuSideActionGroupLabels,
       menuUtilitySectionCount,
       menuHeaderHasUtilityActions,
       menuBulkPanelCount,
@@ -857,6 +863,8 @@ async function main() {
         && menuConfigEditorCount === 1
         && menuSelectedPanelCount === 1
         && menuSidePanelCount === 1
+        && menuSidePanelHeadCount === 1
+        && menuSideActionGroupLabels.join("|") === "新增入口|批量维护|检查发布"
         && menuUtilitySectionCount === 1
         && !menuHeaderHasUtilityActions
         && menuBulkPanelCount === 1
@@ -876,6 +884,8 @@ async function main() {
         menuConfigEditorCount,
         menuSelectedPanelCount,
         menuSidePanelCount,
+        menuSidePanelHeadCount,
+        menuSideActionGroupLabels,
         menuUtilitySectionCount,
         menuHeaderHasUtilityActions,
         menuBulkPanelCount,

@@ -335,9 +335,11 @@
         </section>
 
         <aside class="menu-side-panel" aria-label="菜单配置摘要">
-          <div class="menu-side-section">
-            <span class="panel-kicker">配置状态</span>
+          <div class="menu-side-panel-head">
+            <span class="panel-kicker">配置摘要</span>
             <strong>{{ selectedMenu ? selectedMenu.name : '全部菜单' }}</strong>
+          </div>
+          <div class="menu-side-section menu-side-summary">
             <div class="menu-state-list">
               <span>
                 <b>{{ selectedMenu && isDirty(selectedMenu.id) ? '待保存' : '已同步' }}</b>
@@ -353,21 +355,21 @@
               </span>
             </div>
           </div>
-          <div v-if="selectedMenu" class="menu-side-section">
-            <span class="panel-kicker">快捷操作</span>
+          <div v-if="selectedMenu" class="menu-side-section menu-side-action-group">
+            <span class="menu-side-section-title">新增入口</span>
             <button type="button" class="ghost" @click="openCreateMenu('sibling')">新增同级</button>
             <button type="button" class="ghost" @click="openCreateMenu('child')">新增下级</button>
             <button type="button" class="ghost" @click="openCreateMenu('copy')">复制当前入口</button>
           </div>
-          <div class="menu-side-section">
-            <span class="panel-kicker">批量调整</span>
-            <p>批量区用于连续维护多条菜单；日常配置优先使用当前菜单面板。</p>
+          <div class="menu-side-section menu-side-action-group">
+            <span class="menu-side-section-title">批量维护</span>
+            <p>用于连续维护多条菜单；日常配置优先使用当前菜单面板。</p>
             <button type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
               {{ bulkPanelOpen ? '收起批量调整' : '展开批量调整' }}
             </button>
           </div>
-          <div class="menu-side-section menu-utility-section">
-            <span class="panel-kicker">检查与版本</span>
+          <div class="menu-side-section menu-side-action-group menu-utility-section">
+            <span class="menu-side-section-title">检查发布</span>
             <button type="button" class="ghost" @click="showGuide = !showGuide">
               {{ showGuide ? '收起配置说明' : '查看配置说明' }}
             </button>
@@ -2460,13 +2462,7 @@ h1 {
   position: sticky;
   top: 12px;
   display: grid;
-  gap: 10px;
-  min-width: 0;
-}
-
-.menu-side-section {
-  display: grid;
-  gap: 8px;
+  gap: 0;
   min-width: 0;
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
@@ -2474,12 +2470,33 @@ h1 {
   background: var(--sc-app-surface);
 }
 
-.menu-side-section strong {
+.menu-side-panel-head {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding-bottom: 10px;
+}
+
+.menu-side-panel-head strong {
   min-width: 0;
   overflow: hidden;
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.menu-side-section {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--sc-app-border);
+}
+
+.menu-side-section-title {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .menu-side-section p {
@@ -2489,7 +2506,7 @@ h1 {
   line-height: 1.45;
 }
 
-.menu-side-section .ghost {
+.menu-side-action-group .ghost {
   width: 100%;
   justify-content: center;
 }
