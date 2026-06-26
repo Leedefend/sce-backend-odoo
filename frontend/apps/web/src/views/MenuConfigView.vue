@@ -178,7 +178,7 @@
         <div class="tree-panel-head">
           <div>
             <span class="panel-kicker">菜单目录</span>
-            <strong>{{ visibleFlatRows.length }} 个可配置菜单</strong>
+            <strong>{{ treeCountLabel }}</strong>
           </div>
           <span class="tree-panel-hint">
             {{ treeDragEnabled ? '直接拖拽排序' : '搜索时暂停拖拽' }}
@@ -187,6 +187,18 @@
         </div>
         <div class="tree-search">
           <input v-model="searchText" type="search" placeholder="搜索菜单名称或路径" />
+        </div>
+        <div class="tree-state-tabs" aria-label="菜单状态筛选">
+          <button
+            v-for="option in menuStateFilterOptions"
+            :key="option.value"
+            type="button"
+            :class="{ active: menuStateFilter === option.value }"
+            @click="menuStateFilter = option.value"
+          >
+            <span>{{ option.label }}</span>
+            <b>{{ option.count }}</b>
+          </button>
         </div>
         <div class="tree-shortcuts">
           <button
@@ -715,6 +727,7 @@ const versionPanelOpen = ref(false);
 const selectedVersionNo = ref(0);
 const selectedMenuId = ref(0);
 const searchText = ref('');
+const menuStateFilter = ref<'all' | 'visible' | 'hidden' | 'unconfigured'>('all');
 const dragSourceMenuId = ref(0);
 const dragTargetMenuId = ref(0);
 const dragDropPosition = ref<DropPosition>('after');
@@ -852,7 +865,7 @@ const MenuConfigTree = defineComponent({
             menuHandlingStateClass(node),
             'tree-origin-badge',
           ],
-        }, menuHandlingStateLabel(node)),
+        }, menuTreeStateLabel(node)),
         isUserCreatedMenu(node)
           ? h('span', { class: ['menu-origin-badge', 'deletable', 'tree-origin-badge'] }, '可删除')
           : null,
@@ -972,8 +985,37 @@ const visibleFlatRows = computed<FlatRow[]>(() => {
   return out;
 });
 
+const treeCountLabel = computed(() => {
+  const total = flatRows.value.length;
+  const current = visibleFlatRows.value.length;
+  if (current === total) return `${total} 个可配置菜单`;
+  return `${current} / ${total} 个可配置菜单`;
+});
+
 const normalizedSearchText = computed(() => searchText.value.trim().toLowerCase());
 const treeDragEnabled = computed(() => !normalizedSearchText.value);
+
+const menuStateFilterOptions = computed(() => {
+  const counts = flatRows.value.reduce((acc, row) => {
+    const state = menuHandlingStateClass(row.menu);
+    acc.all += 1;
+    if (state === 'visible') acc.visible += 1;
+    if (state === 'hidden') acc.hidden += 1;
+    if (state === 'unconfigured') acc.unconfigured += 1;
+    return acc;
+  }, {
+    all: 0,
+    visible: 0,
+    hidden: 0,
+    unconfigured: 0,
+  });
+  return [
+    { value: 'all' as const, label: '全部', count: counts.all },
+    { value: 'visible' as const, label: '已启用', count: counts.visible },
+    { value: 'hidden' as const, label: '已隐藏', count: counts.hidden },
+    { value: 'unconfigured' as const, label: '候选', count: counts.unconfigured },
+  ];
+});
 
 function menuSearchText(menu: MenuConfigMenu) {
   const draft = drafts[menu.id];
@@ -988,6 +1030,7 @@ function menuSearchText(menu: MenuConfigMenu) {
     draft?.custom_label || '',
     draft?.note || '',
     menuHandlingStateLabel(menu),
+    menuTreeStateLabel(menu),
   ].join(' ').toLowerCase();
 }
 
@@ -1019,16 +1062,30 @@ function menuHandlingStateClass(menu: MenuConfigMenu | null | undefined) {
   return draft?.policy_id ? 'hidden' : 'unconfigured';
 }
 
+function menuTreeStateLabel(menu: MenuConfigMenu | null | undefined) {
+  const state = menuHandlingStateClass(menu);
+  if (state === 'visible') return '启用';
+  if (state === 'hidden') return '隐藏';
+  return '候选';
+}
+
+function menuMatchesStateFilter(menu: MenuConfigMenu) {
+  if (menuStateFilter.value === 'all') return true;
+  return menuHandlingStateClass(menu) === menuStateFilter.value;
+}
+
 const visibleTree = computed<MenuConfigMenu[]>(() => {
   const term = normalizedSearchText.value;
-  if (!term) {
+  if (!term && menuStateFilter.value === 'all') {
     return tree.value;
   }
 
   const filterBranch = (items: MenuConfigMenu[]): MenuConfigMenu[] => {
     return items.flatMap((item) => {
       const children = filterBranch(item.children || []);
-      if (children.length || menuMatchesSearch(item)) {
+      const searchMatched = !term || menuMatchesSearch(item);
+      const stateMatched = menuMatchesStateFilter(item);
+      if (children.length || (searchMatched && stateMatched)) {
         return [{ ...item, children }];
       }
       return [];
@@ -2548,6 +2605,53 @@ h1 {
   padding: 0 10px;
 }
 
+.tree-state-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.tree-state-tabs button {
+  min-width: 0;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 0 6px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tree-state-tabs button span,
+.tree-state-tabs button b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-state-tabs button b {
+  color: var(--sc-app-text-primary);
+  font-weight: 700;
+}
+
+.tree-state-tabs button.active {
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+}
+
+.tree-state-tabs button.active b {
+  color: var(--sc-app-info-text);
+}
+
 .tree-scroll {
   overflow: auto;
   max-height: calc(100vh - 220px);
@@ -2763,12 +2867,11 @@ h1 {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
+  margin-left: auto;
   min-height: 18px;
-  border: 1px solid var(--sc-app-info-border);
-  border-radius: 999px;
+  min-width: 34px;
+  border-radius: 5px;
   padding: 0 6px;
-  background: var(--sc-app-info-bg);
-  color: var(--sc-app-info-text);
   font-size: 11px;
   font-weight: 600;
   line-height: 1;
