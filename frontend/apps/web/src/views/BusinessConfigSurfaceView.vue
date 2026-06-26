@@ -163,69 +163,175 @@
           </button>
         </div>
       </div>
-      <div v-if="visibleCoverageRows.length" class="scan-list">
-        <div
-          v-for="row in visibleCoverageRows"
-          :key="coverageRowKey(row)"
-          class="scan-row"
-          :class="{ 'scan-row--selected': coverageRowMatchesScope(row), 'scan-row--clickable': !coverageRowMatchesScope(row) }"
-          role="button"
-          tabindex="0"
-          @click="focusScanRow(row)"
-          @keydown.enter.prevent="focusScanRow(row)"
-          @keydown.space.prevent="focusScanRow(row)"
-        >
-          <div class="scan-row-main">
-            <strong>{{ row.name || row.model }}</strong>
-            <span v-if="advancedPanelOpen">{{ row.model }}</span>
+      <div class="config-workspace">
+        <aside class="page-picker-panel" aria-label="业务页面列表">
+          <div class="page-picker-head">
+            <strong>业务页面</strong>
+            <span>{{ visibleCoverageRows.length }} 个匹配页面</span>
           </div>
-          <div class="scan-row-meta">
-            <span>{{ pageViewModeText(row) }}</span>
-            <span>{{ rowCoverageProgressText(row) }}</span>
-            <span v-if="rowActionHintText(row)">{{ rowActionHintText(row) }}</span>
-            <span>{{ pageDesignStatus(row) }}</span>
-            <span v-if="advancedPanelOpen && row.user_preference_count">已有个人配置 {{ row.user_preference_count }}</span>
-            <span v-if="advancedPanelOpen">{{ runtimeEvidenceText(row) }}</span>
-            <span v-if="advancedPanelOpen && runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
-          </div>
-          <div v-if="advancedPanelOpen" class="scan-row-admin-actions">
-            <span>{{ severityLabel(row.severity) }}</span>
-            <span v-if="row.missing_view_types.length">需补 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
-            <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
-          </div>
-          <div class="scan-row-actions">
-            <button v-if="rowHasFormConfig(row)" type="button" class="ghost small primary" @click.stop="openDesignerForRow(row)">编辑表单</button>
-            <button
-              v-if="rowHasListSearchConfig(row)"
-              type="button"
-              class="ghost small"
-              @click.stop="openListSearchForRow(row)"
+          <div v-if="visibleCoverageRows.length" class="scan-list">
+            <div
+              v-for="row in visibleCoverageRows"
+              :key="coverageRowKey(row)"
+              class="scan-row"
+              :class="{ 'scan-row--selected': coverageRowMatchesScope(row), 'scan-row--clickable': !coverageRowMatchesScope(row) }"
+              role="button"
+              tabindex="0"
+              @click="focusScanRow(row)"
+              @keydown.enter.prevent="focusScanRow(row)"
+              @keydown.space.prevent="focusScanRow(row)"
             >
-              配置列表与搜索
-            </button>
-            <button
-              type="button"
-              class="ghost small"
-              :disabled="!row.runtime_route?.path"
-              @click.stop="openRuntimeRoute(row)"
-            >
-              预览页面
-            </button>
-            <button
-              v-for="action in visibleRowRemediationActions(row)"
-              :key="`row-remediation-${coverageRowKey(row)}-${action.code}`"
-              type="button"
-              class="ghost small"
-              :disabled="listSearchSaving || versionsLoading"
-              @click.stop="runRemediationAction(row, action)"
-            >
-              {{ action.label }}
-            </button>
-            <button type="button" class="ghost small" @click.stop="focusScanRow(row)">选择</button>
+              <div class="scan-row-main">
+                <strong>{{ row.name || row.model }}</strong>
+                <span v-if="advancedPanelOpen">{{ row.model }}</span>
+              </div>
+              <div class="scan-row-meta">
+                <span>{{ pageViewModeText(row) }}</span>
+                <span>{{ rowCoverageProgressText(row) }}</span>
+                <span v-if="rowActionHintText(row)">{{ rowActionHintText(row) }}</span>
+                <span>{{ pageDesignStatus(row) }}</span>
+                <span v-if="advancedPanelOpen && row.user_preference_count">已有个人配置 {{ row.user_preference_count }}</span>
+                <span v-if="advancedPanelOpen">{{ runtimeEvidenceText(row) }}</span>
+                <span v-if="advancedPanelOpen && runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
+              </div>
+              <div v-if="advancedPanelOpen" class="scan-row-admin-actions">
+                <span>{{ severityLabel(row.severity) }}</span>
+                <span v-if="row.missing_view_types.length">需补 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
+                <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
+              </div>
+              <div class="scan-row-actions">
+                <button v-if="rowHasFormConfig(row)" type="button" class="ghost small primary" @click.stop="openDesignerForRow(row)">编辑表单</button>
+                <button
+                  v-if="rowHasListSearchConfig(row)"
+                  type="button"
+                  class="ghost small"
+                  @click.stop="openListSearchForRow(row)"
+                >
+                  配置列表与搜索
+                </button>
+                <button
+                  type="button"
+                  class="ghost small"
+                  :disabled="!row.runtime_route?.path"
+                  @click.stop="openRuntimeRoute(row)"
+                >
+                  预览页面
+                </button>
+                <button
+                  v-for="action in visibleRowRemediationActions(row)"
+                  :key="`row-remediation-${coverageRowKey(row)}-${action.code}`"
+                  type="button"
+                  class="ghost small"
+                  :disabled="listSearchSaving || versionsLoading"
+                  @click.stop="runRemediationAction(row, action)"
+                >
+                  {{ action.label }}
+                </button>
+                <button type="button" class="ghost small" @click.stop="focusScanRow(row)">选择</button>
+              </div>
+            </div>
           </div>
-        </div>
+          <div v-else class="empty-state">当前没有匹配的业务页面，可调整搜索条件或取消“只看需处理”。</div>
+        </aside>
+
+        <section v-if="!loading && (currentModel || visibleConfigSections.length)" class="page-config-panel" aria-label="已选页面配置">
+          <div class="selected-page-overview">
+            <div>
+              <span>正在配置</span>
+              <strong>{{ selectedCoverageRow?.name || selectedPageLabel || currentModel || '当前页面' }}</strong>
+            </div>
+            <div class="selected-page-overview-meta">
+              <span>{{ selectedCoverageRow ? pageViewModeText(selectedCoverageRow) : '页面配置' }}</span>
+              <span v-if="selectedCoverageRow">{{ rowCoverageProgressText(selectedCoverageRow) }}</span>
+              <span v-if="selectedCoverageRow">{{ pageDesignStatus(selectedCoverageRow) }}</span>
+            </div>
+          </div>
+          <div class="section-grid">
+            <article v-for="section in visibleConfigSections" :key="section.key" class="config-card">
+              <div class="config-card-head">
+                <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
+                <strong :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
+              </div>
+              <p>{{ sectionPrimaryCopy(section.key) }}</p>
+              <div class="config-card-meta">
+                <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
+                <span v-if="sectionConfigProgressText(section.key, section.contract_count)">{{ sectionConfigProgressText(section.key, section.contract_count) }}</span>
+              </div>
+              <div class="config-card-actions">
+                <button
+                  v-if="section.key === 'form' || section.key === 'list_search' || section.key === 'analysis'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || versionsLoading"
+                  @click="loadVersions(section.key)"
+                >
+                  {{ versionsLoading ? '读取中...' : '版本记录' }}
+                </button>
+                <button
+                  v-if="section.key === 'list_search'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || listSearchBusy"
+                  @click="loadListSearchConfig"
+                >
+                  {{ listSearchBusy ? '读取中...' : '配置列表与搜索' }}
+                </button>
+                <button
+                  v-else-if="section.key === 'form'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!canOpenDesigner"
+                  @click="openFormConfig"
+                >
+                  配置表单字段
+                </button>
+                <button
+                  v-else-if="section.key === 'menu'"
+                  type="button"
+                  class="ghost small"
+                  @click="openMenuConfig"
+                >
+                  调整菜单入口
+                </button>
+                <button
+                  v-if="section.key === 'menu'"
+                  type="button"
+                  class="ghost small primary"
+                  @click="openCreateMenuConfig"
+                >
+                  新增菜单
+                </button>
+                <button
+                  v-else-if="section.key === 'analysis'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || listSearchBusy"
+                  @click="loadAnalysisConfig"
+                >
+                  {{ listSearchBusy ? '读取中...' : '配置分析视图' }}
+                </button>
+                <button
+                  v-else-if="section.key === 'approval'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || approvalLoading"
+                  @click="loadApprovalConfig"
+                >
+                  {{ approvalLoading ? '读取中...' : '设置审批' }}
+                </button>
+                <button
+                  v-if="section.key === 'approval' && section.route?.path"
+                  type="button"
+                  class="ghost small"
+                  @click="openApprovalConfig(section)"
+                >
+                  高级规则
+                </button>
+              </div>
+            </article>
+          </div>
+        </section>
       </div>
-      <div v-else class="empty-state">当前没有匹配的业务页面，可调整搜索条件或取消“只看需处理”。</div>
     </section>
     <section v-if="advancedPanelOpen && coverageScan" class="scan-panel scan-panel--admin">
       <div class="scan-toolbar">
@@ -305,91 +411,6 @@
         </div>
       </div>
     </section>
-    <section v-if="!loading && (currentModel || visibleConfigSections.length)" class="section-grid">
-      <article v-for="section in visibleConfigSections" :key="section.key" class="config-card">
-        <div class="config-card-head">
-          <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
-          <strong :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
-        </div>
-        <p>{{ sectionPrimaryCopy(section.key) }}</p>
-        <div class="config-card-meta">
-          <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
-          <span v-if="sectionConfigProgressText(section.key, section.contract_count)">{{ sectionConfigProgressText(section.key, section.contract_count) }}</span>
-        </div>
-        <div class="config-card-actions">
-          <button
-            v-if="section.key === 'form' || section.key === 'list_search' || section.key === 'analysis'"
-            type="button"
-            class="ghost small"
-            :disabled="!currentModel || versionsLoading"
-            @click="loadVersions(section.key)"
-          >
-            {{ versionsLoading ? '读取中...' : '版本记录' }}
-          </button>
-          <button
-            v-if="section.key === 'list_search'"
-            type="button"
-            class="ghost small"
-            :disabled="!currentModel || listSearchBusy"
-            @click="loadListSearchConfig"
-          >
-            {{ listSearchBusy ? '读取中...' : '配置列表与搜索' }}
-          </button>
-          <button
-            v-else-if="section.key === 'form'"
-            type="button"
-            class="ghost small"
-            :disabled="!canOpenDesigner"
-            @click="openFormConfig"
-          >
-            配置表单字段
-          </button>
-          <button
-            v-else-if="section.key === 'menu'"
-            type="button"
-            class="ghost small"
-            @click="openMenuConfig"
-          >
-            调整菜单入口
-          </button>
-          <button
-            v-if="section.key === 'menu'"
-            type="button"
-            class="ghost small primary"
-            @click="openCreateMenuConfig"
-          >
-            新增菜单
-          </button>
-          <button
-            v-else-if="section.key === 'analysis'"
-            type="button"
-            class="ghost small"
-            :disabled="!currentModel || listSearchBusy"
-            @click="loadAnalysisConfig"
-          >
-            {{ listSearchBusy ? '读取中...' : '配置分析视图' }}
-          </button>
-          <button
-            v-else-if="section.key === 'approval'"
-            type="button"
-            class="ghost small"
-            :disabled="!currentModel || approvalLoading"
-            @click="loadApprovalConfig"
-          >
-            {{ approvalLoading ? '读取中...' : '设置审批' }}
-          </button>
-          <button
-            v-if="section.key === 'approval' && section.route?.path"
-            type="button"
-            class="ghost small"
-            @click="openApprovalConfig(section)"
-          >
-            高级规则
-          </button>
-        </div>
-      </article>
-    </section>
-
     <section v-if="approvalPanelOpen" class="edit-panel approval-panel">
       <div class="edit-panel-head">
         <div>
@@ -3339,6 +3360,84 @@ h1 {
   gap: 6px;
 }
 
+.config-workspace {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.45fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.page-picker-panel,
+.page-config-panel {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.page-picker-panel {
+  align-content: start;
+}
+
+.page-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 30px;
+  color: var(--sc-app-text-primary);
+}
+
+.page-picker-head span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.selected-page-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-bg);
+}
+
+.selected-page-overview > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.selected-page-overview span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.selected-page-overview strong {
+  color: var(--sc-app-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-page-overview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.selected-page-overview-meta span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  background: var(--sc-app-panel-muted);
+}
+
 .scan-list {
   display: grid;
   gap: 8px;
@@ -3419,6 +3518,16 @@ h1 {
   white-space: nowrap;
 }
 
+.page-picker-panel .scan-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.page-picker-panel .scan-row-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  white-space: normal;
+}
+
 .scan-panel--admin .scan-row {
   display: flex;
   flex-wrap: wrap;
@@ -3478,7 +3587,6 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
-  padding: 0 18px;
 }
 
 .config-card {
@@ -4126,9 +4234,19 @@ h1 {
 
   .workbench-flow,
   .scope-panel,
+  .config-workspace,
   .approval-config-grid,
   .edit-grid {
     grid-template-columns: 1fr;
+  }
+
+  .selected-page-overview {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .selected-page-overview-meta {
+    justify-content: flex-start;
   }
 
   .approval-step-table {

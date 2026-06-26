@@ -389,7 +389,16 @@ async function approvalStepNames(page) {
 async function dragApprovalStep(page, fromIndex, toIndex) {
   const source = page.locator(".approval-step-row").nth(fromIndex).locator(".approval-step-drag");
   const target = page.locator(".approval-step-row").nth(toIndex);
-  await source.dragTo(target);
+  await source.scrollIntoViewIfNeeded();
+  await target.scrollIntoViewIfNeeded();
+  const targetBox = await target.boundingBox();
+  const targetPosition = targetBox
+    ? {
+      x: Math.max(2, Math.round(targetBox.width / 2)),
+      y: fromIndex < toIndex ? Math.max(2, Math.round(targetBox.height - 2)) : 2,
+    }
+    : undefined;
+  await source.dragTo(target, targetPosition ? { targetPosition } : undefined);
 }
 
 async function selectDesignerField(page, index = 0) {
@@ -424,6 +433,7 @@ async function main() {
   await ensureDirs();
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  let currentStep = "start";
   const errors = [];
   const warnings = [];
   page.on("pageerror", (err) => errors.push(`pageerror:${err.message}`));
@@ -445,13 +455,19 @@ async function main() {
   };
 
   try {
+    currentStep = "login";
     await login(page);
 
+    currentStep = "open default config page";
     await page.goto(CONFIG_URL, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".scan-row--selected", { timeout: 20000 });
     const defaultCards = await page.locator(".config-card h2").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
+    const configWorkspaceCount = await page.locator(".config-workspace").count();
+    const pagePickerPanelCount = await page.locator(".config-workspace .page-picker-panel").count();
+    const pageConfigPanelCount = await page.locator(".config-workspace .page-config-panel").count();
+    const selectedOverviewText = await page.locator(".selected-page-overview").innerText();
     const selectedName = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
     const defaultPageText = await page.locator("body").innerText();
     const pageTypeLabels = await page.locator(".page-type-tabs button").evaluateAll((nodes) => (
@@ -469,6 +485,7 @@ async function main() {
     const leakedDefaultVersionTerms = await visibleForbiddenTerms(page, ".version-panel");
     await page.locator(".version-panel").getByRole("button", { name: "关闭" }).click();
     await page.waitForSelector(".version-panel", { state: "detached", timeout: 10000 });
+    currentStep = "open approval panel";
     const approvalCard = page.locator(".config-card").filter({ hasText: "审批规则" });
     await approvalCard.getByRole("button", { name: "设置审批" }).click();
     await page.waitForSelector(".approval-panel", { timeout: 10000 });
@@ -499,6 +516,7 @@ async function main() {
     let approvalDragResetSaveDisabled = false;
     if (approvalStepRowCount >= 2) {
       if (!approvalWasEnabledInitially) {
+        currentStep = "enable approval for drag probe";
         await approvalRequiredToggle.check();
         await page.waitForFunction(() => {
           const firstInput = document.querySelector(".approval-step-row input[type='text']");
@@ -507,9 +525,11 @@ async function main() {
       }
       const firstProbeName = `验收步骤A-${approvalDragProbeSuffix}`;
       const secondProbeName = `验收步骤B-${approvalDragProbeSuffix}`;
+      currentStep = "prepare approval drag probe";
       await approvalPanel.locator(".approval-step-row").nth(0).locator("input[type='text']").fill(firstProbeName);
       await approvalPanel.locator(".approval-step-row").nth(1).locator("input[type='text']").fill(secondProbeName);
       approvalDragOrderBefore = await approvalStepNames(page);
+      currentStep = "run approval drag probe";
       await dragApprovalStep(page, 0, 1);
       await page.waitForFunction((expectedFirst) => {
         const firstInput = document.querySelector(".approval-step-row input[type='text']");
@@ -518,6 +538,7 @@ async function main() {
       approvalDragOrderAfter = await approvalStepNames(page);
       approvalDragSaveEnabled = await approvalPanel.getByRole("button", { name: "保存审批设置" }).isEnabled();
       report.artifacts.approvalPanelDragged = await captureStep(page, "approval-panel-dragged");
+      currentStep = "reset approval drag probe";
       await approvalPanel.getByRole("button", { name: "还原" }).click();
       await page.waitForFunction((probeSuffix) => {
         const names = Array.from(document.querySelectorAll(".approval-step-row input[type='text']"))
@@ -531,6 +552,7 @@ async function main() {
     report.artifacts.approvalPanel = await captureStep(page, "approval-panel");
     await approvalPanel.getByRole("button", { name: "关闭" }).click();
     await page.waitForSelector(".approval-panel", { state: "detached", timeout: 10000 });
+    currentStep = "page search and switch";
     const initialPageRows = await page.locator(".scan-row-main strong").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
@@ -584,6 +606,10 @@ async function main() {
     await page.waitForSelector(".scan-row--selected", { timeout: 20000 });
     report.checks.defaultConfigPage = {
       defaultCards,
+      configWorkspaceCount,
+      pagePickerPanelCount,
+      pageConfigPanelCount,
+      selectedOverviewText,
       selectedName,
       pageTypeLabels,
       leakedDefaultTerms,
@@ -631,6 +657,15 @@ async function main() {
       defaultCards.join("|") === "表单字段与布局|列表与搜索|菜单入口|审批规则",
       "默认配置卡片不符合用户配置边界",
       { defaultCards },
+    );
+    assert(
+      configWorkspaceCount === 1
+        && pagePickerPanelCount === 1
+        && pageConfigPanelCount === 1
+        && selectedOverviewText.includes("正在配置")
+        && selectedOverviewText.includes("项目合同汇总"),
+      "配置页面没有形成左侧页面列表和右侧配置面板结构",
+      { configWorkspaceCount, pagePickerPanelCount, pageConfigPanelCount, selectedOverviewText },
     );
     assert(selectedName === "项目合同汇总", "配置页没有恢复选中页面", { selectedName });
     assert(
@@ -1511,7 +1546,7 @@ async function main() {
     report.ok = false;
     report.failure = {
       message: err instanceof Error ? err.message : String(err),
-      details: err?.details || {},
+      details: { currentStep, ...(err?.details || {}) },
     };
   } finally {
     await browser.close();
