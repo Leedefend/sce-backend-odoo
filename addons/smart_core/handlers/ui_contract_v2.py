@@ -599,6 +599,26 @@ class UiContractV2Handler(BaseIntentHandler):
         field_groups = governance.get("field_groups") if isinstance(governance.get("field_groups"), dict) else {}
         if not field_groups:
             return
+        group_columns = governance.get("group_columns") if isinstance(governance.get("group_columns"), dict) else {}
+        try:
+            form_columns = int(governance.get("form_columns") or 0)
+        except (TypeError, ValueError):
+            form_columns = 0
+
+        def apply_group_columns(node: dict[str, Any], title: str) -> None:
+            try:
+                columns = int(group_columns.get(title) or 0)
+            except (TypeError, ValueError):
+                columns = 0
+            columns = columns if columns > 0 else form_columns
+            if columns <= 0:
+                return
+            node["cols"] = columns
+            node["columns"] = columns
+            attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
+            attrs["col"] = str(columns)
+            node["attributes"] = attrs
+
         configured_groups: list[tuple[str, list[str]]] = []
         configured_names: set[str] = set()
         for raw_title, raw_names in field_groups.items():
@@ -680,6 +700,7 @@ class UiContractV2Handler(BaseIntentHandler):
                     "widgetList": [],
                 }
                 container_tree.append(group)
+            apply_group_columns(group, title)
             children = group.get("children") if isinstance(group.get("children"), list) else []
             for name in names:
                 node = moved_nodes.get(name)
@@ -708,6 +729,27 @@ class UiContractV2Handler(BaseIntentHandler):
         ).strip().lower()
         if model != "sc.general.contract" or view_type != "form":
             return
+        profile = (source_contract or {}).get("business_operation_profile") if isinstance((source_contract or {}).get("business_operation_profile"), dict) else {}
+        governance = profile.get("form_structure_governance") if isinstance(profile.get("form_structure_governance"), dict) else {}
+        group_columns = governance.get("group_columns") if isinstance(governance.get("group_columns"), dict) else {}
+        try:
+            form_columns = int(governance.get("form_columns") or 0)
+        except (TypeError, ValueError):
+            form_columns = 0
+
+        def group_layout_columns(title: str) -> dict[str, Any]:
+            try:
+                columns = int(group_columns.get(title) or 0)
+            except (TypeError, ValueError):
+                columns = 0
+            columns = columns if columns > 0 else form_columns
+            if columns <= 0:
+                return {}
+            return {
+                "cols": columns,
+                "columns": columns,
+                "attributes": {"col": str(columns)},
+            }
 
         groups: list[tuple[str, list[str]]] = [
             ("合同基本信息", ["contract_name", "contract_no", "contract_type", "contract_direction", "project_id"]),
@@ -803,6 +845,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "label": title,
                 "children": children,
                 "widgetList": [],
+                **group_layout_columns(title),
             })
 
         layout_contract["containerTree"] = container_tree
