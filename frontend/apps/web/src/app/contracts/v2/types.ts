@@ -167,7 +167,6 @@ export interface ContractV2Snapshot {
   runtimeContract: ContractV2Dictionary;
   meta: ContractV2Dictionary;
   formStructureContract?: ContractV2Dictionary;
-  searchContract?: ContractV2Dictionary;
 }
 
 export interface ContractV2UnsupportedFeature {

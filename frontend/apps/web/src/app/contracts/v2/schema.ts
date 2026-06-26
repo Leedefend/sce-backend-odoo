@@ -513,6 +513,5 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
     ...(isRecord(root.formStructureContract)
       ? { formStructureContract: asRecord(root.formStructureContract) }
       : {}),
-    ...(isRecord(root.searchContract) ? { searchContract: root.searchContract } : {}),
   };
 }
