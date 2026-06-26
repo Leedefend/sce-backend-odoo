@@ -2530,6 +2530,49 @@ function normalizeLowCodeColumns(value: unknown, fallback: 1 | 2 | 3 = 2): 1 | 2
   return fallback;
 }
 
+function normalizeLowCodeColumnsOrNull(value: unknown): 1 | 2 | 3 | null {
+  const columns = Number(value);
+  return columns === 1 || columns === 2 || columns === 3 ? columns : null;
+}
+
+function inferLowCodeLayoutColumns(nodes: NativeFormLayoutNode[]): 1 | 2 | 3 | null {
+  const counts: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 };
+  const directFieldCount = (node: NativeFormLayoutNode) => {
+    const children = Array.isArray(node?.children) ? node.children as NativeFormLayoutNode[] : [];
+    return children.filter((child) => nativeLayoutNodeType(child) === 'field' && child.visible !== false).length;
+  };
+  const walk = (items: NativeFormLayoutNode[]) => {
+    items.forEach((node) => {
+      const attrs = node && typeof node.attributes === 'object' && node.attributes
+        ? node.attributes as Record<string, unknown>
+        : {};
+      const nodeType = nativeLayoutNodeType(node);
+      const columns = normalizeLowCodeColumnsOrNull(
+        attrs.col
+        ?? attrs.columns
+        ?? attrs.cols
+        ?? (node as { col?: unknown; cols?: unknown; columns?: unknown }).col
+        ?? (node as { col?: unknown; cols?: unknown; columns?: unknown }).cols
+        ?? (node as { col?: unknown; cols?: unknown; columns?: unknown }).columns,
+      );
+      const fieldCount = directFieldCount(node);
+      const hasFields = fieldCount > 0;
+      if (columns && (nodeType === 'group' || hasFields)) {
+        counts[columns] += Math.max(1, fieldCount);
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
+      });
+    });
+  };
+  walk(nodes);
+  const ranked = (Object.entries(counts) as Array<[string, number]>)
+    .filter(([, count]) => count > 0)
+    .sort((left, right) => right[1] - left[1] || Number(right[0]) - Number(left[0]));
+  return ranked.length ? normalizeLowCodeColumnsOrNull(ranked[0][0]) : null;
+}
+
 function normalizeLowCodeFieldSize(value: unknown): LowCodeFieldSize {
   const normalized = String(value || '').trim().toLowerCase();
   if (['wide', 'full', 'large'].includes(normalized)) return normalized as LowCodeFieldSize;
@@ -3192,7 +3235,8 @@ watch(selectedFormSettingsFieldGroupTitle, (title) => {
 });
 
 function syncLayoutDraftFromFormSpec(formSpec: Record<string, unknown>) {
-  const specColumns = normalizeLowCodeColumns(formSpec.columns ?? (formSpec as { cols?: unknown }).cols, 3);
+  const runtimeColumns = inferLowCodeLayoutColumns(rawNativeFormLayoutNodes.value) || 3;
+  const specColumns = normalizeLowCodeColumns(formSpec.columns ?? (formSpec as { cols?: unknown }).cols, runtimeColumns);
   formLayoutColumnsBase.value = specColumns;
   if (!formLayoutDirty.value) {
     formLayoutColumnsDraft.value = specColumns;
