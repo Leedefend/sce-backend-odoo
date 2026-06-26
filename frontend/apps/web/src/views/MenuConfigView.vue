@@ -193,7 +193,7 @@
       </aside>
 
       <main class="menu-config-editor">
-        <section v-if="selectedMenu" class="menu-selected-panel" aria-label="当前菜单配置">
+        <section v-if="selectedMenu" class="menu-selected-panel menu-primary-panel" aria-label="当前菜单配置">
           <div class="menu-selected-head">
             <div>
               <span class="panel-kicker">当前菜单</span>
@@ -326,7 +326,7 @@
             </div>
           </div>
         </section>
-        <section v-else class="menu-selected-panel menu-selected-panel--empty" aria-label="菜单配置概览">
+        <section v-else class="menu-selected-panel menu-primary-panel menu-selected-panel--empty" aria-label="菜单配置概览">
           <div>
             <span class="panel-kicker">菜单配置</span>
             <h2>全部菜单</h2>
@@ -334,19 +334,62 @@
           </div>
         </section>
 
+        <aside class="menu-side-panel" aria-label="菜单配置摘要">
+          <div class="menu-side-section">
+            <span class="panel-kicker">配置状态</span>
+            <strong>{{ selectedMenu ? selectedMenu.name : '全部菜单' }}</strong>
+            <div class="menu-state-list">
+              <span>
+                <b>{{ selectedMenu && isDirty(selectedMenu.id) ? '待保存' : '已同步' }}</b>
+                当前菜单
+              </span>
+              <span>
+                <b>{{ dirtyCount }}</b>
+                未保存菜单
+              </span>
+              <span>
+                <b>{{ selectedMenu ? selectedDraft.role_group_ids.length : 0 }}</b>
+                限定角色
+              </span>
+            </div>
+          </div>
+          <div v-if="selectedMenu" class="menu-side-section">
+            <span class="panel-kicker">快捷操作</span>
+            <button type="button" class="ghost" @click="openCreateMenu('sibling')">新增同级</button>
+            <button type="button" class="ghost" @click="openCreateMenu('child')">新增下级</button>
+            <button type="button" class="ghost" @click="openCreateMenu('copy')">复制当前入口</button>
+          </div>
+          <div class="menu-side-section">
+            <span class="panel-kicker">批量调整</span>
+            <p>批量区用于连续维护多条菜单；日常配置优先使用当前菜单面板。</p>
+            <button type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
+              {{ bulkPanelOpen ? '收起批量调整' : '展开批量调整' }}
+            </button>
+          </div>
+        </aside>
+
         <section class="menu-bulk-panel" aria-label="批量菜单配置">
         <div class="table-toolbar">
           <div>
             <strong>{{ filteredRows.length }}</strong>
             <span>条菜单</span>
           </div>
-          <label class="toggle-filter">
-            <input v-model="onlyConfigured" type="checkbox" />
-            只看已配置
-          </label>
+          <div class="table-toolbar-actions">
+            <label class="toggle-filter">
+              <input v-model="onlyConfigured" type="checkbox" />
+              只看已配置
+            </label>
+            <button type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
+              {{ bulkPanelOpen ? '收起' : '展开' }}
+            </button>
+          </div>
         </div>
 
         <div v-if="loading" class="loading-state">正在加载菜单配置...</div>
+        <div v-else-if="!bulkPanelOpen" class="bulk-collapsed-state">
+          <span>批量调整已收起</span>
+          <button type="button" class="link-button" @click="bulkPanelOpen = true">展开批量编辑表格</button>
+        </div>
         <div v-else class="table-wrap">
           <table>
             <colgroup>
@@ -588,6 +631,7 @@ const dragDropPosition = ref<DropPosition>('after');
 const onlyConfigured = ref(false);
 const showGuide = ref(false);
 const createPanelOpen = ref(false);
+const bulkPanelOpen = ref(false);
 const company = ref<{ id: number; name: string } | null>(null);
 const statusMessage = computed(() => message.value || saveNotice.value);
 const menus = ref<MenuConfigMenu[]>([]);
@@ -2263,7 +2307,9 @@ h1 {
 .menu-config-editor {
   min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
   align-content: start;
+  align-items: start;
   gap: 12px;
   border: 1px solid var(--sc-app-border);
   padding: 12px;
@@ -2282,6 +2328,10 @@ h1 {
   display: grid;
   gap: 12px;
   padding: 14px;
+}
+
+.menu-primary-panel {
+  min-height: 360px;
 }
 
 .menu-selected-panel--empty {
@@ -2378,6 +2428,62 @@ h1 {
   max-height: 132px;
 }
 
+.menu-side-panel {
+  position: sticky;
+  top: 12px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.menu-side-section {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--sc-app-surface);
+}
+
+.menu-side-section strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-side-section p {
+  margin: 0;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.menu-state-list {
+  display: grid;
+  gap: 6px;
+}
+
+.menu-state-list span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.menu-state-list b {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+}
+
+.menu-bulk-panel {
+  grid-column: 1 / -1;
+}
+
 .table-toolbar {
   min-height: 42px;
   display: flex;
@@ -2386,6 +2492,12 @@ h1 {
   gap: 12px;
   padding: 0 12px;
   border-bottom: 1px solid var(--sc-app-border);
+}
+
+.table-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .toggle-filter {
@@ -2399,6 +2511,16 @@ h1 {
 .loading-state {
   padding: 28px;
   color: var(--sc-app-text-secondary);
+}
+
+.bulk-collapsed-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 12px;
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
 }
 
 .table-wrap {
@@ -2644,6 +2766,19 @@ tr.dirty td:first-child {
 
   .menu-config-workspace {
     grid-template-columns: 1fr;
+  }
+
+  .menu-config-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-side-panel,
+  .menu-bulk-panel {
+    grid-column: auto;
+  }
+
+  .menu-side-panel {
+    position: static;
   }
 
   .menu-config-tree {

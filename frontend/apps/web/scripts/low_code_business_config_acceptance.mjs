@@ -569,7 +569,9 @@ async function main() {
     const menuConfigTitle = await page.locator(".menu-config-header h1").innerText();
     const menuConfigEditorCount = await page.locator(".menu-config-editor").count();
     const menuSelectedPanelCount = await page.locator(".menu-selected-panel").count();
+    const menuSidePanelCount = await page.locator(".menu-side-panel").count();
     const menuBulkPanelCount = await page.locator(".menu-bulk-panel").count();
+    const menuBulkCollapsedCount = await page.locator(".bulk-collapsed-state").count();
     const menuTreeCount = await page.locator(".menu-config-tree").count();
     const menuTreeOrderToolCount = await page.locator(".tree-node-order-tools").count();
     const menuFirstTreeNode = page.locator(".menu-config-tree .tree-scroll .tree-node").first();
@@ -680,7 +682,9 @@ async function main() {
       menuConfigTitle,
       menuConfigEditorCount,
       menuSelectedPanelCount,
+      menuSidePanelCount,
       menuBulkPanelCount,
+      menuBulkCollapsedCount,
       menuTreeCount,
       menuTreeOrderToolCount,
       menuFirstTreeNodeCount,
@@ -843,7 +847,9 @@ async function main() {
       menuConfigTitle === "菜单配置"
         && menuConfigEditorCount === 1
         && menuSelectedPanelCount === 1
+        && menuSidePanelCount === 1
         && menuBulkPanelCount === 1
+        && menuBulkCollapsedCount === 1
         && menuTreeCount === 1
         && menuTreeOrderToolCount === 0
         && menuFirstTreeNodeCount >= 1
@@ -857,7 +863,9 @@ async function main() {
         menuConfigTitle,
         menuConfigEditorCount,
         menuSelectedPanelCount,
+        menuSidePanelCount,
         menuBulkPanelCount,
+        menuBulkCollapsedCount,
         menuTreeCount,
         menuTreeOrderToolCount,
         menuFirstTreeNodeCount,
