@@ -121,48 +121,6 @@
           {{ item.label }} {{ item.count }}
         </span>
       </div>
-      <div v-if="selectedCoverageRow" class="selected-config-toolbar" aria-label="已选页面配置操作">
-        <div class="selected-config-toolbar-main">
-          <span>已选页面</span>
-          <strong>{{ selectedCoverageRow.name || selectedCoverageRow.model }}</strong>
-        </div>
-        <div class="selected-config-toolbar-actions">
-          <button
-            v-if="rowHasFormConfig(selectedCoverageRow)"
-            type="button"
-            class="ghost small primary"
-            :disabled="!canOpenDesigner"
-            @click="openFormConfig"
-          >
-            编辑表单字段
-          </button>
-          <button
-            v-if="rowHasListSearchConfig(selectedCoverageRow)"
-            type="button"
-            class="ghost small"
-            :disabled="listSearchBusy"
-            @click="loadListSearchConfig"
-          >
-            配置列表与搜索
-          </button>
-          <button
-            type="button"
-            class="ghost small"
-            :disabled="approvalLoading"
-            @click="loadApprovalConfig"
-          >
-            设置审批
-          </button>
-          <button
-            type="button"
-            class="ghost small"
-            :disabled="!previewRouteTarget.path"
-            @click="previewSelectedRuntimeRoute"
-          >
-            预览页面
-          </button>
-        </div>
-      </div>
       <div class="config-workspace">
         <aside class="page-picker-panel" aria-label="业务页面列表">
           <div class="page-picker-head">
@@ -200,25 +158,8 @@
                 <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
               </div>
               <div class="scan-row-actions">
-                <button v-if="rowHasFormConfig(row)" type="button" class="ghost small primary" @click.stop="openDesignerForRow(row)">编辑表单</button>
                 <button
-                  v-if="rowHasListSearchConfig(row)"
-                  type="button"
-                  class="ghost small"
-                  @click.stop="openListSearchForRow(row)"
-                >
-                  配置列表与搜索
-                </button>
-                <button
-                  type="button"
-                  class="ghost small"
-                  :disabled="!row.runtime_route?.path"
-                  @click.stop="openRuntimeRoute(row)"
-                >
-                  预览页面
-                </button>
-                <button
-                  v-for="action in visibleRowRemediationActions(row)"
+                  v-for="action in advancedPanelOpen ? visibleRowRemediationActions(row) : []"
                   :key="`row-remediation-${coverageRowKey(row)}-${action.code}`"
                   type="button"
                   class="ghost small"
@@ -240,10 +181,20 @@
               <span>正在配置</span>
               <strong>{{ selectedCoverageRow?.name || selectedPageLabel || currentModel || '当前页面' }}</strong>
             </div>
-            <div class="selected-page-overview-meta">
-              <span>{{ selectedCoverageRow ? pageViewModeText(selectedCoverageRow) : '页面配置' }}</span>
-              <span v-if="selectedCoverageRow">{{ rowCoverageProgressText(selectedCoverageRow) }}</span>
-              <span v-if="selectedCoverageRow">{{ pageDesignStatus(selectedCoverageRow) }}</span>
+            <div class="selected-page-overview-side">
+              <div class="selected-page-overview-meta">
+                <span>{{ selectedCoverageRow ? pageViewModeText(selectedCoverageRow) : '页面配置' }}</span>
+                <span v-if="selectedCoverageRow">{{ rowCoverageProgressText(selectedCoverageRow) }}</span>
+                <span v-if="selectedCoverageRow">{{ pageDesignStatus(selectedCoverageRow) }}</span>
+              </div>
+              <button
+                type="button"
+                class="ghost small"
+                :disabled="!previewRouteTarget.path"
+                @click="previewSelectedRuntimeRoute"
+              >
+                预览页面
+              </button>
             </div>
           </div>
           <div class="section-grid">
@@ -3324,42 +3275,6 @@ h1 {
   color: var(--sc-app-text-primary);
 }
 
-.selected-config-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 8px;
-  background: var(--sc-app-panel-muted);
-}
-
-.selected-config-toolbar-main {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.selected-config-toolbar-main span {
-  color: var(--sc-app-text-muted);
-  font-size: 12px;
-}
-
-.selected-config-toolbar-main strong {
-  color: var(--sc-app-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.selected-config-toolbar-actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
 .config-workspace {
   display: grid;
   grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.45fr);
@@ -3401,6 +3316,14 @@ h1 {
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
   background: var(--sc-app-bg);
+}
+
+.selected-page-overview-side {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
 }
 
 .selected-page-overview > div:first-child {
@@ -3519,13 +3442,29 @@ h1 {
 }
 
 .page-picker-panel .scan-row {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
 }
 
 .page-picker-panel .scan-row-actions {
-  justify-content: flex-start;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
   white-space: normal;
+}
+
+.page-picker-panel .scan-row-meta {
+  gap: 4px;
+}
+
+.page-picker-panel .scan-row-meta span {
+  min-height: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.page-picker-panel .scan-row-admin-actions {
+  grid-column: 1 / -1;
 }
 
 .scan-panel--admin .scan-row {
@@ -4242,6 +4181,11 @@ h1 {
 
   .selected-page-overview {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .selected-page-overview-side {
+    align-items: flex-start;
     flex-direction: column;
   }
 

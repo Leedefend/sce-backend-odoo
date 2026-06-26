@@ -468,6 +468,9 @@ async function main() {
     const pagePickerPanelCount = await page.locator(".config-workspace .page-picker-panel").count();
     const pageConfigPanelCount = await page.locator(".config-workspace .page-config-panel").count();
     const selectedOverviewText = await page.locator(".selected-page-overview").innerText();
+    const defaultSelectedRowActionLabels = await page.locator(".scan-row--selected .scan-row-actions button").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
     const selectedName = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
     const defaultPageText = await page.locator("body").innerText();
     const pageTypeLabels = await page.locator(".page-type-tabs button").evaluateAll((nodes) => (
@@ -599,7 +602,7 @@ async function main() {
     const snapshotCompareButtonCount = await page.getByRole("button", { name: "对比快照" }).count();
     await page.getByRole("button", { name: "高级设置" }).click();
     await page.waitForSelector(".scope-panel", { state: "detached", timeout: 10000 });
-    await page.locator(".scan-row--selected").getByRole("button", { name: "预览页面" }).click();
+    await page.locator(".selected-page-overview").getByRole("button", { name: "预览页面" }).click();
     await page.waitForURL((url) => String(url).includes("/a/562"), { timeout: 20000 });
     const previewUrl = page.url();
     await page.goBack({ waitUntil: "domcontentloaded" });
@@ -610,6 +613,7 @@ async function main() {
       pagePickerPanelCount,
       pageConfigPanelCount,
       selectedOverviewText,
+      defaultSelectedRowActionLabels,
       selectedName,
       pageTypeLabels,
       leakedDefaultTerms,
@@ -663,9 +667,10 @@ async function main() {
         && pagePickerPanelCount === 1
         && pageConfigPanelCount === 1
         && selectedOverviewText.includes("正在配置")
-        && selectedOverviewText.includes("项目合同汇总"),
+        && selectedOverviewText.includes("项目合同汇总")
+        && defaultSelectedRowActionLabels.join("|") === "选择",
       "配置页面没有形成左侧页面列表和右侧配置面板结构",
-      { configWorkspaceCount, pagePickerPanelCount, pageConfigPanelCount, selectedOverviewText },
+      { configWorkspaceCount, pagePickerPanelCount, pageConfigPanelCount, selectedOverviewText, defaultSelectedRowActionLabels },
     );
     assert(selectedName === "项目合同汇总", "配置页没有恢复选中页面", { selectedName });
     assert(
