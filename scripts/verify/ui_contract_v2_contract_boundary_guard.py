@@ -11,15 +11,11 @@ ROOT = Path(__file__).resolve().parents[2]
 HANDLER = ROOT / "addons/smart_core/handlers/ui_contract_v2.py"
 ASSEMBLER = ROOT / "addons/smart_core/core/unified_page_contract_v2_assembler.py"
 
-ALLOWED_FINAL_CONTRACT_MUTATORS = {
-    "_normalize_general_contract_tax_contract",
-    "_apply_business_config_form_groups_to_v2",
-    "_normalize_general_contract_company_form",
-    "_normalize_construction_diary_form",
-    "_apply_legacy_visible_list_layout",
-    "_apply_field_policies_to_v2_status",
-    "_ensure_native_layout_widget_status_visible",
-    "_sync_contract_original_contract_relation_to_v2_nodes",
+ALLOWED_FINAL_CONTRACT_WRITERS = {
+    "_set_v2_container_tree",
+    "_set_v2_widget_status",
+    "_set_v2_data_meta",
+    "_replace_v2_contract_content",
 }
 
 ALLOWED_SOURCE_PROJECTION_WRITERS = {
@@ -37,6 +33,8 @@ FINAL_CONTRACT_KEYS = {
     "widgetStatus",
     "containerStatus",
     "buttonStatus",
+    "dataContract",
+    "dataMeta",
 }
 
 SOURCE_PROJECTION_KEYS = {
@@ -107,6 +105,19 @@ def _assignment_nodes(tree: ast.AST) -> list[ast.AST]:
     return nodes
 
 
+def _contract_replacement_calls(tree: ast.AST) -> list[ast.Call]:
+    out: list[ast.Call] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+            continue
+        if node.func.attr not in {"clear", "update"}:
+            continue
+        value = node.func.value
+        if isinstance(value, ast.Name) and value.id in {"contract", "contract_v2"}:
+            out.append(node)
+    return out
+
+
 def main() -> int:
     source = HANDLER.read_text(encoding="utf-8")
     tree = ast.parse(source)
@@ -120,10 +131,10 @@ def main() -> int:
         function = _function_for(target, parents)
         line = getattr(target, "lineno", 0)
 
-        if FINAL_CONTRACT_KEYS & keys and function not in ALLOWED_FINAL_CONTRACT_MUTATORS:
+        if FINAL_CONTRACT_KEYS & keys and function not in ALLOWED_FINAL_CONTRACT_WRITERS:
             violations.append(
                 f"{HANDLER.relative_to(ROOT)}:{line}: {function} writes final V2 contract keys "
-                f"{sorted(FINAL_CONTRACT_KEYS & keys)} without allowlist"
+                f"{sorted(FINAL_CONTRACT_KEYS & keys)} outside centralized V2 contract patch helpers"
             )
 
         if SOURCE_PROJECTION_KEYS & keys and function not in ALLOWED_SOURCE_PROJECTION_WRITERS:
@@ -136,6 +147,15 @@ def main() -> int:
             violations.append(
                 f"{HANDLER.relative_to(ROOT)}:{line}: {function} mutates source_contract.views.form; "
                 "handler must emit source projections and let assembler own final layout"
+            )
+
+    for call in _contract_replacement_calls(tree):
+        function = _function_for(call, parents)
+        line = getattr(call, "lineno", 0)
+        if function != "_replace_v2_contract_content":
+            violations.append(
+                f"{HANDLER.relative_to(ROOT)}:{line}: {function} directly calls contract.{call.func.attr}(); "
+                "whole-contract replacement must go through _replace_v2_contract_content"
             )
 
     assembler_source = ASSEMBLER.read_text(encoding="utf-8")

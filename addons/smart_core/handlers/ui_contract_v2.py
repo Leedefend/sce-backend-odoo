@@ -191,6 +191,35 @@ class UiContractV2Handler(BaseIntentHandler):
             "runtime_carrier": cls.INTENT_TYPE,
         }
 
+    def _set_v2_container_tree(self, contract: dict[str, Any], container_tree: list[Any]) -> None:
+        if not isinstance(contract, dict):
+            return
+        layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+        layout_contract["containerTree"] = container_tree
+        contract["layoutContract"] = layout_contract
+
+    def _set_v2_widget_status(self, contract: dict[str, Any], widget_status: list[dict[str, Any]]) -> None:
+        if not isinstance(contract, dict):
+            return
+        status_contract = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
+        status_contract["widgetStatus"] = widget_status
+        contract["statusContract"] = status_contract
+
+    def _set_v2_data_meta(self, contract: dict[str, Any], patch: dict[str, Any]) -> None:
+        if not isinstance(contract, dict) or not isinstance(patch, dict):
+            return
+        data_contract = contract.get("dataContract") if isinstance(contract.get("dataContract"), dict) else {}
+        data_meta = data_contract.get("dataMeta") if isinstance(data_contract.get("dataMeta"), dict) else {}
+        data_meta.update(patch)
+        data_contract["dataMeta"] = data_meta
+        contract["dataContract"] = data_contract
+
+    def _replace_v2_contract_content(self, contract: dict[str, Any], replacement: dict[str, Any]) -> None:
+        if not isinstance(contract, dict) or not isinstance(replacement, dict):
+            return
+        contract.clear()
+        contract.update(replacement)
+
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         params = self._params(payload)
         client_type = resolve_client_type(self._headers(), params)
@@ -502,8 +531,7 @@ class UiContractV2Handler(BaseIntentHandler):
 
         cleaned = clean(contract)
         if isinstance(cleaned, dict):
-            contract.clear()
-            contract.update(cleaned)
+            self._replace_v2_contract_content(contract, cleaned)
 
         status_contract = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
         widget_status = status_contract.get("widgetStatus") if isinstance(status_contract.get("widgetStatus"), list) else []
@@ -527,11 +555,10 @@ class UiContractV2Handler(BaseIntentHandler):
             row["disabled"] = False
             row["auth"] = "edit"
         if widget_status:
-            status_contract["widgetStatus"] = [
+            self._set_v2_widget_status(contract, [
                 row for row in widget_status
                 if not (isinstance(row, dict) and str(row.get("widgetId") or "").strip() == "field.tax_rate")
-            ]
-            contract["statusContract"] = status_contract
+            ])
 
         def has_tax_id_layout_node(value: Any) -> bool:
             if is_tax_id_node(value) and (
@@ -571,8 +598,7 @@ class UiContractV2Handler(BaseIntentHandler):
             return False
 
         if append_after_amount_node(container_tree):
-            layout_contract["containerTree"] = container_tree
-            contract["layoutContract"] = layout_contract
+            self._set_v2_container_tree(contract, container_tree)
 
     def _apply_business_config_form_groups_to_v2(
         self,
@@ -688,8 +714,7 @@ class UiContractV2Handler(BaseIntentHandler):
                     children.append(deepcopy(node))
             group["children"] = children
 
-        layout_contract["containerTree"] = container_tree
-        contract["layoutContract"] = layout_contract
+        self._set_v2_container_tree(contract, container_tree)
 
     def _normalize_general_contract_company_form(self, contract: dict[str, Any], source_contract: dict[str, Any] | None = None) -> None:
         if not isinstance(contract, dict):
@@ -807,10 +832,8 @@ class UiContractV2Handler(BaseIntentHandler):
             self._apply_form_layout_governance_to_group(group_node, title, source_contract=source_contract)
             container_tree.append(group_node)
 
-        layout_contract["containerTree"] = container_tree
-        contract["layoutContract"] = layout_contract
+        self._set_v2_container_tree(contract, container_tree)
 
-        status_contract = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
         widget_status = []
         for name in ["state"] + ordered_fields:
             if name == "state" or name in visible:
@@ -822,8 +845,7 @@ class UiContractV2Handler(BaseIntentHandler):
                     "disabled": name in readonly,
                     "auth": "readonly" if name in readonly else "edit",
                 })
-        status_contract["widgetStatus"] = widget_status
-        contract["statusContract"] = status_contract
+        self._set_v2_widget_status(contract, widget_status)
 
         governance = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
         governance["general_contract_company_form"] = {
@@ -845,8 +867,7 @@ class UiContractV2Handler(BaseIntentHandler):
 
         replaced = replace_amount_label(contract)
         if isinstance(replaced, dict):
-            contract.clear()
-            contract.update(replaced)
+            self._replace_v2_contract_content(contract, replaced)
 
     def _form_layout_governance(self, source_contract: dict[str, Any] | None) -> dict[str, Any]:
         if not isinstance(source_contract, dict):
@@ -1027,10 +1048,8 @@ class UiContractV2Handler(BaseIntentHandler):
             }
             self._apply_form_layout_governance_to_group(group_node, title, source_contract=source_contract)
             container_tree.append(group_node)
-        layout_contract["containerTree"] = container_tree
-        contract["layoutContract"] = layout_contract
+        self._set_v2_container_tree(contract, container_tree)
 
-        status_contract = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
         widget_status = []
         for name in ["state"] + ordered_fields:
             if name == "state" or name in visible:
@@ -1042,8 +1061,7 @@ class UiContractV2Handler(BaseIntentHandler):
                     "disabled": name in readonly,
                     "auth": "readonly" if name in readonly else "edit",
                 })
-        status_contract["widgetStatus"] = widget_status
-        contract["statusContract"] = status_contract
+        self._set_v2_widget_status(contract, widget_status)
 
         governance = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
         governance["construction_diary_form"] = {
@@ -1158,11 +1176,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 **(layout.get("componentRegistry") if isinstance(layout.get("componentRegistry"), dict) else {}),
                 "sc.table.data": {"componentKey": "sc.table.data"},
             }
-            data_contract = contract_v2.get("dataContract") if isinstance(contract_v2.get("dataContract"), dict) else {}
-            data_meta = data_contract.get("dataMeta") if isinstance(data_contract.get("dataMeta"), dict) else {}
-            data_meta["fieldCount"] = len(columns)
-            data_contract["dataMeta"] = data_meta
-            contract_v2["dataContract"] = data_contract
+            self._set_v2_data_meta(contract_v2, {"fieldCount": len(columns)})
 
     def _apply_field_policies_to_v2_status(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
         field_policies = source_contract.get("field_policies") if isinstance(source_contract.get("field_policies"), dict) else {}
@@ -1224,8 +1238,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 rows = [row]
             for row in rows:
                 apply_policy(row, policy)
-        status_contract["widgetStatus"] = widget_status
-        contract_v2["statusContract"] = status_contract
+        self._set_v2_widget_status(contract_v2, widget_status)
 
     def _ensure_native_layout_widget_status_visible(self, contract_v2: dict[str, Any]) -> None:
         layout_contract = contract_v2.get("layoutContract") if isinstance(contract_v2.get("layoutContract"), dict) else {}
@@ -1301,8 +1314,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "disabled": False,
                 "auth": "edit",
             })
-        status_contract["widgetStatus"] = widget_status
-        contract_v2["statusContract"] = status_contract
+        self._set_v2_widget_status(contract_v2, widget_status)
 
     def _inject_action_window_contract(
         self,
