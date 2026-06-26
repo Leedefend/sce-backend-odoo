@@ -479,11 +479,12 @@ function decodeStatusContract(source: ContractV2Dictionary): ContractV2StatusCon
 export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
   const root = asRecord(value);
   const issues: DecodeIssue[] = [];
-  const pageInfo = decodePageInfo(readAliasedObject(root, 'pageInfo', ['page_info'], '$', issues), issues);
-  const layoutContract = decodeLayoutContract(readAliasedObject(root, 'layoutContract', ['layout_contract'], '$', issues), issues);
-  const actionContract = decodeActionContract(readAliasedObject(root, 'actionContract', ['action_contract'], '$', issues), issues);
-  const dataContract = decodeDataContract(readAliasedObject(root, 'dataContract', ['data_contract'], '$', issues));
-  const statusContract = decodeStatusContract(aliasedRecord(root, 'statusContract', ['status_contract']));
+  const pageInfo = decodePageInfo(readAliasedObject(root, 'pageInfo', [], '$', issues), issues);
+  const layoutContract = decodeLayoutContract(readAliasedObject(root, 'layoutContract', [], '$', issues), issues);
+  const statusContract = decodeStatusContract(readAliasedObject(root, 'statusContract', [], '$', issues));
+  const actionContract = decodeActionContract(readAliasedObject(root, 'actionContract', [], '$', issues), issues);
+  const dataContract = decodeDataContract(readAliasedObject(root, 'dataContract', [], '$', issues));
+  const runtimeContract = readAliasedObject(root, 'runtimeContract', [], '$', issues);
   if (issues.length) {
     throw new ContractV2DecodeError(issues);
   }
@@ -493,7 +494,7 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
     statusContract,
     actionContract,
     dataContract,
-    runtimeContract: aliasedRecord(root, 'runtimeContract', ['runtime_contract']),
+    runtimeContract,
     meta: asRecord(root.meta),
     ...(isRecord(root.formStructureContract)
       ? { formStructureContract: asRecord(root.formStructureContract) }
