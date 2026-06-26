@@ -179,6 +179,24 @@ FORBIDDEN_STRICT_STORE_META_EXTENSION_TOKENS = (
     "requiredCapabilities",
 )
 
+ALLOWED_STRICT_STORE_SNAKE_CASE_TOKENS = {
+    # ContractV2ValueSource.kind; not a payload field read.
+    "main_data",
+    # Native form shadow widget synthesis compatibility.
+    "component_config",
+    "component_key",
+    "field_info",
+    "field_type",
+    "relation_entry",
+    "widget_id",
+    "widget_options",
+    # Source context compatibility owned by resolveContractV2SourceContext.
+    "context_raw",
+    "domain_raw",
+    "render_profile",
+    "source_context",
+}
+
 FORBIDDEN_STRICT_ALIAS_HELPERS = (
     "function requiredAliasedString(",
     "function optionalAliasedString(",
@@ -376,6 +394,10 @@ def _function_body(source: str, function_name: str) -> str:
     return match.group("body") if match else ""
 
 
+def _snake_case_tokens(source: str) -> set[str]:
+    return set(re.findall(r"\b[A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]*\b", source))
+
+
 def main() -> int:
     violations: list[str] = []
     helper_source = CONTRACT_HELPERS.read_text(encoding="utf-8")
@@ -482,6 +504,13 @@ def main() -> int:
             violations.append(
                 f"{_relative(STRICT_STORE)}: strict V2 store must not read schema-external meta extension {token}"
             )
+    strict_store_snake_tokens = _snake_case_tokens(strict_store_source)
+    if strict_store_snake_tokens != ALLOWED_STRICT_STORE_SNAKE_CASE_TOKENS:
+        violations.append(
+            f"{_relative(STRICT_STORE)}: strict V2 store snake_case compatibility tokens must match whitelist; "
+            f"extra={sorted(strict_store_snake_tokens - ALLOWED_STRICT_STORE_SNAKE_CASE_TOKENS)} "
+            f"missing={sorted(ALLOWED_STRICT_STORE_SNAKE_CASE_TOKENS - strict_store_snake_tokens)}"
+        )
     schema_payload = json.loads(BACKEND_SCHEMA.read_text(encoding="utf-8"))
     schema_top_level = set((schema_payload.get("properties") or {}).keys())
     schema_required = set(schema_payload.get("required") or [])
