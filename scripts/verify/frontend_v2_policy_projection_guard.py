@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+BACKEND_SCHEMA = ROOT / "docs/architecture/unified_page_contract_v2/unified_page_contract_v2.schema.json"
 CONTRACT_HELPERS = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractV2.ts"
 STRICT_SCHEMA = ROOT / "frontend/apps/web/src/app/contracts/v2/schema.ts"
 STRICT_TYPES = ROOT / "frontend/apps/web/src/app/contracts/v2/types.ts"
@@ -90,6 +92,18 @@ def _has_helper_call(source: str, helper: str) -> bool:
     return bool(re.search(rf"\b{re.escape(helper)}\s*\(", source))
 
 
+def _strict_snapshot_fields(source: str) -> set[str]:
+    match = re.search(r"export\s+interface\s+ContractV2Snapshot\s*\{(?P<body>.*?)\n\}", source, re.DOTALL)
+    if not match:
+        return set()
+    fields: set[str] = set()
+    for line in match.group("body").splitlines():
+        field = re.match(r"\s*([A-Za-z_$][\w$]*)\??:", line)
+        if field:
+            fields.add(field.group(1))
+    return fields
+
+
 def main() -> int:
     violations: list[str] = []
     helper_source = CONTRACT_HELPERS.read_text(encoding="utf-8")
@@ -108,6 +122,16 @@ def main() -> int:
             violations.append(
                 f"{_relative(STRICT_TYPES)}: strict V2 types must not declare compatibility alias {token}"
             )
+    schema_payload = json.loads(BACKEND_SCHEMA.read_text(encoding="utf-8"))
+    schema_top_level = set((schema_payload.get("properties") or {}).keys())
+    strict_snapshot_fields = _strict_snapshot_fields(strict_type_source)
+    if not strict_snapshot_fields:
+        violations.append(f"{_relative(STRICT_TYPES)}: missing ContractV2Snapshot interface")
+    elif strict_snapshot_fields != schema_top_level:
+        violations.append(
+            f"{_relative(STRICT_TYPES)}: ContractV2Snapshot fields must match schema top-level properties; "
+            f"extra={sorted(strict_snapshot_fields - schema_top_level)} missing={sorted(schema_top_level - strict_snapshot_fields)}"
+        )
 
     for path in CONSUMER_FILES:
         source = path.read_text(encoding="utf-8")
