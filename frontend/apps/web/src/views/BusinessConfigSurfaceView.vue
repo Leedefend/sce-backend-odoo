@@ -553,7 +553,7 @@
       </div>
     </section>
 
-    <section v-if="analysisPanelOpen" class="edit-panel">
+    <section v-if="analysisPanelOpen" class="edit-panel config-editor-panel">
       <div class="edit-panel-head">
         <div>
           <h2>分析视图设置</h2>
@@ -671,7 +671,7 @@
       </div>
     </section>
 
-    <section v-if="listSearchPanelOpen" class="edit-panel">
+    <section v-if="listSearchPanelOpen" class="edit-panel config-editor-panel">
       <div class="edit-panel-head">
         <div>
           <h2>列表与搜索设置</h2>
@@ -3595,6 +3595,23 @@ h1 {
   background: var(--sc-app-panel);
 }
 
+.config-editor-panel {
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: start;
+}
+
+.config-editor-panel .edit-panel-head,
+.config-editor-panel .edit-meta,
+.config-editor-panel .preference-list {
+  grid-column: 1 / -1;
+}
+
+.config-editor-panel .edit-panel-head {
+  min-height: 48px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
 .version-panel {
   display: grid;
   gap: 12px;
@@ -3803,6 +3820,22 @@ h1 {
   background: var(--sc-app-bg);
 }
 
+.config-editor-panel .list-search-tabs {
+  position: sticky;
+  top: 12px;
+  display: grid;
+  align-content: start;
+  justify-self: stretch;
+  gap: 6px;
+  padding: 8px;
+}
+
+.config-editor-panel .list-search-tabs button {
+  width: 100%;
+  justify-content: space-between;
+  min-height: 36px;
+}
+
 .list-search-tabs button {
   min-height: 30px;
   display: inline-flex;
@@ -3943,6 +3976,10 @@ h1 {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.config-editor-panel .edit-grid {
+  min-width: 0;
+}
+
 .field-chip-editor {
   min-width: 0;
   display: grid;
@@ -3954,6 +3991,12 @@ h1 {
   background: var(--sc-app-bg);
   color: var(--sc-app-text-secondary);
   font-size: 13px;
+}
+
+.config-editor-panel .field-chip-editor {
+  min-height: 360px;
+  padding: 14px;
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 6%);
 }
 
 .field-chip-editor header {
@@ -4174,9 +4217,14 @@ h1 {
   .workbench-flow,
   .scope-panel,
   .config-workspace,
+  .config-editor-panel,
   .approval-config-grid,
   .edit-grid {
     grid-template-columns: 1fr;
+  }
+
+  .config-editor-panel .list-search-tabs {
+    position: static;
   }
 
   .selected-page-overview {

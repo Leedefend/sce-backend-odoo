@@ -793,6 +793,9 @@ async function main() {
     await page.waitForSelector(".edit-panel", { timeout: 20000 });
     const analysisPanel = page.locator(".edit-panel").filter({ hasText: "分析视图设置" });
     const analysisTitle = await analysisPanel.locator("h2").innerText();
+    const analysisEditorPanelCount = await analysisPanel.evaluate((node) => node.classList.contains("config-editor-panel") ? 1 : 0);
+    const analysisEditorNavCount = await analysisPanel.locator(".list-search-tabs").count();
+    const analysisEditorCanvasCount = await analysisPanel.locator(".field-chip-editor").count();
     const leakedAnalysisTerms = await visibleForbiddenTerms(page, ".edit-panel");
     const analysisTabs = await analysisPanel.locator(".list-search-tabs button span").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
@@ -812,6 +815,9 @@ async function main() {
       analysisSelectedName,
       analysisCards,
       analysisTitle,
+      analysisEditorPanelCount,
+      analysisEditorNavCount,
+      analysisEditorCanvasCount,
       leakedAnalysisTerms,
       analysisTabs,
       analysisOptionSummary,
@@ -831,6 +837,11 @@ async function main() {
     });
     assert(analysisCards.includes("分析视图"), "分析页面没有展示分析视图配置卡片", { analysisCards });
     assert(analysisTitle === "分析视图设置", "分析视图面板标题不正确", { analysisTitle });
+    assert(
+      analysisEditorPanelCount === 1 && analysisEditorNavCount === 1 && analysisEditorCanvasCount === 1,
+      "分析视图面板没有形成配置导航和配置画布结构",
+      { analysisEditorPanelCount, analysisEditorNavCount, analysisEditorCanvasCount },
+    );
     assert(
       analysisTabs.join("|") === "透视指标|透视维度|图表指标|图表维度",
       "分析视图配置类型切换不完整",
@@ -863,7 +874,11 @@ async function main() {
 
     await page.goto(LIST_SEARCH_URL, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".edit-panel", { timeout: 20000 });
-    const listSearchTitle = await page.locator(".edit-panel h2").innerText();
+    const listSearchPanel = page.locator(".edit-panel").filter({ hasText: "列表与搜索设置" });
+    const listSearchTitle = await listSearchPanel.locator("h2").innerText();
+    const listSearchEditorPanelCount = await listSearchPanel.evaluate((node) => node.classList.contains("config-editor-panel") ? 1 : 0);
+    const listSearchEditorNavCount = await listSearchPanel.locator(".list-search-tabs").count();
+    const listSearchEditorCanvasCount = await listSearchPanel.locator(".field-chip-editor").count();
     const leakedListSearchTerms = await visibleForbiddenTerms(page, ".edit-panel");
     const saveButtonCount = await page.getByRole("button", { name: "保存设置" }).count();
     const oldSaveButtonCount = await page.getByRole("button", { name: "保存业务默认" }).count();
@@ -900,6 +915,9 @@ async function main() {
     await page.locator(".field-option-search").fill("");
     report.checks.listSearchPanel = {
       listSearchTitle,
+      listSearchEditorPanelCount,
+      listSearchEditorNavCount,
+      listSearchEditorCanvasCount,
       saveButtonCount,
       oldSaveButtonCount,
       optionSummary,
@@ -921,6 +939,11 @@ async function main() {
     };
     report.artifacts.listSearchPanel = await captureStep(page, "list-search-panel");
     assert(listSearchTitle === "列表与搜索设置", "列表与搜索面板标题不正确", { listSearchTitle });
+    assert(
+      listSearchEditorPanelCount === 1 && listSearchEditorNavCount === 1 && listSearchEditorCanvasCount === 1,
+      "列表与搜索面板没有形成配置导航和配置画布结构",
+      { listSearchEditorPanelCount, listSearchEditorNavCount, listSearchEditorCanvasCount },
+    );
     assert(saveButtonCount === 1 && oldSaveButtonCount === 0, "列表与搜索保存按钮文案不正确", {
       saveButtonCount,
       oldSaveButtonCount,
