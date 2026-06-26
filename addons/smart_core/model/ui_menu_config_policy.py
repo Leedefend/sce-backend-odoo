@@ -552,9 +552,42 @@ class UiMenuConfigPolicy(models.Model):
                 meta["route"] = "/m/%s" % int(menu.id)
             return meta
 
-        def build_missing_menu_node(menu, policy=None) -> dict | None:
+        visible_menu_ids_cache = None
+
+        def visible_menu_ids_for_user() -> set[int] | None:
+            nonlocal visible_menu_ids_cache
+            if visible_menu_ids_cache is not None:
+                return visible_menu_ids_cache
+            try:
+                menu_env = self.env(user=user)["ir.ui.menu"] if user else self.env["ir.ui.menu"]
+                try:
+                    visible_menu_ids_cache = {int(menu_id) for menu_id in menu_env._visible_menu_ids(debug=False)}
+                except TypeError:
+                    visible_menu_ids_cache = {int(menu_id) for menu_id in menu_env._visible_menu_ids()}
+            except Exception:
+                visible_menu_ids_cache = None
+            return visible_menu_ids_cache
+
+        def menu_visible_to_user(menu) -> bool:
+            visible_ids = visible_menu_ids_for_user()
+            if visible_ids is None:
+                return True
+            try:
+                return int(menu.id or 0) in visible_ids
+            except Exception:
+                return False
+
+        def build_missing_menu_node(menu, policy=None, seen: set[int] | None = None) -> dict | None:
             menu = menu.exists()
             if not menu:
+                return None
+            menu_id = int(menu.id or 0)
+            seen = set(seen or set())
+            if menu_id in seen or not menu_visible_to_user(menu):
+                return None
+            seen.add(menu_id)
+            policy = policy if policy is not None else policies_by_menu.get(menu_id)
+            if policy and not policy_visible(policy):
                 return None
             label = policy_custom_label(policy) if policy else ""
             label = label or str(menu.name or "").strip()
@@ -591,6 +624,17 @@ class UiMenuConfigPolicy(models.Model):
                 node["model"] = action_meta["model"]
             if action_meta.get("view_modes"):
                 node["view_modes"] = action_meta["view_modes"]
+            children = []
+            try:
+                child_menus = self.env["ir.ui.menu"].sudo().search([("parent_id", "=", menu_id)], order="sequence,id")
+            except Exception:
+                child_menus = []
+            for child_menu in child_menus:
+                child_policy = policies_by_menu.get(int(child_menu.id or 0))
+                child_node = build_missing_menu_node(child_menu, child_policy, seen)
+                if child_node is not None:
+                    children.append(child_node)
+            node["children"] = sort_children(children)
             return node
 
         def remove_node(nodes: list[dict], menu_id: int, source_menu=None, source_label: str = "") -> tuple[list[dict], dict | None]:

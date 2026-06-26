@@ -900,6 +900,81 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(prepaid_node["parent_id"], 840)
         self.assertEqual(stats["moved_count"], 2)
 
+    def test_runtime_overlay_builds_children_for_missing_moved_group(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=root, sequence=20)
+        material_center = _Menu(295, "物资与分包", parent=root, sequence=45)
+        labor_group = _Menu(301, "劳务管理", parent=material_center, sequence=20)
+        labor_plan = _Menu(500, "劳务计划", parent=labor_group, sequence=10)
+        labor_request = _Menu(501, "劳务申请", parent=labor_group, sequence=20)
+        labor_check = _Menu(822, "劳务结算候选核对", parent=labor_group, sequence=39)
+        menus = _MenuModel([root, project_center, material_center, labor_group, labor_plan, labor_request, labor_check])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                301: {
+                    "active": True,
+                    "menu_id": 301,
+                    "menu_label": "劳务管理",
+                    "visible": True,
+                    "target_parent_menu_id": 292,
+                    "sequence_override": 60,
+                },
+                501: {
+                    "active": True,
+                    "menu_id": 501,
+                    "menu_label": "劳务申请",
+                    "visible": False,
+                    "sequence_override": 20,
+                },
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "sequence": 30,
+                        "children": [
+                            {
+                                "menu_id": 292,
+                                "name": "项目中心",
+                                "sequence": 20,
+                                "children": [],
+                            }
+                        ],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        project_node = next(child for child in root_node["children"] if child["menu_id"] == 292)
+        labor_node = next(child for child in project_node["children"] if child["menu_id"] == 301)
+        child_ids = [child["menu_id"] for child in labor_node["children"]]
+        self.assertEqual(labor_node["sequence"], 60)
+        self.assertEqual(labor_node["parent_id"], 292)
+        self.assertIn(500, child_ids)
+        self.assertIn(822, child_ids)
+        self.assertNotIn(501, child_ids)
+        self.assertEqual(stats["moved_count"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
