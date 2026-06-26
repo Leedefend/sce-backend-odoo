@@ -227,6 +227,48 @@ async function dragDesignerField(page, fromIndex, toIndex) {
   await source.dragTo(target);
 }
 
+async function probeDesignerFieldDragAutoScroll(page) {
+  const source = page.locator(".field--selectable").first();
+  await source.waitFor({ timeout: 10000 });
+  await source.scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const beforeScrollY = await page.evaluate(() => window.scrollY);
+  const result = await source.evaluate(async (node) => {
+    const fieldKey = node.getAttribute("data-field-key") || node.getAttribute("data-field-name") || "";
+    if (!fieldKey) return { fieldKey, before: window.scrollY, after: window.scrollY };
+    const dataTransfer = new DataTransfer();
+    node.dispatchEvent(new DragEvent("dragstart", {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer,
+      clientY: Math.round(window.innerHeight / 2),
+    }));
+    window.dispatchEvent(new DragEvent("dragover", {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer,
+      clientY: Math.max(1, window.innerHeight - 2),
+    }));
+    await new Promise((resolve) => window.setTimeout(resolve, 420));
+    const after = window.scrollY;
+    window.dispatchEvent(new DragEvent("dragend", {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer,
+      clientY: Math.max(1, window.innerHeight - 2),
+    }));
+    return { fieldKey, before: 0, after };
+  });
+  await page.waitForTimeout(100);
+  const dirtyAfterProbe = await page.locator(".contract-field-governance-dirty").count();
+  return {
+    fieldKey: result.fieldKey,
+    beforeScrollY,
+    afterScrollY: result.after,
+    dirtyAfterProbe,
+  };
+}
+
 async function formDesignerFieldGroups(page) {
   return page.locator(".native-container--group").evaluateAll((nodes) => (
     nodes.map((node, groupIndex) => {
@@ -822,6 +864,7 @@ async function main() {
     const orderButtonCount = await page.locator(".field-order-btn, .contract-field-selection-order-btn").count();
     const draggableFieldCount = await page.locator(".field--order-editable[draggable='true']").count();
     const selectableFieldCount = await page.locator(".field--selectable").count();
+    const dragAutoScrollProbe = await probeDesignerFieldDragAutoScroll(page);
     const returnButtonCount = await page.getByRole("button", { name: "返回配置" }).count();
     const legacyPanelCount = await page.locator(".contract-lowcode-objects").count();
     const initialFormDirtyCount = await page.locator(".contract-field-governance-dirty").count();
@@ -1054,6 +1097,7 @@ async function main() {
       dragHandleCount,
       orderButtonCount,
       draggableFieldCount,
+      dragAutoScrollProbe,
       selectedFieldCount,
       selectedPanelText,
       operationLogTextAfterHide,
@@ -1115,6 +1159,12 @@ async function main() {
     assert(dragHandleCount === 0, "表单设计器不应再显示六点拖拽把手", { dragHandleCount });
     assert(orderButtonCount === 0, "表单设计器不应再显示上下箭头排序按钮", { orderButtonCount });
     assert(draggableFieldCount > 0, "表单设计器字段块不可直接拖拽", { draggableFieldCount });
+    assert(
+      dragAutoScrollProbe.afterScrollY > dragAutoScrollProbe.beforeScrollY
+        && dragAutoScrollProbe.dirtyAfterProbe === 0,
+      "表单设计器长距离拖拽时未触发页面自动滚动",
+      { dragAutoScrollProbe },
+    );
     assert(selectedFieldCount > 0 && selectedPanelText.includes("已选字段"), "表单字段点选后没有进入配置状态", {
       selectedFieldCount,
       selectedPanelText,

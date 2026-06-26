@@ -2153,6 +2153,8 @@ const fieldMoveTargetDraft = reactive<Record<string, string>>({});
 const draggingFieldKey = ref('');
 const draggingFieldLabel = ref('');
 const dropTargetFieldKey = ref('');
+const fieldDragAutoScrollDirection = ref(0);
+let fieldDragAutoScrollFrame = 0;
 const selectedFormSettingsFieldKey = ref('');
 const selectedFormSettingsFieldLabel = ref('');
 const selectedFormSettingsFieldGroupTitleDraft = ref('');
@@ -10333,6 +10335,68 @@ function onFieldOrderDragStart(fieldKey: string, event?: DragEvent) {
   }
 }
 
+function stopFieldDragAutoScroll() {
+  fieldDragAutoScrollDirection.value = 0;
+  if (fieldDragAutoScrollFrame) {
+    cancelAnimationFrame(fieldDragAutoScrollFrame);
+    fieldDragAutoScrollFrame = 0;
+  }
+}
+
+function runFieldDragAutoScroll() {
+  if (!fieldDragAutoScrollDirection.value || !draggingFieldKey.value) {
+    stopFieldDragAutoScroll();
+    return;
+  }
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+  const maxScrollTop = typeof document !== 'undefined'
+    ? Math.max(
+      document.documentElement.scrollHeight,
+      document.body?.scrollHeight || 0,
+    ) - viewportHeight
+    : 0;
+  const currentScrollTop = typeof window !== 'undefined' ? window.scrollY : 0;
+  const atStart = currentScrollTop <= 0 && fieldDragAutoScrollDirection.value < 0;
+  const atEnd = currentScrollTop >= maxScrollTop && fieldDragAutoScrollDirection.value > 0;
+  if (atStart || atEnd) {
+    stopFieldDragAutoScroll();
+    return;
+  }
+  window.scrollBy({
+    top: fieldDragAutoScrollDirection.value * 18,
+    behavior: 'auto',
+  });
+  fieldDragAutoScrollFrame = requestAnimationFrame(runFieldDragAutoScroll);
+}
+
+function scheduleFieldDragAutoScroll(direction: number) {
+  if (fieldDragAutoScrollDirection.value === direction && fieldDragAutoScrollFrame) return;
+  stopFieldDragAutoScroll();
+  if (!direction) return;
+  fieldDragAutoScrollDirection.value = direction;
+  fieldDragAutoScrollFrame = requestAnimationFrame(runFieldDragAutoScroll);
+}
+
+function onFieldOrderWindowDragOver(event: DragEvent) {
+  if (!isContractFieldOrderEditable.value || !draggingFieldKey.value) return;
+  const viewportHeight = window.innerHeight || 0;
+  if (!viewportHeight) return;
+  const edgeSize = Math.min(132, Math.max(72, Math.round(viewportHeight * 0.16)));
+  if (event.clientY <= edgeSize) {
+    scheduleFieldDragAutoScroll(-1);
+    return;
+  }
+  if (event.clientY >= viewportHeight - edgeSize) {
+    scheduleFieldDragAutoScroll(1);
+    return;
+  }
+  scheduleFieldDragAutoScroll(0);
+}
+
+function onFieldOrderWindowDragStop() {
+  onFieldOrderDragEnd();
+}
+
 function onFieldOrderDragOver(fieldKey: string) {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === fieldKey) return;
   dropTargetFieldKey.value = fieldKey;
@@ -10424,6 +10488,7 @@ function onFieldOrderDragEnd() {
   draggingFieldKey.value = '';
   draggingFieldLabel.value = '';
   dropTargetFieldKey.value = '';
+  stopFieldDragAutoScroll();
 }
 
 function resetContractFieldOrder() {
@@ -11253,6 +11318,9 @@ watch(
 onMounted(() => {
   if (typeof window !== 'undefined') {
     window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+    window.addEventListener('dragover', onFieldOrderWindowDragOver);
+    window.addEventListener('drop', onFieldOrderWindowDragStop);
+    window.addEventListener('dragend', onFieldOrderWindowDragStop);
   }
   if (typeof document !== 'undefined') {
     document.addEventListener('keydown', onRelationDialogDocumentKeydown);
@@ -11276,10 +11344,14 @@ onDeactivated(() => {
 onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+    window.removeEventListener('dragover', onFieldOrderWindowDragOver);
+    window.removeEventListener('drop', onFieldOrderWindowDragStop);
+    window.removeEventListener('dragend', onFieldOrderWindowDragStop);
   }
   if (typeof document !== 'undefined') {
     document.removeEventListener('keydown', onRelationDialogDocumentKeydown);
   }
+  stopFieldDragAutoScroll();
 });
 </script>
 

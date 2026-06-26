@@ -290,6 +290,10 @@ class UIBusinessConfigContract(models.Model):
                 rows = spec.get(key)
                 if rows is None:
                     continue
+                if key == "columns" and view_type == "form":
+                    if isinstance(rows, int) and rows in {1, 2, 3}:
+                        continue
+                    raise ValidationError("view_orchestration.views.form.columns 必须是 1、2 或 3。")
                 if not isinstance(rows, list):
                     raise ValidationError("view_orchestration.views.%s.%s 必须是数组。" % (view_type, key))
                 if key in {"measures", "dimensions"}:
