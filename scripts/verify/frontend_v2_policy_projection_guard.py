@@ -267,6 +267,14 @@ FORBIDDEN_STRICT_WIDGET_ALIASES = (
     "fieldInfo.relation",
 )
 
+FORBIDDEN_STRICT_CONTAINER_FORMAL_FIELD_ALIASES = (
+    "['container_id', 'id', 'name']",
+    "['container_type', 'type']",
+    "raw.widget_list",
+    "raw.widgets",
+    "raw.string) || asString(raw.label)",
+)
+
 FORBIDDEN_STRICT_STATUS_CONTRACT_ALIASES = (
     "['global_status']",
     "['widget_status']",
@@ -401,6 +409,12 @@ def main() -> int:
         if token in widget_decoder:
             violations.append(
                 f"{_relative(STRICT_SCHEMA)}: strict V2 widget decoder must not accept compatibility alias {token}"
+            )
+    container_decoder = _function_body(strict_schema_source, "decodeContainer")
+    for token in FORBIDDEN_STRICT_CONTAINER_FORMAL_FIELD_ALIASES:
+        if token in container_decoder:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 container formal fields must not accept compatibility alias {token}"
             )
     status_decoder_source = "\n".join(
         _function_body(strict_schema_source, name)

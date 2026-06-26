@@ -320,10 +320,10 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
     issues.push({ path, message: 'container must be an object' });
     return null;
   }
-  const containerId = requiredAliasedString(raw, 'containerId', ['container_id', 'id', 'name'], path, issues);
-  const containerType = requiredAliasedString(raw, 'containerType', ['container_type', 'type'], path, issues);
+  const containerId = requiredString(raw, 'containerId', path, issues);
+  const containerType = requiredString(raw, 'containerType', path, issues);
   if (!containerId || !containerType) return null;
-  const children = (Array.isArray(raw.children) ? raw.children : [])
+  const children = requiredArray(raw, 'children', path, issues)
     .map((item, index) => decodeContainer(item, `${path}.children[${index}]`, issues))
     .filter((item): item is ContractV2Container => Boolean(item));
   const decodeNodeList = (key: 'pages' | 'tabs' | 'nodes' | 'items'): ContractV2Container[] => (
@@ -331,14 +331,7 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
   )
     .map((item, index) => decodeContainer(item, `${path}.${key}[${index}]`, issues))
     .filter((item): item is ContractV2Container => Boolean(item));
-  const widgetListRaw = Array.isArray(raw.widgetList)
-    ? raw.widgetList
-    : Array.isArray(raw.widget_list)
-      ? raw.widget_list
-      : Array.isArray(raw.widgets)
-        ? raw.widgets
-        : [];
-  const widgetList = widgetListRaw
+  const widgetList = requiredArray(raw, 'widgetList', path, issues)
     .map((item, index) => decodeWidget(item, `${path}.widgetList[${index}]`, issues))
     .filter((item): item is ContractV2Widget => Boolean(item));
   const pages = decodeNodeList('pages');
@@ -358,7 +351,7 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
     ...(asString(raw.name) ? { name: asString(raw.name) } : {}),
     ...(asString(raw.string) ? { string: asString(raw.string) } : {}),
     ...(asString(raw.label) ? { label: asString(raw.label) } : {}),
-    title: asString(raw.title) || asString(raw.string) || asString(raw.label),
+    title: requiredString(raw, 'title', path, issues),
     span: requiredIntegerInRange(raw, 'span', path, issues, 24),
     ...(asString(raw.styleToken) ? { styleToken: asString(raw.styleToken) } : {}),
     ...(Number(raw.cols || raw.col) ? { cols: Number(raw.cols || raw.col) } : {}),
