@@ -497,12 +497,15 @@ function decodeDataSources(value: unknown): Record<string, ContractV2Dictionary>
   }, {});
 }
 
-function decodeVisibleFields(value: unknown): ContractV2VisibleFields | undefined {
+function decodeVisibleFields(value: unknown, path: string, issues: DecodeIssue[]): ContractV2VisibleFields | undefined {
   const row = asRecord(value);
-  const fields = Array.isArray(value)
-    ? asStringArray(value)
-    : asStringArray(row.fields || row.fieldNames || row.field_names);
-  if (!fields.length) return undefined;
+  const fields = asStringArray(row.fields);
+  if (!fields.length) {
+    if (Object.keys(row).length) {
+      issues.push({ path: `${path}.fields`, message: 'must be a non-empty string array' });
+    }
+    return undefined;
+  }
   const sourceAuthority = asRecord(row.sourceAuthority);
   return {
     fields,
@@ -510,15 +513,18 @@ function decodeVisibleFields(value: unknown): ContractV2VisibleFields | undefine
   };
 }
 
-function decodeFieldGroups(value: unknown): ContractV2FieldGroups | undefined {
+function decodeFieldGroups(value: unknown, path: string, issues: DecodeIssue[]): ContractV2FieldGroups | undefined {
   const row = asRecord(value);
-  const rawGroups = Array.isArray(value)
-    ? value
-    : (Array.isArray(row.groups) ? row.groups : Array.isArray(row.items) ? row.items : []);
+  const rawGroups = Array.isArray(row.groups) ? row.groups : [];
   const groups = rawGroups
     .map((item) => asRecord(item))
     .filter((item) => Object.keys(item).length > 0);
-  if (!groups.length) return undefined;
+  if (!groups.length) {
+    if (Object.keys(row).length) {
+      issues.push({ path: `${path}.groups`, message: 'must be a non-empty object array' });
+    }
+    return undefined;
+  }
   const sourceAuthority = asRecord(row.sourceAuthority);
   return {
     groups,
@@ -526,11 +532,23 @@ function decodeFieldGroups(value: unknown): ContractV2FieldGroups | undefined {
   };
 }
 
-function decodeDataMeta(value: unknown): ContractV2DataMeta {
+function decodeDataMeta(value: unknown, issues: DecodeIssue[]): ContractV2DataMeta {
   const row = asRecord(value);
   const businessOperationProfile = asRecord(row.businessOperationProfile);
-  const visibleFields = decodeVisibleFields(row.visibleFields);
-  const fieldGroups = decodeFieldGroups(row.fieldGroups);
+  const forbiddenKeys = [
+    'business_operation_profile',
+    'visible_fields',
+    'field_groups',
+    'legacy' + 'ContractProjection',
+    'legacy_contract' + '_projection',
+  ];
+  forbiddenKeys.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(row, key)) {
+      issues.push({ path: `dataContract.dataMeta.${key}`, message: 'is not allowed in strict V2 dataMeta' });
+    }
+  });
+  const visibleFields = decodeVisibleFields(row.visibleFields, 'dataContract.dataMeta.visibleFields', issues);
+  const fieldGroups = decodeFieldGroups(row.fieldGroups, 'dataContract.dataMeta.fieldGroups', issues);
   return {
     ...row,
     ...(Object.keys(businessOperationProfile).length ? { businessOperationProfile } : {}),
@@ -549,7 +567,7 @@ function decodeDataContract(source: ContractV2Dictionary, issues: DecodeIssue[])
     dictData: requiredRecord(source, 'dictData', 'dataContract', issues),
     pagination: requiredRecord(source, 'pagination', 'dataContract', issues),
     dataSource: decodeDataSources(requiredRecord(source, 'dataSource', 'dataContract', issues)),
-    dataMeta: decodeDataMeta(requiredRecord(source, 'dataMeta', 'dataContract', issues)),
+    dataMeta: decodeDataMeta(requiredRecord(source, 'dataMeta', 'dataContract', issues), issues),
     ...(Object.keys(treeData).length ? { treeData } : {}),
     ...(Object.keys(ganttData).length ? { ganttData } : {}),
   };

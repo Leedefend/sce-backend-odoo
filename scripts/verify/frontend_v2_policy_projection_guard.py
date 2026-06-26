@@ -225,6 +225,18 @@ FORBIDDEN_STRICT_DATA_CONTRACT_ALIASES = (
     "source.data_meta",
 )
 
+FORBIDDEN_STRICT_DATA_META_ALIASES = (
+    "row.fieldNames",
+    "row.field_names",
+    "Array.isArray(value)",
+    "Array.isArray(row.items)",
+    "visible_fields",
+    "field_groups",
+    "business_operation_profile",
+    "'legacy' + 'ContractProjection'",
+    "'legacy_contract' + '_projection'",
+)
+
 FORBIDDEN_STRICT_STATUS_CONTRACT_ALIASES = (
     "['global_status']",
     "['widget_status']",
@@ -338,6 +350,21 @@ def main() -> int:
         if token in data_contract_decoder:
             violations.append(
                 f"{_relative(STRICT_SCHEMA)}: strict V2 dataContract decoder must not accept compatibility alias {token}"
+            )
+    data_meta_decoder_source = "\n".join(
+        _function_body(strict_schema_source, name)
+        for name in ("decodeVisibleFields", "decodeFieldGroups")
+    )
+    for token in FORBIDDEN_STRICT_DATA_META_ALIASES[:4]:
+        if token in data_meta_decoder_source:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 dataMeta decoder must not accept compatibility alias {token}"
+            )
+    data_meta_decoder = _function_body(strict_schema_source, "decodeDataMeta")
+    for token in FORBIDDEN_STRICT_DATA_META_ALIASES[4:]:
+        if token not in data_meta_decoder:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 dataMeta decoder must reject forbidden key {token}"
             )
     status_decoder_source = "\n".join(
         _function_body(strict_schema_source, name)
