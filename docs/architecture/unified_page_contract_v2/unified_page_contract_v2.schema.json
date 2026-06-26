@@ -733,6 +733,16 @@
     },
     "dataMeta": {
       "type": "object",
+      "propertyNames": {
+        "not": {
+          "enum": [
+            "business_operation_profile",
+            "visible_fields",
+            "field_groups",
+            "legacyContractProjection"
+          ]
+        }
+      },
       "additionalProperties": true,
       "properties": {
         "businessOperationProfile": {
