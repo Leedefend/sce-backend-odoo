@@ -102,6 +102,10 @@ REQUIRED_STRICT_ENUM_TYPE_TOKENS = (
     "export type ContractV2TargetScope = 'widget' | 'container' | 'page' | 'dataSource' | 'runtime'",
     "export type ContractV2RefreshMode = 'none' | 'partial' | 'full'",
     "export type ContractV2Auth = 'none' | 'read' | 'edit' | 'admin'",
+    "export type ContractV2PatchStrategy = 'incremental' | 'full'",
+    "export type ContractV2CachePolicy = 'none' | 'etag' | 'snapshot'",
+    "export type ContractV2RenderStrategy = 'sync' | 'scheduled' | 'virtualized'",
+    "export type ContractV2PatchOperation = 'replace' | 'merge' | 'append' | 'remove' | 'reorder' | 'invalidate'",
     "viewType: ContractV2ViewType",
     "layoutType: ContractV2LayoutType",
     "adaptMode: ContractV2AdaptMode",
@@ -110,6 +114,11 @@ REQUIRED_STRICT_ENUM_TYPE_TOKENS = (
     "targetScope: ContractV2TargetScope",
     "refreshMode: ContractV2RefreshMode",
     "auth?: ContractV2Auth",
+    "runtimeContract: ContractV2RuntimeContract",
+    "patchStrategy: ContractV2PatchStrategy",
+    "cachePolicy: ContractV2CachePolicy",
+    "renderStrategy?: ContractV2RenderStrategy",
+    "patchOperations?: ContractV2PatchOperation[]",
 )
 
 REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
@@ -121,6 +130,11 @@ REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
     "function decodeTargetScope(",
     "function decodeRefreshMode(",
     "function decodeAuth(",
+    "function decodePatchStrategy(",
+    "function decodeCachePolicy(",
+    "function decodeRenderStrategy(",
+    "function decodePatchOperation(",
+    "function decodeRuntimeContract(",
     "viewType: decodeViewType(",
     "layoutType: decodeLayoutType(",
     "adaptMode: decodeAdaptMode(",
@@ -129,6 +143,9 @@ REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
     "targetScope: decodeTargetScope(",
     "refreshMode: decodeRefreshMode(",
     "const auth = decodeAuth(",
+    "patchStrategy: decodePatchStrategy(",
+    "cachePolicy: decodeCachePolicy(",
+    "const runtimeContract = decodeRuntimeContract(",
 )
 
 

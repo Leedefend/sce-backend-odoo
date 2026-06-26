@@ -16,10 +16,15 @@ import type {
   ContractV2LayoutType,
   ContractV2LayoutContract,
   ContractV2PageInfo,
+  ContractV2CachePolicy,
+  ContractV2PatchOperation,
+  ContractV2PatchStrategy,
   ContractV2SelectorStatus,
   ContractV2Snapshot,
   ContractV2StatusContract,
   ContractV2RefreshMode,
+  ContractV2RenderStrategy,
+  ContractV2RuntimeContract,
   ContractV2TargetScope,
   ContractV2TriggerType,
   ContractV2VisibleFields,
@@ -61,6 +66,13 @@ function asStringArray(value: unknown): string[] {
 
 function optionalBoolean(value: unknown): boolean | undefined {
   return typeof value === 'boolean' ? value : undefined;
+}
+
+function requiredBoolean(source: ContractV2Dictionary, key: string, path: string, issues: DecodeIssue[], fallback: boolean): boolean {
+  const value = source[key];
+  if (typeof value === 'boolean') return value;
+  issues.push({ path: `${path}.${key}`, message: 'must be a boolean' });
+  return fallback;
 }
 
 function requiredString(source: ContractV2Dictionary, key: string, path: string, issues: DecodeIssue[]): string {
@@ -189,6 +201,46 @@ function decodeAuth(value: string, path: string, issues: DecodeIssue[]): Contrac
   }
   issues.push({ path, message: `unsupported auth ${value}` });
   return undefined;
+}
+
+function decodePatchStrategy(value: string, path: string, issues: DecodeIssue[]): ContractV2PatchStrategy {
+  if (value === 'incremental' || value === 'full') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported patch strategy ${value || '<empty>'}` });
+  return 'incremental';
+}
+
+function decodeCachePolicy(value: string, path: string, issues: DecodeIssue[]): ContractV2CachePolicy {
+  if (value === 'none' || value === 'etag' || value === 'snapshot') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported cache policy ${value || '<empty>'}` });
+  return 'none';
+}
+
+function decodeRenderStrategy(value: string, path: string, issues: DecodeIssue[]): ContractV2RenderStrategy | undefined {
+  if (!value) return undefined;
+  if (value === 'sync' || value === 'scheduled' || value === 'virtualized') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported render strategy ${value}` });
+  return undefined;
+}
+
+function decodePatchOperation(value: string, path: string, issues: DecodeIssue[]): ContractV2PatchOperation | null {
+  if (value === 'replace' || value === 'merge' || value === 'append' || value === 'remove' || value === 'reorder' || value === 'invalidate') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported patch operation ${value || '<empty>'}` });
+  return null;
+}
+
+function requiredRecord(source: ContractV2Dictionary, key: string, path: string, issues: DecodeIssue[]): ContractV2Dictionary {
+  const value = source[key];
+  if (isRecord(value)) return value;
+  issues.push({ path: `${path}.${key}`, message: 'must be an object' });
+  return {};
 }
 
 function decodePageInfo(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2PageInfo {
@@ -552,6 +604,29 @@ function decodeStatusContract(source: ContractV2Dictionary, issues: DecodeIssue[
   };
 }
 
+function decodeRuntimeContract(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2RuntimeContract {
+  const renderStrategy = decodeRenderStrategy(asString(source.renderStrategy), 'runtimeContract.renderStrategy', issues);
+  const patchOperations = Array.isArray(source.patchOperations)
+    ? source.patchOperations
+      .map((item, index) => decodePatchOperation(asString(item), `runtimeContract.patchOperations[${index}]`, issues))
+      .filter((item): item is ContractV2PatchOperation => Boolean(item))
+    : [];
+  return {
+    patchStrategy: decodePatchStrategy(requiredString(source, 'patchStrategy', 'runtimeContract', issues), 'runtimeContract.patchStrategy', issues),
+    cachePolicy: decodeCachePolicy(requiredString(source, 'cachePolicy', 'runtimeContract', issues), 'runtimeContract.cachePolicy', issues),
+    optimistic: requiredBoolean(source, 'optimistic', 'runtimeContract', issues, false),
+    lazyContainer: asStringArray(source.lazyContainer),
+    virtualization: requiredRecord(source, 'virtualization', 'runtimeContract', issues),
+    retryPolicy: requiredRecord(source, 'retryPolicy', 'runtimeContract', issues),
+    ...(renderStrategy ? { renderStrategy } : {}),
+    ...(isRecord(source.hydration) ? { hydration: source.hydration } : {}),
+    ...(patchOperations.length ? { patchOperations } : {}),
+    ...(isRecord(source.tracePolicy) ? { tracePolicy: source.tracePolicy } : {}),
+    ...(isRecord(source.complexityBudget) ? { complexityBudget: source.complexityBudget } : {}),
+    ...(isRecord(source.aiEnvelope) ? { aiEnvelope: source.aiEnvelope } : {}),
+  };
+}
+
 export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
   const root = asRecord(value);
   const issues: DecodeIssue[] = [];
@@ -560,7 +635,7 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
   const statusContract = decodeStatusContract(readAliasedObject(root, 'statusContract', [], '$', issues), issues);
   const actionContract = decodeActionContract(readAliasedObject(root, 'actionContract', [], '$', issues), issues);
   const dataContract = decodeDataContract(readAliasedObject(root, 'dataContract', [], '$', issues));
-  const runtimeContract = readAliasedObject(root, 'runtimeContract', [], '$', issues);
+  const runtimeContract = decodeRuntimeContract(readAliasedObject(root, 'runtimeContract', [], '$', issues), issues);
   const meta = readAliasedObject(root, 'meta', [], '$', issues);
   if (issues.length) {
     throw new ContractV2DecodeError(issues);

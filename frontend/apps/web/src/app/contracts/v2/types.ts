@@ -7,6 +7,10 @@ export type ContractV2DispatchMode = 'local' | 'server' | 'serverDebounced' | 's
 export type ContractV2TargetScope = 'widget' | 'container' | 'page' | 'dataSource' | 'runtime';
 export type ContractV2RefreshMode = 'none' | 'partial' | 'full';
 export type ContractV2Auth = 'none' | 'read' | 'edit' | 'admin';
+export type ContractV2PatchStrategy = 'incremental' | 'full';
+export type ContractV2CachePolicy = 'none' | 'etag' | 'snapshot';
+export type ContractV2RenderStrategy = 'sync' | 'scheduled' | 'virtualized';
+export type ContractV2PatchOperation = 'replace' | 'merge' | 'append' | 'remove' | 'reorder' | 'invalidate';
 export type ContractV2Dictionary = Record<string, unknown>;
 
 export interface ContractV2PageInfo {
@@ -167,13 +171,28 @@ export interface ContractV2StatusContract {
   selectorStatus: ContractV2SelectorStatus[];
 }
 
+export interface ContractV2RuntimeContract {
+  patchStrategy: ContractV2PatchStrategy;
+  cachePolicy: ContractV2CachePolicy;
+  optimistic: boolean;
+  lazyContainer: string[];
+  virtualization: ContractV2Dictionary;
+  retryPolicy: ContractV2Dictionary;
+  renderStrategy?: ContractV2RenderStrategy;
+  hydration?: ContractV2Dictionary;
+  patchOperations?: ContractV2PatchOperation[];
+  tracePolicy?: ContractV2Dictionary;
+  complexityBudget?: ContractV2Dictionary;
+  aiEnvelope?: ContractV2Dictionary;
+}
+
 export interface ContractV2Snapshot {
   pageInfo: ContractV2PageInfo;
   layoutContract: ContractV2LayoutContract;
   statusContract: ContractV2StatusContract;
   actionContract: ContractV2ActionContract;
   dataContract: ContractV2DataContract;
-  runtimeContract: ContractV2Dictionary;
+  runtimeContract: ContractV2RuntimeContract;
   meta: ContractV2Dictionary;
   formStructureContract?: ContractV2Dictionary;
 }
