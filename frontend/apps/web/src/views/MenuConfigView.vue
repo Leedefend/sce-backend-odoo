@@ -68,24 +68,52 @@
     </section>
     <section v-if="versionPanelOpen" class="version-panel">
       <div class="version-panel-header">
-        <strong>菜单配置版本</strong>
-        <span v-if="versionState?.contract">当前版本 {{ versionState.contract.version_no }}</span>
+        <div>
+          <strong>版本与回滚</strong>
+          <span>每次保存菜单配置都会生成一个已发布版本；回滚会把菜单配置恢复到选中的历史版本。</span>
+        </div>
+        <span v-if="versionState?.contract">当前发布版本 {{ versionState.contract.version_no }}</span>
         <span v-else>保存后生成版本</span>
+      </div>
+      <div v-if="versionState?.contract" class="version-current-card">
+        <span class="panel-kicker">当前生效</span>
+        <strong>版本 {{ versionState.contract.version_no }}</strong>
+        <span>
+          当前配置 {{ versionState.contract.summary.policy_count }} 项，
+          隐藏 {{ versionState.contract.summary.hidden_count }}，改名 {{ versionState.contract.summary.renamed_count }}，
+          移动 {{ versionState.contract.summary.moved_count }}，排序 {{ versionState.contract.summary.reordered_count }}。
+        </span>
       </div>
       <div v-if="versionState?.versions.length" class="version-list">
         <label
           v-for="version in versionState.versions"
           :key="version.id"
           class="version-item"
-          :class="{ selected: selectedVersionNo === version.version_no }"
+          :class="{ selected: selectedVersionNo === version.version_no, current: version.version_no === versionState?.contract?.version_no }"
         >
           <input v-model.number="selectedVersionNo" type="radio" :value="version.version_no" />
-          <span class="version-title">版本 {{ version.version_no }}</span>
-          <span class="version-meta">
-            配置 {{ version.summary.policy_count }} 项，隐藏 {{ version.summary.hidden_count }}，改名 {{ version.summary.renamed_count }}，
-            移动 {{ version.summary.moved_count }}，排序 {{ version.summary.reordered_count }}
+          <span class="version-title">
+            版本 {{ version.version_no }}
+            <b v-if="version.version_no === versionState?.contract?.version_no">当前</b>
           </span>
+          <span class="version-meta">配置 {{ version.summary.policy_count }} 项</span>
+          <span class="version-meta">隐藏 {{ version.summary.hidden_count }}，改名 {{ version.summary.renamed_count }}</span>
+          <span class="version-meta">移动 {{ version.summary.moved_count }}，排序 {{ version.summary.reordered_count }}</span>
         </label>
+      </div>
+      <div v-if="selectedRollbackVersion" class="version-preview">
+        <span class="panel-kicker">准备回滚</span>
+        <strong>将恢复到版本 {{ selectedRollbackVersion.version_no }}</strong>
+        <span>
+          回滚后会恢复该版本的显示、隐藏、名称、位置、排序和角色范围；当前未保存修改不会包含在回滚版本中。
+        </span>
+        <span>
+          目标版本包含 {{ selectedRollbackVersion.summary.policy_count }} 项配置，
+          隐藏 {{ selectedRollbackVersion.summary.hidden_count }}，移动 {{ selectedRollbackVersion.summary.moved_count }}。
+        </span>
+        <button type="button" class="danger" :disabled="rollbackButtonDisabled" @click="rollbackSelectedMenuConfiguration">
+          {{ rollingBack ? '回滚中...' : rollbackButtonText }}
+        </button>
       </div>
       <div v-else class="version-empty">
         保存菜单配置后会自动生成已发布版本；没有历史版本时，当前菜单配置不能回滚。
@@ -403,10 +431,7 @@
               {{ auditing ? '检查中...' : '生效检查' }}
             </button>
             <button type="button" class="ghost" :disabled="loading || versionLoading || saving" @click="toggleVersionPanel">
-              {{ versionPanelOpen ? '收起版本记录' : (versionLoading ? '加载中...' : '版本记录') }}
-            </button>
-            <button type="button" class="ghost" :disabled="rollbackButtonDisabled" @click="rollbackSelectedMenuConfiguration">
-              {{ rollingBack ? '回滚中...' : rollbackButtonText }}
+              {{ versionPanelOpen ? '收起版本与回滚' : (versionLoading ? '加载中...' : '版本与回滚') }}
             </button>
           </div>
         </aside>
@@ -870,6 +895,13 @@ const canRollbackMenuConfiguration = computed(() => {
   );
 });
 
+const selectedRollbackVersion = computed(() => {
+  const currentVersion = Number(versionState.value?.contract?.version_no || 0);
+  const selected = Number(selectedVersionNo.value || 0);
+  if (!selected || selected === currentVersion) return null;
+  return (versionState.value?.versions || []).find((version) => Number(version.version_no || 0) === selected) || null;
+});
+
 const rollbackButtonText = computed(() => {
   if (!versionState.value?.contract) return '先查看版本';
   if (!canRollbackMenuConfiguration.value) return '暂无可回滚版本';
@@ -882,6 +914,7 @@ const rollbackButtonDisabled = computed(() => (
   || rollingBack.value
   || versionLoading.value
   || Boolean(versionState.value?.contract && !canRollbackMenuConfiguration.value)
+  || !selectedRollbackVersion.value
 ));
 
 const groupOptions = computed(() => {
@@ -2320,8 +2353,8 @@ h1 {
 .version-panel {
   margin: 0 18px;
   display: grid;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid var(--sc-app-border);
   border-radius: 6px;
   background: var(--sc-app-panel);
@@ -2335,15 +2368,36 @@ h1 {
   gap: 12px;
 }
 
+.version-panel-header > div {
+  display: grid;
+  gap: 3px;
+}
+
 .version-panel-header span {
   color: var(--sc-app-text-secondary);
 }
 
+.version-current-card,
+.version-preview {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
+}
+
+.version-current-card strong,
+.version-preview strong {
+  color: var(--sc-app-text-primary);
+}
+
 .version-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 8px;
-  max-height: 142px;
+  max-height: 220px;
   overflow: auto;
 }
 
@@ -2358,9 +2412,9 @@ h1 {
 .version-item {
   min-width: 0;
   display: grid;
-  grid-template-columns: auto minmax(64px, auto) minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 4px 8px;
   padding: 8px;
   border: 1px solid var(--sc-app-border);
   border-radius: 6px;
@@ -2373,16 +2427,53 @@ h1 {
   background: var(--sc-app-info-bg);
 }
 
+.version-item.current {
+  cursor: default;
+}
+
 .version-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.version-title b {
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--sc-app-success-bg);
+  color: var(--sc-app-success-text);
+  font-size: 11px;
   font-weight: 600;
 }
 
 .version-meta {
+  grid-column: 2;
   min-width: 0;
   color: var(--sc-app-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.version-preview {
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
+}
+
+.version-preview .danger {
+  justify-self: start;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--sc-app-danger-border);
+  border-radius: 6px;
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.version-preview .danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .create-panel {
