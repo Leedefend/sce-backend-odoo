@@ -653,8 +653,6 @@ class UiMenuConfigPolicy(models.Model):
             policy = policy if policy is not None else policies_by_menu.get(menu_id)
             if menu_id in seen:
                 return None
-            if not menu_visible_to_user(menu) and not is_configured_structural_group(menu, policy):
-                return None
             seen.add(menu_id)
             if stats.get("config_only") and not policy:
                 return None
@@ -774,11 +772,25 @@ class UiMenuConfigPolicy(models.Model):
                 return configured_parent
             return menu.parent_id
 
+        def visible_parent_menu(nodes: list[dict], menu):
+            parent = effective_parent_menu(menu)
+            seen = {int(menu.id or 0)}
+            while parent and parent.exists() and int(parent.id or 0) not in seen:
+                parent_id = int(parent.id or 0)
+                seen.add(parent_id)
+                parent_policy = policies_by_menu.get(parent_id)
+                if parent_policy and policy_visible(parent_policy):
+                    return parent
+                if node_matches_any_menu(nodes, parent):
+                    return parent
+                parent = effective_parent_menu(parent)
+            return self.env["ir.ui.menu"].browse(0)
+
         def ensure_menu_present(nodes: list[dict], menu) -> list[dict]:
             menu = menu.exists() if menu else menu
             if not menu or node_matches_any_menu(nodes, menu):
                 return nodes
-            parent = effective_parent_menu(menu)
+            parent = visible_parent_menu(nodes, menu)
             if parent and parent.exists() and int(parent.id or 0) != int(menu.id or 0):
                 nodes = ensure_menu_present(nodes, parent)
             policy = policies_by_menu.get(int(menu.id or 0))
@@ -832,6 +844,21 @@ class UiMenuConfigPolicy(models.Model):
                     next_nodes.append(moved_node)
             return sort_children(next_nodes)
 
+        def materialize_visible_configured_nodes(nodes: list[dict]) -> list[dict]:
+            next_nodes = nodes
+            visible_policies = [
+                (int(menu_id), policy)
+                for menu_id, policy in policies_by_menu.items()
+                if policy_visible(policy) and policy_menu_exists(policy)
+            ]
+            visible_policies.sort(key=lambda item: (
+                menu_depth(policy_menu_record(item[1])),
+                int(item[0] or 0),
+            ))
+            for _menu_id, policy in visible_policies:
+                next_nodes = ensure_menu_present(next_nodes, policy_menu_record(policy))
+            return sort_children(next_nodes)
+
         out = dict(nav_fact)
         applied_flat = [
             applied
@@ -849,5 +876,5 @@ class UiMenuConfigPolicy(models.Model):
             for applied in [apply_node(dict(node))]
             if applied is not None
         ]
-        out["tree"] = apply_moves(prune_unconfigured_nodes(applied_tree))
+        out["tree"] = materialize_visible_configured_nodes(apply_moves(prune_unconfigured_nodes(applied_tree)))
         return out, stats
