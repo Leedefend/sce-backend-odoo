@@ -17,7 +17,10 @@
     "ui_contract": {
       "sourceType": "ui.contract",
       "minContainerCount": 1,
-      "minWidgetStatusCount": 2,
+      "minWidgetStatusCount": 1,
+      "expectedWidgetIds": [
+        "field.stage_id"
+      ],
       "minActionCount": 0,
       "requiresFormStructureContract": true
     },

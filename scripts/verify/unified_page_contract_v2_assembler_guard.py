@@ -81,12 +81,27 @@ def validate_contract(
     if "compat" in meta:
         fail(errors, "meta.compat must be removed")
     container_count = len(payload.get("layoutContract", {}).get("containerTree") or [])
-    widget_status_count = len(payload.get("statusContract", {}).get("widgetStatus") or [])
+    widget_status = payload.get("statusContract", {}).get("widgetStatus") or []
+    widget_status_count = len(widget_status)
     action_count = len(payload.get("actionContract", {}).get("actionRuleList") or [])
     if container_count < int(snapshot.get("minContainerCount") or 0):
         fail(errors, f"{expected_source_type}: container snapshot below baseline")
     if widget_status_count < int(snapshot.get("minWidgetStatusCount") or 0):
         fail(errors, f"{expected_source_type}: widget status snapshot below baseline")
+    expected_widget_ids = [
+        str(item)
+        for item in snapshot.get("expectedWidgetIds") or []
+        if str(item)
+    ]
+    if expected_widget_ids:
+        actual_widget_ids = {
+            str(row.get("widgetId"))
+            for row in widget_status
+            if isinstance(row, dict) and str(row.get("widgetId"))
+        }
+        for widget_id in expected_widget_ids:
+            if widget_id not in actual_widget_ids:
+                fail(errors, f"{expected_source_type}: expected widgetStatus {widget_id!r} missing")
     if action_count < int(snapshot.get("minActionCount") or 0):
         fail(errors, f"{expected_source_type}: action snapshot below baseline")
     expected_form_structure = snapshot.get("requiresFormStructureContract") is True
