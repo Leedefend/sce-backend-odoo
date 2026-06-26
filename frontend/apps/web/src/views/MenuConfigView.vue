@@ -190,62 +190,74 @@
             </div>
             <span v-if="isDirty(selectedMenu.id)" class="dirty-count">待保存</span>
           </div>
-          <div class="menu-selected-grid">
-            <label>
-              <span>显示名称</span>
-              <input
-                class="cell-input"
-                :value="selectedDraft.custom_label"
-                :placeholder="selectedMenu.name"
-                @input="updateDraft(selectedMenu.id, { custom_label: inputValue($event) })"
-              />
-            </label>
-            <label>
-              <span>移动到上级</span>
-              <select
-                class="cell-input"
-                :value="selectedDraft.target_parent_menu_id || 0"
-                @change="updateDraft(selectedMenu.id, { target_parent_menu_id: numericValue($event) })"
-              >
-                <option :value="0">不移动</option>
-                <option
-                  v-for="target in parentOptions(selectedMenu.id)"
-                  :key="target.id"
-                  :value="target.id"
-                >
-                  {{ target.complete_name || target.name }}
-                </option>
-              </select>
-            </label>
-            <label>
-              <span>排序号</span>
-              <input
-                class="cell-input"
-                type="number"
-                :value="selectedDraft.sequence_override || ''"
-                :placeholder="String(selectedMenu.sequence || 0)"
-                @input="updateDraft(selectedMenu.id, { sequence_override: numericValue($event) })"
-              />
-            </label>
-            <label class="menu-visible-toggle">
-              <input
-                type="checkbox"
-                :checked="selectedDraft.visible"
-                @change="updateDraft(selectedMenu.id, { visible: checkedValue($event) })"
-              />
-              <span>显示菜单</span>
-            </label>
-            <label class="menu-note-field">
-              <span>备注</span>
-              <input
-                class="cell-input"
-                :value="displayNoteValue(selectedDraft.note)"
-                placeholder="可选"
-                @input="updateDraft(selectedMenu.id, { note: inputValue($event) })"
-              />
-            </label>
+          <div class="menu-detail-section">
+            <div class="menu-detail-section-head">
+              <strong>基础信息</strong>
+            </div>
+            <div class="menu-detail-grid menu-detail-grid--basic">
+              <label>
+                <span>显示名称</span>
+                <input
+                  class="cell-input"
+                  :value="selectedDraft.custom_label"
+                  :placeholder="selectedMenu.name"
+                  @input="updateDraft(selectedMenu.id, { custom_label: inputValue($event) })"
+                />
+              </label>
+              <label>
+                <span>备注</span>
+                <input
+                  class="cell-input"
+                  :value="displayNoteValue(selectedDraft.note)"
+                  placeholder="可选"
+                  @input="updateDraft(selectedMenu.id, { note: inputValue($event) })"
+                />
+              </label>
+            </div>
           </div>
-          <div class="menu-role-panel">
+          <div class="menu-detail-section">
+            <div class="menu-detail-section-head">
+              <strong>位置与显示</strong>
+            </div>
+            <div class="menu-detail-grid menu-detail-grid--placement">
+              <label>
+                <span>移动到上级</span>
+                <select
+                  class="cell-input"
+                  :value="selectedDraft.target_parent_menu_id || 0"
+                  @change="updateDraft(selectedMenu.id, { target_parent_menu_id: numericValue($event) })"
+                >
+                  <option :value="0">不移动</option>
+                  <option
+                    v-for="target in parentOptions(selectedMenu.id)"
+                    :key="target.id"
+                    :value="target.id"
+                  >
+                    {{ target.complete_name || target.name }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>排序号</span>
+                <input
+                  class="cell-input"
+                  type="number"
+                  :value="selectedDraft.sequence_override || ''"
+                  :placeholder="String(selectedMenu.sequence || 0)"
+                  @input="updateDraft(selectedMenu.id, { sequence_override: numericValue($event) })"
+                />
+              </label>
+              <label class="menu-visible-toggle">
+                <input
+                  type="checkbox"
+                  :checked="selectedDraft.visible"
+                  @change="updateDraft(selectedMenu.id, { visible: checkedValue($event) })"
+                />
+                <span>显示菜单</span>
+              </label>
+            </div>
+          </div>
+          <div class="menu-role-panel menu-detail-section">
             <div class="menu-role-head">
               <strong>可见业务角色</strong>
               <span>{{ roleScopeSummary(selectedMenu.id) }}</span>
@@ -2370,18 +2382,40 @@ h1 {
   font-size: 12px;
 }
 
-.menu-selected-grid {
+.menu-detail-section {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+  min-width: 0;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--sc-app-bg);
 }
 
-.menu-selected-grid label,
-.menu-role-panel {
+.menu-detail-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+}
+
+.menu-detail-grid {
+  display: grid;
+  gap: 10px;
   min-width: 0;
 }
 
-.menu-selected-grid label {
+.menu-detail-grid--basic {
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.2fr);
+}
+
+.menu-detail-grid--placement {
+  grid-template-columns: minmax(220px, 1fr) minmax(96px, 0.4fr) minmax(150px, 0.5fr);
+}
+
+.menu-detail-grid label {
   display: grid;
   gap: 6px;
   color: var(--sc-app-text-secondary);
@@ -2400,17 +2434,8 @@ h1 {
   color: var(--sc-app-text-primary);
 }
 
-.menu-note-field {
-  grid-column: span 2;
-}
-
 .menu-role-panel {
-  display: grid;
   gap: 8px;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 6px;
-  padding: 10px;
-  background: var(--sc-app-bg);
 }
 
 .menu-role-head {
@@ -2797,13 +2822,10 @@ tr.dirty td:first-child {
     border-right: 1px solid var(--sc-app-border);
   }
 
-  .menu-selected-grid,
+  .menu-detail-grid--basic,
+  .menu-detail-grid--placement,
   .menu-role-check-list {
     grid-template-columns: 1fr;
-  }
-
-  .menu-note-field {
-    grid-column: auto;
   }
 
   .menu-selected-head,

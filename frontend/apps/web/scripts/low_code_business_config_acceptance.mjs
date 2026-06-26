@@ -585,6 +585,9 @@ async function main() {
     const menuSelectedTitle = await page.locator(".menu-selected-panel h2").innerText();
     const menuSelectedInputCount = await page.locator(".menu-selected-panel .cell-input").count();
     const menuRolePanelCount = await page.locator(".menu-selected-panel .menu-role-panel").count();
+    const menuDetailSectionLabels = await page.locator(".menu-selected-panel .menu-detail-section-head strong, .menu-selected-panel .menu-role-head strong").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
     const menuConfigPageText = await page.locator(".menu-config-page").innerText();
     const menuConfigHasInternalNote = /user_confirmed_|technical_|system_/.test(menuConfigPageText);
     const leakedMenuConfigTerms = await visibleForbiddenTerms(page, ".menu-config-page");
@@ -696,6 +699,7 @@ async function main() {
       menuSelectedTitle,
       menuSelectedInputCount,
       menuRolePanelCount,
+      menuDetailSectionLabels,
       menuConfigHasInternalNote,
       leakedMenuConfigTerms,
       initialPageRows,
@@ -863,6 +867,7 @@ async function main() {
         && menuSelectedTitle !== "全部菜单"
         && menuSelectedInputCount >= 4
         && menuRolePanelCount === 1
+        && menuDetailSectionLabels.join("|") === "基础信息|位置与显示|可见业务角色"
         && !menuConfigHasInternalNote
         && leakedMenuConfigTerms.length === 0,
       "菜单配置页面没有形成专业配置面板结构",
@@ -881,6 +886,7 @@ async function main() {
         menuSelectedTitle,
         menuSelectedInputCount,
         menuRolePanelCount,
+        menuDetailSectionLabels,
         menuConfigHasInternalNote,
         leakedMenuConfigTerms,
       },
