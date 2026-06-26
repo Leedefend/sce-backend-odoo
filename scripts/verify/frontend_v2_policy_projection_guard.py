@@ -114,6 +114,10 @@ def _strict_snapshot_fields(source: str) -> set[str]:
     return fields
 
 
+def _strict_required_object_reads(source: str) -> set[str]:
+    return set(re.findall(r"readAliasedObject\(root, '([^']+)', \[\], '\$', issues\)", source))
+
+
 def main() -> int:
     violations: list[str] = []
     helper_source = CONTRACT_HELPERS.read_text(encoding="utf-8")
@@ -134,6 +138,7 @@ def main() -> int:
             )
     schema_payload = json.loads(BACKEND_SCHEMA.read_text(encoding="utf-8"))
     schema_top_level = set((schema_payload.get("properties") or {}).keys())
+    schema_required = set(schema_payload.get("required") or [])
     strict_snapshot_fields = _strict_snapshot_fields(strict_type_source)
     if not strict_snapshot_fields:
         violations.append(f"{_relative(STRICT_TYPES)}: missing ContractV2Snapshot interface")
@@ -142,8 +147,12 @@ def main() -> int:
             f"{_relative(STRICT_TYPES)}: ContractV2Snapshot fields must match schema top-level properties; "
             f"extra={sorted(strict_snapshot_fields - schema_top_level)} missing={sorted(schema_top_level - strict_snapshot_fields)}"
         )
-    if "const meta = readAliasedObject(root, 'meta', [], '$', issues)" not in strict_schema_source:
-        violations.append(f"{_relative(STRICT_SCHEMA)}: strict V2 decoder must require top-level meta object")
+    strict_required_reads = _strict_required_object_reads(strict_schema_source)
+    if strict_required_reads != schema_required:
+        violations.append(
+            f"{_relative(STRICT_SCHEMA)}: strict V2 decoder required object reads must match schema.required; "
+            f"extra={sorted(strict_required_reads - schema_required)} missing={sorted(schema_required - strict_required_reads)}"
+        )
 
     for path in CONSUMER_FILES:
         source = path.read_text(encoding="utf-8")
