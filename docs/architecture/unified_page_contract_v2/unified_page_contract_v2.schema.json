@@ -487,6 +487,7 @@
     },
     "containerStatus": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "containerId"
       ],
@@ -507,6 +508,7 @@
     },
     "widgetStatus": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "widgetId"
       ],
@@ -544,6 +546,7 @@
     },
     "buttonStatus": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "btnId"
       ],
@@ -564,6 +567,7 @@
     },
     "selectorStatus": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "selector"
       ],

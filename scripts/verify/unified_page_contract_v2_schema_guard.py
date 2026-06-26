@@ -49,6 +49,13 @@ REQUIRED_DEFS = {
     "meta",
 }
 
+REQUIRED_CLOSED_OBJECT_DEFS = {
+    "containerStatus",
+    "widgetStatus",
+    "buttonStatus",
+    "selectorStatus",
+}
+
 LEGACY_ROOT_KEYS = {
     "scene_contract_v1",
     "page_orchestration_v1",
@@ -148,6 +155,10 @@ def validate_schema(schema: dict[str, Any], registry: dict[str, Any], errors: li
     missing_defs = REQUIRED_DEFS - defs
     if missing_defs:
         fail(errors, f"schema missing $defs: {sorted(missing_defs)}")
+    for name in sorted(REQUIRED_CLOSED_OBJECT_DEFS):
+        definition = schema.get("$defs", {}).get(name, {})
+        if definition.get("additionalProperties") is not False:
+            fail(errors, f"schema $defs.{name} must set additionalProperties=false")
     for path in sorted(FORMAL_V2_FIELD_PATHS):
         if dict_path(schema, path) is None:
             fail(errors, f"schema missing formal v2 field path: {path}")
