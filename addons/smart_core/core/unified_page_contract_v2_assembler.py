@@ -517,7 +517,10 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     layout_rows = form_layout.get("layout") if isinstance(form_layout.get("layout"), list) else []
     native_layout_rows = [row for row in layout_rows if isinstance(row, dict)]
     if not any(_text(row.get("type") or row.get("kind")).lower() == "header" for row in native_layout_rows):
-        header_buttons = form_layout.get("header_buttons") if isinstance(form_layout.get("header_buttons"), list) else []
+        header_buttons = []
+        for button_source in (form_layout.get("header_buttons"), source.get("header_buttons")):
+            if isinstance(button_source, list):
+                header_buttons.extend(button_source)
         button_children = []
         for button in header_buttons:
             if not isinstance(button, dict):
@@ -573,7 +576,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
             context=source_context_context,
         )
         form_structure_applied = True
-    elif layout_type == "form" and layout_rows:
+    elif layout_type == "form" and native_layout_rows:
         container_tree = _normalize_native_layout_nodes(
             native_layout_rows,
             fields_by_name,

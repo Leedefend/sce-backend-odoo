@@ -2163,9 +2163,9 @@ class UiContractV2Handler(BaseIntentHandler):
                 unique=unique,
                 governance=form_structure_governance,
             )
-            form = _ensure_source_form_contract(source_contract)
             if attachment_field:
-                attachments = form.get("attachments") if isinstance(form.get("attachments"), dict) else {}
+                collaboration = source_contract.get("collaboration") if isinstance(source_contract.get("collaboration"), dict) else {}
+                attachments = collaboration.get("attachments") if isinstance(collaboration.get("attachments"), dict) else {}
                 attachments.update({
                     "enabled": True,
                     "field": attachment_field,
@@ -2180,7 +2180,8 @@ class UiContractV2Handler(BaseIntentHandler):
                         "size_exceeded": "文件过大",
                     },
                 })
-                form["attachments"] = attachments
+                collaboration["attachments"] = attachments
+                source_contract["collaboration"] = collaboration
 
     def _merge_business_kanban_profile(
         self,
@@ -3221,9 +3222,9 @@ class UiContractV2Handler(BaseIntentHandler):
             _logger.debug("ui.contract.v2 collaboration injection skipped: model inspect failed", exc_info=True)
             return
 
-        form = _ensure_source_form_contract(source_contract)
-        chatter = form.get("chatter") if isinstance(form.get("chatter"), dict) else {}
-        attachments = form.get("attachments") if isinstance(form.get("attachments"), dict) else {}
+        collaboration = source_contract.get("collaboration") if isinstance(source_contract.get("collaboration"), dict) else {}
+        chatter = collaboration.get("chatter") if isinstance(collaboration.get("chatter"), dict) else {}
+        attachments = collaboration.get("attachments") if isinstance(collaboration.get("attachments"), dict) else {}
         upload_allowed = model in _allowed_models_from_hook(self.env, "smart_core_file_upload_allowed_models")
         download_allowed = model in _allowed_models_from_hook(self.env, "smart_core_file_download_allowed_models")
         chatter_fields = [
@@ -3238,7 +3239,6 @@ class UiContractV2Handler(BaseIntentHandler):
         if not chatter_enabled and not attachment_enabled:
             return
 
-        collaboration = source_contract.get("collaboration") if isinstance(source_contract.get("collaboration"), dict) else {}
         if chatter_enabled:
             chatter = {
                 **chatter,
@@ -3255,7 +3255,6 @@ class UiContractV2Handler(BaseIntentHandler):
                     activity_capable=bool(activity_capable),
                 ),
             }
-            form["chatter"] = chatter
             collaboration["chatter"] = deepcopy(chatter)
         if attachment_enabled:
             upload_contract = attachments.get("upload") if isinstance(attachments.get("upload"), dict) else {}
@@ -3288,7 +3287,6 @@ class UiContractV2Handler(BaseIntentHandler):
             attachments["upload"]["enabled"] = bool(upload_allowed)
             attachments["download"].update(download_contract)
             attachments["download"]["enabled"] = bool(download_allowed)
-            form["attachments"] = attachments
             collaboration["attachments"] = deepcopy(attachments)
         collaboration["timeline"] = {
             "enabled": True,
@@ -3335,15 +3333,14 @@ class UiContractV2Handler(BaseIntentHandler):
         )
         if not method:
             return
-        form = _ensure_source_form_contract(source_contract)
-        header_buttons = form.get("header_buttons") if isinstance(form.get("header_buttons"), list) else []
+        header_buttons = source_contract.get("header_buttons") if isinstance(source_contract.get("header_buttons"), list) else []
         for button in header_buttons:
             if not isinstance(button, dict):
                 continue
             payload = button.get("payload") if isinstance(button.get("payload"), dict) else {}
             existing_method = str(button.get("name") or payload.get("method") or "").strip()
             if existing_method == method:
-                form["header_buttons"] = header_buttons
+                source_contract["header_buttons"] = header_buttons
                 return
         header_buttons.append({
             "name": method,
@@ -3375,7 +3372,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "runtime_carrier": "ui.contract.v2.standard_submit",
             },
         })
-        form["header_buttons"] = header_buttons
+        source_contract["header_buttons"] = header_buttons
 
     def _inject_record_business_category_context(self, source_contract: dict[str, Any], *, model: str, record_id: Any) -> None:
         if not model:
@@ -3854,18 +3851,6 @@ class UiContractV2Handler(BaseIntentHandler):
             },
             code=code,
         )
-
-
-def _ensure_source_form_contract(source_contract: dict[str, Any]) -> dict[str, Any]:
-    views = source_contract.get("views")
-    if not isinstance(views, dict):
-        views = {}
-        source_contract["views"] = views
-    form = views.get("form")
-    if not isinstance(form, dict):
-        form = {}
-        views["form"] = form
-    return form
 
 
 def _safe_eval_action_value(value: Any, default: Any) -> Any:

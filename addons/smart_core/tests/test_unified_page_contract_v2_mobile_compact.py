@@ -129,6 +129,37 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
 
         self.assertEqual(full["pageInfo"]["pageName"], "项目")
 
+    def test_top_level_header_buttons_project_to_form_header(self):
+        source = {
+            "model": "project.project",
+            "view_type": "form",
+            "head": {"title": "项目"},
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "项目名称"},
+            },
+            "header_buttons": [
+                {
+                    "name": "action_submit",
+                    "label": "提交",
+                    "kind": "object",
+                    "payload": {"method": "action_submit", "type": "object"},
+                }
+            ],
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.top.level.header.buttons",
+        )
+
+        header = full["layoutContract"]["containerTree"][0]
+        self.assertEqual(header["type"], "header")
+        self.assertEqual(header["children"][0]["type"], "button")
+        self.assertEqual(header["children"][0]["name"], "action_submit")
+        self.assertEqual(header["children"][0]["label"], "提交")
+
     def test_form_data_source_keeps_deep_form_fields(self):
         fields = {
             f"field_{index}": {
