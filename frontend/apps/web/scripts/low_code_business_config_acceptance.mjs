@@ -979,6 +979,10 @@ async function main() {
     const dropPlacementProbe = await probeDesignerFieldDropPlacement(page);
     const returnButtonCount = await page.getByRole("button", { name: "返回配置" }).count();
     const legacyPanelCount = await page.locator(".contract-lowcode-objects").count();
+    const designerControlGridCount = await page.locator(".contract-form-designer-control-grid").count();
+    const designerInspectorCount = await page.locator(".contract-form-inspector").count();
+    const designerCanvasCount = await page.locator(".contract-form-designer-canvas").count();
+    const designerLayoutToolText = await page.locator(".contract-form-layout-tools").innerText();
     const initialFormDirtyCount = await page.locator(".contract-field-governance-dirty").count();
     const initialHiddenFieldDesignCount = await page.locator(".field--config-hidden").count();
     const initialHiddenGroupDesignCount = await page.locator(".native-container--config-hidden").count();
@@ -1277,6 +1281,10 @@ async function main() {
       createFieldDialogClosed,
       returnButtonCount,
       legacyPanelCount,
+      designerControlGridCount,
+      designerInspectorCount,
+      designerCanvasCount,
+      designerLayoutToolText,
     };
     report.artifacts.formDesigner = await captureStep(page, "form-designer");
     assert(designTitle === "当前页面字段配置", "表单设计器标题不正确", { designTitle });
@@ -1286,6 +1294,14 @@ async function main() {
       { leakedFormDesignerTerms },
     );
     assert(designFieldCount > 0, "表单设计器没有显示可配置字段数量", { designFieldCountText });
+    assert(
+      designerControlGridCount === 1
+        && designerInspectorCount === 1
+        && designerCanvasCount === 1
+        && designerLayoutToolText.includes("页面布局"),
+      "表单设计器没有形成专业配置面板结构",
+      { designerControlGridCount, designerInspectorCount, designerCanvasCount, designerLayoutToolText },
+    );
     assert(selectableFieldCount > 0, "表单设计器没有可点选字段", { selectableFieldCount });
     assert(dragHandleCount === 0, "表单设计器不应再显示六点拖拽把手", { dragHandleCount });
     assert(orderButtonCount === 0, "表单设计器不应再显示上下箭头排序按钮", { orderButtonCount });
