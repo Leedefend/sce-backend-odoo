@@ -843,6 +843,22 @@ async function main() {
     const saveFormEnabledAfterReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     await selectDesignerField(page, 1);
     const selectedPanelBeforeMove = await page.locator(".contract-field-selection-card").innerText();
+    const positionMoveControlCount = await page.locator(".contract-field-position-move").count();
+    const formOrderBeforePanelMove = await formDesignerFieldTexts(page);
+    const panelMoveSourceLabel = formOrderBeforePanelMove[1] || "";
+    const panelMoveTargetLabel = formOrderBeforePanelMove[2] || formOrderBeforePanelMove[0] || "";
+    let formOrderAfterPanelMove = formOrderBeforePanelMove;
+    let panelMoveResetSaveDisabled = true;
+    if (panelMoveSourceLabel && panelMoveTargetLabel) {
+      await page.locator(".contract-field-position-move select").first().selectOption({ label: panelMoveTargetLabel });
+      await page.locator(".contract-field-position-move select").nth(1).selectOption("after");
+      await page.locator(".contract-field-position-move").getByRole("button", { name: "移动" }).click();
+      await page.waitForTimeout(500);
+      formOrderAfterPanelMove = await formDesignerFieldTexts(page);
+      await page.getByRole("button", { name: "重置" }).click();
+      await page.waitForTimeout(500);
+      panelMoveResetSaveDisabled = !(await page.getByRole("button", { name: "保存表单设置" }).isEnabled());
+    }
     const formOrderBeforeDragPersist = await formDesignerFieldTexts(page);
     const sameGroupOrderProbe = (await formDesignerFieldGroups(page)).find((group) => group.fields.length >= 2);
     const orderSourceField = sameGroupOrderProbe?.fields?.[0] || { index: 0, label: formOrderBeforeDragPersist[0] || "" };
@@ -970,6 +986,10 @@ async function main() {
       resetFormEnabledAfterHide,
       formDirtyAfterReset,
       saveFormEnabledAfterReset,
+      positionMoveControlCount,
+      formOrderBeforePanelMove,
+      formOrderAfterPanelMove,
+      panelMoveResetSaveDisabled,
       selectedPanelBeforeMove,
       formOrderBeforeDragPersist,
       formOrderAfterDrag,
@@ -1028,6 +1048,26 @@ async function main() {
       },
     );
     assert(selectedPanelBeforeMove.includes("已选字段"), "表单字段点选状态不可用", { selectedPanelBeforeMove });
+    assert(
+      positionMoveControlCount > 0
+        && (
+          !panelMoveSourceLabel
+          || !panelMoveTargetLabel
+          || (
+            formOrderAfterPanelMove.indexOf(panelMoveSourceLabel) > formOrderAfterPanelMove.indexOf(panelMoveTargetLabel)
+            && panelMoveResetSaveDisabled
+          )
+        ),
+      "表单字段面板定位移动不可用",
+      {
+        positionMoveControlCount,
+        panelMoveSourceLabel,
+        panelMoveTargetLabel,
+        formOrderBeforePanelMove,
+        formOrderAfterPanelMove,
+        panelMoveResetSaveDisabled,
+      },
+    );
     assert(
       formOrderAfterDrag.indexOf(nextFieldLabel) >= 0
         && formOrderAfterDrag.indexOf(draggedFieldLabel) > formOrderAfterDrag.indexOf(nextFieldLabel)

@@ -272,6 +272,41 @@
                       </option>
                     </select>
                   </label>
+                  <div class="contract-field-position-move">
+                    <label>
+                      <span>移动位置</span>
+                      <select
+                        v-model="selectedFormSettingsOrderTargetKey"
+                        :disabled="busy || selectedFormSettingsOrderTargetOptions.length === 0"
+                      >
+                        <option
+                          v-for="option in selectedFormSettingsOrderTargetOptions"
+                          :key="`selected-field-order-target-${option.fieldKey}`"
+                          :value="option.fieldKey"
+                        >
+                          {{ option.label }}
+                        </option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>放置方式</span>
+                      <select
+                        v-model="selectedFormSettingsOrderPlacement"
+                        :disabled="busy || selectedFormSettingsOrderTargetOptions.length === 0"
+                      >
+                        <option value="before">移到其前</option>
+                        <option value="after">移到其后</option>
+                      </select>
+                    </label>
+                    <button
+                      class="ghost small"
+                      type="button"
+                      :disabled="busy || !selectedFormSettingsOrderTargetKey"
+                      @click="moveSelectedFormSettingsFieldToOrderTarget"
+                    >
+                      移动
+                    </button>
+                  </div>
                   <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${selectedFormSettingsFieldRow.label}字段显示`">
                     <label
                       v-for="action in selectedFormSettingsFieldRow.actions"
@@ -2037,6 +2072,8 @@ const dropTargetFieldKey = ref('');
 const selectedFormSettingsFieldKey = ref('');
 const selectedFormSettingsFieldLabel = ref('');
 const selectedFormSettingsFieldGroupTitleDraft = ref('');
+const selectedFormSettingsOrderTargetKey = ref('');
+const selectedFormSettingsOrderPlacement = ref<'before' | 'after'>('before');
 const isContractFieldOrderEditable = computed(() => (
   !isBusinessConfigRuntimeModel(model.value)
   && (
@@ -2232,6 +2269,46 @@ const currentFormDesignFieldKeys = computed(() => {
   });
   return Array.from(keys);
 });
+
+const currentFormOrderedFieldKeys = computed(() => {
+  const baseKeys = currentFormDesignFieldKeys.value;
+  if (!fieldOrderDraft.value.length) return baseKeys;
+  const baseSet = new Set(baseKeys);
+  const ordered = fieldOrderDraft.value.filter((fieldKey) => baseSet.has(fieldKey));
+  const missing = baseKeys.filter((fieldKey) => !ordered.includes(fieldKey));
+  return [...ordered, ...missing];
+});
+
+const selectedFormSettingsOrderTargetOptions = computed(() => {
+  const selectedFieldKey = selectedFormSettingsFieldKey.value;
+  return currentFormOrderedFieldKeys.value
+    .filter((fieldKey) => fieldKey && fieldKey !== selectedFieldKey)
+    .map((fieldKey) => ({
+      fieldKey,
+      label: formDesignFieldLabel(fieldKey),
+    }));
+});
+
+watch([selectedFormSettingsFieldKey, selectedFormSettingsOrderTargetOptions], () => {
+  if (!selectedFormSettingsFieldKey.value) {
+    selectedFormSettingsOrderTargetKey.value = '';
+    return;
+  }
+  const options = selectedFormSettingsOrderTargetOptions.value;
+  if (!options.length) {
+    selectedFormSettingsOrderTargetKey.value = '';
+    return;
+  }
+  if (!options.some((option) => option.fieldKey === selectedFormSettingsOrderTargetKey.value)) {
+    const selectedIndex = currentFormOrderedFieldKeys.value.indexOf(selectedFormSettingsFieldKey.value);
+    const preferred = currentFormOrderedFieldKeys.value[selectedIndex + 1]
+      || currentFormOrderedFieldKeys.value[selectedIndex - 1]
+      || options[0].fieldKey;
+    selectedFormSettingsOrderTargetKey.value = options.some((option) => option.fieldKey === preferred)
+      ? preferred
+      : options[0].fieldKey;
+  }
+}, { immediate: true });
 
 function syncFieldOrderDraftWithDesignKeys(rawKeys = currentFormDesignFieldKeys.value) {
   if (!isContractFieldOrderEditable.value) return;
@@ -9636,6 +9713,22 @@ function onSelectedFormSettingsFieldGroupMoveChange(event: Event) {
   moveSelectedFormSettingsFieldToGroup(value);
 }
 
+function moveSelectedFormSettingsFieldToOrderTarget() {
+  const fieldKey = selectedFormSettingsFieldKey.value;
+  const targetFieldKey = selectedFormSettingsOrderTargetKey.value;
+  if (!fieldKey || !targetFieldKey || fieldKey === targetFieldKey) return;
+  const moved = moveFieldOrderTo(fieldKey, targetFieldKey, selectedFormSettingsOrderPlacement.value, '调整位置');
+  if (!moved) return;
+  const targetGroup = normalizeFieldGroupTitle(fieldGroupBase.value[targetFieldKey] || fieldGroupDraft[targetFieldKey]);
+  if (targetGroup) {
+    fieldGroupDraft[fieldKey] = targetGroup;
+    fieldMoveTargetDraft[fieldKey] = targetFieldKey;
+    selectedFormSettingsFieldGroupTitleDraft.value = targetGroup;
+  }
+  selectedFormSettingsFieldKey.value = fieldKey;
+  selectedFormSettingsFieldLabel.value = formDesignFieldLabel(fieldKey);
+}
+
 function onSelectedFormSettingsFieldVisibilityChange(value: string) {
   const fieldKey = selectedFormSettingsFieldKey.value;
   if (!fieldKey) return;
@@ -9899,7 +9992,11 @@ function onFieldOrderDragLeave(fieldKey: string) {
 function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '') {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === targetFieldKey) return;
   const sourceFieldKey = draggingFieldKey.value;
-  moveFieldOrderTo(draggingFieldKey.value, targetFieldKey);
+  const currentOrder = fieldOrderDraft.value.length ? fieldOrderDraft.value : currentFormOrderedFieldKeys.value;
+  const sourceIndex = currentOrder.indexOf(sourceFieldKey);
+  const targetIndex = currentOrder.indexOf(targetFieldKey);
+  const placement = sourceIndex >= 0 && targetIndex >= 0 && sourceIndex < targetIndex ? 'after' : 'before';
+  moveFieldOrderTo(draggingFieldKey.value, targetFieldKey, placement, '拖拽排序');
   const normalizedTargetGroup = normalizeFieldGroupTitle(fieldGroupBase.value[targetFieldKey] || fieldGroupDraft[targetFieldKey] || targetGroupTitle);
   if (normalizedTargetGroup) {
     fieldGroupDraft[sourceFieldKey] = normalizedTargetGroup;
@@ -9930,18 +10027,30 @@ function onFieldOrderGroupDrop(groupTitle: string) {
   dropTargetFieldKey.value = '';
 }
 
-function moveFieldOrderTo(sourceFieldKey: string, targetFieldKey: string) {
+function moveFieldOrderTo(
+  sourceFieldKey: string,
+  targetFieldKey: string,
+  placement: 'before' | 'after' = 'before',
+  operationAction = '拖拽排序',
+) {
   ensureFieldOrderDraftStartsFromCurrentLayout();
   const draft = [...fieldOrderDraft.value];
   const from = draft.indexOf(sourceFieldKey);
   const to = draft.indexOf(targetFieldKey);
-  if (from < 0 || to < 0) return;
+  if (from < 0 || to < 0 || sourceFieldKey === targetFieldKey) return false;
   const [moved] = draft.splice(from, 1);
-  draft.splice(to, 0, moved);
+  const targetIndex = draft.indexOf(targetFieldKey);
+  if (targetIndex < 0) return false;
+  const insertIndex = placement === 'after' ? targetIndex + 1 : targetIndex;
+  draft.splice(insertIndex, 0, moved);
   fieldOrderDraft.value = draft;
   fieldOrderPreviewActive.value = true;
   formConfigAuditResult.value = null;
-  appendFormConfigOperation('拖拽排序', `${formDesignFieldLabel(sourceFieldKey)} 调整到 ${formDesignFieldLabel(targetFieldKey)} 前`);
+  appendFormConfigOperation(
+    operationAction,
+    `${formDesignFieldLabel(sourceFieldKey)} 调整到 ${formDesignFieldLabel(targetFieldKey)} ${placement === 'after' ? '后' : '前'}`,
+  );
+  return true;
 }
 
 function moveFieldOrder(fieldKey: string, delta: number) {
@@ -11580,6 +11689,33 @@ onBeforeUnmount(() => {
 .contract-field-group-move select {
   min-width: 128px;
   max-width: 190px;
+  height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 5px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  padding: 0 8px;
+}
+
+.contract-field-position-move {
+  display: inline-flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.contract-field-position-move label {
+  display: inline-grid;
+  gap: 4px;
+  min-width: 116px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-field-position-move select {
+  min-width: 116px;
+  max-width: 220px;
   height: 30px;
   border: 1px solid var(--sc-app-border);
   border-radius: 5px;
