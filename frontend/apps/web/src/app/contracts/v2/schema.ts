@@ -94,7 +94,8 @@ function readAliasedObject(
 ): ContractV2Dictionary {
   const value = source[key] || aliases.map((alias) => source[alias]).find(isRecord);
   if (!isRecord(value)) {
-    issues.push({ path: `${path}.${key}`, message: `must be an object; aliases checked: ${aliases.join(', ')}` });
+    const aliasMessage = aliases.length ? `; aliases checked: ${aliases.join(', ')}` : '';
+    issues.push({ path: `${path}.${key}`, message: `must be an object${aliasMessage}` });
     return {};
   }
   return value;
@@ -485,6 +486,7 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
   const actionContract = decodeActionContract(readAliasedObject(root, 'actionContract', [], '$', issues), issues);
   const dataContract = decodeDataContract(readAliasedObject(root, 'dataContract', [], '$', issues));
   const runtimeContract = readAliasedObject(root, 'runtimeContract', [], '$', issues);
+  const meta = readAliasedObject(root, 'meta', [], '$', issues);
   if (issues.length) {
     throw new ContractV2DecodeError(issues);
   }
@@ -495,7 +497,7 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
     actionContract,
     dataContract,
     runtimeContract,
-    meta: asRecord(root.meta),
+    meta,
     ...(isRecord(root.formStructureContract)
       ? { formStructureContract: asRecord(root.formStructureContract) }
       : {}),

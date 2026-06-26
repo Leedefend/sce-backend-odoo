@@ -142,6 +142,8 @@ def main() -> int:
             f"{_relative(STRICT_TYPES)}: ContractV2Snapshot fields must match schema top-level properties; "
             f"extra={sorted(strict_snapshot_fields - schema_top_level)} missing={sorted(schema_top_level - strict_snapshot_fields)}"
         )
+    if "const meta = readAliasedObject(root, 'meta', [], '$', issues)" not in strict_schema_source:
+        violations.append(f"{_relative(STRICT_SCHEMA)}: strict V2 decoder must require top-level meta object")
 
     for path in CONSUMER_FILES:
         source = path.read_text(encoding="utf-8")
