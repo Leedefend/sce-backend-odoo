@@ -45,17 +45,28 @@ def fail(errors: list[str], message: str) -> None:
     errors.append(message)
 
 
+def registry_path(value: dict[str, Any], path: tuple[str, ...]) -> Any:
+    node: Any = value
+    for item in path:
+        if not isinstance(node, dict):
+            return None
+        node = node.get(item)
+    return node
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixture", required=True, type=Path)
     parser.add_argument("--snapshot", required=True, type=Path)
     parser.add_argument("--schema", required=True, type=Path)
+    parser.add_argument("--enum-registry", required=True, type=Path)
     args = parser.parse_args()
 
     target = load_data_module()
     source = load_json(args.fixture)
     snapshot = load_json(args.snapshot)
     schema = load_json(args.schema)
+    registry = load_json(args.enum_registry)
     data_contract = target.build_data_contract_v2(source)
     expected = snapshot.get("expected") if isinstance(snapshot.get("expected"), dict) else {}
     errors: list[str] = []
@@ -68,6 +79,13 @@ def main() -> int:
     schema_props = set(schema.get("$defs", {}).get("dataContract", {}).get("properties", {}).keys())
     if not optional.issubset(schema_props):
         fail(errors, "schema dataContract must expose optional treeData/ganttData extension slots")
+
+    cache_policies = registry_path(registry, ("cachePolicy",))
+    consistency_values = registry_path(registry, ("consistency",))
+    if set(getattr(target, "ALLOWED_CACHE_POLICIES", set())) != set(cache_policies or []):
+        fail(errors, "data ALLOWED_CACHE_POLICIES must match enum_registry.cachePolicy")
+    if set(getattr(target, "ALLOWED_CONSISTENCY", set())) != set(consistency_values or []):
+        fail(errors, "data ALLOWED_CONSISTENCY must match enum_registry.consistency")
 
     if sorted(data_contract.get("mainData", {}).keys()) != sorted(expected.get("mainDataKeys") or []):
         fail(errors, "mainData keys mismatch")
@@ -88,6 +106,13 @@ def main() -> int:
         actual = data_contract.get("dataSource", {}).get(data_key)
         if actual != expected_row:
             fail(errors, f"dataSource.{data_key}: expected {expected_row!r}, got {actual!r}")
+    for data_key, row in (data_contract.get("dataSource") or {}).items():
+        if not isinstance(row, dict):
+            continue
+        if row.get("cachePolicy") not in cache_policies:
+            fail(errors, f"dataSource.{data_key}.cachePolicy must be listed in enum_registry.cachePolicy")
+        if row.get("consistency") not in consistency_values:
+            fail(errors, f"dataSource.{data_key}.consistency must be listed in enum_registry.consistency")
     forbidden = target.find_forbidden_data_source_keys(data_contract)
     if forbidden:
         fail(errors, f"dataSource has forbidden semantic/executable keys: {forbidden}")

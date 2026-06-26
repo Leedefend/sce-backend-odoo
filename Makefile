@@ -4905,7 +4905,7 @@ verify.unified_page_contract.v2.action: guard.prod.forbid
 .PHONY: verify.unified_page_contract.v2.data
 verify.unified_page_contract.v2.data: guard.prod.forbid
 	@python3 -m py_compile addons/smart_core/core/unified_page_contract_v2_data.py scripts/verify/unified_page_contract_v2_data_guard.py
-	@python3 scripts/verify/unified_page_contract_v2_data_guard.py --fixture docs/architecture/unified_page_contract_v2/fixtures/data_contract_source.json --snapshot docs/architecture/unified_page_contract_v2/snapshots/data_contract_snapshot_v1.json --schema docs/architecture/unified_page_contract_v2/unified_page_contract_v2.schema.json
+	@python3 scripts/verify/unified_page_contract_v2_data_guard.py --fixture docs/architecture/unified_page_contract_v2/fixtures/data_contract_source.json --snapshot docs/architecture/unified_page_contract_v2/snapshots/data_contract_snapshot_v1.json --schema docs/architecture/unified_page_contract_v2/unified_page_contract_v2.schema.json --enum-registry docs/architecture/unified_page_contract_v2/enum_registry.json
 
 .PHONY: verify.unified_page_contract.v2.runtime
 verify.unified_page_contract.v2.runtime: guard.prod.forbid
