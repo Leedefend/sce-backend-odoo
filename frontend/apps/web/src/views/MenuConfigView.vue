@@ -1915,77 +1915,15 @@ function buildTreeFromNavigation(
   });
 }
 
-function attachMissingConfiguredMenus(
-  baseTree: MenuConfigMenu[],
-  allMenus: MenuConfigMenu[],
-  usedMenuIds: Set<number>,
-  rootMenuId = 0,
-): MenuConfigMenu[] {
-  const rootIds = new Set(baseTree.map((item) => Number(item.id)));
-  const renderedMenuIds = new Set<number>();
-  const collectRenderedIds = (items: MenuConfigMenu[]) => {
-    items.forEach((item) => {
-      const id = Number(item.id || 0);
-      if (id) renderedMenuIds.add(id);
-      if (item.children?.length) collectRenderedIds(item.children);
-    });
-  };
-  collectRenderedIds(baseTree);
-
-  const byParent = new Map<number, MenuConfigMenu[]>();
-  allMenus.forEach((menu) => {
-    const menuId = Number(menu.id);
-    if (usedMenuIds.has(menuId) || renderedMenuIds.has(menuId)) return;
-    const parentId = Number(menu.parent_id || 0);
-    if (!parentId && !rootIds.size) return;
-    const list = byParent.get(parentId) || [];
-    list.push({ ...menu, children: [], menu_config_missing: true } as MenuConfigTreeNode);
-    byParent.set(parentId, list);
+function markHandlingMembership(items: MenuConfigMenu[], usedMenuIds: Set<number>): MenuConfigMenu[] {
+  return items.map((item) => {
+    const menuId = Number(item.id || 0);
+    const children = item.children?.length ? markHandlingMembership(item.children, usedMenuIds) : [];
+    if (!menuId || usedMenuIds.has(menuId)) {
+      return { ...item, children };
+    }
+    return { ...item, children, menu_config_missing: true } as MenuConfigTreeNode;
   });
-
-  const sortBranch = (items: MenuConfigMenu[]) => [...items].sort((a, b) => (
-    Number(a.sequence || 0) - Number(b.sequence || 0)
-    || Number(a.id || 0) - Number(b.id || 0)
-  ));
-
-  const buildMissingBranch = (parentId: number): MenuConfigMenu[] => sortBranch(byParent.get(parentId) || []).map((menu) => ({
-    ...menu,
-    children: buildMissingBranch(Number(menu.id)),
-  }));
-
-  const attach = (items: MenuConfigMenu[]): MenuConfigMenu[] => sortBranch(items.map((item) => ({
-    ...item,
-    children: sortBranch([
-      ...(item.children?.length ? attach(item.children) : []),
-      ...buildMissingBranch(Number(item.id)),
-    ]),
-  })));
-
-  const dedupeRuntimeSiblings = (items: MenuConfigMenu[]): MenuConfigMenu[] => {
-    const realLabels = new Set(items
-      .filter((item) => !isRuntimeMenuGroup(item))
-      .map((item) => normalizedMenuLabel(item.name || item.display_name))
-      .filter(Boolean));
-    return sortBranch(items
-      .filter((item) => !(isRuntimeMenuGroup(item) && realLabels.has(normalizedMenuLabel(item.name || item.display_name))))
-      .map((item) => ({
-        ...item,
-        children: item.children?.length ? dedupeRuntimeSiblings(item.children) : [],
-      })));
-  };
-
-  const attached = attach(baseTree);
-  const rootMissing = rootMenuId
-    ? buildMissingBranch(rootMenuId).filter((menu) => !rootIds.has(Number(menu.id)))
-    : [];
-  if (attached.length) return dedupeRuntimeSiblings([...attached, ...rootMissing]);
-  return buildMissingBranch(0);
-}
-
-function scopedRootMenuId(payloadTree: MenuConfigMenu[] = []) {
-  const rootId = Number(rootMenu.value?.id || 0);
-  if (rootId) return rootId;
-  return Number(payloadTree?.[0]?.id || 0);
 }
 
 function collectNavigationMenuIds() {
@@ -2051,13 +1989,8 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
       });
     });
     const usedMenuIds = new Set<number>();
-    const navOrderedTree = buildTreeFromNavigation(scopedNavigationTree(), menuById, menuByLabel, usedMenuIds);
-    const completeTree = attachMissingConfiguredMenus(
-      navOrderedTree,
-      payload.menus || [],
-      usedMenuIds,
-      scopedRootMenuId(payload.tree || []),
-    );
+    buildTreeFromNavigation(scopedNavigationTree(), menuById, menuByLabel, usedMenuIds);
+    const completeTree = markHandlingMembership(payload.tree || [], usedMenuIds);
     tree.value = completeTree;
     const routeMenuId = Number(route.query.menu_id || 0);
     const firstMenuId = completeTree[0]?.id || payload.menus?.[0]?.id || 0;
