@@ -138,8 +138,9 @@ class _Menu:
 
 
 class _MenuModel(_RecordSet):
-    def __init__(self, menus=()):
+    def __init__(self, menus=(), visible_ids=None):
         super().__init__(menus)
+        self.visible_ids = visible_ids
         for menu in self:
             menu._owner = self
 
@@ -149,6 +150,11 @@ class _MenuModel(_RecordSet):
     def with_context(self, **kwargs):
         self.context = kwargs
         return self
+
+    def _visible_menu_ids(self, debug=False):
+        if self.visible_ids is None:
+            raise AttributeError("_visible_menu_ids")
+        return list(self.visible_ids)
 
     def browse(self, record_id):
         for record in self:
@@ -999,8 +1005,8 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         company = types.SimpleNamespace(id=7)
         user = _User([])
         root = _Menu(291, "智慧施工管理平台")
-        office = _Menu(842, "综合办公", parent=root, sequence=70)
-        menus = _MenuModel([root, office])
+        office = _Menu(842, "综合办公", parent=root, sequence=70, action="")
+        menus = _MenuModel([root, office], visible_ids=[291])
         env = _Env(
             {
                 "ir.ui.menu": menus,

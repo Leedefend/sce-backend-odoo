@@ -637,16 +637,34 @@ class UiMenuConfigPolicy(models.Model):
             except Exception:
                 return False
 
+        def is_configured_structural_group(menu, policy) -> bool:
+            if not policy or not policy_visible(policy):
+                return False
+            try:
+                if str(menu.action or "").strip():
+                    return False
+            except Exception:
+                return False
+            try:
+                groups = getattr(menu, "groups_id", None)
+                if groups and len(groups):
+                    return False
+            except Exception:
+                return False
+            return True
+
         def build_missing_menu_node(menu, policy=None, seen: set[int] | None = None) -> dict | None:
             menu = menu.exists()
             if not menu:
                 return None
             menu_id = int(menu.id or 0)
             seen = set(seen or set())
-            if menu_id in seen or not menu_visible_to_user(menu):
+            policy = policy if policy is not None else policies_by_menu.get(menu_id)
+            if menu_id in seen:
+                return None
+            if not menu_visible_to_user(menu) and not is_configured_structural_group(menu, policy):
                 return None
             seen.add(menu_id)
-            policy = policy if policy is not None else policies_by_menu.get(menu_id)
             if stats.get("config_only") and not policy:
                 return None
             if policy and not policy_visible(policy):
