@@ -2094,7 +2094,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 type_for=field_type,
             )
 
-        if form_structure_governance and not form_structure_governance.get("form_layout_overlay"):
+        if form_structure_governance:
             source_contract["form_structure_contract"] = self._build_form_structure_contract(
                 model=model,
                 profile=profile,
