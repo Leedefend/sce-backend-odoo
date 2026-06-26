@@ -236,9 +236,25 @@ def main() -> int:
         violations.append(
             f"{runtime_path.relative_to(ROOT)}: runtime guard must reject legacyContractProjection in stable V2 contract"
         )
+    if "dataContract.dataMeta.{key} must not be emitted; use formal V2 camelCase metadata" not in runtime_source:
+        violations.append(
+            f"{runtime_path.relative_to(ROOT)}: runtime guard must reject snake_case dataMeta compatibility fields"
+        )
     if "def find_policy_contract_issues(" not in runtime_source or "issues.extend(find_policy_contract_issues(contract))" not in runtime_source:
         violations.append(
             f"{runtime_path.relative_to(ROOT)}: runtime guard must validate formal V2 policy projections"
+        )
+    if "actionContract compatibility field {key} must not be emitted by V2 contract" not in runtime_source:
+        violations.append(
+            f"{runtime_path.relative_to(ROOT)}: runtime guard must reject actionContract snake_case policy fields"
+        )
+    if "layoutContract compatibility field list_profile must not be emitted by V2 contract" not in runtime_source:
+        violations.append(
+            f"{runtime_path.relative_to(ROOT)}: runtime guard must reject layoutContract snake_case list profile"
+        )
+    if "root compatibility field form_structure_contract must not be emitted by V2 contract" not in runtime_source:
+        violations.append(
+            f"{runtime_path.relative_to(ROOT)}: runtime guard must reject root form_structure_contract compatibility alias"
         )
     if "sourceAuthority.formal_projection must be true" not in runtime_source:
         violations.append(

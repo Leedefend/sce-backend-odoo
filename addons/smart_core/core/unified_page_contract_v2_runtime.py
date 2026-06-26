@@ -217,16 +217,19 @@ def find_metadata_projection_issues(data_contract: dict[str, Any]) -> list[str]:
     legacy_projection = _dict(data_meta.get("legacyContractProjection") or data_meta.get("legacy_contract_projection"))
     if legacy_projection:
         issues.append("dataContract.dataMeta.legacyContractProjection must not be emitted in stable V2 contract")
+    for key in ("business_operation_profile", "visible_fields", "field_groups"):
+        if key in data_meta:
+            issues.append(f"dataContract.dataMeta.{key} must not be emitted; use formal V2 camelCase metadata")
     for key in ("business_operation_profile", "field_groups", "form_structure_contract", "formStructureContract", "list_profile", "visible_fields"):
         if key in legacy_projection:
             issues.append(f"legacyContractProjection.{key} must not be emitted; use formal V2 metadata")
     _validate_metadata_projection_authority(
         issues,
-        value=data_meta.get("businessOperationProfile") or data_meta.get("business_operation_profile"),
+        value=data_meta.get("businessOperationProfile"),
         source_key="business_operation_profile",
         projected_path="dataContract.dataMeta.businessOperationProfile",
     )
-    visible_fields = data_meta.get("visibleFields") or data_meta.get("visible_fields")
+    visible_fields = data_meta.get("visibleFields")
     _validate_metadata_projection_authority(
         issues,
         value=visible_fields,
@@ -236,7 +239,7 @@ def find_metadata_projection_issues(data_contract: dict[str, Any]) -> list[str]:
     visible_fields_row = _dict(visible_fields)
     if visible_fields_row and not _list(visible_fields_row.get("fields")):
         issues.append("dataContract.dataMeta.visibleFields.fields is required")
-    field_groups = data_meta.get("fieldGroups") or data_meta.get("field_groups")
+    field_groups = data_meta.get("fieldGroups")
     _validate_metadata_projection_authority(
         issues,
         value=field_groups,
@@ -281,6 +284,11 @@ def find_policy_contract_issues(contract: dict[str, Any]) -> list[str]:
     for key in ("delete_policy", "surface_policies", "list_profile"):
         if key in source:
             issues.append(f"root compatibility field {key} must not be emitted by V2 contract")
+    for key in ("delete_policy", "surface_policies"):
+        if key in action:
+            issues.append(f"actionContract compatibility field {key} must not be emitted by V2 contract")
+    if "list_profile" in layout:
+        issues.append("layoutContract compatibility field list_profile must not be emitted by V2 contract")
     _validate_policy_projection(
         issues,
         projected_value=action.get("deletePolicy"),
@@ -328,6 +336,8 @@ def _validate_policy_projection(
 
 def find_form_structure_contract_issues(contract: dict[str, Any]) -> list[str]:
     issues: list[str] = []
+    if "form_structure_contract" in contract:
+        issues.append("root compatibility field form_structure_contract must not be emitted by V2 contract")
     structure = _dict(contract.get("formStructureContract") or contract.get("form_structure_contract"))
     if not structure:
         return issues

@@ -183,6 +183,37 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
 
         self.assertEqual(issues, [])
 
+    def test_metadata_projection_rejects_snake_case_formal_aliases(self):
+        issues = runtime.find_metadata_projection_issues({
+            "dataMeta": {
+                "business_operation_profile": {
+                    "common_fields": ["name"],
+                    "sourceAuthority": self._metadata_source("business_operation_profile"),
+                },
+                "visible_fields": {
+                    "fields": ["name"],
+                    "sourceAuthority": self._metadata_source("visible_fields"),
+                },
+                "field_groups": {
+                    "groups": [{"name": "core", "fields": ["name"]}],
+                    "sourceAuthority": self._metadata_source("field_groups"),
+                },
+            }
+        })
+
+        self.assertIn(
+            "dataContract.dataMeta.business_operation_profile must not be emitted; use formal V2 camelCase metadata",
+            issues,
+        )
+        self.assertIn(
+            "dataContract.dataMeta.visible_fields must not be emitted; use formal V2 camelCase metadata",
+            issues,
+        )
+        self.assertIn(
+            "dataContract.dataMeta.field_groups must not be emitted; use formal V2 camelCase metadata",
+            issues,
+        )
+
     def test_policy_contract_rejects_root_compatibility_fields(self):
         contract = self._contract()
         contract["delete_policy"] = {"allow": True}
@@ -194,6 +225,20 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
         self.assertIn("root compatibility field delete_policy must not be emitted by V2 contract", issues)
         self.assertIn("root compatibility field surface_policies must not be emitted by V2 contract", issues)
         self.assertIn("root compatibility field list_profile must not be emitted by V2 contract", issues)
+
+    def test_policy_contract_rejects_nested_compatibility_fields(self):
+        contract = self._contract()
+        contract["actionContract"] = {
+            "delete_policy": {"allow": True},
+            "surface_policies": {"kind": "list"},
+        }
+        contract["layoutContract"]["list_profile"] = {"batch_policy": {"enabled": True}}
+
+        issues = runtime.find_policy_contract_issues(contract)
+
+        self.assertIn("actionContract compatibility field delete_policy must not be emitted by V2 contract", issues)
+        self.assertIn("actionContract compatibility field surface_policies must not be emitted by V2 contract", issues)
+        self.assertIn("layoutContract compatibility field list_profile must not be emitted by V2 contract", issues)
 
     def test_policy_contract_accepts_formal_v2_policy_projection(self):
         contract = self._contract()
@@ -257,6 +302,14 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
         self.assertIn("formStructureContract.fieldRoles.missing_role references unknown field", issues)
         self.assertIn("formStructureContract.fieldRoles.missing_role.slot references unknown slot missing_slot", issues)
         self.assertIn("formStructureContract field not projected to layout: missing_field", issues)
+
+    def test_form_structure_contract_rejects_root_compatibility_alias(self):
+        contract = self._contract()
+        contract["form_structure_contract"] = contract["formStructureContract"]
+
+        issues = runtime.find_form_structure_contract_issues(contract)
+
+        self.assertIn("root compatibility field form_structure_contract must not be emitted by V2 contract", issues)
 
     def test_form_structure_contract_allows_overview_summary_references(self):
         contract = self._contract()
