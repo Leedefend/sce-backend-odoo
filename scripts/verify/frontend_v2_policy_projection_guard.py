@@ -197,6 +197,23 @@ ALLOWED_STRICT_STORE_SNAKE_CASE_TOKENS = {
     "source_context",
 }
 
+ALLOWED_STRICT_SCHEMA_SNAKE_CASE_TOKENS = {
+    # Formal enum values.
+    "harmony_h5",
+    "web_pc",
+    "wx_mini",
+    # Explicit dataMeta forbidden-key rejection.
+    "business_operation_profile",
+    "field_groups",
+    "legacy_contract",
+    "visible_fields",
+    # Native form container extension compatibility.
+    "button_type",
+    "field_info",
+    "form_structure",
+    "form_structure_role",
+}
+
 FORBIDDEN_STRICT_ALIAS_HELPERS = (
     "function requiredAliasedString(",
     "function optionalAliasedString(",
@@ -405,6 +422,13 @@ def main() -> int:
         if f"export function {helper}(" not in helper_source:
             violations.append(f"{_relative(CONTRACT_HELPERS)}: missing exported helper {helper}")
     strict_schema_source = STRICT_SCHEMA.read_text(encoding="utf-8")
+    strict_schema_snake_tokens = _snake_case_tokens(strict_schema_source)
+    if strict_schema_snake_tokens != ALLOWED_STRICT_SCHEMA_SNAKE_CASE_TOKENS:
+        violations.append(
+            f"{_relative(STRICT_SCHEMA)}: strict V2 decoder snake_case tokens must match whitelist; "
+            f"extra={sorted(strict_schema_snake_tokens - ALLOWED_STRICT_SCHEMA_SNAKE_CASE_TOKENS)} "
+            f"missing={sorted(ALLOWED_STRICT_SCHEMA_SNAKE_CASE_TOKENS - strict_schema_snake_tokens)}"
+        )
     for token in FORBIDDEN_STRICT_SCHEMA_COMPAT_ALIASES:
         if token in strict_schema_source:
             violations.append(
