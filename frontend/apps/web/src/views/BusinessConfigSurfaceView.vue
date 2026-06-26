@@ -3479,11 +3479,19 @@ h1 {
 .page-picker-panel .scan-row {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px 10px;
+  align-items: start;
   border: 0;
   border-bottom: 1px solid var(--sc-app-border);
   border-radius: 0;
   padding: 12px;
   background: transparent;
+}
+
+.page-picker-panel .scan-row-main strong {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .page-picker-panel .scan-row-actions {

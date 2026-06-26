@@ -475,6 +475,9 @@ async function main() {
     const defaultSelectedRowCurrentText = await page.locator(".scan-row--selected .scan-row-current").innerText();
     const defaultNonSelectedChooseButtonCount = await page.locator(".scan-row:not(.scan-row--selected) .scan-row-actions button").filter({ hasText: "选择" }).count();
     const selectedName = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
+    const pagePickerNameWhiteSpace = await page.locator(".page-picker-panel .scan-row-main strong").first().evaluate((node) => (
+      window.getComputedStyle(node).whiteSpace
+    ));
     const defaultPageText = await page.locator("body").innerText();
     const pageTypeLabels = await page.locator(".page-type-tabs button").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
@@ -668,6 +671,7 @@ async function main() {
       defaultSelectedRowCurrentText,
       defaultNonSelectedChooseButtonCount,
       selectedName,
+      pagePickerNameWhiteSpace,
       pageTypeLabels,
       leakedDefaultTerms,
       defaultHasUnwiredCopy: defaultPageText.includes("编辑入口待接入"),
@@ -752,7 +756,8 @@ async function main() {
         && selectedOverviewText.includes("项目合同汇总")
         && defaultSelectedRowActionLabels.length === 0
         && defaultSelectedRowCurrentText === "当前配置"
-        && defaultNonSelectedChooseButtonCount >= 1,
+        && defaultNonSelectedChooseButtonCount >= 1
+        && pagePickerNameWhiteSpace === "normal",
       "配置页面没有形成左侧页面列表和右侧配置面板结构",
       {
         configWorkspaceCount,
@@ -763,6 +768,7 @@ async function main() {
         defaultSelectedRowActionLabels,
         defaultSelectedRowCurrentText,
         defaultNonSelectedChooseButtonCount,
+        pagePickerNameWhiteSpace,
       },
     );
     assert(selectedName === "项目合同汇总", "配置页没有恢复选中页面", { selectedName });
