@@ -10215,9 +10215,44 @@ function onSelectedFormSettingsFieldGroupMoveChange(event: Event) {
 
 function onFormLayoutColumnsChange(event: Event) {
   const target = event.target as HTMLSelectElement | null;
+  const previousColumns = formLayoutColumnsDraft.value;
   const columns = normalizeLowCodeColumns(target?.value, formLayoutColumnsDraft.value);
   if (columns === formLayoutColumnsDraft.value) return;
+  const groupTitles = new Set<string>();
+  currentFormGroupOptions.value.forEach((title) => {
+    const key = normalizeFieldGroupTitle(title);
+    if (key) groupTitles.add(key);
+  });
+  formDesignerGroupNavigatorItems.value.forEach((item) => {
+    const key = normalizeFieldGroupTitle(item.title);
+    if (key) groupTitles.add(key);
+  });
+  Object.keys(groupColumnsBase.value).forEach((key) => {
+    const normalized = normalizeFieldGroupTitle(key);
+    if (normalized) groupTitles.add(normalized);
+  });
+  Object.keys(groupColumnsDraft).forEach((key) => {
+    const normalized = normalizeFieldGroupTitle(key);
+    if (normalized) groupTitles.add(normalized);
+  });
   formLayoutColumnsDraft.value = columns;
+  groupTitles.forEach((key) => {
+    const baseColumns = groupColumnsBase.value[key] || previousColumns;
+    const draftColumns = groupColumnsDraft[key] || baseColumns;
+    if (draftColumns !== previousColumns) return;
+    groupColumnsDraft[key] = columns;
+    const baseVisible = Object.prototype.hasOwnProperty.call(groupVisibilityBase.value, key)
+      ? groupVisibilityBase.value[key] !== false
+      : true;
+    const draftVisible = Object.prototype.hasOwnProperty.call(groupVisibilityDraft, key)
+      ? groupVisibilityDraft[key] !== false
+      : baseVisible;
+    if (columns === baseColumns && draftVisible === baseVisible) {
+      delete groupLayoutDirtyKeys[key];
+    } else {
+      groupLayoutDirtyKeys[key] = true;
+    }
+  });
   formLayoutDirty.value = columns !== formLayoutColumnsBase.value;
   formConfigAuditResult.value = null;
   appendFormConfigOperation('调整页面列数', `页面调整为 ${columns} 栏`);
