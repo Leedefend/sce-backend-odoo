@@ -267,20 +267,20 @@ function requiredIntegerInRange(
 }
 
 function decodePageInfo(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2PageInfo {
-  const contractVersion = requiredAliasedString(source, 'contractVersion', ['contract_version'], 'pageInfo', issues);
-  if (!/^2\.\d+\.\d+(?:[-+].*)?$/.test(contractVersion)) {
+  const contractVersion = requiredString(source, 'contractVersion', 'pageInfo', issues);
+  if (!/^2\.\d+\.\d+$/.test(contractVersion)) {
     issues.push({ path: 'pageInfo.contractVersion', message: 'must be semantic version 2.x.y' });
   }
   return {
-    pageId: requiredAliasedString(source, 'pageId', ['page_id'], 'pageInfo', issues),
-    sceneKey: requiredAliasedString(source, 'sceneKey', ['scene_key'], 'pageInfo', issues),
-    pageName: requiredAliasedString(source, 'pageName', ['page_name', 'title'], 'pageInfo', issues),
+    pageId: requiredString(source, 'pageId', 'pageInfo', issues),
+    sceneKey: requiredString(source, 'sceneKey', 'pageInfo', issues),
+    pageName: requiredString(source, 'pageName', 'pageInfo', issues),
     model: requiredString(source, 'model', 'pageInfo', issues),
-    viewType: decodeViewType(requiredAliasedString(source, 'viewType', ['view_type'], 'pageInfo', issues), 'pageInfo.viewType', issues),
-    layoutType: decodeLayoutType(requiredAliasedString(source, 'layoutType', ['layout_type'], 'pageInfo', issues), 'pageInfo.layoutType', issues),
+    viewType: decodeViewType(requiredString(source, 'viewType', 'pageInfo', issues), 'pageInfo.viewType', issues),
+    layoutType: decodeLayoutType(requiredString(source, 'layoutType', 'pageInfo', issues), 'pageInfo.layoutType', issues),
     renderMode: decodePageRenderMode(requiredString(source, 'renderMode', 'pageInfo', issues), 'pageInfo.renderMode', issues),
     contractVersion,
-    clientType: decodeClientType(requiredAliasedString(source, 'clientType', ['client_type'], 'pageInfo', issues), issues),
+    clientType: decodeClientType(requiredString(source, 'clientType', 'pageInfo', issues), issues),
   };
 }
 

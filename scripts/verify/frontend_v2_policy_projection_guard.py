@@ -150,6 +150,13 @@ REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
     "viewType: decodeViewType(",
     "layoutType: decodeLayoutType(",
     "renderMode: decodePageRenderMode(",
+    "const contractVersion = requiredString(source, 'contractVersion', 'pageInfo', issues)",
+    "pageId: requiredString(source, 'pageId', 'pageInfo', issues)",
+    "sceneKey: requiredString(source, 'sceneKey', 'pageInfo', issues)",
+    "pageName: requiredString(source, 'pageName', 'pageInfo', issues)",
+    "viewType: decodeViewType(requiredString(source, 'viewType', 'pageInfo', issues)",
+    "layoutType: decodeLayoutType(requiredString(source, 'layoutType', 'pageInfo', issues)",
+    "clientType: decodeClientType(requiredString(source, 'clientType', 'pageInfo', issues)",
     "adaptMode: decodeAdaptMode(",
     "triggerType: decodeTriggerType(",
     "dispatchMode: decodeDispatchMode(",
@@ -170,6 +177,16 @@ REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
 FORBIDDEN_STRICT_STORE_META_EXTENSION_TOKENS = (
     "meta.requiredCapabilities",
     "requiredCapabilities",
+)
+
+FORBIDDEN_STRICT_PAGE_INFO_ALIASES = (
+    "['contract_version']",
+    "['page_id']",
+    "['scene_key']",
+    "['page_name', 'title']",
+    "['view_type']",
+    "['layout_type']",
+    "['client_type']",
 )
 
 
@@ -213,6 +230,11 @@ def _strict_required_object_reads(source: str) -> set[str]:
     return set(re.findall(r"readAliasedObject\(root, '([^']+)', \[\], '\$', issues\)", source))
 
 
+def _function_body(source: str, function_name: str) -> str:
+    match = re.search(rf"function\s+{re.escape(function_name)}\s*\([^)]*\)\s*:[^{{]+\{{(?P<body>.*?)\n\}}", source, re.DOTALL)
+    return match.group("body") if match else ""
+
+
 def main() -> int:
     violations: list[str] = []
     helper_source = CONTRACT_HELPERS.read_text(encoding="utf-8")
@@ -237,6 +259,12 @@ def main() -> int:
     for token in REQUIRED_STRICT_ENUM_DECODER_TOKENS:
         if token not in strict_schema_source:
             violations.append(f"{_relative(STRICT_SCHEMA)}: strict V2 enum decoder token missing: {token}")
+    page_info_decoder = _function_body(strict_schema_source, "decodePageInfo")
+    for token in FORBIDDEN_STRICT_PAGE_INFO_ALIASES:
+        if token in page_info_decoder:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 pageInfo decoder must not accept compatibility alias {token}"
+            )
     strict_store_source = STRICT_STORE.read_text(encoding="utf-8")
     for token in FORBIDDEN_STRICT_STORE_META_EXTENSION_TOKENS:
         if token in strict_store_source:
