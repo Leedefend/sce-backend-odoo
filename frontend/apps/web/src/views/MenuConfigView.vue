@@ -2608,7 +2608,7 @@ h1 {
 
 .tree-state-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   padding: 8px 10px 10px;
   border-bottom: 1px solid var(--sc-app-border);
@@ -2619,11 +2619,11 @@ h1 {
   min-height: 32px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 8px;
   border: 1px solid var(--sc-app-border);
   border-radius: 6px;
-  padding: 0 6px;
+  padding: 0 8px;
   background: var(--sc-app-bg);
   color: var(--sc-app-text-secondary);
   font-size: 12px;
@@ -2633,8 +2633,6 @@ h1 {
 .tree-state-tabs button span,
 .tree-state-tabs button b {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
