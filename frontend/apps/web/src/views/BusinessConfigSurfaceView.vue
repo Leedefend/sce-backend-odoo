@@ -960,6 +960,8 @@ import {
 } from '../api/businessConfig';
 import { isBusinessConfigRuntimeModel } from '../app/businessConfigBoundaries';
 
+const SURFACE_LOAD_TIMEOUT_MS = 20000;
+
 const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
@@ -1019,6 +1021,7 @@ const approvalStepsBaseJson = ref('[]');
 const approvalStepDragIndex = ref<number | null>(null);
 const approvalStepDropIndex = ref<number | null>(null);
 let approvalStepTempId = 0;
+let surfaceLoadSeq = 0;
 const listColumnDraft = ref('');
 const searchFilterDraft = ref('');
 const searchGroupDraft = ref('');
@@ -1685,21 +1688,43 @@ function remediationActionLabel(code: string) {
   return code;
 }
 
+function withSurfaceLoadTimeout<T>(request: Promise<T>) {
+  let timer: number | undefined;
+  const timeout = new Promise<T>((_, reject) => {
+    timer = window.setTimeout(() => {
+      reject(new Error('配置能力读取超时，请检查网络或稍后点击“读取配置对象”重试。'));
+    }, SURFACE_LOAD_TIMEOUT_MS);
+  });
+  return Promise.race([request, timeout]).finally(() => {
+    if (timer) {
+      window.clearTimeout(timer);
+    }
+  });
+}
+
 async function loadSurface() {
+  const seq = ++surfaceLoadSeq;
   loading.value = true;
   error.value = '';
   clearMessage();
   try {
-    surface.value = await loadBusinessConfigSurface({
-      model: currentModel.value || undefined,
-      action_id: scopeAction.value,
-      view_id: scopeView.value,
-      role_key: scopeRole.value,
-    });
+    const nextSurface = await withSurfaceLoadTimeout(
+      loadBusinessConfigSurface({
+        model: currentModel.value || undefined,
+        action_id: scopeAction.value,
+        view_id: scopeView.value,
+        role_key: scopeRole.value,
+      }),
+    );
+    if (seq !== surfaceLoadSeq) return;
+    surface.value = nextSurface;
   } catch (err) {
+    if (seq !== surfaceLoadSeq) return;
     error.value = err instanceof Error ? err.message : '业务配置工作台加载失败';
   } finally {
-    loading.value = false;
+    if (seq === surfaceLoadSeq) {
+      loading.value = false;
+    }
   }
 }
 
