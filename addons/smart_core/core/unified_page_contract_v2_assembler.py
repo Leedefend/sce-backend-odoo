@@ -668,6 +668,8 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         container_status=contract["statusContract"]["containerStatus"],
     )
     _standardize_form_container_semantics(container_tree, model=model, view_type=view_type, source=source)
+    if layout_type == "form":
+        _apply_form_structure_columns_to_tree(container_tree, form_structure_contract)
     contract["layoutContract"]["containerTree"] = container_tree
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
     if form_structure_contract and form_structure_applied:
