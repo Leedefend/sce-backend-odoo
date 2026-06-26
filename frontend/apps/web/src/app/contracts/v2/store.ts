@@ -73,6 +73,11 @@ function asText(value: unknown): string {
   return String(value || '').trim();
 }
 
+function spanValue(value: unknown): number {
+  const numberValue = Number(value);
+  return Number.isInteger(numberValue) && numberValue >= 1 && numberValue <= 24 ? numberValue : 24;
+}
+
 function synthesizeWidgetFromContainer(container: ContractV2Container): ContractV2Widget | null {
   const type = asText(container.type || container.containerType).toLowerCase();
   if (type !== 'field') return null;
@@ -100,8 +105,10 @@ function synthesizeWidgetFromContainer(container: ContractV2Container): Contract
     widgetType: asText(container.widget || fieldInfo.widget || fieldType || container.containerType) || 'display',
     fieldCode,
     label: asText(container.label || container.string || fieldInfo.label || fieldInfo.string) || fieldCode,
+    span: spanValue(container.span || fieldInfo.span || attributes.span),
     componentKey: asText(fieldInfo.componentKey || fieldInfo.component_key || attributes.componentKey || attributes.component_key) || 'sc.display.text',
-    ...(Object.keys(mergedComponentConfig).length ? { componentConfig: mergedComponentConfig } : {}),
+    capabilities: [],
+    componentConfig: mergedComponentConfig,
     ...(fieldType ? { fieldType } : {}),
     ...(relation ? { relation } : {}),
   };

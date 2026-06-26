@@ -31,8 +31,10 @@ export interface ContractV2Widget {
   widgetType: string;
   fieldCode: string;
   label: string;
+  span: number;
   componentKey: string;
-  componentConfig?: ContractV2Dictionary;
+  capabilities: string[];
+  componentConfig: ContractV2Dictionary;
   fieldType?: string;
   relation?: string;
   formStructureRole?: ContractV2Dictionary;
@@ -46,6 +48,8 @@ export interface ContractV2Container {
   string?: string;
   label?: string;
   title: string;
+  span: number;
+  styleToken?: string;
   cols?: number;
   columns?: number;
   widget?: string;

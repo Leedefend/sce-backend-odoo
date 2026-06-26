@@ -194,7 +194,11 @@ def _strict_snapshot_fields(source: str) -> set[str]:
 
 
 def _interface_fields(source: str, interface_name: str) -> set[str]:
-    match = re.search(rf"export\s+interface\s+{re.escape(interface_name)}\s*\{{(?P<body>.*?)\n\}}", source, re.DOTALL)
+    match = re.search(
+        rf"export\s+interface\s+{re.escape(interface_name)}(?:\s+extends\s+[^\{{]+)?\s*\{{(?P<body>.*?)\n\}}",
+        source,
+        re.DOTALL,
+    )
     if not match:
         return set()
     fields: set[str] = set()
@@ -280,6 +284,10 @@ def main() -> int:
         "actionContract": "ContractV2ActionContract",
         "actionRule": "ContractV2ActionRule",
         "runtimeContract": "ContractV2RuntimeContract",
+        "container": "ContractV2Container",
+        "widget": "ContractV2Widget",
+        "dataContract": "ContractV2DataContract",
+        "dataMeta": "ContractV2DataMeta",
         "meta": "ContractV2Meta",
         "visibleFields": "ContractV2VisibleFields",
         "fieldGroups": "ContractV2FieldGroups",

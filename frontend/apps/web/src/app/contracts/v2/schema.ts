@@ -253,6 +253,19 @@ function requiredRecord(source: ContractV2Dictionary, key: string, path: string,
   return {};
 }
 
+function requiredIntegerInRange(
+  source: ContractV2Dictionary,
+  key: string,
+  path: string,
+  issues: DecodeIssue[],
+  fallback: number,
+): number {
+  const value = Number(source[key]);
+  if (Number.isInteger(value) && value >= 1 && value <= 24) return value;
+  issues.push({ path: `${path}.${key}`, message: 'must be an integer between 1 and 24' });
+  return fallback;
+}
+
 function decodePageInfo(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2PageInfo {
   const contractVersion = requiredAliasedString(source, 'contractVersion', ['contract_version'], 'pageInfo', issues);
   if (!/^2\.\d+\.\d+(?:[-+].*)?$/.test(contractVersion)) {
@@ -307,8 +320,10 @@ function decodeWidget(raw: unknown, path: string, issues: DecodeIssue[]): Contra
     widgetType,
     fieldCode,
     label: optionalAliasedString(raw, 'label', ['string', 'title']) || asString(fieldInfo.label) || asString(fieldInfo.string) || fieldCode,
+    span: requiredIntegerInRange(raw, 'span', path, issues, 24),
     componentKey,
-    ...(Object.keys(mergedComponentConfig).length ? { componentConfig: mergedComponentConfig } : {}),
+    capabilities: asStringArray(raw.capabilities),
+    componentConfig: mergedComponentConfig,
     ...(optionalAliasedString(raw, 'fieldType', ['field_type', 'ttype']) || asString(fieldInfo.type) || asString(fieldInfo.ttype)
       ? { fieldType: optionalAliasedString(raw, 'fieldType', ['field_type', 'ttype']) || asString(fieldInfo.type) || asString(fieldInfo.ttype) }
       : {}),
@@ -360,6 +375,8 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
     ...(asString(raw.string) ? { string: asString(raw.string) } : {}),
     ...(asString(raw.label) ? { label: asString(raw.label) } : {}),
     title: asString(raw.title) || asString(raw.string) || asString(raw.label),
+    span: requiredIntegerInRange(raw, 'span', path, issues, 24),
+    ...(asString(raw.styleToken) ? { styleToken: asString(raw.styleToken) } : {}),
     ...(Number(raw.cols || raw.col) ? { cols: Number(raw.cols || raw.col) } : {}),
     ...(Number(raw.columns) ? { columns: Number(raw.columns) } : {}),
     ...(asString(raw.widget) ? { widget: asString(raw.widget) } : {}),
