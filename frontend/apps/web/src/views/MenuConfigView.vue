@@ -23,7 +23,7 @@
     <section v-if="showGuide" class="guide-panel">
       <div>
         <h2>配置口径</h2>
-        <p>这里只配置当前导航中实际出现的菜单；未面向业务用户开放的入口不进入配置范围。</p>
+        <p>这里只配置当前业务办理范围内的菜单；已隐藏但可重新开放的系统菜单也会进入配置范围。</p>
       </div>
       <div class="guide-grid">
         <article>
@@ -1796,6 +1796,12 @@ function attachMissingConfiguredMenus(
   return buildMissingBranch(0);
 }
 
+function scopedRootMenuId(payloadTree: MenuConfigMenu[] = []) {
+  const rootId = Number(rootMenu.value?.id || 0);
+  if (rootId) return rootId;
+  return Number(payloadTree?.[0]?.id || 0);
+}
+
 function collectNavigationMenuIds() {
   const ids: number[] = [];
   const seen = new Set<number>();
@@ -1863,7 +1869,7 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
       navOrderedTree,
       payload.menus || [],
       usedMenuIds,
-      rootMenu.value?.id || 0,
+      scopedRootMenuId(payload.tree || []),
     );
     tree.value = completeTree;
     const routeMenuId = Number(route.query.menu_id || 0);
