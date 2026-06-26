@@ -107,6 +107,22 @@ class _RecordSet(list):
     def exists(self):
         return self
 
+    def mapped(self, name):
+        values = _RecordSet([])
+        scalars = []
+        for record in self:
+            value = getattr(record, name, None)
+            if isinstance(value, (list, _RecordSet)):
+                values.extend(value)
+            elif hasattr(value, "id"):
+                values.append(value)
+            elif value is not None:
+                scalars.append(value)
+        return values if values else scalars
+
+    def sorted(self, key=None, reverse=False):
+        return _RecordSet(sorted(list(self), key=key, reverse=reverse))
+
 
 class _Group:
     def __init__(self, ident, name):
@@ -157,6 +173,9 @@ class _MenuModel(_RecordSet):
         return list(self.visible_ids)
 
     def browse(self, record_id):
+        if isinstance(record_id, (list, tuple, set)):
+            wanted = {int(item or 0) for item in record_id}
+            return _RecordSet([record for record in self if int(record.id or 0) in wanted])
         for record in self:
             if int(record.id or 0) == int(record_id or 0):
                 return record
@@ -570,6 +589,55 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(contract.contract_json["menu_orchestration"]["policy_count"], 1)
         self.assertEqual(contract.contract_json["menu_orchestration"]["source"], "smart_core.lowcode.menu_config")
         self.assertTrue(result["meta"]["contract_mirrored"])
+
+    def test_menu_config_panel_scopes_rows_to_business_root_after_policy_moves(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        business_root = _Menu(291, "智慧施工管理平台")
+        system_settings = _Menu(297, "系统设置", parent=business_root, sequence=90)
+        unrelated_root = _Menu(1, "设置")
+        unrelated_child = _Menu(2, "技术参数", parent=unrelated_root, sequence=10)
+        menus = _MenuModel([business_root, system_settings, unrelated_root, unrelated_child])
+        policies = _PolicyModel(
+            [
+                _Policy(1, business_root, company=company, target_parent=None),
+                _Policy(2, system_settings, company=company, target_parent=business_root),
+                _Policy(3, unrelated_root, company=company, target_parent=None),
+                _Policy(4, unrelated_child, company=company, target_parent=unrelated_root),
+            ],
+            user=user,
+        )
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([]),
+                "ui.menu.config.policy": policies,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationLoadHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "root_menu_id": 291,
+                "menu_ids": [291, 297, 1, 2],
+            },
+        )
+        handler._group_option_records = lambda menus, policies: _RecordSet([])
+        handler._expand_with_parent_ids = lambda menus: [int(menu.id) for menu in menus]
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertEqual(result["meta"]["scope_root_menu_id"], 291)
+        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 297])
+        self.assertEqual(set(result["data"]["policies"].keys()), {291, 297})
+        self.assertEqual([(row["id"], row["name"]) for row in result["data"]["tree"]], [(291, "智慧施工管理平台")])
+        self.assertEqual(
+            [(row["id"], row["name"]) for row in result["data"]["tree"][0]["children"]],
+            [(297, "系统设置")],
+        )
 
     def test_menu_config_save_deactivates_superseded_same_scope_policy(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")

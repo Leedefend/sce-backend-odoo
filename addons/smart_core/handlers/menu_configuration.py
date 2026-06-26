@@ -256,6 +256,30 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 row["sequence"] = sequence
         return list(by_id.values())
 
+    def _filter_rows_to_root_scope(self, rows: list[dict], root_menu_id: int) -> list[dict]:
+        root_menu_id = _to_int(root_menu_id)
+        if not root_menu_id:
+            return rows
+        by_parent: dict[int, list[int]] = {}
+        row_ids = set()
+        for row in rows:
+            row_id = _to_int(row.get("id") or row.get("menu_id"))
+            if not row_id:
+                continue
+            row_ids.add(row_id)
+            by_parent.setdefault(_to_int(row.get("parent_id")), []).append(row_id)
+        if root_menu_id not in row_ids:
+            return rows
+        scoped_ids = {root_menu_id}
+        stack = list(by_parent.get(root_menu_id, []))
+        while stack:
+            menu_id = stack.pop()
+            if menu_id in scoped_ids:
+                continue
+            scoped_ids.add(menu_id)
+            stack.extend(by_parent.get(menu_id, []))
+        return [row for row in rows if _to_int(row.get("id") or row.get("menu_id")) in scoped_ids]
+
     def _build_tree(self, rows: list[dict]) -> list[dict]:
         by_id = {int(row["id"]): dict(row, children=[]) for row in rows}
         roots: list[dict] = []
@@ -348,6 +372,13 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             policy_by_menu.setdefault(int(policy.menu_id.id), self._serialize_policy(policy))
 
         effective_menu_rows = self._effective_menu_rows(menu_rows, policy_by_menu)
+        effective_menu_rows = self._filter_rows_to_root_scope(effective_menu_rows, root_menu_id)
+        scoped_menu_ids = {int(row["id"]) for row in effective_menu_rows}
+        policy_by_menu = {
+            menu_id: policy
+            for menu_id, policy in policy_by_menu.items()
+            if int(menu_id or 0) in scoped_menu_ids
+        }
 
         groups = self._group_option_records(menus, policies)
         group_rows = [
@@ -373,6 +404,8 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 "source_authority": self.source_authority_contract(),
                 "menu_count": len(menu_rows),
                 "policy_count": len(policy_by_menu),
+                "scope_root_menu_id": root_menu_id,
+                "scoped_menu_count": len(effective_menu_rows),
                 "requested_menu_count": len(requested_menu_ids),
                 "group_option_count": len(group_rows),
             },
