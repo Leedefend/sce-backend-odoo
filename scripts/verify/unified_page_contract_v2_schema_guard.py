@@ -10,6 +10,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from jsonschema import Draft202012Validator
+
 
 TOP_LEVEL_KEYS = {
     "pageInfo",
@@ -210,6 +212,19 @@ def validate_example(path: Path, payload: dict[str, Any], registry: dict[str, An
                 fail(errors, f"{path}: unknown capabilities {sorted(unknown)} at {node_path}")
 
 
+def validate_example_against_schema(
+    path: Path,
+    payload: dict[str, Any],
+    validator: Draft202012Validator,
+    errors: list[str],
+) -> None:
+    for issue in sorted(validator.iter_errors(payload), key=lambda item: list(item.absolute_path)):
+        location = "$"
+        if issue.absolute_path:
+            location = "$." + ".".join(str(item) for item in issue.absolute_path)
+        fail(errors, f"{path}: schema validation failed at {location}: {issue.message}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--schema", required=True, type=Path)
@@ -221,6 +236,7 @@ def main() -> int:
     schema = load_json(args.schema)
     registry = load_json(args.enum_registry)
     validate_schema(schema, registry, errors)
+    validator = Draft202012Validator(schema)
 
     example_paths = sorted(args.examples.glob("*.json"))
     if not example_paths:
@@ -228,6 +244,7 @@ def main() -> int:
 
     for example_path in example_paths:
         payload = load_json(example_path)
+        validate_example_against_schema(example_path, payload, validator, errors)
         validate_example(example_path, payload, registry, errors)
 
     if errors:
