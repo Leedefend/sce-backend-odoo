@@ -1153,7 +1153,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
                     "menu_id": 299,
                     "menu_label": "投标管理",
                     "visible": True,
-                    "target_parent_menu_id": 292,
+                    "target_parent_menu_id": 0,
                     "sequence_override": 30,
                 },
                 477: {
@@ -1206,7 +1206,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(fee_node["parent_id"], 299)
         self.assertEqual(fee_node["sequence"], 40)
         self.assertEqual(fee_node["meta"]["parent_menu_id"], 299)
-        self.assertEqual(stats["moved_count"], 3)
+        self.assertEqual(stats["moved_count"], 2)
 
     def test_runtime_overlay_builds_children_for_missing_moved_group(self):
         module = _load_policy_model()

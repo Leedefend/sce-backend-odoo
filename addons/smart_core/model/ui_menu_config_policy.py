@@ -763,10 +763,50 @@ class UiMenuConfigPolicy(models.Model):
                     return True
             return False
 
+        def effective_parent_menu(menu):
+            try:
+                menu_id = int(menu.id or 0)
+            except Exception:
+                menu_id = 0
+            policy = policies_by_menu.get(menu_id)
+            configured_parent = policy_target_parent(policy) if policy else self.env["ir.ui.menu"].browse(0)
+            if configured_parent and configured_parent.exists() and int(configured_parent.id or 0) != menu_id:
+                return configured_parent
+            return menu.parent_id
+
+        def ensure_menu_present(nodes: list[dict], menu) -> list[dict]:
+            menu = menu.exists() if menu else menu
+            if not menu or node_matches_any_menu(nodes, menu):
+                return nodes
+            parent = effective_parent_menu(menu)
+            if parent and parent.exists() and int(parent.id or 0) != int(menu.id or 0):
+                nodes = ensure_menu_present(nodes, parent)
+            policy = policies_by_menu.get(int(menu.id or 0))
+            node = build_missing_menu_node(menu, policy)
+            if node is None:
+                return nodes
+            if parent and parent.exists() and int(parent.id or 0) != int(menu.id or 0):
+                nodes, inserted = insert_node(nodes, parent, node)
+                if inserted:
+                    return sort_children(nodes)
+            return sort_children(nodes + [node])
+
+        def node_matches_any_menu(nodes: list[dict], menu) -> bool:
+            for node in nodes or []:
+                if not isinstance(node, dict):
+                    continue
+                if node_matches_menu(node, menu):
+                    return True
+                children = node.get("children") if isinstance(node.get("children"), list) else []
+                if children and node_matches_any_menu(children, menu):
+                    return True
+            return False
+
         def apply_moves(nodes: list[dict]) -> list[dict]:
             next_nodes = nodes
             for move in move_targets:
                 target_menu = move["target_menu"]
+                next_nodes = ensure_menu_present(next_nodes, target_menu)
                 next_nodes, moved_node = remove_node(
                     next_nodes,
                     int(move["menu_id"]),
