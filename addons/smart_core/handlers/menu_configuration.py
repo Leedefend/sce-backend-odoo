@@ -343,7 +343,32 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         root_menu_id = self._root_menu_id(params)
         if root_menu_id and root_menu_id not in requested_menu_ids:
             requested_menu_ids.append(root_menu_id)
-        if requested_menu_ids:
+        if root_menu_id:
+            requested_set = {int(menu_id) for menu_id in requested_menu_ids if int(menu_id or 0)}
+            candidate_ids = set(requested_set)
+            policy_records = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False).search([
+                ("company_id", "=", company_id),
+                ("active", "=", True),
+                ("menu_id", "!=", False),
+            ])
+            for policy in policy_records:
+                menu_id = _to_int(getattr(getattr(policy, "menu_id", None), "id", 0))
+                target_parent_id = _to_int(getattr(getattr(policy, "target_parent_menu_id", None), "id", 0))
+                visible = _to_bool(getattr(policy, "visible", True), True)
+                if menu_id in requested_set or target_parent_id in requested_set or not visible:
+                    candidate_ids.add(menu_id)
+                    if target_parent_id:
+                        candidate_ids.add(target_parent_id)
+            requested_menus = MenuAll.browse(sorted(candidate_ids)).exists()
+            menu_ids_with_parents = self._expand_with_parent_ids(requested_menus)
+            menus = MenuAll.browse(menu_ids_with_parents).exists().sorted(
+                key=lambda menu: (
+                    int(menu.parent_id.id or 0) if menu.parent_id else 0,
+                    int(menu.sequence or 0),
+                    int(menu.id or 0),
+                )
+            )
+        elif requested_menu_ids:
             policy_records = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False).search([
                 ("company_id", "=", company_id),
                 ("active", "=", True),

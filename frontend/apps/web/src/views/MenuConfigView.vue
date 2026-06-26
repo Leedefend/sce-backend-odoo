@@ -150,7 +150,7 @@
         <div class="tree-panel-head">
           <div>
             <span class="panel-kicker">菜单目录</span>
-            <strong>{{ flatRows.length }} 个菜单</strong>
+            <strong>{{ visibleFlatRows.length }} 个菜单</strong>
           </div>
           <span class="tree-panel-hint">
             {{ treeDragEnabled ? '直接拖拽排序' : '搜索时暂停拖拽' }}
@@ -649,6 +649,7 @@ type FlatRow = {
 
 type DropPosition = 'before' | 'after' | 'inside';
 type RuntimeMenuConfigGroup = MenuConfigMenu & { runtime_group?: boolean };
+type MenuConfigTreeNode = MenuConfigMenu & { menu_config_missing?: boolean };
 
 const MENU_CONFIG_SAVE_NOTICE_KEY = 'sc_menu_config_save_notice';
 
@@ -911,6 +912,20 @@ const flatRows = computed<FlatRow[]>(() => {
   return out;
 });
 
+const visibleFlatRows = computed<FlatRow[]>(() => {
+  const out: FlatRow[] = [];
+  const walk = (items: MenuConfigMenu[], level = 1) => {
+    items.forEach((item) => {
+      if (!isRuntimeMenuGroup(item)) {
+        out.push({ menu: item, level });
+      }
+      if (item.children?.length) walk(item.children, level + 1);
+    });
+  };
+  walk(visibleTree.value);
+  return out;
+});
+
 const normalizedSearchText = computed(() => searchText.value.trim().toLowerCase());
 const treeDragEnabled = computed(() => !normalizedSearchText.value);
 
@@ -935,9 +950,20 @@ function menuMatchesSearch(menu: MenuConfigMenu) {
   return menuSearchText(menu).includes(term);
 }
 
+function isMissingConfiguredMenu(menu: MenuConfigMenu | null | undefined) {
+  return Boolean((menu as MenuConfigTreeNode | null | undefined)?.menu_config_missing);
+}
+
 const visibleTree = computed<MenuConfigMenu[]>(() => {
   const term = normalizedSearchText.value;
-  if (!term) return tree.value;
+  if (!term) {
+    const filterDefaultBranch = (items: MenuConfigMenu[]): MenuConfigMenu[] => items.flatMap((item) => {
+      const children = filterDefaultBranch(item.children || []);
+      if (isMissingConfiguredMenu(item) && !children.length) return [];
+      return [{ ...item, children }];
+    });
+    return filterDefaultBranch(tree.value);
+  }
 
   const filterBranch = (items: MenuConfigMenu[]): MenuConfigMenu[] => {
     return items.flatMap((item) => {
@@ -964,13 +990,14 @@ const selectedIds = computed(() => {
       if (item.children?.length) walk(item.children, active);
     });
   };
-  walk(tree.value);
+  walk(visibleTree.value);
   return out;
 });
 
 const filteredRows = computed(() => {
   const term = normalizedSearchText.value;
-  return flatRows.value.filter((row) => {
+  const sourceRows = term ? flatRows.value : visibleFlatRows.value;
+  return sourceRows.filter((row) => {
     if (!term && selectedMenuId.value && !selectedIds.value.has(row.menu.id)) return false;
     if (onlyConfigured.value && !hasConfiguration(row.menu.id)) return false;
     if (!term) return true;
@@ -1852,7 +1879,7 @@ function attachMissingConfiguredMenus(
     const parentId = Number(menu.parent_id || 0);
     if (!parentId && !rootIds.size) return;
     const list = byParent.get(parentId) || [];
-    list.push({ ...menu, children: [] });
+    list.push({ ...menu, children: [], menu_config_missing: true } as MenuConfigTreeNode);
     byParent.set(parentId, list);
   });
 
