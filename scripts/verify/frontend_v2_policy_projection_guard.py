@@ -66,6 +66,10 @@ FORBIDDEN_STRICT_SCHEMA_COMPAT_ALIASES = (
     "row.source_authority",
     "root.form_structure_contract",
     "root.searchContract",
+    "root.data",
+    "root.rawBody",
+    "unified_page_contract_v2",
+    "__unified_page_contract_v2",
     "legacyContractProjection",
     "legacy_contract_projection",
 )

@@ -476,23 +476,8 @@ function decodeStatusContract(source: ContractV2Dictionary): ContractV2StatusCon
   };
 }
 
-export function extractContractV2Candidate(value: unknown): unknown {
-  const root = asRecord(value);
-  const data = asRecord(root.data);
-  const rawBody = asRecord(root.rawBody);
-  return (
-    root.unified_page_contract_v2 ||
-    root.__unified_page_contract_v2 ||
-    data.unified_page_contract_v2 ||
-    data.__unified_page_contract_v2 ||
-    rawBody.unified_page_contract_v2 ||
-    rawBody.__unified_page_contract_v2 ||
-    value
-  );
-}
-
 export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
-  const root = asRecord(extractContractV2Candidate(value));
+  const root = asRecord(value);
   const issues: DecodeIssue[] = [];
   const pageInfo = decodePageInfo(readAliasedObject(root, 'pageInfo', ['page_info'], '$', issues), issues);
   const layoutContract = decodeLayoutContract(readAliasedObject(root, 'layoutContract', ['layout_contract'], '$', issues), issues);
