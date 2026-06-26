@@ -1,4 +1,7 @@
 export type ContractV2ClientType = 'web_pc' | 'wx_mini' | 'harmony_h5';
+export type ContractV2ViewType = 'form' | 'list' | 'table' | 'kanban' | 'tree' | 'gantt' | 'combine';
+export type ContractV2LayoutType = 'form' | 'table' | 'kanban' | 'tree' | 'gantt' | 'combine';
+export type ContractV2AdaptMode = 'pc' | 'mobile';
 export type ContractV2Dictionary = Record<string, unknown>;
 
 export interface ContractV2PageInfo {
@@ -6,8 +9,8 @@ export interface ContractV2PageInfo {
   sceneKey: string;
   pageName: string;
   model: string;
-  viewType: string;
-  layoutType: string;
+  viewType: ContractV2ViewType;
+  layoutType: ContractV2LayoutType;
   contractVersion: string;
   clientType: ContractV2ClientType;
 }
@@ -55,8 +58,8 @@ export interface ContractV2Container {
 }
 
 export interface ContractV2LayoutContract {
-  layoutType: string;
-  adaptMode: string;
+  layoutType: ContractV2LayoutType;
+  adaptMode: ContractV2AdaptMode;
   containerTree: ContractV2Container[];
   componentRegistry: ContractV2Dictionary;
   listProfile?: ContractV2Dictionary;

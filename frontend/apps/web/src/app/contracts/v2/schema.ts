@@ -2,6 +2,7 @@ import type {
   ContractV2ActionContract,
   ContractV2ActionRule,
   ContractV2ButtonStatus,
+  ContractV2AdaptMode,
   ContractV2ClientType,
   ContractV2Container,
   ContractV2ContainerStatus,
@@ -10,12 +11,14 @@ import type {
   ContractV2Dictionary,
   ContractV2FieldGroups,
   ContractV2GlobalStatus,
+  ContractV2LayoutType,
   ContractV2LayoutContract,
   ContractV2PageInfo,
   ContractV2SelectorStatus,
   ContractV2Snapshot,
   ContractV2StatusContract,
   ContractV2VisibleFields,
+  ContractV2ViewType,
   ContractV2Widget,
   ContractV2WidgetStatus,
 } from './types';
@@ -118,6 +121,30 @@ function decodeClientType(value: string, issues: DecodeIssue[]): ContractV2Clien
   return 'web_pc';
 }
 
+function decodeViewType(value: string, path: string, issues: DecodeIssue[]): ContractV2ViewType {
+  if (value === 'form' || value === 'list' || value === 'table' || value === 'kanban' || value === 'tree' || value === 'gantt' || value === 'combine') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported view type ${value || '<empty>'}` });
+  return 'form';
+}
+
+function decodeLayoutType(value: string, path: string, issues: DecodeIssue[]): ContractV2LayoutType {
+  if (value === 'form' || value === 'table' || value === 'kanban' || value === 'tree' || value === 'gantt' || value === 'combine') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported layout type ${value || '<empty>'}` });
+  return 'form';
+}
+
+function decodeAdaptMode(value: string, path: string, issues: DecodeIssue[]): ContractV2AdaptMode {
+  if (value === 'pc' || value === 'mobile') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported adapt mode ${value || '<empty>'}` });
+  return 'pc';
+}
+
 function decodePageInfo(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2PageInfo {
   const contractVersion = requiredAliasedString(source, 'contractVersion', ['contract_version'], 'pageInfo', issues);
   if (!/^2\.\d+\.\d+(?:[-+].*)?$/.test(contractVersion)) {
@@ -128,8 +155,8 @@ function decodePageInfo(source: ContractV2Dictionary, issues: DecodeIssue[]): Co
     sceneKey: requiredAliasedString(source, 'sceneKey', ['scene_key'], 'pageInfo', issues),
     pageName: requiredAliasedString(source, 'pageName', ['page_name', 'title'], 'pageInfo', issues),
     model: requiredString(source, 'model', 'pageInfo', issues),
-    viewType: requiredAliasedString(source, 'viewType', ['view_type'], 'pageInfo', issues),
-    layoutType: requiredAliasedString(source, 'layoutType', ['layout_type'], 'pageInfo', issues),
+    viewType: decodeViewType(requiredAliasedString(source, 'viewType', ['view_type'], 'pageInfo', issues), 'pageInfo.viewType', issues),
+    layoutType: decodeLayoutType(requiredAliasedString(source, 'layoutType', ['layout_type'], 'pageInfo', issues), 'pageInfo.layoutType', issues),
     contractVersion,
     clientType: decodeClientType(requiredAliasedString(source, 'clientType', ['client_type'], 'pageInfo', issues), issues),
   };
@@ -255,8 +282,8 @@ function decodeLayoutContract(source: ContractV2Dictionary, issues: DecodeIssue[
     .map((item, index) => decodeContainer(item, `layoutContract.containerTree[${index}]`, issues))
     .filter((item): item is ContractV2Container => Boolean(item));
   return {
-    layoutType: requiredAliasedString(source, 'layoutType', ['layout_type'], 'layoutContract', issues),
-    adaptMode: requiredAliasedString(source, 'adaptMode', ['adapt_mode'], 'layoutContract', issues),
+    layoutType: decodeLayoutType(requiredAliasedString(source, 'layoutType', ['layout_type'], 'layoutContract', issues), 'layoutContract.layoutType', issues),
+    adaptMode: decodeAdaptMode(requiredAliasedString(source, 'adaptMode', ['adapt_mode'], 'layoutContract', issues), 'layoutContract.adaptMode', issues),
     containerTree,
     componentRegistry: aliasedRecord(source, 'componentRegistry', ['component_registry']),
     ...(Object.keys(asRecord(source.listProfile)).length

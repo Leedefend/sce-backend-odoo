@@ -93,6 +93,24 @@ FORBIDDEN_STRICT_TYPE_COMPAT_ALIASES = (
     "legacy_contract_projection",
 )
 
+REQUIRED_STRICT_ENUM_TYPE_TOKENS = (
+    "export type ContractV2ViewType = 'form' | 'list' | 'table' | 'kanban' | 'tree' | 'gantt' | 'combine'",
+    "export type ContractV2LayoutType = 'form' | 'table' | 'kanban' | 'tree' | 'gantt' | 'combine'",
+    "export type ContractV2AdaptMode = 'pc' | 'mobile'",
+    "viewType: ContractV2ViewType",
+    "layoutType: ContractV2LayoutType",
+    "adaptMode: ContractV2AdaptMode",
+)
+
+REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
+    "function decodeViewType(",
+    "function decodeLayoutType(",
+    "function decodeAdaptMode(",
+    "viewType: decodeViewType(",
+    "layoutType: decodeLayoutType(",
+    "adaptMode: decodeAdaptMode(",
+)
+
 
 def _relative(path: Path) -> str:
     return str(path.relative_to(ROOT))
@@ -136,6 +154,12 @@ def main() -> int:
             violations.append(
                 f"{_relative(STRICT_TYPES)}: strict V2 types must not declare compatibility alias {token}"
             )
+    for token in REQUIRED_STRICT_ENUM_TYPE_TOKENS:
+        if token not in strict_type_source:
+            violations.append(f"{_relative(STRICT_TYPES)}: strict V2 type enum token missing: {token}")
+    for token in REQUIRED_STRICT_ENUM_DECODER_TOKENS:
+        if token not in strict_schema_source:
+            violations.append(f"{_relative(STRICT_SCHEMA)}: strict V2 enum decoder token missing: {token}")
     schema_payload = json.loads(BACKEND_SCHEMA.read_text(encoding="utf-8"))
     schema_top_level = set((schema_payload.get("properties") or {}).keys())
     schema_required = set(schema_payload.get("required") or [])
