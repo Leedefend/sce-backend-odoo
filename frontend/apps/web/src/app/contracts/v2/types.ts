@@ -11,6 +11,7 @@ export type ContractV2PatchStrategy = 'incremental' | 'full';
 export type ContractV2CachePolicy = 'none' | 'etag' | 'snapshot';
 export type ContractV2RenderStrategy = 'sync' | 'scheduled' | 'virtualized';
 export type ContractV2PatchOperation = 'replace' | 'merge' | 'append' | 'remove' | 'reorder' | 'invalidate';
+export type ContractV2PageRenderMode = 'governed';
 export type ContractV2Dictionary = Record<string, unknown>;
 
 export interface ContractV2PageInfo {
@@ -20,6 +21,7 @@ export interface ContractV2PageInfo {
   model: string;
   viewType: ContractV2ViewType;
   layoutType: ContractV2LayoutType;
+  renderMode: ContractV2PageRenderMode;
   contractVersion: string;
   clientType: ContractV2ClientType;
 }
@@ -67,9 +69,11 @@ export interface ContractV2Container {
 }
 
 export interface ContractV2LayoutContract {
+  pageId: string;
   layoutType: ContractV2LayoutType;
   adaptMode: ContractV2AdaptMode;
   containerTree: ContractV2Container[];
+  layoutHints: ContractV2Dictionary;
   componentRegistry: ContractV2Dictionary;
   listProfile?: ContractV2Dictionary;
 }
@@ -87,11 +91,13 @@ export interface ContractV2ActionRule {
   intent?: string;
   target?: ContractV2Dictionary;
   button?: ContractV2Dictionary;
+  submitPolicy?: ContractV2Dictionary;
+  tracePolicy?: ContractV2Dictionary;
 }
 
 export interface ContractV2ActionContract {
   actionRuleList: ContractV2ActionRule[];
-  dependencyGraph?: Record<string, string[]>;
+  dependencyGraph: Record<string, string[]>;
   deletePolicy?: ContractV2Dictionary;
   surfacePolicies?: ContractV2Dictionary;
 }

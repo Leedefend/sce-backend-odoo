@@ -16,6 +16,7 @@ import type {
   ContractV2LayoutType,
   ContractV2LayoutContract,
   ContractV2Meta,
+  ContractV2PageRenderMode,
   ContractV2PageInfo,
   ContractV2CachePolicy,
   ContractV2PatchOperation,
@@ -204,6 +205,14 @@ function decodeAuth(value: string, path: string, issues: DecodeIssue[]): Contrac
   return undefined;
 }
 
+function decodePageRenderMode(value: string, path: string, issues: DecodeIssue[]): ContractV2PageRenderMode {
+  if (value === 'governed') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported render mode ${value || '<empty>'}` });
+  return 'governed';
+}
+
 function decodePatchStrategy(value: string, path: string, issues: DecodeIssue[]): ContractV2PatchStrategy {
   if (value === 'incremental' || value === 'full') {
     return value;
@@ -256,6 +265,7 @@ function decodePageInfo(source: ContractV2Dictionary, issues: DecodeIssue[]): Co
     model: requiredString(source, 'model', 'pageInfo', issues),
     viewType: decodeViewType(requiredAliasedString(source, 'viewType', ['view_type'], 'pageInfo', issues), 'pageInfo.viewType', issues),
     layoutType: decodeLayoutType(requiredAliasedString(source, 'layoutType', ['layout_type'], 'pageInfo', issues), 'pageInfo.layoutType', issues),
+    renderMode: decodePageRenderMode(requiredString(source, 'renderMode', 'pageInfo', issues), 'pageInfo.renderMode', issues),
     contractVersion,
     clientType: decodeClientType(requiredAliasedString(source, 'clientType', ['client_type'], 'pageInfo', issues), issues),
   };
@@ -381,9 +391,11 @@ function decodeLayoutContract(source: ContractV2Dictionary, issues: DecodeIssue[
     .map((item, index) => decodeContainer(item, `layoutContract.containerTree[${index}]`, issues))
     .filter((item): item is ContractV2Container => Boolean(item));
   return {
+    pageId: requiredString(source, 'pageId', 'layoutContract', issues),
     layoutType: decodeLayoutType(requiredAliasedString(source, 'layoutType', ['layout_type'], 'layoutContract', issues), 'layoutContract.layoutType', issues),
     adaptMode: decodeAdaptMode(requiredAliasedString(source, 'adaptMode', ['adapt_mode'], 'layoutContract', issues), 'layoutContract.adaptMode', issues),
     containerTree,
+    layoutHints: requiredRecord(source, 'layoutHints', 'layoutContract', issues),
     componentRegistry: aliasedRecord(source, 'componentRegistry', ['component_registry']),
     ...(Object.keys(asRecord(source.listProfile)).length
       ? { listProfile: asRecord(source.listProfile) }
@@ -400,6 +412,8 @@ function decodeActionRule(raw: unknown, path: string, issues: DecodeIssue[]): Co
   if (!actionId) return null;
   const target = asRecord(raw.target);
   const button = asRecord(raw.button);
+  const submitPolicy = asRecord(raw.submitPolicy);
+  const tracePolicy = asRecord(raw.tracePolicy);
   return {
     actionId,
     triggerType: decodeTriggerType(requiredAliasedString(raw, 'triggerType', ['trigger_type'], path, issues), `${path}.triggerType`, issues),
@@ -413,6 +427,8 @@ function decodeActionRule(raw: unknown, path: string, issues: DecodeIssue[]): Co
     ...(optionalString(raw, 'intent') ? { intent: optionalString(raw, 'intent') } : {}),
     ...(Object.keys(target).length ? { target } : {}),
     ...(Object.keys(button).length ? { button } : {}),
+    ...(Object.keys(submitPolicy).length ? { submitPolicy } : {}),
+    ...(Object.keys(tracePolicy).length ? { tracePolicy } : {}),
   };
 }
 
@@ -431,7 +447,7 @@ function decodeActionContract(source: ContractV2Dictionary, issues: DecodeIssue[
   }, {});
   return {
     actionRuleList,
-    ...(Object.keys(dependencyGraph).length ? { dependencyGraph } : {}),
+    dependencyGraph,
     ...(Object.keys(asRecord(source.deletePolicy)).length
       ? { deletePolicy: asRecord(source.deletePolicy) }
       : {}),

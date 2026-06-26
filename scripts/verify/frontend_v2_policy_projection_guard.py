@@ -107,15 +107,22 @@ REQUIRED_STRICT_ENUM_TYPE_TOKENS = (
     "export type ContractV2CachePolicy = 'none' | 'etag' | 'snapshot'",
     "export type ContractV2RenderStrategy = 'sync' | 'scheduled' | 'virtualized'",
     "export type ContractV2PatchOperation = 'replace' | 'merge' | 'append' | 'remove' | 'reorder' | 'invalidate'",
+    "export type ContractV2PageRenderMode = 'governed'",
     "export interface ContractV2Meta",
     "viewType: ContractV2ViewType",
     "layoutType: ContractV2LayoutType",
+    "renderMode: ContractV2PageRenderMode",
     "adaptMode: ContractV2AdaptMode",
     "triggerType: ContractV2TriggerType",
     "dispatchMode: ContractV2DispatchMode",
     "targetScope: ContractV2TargetScope",
     "refreshMode: ContractV2RefreshMode",
     "auth?: ContractV2Auth",
+    "pageId: string",
+    "layoutHints: ContractV2Dictionary",
+    "submitPolicy?: ContractV2Dictionary",
+    "tracePolicy?: ContractV2Dictionary",
+    "dependencyGraph: Record<string, string[]>",
     "runtimeContract: ContractV2RuntimeContract",
     "patchStrategy: ContractV2PatchStrategy",
     "cachePolicy: ContractV2CachePolicy",
@@ -137,16 +144,23 @@ REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
     "function decodeCachePolicy(",
     "function decodeRenderStrategy(",
     "function decodePatchOperation(",
+    "function decodePageRenderMode(",
     "function decodeRuntimeContract(",
     "function decodeMeta(",
     "viewType: decodeViewType(",
     "layoutType: decodeLayoutType(",
+    "renderMode: decodePageRenderMode(",
     "adaptMode: decodeAdaptMode(",
     "triggerType: decodeTriggerType(",
     "dispatchMode: decodeDispatchMode(",
     "targetScope: decodeTargetScope(",
     "refreshMode: decodeRefreshMode(",
     "const auth = decodeAuth(",
+    "pageId: requiredString(source, 'pageId', 'layoutContract', issues)",
+    "layoutHints: requiredRecord(source, 'layoutHints', 'layoutContract', issues)",
+    "dependencyGraph,",
+    "submitPolicy }",
+    "tracePolicy }",
     "patchStrategy: decodePatchStrategy(",
     "cachePolicy: decodeCachePolicy(",
     "const runtimeContract = decodeRuntimeContract(",
@@ -259,6 +273,36 @@ def main() -> int:
             violations.append(
                 f"{_relative(STRICT_TYPES)}: {interface_name} fields must match schema $defs.{schema_name}; "
                 f"extra={sorted(type_fields - schema_fields)} missing={sorted(schema_fields - type_fields)}"
+            )
+    schema_interface_map = {
+        "pageInfo": "ContractV2PageInfo",
+        "layoutContract": "ContractV2LayoutContract",
+        "actionContract": "ContractV2ActionContract",
+        "actionRule": "ContractV2ActionRule",
+        "runtimeContract": "ContractV2RuntimeContract",
+        "meta": "ContractV2Meta",
+        "visibleFields": "ContractV2VisibleFields",
+        "fieldGroups": "ContractV2FieldGroups",
+    }
+    for schema_name, interface_name in schema_interface_map.items():
+        schema_def = schema_defs.get(schema_name)
+        if schema_name in schema_top_level:
+            schema_def = schema_payload.get("properties", {}).get(schema_name)
+            if isinstance(schema_def, dict) and "$ref" in schema_def:
+                schema_def = schema_defs.get(str(schema_def["$ref"]).rsplit("/", 1)[-1])
+        schema_fields = set(((schema_def or {}).get("properties") or {}).keys())
+        type_fields = _interface_fields(strict_type_source, interface_name)
+        if not schema_fields:
+            violations.append(f"{_relative(BACKEND_SCHEMA)}: missing schema properties for {schema_name}")
+            continue
+        if not type_fields:
+            violations.append(f"{_relative(STRICT_TYPES)}: missing {interface_name} interface")
+            continue
+        missing = schema_fields - type_fields
+        if missing:
+            violations.append(
+                f"{_relative(STRICT_TYPES)}: {interface_name} must cover schema {schema_name} fields; "
+                f"missing={sorted(missing)}"
             )
 
     for path in CONSUMER_FILES:
