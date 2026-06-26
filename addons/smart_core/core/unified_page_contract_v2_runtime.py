@@ -185,6 +185,7 @@ def find_runtime_guard_issues(contract: dict[str, Any]) -> list[str]:
         if isinstance(row, dict) and not _text(row.get("selector")):
             issues.append("selectorStatus row missing selector")
     issues.extend(find_data_source_authority_issues(data))
+    issues.extend(find_policy_contract_issues(contract))
     issues.extend(find_form_structure_contract_issues(contract))
     return issues
 
@@ -215,6 +216,68 @@ def find_data_source_authority_issues(data_contract: dict[str, Any]) -> list[str
         elif source_authority.get("compatibility_projection") is not True:
             issues.append("dataContract.dataMeta.legacyContractProjection.sourceAuthority.compatibility_projection must be true")
     return issues
+
+
+def find_policy_contract_issues(contract: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    source = _dict(contract)
+    action = _dict(source.get("actionContract"))
+    layout = _dict(source.get("layoutContract"))
+    _validate_policy_projection(
+        issues,
+        source_value=source.get("delete_policy"),
+        projected_value=action.get("deletePolicy"),
+        source_key="delete_policy",
+        projected_path="actionContract.deletePolicy",
+    )
+    _validate_policy_projection(
+        issues,
+        source_value=source.get("surface_policies"),
+        projected_value=action.get("surfacePolicies"),
+        source_key="surface_policies",
+        projected_path="actionContract.surfacePolicies",
+    )
+    _validate_policy_projection(
+        issues,
+        source_value=source.get("list_profile"),
+        projected_value=layout.get("listProfile"),
+        source_key="list_profile",
+        projected_path="layoutContract.listProfile",
+    )
+    return issues
+
+
+def _validate_policy_projection(
+    issues: list[str],
+    *,
+    source_value: Any,
+    projected_value: Any,
+    source_key: str,
+    projected_path: str,
+) -> None:
+    if not isinstance(source_value, dict):
+        return
+    projected = _dict(projected_value)
+    if not projected:
+        issues.append(f"{projected_path} is required when root {source_key} compatibility field exists")
+        return
+    source_authority = _dict(projected.get("sourceAuthority") or projected.get("source_authority"))
+    if not source_authority:
+        issues.append(f"{projected_path}.sourceAuthority is required")
+    else:
+        if source_authority.get("projection_only") is not True:
+            issues.append(f"{projected_path}.sourceAuthority.projection_only must be true")
+        if source_authority.get("no_business_fact_authority") is not True:
+            issues.append(f"{projected_path}.sourceAuthority.no_business_fact_authority must be true")
+        if source_authority.get("compatibility_replacement") is not True:
+            issues.append(f"{projected_path}.sourceAuthority.compatibility_replacement must be true")
+        if _text(source_authority.get("source_key")) != source_key:
+            issues.append(f"{projected_path}.sourceAuthority.source_key must be {source_key}")
+    projected_without_authority = dict(projected)
+    projected_without_authority.pop("sourceAuthority", None)
+    projected_without_authority.pop("source_authority", None)
+    if projected_without_authority != source_value:
+        issues.append(f"{projected_path} must mirror root {source_key} until compatibility field is removed")
 
 
 def find_form_structure_contract_issues(contract: dict[str, Any]) -> list[str]:

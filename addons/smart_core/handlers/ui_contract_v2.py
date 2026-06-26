@@ -227,15 +227,58 @@ class UiContractV2Handler(BaseIntentHandler):
         governance[key] = patch
         contract["governance"] = governance
 
+    def _v2_policy_projection_source_authority(self, *, runtime_carrier: str, source_key: str) -> dict[str, Any]:
+        return {
+            "kind": self.SOURCE_KIND,
+            "runtime_carrier": runtime_carrier,
+            "projection_only": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            "compatibility_replacement": True,
+            "fact_authority": "source_contract_projection",
+            "source_key": source_key,
+        }
+
+    def _v2_policy_projection(self, value: dict[str, Any], *, runtime_carrier: str, source_key: str) -> dict[str, Any]:
+        projection = deepcopy(value or {})
+        projection["sourceAuthority"] = self._v2_policy_projection_source_authority(
+            runtime_carrier=runtime_carrier,
+            source_key=source_key,
+        )
+        return projection
+
     def _copy_v2_source_passthroughs(self, contract: dict[str, Any], source_contract: dict[str, Any]) -> None:
         if not isinstance(contract, dict) or not isinstance(source_contract, dict):
             return
         if isinstance(source_contract.get("delete_policy"), dict):
-            contract["delete_policy"] = dict(source_contract.get("delete_policy") or {})
+            delete_policy = dict(source_contract.get("delete_policy") or {})
+            contract["delete_policy"] = delete_policy
+            action_contract = contract.get("actionContract") if isinstance(contract.get("actionContract"), dict) else {}
+            action_contract["deletePolicy"] = self._v2_policy_projection(
+                delete_policy,
+                runtime_carrier="ui.contract.v2.actionContract.deletePolicy",
+                source_key="delete_policy",
+            )
+            contract["actionContract"] = action_contract
         if isinstance(source_contract.get("surface_policies"), dict):
-            contract["surface_policies"] = deepcopy(source_contract.get("surface_policies") or {})
+            surface_policies = deepcopy(source_contract.get("surface_policies") or {})
+            contract["surface_policies"] = surface_policies
+            action_contract = contract.get("actionContract") if isinstance(contract.get("actionContract"), dict) else {}
+            action_contract["surfacePolicies"] = self._v2_policy_projection(
+                surface_policies,
+                runtime_carrier="ui.contract.v2.actionContract.surfacePolicies",
+                source_key="surface_policies",
+            )
+            contract["actionContract"] = action_contract
         if isinstance(source_contract.get("list_profile"), dict):
-            contract["list_profile"] = deepcopy(source_contract.get("list_profile") or {})
+            list_profile = deepcopy(source_contract.get("list_profile") or {})
+            contract["list_profile"] = list_profile
+            layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+            layout_contract["listProfile"] = self._v2_policy_projection(
+                list_profile,
+                runtime_carrier="ui.contract.v2.layoutContract.listProfile",
+                source_key="list_profile",
+            )
+            contract["layoutContract"] = layout_contract
 
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         params = self._params(payload)

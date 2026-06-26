@@ -138,6 +138,74 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
 
         self.assertEqual(issues, [])
 
+    def test_policy_contract_rejects_root_compat_without_formal_v2_projection(self):
+        contract = self._contract()
+        contract["delete_policy"] = {"allow": True}
+        contract["surface_policies"] = {"kind": "list"}
+        contract["list_profile"] = {"batch_policy": {"enabled": True}}
+
+        issues = runtime.find_policy_contract_issues(contract)
+
+        self.assertIn(
+            "actionContract.deletePolicy is required when root delete_policy compatibility field exists",
+            issues,
+        )
+        self.assertIn(
+            "actionContract.surfacePolicies is required when root surface_policies compatibility field exists",
+            issues,
+        )
+        self.assertIn(
+            "layoutContract.listProfile is required when root list_profile compatibility field exists",
+            issues,
+        )
+
+    def test_policy_contract_accepts_formal_v2_policy_projection(self):
+        contract = self._contract()
+        contract["delete_policy"] = {"allow": True}
+        contract["surface_policies"] = {"kind": "list"}
+        contract["list_profile"] = {"batch_policy": {"enabled": True}}
+        contract["actionContract"] = {
+            "deletePolicy": {
+                "allow": True,
+                "sourceAuthority": self._policy_source("delete_policy"),
+            },
+            "surfacePolicies": {
+                "kind": "list",
+                "sourceAuthority": self._policy_source("surface_policies"),
+            },
+        }
+        contract["layoutContract"]["listProfile"] = {
+            "batch_policy": {"enabled": True},
+            "sourceAuthority": self._policy_source("list_profile"),
+        }
+
+        issues = runtime.find_policy_contract_issues(contract)
+
+        self.assertEqual(issues, [])
+
+    def test_policy_contract_rejects_projection_drift(self):
+        contract = self._contract()
+        contract["list_profile"] = {"batch_policy": {"enabled": True}}
+        contract["layoutContract"]["listProfile"] = {
+            "batch_policy": {"enabled": False},
+            "sourceAuthority": self._policy_source("list_profile"),
+        }
+
+        issues = runtime.find_policy_contract_issues(contract)
+
+        self.assertIn(
+            "layoutContract.listProfile must mirror root list_profile until compatibility field is removed",
+            issues,
+        )
+
+    def _policy_source(self, source_key):
+        return {
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "compatibility_replacement": True,
+            "source_key": source_key,
+        }
+
     def test_form_structure_contract_rejects_unknown_duplicate_and_unprojected_fields(self):
         contract = self._contract()
         contract["formStructureContract"]["slots"][1]["groups"][0]["fieldRefs"].extend(["subject", "missing_field"])

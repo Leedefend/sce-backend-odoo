@@ -237,6 +237,7 @@ def _base_contract(
             "adaptMode": "pc" if client == "web_pc" else "mobile",
             "containerTree": [],
             "layoutHints": {},
+            "listProfile": {},
             "componentRegistry": {},
         },
         "statusContract": {
@@ -246,7 +247,12 @@ def _base_contract(
             "buttonStatus": [],
             "selectorStatus": [],
         },
-        "actionContract": {"actionRuleList": [], "dependencyGraph": {}},
+        "actionContract": {
+            "actionRuleList": [],
+            "dependencyGraph": {},
+            "deletePolicy": {},
+            "surfacePolicies": {},
+        },
         "dataContract": {
             "mainData": {},
             "tableRows": {},
