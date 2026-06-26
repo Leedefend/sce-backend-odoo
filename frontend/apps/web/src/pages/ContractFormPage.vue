@@ -317,6 +317,12 @@
               <li v-for="entry in formConfigOperationLog.slice(0, 8)" :key="entry.id">
                 <time>{{ formatFormConfigOperationTime(entry.at) }}</time>
                 <strong>{{ entry.action }}</strong>
+                <span
+                  class="contract-form-operation-log-status"
+                  :class="`contract-form-operation-log-status--${entry.status}`"
+                >
+                  {{ formConfigOperationStatusLabel(entry.status) }}
+                </span>
                 <span>{{ entry.summary }}</span>
               </li>
             </ol>
@@ -1318,6 +1324,7 @@ type FormConfigOperationLogEntry = {
   operator: string;
   action: string;
   summary: string;
+  status: 'pending' | 'saved' | 'reverted' | 'done';
 };
 
 class ContractAccessPolicyError extends Error {
@@ -2019,11 +2026,13 @@ const fieldOrderDraft = ref<string[]>([]);
 const fieldOrderPreviewActive = ref(false);
 const nativeFormDesignFieldKeys = ref<string[]>([]);
 const nativeFormDesignFieldLabels = ref<Record<string, string>>({});
+const formConfigFieldLabelCache = reactive<Record<string, string>>({});
 const fieldGroupBase = ref<Record<string, string>>({});
 const fieldGroupSavedBase = ref<Record<string, string>>({});
 const fieldGroupDraft = reactive<Record<string, string>>({});
 const fieldMoveTargetDraft = reactive<Record<string, string>>({});
 const draggingFieldKey = ref('');
+const draggingFieldLabel = ref('');
 const dropTargetFieldKey = ref('');
 const selectedFormSettingsFieldKey = ref('');
 const selectedFormSettingsFieldLabel = ref('');
@@ -2046,7 +2055,6 @@ const fieldVisibilityDirtyKeys = reactive<Record<string, boolean>>({});
 const formConfigAuditBusy = ref(false);
 const formConfigAuditResult = ref<FormConfigAuditResult | null>(null);
 const formConfigOperationLog = ref<FormConfigOperationLogEntry[]>([]);
-const formConfigOperationLogHydrated = ref(false);
 const lowCodeFieldCreateDialog = reactive({
   open: false,
   afterFieldKey: '',
@@ -2297,6 +2305,7 @@ const formConfigOperationLogStorageKey = computed(() => {
 
 function normalizeFormConfigOperationLogEntries(raw: unknown) {
   if (!Array.isArray(raw)) return [];
+  const allowedStatus = new Set<FormConfigOperationLogEntry['status']>(['pending', 'saved', 'reverted', 'done']);
   return raw
     .map((item) => {
       const row = item && typeof item === 'object' && !Array.isArray(item)
@@ -2313,6 +2322,9 @@ function normalizeFormConfigOperationLogEntries(raw: unknown) {
         operator: String(row.operator || formConfigOperatorName.value || '当前用户').trim(),
         action,
         summary,
+        status: allowedStatus.has(row.status as FormConfigOperationLogEntry['status'])
+          ? row.status as FormConfigOperationLogEntry['status']
+          : 'done',
       };
     })
     .filter((item): item is FormConfigOperationLogEntry => Boolean(item));
@@ -2336,14 +2348,16 @@ function hydrateFormConfigOperationLog() {
   try {
     const raw = window.sessionStorage.getItem(key);
     formConfigOperationLog.value = normalizeFormConfigOperationLogEntries(raw ? JSON.parse(raw) : []);
-    formConfigOperationLogHydrated.value = true;
   } catch {
     formConfigOperationLog.value = [];
-    formConfigOperationLogHydrated.value = true;
   }
 }
 
-function appendFormConfigOperation(action: string, summary: string) {
+function appendFormConfigOperation(
+  action: string,
+  summary: string,
+  status: FormConfigOperationLogEntry['status'] = 'pending',
+) {
   const normalizedAction = String(action || '').trim();
   const normalizedSummary = String(summary || '').trim();
   if (!normalizedAction || !normalizedSummary) return;
@@ -2355,9 +2369,19 @@ function appendFormConfigOperation(action: string, summary: string) {
       operator: formConfigOperatorName.value,
       action: normalizedAction,
       summary: normalizedSummary,
+      status,
     },
     ...formConfigOperationLog.value,
   ].slice(0, 50);
+  persistFormConfigOperationLog();
+}
+
+function markPendingFormConfigOperations(status: Extract<FormConfigOperationLogEntry['status'], 'saved' | 'reverted'>) {
+  const hasPending = formConfigOperationLog.value.some((entry) => entry.status === 'pending');
+  if (!hasPending) return;
+  formConfigOperationLog.value = formConfigOperationLog.value.map((entry) => (
+    entry.status === 'pending' ? { ...entry, status } : entry
+  ));
   persistFormConfigOperationLog();
 }
 
@@ -2370,6 +2394,13 @@ function formatFormConfigOperationTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+}
+
+function formConfigOperationStatusLabel(status: FormConfigOperationLogEntry['status']) {
+  if (status === 'pending') return '待保存';
+  if (status === 'saved') return '已保存';
+  if (status === 'reverted') return '已撤销';
+  return '已执行';
 }
 
 watch(formConfigOperationLogStorageKey, () => {
@@ -2401,12 +2432,26 @@ function formDesignFieldLabel(fieldKey: string) {
     ? String(selectedFormSettingsFieldLabel.value || '').trim()
     : '';
   if (selectedLabel && selectedLabel !== key) return selectedLabel;
+  const cachedLabel = String(formConfigFieldLabelCache[key] || '').trim();
+  const structuredLabel = String(contractFieldLabel(key) || '').trim();
+  const nativeLabel = String(nativeFormDesignFieldLabels.value[key] || '').trim();
   const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === key);
   const rowLabel = String(row?.label || '').trim();
-  const nativeLabel = String(nativeFormDesignFieldLabels.value[key] || '').trim();
+  const descriptor = contract.value?.fields?.[key] as Record<string, unknown> | undefined;
+  const descriptorLabel = String(descriptor?.string || descriptor?.label || '').trim();
+  if (cachedLabel && cachedLabel !== key) return cachedLabel;
+  if (structuredLabel && structuredLabel !== key) return structuredLabel;
   if (nativeLabel && nativeLabel !== key) return nativeLabel;
   if (rowLabel && rowLabel !== key) return rowLabel;
+  if (descriptorLabel && descriptorLabel !== key) return descriptorLabel;
   return rowLabel || key;
+}
+
+function rememberFormConfigFieldLabel(fieldKey: string, label: string) {
+  const key = String(fieldKey || '').trim();
+  const normalizedLabel = String(label || '').trim();
+  if (!key || !normalizedLabel || normalizedLabel === key) return;
+  formConfigFieldLabelCache[key] = normalizedLabel;
 }
 
 const suggestedHiddenFieldRows = computed(() => currentFormDesignFieldKeys.value
@@ -7414,11 +7459,13 @@ function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: numbe
   const state = runtimeState(name);
   const nativeReadonly = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'readonly'));
   const nativeRequired = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'required'));
+  const label = nativeFieldLabel(nodeRaw, descriptor);
+  rememberFormConfigFieldLabel(name, label);
   return {
     key: `native_field_${name}_${index}`,
     kind: 'field',
     name,
-    label: nativeFieldLabel(nodeRaw, descriptor),
+    label,
     readonly: Boolean(nativeReadonly || resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
     required: Boolean(nativeRequired || resolved.required || state.required || descriptor?.required),
     widget: nativeNodeWidget(nodeRaw),
@@ -9488,6 +9535,7 @@ function onFormSettingsFieldSelect(payload: { field: FormSectionFieldSchema; gro
   if (!isContractFieldOrderEditable.value) return;
   const fieldKey = String(payload.field.name || payload.field.key || '').trim();
   if (!fieldKey) return;
+  rememberFormConfigFieldLabel(fieldKey, payload.field.label);
   if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) {
     const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === fieldKey);
     const checkedAction = row?.actions.find((action) => Boolean(action.checked));
@@ -9533,6 +9581,7 @@ function moveFieldToGroupEnd(fieldKey: string, groupTitle: string) {
   fieldGroupDraft[sourceFieldKey] = normalizedTargetGroup;
   fieldMoveTargetDraft[sourceFieldKey] = anchorFieldKey;
   selectedFormSettingsFieldKey.value = sourceFieldKey;
+  selectedFormSettingsFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(sourceFieldKey);
   selectedFormSettingsFieldGroupTitleDraft.value = normalizedTargetGroup;
   formConfigAuditResult.value = null;
   appendFormConfigOperation('移动分组', `${formDesignFieldLabel(sourceFieldKey)} 移动到 ${normalizedTargetGroup}`);
@@ -9596,6 +9645,9 @@ function onContractInlineFieldOrderMove(payload: { field: FormSectionFieldSchema
 function onContractInlineFieldOrderDragStart(payload: { field: FormSectionFieldSchema; event: DragEvent }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
+  rememberFormConfigFieldLabel(fieldKey, payload.field.label);
+  const fieldLabel = String(payload.field.label || '').trim();
+  draggingFieldLabel.value = fieldLabel && fieldLabel !== fieldKey ? fieldLabel : formDesignFieldLabel(fieldKey);
   onFieldOrderDragStart(fieldKey, payload.event);
 }
 
@@ -9660,10 +9712,10 @@ async function setInlineFieldPolicy(fieldKey: string, params: Record<string, unk
       context: { view: 'form' },
     });
     if (label) {
-      appendFormConfigOperation('修改字段名称', `${formDesignFieldLabel(fieldKey)} 改为 ${label}`);
+      appendFormConfigOperation('修改字段名称', `${formDesignFieldLabel(fieldKey)} 改为 ${label}`, 'done');
     }
     if (groupTitle) {
-      appendFormConfigOperation('移动分组', `${label || formDesignFieldLabel(fieldKey)} 移动到 ${groupTitle}`);
+      appendFormConfigOperation('移动分组', `${label || formDesignFieldLabel(fieldKey)} 移动到 ${groupTitle}`, 'done');
     }
     contractModeFeedback.value = '字段配置已更新';
     await reload();
@@ -9727,7 +9779,7 @@ async function onContractInlineGroupRename(payload: { oldTitle: string; newTitle
         context: { view: 'form' },
       });
     }
-    appendFormConfigOperation('修改分组名称', `${oldTitle} 改为 ${newTitle}`);
+    appendFormConfigOperation('修改分组名称', `${oldTitle} 改为 ${newTitle}`, 'done');
     contractModeFeedback.value = '区域名称已更新';
     await reload();
   } catch (err) {
@@ -9777,7 +9829,7 @@ async function submitInlineCustomFieldCreate() {
       context: { view: 'form' },
     });
     contractModeFeedback.value = '字段已添加';
-    appendFormConfigOperation('新增字段', `${label} 添加到 ${lowCodeFieldCreateDialog.groupTitle || '业务配置字段'}`);
+    appendFormConfigOperation('新增字段', `${label} 添加到 ${lowCodeFieldCreateDialog.groupTitle || '业务配置字段'}`, 'done');
     closeInlineCustomFieldCreate();
     await reload();
   } catch (err) {
@@ -9791,6 +9843,7 @@ async function submitInlineCustomFieldCreate() {
 function onFieldOrderDragStart(fieldKey: string, event?: DragEvent) {
   if (!isContractFieldOrderEditable.value) return;
   draggingFieldKey.value = fieldKey;
+  draggingFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(fieldKey);
   dropTargetFieldKey.value = '';
   if (event?.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
@@ -9818,6 +9871,7 @@ function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '') {
     selectedFormSettingsFieldGroupTitleDraft.value = normalizedTargetGroup;
   }
   selectedFormSettingsFieldKey.value = sourceFieldKey;
+  selectedFormSettingsFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(sourceFieldKey);
   dropTargetFieldKey.value = '';
 }
 
@@ -9870,6 +9924,7 @@ function moveFieldOrder(fieldKey: string, delta: number) {
 
 function onFieldOrderDragEnd() {
   draggingFieldKey.value = '';
+  draggingFieldLabel.value = '';
   dropTargetFieldKey.value = '';
 }
 
@@ -9895,7 +9950,8 @@ function resetContractFieldOrder() {
     delete fieldVisibilityDirtyKeys[key];
   });
   formConfigAuditResult.value = null;
-  appendFormConfigOperation('重置表单设置', '撤销当前页面未保存的表单配置调整');
+  markPendingFormConfigOperations('reverted');
+  appendFormConfigOperation('重置表单设置', '撤销当前页面未保存的表单配置调整', 'done');
   contractModeFeedback.value = '';
 }
 
@@ -10049,7 +10105,8 @@ async function saveContractFieldOrder() {
     lowCodeContractLoaded.value = false;
     formConfigAuditResult.value = null;
     contractModeFeedback.value = '表单设置已保存并发布，刷新页面后按新配置生效';
-    appendFormConfigOperation('保存发布', saveOperationSummary);
+    markPendingFormConfigOperations('saved');
+    appendFormConfigOperation('保存发布', saveOperationSummary, 'done');
     await reload();
     await hydrateLowCodeDraftFromContract();
     return true;
@@ -11755,7 +11812,7 @@ onBeforeUnmount(() => {
 
 .contract-form-operation-log-list li {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-columns: auto auto auto minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   min-width: 0;
@@ -11768,7 +11825,36 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 
-.contract-form-operation-log-list span {
+.contract-form-operation-log-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 1px 7px;
+  color: var(--sc-app-text-secondary);
+  background: var(--sc-app-muted-bg);
+  white-space: nowrap;
+}
+
+.contract-form-operation-log-status--pending {
+  border-color: var(--sc-app-warning-border);
+  color: var(--sc-app-warning-text);
+  background: var(--sc-app-warning-bg);
+}
+
+.contract-form-operation-log-status--saved,
+.contract-form-operation-log-status--done {
+  border-color: var(--sc-app-success-border);
+  color: var(--sc-app-success-text);
+  background: var(--sc-app-success-bg);
+}
+
+.contract-form-operation-log-status--reverted {
+  color: var(--sc-semantic-text-muted);
+}
+
+.contract-form-operation-log-list li > span:not(.contract-form-operation-log-status) {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

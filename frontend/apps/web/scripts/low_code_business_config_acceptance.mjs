@@ -838,6 +838,7 @@ async function main() {
     const saveFormEnabledAfterHide = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     const resetFormEnabledAfterHide = await page.getByRole("button", { name: "重置" }).isEnabled();
     await page.getByRole("button", { name: "重置" }).click();
+    const operationLogTextAfterReset = await page.locator(".contract-form-operation-log").innerText();
     const formDirtyAfterReset = await page.locator(".contract-field-governance-dirty").count();
     const saveFormEnabledAfterReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     await selectDesignerField(page, 1);
@@ -958,6 +959,7 @@ async function main() {
       selectedFieldCount,
       selectedPanelText,
       operationLogTextAfterHide,
+      operationLogTextAfterReset,
       operationLogEntryCountAfterHide,
       initialFormDirtyCount,
       initialSaveFormEnabled,
@@ -1000,9 +1002,11 @@ async function main() {
     assert(
       operationLogEntryCountAfterHide > 0
         && operationLogTextAfterHide.includes("本次操作记录")
-        && operationLogTextAfterHide.includes("隐藏字段"),
+        && operationLogTextAfterHide.includes("隐藏字段")
+        && operationLogTextAfterHide.includes("待保存")
+        && operationLogTextAfterReset.includes("已撤销"),
       "表单配置没有记录当前用户操作",
-      { operationLogTextAfterHide, operationLogEntryCountAfterHide },
+      { operationLogTextAfterHide, operationLogTextAfterReset, operationLogEntryCountAfterHide },
     );
     assert(
       formDirtyAfterHide > 0
@@ -1057,6 +1061,7 @@ async function main() {
         && crossGroupDrop.saveEnabled
         && crossGroupDrop.movedToTargetBeforeSave
         && crossGroupDrop.removedFromSourceBeforeSave
+        && crossGroupDrop.panelAfterDrop.includes(crossGroupDrop.sourceField)
         && crossGroupDrop.persistedInTarget
         && !crossGroupDrop.persistedInSource,
       "表单字段跨分组拖拽保存刷新后没有保持",
