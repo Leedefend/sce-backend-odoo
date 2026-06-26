@@ -4930,8 +4930,9 @@ verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host: guard.prod.f
 
 .PHONY: verify.unified_page_contract.v2.web_consumer
 verify.unified_page_contract.v2.web_consumer: guard.prod.forbid
-	@python3 -m py_compile scripts/verify/unified_page_contract_v2_web_consumer_guard.py
+	@python3 -m py_compile scripts/verify/unified_page_contract_v2_web_consumer_guard.py scripts/verify/web_unified_page_contract_v2_guard.py
 	@python3 scripts/verify/unified_page_contract_v2_web_consumer_guard.py
+	@python3 scripts/verify/web_unified_page_contract_v2_guard.py
 
 .PHONY: verify.unified_page_contract.v2.web_architecture
 verify.unified_page_contract.v2.web_architecture: guard.prod.forbid
