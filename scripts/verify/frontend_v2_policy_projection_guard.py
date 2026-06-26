@@ -97,18 +97,34 @@ REQUIRED_STRICT_ENUM_TYPE_TOKENS = (
     "export type ContractV2ViewType = 'form' | 'list' | 'table' | 'kanban' | 'tree' | 'gantt' | 'combine'",
     "export type ContractV2LayoutType = 'form' | 'table' | 'kanban' | 'tree' | 'gantt' | 'combine'",
     "export type ContractV2AdaptMode = 'pc' | 'mobile'",
+    "export type ContractV2TriggerType = 'change' | 'click' | 'select' | 'refresh' | 'add' | 'delete' | 'confirm' | 'submit' | 'blur' | 'focus'",
+    "export type ContractV2DispatchMode = 'local' | 'server' | 'serverDebounced' | 'serverBlocking'",
+    "export type ContractV2TargetScope = 'widget' | 'container' | 'page' | 'dataSource' | 'runtime'",
+    "export type ContractV2RefreshMode = 'none' | 'partial' | 'full'",
     "viewType: ContractV2ViewType",
     "layoutType: ContractV2LayoutType",
     "adaptMode: ContractV2AdaptMode",
+    "triggerType: ContractV2TriggerType",
+    "dispatchMode: ContractV2DispatchMode",
+    "targetScope: ContractV2TargetScope",
+    "refreshMode: ContractV2RefreshMode",
 )
 
 REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
     "function decodeViewType(",
     "function decodeLayoutType(",
     "function decodeAdaptMode(",
+    "function decodeTriggerType(",
+    "function decodeDispatchMode(",
+    "function decodeTargetScope(",
+    "function decodeRefreshMode(",
     "viewType: decodeViewType(",
     "layoutType: decodeLayoutType(",
     "adaptMode: decodeAdaptMode(",
+    "triggerType: decodeTriggerType(",
+    "dispatchMode: decodeDispatchMode(",
+    "targetScope: decodeTargetScope(",
+    "refreshMode: decodeRefreshMode(",
 )
 
 

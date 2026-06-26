@@ -2,6 +2,10 @@ export type ContractV2ClientType = 'web_pc' | 'wx_mini' | 'harmony_h5';
 export type ContractV2ViewType = 'form' | 'list' | 'table' | 'kanban' | 'tree' | 'gantt' | 'combine';
 export type ContractV2LayoutType = 'form' | 'table' | 'kanban' | 'tree' | 'gantt' | 'combine';
 export type ContractV2AdaptMode = 'pc' | 'mobile';
+export type ContractV2TriggerType = 'change' | 'click' | 'select' | 'refresh' | 'add' | 'delete' | 'confirm' | 'submit' | 'blur' | 'focus';
+export type ContractV2DispatchMode = 'local' | 'server' | 'serverDebounced' | 'serverBlocking';
+export type ContractV2TargetScope = 'widget' | 'container' | 'page' | 'dataSource' | 'runtime';
+export type ContractV2RefreshMode = 'none' | 'partial' | 'full';
 export type ContractV2Dictionary = Record<string, unknown>;
 
 export interface ContractV2PageInfo {
@@ -67,12 +71,12 @@ export interface ContractV2LayoutContract {
 
 export interface ContractV2ActionRule {
   actionId: string;
-  triggerType: string;
+  triggerType: ContractV2TriggerType;
   sourceWidgetId: string;
   targetIds: string[];
-  dispatchMode: string;
-  targetScope: string;
-  refreshMode: string;
+  dispatchMode: ContractV2DispatchMode;
+  targetScope: ContractV2TargetScope;
+  refreshMode: ContractV2RefreshMode;
   actionKey?: string;
   label?: string;
   intent?: string;

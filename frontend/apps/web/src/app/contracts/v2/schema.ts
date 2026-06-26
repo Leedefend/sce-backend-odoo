@@ -9,6 +9,7 @@ import type {
   ContractV2DataContract,
   ContractV2DataMeta,
   ContractV2Dictionary,
+  ContractV2DispatchMode,
   ContractV2FieldGroups,
   ContractV2GlobalStatus,
   ContractV2LayoutType,
@@ -17,6 +18,9 @@ import type {
   ContractV2SelectorStatus,
   ContractV2Snapshot,
   ContractV2StatusContract,
+  ContractV2RefreshMode,
+  ContractV2TargetScope,
+  ContractV2TriggerType,
   ContractV2VisibleFields,
   ContractV2ViewType,
   ContractV2Widget,
@@ -143,6 +147,38 @@ function decodeAdaptMode(value: string, path: string, issues: DecodeIssue[]): Co
   }
   issues.push({ path, message: `unsupported adapt mode ${value || '<empty>'}` });
   return 'pc';
+}
+
+function decodeTriggerType(value: string, path: string, issues: DecodeIssue[]): ContractV2TriggerType {
+  if (value === 'change' || value === 'click' || value === 'select' || value === 'refresh' || value === 'add' || value === 'delete' || value === 'confirm' || value === 'submit' || value === 'blur' || value === 'focus') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported trigger type ${value || '<empty>'}` });
+  return 'click';
+}
+
+function decodeDispatchMode(value: string, path: string, issues: DecodeIssue[]): ContractV2DispatchMode {
+  if (value === 'local' || value === 'server' || value === 'serverDebounced' || value === 'serverBlocking') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported dispatch mode ${value || '<empty>'}` });
+  return 'local';
+}
+
+function decodeTargetScope(value: string, path: string, issues: DecodeIssue[]): ContractV2TargetScope {
+  if (value === 'widget' || value === 'container' || value === 'page' || value === 'dataSource' || value === 'runtime') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported target scope ${value || '<empty>'}` });
+  return 'page';
+}
+
+function decodeRefreshMode(value: string, path: string, issues: DecodeIssue[]): ContractV2RefreshMode {
+  if (value === 'none' || value === 'partial' || value === 'full') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported refresh mode ${value || '<empty>'}` });
+  return 'none';
 }
 
 function decodePageInfo(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2PageInfo {
@@ -303,12 +339,12 @@ function decodeActionRule(raw: unknown, path: string, issues: DecodeIssue[]): Co
   const button = asRecord(raw.button);
   return {
     actionId,
-    triggerType: requiredAliasedString(raw, 'triggerType', ['trigger_type'], path, issues),
+    triggerType: decodeTriggerType(requiredAliasedString(raw, 'triggerType', ['trigger_type'], path, issues), `${path}.triggerType`, issues),
     sourceWidgetId: requiredAliasedString(raw, 'sourceWidgetId', ['source_widget_id'], path, issues),
     targetIds: asStringArray(raw.targetIds || raw.target_ids),
-    dispatchMode: requiredAliasedString(raw, 'dispatchMode', ['dispatch_mode'], path, issues),
-    targetScope: requiredAliasedString(raw, 'targetScope', ['target_scope'], path, issues),
-    refreshMode: requiredAliasedString(raw, 'refreshMode', ['refresh_mode'], path, issues),
+    dispatchMode: decodeDispatchMode(requiredAliasedString(raw, 'dispatchMode', ['dispatch_mode'], path, issues), `${path}.dispatchMode`, issues),
+    targetScope: decodeTargetScope(requiredAliasedString(raw, 'targetScope', ['target_scope'], path, issues), `${path}.targetScope`, issues),
+    refreshMode: decodeRefreshMode(requiredAliasedString(raw, 'refreshMode', ['refresh_mode'], path, issues), `${path}.refreshMode`, issues),
     ...(optionalAliasedString(raw, 'actionKey', ['action_key', 'key']) ? { actionKey: optionalAliasedString(raw, 'actionKey', ['action_key', 'key']) } : {}),
     ...(optionalString(raw, 'label') ? { label: optionalString(raw, 'label') } : {}),
     ...(optionalString(raw, 'intent') ? { intent: optionalString(raw, 'intent') } : {}),
