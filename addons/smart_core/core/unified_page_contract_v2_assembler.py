@@ -2061,7 +2061,7 @@ def _metadata_projection_source_authority(*, runtime_carrier: str, source_key: s
         "runtime_carrier": runtime_carrier,
         "projection_only": True,
         "no_business_fact_authority": True,
-        "compatibility_replacement": True,
+        "formal_projection": True,
         "fact_authority": "source_contract_projection",
         "source_key": source_key,
     }

@@ -233,7 +233,7 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
         return {
             "projection_only": True,
             "no_business_fact_authority": True,
-            "compatibility_replacement": True,
+            "formal_projection": True,
             "source_key": source_key,
         }
 
@@ -241,7 +241,7 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
         return {
             "projection_only": True,
             "no_business_fact_authority": True,
-            "compatibility_replacement": True,
+            "formal_projection": True,
             "source_key": source_key,
         }
 

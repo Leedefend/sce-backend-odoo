@@ -233,7 +233,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "runtime_carrier": runtime_carrier,
             "projection_only": True,
             "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
-            "compatibility_replacement": True,
+            "formal_projection": True,
             "fact_authority": "source_contract_projection",
             "source_key": source_key,
         }

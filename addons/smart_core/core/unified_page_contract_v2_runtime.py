@@ -267,8 +267,8 @@ def _validate_metadata_projection_authority(
         issues.append(f"{projected_path}.sourceAuthority.projection_only must be true")
     if source_authority.get("no_business_fact_authority") is not True:
         issues.append(f"{projected_path}.sourceAuthority.no_business_fact_authority must be true")
-    if source_authority.get("compatibility_replacement") is not True:
-        issues.append(f"{projected_path}.sourceAuthority.compatibility_replacement must be true")
+    if source_authority.get("formal_projection") is not True:
+        issues.append(f"{projected_path}.sourceAuthority.formal_projection must be true")
     if _text(source_authority.get("source_key")) != source_key:
         issues.append(f"{projected_path}.sourceAuthority.source_key must be {source_key}")
 
@@ -320,8 +320,8 @@ def _validate_policy_projection(
             issues.append(f"{projected_path}.sourceAuthority.projection_only must be true")
         if source_authority.get("no_business_fact_authority") is not True:
             issues.append(f"{projected_path}.sourceAuthority.no_business_fact_authority must be true")
-        if source_authority.get("compatibility_replacement") is not True:
-            issues.append(f"{projected_path}.sourceAuthority.compatibility_replacement must be true")
+        if source_authority.get("formal_projection") is not True:
+            issues.append(f"{projected_path}.sourceAuthority.formal_projection must be true")
         if _text(source_authority.get("source_key")) != source_key:
             issues.append(f"{projected_path}.sourceAuthority.source_key must be {source_key}")
 

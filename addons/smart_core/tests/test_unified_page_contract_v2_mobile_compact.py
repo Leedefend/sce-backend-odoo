@@ -189,7 +189,7 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual(profile["sourceAuthority"]["runtime_carrier"], "ui.contract.v2.dataMeta.businessOperationProfile")
         self.assertTrue(profile["sourceAuthority"]["projection_only"])
         self.assertTrue(profile["sourceAuthority"]["no_business_fact_authority"])
-        self.assertTrue(profile["sourceAuthority"]["compatibility_replacement"])
+        self.assertTrue(profile["sourceAuthority"]["formal_projection"])
         self.assertNotIn("legacyContractProjection", full["dataContract"]["dataMeta"])
 
     def test_form_data_source_keeps_deep_form_fields(self):

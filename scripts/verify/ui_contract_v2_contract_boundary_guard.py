@@ -193,6 +193,10 @@ def main() -> int:
         violations.append(
             f"{ASSEMBLER.relative_to(ROOT)}: business_operation_profile, visible_fields and field_groups must project to formal V2 dataMeta"
         )
+    if "\"formal_projection\": True" not in assembler_source or "\"formal_projection\": True" not in source:
+        violations.append(
+            f"{ASSEMBLER.relative_to(ROOT)} / {HANDLER.relative_to(ROOT)}: formal V2 projections must mark sourceAuthority.formal_projection"
+        )
     if "\"deletePolicy\": {}" not in assembler_source or "\"surfacePolicies\": {}" not in assembler_source:
         violations.append(
             f"{ASSEMBLER.relative_to(ROOT)}: actionContract must reserve formal V2 policy slots"
@@ -212,15 +216,15 @@ def main() -> int:
             )
     if "action_contract[\"deletePolicy\"] = self._v2_policy_projection(" not in source:
         violations.append(
-            f"{HANDLER.relative_to(ROOT)}: delete_policy compatibility field must project to actionContract.deletePolicy"
+            f"{HANDLER.relative_to(ROOT)}: delete_policy source field must project to actionContract.deletePolicy"
         )
     if "action_contract[\"surfacePolicies\"] = self._v2_policy_projection(" not in source:
         violations.append(
-            f"{HANDLER.relative_to(ROOT)}: surface_policies compatibility field must project to actionContract.surfacePolicies"
+            f"{HANDLER.relative_to(ROOT)}: surface_policies source field must project to actionContract.surfacePolicies"
         )
     if "layout_contract[\"listProfile\"] = self._v2_policy_projection(" not in source:
         violations.append(
-            f"{HANDLER.relative_to(ROOT)}: list_profile compatibility field must project to layoutContract.listProfile"
+            f"{HANDLER.relative_to(ROOT)}: list_profile source field must project to layoutContract.listProfile"
         )
     runtime_path = ROOT / "addons/smart_core/core/unified_page_contract_v2_runtime.py"
     runtime_source = runtime_path.read_text(encoding="utf-8")
@@ -235,6 +239,10 @@ def main() -> int:
     if "def find_policy_contract_issues(" not in runtime_source or "issues.extend(find_policy_contract_issues(contract))" not in runtime_source:
         violations.append(
             f"{runtime_path.relative_to(ROOT)}: runtime guard must validate formal V2 policy projections"
+        )
+    if "sourceAuthority.formal_projection must be true" not in runtime_source:
+        violations.append(
+            f"{runtime_path.relative_to(ROOT)}: runtime guard must require sourceAuthority.formal_projection"
         )
 
     if violations:
