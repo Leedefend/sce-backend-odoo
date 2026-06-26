@@ -831,7 +831,7 @@ async function main() {
     const selectedPanelText = await page.locator(".contract-field-selection-card").innerText();
     const inlineAddButtonCount = await page.locator(".field-order-btn", { hasText: "新增" }).count();
     const inlineVisibilityActionCount = await page.locator(".field-inline-actions .field-inline-action").count();
-    await page.locator(".contract-field-selection-card").getByText("隐藏", { exact: true }).click();
+    await page.locator(".contract-field-governance-actions").getByText("隐藏", { exact: true }).click();
     const operationLogTextAfterHide = await page.locator(".contract-form-operation-log").innerText();
     const operationLogEntryCountAfterHide = await page.locator(".contract-form-operation-log-list li").count();
     const formDirtyAfterHide = await page.locator(".contract-field-governance-dirty").count();
@@ -843,6 +843,62 @@ async function main() {
     const saveFormEnabledAfterReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     await selectDesignerField(page, 1);
     const selectedPanelBeforeMove = await page.locator(".contract-field-selection-card").innerText();
+    const pageColumnsControlCount = await page.locator(".contract-form-layout-tools select").count();
+    let pageColumnsDirtyAfterEdit = 0;
+    let pageColumnsDirtyAfterRestore = 0;
+    if (pageColumnsControlCount > 0) {
+      const pageColumnsSelect = page.locator(".contract-form-layout-tools select").first();
+      const originalColumns = await pageColumnsSelect.inputValue();
+      const alternateColumns = originalColumns === "3" ? "2" : "3";
+      await pageColumnsSelect.selectOption(alternateColumns);
+      await page.waitForTimeout(300);
+      pageColumnsDirtyAfterEdit = await page.locator(".contract-field-governance-dirty").count();
+      await pageColumnsSelect.selectOption(originalColumns);
+      await page.waitForTimeout(300);
+      pageColumnsDirtyAfterRestore = await page.locator(".contract-field-governance-dirty").count();
+    }
+    await selectDesignerField(page, 1);
+    const groupVisibilityControlCount = await page.locator(".contract-field-group-visibility input").count();
+    const groupColumnsControlCount = await page.locator(".contract-field-group-columns select").count();
+    const fieldSizeControlCount = await page.locator(".contract-field-size-control select").count();
+    let groupVisibilityDirtyAfterHide = 0;
+    let groupVisibilityDirtyAfterRestore = 0;
+    if (groupVisibilityControlCount >= 2) {
+      await page.locator(".contract-field-group-visibility input[value='hide']").first().click();
+      await page.waitForTimeout(300);
+      groupVisibilityDirtyAfterHide = await page.locator(".contract-field-governance-dirty").count();
+      await page.locator(".contract-field-group-visibility input[value='show']").first().click();
+      await page.waitForTimeout(300);
+      groupVisibilityDirtyAfterRestore = await page.locator(".contract-field-governance-dirty").count();
+    }
+    await selectDesignerField(page, 1);
+    let groupColumnsDirtyAfterEdit = 0;
+    let groupColumnsDirtyAfterRestore = 0;
+    if (groupColumnsControlCount > 0) {
+      const groupColumnsSelect = page.locator(".contract-field-group-columns select").first();
+      const originalColumns = await groupColumnsSelect.inputValue();
+      const alternateColumns = originalColumns === "3" ? "2" : "3";
+      await groupColumnsSelect.selectOption(alternateColumns);
+      await page.waitForTimeout(300);
+      groupColumnsDirtyAfterEdit = await page.locator(".contract-field-governance-dirty").count();
+      await groupColumnsSelect.selectOption(originalColumns);
+      await page.waitForTimeout(300);
+      groupColumnsDirtyAfterRestore = await page.locator(".contract-field-governance-dirty").count();
+    }
+    let fieldSizeDirtyAfterEdit = 0;
+    let fieldSizeDirtyAfterRestore = 0;
+    if (fieldSizeControlCount > 0) {
+      const fieldSizeSelect = page.locator(".contract-field-size-control select").first();
+      const originalSize = await fieldSizeSelect.inputValue();
+      const alternateSize = originalSize === "full" ? "normal" : "full";
+      await fieldSizeSelect.selectOption(alternateSize);
+      await page.waitForTimeout(300);
+      fieldSizeDirtyAfterEdit = await page.locator(".contract-field-governance-dirty").count();
+      await fieldSizeSelect.selectOption(originalSize);
+      await page.waitForTimeout(300);
+      fieldSizeDirtyAfterRestore = await page.locator(".contract-field-governance-dirty").count();
+    }
+    await selectDesignerField(page, 1);
     const groupRenameControlCount = await page.locator(".contract-field-group-rename input").count();
     let groupRenameOriginalTitle = "";
     let groupRenameTempTitle = "";
@@ -1011,6 +1067,18 @@ async function main() {
       resetFormEnabledAfterHide,
       formDirtyAfterReset,
       saveFormEnabledAfterReset,
+      pageColumnsControlCount,
+      pageColumnsDirtyAfterEdit,
+      pageColumnsDirtyAfterRestore,
+      groupVisibilityControlCount,
+      groupVisibilityDirtyAfterHide,
+      groupVisibilityDirtyAfterRestore,
+      groupColumnsControlCount,
+      groupColumnsDirtyAfterEdit,
+      groupColumnsDirtyAfterRestore,
+      fieldSizeControlCount,
+      fieldSizeDirtyAfterEdit,
+      fieldSizeDirtyAfterRestore,
       groupRenameControlCount,
       groupRenameOriginalTitle,
       groupRenameTempTitle,
@@ -1078,6 +1146,35 @@ async function main() {
       },
     );
     assert(selectedPanelBeforeMove.includes("已选字段"), "表单字段点选状态不可用", { selectedPanelBeforeMove });
+    assert(
+      pageColumnsControlCount > 0
+        && pageColumnsDirtyAfterEdit > 0
+        && pageColumnsDirtyAfterRestore === 0
+        && groupVisibilityControlCount >= 2
+        && groupVisibilityDirtyAfterHide > 0
+        && groupVisibilityDirtyAfterRestore === 0
+        && groupColumnsControlCount > 0
+        && groupColumnsDirtyAfterEdit > 0
+        && groupColumnsDirtyAfterRestore === 0
+        && fieldSizeControlCount > 0
+        && fieldSizeDirtyAfterEdit > 0
+        && fieldSizeDirtyAfterRestore === 0,
+      "表单布局低代码配置能力不可用",
+      {
+        pageColumnsControlCount,
+        pageColumnsDirtyAfterEdit,
+        pageColumnsDirtyAfterRestore,
+        groupVisibilityControlCount,
+        groupVisibilityDirtyAfterHide,
+        groupVisibilityDirtyAfterRestore,
+        groupColumnsControlCount,
+        groupColumnsDirtyAfterEdit,
+        groupColumnsDirtyAfterRestore,
+        fieldSizeControlCount,
+        fieldSizeDirtyAfterEdit,
+        fieldSizeDirtyAfterRestore,
+      },
+    );
     assert(
       groupRenameControlCount > 0
         && (

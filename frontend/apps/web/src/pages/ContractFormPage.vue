@@ -238,6 +238,16 @@
                 </button>
               </div>
             </header>
+            <section class="contract-form-layout-tools" aria-label="表单布局配置">
+              <label>
+                <span>页面列数</span>
+                <select :value="formLayoutColumnsDraft" :disabled="busy" @change="onFormLayoutColumnsChange">
+                  <option :value="1">1 栏</option>
+                  <option :value="2">2 栏</option>
+                  <option :value="3">3 栏</option>
+                </select>
+              </label>
+            </section>
             <section class="contract-field-selection-panel">
               <div v-if="selectedFormSettingsFieldRow" class="contract-field-selection-card">
                 <div class="contract-field-selection-main">
@@ -281,6 +291,56 @@
                       @change="onSelectedFormSettingsGroupTitleChange"
                       @keydown.enter.prevent="onSelectedFormSettingsGroupTitleChange"
                     />
+                  </label>
+                  <div class="contract-field-group-visibility" role="radiogroup" :aria-label="`${selectedFormSettingsFieldGroupTitle}分组显示`">
+                    <span>分组显示</span>
+                    <label>
+                      <input
+                        type="radio"
+                        :name="`contract-field-group-visible-${selectedFormSettingsFieldGroupTitle}`"
+                        value="show"
+                        :checked="selectedFormSettingsGroupVisible"
+                        :disabled="busy || !selectedFormSettingsFieldGroupTitle"
+                        @change="onSelectedFormSettingsGroupVisibilityChange('show')"
+                      />
+                      <span>显示</span>
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        :name="`contract-field-group-visible-${selectedFormSettingsFieldGroupTitle}`"
+                        value="hide"
+                        :checked="!selectedFormSettingsGroupVisible"
+                        :disabled="busy || !selectedFormSettingsFieldGroupTitle"
+                        @change="onSelectedFormSettingsGroupVisibilityChange('hide')"
+                      />
+                      <span>隐藏</span>
+                    </label>
+                  </div>
+                  <label class="contract-field-group-columns">
+                    <span>分组列数</span>
+                    <select
+                      :value="selectedFormSettingsGroupColumns"
+                      :disabled="busy || !selectedFormSettingsFieldGroupTitle"
+                      @change="onSelectedFormSettingsGroupColumnsChange"
+                    >
+                      <option :value="1">1 栏</option>
+                      <option :value="2">2 栏</option>
+                      <option :value="3">3 栏</option>
+                    </select>
+                  </label>
+                  <label class="contract-field-size-control">
+                    <span>字段尺寸</span>
+                    <select
+                      :value="selectedFormSettingsFieldSize"
+                      :disabled="busy || !selectedFormSettingsFieldKey"
+                      @change="onSelectedFormSettingsFieldSizeChange"
+                    >
+                      <option value="normal">标准</option>
+                      <option value="wide">加宽</option>
+                      <option value="full">整行</option>
+                      <option value="large">大输入框</option>
+                    </select>
                   </label>
                   <div class="contract-field-position-move">
                     <label>
@@ -1260,8 +1320,11 @@ type LayoutNode = {
   required: boolean;
   widget?: string;
   widgetSemantics?: Record<string, unknown>;
+  spanClass?: string;
   descriptor?: FieldDescriptor;
 };
+
+type LowCodeFieldSize = 'normal' | 'wide' | 'full' | 'large';
 
 type RelationOption = {
   id: number;
@@ -2075,6 +2138,17 @@ const formConfigFieldLabelCache = reactive<Record<string, string>>({});
 const fieldGroupBase = ref<Record<string, string>>({});
 const fieldGroupSavedBase = ref<Record<string, string>>({});
 const fieldGroupDraft = reactive<Record<string, string>>({});
+const formLayoutColumnsBase = ref<1 | 2 | 3>(3);
+const formLayoutColumnsDraft = ref<1 | 2 | 3>(3);
+const groupVisibilityBase = ref<Record<string, boolean>>({});
+const groupVisibilityDraft = reactive<Record<string, boolean>>({});
+const groupColumnsBase = ref<Record<string, 1 | 2 | 3>>({});
+const groupColumnsDraft = reactive<Record<string, 1 | 2 | 3>>({});
+const fieldSizeBase = ref<Record<string, LowCodeFieldSize>>({});
+const fieldSizeDraft = reactive<Record<string, LowCodeFieldSize>>({});
+const formLayoutDirty = ref(false);
+const groupLayoutDirtyKeys = reactive<Record<string, boolean>>({});
+const fieldLayoutDirtyKeys = reactive<Record<string, boolean>>({});
 const fieldMoveTargetDraft = reactive<Record<string, string>>({});
 const draggingFieldKey = ref('');
 const draggingFieldLabel = ref('');
@@ -2225,6 +2299,17 @@ watch(contractModeBaseFieldRows, (rows) => {
     fieldVisibilityBase.value = {};
     fieldGroupBase.value = {};
     fieldGroupSavedBase.value = {};
+    formLayoutColumnsBase.value = 3;
+    formLayoutColumnsDraft.value = 3;
+    groupVisibilityBase.value = {};
+    Object.keys(groupVisibilityDraft).forEach((key) => delete groupVisibilityDraft[key]);
+    groupColumnsBase.value = {};
+    Object.keys(groupColumnsDraft).forEach((key) => delete groupColumnsDraft[key]);
+    fieldSizeBase.value = {};
+    Object.keys(fieldSizeDraft).forEach((key) => delete fieldSizeDraft[key]);
+    formLayoutDirty.value = false;
+    Object.keys(groupLayoutDirtyKeys).forEach((key) => delete groupLayoutDirtyKeys[key]);
+    Object.keys(fieldLayoutDirtyKeys).forEach((key) => delete fieldLayoutDirtyKeys[key]);
     lowCodeFormLayoutBase.value = [];
     Object.keys(fieldGroupDraft).forEach((key) => delete fieldGroupDraft[key]);
     Object.keys(fieldMoveTargetDraft).forEach((key) => delete fieldMoveTargetDraft[key]);
@@ -2372,8 +2457,59 @@ const hasFieldGroupChanges = computed(() => Object.keys(fieldGroupDraft).some((f
   return Boolean(draft) && draft !== base;
 }));
 
+function normalizeLowCodeColumns(value: unknown, fallback: 1 | 2 | 3 = 2): 1 | 2 | 3 {
+  const columns = Number(value);
+  if (columns === 1 || columns === 2 || columns === 3) return columns;
+  return fallback;
+}
+
+function normalizeLowCodeFieldSize(value: unknown): LowCodeFieldSize {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (['wide', 'full', 'large'].includes(normalized)) return normalized as LowCodeFieldSize;
+  return 'normal';
+}
+
+function lowCodeFieldSizeClass(size: LowCodeFieldSize) {
+  if (size === 'wide') return 'field--wide';
+  if (size === 'full') return 'field--full';
+  if (size === 'large') return 'field--full field--large';
+  return '';
+}
+
+function effectiveGroupVisible(title: string) {
+  const key = normalizeFieldGroupTitle(title);
+  if (!key) return true;
+  if (Object.prototype.hasOwnProperty.call(groupVisibilityDraft, key)) return groupVisibilityDraft[key] !== false;
+  if (Object.prototype.hasOwnProperty.call(groupVisibilityBase.value, key)) return groupVisibilityBase.value[key] !== false;
+  return true;
+}
+
+function effectiveGroupColumns(title: string): 1 | 2 | 3 {
+  const key = normalizeFieldGroupTitle(title);
+  if (!key) return formLayoutColumnsDraft.value;
+  return groupColumnsDraft[key] || groupColumnsBase.value[key] || formLayoutColumnsDraft.value;
+}
+
+function effectiveFieldSize(fieldKey: string): LowCodeFieldSize {
+  const key = String(fieldKey || '').trim();
+  if (!key) return 'normal';
+  return fieldSizeDraft[key] || fieldSizeBase.value[key] || 'normal';
+}
+
+const hasFormLayoutChanges = computed(() => formLayoutDirty.value);
+
+const hasGroupLayoutChanges = computed(() => Object.keys(groupLayoutDirtyKeys).length > 0);
+
+const hasFieldLayoutChanges = computed(() => Object.keys(fieldLayoutDirtyKeys).length > 0);
+
 const hasCurrentFormFieldDraftChanges = computed(() => (
-  hasFieldOrderChanges.value || hasFieldVisibilityChanges.value || hasFieldGroupChanges.value || fieldVisibilityDirty.value
+  hasFieldOrderChanges.value
+  || hasFieldVisibilityChanges.value
+  || hasFieldGroupChanges.value
+  || hasFormLayoutChanges.value
+  || hasGroupLayoutChanges.value
+  || hasFieldLayoutChanges.value
+  || fieldVisibilityDirty.value
 ));
 
 const formConfigOperatorName = computed(() => {
@@ -2925,9 +3061,91 @@ const selectedFormSettingsFieldGroupTitle = computed(() => {
   return nativeGroup?.title || selectedFormSettingsFieldGroupTitleDraft.value || '业务配置字段';
 });
 
+const selectedFormSettingsGroupVisible = computed(() => effectiveGroupVisible(selectedFormSettingsFieldGroupTitle.value));
+const selectedFormSettingsGroupColumns = computed(() => effectiveGroupColumns(selectedFormSettingsFieldGroupTitle.value));
+const selectedFormSettingsFieldSize = computed(() => effectiveFieldSize(selectedFormSettingsFieldKey.value));
+
 watch(selectedFormSettingsFieldGroupTitle, (title) => {
   selectedFormSettingsFieldGroupTitleEdit.value = title;
 });
+
+function syncLayoutDraftFromFormSpec(formSpec: Record<string, unknown>) {
+  const specColumns = normalizeLowCodeColumns(formSpec.columns ?? (formSpec as { cols?: unknown }).cols, 3);
+  formLayoutColumnsBase.value = specColumns;
+  if (!formLayoutDirty.value) {
+    formLayoutColumnsDraft.value = specColumns;
+  }
+  const nextGroupVisible: Record<string, boolean> = {};
+  const nextGroupColumns: Record<string, 1 | 2 | 3> = {};
+  const nextFieldSize: Record<string, LowCodeFieldSize> = {};
+  const collectLayout = (nodes: unknown, activeGroup = '') => {
+    for (const raw of Array.isArray(nodes) ? nodes : []) {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+      const node = raw as Record<string, unknown>;
+      const nodeType = String(node.type || node.kind || node.containerType || '').trim().toLowerCase();
+      const title = normalizeFieldGroupTitle(node.string || node.label || node.title);
+      const groupTitle = nodeType === 'group' && title ? title : activeGroup;
+      if (nodeType === 'group' && title) {
+        nextGroupVisible[title] = node.visible !== false;
+        nextGroupColumns[title] = normalizeLowCodeColumns(
+          node.columns ?? node.cols ?? ((node.attributes && typeof node.attributes === 'object' && !Array.isArray(node.attributes))
+            ? (node.attributes as Record<string, unknown>).columns ?? (node.attributes as Record<string, unknown>).cols
+            : undefined),
+          specColumns,
+        );
+      }
+      const fieldName = String(node.name || node.field || node.field_name || '').trim();
+      if (nodeType === 'field' && fieldName) {
+        const rawSize = node.field_size || node.fieldSize || node.size;
+        const rawClass = String(node.class || node.className || '').trim();
+        const inferred = rawSize
+          || (rawClass.includes('field--large') ? 'large'
+            : (rawClass.includes('field--full') ? 'full'
+              : (rawClass.includes('field--wide') ? 'wide' : 'normal')));
+        nextFieldSize[fieldName] = normalizeLowCodeFieldSize(inferred);
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        collectLayout(node[key], groupTitle);
+      });
+    }
+  };
+  collectLayout(formSpec.layout);
+  const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
+  formFields.forEach((row) => {
+    const fieldName = String(row.name || row.field || row.field_name || '').trim();
+    if (!fieldName || nextFieldSize[fieldName]) return;
+    const rawClass = String(row.class || row.className || '').trim();
+    nextFieldSize[fieldName] = normalizeLowCodeFieldSize(
+      row.field_size
+      || row.fieldSize
+      || row.size
+      || (rawClass.includes('field--large') ? 'large'
+        : (rawClass.includes('field--full') ? 'full'
+          : (rawClass.includes('field--wide') ? 'wide' : 'normal'))),
+    );
+  });
+  groupVisibilityBase.value = nextGroupVisible;
+  if (!Object.keys(groupLayoutDirtyKeys).length) {
+    Object.keys(groupVisibilityDraft).forEach((key) => delete groupVisibilityDraft[key]);
+    Object.entries(nextGroupVisible).forEach(([key, value]) => {
+      groupVisibilityDraft[key] = value;
+    });
+  }
+  groupColumnsBase.value = nextGroupColumns;
+  if (!Object.keys(groupLayoutDirtyKeys).length) {
+    Object.keys(groupColumnsDraft).forEach((key) => delete groupColumnsDraft[key]);
+    Object.entries(nextGroupColumns).forEach(([key, value]) => {
+      groupColumnsDraft[key] = value;
+    });
+  }
+  fieldSizeBase.value = nextFieldSize;
+  if (!Object.keys(fieldLayoutDirtyKeys).length) {
+    Object.keys(fieldSizeDraft).forEach((key) => delete fieldSizeDraft[key]);
+    Object.entries(nextFieldSize).forEach(([key, value]) => {
+      fieldSizeDraft[key] = value;
+    });
+  }
+}
 
 async function hydrateLowCodeDraftFromContract() {
   if (!isContractFieldOrderEditable.value || lowCodeContractLoaded.value || lowCodeContractHydrating.value) return;
@@ -2978,6 +3196,7 @@ async function hydrateLowCodeDraftFromContract() {
     lowCodeFormLayoutBase.value = Array.isArray(formSpec.layout)
       ? formSpec.layout as unknown as NativeFormLayoutNode[]
       : [];
+    syncLayoutDraftFromFormSpec(formSpec);
     if (formFields.length) {
       const orderNames = formFields
         .map((row) => ({ name: String(row?.name || row?.field || '').trim(), sequence: Number(row?.sequence || row?.order || 0) }))
@@ -3095,6 +3314,7 @@ async function refreshLowCodeFormLayoutBase() {
     lowCodeFormLayoutBase.value = Array.isArray(formSpec.layout)
       ? formSpec.layout as unknown as NativeFormLayoutNode[]
       : [];
+    syncLayoutDraftFromFormSpec(formSpec);
     const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
     formFields.forEach((row) => {
       const key = String(row?.name || row?.field || '').trim();
@@ -3180,6 +3400,7 @@ async function switchLowCodeContractByName() {
     lowCodeFormLayoutBase.value = Array.isArray(formSpec.layout)
       ? formSpec.layout as unknown as NativeFormLayoutNode[]
       : [];
+    syncLayoutDraftFromFormSpec(formSpec);
     if (formFields.length) {
       const orderNames = formFields
         .map((row) => ({ name: String(row?.name || row?.field || '').trim(), sequence: Number(row?.sequence || row?.order || 0) }))
@@ -3371,28 +3592,42 @@ function buildLowCodeViewOrchestration() {
       if (!groupBuckets.has(key)) groupBuckets.set(key, []);
       groupBuckets.get(key)?.push(name);
     });
-    const layoutGroups = Array.from(groupBuckets.entries()).map(([title, names]) => ({
+    const layoutGroups = Array.from(groupBuckets.entries())
+      .filter(([title]) => effectiveGroupVisible(title))
+      .map(([title, names]) => ({
       type: 'group',
       string: title,
+      visible: effectiveGroupVisible(title),
+      columns: effectiveGroupColumns(title),
       children: names.map((name) => ({
         type: 'field',
         name,
+        ...(lowCodeFieldSizeClass(effectiveFieldSize(name)) ? {
+          class: lowCodeFieldSizeClass(effectiveFieldSize(name)),
+          field_size: effectiveFieldSize(name),
+        } : {}),
       })),
     }));
     views.form = {
+      columns: formLayoutColumnsDraft.value,
       fields: formNames.map((name, index) => {
         const groupTitle = fieldGroupTitle(name);
+        const fieldSize = effectiveFieldSize(name);
+        const fieldClass = lowCodeFieldSizeClass(fieldSize);
         return {
           name,
           label: fieldLabel(name),
-          visible: fieldVisibilityDraft[name] !== false,
+          visible: fieldVisibilityDraft[name] !== false && effectiveGroupVisible(groupTitle || '业务配置字段'),
           sequence: (index + 1) * 10,
           ...(groupTitle ? { group_title: groupTitle } : {}),
+          ...(fieldClass ? { class: fieldClass, field_size: fieldSize } : {}),
         };
       }),
       sections: Array.from(groupBuckets.entries()).map(([title, names], index) => ({
         name: `business_config_section_${index + 1}`,
         title,
+        visible: effectiveGroupVisible(title),
+        columns: effectiveGroupColumns(title),
         sequence: (index + 1) * 10,
         fields: [...names],
       })),
@@ -7003,6 +7238,7 @@ function normalizeNativeLayoutColumns(value: unknown): 1 | 2 | 3 | null {
 }
 
 const nativeFormRootColumns = computed<1 | 2 | 3>(() => {
+  if (isContractFieldOrderEditable.value) return formLayoutColumnsDraft.value;
   const walk = (nodes: NativeFormLayoutNode[]): 1 | 2 | 3 | null => {
     for (const node of nodes) {
       const attrs = node && typeof node.attributes === 'object' && node.attributes
@@ -7429,6 +7665,11 @@ function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
   if (evaluateNativeModifierValue(nativeModifierValue(nodeRaw, 'invisible'))) return false;
   const node = nodeRaw as Record<string, unknown>;
   const nodeType = String(node.type || '').trim().toLowerCase();
+  if (node.visible === false) return false;
+  if (nodeType === 'group') {
+    const title = normalizeFieldGroupTitle(node.string || node.label || node.title);
+    if (title && !effectiveGroupVisible(title)) return false;
+  }
   const fieldName = String(nodeRaw.name || '').trim();
   if (
     nodeType === 'field'
@@ -7590,6 +7831,16 @@ function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: numbe
   const nativeReadonly = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'readonly'));
   const nativeRequired = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'required'));
   const label = nativeFieldLabel(nodeRaw, descriptor);
+  const nodeClass = String((nodeRaw as Record<string, unknown>).class || (nodeRaw as Record<string, unknown>).className || '').trim();
+  const fieldSize = isContractFieldOrderEditable.value
+    ? effectiveFieldSize(name)
+    : normalizeLowCodeFieldSize(
+      (nodeRaw as Record<string, unknown>).field_size
+      || (nodeRaw as Record<string, unknown>).fieldSize
+      || (nodeClass.includes('field--large') ? 'large'
+        : (nodeClass.includes('field--full') ? 'full'
+          : (nodeClass.includes('field--wide') ? 'wide' : 'normal'))),
+    );
   rememberFormConfigFieldLabel(name, label);
   return {
     key: `native_field_${name}_${index}`,
@@ -7600,6 +7851,7 @@ function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: numbe
     required: Boolean(nativeRequired || resolved.required || state.required || descriptor?.required),
     widget: nativeNodeWidget(nodeRaw),
     widgetSemantics: nativeNodeWidgetSemantics(nodeRaw),
+    spanClass: lowCodeFieldSizeClass(fieldSize) || nodeClass,
     descriptor,
   };
 }
@@ -7795,7 +8047,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
 const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   resolveFieldType: (descriptor) => fieldType(descriptor) || 'char',
   resolveRequired: (field) => shouldShowRequiredMark(field as LayoutNode),
-  resolveSpanClass: (field) => resolveFieldSpanClass({
+  resolveSpanClass: (field) => (field as LayoutNode).spanClass || resolveFieldSpanClass({
     fieldName: field.name,
     fieldType: fieldType(field.descriptor),
   }),
@@ -9734,6 +9986,82 @@ function onSelectedFormSettingsFieldGroupMoveChange(event: Event) {
   moveSelectedFormSettingsFieldToGroup(value);
 }
 
+function onFormLayoutColumnsChange(event: Event) {
+  const target = event.target as HTMLSelectElement | null;
+  const columns = normalizeLowCodeColumns(target?.value, formLayoutColumnsDraft.value);
+  if (columns === formLayoutColumnsDraft.value) return;
+  formLayoutColumnsDraft.value = columns;
+  formLayoutDirty.value = columns !== formLayoutColumnsBase.value;
+  formConfigAuditResult.value = null;
+  appendFormConfigOperation('调整页面列数', `页面调整为 ${columns} 栏`);
+}
+
+function onSelectedFormSettingsGroupVisibilityChange(value: string) {
+  const title = selectedFormSettingsFieldGroupTitle.value;
+  const key = normalizeFieldGroupTitle(title);
+  if (!key) return;
+  const visible = value !== 'hide';
+  if (effectiveGroupVisible(key) === visible) return;
+  groupVisibilityDraft[key] = visible;
+  const baseVisible = Object.prototype.hasOwnProperty.call(groupVisibilityBase.value, key)
+    ? groupVisibilityBase.value[key] !== false
+    : true;
+  if (visible === baseVisible && (groupColumnsDraft[key] || groupColumnsBase.value[key] || formLayoutColumnsBase.value) === (groupColumnsBase.value[key] || formLayoutColumnsBase.value)) {
+    delete groupLayoutDirtyKeys[key];
+  } else {
+    groupLayoutDirtyKeys[key] = true;
+  }
+  formConfigAuditResult.value = null;
+  appendFormConfigOperation(visible ? '显示分组' : '隐藏分组', `${key} 设置为${visible ? '显示' : '隐藏'}`);
+}
+
+function onSelectedFormSettingsGroupColumnsChange(event: Event) {
+  const title = selectedFormSettingsFieldGroupTitle.value;
+  const key = normalizeFieldGroupTitle(title);
+  if (!key) return;
+  const target = event.target as HTMLSelectElement | null;
+  const columns = normalizeLowCodeColumns(target?.value, effectiveGroupColumns(key));
+  if (effectiveGroupColumns(key) === columns) return;
+  groupColumnsDraft[key] = columns;
+  const baseColumns = groupColumnsBase.value[key] || formLayoutColumnsBase.value;
+  const baseVisible = Object.prototype.hasOwnProperty.call(groupVisibilityBase.value, key)
+    ? groupVisibilityBase.value[key] !== false
+    : true;
+  const draftVisible = Object.prototype.hasOwnProperty.call(groupVisibilityDraft, key)
+    ? groupVisibilityDraft[key] !== false
+    : baseVisible;
+  if (columns === baseColumns && draftVisible === baseVisible) {
+    delete groupLayoutDirtyKeys[key];
+  } else {
+    groupLayoutDirtyKeys[key] = true;
+  }
+  formConfigAuditResult.value = null;
+  appendFormConfigOperation('调整分组列数', `${key} 调整为 ${columns} 栏`);
+}
+
+function lowCodeFieldSizeLabel(size: LowCodeFieldSize) {
+  if (size === 'wide') return '加宽';
+  if (size === 'full') return '整行';
+  if (size === 'large') return '大输入框';
+  return '标准';
+}
+
+function onSelectedFormSettingsFieldSizeChange(event: Event) {
+  const fieldKey = selectedFormSettingsFieldKey.value;
+  if (!fieldKey) return;
+  const target = event.target as HTMLSelectElement | null;
+  const size = normalizeLowCodeFieldSize(target?.value);
+  if (effectiveFieldSize(fieldKey) === size) return;
+  fieldSizeDraft[fieldKey] = size;
+  if (size === (fieldSizeBase.value[fieldKey] || 'normal')) {
+    delete fieldLayoutDirtyKeys[fieldKey];
+  } else {
+    fieldLayoutDirtyKeys[fieldKey] = true;
+  }
+  formConfigAuditResult.value = null;
+  appendFormConfigOperation('调整字段尺寸', `${formDesignFieldLabel(fieldKey)} 设置为${lowCodeFieldSizeLabel(size)}`);
+}
+
 async function onSelectedFormSettingsGroupTitleChange(event: Event) {
   const oldTitle = selectedFormSettingsFieldGroupTitle.value;
   const target = event.target as HTMLInputElement | null;
@@ -10106,6 +10434,22 @@ function resetContractFieldOrder() {
   Object.entries({ ...fieldGroupBase.value, ...fieldGroupSavedBase.value }).forEach(([key, value]) => {
     if (value) fieldGroupDraft[key] = value;
   });
+  formLayoutColumnsDraft.value = formLayoutColumnsBase.value;
+  Object.keys(groupVisibilityDraft).forEach((key) => delete groupVisibilityDraft[key]);
+  Object.entries(groupVisibilityBase.value).forEach(([key, value]) => {
+    groupVisibilityDraft[key] = value;
+  });
+  Object.keys(groupColumnsDraft).forEach((key) => delete groupColumnsDraft[key]);
+  Object.entries(groupColumnsBase.value).forEach(([key, value]) => {
+    groupColumnsDraft[key] = value;
+  });
+  Object.keys(fieldSizeDraft).forEach((key) => delete fieldSizeDraft[key]);
+  Object.entries(fieldSizeBase.value).forEach(([key, value]) => {
+    fieldSizeDraft[key] = value;
+  });
+  formLayoutDirty.value = false;
+  Object.keys(groupLayoutDirtyKeys).forEach((key) => delete groupLayoutDirtyKeys[key]);
+  Object.keys(fieldLayoutDirtyKeys).forEach((key) => delete fieldLayoutDirtyKeys[key]);
   formVisibilityDraftFieldKeys.value.forEach((fieldKey) => {
     if (Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) {
       fieldVisibilityDraft[fieldKey] = fieldVisibilityBase.value[fieldKey];
@@ -10188,6 +10532,7 @@ function formConfigSaveOperationSummary(changedVisibility: Record<string, boolea
   if (groupCount) parts.push(`${groupCount} 个字段分组`);
   const visibilityCount = Object.keys(changedVisibility).length;
   if (visibilityCount) parts.push(`${visibilityCount} 个字段显示状态`);
+  if (hasFormLayoutChanges.value || hasGroupLayoutChanges.value || hasFieldLayoutChanges.value) parts.push('表单布局');
   return parts.length ? `保存并发布：${parts.join('、')}` : '保存并发布表单设置';
 }
 
@@ -10209,18 +10554,21 @@ async function saveContractFieldOrder() {
   if (Object.keys(changedVisibility).length) {
     applyParams.field_visibility = changedVisibility;
   }
-  if (!('field_order' in applyParams) && !('field_visibility' in applyParams) && !('field_groups' in applyParams)) {
+  const hasFieldApplyParams = 'field_order' in applyParams || 'field_visibility' in applyParams || 'field_groups' in applyParams;
+  if (!hasFieldApplyParams && !hasFormLayoutChanges.value && !hasGroupLayoutChanges.value && !hasFieldLayoutChanges.value) {
     fieldVisibilityDirty.value = false;
     contractModeFeedback.value = '';
     return true;
   }
   busyKind.value = 'action';
   try {
-    await intentRequest({
-      intent: 'ui.business_config.lowcode.apply',
-      params: applyParams,
-      context: { view: 'form' },
-    });
+    if (hasFieldApplyParams) {
+      await intentRequest({
+        intent: 'ui.business_config.lowcode.apply',
+        params: applyParams,
+        context: { view: 'form' },
+      });
+    }
     const saveResult = await intentRequest<{
       precheck?: { warnings?: string[]; errors?: string[] }
     }>({
@@ -10271,6 +10619,13 @@ async function saveContractFieldOrder() {
         ...changedGroups,
       };
     }
+    formLayoutColumnsBase.value = formLayoutColumnsDraft.value;
+    groupVisibilityBase.value = { ...groupVisibilityDraft };
+    groupColumnsBase.value = { ...groupColumnsDraft };
+    fieldSizeBase.value = { ...fieldSizeDraft };
+    formLayoutDirty.value = false;
+    Object.keys(groupLayoutDirtyKeys).forEach((key) => delete groupLayoutDirtyKeys[key]);
+    Object.keys(fieldLayoutDirtyKeys).forEach((key) => delete fieldLayoutDirtyKeys[key]);
     fieldVisibilityDirty.value = false;
     lowCodeContractLoaded.value = false;
     formConfigAuditResult.value = null;
@@ -11630,6 +11985,34 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
+.contract-form-layout-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+}
+
+.contract-form-layout-tools label {
+  display: inline-grid;
+  gap: 4px;
+  min-width: 128px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-form-layout-tools select {
+  height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 5px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  padding: 0 8px;
+}
+
 .contract-field-selection-panel {
   display: grid;
   gap: 8px;
@@ -11739,6 +12122,43 @@ onBeforeUnmount(() => {
   background: var(--sc-app-input-bg);
   color: var(--sc-app-text-primary);
   padding: 0 8px;
+}
+
+.contract-field-group-columns,
+.contract-field-size-control {
+  display: inline-grid;
+  gap: 4px;
+  min-width: 116px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-field-group-columns select,
+.contract-field-size-control select {
+  min-width: 116px;
+  max-width: 160px;
+  height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 5px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  padding: 0 8px;
+}
+
+.contract-field-group-visibility {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-field-group-visibility label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--sc-app-text-primary);
 }
 
 .contract-field-position-move {

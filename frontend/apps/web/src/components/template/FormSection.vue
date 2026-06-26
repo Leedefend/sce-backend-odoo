@@ -376,11 +376,17 @@ function fieldIdentity(field: FormSectionFieldSchema) {
   return String(field.name || field.key || '').trim();
 }
 
+function fieldSpanClass(field: FormSectionFieldSchema) {
+  const span = field.spanClass || defaultSpanClass(field.type);
+  if (props.columns === 1 && span.includes('field--wide')) return span.replace('field--wide', 'field--full');
+  return span;
+}
+
 function fieldClass(field: FormSectionFieldSchema) {
   const fieldKey = fieldIdentity(field);
   return [
     'field',
-    field.spanClass || defaultSpanClass(field.type),
+    fieldSpanClass(field),
     fieldWidgetClass(field),
     {
       'field--order-editable': props.fieldOrderEditable,
@@ -695,8 +701,17 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   grid-column: span 1;
 }
 
+.field--wide {
+  grid-column: span 2;
+}
+
 .field--full {
   grid-column: 1 / -1;
+}
+
+.field--large .input,
+.field--large textarea.input {
+  min-height: 92px;
 }
 
 .field-label-row {
@@ -1025,6 +1040,10 @@ select.input {
     grid-template-columns: 1fr !important;
     row-gap: 16px;
     column-gap: 0;
+  }
+
+  .field--wide {
+    grid-column: 1 / -1;
   }
 
   .native-date-range {

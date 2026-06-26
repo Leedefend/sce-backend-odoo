@@ -364,6 +364,12 @@ export type NativeFormLayoutNode = {
   cols?: number;
   columns?: number;
   widget?: string;
+  visible?: boolean;
+  class?: string;
+  className?: string;
+  field_size?: string;
+  fieldSize?: string;
+  size?: string;
   attributes?: Record<string, unknown>;
   fieldInfo?: Record<string, unknown>;
   field_info?: Record<string, unknown>;

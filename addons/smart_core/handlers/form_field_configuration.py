@@ -591,6 +591,8 @@ def _upsert_view_orchestration_field_rows(
     spec = views.get(view_type) if isinstance(views.get(view_type), dict) else {}
     fields_rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
     layout_group_by_field: dict[str, str] = {}
+    group_meta_by_title: dict[str, dict] = {}
+    field_layout_meta_by_name: dict[str, dict] = {}
 
     def collect_layout_groups(nodes, group_title: str = "") -> None:
         for node in nodes if isinstance(nodes, list) else []:
@@ -599,13 +601,35 @@ def _upsert_view_orchestration_field_rows(
             node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
             title = str(node.get("string") or node.get("label") or node.get("title") or "").strip()
             next_group = title if node_type == "group" and title else group_title
+            if node_type == "group" and title:
+                attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
+                group_meta_by_title[title] = {
+                    "visible": node.get("visible"),
+                    "columns": node.get("columns") or node.get("cols") or attrs.get("columns") or attrs.get("cols"),
+                }
             field_name = str(node.get("name") or node.get("field") or "").strip()
             if node_type == "field" and field_name and next_group:
                 layout_group_by_field[field_name] = next_group
+            if node_type == "field" and field_name:
+                field_layout_meta_by_name[field_name] = {
+                    "class": node.get("class") or node.get("className"),
+                    "field_size": node.get("field_size") or node.get("fieldSize") or node.get("size"),
+                }
             for child_key in ("children", "pages", "tabs", "nodes", "items"):
                 collect_layout_groups(node.get(child_key), next_group)
 
     collect_layout_groups(spec.get("layout"))
+    for section in spec.get("sections") if isinstance(spec.get("sections"), list) else []:
+        if not isinstance(section, dict):
+            continue
+        title = str(section.get("title") or section.get("label") or section.get("name") or "").strip()
+        if not title:
+            continue
+        current = group_meta_by_title.get(title, {})
+        group_meta_by_title[title] = {
+            "visible": current.get("visible") if current.get("visible") is not None else section.get("visible"),
+            "columns": current.get("columns") or section.get("columns") or section.get("cols"),
+        }
     by_name = {
         str(row.get("name") or row.get("field") or row.get("field_name") or "").strip(): dict(row)
         for row in fields_rows
@@ -616,13 +640,16 @@ def _upsert_view_orchestration_field_rows(
         if not field_name:
             continue
         current = by_name.get(field_name, {"name": field_name})
-        for key in ("label", "visible", "sequence", "group_title"):
+        for key in ("label", "visible", "sequence", "group_title", "class", "field_size", "width"):
             if key in row and row.get(key) is not None:
                 current[key] = row.get(key)
         by_name[field_name] = current
     for field_name, current in by_name.items():
         if not str(current.get("group_title") or "").strip() and layout_group_by_field.get(field_name):
             current["group_title"] = layout_group_by_field[field_name]
+        for key, value in field_layout_meta_by_name.get(field_name, {}).items():
+            if value and not current.get(key):
+                current[key] = value
     spec["fields"] = sorted(by_name.values(), key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or "")))
     grouped: dict[str, list[dict]] = {}
     for row in spec["fields"]:
@@ -640,6 +667,8 @@ def _upsert_view_orchestration_field_rows(
             {
                 "name": "business_config_section_%s" % (index + 1),
                 "title": title,
+                **({"visible": group_meta_by_title.get(title, {}).get("visible")} if group_meta_by_title.get(title, {}).get("visible") is not None else {}),
+                **({"columns": group_meta_by_title.get(title, {}).get("columns")} if group_meta_by_title.get(title, {}).get("columns") else {}),
                 "sequence": (index + 1) * 10,
                 "fields": [
                     str(item.get("name") or item.get("field") or item.get("field_name") or "").strip()
@@ -656,10 +685,14 @@ def _upsert_view_orchestration_field_rows(
             {
                 "type": "group",
                 "string": title,
+                **({"visible": group_meta_by_title.get(title, {}).get("visible")} if group_meta_by_title.get(title, {}).get("visible") is not None else {}),
+                **({"columns": group_meta_by_title.get(title, {}).get("columns")} if group_meta_by_title.get(title, {}).get("columns") else {}),
                 "children": [
                     {
                         "type": "field",
                         "name": str(item.get("name") or item.get("field") or item.get("field_name") or "").strip(),
+                        **({"class": item.get("class")} if item.get("class") else {}),
+                        **({"field_size": item.get("field_size")} if item.get("field_size") else {}),
                     }
                     for item in sorted(items, key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or "")))
                     if str(item.get("name") or item.get("field") or item.get("field_name") or "").strip()
