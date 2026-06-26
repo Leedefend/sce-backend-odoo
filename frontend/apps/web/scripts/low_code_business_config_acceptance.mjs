@@ -983,8 +983,11 @@ async function main() {
     const designerInspectorCount = await page.locator(".contract-form-inspector").count();
     const designerCanvasCount = await page.locator(".contract-form-designer-canvas").count();
     const designerWorkspaceCount = await page.locator(".form-grid--designer-workspace").count();
+    const designerSidebarCount = await page.locator(".contract-form-designer-sidebar").count();
     const designerFieldNavigatorCount = await page.locator(".contract-form-field-navigator").count();
     const designerFieldNavigatorItemCount = await page.locator(".contract-form-field-nav-item").count();
+    const designerCanvasHeadText = await page.locator(".contract-form-canvas-head").innerText();
+    let designerInspectorSectionLabels = [];
     const designerLayoutToolText = await page.locator(".contract-form-layout-tools").innerText();
     const initialFormDirtyCount = await page.locator(".contract-field-governance-dirty").count();
     const initialHiddenFieldDesignCount = await page.locator(".field--config-hidden").count();
@@ -993,6 +996,9 @@ async function main() {
     await selectDesignerField(page, 0);
     const selectedFieldCount = await page.locator(".field--selected").count();
     const selectedPanelText = await page.locator(".contract-field-selection-card").innerText();
+    designerInspectorSectionLabels = await page.locator(".contract-field-inspector-section header strong").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+    ));
     const inlineAddButtonCount = await page.locator(".field-order-btn", { hasText: "新增" }).count();
     const inlineVisibilityActionCount = await page.locator(".field-inline-actions .field-inline-action").count();
     await page.locator(".contract-field-governance-actions").getByText("隐藏", { exact: true }).click();
@@ -1288,8 +1294,11 @@ async function main() {
       designerInspectorCount,
       designerCanvasCount,
       designerWorkspaceCount,
+      designerSidebarCount,
       designerFieldNavigatorCount,
       designerFieldNavigatorItemCount,
+      designerCanvasHeadText,
+      designerInspectorSectionLabels,
       designerLayoutToolText,
     };
     report.artifacts.formDesigner = await captureStep(page, "form-designer");
@@ -1305,8 +1314,13 @@ async function main() {
         && designerInspectorCount === 1
         && designerCanvasCount === 1
         && designerWorkspaceCount === 1
+        && designerSidebarCount === 1
         && designerFieldNavigatorCount === 1
         && designerFieldNavigatorItemCount > 0
+        && designerCanvasHeadText.includes("表单画布")
+        && designerInspectorSectionLabels.includes("基础属性")
+        && designerInspectorSectionLabels.includes("布局与分组")
+        && designerInspectorSectionLabels.includes("位置调整")
         && designerLayoutToolText.includes("页面布局"),
       "表单设计器没有形成专业配置面板结构",
       {
@@ -1314,8 +1328,11 @@ async function main() {
         designerInspectorCount,
         designerCanvasCount,
         designerWorkspaceCount,
+        designerSidebarCount,
         designerFieldNavigatorCount,
         designerFieldNavigatorItemCount,
+        designerCanvasHeadText,
+        designerInspectorSectionLabels,
         designerLayoutToolText,
       },
     );
