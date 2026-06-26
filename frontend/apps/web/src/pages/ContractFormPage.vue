@@ -323,7 +323,7 @@
                 >
                   {{ formConfigOperationStatusLabel(entry.status) }}
                 </span>
-                <span>{{ entry.summary }}</span>
+                <span>{{ formatFormConfigOperationSummary(entry.summary) }}</span>
               </li>
             </ol>
             <p v-else class="contract-form-operation-log-empty">暂无操作记录</p>
@@ -2401,6 +2401,40 @@ function formConfigOperationStatusLabel(status: FormConfigOperationLogEntry['sta
   if (status === 'saved') return '已保存';
   if (status === 'reverted') return '已撤销';
   return '已执行';
+}
+
+function escapeFormConfigOperationRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function formConfigFieldLabelReplacementEntries() {
+  const labels = new Map<string, string>();
+  const remember = (fieldKey: string, label: string) => {
+    const key = String(fieldKey || '').trim();
+    const value = String(label || '').trim();
+    if (!key || !value || key === value) return;
+    labels.set(key, value);
+  };
+  Object.entries(formConfigFieldLabelCache).forEach(([key, label]) => remember(key, label));
+  Object.entries(nativeFormDesignFieldLabels.value).forEach(([key, label]) => remember(key, label));
+  activeContractModeFieldRows.value.forEach((row) => remember(row.fieldKey, row.label));
+  currentFormDesignFieldKeys.value.forEach((fieldKey) => {
+    const key = String(fieldKey || '').trim();
+    if (!key || labels.has(key)) return;
+    const descriptor = contract.value?.fields?.[key] as Record<string, unknown> | undefined;
+    remember(key, String(contractFieldLabel(key) || descriptor?.string || descriptor?.label || '').trim());
+  });
+  return Array.from(labels.entries()).sort((left, right) => right[0].length - left[0].length);
+}
+
+function formatFormConfigOperationSummary(summary: string) {
+  let text = String(summary || '').trim();
+  if (!text) return '';
+  formConfigFieldLabelReplacementEntries().forEach(([fieldKey, label]) => {
+    const pattern = new RegExp(`(^|[^A-Za-z0-9_])${escapeFormConfigOperationRegExp(fieldKey)}(?=$|[^A-Za-z0-9_])`, 'g');
+    text = text.replace(pattern, `$1${label}`);
+  });
+  return text;
 }
 
 watch(formConfigOperationLogStorageKey, () => {
@@ -9654,6 +9688,7 @@ function onContractInlineFieldOrderDragStart(payload: { field: FormSectionFieldS
 function onContractInlineFieldOrderDragOver(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
+  rememberFormConfigFieldLabel(fieldKey, payload.field.label);
   onFieldOrderDragOver(fieldKey);
 }
 
@@ -9666,6 +9701,7 @@ function onContractInlineFieldOrderDragLeave(payload: { field: FormSectionFieldS
 function onContractInlineFieldOrderDrop(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
+  rememberFormConfigFieldLabel(fieldKey, payload.field.label);
   onFieldOrderDrop(fieldKey, payload.groupTitle);
 }
 
