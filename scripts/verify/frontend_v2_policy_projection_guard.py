@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND_SCHEMA = ROOT / "docs/architecture/unified_page_contract_v2/unified_page_contract_v2.schema.json"
+ENUM_REGISTRY = ROOT / "docs/architecture/unified_page_contract_v2/enum_registry.json"
 CONTRACT_HELPERS = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractV2.ts"
 STRICT_SCHEMA = ROOT / "frontend/apps/web/src/app/contracts/v2/schema.ts"
 STRICT_TYPES = ROOT / "frontend/apps/web/src/app/contracts/v2/types.ts"
@@ -365,6 +366,23 @@ ALLOWED_STRICT_SCHEMA_EXTENSION_FIELDS = {
     "ContractV2ActionRule": {"actionKey", "button", "intent", "label", "target"},
 }
 
+STRICT_TYPE_ENUM_REGISTRY_MAP = {
+    "ContractV2ClientType": ("clientType", "stable"),
+    "ContractV2ViewType": ("viewType",),
+    "ContractV2LayoutType": ("layoutType",),
+    "ContractV2AdaptMode": ("adaptMode",),
+    "ContractV2TriggerType": ("triggerType",),
+    "ContractV2DispatchMode": ("dispatchMode",),
+    "ContractV2TargetScope": ("targetScope",),
+    "ContractV2RefreshMode": ("refreshMode",),
+    "ContractV2Auth": ("authLevel",),
+    "ContractV2PatchStrategy": ("patchStrategy",),
+    "ContractV2CachePolicy": ("cachePolicy",),
+    "ContractV2RenderStrategy": ("renderStrategy",),
+    "ContractV2PatchOperation": ("patchOperation",),
+    "ContractV2PageRenderMode": ("renderMode",),
+}
+
 
 def _relative(path: Path) -> str:
     return str(path.relative_to(ROOT))
@@ -415,6 +433,22 @@ def _snake_case_tokens(source: str) -> set[str]:
     return set(re.findall(r"\b[A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]*\b", source))
 
 
+def _registry_path(value: dict[str, object], path: tuple[str, ...]) -> object:
+    node: object = value
+    for item in path:
+        if not isinstance(node, dict):
+            return None
+        node = node.get(item)
+    return node
+
+
+def _strict_type_enum_literals(source: str, type_name: str) -> list[str] | None:
+    match = re.search(rf"export\s+type\s+{re.escape(type_name)}\s*=\s*(?P<body>[^;]+);", source)
+    if not match:
+        return None
+    return re.findall(r"'([^']+)'", match.group("body"))
+
+
 def main() -> int:
     violations: list[str] = []
     helper_source = CONTRACT_HELPERS.read_text(encoding="utf-8")
@@ -435,6 +469,18 @@ def main() -> int:
                 f"{_relative(STRICT_SCHEMA)}: strict V2 decoder must not accept compatibility alias {token}"
             )
     strict_type_source = STRICT_TYPES.read_text(encoding="utf-8")
+    enum_registry = json.loads(ENUM_REGISTRY.read_text(encoding="utf-8"))
+    for type_name, registry_key_path in sorted(STRICT_TYPE_ENUM_REGISTRY_MAP.items()):
+        type_literals = _strict_type_enum_literals(strict_type_source, type_name)
+        registry_literals = _registry_path(enum_registry, registry_key_path)
+        if type_literals is None:
+            violations.append(f"{_relative(STRICT_TYPES)}: missing strict V2 enum type {type_name}")
+            continue
+        if type_literals != registry_literals:
+            violations.append(
+                f"{_relative(STRICT_TYPES)}: {type_name} literals must match enum_registry.{'.'.join(registry_key_path)}; "
+                f"type={type_literals} registry={registry_literals}"
+            )
     for token in FORBIDDEN_STRICT_TYPE_COMPAT_ALIASES:
         if token in strict_type_source:
             violations.append(
