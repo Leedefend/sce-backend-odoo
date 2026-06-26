@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import re
 from pathlib import Path
 
 
@@ -17,7 +18,7 @@ ALLOWED_FINAL_CONTRACT_WRITERS = {
     "_set_v2_data_meta",
     "_replace_v2_contract_content",
     "_set_v2_governance_patch",
-    "_copy_v2_source_passthroughs",
+    "_project_v2_source_policies",
 }
 
 ALLOWED_SOURCE_PROJECTION_WRITERS = {
@@ -38,9 +39,6 @@ FINAL_CONTRACT_KEYS = {
     "dataContract",
     "dataMeta",
     "governance",
-    "delete_policy",
-    "surface_policies",
-    "list_profile",
     "deletePolicy",
     "surfacePolicies",
     "listProfile",
@@ -199,6 +197,15 @@ def main() -> int:
         violations.append(
             f"{ASSEMBLER.relative_to(ROOT)}: layoutContract must reserve formal V2 listProfile slot"
         )
+    for forbidden in (
+        "contract[\"delete_policy\"]",
+        "contract[\"surface_policies\"]",
+        "contract[\"list_profile\"]",
+    ):
+        if re.search(rf"(?<![A-Za-z0-9_]){re.escape(forbidden)}", source):
+            violations.append(
+                f"{HANDLER.relative_to(ROOT)}: final V2 contract must not emit root compatibility field {forbidden}"
+            )
     if "action_contract[\"deletePolicy\"] = self._v2_policy_projection(" not in source:
         violations.append(
             f"{HANDLER.relative_to(ROOT)}: delete_policy compatibility field must project to actionContract.deletePolicy"

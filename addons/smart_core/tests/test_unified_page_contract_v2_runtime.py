@@ -138,7 +138,7 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
 
         self.assertEqual(issues, [])
 
-    def test_policy_contract_rejects_root_compat_without_formal_v2_projection(self):
+    def test_policy_contract_rejects_root_compatibility_fields(self):
         contract = self._contract()
         contract["delete_policy"] = {"allow": True}
         contract["surface_policies"] = {"kind": "list"}
@@ -146,24 +146,12 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
 
         issues = runtime.find_policy_contract_issues(contract)
 
-        self.assertIn(
-            "actionContract.deletePolicy is required when root delete_policy compatibility field exists",
-            issues,
-        )
-        self.assertIn(
-            "actionContract.surfacePolicies is required when root surface_policies compatibility field exists",
-            issues,
-        )
-        self.assertIn(
-            "layoutContract.listProfile is required when root list_profile compatibility field exists",
-            issues,
-        )
+        self.assertIn("root compatibility field delete_policy must not be emitted by V2 contract", issues)
+        self.assertIn("root compatibility field surface_policies must not be emitted by V2 contract", issues)
+        self.assertIn("root compatibility field list_profile must not be emitted by V2 contract", issues)
 
     def test_policy_contract_accepts_formal_v2_policy_projection(self):
         contract = self._contract()
-        contract["delete_policy"] = {"allow": True}
-        contract["surface_policies"] = {"kind": "list"}
-        contract["list_profile"] = {"batch_policy": {"enabled": True}}
         contract["actionContract"] = {
             "deletePolicy": {
                 "allow": True,
@@ -183,18 +171,16 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
 
         self.assertEqual(issues, [])
 
-    def test_policy_contract_rejects_projection_drift(self):
+    def test_policy_contract_rejects_projection_without_authority(self):
         contract = self._contract()
-        contract["list_profile"] = {"batch_policy": {"enabled": True}}
         contract["layoutContract"]["listProfile"] = {
             "batch_policy": {"enabled": False},
-            "sourceAuthority": self._policy_source("list_profile"),
         }
 
         issues = runtime.find_policy_contract_issues(contract)
 
         self.assertIn(
-            "layoutContract.listProfile must mirror root list_profile until compatibility field is removed",
+            "layoutContract.listProfile.sourceAuthority is required",
             issues,
         )
 

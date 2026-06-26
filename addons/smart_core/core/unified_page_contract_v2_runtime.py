@@ -223,23 +223,23 @@ def find_policy_contract_issues(contract: dict[str, Any]) -> list[str]:
     source = _dict(contract)
     action = _dict(source.get("actionContract"))
     layout = _dict(source.get("layoutContract"))
+    for key in ("delete_policy", "surface_policies", "list_profile"):
+        if key in source:
+            issues.append(f"root compatibility field {key} must not be emitted by V2 contract")
     _validate_policy_projection(
         issues,
-        source_value=source.get("delete_policy"),
         projected_value=action.get("deletePolicy"),
         source_key="delete_policy",
         projected_path="actionContract.deletePolicy",
     )
     _validate_policy_projection(
         issues,
-        source_value=source.get("surface_policies"),
         projected_value=action.get("surfacePolicies"),
         source_key="surface_policies",
         projected_path="actionContract.surfacePolicies",
     )
     _validate_policy_projection(
         issues,
-        source_value=source.get("list_profile"),
         projected_value=layout.get("listProfile"),
         source_key="list_profile",
         projected_path="layoutContract.listProfile",
@@ -250,17 +250,13 @@ def find_policy_contract_issues(contract: dict[str, Any]) -> list[str]:
 def _validate_policy_projection(
     issues: list[str],
     *,
-    source_value: Any,
     projected_value: Any,
     source_key: str,
     projected_path: str,
 ) -> None:
-    if not isinstance(source_value, dict):
+    if not isinstance(projected_value, dict) or not projected_value:
         return
     projected = _dict(projected_value)
-    if not projected:
-        issues.append(f"{projected_path} is required when root {source_key} compatibility field exists")
-        return
     source_authority = _dict(projected.get("sourceAuthority") or projected.get("source_authority"))
     if not source_authority:
         issues.append(f"{projected_path}.sourceAuthority is required")
@@ -273,11 +269,6 @@ def _validate_policy_projection(
             issues.append(f"{projected_path}.sourceAuthority.compatibility_replacement must be true")
         if _text(source_authority.get("source_key")) != source_key:
             issues.append(f"{projected_path}.sourceAuthority.source_key must be {source_key}")
-    projected_without_authority = dict(projected)
-    projected_without_authority.pop("sourceAuthority", None)
-    projected_without_authority.pop("source_authority", None)
-    if projected_without_authority != source_value:
-        issues.append(f"{projected_path} must mirror root {source_key} until compatibility field is removed")
 
 
 def find_form_structure_contract_issues(contract: dict[str, Any]) -> list[str]:

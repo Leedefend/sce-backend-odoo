@@ -246,12 +246,11 @@ class UiContractV2Handler(BaseIntentHandler):
         )
         return projection
 
-    def _copy_v2_source_passthroughs(self, contract: dict[str, Any], source_contract: dict[str, Any]) -> None:
+    def _project_v2_source_policies(self, contract: dict[str, Any], source_contract: dict[str, Any]) -> None:
         if not isinstance(contract, dict) or not isinstance(source_contract, dict):
             return
         if isinstance(source_contract.get("delete_policy"), dict):
             delete_policy = dict(source_contract.get("delete_policy") or {})
-            contract["delete_policy"] = delete_policy
             action_contract = contract.get("actionContract") if isinstance(contract.get("actionContract"), dict) else {}
             action_contract["deletePolicy"] = self._v2_policy_projection(
                 delete_policy,
@@ -261,7 +260,6 @@ class UiContractV2Handler(BaseIntentHandler):
             contract["actionContract"] = action_contract
         if isinstance(source_contract.get("surface_policies"), dict):
             surface_policies = deepcopy(source_contract.get("surface_policies") or {})
-            contract["surface_policies"] = surface_policies
             action_contract = contract.get("actionContract") if isinstance(contract.get("actionContract"), dict) else {}
             action_contract["surfacePolicies"] = self._v2_policy_projection(
                 surface_policies,
@@ -271,7 +269,6 @@ class UiContractV2Handler(BaseIntentHandler):
             contract["actionContract"] = action_contract
         if isinstance(source_contract.get("list_profile"), dict):
             list_profile = deepcopy(source_contract.get("list_profile") or {})
-            contract["list_profile"] = list_profile
             layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
             layout_contract["listProfile"] = self._v2_policy_projection(
                 list_profile,
@@ -468,7 +465,7 @@ class UiContractV2Handler(BaseIntentHandler):
         self._normalize_general_contract_company_form(contract_v2, source_contract=source_contract)
         self._normalize_construction_diary_form(contract_v2, source_contract=source_contract)
         self._apply_business_config_form_groups_to_v2(contract_v2, source_contract=source_contract)
-        self._copy_v2_source_passthroughs(contract_v2, source_contract)
+        self._project_v2_source_policies(contract_v2, source_contract)
         contract_v2 = trim_unified_page_contract_v2(
             contract_v2,
             client_type=client_type,
