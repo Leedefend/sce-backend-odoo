@@ -272,6 +272,16 @@
                       </option>
                     </select>
                   </label>
+                  <label class="contract-field-group-rename">
+                    <span>分组名称</span>
+                    <input
+                      v-model="selectedFormSettingsFieldGroupTitleEdit"
+                      type="text"
+                      :disabled="busy || !selectedFormSettingsFieldGroupTitle"
+                      @change="onSelectedFormSettingsGroupTitleChange"
+                      @keydown.enter.prevent="onSelectedFormSettingsGroupTitleChange"
+                    />
+                  </label>
                   <div class="contract-field-position-move">
                     <label>
                       <span>移动位置</span>
@@ -2072,6 +2082,7 @@ const dropTargetFieldKey = ref('');
 const selectedFormSettingsFieldKey = ref('');
 const selectedFormSettingsFieldLabel = ref('');
 const selectedFormSettingsFieldGroupTitleDraft = ref('');
+const selectedFormSettingsFieldGroupTitleEdit = ref('');
 const selectedFormSettingsOrderTargetKey = ref('');
 const selectedFormSettingsOrderPlacement = ref<'before' | 'after'>('before');
 const isContractFieldOrderEditable = computed(() => (
@@ -2897,6 +2908,10 @@ const currentFormGroupOptions = computed(() => {
     .filter((group) => group.fieldKeys.some((fieldKey) => configurableFields.has(fieldKey)))
     .map((group) => normalizeFieldGroupTitle(group.title))
     .filter(Boolean);
+  currentFormDesignFieldKeys.value.forEach((fieldKey) => {
+    const title = effectiveFieldGroupTitleForDraft(fieldKey);
+    if (title) groupTitles.push(title);
+  });
   const businessGroupTitles = groupTitles.filter((title) => title !== '主表区域');
   return Array.from(new Set(businessGroupTitles.length ? businessGroupTitles : groupTitles));
 });
@@ -2908,6 +2923,10 @@ const selectedFormSettingsFieldGroupTitle = computed(() => {
   if (draftTitle) return draftTitle;
   const nativeGroup = nativeFieldStructureGroups.value.find((group) => group.fieldKeys.includes(fieldKey));
   return nativeGroup?.title || selectedFormSettingsFieldGroupTitleDraft.value || '业务配置字段';
+});
+
+watch(selectedFormSettingsFieldGroupTitle, (title) => {
+  selectedFormSettingsFieldGroupTitleEdit.value = title;
 });
 
 async function hydrateLowCodeDraftFromContract() {
@@ -9664,6 +9683,7 @@ function onFormSettingsFieldSelect(payload: { field: FormSectionFieldSchema; gro
     effectiveFieldGroupTitleForDraft(fieldKey)
     || normalizeFieldGroupTitle(payload.groupTitle)
   );
+  selectedFormSettingsFieldGroupTitleEdit.value = selectedFormSettingsFieldGroupTitleDraft.value;
   formSettingsActiveTab.value = 'fields';
 }
 
@@ -9694,6 +9714,7 @@ function moveFieldToGroupEnd(fieldKey: string, groupTitle: string) {
   selectedFormSettingsFieldKey.value = sourceFieldKey;
   selectedFormSettingsFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(sourceFieldKey);
   selectedFormSettingsFieldGroupTitleDraft.value = normalizedTargetGroup;
+  selectedFormSettingsFieldGroupTitleEdit.value = normalizedTargetGroup;
   formConfigAuditResult.value = null;
   appendFormConfigOperation('移动分组', `${formDesignFieldLabel(sourceFieldKey)} 移动到 ${normalizedTargetGroup}`);
 }
@@ -9713,6 +9734,17 @@ function onSelectedFormSettingsFieldGroupMoveChange(event: Event) {
   moveSelectedFormSettingsFieldToGroup(value);
 }
 
+async function onSelectedFormSettingsGroupTitleChange(event: Event) {
+  const oldTitle = selectedFormSettingsFieldGroupTitle.value;
+  const target = event.target as HTMLInputElement | null;
+  const newTitle = String(selectedFormSettingsFieldGroupTitleEdit.value || target?.value || '').trim();
+  if (!oldTitle || !newTitle || oldTitle === newTitle) {
+    selectedFormSettingsFieldGroupTitleEdit.value = oldTitle;
+    return;
+  }
+  await onContractInlineGroupRename({ oldTitle, newTitle });
+}
+
 function moveSelectedFormSettingsFieldToOrderTarget() {
   const fieldKey = selectedFormSettingsFieldKey.value;
   const targetFieldKey = selectedFormSettingsOrderTargetKey.value;
@@ -9724,6 +9756,7 @@ function moveSelectedFormSettingsFieldToOrderTarget() {
     fieldGroupDraft[fieldKey] = targetGroup;
     fieldMoveTargetDraft[fieldKey] = targetFieldKey;
     selectedFormSettingsFieldGroupTitleDraft.value = targetGroup;
+    selectedFormSettingsFieldGroupTitleEdit.value = targetGroup;
   }
   selectedFormSettingsFieldKey.value = fieldKey;
   selectedFormSettingsFieldLabel.value = formDesignFieldLabel(fieldKey);
@@ -9886,37 +9919,29 @@ function fieldsInNativeGroup(groupTitle: string) {
   return Array.from(out.entries()).map(([fieldKey, label]) => ({ fieldKey, label }));
 }
 
+function fieldsInConfiguredGroup(groupTitle: string) {
+  const targetTitle = normalizeFieldGroupTitle(groupTitle);
+  if (!targetTitle) return [];
+  const rows = currentFormOrderedFieldKeys.value
+    .filter((fieldKey) => fieldGroupTitleMatches(effectiveFieldGroupTitleForDraft(fieldKey), targetTitle))
+    .map((fieldKey) => ({ fieldKey, label: formDesignFieldLabel(fieldKey) }));
+  return rows.length ? rows : fieldsInNativeGroup(targetTitle);
+}
+
 async function onContractInlineGroupRename(payload: { oldTitle: string; newTitle: string }) {
   const oldTitle = String(payload.oldTitle || '').trim();
   const newTitle = String(payload.newTitle || '').trim();
   if (!oldTitle || !newTitle || oldTitle === newTitle || busy.value) return;
-  const fields = fieldsInNativeGroup(oldTitle);
+  const fields = fieldsInConfiguredGroup(oldTitle);
   if (!fields.length) return;
-  busyKind.value = 'action';
-  try {
-    const base = lowCodeApplyBaseParams();
-    for (const row of fields) {
-      await intentRequest({
-        intent: 'ui.form_field_policy.set',
-        params: {
-          ...base,
-          field_name: row.fieldKey,
-          label: row.label || row.fieldKey,
-          group_title: newTitle,
-          sequence: contractFieldSequence(row.fieldKey),
-        },
-        context: { view: 'form' },
-      });
-    }
-    appendFormConfigOperation('修改分组名称', `${oldTitle} 改为 ${newTitle}`, 'done');
-    contractModeFeedback.value = '区域名称已更新';
-    await reload();
-  } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'group rename failed';
-    status.value = 'error';
-  } finally {
-    busyKind.value = null;
-  }
+  fields.forEach((row) => {
+    fieldGroupDraft[row.fieldKey] = newTitle;
+  });
+  selectedFormSettingsFieldGroupTitleDraft.value = newTitle;
+  selectedFormSettingsFieldGroupTitleEdit.value = newTitle;
+  formConfigAuditResult.value = null;
+  appendFormConfigOperation('修改分组名称', `${oldTitle} 改为 ${newTitle}`);
+  contractModeFeedback.value = '分组名称已调整，保存表单设置后生效';
 }
 
 function openInlineCustomFieldCreate(groupTitle: string, afterFieldKey = '') {
@@ -11689,6 +11714,25 @@ onBeforeUnmount(() => {
 .contract-field-group-move select {
   min-width: 128px;
   max-width: 190px;
+  height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 5px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  padding: 0 8px;
+}
+
+.contract-field-group-rename {
+  display: inline-grid;
+  gap: 4px;
+  min-width: 150px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-field-group-rename input {
+  width: 150px;
+  max-width: 100%;
   height: 30px;
   border: 1px solid var(--sc-app-border);
   border-radius: 5px;

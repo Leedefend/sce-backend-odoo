@@ -843,6 +843,31 @@ async function main() {
     const saveFormEnabledAfterReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     await selectDesignerField(page, 1);
     const selectedPanelBeforeMove = await page.locator(".contract-field-selection-card").innerText();
+    const groupRenameControlCount = await page.locator(".contract-field-group-rename input").count();
+    let groupRenameOriginalTitle = "";
+    let groupRenameTempTitle = "";
+    let groupRenamePanelAfterRename = "";
+    let groupRenamePanelAfterRestore = "";
+    if (groupRenameControlCount > 0) {
+      const groupRenameInput = page.locator(".contract-field-group-rename input").first();
+      groupRenameOriginalTitle = (await groupRenameInput.inputValue()).trim();
+      groupRenameTempTitle = `${groupRenameOriginalTitle}验收`;
+      if (groupRenameOriginalTitle && groupRenameTempTitle !== groupRenameOriginalTitle) {
+        await groupRenameInput.fill(groupRenameTempTitle);
+        await groupRenameInput.press("Enter");
+        await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
+        await page.waitForTimeout(1000);
+        await selectDesignerField(page, 1);
+        groupRenamePanelAfterRename = await page.locator(".contract-field-selection-card").innerText();
+        const restoreInput = page.locator(".contract-field-group-rename input").first();
+        await restoreInput.fill(groupRenameOriginalTitle);
+        await restoreInput.press("Enter");
+        await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
+        await page.waitForTimeout(1000);
+        await selectDesignerField(page, 1);
+        groupRenamePanelAfterRestore = await page.locator(".contract-field-selection-card").innerText();
+      }
+    }
     const positionMoveControlCount = await page.locator(".contract-field-position-move").count();
     const formOrderBeforePanelMove = await formDesignerFieldTexts(page);
     const panelMoveSourceLabel = formOrderBeforePanelMove[1] || "";
@@ -986,6 +1011,11 @@ async function main() {
       resetFormEnabledAfterHide,
       formDirtyAfterReset,
       saveFormEnabledAfterReset,
+      groupRenameControlCount,
+      groupRenameOriginalTitle,
+      groupRenameTempTitle,
+      groupRenamePanelAfterRename,
+      groupRenamePanelAfterRestore,
       positionMoveControlCount,
       formOrderBeforePanelMove,
       formOrderAfterPanelMove,
@@ -1048,6 +1078,24 @@ async function main() {
       },
     );
     assert(selectedPanelBeforeMove.includes("已选字段"), "表单字段点选状态不可用", { selectedPanelBeforeMove });
+    assert(
+      groupRenameControlCount > 0
+        && (
+          !groupRenameOriginalTitle
+          || (
+            groupRenamePanelAfterRename.includes(groupRenameTempTitle)
+            && groupRenamePanelAfterRestore.includes(groupRenameOriginalTitle)
+          )
+        ),
+      "表单分组名称不能在字段配置面板自主编辑",
+      {
+        groupRenameControlCount,
+        groupRenameOriginalTitle,
+        groupRenameTempTitle,
+        groupRenamePanelAfterRename,
+        groupRenamePanelAfterRestore,
+      },
+    );
     assert(
       positionMoveControlCount > 0
         && (
