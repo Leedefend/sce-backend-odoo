@@ -196,6 +196,14 @@
         </div>
         <div class="topbar-actions">
           <GlobalMessagePanel />
+          <button
+            v-if="isConfigurationRoute"
+            class="config-return sc-btn sc-btn-sm"
+            type="button"
+            @click="returnToBusinessSurface"
+          >
+            返回业务办理
+          </button>
           <button class="theme-switch sc-btn sc-btn-sm" type="button" @click="toggleTheme">主题：{{ themeLabel }}</button>
         </div>
       </header>
@@ -1402,6 +1410,10 @@ function handleSelect(node: NavNode) {
 
 function openRoleLanding() {
   router.push(roleLandingPath.value).catch(() => {});
+}
+
+function returnToBusinessSurface() {
+  router.push(roleLandingPath.value || '/').catch(() => {});
 }
 
 function resolveActivityPageRoute(page: ActivityPage): string {
