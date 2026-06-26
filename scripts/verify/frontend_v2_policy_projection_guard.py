@@ -60,6 +60,8 @@ FORBIDDEN_STRICT_SCHEMA_COMPAT_ALIASES = (
     "['business_operation_profile']",
     "row.visible_fields",
     "row.field_groups",
+    "row.source_authority",
+    "root.form_structure_contract",
 )
 
 

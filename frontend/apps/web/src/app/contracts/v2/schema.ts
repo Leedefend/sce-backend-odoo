@@ -336,7 +336,7 @@ function decodeVisibleFields(value: unknown): ContractV2VisibleFields | undefine
     ? asStringArray(value)
     : asStringArray(row.fields || row.fieldNames || row.field_names);
   if (!fields.length) return undefined;
-  const sourceAuthority = asRecord(row.sourceAuthority || row.source_authority);
+  const sourceAuthority = asRecord(row.sourceAuthority);
   return {
     fields,
     ...(Object.keys(sourceAuthority).length ? { sourceAuthority } : {}),
@@ -352,7 +352,7 @@ function decodeFieldGroups(value: unknown): ContractV2FieldGroups | undefined {
     .map((item) => asRecord(item))
     .filter((item) => Object.keys(item).length > 0);
   if (!groups.length) return undefined;
-  const sourceAuthority = asRecord(row.sourceAuthority || row.source_authority);
+  const sourceAuthority = asRecord(row.sourceAuthority);
   return {
     groups,
     ...(Object.keys(sourceAuthority).length ? { sourceAuthority } : {}),
@@ -510,8 +510,8 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
     dataContract,
     runtimeContract: aliasedRecord(root, 'runtimeContract', ['runtime_contract']),
     meta: asRecord(root.meta),
-    ...(isRecord(root.formStructureContract || root.form_structure_contract)
-      ? { formStructureContract: asRecord(root.formStructureContract || root.form_structure_contract) }
+    ...(isRecord(root.formStructureContract)
+      ? { formStructureContract: asRecord(root.formStructureContract) }
       : {}),
     ...(isRecord(root.searchContract) ? { searchContract: root.searchContract } : {}),
   };
