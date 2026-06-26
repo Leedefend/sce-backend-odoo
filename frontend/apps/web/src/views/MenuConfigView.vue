@@ -2927,12 +2927,13 @@ h1 {
 }
 
 .menu-detail-grid--placement {
-  grid-template-columns: minmax(220px, 1fr) minmax(96px, 0.4fr) minmax(150px, 0.5fr);
+  grid-template-columns: minmax(0, 1fr) minmax(88px, 0.35fr) minmax(112px, 0.4fr);
 }
 
 .menu-detail-grid label {
   display: grid;
   gap: 6px;
+  min-width: 0;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
@@ -2941,6 +2942,8 @@ h1 {
   grid-template-columns: auto 1fr;
   align-content: end;
   align-items: center;
+  box-sizing: border-box;
+  width: 100%;
   min-height: 58px;
   border: 1px solid var(--sc-app-border);
   border-radius: 6px;
