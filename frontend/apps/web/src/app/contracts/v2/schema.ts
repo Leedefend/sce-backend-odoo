@@ -400,20 +400,20 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
 }
 
 function decodeLayoutContract(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2LayoutContract {
-  const containerTreeRaw = aliasedArray(source, 'containerTree', ['container_tree', 'containerList', 'container_list']);
-  if (!containerTreeRaw.length && !Array.isArray(source.containerTree) && !Array.isArray(source.container_tree)) {
-    issues.push({ path: 'layoutContract.containerTree', message: 'must be an array; aliases checked: container_tree, containerList, container_list' });
+  const containerTreeRaw = Array.isArray(source.containerTree) ? source.containerTree : [];
+  if (!Array.isArray(source.containerTree)) {
+    issues.push({ path: 'layoutContract.containerTree', message: 'must be an array' });
   }
   const containerTree = containerTreeRaw
     .map((item, index) => decodeContainer(item, `layoutContract.containerTree[${index}]`, issues))
     .filter((item): item is ContractV2Container => Boolean(item));
   return {
     pageId: requiredString(source, 'pageId', 'layoutContract', issues),
-    layoutType: decodeLayoutType(requiredAliasedString(source, 'layoutType', ['layout_type'], 'layoutContract', issues), 'layoutContract.layoutType', issues),
-    adaptMode: decodeAdaptMode(requiredAliasedString(source, 'adaptMode', ['adapt_mode'], 'layoutContract', issues), 'layoutContract.adaptMode', issues),
+    layoutType: decodeLayoutType(requiredString(source, 'layoutType', 'layoutContract', issues), 'layoutContract.layoutType', issues),
+    adaptMode: decodeAdaptMode(requiredString(source, 'adaptMode', 'layoutContract', issues), 'layoutContract.adaptMode', issues),
     containerTree,
     layoutHints: requiredRecord(source, 'layoutHints', 'layoutContract', issues),
-    componentRegistry: aliasedRecord(source, 'componentRegistry', ['component_registry']),
+    componentRegistry: requiredRecord(source, 'componentRegistry', 'layoutContract', issues),
     ...(Object.keys(asRecord(source.listProfile)).length
       ? { listProfile: asRecord(source.listProfile) }
       : {}),

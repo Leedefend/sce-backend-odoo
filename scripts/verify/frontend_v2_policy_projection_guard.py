@@ -189,6 +189,14 @@ FORBIDDEN_STRICT_PAGE_INFO_ALIASES = (
     "['client_type']",
 )
 
+FORBIDDEN_STRICT_LAYOUT_CONTRACT_ALIASES = (
+    "['container_tree', 'containerList', 'container_list']",
+    "source.container_tree",
+    "['layout_type']",
+    "['adapt_mode']",
+    "['component_registry']",
+)
+
 
 def _relative(path: Path) -> str:
     return str(path.relative_to(ROOT))
@@ -264,6 +272,12 @@ def main() -> int:
         if token in page_info_decoder:
             violations.append(
                 f"{_relative(STRICT_SCHEMA)}: strict V2 pageInfo decoder must not accept compatibility alias {token}"
+            )
+    layout_contract_decoder = _function_body(strict_schema_source, "decodeLayoutContract")
+    for token in FORBIDDEN_STRICT_LAYOUT_CONTRACT_ALIASES:
+        if token in layout_contract_decoder:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 layoutContract decoder must not accept compatibility alias {token}"
             )
     strict_store_source = STRICT_STORE.read_text(encoding="utf-8")
     for token in FORBIDDEN_STRICT_STORE_META_EXTENSION_TOKENS:
