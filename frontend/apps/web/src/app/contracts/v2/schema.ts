@@ -258,8 +258,8 @@ function decodeLayoutContract(source: ContractV2Dictionary, issues: DecodeIssue[
     adaptMode: requiredAliasedString(source, 'adaptMode', ['adapt_mode'], 'layoutContract', issues),
     containerTree,
     componentRegistry: aliasedRecord(source, 'componentRegistry', ['component_registry']),
-    ...(Object.keys(aliasedRecord(source, 'listProfile', ['list_profile'])).length
-      ? { listProfile: aliasedRecord(source, 'listProfile', ['list_profile']) }
+    ...(Object.keys(asRecord(source.listProfile)).length
+      ? { listProfile: asRecord(source.listProfile) }
       : {}),
   };
 }
@@ -305,11 +305,11 @@ function decodeActionContract(source: ContractV2Dictionary, issues: DecodeIssue[
   return {
     actionRuleList,
     ...(Object.keys(dependencyGraph).length ? { dependencyGraph } : {}),
-    ...(Object.keys(aliasedRecord(source, 'deletePolicy', ['delete_policy'])).length
-      ? { deletePolicy: aliasedRecord(source, 'deletePolicy', ['delete_policy']) }
+    ...(Object.keys(asRecord(source.deletePolicy)).length
+      ? { deletePolicy: asRecord(source.deletePolicy) }
       : {}),
-    ...(Object.keys(aliasedRecord(source, 'surfacePolicies', ['surface_policies'])).length
-      ? { surfacePolicies: aliasedRecord(source, 'surfacePolicies', ['surface_policies']) }
+    ...(Object.keys(asRecord(source.surfacePolicies)).length
+      ? { surfacePolicies: asRecord(source.surfacePolicies) }
       : {}),
   };
 }
@@ -361,9 +361,9 @@ function decodeFieldGroups(value: unknown): ContractV2FieldGroups | undefined {
 
 function decodeDataMeta(value: unknown): ContractV2DataMeta {
   const row = asRecord(value);
-  const businessOperationProfile = aliasedRecord(row, 'businessOperationProfile', ['business_operation_profile']);
-  const visibleFields = decodeVisibleFields(row.visibleFields || row.visible_fields);
-  const fieldGroups = decodeFieldGroups(row.fieldGroups || row.field_groups);
+  const businessOperationProfile = asRecord(row.businessOperationProfile);
+  const visibleFields = decodeVisibleFields(row.visibleFields);
+  const fieldGroups = decodeFieldGroups(row.fieldGroups);
   return {
     ...row,
     ...(Object.keys(businessOperationProfile).length ? { businessOperationProfile } : {}),

@@ -9,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_HELPERS = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractV2.ts"
+STRICT_SCHEMA = ROOT / "frontend/apps/web/src/app/contracts/v2/schema.ts"
 CONSUMER_FILES = [
     ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewPageDisplayStateRuntime.ts",
     ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewActionPresentationRuntime.ts",
@@ -52,6 +53,15 @@ ALLOWED_DIRECT_READS = {
     },
 }
 
+FORBIDDEN_STRICT_SCHEMA_COMPAT_ALIASES = (
+    "['delete_policy']",
+    "['surface_policies']",
+    "['list_profile']",
+    "['business_operation_profile']",
+    "row.visible_fields",
+    "row.field_groups",
+)
+
 
 def _relative(path: Path) -> str:
     return str(path.relative_to(ROOT))
@@ -67,6 +77,12 @@ def main() -> int:
     for helper in REQUIRED_HELPERS:
         if f"export function {helper}(" not in helper_source:
             violations.append(f"{_relative(CONTRACT_HELPERS)}: missing exported helper {helper}")
+    strict_schema_source = STRICT_SCHEMA.read_text(encoding="utf-8")
+    for token in FORBIDDEN_STRICT_SCHEMA_COMPAT_ALIASES:
+        if token in strict_schema_source:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 decoder must not accept compatibility alias {token}"
+            )
 
     for path in CONSUMER_FILES:
         source = path.read_text(encoding="utf-8")
