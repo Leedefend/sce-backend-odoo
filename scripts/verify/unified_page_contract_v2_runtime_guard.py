@@ -51,17 +51,28 @@ def compare_subset(actual: dict[str, Any], expected: dict[str, Any], path: str, 
             fail(errors, f"{path}.{key}: expected {expected_value!r}, got {actual.get(key)!r}")
 
 
+def registry_path(value: dict[str, Any], path: tuple[str, ...]) -> Any:
+    node: Any = value
+    for item in path:
+        if not isinstance(node, dict):
+            return None
+        node = node.get(item)
+    return node
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixture", required=True, type=Path)
     parser.add_argument("--snapshot", required=True, type=Path)
     parser.add_argument("--schema", required=True, type=Path)
+    parser.add_argument("--enum-registry", required=True, type=Path)
     args = parser.parse_args()
 
     target = load_runtime_module()
     contract = load_json(args.fixture)
     snapshot = load_json(args.snapshot)
     schema = load_json(args.schema)
+    registry = load_json(args.enum_registry)
     runtime = target.build_runtime_contract_v2(contract)
     contract["runtimeContract"] = runtime
     errors: list[str] = []
@@ -77,8 +88,31 @@ def main() -> int:
     for issue in issues:
         fail(errors, issue)
 
-    if len(runtime.get("patchOperations") or []) != 6:
-        fail(errors, "patchOperations must expose the fixed six-operation registry")
+    patch_operations = registry_path(registry, ("patchOperation",))
+    patch_strategy = registry_path(registry, ("patchStrategy",))
+    cache_policy = registry_path(registry, ("cachePolicy",))
+    render_strategy = registry_path(registry, ("renderStrategy",))
+    if list(getattr(target, "PATCH_OPERATIONS", ())) != patch_operations:
+        fail(errors, "runtime PATCH_OPERATIONS must match enum_registry.patchOperation")
+    if runtime.get("patchOperations") != patch_operations:
+        fail(errors, "runtimeContract.patchOperations must expose enum_registry.patchOperation")
+    invalid_runtime = target.build_runtime_contract_v2(
+        contract,
+        overrides={
+            "patchStrategy": "invalid",
+            "cachePolicy": "invalid",
+            "renderStrategy": "invalid",
+            "patchOperations": ["replace", "invalid"],
+        },
+    )
+    if invalid_runtime.get("patchStrategy") != (patch_strategy or ["incremental"])[0]:
+        fail(errors, "invalid patchStrategy must normalize to enum_registry.patchStrategy default")
+    if invalid_runtime.get("cachePolicy") not in cache_policy:
+        fail(errors, "invalid cachePolicy fallback must be listed in enum_registry.cachePolicy")
+    if invalid_runtime.get("renderStrategy") != (render_strategy or ["sync"])[0]:
+        fail(errors, "invalid renderStrategy must normalize to enum_registry.renderStrategy default")
+    if invalid_runtime.get("patchOperations") != ["replace"]:
+        fail(errors, "runtimeContract.patchOperations must drop operations outside enum_registry.patchOperation")
     if runtime.get("aiEnvelope", {}).get("executable") is not False:
         fail(errors, "aiEnvelope must be non-executable")
     if not runtime.get("tracePolicy", {}).get("required"):

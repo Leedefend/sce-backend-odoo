@@ -4912,7 +4912,7 @@ verify.unified_page_contract.v2.runtime: guard.prod.forbid
 	@python3 -m py_compile addons/smart_core/core/unified_page_contract_v2_runtime.py scripts/verify/unified_page_contract_v2_runtime_guard.py addons/smart_core/tests/test_unified_page_contract_v2_runtime.py addons/smart_core/tests/test_unified_page_contract_v2_mobile_compact.py
 	@python3 addons/smart_core/tests/test_unified_page_contract_v2_runtime.py
 	@python3 addons/smart_core/tests/test_unified_page_contract_v2_mobile_compact.py
-	@python3 scripts/verify/unified_page_contract_v2_runtime_guard.py --fixture docs/architecture/unified_page_contract_v2/fixtures/runtime_contract_source.json --snapshot docs/architecture/unified_page_contract_v2/snapshots/runtime_contract_snapshot_v1.json --schema docs/architecture/unified_page_contract_v2/unified_page_contract_v2.schema.json
+	@python3 scripts/verify/unified_page_contract_v2_runtime_guard.py --fixture docs/architecture/unified_page_contract_v2/fixtures/runtime_contract_source.json --snapshot docs/architecture/unified_page_contract_v2/snapshots/runtime_contract_snapshot_v1.json --schema docs/architecture/unified_page_contract_v2/unified_page_contract_v2.schema.json --enum-registry docs/architecture/unified_page_contract_v2/enum_registry.json
 
 .PHONY: verify.unified_page_contract.v2.client
 verify.unified_page_contract.v2.client: guard.prod.forbid
