@@ -126,12 +126,23 @@ class _Menu:
         self.action = action
         self.web_icon = web_icon
         self.groups_id = _RecordSet([])
+        self._owner = None
 
     def exists(self):
         return self
 
+    def unlink(self):
+        if self._owner is not None and self in self._owner:
+            self._owner.remove(self)
+        return True
+
 
 class _MenuModel(_RecordSet):
+    def __init__(self, menus=()):
+        super().__init__(menus)
+        for menu in self:
+            menu._owner = self
+
     def sudo(self):
         return self
 
@@ -175,6 +186,7 @@ class _MenuModel(_RecordSet):
             action=vals.get("action") or "",
             web_icon=vals.get("web_icon") or "",
         )
+        menu._owner = self
         self.append(menu)
         return menu
 
@@ -184,7 +196,15 @@ class _ModelDataModel(_RecordSet):
         return self
 
     def search(self, domain):
-        return _RecordSet([])
+        model = next((value for field, op, value in domain if field == "model" and op == "="), "")
+        res_ids = next((value for field, op, value in domain if field == "res_id" and op == "in"), None)
+        rows = list(self)
+        if model:
+            rows = [row for row in rows if getattr(row, "model", "") == model]
+        if res_ids is not None:
+            ids = {int(item or 0) for item in res_ids}
+            rows = [row for row in rows if int(getattr(row, "res_id", 0) or 0) in ids]
+        return _RecordSet(rows)
 
 
 class _Policy:
@@ -255,6 +275,8 @@ class _PolicyModel(_RecordSet):
         self.order = order
         company_id = next((value for field, op, value in domain if field == "company_id" and op == "="), 0)
         menu_id = next((value for field, op, value in domain if field == "menu_id" and op == "="), 0)
+        menu_ids = next((value for field, op, value in domain if field == "menu_id" and op == "in"), None)
+        menu_id_set = {int(item or 0) for item in (menu_ids or [])} if menu_ids is not None else set()
         active_required = any(field == "active" and op == "=" and value is True for field, op, value in domain)
         rows = [
             policy
@@ -262,6 +284,7 @@ class _PolicyModel(_RecordSet):
             if int(policy.company_id.id or 0) == int(company_id or 0)
             and policy.menu_id
             and (not menu_id or int(policy.menu_id.id or 0) == int(menu_id or 0))
+            and (not menu_id_set or int(policy.menu_id.id or 0) in menu_id_set)
             and (not active_required or policy.active)
         ]
         if order and "menu_id" in order:
@@ -642,6 +665,76 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(contracts[0].contract_json["menu_orchestration"]["source"], "smart_core.lowcode.menu_config")
         self.assertEqual(result["meta"]["source_authority"]["kind"], "ui_menu_config_menu_create_write_proxy")
         self.assertEqual(result["meta"]["source_authority"]["lowcode_boundary"], "menu_config")
+
+    def test_menu_config_delete_removes_created_menu_and_deactivates_policy(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        parent = _Menu(20, "业务配置", "智慧施工 / 业务配置")
+        created = _Menu(31, "临时菜单", "智慧施工 / 业务配置 / 临时菜单", parent=parent, sequence=30)
+        menus = _MenuModel([parent, created])
+        policy = _Policy(1, created, company=company, custom_label="临时菜单", sequence_override=30)
+        policies = _PolicyModel([policy], user=user)
+        contracts = _ContractModel([])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([]),
+                "ui.menu.config.policy": policies,
+                "ui.business.config.contract": contracts,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationDeleteHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "menu_id": 31,
+            },
+        )
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["deleted_menu_ids"], [31])
+        self.assertEqual([menu.id for menu in menus], [20])
+        self.assertFalse(policy.active)
+        self.assertFalse(policy.visible)
+        self.assertEqual(len(contracts), 1)
+        self.assertEqual(result["meta"]["source_authority"]["kind"], "ui_menu_config_menu_delete_write_proxy")
+
+    def test_menu_config_delete_rejects_module_menu_with_xmlid(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        menu = _Menu(31, "系统菜单", "智慧施工 / 系统菜单", sequence=30)
+        menus = _MenuModel([menu])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([
+                    types.SimpleNamespace(model="ir.ui.menu", res_id=31, module="smart_core", name="menu_system"),
+                ]),
+                "ui.menu.config.policy": _PolicyModel([], user=user),
+                "ui.business.config.contract": _ContractModel([]),
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationDeleteHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "menu_id": 31,
+            },
+        )
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["reason_code"], "PROTECTED_MENU")
+        self.assertEqual([row.id for row in menus], [31])
 
     def test_menu_config_rollback_restores_policy_rows_from_contract_version(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")

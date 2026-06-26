@@ -665,6 +665,127 @@ class MenuConfigurationCreateHandler(MenuConfigurationSaveHandler):
         }
 
 
+class MenuConfigurationDeleteHandler(MenuConfigurationSaveHandler):
+    INTENT_TYPE = "ui.menu_config.menu.delete"
+    DESCRIPTION = "删除菜单配置新增的菜单入口"
+    VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "menu deletion removes runtime-created ir.ui.menu records"
+
+    @classmethod
+    def source_authority_contract(cls) -> dict:
+        source = super().source_authority_contract()
+        source.update({
+            "kind": "ui_menu_config_menu_delete_write_proxy",
+            "authorities": [
+                "ir.ui.menu",
+                "ir.model.data",
+                "ui.menu.config.policy",
+                "ui.business.config.contract",
+            ],
+            "write_proxy": True,
+            "runtime_carrier": cls.INTENT_TYPE,
+            "boundary": "runtime_menu_entry_deletion",
+            "lowcode_boundary": "menu_config",
+            "contract_source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+        })
+        return source
+
+    def _err(self, code: int, message: str, reason_code: str = "USER_ERROR"):
+        return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
+
+    def _menu_external_ids(self, menu_ids: list[int]) -> dict[int, str]:
+        if not menu_ids:
+            return {}
+        ModelData = self.env["ir.model.data"].sudo()
+        rows = ModelData.search([
+            ("model", "=", "ir.ui.menu"),
+            ("res_id", "in", menu_ids),
+        ])
+        out = {}
+        for row in rows:
+            res_id = _to_int(getattr(row, "res_id", 0))
+            if not res_id:
+                continue
+            out[res_id] = "%s.%s" % (_to_text(getattr(row, "module", "")), _to_text(getattr(row, "name", "")))
+        return out
+
+    def _descendant_menu_ids(self, menu_id: int) -> list[int]:
+        out: list[int] = []
+        Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
+        children = Menu.search([("parent_id", "=", menu_id)])
+        for child in children:
+            child_id = int(child.id or 0)
+            if not child_id:
+                continue
+            out.append(child_id)
+            out.extend(self._descendant_menu_ids(child_id))
+        return out
+
+    def handle(self, payload=None, ctx=None):
+        del ctx
+        self._ensure_access()
+        params = (payload or {}).get("params") if isinstance(payload, dict) else {}
+        params = params if isinstance(params, dict) else {}
+        company_id = self._company_id(params)
+        menu_id = _to_int(params.get("menu_id") or params.get("id"))
+        recursive = _to_bool(params.get("recursive"), False)
+        if not menu_id:
+            return self._err(400, "请选择要删除的菜单。")
+
+        Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
+        menu = Menu.browse(menu_id).exists()
+        if not menu:
+            return self._err(404, "菜单不存在或已删除。", "NOT_FOUND")
+
+        descendant_ids = self._descendant_menu_ids(menu_id)
+        if descendant_ids and not recursive:
+            return self._err(400, "该菜单包含下级菜单，请先删除下级菜单。", "HAS_CHILDREN")
+        delete_ids = [menu_id] + descendant_ids
+        xmlids = self._menu_external_ids(delete_ids)
+        if xmlids:
+            protected = ", ".join("%s(%s)" % (xmlid, mid) for mid, xmlid in sorted(xmlids.items()))
+            return self._err(400, "系统菜单不能物理删除，请关闭“显示菜单”隐藏。受保护菜单：%s" % protected, "PROTECTED_MENU")
+
+        Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
+        policies = Policy.search([
+            ("company_id", "=", company_id),
+            ("menu_id", "in", delete_ids),
+        ])
+        for policy in policies:
+            policy.write({"active": False, "visible": False})
+
+        deleted = []
+        for current_id in reversed(delete_ids):
+            current = Menu.browse(current_id).exists()
+            if not current:
+                continue
+            deleted.append({"id": int(current.id), "name": _to_text(current.display_name or current.name)})
+            current.unlink()
+
+        contract = self._mirror_menu_config_contract(company_id)
+        return {
+            "ok": True,
+            "data": {
+                "deleted": deleted,
+                "deleted_count": len(deleted),
+                "deleted_menu_ids": delete_ids,
+                "deactivated_policy_count": len(policies),
+                "contract": {
+                    "id": int(contract.id),
+                    "name": str(contract.name or ""),
+                    "model": str(contract.model or ""),
+                    "status": str(contract.status or ""),
+                    "version_no": int(contract.version_no or 1),
+                } if contract else None,
+            },
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "source_authority": self.source_authority_contract(),
+                "contract_mirrored": bool(contract),
+            },
+        }
+
+
 class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
     INTENT_TYPE = "ui.menu_config.audit"
     DESCRIPTION = "审计当前公司和业务角色命中的菜单配置"

@@ -11,7 +11,7 @@
           返回配置工作台
         </button>
         <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel()">刷新</button>
-        <button type="button" class="ghost" :disabled="loading || saving || creatingMenu" @click="openCreateMenu('custom')">
+        <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('custom')">
           新增菜单
         </button>
         <button type="button" class="primary" :disabled="!dirtyCount || saving" @click="saveChanges">
@@ -366,9 +366,18 @@
           </div>
           <div v-if="selectedMenu" class="menu-side-section menu-side-action-group">
             <span class="menu-side-section-title">新增入口</span>
-            <button type="button" class="ghost" @click="openCreateMenu('sibling')">新增同级</button>
-            <button type="button" class="ghost" @click="openCreateMenu('child')">新增下级</button>
-            <button type="button" class="ghost" @click="openCreateMenu('copy')">复制当前入口</button>
+            <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('sibling')">新增同级</button>
+            <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('child')">新增下级</button>
+            <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('copy')">复制当前入口</button>
+            <button
+              v-if="canDeleteSelectedMenu"
+              type="button"
+              class="ghost danger-ghost"
+              :disabled="loading || saving || creatingMenu || deletingMenu"
+              @click="deleteSelectedMenu"
+            >
+              {{ deletingMenu ? '删除中...' : '删除新增菜单' }}
+            </button>
           </div>
           <div class="menu-side-section menu-side-action-group">
             <span class="menu-side-section-title">批量维护</span>
@@ -593,6 +602,7 @@ import {
   rollbackMenuConfiguration,
   saveMenuConfigurationPanel,
   createMenuConfigurationEntry,
+  deleteMenuConfigurationEntry,
   type MenuConfigAuditPayload,
   type MenuConfigGroup,
   type MenuConfigMenu,
@@ -644,6 +654,7 @@ const auditing = ref(false);
 const rollingBack = ref(false);
 const versionLoading = ref(false);
 const creatingMenu = ref(false);
+const deletingMenu = ref(false);
 const error = ref('');
 const message = ref('');
 const saveNotice = ref(storedSaveNotice());
@@ -947,6 +958,11 @@ const selectedMenu = computed(() => menus.value.find((menu) => Number(menu.id) =
 const selectedDraft = computed(() => (
   selectedMenu.value ? draftFor(selectedMenu.value.id) || defaultDraftForEmpty() : defaultDraftForEmpty()
 ));
+const canDeleteSelectedMenu = computed(() => {
+  const menu = selectedMenu.value;
+  if (!menu?.id) return false;
+  return !String(menu.xmlid || '').trim();
+});
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || config.startupRootXmlid || '').trim());
 const rootMenu = computed(() => (
   rootMenuXmlid.value
@@ -1313,6 +1329,43 @@ async function createMenuEntry() {
     error.value = err instanceof Error ? err.message : '菜单创建失败';
   } finally {
     creatingMenu.value = false;
+  }
+}
+
+async function deleteSelectedMenu() {
+  const menu = selectedMenu.value;
+  if (!menu?.id || !canDeleteSelectedMenu.value) return;
+  if (dirtyCount.value) {
+    error.value = '请先保存或放弃未保存修改后再删除菜单。';
+    return;
+  }
+  const menuName = menu.name || menu.display_name || '当前菜单';
+  const confirmed = window.confirm(`确认删除新增菜单“${menuName}”？删除后会同步刷新导航配置。`);
+  if (!confirmed) return;
+
+  const fallbackMenuId = Number(menu.parent_id || 0);
+  deletingMenu.value = true;
+  error.value = '';
+  message.value = '';
+  setSaveNotice('');
+  auditResult.value = null;
+  try {
+    const result = await deleteMenuConfigurationEntry({
+      company_id: company.value?.id || undefined,
+      menu_id: menu.id,
+    });
+    await session.loadAppInit({ force: true });
+    selectedMenuId.value = fallbackMenuId;
+    await loadPanel({ preserveStatus: true });
+    if (versionPanelOpen.value) {
+      await loadVersions();
+    }
+    const countText = result.deleted_count > 1 ? `等 ${result.deleted_count} 个菜单` : '';
+    message.value = `已删除菜单“${menuName}”${countText}，导航已刷新`;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '菜单删除失败';
+  } finally {
+    deletingMenu.value = false;
   }
 }
 
@@ -1979,6 +2032,15 @@ h1 {
 .ghost {
   background: var(--sc-app-panel);
   color: var(--sc-app-text-primary);
+}
+
+.danger-ghost {
+  border-color: var(--sc-app-danger-border);
+  color: var(--sc-app-danger-text);
+}
+
+.danger-ghost:hover:not(:disabled) {
+  background: var(--sc-app-danger-bg);
 }
 
 .primary {

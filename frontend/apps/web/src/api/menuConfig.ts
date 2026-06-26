@@ -159,6 +159,20 @@ export interface MenuConfigCreatePayload {
   } | null;
 }
 
+export interface MenuConfigDeletePayload {
+  deleted: Array<{ id: number; name: string }>;
+  deleted_count: number;
+  deleted_menu_ids: number[];
+  deactivated_policy_count: number;
+  contract?: {
+    id: number;
+    name: string;
+    model: string;
+    status: string;
+    version_no: number;
+  } | null;
+}
+
 export async function loadMenuConfigurationPanel(params: { company_id?: number; menu_ids?: number[]; root_menu_xmlid?: string } = {}) {
   return intentRequest<MenuConfigPayload>({
     intent: 'ui.menu_config.panel.get',
@@ -185,6 +199,17 @@ export async function createMenuConfigurationEntry(params: {
 }) {
   return intentRequest<MenuConfigCreatePayload>({
     intent: 'ui.menu_config.menu.create',
+    params,
+  });
+}
+
+export async function deleteMenuConfigurationEntry(params: {
+  company_id?: number;
+  menu_id: number;
+  recursive?: boolean;
+}) {
+  return intentRequest<MenuConfigDeletePayload>({
+    intent: 'ui.menu_config.menu.delete',
     params,
   });
 }
