@@ -34,6 +34,10 @@ REQUIRED_DEFS = {
     "actionContract",
     "actionRule",
     "dataContract",
+    "dataMeta",
+    "visibleFields",
+    "fieldGroups",
+    "sourceAuthority",
     "runtimeContract",
     "formStructureContract",
     "formStructureSlot",
@@ -48,6 +52,24 @@ LEGACY_ROOT_KEYS = {
     "ui_contract",
     "ui.contract",
     "api.onchange",
+}
+
+FORMAL_V2_FIELD_PATHS = {
+    "$defs.layoutContract.properties.listProfile",
+    "$defs.actionContract.properties.deletePolicy",
+    "$defs.actionContract.properties.surfacePolicies",
+    "$defs.dataMeta.properties.businessOperationProfile",
+    "$defs.dataMeta.properties.visibleFields",
+    "$defs.dataMeta.properties.fieldGroups",
+}
+
+FORBIDDEN_FORMAL_SCHEMA_KEYS = {
+    "list_profile",
+    "delete_policy",
+    "surface_policies",
+    "business_operation_profile",
+    "visible_fields",
+    "field_groups",
 }
 
 ID_KEYS = {
@@ -93,6 +115,15 @@ def fail(errors: list[str], message: str) -> None:
     errors.append(message)
 
 
+def dict_path(value: dict[str, Any], path: str) -> Any:
+    node: Any = value
+    for item in path.split("."):
+        if not isinstance(node, dict):
+            return None
+        node = node.get(item)
+    return node
+
+
 def validate_schema(schema: dict[str, Any], registry: dict[str, Any], errors: list[str]) -> None:
     required = set(schema.get("required", []))
     if required != TOP_LEVEL_KEYS:
@@ -106,6 +137,15 @@ def validate_schema(schema: dict[str, Any], registry: dict[str, Any], errors: li
     missing_defs = REQUIRED_DEFS - defs
     if missing_defs:
         fail(errors, f"schema missing $defs: {sorted(missing_defs)}")
+    for path in sorted(FORMAL_V2_FIELD_PATHS):
+        if dict_path(schema, path) is None:
+            fail(errors, f"schema missing formal v2 field path: {path}")
+    for node_path, node in walk(schema):
+        if not isinstance(node, dict):
+            continue
+        for key in node:
+            if key in FORBIDDEN_FORMAL_SCHEMA_KEYS:
+                fail(errors, f"schema must not declare compatibility field {key!r} at {node_path}")
 
     stable_clients = registry.get("clientType", {}).get("stable", [])
     page_info = schema.get("$defs", {}).get("pageInfo", {})

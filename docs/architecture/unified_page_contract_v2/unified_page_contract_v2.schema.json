@@ -156,6 +156,9 @@
           "additionalProperties": {
             "$ref": "#/$defs/componentRegistryEntry"
           }
+        },
+        "listProfile": {
+          "type": "object"
         }
       }
     },
@@ -607,6 +610,12 @@
               "$ref": "#/$defs/id"
             }
           }
+        },
+        "deletePolicy": {
+          "type": "object"
+        },
+        "surfacePolicies": {
+          "type": "object"
         }
       }
     },
@@ -718,7 +727,83 @@
           "type": "object"
         },
         "dataMeta": {
+          "$ref": "#/$defs/dataMeta"
+        }
+      }
+    },
+    "dataMeta": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "businessOperationProfile": {
           "type": "object"
+        },
+        "visibleFields": {
+          "$ref": "#/$defs/visibleFields"
+        },
+        "fieldGroups": {
+          "$ref": "#/$defs/fieldGroups"
+        }
+      }
+    },
+    "visibleFields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fields"
+      ],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "sourceAuthority": {
+          "$ref": "#/$defs/sourceAuthority"
+        }
+      }
+    },
+    "fieldGroups": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "groups"
+      ],
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "sourceAuthority": {
+          "$ref": "#/$defs/sourceAuthority"
+        }
+      }
+    },
+    "sourceAuthority": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "runtime_carrier": {
+          "type": "string"
+        },
+        "projection_only": {
+          "type": "boolean"
+        },
+        "no_business_fact_authority": {
+          "type": "boolean"
+        },
+        "formal_projection": {
+          "type": "boolean"
+        },
+        "source_key": {
+          "type": "string"
         }
       }
     },
