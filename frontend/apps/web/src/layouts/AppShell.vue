@@ -2,12 +2,12 @@
   <div
     class="shell layout-shell"
     data-component="LayoutShell"
-    :class="{ 'shell--configuration': isConfigurationRoute }"
+    :class="{ 'shell--configuration': isConfigurationRoute, 'shell--sidebar-hidden': sidebarHidden }"
     :data-layout-kind="activeLayout.kind"
     :data-sidebar-mode="activeLayout.sidebar"
     :data-header-mode="activeLayout.header"
   >
-    <aside v-if="!isConfigurationRoute" class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
+    <aside v-if="!sidebarHidden" class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
       <div class="brand">
         <div class="logo">{{ shellLogoText }}</div>
         <div>
@@ -197,6 +197,13 @@
         <div class="topbar-actions">
           <GlobalMessagePanel />
           <button
+            class="sidebar-toggle sc-btn sc-btn-sm"
+            type="button"
+            @click="toggleSidebar"
+          >
+            {{ sidebarHidden ? '显示侧边栏' : '隐藏侧边栏' }}
+          </button>
+          <button
             v-if="isConfigurationRoute"
             class="config-return sc-btn sc-btn-sm"
             type="button"
@@ -317,6 +324,7 @@ type PublishedApp = {
 };
 const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 const BUSINESS_CONFIG_ROOT_MENU_XMLID = 'smart_construction_core.menu_sc_root';
+const SIDEBAR_HIDDEN_STORAGE_KEY = 'sc_shell_sidebar_hidden';
 
 function asDict(value: unknown): UnknownDict | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -363,6 +371,7 @@ const session = useSessionStore();
 const route = useRoute();
 const router = useRouter();
 const query = ref('');
+const sidebarHidden = ref(false);
 const projectMenuOpen = ref(false);
 const projectSearch = ref('');
 const projectSearching = ref(false);
@@ -963,6 +972,28 @@ function toggleTheme(): void {
   themeMode.value = nextTheme(themeMode.value);
   persistTheme(themeMode.value);
 }
+
+function loadSidebarHidden(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_HIDDEN_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function persistSidebarHidden(hidden: boolean): void {
+  try {
+    localStorage.setItem(SIDEBAR_HIDDEN_STORAGE_KEY, hidden ? '1' : '0');
+  } catch {
+    // ignore
+  }
+}
+
+function toggleSidebar(): void {
+  sidebarHidden.value = !sidebarHidden.value;
+  persistSidebarHidden(sidebarHidden.value);
+}
+
 const runtimeNavigationRegistry = computed(() =>
   buildRuntimeNavigationRegistry({
     scenes: session.scenes || [],
@@ -1194,6 +1225,7 @@ function exportSuggestedActionJson(filter: { success?: boolean; kind?: string; s
 
 onMounted(() => {
   themeMode.value = loadThemeMode();
+  sidebarHidden.value = loadSidebarHidden();
   applyTheme(themeMode.value);
   showExtractionStats.value = String(route.query.hud_stats || '').trim() === '1';
   void loadPublishedApps();
@@ -1485,7 +1517,7 @@ async function logout() {
   font-family: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
 }
 
-.shell--configuration {
+.shell--sidebar-hidden {
   grid-template-columns: minmax(0, 1fr);
 }
 
