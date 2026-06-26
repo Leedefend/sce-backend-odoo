@@ -4928,6 +4928,11 @@ verify.unified_page_contract.v2.intent: guard.prod.forbid
 verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host: guard.prod.forbid
 	@python3 scripts/verify/unified_page_contract_v2_harmony_h5_compile_acceptance_guard.py --report artifacts/backend/unified_page_contract_v2_harmony_h5_compile_acceptance.json --execute
 
+.PHONY: verify.unified_page_contract.v2.regression_audit.host
+verify.unified_page_contract.v2.regression_audit.host: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/unified_page_contract_v2_regression_audit.py
+	@python3 scripts/verify/unified_page_contract_v2_regression_audit.py
+
 .PHONY: verify.unified_page_contract.v2.web_consumer
 verify.unified_page_contract.v2.web_consumer: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/unified_page_contract_v2_web_consumer_guard.py scripts/verify/web_unified_page_contract_v2_guard.py
