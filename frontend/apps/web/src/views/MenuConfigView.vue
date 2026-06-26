@@ -1808,9 +1808,20 @@ function attachMissingConfiguredMenus(
   rootMenuId = 0,
 ): MenuConfigMenu[] {
   const rootIds = new Set(baseTree.map((item) => Number(item.id)));
+  const renderedMenuIds = new Set<number>();
+  const collectRenderedIds = (items: MenuConfigMenu[]) => {
+    items.forEach((item) => {
+      const id = Number(item.id || 0);
+      if (id) renderedMenuIds.add(id);
+      if (item.children?.length) collectRenderedIds(item.children);
+    });
+  };
+  collectRenderedIds(baseTree);
+
   const byParent = new Map<number, MenuConfigMenu[]>();
   allMenus.forEach((menu) => {
-    if (usedMenuIds.has(Number(menu.id))) return;
+    const menuId = Number(menu.id);
+    if (usedMenuIds.has(menuId) || renderedMenuIds.has(menuId)) return;
     const parentId = Number(menu.parent_id || 0);
     if (!parentId && !rootIds.size) return;
     const list = byParent.get(parentId) || [];
