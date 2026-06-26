@@ -85,26 +85,8 @@ function requiredString(source: ContractV2Dictionary, key: string, path: string,
   return value;
 }
 
-function requiredAliasedString(
-  source: ContractV2Dictionary,
-  key: string,
-  aliases: string[],
-  path: string,
-  issues: DecodeIssue[],
-): string {
-  const value = asString(source[key]) || aliases.map((alias) => asString(source[alias])).find(Boolean) || '';
-  if (!value) {
-    issues.push({ path: `${path}.${key}`, message: `is required; aliases checked: ${aliases.join(', ')}` });
-  }
-  return value;
-}
-
 function optionalString(source: ContractV2Dictionary, key: string): string | undefined {
   return asString(source[key]) || undefined;
-}
-
-function optionalAliasedString(source: ContractV2Dictionary, key: string, aliases: string[]): string | undefined {
-  return asString(source[key]) || aliases.map((alias) => asString(source[alias])).find(Boolean) || undefined;
 }
 
 function readAliasedObject(
@@ -121,15 +103,6 @@ function readAliasedObject(
     return {};
   }
   return value;
-}
-
-function aliasedRecord(source: ContractV2Dictionary, key: string, aliases: string[]): ContractV2Dictionary {
-  return asRecord(source[key] || aliases.map((alias) => source[alias]).find(isRecord));
-}
-
-function aliasedArray(source: ContractV2Dictionary, key: string, aliases: string[]): unknown[] {
-  const value = source[key] || aliases.map((alias) => source[alias]).find(Array.isArray);
-  return Array.isArray(value) ? value : [];
 }
 
 function decodeClientType(value: string, issues: DecodeIssue[]): ContractV2ClientType {

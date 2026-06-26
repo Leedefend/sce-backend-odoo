@@ -179,6 +179,13 @@ FORBIDDEN_STRICT_STORE_META_EXTENSION_TOKENS = (
     "requiredCapabilities",
 )
 
+FORBIDDEN_STRICT_ALIAS_HELPERS = (
+    "function requiredAliasedString(",
+    "function optionalAliasedString(",
+    "function aliasedRecord(",
+    "function aliasedArray(",
+)
+
 FORBIDDEN_STRICT_PAGE_INFO_ALIASES = (
     "['contract_version']",
     "['page_id']",
@@ -359,6 +366,9 @@ def main() -> int:
     for token in REQUIRED_STRICT_ENUM_DECODER_TOKENS:
         if token not in strict_schema_source:
             violations.append(f"{_relative(STRICT_SCHEMA)}: strict V2 enum decoder token missing: {token}")
+    for token in FORBIDDEN_STRICT_ALIAS_HELPERS:
+        if token in strict_schema_source:
+            violations.append(f"{_relative(STRICT_SCHEMA)}: strict V2 decoder must not define alias helper {token}")
     page_info_decoder = _function_body(strict_schema_source, "decodePageInfo")
     for token in FORBIDDEN_STRICT_PAGE_INFO_ALIASES:
         if token in page_info_decoder:
