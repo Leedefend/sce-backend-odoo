@@ -362,7 +362,7 @@
         </div>
       </div>
     </section>
-    <section v-if="approvalPanelOpen" class="edit-panel approval-panel">
+    <section v-if="approvalPanelOpen" class="edit-panel config-editor-panel approval-panel">
       <div class="edit-panel-head">
         <div>
           <h2>审批规则</h2>
@@ -372,34 +372,42 @@
           关闭
         </button>
       </div>
-      <div class="approval-config-grid">
-        <label class="approval-toggle">
-          <input v-model="approvalForm.approval_required" type="checkbox" @change="onApprovalRequiredChange" />
-          <span>启用审批</span>
-        </label>
-        <label>
-          <span>审批方式</span>
-          <select v-model="approvalForm.mode" :disabled="!approvalForm.approval_required">
-            <option
-              v-for="option in approvalModeOptions"
-              :key="option.value"
-              :value="option.value"
-              :disabled="approvalForm.approval_required && option.value === 'none'"
-            >
-              {{ option.label }}
-            </option>
-          </select>
-        </label>
-        <label>
-          <span>默认审批岗位</span>
-          <select v-model="approvalForm.manager_scope_key" :disabled="!approvalForm.approval_required">
-            <option value="">暂不指定</option>
-            <option v-for="option in approvalScopeOptions" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
-        </label>
-      </div>
+      <aside class="approval-rule-panel" aria-label="审批规则设置">
+        <div class="approval-config-grid">
+          <label class="approval-toggle">
+            <input v-model="approvalForm.approval_required" type="checkbox" @change="onApprovalRequiredChange" />
+            <span>启用审批</span>
+          </label>
+          <label>
+            <span>审批方式</span>
+            <select v-model="approvalForm.mode" :disabled="!approvalForm.approval_required">
+              <option
+                v-for="option in approvalModeOptions"
+                :key="option.value"
+                :value="option.value"
+                :disabled="approvalForm.approval_required && option.value === 'none'"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+          <label>
+            <span>默认审批岗位</span>
+            <select v-model="approvalForm.manager_scope_key" :disabled="!approvalForm.approval_required">
+              <option value="">暂不指定</option>
+              <option v-for="option in approvalScopeOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+        </div>
+        <div class="edit-meta approval-rule-summary">
+          <span>运行状态：{{ approvalRuntimeText }}</span>
+          <span>步骤数：{{ approvalAudit?.policy.step_count ?? 0 }}</span>
+          <span v-if="advancedPanelOpen">边界：{{ approvalAudit?.boundary || 'industry_policy_runtime' }}</span>
+          <span v-if="hasApprovalDraftChanges" class="edit-dirty">配置已调整，可保存</span>
+        </div>
+      </aside>
       <section class="approval-steps">
         <header>
           <div>
@@ -409,7 +417,6 @@
         </header>
         <div v-if="approvalSteps.length" class="approval-step-table" role="table" aria-label="审批步骤">
           <div class="approval-step-table-head" role="row">
-            <span></span>
             <span>序号</span>
             <span>步骤名称</span>
             <span>审批岗位</span>
@@ -426,21 +433,14 @@
               'approval-step-row--drop-target': approvalStepDropIndex === index && approvalStepDragIndex !== index,
             }"
             role="row"
+            :draggable="approvalForm.approval_required"
+            :aria-label="`拖动第${index + 1}步调整顺序`"
+            @dragstart="startApprovalStepDrag(index, $event)"
             @dragover.prevent
             @dragenter.prevent="approvalStepDropIndex = index"
             @drop.prevent="dropApprovalStep(index)"
             @dragend="clearApprovalStepDrag"
           >
-            <span
-              class="approval-step-drag"
-              title="拖动排序"
-              role="button"
-              tabindex="0"
-              draggable="true"
-              :aria-label="`拖动第${index + 1}步调整顺序`"
-              @dragstart.stop="startApprovalStepDrag(index, $event)"
-              @dragend.stop="clearApprovalStepDrag"
-            >⋮⋮</span>
             <span class="approval-step-seq">{{ index + 1 }}</span>
             <div class="approval-step-cell">
               <input v-model="step.name" type="text" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步名称`" />
@@ -460,8 +460,6 @@
               <input v-model="step.amount_max" type="number" min="0" step="0.01" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额上限`" />
             </div>
             <div class="approval-step-actions">
-              <button type="button" title="上移" :disabled="index === 0 || approvalLoading || !approvalForm.approval_required" @click="moveApprovalStep(index, -1)">↑</button>
-              <button type="button" title="下移" :disabled="index === approvalSteps.length - 1 || approvalLoading || !approvalForm.approval_required" @click="moveApprovalStep(index, 1)">↓</button>
               <button type="button" title="移除" :disabled="approvalLoading || !approvalForm.approval_required" @click="removeApprovalStep(index)">×</button>
             </div>
           </div>
@@ -473,12 +471,6 @@
           添加一行
         </button>
       </section>
-      <div class="edit-meta">
-        <span>运行状态：{{ approvalRuntimeText }}</span>
-        <span>步骤数：{{ approvalAudit?.policy.step_count ?? 0 }}</span>
-        <span v-if="advancedPanelOpen">边界：{{ approvalAudit?.boundary || 'industry_policy_runtime' }}</span>
-        <span v-if="hasApprovalDraftChanges" class="edit-dirty">配置已调整，可保存</span>
-      </div>
       <div class="edit-panel-actions">
         <button type="button" class="ghost small primary" :disabled="approvalLoading || !hasApprovalDraftChanges" @click="saveApprovalConfig">
           {{ approvalLoading ? '保存中...' : '保存审批设置' }}
@@ -2702,15 +2694,6 @@ function removeApprovalStep(index: number) {
   approvalSteps.value.splice(index, 1);
 }
 
-function moveApprovalStep(index: number, delta: number) {
-  const targetIndex = index + delta;
-  if (targetIndex < 0 || targetIndex >= approvalSteps.value.length) return;
-  const next = [...approvalSteps.value];
-  const [item] = next.splice(index, 1);
-  next.splice(targetIndex, 0, item);
-  approvalSteps.value = next;
-}
-
 function startApprovalStepDrag(index: number, event: DragEvent) {
   approvalStepDragIndex.value = index;
   approvalStepDropIndex.value = index;
@@ -3644,9 +3627,35 @@ h1 {
 
 .approval-config-grid {
   display: grid;
-  grid-template-columns: minmax(140px, 0.6fr) repeat(2, minmax(180px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
-  align-items: end;
+  align-items: stretch;
+}
+
+.approval-rule-panel {
+  position: sticky;
+  top: 12px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--sc-app-bg);
+}
+
+.approval-panel .approval-rule-summary {
+  grid-column: auto;
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--sc-app-border);
+}
+
+.approval-panel .edit-panel-actions {
+  grid-column: 1 / -1;
+  justify-self: end;
 }
 
 .approval-config-grid label {
@@ -3672,7 +3681,13 @@ h1 {
 .approval-steps {
   display: grid;
   gap: 10px;
-  margin-top: 12px;
+  min-width: 0;
+  min-height: 360px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--sc-app-surface);
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 6%);
 }
 
 .approval-steps header {
@@ -3707,7 +3722,7 @@ h1 {
 .approval-step-table-head,
 .approval-step-row {
   display: grid;
-  grid-template-columns: 34px 44px minmax(150px, 1.2fr) minmax(170px, 1.1fr) minmax(106px, 0.7fr) minmax(106px, 0.7fr) 106px;
+  grid-template-columns: 44px minmax(150px, 1.2fr) minmax(170px, 1.1fr) minmax(106px, 0.7fr) minmax(106px, 0.7fr) 42px;
   gap: 8px;
   align-items: center;
 }
@@ -3727,6 +3742,14 @@ h1 {
   padding: 6px 8px;
   border-bottom: 1px solid var(--sc-app-border);
   background: var(--sc-app-bg);
+}
+
+.approval-step-row[draggable="true"] {
+  cursor: grab;
+}
+
+.approval-step-row[draggable="true"]:active {
+  cursor: grabbing;
 }
 
 .approval-step-row:last-child {
@@ -3753,7 +3776,6 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
-.approval-step-drag,
 .approval-step-actions button {
   min-width: 30px;
   min-height: 30px;
@@ -3761,17 +3783,6 @@ h1 {
   border-radius: 6px;
   background: var(--sc-app-bg);
   color: var(--sc-app-text-secondary);
-}
-
-.approval-step-drag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: grab;
-}
-
-.approval-step-drag:active {
-  cursor: grabbing;
 }
 
 .approval-step-actions {
@@ -4227,6 +4238,10 @@ h1 {
     position: static;
   }
 
+  .approval-rule-panel {
+    position: static;
+  }
+
   .selected-page-overview {
     align-items: stretch;
     flex-direction: column;
@@ -4251,7 +4266,7 @@ h1 {
   }
 
   .approval-step-row {
-    grid-template-columns: 34px 44px minmax(0, 1fr);
+    grid-template-columns: 44px minmax(0, 1fr);
     border: 1px solid var(--sc-app-border);
     border-radius: 6px;
     margin-bottom: 8px;

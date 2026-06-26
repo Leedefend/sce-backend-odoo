@@ -387,7 +387,7 @@ async function approvalStepNames(page) {
 }
 
 async function dragApprovalStep(page, fromIndex, toIndex) {
-  const source = page.locator(".approval-step-row").nth(fromIndex).locator(".approval-step-drag");
+  const source = page.locator(".approval-step-row").nth(fromIndex);
   const target = page.locator(".approval-step-row").nth(toIndex);
   await source.scrollIntoViewIfNeeded();
   await target.scrollIntoViewIfNeeded();
@@ -495,6 +495,9 @@ async function main() {
     const approvalPanel = page.locator(".approval-panel");
     const approvalPanelTitle = await approvalPanel.locator("h2").innerText();
     const approvalPanelText = await approvalPanel.innerText();
+    const approvalEditorPanelCount = await approvalPanel.evaluate((node) => node.classList.contains("config-editor-panel") ? 1 : 0);
+    const approvalRulePanelCount = await approvalPanel.locator(".approval-rule-panel").count();
+    const approvalStepCanvasCount = await approvalPanel.locator(".approval-steps").count();
     const approvalFieldLabels = await approvalPanel.locator(".approval-config-grid label span").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
@@ -508,6 +511,7 @@ async function main() {
     const approvalWasEnabledInitially = await approvalRequiredToggle.isChecked();
     const approvalStepText = await approvalPanel.locator(".approval-steps").innerText();
     const approvalStepDragHandleCount = await approvalPanel.locator(".approval-step-drag").count();
+    let approvalStepDirectDragRowCount = await approvalPanel.locator(".approval-step-row[draggable='true']").count();
     const approvalStepHeaderText = await approvalPanel.locator(".approval-step-table-head").innerText().catch(() => "");
     const approvalAddStepButtonCount = await approvalPanel.getByRole("button", { name: "添加一行" }).count();
     const approvalStepRowCount = await approvalPanel.locator(".approval-step-row").count();
@@ -526,6 +530,7 @@ async function main() {
           return firstInput && !firstInput.disabled;
         }, null, { timeout: 10000 });
       }
+      approvalStepDirectDragRowCount = await approvalPanel.locator(".approval-step-row[draggable='true']").count();
       const firstProbeName = `验收步骤A-${approvalDragProbeSuffix}`;
       const secondProbeName = `验收步骤B-${approvalDragProbeSuffix}`;
       currentStep = "prepare approval drag probe";
@@ -627,6 +632,9 @@ async function main() {
       leakedDefaultVersionTerms,
       approvalPanelTitle,
       approvalPanelText,
+      approvalEditorPanelCount,
+      approvalRulePanelCount,
+      approvalStepCanvasCount,
       approvalFieldLabels,
       approvalModeOptionLabels,
       approvalScopeOptionCount,
@@ -634,6 +642,8 @@ async function main() {
       approvalWasEnabledInitially,
       approvalAdvancedButtonCount,
       approvalStepRowCount,
+      approvalStepDragHandleCount,
+      approvalStepDirectDragRowCount,
       approvalDragOrderBefore,
       approvalDragOrderAfter,
       approvalDragResetOrder,
@@ -740,6 +750,9 @@ async function main() {
     );
     assert(
       approvalPanelTitle === "审批规则"
+        && approvalEditorPanelCount === 1
+        && approvalRulePanelCount === 1
+        && approvalStepCanvasCount === 1
         && approvalFieldLabels.join("|") === "启用审批|审批方式|默认审批岗位"
         && approvalModeOptionLabels.includes("无需审核")
         && approvalModeOptionLabels.includes("单级审核")
@@ -751,8 +764,9 @@ async function main() {
         && approvalStepHeaderText.includes("步骤名称")
         && approvalStepHeaderText.includes("审批岗位")
         && approvalAddStepButtonCount === 1
-        && approvalStepDragHandleCount > 0
+        && approvalStepDragHandleCount === 0
         && approvalStepRowCount >= 2
+        && approvalStepDirectDragRowCount >= 2
         && approvalDragOrderBefore.length >= 2
         && approvalDragOrderAfter[0] === approvalDragOrderBefore[1]
         && approvalDragOrderAfter[1] === approvalDragOrderBefore[0]
@@ -764,6 +778,9 @@ async function main() {
       {
         approvalPanelTitle,
         approvalPanelText,
+        approvalEditorPanelCount,
+        approvalRulePanelCount,
+        approvalStepCanvasCount,
         approvalFieldLabels,
         approvalModeOptionLabels,
         approvalScopeOptionCount,
@@ -772,6 +789,7 @@ async function main() {
         approvalStepText,
         approvalStepHeaderText,
         approvalStepDragHandleCount,
+        approvalStepDirectDragRowCount,
         approvalAddStepButtonCount,
         approvalStepRowCount,
         approvalDragOrderBefore,
