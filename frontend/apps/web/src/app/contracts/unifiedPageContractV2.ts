@@ -74,6 +74,22 @@ export type UnifiedPageContractV2ContainerStatus = {
   reasonCode?: string;
 };
 
+export type UnifiedPageContractV2VisibleFields = {
+  fields: string[];
+  sourceAuthority?: Record<string, unknown>;
+};
+
+export type UnifiedPageContractV2FieldGroups = {
+  groups: Array<Record<string, unknown>>;
+  sourceAuthority?: Record<string, unknown>;
+};
+
+export type UnifiedPageContractV2DataMeta = Record<string, unknown> & {
+  businessOperationProfile?: Record<string, unknown>;
+  visibleFields?: UnifiedPageContractV2VisibleFields;
+  fieldGroups?: UnifiedPageContractV2FieldGroups;
+};
+
 export type UnifiedPageContractV2 = {
   pageInfo: {
     pageId: string;
@@ -89,18 +105,21 @@ export type UnifiedPageContractV2 = {
     layoutType: string;
     adaptMode: string;
     containerTree: UnifiedPageContractV2Container[];
+    listProfile?: Record<string, unknown>;
     componentRegistry: Record<string, unknown>;
   };
   statusContract: Record<string, unknown>;
   actionContract: {
     actionRuleList: UnifiedPageContractV2Action[];
     dependencyGraph?: Record<string, string[]>;
+    deletePolicy?: Record<string, unknown>;
+    surfacePolicies?: Record<string, unknown>;
   };
   searchContract?: Record<string, unknown>;
   dataContract: {
     dataSource?: Record<string, unknown>;
     search?: Record<string, unknown>;
-    dataMeta?: Record<string, unknown>;
+    dataMeta?: UnifiedPageContractV2DataMeta;
   };
   runtimeContract: Record<string, unknown>;
   formStructureContract?: Record<string, unknown>;

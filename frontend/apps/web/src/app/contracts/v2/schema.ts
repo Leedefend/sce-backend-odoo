@@ -6,13 +6,16 @@ import type {
   ContractV2Container,
   ContractV2ContainerStatus,
   ContractV2DataContract,
+  ContractV2DataMeta,
   ContractV2Dictionary,
+  ContractV2FieldGroups,
   ContractV2GlobalStatus,
   ContractV2LayoutContract,
   ContractV2PageInfo,
   ContractV2SelectorStatus,
   ContractV2Snapshot,
   ContractV2StatusContract,
+  ContractV2VisibleFields,
   ContractV2Widget,
   ContractV2WidgetStatus,
 } from './types';
@@ -255,6 +258,9 @@ function decodeLayoutContract(source: ContractV2Dictionary, issues: DecodeIssue[
     adaptMode: requiredAliasedString(source, 'adaptMode', ['adapt_mode'], 'layoutContract', issues),
     containerTree,
     componentRegistry: aliasedRecord(source, 'componentRegistry', ['component_registry']),
+    ...(Object.keys(aliasedRecord(source, 'listProfile', ['list_profile'])).length
+      ? { listProfile: aliasedRecord(source, 'listProfile', ['list_profile']) }
+      : {}),
   };
 }
 
@@ -299,6 +305,12 @@ function decodeActionContract(source: ContractV2Dictionary, issues: DecodeIssue[
   return {
     actionRuleList,
     ...(Object.keys(dependencyGraph).length ? { dependencyGraph } : {}),
+    ...(Object.keys(aliasedRecord(source, 'deletePolicy', ['delete_policy'])).length
+      ? { deletePolicy: aliasedRecord(source, 'deletePolicy', ['delete_policy']) }
+      : {}),
+    ...(Object.keys(aliasedRecord(source, 'surfacePolicies', ['surface_policies'])).length
+      ? { surfacePolicies: aliasedRecord(source, 'surfacePolicies', ['surface_policies']) }
+      : {}),
   };
 }
 
@@ -318,6 +330,48 @@ function decodeDataSources(value: unknown): Record<string, ContractV2Dictionary>
   }, {});
 }
 
+function decodeVisibleFields(value: unknown): ContractV2VisibleFields | undefined {
+  const row = asRecord(value);
+  const fields = Array.isArray(value)
+    ? asStringArray(value)
+    : asStringArray(row.fields || row.fieldNames || row.field_names);
+  if (!fields.length) return undefined;
+  const sourceAuthority = asRecord(row.sourceAuthority || row.source_authority);
+  return {
+    fields,
+    ...(Object.keys(sourceAuthority).length ? { sourceAuthority } : {}),
+  };
+}
+
+function decodeFieldGroups(value: unknown): ContractV2FieldGroups | undefined {
+  const row = asRecord(value);
+  const rawGroups = Array.isArray(value)
+    ? value
+    : (Array.isArray(row.groups) ? row.groups : Array.isArray(row.items) ? row.items : []);
+  const groups = rawGroups
+    .map((item) => asRecord(item))
+    .filter((item) => Object.keys(item).length > 0);
+  if (!groups.length) return undefined;
+  const sourceAuthority = asRecord(row.sourceAuthority || row.source_authority);
+  return {
+    groups,
+    ...(Object.keys(sourceAuthority).length ? { sourceAuthority } : {}),
+  };
+}
+
+function decodeDataMeta(value: unknown): ContractV2DataMeta {
+  const row = asRecord(value);
+  const businessOperationProfile = aliasedRecord(row, 'businessOperationProfile', ['business_operation_profile']);
+  const visibleFields = decodeVisibleFields(row.visibleFields || row.visible_fields);
+  const fieldGroups = decodeFieldGroups(row.fieldGroups || row.field_groups);
+  return {
+    ...row,
+    ...(Object.keys(businessOperationProfile).length ? { businessOperationProfile } : {}),
+    ...(visibleFields ? { visibleFields } : {}),
+    ...(fieldGroups ? { fieldGroups } : {}),
+  };
+}
+
 function decodeDataContract(source: ContractV2Dictionary): ContractV2DataContract {
   const treeData = decodeRowsMap(source.treeData || source.tree_data);
   const ganttData = decodeRowsMap(source.ganttData || source.gantt_data);
@@ -328,7 +382,7 @@ function decodeDataContract(source: ContractV2Dictionary): ContractV2DataContrac
     dictData: aliasedRecord(source, 'dictData', ['dict_data']),
     pagination: asRecord(source.pagination),
     dataSource: decodeDataSources(source.dataSource || source.data_source),
-    dataMeta: aliasedRecord(source, 'dataMeta', ['data_meta']),
+    dataMeta: decodeDataMeta(source.dataMeta || source.data_meta),
     ...(Object.keys(treeData).length ? { treeData } : {}),
     ...(Object.keys(ganttData).length ? { ganttData } : {}),
   };

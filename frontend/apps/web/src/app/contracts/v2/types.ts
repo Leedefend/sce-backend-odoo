@@ -59,6 +59,7 @@ export interface ContractV2LayoutContract {
   adaptMode: string;
   containerTree: ContractV2Container[];
   componentRegistry: ContractV2Dictionary;
+  listProfile?: ContractV2Dictionary;
 }
 
 export interface ContractV2ActionRule {
@@ -79,6 +80,24 @@ export interface ContractV2ActionRule {
 export interface ContractV2ActionContract {
   actionRuleList: ContractV2ActionRule[];
   dependencyGraph?: Record<string, string[]>;
+  deletePolicy?: ContractV2Dictionary;
+  surfacePolicies?: ContractV2Dictionary;
+}
+
+export interface ContractV2VisibleFields {
+  fields: string[];
+  sourceAuthority?: ContractV2Dictionary;
+}
+
+export interface ContractV2FieldGroups {
+  groups: ContractV2Dictionary[];
+  sourceAuthority?: ContractV2Dictionary;
+}
+
+export interface ContractV2DataMeta extends ContractV2Dictionary {
+  businessOperationProfile?: ContractV2Dictionary;
+  visibleFields?: ContractV2VisibleFields;
+  fieldGroups?: ContractV2FieldGroups;
 }
 
 export interface ContractV2DataContract {
@@ -88,7 +107,7 @@ export interface ContractV2DataContract {
   dictData: Record<string, unknown>;
   pagination: Record<string, unknown>;
   dataSource: Record<string, ContractV2Dictionary>;
-  dataMeta: ContractV2Dictionary;
+  dataMeta: ContractV2DataMeta;
   treeData?: Record<string, unknown[]>;
   ganttData?: Record<string, unknown[]>;
 }

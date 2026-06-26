@@ -62,6 +62,12 @@ def main() -> int:
         "collectUnifiedPageContractV2FieldContainerStatus",
         "resolveUnifiedPageContractV2PrimaryDataSource",
         "formStructureContract?: Record<string, unknown>",
+        "businessOperationProfile?: Record<string, unknown>",
+        "visibleFields?: UnifiedPageContractV2VisibleFields",
+        "fieldGroups?: UnifiedPageContractV2FieldGroups",
+        "deletePolicy?: Record<string, unknown>",
+        "surfacePolicies?: Record<string, unknown>",
+        "listProfile?: Record<string, unknown>",
     ))
     require_tokens(errors, record_runtime_source, "web v2 record runtime", (
         "resolveUnifiedPageContractV2(contract)",
