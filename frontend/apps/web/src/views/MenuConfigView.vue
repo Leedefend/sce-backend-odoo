@@ -648,6 +648,7 @@ type FlatRow = {
 };
 
 type DropPosition = 'before' | 'after' | 'inside';
+type RuntimeMenuConfigGroup = MenuConfigMenu & { runtime_group?: boolean };
 
 const MENU_CONFIG_SAVE_NOTICE_KEY = 'sc_menu_config_save_notice';
 
@@ -900,7 +901,9 @@ const flatRows = computed<FlatRow[]>(() => {
   const out: FlatRow[] = [];
   const walk = (items: MenuConfigMenu[], level = 1) => {
     items.forEach((item) => {
-      out.push({ menu: item, level });
+      if (!isRuntimeMenuGroup(item)) {
+        out.push({ menu: item, level });
+      }
       if (item.children?.length) walk(item.children, level + 1);
     });
   };
@@ -952,12 +955,13 @@ const visibleTree = computed<MenuConfigMenu[]>(() => {
 const selectedIds = computed(() => {
   if (!selectedMenuId.value) return new Set<number>();
   const out = new Set<number>();
-  const walk = (items: MenuConfigMenu[]) => {
+  const walk = (items: MenuConfigMenu[], selectedAncestor = false) => {
     items.forEach((item) => {
-      if (item.id === selectedMenuId.value || out.has(item.parent_id)) {
+      const active = selectedAncestor || item.id === selectedMenuId.value;
+      if (active && !isRuntimeMenuGroup(item)) {
         out.add(item.id);
       }
-      if (item.children?.length) walk(item.children);
+      if (item.children?.length) walk(item.children, active);
     });
   };
   walk(tree.value);
@@ -1017,7 +1021,12 @@ const copySourceOptions = computed(() => navigationMenus.value
 
 function isUserCreatedMenu(menu: MenuConfigMenu | null | undefined): boolean {
   if (!menu?.id) return false;
+  if (isRuntimeMenuGroup(menu)) return false;
   return !String(menu.xmlid || '').trim();
+}
+
+function isRuntimeMenuGroup(menu: MenuConfigMenu | null | undefined): boolean {
+  return Boolean((menu as RuntimeMenuConfigGroup | null | undefined)?.runtime_group);
 }
 
 function defaultDraft(menu: MenuConfigMenu, policy?: MenuConfigPolicy): DraftPolicy {
@@ -1230,6 +1239,19 @@ function menuById(menuId: number) {
   return menus.value.find((menu) => Number(menu.id) === Number(menuId)) || null;
 }
 
+function treeMenuById(menuId: number) {
+  let found: MenuConfigMenu | null = null;
+  const walk = (items: MenuConfigMenu[]): boolean => items.some((item) => {
+    if (Number(item.id) === Number(menuId)) {
+      found = item;
+      return true;
+    }
+    return Boolean(item.children?.length && walk(item.children));
+  });
+  walk(tree.value);
+  return found;
+}
+
 function descendantsFor(menuId: number) {
   const out = new Set<number>();
   const byParent = new Map<number, MenuConfigMenu[]>();
@@ -1424,7 +1446,9 @@ function flattenMenuTree(items: MenuConfigMenu[]): MenuConfigMenu[] {
   const out: MenuConfigMenu[] = [];
   const walk = (rows: MenuConfigMenu[]) => {
     rows.forEach((item) => {
-      out.push(item);
+      if (!isRuntimeMenuGroup(item)) {
+        out.push(item);
+      }
       if (item.children?.length) walk(item.children);
     });
   };
@@ -1469,6 +1493,8 @@ function toggleTreeNodeCollapse(menuId: number) {
 
 function startTreeDrag(menuId: number) {
   if (!treeDragEnabled.value) return;
+  const menu = treeMenuById(menuId);
+  if (isRuntimeMenuGroup(menu)) return;
   dragSourceMenuId.value = menuId;
   dragTargetMenuId.value = 0;
   dragDropPosition.value = 'after';
@@ -1736,9 +1762,27 @@ function buildTreeFromNavigation(
       menu = candidates.find((candidate) => !usedMenuIds.has(candidate.id));
     }
     if (!menu) {
-      return Array.isArray(node.children)
+      const children = Array.isArray(node.children)
         ? buildTreeFromNavigation(node.children as NavNode[], menuById, menuByLabel, usedMenuIds)
         : [];
+      if (!children.length || !label || !menuId) return children;
+      return [{
+        id: menuId,
+        menu_id: menuId,
+        name: label,
+        display_name: label,
+        complete_name: label,
+        parent_id: 0,
+        parent_name: '',
+        sequence: Number(node.sequence ?? node.meta?.sequence ?? 0),
+        action: '',
+        web_icon: '',
+        xmlid: '__runtime_group__',
+        group_ids: [],
+        group_names: [],
+        runtime_group: true,
+        children,
+      } as RuntimeMenuConfigGroup];
     }
     usedMenuIds.add(menu.id);
     return [{
