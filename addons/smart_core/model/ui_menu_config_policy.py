@@ -546,8 +546,9 @@ class UiMenuConfigPolicy(models.Model):
             if not menu:
                 return False
             menu_id = int(menu.id)
-            if node_menu_id(node) == menu_id:
-                return True
+            normalized_menu_id = node_menu_id(node)
+            if normalized_menu_id:
+                return normalized_menu_id == menu_id
             labels = {
                 str(node.get("name") or "").strip(),
                 str(node.get("label") or "").strip(),
@@ -556,8 +557,9 @@ class UiMenuConfigPolicy(models.Model):
             return bool(str(menu.name or "").strip() in labels)
 
         def node_matches_policy_source(node: dict, menu_id: int, source_menu, source_label: str) -> bool:
-            if node_menu_id(node) == int(menu_id or 0):
-                return True
+            normalized_menu_id = node_menu_id(node)
+            if normalized_menu_id:
+                return normalized_menu_id == int(menu_id or 0)
             if node_matches_menu(node, source_menu):
                 return True
             labels = {

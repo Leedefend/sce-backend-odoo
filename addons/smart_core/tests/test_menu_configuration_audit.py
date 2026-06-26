@@ -1387,6 +1387,72 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(material_node["name"], "材料合同")
         self.assertEqual(material_node["meta"]["parent_menu_id"], 293)
 
+    def test_runtime_overlay_does_not_treat_same_label_different_menu_as_present(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        contract = _Menu(293, "合同中心", parent=root, sequence=40)
+        old_fact = _Menu(425, "历史采购/一般合同事实", parent=contract, sequence=90, action="ir.actions.act_window,714")
+        new_fact = _Menu(601, "历史采购/一般合同事实", parent=contract, sequence=60, action="ir.actions.act_window,798")
+        menus = _MenuModel([root, contract, old_fact, new_fact])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([
+                    _ActionWindow(714, "sc.legacy.purchase.contract.fact"),
+                    _ActionWindow(798, "sc.general.contract.fact"),
+                ]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                293: {"active": True, "menu_id": 293, "menu_label": "合同中心", "visible": True},
+                425: {"active": True, "menu_id": 425, "menu_label": "历史采购/一般合同事实", "visible": True, "sequence_override": 90},
+                601: {"active": True, "menu_id": 601, "menu_label": "历史采购/一般合同事实", "visible": True, "sequence_override": 60},
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, _stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [
+                            {
+                                "menu_id": 293,
+                                "name": "合同中心",
+                                "children": [
+                                    {
+                                        "menu_id": 425,
+                                        "name": "历史采购/一般合同事实",
+                                        "meta": {"menu_id": 425, "parent_menu_id": 293},
+                                        "children": [],
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        contract_node = next(child for child in root_node["children"] if child["menu_id"] == 293)
+        child_ids = [child["menu_id"] for child in contract_node["children"]]
+        self.assertIn(425, child_ids)
+        self.assertIn(601, child_ids)
+        self.assertEqual(child_ids.count(601), 1)
+
     def test_runtime_overlay_builds_children_for_missing_moved_group(self):
         module = _load_policy_model()
         company = types.SimpleNamespace(id=7)
