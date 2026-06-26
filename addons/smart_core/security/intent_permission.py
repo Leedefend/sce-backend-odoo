@@ -181,6 +181,8 @@ def _is_ui_only_config_intent(intent_name):
         "ui.business_config.contract.save",
         "ui.business_config.contract.publish",
         "ui.business_config.contract.rollback",
+        "sc.approval_policy.config.set",
+        "sc.approval_policy.steps.set",
     }
 
 

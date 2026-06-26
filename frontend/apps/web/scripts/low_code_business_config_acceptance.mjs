@@ -506,7 +506,7 @@ async function main() {
     const approvalCard = page.locator(".config-card").filter({ hasText: "审批规则" });
     await approvalCard.getByRole("button", { name: "设置审批" }).click();
     await page.waitForSelector(".approval-panel", { timeout: 10000 });
-    const approvalPanel = page.locator(".approval-panel");
+    let approvalPanel = page.locator(".approval-panel");
     const approvalPanelTitle = await approvalPanel.locator("h2").innerText();
     const approvalPanelText = await approvalPanel.innerText();
     const approvalEditorPanelCount = await approvalPanel.evaluate((node) => node.classList.contains("config-editor-panel") ? 1 : 0);
@@ -527,7 +527,7 @@ async function main() {
     const approvalStepDragHandleCount = await approvalPanel.locator(".approval-step-drag").count();
     let approvalStepDirectDragRowCount = await approvalPanel.locator(".approval-step-row[draggable='true']").count();
     const approvalStepHeaderText = await approvalPanel.locator(".approval-step-table-head").innerText().catch(() => "");
-    const approvalAddStepButtonCount = await approvalPanel.getByRole("button", { name: "添加一行" }).count();
+    const approvalAddStepButtonCount = await approvalPanel.getByRole("button", { name: "添加步骤" }).count();
     const approvalStepRowCount = await approvalPanel.locator(".approval-step-row").count();
     const approvalDragProbeSuffix = String(Date.now());
     let approvalDragOrderBefore = [];
@@ -535,6 +535,11 @@ async function main() {
     let approvalDragResetOrder = [];
     let approvalDragSaveEnabled = false;
     let approvalDragResetSaveDisabled = false;
+    let approvalPersistOriginalName = "";
+    let approvalPersistSavedName = "";
+    let approvalPersistSaveEnabled = false;
+    let approvalPersistReloadName = "";
+    let approvalPersistRestoreSaveDisabled = false;
     if (approvalStepRowCount >= 2) {
       if (!approvalWasEnabledInitially) {
         currentStep = "enable approval for drag probe";
@@ -569,6 +574,40 @@ async function main() {
       }, approvalDragProbeSuffix, { timeout: 10000 });
       approvalDragResetOrder = await approvalStepNames(page);
       approvalDragResetSaveDisabled = await approvalPanel.getByRole("button", { name: "保存审批设置" }).isDisabled();
+      currentStep = "save approval step persistence probe";
+      const firstStepInput = approvalPanel.locator(".approval-step-row").nth(0).locator("input[type='text']");
+      if (await firstStepInput.isDisabled()) {
+        await approvalRequiredToggle.check();
+        await page.waitForFunction(() => {
+          const input = document.querySelector(".approval-step-row input[type='text']");
+          return input && !input.disabled;
+        }, null, { timeout: 10000 });
+      }
+      approvalPersistOriginalName = await firstStepInput.inputValue();
+      approvalPersistSavedName = `审批保存验收-${approvalDragProbeSuffix}`;
+      await firstStepInput.fill(approvalPersistSavedName);
+      approvalPersistSaveEnabled = await approvalPanel.getByRole("button", { name: "保存审批设置" }).isEnabled();
+      await approvalPanel.getByRole("button", { name: "保存审批设置" }).click();
+      await page.waitForFunction(() => {
+        const button = Array.from(document.querySelectorAll("button"))
+          .find((node) => node.textContent?.includes("保存审批设置"));
+        return Boolean(button?.disabled);
+      }, null, { timeout: 20000 });
+      await approvalPanel.getByRole("button", { name: "关闭" }).click();
+      await page.waitForSelector(".approval-panel", { state: "detached", timeout: 10000 });
+      await page.locator(".config-card").filter({ hasText: "审批规则" }).getByRole("button", { name: "设置审批" }).click();
+      await page.waitForSelector(".approval-panel", { timeout: 10000 });
+      approvalPanel = page.locator(".approval-panel");
+      approvalPersistReloadName = await approvalPanel.locator(".approval-step-row").nth(0).locator("input[type='text']").inputValue();
+      currentStep = "restore approval step persistence probe";
+      await approvalPanel.locator(".approval-step-row").nth(0).locator("input[type='text']").fill(approvalPersistOriginalName);
+      await approvalPanel.getByRole("button", { name: "保存审批设置" }).click();
+      await page.waitForFunction(() => {
+        const button = Array.from(document.querySelectorAll("button"))
+          .find((node) => node.textContent?.includes("保存审批设置"));
+        return Boolean(button?.disabled);
+      }, null, { timeout: 20000 });
+      approvalPersistRestoreSaveDisabled = await approvalPanel.getByRole("button", { name: "保存审批设置" }).isDisabled();
     }
     const leakedApprovalTerms = await visibleForbiddenTerms(page, ".approval-panel");
     report.artifacts.approvalPanel = await captureStep(page, "approval-panel");
@@ -711,6 +750,11 @@ async function main() {
       approvalDragResetOrder,
       approvalDragSaveEnabled,
       approvalDragResetSaveDisabled,
+      approvalPersistOriginalName,
+      approvalPersistSavedName,
+      approvalPersistSaveEnabled,
+      approvalPersistReloadName,
+      approvalPersistRestoreSaveDisabled,
       leakedApprovalTerms,
       menuConfigTitle,
       menuConfigEditorCount,
@@ -877,6 +921,10 @@ async function main() {
         && approvalDragSaveEnabled
         && approvalDragResetSaveDisabled
         && approvalDragResetOrder.every((name) => !name.includes(approvalDragProbeSuffix))
+        && approvalPersistOriginalName.length > 0
+        && approvalPersistSaveEnabled
+        && approvalPersistReloadName === approvalPersistSavedName
+        && approvalPersistRestoreSaveDisabled
         && leakedApprovalTerms.length === 0,
       "审批设置面板不可用或露出了治理话术",
       {
@@ -901,6 +949,11 @@ async function main() {
         approvalDragResetOrder,
         approvalDragSaveEnabled,
         approvalDragResetSaveDisabled,
+        approvalPersistOriginalName,
+        approvalPersistSavedName,
+        approvalPersistSaveEnabled,
+        approvalPersistReloadName,
+        approvalPersistRestoreSaveDisabled,
         leakedApprovalTerms,
       },
     );

@@ -410,6 +410,8 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
             "ui.business_config.contract.save",
             "ui.business_config.contract.publish",
             "ui.business_config.contract.rollback",
+            "sc.approval_policy.config.set",
+            "sc.approval_policy.steps.set",
         ):
             with self.subTest(intent_name=intent_name):
                 self.model.access_modes.clear()

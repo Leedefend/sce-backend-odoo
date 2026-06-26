@@ -377,6 +377,10 @@
         </button>
       </div>
       <aside class="approval-rule-panel" aria-label="审批规则设置">
+        <div class="approval-rule-head">
+          <strong>规则开关</strong>
+          <span>{{ approvalRuntimeText }}</span>
+        </div>
         <div class="approval-config-grid">
           <label class="approval-toggle">
             <input v-model="approvalForm.approval_required" type="checkbox" @change="onApprovalRequiredChange" />
@@ -406,18 +410,21 @@
           </label>
         </div>
         <div class="edit-meta approval-rule-summary">
-          <span>运行状态：{{ approvalRuntimeText }}</span>
-          <span>步骤数：{{ approvalAudit?.policy.step_count ?? 0 }}</span>
+          <span>当前步骤：{{ activeApprovalStepCount }} 个</span>
+          <span>保存状态：{{ hasApprovalDraftChanges ? '有未保存调整' : '已同步' }}</span>
           <span v-if="advancedPanelOpen">边界：{{ approvalAudit?.boundary || 'industry_policy_runtime' }}</span>
           <span v-if="hasApprovalDraftChanges" class="edit-dirty">配置已调整，可保存</span>
         </div>
       </aside>
-      <section class="approval-steps">
+      <section class="approval-steps" :class="{ 'approval-steps--disabled': !approvalForm.approval_required }">
         <header>
           <div>
-            <strong>审批步骤</strong>
-            <span>{{ activeApprovalStepCount }} 个启用步骤，可拖动排序</span>
+            <strong>审批步骤编排</strong>
+            <span>{{ approvalForm.approval_required ? `${activeApprovalStepCount} 个启用步骤，拖动整行调整顺序` : '启用审批后配置办理节点' }}</span>
           </div>
+          <button type="button" class="ghost small" :disabled="approvalLoading || !approvalForm.approval_required" @click="addApprovalStep">
+            添加步骤
+          </button>
         </header>
         <div v-if="approvalSteps.length" class="approval-step-table" role="table" aria-label="审批步骤">
           <div class="approval-step-table-head" role="row">
@@ -447,10 +454,10 @@
           >
             <span class="approval-step-seq">{{ index + 1 }}</span>
             <div class="approval-step-cell">
-              <input v-model="step.name" type="text" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步名称`" />
+              <input v-model="step.name" type="text" placeholder="例如：合同中心审核" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步名称`" />
             </div>
             <div class="approval-step-cell">
-              <select v-model="step.approval_scope_key" :disabled="!approvalForm.approval_required">
+              <select v-model="step.approval_scope_key" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步审批岗位`">
                 <option value="">请选择</option>
                 <option v-for="option in approvalScopeOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
@@ -458,10 +465,10 @@
               </select>
             </div>
             <div class="approval-step-cell">
-              <input v-model="step.amount_min" type="number" min="0" step="0.01" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额下限`" />
+              <input v-model="step.amount_min" type="number" min="0" step="0.01" placeholder="不限制" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额下限`" />
             </div>
             <div class="approval-step-cell">
-              <input v-model="step.amount_max" type="number" min="0" step="0.01" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额上限`" />
+              <input v-model="step.amount_max" type="number" min="0" step="0.01" placeholder="不限制" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额上限`" />
             </div>
             <div class="approval-step-actions">
               <button type="button" title="移除" :disabled="approvalLoading || !approvalForm.approval_required" @click="removeApprovalStep(index)">×</button>
@@ -470,13 +477,12 @@
         </div>
         <div v-else class="approval-step-empty">
           当前没有审批步骤，启用审批后可添加办理节点。
+          <button type="button" class="ghost small" :disabled="approvalLoading" @click="enableApprovalWithDefaultStep">启用并添加步骤</button>
         </div>
-        <button type="button" class="approval-step-add-line" :disabled="approvalLoading || !approvalForm.approval_required" @click="addApprovalStep">
-          添加一行
-        </button>
+        <div v-if="approvalValidationMessage" class="approval-validation">{{ approvalValidationMessage }}</div>
       </section>
       <div class="edit-panel-actions">
-        <button type="button" class="ghost small primary" :disabled="approvalLoading || !hasApprovalDraftChanges" @click="saveApprovalConfig">
+        <button type="button" class="ghost small primary" :disabled="approvalLoading || !canSaveApprovalDraft" @click="saveApprovalConfig">
           {{ approvalLoading ? '保存中...' : '保存审批设置' }}
         </button>
         <button type="button" class="ghost small" :disabled="approvalLoading || !hasApprovalDraftChanges" @click="resetApprovalDraft">
@@ -1300,6 +1306,25 @@ const approvalStepsJson = computed(() => JSON.stringify(approvalSteps.value.map(
   condition_note: String(step.condition_note || '').trim(),
   note: String(step.note || '').trim(),
 }))));
+const approvalValidationMessage = computed(() => {
+  if (!approvalForm.value.approval_required) return '';
+  if (!approvalSteps.value.length) return '启用审批后至少需要配置一个审批步骤。';
+  const invalidNameIndex = approvalSteps.value.findIndex((step) => !String(step.name || '').trim());
+  if (invalidNameIndex >= 0) return `第 ${invalidNameIndex + 1} 步需要填写步骤名称。`;
+  const invalidScopeIndex = approvalSteps.value.findIndex((step) => !String(step.approval_scope_key || '').trim());
+  if (invalidScopeIndex >= 0) return `第 ${invalidScopeIndex + 1} 步需要选择审批岗位。`;
+  const invalidAmountIndex = approvalSteps.value.findIndex((step) => {
+    const minText = normalizeAmountText(step.amount_min);
+    const maxText = normalizeAmountText(step.amount_max);
+    if (!minText || !maxText) return false;
+    const min = Number(minText);
+    const max = Number(maxText);
+    return Number.isFinite(min) && Number.isFinite(max) && min > max;
+  });
+  if (invalidAmountIndex >= 0) return `第 ${invalidAmountIndex + 1} 步金额下限不能大于上限。`;
+  return '';
+});
+const canSaveApprovalDraft = computed(() => hasApprovalDraftChanges.value && !approvalValidationMessage.value);
 
 function numericQuery(name: string) {
   const parsed = Number(route.query[name] || 0);
@@ -2590,6 +2615,14 @@ function onApprovalRequiredChange() {
   if (!approvalForm.value.mode || approvalForm.value.mode === 'none') {
     approvalForm.value.mode = 'single';
   }
+  if (!approvalSteps.value.length) {
+    addApprovalStep();
+  }
+}
+
+function enableApprovalWithDefaultStep() {
+  approvalForm.value.approval_required = true;
+  onApprovalRequiredChange();
 }
 
 async function loadApprovalConfig() {
@@ -2612,6 +2645,10 @@ async function loadApprovalConfig() {
 
 async function saveApprovalConfig() {
   if (!currentModel.value || !hasApprovalDraftChanges.value) return false;
+  if (approvalValidationMessage.value) {
+    error.value = approvalValidationMessage.value;
+    return false;
+  }
   approvalLoading.value = true;
   error.value = '';
   clearMessage();
@@ -3730,6 +3767,23 @@ h1 {
   background: var(--sc-app-bg);
 }
 
+.approval-rule-head {
+  display: grid;
+  gap: 3px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.approval-rule-head strong {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+}
+
+.approval-rule-head span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
 .approval-panel .approval-rule-summary {
   grid-column: auto;
   display: grid;
@@ -3775,6 +3829,10 @@ h1 {
   box-shadow: inset 0 0 0 1px rgb(148 163 184 / 6%);
 }
 
+.approval-steps--disabled {
+  background: var(--sc-app-panel-muted);
+}
+
 .approval-steps header {
   display: flex;
   align-items: center;
@@ -3798,7 +3856,7 @@ h1 {
 }
 
 .approval-step-table {
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid var(--sc-app-border);
   border-radius: 6px;
   background: var(--sc-app-surface);
@@ -3807,9 +3865,10 @@ h1 {
 .approval-step-table-head,
 .approval-step-row {
   display: grid;
-  grid-template-columns: 44px minmax(150px, 1.2fr) minmax(170px, 1.1fr) minmax(106px, 0.7fr) minmax(106px, 0.7fr) 42px;
+  grid-template-columns: 44px minmax(180px, 1.2fr) minmax(190px, 1.1fr) minmax(118px, 0.7fr) minmax(118px, 0.7fr) 42px;
   gap: 8px;
   align-items: center;
+  min-width: 780px;
 }
 
 .approval-step-table-head {
@@ -3874,6 +3933,25 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+.approval-step-empty {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  border: 1px dashed var(--sc-app-border);
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--sc-app-bg);
+}
+
+.approval-validation {
+  border: 1px solid var(--sc-app-warning-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
+  font-size: 12px;
 }
 
 .approval-step-add-line {
@@ -4352,6 +4430,7 @@ h1 {
 
   .approval-step-row {
     grid-template-columns: 44px minmax(0, 1fr);
+    min-width: 0;
     border: 1px solid var(--sc-app-border);
     border-radius: 6px;
     margin-bottom: 8px;
