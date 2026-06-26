@@ -189,6 +189,23 @@ def main() -> int:
         violations.append(
             f"{ASSEMBLER.relative_to(ROOT)}: legacyContractProjection must carry compatibility sourceAuthority"
         )
+    if "businessOperationProfile" not in assembler_source or "visibleFields" not in assembler_source:
+        violations.append(
+            f"{ASSEMBLER.relative_to(ROOT)}: business_operation_profile and visible_fields must project to formal V2 dataMeta"
+        )
+    compat_projection_match = re.search(r"compat_projection\s*=\s*\{(?P<body>.*?)\n\s*\}", assembler_source, re.S)
+    compat_projection_body = compat_projection_match.group("body") if compat_projection_match else ""
+    for forbidden in (
+        "\"business_operation_profile\"",
+        "\"form_structure_contract\"",
+        "\"formStructureContract\"",
+        "\"list_profile\"",
+        "\"visible_fields\"",
+    ):
+        if forbidden in compat_projection_body:
+            violations.append(
+                f"{ASSEMBLER.relative_to(ROOT)}: legacyContractProjection must not include {forbidden}; use formal V2 fields"
+            )
     if "\"deletePolicy\": {}" not in assembler_source or "\"surfacePolicies\": {}" not in assembler_source:
         violations.append(
             f"{ASSEMBLER.relative_to(ROOT)}: actionContract must reserve formal V2 policy slots"

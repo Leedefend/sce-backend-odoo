@@ -2,12 +2,15 @@ import type { ActionContract } from '@sc/schema';
 import type { IntentRawResult } from '../../api/intents';
 import {
   collectUnifiedPageContractV2FieldWidgets,
+  resolveUnifiedPageContractV2BusinessOperationProfile,
   resolveUnifiedPageContractV2DeletePolicy,
+  resolveUnifiedPageContractV2FormStructureContract,
   resolveUnifiedPageContractV2GlobalStatus,
   resolveUnifiedPageContractV2ListProfile,
   resolveUnifiedPageContractV2MainData,
   resolveUnifiedPageContractV2SourceContext,
   resolveUnifiedPageContractV2SurfacePolicies,
+  resolveUnifiedPageContractV2VisibleFields,
   type UnifiedPageContractV2Widget,
 } from '../contracts/unifiedPageContractV2';
 
@@ -370,14 +373,12 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const v2SearchContract = resolveV2SearchContract(v2Contract);
   const v2Collaboration = resolveV2CollaborationContract(v2Contract);
   const legacyProjection = resolveV2LegacyContractProjection(v2Contract);
-  const legacyListProfile = asDict(legacyProjection.list_profile);
   const v2ListProfile = resolveUnifiedPageContractV2ListProfile(v2Contract);
-  const sourceListProfile = Object.keys(v2ListProfile).length ? v2ListProfile : legacyListProfile;
+  const sourceListProfile = v2ListProfile;
   const legacyFieldGroups = Array.isArray(legacyProjection.field_groups) ? legacyProjection.field_groups : [];
-  const legacyVisibleFields = Array.isArray(legacyProjection.visible_fields)
-    ? legacyProjection.visible_fields.map((name) => String(name || '').trim()).filter(Boolean)
-    : [];
-  const legacyBusinessProfile = asDict(legacyProjection.business_operation_profile);
+  const formalVisibleFields = resolveUnifiedPageContractV2VisibleFields(v2Contract);
+  const formalBusinessProfile = resolveUnifiedPageContractV2BusinessOperationProfile(v2Contract);
+  const formalFormStructureContract = resolveUnifiedPageContractV2FormStructureContract(v2Contract);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
   const workflowContract = Object.keys(asDict(v2Contract.workflowContract)).length
     ? asDict(v2Contract.workflowContract)
@@ -553,7 +554,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
       ...(viewType !== 'form' ? { [viewType]: formView } : {}),
     },
     ...(Object.keys(v2SearchContract).length ? { search: v2SearchContract } : {}),
-    visible_fields: legacyVisibleFields.length ? legacyVisibleFields : fieldNames,
+    visible_fields: formalVisibleFields.length ? formalVisibleFields : fieldNames,
     list_profile: Object.keys(sourceListProfile).length
       ? sourceListProfile
       : (
@@ -583,7 +584,8 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
         }
         : undefined,
     field_groups: legacyFieldGroups,
-    ...(Object.keys(legacyBusinessProfile).length ? { business_operation_profile: legacyBusinessProfile } : {}),
+    ...(Object.keys(formalBusinessProfile).length ? { business_operation_profile: formalBusinessProfile } : {}),
+    ...(Object.keys(formalFormStructureContract).length ? { form_structure_contract: formalFormStructureContract } : {}),
     contract_surface: contractSurface,
     render_mode: renderMode,
     source_mode: sourceMode,

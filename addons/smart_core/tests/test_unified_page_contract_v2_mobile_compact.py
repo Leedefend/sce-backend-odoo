@@ -160,7 +160,7 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual(header["children"][0]["name"], "action_submit")
         self.assertEqual(header["children"][0]["label"], "提交")
 
-    def test_data_source_and_legacy_projection_carry_source_authority(self):
+    def test_data_source_and_formal_metadata_projection_carry_source_authority(self):
         source = {
             "model": "project.project",
             "view_type": "form",
@@ -185,8 +185,12 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual(primary["sourceAuthority"]["runtime_carrier"], "ui.contract.v2.dataContract.dataSource")
         self.assertTrue(primary["sourceAuthority"]["projection_only"])
         self.assertTrue(primary["sourceAuthority"]["no_business_fact_authority"])
-        projection = full["dataContract"]["dataMeta"]["legacyContractProjection"]
-        self.assertTrue(projection["sourceAuthority"]["compatibility_projection"])
+        profile = full["dataContract"]["dataMeta"]["businessOperationProfile"]
+        self.assertEqual(profile["sourceAuthority"]["runtime_carrier"], "ui.contract.v2.dataMeta.businessOperationProfile")
+        self.assertTrue(profile["sourceAuthority"]["projection_only"])
+        self.assertTrue(profile["sourceAuthority"]["no_business_fact_authority"])
+        self.assertTrue(profile["sourceAuthority"]["compatibility_replacement"])
+        self.assertNotIn("legacyContractProjection", full["dataContract"]["dataMeta"])
 
     def test_form_data_source_keeps_deep_form_fields(self):
         fields = {

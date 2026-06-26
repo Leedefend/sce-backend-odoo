@@ -496,3 +496,52 @@ export function resolveUnifiedPageContractV2ListProfile(contract: unknown): Reco
   if (Object.keys(formal).length) return formal;
   return asDict(source.list_profile);
 }
+
+function resolveUnifiedPageContractV2DataMeta(contract: unknown): Dict {
+  const root = asDict(contract);
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const source = v2 ? asDict(v2) : root;
+  const data = readDictAlias(source, 'dataContract', 'data_contract');
+  return readDictAlias(data, 'dataMeta', 'data_meta');
+}
+
+function resolveUnifiedPageContractV2LegacyProjection(contract: unknown): Dict {
+  const dataMeta = resolveUnifiedPageContractV2DataMeta(contract);
+  return readDictAlias(dataMeta, 'legacyContractProjection', 'legacy_contract_projection');
+}
+
+export function resolveUnifiedPageContractV2BusinessOperationProfile(contract: unknown): Record<string, unknown> {
+  const dataMeta = resolveUnifiedPageContractV2DataMeta(contract);
+  const formal = readDictAlias(dataMeta, 'businessOperationProfile', 'business_operation_profile');
+  if (Object.keys(formal).length) return formal;
+  return asDict(resolveUnifiedPageContractV2LegacyProjection(contract).business_operation_profile);
+}
+
+export function resolveUnifiedPageContractV2VisibleFields(contract: unknown): string[] {
+  const dataMeta = resolveUnifiedPageContractV2DataMeta(contract);
+  const formal = dataMeta.visibleFields || dataMeta.visible_fields;
+  const formalRow = asDict(formal);
+  const formalFields = Array.isArray(formal)
+    ? formal
+    : asList(formalRow.fields || formalRow.fieldNames || formalRow.field_names);
+  if (formalFields.length) {
+    return formalFields.map((item) => asText(item)).filter(Boolean);
+  }
+  const legacy = asList(resolveUnifiedPageContractV2LegacyProjection(contract).visible_fields);
+  if (legacy.length) {
+    return legacy.map((item) => asText(item)).filter(Boolean);
+  }
+  return collectUnifiedPageContractV2FieldWidgets(contract)
+    .map((widget) => asText(widget.fieldCode))
+    .filter(Boolean);
+}
+
+export function resolveUnifiedPageContractV2FormStructureContract(contract: unknown): Record<string, unknown> {
+  const root = asDict(contract);
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const source = v2 ? asDict(v2) : root;
+  const formal = readDictAlias(source, 'formStructureContract', 'form_structure_contract');
+  if (Object.keys(formal).length) return formal;
+  const legacy = resolveUnifiedPageContractV2LegacyProjection(contract);
+  return readDictAlias(legacy, 'formStructureContract', 'form_structure_contract');
+}

@@ -185,6 +185,7 @@ def find_runtime_guard_issues(contract: dict[str, Any]) -> list[str]:
         if isinstance(row, dict) and not _text(row.get("selector")):
             issues.append("selectorStatus row missing selector")
     issues.extend(find_data_source_authority_issues(data))
+    issues.extend(find_metadata_projection_issues(data))
     issues.extend(find_policy_contract_issues(contract))
     issues.extend(find_form_structure_contract_issues(contract))
     return issues
@@ -216,6 +217,56 @@ def find_data_source_authority_issues(data_contract: dict[str, Any]) -> list[str
         elif source_authority.get("compatibility_projection") is not True:
             issues.append("dataContract.dataMeta.legacyContractProjection.sourceAuthority.compatibility_projection must be true")
     return issues
+
+
+def find_metadata_projection_issues(data_contract: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    data_meta = _dict(data_contract.get("dataMeta"))
+    legacy_projection = _dict(data_meta.get("legacyContractProjection") or data_meta.get("legacy_contract_projection"))
+    for key in ("business_operation_profile", "form_structure_contract", "formStructureContract", "list_profile", "visible_fields"):
+        if key in legacy_projection:
+            issues.append(f"legacyContractProjection.{key} must not be emitted; use formal V2 metadata")
+    _validate_metadata_projection_authority(
+        issues,
+        value=data_meta.get("businessOperationProfile") or data_meta.get("business_operation_profile"),
+        source_key="business_operation_profile",
+        projected_path="dataContract.dataMeta.businessOperationProfile",
+    )
+    visible_fields = data_meta.get("visibleFields") or data_meta.get("visible_fields")
+    _validate_metadata_projection_authority(
+        issues,
+        value=visible_fields,
+        source_key="visible_fields",
+        projected_path="dataContract.dataMeta.visibleFields",
+    )
+    visible_fields_row = _dict(visible_fields)
+    if visible_fields_row and not _list(visible_fields_row.get("fields")):
+        issues.append("dataContract.dataMeta.visibleFields.fields is required")
+    return issues
+
+
+def _validate_metadata_projection_authority(
+    issues: list[str],
+    *,
+    value: Any,
+    source_key: str,
+    projected_path: str,
+) -> None:
+    row = _dict(value)
+    if not row:
+        return
+    source_authority = _dict(row.get("sourceAuthority") or row.get("source_authority"))
+    if not source_authority:
+        issues.append(f"{projected_path}.sourceAuthority is required")
+        return
+    if source_authority.get("projection_only") is not True:
+        issues.append(f"{projected_path}.sourceAuthority.projection_only must be true")
+    if source_authority.get("no_business_fact_authority") is not True:
+        issues.append(f"{projected_path}.sourceAuthority.no_business_fact_authority must be true")
+    if source_authority.get("compatibility_replacement") is not True:
+        issues.append(f"{projected_path}.sourceAuthority.compatibility_replacement must be true")
+    if _text(source_authority.get("source_key")) != source_key:
+        issues.append(f"{projected_path}.sourceAuthority.source_key must be {source_key}")
 
 
 def find_policy_contract_issues(contract: dict[str, Any]) -> list[str]:

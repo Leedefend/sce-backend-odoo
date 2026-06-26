@@ -138,6 +138,51 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
 
         self.assertEqual(issues, [])
 
+    def test_metadata_projection_rejects_legacy_projection_payloads(self):
+        issues = runtime.find_metadata_projection_issues({
+            "dataMeta": {
+                "legacyContractProjection": {
+                    "business_operation_profile": {"source": "legacy"},
+                    "form_structure_contract": {"source": "legacy"},
+                    "list_profile": {"columns": ["name"]},
+                    "visible_fields": ["name"],
+                }
+            }
+        })
+
+        self.assertIn(
+            "legacyContractProjection.business_operation_profile must not be emitted; use formal V2 metadata",
+            issues,
+        )
+        self.assertIn(
+            "legacyContractProjection.form_structure_contract must not be emitted; use formal V2 metadata",
+            issues,
+        )
+        self.assertIn(
+            "legacyContractProjection.list_profile must not be emitted; use formal V2 metadata",
+            issues,
+        )
+        self.assertIn(
+            "legacyContractProjection.visible_fields must not be emitted; use formal V2 metadata",
+            issues,
+        )
+
+    def test_metadata_projection_accepts_formal_v2_metadata(self):
+        issues = runtime.find_metadata_projection_issues({
+            "dataMeta": {
+                "businessOperationProfile": {
+                    "common_fields": ["name"],
+                    "sourceAuthority": self._metadata_source("business_operation_profile"),
+                },
+                "visibleFields": {
+                    "fields": ["name"],
+                    "sourceAuthority": self._metadata_source("visible_fields"),
+                },
+            }
+        })
+
+        self.assertEqual(issues, [])
+
     def test_policy_contract_rejects_root_compatibility_fields(self):
         contract = self._contract()
         contract["delete_policy"] = {"allow": True}
@@ -185,6 +230,14 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
         )
 
     def _policy_source(self, source_key):
+        return {
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "compatibility_replacement": True,
+            "source_key": source_key,
+        }
+
+    def _metadata_source(self, source_key):
         return {
             "projection_only": True,
             "no_business_fact_authority": True,

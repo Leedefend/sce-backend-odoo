@@ -714,15 +714,31 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     if search_contract:
         contract["searchContract"] = search_contract
         contract["dataContract"]["search"] = deepcopy(search_contract)
+    business_operation_profile = _dict(source.get("business_operation_profile"))
+    if business_operation_profile:
+        profile_projection = deepcopy(business_operation_profile)
+        profile_projection["sourceAuthority"] = _metadata_projection_source_authority(
+            runtime_carrier="ui.contract.v2.dataMeta.businessOperationProfile",
+            source_key="business_operation_profile",
+        )
+        contract["dataContract"]["dataMeta"]["businessOperationProfile"] = profile_projection
+    visible_fields = [
+        _text(item)
+        for item in _list(source.get("visible_fields"))
+        if _text(item)
+    ]
+    if visible_fields:
+        contract["dataContract"]["dataMeta"]["visibleFields"] = {
+            "fields": visible_fields,
+            "sourceAuthority": _metadata_projection_source_authority(
+                runtime_carrier="ui.contract.v2.dataMeta.visibleFields",
+                source_key="visible_fields",
+            ),
+        }
     compat_projection = {
         key: deepcopy(source.get(key))
         for key in (
-            "business_operation_profile",
             "field_groups",
-            "form_structure_contract",
-            "formStructureContract",
-            "list_profile",
-            "visible_fields",
         )
         if source.get(key) is not None
     }
@@ -2048,6 +2064,18 @@ def _compat_projection_source_authority() -> dict[str, Any]:
         "no_business_fact_authority": True,
         "compatibility_projection": True,
         "fact_authority": "source_contract_projection",
+    }
+
+
+def _metadata_projection_source_authority(*, runtime_carrier: str, source_key: str) -> dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "runtime_carrier": runtime_carrier,
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "compatibility_replacement": True,
+        "fact_authority": "source_contract_projection",
+        "source_key": source_key,
     }
 
 

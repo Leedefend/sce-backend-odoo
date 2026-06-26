@@ -17,6 +17,7 @@ CONSUMER_FILES = [
     ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewFilterComputedRuntime.ts",
     ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewContractShapeRuntime.ts",
     ROOT / "frontend/apps/web/src/views/ActionView.vue",
+    ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue",
     ROOT / "frontend/apps/web/src/app/runtime/unifiedPageContractV2CompatProjection.ts",
 ]
 
@@ -24,12 +25,18 @@ REQUIRED_HELPERS = (
     "resolveUnifiedPageContractV2DeletePolicy",
     "resolveUnifiedPageContractV2SurfacePolicies",
     "resolveUnifiedPageContractV2ListProfile",
+    "resolveUnifiedPageContractV2BusinessOperationProfile",
+    "resolveUnifiedPageContractV2FormStructureContract",
+    "resolveUnifiedPageContractV2VisibleFields",
 )
 
 FORBIDDEN_DIRECT_READS = (
     ".delete_policy",
     ".surface_policies",
     ".list_profile",
+    ".business_operation_profile",
+    ".form_structure_contract",
+    ".visible_fields",
 )
 
 ALLOWED_DIRECT_READS = {
@@ -65,6 +72,12 @@ def main() -> int:
                 violations.append(f"{rel}: list_profile consumers must use resolveUnifiedPageContractV2ListProfile")
             if "delete_policy" in source and not _has_helper_call(source, "resolveUnifiedPageContractV2DeletePolicy"):
                 violations.append(f"{rel}: delete_policy consumers must use resolveUnifiedPageContractV2DeletePolicy")
+            if "business_operation_profile" in source and not _has_helper_call(source, "resolveUnifiedPageContractV2BusinessOperationProfile"):
+                violations.append(f"{rel}: business_operation_profile consumers must use resolveUnifiedPageContractV2BusinessOperationProfile")
+            if "form_structure_contract" in source and not _has_helper_call(source, "resolveUnifiedPageContractV2FormStructureContract"):
+                violations.append(f"{rel}: form_structure_contract consumers must use resolveUnifiedPageContractV2FormStructureContract")
+            if "visible_fields" in source and not _has_helper_call(source, "resolveUnifiedPageContractV2VisibleFields"):
+                violations.append(f"{rel}: visible_fields consumers must use resolveUnifiedPageContractV2VisibleFields")
 
         allowed = ALLOWED_DIRECT_READS.get(rel, {})
         for index, line in enumerate(source.splitlines(), start=1):

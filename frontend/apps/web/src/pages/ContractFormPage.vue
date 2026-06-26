@@ -1250,10 +1250,13 @@ import {
   collectUnifiedPageContractV2FieldContainerStatus,
   collectUnifiedPageContractV2FieldStatus,
   collectUnifiedPageContractV2FieldWidgets,
+  resolveUnifiedPageContractV2BusinessOperationProfile,
+  resolveUnifiedPageContractV2FormStructureContract,
   resolveUnifiedPageContractV2MainData,
   resolveUnifiedPageContractV2,
   resolveUnifiedPageContractV2GlobalStatus,
   resolveUnifiedPageContractV2SourceContext,
+  resolveUnifiedPageContractV2VisibleFields,
 } from '../app/contracts/unifiedPageContractV2';
 
 type UiStatus = 'loading' | 'ok' | 'error';
@@ -6452,14 +6455,13 @@ function mergeFieldLabelsFromSource(source: unknown, out: Record<string, string>
 const contractFieldLabels = computed<Record<string, string>>(() => {
   const labels: Record<string, string> = {};
   const snapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
-  const dataMeta = dictOrEmpty(dictOrEmpty(snapshot.dataContract).dataMeta);
-  const legacyProjection = dictOrEmpty(dataMeta.legacyContractProjection);
-  const businessProfile = dictOrEmpty(legacyProjection.business_operation_profile);
+  const source = Object.keys(snapshot).length ? snapshot : contract.value;
+  const businessProfile = resolveUnifiedPageContractV2BusinessOperationProfile(source);
   Object.entries(dictOrEmpty(businessProfile.field_labels)).forEach(([name, value]) => {
     const label = String(value || '').trim();
     if (name && label) labels[name] = label;
   });
-  mergeFieldLabelsFromSource(legacyProjection.form_structure_contract, labels);
+  mergeFieldLabelsFromSource(resolveUnifiedPageContractV2FormStructureContract(source), labels);
   mergeFieldLabelsFromSource(snapshot.formStructureContract, labels);
   mergeFieldLabelsFromSource((contract.value as Record<string, unknown> | null | undefined)?.formStructureContract, labels);
   return labels;
@@ -7049,8 +7051,9 @@ const nonSceneValidationErrors = computed(() => (
   validationErrors.value.filter((item) => !String(item || '').trim().startsWith(sceneValidationErrorPrefix))
 ));
 const contractVisibleFields = computed<string[]>(() => {
-  const rows = Array.isArray(contract.value?.visible_fields) ? contract.value?.visible_fields : [];
-  return rows.map((name) => String(name || '').trim()).filter(Boolean);
+  const snapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
+  const source = Object.keys(snapshot).length ? snapshot : contract.value;
+  return resolveUnifiedPageContractV2VisibleFields(source);
 });
 
 const CREATE_WORKFLOW_STATE_FIELD_NAMES = new Set([
@@ -9263,9 +9266,7 @@ function analyzeFormContractReadiness(
     if (v2ViewType && v2ViewType !== 'form') issues.push(`v2.pageInfo.viewType is ${v2ViewType}, expected form`);
   }
 
-  const visible = Array.isArray(row.visible_fields)
-    ? row.visible_fields.map((x) => String(x || '').trim()).filter(Boolean)
-    : [];
+  const visible = resolveUnifiedPageContractV2VisibleFields(row);
   const visibleNameSet = new Set(visible);
   const groupNames = new Set<string>();
   const groups = Array.isArray(row.field_groups) ? row.field_groups : [];
