@@ -4,6 +4,7 @@ import {
   collectUnifiedPageContractV2FieldWidgets,
   resolveUnifiedPageContractV2BusinessOperationProfile,
   resolveUnifiedPageContractV2DeletePolicy,
+  resolveUnifiedPageContractV2FieldGroups,
   resolveUnifiedPageContractV2FormStructureContract,
   resolveUnifiedPageContractV2GlobalStatus,
   resolveUnifiedPageContractV2ListProfile,
@@ -44,13 +45,6 @@ function resolveV2CollaborationContract(v2Contract: unknown): Dict {
   const root = asDict(v2Contract);
   const runtime = asDict(root.runtimeContract);
   return asDict(runtime.collaboration);
-}
-
-function resolveV2LegacyContractProjection(v2Contract: unknown): Dict {
-  const root = asDict(v2Contract);
-  const dataContract = asDict(root.dataContract);
-  const dataMeta = asDict(dataContract.dataMeta);
-  return asDict(dataMeta.legacyContractProjection || dataMeta.legacy_contract_projection);
 }
 
 function stableFieldName(name: string) {
@@ -372,10 +366,9 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
   const v2SearchContract = resolveV2SearchContract(v2Contract);
   const v2Collaboration = resolveV2CollaborationContract(v2Contract);
-  const legacyProjection = resolveV2LegacyContractProjection(v2Contract);
   const v2ListProfile = resolveUnifiedPageContractV2ListProfile(v2Contract);
   const sourceListProfile = v2ListProfile;
-  const legacyFieldGroups = Array.isArray(legacyProjection.field_groups) ? legacyProjection.field_groups : [];
+  const formalFieldGroups = resolveUnifiedPageContractV2FieldGroups(v2Contract);
   const formalVisibleFields = resolveUnifiedPageContractV2VisibleFields(v2Contract);
   const formalBusinessProfile = resolveUnifiedPageContractV2BusinessOperationProfile(v2Contract);
   const formalFormStructureContract = resolveUnifiedPageContractV2FormStructureContract(v2Contract);
@@ -583,7 +576,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
           batch_policy: batchPolicy,
         }
         : undefined,
-    field_groups: legacyFieldGroups,
+    field_groups: formalFieldGroups,
     ...(Object.keys(formalBusinessProfile).length ? { business_operation_profile: formalBusinessProfile } : {}),
     ...(Object.keys(formalFormStructureContract).length ? { form_structure_contract: formalFormStructureContract } : {}),
     contract_surface: contractSurface,

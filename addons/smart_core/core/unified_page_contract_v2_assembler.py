@@ -735,16 +735,15 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
                 source_key="visible_fields",
             ),
         }
-    compat_projection = {
-        key: deepcopy(source.get(key))
-        for key in (
-            "field_groups",
-        )
-        if source.get(key) is not None
-    }
-    if compat_projection:
-        compat_projection["sourceAuthority"] = _compat_projection_source_authority()
-        contract["dataContract"]["dataMeta"]["legacyContractProjection"] = compat_projection
+    field_groups = [deepcopy(item) for item in _list(source.get("field_groups")) if isinstance(item, dict)]
+    if field_groups:
+        contract["dataContract"]["dataMeta"]["fieldGroups"] = {
+            "groups": field_groups,
+            "sourceAuthority": _metadata_projection_source_authority(
+                runtime_carrier="ui.contract.v2.dataMeta.fieldGroups",
+                source_key="field_groups",
+            ),
+        }
     _append_ui_contract_actions(contract, ui, source_widget_id="page.root", main_data=contract["dataContract"]["mainData"])
     _append_ui_contract_row_actions(contract, ui)
     _append_project_kanban_row_action(contract, model=model, view_type=view_type)
@@ -2053,17 +2052,6 @@ def _data_source_authority(*, model: str, view_type: str) -> dict[str, Any]:
         "fact_authority": "odoo.model",
         "model": model,
         "view_type": view_type,
-    }
-
-
-def _compat_projection_source_authority() -> dict[str, Any]:
-    return {
-        "kind": SOURCE_KIND,
-        "runtime_carrier": "ui.contract.v2.dataMeta.legacyContractProjection",
-        "projection_only": True,
-        "no_business_fact_authority": True,
-        "compatibility_projection": True,
-        "fact_authority": "source_contract_projection",
     }
 
 

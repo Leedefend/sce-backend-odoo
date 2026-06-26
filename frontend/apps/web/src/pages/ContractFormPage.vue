@@ -1251,6 +1251,7 @@ import {
   collectUnifiedPageContractV2FieldStatus,
   collectUnifiedPageContractV2FieldWidgets,
   resolveUnifiedPageContractV2BusinessOperationProfile,
+  resolveUnifiedPageContractV2FieldGroups,
   resolveUnifiedPageContractV2FormStructureContract,
   resolveUnifiedPageContractV2MainData,
   resolveUnifiedPageContractV2,
@@ -6819,7 +6820,9 @@ type SemanticFieldGroup = {
 };
 
 const semanticFieldGroups = computed<Record<string, SemanticFieldGroup>>(() => {
-  const raw = Array.isArray(contract.value?.field_groups) ? contract.value?.field_groups : [];
+  const snapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
+  const source = Object.keys(snapshot).length ? snapshot : contract.value;
+  const raw = resolveUnifiedPageContractV2FieldGroups(source);
   const out: Record<string, SemanticFieldGroup> = {};
   for (const item of raw || []) {
     if (!item || typeof item !== 'object') continue;
@@ -9269,7 +9272,7 @@ function analyzeFormContractReadiness(
   const visible = resolveUnifiedPageContractV2VisibleFields(row);
   const visibleNameSet = new Set(visible);
   const groupNames = new Set<string>();
-  const groups = Array.isArray(row.field_groups) ? row.field_groups : [];
+  const groups = resolveUnifiedPageContractV2FieldGroups(row);
   groups.forEach((item) => {
     if (!item || typeof item !== 'object') return;
     const fieldsRaw = (item as Record<string, unknown>).fields;

@@ -536,6 +536,20 @@ export function resolveUnifiedPageContractV2VisibleFields(contract: unknown): st
     .filter(Boolean);
 }
 
+export function resolveUnifiedPageContractV2FieldGroups(contract: unknown): Array<Record<string, unknown>> {
+  const dataMeta = resolveUnifiedPageContractV2DataMeta(contract);
+  const formal = dataMeta.fieldGroups || dataMeta.field_groups;
+  const formalRow = asDict(formal);
+  const groups = Array.isArray(formal)
+    ? formal
+    : asList(formalRow.groups || formalRow.items || formalRow.fieldGroups || formalRow.field_groups);
+  if (groups.length) {
+    return groups.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item));
+  }
+  const legacy = asList(resolveUnifiedPageContractV2LegacyProjection(contract).field_groups);
+  return legacy.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item));
+}
+
 export function resolveUnifiedPageContractV2FormStructureContract(contract: unknown): Record<string, unknown> {
   const root = asDict(contract);
   const v2 = resolveUnifiedPageContractV2(contract);

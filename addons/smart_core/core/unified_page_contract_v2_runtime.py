@@ -223,7 +223,9 @@ def find_metadata_projection_issues(data_contract: dict[str, Any]) -> list[str]:
     issues: list[str] = []
     data_meta = _dict(data_contract.get("dataMeta"))
     legacy_projection = _dict(data_meta.get("legacyContractProjection") or data_meta.get("legacy_contract_projection"))
-    for key in ("business_operation_profile", "form_structure_contract", "formStructureContract", "list_profile", "visible_fields"):
+    if legacy_projection:
+        issues.append("dataContract.dataMeta.legacyContractProjection must not be emitted in stable V2 contract")
+    for key in ("business_operation_profile", "field_groups", "form_structure_contract", "formStructureContract", "list_profile", "visible_fields"):
         if key in legacy_projection:
             issues.append(f"legacyContractProjection.{key} must not be emitted; use formal V2 metadata")
     _validate_metadata_projection_authority(
@@ -242,6 +244,16 @@ def find_metadata_projection_issues(data_contract: dict[str, Any]) -> list[str]:
     visible_fields_row = _dict(visible_fields)
     if visible_fields_row and not _list(visible_fields_row.get("fields")):
         issues.append("dataContract.dataMeta.visibleFields.fields is required")
+    field_groups = data_meta.get("fieldGroups") or data_meta.get("field_groups")
+    _validate_metadata_projection_authority(
+        issues,
+        value=field_groups,
+        source_key="field_groups",
+        projected_path="dataContract.dataMeta.fieldGroups",
+    )
+    field_groups_row = _dict(field_groups)
+    if field_groups_row and not _list(field_groups_row.get("groups")):
+        issues.append("dataContract.dataMeta.fieldGroups.groups is required")
     return issues
 
 

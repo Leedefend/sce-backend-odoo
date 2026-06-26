@@ -26,6 +26,7 @@ REQUIRED_HELPERS = (
     "resolveUnifiedPageContractV2SurfacePolicies",
     "resolveUnifiedPageContractV2ListProfile",
     "resolveUnifiedPageContractV2BusinessOperationProfile",
+    "resolveUnifiedPageContractV2FieldGroups",
     "resolveUnifiedPageContractV2FormStructureContract",
     "resolveUnifiedPageContractV2VisibleFields",
 )
@@ -35,6 +36,7 @@ FORBIDDEN_DIRECT_READS = (
     ".surface_policies",
     ".list_profile",
     ".business_operation_profile",
+    ".field_groups",
     ".form_structure_contract",
     ".visible_fields",
 )
@@ -43,6 +45,9 @@ ALLOWED_DIRECT_READS = {
     "frontend/apps/web/src/app/runtime/unifiedPageContractV2CompatProjection.ts": {
         ".delete_policy": {"const candidate = asDict(node.delete_policy);"},
         ".list_profile": {"const legacyListProfile = asDict(legacyProjection.list_profile);"},
+    },
+    "frontend/apps/web/src/pages/ContractFormPage.vue": {
+        ".field_groups": {"applyParams.field_groups = changedGroups;"},
     },
 }
 
@@ -74,6 +79,8 @@ def main() -> int:
                 violations.append(f"{rel}: delete_policy consumers must use resolveUnifiedPageContractV2DeletePolicy")
             if "business_operation_profile" in source and not _has_helper_call(source, "resolveUnifiedPageContractV2BusinessOperationProfile"):
                 violations.append(f"{rel}: business_operation_profile consumers must use resolveUnifiedPageContractV2BusinessOperationProfile")
+            if "field_groups" in source and not _has_helper_call(source, "resolveUnifiedPageContractV2FieldGroups"):
+                violations.append(f"{rel}: field_groups consumers must use resolveUnifiedPageContractV2FieldGroups")
             if "form_structure_contract" in source and not _has_helper_call(source, "resolveUnifiedPageContractV2FormStructureContract"):
                 violations.append(f"{rel}: form_structure_contract consumers must use resolveUnifiedPageContractV2FormStructureContract")
             if "visible_fields" in source and not _has_helper_call(source, "resolveUnifiedPageContractV2VisibleFields"):

@@ -143,6 +143,7 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
             "dataMeta": {
                 "legacyContractProjection": {
                     "business_operation_profile": {"source": "legacy"},
+                    "field_groups": [{"name": "core", "fields": ["name"]}],
                     "form_structure_contract": {"source": "legacy"},
                     "list_profile": {"columns": ["name"]},
                     "visible_fields": ["name"],
@@ -151,7 +152,15 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
         })
 
         self.assertIn(
+            "dataContract.dataMeta.legacyContractProjection must not be emitted in stable V2 contract",
+            issues,
+        )
+        self.assertIn(
             "legacyContractProjection.business_operation_profile must not be emitted; use formal V2 metadata",
+            issues,
+        )
+        self.assertIn(
+            "legacyContractProjection.field_groups must not be emitted; use formal V2 metadata",
             issues,
         )
         self.assertIn(
@@ -177,6 +186,10 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
                 "visibleFields": {
                     "fields": ["name"],
                     "sourceAuthority": self._metadata_source("visible_fields"),
+                },
+                "fieldGroups": {
+                    "groups": [{"name": "core", "fields": ["name"]}],
+                    "sourceAuthority": self._metadata_source("field_groups"),
                 },
             }
         })
