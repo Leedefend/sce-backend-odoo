@@ -471,6 +471,8 @@ async function main() {
     const defaultSelectedRowActionLabels = await page.locator(".scan-row--selected .scan-row-actions button").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
+    const defaultSelectedRowCurrentText = await page.locator(".scan-row--selected .scan-row-current").innerText();
+    const defaultNonSelectedChooseButtonCount = await page.locator(".scan-row:not(.scan-row--selected) .scan-row-actions button").filter({ hasText: "选择" }).count();
     const selectedName = await page.locator(".scan-row--selected .scan-row-main strong").first().innerText();
     const defaultPageText = await page.locator("body").innerText();
     const pageTypeLabels = await page.locator(".page-type-tabs button").evaluateAll((nodes) => (
@@ -661,6 +663,8 @@ async function main() {
       pageConfigPanelCount,
       selectedOverviewText,
       defaultSelectedRowActionLabels,
+      defaultSelectedRowCurrentText,
+      defaultNonSelectedChooseButtonCount,
       selectedName,
       pageTypeLabels,
       leakedDefaultTerms,
@@ -742,9 +746,19 @@ async function main() {
         && pageConfigPanelCount === 1
         && selectedOverviewText.includes("正在配置")
         && selectedOverviewText.includes("项目合同汇总")
-        && defaultSelectedRowActionLabels.join("|") === "选择",
+        && defaultSelectedRowActionLabels.length === 0
+        && defaultSelectedRowCurrentText === "当前配置"
+        && defaultNonSelectedChooseButtonCount >= 1,
       "配置页面没有形成左侧页面列表和右侧配置面板结构",
-      { configWorkspaceCount, pagePickerPanelCount, pageConfigPanelCount, selectedOverviewText, defaultSelectedRowActionLabels },
+      {
+        configWorkspaceCount,
+        pagePickerPanelCount,
+        pageConfigPanelCount,
+        selectedOverviewText,
+        defaultSelectedRowActionLabels,
+        defaultSelectedRowCurrentText,
+        defaultNonSelectedChooseButtonCount,
+      },
     );
     assert(selectedName === "项目合同汇总", "配置页没有恢复选中页面", { selectedName });
     assert(

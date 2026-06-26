@@ -168,7 +168,8 @@
                 >
                   {{ action.label }}
                 </button>
-                <button type="button" class="ghost small" @click.stop="focusScanRow(row)">选择</button>
+                <span v-if="coverageRowMatchesScope(row)" class="scan-row-current">当前配置</span>
+                <button v-else type="button" class="ghost small" @click.stop="focusScanRow(row)">选择</button>
               </div>
             </div>
           </div>
@@ -3364,6 +3365,7 @@ h1 {
 
 .scan-row--selected {
   border-color: var(--sc-app-accent);
+  background: var(--sc-app-panel-muted);
   box-shadow: inset 3px 0 0 var(--sc-app-accent);
 }
 
@@ -3402,6 +3404,21 @@ h1 {
   flex-wrap: wrap;
   gap: 6px;
   min-width: 0;
+}
+
+.scan-row-current {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sc-app-accent);
+  border-radius: 999px;
+  padding: 0 10px;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .scan-row-meta span,
