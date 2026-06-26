@@ -1857,11 +1857,24 @@ function attachMissingConfiguredMenus(
     ]),
   })));
 
+  const dedupeRuntimeSiblings = (items: MenuConfigMenu[]): MenuConfigMenu[] => {
+    const realLabels = new Set(items
+      .filter((item) => !isRuntimeMenuGroup(item))
+      .map((item) => normalizedMenuLabel(item.name || item.display_name))
+      .filter(Boolean));
+    return sortBranch(items
+      .filter((item) => !(isRuntimeMenuGroup(item) && realLabels.has(normalizedMenuLabel(item.name || item.display_name))))
+      .map((item) => ({
+        ...item,
+        children: item.children?.length ? dedupeRuntimeSiblings(item.children) : [],
+      })));
+  };
+
   const attached = attach(baseTree);
   const rootMissing = rootMenuId
     ? buildMissingBranch(rootMenuId).filter((menu) => !rootIds.has(Number(menu.id)))
     : [];
-  if (attached.length) return sortBranch([...attached, ...rootMissing]);
+  if (attached.length) return dedupeRuntimeSiblings([...attached, ...rootMissing]);
   return buildMissingBranch(0);
 }
 
