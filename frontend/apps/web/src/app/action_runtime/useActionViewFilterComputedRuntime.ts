@@ -1,5 +1,8 @@
 import { computed, type Ref } from 'vue';
-import { resolveUnifiedPageContractV2SelectorStatus } from '../contracts/unifiedPageContractV2';
+import {
+  resolveUnifiedPageContractV2SelectorStatus,
+  resolveUnifiedPageContractV2SurfacePolicies,
+} from '../contracts/unifiedPageContractV2';
 
 type Dict = Record<string, unknown>;
 
@@ -91,7 +94,8 @@ export function useActionViewFilterComputedRuntime(options: UseActionViewFilterC
   });
 
   const filterPrimaryBudget = computed(() => {
-    const raw = Number(options.actionContract.value?.surface_policies?.filters_primary_max ?? 5);
+    const surfacePolicies = resolveUnifiedPageContractV2SurfacePolicies(options.actionContract.value);
+    const raw = Number(surfacePolicies.filters_primary_max ?? 5);
     if (!Number.isFinite(raw) || raw < 0) return 5;
     return Math.floor(raw);
   });

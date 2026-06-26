@@ -4,6 +4,7 @@ import {
   collectUnifiedPageContractV2FieldWidgets,
   collectUnifiedPageContractV2FieldStatus,
   resolveUnifiedPageContractV2,
+  resolveUnifiedPageContractV2ListProfile,
 } from '../contracts/unifiedPageContractV2';
 
 type Dict = Record<string, unknown>;
@@ -198,7 +199,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     collectUnifiedPageContractV2FieldWidgets(contract).forEach((widget) => {
       if (widget.fieldCode && widget.label) labels[widget.fieldCode] = widget.label;
     });
-    const listProfile = (contract.list_profile || {}) as Dict;
+    const listProfile = resolveUnifiedPageContractV2ListProfile(contract);
     const semanticPage = (contract.semantic_page || {}) as Dict;
     const listSemantics = (semanticPage.list_semantics || {}) as Dict;
     const semanticColumns = Array.isArray(listSemantics.columns) ? (listSemantics.columns as Array<Dict>) : [];
@@ -475,7 +476,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractListProfile(contract: unknown) {
     const typed = (contract || {}) as Dict;
-    const rawProfile = (typed.list_profile || {}) as Dict;
+    const rawProfile = resolveUnifiedPageContractV2ListProfile(typed);
     const semanticPage = (typed.semantic_page || {}) as Dict;
     const listSemantics = (semanticPage.list_semantics || {}) as Dict;
     const semanticColumns = Array.isArray(listSemantics.columns) ? (listSemantics.columns as Array<Dict>) : [];

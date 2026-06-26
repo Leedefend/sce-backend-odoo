@@ -2,9 +2,12 @@ import type { ActionContract } from '@sc/schema';
 import type { IntentRawResult } from '../../api/intents';
 import {
   collectUnifiedPageContractV2FieldWidgets,
+  resolveUnifiedPageContractV2DeletePolicy,
   resolveUnifiedPageContractV2GlobalStatus,
+  resolveUnifiedPageContractV2ListProfile,
   resolveUnifiedPageContractV2MainData,
   resolveUnifiedPageContractV2SourceContext,
+  resolveUnifiedPageContractV2SurfacePolicies,
   type UnifiedPageContractV2Widget,
 } from '../contracts/unifiedPageContractV2';
 
@@ -344,7 +347,7 @@ function collectV2DeletePolicyCandidates(value: unknown, out: Dict[] = []): Dict
 function resolveV2DeletePolicy(v2Contract: Dict, model: string): Dict {
   const targetModel = String(model || '').trim();
   if (!targetModel) return {};
-  const topLevel = asDict(v2Contract.delete_policy);
+  const topLevel = resolveUnifiedPageContractV2DeletePolicy(v2Contract);
   if (String(topLevel.model || '').trim() === targetModel) {
     return topLevel;
   }
@@ -368,7 +371,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const v2Collaboration = resolveV2CollaborationContract(v2Contract);
   const legacyProjection = resolveV2LegacyContractProjection(v2Contract);
   const legacyListProfile = asDict(legacyProjection.list_profile);
-  const v2ListProfile = asDict(v2Contract.list_profile);
+  const v2ListProfile = resolveUnifiedPageContractV2ListProfile(v2Contract);
   const sourceListProfile = Object.keys(v2ListProfile).length ? v2ListProfile : legacyListProfile;
   const legacyFieldGroups = Array.isArray(legacyProjection.field_groups) ? legacyProjection.field_groups : [];
   const legacyVisibleFields = Array.isArray(legacyProjection.visible_fields)
@@ -452,7 +455,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const unlinkRightAllowed = rights.unlink !== false;
   const deletePolicy = resolveV2DeletePolicy(v2Contract, model);
   const unlinkAllowed = deletePolicy.allowed === true && String(deletePolicy.delete_mode || '').trim().toLowerCase() === 'unlink';
-  const sourceSurfacePolicies = asDict(v2Contract.surface_policies);
+  const sourceSurfacePolicies = resolveUnifiedPageContractV2SurfacePolicies(v2Contract);
   const sourceBatchPolicy = asDict(sourceSurfacePolicies.batch_policy);
   const sourceBatchActions = Array.isArray(sourceBatchPolicy.available_actions)
     ? sourceBatchPolicy.available_actions.map((item) => String(item || '').trim()).filter(Boolean)

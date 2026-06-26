@@ -466,3 +466,33 @@ export function resolveUnifiedPageContractV2PrimaryDataSource(contract: unknown)
   const dataSource = readDictAlias(data, 'dataSource', 'data_source');
   return asDict(dataSource.primary);
 }
+
+export function resolveUnifiedPageContractV2DeletePolicy(contract: unknown): Record<string, unknown> {
+  const root = asDict(contract);
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const source = v2 ? asDict(v2) : root;
+  const action = readDictAlias(source, 'actionContract', 'action_contract');
+  const formal = readDictAlias(action, 'deletePolicy', 'delete_policy');
+  if (Object.keys(formal).length) return formal;
+  return asDict(source.delete_policy);
+}
+
+export function resolveUnifiedPageContractV2SurfacePolicies(contract: unknown): Record<string, unknown> {
+  const root = asDict(contract);
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const source = v2 ? asDict(v2) : root;
+  const action = readDictAlias(source, 'actionContract', 'action_contract');
+  const formal = readDictAlias(action, 'surfacePolicies', 'surface_policies');
+  if (Object.keys(formal).length) return formal;
+  return asDict(source.surface_policies);
+}
+
+export function resolveUnifiedPageContractV2ListProfile(contract: unknown): Record<string, unknown> {
+  const root = asDict(contract);
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const source = v2 ? asDict(v2) : root;
+  const layout = readDictAlias(source, 'layoutContract', 'layout_contract');
+  const formal = readDictAlias(layout, 'listProfile', 'list_profile');
+  if (Object.keys(formal).length) return formal;
+  return asDict(source.list_profile);
+}

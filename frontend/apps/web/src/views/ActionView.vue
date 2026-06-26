@@ -843,6 +843,7 @@ import {
 import {
   collectUnifiedPageContractV2ButtonStatus,
   resolveUnifiedPageContractV2GlobalStatus,
+  resolveUnifiedPageContractV2SurfacePolicies,
   type UnifiedPageContractV2ButtonStatus,
 } from '../app/contracts/unifiedPageContractV2';
 import {
@@ -1182,7 +1183,8 @@ const batchPolicy = computed(() => {
   if (profilePolicy && Array.isArray(profilePolicy.available_actions) && profilePolicy.available_actions.length > 0) {
     return profilePolicy;
   }
-  return actionContract.value?.surface_policies?.batch_policy || profilePolicy || {};
+  const surfacePolicies = resolveUnifiedPageContractV2SurfacePolicies(actionContract.value);
+  return surfacePolicies.batch_policy || profilePolicy || {};
 });
 const activeField = computed(() => String(batchPolicy.value.active_field || '').trim());
 const allowedBatchActions = computed(() =>
