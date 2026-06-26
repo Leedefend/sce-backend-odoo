@@ -635,6 +635,7 @@ function containerClass(node: NativeFormLayoutNode) {
     'native-container',
     `native-container--${nodeType(node) || 'node'}`,
     {
+      'native-container--config-hidden': props.fieldConfigEditable && nodeType(node) === 'group' && node.visible === false,
       'native-container--field-drop-target': Boolean(
         props.fieldOrderEditable
         && props.fieldOrderDraggingKey
@@ -810,6 +811,12 @@ function closeMore(node: NativeFormLayoutNode) {
 .native-container--field-drop-target.native-container--page {
   outline: 1px dashed var(--sc-semantic-surface-interactive);
   outline-offset: 4px;
+}
+
+.native-container--config-hidden {
+  border-top-style: dashed;
+  opacity: 0.72;
+  background: color-mix(in srgb, var(--sc-app-muted-bg) 64%, transparent);
 }
 
 .native-container--group > .native-container-head {

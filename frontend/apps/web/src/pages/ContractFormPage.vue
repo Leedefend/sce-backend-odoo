@@ -6969,6 +6969,13 @@ function filterVisibleNativeLayoutNodes(nodes: NativeFormLayoutNode[]): NativeFo
     .filter((node) => isNativeLayoutNodeVisible(node))
     .map((node) => {
       const next = { ...(node as Record<string, unknown>) } as Record<string, unknown>;
+      const nodeType = String(next.type || '').trim().toLowerCase();
+      if (isContractFieldOrderEditable.value && nodeType === 'group') {
+        const title = normalizeFieldGroupTitle(next.string || next.label || next.title);
+        if (title && !effectiveGroupVisible(title)) {
+          next.visible = false;
+        }
+      }
       (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
         const value = next[key];
         if (Array.isArray(value)) {
@@ -7667,10 +7674,10 @@ function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
   if (evaluateNativeModifierValue(nativeModifierValue(nodeRaw, 'invisible'))) return false;
   const node = nodeRaw as Record<string, unknown>;
   const nodeType = String(node.type || '').trim().toLowerCase();
-  if (node.visible === false) return false;
+  if (node.visible === false && !(isContractFieldOrderEditable.value && nodeType === 'group')) return false;
   if (nodeType === 'group') {
     const title = normalizeFieldGroupTitle(node.string || node.label || node.title);
-    if (title && !effectiveGroupVisible(title)) return false;
+    if (title && !effectiveGroupVisible(title) && !isContractFieldOrderEditable.value) return false;
   }
   const fieldName = String(nodeRaw.name || '').trim();
   if (
@@ -7678,6 +7685,7 @@ function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
     && fieldName
     && Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldName)
     && fieldVisibilityDraft[fieldName] === false
+    && !isContractFieldOrderEditable.value
   ) {
     return false;
   }

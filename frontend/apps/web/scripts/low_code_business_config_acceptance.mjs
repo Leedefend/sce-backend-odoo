@@ -868,6 +868,8 @@ async function main() {
     const returnButtonCount = await page.getByRole("button", { name: "返回配置" }).count();
     const legacyPanelCount = await page.locator(".contract-lowcode-objects").count();
     const initialFormDirtyCount = await page.locator(".contract-field-governance-dirty").count();
+    const initialHiddenFieldDesignCount = await page.locator(".field--config-hidden").count();
+    const initialHiddenGroupDesignCount = await page.locator(".native-container--config-hidden").count();
     const initialSaveFormEnabled = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     await selectDesignerField(page, 0);
     const selectedFieldCount = await page.locator(".field--selected").count();
@@ -878,11 +880,13 @@ async function main() {
     const operationLogTextAfterHide = await page.locator(".contract-form-operation-log").innerText();
     const operationLogEntryCountAfterHide = await page.locator(".contract-form-operation-log-list li").count();
     const formDirtyAfterHide = await page.locator(".contract-field-governance-dirty").count();
+    const hiddenFieldDesignCountAfterHide = await page.locator(".field--config-hidden").count();
     const saveFormEnabledAfterHide = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     const resetFormEnabledAfterHide = await page.getByRole("button", { name: "重置" }).isEnabled();
     await page.getByRole("button", { name: "重置" }).click();
     const operationLogTextAfterReset = await page.locator(".contract-form-operation-log").innerText();
     const formDirtyAfterReset = await page.locator(".contract-field-governance-dirty").count();
+    const hiddenFieldDesignCountAfterReset = await page.locator(".field--config-hidden").count();
     const saveFormEnabledAfterReset = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     await selectDesignerField(page, 1);
     const selectedPanelBeforeMove = await page.locator(".contract-field-selection-card").innerText();
@@ -906,13 +910,17 @@ async function main() {
     const fieldSizeControlCount = await page.locator(".contract-field-size-control select").count();
     let groupVisibilityDirtyAfterHide = 0;
     let groupVisibilityDirtyAfterRestore = 0;
+    let hiddenGroupDesignCountAfterHide = 0;
+    let hiddenGroupDesignCountAfterRestore = 0;
     if (groupVisibilityControlCount >= 2) {
       await page.locator(".contract-field-group-visibility input[value='hide']").first().click();
       await page.waitForTimeout(300);
       groupVisibilityDirtyAfterHide = await page.locator(".contract-field-governance-dirty").count();
+      hiddenGroupDesignCountAfterHide = await page.locator(".native-container--config-hidden").count();
       await page.locator(".contract-field-group-visibility input[value='show']").first().click();
       await page.waitForTimeout(300);
       groupVisibilityDirtyAfterRestore = await page.locator(".contract-field-governance-dirty").count();
+      hiddenGroupDesignCountAfterRestore = await page.locator(".native-container--config-hidden").count();
     }
     await selectDesignerField(page, 1);
     let groupColumnsDirtyAfterEdit = 0;
@@ -1105,11 +1113,15 @@ async function main() {
       operationLogTextAfterDrag,
       operationLogEntryCountAfterHide,
       initialFormDirtyCount,
+      initialHiddenFieldDesignCount,
+      initialHiddenGroupDesignCount,
       initialSaveFormEnabled,
       formDirtyAfterHide,
+      hiddenFieldDesignCountAfterHide,
       saveFormEnabledAfterHide,
       resetFormEnabledAfterHide,
       formDirtyAfterReset,
+      hiddenFieldDesignCountAfterReset,
       saveFormEnabledAfterReset,
       pageColumnsControlCount,
       pageColumnsDirtyAfterEdit,
@@ -1117,6 +1129,8 @@ async function main() {
       groupVisibilityControlCount,
       groupVisibilityDirtyAfterHide,
       groupVisibilityDirtyAfterRestore,
+      hiddenGroupDesignCountAfterHide,
+      hiddenGroupDesignCountAfterRestore,
       groupColumnsControlCount,
       groupColumnsDirtyAfterEdit,
       groupColumnsDirtyAfterRestore,
@@ -1180,18 +1194,23 @@ async function main() {
     );
     assert(
       formDirtyAfterHide > 0
+        && hiddenFieldDesignCountAfterHide > initialHiddenFieldDesignCount
         && saveFormEnabledAfterHide
         && resetFormEnabledAfterHide
         && formDirtyAfterReset === initialFormDirtyCount
+        && hiddenFieldDesignCountAfterReset === initialHiddenFieldDesignCount
         && saveFormEnabledAfterReset === initialSaveFormEnabled,
       "表单字段显示隐藏草稿或重置不可用",
       {
         initialFormDirtyCount,
+        initialHiddenFieldDesignCount,
         initialSaveFormEnabled,
         formDirtyAfterHide,
+        hiddenFieldDesignCountAfterHide,
         saveFormEnabledAfterHide,
         resetFormEnabledAfterHide,
         formDirtyAfterReset,
+        hiddenFieldDesignCountAfterReset,
         saveFormEnabledAfterReset,
       },
     );
@@ -1203,6 +1222,8 @@ async function main() {
         && groupVisibilityControlCount >= 2
         && groupVisibilityDirtyAfterHide > 0
         && groupVisibilityDirtyAfterRestore === 0
+        && hiddenGroupDesignCountAfterHide > initialHiddenGroupDesignCount
+        && hiddenGroupDesignCountAfterRestore === initialHiddenGroupDesignCount
         && groupColumnsControlCount > 0
         && groupColumnsDirtyAfterEdit > 0
         && groupColumnsDirtyAfterRestore === 0
@@ -1212,11 +1233,14 @@ async function main() {
       "表单布局低代码配置能力不可用",
       {
         pageColumnsControlCount,
+        initialHiddenGroupDesignCount,
         pageColumnsDirtyAfterEdit,
         pageColumnsDirtyAfterRestore,
         groupVisibilityControlCount,
         groupVisibilityDirtyAfterHide,
         groupVisibilityDirtyAfterRestore,
+        hiddenGroupDesignCountAfterHide,
+        hiddenGroupDesignCountAfterRestore,
         groupColumnsControlCount,
         groupColumnsDirtyAfterEdit,
         groupColumnsDirtyAfterRestore,

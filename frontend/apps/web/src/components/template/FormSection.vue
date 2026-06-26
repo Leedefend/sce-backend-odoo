@@ -394,6 +394,7 @@ function fieldClass(field: FormSectionFieldSchema) {
       'field--order-drop-target': props.fieldOrderDropTargetKey === fieldKey && props.fieldOrderDraggingKey !== fieldKey,
       'field--selectable': props.fieldSelectionMode,
       'field--selected': props.fieldSelectionMode && props.selectedFieldKey === fieldKey,
+      'field--config-hidden': props.fieldSelectionMode && isFieldMarkedHidden(field),
     },
   ];
 }
@@ -460,6 +461,13 @@ function readonlyText(value: unknown) {
 
 function fieldActionsFor(field: FormSectionFieldSchema) {
   return props.fieldActions?.(field) || [];
+}
+
+function isFieldMarkedHidden(field: FormSectionFieldSchema) {
+  return fieldActionsFor(field).some((action) => (
+    Boolean(action.checked)
+    && String(action.value || action.key || '').trim().toLowerCase() === 'hide'
+  ));
 }
 
 function emitFieldChange(field: FormSectionFieldSchema, value: string | number | boolean | null) {
@@ -695,6 +703,12 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   border-color: var(--sc-semantic-surface-interactive);
   background: var(--sc-app-info-bg);
   box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
+}
+
+.field--config-hidden {
+  border-style: dashed;
+  opacity: 0.68;
+  background: color-mix(in srgb, var(--sc-app-muted-bg) 72%, transparent);
 }
 
 .field--half {
