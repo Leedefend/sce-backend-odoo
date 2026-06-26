@@ -467,6 +467,7 @@ async function main() {
     const configWorkspaceCount = await page.locator(".config-workspace").count();
     const pagePickerPanelCount = await page.locator(".config-workspace .page-picker-panel").count();
     const pageConfigPanelCount = await page.locator(".config-workspace .page-config-panel").count();
+    const pagePickerHeadText = await page.locator(".page-picker-head").innerText();
     const selectedOverviewText = await page.locator(".selected-page-overview").innerText();
     const defaultSelectedRowActionLabels = await page.locator(".scan-row--selected .scan-row-actions button").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
@@ -661,6 +662,7 @@ async function main() {
       configWorkspaceCount,
       pagePickerPanelCount,
       pageConfigPanelCount,
+      pagePickerHeadText,
       selectedOverviewText,
       defaultSelectedRowActionLabels,
       defaultSelectedRowCurrentText,
@@ -744,6 +746,8 @@ async function main() {
       configWorkspaceCount === 1
         && pagePickerPanelCount === 1
         && pageConfigPanelCount === 1
+        && pagePickerHeadText.includes("业务页面目录")
+        && pagePickerHeadText.includes("个匹配页面")
         && selectedOverviewText.includes("正在配置")
         && selectedOverviewText.includes("项目合同汇总")
         && defaultSelectedRowActionLabels.length === 0
@@ -754,6 +758,7 @@ async function main() {
         configWorkspaceCount,
         pagePickerPanelCount,
         pageConfigPanelCount,
+        pagePickerHeadText,
         selectedOverviewText,
         defaultSelectedRowActionLabels,
         defaultSelectedRowCurrentText,

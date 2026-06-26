@@ -124,8 +124,11 @@
       <div class="config-workspace">
         <aside class="page-picker-panel" aria-label="业务页面列表">
           <div class="page-picker-head">
-            <strong>业务页面</strong>
-            <span>{{ visibleCoverageRows.length }} 个匹配页面</span>
+            <div>
+              <span>业务页面目录</span>
+              <strong>{{ visibleCoverageRows.length }} 个匹配页面</strong>
+            </div>
+            <em>{{ selectedCoverageRow?.name || selectedPageLabel || '未选择' }}</em>
           </div>
           <div v-if="visibleCoverageRows.length" class="scan-list">
             <div
@@ -3261,7 +3264,7 @@ h1 {
 
 .config-workspace {
   display: grid;
-  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.45fr);
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
   gap: 12px;
   align-items: start;
 }
@@ -3275,20 +3278,52 @@ h1 {
 
 .page-picker-panel {
   align-content: start;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-bg);
+  overflow: hidden;
 }
 
 .page-picker-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  min-height: 30px;
+  min-height: 54px;
+  padding: 12px;
+  border-bottom: 1px solid var(--sc-app-border);
   color: var(--sc-app-text-primary);
+}
+
+.page-picker-head > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
 
 .page-picker-head span {
   color: var(--sc-app-text-secondary);
   font-size: 12px;
+}
+
+.page-picker-head strong {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+}
+
+.page-picker-head em {
+  max-width: 128px;
+  overflow: hidden;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .selected-page-overview {
@@ -3347,7 +3382,7 @@ h1 {
 
 .scan-list {
   display: grid;
-  gap: 8px;
+  gap: 0;
 }
 
 .scan-row {
@@ -3443,16 +3478,23 @@ h1 {
 
 .page-picker-panel .scan-row {
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--sc-app-border);
+  border-radius: 0;
+  padding: 12px;
+  background: transparent;
 }
 
 .page-picker-panel .scan-row-actions {
+  align-self: start;
   justify-content: flex-end;
   flex-wrap: nowrap;
   white-space: normal;
 }
 
 .page-picker-panel .scan-row-meta {
+  grid-column: 1 / -1;
   gap: 4px;
 }
 
@@ -3465,6 +3507,14 @@ h1 {
 
 .page-picker-panel .scan-row-admin-actions {
   grid-column: 1 / -1;
+}
+
+.page-picker-panel .scan-row--selected {
+  background: var(--sc-app-panel-muted);
+}
+
+.page-picker-panel .scan-row:last-child {
+  border-bottom: 0;
 }
 
 .scan-panel--admin .scan-row {
