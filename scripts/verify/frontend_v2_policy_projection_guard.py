@@ -383,6 +383,23 @@ STRICT_TYPE_ENUM_REGISTRY_MAP = {
     "ContractV2PageRenderMode": ("renderMode",),
 }
 
+STRICT_DECODER_ENUM_REGISTRY_MAP = {
+    "decodeClientType": ("clientType", "stable"),
+    "decodeViewType": ("viewType",),
+    "decodeLayoutType": ("layoutType",),
+    "decodeAdaptMode": ("adaptMode",),
+    "decodeTriggerType": ("triggerType",),
+    "decodeDispatchMode": ("dispatchMode",),
+    "decodeTargetScope": ("targetScope",),
+    "decodeRefreshMode": ("refreshMode",),
+    "decodeAuth": ("authLevel",),
+    "decodePageRenderMode": ("renderMode",),
+    "decodePatchStrategy": ("patchStrategy",),
+    "decodeCachePolicy": ("cachePolicy",),
+    "decodeRenderStrategy": ("renderStrategy",),
+    "decodePatchOperation": ("patchOperation",),
+}
+
 
 def _relative(path: Path) -> str:
     return str(path.relative_to(ROOT))
@@ -449,6 +466,13 @@ def _strict_type_enum_literals(source: str, type_name: str) -> list[str] | None:
     return re.findall(r"'([^']+)'", match.group("body"))
 
 
+def _decoder_enum_literals(source: str, function_name: str) -> list[str] | None:
+    body = _function_body(source, function_name)
+    if not body:
+        return None
+    return re.findall(r"\bvalue\s*===\s*'([^']+)'", body)
+
+
 def main() -> int:
     violations: list[str] = []
     helper_source = CONTRACT_HELPERS.read_text(encoding="utf-8")
@@ -470,6 +494,17 @@ def main() -> int:
             )
     strict_type_source = STRICT_TYPES.read_text(encoding="utf-8")
     enum_registry = json.loads(ENUM_REGISTRY.read_text(encoding="utf-8"))
+    for function_name, registry_key_path in sorted(STRICT_DECODER_ENUM_REGISTRY_MAP.items()):
+        decoder_literals = _decoder_enum_literals(strict_schema_source, function_name)
+        registry_literals = _registry_path(enum_registry, registry_key_path)
+        if decoder_literals is None:
+            violations.append(f"{_relative(STRICT_SCHEMA)}: missing strict V2 enum decoder {function_name}")
+            continue
+        if decoder_literals != registry_literals:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: {function_name} literals must match enum_registry.{'.'.join(registry_key_path)}; "
+                f"decoder={decoder_literals} registry={registry_literals}"
+            )
     for type_name, registry_key_path in sorted(STRICT_TYPE_ENUM_REGISTRY_MAP.items()):
         type_literals = _strict_type_enum_literals(strict_type_source, type_name)
         registry_literals = _registry_path(enum_registry, registry_key_path)
