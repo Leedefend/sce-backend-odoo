@@ -1356,7 +1356,13 @@ async function createMenuEntry() {
     selectedMenuId.value = Number(createdMenu?.id || 0);
     createPanelOpen.value = false;
     auditResult.value = null;
-    message.value = `已创建菜单“${createdName}”，可继续新增下级菜单；刷新页面后导航按配置生效`;
+    await session.loadAppInit({ force: true });
+    await loadPanel({ preserveStatus: true });
+    if (versionPanelOpen.value) {
+      await loadVersions();
+    }
+    selectedMenuId.value = Number(createdMenu?.id || 0);
+    message.value = `已创建菜单“${createdName}”，导航已刷新，可继续新增下级菜单`;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '菜单创建失败';
   } finally {
