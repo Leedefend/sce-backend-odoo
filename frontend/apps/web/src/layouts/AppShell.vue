@@ -2,11 +2,12 @@
   <div
     class="shell layout-shell"
     data-component="LayoutShell"
+    :class="{ 'shell--configuration': isConfigurationRoute }"
     :data-layout-kind="activeLayout.kind"
     :data-sidebar-mode="activeLayout.sidebar"
     :data-header-mode="activeLayout.header"
   >
-    <aside class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
+    <aside v-if="!isConfigurationRoute" class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
       <div class="brand">
         <div class="logo">{{ shellLogoText }}</div>
         <div>
@@ -1470,6 +1471,14 @@ async function logout() {
   background: var(--sc-app-bg);
   color: var(--ink);
   font-family: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+}
+
+.shell--configuration {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.shell--configuration .content {
+  padding: 8px 24px;
 }
 
 .sidebar {
