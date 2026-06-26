@@ -923,6 +923,14 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         policy_model.env = env
         policy_model._runtime_menu_config_source_for_user = lambda user=None: (
             {
+                292: {
+                    "active": True,
+                    "menu_id": 292,
+                    "menu_label": "项目中心",
+                    "visible": True,
+                    "target_parent_menu_id": 291,
+                    "sequence_override": 20,
+                },
                 301: {
                     "active": True,
                     "menu_id": 301,
@@ -931,12 +939,26 @@ class TestMenuConfigurationAudit(unittest.TestCase):
                     "target_parent_menu_id": 292,
                     "sequence_override": 60,
                 },
+                500: {
+                    "active": True,
+                    "menu_id": 500,
+                    "menu_label": "劳务计划",
+                    "visible": True,
+                    "sequence_override": 10,
+                },
                 501: {
                     "active": True,
                     "menu_id": 501,
                     "menu_label": "劳务申请",
                     "visible": False,
                     "sequence_override": 20,
+                },
+                822: {
+                    "active": True,
+                    "menu_id": 822,
+                    "menu_label": "劳务结算候选核对",
+                    "visible": True,
+                    "sequence_override": 39,
                 },
             },
             "ui.menu.config.policy",
@@ -973,7 +995,57 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertIn(500, child_ids)
         self.assertIn(822, child_ids)
         self.assertNotIn(501, child_ids)
-        self.assertEqual(stats["moved_count"], 1)
+        self.assertEqual(stats["moved_count"], 2)
+
+    def test_runtime_overlay_config_only_hides_unconfigured_leaf(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        configured_menu = _Menu(11, "合同办理")
+        hidden_menu = _Menu(12, "未配置办理")
+        env = _Env(
+            {
+                "ir.ui.menu": _MenuModel([configured_menu, hidden_menu]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                11: {
+                    "active": True,
+                    "menu_id": 11,
+                    "menu_label": "合同办理",
+                    "visible": True,
+                    "sequence_override": 10,
+                },
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "sequence": 30,
+                        "children": [
+                            {"menu_id": 11, "name": "合同办理", "sequence": 10, "children": []},
+                            {"menu_id": 12, "name": "未配置办理", "sequence": 20, "children": []},
+                        ],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        child_ids = [child["menu_id"] for child in overlaid["tree"][0]["children"]]
+        self.assertEqual(child_ids, [11])
+        self.assertEqual(stats["unconfigured_hidden_count"], 1)
 
 
 if __name__ == "__main__":

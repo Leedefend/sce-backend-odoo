@@ -338,20 +338,32 @@ class UiMenuConfigPolicy(models.Model):
             if not isinstance(policy, dict):
                 return policy.target_parent_menu_id
             parent_id = _to_int(policy.get("target_parent_menu_id"))
-            return self.env["ir.ui.menu"].browse(parent_id) if parent_id else self.env["ir.ui.menu"]
+            return self.env["ir.ui.menu"].browse(parent_id) if parent_id else self.env["ir.ui.menu"].browse(0)
 
         def policy_menu_exists(policy) -> bool:
             return bool(policy_menu_record(policy).exists())
+
+        def config_only_enabled() -> bool:
+            try:
+                raw = self.env["ir.config_parameter"].sudo().get_param(
+                    "smart_core.nav.user_menu_config.config_only.enabled",
+                    "1",
+                )
+            except Exception:
+                raw = "1"
+            return str(raw or "").strip().lower() not in {"0", "false", "no", "off"}
 
         stats = {
             "source_authority": self._source_contract(runtime_source=runtime_source),
             "runtime_source": runtime_source,
             "applied_count": 0,
             "hidden_count": 0,
+            "unconfigured_hidden_count": 0,
             "protected_count": 0,
             "renamed_count": 0,
             "reordered_count": 0,
             "moved_count": 0,
+            "config_only": config_only_enabled(),
         }
         move_targets = [
             {
@@ -473,6 +485,54 @@ class UiMenuConfigPolicy(models.Model):
                 node["children"] = next_children
             return node
 
+        def policy_for_node(node: dict):
+            try:
+                normalized_menu_id = int((node.get("menu_id") or (node.get("meta") or {}).get("menu_id") or 0))
+            except Exception:
+                normalized_menu_id = 0
+            policy = policies_by_menu.get(normalized_menu_id)
+            if policy:
+                return policy
+            labels = [
+                str(node.get("name") or "").strip(),
+                str(node.get("label") or "").strip(),
+                str(node.get("title") or "").strip(),
+            ]
+            return next((policies_by_label.get(label) for label in labels if label in policies_by_label), None)
+
+        def prune_unconfigured_nodes(nodes: list[dict], *, depth: int = 0) -> list[dict]:
+            if not stats.get("config_only"):
+                return nodes
+            kept = []
+            for node in nodes or []:
+                if not isinstance(node, dict):
+                    continue
+                next_node = dict(node)
+                children = next_node.get("children") if isinstance(next_node.get("children"), list) else []
+                next_children = prune_unconfigured_nodes(children, depth=depth + 1) if children else []
+                if children:
+                    next_node["children"] = sort_children(next_children)
+                policy = policy_for_node(next_node)
+                configured_visible = bool(policy and policy_visible(policy))
+                protected = is_protected_runtime_config_node(next_node)
+                if depth == 0 or protected or configured_visible or next_children:
+                    kept.append(next_node)
+                    continue
+                stats["unconfigured_hidden_count"] += 1
+            return sort_children(kept)
+
+        def prune_unconfigured_flat(nodes: list[dict]) -> list[dict]:
+            if not stats.get("config_only"):
+                return nodes
+            kept = []
+            for node in nodes or []:
+                if not isinstance(node, dict):
+                    continue
+                policy = policy_for_node(node)
+                if (policy and policy_visible(policy)) or is_protected_runtime_config_node(node):
+                    kept.append(node)
+            return kept
+
         def sort_children(nodes: list[dict]) -> list[dict]:
             nodes.sort(key=lambda row: (int(row.get("sequence") or 0), int(row.get("menu_id") or 0)))
             return nodes
@@ -587,6 +647,8 @@ class UiMenuConfigPolicy(models.Model):
                 return None
             seen.add(menu_id)
             policy = policy if policy is not None else policies_by_menu.get(menu_id)
+            if stats.get("config_only") and not policy:
+                return None
             if policy and not policy_visible(policy):
                 return None
             label = policy_custom_label(policy) if policy else ""
@@ -721,19 +783,21 @@ class UiMenuConfigPolicy(models.Model):
             return sort_children(next_nodes)
 
         out = dict(nav_fact)
-        out["flat"] = [
+        applied_flat = [
             applied
             for node in out.get("flat", [])
             if isinstance(node, dict)
             for applied in [apply_node(dict(node))]
             if applied is not None
         ]
+        out["flat"] = prune_unconfigured_flat(applied_flat)
         out["flat"].sort(key=lambda row: (int(row.get("sequence") or 0), int(row.get("menu_id") or 0)))
-        out["tree"] = apply_moves([
+        applied_tree = [
             applied
             for node in out.get("tree", [])
             if isinstance(node, dict)
             for applied in [apply_node(dict(node))]
             if applied is not None
-        ])
+        ]
+        out["tree"] = apply_moves(prune_unconfigured_nodes(applied_tree))
         return out, stats
