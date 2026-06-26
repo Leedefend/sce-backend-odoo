@@ -1,6 +1,7 @@
 import type {
   ContractV2ActionContract,
   ContractV2ActionRule,
+  ContractV2Auth,
   ContractV2ButtonStatus,
   ContractV2AdaptMode,
   ContractV2ClientType,
@@ -179,6 +180,15 @@ function decodeRefreshMode(value: string, path: string, issues: DecodeIssue[]): 
   }
   issues.push({ path, message: `unsupported refresh mode ${value || '<empty>'}` });
   return 'none';
+}
+
+function decodeAuth(value: string, path: string, issues: DecodeIssue[]): ContractV2Auth | undefined {
+  if (!value) return undefined;
+  if (value === 'none' || value === 'read' || value === 'edit' || value === 'admin') {
+    return value;
+  }
+  issues.push({ path, message: `unsupported auth ${value}` });
+  return undefined;
 }
 
 function decodePageInfo(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2PageInfo {
@@ -462,16 +472,18 @@ function decodeGlobalStatus(source: ContractV2Dictionary): ContractV2GlobalStatu
   };
 }
 
-function decodeWidgetStatus(raw: unknown): ContractV2WidgetStatus | null {
+function decodeWidgetStatus(raw: unknown, path: string, issues: DecodeIssue[]): ContractV2WidgetStatus | null {
   if (!isRecord(raw)) return null;
   const widgetId = asString(raw.widgetId) || asString(raw.widget_id);
   if (!widgetId) return null;
+  const auth = decodeAuth(asString(raw.auth), `${path}.auth`, issues);
   return {
     widgetId,
     visible: optionalBoolean(raw.visible),
     readonly: optionalBoolean(raw.readonly),
     required: optionalBoolean(raw.required),
     disabled: optionalBoolean(raw.disabled),
+    ...(auth ? { auth } : {}),
     ...(optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code')
       ? { reasonCode: optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code') }
       : {}),
@@ -522,11 +534,11 @@ function decodeSelectorStatus(raw: unknown): ContractV2SelectorStatus | null {
   };
 }
 
-function decodeStatusContract(source: ContractV2Dictionary): ContractV2StatusContract {
+function decodeStatusContract(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2StatusContract {
   return {
     globalStatus: decodeGlobalStatus(aliasedRecord(source, 'globalStatus', ['global_status'])),
     widgetStatus: aliasedArray(source, 'widgetStatus', ['widget_status'])
-      .map(decodeWidgetStatus)
+      .map((item, index) => decodeWidgetStatus(item, `statusContract.widgetStatus[${index}]`, issues))
       .filter((item): item is ContractV2WidgetStatus => Boolean(item)),
     buttonStatus: aliasedArray(source, 'buttonStatus', ['button_status'])
       .map(decodeButtonStatus)
@@ -545,7 +557,7 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
   const issues: DecodeIssue[] = [];
   const pageInfo = decodePageInfo(readAliasedObject(root, 'pageInfo', [], '$', issues), issues);
   const layoutContract = decodeLayoutContract(readAliasedObject(root, 'layoutContract', [], '$', issues), issues);
-  const statusContract = decodeStatusContract(readAliasedObject(root, 'statusContract', [], '$', issues));
+  const statusContract = decodeStatusContract(readAliasedObject(root, 'statusContract', [], '$', issues), issues);
   const actionContract = decodeActionContract(readAliasedObject(root, 'actionContract', [], '$', issues), issues);
   const dataContract = decodeDataContract(readAliasedObject(root, 'dataContract', [], '$', issues));
   const runtimeContract = readAliasedObject(root, 'runtimeContract', [], '$', issues);

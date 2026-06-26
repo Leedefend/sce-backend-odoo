@@ -101,6 +101,7 @@ REQUIRED_STRICT_ENUM_TYPE_TOKENS = (
     "export type ContractV2DispatchMode = 'local' | 'server' | 'serverDebounced' | 'serverBlocking'",
     "export type ContractV2TargetScope = 'widget' | 'container' | 'page' | 'dataSource' | 'runtime'",
     "export type ContractV2RefreshMode = 'none' | 'partial' | 'full'",
+    "export type ContractV2Auth = 'none' | 'read' | 'edit' | 'admin'",
     "viewType: ContractV2ViewType",
     "layoutType: ContractV2LayoutType",
     "adaptMode: ContractV2AdaptMode",
@@ -108,6 +109,7 @@ REQUIRED_STRICT_ENUM_TYPE_TOKENS = (
     "dispatchMode: ContractV2DispatchMode",
     "targetScope: ContractV2TargetScope",
     "refreshMode: ContractV2RefreshMode",
+    "auth?: ContractV2Auth",
 )
 
 REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
@@ -118,6 +120,7 @@ REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
     "function decodeDispatchMode(",
     "function decodeTargetScope(",
     "function decodeRefreshMode(",
+    "function decodeAuth(",
     "viewType: decodeViewType(",
     "layoutType: decodeLayoutType(",
     "adaptMode: decodeAdaptMode(",
@@ -125,6 +128,7 @@ REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
     "dispatchMode: decodeDispatchMode(",
     "targetScope: decodeTargetScope(",
     "refreshMode: decodeRefreshMode(",
+    "const auth = decodeAuth(",
 )
 
 

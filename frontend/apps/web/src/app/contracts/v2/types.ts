@@ -6,6 +6,7 @@ export type ContractV2TriggerType = 'change' | 'click' | 'select' | 'refresh' | 
 export type ContractV2DispatchMode = 'local' | 'server' | 'serverDebounced' | 'serverBlocking';
 export type ContractV2TargetScope = 'widget' | 'container' | 'page' | 'dataSource' | 'runtime';
 export type ContractV2RefreshMode = 'none' | 'partial' | 'full';
+export type ContractV2Auth = 'none' | 'read' | 'edit' | 'admin';
 export type ContractV2Dictionary = Record<string, unknown>;
 
 export interface ContractV2PageInfo {
@@ -131,6 +132,7 @@ export interface ContractV2WidgetStatus {
   readonly?: boolean;
   required?: boolean;
   disabled?: boolean;
+  auth?: ContractV2Auth;
   reasonCode?: string;
 }
 
