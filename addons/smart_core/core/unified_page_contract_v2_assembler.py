@@ -721,6 +721,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         if source.get(key) is not None
     }
     if compat_projection:
+        compat_projection["sourceAuthority"] = _compat_projection_source_authority()
         contract["dataContract"]["dataMeta"]["legacyContractProjection"] = compat_projection
     _append_ui_contract_actions(contract, ui, source_widget_id="page.root", main_data=contract["dataContract"]["mainData"])
     _append_ui_contract_row_actions(contract, ui)
@@ -1964,6 +1965,7 @@ def _ui_contract_data_source(
     if "id" not in field_names:
         field_names.insert(0, "id")
     extra_params = _ui_data_source_extra_params(_dict(source), _dict(ui))
+    source_authority = _data_source_authority(model=model, view_type=view_type)
     if view_type == "form":
         if record_id <= 0:
             return {
@@ -1971,6 +1973,7 @@ def _ui_contract_data_source(
                 "intent": "api.data",
                 "cachePolicy": "none",
                 "consistency": "strong",
+                "sourceAuthority": source_authority,
                 "params": {
                     "op": "default_get",
                     "model": model,
@@ -1983,6 +1986,7 @@ def _ui_contract_data_source(
             "intent": "api.data",
             "cachePolicy": "none",
             "consistency": "strong",
+            "sourceAuthority": source_authority,
             "params": {
                 "op": "read",
                 "model": model,
@@ -1998,6 +2002,7 @@ def _ui_contract_data_source(
         "intent": "api.data",
         "cachePolicy": "none",
         "consistency": "strong",
+        "sourceAuthority": source_authority,
         "params": {
             "op": "list",
             "model": model,
@@ -2014,6 +2019,29 @@ def _ui_contract_data_source(
             "nextOffsetField": "next_offset",
             "totalField": "total",
         },
+    }
+
+
+def _data_source_authority(*, model: str, view_type: str) -> dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "runtime_carrier": "ui.contract.v2.dataContract.dataSource",
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "fact_authority": "odoo.model",
+        "model": model,
+        "view_type": view_type,
+    }
+
+
+def _compat_projection_source_authority() -> dict[str, Any]:
+    return {
+        "kind": SOURCE_KIND,
+        "runtime_carrier": "ui.contract.v2.dataMeta.legacyContractProjection",
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "compatibility_projection": True,
+        "fact_authority": "source_contract_projection",
     }
 
 

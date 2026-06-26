@@ -180,6 +180,20 @@ def main() -> int:
             f"{ASSEMBLER.relative_to(ROOT)}: assembler must consume top-level source.header_buttons "
             "instead of requiring handlers to mutate views.form.header_buttons"
         )
+    if "def _data_source_authority(" not in assembler_source or "\"sourceAuthority\": source_authority" not in assembler_source:
+        violations.append(
+            f"{ASSEMBLER.relative_to(ROOT)}: dataContract.dataSource rows must be stamped with _data_source_authority"
+        )
+    if "def _compat_projection_source_authority(" not in assembler_source or "compat_projection[\"sourceAuthority\"] = _compat_projection_source_authority()" not in assembler_source:
+        violations.append(
+            f"{ASSEMBLER.relative_to(ROOT)}: legacyContractProjection must carry compatibility sourceAuthority"
+        )
+    runtime_path = ROOT / "addons/smart_core/core/unified_page_contract_v2_runtime.py"
+    runtime_source = runtime_path.read_text(encoding="utf-8")
+    if "def find_data_source_authority_issues(" not in runtime_source or "issues.extend(find_data_source_authority_issues(data))" not in runtime_source:
+        violations.append(
+            f"{runtime_path.relative_to(ROOT)}: runtime guard must validate dataSource and legacy projection authority"
+        )
 
     if violations:
         print("[ui_contract_v2_contract_boundary_guard] FAIL")

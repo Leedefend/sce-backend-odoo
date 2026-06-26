@@ -160,6 +160,34 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual(header["children"][0]["name"], "action_submit")
         self.assertEqual(header["children"][0]["label"], "提交")
 
+    def test_data_source_and_legacy_projection_carry_source_authority(self):
+        source = {
+            "model": "project.project",
+            "view_type": "form",
+            "head": {"title": "项目"},
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "项目名称"},
+            },
+            "business_operation_profile": {
+                "source": "test",
+                "common_fields": ["name"],
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.data.source.authority",
+        )
+
+        primary = full["dataContract"]["dataSource"]["primary"]
+        self.assertEqual(primary["sourceAuthority"]["runtime_carrier"], "ui.contract.v2.dataContract.dataSource")
+        self.assertTrue(primary["sourceAuthority"]["projection_only"])
+        self.assertTrue(primary["sourceAuthority"]["no_business_fact_authority"])
+        projection = full["dataContract"]["dataMeta"]["legacyContractProjection"]
+        self.assertTrue(projection["sourceAuthority"]["compatibility_projection"])
+
     def test_form_data_source_keeps_deep_form_fields(self):
         fields = {
             f"field_{index}": {

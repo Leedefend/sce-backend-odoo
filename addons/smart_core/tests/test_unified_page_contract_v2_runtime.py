@@ -95,6 +95,49 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
         issues = runtime.find_form_structure_contract_issues(self._contract())
         self.assertEqual(issues, [])
 
+    def test_data_source_authority_rejects_missing_source_authority(self):
+        issues = runtime.find_data_source_authority_issues({
+            "dataSource": {
+                "primary": {
+                    "query": "api.data",
+                    "intent": "api.data",
+                    "params": {"model": "project.project"},
+                }
+            },
+            "dataMeta": {
+                "legacyContractProjection": {
+                    "business_operation_profile": {"source": "test"},
+                }
+            },
+        })
+
+        self.assertIn("dataContract.dataSource.primary.sourceAuthority is required", issues)
+        self.assertIn("dataContract.dataMeta.legacyContractProjection.sourceAuthority is required", issues)
+
+    def test_data_source_authority_accepts_projected_sources(self):
+        issues = runtime.find_data_source_authority_issues({
+            "dataSource": {
+                "primary": {
+                    "query": "api.data",
+                    "intent": "api.data",
+                    "sourceAuthority": {
+                        "projection_only": True,
+                        "no_business_fact_authority": True,
+                        "fact_authority": "odoo.model",
+                    },
+                }
+            },
+            "dataMeta": {
+                "legacyContractProjection": {
+                    "sourceAuthority": {
+                        "compatibility_projection": True,
+                    },
+                }
+            },
+        })
+
+        self.assertEqual(issues, [])
+
     def test_form_structure_contract_rejects_unknown_duplicate_and_unprojected_fields(self):
         contract = self._contract()
         contract["formStructureContract"]["slots"][1]["groups"][0]["fieldRefs"].extend(["subject", "missing_field"])
