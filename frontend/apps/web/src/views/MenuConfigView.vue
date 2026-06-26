@@ -1748,6 +1748,13 @@ function normalizedMenuLabel(value: string) {
   return String(value || '').trim().toLowerCase();
 }
 
+function canMatchNavigationGroupByLabel(node: NavNode) {
+  const meta = node.meta || {};
+  const hasChildren = Array.isArray(node.children) && node.children.length > 0;
+  const hasAction = Boolean(node.action_id || meta.action_id || node.model || meta.model || node.action || meta.action);
+  return hasChildren && !hasAction;
+}
+
 function buildTreeFromNavigation(
   navNodes: NavNode[],
   menuById: Map<number, MenuConfigMenu>,
@@ -1761,9 +1768,12 @@ function buildTreeFromNavigation(
     if (menu && usedMenuIds.has(menu.id)) {
       menu = undefined;
     }
-    if (!menu && !menuId) {
+    if (!menu && (!menuId || canMatchNavigationGroupByLabel(node))) {
       const candidates = menuByLabel.get(normalizedMenuLabel(label)) || [];
-      menu = candidates.find((candidate) => !usedMenuIds.has(candidate.id));
+      menu = candidates.find((candidate) => (
+        !usedMenuIds.has(candidate.id)
+        && (!menuId || !String(candidate.action || '').trim())
+      ));
     }
     if (!menu) {
       const children = Array.isArray(node.children)
