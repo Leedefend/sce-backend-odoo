@@ -2579,6 +2579,23 @@ function hydrateFormConfigOperationLog() {
   }
 }
 
+function formConfigOperationSubject(action: string, summary: string) {
+  const normalizedAction = String(action || '').trim();
+  const normalizedSummary = String(summary || '').trim();
+  if (!normalizedSummary) return '';
+  if (normalizedAction === '调整页面列数') return '页面';
+  const match = normalizedSummary.match(/^(.+?)\s+(设置为|移动到|调整到|调整为|改为|添加到)/);
+  if (match?.[1]) return match[1].trim();
+  return normalizedSummary;
+}
+
+function formConfigOperationCoalesceKey(action: string, summary: string) {
+  const normalizedAction = String(action || '').trim();
+  const subject = formConfigOperationSubject(normalizedAction, summary);
+  if (!normalizedAction || !subject) return '';
+  return `${normalizedAction}:${subject}`;
+}
+
 function appendFormConfigOperation(
   action: string,
   summary: string,
@@ -2588,15 +2605,27 @@ function appendFormConfigOperation(
   const normalizedSummary = String(summary || '').trim();
   if (!normalizedAction || !normalizedSummary) return;
   const now = new Date();
+  const entry = {
+    id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    at: now.toISOString(),
+    operator: formConfigOperatorName.value,
+    action: normalizedAction,
+    summary: normalizedSummary,
+    status,
+  };
+  const latest = formConfigOperationLog.value[0];
+  const currentKey = formConfigOperationCoalesceKey(normalizedAction, normalizedSummary);
+  const latestKey = latest ? formConfigOperationCoalesceKey(latest.action, latest.summary) : '';
+  if (status === 'pending' && latest?.status === 'pending' && currentKey && currentKey === latestKey) {
+    formConfigOperationLog.value = [
+      { ...entry, id: latest.id },
+      ...formConfigOperationLog.value.slice(1),
+    ].slice(0, 50);
+    persistFormConfigOperationLog();
+    return;
+  }
   formConfigOperationLog.value = [
-    {
-      id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
-      at: now.toISOString(),
-      operator: formConfigOperatorName.value,
-      action: normalizedAction,
-      summary: normalizedSummary,
-      status,
-    },
+    entry,
     ...formConfigOperationLog.value,
   ].slice(0, 50);
   persistFormConfigOperationLog();

@@ -1001,6 +1001,8 @@ async function main() {
     await page.waitForTimeout(1000);
     const formOrderAfterDrag = await formDesignerFieldTexts(page);
     const operationLogTextAfterDrag = await page.locator(".contract-form-operation-log").innerText();
+    const operationLogHasTechnicalFieldAfterDrag = /\b[a-z][a-z0-9]*_[a-z0-9_]+\b/.test(operationLogTextAfterDrag);
+    const operationLogGroupColumnEntryCountAfterDrag = (operationLogTextAfterDrag.match(/调整分组列数/g) || []).length;
     const saveFormEnabledAfterDrag = await page.getByRole("button", { name: "保存表单设置" }).isEnabled();
     let formOrderAfterPersistReload = formOrderAfterDrag;
     let saveFormEnabledAfterRestoreDrag = false;
@@ -1149,6 +1151,8 @@ async function main() {
       selectedPanelBeforeMove,
       formOrderBeforeDragPersist,
       formOrderAfterDrag,
+      operationLogHasTechnicalFieldAfterDrag,
+      operationLogGroupColumnEntryCountAfterDrag,
       saveFormEnabledAfterDrag,
       formOrderAfterPersistReload,
       saveFormEnabledAfterRestoreDrag,
@@ -1291,6 +1295,8 @@ async function main() {
       formOrderAfterDrag.indexOf(nextFieldLabel) >= 0
         && formOrderAfterDrag.indexOf(draggedFieldLabel) > formOrderAfterDrag.indexOf(nextFieldLabel)
         && operationLogTextAfterDrag.includes(nextFieldLabel)
+        && !operationLogHasTechnicalFieldAfterDrag
+        && operationLogGroupColumnEntryCountAfterDrag <= 1
         && (
           !saveFormEnabledAfterDrag
           || (
@@ -1313,6 +1319,8 @@ async function main() {
         formOrderBeforeDragPersist,
         formOrderAfterDrag,
         operationLogTextAfterDrag,
+        operationLogHasTechnicalFieldAfterDrag,
+        operationLogGroupColumnEntryCountAfterDrag,
         saveFormEnabledAfterDrag,
         formOrderAfterPersistReload,
         saveFormEnabledAfterRestoreDrag,
