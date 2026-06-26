@@ -1140,7 +1140,9 @@ async function main() {
     const designerCanvasCount = await page.locator(".contract-form-designer-canvas").count();
     const designerWorkspaceCount = await page.locator(".form-grid--designer-workspace").count();
     const designerSidebarCount = await page.locator(".contract-form-designer-sidebar").count();
+    const designerSidebarHeadText = await page.locator(".contract-form-designer-sidebar-head").innerText();
     const designerFieldNavigatorCount = await page.locator(".contract-form-field-navigator").count();
+    const designerFieldNavigatorHeaderText = await page.locator(".contract-form-field-navigator header").innerText();
     const designerFieldNavigatorItemCount = await page.locator(".contract-form-field-nav-item").count();
     const designerCanvasHeadText = await page.locator(".contract-form-canvas-head").innerText();
     let designerInspectorSectionLabels = [];
@@ -1451,7 +1453,9 @@ async function main() {
       designerCanvasCount,
       designerWorkspaceCount,
       designerSidebarCount,
+      designerSidebarHeadText,
       designerFieldNavigatorCount,
+      designerFieldNavigatorHeaderText,
       designerFieldNavigatorItemCount,
       designerCanvasHeadText,
       designerInspectorSectionLabels,
@@ -1471,7 +1475,11 @@ async function main() {
         && designerCanvasCount === 1
         && designerWorkspaceCount === 1
         && designerSidebarCount === 1
+        && designerSidebarHeadText.includes("字段目录")
+        && designerSidebarHeadText.includes("个字段")
+        && designerSidebarHeadText.includes("个分组")
         && designerFieldNavigatorCount === 1
+        && designerFieldNavigatorHeaderText.includes("分组导航")
         && designerFieldNavigatorItemCount > 0
         && designerCanvasHeadText.includes("表单画布")
         && designerInspectorSectionLabels.includes("基础属性")
@@ -1485,7 +1493,9 @@ async function main() {
         designerCanvasCount,
         designerWorkspaceCount,
         designerSidebarCount,
+        designerSidebarHeadText,
         designerFieldNavigatorCount,
+        designerFieldNavigatorHeaderText,
         designerFieldNavigatorItemCount,
         designerCanvasHeadText,
         designerInspectorSectionLabels,

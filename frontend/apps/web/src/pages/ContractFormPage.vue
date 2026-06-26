@@ -240,10 +240,17 @@
             </header>
             <div class="contract-form-designer-control-grid">
               <aside class="contract-form-designer-sidebar" aria-label="表单设计器导航">
+                <header class="contract-form-designer-sidebar-head">
+                  <div>
+                    <span>字段目录</span>
+                    <strong>{{ currentFormDesignFieldCount }} 个字段</strong>
+                  </div>
+                  <em>{{ formDesignerGroupNavigatorItems.length }} 个分组</em>
+                </header>
                 <section class="contract-form-field-navigator" aria-label="字段分组导航">
                   <header>
-                    <strong>字段分组</strong>
-                    <span>{{ formDesignerGroupNavigatorItems.length }} 个分组</span>
+                    <strong>分组导航</strong>
+                    <span>点选分组定位画布</span>
                   </header>
                   <button
                     v-for="item in formDesignerGroupNavigatorItems"
@@ -12233,8 +12240,13 @@ onBeforeUnmount(() => {
 
 .contract-form-designer-sidebar {
   display: grid;
-  gap: 10px;
+  gap: 0;
   align-content: start;
+  min-width: 0;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-bg);
+  overflow: hidden;
 }
 
 .form-grid--designer-workspace .contract-form-designer-sidebar {
@@ -12246,6 +12258,45 @@ onBeforeUnmount(() => {
   overflow: auto;
 }
 
+.contract-form-designer-sidebar-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.contract-form-designer-sidebar-head div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.contract-form-designer-sidebar-head span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-form-designer-sidebar-head strong {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+}
+
+.contract-form-designer-sidebar-head em {
+  flex: 0 0 auto;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
 .contract-form-field-navigator {
   display: grid;
   gap: 6px;
@@ -12253,9 +12304,7 @@ onBeforeUnmount(() => {
   max-height: calc(100vh - 220px);
   overflow: auto;
   padding: 10px;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 8px;
-  background: var(--sc-app-bg);
+  background: transparent;
 }
 
 .contract-form-field-navigator header {
@@ -12331,9 +12380,8 @@ onBeforeUnmount(() => {
   gap: 10px;
   align-content: start;
   padding: 10px;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 8px;
-  background: var(--sc-app-bg);
+  border-top: 1px solid var(--sc-app-border);
+  background: transparent;
 }
 
 .contract-form-layout-tools header {
