@@ -1000,6 +1000,23 @@ const rootMenu = computed(() => (
     ? menus.value.find((menu) => menu.xmlid === rootMenuXmlid.value) || null
     : null
 ));
+const BUSINESS_MENU_ROOT_LABEL = '智慧施工管理平台';
+
+function isBusinessRootNode(node: NavNode) {
+  const label = navMenuLabel(node);
+  return label === BUSINESS_MENU_ROOT_LABEL || Number(navMenuId(node)) === Number(rootMenu.value?.id || 0);
+}
+
+function scopedNavigationTree() {
+  const nodes = Array.isArray(session.menuTree) ? (session.menuTree as NavNode[]) : [];
+  const explicitRootId = Number(rootMenu.value?.id || 0);
+  const matched = nodes.find((node) => (
+    (explicitRootId && Number(navMenuId(node)) === explicitRootId)
+    || isBusinessRootNode(node)
+  ));
+  return matched ? [matched] : nodes.filter((node) => navMenuLabel(node) !== '系统菜单');
+}
+
 const navigationMenus = computed(() => flattenMenuTree(tree.value));
 const navigationParentMenus = computed(() => navigationMenus.value.filter((menu) => (
   Boolean(menu.children?.length) || !String(menu.action || '').trim()
@@ -1899,7 +1916,7 @@ function collectNavigationMenuIds() {
       }
     });
   };
-  walk(session.menuTree || []);
+  walk(scopedNavigationTree());
   return ids;
 }
 
@@ -1930,6 +1947,7 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
   try {
     const payload = await loadMenuConfigurationPanel({
       menu_ids: collectNavigationMenuIds(),
+      root_menu_id: Number(rootMenu.value?.id || 0) || undefined,
       root_menu_xmlid: rootMenuXmlid.value || undefined,
     });
     auditResult.value = null;
@@ -1946,7 +1964,7 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
       });
     });
     const usedMenuIds = new Set<number>();
-    const navOrderedTree = buildTreeFromNavigation(session.menuTree as NavNode[], menuById, menuByLabel, usedMenuIds);
+    const navOrderedTree = buildTreeFromNavigation(scopedNavigationTree(), menuById, menuByLabel, usedMenuIds);
     const completeTree = attachMissingConfiguredMenus(
       navOrderedTree,
       payload.menus || [],

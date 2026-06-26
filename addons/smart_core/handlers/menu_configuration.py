@@ -187,7 +187,12 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         if not root_menu_xmlid:
             return 0
         menu = _xmlid_record(self.env, root_menu_xmlid)
-        return int(menu.id or 0) if menu and getattr(menu, "_name", "") == "ir.ui.menu" else 0
+        if menu and getattr(menu, "_name", "") == "ir.ui.menu":
+            return int(menu.id or 0)
+        if root_menu_xmlid == "smart_construction_core.menu_sc_root":
+            fallback = self.env["ir.ui.menu"].sudo().search([("name", "=", "智慧施工管理平台")], limit=1)
+            return int(fallback.id or 0) if fallback else 0
+        return 0
 
     def _expand_with_parent_ids(self, menus) -> list[int]:
         ids = set(int(menu.id) for menu in menus)
@@ -343,10 +348,11 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 ("company_id", "=", company_id),
                 ("active", "=", True),
                 ("menu_id", "!=", False),
+                ("menu_id", "in", requested_menu_ids),
             ])
-            policy_menu_ids = policy_records.mapped("menu_id").ids
-            target_parent_ids = policy_records.mapped("target_parent_menu_id").ids
-            requested_menus = MenuAll.browse(sorted(set(requested_menu_ids + policy_menu_ids + target_parent_ids))).exists()
+            target_parent_records = policy_records.mapped("target_parent_menu_id")
+            target_parent_ids = getattr(target_parent_records, "ids", target_parent_records or [])
+            requested_menus = MenuAll.browse(sorted(set(requested_menu_ids + target_parent_ids))).exists()
             menu_ids_with_parents = self._expand_with_parent_ids(requested_menus)
             menus = MenuAll.browse(menu_ids_with_parents).exists().sorted(
                 key=lambda menu: (
