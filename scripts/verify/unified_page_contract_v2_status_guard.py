@@ -53,15 +53,26 @@ def compare_subset(actual: dict[str, Any], expected: dict[str, Any], path: str, 
             fail(errors, f"{path}.{key}: expected {expected_value!r}, got {actual.get(key)!r}")
 
 
+def registry_path(value: dict[str, Any], path: tuple[str, ...]) -> Any:
+    node: Any = value
+    for item in path:
+        if not isinstance(node, dict):
+            return None
+        node = node.get(item)
+    return node
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixture", required=True, type=Path)
     parser.add_argument("--snapshot", required=True, type=Path)
+    parser.add_argument("--enum-registry", required=True, type=Path)
     args = parser.parse_args()
 
     target = load_status_module()
     source = load_json(args.fixture)
     snapshot = load_json(args.snapshot)
+    registry = load_json(args.enum_registry)
     status = target.build_status_contract_v2(source, render_profile="edit")
     expected = snapshot.get("expected") if isinstance(snapshot.get("expected"), dict) else {}
     errors: list[str] = []
@@ -70,7 +81,13 @@ def main() -> int:
         if key not in status:
             fail(errors, f"statusContract missing {key}")
 
+    auth_levels = registry_path(registry, ("authLevel",))
+    if set(getattr(target, "AUTH_LEVELS", set())) != set(auth_levels or []):
+        fail(errors, "status AUTH_LEVELS must match enum_registry.authLevel")
+
     compare_subset(status.get("globalStatus") or {}, expected.get("globalStatus") or {}, "globalStatus", errors)
+    if (status.get("globalStatus") or {}).get("pageAuth") not in auth_levels:
+        fail(errors, "globalStatus.pageAuth must be listed in enum_registry.authLevel")
 
     actual_widgets = index_by(status.get("widgetStatus") or [], "widgetId")
     for widget_id, expected_row in (expected.get("widgetStatus") or {}).items():
@@ -103,8 +120,8 @@ def main() -> int:
     for row in status.get("widgetStatus") or []:
         if row.get("reason_code") or row.get("reason"):
             fail(errors, f"{row.get('widgetId')}: reason must be normalized to reasonCode")
-        if row.get("auth") not in {"none", "read", "edit", "admin"}:
-            fail(errors, f"{row.get('widgetId')}: invalid auth {row.get('auth')!r}")
+        if row.get("auth") not in auth_levels:
+            fail(errors, f"{row.get('widgetId')}: auth must be listed in enum_registry.authLevel")
 
     if errors:
         print("Unified Page Contract v2+ status guard failed:")
