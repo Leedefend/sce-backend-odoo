@@ -2254,7 +2254,36 @@ class UiContractV2Handler(BaseIntentHandler):
         field_labels: dict[str, str] = {}
         section_titles: list[str] = []
         field_groups: dict[str, list[str]] = {}
+        group_columns: dict[str, int] = {}
+        form_columns = 0
         config_summaries: list[dict[str, Any]] = []
+
+        def normalize_columns(value: Any) -> int:
+            try:
+                columns = int(value)
+            except (TypeError, ValueError):
+                return 0
+            return columns if columns > 0 else 0
+
+        def collect_layout_group_columns(nodes: Any) -> None:
+            for item in nodes if isinstance(nodes, list) else []:
+                if not isinstance(item, dict):
+                    continue
+                node_type = str(item.get("type") or item.get("kind") or "").strip().lower()
+                title = str(item.get("string") or item.get("label") or item.get("title") or item.get("name") or "").strip()
+                attrs = item.get("attributes") if isinstance(item.get("attributes"), dict) else {}
+                columns = (
+                    normalize_columns(item.get("columns"))
+                    or normalize_columns(item.get("cols"))
+                    or normalize_columns(item.get("col"))
+                    or normalize_columns(attrs.get("columns"))
+                    or normalize_columns(attrs.get("cols"))
+                    or normalize_columns(attrs.get("col"))
+                )
+                if node_type == "group" and title and columns:
+                    group_columns[title] = columns
+                for child_key in ("children", "pages", "tabs", "nodes", "items"):
+                    collect_layout_group_columns(item.get(child_key))
         try:
             view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
             configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
@@ -2277,8 +2306,10 @@ class UiContractV2Handler(BaseIntentHandler):
             orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
             views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
             form_spec = views.get("form") if isinstance(views.get("form"), dict) else {}
+            form_columns = normalize_columns(form_spec.get("columns")) or normalize_columns(form_spec.get("cols")) or form_columns
             if isinstance(form_spec.get("layout"), list) and form_spec.get("layout"):
                 form_layout_overlay = True
+                collect_layout_group_columns(form_spec.get("layout"))
             rows = form_spec.get("fields") if isinstance(form_spec.get("fields"), list) else []
             for row in rows:
                 if isinstance(row, dict):
@@ -2317,6 +2348,9 @@ class UiContractV2Handler(BaseIntentHandler):
                     for name in fields:
                         if name not in existing:
                             existing.append(name)
+                    columns = normalize_columns(row.get("columns")) or normalize_columns(row.get("cols"))
+                    if columns:
+                        group_columns[title] = columns
         applied = bool(view_governance.get("applied") or business_contracts or legacy_overlay or field_names)
         if not applied:
             return {}
@@ -2330,6 +2364,8 @@ class UiContractV2Handler(BaseIntentHandler):
             "field_labels": field_labels,
             "section_titles": section_titles,
             "field_groups": field_groups,
+            "form_columns": form_columns,
+            "group_columns": group_columns,
         }
 
     def _build_form_structure_contract(
@@ -2413,10 +2449,23 @@ class UiContractV2Handler(BaseIntentHandler):
             if isinstance(governance, dict) and isinstance(governance.get("field_groups"), dict)
             else {}
         )
+        configured_group_columns = (
+            governance.get("group_columns")
+            if isinstance(governance, dict) and isinstance(governance.get("group_columns"), dict)
+            else {}
+        )
         if configured_field_groups:
             group_rows: list[dict[str, Any]] = []
             configured_roles: dict[str, dict[str, Any]] = {}
             assigned_configured_fields: set[str] = set()
+
+            def configured_columns(title: str) -> int:
+                try:
+                    columns = int(configured_group_columns.get(title) or 0)
+                except (TypeError, ValueError):
+                    columns = 0
+                return columns if columns > 0 else 0
+
             for index, (raw_title, raw_fields) in enumerate(configured_field_groups.items(), start=1):
                 title = str(raw_title or "").strip() or "业务配置字段"
                 names = [
@@ -2439,13 +2488,18 @@ class UiContractV2Handler(BaseIntentHandler):
                         "slot": "configured_form",
                         "group": group_name,
                     }
-                group_rows.append({
+                row = {
                     "name": group_name,
                     "title": title,
                     "role": "configured_field_group",
                     "fieldRefs": refs,
                     "fieldLabels": {name: field_display_label(name) for name in refs},
-                })
+                }
+                columns = configured_columns(title)
+                if columns:
+                    row["cols"] = columns
+                    row["columns"] = columns
+                group_rows.append(row)
             if group_rows:
                 return {
                     "source": "ui.contract.v2.form_structure_contract",

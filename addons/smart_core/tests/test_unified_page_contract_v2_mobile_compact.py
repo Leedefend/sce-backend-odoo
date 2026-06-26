@@ -678,6 +678,68 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
             ["name", "company_type", "vat"],
         )
 
+    def test_form_structure_contract_preserves_configured_group_columns(self):
+        source = {
+            "model": "res.partner",
+            "view_type": "form",
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "children": [
+                                {
+                                    "type": "group",
+                                    "name": "native_group",
+                                    "cols": 2,
+                                    "children": [
+                                        {"type": "field", "name": "name"},
+                                        {"type": "field", "name": "company_type"},
+                                        {"type": "field", "name": "vat"},
+                                    ],
+                                }
+                            ],
+                        }
+                    ]
+                }
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "名称"},
+                "company_type": {"name": "company_type", "type": "selection", "string": "客户类型"},
+                "vat": {"name": "vat", "type": "char", "string": "税号"},
+            },
+            "form_structure_contract": {
+                "source": "ui.contract.v2.form_structure_contract",
+                "mode": "business_task_form",
+                "slots": [
+                    {
+                        "slot": "configured_form",
+                        "title": "表单字段",
+                        "groups": [
+                            {
+                                "name": "configured_group_1",
+                                "title": "基础信息",
+                                "cols": 3,
+                                "fieldRefs": ["name", "company_type", "vat"],
+                            },
+                        ],
+                    },
+                ],
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.structure.configured.columns",
+        )
+
+        group = full["layoutContract"]["containerTree"][0]["children"][0]
+        self.assertEqual(group["label"], "基础信息")
+        self.assertEqual(group["cols"], 3)
+        self.assertEqual(group["attributes"]["col"], "3")
+
     def test_ui_contract_v2_preserves_relation_entry_search_dialog(self):
         search_dialog = {
             "columns": [

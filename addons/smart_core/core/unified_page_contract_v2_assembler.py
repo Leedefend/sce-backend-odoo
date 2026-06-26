@@ -1524,7 +1524,8 @@ def _form_structure_contract_layout_rows(
         if not children:
             return {}
         child_names = [row.get("name") for row in children if _text(row.get("name"))]
-        inherited_columns = next(
+        configured_columns = node_layout_columns(group)
+        inherited_columns = configured_columns or next(
             (
                 row.get("cols")
                 for row in native_group_layouts
