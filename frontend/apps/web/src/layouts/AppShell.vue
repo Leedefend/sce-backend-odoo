@@ -1450,14 +1450,14 @@ async function logout() {
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   background: var(--sc-app-bg);
   color: var(--ink);
   font-family: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
 }
 
 .sidebar {
-  padding: 18px 14px 14px;
+  padding: 18px 16px 14px;
   display: grid;
   grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
   gap: 10px;
@@ -1517,10 +1517,10 @@ async function logout() {
 }
 
 .nav-shell {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 0;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
+  padding: 8px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 6px;
@@ -1530,7 +1530,7 @@ async function logout() {
 
 .search input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 9px 10px;
   border-radius: 6px;
   border: 1px solid var(--sc-app-border);
   background: var(--sc-app-input-bg);
@@ -1893,7 +1893,7 @@ async function logout() {
 .menu {
   overflow: auto;
   padding-right: 2px;
-  padding-top: 0;
+  padding-top: 2px;
   min-height: 0;
   display: flex;
   flex-direction: column;
