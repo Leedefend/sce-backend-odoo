@@ -73,6 +73,25 @@ FORMAL_V2_FIELD_PATHS = {
     "$defs.dataMeta.properties.fieldGroups",
 }
 
+SCHEMA_ENUM_REGISTRY_MAP = {
+    ("pageInfo", "viewType"): ("viewType",),
+    ("pageInfo", "layoutType"): ("layoutType",),
+    ("pageInfo", "renderMode"): ("renderMode",),
+    ("pageInfo", "clientType"): ("clientType", "stable"),
+    ("layoutContract", "layoutType"): ("layoutType",),
+    ("layoutContract", "adaptMode"): ("adaptMode",),
+    ("container", "containerType"): ("containerType",),
+    ("widget", "widgetType"): ("widgetType",),
+    ("widgetStatus", "auth"): ("authLevel",),
+    ("actionRule", "triggerType"): ("triggerType",),
+    ("actionRule", "dispatchMode"): ("dispatchMode",),
+    ("actionRule", "targetScope"): ("targetScope",),
+    ("actionRule", "refreshMode"): ("refreshMode",),
+    ("runtimeContract", "patchStrategy"): ("patchStrategy",),
+    ("runtimeContract", "cachePolicy"): ("cachePolicy",),
+    ("runtimeContract", "renderStrategy"): ("renderStrategy",),
+}
+
 FORBIDDEN_FORMAL_SCHEMA_KEYS = {
     "list_profile",
     "delete_policy",
@@ -166,6 +185,15 @@ def dict_path(value: dict[str, Any], path: str) -> Any:
     return node
 
 
+def registry_path(value: dict[str, Any], path: tuple[str, ...]) -> Any:
+    node: Any = value
+    for item in path:
+        if not isinstance(node, dict):
+            return None
+        node = node.get(item)
+    return node
+
+
 def validate_schema(schema: dict[str, Any], registry: dict[str, Any], errors: list[str]) -> None:
     required = set(schema.get("required", []))
     if required != TOP_LEVEL_KEYS:
@@ -193,13 +221,24 @@ def validate_schema(schema: dict[str, Any], registry: dict[str, Any], errors: li
             if key in FORBIDDEN_FORMAL_SCHEMA_KEYS:
                 fail(errors, f"schema must not declare compatibility field {key!r} at {node_path}")
 
-    stable_clients = registry.get("clientType", {}).get("stable", [])
-    page_info = schema.get("$defs", {}).get("pageInfo", {})
-    schema_clients = (
-        page_info.get("properties", {}).get("clientType", {}).get("enum", [])
-    )
-    if schema_clients != stable_clients:
-        fail(errors, "schema clientType enum must match enum_registry.clientType.stable")
+    schema_defs = schema.get("$defs", {})
+    for (def_name, field_name), registry_key_path in sorted(SCHEMA_ENUM_REGISTRY_MAP.items()):
+        schema_enum = (
+            schema_defs.get(def_name, {})
+            .get("properties", {})
+            .get(field_name, {})
+            .get("enum")
+        )
+        registry_enum = registry_path(registry, registry_key_path)
+        if not isinstance(schema_enum, list):
+            fail(errors, f"schema $defs.{def_name}.properties.{field_name}.enum is required")
+            continue
+        if schema_enum != registry_enum:
+            fail(
+                errors,
+                f"schema $defs.{def_name}.properties.{field_name}.enum must match "
+                f"enum_registry.{'.'.join(registry_key_path)}",
+            )
 
     patch_ops = set(registry.get("patchOperation", []))
     expected_patch_ops = {"replace", "merge", "append", "remove", "reorder", "invalidate"}
