@@ -740,6 +740,74 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual(group["cols"], 3)
         self.assertEqual(group["attributes"]["col"], "3")
 
+    def test_form_structure_columns_apply_to_governed_form_layout(self):
+        source = {
+            "model": "res.partner",
+            "view_type": "form",
+            "governance": {
+                "view_orchestration": {
+                    "applied": True,
+                    "form_layout_overlay": True,
+                }
+            },
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "children": [
+                                {
+                                    "type": "group",
+                                    "name": "configured_business_fields",
+                                    "string": "业务配置字段",
+                                    "columns": 3,
+                                    "children": [
+                                        {"type": "field", "name": "name"},
+                                        {"type": "field", "name": "company_type"},
+                                    ],
+                                }
+                            ],
+                        }
+                    ]
+                }
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "名称"},
+                "company_type": {"name": "company_type", "type": "selection", "string": "客户类型"},
+            },
+            "form_structure_contract": {
+                "source": "ui.contract.v2.form_structure_contract",
+                "mode": "business_task_form",
+                "columns": 2,
+                "slots": [
+                    {
+                        "slot": "configured_form",
+                        "title": "表单字段",
+                        "groups": [
+                            {
+                                "name": "configured_group_1",
+                                "title": "业务配置字段",
+                                "fieldRefs": ["name", "company_type"],
+                            },
+                        ],
+                    },
+                ],
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.structure.columns.overlay",
+        )
+
+        group = full["layoutContract"]["containerTree"][0]["children"][0]
+        self.assertEqual(group["label"], "业务配置字段")
+        self.assertEqual(group["cols"], 2)
+        self.assertEqual(group["columns"], 2)
+        self.assertEqual(group["attributes"]["col"], "2")
+
     def test_ui_contract_v2_preserves_relation_entry_search_dialog(self):
         search_dialog = {
             "columns": [

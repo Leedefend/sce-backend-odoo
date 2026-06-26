@@ -2501,11 +2501,17 @@ class UiContractV2Handler(BaseIntentHandler):
                     row["columns"] = columns
                 group_rows.append(row)
             if group_rows:
+                form_columns = 0
+                try:
+                    form_columns = int(governance.get("form_columns") or 0) if isinstance(governance, dict) else 0
+                except (TypeError, ValueError):
+                    form_columns = 0
                 return {
                     "source": "ui.contract.v2.form_structure_contract",
                     "structureVersion": "1.0",
                     "model": model,
                     "viewType": "form",
+                    **({"columns": form_columns} if form_columns > 0 else {}),
                     "mode": "business_task_form",
                     "layoutPolicy": "business_config_sections",
                     "objectProfile": {

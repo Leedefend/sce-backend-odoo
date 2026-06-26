@@ -659,6 +659,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         ]
         contract["statusContract"]["containerStatus"].append({"containerId": container_id, "visible": True, "disabled": False})
     if layout_type == "form":
+        _apply_form_structure_columns_to_tree(container_tree, form_structure_contract)
         container_tree = _remove_attachment_field_nodes(container_tree, fields_by_name)
     _standardize_business_form_default_tabs(
         container_tree,
@@ -1684,6 +1685,108 @@ def _form_structure_contract_layout_rows(
         },
     }
     return header_rows + [sheet]
+
+
+def _form_structure_layout_columns(value: Any) -> int | None:
+    try:
+        columns = int(value)
+    except (TypeError, ValueError):
+        return None
+    return columns if columns > 0 else None
+
+
+def _form_structure_node_columns(node: dict[str, Any]) -> int | None:
+    attrs = _dict(node.get("attributes") or node.get("attrs"))
+    return (
+        _form_structure_layout_columns(node.get("cols"))
+        or _form_structure_layout_columns(node.get("columns"))
+        or _form_structure_layout_columns(node.get("col"))
+        or _form_structure_layout_columns(attrs.get("columns"))
+        or _form_structure_layout_columns(attrs.get("cols"))
+        or _form_structure_layout_columns(attrs.get("col"))
+    )
+
+
+def _form_structure_field_refs(node: dict[str, Any]) -> list[str]:
+    refs: list[str] = []
+
+    def collect(value: Any) -> None:
+        for item in _list(value):
+            if not isinstance(item, dict):
+                continue
+            node_type = _text(item.get("type") or item.get("kind")).lower()
+            name = _text(item.get("name") or item.get("field"))
+            if node_type == "field" and name and name not in refs:
+                refs.append(name)
+            for key in ("children", "pages", "tabs", "nodes", "items", "groups", "fields"):
+                collect(item.get(key))
+
+    collect(node.get("children"))
+    return refs
+
+
+def _apply_form_structure_columns_to_tree(container_tree: list[dict[str, Any]], structure_contract: dict[str, Any]) -> None:
+    if not container_tree or not structure_contract:
+        return
+    default_columns = _form_structure_node_columns(structure_contract)
+    group_policies: list[dict[str, Any]] = []
+    for slot in _list(structure_contract.get("slots")):
+        if not isinstance(slot, dict):
+            continue
+        for group in _list(slot.get("groups")):
+            if not isinstance(group, dict):
+                continue
+            columns = _form_structure_node_columns(group)
+            if not columns:
+                continue
+            group_policies.append({
+                "title": _text(group.get("title") or group.get("label") or group.get("string") or group.get("name")),
+                "fields": [
+                    _text(item)
+                    for item in _list(group.get("fieldRefs") or group.get("field_refs") or group.get("fields"))
+                    if _text(item)
+                ],
+                "columns": columns,
+            })
+
+    def apply(node: dict[str, Any]) -> None:
+        node_type = _text(node.get("type") or node.get("kind") or node.get("containerType")).lower()
+        if node_type == "group":
+            title = _text(node.get("string") or node.get("label") or node.get("title") or node.get("name"))
+            node_fields = _form_structure_field_refs(node)
+            columns = next(
+                (
+                    int(row["columns"])
+                    for row in group_policies
+                    if row.get("title") and row.get("title") == title
+                ),
+                None,
+            )
+            if columns is None and node_fields:
+                node_field_set = set(node_fields)
+                columns = next(
+                    (
+                        int(row["columns"])
+                        for row in group_policies
+                        if row.get("fields") and set(row.get("fields") or []) == node_field_set
+                    ),
+                    None,
+                )
+            columns = columns or default_columns
+            if columns:
+                node["cols"] = columns
+                node["columns"] = columns
+                attrs = _dict(node.get("attributes") or node.get("attrs"))
+                attrs["col"] = str(columns)
+                node["attributes"] = attrs
+        for key in ("children", "pages", "tabs", "nodes", "items", "groups"):
+            for child in _list(node.get(key)):
+                if isinstance(child, dict):
+                    apply(child)
+
+    for row in container_tree:
+        if isinstance(row, dict):
+            apply(row)
 
 
 def _is_attachment_field_name(name: str, fields_by_name: dict[str, dict[str, Any]]) -> bool:
