@@ -631,7 +631,7 @@ class MenuConfigurationCreateHandler(MenuConfigurationSaveHandler):
             Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
             policy_vals = self._values_for_row({
                 "menu_id": int(menu.id),
-                "target_parent_menu_id": 0,
+                "target_parent_menu_id": int(parent.id) if parent else 0,
                 "custom_label": custom_label,
                 "sequence_override": sequence,
                 "visible": visible,

@@ -659,6 +659,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(created.action, "ir.actions.act_window,88")
         self.assertEqual(len(policies), 1)
         self.assertEqual(policies[0].menu_id.id, created.id)
+        self.assertEqual(policies[0].target_parent_menu_id.id, 20)
         self.assertEqual(policies[0].sequence_override, 30)
         self.assertEqual(len(contracts), 1)
         self.assertEqual(contracts[0].contract_json["menu_orchestration"]["policy_count"], 1)
@@ -992,6 +993,58 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(prepaid_node["sequence"], 110)
         self.assertEqual(prepaid_node["parent_id"], 840)
         self.assertEqual(stats["moved_count"], 2)
+
+    def test_runtime_overlay_inserts_config_created_root_child(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        office = _Menu(842, "综合办公", parent=root, sequence=70)
+        menus = _MenuModel([root, office])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                842: {
+                    "active": True,
+                    "menu_id": 842,
+                    "menu_label": "综合办公",
+                    "visible": True,
+                    "target_parent_menu_id": 291,
+                    "sequence_override": 70,
+                },
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "sequence": 30,
+                        "children": [],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        office_node = next(child for child in root_node["children"] if child["menu_id"] == 842)
+        self.assertEqual(office_node["name"], "综合办公")
+        self.assertEqual(office_node["parent_id"], 291)
+        self.assertEqual(office_node["sequence"], 70)
+        self.assertEqual(stats["moved_count"], 1)
 
     def test_runtime_overlay_builds_children_for_missing_moved_group(self):
         module = _load_policy_model()

@@ -12,7 +12,7 @@
         </button>
         <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel()">刷新</button>
         <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('custom')">
-          新增菜单
+          新增一级菜单
         </button>
         <button type="button" class="primary" :disabled="!dirtyCount || saving" @click="saveChanges">
           {{ saving ? '保存中...' : '保存修改' }}
@@ -1307,7 +1307,7 @@ function upsertCreatedMenu(menu: MenuConfigMenu, policy?: MenuConfigPolicy) {
 
 function resetCreateForm() {
   createForm.name = '';
-  createForm.parent_menu_id = selectedMenu.value?.id || defaultCreateParentId.value;
+  createForm.parent_menu_id = defaultCreateParentId.value;
   createForm.source_menu_id = 0;
   createForm.sequence = 0;
   createForm.visible = true;
