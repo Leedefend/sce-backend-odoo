@@ -705,6 +705,92 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertFalse(result["data"]["policies"][999]["visible"])
         self.assertEqual(result["meta"]["scoped_menu_count"], 4)
 
+    def test_menu_config_panel_excludes_hidden_policy_outside_business_root(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        business_root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=business_root, sequence=20)
+        visible_entry = _Menu(379, "项目台账", parent=project_center, sequence=10)
+        settings_root = _Menu(1, "设置")
+        technical_menu = _Menu(42, "菜单项", parent=settings_root, sequence=10)
+        menus = _MenuModel([business_root, project_center, visible_entry, settings_root, technical_menu])
+        policies = _PolicyModel(
+            [
+                _Policy(1, business_root, company=company),
+                _Policy(2, project_center, company=company),
+                _Policy(3, visible_entry, company=company),
+                _Policy(4, technical_menu, company=company, visible=False),
+            ],
+            user=user,
+        )
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([]),
+                "ui.menu.config.policy": policies,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationLoadHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "root_menu_id": 291,
+                "menu_ids": [291, 292, 379],
+            },
+        )
+        handler._group_option_records = lambda menus, policies: _RecordSet([])
+        handler._expand_with_parent_ids = lambda menus: [int(menu.id) for menu in menus]
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 292, 379])
+        self.assertEqual(set(result["data"]["policies"].keys()), {291, 292, 379})
+        self.assertNotIn(42, {row["id"] for row in result["data"]["menus"]})
+
+    def test_menu_config_save_rejects_menu_outside_business_root(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        business_root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=business_root, sequence=20)
+        settings_root = _Menu(1, "设置")
+        technical_menu = _Menu(42, "菜单项", parent=settings_root, sequence=10)
+        policies = _PolicyModel([], user=user)
+        contracts = _ContractModel([])
+        env = _Env(
+            {
+                "ir.ui.menu": _MenuModel([business_root, project_center, settings_root, technical_menu]),
+                "ui.menu.config.policy": policies,
+                "ui.business.config.contract": contracts,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationSaveHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "root_menu_id": 291,
+                "rows": [
+                    {
+                        "menu_id": 42,
+                        "target_parent_menu_id": 1,
+                        "visible": False,
+                    }
+                ],
+            },
+        )
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["reason_code"], "MENU_CONFIG_SCOPE_VIOLATION")
+        self.assertEqual(len(policies), 0)
+        self.assertEqual(len(contracts), 0)
+
     def test_menu_config_save_deactivates_superseded_same_scope_policy(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
         user = _User([])
