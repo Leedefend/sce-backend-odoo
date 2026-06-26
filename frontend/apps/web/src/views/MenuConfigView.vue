@@ -1004,9 +1004,13 @@ const navigationMenus = computed(() => flattenMenuTree(tree.value));
 const navigationParentMenus = computed(() => navigationMenus.value.filter((menu) => (
   Boolean(menu.children?.length) || !String(menu.action || '').trim()
 )));
+const configuredParentMenus = computed(() => menus.value.filter((menu) => (
+  !isRuntimeMenuGroup(menu) && (Boolean(menu.children?.length) || !String(menu.action || '').trim())
+)));
 const createParentOptions = computed(() => {
   const byId = new Map<number, MenuConfigMenu>();
   if (rootMenu.value) byId.set(Number(rootMenu.value.id), rootMenu.value);
+  configuredParentMenus.value.forEach((menu) => byId.set(Number(menu.id), menu));
   navigationParentMenus.value.forEach((menu) => byId.set(Number(menu.id), menu));
   return Array.from(byId.values()).sort((a, b) => parentOptionSortKey(a).localeCompare(parentOptionSortKey(b), 'zh-Hans-CN'));
 });
@@ -1757,7 +1761,7 @@ function buildTreeFromNavigation(
     if (menu && usedMenuIds.has(menu.id)) {
       menu = undefined;
     }
-    if (!menu) {
+    if (!menu && !menuId) {
       const candidates = menuByLabel.get(normalizedMenuLabel(label)) || [];
       menu = candidates.find((candidate) => !usedMenuIds.has(candidate.id));
     }
