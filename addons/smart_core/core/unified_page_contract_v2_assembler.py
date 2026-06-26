@@ -95,6 +95,11 @@ def _text(value: Any, default: str = "") -> str:
     return text or default
 
 
+def _formal_container_type(value: Any, default: str = "section") -> str:
+    node_type = _text(value, default).lower()
+    return "section" if node_type == "sheet" else node_type
+
+
 def _stable_id(value: Any, fallback: str) -> str:
     raw = _text(value, fallback)
     out = []
@@ -611,7 +616,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
                 "type": "sheet",
                 "name": sheet_id,
                 "containerId": sheet_id,
-                "containerType": "sheet",
+                "containerType": _formal_container_type("sheet"),
                 "string": contract["pageInfo"]["pageName"],
                 "label": contract["pageInfo"]["pageName"],
                 "span": 12,
@@ -1120,7 +1125,7 @@ def _normalize_native_layout_nodes(
         if not container_id:
             container_id = _stable_id(node.get("title") or node.get("string") or node.get("label") or node_type, node_type)
         node["containerId"] = container_id
-        node["containerType"] = node_type
+        node["containerType"] = _formal_container_type(node_type)
         node.setdefault("title", _text(node.get("title") or node.get("string") or node.get("label") or container_id, container_id))
         node.setdefault("label", _text(node.get("label") or node.get("string") or node.get("title") or container_id, container_id))
         container_status.append({"containerId": container_id, "visible": not bool(invisible), "disabled": False})
