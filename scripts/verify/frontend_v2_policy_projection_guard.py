@@ -237,6 +237,36 @@ FORBIDDEN_STRICT_DATA_META_ALIASES = (
     "'legacy_contract' + '_projection'",
 )
 
+FORBIDDEN_STRICT_WIDGET_ALIASES = (
+    "raw.fieldInfo",
+    "raw.field_info",
+    "raw.component_config",
+    "fieldInfo.componentConfig",
+    "fieldInfo.component_config",
+    "fieldInfo.relationEntry",
+    "fieldInfo.relation_entry",
+    "componentConfig.relationEntry",
+    "componentConfig.relation_entry",
+    "fieldInfo.widgetOptions",
+    "fieldInfo.widget_options",
+    "fieldInfo.options",
+    "componentConfig.widgetOptions",
+    "componentConfig.widget_options",
+    "['field_code', 'name', 'field']",
+    "['widget_id', 'id']",
+    "['widget_type', 'widget', 'type']",
+    "['component_key']",
+    "fieldInfo.componentKey",
+    "fieldInfo.component_key",
+    "['string', 'title']",
+    "fieldInfo.label",
+    "fieldInfo.string",
+    "['field_type', 'ttype']",
+    "fieldInfo.type",
+    "fieldInfo.ttype",
+    "fieldInfo.relation",
+)
+
 FORBIDDEN_STRICT_STATUS_CONTRACT_ALIASES = (
     "['global_status']",
     "['widget_status']",
@@ -365,6 +395,12 @@ def main() -> int:
         if token not in data_meta_decoder:
             violations.append(
                 f"{_relative(STRICT_SCHEMA)}: strict V2 dataMeta decoder must reject forbidden key {token}"
+            )
+    widget_decoder = _function_body(strict_schema_source, "decodeWidget")
+    for token in FORBIDDEN_STRICT_WIDGET_ALIASES:
+        if token in widget_decoder:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 widget decoder must not accept compatibility alias {token}"
             )
     status_decoder_source = "\n".join(
         _function_body(strict_schema_source, name)

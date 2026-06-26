@@ -296,45 +296,22 @@ function decodeWidget(raw: unknown, path: string, issues: DecodeIssue[]): Contra
     issues.push({ path, message: 'widget must be an object' });
     return null;
   }
-  const fieldInfo = asRecord(raw.fieldInfo || raw.field_info);
-  const componentConfig = asRecord(raw.componentConfig || raw.component_config || fieldInfo.componentConfig || fieldInfo.component_config);
-  const relationEntry = asRecord(fieldInfo.relationEntry || fieldInfo.relation_entry || componentConfig.relationEntry || componentConfig.relation_entry);
-  const widgetOptions = asRecord(fieldInfo.widgetOptions || fieldInfo.widget_options || fieldInfo.options || componentConfig.widgetOptions || componentConfig.widget_options);
-  const fieldCode = optionalAliasedString(raw, 'fieldCode', ['field_code', 'name', 'field']) || asString(fieldInfo.name);
-  const widgetId = optionalAliasedString(raw, 'widgetId', ['widget_id', 'id']) || (fieldCode ? `field.${fieldCode}` : '');
-  const widgetType = (
-    optionalAliasedString(raw, 'widgetType', ['widget_type', 'widget', 'type'])
-    || asString(fieldInfo.widget)
-    || asString(fieldInfo.type)
-    || asString(fieldInfo.ttype)
-    || 'display'
-  );
-  const componentKey = (
-    optionalAliasedString(raw, 'componentKey', ['component_key'])
-    || asString(fieldInfo.componentKey)
-    || asString(fieldInfo.component_key)
-    || 'sc.display.text'
-  );
+  const componentConfig = requiredRecord(raw, 'componentConfig', path, issues);
+  const fieldCode = requiredString(raw, 'fieldCode', path, issues);
+  const widgetId = requiredString(raw, 'widgetId', path, issues);
+  const widgetType = requiredString(raw, 'widgetType', path, issues);
+  const componentKey = requiredString(raw, 'componentKey', path, issues);
   if (!widgetId || !fieldCode) return null;
-  const mergedComponentConfig = {
-    ...componentConfig,
-    ...(Array.isArray(fieldInfo.selection) && !Array.isArray(componentConfig.selection) ? { selection: fieldInfo.selection } : {}),
-    ...(Object.keys(relationEntry).length ? { relationEntry } : {}),
-    ...(Object.keys(widgetOptions).length ? { widgetOptions } : {}),
-  };
   return {
     widgetId,
     widgetType,
     fieldCode,
-    label: optionalAliasedString(raw, 'label', ['string', 'title']) || asString(fieldInfo.label) || asString(fieldInfo.string) || fieldCode,
+    label: requiredString(raw, 'label', path, issues),
     span: requiredIntegerInRange(raw, 'span', path, issues, 24),
     componentKey,
     capabilities: asStringArray(raw.capabilities),
-    componentConfig: mergedComponentConfig,
-    ...(optionalAliasedString(raw, 'fieldType', ['field_type', 'ttype']) || asString(fieldInfo.type) || asString(fieldInfo.ttype)
-      ? { fieldType: optionalAliasedString(raw, 'fieldType', ['field_type', 'ttype']) || asString(fieldInfo.type) || asString(fieldInfo.ttype) }
-      : {}),
-    ...(optionalString(raw, 'relation') || asString(fieldInfo.relation) ? { relation: optionalString(raw, 'relation') || asString(fieldInfo.relation) } : {}),
+    componentConfig,
+    ...(isRecord(raw.formStructureRole) ? { formStructureRole: raw.formStructureRole } : {}),
   };
 }
 
