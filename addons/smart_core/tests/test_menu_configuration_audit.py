@@ -1276,6 +1276,65 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(payment_node["name"], "付款申请明细")
         self.assertEqual(payment_node["sequence"], 25)
 
+    def test_runtime_overlay_materializes_missing_parent_and_child_once(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        finance = _Menu(306, "财务中心", parent=root, sequence=30)
+        deposit_group = _Menu(570, "保证金管理", parent=finance, sequence=60)
+        deposit_payment = _Menu(615, "付款还保证金", parent=deposit_group, sequence=80, action="ir.actions.act_window,814")
+        menus = _MenuModel([root, finance, deposit_group, deposit_payment])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([_ActionWindow(814, "sc.deposit.payment")]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                306: {"active": True, "menu_id": 306, "menu_label": "财务中心", "visible": True},
+                570: {"active": True, "menu_id": 570, "menu_label": "保证金管理", "visible": True, "sequence_override": 60},
+                615: {"active": True, "menu_id": 615, "menu_label": "付款还保证金", "visible": True, "sequence_override": 30},
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, _stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [{"menu_id": 306, "name": "财务中心", "children": []}],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        seen = []
+
+        def walk(nodes):
+            for node in nodes:
+                seen.append(node["menu_id"])
+                walk(node.get("children") or [])
+
+        walk(overlaid["tree"])
+        root_node = overlaid["tree"][0]
+        finance_node = next(child for child in root_node["children"] if child["menu_id"] == 306)
+        deposit_node = next(child for child in finance_node["children"] if child["menu_id"] == 570)
+        payment_node = next(child for child in deposit_node["children"] if child["menu_id"] == 615)
+        self.assertEqual(seen.count(615), 1)
+        self.assertEqual(payment_node["sequence"], 30)
+        self.assertEqual(payment_node["meta"]["parent_menu_id"], 570)
+
     def test_runtime_overlay_attaches_visible_child_to_nearest_visible_parent_when_parent_hidden(self):
         module = _load_policy_model()
         company = types.SimpleNamespace(id=7)

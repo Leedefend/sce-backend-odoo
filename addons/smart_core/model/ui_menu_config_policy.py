@@ -693,17 +693,6 @@ class UiMenuConfigPolicy(models.Model):
                 node["model"] = action_meta["model"]
             if action_meta.get("view_modes"):
                 node["view_modes"] = action_meta["view_modes"]
-            children = []
-            try:
-                child_menus = self.env["ir.ui.menu"].sudo().search([("parent_id", "=", menu_id)], order="sequence,id")
-            except Exception:
-                child_menus = []
-            for child_menu in child_menus:
-                child_policy = policies_by_menu.get(int(child_menu.id or 0))
-                child_node = build_missing_menu_node(child_menu, child_policy, seen)
-                if child_node is not None:
-                    children.append(child_node)
-            node["children"] = sort_children(children)
             return node
 
         def remove_node(nodes: list[dict], menu_id: int, source_menu=None, source_label: str = "") -> tuple[list[dict], dict | None]:
