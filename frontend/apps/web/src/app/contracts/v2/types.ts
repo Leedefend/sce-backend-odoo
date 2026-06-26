@@ -186,6 +186,14 @@ export interface ContractV2RuntimeContract {
   aiEnvelope?: ContractV2Dictionary;
 }
 
+export interface ContractV2Meta {
+  etag: string;
+  snapshotId: string;
+  traceId: string;
+  requestId: string;
+  sourceType: string;
+}
+
 export interface ContractV2Snapshot {
   pageInfo: ContractV2PageInfo;
   layoutContract: ContractV2LayoutContract;
@@ -193,7 +201,7 @@ export interface ContractV2Snapshot {
   actionContract: ContractV2ActionContract;
   dataContract: ContractV2DataContract;
   runtimeContract: ContractV2RuntimeContract;
-  meta: ContractV2Dictionary;
+  meta: ContractV2Meta;
   formStructureContract?: ContractV2Dictionary;
 }
 

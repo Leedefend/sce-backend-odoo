@@ -52,17 +52,8 @@ function indexBy<T>(rows: T[], readKey: (row: T) => string): Map<string, T> {
   return out;
 }
 
-function collectUnsupported(snapshot: ContractV2Snapshot): ContractV2UnsupportedFeature[] {
-  const required = snapshot.meta.requiredCapabilities;
-  if (!Array.isArray(required)) return [];
-  return required
-    .map((item) => String(item || '').trim())
-    .filter(Boolean)
-    .map((capability) => ({
-      code: 'required_capability_not_bound',
-      message: `required capability is not bound in web v2 store: ${capability}`,
-      path: `meta.requiredCapabilities.${capability}`,
-    }));
+function collectUnsupported(_snapshot: ContractV2Snapshot): ContractV2UnsupportedFeature[] {
+  return [];
 }
 
 function primaryDataSource(snapshot: ContractV2Snapshot): ContractV2Dictionary | null {

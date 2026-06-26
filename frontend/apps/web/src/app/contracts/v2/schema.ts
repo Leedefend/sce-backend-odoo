@@ -15,6 +15,7 @@ import type {
   ContractV2GlobalStatus,
   ContractV2LayoutType,
   ContractV2LayoutContract,
+  ContractV2Meta,
   ContractV2PageInfo,
   ContractV2CachePolicy,
   ContractV2PatchOperation,
@@ -627,6 +628,16 @@ function decodeRuntimeContract(source: ContractV2Dictionary, issues: DecodeIssue
   };
 }
 
+function decodeMeta(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2Meta {
+  return {
+    etag: requiredString(source, 'etag', 'meta', issues),
+    snapshotId: requiredString(source, 'snapshotId', 'meta', issues),
+    traceId: requiredString(source, 'traceId', 'meta', issues),
+    requestId: requiredString(source, 'requestId', 'meta', issues),
+    sourceType: requiredString(source, 'sourceType', 'meta', issues),
+  };
+}
+
 export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
   const root = asRecord(value);
   const issues: DecodeIssue[] = [];
@@ -636,7 +647,7 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
   const actionContract = decodeActionContract(readAliasedObject(root, 'actionContract', [], '$', issues), issues);
   const dataContract = decodeDataContract(readAliasedObject(root, 'dataContract', [], '$', issues));
   const runtimeContract = decodeRuntimeContract(readAliasedObject(root, 'runtimeContract', [], '$', issues), issues);
-  const meta = readAliasedObject(root, 'meta', [], '$', issues);
+  const meta = decodeMeta(readAliasedObject(root, 'meta', [], '$', issues), issues);
   if (issues.length) {
     throw new ContractV2DecodeError(issues);
   }

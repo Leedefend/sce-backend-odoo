@@ -13,6 +13,7 @@ BACKEND_SCHEMA = ROOT / "docs/architecture/unified_page_contract_v2/unified_page
 CONTRACT_HELPERS = ROOT / "frontend/apps/web/src/app/contracts/unifiedPageContractV2.ts"
 STRICT_SCHEMA = ROOT / "frontend/apps/web/src/app/contracts/v2/schema.ts"
 STRICT_TYPES = ROOT / "frontend/apps/web/src/app/contracts/v2/types.ts"
+STRICT_STORE = ROOT / "frontend/apps/web/src/app/contracts/v2/store.ts"
 CONSUMER_FILES = [
     ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewPageDisplayStateRuntime.ts",
     ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewActionPresentationRuntime.ts",
@@ -106,6 +107,7 @@ REQUIRED_STRICT_ENUM_TYPE_TOKENS = (
     "export type ContractV2CachePolicy = 'none' | 'etag' | 'snapshot'",
     "export type ContractV2RenderStrategy = 'sync' | 'scheduled' | 'virtualized'",
     "export type ContractV2PatchOperation = 'replace' | 'merge' | 'append' | 'remove' | 'reorder' | 'invalidate'",
+    "export interface ContractV2Meta",
     "viewType: ContractV2ViewType",
     "layoutType: ContractV2LayoutType",
     "adaptMode: ContractV2AdaptMode",
@@ -119,6 +121,7 @@ REQUIRED_STRICT_ENUM_TYPE_TOKENS = (
     "cachePolicy: ContractV2CachePolicy",
     "renderStrategy?: ContractV2RenderStrategy",
     "patchOperations?: ContractV2PatchOperation[]",
+    "meta: ContractV2Meta",
 )
 
 REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
@@ -135,6 +138,7 @@ REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
     "function decodeRenderStrategy(",
     "function decodePatchOperation(",
     "function decodeRuntimeContract(",
+    "function decodeMeta(",
     "viewType: decodeViewType(",
     "layoutType: decodeLayoutType(",
     "adaptMode: decodeAdaptMode(",
@@ -146,6 +150,12 @@ REQUIRED_STRICT_ENUM_DECODER_TOKENS = (
     "patchStrategy: decodePatchStrategy(",
     "cachePolicy: decodeCachePolicy(",
     "const runtimeContract = decodeRuntimeContract(",
+    "const meta = decodeMeta(",
+)
+
+FORBIDDEN_STRICT_STORE_META_EXTENSION_TOKENS = (
+    "meta.requiredCapabilities",
+    "requiredCapabilities",
 )
 
 
@@ -197,6 +207,12 @@ def main() -> int:
     for token in REQUIRED_STRICT_ENUM_DECODER_TOKENS:
         if token not in strict_schema_source:
             violations.append(f"{_relative(STRICT_SCHEMA)}: strict V2 enum decoder token missing: {token}")
+    strict_store_source = STRICT_STORE.read_text(encoding="utf-8")
+    for token in FORBIDDEN_STRICT_STORE_META_EXTENSION_TOKENS:
+        if token in strict_store_source:
+            violations.append(
+                f"{_relative(STRICT_STORE)}: strict V2 store must not read schema-external meta extension {token}"
+            )
     schema_payload = json.loads(BACKEND_SCHEMA.read_text(encoding="utf-8"))
     schema_top_level = set((schema_payload.get("properties") or {}).keys())
     schema_required = set(schema_payload.get("required") or [])
