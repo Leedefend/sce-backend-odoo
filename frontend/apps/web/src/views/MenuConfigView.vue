@@ -178,7 +178,7 @@
         <div class="tree-panel-head">
           <div>
             <span class="panel-kicker">菜单目录</span>
-            <strong>{{ visibleFlatRows.length }} 个菜单</strong>
+            <strong>{{ visibleFlatRows.length }} 个可配置菜单</strong>
           </div>
           <span class="tree-panel-hint">
             {{ treeDragEnabled ? '直接拖拽排序' : '搜索时暂停拖拽' }}
@@ -229,6 +229,12 @@
               <p>{{ selectedMenu.complete_name || selectedMenu.parent_name || '顶层菜单' }}</p>
             </div>
             <div class="menu-selected-badges">
+              <span
+                class="menu-origin-badge"
+                :class="menuHandlingStateClass(selectedMenu)"
+              >
+                {{ menuHandlingStateLabel(selectedMenu) }}
+              </span>
               <span v-if="isUserCreatedMenu(selectedMenu)" class="menu-origin-badge deletable">用户新增，可删除</span>
               <span v-else class="menu-origin-badge locked">系统菜单，可隐藏</span>
               <span v-if="isDirty(selectedMenu.id)" class="dirty-count">待保存</span>
@@ -840,6 +846,13 @@ const MenuConfigTree = defineComponent({
           }, collapsed ? '▸' : '▾')
           : h('span', { class: 'branch-marker' }, ''),
         h('span', node.name),
+        h('span', {
+          class: [
+            'menu-origin-badge',
+            menuHandlingStateClass(node),
+            'tree-origin-badge',
+          ],
+        }, menuHandlingStateLabel(node)),
         isUserCreatedMenu(node)
           ? h('span', { class: ['menu-origin-badge', 'deletable', 'tree-origin-badge'] }, '可删除')
           : null,
@@ -974,6 +987,7 @@ function menuSearchText(menu: MenuConfigMenu) {
     ...(menu.group_names || []),
     draft?.custom_label || '',
     draft?.note || '',
+    menuHandlingStateLabel(menu),
   ].join(' ').toLowerCase();
 }
 
@@ -987,15 +1001,28 @@ function isMissingConfiguredMenu(menu: MenuConfigMenu | null | undefined) {
   return Boolean((menu as MenuConfigTreeNode | null | undefined)?.menu_config_missing);
 }
 
+function isMenuShownInHandling(menu: MenuConfigMenu | null | undefined) {
+  if (!menu || isMissingConfiguredMenu(menu)) return false;
+  const draft = drafts[menu.id];
+  return Boolean(draft?.policy_id && draft.visible);
+}
+
+function menuHandlingStateLabel(menu: MenuConfigMenu | null | undefined) {
+  if (isMenuShownInHandling(menu)) return '办理面显示';
+  const draft = menu ? drafts[menu.id] : null;
+  return draft?.policy_id ? '未显示' : '未配置';
+}
+
+function menuHandlingStateClass(menu: MenuConfigMenu | null | undefined) {
+  if (isMenuShownInHandling(menu)) return 'visible';
+  const draft = menu ? drafts[menu.id] : null;
+  return draft?.policy_id ? 'hidden' : 'unconfigured';
+}
+
 const visibleTree = computed<MenuConfigMenu[]>(() => {
   const term = normalizedSearchText.value;
   if (!term) {
-    const filterDefaultBranch = (items: MenuConfigMenu[]): MenuConfigMenu[] => items.flatMap((item) => {
-      const children = filterDefaultBranch(item.children || []);
-      if (isMissingConfiguredMenu(item) && !children.length) return [];
-      return [{ ...item, children }];
-    });
-    return filterDefaultBranch(tree.value);
+    return tree.value;
   }
 
   const filterBranch = (items: MenuConfigMenu[]): MenuConfigMenu[] => {
@@ -2777,6 +2804,23 @@ h1 {
 }
 
 .menu-origin-badge.locked {
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
+}
+
+.menu-origin-badge.visible {
+  border-color: var(--sc-app-success-border);
+  background: var(--sc-app-success-bg);
+  color: var(--sc-app-success-text);
+}
+
+.menu-origin-badge.hidden {
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
+}
+
+.menu-origin-badge.unconfigured {
   background: var(--sc-app-muted-bg);
   color: var(--sc-app-text-secondary);
 }

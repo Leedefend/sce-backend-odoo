@@ -705,6 +705,49 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertFalse(result["data"]["policies"][999]["visible"])
         self.assertEqual(result["meta"]["scoped_menu_count"], 4)
 
+    def test_menu_config_panel_includes_unconfigured_business_root_menu(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        business_root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=business_root, sequence=20)
+        visible_entry = _Menu(379, "项目台账", parent=project_center, sequence=10)
+        unconfigured_entry = _Menu(410, "未配置业务入口", parent=project_center, sequence=30)
+        menus = _MenuModel([business_root, project_center, visible_entry, unconfigured_entry])
+        policies = _PolicyModel(
+            [
+                _Policy(1, business_root, company=company),
+                _Policy(2, project_center, company=company),
+                _Policy(3, visible_entry, company=company),
+            ],
+            user=user,
+        )
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([]),
+                "ui.menu.config.policy": policies,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationLoadHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "root_menu_id": 291,
+                "menu_ids": [291, 292, 379],
+            },
+        )
+        handler._group_option_records = lambda menus, policies: _RecordSet([])
+        handler._expand_with_parent_ids = lambda menus: [int(menu.id) for menu in menus]
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 292, 379, 410])
+        self.assertEqual(set(result["data"]["policies"].keys()), {291, 292, 379})
+        self.assertEqual(result["meta"]["scoped_menu_count"], 4)
+
     def test_menu_config_panel_excludes_hidden_policy_outside_business_root(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
         user = _User([])

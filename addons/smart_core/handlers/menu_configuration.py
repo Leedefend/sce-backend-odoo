@@ -291,6 +291,31 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             scoped_rows.append(dict(row))
         return _menu_config_contract_json_from_rows(company_id, scoped_rows)
 
+    def _menu_subtree_ids(self, menus, root_menu_id: int) -> list[int]:
+        root_menu_id = _to_int(root_menu_id)
+        if not root_menu_id:
+            return []
+        by_parent: dict[int, list[int]] = {}
+        all_ids: set[int] = set()
+        for menu in menus:
+            menu_id = _to_int(getattr(menu, "id", 0))
+            if not menu_id:
+                continue
+            all_ids.add(menu_id)
+            parent_id = _to_int(getattr(getattr(menu, "parent_id", None), "id", 0))
+            by_parent.setdefault(parent_id, []).append(menu_id)
+        if root_menu_id not in all_ids:
+            return []
+        scoped_ids = {root_menu_id}
+        stack = list(by_parent.get(root_menu_id, []))
+        while stack:
+            menu_id = stack.pop()
+            if menu_id in scoped_ids:
+                continue
+            scoped_ids.add(menu_id)
+            stack.extend(by_parent.get(menu_id, []))
+        return sorted(scoped_ids)
+
     def _expand_with_parent_ids(self, menus) -> list[int]:
         ids = set(int(menu.id) for menu in menus)
         parent = menus.mapped("parent_id")
@@ -441,8 +466,10 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         if root_menu_id and root_menu_id not in requested_menu_ids:
             requested_menu_ids.append(root_menu_id)
         if root_menu_id:
+            all_menus = MenuAll.search([], order="parent_id, sequence, id")
+            candidate_ids = set(self._menu_subtree_ids(all_menus, root_menu_id))
             requested_set = {int(menu_id) for menu_id in requested_menu_ids if int(menu_id or 0)}
-            candidate_ids = set(requested_set)
+            candidate_ids.update(requested_set)
             policy_records = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False).search([
                 ("company_id", "=", company_id),
                 ("active", "=", True),
@@ -452,11 +479,9 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             for policy in policy_records:
                 menu_id = _to_int(getattr(getattr(policy, "menu_id", None), "id", 0))
                 target_parent_id = _to_int(getattr(getattr(policy, "target_parent_menu_id", None), "id", 0))
-                visible = _to_bool(getattr(policy, "visible", True), True)
-                if menu_id in requested_set or target_parent_id in requested_set or not visible:
-                    candidate_ids.add(menu_id)
-                    if target_parent_id:
-                        candidate_ids.add(target_parent_id)
+                candidate_ids.add(menu_id)
+                if target_parent_id:
+                    candidate_ids.add(target_parent_id)
             requested_menus = MenuAll.browse(sorted(candidate_ids)).exists()
             menu_ids_with_parents = self._expand_with_parent_ids(requested_menus)
             menus = MenuAll.browse(menu_ids_with_parents).exists().sorted(
