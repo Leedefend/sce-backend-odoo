@@ -494,6 +494,7 @@
     - contract assembler semantic smoke + schema guard
     - runtime surface dashboard report + schema guard
     - native view semantic page guard (`shape + schema`)
+    - unified page contract v2 aggregate guard
 - `make verify.phase_next.evidence.bundle.strict`
   - Strict aggregate target:
     - `verify.phase_next.evidence.bundle`
