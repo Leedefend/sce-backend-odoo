@@ -19,6 +19,7 @@ CONSUMER_FILES = [
     ROOT / "frontend/apps/web/src/views/ActionView.vue",
     ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue",
     ROOT / "frontend/apps/web/src/app/runtime/unifiedPageContractV2CompatProjection.ts",
+    ROOT / "frontend/apps/web/scripts/low_code_global_stability_acceptance.mjs",
 ]
 
 REQUIRED_HELPERS = (
@@ -70,6 +71,8 @@ def main() -> int:
     for path in CONSUMER_FILES:
         source = path.read_text(encoding="utf-8")
         rel = _relative(path)
+        if "legacyContractProjection" in source or "legacy_contract_projection" in source:
+            violations.append(f"{rel}: stable V2 consumers must not read legacyContractProjection")
         if rel != _relative(CONTRACT_HELPERS):
             if "surface_policies" in source and not _has_helper_call(source, "resolveUnifiedPageContractV2SurfacePolicies"):
                 violations.append(f"{rel}: surface_policies consumers must use resolveUnifiedPageContractV2SurfacePolicies")

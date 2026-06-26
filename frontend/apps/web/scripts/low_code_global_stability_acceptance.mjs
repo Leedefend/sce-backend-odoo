@@ -81,10 +81,15 @@ function pickAvailableFields(audit, preferred, count) {
   return out;
 }
 
+function resolveUnifiedPageContractV2ListProfile(contract) {
+  const formal = contract?.layoutContract?.listProfile || contract?.layoutContract?.["list_profile"];
+  if (formal && typeof formal === "object" && !Array.isArray(formal)) return formal;
+  const rootFallback = contract?.["list_profile"];
+  return rootFallback && typeof rootFallback === "object" && !Array.isArray(rootFallback) ? rootFallback : {};
+}
+
 function treeRuntimeColumns(contract) {
-  const direct = contract?.list_profile?.columns;
-  if (Array.isArray(direct) && direct.length) return names(direct);
-  const profile = contract?.dataContract?.dataMeta?.legacyContractProjection?.list_profile;
+  const profile = resolveUnifiedPageContractV2ListProfile(contract);
   if (profile?.columns) return names(profile.columns);
   const widgets = contract?.layoutContract?.containerTree?.[0]?.widgetList;
   return names(widgets || [], "fieldCode");
