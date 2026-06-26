@@ -414,6 +414,8 @@ class UiMenuConfigPolicy(models.Model):
             return next((value for value in candidates if value in policies_by_menu), candidates[0] if candidates else 0)
 
         def is_protected_runtime_config_node(node: dict) -> bool:
+            if stats.get("config_only"):
+                return False
             meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
             menu_id = node_menu_id(node)
             try:
@@ -462,7 +464,7 @@ class UiMenuConfigPolicy(models.Model):
                 stats["applied_count"] += 1
                 skip_policy_effects = False
                 if not policy_visible(policy):
-                    if policy_matched_by_label and isinstance(children, list) and children:
+                    if not stats.get("config_only") and policy_matched_by_label and isinstance(children, list) and children:
                         stats["protected_count"] += 1
                     elif is_protected_runtime_config_node(node):
                         stats["protected_count"] += 1
@@ -520,7 +522,7 @@ class UiMenuConfigPolicy(models.Model):
                 policy = policy_for_node(next_node)
                 configured_visible = bool(policy and policy_visible(policy))
                 protected = is_protected_runtime_config_node(next_node)
-                if depth == 0 or protected or configured_visible or next_children:
+                if configured_visible or protected:
                     kept.append(next_node)
                     continue
                 stats["unconfigured_hidden_count"] += 1
@@ -671,7 +673,7 @@ class UiMenuConfigPolicy(models.Model):
                 "source": "ui.menu.config.policy",
                 "menu_id": int(menu.id),
                 "menu_xmlid": "",
-                "parent_menu_id": int(menu.parent_id.id or 0),
+                "parent_menu_id": int(menu.parent_id.id or 0) if menu.parent_id else 0,
                 "parent_menu_label": str(menu.parent_id.name or "") if menu.parent_id else "",
                 "source_authority": self._source_contract(runtime_source=runtime_source),
                 **action_meta,
@@ -682,7 +684,7 @@ class UiMenuConfigPolicy(models.Model):
                 "title": label,
                 "name": label,
                 "menu_id": int(menu.id),
-                "parent_id": int(menu.parent_id.id or 0),
+                "parent_id": int(menu.parent_id.id or 0) if menu.parent_id else 0,
                 "sequence": sequence,
                 "children": [],
                 "meta": meta,
