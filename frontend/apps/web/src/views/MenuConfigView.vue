@@ -192,7 +192,149 @@
         </div>
       </aside>
 
-      <main class="menu-config-table-panel">
+      <main class="menu-config-editor">
+        <section v-if="selectedMenu" class="menu-selected-panel" aria-label="当前菜单配置">
+          <div class="menu-selected-head">
+            <div>
+              <span class="panel-kicker">当前菜单</span>
+              <h2>{{ selectedMenu.name }}</h2>
+              <p>{{ selectedMenu.complete_name || selectedMenu.parent_name || '顶层菜单' }}</p>
+            </div>
+            <span v-if="isDirty(selectedMenu.id)" class="dirty-count">待保存</span>
+          </div>
+          <div class="menu-selected-grid">
+            <label>
+              <span>显示名称</span>
+              <input
+                class="cell-input"
+                :value="selectedDraft.custom_label"
+                :placeholder="selectedMenu.name"
+                @input="updateDraft(selectedMenu.id, { custom_label: inputValue($event) })"
+              />
+            </label>
+            <label>
+              <span>移动到上级</span>
+              <select
+                class="cell-input"
+                :value="selectedDraft.target_parent_menu_id || 0"
+                @change="updateDraft(selectedMenu.id, { target_parent_menu_id: numericValue($event) })"
+              >
+                <option :value="0">不移动</option>
+                <option
+                  v-for="target in parentOptions(selectedMenu.id)"
+                  :key="target.id"
+                  :value="target.id"
+                >
+                  {{ target.complete_name || target.name }}
+                </option>
+              </select>
+            </label>
+            <label>
+              <span>排序号</span>
+              <input
+                class="cell-input"
+                type="number"
+                :value="selectedDraft.sequence_override || ''"
+                :placeholder="String(selectedMenu.sequence || 0)"
+                @input="updateDraft(selectedMenu.id, { sequence_override: numericValue($event) })"
+              />
+            </label>
+            <label class="menu-visible-toggle">
+              <input
+                type="checkbox"
+                :checked="selectedDraft.visible"
+                @change="updateDraft(selectedMenu.id, { visible: checkedValue($event) })"
+              />
+              <span>显示菜单</span>
+            </label>
+            <label class="menu-note-field">
+              <span>备注</span>
+              <input
+                class="cell-input"
+                :value="displayNoteValue(selectedDraft.note)"
+                placeholder="可选"
+                @input="updateDraft(selectedMenu.id, { note: inputValue($event) })"
+              />
+            </label>
+          </div>
+          <div class="menu-role-panel">
+            <div class="menu-role-head">
+              <strong>可见业务角色</strong>
+              <span>{{ roleScopeSummary(selectedMenu.id) }}</span>
+            </div>
+            <div v-if="selectedDraft.role_group_ids.length" class="group-chip-list">
+              <span
+                v-for="groupId in selectedDraft.role_group_ids"
+                :key="`selected-${selectedMenu.id}-${groupId}`"
+                class="group-chip"
+                :title="roleGroupName(groupId)"
+              >
+                {{ roleGroupName(groupId) }}
+                <button type="button" title="移除业务角色" @click="removeRoleGroup(selectedMenu.id, groupId)">×</button>
+              </span>
+            </div>
+            <select
+              class="cell-input group-domain-select"
+              :value="roleGroupDomainForMenu(selectedMenu.id)"
+              @change="setRoleGroupDomain(selectedMenu.id, inputValue($event))"
+            >
+              <option v-for="domain in roleGroupDomainOptions" :key="domain" :value="domain">
+                {{ domain }}
+              </option>
+            </select>
+            <div class="group-check-list menu-role-check-list">
+              <label
+                v-for="group in scopedRoleGroupOptions(selectedMenu.id)"
+                :key="`selected-${selectedMenu.id}-scope-${group.id}`"
+                class="group-check-item"
+                :title="group.display_name"
+              >
+                <input
+                  type="checkbox"
+                  :checked="isRoleGroupSelected(selectedMenu.id, group.id)"
+                  @change="toggleRoleGroup(selectedMenu.id, group.id, checkedValue($event))"
+                />
+                <span>{{ group.display_name }}</span>
+              </label>
+            </div>
+            <div class="group-scope-actions">
+              <span class="group-scope-count">{{ scopedRoleGroupSelectionText(selectedMenu.id) }}</span>
+              <button
+                type="button"
+                class="link-button"
+                :disabled="!scopedUnselectedRoleGroupCount(selectedMenu.id)"
+                @click="selectScopedRoleGroups(selectedMenu.id)"
+              >
+                勾选当前分组
+              </button>
+              <button
+                type="button"
+                class="link-button"
+                :disabled="!scopedSelectedRoleGroupCount(selectedMenu.id)"
+                @click="clearScopedRoleGroups(selectedMenu.id)"
+              >
+                清空当前分组
+              </button>
+              <button
+                v-if="selectedDraft.role_group_ids.length"
+                type="button"
+                class="link-button"
+                @click="clearRoleGroups(selectedMenu.id)"
+              >
+                恢复所有角色可见
+              </button>
+            </div>
+          </div>
+        </section>
+        <section v-else class="menu-selected-panel menu-selected-panel--empty" aria-label="菜单配置概览">
+          <div>
+            <span class="panel-kicker">菜单配置</span>
+            <h2>全部菜单</h2>
+            <p>从左侧选择一个菜单后，在这里调整名称、父级、显示范围和业务角色。</p>
+          </div>
+        </section>
+
+        <section class="menu-bulk-panel" aria-label="批量菜单配置">
         <div class="table-toolbar">
           <div>
             <strong>{{ filteredRows.length }}</strong>
@@ -354,7 +496,7 @@
                 <td>
                   <input
                     class="cell-input note-input"
-                    :value="draftFor(row.menu.id).note"
+                    :value="displayNoteValue(draftFor(row.menu.id).note)"
                     placeholder="可选"
                     @input="updateDraft(row.menu.id, { note: inputValue($event) })"
                   />
@@ -363,6 +505,7 @@
             </tbody>
           </table>
         </div>
+        </section>
       </main>
     </div>
   </section>
@@ -569,26 +712,6 @@ const MenuConfigTree = defineComponent({
           }, collapsed ? '▸' : '▾')
           : h('span', { class: 'branch-marker' }, ''),
         h('span', node.name),
-        props.dragEnabled ? h('span', { class: 'tree-node-order-tools' }, [
-          h('span', {
-            class: 'tree-node-order-btn',
-            title: '上移',
-            onMousedown: (event: MouseEvent) => event.stopPropagation(),
-            onClick: (event: MouseEvent) => {
-              event.stopPropagation();
-              emit('order-move', { menuId: node.id, delta: -1 });
-            },
-          }, '↑'),
-          h('span', {
-            class: 'tree-node-order-btn',
-            title: '下移',
-            onMousedown: (event: MouseEvent) => event.stopPropagation(),
-            onClick: (event: MouseEvent) => {
-              event.stopPropagation();
-              emit('order-move', { menuId: node.id, delta: 1 });
-            },
-          }, '↓'),
-        ]) : null,
       ]),
       hasChildren && !collapsed
         ? h(MenuConfigTree, {
@@ -749,6 +872,9 @@ const filteredRows = computed(() => {
 
 const dirtyCount = computed(() => Object.keys(drafts).filter((key) => isDirty(Number(key))).length);
 const selectedMenu = computed(() => menus.value.find((menu) => Number(menu.id) === Number(selectedMenuId.value)) || null);
+const selectedDraft = computed(() => (
+  selectedMenu.value ? draftFor(selectedMenu.value.id) || defaultDraftForEmpty() : defaultDraftForEmpty()
+));
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || config.startupRootXmlid || '').trim());
 const rootMenu = computed(() => (
   rootMenuXmlid.value
@@ -794,6 +920,19 @@ function cloneDraft(draft: DraftPolicy): DraftPolicy {
   };
 }
 
+function defaultDraftForEmpty(): DraftPolicy {
+  return {
+    policy_id: 0,
+    menu_id: 0,
+    target_parent_menu_id: 0,
+    custom_label: '',
+    sequence_override: 0,
+    visible: true,
+    role_group_ids: [],
+    note: '',
+  };
+}
+
 function normalizeDraft(draft: DraftPolicy) {
   return JSON.stringify({
     policy_id: draft.policy_id || 0,
@@ -835,6 +974,12 @@ function hasConfiguration(menuId: number) {
 function roleScopeSummary(menuId: number) {
   const count = draftFor(menuId)?.role_group_ids.length || 0;
   return count ? `限 ${count} 个业务角色可见` : '所有业务角色可见';
+}
+
+function displayNoteValue(value: string) {
+  const note = String(value || '').trim();
+  if (/^(user_confirmed_|system_|technical_)/i.test(note)) return '';
+  return note;
 }
 
 function roleGroupName(groupId: number) {
@@ -1558,6 +1703,11 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
       rootMenu.value?.id || 0,
     );
     tree.value = completeTree;
+    const routeMenuId = Number(route.query.menu_id || 0);
+    const firstMenuId = completeTree[0]?.id || payload.menus?.[0]?.id || 0;
+    if (!selectedMenuId.value || !payload.menus.some((menu) => Number(menu.id) === Number(selectedMenuId.value))) {
+      selectedMenuId.value = payload.menus.some((menu) => Number(menu.id) === routeMenuId) ? routeMenuId : firstMenuId;
+    }
     initializeTreeCollapse(completeTree);
     groups.value = payload.groups || [];
     Object.keys(drafts).forEach((key) => delete drafts[Number(key)]);
@@ -2110,42 +2260,122 @@ h1 {
   color: var(--sc-app-text-primary);
 }
 
-:deep(.tree-node-order-tools) {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  opacity: 0;
-}
-
-:deep(.tree-node:hover .tree-node-order-tools),
-:deep(.tree-node.active .tree-node-order-tools) {
-  opacity: 1;
-}
-
-:deep(.tree-node-order-btn) {
-  width: 22px;
-  height: 22px;
-  display: inline-grid;
-  place-items: center;
+.menu-config-editor {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 12px;
   border: 1px solid var(--sc-app-border);
-  border-radius: 4px;
+  padding: 12px;
   background: var(--sc-app-panel);
+}
+
+.menu-selected-panel,
+.menu-bulk-panel {
+  min-width: 0;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-surface);
+}
+
+.menu-selected-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.menu-selected-panel--empty {
+  color: var(--sc-app-text-secondary);
+}
+
+.menu-selected-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.panel-kicker {
+  display: inline-block;
+  margin-bottom: 4px;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
-  line-height: 1;
-  cursor: pointer;
 }
 
-:deep(.tree-node-order-btn:hover) {
-  border-color: var(--sc-app-border-strong);
+.menu-selected-head h2,
+.menu-selected-panel--empty h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.menu-selected-head p,
+.menu-selected-panel--empty p {
+  margin: 4px 0 0;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.menu-selected-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.menu-selected-grid label,
+.menu-role-panel {
+  min-width: 0;
+}
+
+.menu-selected-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.menu-visible-toggle {
+  grid-template-columns: auto 1fr;
+  align-content: end;
+  align-items: center;
+  min-height: 58px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: var(--sc-app-bg);
   color: var(--sc-app-text-primary);
 }
 
-.menu-config-table-panel {
-  min-width: 0;
+.menu-note-field {
+  grid-column: span 2;
+}
+
+.menu-role-panel {
+  display: grid;
+  gap: 8px;
   border: 1px solid var(--sc-app-border);
-  background: var(--sc-app-panel);
+  border-radius: 6px;
+  padding: 10px;
+  background: var(--sc-app-bg);
+}
+
+.menu-role-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.menu-role-head span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.menu-role-check-list {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  max-height: 132px;
 }
 
 .table-toolbar {
@@ -2418,6 +2648,21 @@ tr.dirty td:first-child {
 
   .menu-config-tree {
     border-right: 1px solid var(--sc-app-border);
+  }
+
+  .menu-selected-grid,
+  .menu-role-check-list {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-note-field {
+    grid-column: auto;
+  }
+
+  .menu-selected-head,
+  .menu-role-head {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .tree-scroll,

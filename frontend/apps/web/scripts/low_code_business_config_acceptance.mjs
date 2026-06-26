@@ -560,6 +560,33 @@ async function main() {
     report.artifacts.approvalPanel = await captureStep(page, "approval-panel");
     await approvalPanel.getByRole("button", { name: "关闭" }).click();
     await page.waitForSelector(".approval-panel", { state: "detached", timeout: 10000 });
+    currentStep = "open menu config panel";
+    const menuCard = page.locator(".config-card").filter({ hasText: "菜单入口" });
+    await menuCard.getByRole("button", { name: "调整菜单入口" }).click();
+    await page.waitForURL((url) => String(url).includes("/admin/menu-config"), { timeout: 20000 });
+    await page.waitForSelector(".menu-config-editor", { timeout: 20000 });
+    await page.waitForFunction(() => !document.querySelector(".menu-config-editor .loading-state"), null, { timeout: 20000 });
+    const menuConfigTitle = await page.locator(".menu-config-header h1").innerText();
+    const menuConfigEditorCount = await page.locator(".menu-config-editor").count();
+    const menuSelectedPanelCount = await page.locator(".menu-selected-panel").count();
+    const menuBulkPanelCount = await page.locator(".menu-bulk-panel").count();
+    const menuTreeCount = await page.locator(".menu-config-tree").count();
+    const menuTreeOrderToolCount = await page.locator(".tree-node-order-tools").count();
+    const menuFirstTreeNode = page.locator(".menu-config-tree .tree-scroll .tree-node").first();
+    const menuFirstTreeNodeCount = await menuFirstTreeNode.count();
+    if (menuFirstTreeNodeCount) {
+      await menuFirstTreeNode.click();
+    }
+    const menuSelectedTitle = await page.locator(".menu-selected-panel h2").innerText();
+    const menuSelectedInputCount = await page.locator(".menu-selected-panel .cell-input").count();
+    const menuRolePanelCount = await page.locator(".menu-selected-panel .menu-role-panel").count();
+    const menuConfigPageText = await page.locator(".menu-config-page").innerText();
+    const menuConfigHasInternalNote = /user_confirmed_|technical_|system_/.test(menuConfigPageText);
+    const leakedMenuConfigTerms = await visibleForbiddenTerms(page, ".menu-config-page");
+    report.artifacts.menuConfigPanel = await captureStep(page, "menu-config-panel");
+    await page.getByRole("button", { name: "返回配置工作台" }).click();
+    await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 20000 });
+    await page.waitForSelector(".scan-row--selected", { timeout: 20000 });
     currentStep = "page search and switch";
     const initialPageRows = await page.locator(".scan-row-main strong").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
@@ -650,6 +677,18 @@ async function main() {
       approvalDragSaveEnabled,
       approvalDragResetSaveDisabled,
       leakedApprovalTerms,
+      menuConfigTitle,
+      menuConfigEditorCount,
+      menuSelectedPanelCount,
+      menuBulkPanelCount,
+      menuTreeCount,
+      menuTreeOrderToolCount,
+      menuFirstTreeNodeCount,
+      menuSelectedTitle,
+      menuSelectedInputCount,
+      menuRolePanelCount,
+      menuConfigHasInternalNote,
+      leakedMenuConfigTerms,
       initialPageRows,
       searchedPageRows,
       formPageRows,
@@ -798,6 +837,35 @@ async function main() {
         approvalDragSaveEnabled,
         approvalDragResetSaveDisabled,
         leakedApprovalTerms,
+      },
+    );
+    assert(
+      menuConfigTitle === "菜单配置"
+        && menuConfigEditorCount === 1
+        && menuSelectedPanelCount === 1
+        && menuBulkPanelCount === 1
+        && menuTreeCount === 1
+        && menuTreeOrderToolCount === 0
+        && menuFirstTreeNodeCount >= 1
+        && menuSelectedTitle !== "全部菜单"
+        && menuSelectedInputCount >= 4
+        && menuRolePanelCount === 1
+        && !menuConfigHasInternalNote
+        && leakedMenuConfigTerms.length === 0,
+      "菜单配置页面没有形成专业配置面板结构",
+      {
+        menuConfigTitle,
+        menuConfigEditorCount,
+        menuSelectedPanelCount,
+        menuBulkPanelCount,
+        menuTreeCount,
+        menuTreeOrderToolCount,
+        menuFirstTreeNodeCount,
+        menuSelectedTitle,
+        menuSelectedInputCount,
+        menuRolePanelCount,
+        menuConfigHasInternalNote,
+        leakedMenuConfigTerms,
       },
     );
 
