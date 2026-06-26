@@ -253,6 +253,13 @@ function requiredRecord(source: ContractV2Dictionary, key: string, path: string,
   return {};
 }
 
+function requiredArray(source: ContractV2Dictionary, key: string, path: string, issues: DecodeIssue[]): unknown[] {
+  const value = source[key];
+  if (Array.isArray(value)) return value;
+  issues.push({ path: `${path}.${key}`, message: 'must be an array' });
+  return [];
+}
+
 function requiredIntegerInRange(
   source: ContractV2Dictionary,
   key: string,
@@ -532,17 +539,17 @@ function decodeDataMeta(value: unknown): ContractV2DataMeta {
   };
 }
 
-function decodeDataContract(source: ContractV2Dictionary): ContractV2DataContract {
-  const treeData = decodeRowsMap(source.treeData || source.tree_data);
-  const ganttData = decodeRowsMap(source.ganttData || source.gantt_data);
+function decodeDataContract(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2DataContract {
+  const treeData = decodeRowsMap(source.treeData);
+  const ganttData = decodeRowsMap(source.ganttData);
   return {
-    mainData: aliasedRecord(source, 'mainData', ['main_data']),
-    tableRows: decodeRowsMap(source.tableRows || source.table_rows),
-    relationRows: decodeRowsMap(source.relationRows || source.relation_rows),
-    dictData: aliasedRecord(source, 'dictData', ['dict_data']),
-    pagination: asRecord(source.pagination),
-    dataSource: decodeDataSources(source.dataSource || source.data_source),
-    dataMeta: decodeDataMeta(source.dataMeta || source.data_meta),
+    mainData: requiredRecord(source, 'mainData', 'dataContract', issues),
+    tableRows: decodeRowsMap(requiredRecord(source, 'tableRows', 'dataContract', issues)),
+    relationRows: decodeRowsMap(requiredRecord(source, 'relationRows', 'dataContract', issues)),
+    dictData: requiredRecord(source, 'dictData', 'dataContract', issues),
+    pagination: requiredRecord(source, 'pagination', 'dataContract', issues),
+    dataSource: decodeDataSources(requiredRecord(source, 'dataSource', 'dataContract', issues)),
+    dataMeta: decodeDataMeta(requiredRecord(source, 'dataMeta', 'dataContract', issues)),
     ...(Object.keys(treeData).length ? { treeData } : {}),
     ...(Object.keys(ganttData).length ? { ganttData } : {}),
   };
@@ -550,17 +557,17 @@ function decodeDataContract(source: ContractV2Dictionary): ContractV2DataContrac
 
 function decodeGlobalStatus(source: ContractV2Dictionary): ContractV2GlobalStatus {
   return {
-    pageVisible: optionalBoolean(source.pageVisible) ?? optionalBoolean(source.page_visible),
-    ...(optionalAliasedString(source, 'pageAuth', ['page_auth']) ? { pageAuth: optionalAliasedString(source, 'pageAuth', ['page_auth']) } : {}),
-    ...(optionalString(source, 'reasonCode') || optionalString(source, 'reason_code')
-      ? { reasonCode: optionalString(source, 'reasonCode') || optionalString(source, 'reason_code') }
+    pageVisible: optionalBoolean(source.pageVisible),
+    ...(optionalString(source, 'pageAuth') ? { pageAuth: optionalString(source, 'pageAuth') } : {}),
+    ...(optionalString(source, 'reasonCode')
+      ? { reasonCode: optionalString(source, 'reasonCode') }
       : {}),
   };
 }
 
 function decodeWidgetStatus(raw: unknown, path: string, issues: DecodeIssue[]): ContractV2WidgetStatus | null {
   if (!isRecord(raw)) return null;
-  const widgetId = asString(raw.widgetId) || asString(raw.widget_id);
+  const widgetId = asString(raw.widgetId);
   if (!widgetId) return null;
   const auth = decodeAuth(asString(raw.auth), `${path}.auth`, issues);
   return {
@@ -571,36 +578,36 @@ function decodeWidgetStatus(raw: unknown, path: string, issues: DecodeIssue[]): 
     disabled: optionalBoolean(raw.disabled),
     ...(optionalString(raw, 'placeholder') ? { placeholder: optionalString(raw, 'placeholder') } : {}),
     ...(auth ? { auth } : {}),
-    ...(optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code')
-      ? { reasonCode: optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code') }
+    ...(optionalString(raw, 'reasonCode')
+      ? { reasonCode: optionalString(raw, 'reasonCode') }
       : {}),
   };
 }
 
 function decodeButtonStatus(raw: unknown): ContractV2ButtonStatus | null {
   if (!isRecord(raw)) return null;
-  const btnId = asString(raw.btnId) || asString(raw.btn_id);
+  const btnId = asString(raw.btnId);
   if (!btnId) return null;
   return {
     btnId,
     visible: optionalBoolean(raw.visible),
     disabled: optionalBoolean(raw.disabled),
-    ...(optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code')
-      ? { reasonCode: optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code') }
+    ...(optionalString(raw, 'reasonCode')
+      ? { reasonCode: optionalString(raw, 'reasonCode') }
       : {}),
   };
 }
 
 function decodeContainerStatus(raw: unknown): ContractV2ContainerStatus | null {
   if (!isRecord(raw)) return null;
-  const containerId = asString(raw.containerId) || asString(raw.container_id);
+  const containerId = asString(raw.containerId);
   if (!containerId) return null;
   return {
     containerId,
     visible: optionalBoolean(raw.visible),
     disabled: optionalBoolean(raw.disabled),
-    ...(optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code')
-      ? { reasonCode: optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code') }
+    ...(optionalString(raw, 'reasonCode')
+      ? { reasonCode: optionalString(raw, 'reasonCode') }
       : {}),
   };
 }
@@ -615,25 +622,25 @@ function decodeSelectorStatus(raw: unknown): ContractV2SelectorStatus | null {
     readonly: optionalBoolean(raw.readonly),
     required: optionalBoolean(raw.required),
     disabled: optionalBoolean(raw.disabled),
-    ...(optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code')
-      ? { reasonCode: optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code') }
+    ...(optionalString(raw, 'reasonCode')
+      ? { reasonCode: optionalString(raw, 'reasonCode') }
       : {}),
   };
 }
 
 function decodeStatusContract(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2StatusContract {
   return {
-    globalStatus: decodeGlobalStatus(aliasedRecord(source, 'globalStatus', ['global_status'])),
-    widgetStatus: aliasedArray(source, 'widgetStatus', ['widget_status'])
+    globalStatus: decodeGlobalStatus(requiredRecord(source, 'globalStatus', 'statusContract', issues)),
+    widgetStatus: requiredArray(source, 'widgetStatus', 'statusContract', issues)
       .map((item, index) => decodeWidgetStatus(item, `statusContract.widgetStatus[${index}]`, issues))
       .filter((item): item is ContractV2WidgetStatus => Boolean(item)),
-    buttonStatus: aliasedArray(source, 'buttonStatus', ['button_status'])
+    buttonStatus: requiredArray(source, 'buttonStatus', 'statusContract', issues)
       .map(decodeButtonStatus)
       .filter((item): item is ContractV2ButtonStatus => Boolean(item)),
-    containerStatus: aliasedArray(source, 'containerStatus', ['container_status'])
+    containerStatus: requiredArray(source, 'containerStatus', 'statusContract', issues)
       .map(decodeContainerStatus)
       .filter((item): item is ContractV2ContainerStatus => Boolean(item)),
-    selectorStatus: aliasedArray(source, 'selectorStatus', ['selector_status'])
+    selectorStatus: requiredArray(source, 'selectorStatus', 'statusContract', issues)
       .map(decodeSelectorStatus)
       .filter((item): item is ContractV2SelectorStatus => Boolean(item)),
   };
@@ -679,7 +686,7 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
   const layoutContract = decodeLayoutContract(readAliasedObject(root, 'layoutContract', [], '$', issues), issues);
   const statusContract = decodeStatusContract(readAliasedObject(root, 'statusContract', [], '$', issues), issues);
   const actionContract = decodeActionContract(readAliasedObject(root, 'actionContract', [], '$', issues), issues);
-  const dataContract = decodeDataContract(readAliasedObject(root, 'dataContract', [], '$', issues));
+  const dataContract = decodeDataContract(readAliasedObject(root, 'dataContract', [], '$', issues), issues);
   const runtimeContract = decodeRuntimeContract(readAliasedObject(root, 'runtimeContract', [], '$', issues), issues);
   const meta = decodeMeta(readAliasedObject(root, 'meta', [], '$', issues), issues);
   if (issues.length) {

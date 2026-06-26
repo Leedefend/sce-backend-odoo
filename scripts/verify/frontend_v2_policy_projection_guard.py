@@ -214,6 +214,31 @@ FORBIDDEN_STRICT_ACTION_RULE_ALIASES = (
     "['action_key', 'key']",
 )
 
+FORBIDDEN_STRICT_DATA_CONTRACT_ALIASES = (
+    "source.tree_data",
+    "source.gantt_data",
+    "['main_data']",
+    "source.table_rows",
+    "source.relation_rows",
+    "['dict_data']",
+    "source.data_source",
+    "source.data_meta",
+)
+
+FORBIDDEN_STRICT_STATUS_CONTRACT_ALIASES = (
+    "['global_status']",
+    "['widget_status']",
+    "['button_status']",
+    "['container_status']",
+    "['selector_status']",
+    "source.page_visible",
+    "['page_auth']",
+    "reason_code",
+    "raw.widget_id",
+    "raw.btn_id",
+    "raw.container_id",
+)
+
 
 def _relative(path: Path) -> str:
     return str(path.relative_to(ROOT))
@@ -307,6 +332,28 @@ def main() -> int:
         if token in action_rule_decoder:
             violations.append(
                 f"{_relative(STRICT_SCHEMA)}: strict V2 actionRule decoder must not accept compatibility alias {token}"
+            )
+    data_contract_decoder = _function_body(strict_schema_source, "decodeDataContract")
+    for token in FORBIDDEN_STRICT_DATA_CONTRACT_ALIASES:
+        if token in data_contract_decoder:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 dataContract decoder must not accept compatibility alias {token}"
+            )
+    status_decoder_source = "\n".join(
+        _function_body(strict_schema_source, name)
+        for name in (
+            "decodeGlobalStatus",
+            "decodeWidgetStatus",
+            "decodeButtonStatus",
+            "decodeContainerStatus",
+            "decodeSelectorStatus",
+            "decodeStatusContract",
+        )
+    )
+    for token in FORBIDDEN_STRICT_STATUS_CONTRACT_ALIASES:
+        if token in status_decoder_source:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 status decoder must not accept compatibility alias {token}"
             )
     strict_store_source = STRICT_STORE.read_text(encoding="utf-8")
     for token in FORBIDDEN_STRICT_STORE_META_EXTENSION_TOKENS:
