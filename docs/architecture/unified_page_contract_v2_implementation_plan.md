@@ -605,6 +605,7 @@ Make frontend default path consume `UnifiedPageContract v2+`.
 
 - `make verify.unified_page_contract.v2`
 - frontend typecheck
+- frontend static build
 - frontend contract consumer guard
 - stable projection guard for backend formal V2 slots and frontend compatibility boundaries
 - Playwright smoke for selected pages
