@@ -53,7 +53,7 @@ compose ${COMPOSE_TEST_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c "DR
 compose ${COMPOSE_TEST_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c \
   "CREATE DATABASE ${DB_CI} OWNER ${DB_USER} TEMPLATE template0 ENCODING 'UTF8';"
 
-# 1) 确保依赖（解决 odoo_test_helper 缺失）
+# 1) 确保测试依赖
 bash "$(dirname "$0")/ensure_testdeps.sh"
 
 # 2) 跑测试（统一挂载 docs，避免 permission_matrix 文档找不到）
@@ -62,7 +62,7 @@ bash "$(dirname "$0")/ensure_testdeps.sh"
 compose ${COMPOSE_TEST_FILES} run --rm -T \
   -v "${DOCS_MOUNT_HOST}:${DOCS_MOUNT_CONT}:ro" \
   --entrypoint bash odoo -lc "
-    pip3 install -q odoo-test-helper >/dev/null 2>&1 || true
+    pip3 install -q -r /mnt/extra-addons/config/requirements-test.txt >/dev/null 2>&1 || true
     exec /usr/bin/odoo \
       --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_PASSWORD} \
       -d ${DB_CI} \

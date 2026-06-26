@@ -19,7 +19,7 @@ guard_prod_forbid
 compose_testdeps run --rm -T \
   -v "${ROOT_DIR}/docs:/mnt/docs:ro" \
   --entrypoint bash odoo -lc "
-    pip3 install -q odoo-test-helper &&
+    pip3 install -q -r /mnt/extra-addons/config/requirements-test.txt &&
     exec /usr/bin/odoo \
       --db_host=db --db_port=5432 --db_user=odoo --db_password=odoo \
       -d ${DB} \
