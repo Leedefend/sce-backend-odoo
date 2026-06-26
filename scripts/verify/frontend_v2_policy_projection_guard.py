@@ -179,6 +179,18 @@ def _strict_snapshot_fields(source: str) -> set[str]:
     return fields
 
 
+def _interface_fields(source: str, interface_name: str) -> set[str]:
+    match = re.search(rf"export\s+interface\s+{re.escape(interface_name)}\s*\{{(?P<body>.*?)\n\}}", source, re.DOTALL)
+    if not match:
+        return set()
+    fields: set[str] = set()
+    for line in match.group("body").splitlines():
+        field = re.match(r"\s*([A-Za-z_$][\w$]*)\??:", line)
+        if field:
+            fields.add(field.group(1))
+    return fields
+
+
 def _strict_required_object_reads(source: str) -> set[str]:
     return set(re.findall(r"readAliasedObject\(root, '([^']+)', \[\], '\$', issues\)", source))
 
@@ -230,6 +242,24 @@ def main() -> int:
             f"{_relative(STRICT_SCHEMA)}: strict V2 decoder required object reads must match schema.required; "
             f"extra={sorted(strict_required_reads - schema_required)} missing={sorted(schema_required - strict_required_reads)}"
         )
+    status_type_map = {
+        "widgetStatus": "ContractV2WidgetStatus",
+        "buttonStatus": "ContractV2ButtonStatus",
+        "containerStatus": "ContractV2ContainerStatus",
+        "selectorStatus": "ContractV2SelectorStatus",
+    }
+    schema_defs = schema_payload.get("$defs") or {}
+    for schema_name, interface_name in status_type_map.items():
+        schema_fields = set(((schema_defs.get(schema_name) or {}).get("properties") or {}).keys())
+        type_fields = _interface_fields(strict_type_source, interface_name)
+        if not type_fields:
+            violations.append(f"{_relative(STRICT_TYPES)}: missing {interface_name} interface")
+            continue
+        if type_fields != schema_fields:
+            violations.append(
+                f"{_relative(STRICT_TYPES)}: {interface_name} fields must match schema $defs.{schema_name}; "
+                f"extra={sorted(type_fields - schema_fields)} missing={sorted(schema_fields - type_fields)}"
+            )
 
     for path in CONSUMER_FILES:
         source = path.read_text(encoding="utf-8")

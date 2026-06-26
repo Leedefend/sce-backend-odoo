@@ -136,6 +136,7 @@ export interface ContractV2WidgetStatus {
   readonly?: boolean;
   required?: boolean;
   disabled?: boolean;
+  placeholder?: string;
   auth?: ContractV2Auth;
   reasonCode?: string;
 }

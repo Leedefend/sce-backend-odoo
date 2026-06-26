@@ -536,6 +536,7 @@ function decodeWidgetStatus(raw: unknown, path: string, issues: DecodeIssue[]): 
     readonly: optionalBoolean(raw.readonly),
     required: optionalBoolean(raw.required),
     disabled: optionalBoolean(raw.disabled),
+    ...(optionalString(raw, 'placeholder') ? { placeholder: optionalString(raw, 'placeholder') } : {}),
     ...(auth ? { auth } : {}),
     ...(optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code')
       ? { reasonCode: optionalString(raw, 'reasonCode') || optionalString(raw, 'reason_code') }
