@@ -80,6 +80,7 @@ FORBIDDEN_FORMAL_SCHEMA_KEYS = {
     "business_operation_profile",
     "visible_fields",
     "field_groups",
+    "form_structure_contract",
     "legacyContractProjection",
     "legacy_contract_projection",
 }
