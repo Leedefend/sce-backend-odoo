@@ -1703,6 +1703,58 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual([child["menu_id"] for child in overlaid["tree"][0]["children"]], [464])
         self.assertEqual(stats["protected_count"], 0)
 
+    def test_runtime_overlay_config_only_does_not_match_unconfigured_node_by_label(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        business_customer = _Menu(500, "客户", parent=root, sequence=10)
+        menus = _MenuModel([root, business_customer])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                500: {"active": True, "menu_id": 500, "menu_label": "客户", "visible": True},
+            },
+            "ui.business.config.contract.menu_orchestration",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {"menu_id": 145, "name": "客户", "children": [{"menu_id": 151, "name": "客户", "children": []}]},
+                    {"menu_id": 291, "name": "智慧施工管理平台", "children": []},
+                ],
+                "flat": [
+                    {"menu_id": 145, "name": "客户"},
+                    {"menu_id": 151, "name": "客户"},
+                    {"menu_id": 291, "name": "智慧施工管理平台"},
+                ],
+            },
+            user=user,
+        )
+
+        def collect_ids(nodes):
+            out = []
+            for node in nodes:
+                out.append(node["menu_id"])
+                out.extend(collect_ids(node.get("children") or []))
+            return out
+
+        runtime_ids = collect_ids(overlaid["tree"])
+        self.assertIn(500, runtime_ids)
+        self.assertNotIn(145, runtime_ids)
+        self.assertNotIn(151, runtime_ids)
+        self.assertTrue(stats["config_only"])
+
     def test_runtime_overlay_builds_children_for_missing_moved_group(self):
         module = _load_policy_model()
         company = types.SimpleNamespace(id=7)

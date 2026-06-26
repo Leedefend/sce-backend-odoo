@@ -452,7 +452,7 @@ class UiMenuConfigPolicy(models.Model):
             children = node.get("children")
             policy = policies_by_menu.get(normalized_menu_id)
             policy_matched_by_label = False
-            if not policy:
+            if not policy and not stats.get("config_only"):
                 labels = [
                     str(node.get("name") or "").strip(),
                     str(node.get("label") or "").strip(),
@@ -500,6 +500,8 @@ class UiMenuConfigPolicy(models.Model):
             policy = policies_by_menu.get(normalized_menu_id)
             if policy:
                 return policy
+            if stats.get("config_only"):
+                return None
             labels = [
                 str(node.get("name") or "").strip(),
                 str(node.get("label") or "").strip(),
@@ -562,6 +564,8 @@ class UiMenuConfigPolicy(models.Model):
             normalized_menu_id = node_menu_id(node)
             if normalized_menu_id:
                 return normalized_menu_id == int(menu_id or 0)
+            if stats.get("config_only"):
+                return False
             if node_matches_menu(node, source_menu):
                 return True
             labels = {
