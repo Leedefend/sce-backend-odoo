@@ -185,9 +185,9 @@ def main() -> int:
         violations.append(
             f"{ASSEMBLER.relative_to(ROOT)}: dataContract.dataSource rows must be stamped with _data_source_authority"
         )
-    if "legacyContractProjection" in assembler_source:
+    if "legacyContractProjection" in assembler_source or "legacy_contract_projection" in assembler_source:
         violations.append(
-            f"{ASSEMBLER.relative_to(ROOT)}: assembler must not emit legacyContractProjection in stable V2 contract"
+            f"{ASSEMBLER.relative_to(ROOT)}: assembler must not emit legacyContractProjection/legacy_contract_projection in stable V2 contract"
         )
     if "businessOperationProfile" not in assembler_source or "visibleFields" not in assembler_source or "fieldGroups" not in assembler_source:
         violations.append(
@@ -235,6 +235,10 @@ def main() -> int:
     if "legacyContractProjection must not be emitted in stable V2 contract" not in runtime_source:
         violations.append(
             f"{runtime_path.relative_to(ROOT)}: runtime guard must reject legacyContractProjection in stable V2 contract"
+        )
+    if "\"legacy_contract_projection\" in data_meta" not in runtime_source:
+        violations.append(
+            f"{runtime_path.relative_to(ROOT)}: runtime guard must reject legacy_contract_projection in stable V2 contract"
         )
     if "dataContract.dataMeta.{key} must not be emitted; use formal V2 camelCase metadata" not in runtime_source:
         violations.append(
