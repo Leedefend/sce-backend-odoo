@@ -152,7 +152,10 @@
             <span class="panel-kicker">菜单目录</span>
             <strong>{{ flatRows.length }} 个菜单</strong>
           </div>
-          <span class="tree-panel-hint">{{ treeDragEnabled ? '直接拖拽排序' : '搜索时暂停拖拽' }}</span>
+          <span class="tree-panel-hint">
+            {{ treeDragEnabled ? '直接拖拽排序' : '搜索时暂停拖拽' }}
+            <b v-if="deletableMenuCount">可删除 {{ deletableMenuCount }}</b>
+          </span>
         </div>
         <div class="tree-search">
           <input v-model="searchText" type="search" placeholder="搜索菜单名称或路径" />
@@ -197,7 +200,11 @@
               <h2>{{ selectedMenu.name }}</h2>
               <p>{{ selectedMenu.complete_name || selectedMenu.parent_name || '顶层菜单' }}</p>
             </div>
-            <span v-if="isDirty(selectedMenu.id)" class="dirty-count">待保存</span>
+            <div class="menu-selected-badges">
+              <span v-if="isUserCreatedMenu(selectedMenu)" class="menu-origin-badge deletable">用户新增，可删除</span>
+              <span v-else class="menu-origin-badge locked">系统菜单，可隐藏</span>
+              <span v-if="isDirty(selectedMenu.id)" class="dirty-count">待保存</span>
+            </div>
           </div>
           <div class="menu-detail-section">
             <div class="menu-detail-section-head">
@@ -370,14 +377,15 @@
             <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('child')">新增下级</button>
             <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('copy')">复制当前入口</button>
             <button
-              v-if="canDeleteSelectedMenu"
               type="button"
               class="ghost danger-ghost"
-              :disabled="loading || saving || creatingMenu || deletingMenu"
+              :disabled="!canDeleteSelectedMenu || loading || saving || creatingMenu || deletingMenu"
+              :title="selectedMenuDeleteHint"
               @click="deleteSelectedMenu"
             >
               {{ deletingMenu ? '删除中...' : '删除新增菜单' }}
             </button>
+            <p class="action-hint">{{ selectedMenuDeleteHint }}</p>
           </div>
           <div class="menu-side-section menu-side-action-group">
             <span class="menu-side-section-title">批量维护</span>
@@ -433,6 +441,7 @@
               <col class="index-col" />
               <col class="name-col" />
               <col class="default-col" />
+              <col class="status-col" />
               <col class="parent-col" />
               <col class="level-col" />
               <col class="sequence-col" />
@@ -446,6 +455,7 @@
                 <th class="index-col">#</th>
                 <th>显示名称</th>
                 <th>默认名称</th>
+                <th>来源</th>
                 <th>当前父级</th>
                 <th class="level-col">级别</th>
                 <th class="sequence-col">顺序</th>
@@ -471,6 +481,14 @@
                   />
                 </td>
                 <td><span class="muted">{{ row.menu.name }}</span></td>
+                <td class="status-col">
+                  <span
+                    class="menu-origin-badge"
+                    :class="isUserCreatedMenu(row.menu) ? 'deletable' : 'locked'"
+                  >
+                    {{ isUserCreatedMenu(row.menu) ? '可删除' : '系统' }}
+                  </span>
+                </td>
                 <td><span class="muted">{{ row.menu.parent_name || '顶层菜单' }}</span></td>
                 <td class="level-col">{{ row.level }}</td>
                 <td class="sequence-col">
@@ -795,6 +813,9 @@ const MenuConfigTree = defineComponent({
           }, collapsed ? '▸' : '▾')
           : h('span', { class: 'branch-marker' }, ''),
         h('span', node.name),
+        isUserCreatedMenu(node)
+          ? h('span', { class: ['menu-origin-badge', 'deletable', 'tree-origin-badge'] }, '可删除')
+          : null,
       ]),
       hasChildren && !collapsed
         ? h(MenuConfigTree, {
@@ -958,10 +979,16 @@ const selectedMenu = computed(() => menus.value.find((menu) => Number(menu.id) =
 const selectedDraft = computed(() => (
   selectedMenu.value ? draftFor(selectedMenu.value.id) || defaultDraftForEmpty() : defaultDraftForEmpty()
 ));
+const deletableMenuCount = computed(() => menus.value.filter((menu) => isUserCreatedMenu(menu)).length);
 const canDeleteSelectedMenu = computed(() => {
   const menu = selectedMenu.value;
   if (!menu?.id) return false;
-  return !String(menu.xmlid || '').trim();
+  return isUserCreatedMenu(menu);
+});
+const selectedMenuDeleteHint = computed(() => {
+  if (!selectedMenu.value) return '请选择一个菜单后再删除。';
+  if (canDeleteSelectedMenu.value) return '该菜单由配置新增，可以删除。';
+  return '系统内置菜单不能物理删除，需要关闭“显示菜单”来隐藏。';
 });
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || config.startupRootXmlid || '').trim());
 const rootMenu = computed(() => (
@@ -987,6 +1014,11 @@ const defaultCreateParentId = computed(() => (
 const copySourceOptions = computed(() => navigationMenus.value
   .filter((menu) => Boolean(String(menu.action || '').trim()))
   .sort((a, b) => (a.complete_name || a.name).localeCompare(b.complete_name || b.name, 'zh-Hans-CN')));
+
+function isUserCreatedMenu(menu: MenuConfigMenu | null | undefined): boolean {
+  if (!menu?.id) return false;
+  return !String(menu.xmlid || '').trim();
+}
 
 function defaultDraft(menu: MenuConfigMenu, policy?: MenuConfigPolicy): DraftPolicy {
   return {
@@ -2295,6 +2327,9 @@ h1 {
 
 .tree-panel-hint {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid var(--sc-app-border);
   border-radius: 999px;
   padding: 3px 8px;
@@ -2303,6 +2338,11 @@ h1 {
   font-size: 11px;
   line-height: 1.4;
   white-space: nowrap;
+}
+
+.tree-panel-hint b {
+  color: var(--sc-app-info-text);
+  font-weight: 600;
 }
 
 .tree-search {
@@ -2355,6 +2395,13 @@ h1 {
   color: var(--sc-app-text-primary);
   text-align: left;
   cursor: pointer;
+}
+
+:deep(.tree-node > span:nth-child(2)) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tree-shortcuts {
@@ -2468,6 +2515,57 @@ h1 {
   gap: 12px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--sc-app-border);
+}
+
+.menu-selected-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.menu-origin-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  max-width: 100%;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.menu-origin-badge.deletable {
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+}
+
+.menu-origin-badge.locked {
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
+}
+
+:deep(.tree-origin-badge) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 18px;
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: 999px;
+  padding: 0 6px;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .panel-kicker {
@@ -2599,6 +2697,10 @@ h1 {
   border-top: 1px solid var(--sc-app-border);
 }
 
+.action-hint {
+  margin-top: 2px;
+}
+
 .menu-side-section-title {
   color: var(--sc-app-text-primary);
   font-size: 13px;
@@ -2716,7 +2818,7 @@ h1 {
 
 table {
   width: 100%;
-  min-width: 840px;
+  min-width: 900px;
   table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
@@ -2780,6 +2882,10 @@ tr.dirty td:first-child {
 
 .default-col {
   width: 104px;
+}
+
+.status-col {
+  width: 72px;
 }
 
 .parent-col {
