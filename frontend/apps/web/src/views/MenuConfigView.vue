@@ -2971,7 +2971,9 @@ h1 {
 
 .menu-role-check-list {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  max-height: 132px;
+  height: 118px;
+  max-height: 118px;
+  align-content: start;
 }
 
 .menu-side-panel {
@@ -3264,10 +3266,11 @@ tr.dirty td:first-child {
 
 .group-check-list {
   display: grid;
-  gap: 2px;
+  gap: 4px;
   max-height: 96px;
   overflow: auto;
-  padding: 3px;
+  box-sizing: border-box;
+  padding: 6px;
   border: 1px solid var(--sc-app-border);
   border-radius: 4px;
   background: var(--sc-app-panel);
@@ -3277,11 +3280,12 @@ tr.dirty td:first-child {
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
+  min-height: 18px;
   min-width: 0;
   gap: 4px;
   color: var(--sc-app-text-primary);
   font-size: 11px;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
 .group-check-item input {
@@ -3295,10 +3299,14 @@ tr.dirty td:first-child {
 }
 
 .group-scope-actions {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  margin-top: 8px;
+  background: var(--sc-app-bg);
 }
 
 .group-scope-count {
