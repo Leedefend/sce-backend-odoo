@@ -425,7 +425,7 @@ function decodeActionRule(raw: unknown, path: string, issues: DecodeIssue[]): Co
     issues.push({ path, message: 'action rule must be an object' });
     return null;
   }
-  const actionId = requiredAliasedString(raw, 'actionId', ['action_id', 'id', 'key'], path, issues);
+  const actionId = requiredString(raw, 'actionId', path, issues);
   if (!actionId) return null;
   const target = asRecord(raw.target);
   const button = asRecord(raw.button);
@@ -433,13 +433,13 @@ function decodeActionRule(raw: unknown, path: string, issues: DecodeIssue[]): Co
   const tracePolicy = asRecord(raw.tracePolicy);
   return {
     actionId,
-    triggerType: decodeTriggerType(requiredAliasedString(raw, 'triggerType', ['trigger_type'], path, issues), `${path}.triggerType`, issues),
-    sourceWidgetId: requiredAliasedString(raw, 'sourceWidgetId', ['source_widget_id'], path, issues),
-    targetIds: asStringArray(raw.targetIds || raw.target_ids),
-    dispatchMode: decodeDispatchMode(requiredAliasedString(raw, 'dispatchMode', ['dispatch_mode'], path, issues), `${path}.dispatchMode`, issues),
-    targetScope: decodeTargetScope(requiredAliasedString(raw, 'targetScope', ['target_scope'], path, issues), `${path}.targetScope`, issues),
-    refreshMode: decodeRefreshMode(requiredAliasedString(raw, 'refreshMode', ['refresh_mode'], path, issues), `${path}.refreshMode`, issues),
-    ...(optionalAliasedString(raw, 'actionKey', ['action_key', 'key']) ? { actionKey: optionalAliasedString(raw, 'actionKey', ['action_key', 'key']) } : {}),
+    triggerType: decodeTriggerType(requiredString(raw, 'triggerType', path, issues), `${path}.triggerType`, issues),
+    sourceWidgetId: requiredString(raw, 'sourceWidgetId', path, issues),
+    targetIds: asStringArray(raw.targetIds),
+    dispatchMode: decodeDispatchMode(requiredString(raw, 'dispatchMode', path, issues), `${path}.dispatchMode`, issues),
+    targetScope: decodeTargetScope(requiredString(raw, 'targetScope', path, issues), `${path}.targetScope`, issues),
+    refreshMode: decodeRefreshMode(requiredString(raw, 'refreshMode', path, issues), `${path}.refreshMode`, issues),
+    ...(optionalString(raw, 'actionKey') ? { actionKey: optionalString(raw, 'actionKey') } : {}),
     ...(optionalString(raw, 'label') ? { label: optionalString(raw, 'label') } : {}),
     ...(optionalString(raw, 'intent') ? { intent: optionalString(raw, 'intent') } : {}),
     ...(Object.keys(target).length ? { target } : {}),
@@ -450,14 +450,14 @@ function decodeActionRule(raw: unknown, path: string, issues: DecodeIssue[]): Co
 }
 
 function decodeActionContract(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2ActionContract {
-  const actionRuleListRaw = aliasedArray(source, 'actionRuleList', ['action_rule_list', 'actions']);
-  if (!actionRuleListRaw.length && !Array.isArray(source.actionRuleList) && !Array.isArray(source.action_rule_list)) {
-    issues.push({ path: 'actionContract.actionRuleList', message: 'must be an array; aliases checked: action_rule_list, actions' });
+  const actionRuleListRaw = Array.isArray(source.actionRuleList) ? source.actionRuleList : [];
+  if (!Array.isArray(source.actionRuleList)) {
+    issues.push({ path: 'actionContract.actionRuleList', message: 'must be an array' });
   }
   const actionRuleList = actionRuleListRaw
     .map((item, index) => decodeActionRule(item, `actionContract.actionRuleList[${index}]`, issues))
     .filter((item): item is ContractV2ActionRule => Boolean(item));
-  const dependencyGraphRaw = aliasedRecord(source, 'dependencyGraph', ['dependency_graph']);
+  const dependencyGraphRaw = requiredRecord(source, 'dependencyGraph', 'actionContract', issues);
   const dependencyGraph = Object.entries(dependencyGraphRaw).reduce<Record<string, string[]>>((acc, [key, value]) => {
     acc[key] = asStringArray(value);
     return acc;

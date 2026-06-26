@@ -197,6 +197,23 @@ FORBIDDEN_STRICT_LAYOUT_CONTRACT_ALIASES = (
     "['component_registry']",
 )
 
+FORBIDDEN_STRICT_ACTION_CONTRACT_ALIASES = (
+    "['action_rule_list', 'actions']",
+    "source.action_rule_list",
+    "['dependency_graph']",
+)
+
+FORBIDDEN_STRICT_ACTION_RULE_ALIASES = (
+    "['action_id', 'id', 'key']",
+    "['trigger_type']",
+    "['source_widget_id']",
+    "raw.target_ids",
+    "['dispatch_mode']",
+    "['target_scope']",
+    "['refresh_mode']",
+    "['action_key', 'key']",
+)
+
 
 def _relative(path: Path) -> str:
     return str(path.relative_to(ROOT))
@@ -278,6 +295,18 @@ def main() -> int:
         if token in layout_contract_decoder:
             violations.append(
                 f"{_relative(STRICT_SCHEMA)}: strict V2 layoutContract decoder must not accept compatibility alias {token}"
+            )
+    action_contract_decoder = _function_body(strict_schema_source, "decodeActionContract")
+    for token in FORBIDDEN_STRICT_ACTION_CONTRACT_ALIASES:
+        if token in action_contract_decoder:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 actionContract decoder must not accept compatibility alias {token}"
+            )
+    action_rule_decoder = _function_body(strict_schema_source, "decodeActionRule")
+    for token in FORBIDDEN_STRICT_ACTION_RULE_ALIASES:
+        if token in action_rule_decoder:
+            violations.append(
+                f"{_relative(STRICT_SCHEMA)}: strict V2 actionRule decoder must not accept compatibility alias {token}"
             )
     strict_store_source = STRICT_STORE.read_text(encoding="utf-8")
     for token in FORBIDDEN_STRICT_STORE_META_EXTENSION_TOKENS:
