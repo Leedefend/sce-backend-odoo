@@ -62,6 +62,7 @@
               :field-order-count="fieldOrderCount"
               :field-order-dragging-key="fieldOrderDraggingKey"
               :field-order-drop-target-key="fieldOrderDropTargetKey"
+              :field-order-drop-placement="fieldOrderDropPlacement"
               :field-config-editable="fieldConfigEditable"
               :field-selection-mode="fieldSelectionMode"
               :selected-field-key="selectedFieldKey"
@@ -131,6 +132,7 @@
             :field-order-count="fieldOrderCount"
             :field-order-dragging-key="fieldOrderDraggingKey"
             :field-order-drop-target-key="fieldOrderDropTargetKey"
+            :field-order-drop-placement="fieldOrderDropPlacement"
             :field-config-editable="fieldConfigEditable"
             :field-selection-mode="fieldSelectionMode"
             :selected-field-key="selectedFieldKey"
@@ -173,6 +175,7 @@
             :field-order-count="fieldOrderCount"
             :field-order-dragging-key="fieldOrderDraggingKey"
             :field-order-drop-target-key="fieldOrderDropTargetKey"
+            :field-order-drop-placement="fieldOrderDropPlacement"
             :field-config-editable="fieldConfigEditable"
             :field-selection-mode="fieldSelectionMode"
             :selected-field-key="selectedFieldKey"
@@ -253,6 +256,7 @@
             :field-order-count="fieldOrderCount"
             :field-order-dragging-key="fieldOrderDraggingKey"
             :field-order-drop-target-key="fieldOrderDropTargetKey"
+            :field-order-drop-placement="fieldOrderDropPlacement"
             :field-config-editable="fieldConfigEditable"
             :field-selection-mode="fieldSelectionMode"
             :selected-field-key="selectedFieldKey"
@@ -295,6 +299,7 @@
         :field-order-count="fieldOrderCount"
         :field-order-dragging-key="fieldOrderDraggingKey"
         :field-order-drop-target-key="fieldOrderDropTargetKey"
+        :field-order-drop-placement="fieldOrderDropPlacement"
         :field-config-editable="fieldConfigEditable"
         :field-selection-mode="fieldSelectionMode"
         :selected-field-key="selectedFieldKey"
@@ -401,6 +406,7 @@ const props = withDefaults(defineProps<{
   fieldOrderCount?: number;
   fieldOrderDraggingKey?: string;
   fieldOrderDropTargetKey?: string;
+  fieldOrderDropPlacement?: 'before' | 'after' | '';
   fieldConfigEditable?: boolean;
   fieldSelectionMode?: boolean;
   selectedFieldKey?: string;
@@ -417,6 +423,7 @@ const props = withDefaults(defineProps<{
   fieldOrderCount: 0,
   fieldOrderDraggingKey: '',
   fieldOrderDropTargetKey: '',
+  fieldOrderDropPlacement: '',
   fieldConfigEditable: false,
   fieldSelectionMode: false,
   selectedFieldKey: '',
@@ -427,9 +434,9 @@ const emit = defineEmits<{
   (event: 'field-action', payload: FormSectionFieldActionPayload): void;
   (event: 'field-order-move', payload: { field: FormSectionFieldSchema; delta: number }): void;
   (event: 'field-order-drag-start', payload: { field: FormSectionFieldSchema; event: DragEvent }): void;
-  (event: 'field-order-drag-over', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
+  (event: 'field-order-drag-over', payload: { field: FormSectionFieldSchema; groupTitle?: string; placement?: 'before' | 'after' | '' }): void;
   (event: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
-  (event: 'field-order-drop', payload: { field: FormSectionFieldSchema; groupTitle?: string }): void;
+  (event: 'field-order-drop', payload: { field: FormSectionFieldSchema; groupTitle?: string; placement?: 'before' | 'after' | '' }): void;
   (event: 'field-order-group-drop', payload: { groupTitle: string; groupIndex: number }): void;
   (event: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (event: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;

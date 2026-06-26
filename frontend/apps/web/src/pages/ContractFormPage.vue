@@ -470,6 +470,7 @@
           :field-order-count="fieldOrderDraft.length"
           :field-order-dragging-key="draggingFieldKey"
           :field-order-drop-target-key="dropTargetFieldKey"
+          :field-order-drop-placement="dropTargetPlacement"
           :field-config-editable="isContractFieldOrderEditable"
           :field-selection-mode="isContractFieldOrderEditable"
           :selected-field-key="selectedFormSettingsFieldKey"
@@ -2153,6 +2154,7 @@ const fieldMoveTargetDraft = reactive<Record<string, string>>({});
 const draggingFieldKey = ref('');
 const draggingFieldLabel = ref('');
 const dropTargetFieldKey = ref('');
+const dropTargetPlacement = ref<'before' | 'after'>('before');
 const fieldDragAutoScrollDirection = ref(0);
 let fieldDragAutoScrollFrame = 0;
 const selectedFormSettingsFieldKey = ref('');
@@ -10178,11 +10180,11 @@ function onContractInlineFieldOrderDragStart(payload: { field: FormSectionFieldS
   onFieldOrderDragStart(fieldKey, payload.event);
 }
 
-function onContractInlineFieldOrderDragOver(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
+function onContractInlineFieldOrderDragOver(payload: { field: FormSectionFieldSchema; groupTitle?: string; placement?: 'before' | 'after' | '' }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
   rememberFormConfigFieldLabel(fieldKey, payload.field.label);
-  onFieldOrderDragOver(fieldKey);
+  onFieldOrderDragOver(fieldKey, payload.placement);
 }
 
 function onContractInlineFieldOrderDragLeave(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
@@ -10191,11 +10193,11 @@ function onContractInlineFieldOrderDragLeave(payload: { field: FormSectionFieldS
   onFieldOrderDragLeave(fieldKey);
 }
 
-function onContractInlineFieldOrderDrop(payload: { field: FormSectionFieldSchema; groupTitle?: string }) {
+function onContractInlineFieldOrderDrop(payload: { field: FormSectionFieldSchema; groupTitle?: string; placement?: 'before' | 'after' | '' }) {
   const fieldKey = String(payload.field.name || '').trim();
   if (!fieldKey) return;
   rememberFormConfigFieldLabel(fieldKey, payload.field.label);
-  onFieldOrderDrop(fieldKey, payload.groupTitle);
+  onFieldOrderDrop(fieldKey, payload.groupTitle, payload.placement);
 }
 
 function onContractInlineFieldOrderGroupDrop(payload: { groupTitle: string; groupIndex?: number }) {
@@ -10366,6 +10368,7 @@ function onFieldOrderDragStart(fieldKey: string, event?: DragEvent) {
   draggingFieldKey.value = fieldKey;
   draggingFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(fieldKey);
   dropTargetFieldKey.value = '';
+  dropTargetPlacement.value = 'before';
   if (event?.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', fieldKey);
@@ -10434,22 +10437,26 @@ function onFieldOrderWindowDragStop() {
   onFieldOrderDragEnd();
 }
 
-function onFieldOrderDragOver(fieldKey: string) {
+function onFieldOrderDragOver(fieldKey: string, placement: 'before' | 'after' | '' = 'before') {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === fieldKey) return;
   dropTargetFieldKey.value = fieldKey;
+  dropTargetPlacement.value = placement === 'after' ? 'after' : 'before';
 }
 
 function onFieldOrderDragLeave(fieldKey: string) {
-  if (dropTargetFieldKey.value === fieldKey) dropTargetFieldKey.value = '';
+  if (dropTargetFieldKey.value === fieldKey) {
+    dropTargetFieldKey.value = '';
+    dropTargetPlacement.value = 'before';
+  }
 }
 
-function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '') {
+function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '', requestedPlacement?: 'before' | 'after' | '') {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === targetFieldKey) return;
   const sourceFieldKey = draggingFieldKey.value;
   const currentOrder = fieldOrderDraft.value.length ? fieldOrderDraft.value : currentFormOrderedFieldKeys.value;
   const sourceIndex = currentOrder.indexOf(sourceFieldKey);
   const targetIndex = currentOrder.indexOf(targetFieldKey);
-  const placement = sourceIndex >= 0 && targetIndex >= 0 && sourceIndex < targetIndex ? 'after' : 'before';
+  const placement = requestedPlacement || (sourceIndex >= 0 && targetIndex >= 0 && sourceIndex < targetIndex ? 'after' : 'before');
   moveFieldOrderTo(draggingFieldKey.value, targetFieldKey, placement, '拖拽排序');
   const normalizedTargetGroup = normalizeFieldGroupTitle(fieldGroupBase.value[targetFieldKey] || fieldGroupDraft[targetFieldKey] || targetGroupTitle);
   if (normalizedTargetGroup) {
@@ -10460,6 +10467,7 @@ function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '') {
   selectedFormSettingsFieldKey.value = sourceFieldKey;
   selectedFormSettingsFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(sourceFieldKey);
   dropTargetFieldKey.value = '';
+  dropTargetPlacement.value = 'before';
 }
 
 function fieldGroupTitleMatches(value: unknown, target: string) {
@@ -10479,6 +10487,7 @@ function onFieldOrderGroupDrop(groupTitle: string) {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value) return;
   moveFieldToGroupEnd(draggingFieldKey.value, groupTitle);
   dropTargetFieldKey.value = '';
+  dropTargetPlacement.value = 'before';
 }
 
 function moveFieldOrderTo(
@@ -10525,6 +10534,7 @@ function onFieldOrderDragEnd() {
   draggingFieldKey.value = '';
   draggingFieldLabel.value = '';
   dropTargetFieldKey.value = '';
+  dropTargetPlacement.value = 'before';
   stopFieldDragAutoScroll();
 }
 

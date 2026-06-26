@@ -22,10 +22,10 @@
           @keydown.space="emitFieldSelect(field, $event)"
           @dragstart.stop="emitFieldOrderDragStart(field, $event)"
           @dragend.stop="emitFieldOrderDragEnd(field)"
-          @dragover.prevent="emitFieldOrderDragOver(field)"
+          @dragover.prevent="emitFieldOrderDragOver(field, $event)"
           @dragleave="emitFieldOrderDragLeave(field)"
-          @drop.prevent="emitFieldOrderDrop(field)"
-          @mouseup="emitFieldOrderPointerDrop(field)"
+          @drop.prevent="emitFieldOrderDrop(field, $event)"
+          @mouseup="emitFieldOrderPointerDrop(field, $event)"
         >
           <div class="field-label-row">
             <label v-if="!fieldConfigEditable" class="label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
@@ -280,6 +280,7 @@ const props = withDefaults(defineProps<{
   fieldOrderCount?: number;
   fieldOrderDraggingKey?: string;
   fieldOrderDropTargetKey?: string;
+  fieldOrderDropPlacement?: 'before' | 'after' | '';
   fieldConfigEditable?: boolean;
   fieldGroupTitle?: string;
   fieldSelectionMode?: boolean;
@@ -298,6 +299,7 @@ const props = withDefaults(defineProps<{
   fieldOrderCount: 0,
   fieldOrderDraggingKey: '',
   fieldOrderDropTargetKey: '',
+  fieldOrderDropPlacement: '',
   fieldConfigEditable: false,
   fieldGroupTitle: '',
   fieldSelectionMode: false,
@@ -311,9 +313,9 @@ const emit = defineEmits<{
   (e: 'field-action', payload: FormSectionFieldActionPayload): void;
   (e: 'field-order-move', payload: { field: FormSectionFieldSchema; delta: number }): void;
   (e: 'field-order-drag-start', payload: { field: FormSectionFieldSchema; event: DragEvent }): void;
-  (e: 'field-order-drag-over', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
+  (e: 'field-order-drag-over', payload: { field: FormSectionFieldSchema; groupTitle: string; placement: 'before' | 'after' | '' }): void;
   (e: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
-  (e: 'field-order-drop', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
+  (e: 'field-order-drop', payload: { field: FormSectionFieldSchema; groupTitle: string; placement: 'before' | 'after' | '' }): void;
   (e: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (e: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
   (e: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
@@ -384,6 +386,7 @@ function fieldSpanClass(field: FormSectionFieldSchema) {
 
 function fieldClass(field: FormSectionFieldSchema) {
   const fieldKey = fieldIdentity(field);
+  const isDropTarget = props.fieldOrderDropTargetKey === fieldKey && props.fieldOrderDraggingKey !== fieldKey;
   return [
     'field',
     fieldSpanClass(field),
@@ -391,7 +394,9 @@ function fieldClass(field: FormSectionFieldSchema) {
     {
       'field--order-editable': props.fieldOrderEditable,
       'field--order-dragging': props.fieldOrderDraggingKey === fieldKey,
-      'field--order-drop-target': props.fieldOrderDropTargetKey === fieldKey && props.fieldOrderDraggingKey !== fieldKey,
+      'field--order-drop-target': isDropTarget,
+      'field--order-drop-before': isDropTarget && props.fieldOrderDropPlacement !== 'after',
+      'field--order-drop-after': isDropTarget && props.fieldOrderDropPlacement === 'after',
       'field--selectable': props.fieldSelectionMode,
       'field--selected': props.fieldSelectionMode && props.selectedFieldKey === fieldKey,
       'field--config-hidden': props.fieldSelectionMode && isFieldMarkedHidden(field),
@@ -555,9 +560,19 @@ function emitFieldOrderDragStart(field: FormSectionFieldSchema, event: DragEvent
   emit('field-order-drag-start', { field, event });
 }
 
-function emitFieldOrderDragOver(field: FormSectionFieldSchema) {
+function fieldOrderDropPlacement(event?: DragEvent | MouseEvent): 'before' | 'after' | '' {
+  const target = event?.currentTarget as HTMLElement | null | undefined;
+  if (!target || typeof target.getBoundingClientRect !== 'function') return '';
+  const rect = target.getBoundingClientRect();
+  if (!rect.height) return '';
+  const clientY = Number(event?.clientY || 0);
+  if (!Number.isFinite(clientY) || clientY <= 0) return '';
+  return clientY >= rect.top + rect.height / 2 ? 'after' : 'before';
+}
+
+function emitFieldOrderDragOver(field: FormSectionFieldSchema, event?: DragEvent) {
   if (!props.fieldOrderEditable) return;
-  emit('field-order-drag-over', { field, groupTitle: props.fieldGroupTitle || '' });
+  emit('field-order-drag-over', { field, groupTitle: props.fieldGroupTitle || '', placement: fieldOrderDropPlacement(event) });
 }
 
 function emitFieldOrderDragLeave(field: FormSectionFieldSchema) {
@@ -565,14 +580,14 @@ function emitFieldOrderDragLeave(field: FormSectionFieldSchema) {
   emit('field-order-drag-leave', { field, groupTitle: props.fieldGroupTitle || '' });
 }
 
-function emitFieldOrderDrop(field: FormSectionFieldSchema) {
+function emitFieldOrderDrop(field: FormSectionFieldSchema, event?: DragEvent | MouseEvent) {
   if (!props.fieldOrderEditable) return;
-  emit('field-order-drop', { field, groupTitle: props.fieldGroupTitle || '' });
+  emit('field-order-drop', { field, groupTitle: props.fieldGroupTitle || '', placement: fieldOrderDropPlacement(event) });
 }
 
-function emitFieldOrderPointerDrop(field: FormSectionFieldSchema) {
+function emitFieldOrderPointerDrop(field: FormSectionFieldSchema, event: MouseEvent) {
   if (!props.fieldOrderEditable || !props.fieldOrderDraggingKey) return;
-  emitFieldOrderDrop(field);
+  emitFieldOrderDrop(field, event);
   emitFieldOrderDragEnd(field);
 }
 
@@ -683,7 +698,14 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 .field--order-drop-target {
   border-color: var(--sc-semantic-surface-interactive);
   background: var(--sc-app-info-bg);
-  box-shadow: inset 3px 0 0 var(--sc-semantic-surface-interactive);
+}
+
+.field--order-drop-before {
+  box-shadow: inset 0 3px 0 var(--sc-semantic-surface-interactive);
+}
+
+.field--order-drop-after {
+  box-shadow: inset 0 -3px 0 var(--sc-semantic-surface-interactive);
 }
 
 .field--selectable {

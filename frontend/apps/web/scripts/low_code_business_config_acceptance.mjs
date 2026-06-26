@@ -224,7 +224,14 @@ async function dragDesignerField(page, fromIndex, toIndex) {
   const target = page.locator(".field--selectable").nth(toIndex);
   await source.scrollIntoViewIfNeeded();
   await target.scrollIntoViewIfNeeded();
-  await source.dragTo(target);
+  const targetBox = await target.boundingBox();
+  const targetPosition = targetBox
+    ? {
+      x: Math.max(2, Math.round(targetBox.width / 2)),
+      y: fromIndex < toIndex ? Math.max(2, Math.round(targetBox.height - 2)) : 2,
+    }
+    : undefined;
+  await source.dragTo(target, targetPosition ? { targetPosition } : undefined);
 }
 
 async function probeDesignerFieldDragAutoScroll(page) {
@@ -266,6 +273,70 @@ async function probeDesignerFieldDragAutoScroll(page) {
     beforeScrollY,
     afterScrollY: result.after,
     dirtyAfterProbe,
+  };
+}
+
+async function probeDesignerFieldDropPlacement(page) {
+  const fields = page.locator(".field--selectable");
+  const fieldCount = await fields.count();
+  if (fieldCount < 2) {
+    return {
+      fieldCount,
+      beforeClassVisible: false,
+      afterClassVisible: false,
+      dirtyAfterProbe: await page.locator(".contract-field-governance-dirty").count(),
+    };
+  }
+  const source = fields.nth(0);
+  const target = fields.nth(1);
+  await source.scrollIntoViewIfNeeded();
+  await target.scrollIntoViewIfNeeded();
+  const result = await target.evaluate(async (targetNode) => {
+    const sourceNode = document.querySelector(".field--selectable");
+    if (!sourceNode || !targetNode) {
+      return { beforeClassVisible: false, afterClassVisible: false };
+    }
+    const sourceRect = sourceNode.getBoundingClientRect();
+    const targetRect = targetNode.getBoundingClientRect();
+    const dataTransfer = new DataTransfer();
+    sourceNode.dispatchEvent(new DragEvent("dragstart", {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer,
+      clientY: Math.round(sourceRect.top + sourceRect.height / 2),
+    }));
+    targetNode.dispatchEvent(new DragEvent("dragover", {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer,
+      clientY: Math.round(targetRect.top + Math.max(2, targetRect.height * 0.2)),
+    }));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const beforeClassVisible = targetNode.classList.contains("field--order-drop-before")
+      && !targetNode.classList.contains("field--order-drop-after");
+    targetNode.dispatchEvent(new DragEvent("dragover", {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer,
+      clientY: Math.round(targetRect.bottom - Math.max(2, targetRect.height * 0.2)),
+    }));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const afterClassVisible = targetNode.classList.contains("field--order-drop-after")
+      && !targetNode.classList.contains("field--order-drop-before");
+    sourceNode.dispatchEvent(new DragEvent("dragend", {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer,
+      clientY: Math.round(sourceRect.top + sourceRect.height / 2),
+    }));
+    return { beforeClassVisible, afterClassVisible };
+  });
+  await page.waitForTimeout(100);
+  return {
+    fieldCount,
+    beforeClassVisible: result.beforeClassVisible,
+    afterClassVisible: result.afterClassVisible,
+    dirtyAfterProbe: await page.locator(".contract-field-governance-dirty").count(),
   };
 }
 
@@ -865,6 +936,7 @@ async function main() {
     const draggableFieldCount = await page.locator(".field--order-editable[draggable='true']").count();
     const selectableFieldCount = await page.locator(".field--selectable").count();
     const dragAutoScrollProbe = await probeDesignerFieldDragAutoScroll(page);
+    const dropPlacementProbe = await probeDesignerFieldDropPlacement(page);
     const returnButtonCount = await page.getByRole("button", { name: "返回配置" }).count();
     const legacyPanelCount = await page.locator(".contract-lowcode-objects").count();
     const initialFormDirtyCount = await page.locator(".contract-field-governance-dirty").count();
@@ -1108,6 +1180,7 @@ async function main() {
       orderButtonCount,
       draggableFieldCount,
       dragAutoScrollProbe,
+      dropPlacementProbe,
       selectedFieldCount,
       selectedPanelText,
       operationLogTextAfterHide,
@@ -1182,6 +1255,16 @@ async function main() {
         && dragAutoScrollProbe.dirtyAfterProbe === 0,
       "表单设计器长距离拖拽时未触发页面自动滚动",
       { dragAutoScrollProbe },
+    );
+    assert(
+      dropPlacementProbe.fieldCount < 2
+        || (
+          dropPlacementProbe.beforeClassVisible
+          && dropPlacementProbe.afterClassVisible
+          && dropPlacementProbe.dirtyAfterProbe === 0
+        ),
+      "表单设计器拖拽时没有区分放到目标字段前后",
+      { dropPlacementProbe },
     );
     assert(selectedFieldCount > 0 && selectedPanelText.includes("已选字段"), "表单字段点选后没有进入配置状态", {
       selectedFieldCount,
