@@ -1329,8 +1329,9 @@ function filterNodes(nodes: NavNode[], q: string): NavNode[] {
 }
 
 const filteredMenu = computed(() => filterNodes(visibleMenuNodes.value, query.value));
-const activityPages = computed(() => session.activityPages);
-const activeActivityPageKey = computed(() => session.activeActivityPageKey);
+const isConfigurationRoute = computed(() => route.path.startsWith('/admin/'));
+const activityPages = computed(() => (isConfigurationRoute.value ? [] : session.activityPages));
+const activeActivityPageKey = computed(() => (isConfigurationRoute.value ? '' : session.activeActivityPageKey));
 
 function buildMenuSelectionQuery(): LocationQueryRaw {
   const next: LocationQueryRaw = {};
