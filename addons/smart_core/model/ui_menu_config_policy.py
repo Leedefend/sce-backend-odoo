@@ -76,7 +76,7 @@ class UiMenuConfigPolicy(models.Model):
         "policy_id",
         "group_id",
         string="可见业务角色",
-        help="留空表示对当前公司所有用户生效；填写后仅对这些业务角色中的用户生效。",
+        help="留空表示所有业务角色可见；填写后仅对这些业务角色中的用户生效。",
     )
     note = fields.Text(string="说明")
     active = fields.Boolean(string="启用", default=True, index=True)
@@ -153,7 +153,7 @@ class UiMenuConfigPolicy(models.Model):
                     parts.append("排序：%s" % record.sequence_override)
                 record.effect_summary = "；".join(parts) if parts else "保持原样显示"
             groups = record.role_group_ids.mapped("display_name")
-            record.scope_summary = "、".join(groups) if groups else "当前公司所有用户"
+            record.scope_summary = "、".join(groups) if groups else "所有业务角色"
             if not record.visible:
                 record.preview_summary = "对%s隐藏菜单“%s”。" % (record.scope_summary, record.original_label or menu_label)
             else:
@@ -363,6 +363,7 @@ class UiMenuConfigPolicy(models.Model):
             "renamed_count": 0,
             "reordered_count": 0,
             "moved_count": 0,
+            "parent_aligned_count": 0,
             "config_only": config_only_enabled(),
         }
         move_targets = [
@@ -856,6 +857,43 @@ class UiMenuConfigPolicy(models.Model):
                 next_nodes = ensure_menu_present(next_nodes, policy_menu_record(policy))
             return sort_children(next_nodes)
 
+        def align_visible_configured_parentage(nodes: list[dict]) -> list[dict]:
+            next_nodes = nodes
+            visible_policies = [
+                (int(menu_id), policy)
+                for menu_id, policy in policies_by_menu.items()
+                if policy_visible(policy) and policy_menu_exists(policy)
+            ]
+            visible_policies.sort(key=lambda item: (
+                menu_depth(policy_menu_record(item[1])),
+                int(item[0] or 0),
+            ))
+            for menu_id, policy in visible_policies:
+                source_menu = policy_menu_record(policy)
+                parent = visible_parent_menu(next_nodes, source_menu)
+                if not parent or not parent.exists() or int(parent.id or 0) == int(menu_id):
+                    continue
+                next_nodes = ensure_menu_present(next_nodes, parent)
+                next_nodes, moved_node = remove_node(
+                    next_nodes,
+                    menu_id,
+                    source_menu,
+                    policy_menu_name(policy),
+                )
+                if moved_node is None:
+                    moved_node = build_missing_menu_node(source_menu, policy)
+                    if moved_node is None:
+                        continue
+                actual_parent_id = _to_int(moved_node.get("parent_id"))
+                moved_meta = moved_node.get("meta") if isinstance(moved_node.get("meta"), dict) else {}
+                actual_parent_id = _to_int(moved_meta.get("parent_menu_id")) or actual_parent_id
+                next_nodes, inserted = insert_node(next_nodes, parent, moved_node)
+                if inserted and actual_parent_id != int(parent.id or 0):
+                    stats["parent_aligned_count"] += 1
+                elif not inserted:
+                    next_nodes.append(moved_node)
+            return sort_children(next_nodes)
+
         out = dict(nav_fact)
         applied_flat = [
             applied
@@ -873,5 +911,7 @@ class UiMenuConfigPolicy(models.Model):
             for applied in [apply_node(dict(node))]
             if applied is not None
         ]
-        out["tree"] = materialize_visible_configured_nodes(apply_moves(prune_unconfigured_nodes(applied_tree)))
+        out["tree"] = align_visible_configured_parentage(
+            materialize_visible_configured_nodes(apply_moves(prune_unconfigured_nodes(applied_tree)))
+        )
         return out, stats

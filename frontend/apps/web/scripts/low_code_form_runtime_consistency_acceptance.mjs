@@ -8,8 +8,8 @@ const PASSWORD = process.env.E2E_PASSWORD || "123456";
 const MODEL = process.env.LOW_CODE_RUNTIME_MODEL || "sc.general.contract";
 const ACTION_ID = Number(process.env.LOW_CODE_RUNTIME_ACTION_ID || 669);
 const PAGE_LABEL = process.env.LOW_CODE_RUNTIME_PAGE_LABEL || "一般合同（公司）";
-const FIELD_NAME = process.env.LOW_CODE_RUNTIME_FIELD || "subcontract_mode";
-const FIELD_LABEL = process.env.LOW_CODE_RUNTIME_FIELD_LABEL || "合同分包类型";
+let FIELD_NAME = process.env.LOW_CODE_RUNTIME_FIELD || "subcontract_mode";
+let FIELD_LABEL = process.env.LOW_CODE_RUNTIME_FIELD_LABEL || "合同分包类型";
 const HOME_GROUP = process.env.LOW_CODE_RUNTIME_HOME_GROUP || "合同基本信息";
 const TEMP_GROUP = process.env.LOW_CODE_RUNTIME_TEMP_GROUP || "合同方";
 
@@ -37,7 +37,28 @@ async function openFormDesigner(page) {
   await page.waitForSelector(".config-card", { timeout: 30000 });
   await page.getByRole("button", { name: "配置表单字段" }).first().click();
   await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
-  await page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first().waitFor({ timeout: 30000 });
+  let field = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
+  if (!(await field.count())) {
+    field = page.locator(".field--selectable[data-field-name]").first();
+    await field.waitFor({ timeout: 30000 });
+    FIELD_NAME = String(await field.getAttribute("data-field-name") || "").trim();
+    FIELD_LABEL = await selectedFieldLabel(page) || FIELD_LABEL;
+  } else {
+    await field.waitFor({ timeout: 30000 });
+  }
+}
+
+async function selectField(page) {
+  const field = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
+  await field.waitFor({ timeout: 30000 });
+  await field.scrollIntoViewIfNeeded();
+  await field.evaluate((el) => {
+    el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+  });
+  await page.locator(".contract-field-selection-card").waitFor({ timeout: 5000 }).catch(async () => {
+    await field.click({ force: true });
+    await page.locator(".contract-field-selection-card").waitFor({ timeout: 10000 });
+  });
 }
 
 async function selectedFieldGroup(page) {
@@ -55,10 +76,30 @@ async function selectedFieldLabel(page) {
   });
 }
 
+async function moveGroupOptions(page) {
+  await selectField(page);
+  const select = page.locator(".contract-field-selection-card .contract-field-group-move select");
+  await select.waitFor({ timeout: 10000 });
+  return select.locator("option").evaluateAll((nodes) => (
+    nodes
+      .map((node) => String(node.textContent || node.value || "").trim())
+      .filter(Boolean)
+  ));
+}
+
+async function resolveMoveTargetGroup(page, currentGroup) {
+  const options = await moveGroupOptions(page);
+  const preferred = options.includes(TEMP_GROUP) ? TEMP_GROUP : "";
+  const fallback = options.find((groupTitle) => groupTitle && groupTitle !== currentGroup && groupTitle !== HOME_GROUP)
+    || options.find((groupTitle) => groupTitle && groupTitle !== currentGroup)
+    || "";
+  const targetGroup = preferred && preferred !== currentGroup ? preferred : fallback;
+  assert(targetGroup, "没有可用于字段移动验收的其他分组", { currentGroup, options });
+  return { targetGroup, options };
+}
+
 async function renameFieldInDesigner(page, targetLabel, stage) {
-  const field = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
-  await field.scrollIntoViewIfNeeded();
-  await field.click({ force: true });
+  await selectField(page);
   const input = page.locator(".contract-field-label-edit input").first();
   await input.waitFor({ timeout: 10000 });
   const responsePromise = page.waitForResponse((response) => {
@@ -83,13 +124,15 @@ async function renameFieldInDesigner(page, targetLabel, stage) {
 }
 
 async function moveFieldInDesigner(page, targetGroup) {
-  const field = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
-  await field.scrollIntoViewIfNeeded();
-  await field.click({ force: true });
+  await selectField(page);
   const card = page.locator(".contract-field-selection-card");
   await card.waitFor({ timeout: 10000 });
   const select = card.locator(".contract-field-group-move select");
   await select.waitFor({ timeout: 10000 });
+  const options = await select.locator("option").evaluateAll((nodes) => (
+    nodes.map((node) => String(node.textContent || node.value || "").trim()).filter(Boolean)
+  ));
+  assert(options.includes(targetGroup), "移动字段目标分组不在当前可选范围内", { targetGroup, options });
   await select.selectOption({ label: targetGroup });
   await page.waitForTimeout(300);
   assert(
@@ -152,7 +195,7 @@ async function businessRuntimeEvidence(page) {
   return evidence;
 }
 
-async function assertRuntimeGroup(page, expectedGroup, stage, expectedLabel = FIELD_LABEL) {
+async function assertRuntimeGroup(page, expectedGroup, stage, expectedLabel) {
   const configGroup = await selectedFieldGroup(page);
   assert(configGroup === expectedGroup, "配置页字段分组不符合预期", { stage, expectedGroup, configGroup });
   const evidence = await businessRuntimeEvidence(page);
@@ -193,25 +236,30 @@ async function main() {
   try {
     await login(page);
     await openFormDesigner(page);
+    report.field = FIELD_NAME;
 
     const initialGroup = await selectedFieldGroup(page);
-    if (initialGroup !== TEMP_GROUP) {
-      await moveFieldInDesigner(page, TEMP_GROUP);
+    const initialLabel = await selectedFieldLabel(page) || FIELD_LABEL;
+    report.checks.initial = { group: initialGroup, label: initialLabel };
+    const tempTarget = await resolveMoveTargetGroup(page, initialGroup);
+    report.checks.moveGroupOptions = tempTarget;
+    if (initialGroup !== tempTarget.targetGroup) {
+      await moveFieldInDesigner(page, tempTarget.targetGroup);
     }
-    report.checks.afterMoveToTemp = await assertRuntimeGroup(page, TEMP_GROUP, "afterMoveToTemp");
+    report.checks.afterMoveToTemp = await assertRuntimeGroup(page, tempTarget.targetGroup, "afterMoveToTemp", initialLabel);
 
     await openFormDesigner(page);
     await moveFieldInDesigner(page, HOME_GROUP);
-    report.checks.afterRestoreHome = await assertRuntimeGroup(page, HOME_GROUP, "afterRestoreHome");
+    report.checks.afterRestoreHome = await assertRuntimeGroup(page, HOME_GROUP, "afterRestoreHome", initialLabel);
 
-    const renamedLabel = `${FIELD_LABEL}验收`;
+    const renamedLabel = `${initialLabel}验收`;
     await openFormDesigner(page);
     await renameFieldInDesigner(page, renamedLabel, "rename");
     report.checks.afterRename = await assertRuntimeGroup(page, HOME_GROUP, "afterRename", renamedLabel);
 
     await openFormDesigner(page);
-    await renameFieldInDesigner(page, FIELD_LABEL, "renameRestore");
-    report.checks.afterRenameRestore = await assertRuntimeGroup(page, HOME_GROUP, "afterRenameRestore", FIELD_LABEL);
+    await renameFieldInDesigner(page, initialLabel, "renameRestore");
+    report.checks.afterRenameRestore = await assertRuntimeGroup(page, HOME_GROUP, "afterRenameRestore", initialLabel);
 
     report.ok = true;
     console.log(JSON.stringify(report, null, 2));

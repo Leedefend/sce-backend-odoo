@@ -277,7 +277,7 @@ class _Policy:
         self.role_group_ids = _RecordSet(role_groups or [])
         self.active = active
         self.note = ""
-        self.scope_summary = "、".join(group.display_name for group in self.role_group_ids) or "当前公司所有用户"
+        self.scope_summary = "、".join(group.display_name for group in self.role_group_ids) or "所有业务角色"
         self.effect_summary = "隐藏菜单" if not visible else "保持原样显示"
         self.preview_summary = ""
 
@@ -1529,6 +1529,59 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(seen.count(615), 1)
         self.assertEqual(payment_node["sequence"], 30)
         self.assertEqual(payment_node["meta"]["parent_menu_id"], 570)
+
+    def test_runtime_overlay_reparents_existing_orphan_to_configured_parent(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        finance = _Menu(306, "财务中心", parent=root, sequence=30)
+        deposit_group = _Menu(570, "保证金管理", parent=finance, sequence=60)
+        deposit_collect = _Menu(612, "保证金收取", parent=deposit_group, sequence=70, action="ir.actions.act_window,812")
+        menus = _MenuModel([root, finance, deposit_group, deposit_collect])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([_ActionWindow(812, "sc.deposit.collect")]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                306: {"active": True, "menu_id": 306, "menu_label": "财务中心", "visible": True},
+                570: {"active": True, "menu_id": 570, "menu_label": "保证金管理", "visible": True, "sequence_override": 60},
+                612: {"active": True, "menu_id": 612, "menu_label": "保证金收取", "visible": True, "sequence_override": 70},
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [{"menu_id": 306, "name": "财务中心", "children": []}],
+                    },
+                    {"menu_id": 612, "name": "保证金收取", "children": []},
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        top_level_ids = [node["menu_id"] for node in overlaid["tree"]]
+        root_node = next(node for node in overlaid["tree"] if node["menu_id"] == 291)
+        finance_node = next(child for child in root_node["children"] if child["menu_id"] == 306)
+        deposit_node = next(child for child in finance_node["children"] if child["menu_id"] == 570)
+        collect_node = next(child for child in deposit_node["children"] if child["menu_id"] == 612)
+        self.assertNotIn(612, top_level_ids)
+        self.assertEqual(collect_node["meta"]["parent_menu_id"], 570)
+        self.assertGreaterEqual(stats["parent_aligned_count"], 1)
 
     def test_runtime_overlay_attaches_visible_child_to_nearest_visible_parent_when_parent_hidden(self):
         module = _load_policy_model()

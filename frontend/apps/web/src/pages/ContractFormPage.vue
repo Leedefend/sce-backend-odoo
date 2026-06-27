@@ -3152,7 +3152,7 @@ const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; 
     ? storeContainers
     : (Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : []);
   const baseLayout = useLowCodeLayout
-    ? lowCodeLayout
+    ? mergeLowCodeLayoutWithRuntimeGroupShells(lowCodeLayout, runtimeNativeFormLayoutNodes())
     : (isContractFieldOrderEditable.value && legacyLayout.length
       ? legacyLayout
       : (containers.length
@@ -3191,12 +3191,58 @@ const currentFormDesignFieldCount = computed(() => {
   return nativeFieldStructureGroups.value.reduce((total, group) => total + group.fieldKeys.length, 0);
 });
 
+function collectNativeLayoutGroupTitles(nodes: NativeFormLayoutNode[]) {
+  const titles: string[] = [];
+  const walk = (rows: NativeFormLayoutNode[], pageTitle = '', groupTitle = '') => {
+    rows.forEach((node) => {
+      const type = nativeLayoutNodeType(node);
+      const title = String(node?.string || node?.label || '').trim();
+      const nextPage = type === 'page' && title ? title : pageTitle;
+      const nextGroup = type === 'group' && isReadableFieldGroupTitle(title)
+        ? fieldStructureTitle(nextPage, title)
+        : groupTitle;
+      if (type === 'page' && isReadableFieldGroupTitle(title)) titles.push(title);
+      if (type === 'group' && isReadableFieldGroupTitle(nextGroup)) titles.push(nextGroup);
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[], nextPage, nextGroup);
+      });
+    });
+  };
+  walk(Array.isArray(nodes) ? nodes : []);
+  return titles;
+}
+
+function mergeLowCodeLayoutWithRuntimeGroupShells(base: NativeFormLayoutNode[], runtime: NativeFormLayoutNode[]) {
+  if (!Array.isArray(base) || !base.length) return base;
+  const existing = new Set(
+    collectNativeLayoutGroupTitles(base)
+      .map((title) => normalizeFieldGroupTitle(title))
+      .filter(Boolean),
+  );
+  const missing = collectNativeLayoutGroupTitles(runtime)
+    .map((title) => normalizeFieldGroupTitle(title))
+    .filter((title) => title && title !== '主表区域' && !existing.has(title));
+  if (!missing.length) return base;
+  return [
+    ...base,
+    ...Array.from(new Set(missing)).map((title) => ({
+      type: 'group',
+      string: title,
+      label: title,
+      children: [],
+    } as NativeFormLayoutNode)),
+  ];
+}
+
 const currentFormGroupOptions = computed(() => {
-  const configurableFields = new Set(currentFormDesignFieldKeys.value);
   const groupTitles = nativeFieldStructureGroups.value
-    .filter((group) => group.fieldKeys.some((fieldKey) => configurableFields.has(fieldKey)))
     .map((group) => normalizeFieldGroupTitle(group.title))
     .filter(Boolean);
+  collectNativeLayoutGroupTitles(runtimeNativeFormLayoutNodes()).forEach((title) => {
+    const normalized = normalizeFieldGroupTitle(title);
+    if (normalized) groupTitles.push(normalized);
+  });
   currentFormDesignFieldKeys.value.forEach((fieldKey) => {
     const title = effectiveFieldGroupTitleForDraft(fieldKey);
     if (title) groupTitles.push(title);
@@ -7356,7 +7402,7 @@ function runtimeNativeFormLayoutNodes(): NativeFormLayoutNode[] {
 
 const rawNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   if (isContractFieldOrderEditable.value && layoutHasReadableFieldGroups(lowCodeFormLayoutBase.value)) {
-    return lowCodeFormLayoutBase.value;
+    return mergeLowCodeLayoutWithRuntimeGroupShells(lowCodeFormLayoutBase.value, runtimeNativeFormLayoutNodes());
   }
   const legacyLayout = Array.isArray(contract.value?.views?.form?.layout)
     ? contract.value?.views?.form?.layout as unknown as NativeFormLayoutNode[]

@@ -1,0 +1,108 @@
+{
+  "schema_version": "low_code_business_config_capability_matrix.v1",
+  "purpose": "Make low-code business configuration capability closure explicit and verifiable.",
+  "release_rule": "A capability is release-ready only when carrier, authoring intents, runtime consumers, preview, publish_versioning, rollback, audit, and acceptance are all explicit, and release_blockers is empty.",
+  "capabilities": [
+    {
+      "id": "menu_orchestration",
+      "surface": "菜单配置",
+      "user_goal": "业务管理员配置办理面菜单的可见范围、层级位置、排序、显示状态和删除用户新增菜单。",
+      "carrier": ["ui.business.config.contract:menu_orchestration.v1", "ui.menu.config.policy:compatibility_bridge"],
+      "authoring_intents": ["ui.menu_configuration.load", "ui.menu_configuration.save", "ui.menu_configuration.create", "ui.menu_configuration.delete", "ui.menu_configuration.audit", "ui.menu_configuration.rollback"],
+      "runtime_consumers": ["business_navigation_menu", "business_config_menu_surface"],
+      "preview": "business_config_surface + navigation browser acceptance",
+      "publish_versioning": "ui.business.config.contract version + ui.menu.config.policy compatibility mirror",
+      "rollback": "ui.menu_configuration.rollback",
+      "audit": "ui.menu_configuration.audit",
+      "acceptance": ["verify.business_config.coverage", "verify.business_config.browser_acceptance", "verify.business_config.low_code_acceptance", "verify.business_config.low_code_menu_navigation_alignment"],
+      "status": "ready",
+      "release_blockers": []
+    },
+    {
+      "id": "form_field_structure",
+      "surface": "表单配置",
+      "user_goal": "业务管理员配置字段显示隐藏、名称、顺序、分组、分组名称、分组显示、页面列数、分组列数、字段尺寸和新增字段。",
+      "carrier": ["ui.business.config.contract:view_orchestration.views.form", "ui.form.field.policy:compatibility_bridge"],
+      "authoring_intents": ["ui.business_config.lowcode.apply", "ui.business_config.contract.save", "ui.business_config.contract.get", "ui.business_config.contract.versions", "ui.business_config.contract.rollback"],
+      "runtime_consumers": ["unified_page_contract_v2_assembler", "ContractFormPage runtime renderer"],
+      "preview": "保存并预览 opens current configured form with return_to_business_config",
+      "publish_versioning": "ui.business.config.contract action_publish",
+      "rollback": "ui.business_config.contract.rollback",
+      "audit": "frontend operation log + contract snapshot/audit",
+      "acceptance": ["verify.business_config.low_code_acceptance", "verify.business_config.low_code_runtime_consistency", "verify.business_config.low_code_group_matrix", "verify.business_config.low_code_layout_runtime", "verify.business_config.low_code_global_stability"],
+      "status": "partial",
+      "release_blockers": [
+        "Layout runtime acceptance now covers saved page columns, group columns, group visibility and field size; keep expanding it to multiple model/action samples before marking ready.",
+        "Operation logs must always use user labels and group labels; technical field names are not allowed in default operation history."
+      ]
+    },
+    {
+      "id": "list_search_configuration",
+      "surface": "列表与搜索配置",
+      "user_goal": "业务管理员配置列表列、搜索字段、排序、筛选和默认展示方式。",
+      "carrier": ["ui.business.config.contract:view_orchestration.views.tree", "ui.business.config.contract:view_orchestration.views.search", "sc.user.view.preference:personal_only"],
+      "authoring_intents": ["ui.business_config.list_search.*", "ui.business_config.contract.save"],
+      "runtime_consumers": ["page_assembler tree/search injection", "unified_page_contract_v2_assembler"],
+      "preview": "business config preview route",
+      "publish_versioning": "ui.business.config.contract action_publish",
+      "rollback": "ui.business_config.contract.rollback",
+      "audit": "business config snapshot + coverage scan",
+      "acceptance": ["verify.business_config.coverage", "verify.business_config.snapshot", "verify.business_config.low_code_acceptance"],
+      "status": "partial",
+      "release_blockers": [
+        "Business default and personal preference must remain visibly separated in UI and backend diagnostics."
+      ]
+    },
+    {
+      "id": "approval_policy_configuration",
+      "surface": "审批配置",
+      "user_goal": "业务管理员配置审批启用状态、步骤、角色和运行态生效策略。",
+      "carrier": ["sc.approval.policy", "sc.approval.policy.step"],
+      "authoring_intents": ["sc.approval_policy_configuration.get", "sc.approval_policy_configuration.set", "sc.approval_policy_configuration.steps.set"],
+      "runtime_consumers": ["approval runtime policy resolver"],
+      "preview": "approval policy runtime smoke",
+      "publish_versioning": "policy write is immediately effective with audit evidence",
+      "rollback": "policy snapshot restore is required before release-ready status",
+      "audit": "business_config_approval_runtime_smoke evidence",
+      "acceptance": ["verify.business_config.approval_runtime", "verify.business_config.low_code_acceptance"],
+      "status": "partial",
+      "release_blockers": [
+        "Approval rollback/version semantics are weaker than menu/form/list contracts and need a formal version carrier or explicit release exception."
+      ]
+    },
+    {
+      "id": "version_snapshot_rollback",
+      "surface": "配置版本管理",
+      "user_goal": "业务管理员能理解当前版本、查看变更、导出快照、对比版本并恢复到稳定配置。",
+      "carrier": ["ui.business.config.contract", "ui.business.config.contract.version"],
+      "authoring_intents": ["ui.business_config.snapshot.summary", "ui.business_config.snapshot.export", "ui.business_config.snapshot.compare", "ui.business_config.contract.versions", "ui.business_config.contract.rollback"],
+      "runtime_consumers": ["business_config_surface", "snapshot verification scripts"],
+      "preview": "snapshot compare output",
+      "publish_versioning": "contract version_no + published status",
+      "rollback": "ui.business_config.contract.rollback",
+      "audit": "business_config_contract_snapshot.py",
+      "acceptance": ["verify.business_config.snapshot", "verify.business_config.low_code_acceptance"],
+      "status": "partial",
+      "release_blockers": [
+        "Default UI must explain version actions by business language; technical contract terms must stay in diagnostics."
+      ]
+    },
+    {
+      "id": "capability_boundary_and_coverage",
+      "surface": "配置能力边界",
+      "user_goal": "业务管理员看到全量可配置范围、已配置状态、未配置状态和不可越界原因。",
+      "carrier": ["business_config_coverage_gate", "ui.business.config.contract", "platform boundary guards"],
+      "authoring_intents": ["ui.business_config.surface.get", "ui.business_config.coverage.scan", "ui.business_config.coverage.bootstrap_missing"],
+      "runtime_consumers": ["business_config workbench", "coverage gate"],
+      "preview": "coverage scan report",
+      "publish_versioning": "not applicable; boundary is a guardrail",
+      "rollback": "not applicable; boundary violations are rejected",
+      "audit": "business_config_coverage_gate.py + backend_contract_boundary_guard.py",
+      "acceptance": ["verify.business_config.guard_inventory", "verify.business_config.coverage", "verify.business_config.unit"],
+      "status": "partial",
+      "release_blockers": [
+        "Capability matrix must become the source checklist for every new low-code surface before it enters full acceptance."
+      ]
+    }
+  ]
+}

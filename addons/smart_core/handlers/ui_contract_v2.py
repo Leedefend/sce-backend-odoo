@@ -461,11 +461,11 @@ class UiContractV2Handler(BaseIntentHandler):
         )
         if isinstance(hook_payload, dict):
             contract_v2 = dict(hook_payload)
+        self._project_v2_source_policies(contract_v2, source_contract)
         self._normalize_general_contract_tax_contract(contract_v2, source_contract=source_contract)
         self._normalize_general_contract_company_form(contract_v2, source_contract=source_contract)
         self._normalize_construction_diary_form(contract_v2, source_contract=source_contract)
         self._apply_business_config_form_groups_to_v2(contract_v2, source_contract=source_contract)
-        self._project_v2_source_policies(contract_v2, source_contract)
         contract_v2 = trim_unified_page_contract_v2(
             contract_v2,
             client_type=client_type,
@@ -676,6 +676,11 @@ class UiContractV2Handler(BaseIntentHandler):
         field_groups = governance.get("field_groups") if isinstance(governance.get("field_groups"), dict) else {}
         if not field_groups:
             return
+        hidden_field_names = {
+            str(item or "").strip()
+            for item in (governance.get("hidden_field_names") or [])
+            if str(item or "").strip()
+        }
 
         configured_groups: list[tuple[str, list[str]]] = []
         configured_names: set[str] = set()
@@ -686,6 +691,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 for name in (raw_names if isinstance(raw_names, list) else [])
                 if str(name or "").strip()
             ]
+            names = [name for name in names if name not in hidden_field_names]
             names = [name for name in names if name not in configured_names]
             if not title or not names:
                 continue
@@ -795,6 +801,14 @@ class UiContractV2Handler(BaseIntentHandler):
         ]
         ordered_fields = [name for _title, names in groups for name in names]
         visible = set(ordered_fields)
+        governance = self._form_layout_governance(source_contract)
+        hidden_field_names = {
+            str(item or "").strip()
+            for item in (governance.get("hidden_field_names") or [])
+            if str(item or "").strip()
+        }
+        if hidden_field_names:
+            visible.difference_update(hidden_field_names)
         labels = {
             "project_id": "关联项目",
             "partner_name_text": "合同方",
@@ -2486,6 +2500,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "field_labels": field_labels,
             "section_titles": section_titles,
             "field_groups": field_groups,
+            "hidden_field_names": sorted(hidden_field_names),
             "form_columns": form_columns,
             "group_columns": group_columns,
         }
