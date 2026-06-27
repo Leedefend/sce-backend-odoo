@@ -2398,12 +2398,33 @@ function fieldDisplayLabel(name: string) {
 
 function fieldOptionLabel(field: { name: string; label: string; type: string }) {
   const label = field.label || field.name;
-  if (!advancedPanelOpen.value) return label;
-  return duplicatedFieldLabels.value.has(label) ? `${label}（${field.name}）` : label;
+  if (!duplicatedFieldLabels.value.has(label)) return label;
+  const type = fieldTypeLabel(field.type);
+  const hint = shortFieldNameHint(field.name);
+  return `${label}（${[type, hint].filter(Boolean).join(' · ')}）`;
 }
 
 function fieldOptionHelpText(field: { name: string; label: string; type: string }) {
   return [field.label || field.name, field.name, field.type].filter(Boolean).join(' · ');
+}
+
+function fieldTypeLabel(type: string) {
+  const value = String(type || '').trim();
+  if (value === 'many2one') return '关联';
+  if (value === 'many2many' || value === 'one2many') return '明细';
+  if (value === 'monetary' || value === 'float' || value === 'integer') return '数值';
+  if (value === 'date' || value === 'datetime') return '日期';
+  if (value === 'boolean') return '是/否';
+  if (value === 'selection') return '选项';
+  if (value === 'text' || value === 'html') return '长文本';
+  if (value === 'char') return '文本';
+  return value;
+}
+
+function shortFieldNameHint(name: string) {
+  const cleaned = String(name || '').trim();
+  if (!cleaned) return '';
+  return cleaned.length > 28 ? `${cleaned.slice(0, 12)}...${cleaned.slice(-10)}` : cleaned;
 }
 
 function fieldHelpText(name: string) {

@@ -178,6 +178,7 @@ async function ensureCrossGroupDesignerBaseline(page) {
     model: CONFIG_MODEL,
     view_type: "form",
     action_id: CONFIG_ACTION_ID,
+    view_id: 0,
     publish: true,
     contract_json: {
       view_orchestration: groupedViewOrchestration(fieldRows),
@@ -1199,6 +1200,7 @@ async function main() {
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
     const searchedListOptionCount = searchedListOptionLabels.length;
+    const searchedListDuplicateLabelCount = searchedListOptionLabels.length - new Set(searchedListOptionLabels).size;
     await page.locator(".field-option-search").fill("");
     report.checks.listSearchPanel = {
       listSearchTitle,
@@ -1223,6 +1225,7 @@ async function main() {
       groupOptionSummary,
       searchedListOptionCount,
       searchedListOptionLabels,
+      searchedListDuplicateLabelCount,
     };
     report.artifacts.listSearchPanel = await captureStep(page, "list-search-panel");
     assert(listSearchTitle === "列表与搜索设置", "列表与搜索面板标题不正确", { listSearchTitle });
@@ -1252,9 +1255,11 @@ async function main() {
       { listSearchTabs, filterEditorTitle, filterOptionSummary, groupEditorTitle, groupOptionSummary },
     );
     assert(
-      searchedListOptionCount > 0 && searchedListOptionLabels.every((label) => label.includes("合同")),
+      searchedListOptionCount > 0
+        && searchedListOptionLabels.every((label) => label.includes("合同"))
+        && searchedListDuplicateLabelCount === 0,
       "列表与搜索字段池搜索不可用",
-      { searchedListOptionCount, searchedListOptionLabels },
+      { searchedListOptionCount, searchedListOptionLabels, searchedListDuplicateLabelCount },
     );
     assert(
       changedListChipCount === initialListChipCount + 1
