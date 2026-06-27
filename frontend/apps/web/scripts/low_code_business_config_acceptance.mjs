@@ -563,6 +563,8 @@ async function main() {
     const approvalEditorPanelCount = await approvalPanel.evaluate((node) => node.classList.contains("config-editor-panel") ? 1 : 0);
     const approvalRulePanelCount = await approvalPanel.locator(".approval-rule-panel").count();
     const approvalStepCanvasCount = await approvalPanel.locator(".approval-steps").count();
+    const approvalGuideText = await approvalPanel.locator(".approval-guide").innerText();
+    const approvalImpactSummaryText = await approvalPanel.locator(".approval-impact-summary").innerText();
     const approvalFieldLabels = await approvalPanel.locator(".approval-config-grid label span").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
@@ -955,6 +957,9 @@ async function main() {
         && approvalEditorPanelCount === 1
         && approvalRulePanelCount === 1
         && approvalStepCanvasCount === 1
+        && approvalGuideText.includes("审批配置怎么生效")
+        && approvalGuideText.includes("保存后立即影响")
+        && approvalImpactSummaryText.includes("当前规则")
         && approvalFieldLabels.join("|") === "启用审批|审批方式|默认审批岗位"
         && approvalModeOptionLabels.includes("无需审核")
         && approvalModeOptionLabels.includes("单级审核")
@@ -987,6 +992,8 @@ async function main() {
         approvalEditorPanelCount,
         approvalRulePanelCount,
         approvalStepCanvasCount,
+        approvalGuideText,
+        approvalImpactSummaryText,
         approvalFieldLabels,
         approvalModeOptionLabels,
         approvalScopeOptionCount,

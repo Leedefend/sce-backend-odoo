@@ -377,6 +377,10 @@
         </button>
       </div>
       <aside class="approval-rule-panel" aria-label="审批规则设置">
+        <div class="approval-guide">
+          <strong>审批配置怎么生效</strong>
+          <span>{{ approvalEffectGuideText }}</span>
+        </div>
         <div class="approval-rule-head">
           <strong>规则开关</strong>
           <span>{{ approvalRuntimeText }}</span>
@@ -414,6 +418,10 @@
           <span>保存状态：{{ hasApprovalDraftChanges ? '有未保存调整' : '已同步' }}</span>
           <span v-if="advancedPanelOpen">边界：{{ approvalAudit?.boundary || 'industry_policy_runtime' }}</span>
           <span v-if="hasApprovalDraftChanges" class="edit-dirty">配置已调整，可保存</span>
+        </div>
+        <div class="approval-impact-summary">
+          <strong>{{ hasApprovalDraftChanges ? '本次调整' : '当前规则' }}</strong>
+          <span>{{ approvalImpactSummaryText }}</span>
         </div>
       </aside>
       <section class="approval-steps" :class="{ 'approval-steps--disabled': !approvalForm.approval_required }">
@@ -1149,6 +1157,25 @@ const approvalPolicyLabel = computed(() => {
 const approvalRuntimeText = computed(() => {
   if (!approvalAudit.value) return '未读取';
   return approvalAudit.value.runtime_approval_required ? '当前需要审批' : '当前无需审批';
+});
+const approvalEffectGuideText = computed(() => {
+  const target = approvalAudit.value?.policy?.target_model_label || selectedPageLabel.value || '当前业务';
+  return `保存后立即影响${target}的办理审批判断；未保存调整可用“还原”放弃。`;
+});
+const approvalImpactSummaryText = computed(() => {
+  if (!approvalForm.value.approval_required) {
+    return '保存后当前业务不再要求审批。';
+  }
+  const modeLabel = approvalModeOptions.value.find((option) => option.value === approvalForm.value.mode)?.label || '审批';
+  const scopeLabel = approvalScopeOptions.value.find((option) => option.value === approvalForm.value.manager_scope_key)?.label || '未指定默认审批岗位';
+  const activeSteps = approvalSteps.value.filter((step) => step.active);
+  const stepPreview = activeSteps
+    .slice(0, 3)
+    .map((step) => String(step.name || '').trim())
+    .filter(Boolean)
+    .join('、');
+  const suffix = activeSteps.length > 3 ? `等 ${activeSteps.length} 个步骤` : `${activeSteps.length} 个步骤`;
+  return `${modeLabel}，默认岗位：${scopeLabel}，${suffix}${stepPreview ? `：${stepPreview}` : ''}。`;
 });
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value && !currentModelIsRuntimeConfig.value));
 const headerDesignerButtonLabel = computed(() => {
@@ -3851,6 +3878,24 @@ h1 {
   border-radius: 8px;
   padding: 12px;
   background: var(--sc-app-bg);
+}
+
+.approval-guide,
+.approval-impact-summary {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.approval-guide strong,
+.approval-impact-summary strong {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
 }
 
 .approval-rule-head {
