@@ -504,6 +504,10 @@
           关闭
         </button>
       </div>
+      <div class="version-guide">
+        <strong>{{ versionPanelGuide.title }}</strong>
+        <span>{{ versionPanelGuide.body }}</span>
+      </div>
       <div v-if="!versionContracts.length" class="empty-state">{{ versionEmptyText }}</div>
       <div v-else class="version-list">
         <article v-for="contract in versionContracts" :key="contract.id" class="version-card">
@@ -511,16 +515,17 @@
             <div class="version-card-title">
               <strong>{{ viewTypeLabel(contract.view_type) }}</strong>
               <span>{{ versionContractDisplayName(contract) }}</span>
+              <em>{{ versionContractImpactText(contract) }}</em>
             </div>
             <div class="version-card-actions">
-              <em>当前 v{{ contract.version_no }}</em>
+              <span class="version-current-badge">当前生效 v{{ contract.version_no }}</span>
               <button
                 type="button"
                 class="ghost small"
                 :disabled="versionsLoading || listSearchSaving || contract.versions.length < 2"
                 @click="rollbackContractFromWorkbench(contract)"
               >
-                回滚上一版
+                {{ versionRollbackButtonLabel(contract) }}
               </button>
             </div>
           </div>
@@ -531,23 +536,31 @@
             <span>分组 {{ contract.summary.search_group_by_count }}</span>
             <span v-if="contract.summary.analysis_item_count">分析项 {{ contract.summary.analysis_item_count }}</span>
           </div>
+          <div class="version-decision-note">
+            <span>{{ versionContractDecisionText(contract) }}</span>
+          </div>
           <div v-if="contract.summary.analysis_items?.length" class="analysis-summary-list">
             <span v-for="item in contract.summary.analysis_items.slice(0, 12)" :key="item">{{ analysisItemLabel(item) }}</span>
           </div>
           <div class="version-rows">
-            <div v-for="version in contract.versions" :key="version.id" class="version-row">
-              <span>v{{ version.version_no }}</span>
-              <span>{{ versionStatusLabel(version.status) }}</span>
-              <span>{{ version.created_by || '-' }}</span>
+            <div
+              v-for="version in contract.versions"
+              :key="version.id"
+              class="version-row"
+              :class="{ 'version-row--current': version.version_no === contract.version_no }"
+            >
+              <span class="version-row-no">v{{ version.version_no }}</span>
+              <span>{{ version.version_no === contract.version_no ? '当前生效' : versionStatusLabel(version.status) }}</span>
+              <span>保存人 {{ version.created_by || '-' }}</span>
               <span>{{ versionSummaryText(version.summary) }}</span>
-              <span>{{ versionDeltaText(contract.summary, version.summary, version.version_no === contract.version_no) }}</span>
+              <span class="version-row-delta">{{ versionDeltaText(contract.summary, version.summary, version.version_no === contract.version_no) }}</span>
               <button
                 type="button"
                 class="link-button"
                 :disabled="versionsLoading || listSearchSaving || version.version_no === contract.version_no"
                 @click="rollbackContractFromWorkbench(contract, version.version_no)"
               >
-                回滚到此版
+                {{ version.version_no === contract.version_no ? '当前版本' : '恢复此版本' }}
               </button>
             </div>
           </div>
@@ -1194,6 +1207,30 @@ const versionPanelDescription = computed(() => (
     ? '按当前模型、动作、视图、角色作用域读取正式业务配置版本。'
     : '查看这个页面的配置保存记录，可在需要时回滚到历史版本。'
 ));
+const versionPanelGuide = computed(() => {
+  if (activeVersionSection.value === 'form') {
+    return {
+      title: '表单版本怎么用',
+      body: '当前生效版决定办理页面的字段、分组和布局。恢复历史版本后会立即发布为新的当前配置。',
+    };
+  }
+  if (activeVersionSection.value === 'list_search') {
+    return {
+      title: '列表与搜索版本怎么用',
+      body: '这里管理页面默认列表列、搜索条件和默认分组，不覆盖用户自己的列宽、排序等个人偏好。',
+    };
+  }
+  if (activeVersionSection.value === 'analysis') {
+    return {
+      title: '分析版本怎么用',
+      body: '这里管理透视、图表等分析视图的默认指标和维度。恢复历史版本后刷新业务页面即可生效。',
+    };
+  }
+  return {
+    title: '配置版本怎么用',
+    body: '先确认当前生效版，再选择需要恢复的历史版本。恢复操作会发布为新的当前配置。',
+  };
+});
 const versionEmptyText = computed(() => (
   advancedPanelOpen.value ? '当前作用域暂无版本记录。' : '当前页面暂无版本记录。'
 ));
@@ -1571,6 +1608,26 @@ function versionContractDisplayName(contract: BusinessConfigContractVersionsPayl
   const page = selectedPageLabel.value || surface.value?.model || contract.model || '当前页面';
   const view = viewTypeLabel(contract.view_type);
   return view ? `${page} · ${view}` : page;
+}
+
+function versionContractImpactText(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
+  const view = viewTypeLabel(contract.view_type);
+  if (contract.view_type === 'form') return '影响办理页字段、分组、显示隐藏和布局。';
+  if (contract.view_type === 'tree' || contract.view_type === 'list') return '影响办理页默认列表列。';
+  if (contract.view_type === 'search') return '影响办理页搜索条件和默认分组。';
+  if (['pivot', 'graph', 'calendar', 'dashboard'].includes(contract.view_type)) return `影响${view}视图的默认展示。`;
+  return `影响${view}配置的默认运行效果。`;
+}
+
+function versionRollbackButtonLabel(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
+  return contract.versions.length < 2 ? '暂无可回滚版本' : '恢复上一版';
+}
+
+function versionContractDecisionText(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
+  const historyCount = Math.max(0, contract.versions.length - 1);
+  const currentSummary = versionSummaryText(contract.summary);
+  if (!historyCount) return `当前只有一个版本：${currentSummary}。`;
+  return `当前生效：${currentSummary}。可恢复 ${historyCount} 个历史版本，恢复后会发布为新的当前配置。`;
 }
 
 function versionSummaryNames(summary: BusinessConfigContractVersionsPayload['contracts'][number]['summary']) {
@@ -2926,7 +2983,11 @@ async function rollbackContractFromWorkbench(
 ) {
   if (!contract?.name || (versionNo ? versionNo === contract.version_no : contract.versions.length < 2)) return;
   const targetText = versionNo ? `v${versionNo}` : '上一版';
-  const confirmed = window.confirm(`确认将${viewTypeLabel(contract.view_type)}配置回滚到${targetText}？`);
+  const confirmed = window.confirm([
+    `确认恢复${versionContractDisplayName(contract)}的${targetText}？`,
+    versionContractImpactText(contract),
+    '恢复后会立即发布为新的当前配置，刷新业务页面后生效。',
+  ].join('\n'));
   if (!confirmed) return;
   listSearchSaving.value = true;
   error.value = '';
@@ -4079,10 +4140,26 @@ h1 {
   gap: 10px;
 }
 
+.version-guide {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+}
+
+.version-guide strong {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+}
+
 .version-card {
   display: grid;
-  gap: 8px;
-  padding: 10px;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid var(--sc-app-border);
   border-radius: 6px;
   background: var(--sc-app-bg);
@@ -4099,7 +4176,7 @@ h1 {
 .version-card-title {
   min-width: 0;
   display: grid;
-  gap: 3px;
+  gap: 4px;
 }
 
 .version-card-head strong {
@@ -4115,9 +4192,9 @@ h1 {
 }
 
 .version-card-head em {
-  flex: none;
   color: var(--sc-app-text-secondary);
   font-style: normal;
+  white-space: normal;
 }
 
 .version-card-actions {
@@ -4127,11 +4204,32 @@ h1 {
   gap: 8px;
 }
 
+.version-current-badge {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 0 10px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-primary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .version-summary,
 .version-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 12px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.version-decision-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
@@ -4161,8 +4259,24 @@ h1 {
 }
 
 .version-row {
-  padding-top: 6px;
+  align-items: center;
+  padding-top: 8px;
   border-top: 1px solid var(--sc-app-border);
+}
+
+.version-row--current {
+  color: var(--sc-app-text-primary);
+}
+
+.version-row-no {
+  min-width: 42px;
+  color: var(--sc-app-text-primary);
+  font-weight: 600;
+}
+
+.version-row-delta {
+  flex: 1 1 280px;
+  min-width: min(100%, 220px);
 }
 
 .edit-grid {

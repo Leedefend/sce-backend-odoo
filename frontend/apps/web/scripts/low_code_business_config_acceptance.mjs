@@ -546,6 +546,8 @@ async function main() {
     const defaultVersionTitle = await page.locator(".version-panel h2").innerText();
     const defaultVersionDescription = await page.locator(".version-panel .edit-panel-head p").innerText();
     const defaultVersionPanelText = await page.locator(".version-panel").innerText();
+    const defaultVersionGuideCount = await page.locator(".version-panel .version-guide").count();
+    const defaultVersionCurrentBadgeCount = await page.locator(".version-panel .version-current-badge").count();
     const defaultVersionRowCount = await page.locator(".version-panel .version-row").count();
     const defaultHistoricalVersionRowCount = await page.locator(".version-panel .version-row button:not([disabled])").count();
     const leakedDefaultVersionTerms = await visibleForbiddenTerms(page, ".version-panel");
@@ -925,8 +927,9 @@ async function main() {
       defaultVersionButtonCount >= 2
         && defaultVersionTitle.includes("配置版本")
         && defaultVersionDescription.includes("配置保存记录")
+        && defaultVersionGuideCount === 1
         && (defaultVersionRowCount > 0
-          ? defaultVersionPanelText.includes("当前版本")
+          ? defaultVersionPanelText.includes("当前生效") && defaultVersionCurrentBadgeCount > 0
           : defaultVersionPanelText.includes("当前页面暂无版本记录"))
         && (
           defaultHistoricalVersionRowCount === 0
@@ -940,6 +943,8 @@ async function main() {
         defaultVersionTitle,
         defaultVersionDescription,
         defaultVersionPanelText,
+        defaultVersionGuideCount,
+        defaultVersionCurrentBadgeCount,
         defaultVersionRowCount,
         defaultHistoricalVersionRowCount,
         leakedDefaultVersionTerms,
