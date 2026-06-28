@@ -99,6 +99,29 @@ async function discoverLowCodeBoundaryFiles() {
   return out.sort();
 }
 
+function classifyLowCodeBoundaryLeak(value, relativePath) {
+  const text = String(value || "");
+  if (relativePath.startsWith("frontend/apps/web/src/") && /ui\.(?:business\.config\.contract|form\.field\.policy|form\.custom\.field\.wizard|menu\.config\.policy)|sc\.approval\.policy/.test(text)) {
+    return "frontend_model_name";
+  }
+  if (/^ui\.(?:business_config|menu_config|form_field_policy|form_custom_field)|^sc\.approval_policy/.test(text)) {
+    return "intent_or_route_key";
+  }
+  if (/^smart_core\.nav\./.test(text)) {
+    return "runtime_param";
+  }
+  if (/^current_form_/.test(text)) {
+    return "form_action_key";
+  }
+  if (/business_config_lowcode|form_field_configuration|return_to_business_config/.test(text)) {
+    return "route_or_mode_flag";
+  }
+  if (/ui\.business\.config\.contract\.menu_orchestration|ui\.menu\.config\.policy/.test(text)) {
+    return "runtime_source_or_model";
+  }
+  return "boundary_constant";
+}
+
 async function auditLowCodeBoundaryConstants() {
   const leaked = [];
   const pattern = /(?:ui\.(?:business_config|menu_config|form_field_policy|form_custom_field)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|ui\.menu\.config\.policy|ui\.business\.config\.contract\.menu_orchestration|smart_core\.nav\.(?:user_menu_config(?:\.config_only)?\.enabled|user_data_acceptance_only)|current_form_(?:field_settings|add_custom_field|field_order_save|field_configuration)|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
@@ -113,12 +136,21 @@ async function auditLowCodeBoundaryConstants() {
     const text = await fs.readFile(absolutePath, "utf8");
     const lines = text.split(/\r?\n/);
     lines.forEach((line, index) => {
-      const matches = [
-        ...(line.match(pattern) || []),
-        ...(relativePath.startsWith("frontend/apps/web/src/") ? (line.match(frontendModelPattern) || []) : []),
-      ];
-      matches.forEach((match) => {
-        leaked.push({ path: relativePath, line: index + 1, value: match });
+      const categorizedMatches = [];
+      (line.match(pattern) || []).forEach((match) => {
+        categorizedMatches.push({ value: match, kind: classifyLowCodeBoundaryLeak(match, relativePath) });
+      });
+      if (relativePath.startsWith("frontend/apps/web/src/")) {
+        (line.match(frontendModelPattern) || []).forEach((match) => {
+          categorizedMatches.push({ value: match, kind: "frontend_model_name" });
+        });
+      }
+      const seen = new Set();
+      categorizedMatches.forEach((match) => {
+        const key = `${match.kind}:${match.value}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        leaked.push({ path: relativePath, line: index + 1, kind: match.kind, value: match.value });
       });
     });
   }
