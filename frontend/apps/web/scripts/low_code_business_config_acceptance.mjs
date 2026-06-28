@@ -691,6 +691,10 @@ async function main() {
     const menuTreeHeadCount = await page.locator(".menu-config-tree .tree-panel-head").count();
     const menuTreeHeadText = await page.locator(".menu-config-tree .tree-panel-head").innerText();
     const menuTreeOrderToolCount = await page.locator(".tree-node-order-tools").count();
+    const menuTreeNodeLabels = await page.locator(".menu-config-tree .tree-scroll .tree-node").evaluateAll((nodes) => (
+      nodes.map((node) => node.textContent?.replace(/\s+/g, " ").trim()).filter(Boolean).slice(0, 20)
+    ));
+    const menuTreeInternalLabels = menuTreeNodeLabels.filter((label) => /user_confirmed_|technical_|system_/i.test(label));
     const menuFirstTreeNode = page.locator(".menu-config-tree .tree-scroll .tree-node").first();
     const menuFirstTreeNodeCount = await menuFirstTreeNode.count();
     if (menuFirstTreeNodeCount) {
@@ -825,6 +829,8 @@ async function main() {
       menuTreeHeadCount,
       menuTreeHeadText,
       menuTreeOrderToolCount,
+      menuTreeNodeLabels,
+      menuTreeInternalLabels,
       menuFirstTreeNodeCount,
       menuSelectedTitle,
       menuSelectedInputCount,
@@ -853,6 +859,11 @@ async function main() {
       defaultCards.join("|") === "表单字段与布局|列表与搜索|菜单入口|审批规则",
       "默认配置卡片不符合用户配置边界",
       { defaultCards },
+    );
+    assert(
+      menuTreeNodeLabels.length > 0 && menuTreeInternalLabels.length === 0,
+      "菜单配置树显示了空节点或内部技术标识",
+      { menuTreeNodeLabels, menuTreeInternalLabels },
     );
     assert(
       configWorkspaceCount === 1

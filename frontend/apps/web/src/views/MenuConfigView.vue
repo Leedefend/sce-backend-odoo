@@ -148,7 +148,7 @@
           <select v-model.number="createForm.source_menu_id" class="cell-input">
             <option :value="0">只创建分组菜单</option>
             <option v-for="source in copySourceOptions" :key="source.id" :value="source.id">
-              {{ source.complete_name || source.name }}
+              {{ menuPathLabel(source) }}
             </option>
           </select>
         </label>
@@ -237,8 +237,8 @@
           <div class="menu-selected-head">
             <div>
               <span class="panel-kicker">当前菜单</span>
-              <h2>{{ selectedMenu.name }}</h2>
-              <p>{{ selectedMenu.complete_name || selectedMenu.parent_name || '顶层菜单' }}</p>
+              <h2>{{ menuDisplayLabel(selectedMenu) }}</h2>
+              <p>{{ menuPathLabel(selectedMenu) }}</p>
             </div>
             <div class="menu-selected-badges">
               <span
@@ -295,7 +295,7 @@
                     :key="target.id"
                     :value="target.id"
                   >
-                    {{ target.complete_name || target.name }}
+                    {{ parentOptionLabel(target) }}
                   </option>
                 </select>
               </label>
@@ -399,7 +399,7 @@
         <aside class="menu-side-panel" aria-label="菜单配置摘要">
           <div class="menu-side-panel-head">
             <span class="panel-kicker">配置摘要</span>
-            <strong>{{ selectedMenu ? selectedMenu.name : '全部菜单' }}</strong>
+            <strong>{{ selectedMenu ? menuDisplayLabel(selectedMenu) : '全部菜单' }}</strong>
           </div>
           <div class="menu-side-section menu-side-summary">
             <div class="menu-state-list">
@@ -519,11 +519,11 @@
                   <input
                     class="cell-input name-input"
                     :value="draftFor(row.menu.id).custom_label"
-                    :placeholder="row.menu.name"
+                    :placeholder="menuDisplayLabel(row.menu)"
                     @input="updateDraft(row.menu.id, { custom_label: inputValue($event) })"
                   />
                 </td>
-                <td><span class="muted">{{ row.menu.name }}</span></td>
+                <td><span class="muted">{{ menuDisplayLabel(row.menu) }}</span></td>
                 <td class="status-col">
                   <span
                     class="menu-origin-badge"
@@ -532,7 +532,7 @@
                     {{ isUserCreatedMenu(row.menu) ? '可删除' : '系统' }}
                   </span>
                 </td>
-                <td><span class="muted">{{ row.menu.parent_name || '顶层菜单' }}</span></td>
+                <td><span class="muted">{{ menuParentLabel(row.menu) }}</span></td>
                 <td class="level-col">{{ row.level }}</td>
                 <td class="sequence-col">
                   <input
@@ -556,7 +556,7 @@
                       :key="target.id"
                       :value="target.id"
                     >
-                      {{ target.complete_name || target.name }}
+                      {{ parentOptionLabel(target) }}
                     </option>
                   </select>
                 </td>
@@ -858,7 +858,7 @@ const MenuConfigTree = defineComponent({
             },
           }, collapsed ? '▸' : '▾')
           : h('span', { class: 'branch-marker' }, ''),
-        h('span', node.name),
+        h('span', { title: menuPathLabel(node) }, menuDisplayLabel(node)),
         h('span', {
           class: [
             'menu-origin-badge',
@@ -1021,6 +1021,9 @@ const menuStateFilterOptions = computed(() => {
 function menuSearchText(menu: MenuConfigMenu) {
   const draft = drafts[menu.id];
   return [
+    menuDisplayLabel(menu),
+    menuPathLabel(menu),
+    menuParentLabel(menu),
     menu.name,
     menu.display_name,
     menu.complete_name,
@@ -1624,15 +1627,42 @@ function flattenMenuTree(items: MenuConfigMenu[]): MenuConfigMenu[] {
 
 function parentOptionSortKey(menu: MenuConfigMenu) {
   const isRoot = rootMenu.value && Number(menu.id) === Number(rootMenu.value.id);
-  return `${isRoot ? '0' : '1'}:${menu.complete_name || menu.name}`;
+  return `${isRoot ? '0' : '1'}:${menuPathLabel(menu)}`;
 }
 
 function parentOptionLabel(menu: MenuConfigMenu) {
-  const label = menu.complete_name || menu.name;
+  const label = menuPathLabel(menu);
   if (rootMenu.value && Number(menu.id) === Number(rootMenu.value.id)) {
-    return `业务根菜单：${menu.name || label}（新增一级分组）`;
+    return `业务根菜单：${menuDisplayLabel(menu) || label}（新增一级分组）`;
   }
   return label;
+}
+
+function menuDisplayLabel(menu: MenuConfigMenu | null | undefined) {
+  if (!menu) return '';
+  const draft = drafts[menu.id];
+  return String(
+    draft?.custom_label
+    || menu.display_name
+    || menu.name
+    || menu.complete_name
+    || `菜单 ${menu.id}`,
+  ).trim();
+}
+
+function menuPathLabel(menu: MenuConfigMenu | null | undefined) {
+  if (!menu) return '';
+  const path = String(menu.complete_name || '').trim();
+  if (path) return path;
+  const parent = String(menu.parent_name || '').trim();
+  const label = menuDisplayLabel(menu);
+  return parent ? `${parent} / ${label}` : (label || '顶层菜单');
+}
+
+function menuParentLabel(menu: MenuConfigMenu | null | undefined) {
+  if (!menu) return '顶层菜单';
+  const parent = String(menu.parent_name || '').trim();
+  return parent || '顶层菜单';
 }
 
 function initializeTreeCollapse(items: MenuConfigMenu[]) {
@@ -1984,6 +2014,32 @@ function markHandlingMembership(items: MenuConfigMenu[], usedMenuIds: Set<number
   });
 }
 
+function markMissingConfigSubtree(item: MenuConfigMenu): MenuConfigMenu {
+  return {
+    ...item,
+    children: (item.children || []).map(markMissingConfigSubtree),
+    menu_config_missing: true,
+  } as MenuConfigTreeNode;
+}
+
+function collectMissingConfigTree(items: MenuConfigMenu[], usedMenuIds: Set<number>): MenuConfigMenu[] {
+  return items.flatMap((item) => {
+    const menuId = Number(item.id || 0);
+    if (menuId && !usedMenuIds.has(menuId)) {
+      return [markMissingConfigSubtree(item)];
+    }
+    return item.children?.length ? collectMissingConfigTree(item.children, usedMenuIds) : [];
+  });
+}
+
+function mergeNavigationAndConfigTrees(navigationTree: MenuConfigMenu[], configTree: MenuConfigMenu[], usedMenuIds: Set<number>) {
+  if (!navigationTree.length) {
+    return markHandlingMembership(configTree, usedMenuIds);
+  }
+  const missingConfigTree = collectMissingConfigTree(configTree, usedMenuIds);
+  return [...navigationTree, ...missingConfigTree];
+}
+
 function collectNavigationMenuIds() {
   const ids: number[] = [];
   const seen = new Set<number>();
@@ -2047,8 +2103,8 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
       });
     });
     const usedMenuIds = new Set<number>();
-    buildTreeFromNavigation(scopedNavigationTree(), menuById, menuByLabel, usedMenuIds);
-    const completeTree = markHandlingMembership(payload.tree || [], usedMenuIds);
+    const navigationTree = buildTreeFromNavigation(scopedNavigationTree(), menuById, menuByLabel, usedMenuIds);
+    const completeTree = mergeNavigationAndConfigTrees(navigationTree, payload.tree || [], usedMenuIds);
     tree.value = completeTree;
     const routeMenuId = Number(route.query.menu_id || 0);
     const firstMenuId = completeTree[0]?.id || payload.menus?.[0]?.id || 0;
