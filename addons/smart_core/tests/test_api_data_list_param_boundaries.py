@@ -273,6 +273,43 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
         self.assertNotIn(("computed_label", "ilike", "ABC"), domain)
         self.assertNotIn(("amount", "ilike", "ABC"), domain)
 
+    def test_search_term_domain_includes_search_view_fields_for_projection_lists(self):
+        field = lambda field_type, store=True, search=None, groups="": types.SimpleNamespace(
+            type=field_type,
+            store=store,
+            search=search,
+            groups=groups,
+        )
+        user = types.SimpleNamespace(has_group=lambda group: group == "allowed.group")
+        env_model = types.SimpleNamespace(
+            _name="x.receipt",
+            _rec_name="name",
+            env=types.SimpleNamespace(user=user),
+            _fields={
+                "name": field("char"),
+                "p1_visible_project": field("char", store=False),
+                "legacy_project_name": field("char"),
+                "project_id": field("many2one"),
+                "restricted_note": field("char", groups="blocked.group"),
+            },
+        )
+        self.handler._search_view_field_names = lambda model: [
+            "legacy_project_name",
+            "project_id",
+            "restricted_note",
+        ]
+
+        domain = self.handler._build_search_term_domain(
+            env_model,
+            "绵阳",
+            ["p1_visible_project"],
+        )
+
+        self.assertIn(("legacy_project_name", "ilike", "绵阳"), domain)
+        self.assertIn(("project_id", "ilike", "绵阳"), domain)
+        self.assertNotIn(("p1_visible_project", "ilike", "绵阳"), domain)
+        self.assertNotIn(("restricted_note", "ilike", "绵阳"), domain)
+
     def test_python_order_sorts_date_text_chronologically(self):
         rows = [
             {"apply_date": "2024-10-01"},

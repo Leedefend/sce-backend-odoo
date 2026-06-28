@@ -14,6 +14,7 @@ import csv
 import io
 import hashlib
 import json
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from urllib.parse import unquote
 
@@ -1013,6 +1014,43 @@ class ApiDataHandler(BaseIntentHandler):
             return None
         return self._project_scope_denied("当前项目上下文不允许访问或修改其他项目的数据", scope_meta)
 
+    def _search_view_field_names(self, env_model) -> List[str]:
+        model_name = str(getattr(env_model, "_name", "") or "").strip()
+        if not model_name:
+            return []
+        cache = getattr(self, "_search_view_field_cache", None)
+        if cache is None:
+            cache = {}
+            setattr(self, "_search_view_field_cache", cache)
+        if model_name in cache:
+            return list(cache.get(model_name) or [])
+
+        names: List[str] = []
+        try:
+            views = env_model.env["ir.ui.view"].sudo().search([
+                ("model", "=", model_name),
+                ("type", "=", "search"),
+            ])
+        except Exception:
+            cache[model_name] = []
+            return []
+
+        for view in views:
+            arch = str(getattr(view, "arch_db", "") or "").strip()
+            if not arch:
+                continue
+            try:
+                root = ET.fromstring(arch.encode("utf-8"))
+            except Exception:
+                continue
+            for node in root.iter("field"):
+                field_name = str(node.attrib.get("name") or "").strip()
+                if field_name and field_name not in names:
+                    names.append(field_name)
+
+        cache[model_name] = names
+        return list(names)
+
     def _build_search_term_domain(self, env_model, search_term: str, fields_safe: List[str]) -> List[Any]:
         term = str(search_term or "").strip()
         if not term:
@@ -1024,7 +1062,9 @@ class ApiDataHandler(BaseIntentHandler):
 
         candidates: List[str] = []
         rec_name = str(getattr(env_model, "_rec_name", "") or "").strip()
-        for field_name in [rec_name, "name"] + list(fields_safe or []):
+        search_view_fields_raw = self._search_view_field_names(env_model)
+        search_view_fields = self._filter_readable_fields(env_model, search_view_fields_raw) if search_view_fields_raw else []
+        for field_name in [rec_name, "name"] + list(fields_safe or []) + list(search_view_fields or []):
             if not field_name or field_name == "id" or field_name in candidates:
                 continue
             field = env_model._fields.get(field_name)
