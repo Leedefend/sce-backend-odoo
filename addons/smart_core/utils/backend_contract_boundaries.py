@@ -24,6 +24,7 @@ MENU_CONFIG_RUNTIME_SOURCE_POLICY = "ui.menu.config.policy"
 MENU_CONFIG_RUNTIME_SOURCE_CONTRACT = "ui.business.config.contract.menu_orchestration"
 MENU_CONFIG_NAV_ENABLED_PARAM = "smart_core.nav.user_menu_config.enabled"
 MENU_CONFIG_CONFIG_ONLY_PARAM = "smart_core.nav.user_menu_config.config_only.enabled"
+NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM = "smart_core.nav.user_data_acceptance_only"
 APPROVAL_POLICY_SOURCE_TENANT_LOWCODING = "smart_construction_core.lowcode.approval_policy"
 APPROVAL_POLICY_RUNTIME_SOURCE = "sc.approval.policy"
 

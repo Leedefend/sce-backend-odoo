@@ -33,10 +33,13 @@ const ADVANCED_UI_FORBIDDEN_TERMS = [
 const LOW_CODE_BOUNDARY_FILES = [
   "frontend/apps/web/src/api/businessConfig.ts",
   "frontend/apps/web/src/api/menuConfig.ts",
+  "frontend/apps/web/src/services/action_service.ts",
   "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue",
   "frontend/apps/web/src/views/MenuConfigView.vue",
   "frontend/apps/web/src/pages/ContractFormPage.vue",
   "addons/smart_core/controllers/platform_menu_api.py",
+  "addons/smart_core/delivery/menu_service.py",
+  "addons/smart_core/delivery/native_config_menu_projection.py",
   "addons/smart_core/handlers/business_config_surface.py",
   "addons/smart_core/handlers/form_field_configuration.py",
   "addons/smart_core/handlers/menu_configuration.py",
@@ -46,6 +49,7 @@ const LOW_CODE_BOUNDARY_FILES = [
   "addons/smart_core/model/ui_menu_config_policy.py",
   "addons/smart_construction_core/handlers/approval_policy_configuration.py",
   "addons/smart_construction_core/core_extension.py",
+  "addons/smart_construction_core/models/support/product_policy_sync.py",
 ];
 const LOW_CODE_BOUNDARY_ALLOW_FILES = new Set([
   "frontend/apps/web/src/app/businessConfigBoundaries.ts",
@@ -70,7 +74,7 @@ async function ensureDirs() {
 
 async function auditLowCodeBoundaryConstants() {
   const leaked = [];
-  const pattern = /(?:ui\.(?:business_config|menu_config)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|ui\.menu\.config\.policy|ui\.business\.config\.contract\.menu_orchestration|smart_core\.nav\.user_menu_config(?:\.config_only)?\.enabled|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
+  const pattern = /(?:ui\.(?:business_config|menu_config)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|ui\.menu\.config\.policy|ui\.business\.config\.contract\.menu_orchestration|smart_core\.nav\.(?:user_menu_config(?:\.config_only)?\.enabled|user_data_acceptance_only)|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
   for (const relativePath of LOW_CODE_BOUNDARY_FILES) {
     if (LOW_CODE_BOUNDARY_ALLOW_FILES.has(relativePath)) continue;
     const absolutePath = path.join(ROOT_DIR, relativePath);

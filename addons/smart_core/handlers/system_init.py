@@ -33,7 +33,11 @@ from odoo.addons.smart_core.core.system_init_diagnostics_helper import SystemIni
 from odoo.addons.smart_core.core.system_init_identity_payload import SystemInitIdentityPayload
 from odoo.addons.smart_core.core.system_init_nav_request_builder import SystemInitNavRequestBuilder
 from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPayloadBuilder
-from odoo.addons.smart_core.utils.backend_contract_boundaries import MENU_CONFIG_NAV_ENABLED_PARAM, MENU_CONFIG_POLICY_MODEL
+from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    MENU_CONFIG_NAV_ENABLED_PARAM,
+    MENU_CONFIG_POLICY_MODEL,
+    NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM,
+)
 from odoo.addons.smart_core.core.system_init_response_meta_builder import SystemInitResponseMetaBuilder
 from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
 from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
@@ -757,7 +761,7 @@ def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[
 
 def _user_data_acceptance_nav_only_enabled(env) -> bool:
     try:
-        raw = env["ir.config_parameter"].sudo().get_param("smart_core.nav.user_data_acceptance_only", "")
+        raw = env["ir.config_parameter"].sudo().get_param(NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM, "")
     except Exception:
         raw = ""
     return str(raw or "").strip().lower() in {"1", "true", "yes", "on"}

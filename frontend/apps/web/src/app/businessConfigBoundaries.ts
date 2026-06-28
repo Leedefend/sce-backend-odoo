@@ -53,8 +53,10 @@ export const MENU_CONFIG_INTENTS = {
   versions: 'ui.menu_config.versions',
 } as const;
 
+export const MENU_CONFIG_POLICY_MODEL = 'ui.menu.config.policy';
+
 export const MENU_CONFIG_RUNTIME_SOURCES = {
-  policy: 'ui.menu.config.policy',
+  policy: MENU_CONFIG_POLICY_MODEL,
   contract: 'ui.business.config.contract.menu_orchestration',
 } as const;
 
