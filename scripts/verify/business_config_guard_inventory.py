@@ -129,6 +129,13 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
             "sampleCount",
         ),
     },
+    "verify.business_config.low_code_global_stability": {
+        "frontend/apps/web/scripts/low_code_global_stability_acceptance.mjs": (
+            "sanitizedContractJson",
+            "legacy_lowcode_draft",
+            "contract_json: sanitizedContractJson",
+        ),
+    },
 }
 
 

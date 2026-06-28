@@ -114,6 +114,12 @@ async function contractSnapshot(page, { model, actionId, viewType }) {
   }
 }
 
+function sanitizedContractJson(contractJson) {
+  const copy = JSON.parse(JSON.stringify(contractJson || {}));
+  delete copy.legacy_lowcode_draft;
+  return copy;
+}
+
 async function restoreContract(page, snapshot) {
   if (!snapshot) return;
   await intent(page, "ui.business_config.contract.save", {
@@ -123,7 +129,7 @@ async function restoreContract(page, snapshot) {
     action_id: snapshot.action_id,
     view_id: snapshot.view_id,
     role_key: snapshot.role_key,
-    contract_json: snapshot.contract_json || {},
+    contract_json: sanitizedContractJson(snapshot.contract_json),
     publish: snapshot.status === "published",
   });
 }
