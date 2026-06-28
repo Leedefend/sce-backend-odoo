@@ -38,6 +38,10 @@ const LOW_CODE_BOUNDARY_ALLOW_FILES = new Set([
   "frontend/apps/web/src/app/businessConfigBoundaries.ts",
   "addons/smart_core/utils/backend_contract_boundaries.py",
 ]);
+const LOW_CODE_LEGACY_WRITE_GUARD_FILES = [
+  "frontend/apps/web/src/pages/ContractFormPage.vue",
+  "frontend/apps/web/scripts/low_code_business_config_acceptance.mjs",
+];
 
 function assert(condition, message, details = {}) {
   if (!condition) {
@@ -69,6 +73,23 @@ async function auditLowCodeBoundaryConstants() {
   return {
     checkedFiles: LOW_CODE_BOUNDARY_FILES.length,
     allowedFiles: Array.from(LOW_CODE_BOUNDARY_ALLOW_FILES),
+    leaked,
+  };
+}
+
+async function auditLowCodeLegacyWritePaths() {
+  const leaked = [];
+  for (const relativePath of LOW_CODE_LEGACY_WRITE_GUARD_FILES) {
+    const absolutePath = path.join(ROOT_DIR, relativePath);
+    const text = await fs.readFile(absolutePath, "utf8");
+    text.split(/\r?\n/).forEach((line, index) => {
+      if (/^\s*legacy_lowcode_draft\s*:/.test(line)) {
+        leaked.push({ path: relativePath, line: index + 1 });
+      }
+    });
+  }
+  return {
+    checkedFiles: LOW_CODE_LEGACY_WRITE_GUARD_FILES.length,
     leaked,
   };
 }
@@ -219,23 +240,6 @@ async function ensureCrossGroupDesignerBaseline(page) {
     publish: true,
     contract_json: {
       view_orchestration: groupedViewOrchestration(fieldRows),
-      legacy_lowcode_draft: {
-        objects: [{
-          name: CONFIG_MODEL,
-          fields: fieldRows.map((field, index) => ({
-            name: field.name,
-            type: "string",
-            visible: true,
-            order: index + 1,
-          })),
-        }],
-        layout: {
-          form: fieldRows.map((field) => ({ object: CONFIG_MODEL, field: field.name })),
-          list: [],
-          kanban: [],
-        },
-        rules: [],
-      },
     },
   });
   return {
@@ -519,10 +523,16 @@ async function clickFirstAvailableAnalysisField(page, tabLabels) {
 async function main() {
   await ensureDirs();
   const boundaryConstants = await auditLowCodeBoundaryConstants();
+  const legacyWritePaths = await auditLowCodeLegacyWritePaths();
   assert(
     boundaryConstants.leaked.length === 0,
     "低代码边界常量散落在页面、API 或 handler 中",
     boundaryConstants,
+  );
+  assert(
+    legacyWritePaths.leaked.length === 0,
+    "低代码保存路径仍在写 legacy_lowcode_draft",
+    legacyWritePaths,
   );
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -543,6 +553,7 @@ async function main() {
     login: LOGIN,
     checks: {
       boundaryConstants,
+      legacyWritePaths,
     },
     artifacts: {},
     errors,

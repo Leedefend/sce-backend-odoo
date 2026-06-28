@@ -798,83 +798,6 @@
         <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
           <li v-for="(warning, index) in lowCodePrecheckWarnings" :key="`lowcode-warning-${index}`">{{ warning }}</li>
         </ul>
-        <section v-if="showLegacyLowCodeTechnicalPanels" class="contract-lowcode-objects">
-          <header class="contract-lowcode-objects-head">
-            <h4>业务对象配置</h4>
-            <div class="contract-lowcode-contract-switch">
-              <select v-model="lowCodeSelectedContractName" class="input" @change="switchLowCodeContractByName">
-                <option value="">当前草稿</option>
-                <option v-for="item in lowCodeContractList" :key="`contract-${item.id}`" :value="item.name">
-                  {{ item.name }} (v{{ item.version_no }} · {{ item.status }})
-                </option>
-              </select>
-            </div>
-            <button type="button" class="chip-btn" :disabled="busy || !lowCodeSelectedContractName" @click="publishSelectedLowCodeContract">发布配置</button>
-            <button type="button" class="ghost" :disabled="busy || !lowCodeSelectedContractName" @click="rollbackSelectedLowCodeContract">回滚版本</button>
-            <button type="button" class="ghost" :disabled="busy" @click="addLowCodeObject">新增对象</button>
-          </header>
-          <div v-for="(obj, objIndex) in lowCodeObjectsDraft" :key="`lc-obj-${objIndex}`" class="contract-lowcode-object">
-            <div class="contract-lowcode-object-head">
-              <input v-model="obj.name" class="input" placeholder="对象名称" />
-              <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeObject(objIndex)">删除对象</button>
-              <button type="button" class="ghost" :disabled="busy" @click="addLowCodeField(objIndex)">新增字段</button>
-            </div>
-            <div v-for="(field, fieldIndex) in obj.fields" :key="`lc-field-${objIndex}-${fieldIndex}`" class="contract-lowcode-field">
-              <input v-model="field.name" class="input" placeholder="字段名" />
-              <select v-model="field.type" class="input">
-                <option value="string">string</option>
-                <option value="float">float</option>
-                <option value="date">date</option>
-                <option value="selection">selection</option>
-                <option value="integer">integer</option>
-                <option value="boolean">boolean</option>
-              </select>
-              <label class="contract-lowcode-flag"><input v-model="field.required" type="checkbox" />必填</label>
-              <label class="contract-lowcode-flag"><input v-model="field.readonly" type="checkbox" />只读</label>
-              <input v-model="field.default" class="input" placeholder="默认值" />
-              <input v-if="field.type === 'selection'" v-model="field.options" class="input" placeholder="选项（value:label,逗号分隔）" />
-              <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeField(objIndex, fieldIndex)">删除字段</button>
-            </div>
-          </div>
-        </section>
-        <section v-if="showLegacyLowCodeTechnicalPanels" class="contract-lowcode-objects">
-          <header class="contract-lowcode-objects-head">
-            <h4>布局配置</h4>
-            <div class="chips">
-              <button type="button" class="ghost" :disabled="busy" @click="addLowCodeLayoutNode('form')">新增 Form</button>
-              <button type="button" class="ghost" :disabled="busy" @click="addLowCodeLayoutNode('list')">新增 List</button>
-              <button type="button" class="ghost" :disabled="busy" @click="addLowCodeLayoutNode('kanban')">新增 Kanban</button>
-            </div>
-          </header>
-          <div v-for="(node, nodeIndex) in lowCodeLayoutDraft" :key="`lc-layout-${nodeIndex}`" class="contract-lowcode-field">
-            <select v-model="node.section" class="input">
-              <option value="form">form</option>
-              <option value="list">list</option>
-              <option value="kanban">kanban</option>
-            </select>
-            <input v-model="node.object" class="input" placeholder="对象名" />
-            <input v-model="node.field" class="input" placeholder="字段名" />
-            <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeLayoutNode(nodeIndex)">删除</button>
-          </div>
-        </section>
-        <section v-if="showLegacyLowCodeTechnicalPanels" class="contract-lowcode-objects">
-          <header class="contract-lowcode-objects-head">
-            <h4>规则配置</h4>
-            <button type="button" class="ghost" :disabled="busy" @click="addLowCodeRule">新增规则</button>
-          </header>
-          <div v-for="(rule, ruleIndex) in lowCodeRulesDraft" :key="`lc-rule-${ruleIndex}`" class="contract-lowcode-field">
-            <input v-model="rule.name" class="input" placeholder="规则名称" />
-            <select v-model="rule.trigger" class="input">
-              <option value="on_create">on_create</option>
-              <option value="on_update">on_update</option>
-              <option value="scheduled">scheduled</option>
-            </select>
-            <input v-model="rule.object" class="input" placeholder="动作对象" />
-            <input v-model="rule.field" class="input" placeholder="动作字段" />
-            <input v-if="rule.trigger === 'scheduled'" v-model="rule.cron" class="input" placeholder="cron" />
-            <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeRule(ruleIndex)">删除</button>
-          </div>
-        </section>
         <div v-if="hasAdvancedFields && !isProjectIntakeCreateMode && !useNativeFormTree" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
@@ -2270,50 +2193,7 @@ const lowCodePrecheckWarnings = ref<string[]>([]);
 const lowCodeContractList = ref<Array<{ id: number; name: string; model: string; status: string; version_no: number }>>([]);
 const lowCodeSelectedContractName = ref('');
 const lowCodeFormLayoutBase = ref<NativeFormLayoutNode[]>([]);
-const lowCodeObjectsDraft = ref<Array<{
-  name: string;
-  fields: Array<{
-    name: string;
-    type: string;
-    required?: boolean;
-    readonly?: boolean;
-    default?: string;
-    options?: string;
-  }>
-}>>([]);
 const lowCodeLayoutDraft = ref<Array<{ section: 'form' | 'list' | 'kanban'; object: string; field: string }>>([]);
-const lowCodeRulesDraft = ref<Array<{ name: string; trigger: 'on_create' | 'on_update' | 'scheduled'; object: string; field: string; cron?: string }>>([]);
-
-function lowCodeLegacyDraftFromContract(json: unknown) {
-  const root = parseMaybeJsonRecord(json);
-  const compatibility = parseMaybeJsonRecord(root.compatibility || root.low_code_compatibility);
-  const nested = parseMaybeJsonRecord(root.legacy_lowcode_draft || compatibility.legacy_lowcode_draft || compatibility.low_code_draft);
-  const objects = Array.isArray(root.objects)
-    ? root.objects
-    : (Array.isArray(nested.objects) ? nested.objects : []);
-  const objectRows = objects
-    .filter((row) => row && typeof row === 'object' && !Array.isArray(row))
-    .map((row) => row as Record<string, unknown>);
-  const layout = root.layout && typeof root.layout === 'object' && !Array.isArray(root.layout)
-    ? root.layout as Record<string, unknown>
-    : parseMaybeJsonRecord(nested.layout);
-  const rules = Array.isArray(root.rules)
-    ? root.rules
-    : (Array.isArray(nested.rules) ? nested.rules : []);
-  return { objects: objectRows, layout, rules };
-}
-
-function parseSelectionOptions(raw: string): Array<{ value: string; label: string }> {
-  return String(raw || '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .map((item) => {
-      const parts = item.split(':').map((part) => part.trim()).filter(Boolean);
-      if (parts.length >= 2) return { value: parts[0], label: parts.slice(1).join(':') };
-      return { value: item, label: item };
-    });
-}
 
 const contractModeBaseFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
   const mode = activeContractMode.value;
@@ -3010,12 +2890,6 @@ const showLowCodeTechnicalDetails = computed(() => {
   const surface = routeQueryText('surface').toLowerCase();
   return hudFlag === '1' || hudFlag === 'true' || surface === 'hud';
 });
-const showLegacyLowCodeTechnicalPanels = computed(() => (
-  isContractFieldOrderEditable.value
-  && !useNativeFormTree.value
-  && showDebugActionsVisible.value
-  && showLowCodeTechnicalDetails.value
-));
 
 const formFieldConfigScope = computed(() => {
   const page = pageDisplayTitle.value || '当前表单';
@@ -3400,7 +3274,6 @@ async function hydrateLowCodeDraftFromContract() {
   try {
     const base = lowCodeApplyBaseParams();
     const scopedName = lowCodeScopedContractName(modelName, base);
-    const legacyName = legacyLowCodeContractName(modelName);
     const listResult = await intentRequest<{
       items?: Array<{ name?: string }>;
     }>({
@@ -3410,9 +3283,7 @@ async function hydrateLowCodeDraftFromContract() {
     const availableNames = new Set((Array.isArray(listResult?.items) ? listResult?.items || [] : [])
       .map((row) => String(row?.name || '').trim())
       .filter(Boolean));
-    const contractName = availableNames.has(scopedName)
-      ? scopedName
-      : (scopedName !== legacyName && availableNames.has(legacyName) ? legacyName : '');
+    const contractName = availableNames.has(scopedName) ? scopedName : '';
     if (!contractName) return;
     const res = await intentRequest<{
       contract_json?: {
@@ -3420,13 +3291,9 @@ async function hydrateLowCodeDraftFromContract() {
       }
     }>({
       intent: BUSINESS_CONFIG_INTENTS.contractGet,
-      params: contractName === scopedName
-        ? { ...base, model: modelName, name: contractName, view_type: 'form' }
-        : { model: modelName, name: contractName },
+      params: { ...base, model: modelName, name: contractName, view_type: 'form' },
     }).catch(() => null);
     if (!res) return;
-    const legacyDraft = lowCodeLegacyDraftFromContract(res?.contract_json);
-    const objects = legacyDraft.objects;
     const viewOrchestration = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
       ? (res.contract_json as { view_orchestration?: Record<string, unknown> }).view_orchestration || {}
       : {};
@@ -3462,68 +3329,8 @@ async function hydrateLowCodeDraftFromContract() {
           fieldGroupDraft[key] = groupTitle;
         }
       });
-    } else {
-      const matched = objects.find((row) => String(row?.name || '').trim() === modelName) || objects[0];
-      const fields = Array.isArray(matched?.fields) ? matched?.fields || [] : [];
-      const orderNames = fields
-        .map((row) => ({ name: String(row?.name || '').trim(), order: Number(row?.order || 0) }))
-        .filter((row) => row.name)
-        .sort((a, b) => a.order - b.order)
-        .map((row) => row.name);
-      if (orderNames.length) fieldOrderDraft.value = orderNames;
-      fields.forEach((row) => {
-        const key = String(row?.name || '').trim();
-        if (!key) return;
-        const visible = row?.visible !== false;
-        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
-        fieldVisibilityDraft[key] = visible;
-      });
     }
-    lowCodeObjectsDraft.value = objects.map((obj) => ({
-      name: String(obj?.name || '').trim(),
-      fields: Array.isArray(obj?.fields)
-        ? (obj?.fields || []).map((row) => ({
-          name: String(row?.name || '').trim(),
-          type: String((row as { type?: unknown })?.type || 'string').trim() || 'string',
-          required: Boolean((row as { required?: unknown })?.required === true),
-          readonly: Boolean((row as { readonly?: unknown })?.readonly === true),
-          default: String((row as { default?: unknown })?.default || '').trim(),
-          options: Array.isArray((row as { options?: unknown })?.options)
-            ? ((row as { options?: unknown[] })?.options || []).map((item) => String(item || '').trim()).filter(Boolean).join(',')
-            : '',
-        }))
-        : [],
-    })).filter((obj) => obj.name);
-    const layout = legacyDraft.layout;
-    const collectLayout = (section: 'form' | 'list' | 'kanban') => (
-      Array.isArray((layout as Record<string, unknown>)[section])
-        ? ((layout as Record<string, unknown>)[section] as unknown[])
-          .filter((node) => node && typeof node === 'object')
-          .map((node) => node as Record<string, unknown>)
-          .map((node) => ({
-            section,
-            object: String(node.object || '').trim(),
-            field: String(node.field || '').trim(),
-          }))
-          .filter((node) => node.object && node.field)
-        : []
-    );
-    const orchestrationLayoutDraft = collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
-    const legacyLayoutDraft = [...collectLayout('form'), ...collectLayout('list'), ...collectLayout('kanban')];
-    lowCodeLayoutDraft.value = orchestrationLayoutDraft.length ? orchestrationLayoutDraft : legacyLayoutDraft;
-    const rules = legacyDraft.rules;
-    lowCodeRulesDraft.value = rules
-      .filter((row) => row && typeof row === 'object')
-      .map((row) => row as Record<string, unknown>)
-      .map((row) => ({
-        name: String(row.name || '').trim(),
-        trigger: (['on_create', 'on_update', 'scheduled'].includes(String(row.trigger || ''))
-          ? String(row.trigger || 'on_update')
-          : 'on_update') as 'on_create' | 'on_update' | 'scheduled',
-        object: String((row.action as Record<string, unknown> | undefined)?.object || '').trim(),
-        field: String((row.action as Record<string, unknown> | undefined)?.field || '').trim(),
-        cron: String(row.cron || '').trim(),
-      }));
+    lowCodeLayoutDraft.value = collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
     hydrated = true;
   } catch {
     // ignore low-code contract hydrate failure in form runtime
@@ -3621,10 +3428,7 @@ async function switchLowCodeContractByName() {
     const base = lowCodeApplyBaseParams();
     const res = await intentRequest<{
       contract_json?: {
-        objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number; type?: string; required?: boolean; readonly?: boolean; default?: string; options?: unknown[] }> }>;
-        layout?: Record<string, unknown>;
-        rules?: unknown[];
-        legacy_lowcode_draft?: Record<string, unknown>;
+        view_orchestration?: Record<string, unknown>;
       }
     }>({
       intent: BUSINESS_CONFIG_INTENTS.contractGet,
@@ -3667,29 +3471,6 @@ async function switchLowCodeContractByName() {
         }
       });
     }
-    const legacyDraft = lowCodeLegacyDraftFromContract(json);
-    const objects = legacyDraft.objects;
-    lowCodeObjectsDraft.value = objects
-      .filter((obj) => obj && typeof obj === 'object')
-      .map((obj) => ({
-        name: String(obj?.name || '').trim(),
-        fields: Array.isArray(obj?.fields)
-          ? (obj?.fields || []).map((row) => ({
-            name: String(row?.name || '').trim(),
-            type: String(row?.type || 'string').trim() || 'string',
-            required: Boolean(row?.required === true),
-            readonly: Boolean(row?.readonly === true),
-            default: String(row?.default || '').trim(),
-            options: Array.isArray(row?.options) ? row.options.map((item) => {
-              const rec = item as Record<string, unknown>;
-              const value = String(rec?.value || '').trim();
-              const label = String(rec?.label || '').trim();
-              return value && label ? `${value}:${label}` : value || label;
-            }).filter(Boolean).join(',') : '',
-          }))
-          : [],
-      }))
-      .filter((obj) => obj.name);
     lowCodeLayoutDraft.value = collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
   } catch {
     // ignore
@@ -3739,39 +3520,6 @@ async function rollbackSelectedLowCodeContract() {
   }
 }
 
-function addLowCodeLayoutNode(section: 'form' | 'list' | 'kanban') {
-  lowCodeLayoutDraft.value.push({ section, object: '', field: '' });
-}
-function removeLowCodeLayoutNode(index: number) {
-  lowCodeLayoutDraft.value.splice(index, 1);
-}
-function addLowCodeRule() {
-  lowCodeRulesDraft.value.push({ name: `rule_${lowCodeRulesDraft.value.length + 1}`, trigger: 'on_update', object: '', field: '', cron: '' });
-}
-function removeLowCodeRule(index: number) {
-  lowCodeRulesDraft.value.splice(index, 1);
-}
-
-function addLowCodeObject() {
-  lowCodeObjectsDraft.value.push({ name: `object_${lowCodeObjectsDraft.value.length + 1}`, fields: [] });
-}
-
-function removeLowCodeObject(index: number) {
-  lowCodeObjectsDraft.value.splice(index, 1);
-}
-
-function addLowCodeField(objectIndex: number) {
-  const target = lowCodeObjectsDraft.value[objectIndex];
-  if (!target) return;
-  target.fields.push({ name: `field_${target.fields.length + 1}`, type: 'string', required: false, readonly: false, default: '', options: '' });
-}
-
-function removeLowCodeField(objectIndex: number, fieldIndex: number) {
-  const target = lowCodeObjectsDraft.value[objectIndex];
-  if (!target) return;
-  target.fields.splice(fieldIndex, 1);
-}
-
 function collectLowCodeLayoutFromViewOrchestration(views: Record<string, unknown>, modelName: string) {
   const out: Array<{ section: 'form' | 'list' | 'kanban'; object: string; field: string }> = [];
   const collect = (section: 'form' | 'list' | 'kanban', viewKey: string, rowKey: string) => {
@@ -3790,25 +3538,6 @@ function collectLowCodeLayoutFromViewOrchestration(views: Record<string, unknown
   collect('list', 'list', 'columns');
   collect('kanban', 'kanban', 'fields');
   return out;
-}
-
-function normalizedLowCodeDefault(field: { type?: string; default?: string }): unknown {
-  const raw = String(field.default ?? '').trim();
-  if (!raw) return undefined;
-  if (field.type === 'integer') {
-    const parsed = Number.parseInt(raw, 10);
-    return Number.isNaN(parsed) ? raw : parsed;
-  }
-  if (field.type === 'float') {
-    const parsed = Number.parseFloat(raw);
-    return Number.isNaN(parsed) ? raw : parsed;
-  }
-  if (field.type === 'boolean') {
-    if (['1', 'true', 'yes', '是'].includes(raw.toLowerCase())) return true;
-    if (['0', 'false', 'no', '否'].includes(raw.toLowerCase())) return false;
-    return raw;
-  }
-  return raw;
 }
 
 function buildLowCodeViewOrchestration() {
@@ -3944,71 +3673,6 @@ function effectiveLowCodeFieldLabel(name: string, descriptor?: FieldDescriptor) 
   ).trim() || fieldName;
 }
 
-function normalizeLowCodeFieldDraft(field: {
-  name?: string;
-  type?: string;
-  readonly?: boolean;
-  required?: boolean;
-  default?: string;
-  options?: string;
-}, index: number): Record<string, unknown> {
-  const fieldName = String(field.name || '').trim();
-  const row: Record<string, unknown> = {
-    name: fieldName,
-    type: String(field.type || 'string').trim() || 'string',
-    readonly: field.readonly === true,
-    required: field.required === true,
-    visible: fieldVisibilityDraft[fieldName] !== false,
-    order: index + 1,
-  };
-  const defaultValue = normalizedLowCodeDefault(field);
-  if (defaultValue !== undefined) row.default = defaultValue;
-  if (row.type === 'selection') row.options = parseSelectionOptions(String(field.options || ''));
-  return row;
-}
-
-function currentFormContractFieldRows(): Array<Record<string, unknown>> {
-  const baseByKey = new Map(contractModeBaseFieldRows.value.map((row) => [row.fieldKey, row]));
-  const orderedKeys = fieldOrderDraft.value.length
-    ? fieldOrderDraft.value
-    : contractModeBaseFieldRows.value.map((row) => row.fieldKey);
-  return orderedKeys
-    .filter((key) => baseByKey.has(key))
-    .map((key, index) => ({
-      name: key,
-      label: baseByKey.get(key)?.label || key,
-      type: 'string',
-      visible: fieldVisibilityDraft[key] !== false,
-      order: index + 1,
-    }));
-}
-
-function buildLowCodeContractObjects(): Array<Record<string, unknown>> {
-  const modelName = String(model.value || '').trim();
-  const formFields = currentFormContractFieldRows();
-  const objects = lowCodeObjectsDraft.value
-    .map((obj) => ({
-      name: String(obj.name || '').trim(),
-      fields: (obj.fields || [])
-        .map((field, index) => normalizeLowCodeFieldDraft(field, index))
-        .filter((field) => String(field.name || '').trim()),
-    }))
-    .filter((obj) => obj.name);
-  if (!modelName) return objects;
-  const existing = objects.find((obj) => obj.name === modelName);
-  if (!existing) {
-    objects.unshift({ name: modelName, fields: formFields });
-    return objects;
-  }
-  const formNames = new Set(formFields.map((field) => String(field.name || '').trim()));
-  const existingFields = Array.isArray(existing.fields) ? existing.fields : [];
-  existing.fields = [
-    ...formFields,
-    ...existingFields.filter((field) => !formNames.has(String(field.name || '').trim())),
-  ];
-  return objects;
-}
-
 function normalizeLowCodeApplyParams(raw: Record<string, unknown>): Record<string, unknown> {
   const params = { ...raw };
   for (const key of ['action_id', 'actionId', 'view_id', 'viewId']) {
@@ -4023,10 +3687,6 @@ function lowCodeScopedContractName(modelName: string, params: Record<string, unk
   const actionId = Number(params.action_id || params.actionId || 0);
   const viewId = Number(params.view_id || params.viewId || 0);
   return `view_orchestration:${modelName}:form:action:${Number.isFinite(actionId) ? Math.trunc(actionId) : 0}:view:${Number.isFinite(viewId) ? Math.trunc(viewId) : 0}`;
-}
-
-function legacyLowCodeContractName(modelName: string) {
-  return `lowcode.${modelName}`;
 }
 
 const isQuickSubmitDisabled = computed(() => {
@@ -10970,20 +10630,6 @@ async function saveContractFieldOrder() {
         publish: true,
         contract_json: {
           view_orchestration: buildLowCodeViewOrchestration(),
-          legacy_lowcode_draft: {
-            objects: buildLowCodeContractObjects(),
-            layout: {
-              form: lowCodeLayoutDraft.value.filter((row) => row.section === 'form').map((row) => ({ object: row.object, field: row.field })),
-              list: lowCodeLayoutDraft.value.filter((row) => row.section === 'list').map((row) => ({ object: row.object, field: row.field })),
-              kanban: lowCodeLayoutDraft.value.filter((row) => row.section === 'kanban').map((row) => ({ object: row.object, field: row.field })),
-            },
-            rules: lowCodeRulesDraft.value.map((rule) => ({
-              name: rule.name,
-              trigger: rule.trigger,
-              cron: rule.trigger === 'scheduled' ? (rule.cron || '') : '',
-              action: { object: rule.object, field: rule.field },
-            })),
-          },
         },
       },
     });
@@ -13241,42 +12887,6 @@ onBeforeUnmount(() => {
   background: var(--sc-app-warning-bg);
   color: var(--sc-app-warning-text);
   border-radius: 6px;
-}
-
-.contract-lowcode-objects {
-  grid-column: 1 / -1;
-  margin-top: 10px;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 8px;
-  padding: 10px;
-}
-
-.contract-lowcode-objects-head,
-.contract-lowcode-object-head,
-.contract-lowcode-field {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.contract-lowcode-contract-switch {
-  min-width: 260px;
-}
-
-.contract-lowcode-flag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--sc-app-text-secondary);
-}
-
-.contract-lowcode-object {
-  padding: 8px;
-  border: 1px dashed var(--sc-app-border);
-  border-radius: 6px;
-  margin-top: 8px;
 }
 
 .native-statusbar-step {

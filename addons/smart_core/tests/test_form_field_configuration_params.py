@@ -350,6 +350,36 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["errors"], [])
         self.assertNotIn("objects 为空，契约不会产生业务对象配置。", result["warnings"])
 
+    def test_business_config_contract_precheck_requires_view_orchestration(self):
+        handler = self.module.BusinessConfigContractSaveHandler(env={}, params={})
+
+        result = handler._precheck_contract_payload({
+            "objects": [{"name": "res.partner", "fields": []}],
+        })
+
+        self.assertIn("contract_json 必须包含 view_orchestration。", result["errors"])
+
+    def test_business_config_contract_save_rejects_legacy_lowcode_draft(self):
+        handler = self.module.BusinessConfigContractSaveHandler(
+            env={},
+            params={
+                "name": "demo",
+                "model": "res.partner",
+                "view_type": "form",
+                "contract_json": {
+                    "view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}},
+                    "legacy_lowcode_draft": {"objects": []},
+                },
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertIn("legacy_lowcode_draft", result["error"]["message"])
+
     def test_business_config_contract_precheck_accepts_form_layout_schema(self):
         handler = self.module.BusinessConfigContractSaveHandler(env={}, params={})
 
@@ -440,7 +470,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                 "action_id": 11,
                 "view_id": 22,
                 "role_key": "sales",
-                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+                "contract_json": {"view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}}},
             },
         )
 
@@ -491,7 +521,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                 "name": "demo",
                 "model": "res.partner",
                 "view_type": "form",
-                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+                "contract_json": {"view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}}},
             },
         )
 
@@ -509,7 +539,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                 "model": "res.partner",
                 "view_type": "form",
                 "role_group_ids": [1, 2],
-                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+                "contract_json": {"view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}}},
             },
         )
 

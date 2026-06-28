@@ -2689,6 +2689,8 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         if not isinstance(contract_json, dict):
             return self._err(400, "contract_json 必须是对象", REASON_USER_ERROR)
+        if "legacy_lowcode_draft" in contract_json:
+            return self._err(400, "legacy_lowcode_draft 已停止作为保存来源，请使用 view_orchestration", REASON_USER_ERROR)
         contract_json = _lowcode_view_orchestration_payload(contract_json)
         precheck = self._precheck_contract_payload(contract_json)
         if precheck["errors"]:
@@ -2745,13 +2747,10 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
         errors = []
         view_orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
         self._precheck_view_orchestration_layout(view_orchestration, warnings, errors)
-        legacy_draft = payload.get("legacy_lowcode_draft") if isinstance(payload.get("legacy_lowcode_draft"), dict) else {}
         explicit_objects = isinstance(payload.get("objects"), list)
         objects = payload.get("objects") if explicit_objects else []
-        if not objects and isinstance(legacy_draft.get("objects"), list):
-            objects = legacy_draft.get("objects") or []
-        if not objects and not view_orchestration:
-            warnings.append("objects 为空，契约不会产生业务对象配置。")
+        if not view_orchestration:
+            errors.append("contract_json 必须包含 view_orchestration。")
         has_view_fields = bool(_view_orchestration_field_names(payload, "form"))
         for obj in objects:
             if not isinstance(obj, dict):
@@ -2764,8 +2763,6 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             if not fields_rows and (explicit_objects or not has_view_fields):
                 warnings.append("业务对象 %s 未配置字段。" % (obj_name or "<unknown>"))
         rules = payload.get("rules") if isinstance(payload.get("rules"), list) else []
-        if not rules and isinstance(legacy_draft.get("rules"), list):
-            rules = legacy_draft.get("rules") or []
         for idx, rule in enumerate(rules):
             if not isinstance(rule, dict):
                 errors.append("rules[%s] 非对象。" % idx)
