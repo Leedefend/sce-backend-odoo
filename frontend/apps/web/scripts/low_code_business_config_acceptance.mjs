@@ -357,6 +357,26 @@ async function browserIntent(page, intentName, params = {}) {
   }, { dbName: DB_NAME, token, intentName, params });
 }
 
+async function browserIntentEnvelope(page, intentName, params = {}) {
+  const token = await readToken(page);
+  return page.evaluate(async ({ dbName, token, intentName, params }) => {
+    const res = await fetch(`/api/v1/intent?db=${encodeURIComponent(dbName)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Odoo-DB": dbName,
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+      body: JSON.stringify({ intent: intentName, params, meta: { startup_chain_bypass: true } }),
+    });
+    const body = await res.json();
+    if (!res.ok || body.ok === false) {
+      throw new Error(JSON.stringify(body.error || body).slice(0, 700));
+    }
+    return body;
+  }, { dbName: DB_NAME, token, intentName, params });
+}
+
 function collectContractFieldRows(nodes, out = [], seen = new Set()) {
   for (const node of nodes || []) {
     if (!node || typeof node !== "object") continue;
@@ -1461,6 +1481,15 @@ async function main() {
 
     await page.goto(LIST_SEARCH_URL, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".edit-panel", { timeout: 20000 });
+    const listSearchAuditEnvelope = await browserIntentEnvelope(page, "ui.business_config.list_search.audit", {
+      model: CONFIG_MODEL,
+      action_id: CONFIG_ACTION_ID,
+    });
+    const listSearchAuditBoundary = listSearchAuditEnvelope?.data || {};
+    const listSearchAuditSourceAuthority = listSearchAuditEnvelope?.meta?.source_authority || {};
+    const listSearchAuditAuthorities = Array.isArray(listSearchAuditSourceAuthority.authorities)
+      ? listSearchAuditSourceAuthority.authorities.map((item) => String(item || ""))
+      : [];
     const listSearchPanel = page.locator(".edit-panel").filter({ hasText: "列表与搜索设置" });
     const listSearchTitle = await listSearchPanel.locator("h2").innerText();
     const listSearchEditorPanelCount = await listSearchPanel.evaluate((node) => node.classList.contains("config-editor-panel") ? 1 : 0);
@@ -1525,6 +1554,16 @@ async function main() {
       searchedListOptionCount,
       searchedListOptionLabels,
       searchedListDuplicateLabelCount,
+      auditBoundary: {
+        userPreferenceBoundary: String(listSearchAuditBoundary?.user_preference_boundary || ""),
+        userPreferenceCount: Number(listSearchAuditBoundary?.user_preference_count || 0),
+        hasBusinessListConfig: Boolean(listSearchAuditBoundary?.has_business_list_config),
+        hasBusinessSearchConfig: Boolean(listSearchAuditBoundary?.has_business_search_config),
+        sourceAuthorityKind: String(listSearchAuditSourceAuthority.kind || ""),
+        sourceAuthorities: listSearchAuditAuthorities,
+        projectionOnly: Boolean(listSearchAuditSourceAuthority.projection_only),
+        noBusinessFactAuthority: Boolean(listSearchAuditSourceAuthority.no_business_fact_authority),
+      },
     };
     report.artifacts.listSearchPanel = await captureStep(page, "list-search-panel");
     assert(listSearchTitle === "列表与搜索设置", "列表与搜索面板标题不正确", { listSearchTitle });
@@ -1559,6 +1598,19 @@ async function main() {
         && searchedListDuplicateLabelCount === 0,
       "列表与搜索字段池搜索不可用",
       { searchedListOptionCount, searchedListOptionLabels, searchedListDuplicateLabelCount },
+    );
+    assert(
+      listSearchAuditBoundary?.user_preference_boundary === "ui_only"
+        && listSearchAuditAuthorities.includes("ui.business.config.contract")
+        && listSearchAuditAuthorities.includes("sc.user.view.preference")
+        && listSearchAuditSourceAuthority.projection_only === true
+        && listSearchAuditSourceAuthority.no_business_fact_authority === true,
+      "列表与搜索业务默认配置和个人偏好边界没有分离",
+      {
+        listSearchAuditBoundary,
+        listSearchAuditSourceAuthority,
+        listSearchAuditAuthorities,
+      },
     );
     assert(
       changedListChipCount === initialListChipCount + 1

@@ -107,6 +107,9 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
             "defaultVersionGuideCount",
             "defaultVersionCurrentBadgeCount",
             "leakedDefaultVersionTerms",
+            "listSearchAuditBoundary",
+            "userPreferenceBoundary",
+            "sc.user.view.preference",
         ),
     },
 }
