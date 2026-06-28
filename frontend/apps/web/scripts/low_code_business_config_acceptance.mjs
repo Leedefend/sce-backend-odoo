@@ -54,6 +54,8 @@ const LOW_CODE_BOUNDARY_ALLOW_FILES = new Set([
   "frontend/apps/web/src/app/businessConfigBoundaries.ts",
   "addons/smart_core/utils/backend_contract_boundaries.py",
 ]);
+const FRONTEND_BOUNDARY_FILE = "frontend/apps/web/src/app/businessConfigBoundaries.ts";
+const BACKEND_BOUNDARY_FILE = "addons/smart_core/utils/backend_contract_boundaries.py";
 const LOW_CODE_LEGACY_WRITE_GUARD_FILES = [
   "frontend/apps/web/src/pages/ContractFormPage.vue",
   "frontend/apps/web/scripts/low_code_business_config_acceptance.mjs",
@@ -179,6 +181,116 @@ async function auditLowCodeLegacyWritePaths() {
   return {
     checkedFiles: LOW_CODE_LEGACY_WRITE_GUARD_FILES.length,
     leaked,
+  };
+}
+
+function uniqueSorted(values) {
+  return Array.from(new Set(values.map((value) => String(value || "").trim()).filter(Boolean))).sort();
+}
+
+function extractJavaScriptConstantValues(source) {
+  return Object.fromEntries(Array.from(source.matchAll(/export\s+const\s+([A-Z0-9_]+)\s*=\s*['"]([^'"]+)['"]\s*;/g)).map((item) => [item[1], item[2]]));
+}
+
+function extractObjectStringValues(source, objectName) {
+  const match = source.match(new RegExp(`(?:export\\s+)?const\\s+${objectName}\\s*=\\s*\\{([\\s\\S]*?)\\}\\s*(?:as\\s+const)?\\s*;`));
+  if (!match) return [];
+  const constants = extractJavaScriptConstantValues(source);
+  return uniqueSorted(match[1].split(/\r?\n/).flatMap((line) => {
+    const literal = line.match(/:\s*['"]([^'"]+)['"]/);
+    if (literal) return [literal[1]];
+    const identifier = line.match(/:\s*([A-Z0-9_]+)\s*,?/);
+    if (identifier && constants[identifier[1]]) return [constants[identifier[1]]];
+    return [];
+  }));
+}
+
+function extractPythonSetValues(source, objectName) {
+  const match = source.match(new RegExp(`${objectName}\\s*=\\s*\\{([\\s\\S]*?)\\}\\s*(?:\\n[A-Z_]+\\s*=|\\ndef\\s+|\\n\\n)`, "m"));
+  if (!match) return [];
+  return uniqueSorted(Array.from(match[1].matchAll(/["']([^"']+)["']/g)).map((item) => item[1]));
+}
+
+function extractPythonDictValues(source, objectName) {
+  const match = source.match(new RegExp(`${objectName}\\s*=\\s*\\{([\\s\\S]*?)\\}\\s*(?:\\n[A-Z_]+\\s*=|\\ndef\\s+|\\n\\n)`, "m"));
+  if (!match) return [];
+  return uniqueSorted(match[1].split(/\r?\n/).flatMap((line) => {
+    const literal = line.match(/:\s*["']([^"']+)["']/);
+    return literal ? [literal[1]] : [];
+  }));
+}
+
+function extractPythonConstantValues(source, names) {
+  return uniqueSorted(names.flatMap((name) => {
+    const match = source.match(new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`));
+    return match ? [match[1]] : [];
+  }));
+}
+
+function compareValueSets(name, frontendValues, backendValues) {
+  const frontend = uniqueSorted(frontendValues);
+  const backend = uniqueSorted(backendValues);
+  const frontendSet = new Set(frontend);
+  const backendSet = new Set(backend);
+  return {
+    name,
+    frontendCount: frontend.length,
+    backendCount: backend.length,
+    missingFrontend: backend.filter((value) => !frontendSet.has(value)),
+    missingBackend: frontend.filter((value) => !backendSet.has(value)),
+  };
+}
+
+async function auditLowCodeBoundaryParity() {
+  const frontend = await fs.readFile(path.join(ROOT_DIR, FRONTEND_BOUNDARY_FILE), "utf8");
+  const backend = await fs.readFile(path.join(ROOT_DIR, BACKEND_BOUNDARY_FILE), "utf8");
+  const comparisons = [
+    compareValueSets(
+      "business_config_runtime_models",
+      extractObjectStringValues(frontend, "BUSINESS_CONFIG_MODELS"),
+      extractPythonSetValues(backend, "BUSINESS_CONFIG_RUNTIME_MODELS"),
+    ),
+    compareValueSets(
+      "business_config_modes",
+      extractObjectStringValues(frontend, "BUSINESS_CONFIG_MODES"),
+      extractPythonDictValues(backend, "BUSINESS_CONFIG_MODES"),
+    ),
+    compareValueSets(
+      "business_config_action_keys",
+      extractObjectStringValues(frontend, "BUSINESS_CONFIG_ACTION_KEYS"),
+      extractPythonDictValues(backend, "BUSINESS_CONFIG_ACTION_KEYS"),
+    ),
+    compareValueSets(
+      "business_config_intents",
+      extractObjectStringValues(frontend, "BUSINESS_CONFIG_INTENTS"),
+      extractPythonDictValues(backend, "BUSINESS_CONFIG_INTENTS"),
+    ),
+    compareValueSets(
+      "form_field_config_intents",
+      extractObjectStringValues(frontend, "FORM_FIELD_CONFIG_INTENTS"),
+      extractPythonDictValues(backend, "FORM_FIELD_CONFIG_INTENTS"),
+    ),
+    compareValueSets(
+      "menu_config_intents",
+      extractObjectStringValues(frontend, "MENU_CONFIG_INTENTS"),
+      extractPythonDictValues(backend, "MENU_CONFIG_INTENTS"),
+    ),
+    compareValueSets(
+      "menu_config_runtime_sources",
+      extractObjectStringValues(frontend, "MENU_CONFIG_RUNTIME_SOURCES"),
+      extractPythonConstantValues(backend, ["MENU_CONFIG_RUNTIME_SOURCE_POLICY", "MENU_CONFIG_RUNTIME_SOURCE_CONTRACT"]),
+    ),
+    compareValueSets(
+      "approval_policy_intents",
+      extractObjectStringValues(frontend, "APPROVAL_POLICY_INTENTS"),
+      extractPythonDictValues(backend, "APPROVAL_POLICY_INTENTS"),
+    ),
+  ];
+  return {
+    frontendFile: FRONTEND_BOUNDARY_FILE,
+    backendFile: BACKEND_BOUNDARY_FILE,
+    comparisons,
+    mismatches: comparisons.filter((item) => item.missingFrontend.length || item.missingBackend.length),
   };
 }
 
@@ -616,6 +728,7 @@ async function clickFirstAvailableAnalysisField(page, tabLabels) {
 async function main() {
   await ensureDirs();
   const boundaryConstants = await auditLowCodeBoundaryConstants();
+  const boundaryParity = await auditLowCodeBoundaryParity();
   const legacyWritePaths = await auditLowCodeLegacyWritePaths();
   assert(
     boundaryConstants.checkedFiles >= LOW_CODE_BOUNDARY_MIN_CHECKED_FILES,
@@ -633,6 +746,11 @@ async function main() {
     boundaryConstants.leaked.length === 0,
     "低代码边界常量散落在页面、API 或 handler 中",
     boundaryConstants,
+  );
+  assert(
+    boundaryParity.mismatches.length === 0,
+    "低代码前后端边界契约常量不一致",
+    boundaryParity,
   );
   assert(
     legacyWritePaths.leaked.length === 0,
@@ -658,6 +776,7 @@ async function main() {
     login: LOGIN,
     checks: {
       boundaryConstants,
+      boundaryParity,
       legacyWritePaths,
     },
     artifacts: {},

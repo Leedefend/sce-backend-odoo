@@ -45,6 +45,7 @@ export const BUSINESS_CONFIG_INTENTS = {
   analysisBootstrap: 'ui.business_config.analysis.bootstrap',
   formBootstrap: 'ui.business_config.form.bootstrap',
   surfaceGet: 'ui.business_config.surface.get',
+  snapshotSummary: 'ui.business_config.snapshot.summary',
   snapshotCompare: 'ui.business_config.snapshot.compare',
   snapshotExport: 'ui.business_config.snapshot.export',
   coverageScan: 'ui.business_config.coverage.scan',
