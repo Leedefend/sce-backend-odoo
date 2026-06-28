@@ -114,6 +114,10 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
             "listSearchAuditBoundary",
             "userPreferenceBoundary",
             "sc.user.view.preference",
+            "approvalConfigEnvelope",
+            "approvalBoundary",
+            "approval_policy",
+            "industry_policy_runtime",
         ),
     },
 }

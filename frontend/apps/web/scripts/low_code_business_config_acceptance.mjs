@@ -858,6 +858,13 @@ async function main() {
     const approvalCard = page.locator(".config-card").filter({ hasText: "审批规则" });
     await approvalCard.getByRole("button", { name: "设置审批" }).click();
     await page.waitForSelector(".approval-panel", { timeout: 10000 });
+    const approvalConfigEnvelope = await browserIntentEnvelope(page, "sc.approval_policy.config.get", {
+      model: CONFIG_MODEL,
+    });
+    const approvalSourceAuthority = approvalConfigEnvelope?.meta?.source_authority || {};
+    const approvalSourceAuthorities = Array.isArray(approvalSourceAuthority.authorities)
+      ? approvalSourceAuthority.authorities.map((item) => String(item || ""))
+      : [];
     let approvalPanel = page.locator(".approval-panel");
     const approvalPanelTitle = await approvalPanel.locator("h2").innerText();
     const approvalPanelText = await approvalPanel.innerText();
@@ -1117,6 +1124,16 @@ async function main() {
       approvalPersistSaveEnabled,
       approvalPersistReloadName,
       approvalPersistRestoreSaveDisabled,
+      approvalBoundary: {
+        sourceAuthorityKind: String(approvalSourceAuthority.kind || ""),
+        sourceAuthorities: approvalSourceAuthorities,
+        projectionOnly: Boolean(approvalSourceAuthority.projection_only),
+        noBusinessFactAuthority: Boolean(approvalSourceAuthority.no_business_fact_authority),
+        boundary: String(approvalSourceAuthority.boundary || ""),
+        lowcodeBoundary: String(approvalSourceAuthority.lowcode_boundary || ""),
+        policySource: String(approvalSourceAuthority.policy_source || ""),
+        lowcodeSource: String(approvalSourceAuthority.lowcode_source || ""),
+      },
       leakedApprovalTerms,
       menuConfigTitle,
       menuConfigEditorCount,
@@ -1285,6 +1302,12 @@ async function main() {
         && approvalModeOptionLabels.includes("单级审核")
         && approvalModeOptionLabels.includes("多级顺序审核")
         && approvalScopeOptionCount >= 1
+        && approvalSourceAuthority.lowcode_boundary === "approval_policy"
+        && approvalSourceAuthority.policy_source === "sc.approval.policy"
+        && approvalSourceAuthority.boundary === "industry_policy_runtime"
+        && approvalSourceAuthority.no_business_fact_authority === true
+        && approvalSourceAuthority.projection_only === true
+        && approvalSourceAuthorities.includes("sc.approval.policy")
         && approvalSaveDisabledInitially
         && approvalAdvancedButtonCount === 1
         && approvalStepText.includes("审批步骤")
@@ -1317,6 +1340,8 @@ async function main() {
         approvalFieldLabels,
         approvalModeOptionLabels,
         approvalScopeOptionCount,
+        approvalSourceAuthority,
+        approvalSourceAuthorities,
         approvalSaveDisabledInitially,
         approvalAdvancedButtonCount,
         approvalStepText,

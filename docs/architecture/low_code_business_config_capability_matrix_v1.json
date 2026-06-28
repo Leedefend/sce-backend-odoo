@@ -58,14 +58,12 @@
       "authoring_intents": ["sc.approval_policy_configuration.get", "sc.approval_policy_configuration.set", "sc.approval_policy_configuration.steps.set"],
       "runtime_consumers": ["approval runtime policy resolver"],
       "preview": "approval policy runtime smoke",
-      "publish_versioning": "policy write is immediately effective with audit evidence",
-      "rollback": "policy snapshot restore is required before release-ready status",
-      "audit": "business_config_approval_runtime_smoke evidence",
+      "publish_versioning": "runtime policy write is immediately effective by explicit release exception",
+      "rollback": "rollback-only runtime smoke plus UI restore; no contract-version carrier by design",
+      "audit": "business_config_approval_runtime_smoke evidence + approval_policy source authority",
       "acceptance": ["verify.business_config.approval_runtime", "verify.business_config.low_code_acceptance"],
-      "status": "partial",
-      "release_blockers": [
-        "Approval rollback/version semantics are weaker than menu/form/list contracts and need a formal version carrier or explicit release exception."
-      ]
+      "status": "ready",
+      "release_blockers": []
     },
     {
       "id": "version_snapshot_rollback",
