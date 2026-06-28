@@ -104,6 +104,9 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
             "BACKEND_BOUNDARY_FILE",
             "operationLogHasTechnicalFieldAfterDrag",
             "operationLogGroupColumnEntryCountAfterDrag",
+            "defaultVersionGuideCount",
+            "defaultVersionCurrentBadgeCount",
+            "leakedDefaultVersionTerms",
         ),
     },
 }

@@ -1068,6 +1068,8 @@ async function main() {
       defaultVersionTitle,
       defaultVersionDescription,
       defaultVersionPanelText,
+      defaultVersionGuideCount,
+      defaultVersionCurrentBadgeCount,
       defaultVersionRowCount,
       defaultHistoricalVersionRowCount,
       leakedDefaultVersionTerms,

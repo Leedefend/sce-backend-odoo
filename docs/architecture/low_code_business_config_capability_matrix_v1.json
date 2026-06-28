@@ -79,12 +79,10 @@
       "preview": "snapshot compare output",
       "publish_versioning": "contract version_no + published status",
       "rollback": "ui.business_config.contract.rollback",
-      "audit": "business_config_contract_snapshot.py",
+      "audit": "business-language version panel + business_config_contract_snapshot.py",
       "acceptance": ["verify.business_config.snapshot", "verify.business_config.low_code_acceptance"],
-      "status": "partial",
-      "release_blockers": [
-        "Default UI must explain version actions by business language; technical contract terms must stay in diagnostics."
-      ]
+      "status": "ready",
+      "release_blockers": []
     },
     {
       "id": "capability_boundary_and_coverage",
