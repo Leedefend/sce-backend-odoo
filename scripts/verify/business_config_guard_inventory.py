@@ -50,6 +50,10 @@ FULL_ACCEPTANCE_TARGETS = {
     "verify.business_config.low_code_global_stability",
 }
 
+FULL_ACCEPTANCE_TARGETS_WITHOUT_CAPABILITY_OWNER = {
+    "verify.frontend.build",
+}
+
 TARGET_SCRIPT_REQUIREMENTS = {
     "verify.business_config.unit": (
         "scripts/verify/business_config_user_language_guard.py",
@@ -154,6 +158,7 @@ def _validate_capability_matrix(makefile: str, errors: list[str]) -> None:
         for match in re.finditer(r"^(?P<target>[A-Za-z0-9_.-]+)\s*:", makefile, re.MULTILINE)
     }
     seen_ids: set[str] = set()
+    matrix_acceptance_targets: set[str] = set()
     for index, capability in enumerate(capabilities):
         if not isinstance(capability, dict):
             errors.append("low-code capability matrix item %s is not an object" % index)
@@ -182,9 +187,16 @@ def _validate_capability_matrix(makefile: str, errors: list[str]) -> None:
             target_name = str(target or "").strip()
             if target_name.startswith("verify.") and target_name not in target_names:
                 errors.append("low-code capability %s references missing acceptance target %s" % (capability_id, target_name))
+            if target_name.startswith("verify.business_config."):
+                matrix_acceptance_targets.add(target_name)
         blockers = capability.get("release_blockers") if isinstance(capability.get("release_blockers"), list) else []
         if status == "ready" and blockers:
             errors.append("low-code capability %s is ready but still has release_blockers" % capability_id)
+    missing_matrix_targets = sorted(
+        (FULL_ACCEPTANCE_TARGETS - FULL_ACCEPTANCE_TARGETS_WITHOUT_CAPABILITY_OWNER) - matrix_acceptance_targets
+    )
+    if missing_matrix_targets:
+        errors.append("low-code capability matrix does not own full acceptance targets %s" % missing_matrix_targets)
 
 
 def main() -> int:
