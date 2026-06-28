@@ -22,6 +22,20 @@ MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING = "smart_core.lowcode.menu_config"
 APPROVAL_POLICY_SOURCE_TENANT_LOWCODING = "smart_construction_core.lowcode.approval_policy"
 APPROVAL_POLICY_RUNTIME_SOURCE = "sc.approval.policy"
 
+BUSINESS_CONFIG_MODES = {
+    "form_field": "form_field_configuration",
+    "lowcode": "business_config_lowcode",
+}
+
+BUSINESS_CONFIG_AUTHORITIES = {
+    "contract": "ui.business.config.contract",
+    "contract_version": "ui.business.config.contract.version",
+    "form_field_policy": "ui.form.field.policy",
+    "custom_field_wizard": "ui.form.custom.field.wizard",
+}
+
+BUSINESS_CONFIG_OWNER_LAYER = "business_view_orchestration"
+
 BUSINESS_CONFIG_INTENTS = {
     "form_audit": "ui.business_config.form.audit",
     "lowcode_apply": "ui.business_config.lowcode.apply",

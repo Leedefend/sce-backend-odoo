@@ -32,6 +32,7 @@ const LOW_CODE_BOUNDARY_FILES = [
   "addons/smart_core/handlers/business_config_surface.py",
   "addons/smart_core/handlers/form_field_configuration.py",
   "addons/smart_core/handlers/menu_configuration.py",
+  "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py",
 ];
 const LOW_CODE_BOUNDARY_ALLOW_FILES = new Set([
   "frontend/apps/web/src/app/businessConfigBoundaries.ts",
