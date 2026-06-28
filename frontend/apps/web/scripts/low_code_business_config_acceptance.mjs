@@ -37,6 +37,11 @@ const LOW_CODE_BOUNDARY_SCAN_ROOTS = [
 ];
 const LOW_CODE_BOUNDARY_SCAN_EXTENSIONS = new Set([".mjs", ".py", ".ts", ".vue"]);
 const LOW_CODE_BOUNDARY_MIN_CHECKED_FILES = 800;
+const LOW_CODE_BOUNDARY_MIN_FILES_BY_ROOT = {
+  "frontend/apps/web/src": 250,
+  "addons/smart_core": 240,
+  "addons/smart_construction_core": 300,
+};
 const LOW_CODE_BOUNDARY_EXCLUDED_SEGMENTS = new Set([
   "__pycache__",
   "data",
@@ -99,7 +104,10 @@ async function auditLowCodeBoundaryConstants() {
   const pattern = /(?:ui\.(?:business_config|menu_config|form_field_policy|form_custom_field)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|ui\.menu\.config\.policy|ui\.business\.config\.contract\.menu_orchestration|smart_core\.nav\.(?:user_menu_config(?:\.config_only)?\.enabled|user_data_acceptance_only)|current_form_(?:field_settings|add_custom_field|field_order_save|field_configuration)|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
   const frontendModelPattern = /ui\.(?:business\.config\.contract|form\.field\.policy|form\.custom\.field\.wizard|menu\.config\.policy)|sc\.approval\.policy/g;
   const files = await discoverLowCodeBoundaryFiles();
+  const checkedFilesByRoot = Object.fromEntries(LOW_CODE_BOUNDARY_SCAN_ROOTS.map((root) => [root, 0]));
   for (const relativePath of files) {
+    const root = LOW_CODE_BOUNDARY_SCAN_ROOTS.find((candidate) => relativePath.startsWith(`${candidate}/`));
+    if (root) checkedFilesByRoot[root] = (checkedFilesByRoot[root] || 0) + 1;
     if (LOW_CODE_BOUNDARY_ALLOW_FILES.has(relativePath)) continue;
     const absolutePath = path.join(ROOT_DIR, relativePath);
     const text = await fs.readFile(absolutePath, "utf8");
@@ -117,6 +125,8 @@ async function auditLowCodeBoundaryConstants() {
   return {
     checkedFiles: files.length,
     minCheckedFiles: LOW_CODE_BOUNDARY_MIN_CHECKED_FILES,
+    checkedFilesByRoot,
+    minFilesByRoot: LOW_CODE_BOUNDARY_MIN_FILES_BY_ROOT,
     scanRoots: LOW_CODE_BOUNDARY_SCAN_ROOTS,
     allowedFiles: Array.from(LOW_CODE_BOUNDARY_ALLOW_FILES),
     leaked,
@@ -580,6 +590,13 @@ async function main() {
     "低代码边界扫描覆盖文件数异常偏低",
     boundaryConstants,
   );
+  Object.entries(LOW_CODE_BOUNDARY_MIN_FILES_BY_ROOT).forEach(([root, minFiles]) => {
+    assert(
+      Number(boundaryConstants.checkedFilesByRoot?.[root] || 0) >= Number(minFiles || 0),
+      `低代码边界扫描根目录覆盖文件数异常偏低：${root}`,
+      boundaryConstants,
+    );
+  });
   assert(
     boundaryConstants.leaked.length === 0,
     "低代码边界常量散落在页面、API 或 handler 中",
