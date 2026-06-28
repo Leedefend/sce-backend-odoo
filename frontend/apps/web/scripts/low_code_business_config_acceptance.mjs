@@ -96,6 +96,7 @@ async function discoverLowCodeBoundaryFiles() {
 async function auditLowCodeBoundaryConstants() {
   const leaked = [];
   const pattern = /(?:ui\.(?:business_config|menu_config|form_field_policy|form_custom_field)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|ui\.menu\.config\.policy|ui\.business\.config\.contract\.menu_orchestration|smart_core\.nav\.(?:user_menu_config(?:\.config_only)?\.enabled|user_data_acceptance_only)|current_form_(?:field_settings|add_custom_field|field_order_save|field_configuration)|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
+  const frontendModelPattern = /ui\.(?:business\.config\.contract|form\.field\.policy|form\.custom\.field\.wizard|menu\.config\.policy)|sc\.approval\.policy/g;
   const files = await discoverLowCodeBoundaryFiles();
   for (const relativePath of files) {
     if (LOW_CODE_BOUNDARY_ALLOW_FILES.has(relativePath)) continue;
@@ -103,7 +104,10 @@ async function auditLowCodeBoundaryConstants() {
     const text = await fs.readFile(absolutePath, "utf8");
     const lines = text.split(/\r?\n/);
     lines.forEach((line, index) => {
-      const matches = line.match(pattern) || [];
+      const matches = [
+        ...(line.match(pattern) || []),
+        ...(relativePath.startsWith("frontend/apps/web/src/") ? (line.match(frontendModelPattern) || []) : []),
+      ];
       matches.forEach((match) => {
         leaked.push({ path: relativePath, line: index + 1, value: match });
       });

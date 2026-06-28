@@ -1,13 +1,15 @@
-const BUSINESS_CONFIG_RUNTIME_MODELS = new Set([
-  'sc.approval.policy',
-  'sc.approval.step',
-  'sc.approval.scope',
-  'sc.approval.scope.user.wizard',
-  'ui.business.config.contract',
-  'ui.form.field.policy',
-  'ui.form.custom.field.wizard',
-  'ui.menu.config.policy',
-]);
+export const BUSINESS_CONFIG_MODELS = {
+  approvalPolicy: 'sc.approval.policy',
+  approvalStep: 'sc.approval.step',
+  approvalScope: 'sc.approval.scope',
+  approvalScopeUserWizard: 'sc.approval.scope.user.wizard',
+  contract: 'ui.business.config.contract',
+  formFieldPolicy: 'ui.form.field.policy',
+  formCustomFieldWizard: 'ui.form.custom.field.wizard',
+  menuConfigPolicy: 'ui.menu.config.policy',
+} as const;
+
+const BUSINESS_CONFIG_RUNTIME_MODELS = new Set(Object.values(BUSINESS_CONFIG_MODELS));
 
 export const BUSINESS_CONFIG_MODES = {
   formFieldConfiguration: 'form_field_configuration',
