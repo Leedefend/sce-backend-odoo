@@ -102,6 +102,8 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
             "boundaryParity",
             "FRONTEND_BOUNDARY_FILE",
             "BACKEND_BOUNDARY_FILE",
+            "operationLogHasTechnicalFieldAfterDrag",
+            "operationLogGroupColumnEntryCountAfterDrag",
         ),
     },
 }

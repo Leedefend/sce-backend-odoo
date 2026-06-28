@@ -28,12 +28,11 @@
       "preview": "保存并预览 opens current configured form with return_to_business_config",
       "publish_versioning": "ui.business.config.contract action_publish",
       "rollback": "ui.business_config.contract.rollback",
-      "audit": "frontend operation log + contract snapshot/audit",
+      "audit": "frontend operation log with user-label guard + contract snapshot/audit",
       "acceptance": ["verify.business_config.low_code_acceptance", "verify.business_config.low_code_runtime_consistency", "verify.business_config.low_code_group_matrix", "verify.business_config.low_code_layout_runtime", "verify.business_config.low_code_global_stability"],
       "status": "partial",
       "release_blockers": [
-        "Layout runtime acceptance now covers saved page columns, group columns, group visibility and field size; keep expanding it to multiple model/action samples before marking ready.",
-        "Operation logs must always use user labels and group labels; technical field names are not allowed in default operation history."
+        "Layout runtime acceptance now covers saved page columns, group columns, group visibility and field size; keep expanding it to multiple model/action samples before marking ready."
       ]
     },
     {
