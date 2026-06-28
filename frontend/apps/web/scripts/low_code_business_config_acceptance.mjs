@@ -30,27 +30,20 @@ const ADVANCED_UI_FORBIDDEN_TERMS = [
   "ui_only",
   "user_preference_boundary",
 ];
-const LOW_CODE_BOUNDARY_FILES = [
-  "frontend/apps/web/src/api/businessConfig.ts",
-  "frontend/apps/web/src/api/menuConfig.ts",
-  "frontend/apps/web/src/services/action_service.ts",
-  "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue",
-  "frontend/apps/web/src/views/MenuConfigView.vue",
-  "frontend/apps/web/src/pages/ContractFormPage.vue",
-  "addons/smart_core/controllers/platform_menu_api.py",
-  "addons/smart_core/delivery/menu_service.py",
-  "addons/smart_core/delivery/native_config_menu_projection.py",
-  "addons/smart_core/handlers/business_config_surface.py",
-  "addons/smart_core/handlers/form_field_configuration.py",
-  "addons/smart_core/handlers/menu_configuration.py",
-  "addons/smart_core/security/intent_permission.py",
-  "addons/smart_core/handlers/system_init.py",
-  "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py",
-  "addons/smart_core/model/ui_menu_config_policy.py",
-  "addons/smart_construction_core/handlers/approval_policy_configuration.py",
-  "addons/smart_construction_core/core_extension.py",
-  "addons/smart_construction_core/models/support/product_policy_sync.py",
+const LOW_CODE_BOUNDARY_SCAN_ROOTS = [
+  "frontend/apps/web/src",
+  "addons/smart_core",
+  "addons/smart_construction_core",
 ];
+const LOW_CODE_BOUNDARY_SCAN_EXTENSIONS = new Set([".mjs", ".py", ".ts", ".vue"]);
+const LOW_CODE_BOUNDARY_EXCLUDED_SEGMENTS = new Set([
+  "__pycache__",
+  "data",
+  "dist",
+  "node_modules",
+  "tests",
+  "views",
+]);
 const LOW_CODE_BOUNDARY_ALLOW_FILES = new Set([
   "frontend/apps/web/src/app/businessConfigBoundaries.ts",
   "addons/smart_core/utils/backend_contract_boundaries.py",
@@ -72,10 +65,39 @@ async function ensureDirs() {
   await fs.mkdir(ARTIFACT_ROOT, { recursive: true });
 }
 
+async function discoverLowCodeBoundaryFiles() {
+  const out = [];
+  async function walk(relativeDir) {
+    const absoluteDir = path.join(ROOT_DIR, relativeDir);
+    let entries = [];
+    try {
+      entries = await fs.readdir(absoluteDir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const relativePath = path.join(relativeDir, entry.name).split(path.sep).join("/");
+      if (entry.isDirectory()) {
+        if (LOW_CODE_BOUNDARY_EXCLUDED_SEGMENTS.has(entry.name)) continue;
+        await walk(relativePath);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      if (!LOW_CODE_BOUNDARY_SCAN_EXTENSIONS.has(path.extname(entry.name))) continue;
+      out.push(relativePath);
+    }
+  }
+  for (const root of LOW_CODE_BOUNDARY_SCAN_ROOTS) {
+    await walk(root);
+  }
+  return out.sort();
+}
+
 async function auditLowCodeBoundaryConstants() {
   const leaked = [];
   const pattern = /(?:ui\.(?:business_config|menu_config|form_field_policy|form_custom_field)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|ui\.menu\.config\.policy|ui\.business\.config\.contract\.menu_orchestration|smart_core\.nav\.(?:user_menu_config(?:\.config_only)?\.enabled|user_data_acceptance_only)|current_form_(?:field_settings|add_custom_field|field_order_save|field_configuration)|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
-  for (const relativePath of LOW_CODE_BOUNDARY_FILES) {
+  const files = await discoverLowCodeBoundaryFiles();
+  for (const relativePath of files) {
     if (LOW_CODE_BOUNDARY_ALLOW_FILES.has(relativePath)) continue;
     const absolutePath = path.join(ROOT_DIR, relativePath);
     const text = await fs.readFile(absolutePath, "utf8");
@@ -88,7 +110,8 @@ async function auditLowCodeBoundaryConstants() {
     });
   }
   return {
-    checkedFiles: LOW_CODE_BOUNDARY_FILES.length,
+    checkedFiles: files.length,
+    scanRoots: LOW_CODE_BOUNDARY_SCAN_ROOTS,
     allowedFiles: Array.from(LOW_CODE_BOUNDARY_ALLOW_FILES),
     leaked,
   };
