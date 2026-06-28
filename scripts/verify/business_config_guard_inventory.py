@@ -120,6 +120,15 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
             "industry_policy_runtime",
         ),
     },
+    "verify.business_config.low_code_layout_runtime": {
+        "frontend/apps/web/scripts/low_code_form_layout_runtime_acceptance.mjs": (
+            "DEFAULT_LAYOUT_SAMPLES",
+            "LOW_CODE_LAYOUT_SAMPLES_JSON",
+            "construction.contract",
+            "sc.general.contract",
+            "sampleCount",
+        ),
+    },
 }
 
 

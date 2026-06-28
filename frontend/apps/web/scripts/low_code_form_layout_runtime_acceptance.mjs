@@ -5,17 +5,81 @@ const DB_NAME = process.env.DB_NAME || "sc_demo";
 const LOGIN = process.env.E2E_LOGIN || "wutao";
 const PASSWORD = process.env.E2E_PASSWORD || "123456";
 
-const MODEL = process.env.LOW_CODE_LAYOUT_MODEL || "sc.general.contract";
-const ACTION_ID = Number(process.env.LOW_CODE_LAYOUT_ACTION_ID || 669);
-const PAGE_LABEL = process.env.LOW_CODE_LAYOUT_PAGE_LABEL || "一般合同（公司）";
-let FIELD_NAME = process.env.LOW_CODE_LAYOUT_FIELD || "subcontract_mode";
-let FIELD_LABEL = process.env.LOW_CODE_LAYOUT_FIELD_LABEL || "合同分包类型";
-const HOME_GROUP = process.env.LOW_CODE_LAYOUT_HOME_GROUP || "合同基本信息";
-const TEMP_GROUP = process.env.LOW_CODE_LAYOUT_TEMP_GROUP || "合同方";
+const DEFAULT_LAYOUT_SAMPLES = [
+  {
+    model: "sc.general.contract",
+    actionId: 669,
+    pageLabel: "一般合同（公司）",
+    fieldName: "subcontract_mode",
+    fieldLabel: "合同分包类型",
+    homeGroup: "合同基本信息",
+    tempGroup: "合同方",
+  },
+  {
+    model: "construction.contract",
+    actionId: 562,
+    pageLabel: "项目合同汇总",
+    fieldName: "subject",
+    fieldLabel: "合同标题",
+    homeGroup: "合同基本信息",
+    tempGroup: "合同方",
+  },
+];
 
-const CONFIG_URL = `${BASE_URL}/admin/business-config?root_menu_xmlid=smart_construction_core.menu_sc_root&db=${encodeURIComponent(DB_NAME)}&model=${encodeURIComponent(MODEL)}&action_id=${ACTION_ID}&page_label=${encodeURIComponent(PAGE_LABEL)}&open_pages=1`;
-const BUSINESS_URL = `${BASE_URL}/f/${encodeURIComponent(MODEL)}/new?action_id=${ACTION_ID}&root_menu_xmlid=smart_construction_core.menu_sc_root&page_label=${encodeURIComponent(PAGE_LABEL)}`;
-const CONTRACT_NAME = `view_orchestration:${MODEL}:form:action:${ACTION_ID}:view:0`;
+let MODEL = "";
+let ACTION_ID = 0;
+let PAGE_LABEL = "";
+let FIELD_NAME = "";
+let FIELD_LABEL = "";
+let HOME_GROUP = "";
+let TEMP_GROUP = "";
+let CONFIG_URL = "";
+let BUSINESS_URL = "";
+let CONTRACT_NAME = "";
+
+function legacyEnvSample() {
+  return {
+    model: process.env.LOW_CODE_LAYOUT_MODEL || DEFAULT_LAYOUT_SAMPLES[0].model,
+    actionId: Number(process.env.LOW_CODE_LAYOUT_ACTION_ID || DEFAULT_LAYOUT_SAMPLES[0].actionId),
+    pageLabel: process.env.LOW_CODE_LAYOUT_PAGE_LABEL || DEFAULT_LAYOUT_SAMPLES[0].pageLabel,
+    fieldName: process.env.LOW_CODE_LAYOUT_FIELD || DEFAULT_LAYOUT_SAMPLES[0].fieldName,
+    fieldLabel: process.env.LOW_CODE_LAYOUT_FIELD_LABEL || DEFAULT_LAYOUT_SAMPLES[0].fieldLabel,
+    homeGroup: process.env.LOW_CODE_LAYOUT_HOME_GROUP || DEFAULT_LAYOUT_SAMPLES[0].homeGroup,
+    tempGroup: process.env.LOW_CODE_LAYOUT_TEMP_GROUP || DEFAULT_LAYOUT_SAMPLES[0].tempGroup,
+  };
+}
+
+function layoutSamples() {
+  if (process.env.LOW_CODE_LAYOUT_SAMPLES_JSON) {
+    const parsed = JSON.parse(process.env.LOW_CODE_LAYOUT_SAMPLES_JSON);
+    assert(Array.isArray(parsed) && parsed.length > 0, "LOW_CODE_LAYOUT_SAMPLES_JSON 必须是非空数组");
+    return parsed;
+  }
+  const hasLegacyOverride = [
+    "LOW_CODE_LAYOUT_MODEL",
+    "LOW_CODE_LAYOUT_ACTION_ID",
+    "LOW_CODE_LAYOUT_PAGE_LABEL",
+    "LOW_CODE_LAYOUT_FIELD",
+    "LOW_CODE_LAYOUT_FIELD_LABEL",
+    "LOW_CODE_LAYOUT_HOME_GROUP",
+    "LOW_CODE_LAYOUT_TEMP_GROUP",
+  ].some((name) => Boolean(process.env[name]));
+  return hasLegacyOverride ? [legacyEnvSample()] : DEFAULT_LAYOUT_SAMPLES;
+}
+
+function applyLayoutSample(sample) {
+  MODEL = String(sample.model || "").trim();
+  ACTION_ID = Number(sample.actionId || sample.action_id || 0);
+  PAGE_LABEL = String(sample.pageLabel || sample.page_label || "").trim();
+  FIELD_NAME = String(sample.fieldName || sample.field_name || "").trim();
+  FIELD_LABEL = String(sample.fieldLabel || sample.field_label || "").trim();
+  HOME_GROUP = String(sample.homeGroup || sample.home_group || "合同基本信息").trim();
+  TEMP_GROUP = String(sample.tempGroup || sample.temp_group || "合同方").trim();
+  assert(MODEL && ACTION_ID && PAGE_LABEL && FIELD_NAME, "低代码布局验收样本缺少必要字段", { sample });
+  CONFIG_URL = `${BASE_URL}/admin/business-config?root_menu_xmlid=smart_construction_core.menu_sc_root&db=${encodeURIComponent(DB_NAME)}&model=${encodeURIComponent(MODEL)}&action_id=${ACTION_ID}&page_label=${encodeURIComponent(PAGE_LABEL)}&open_pages=1`;
+  BUSINESS_URL = `${BASE_URL}/f/${encodeURIComponent(MODEL)}/new?action_id=${ACTION_ID}&root_menu_xmlid=smart_construction_core.menu_sc_root&page_label=${encodeURIComponent(PAGE_LABEL)}`;
+  CONTRACT_NAME = `view_orchestration:${MODEL}:form:action:${ACTION_ID}:view:0`;
+}
 
 function assert(condition, message, details = {}) {
   if (!condition) {
@@ -321,6 +385,7 @@ async function readSavedContract(page) {
 async function patchSavedContract(page, mutator, stage) {
   const current = await readSavedContract(page);
   const contractJson = JSON.parse(JSON.stringify(current.contract_json || {}));
+  delete contractJson.legacy_lowcode_draft;
   mutator(contractJson);
   const response = await intentRequest(page, "ui.business_config.contract.save", {
     name: CONTRACT_NAME,
@@ -546,16 +611,19 @@ async function assertRuntimeLayout(page, expected, stage) {
   return evidence;
 }
 
-async function main() {
-  const browser = await chromium.launch({ headless: true });
+async function runLayoutSample(browser, sample, sampleIndex) {
+  applyLayoutSample(sample);
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
   const report = {
     ok: false,
+    sampleIndex,
     baseUrl: BASE_URL,
     dbName: DB_NAME,
     model: MODEL,
     actionId: ACTION_ID,
+    pageLabel: PAGE_LABEL,
     field: FIELD_NAME,
+    homeGroup: HOME_GROUP,
     checks: {},
   };
   let baselinePageColumns = 3;
@@ -716,6 +784,31 @@ async function main() {
     }
     console.error(JSON.stringify(report, null, 2));
     process.exitCode = 2;
+  } finally {
+    await page.close();
+  }
+  return report;
+}
+
+async function main() {
+  const browser = await chromium.launch({ headless: true });
+  const samples = layoutSamples();
+  const aggregate = {
+    ok: false,
+    baseUrl: BASE_URL,
+    dbName: DB_NAME,
+    sampleCount: samples.length,
+    samples: [],
+  };
+  try {
+    for (let index = 0; index < samples.length; index += 1) {
+      const report = await runLayoutSample(browser, samples[index], index);
+      aggregate.samples.push(report);
+      if (!report.ok) process.exitCode = 2;
+    }
+    aggregate.ok = aggregate.samples.length === samples.length && aggregate.samples.every((report) => report.ok);
+    if (!aggregate.ok) process.exitCode = 2;
+    console.log(JSON.stringify(aggregate, null, 2));
   } finally {
     await browser.close();
   }
