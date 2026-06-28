@@ -22,7 +22,14 @@ const ANALYSIS_ACTION_ID = process.env.LOW_CODE_ANALYSIS_ACTION_ID || "681";
 const ANALYSIS_MENU_ID = process.env.LOW_CODE_ANALYSIS_MENU_ID || "372";
 const ANALYSIS_PAGE_LABEL = process.env.LOW_CODE_ANALYSIS_PAGE_LABEL || "账户收支统计表";
 const ANALYSIS_CONFIG_URL = `${BASE_URL}/admin/business-config?root_menu_xmlid=smart_construction_core.menu_sc_root&db=${encodeURIComponent(DB_NAME)}&model=${encodeURIComponent(ANALYSIS_MODEL)}&action_id=${encodeURIComponent(ANALYSIS_ACTION_ID)}&menu_id=${encodeURIComponent(ANALYSIS_MENU_ID)}&page_label=${encodeURIComponent(ANALYSIS_PAGE_LABEL)}&open_pages=1`;
-const DEFAULT_UI_FORBIDDEN_TERMS = ["已有个人配置", "个人偏好", "契约", "缺口", "治理", "legacy policy"];
+const DEFAULT_UI_FORBIDDEN_TERMS = ["已有个人配置", "个人偏好", "契约", "缺口", "治理", "边界", "legacy policy"];
+const ADVANCED_UI_FORBIDDEN_TERMS = [
+  ...DEFAULT_UI_FORBIDDEN_TERMS,
+  "industry_policy_runtime",
+  "business_contract",
+  "ui_only",
+  "user_preference_boundary",
+];
 const LOW_CODE_BOUNDARY_FILES = [
   "frontend/apps/web/src/api/businessConfig.ts",
   "frontend/apps/web/src/api/menuConfig.ts",
@@ -100,6 +107,11 @@ async function auditLowCodeLegacyWritePaths() {
 async function visibleForbiddenTerms(page, selector = "body") {
   const text = await page.locator(selector).innerText();
   return DEFAULT_UI_FORBIDDEN_TERMS.filter((term) => text.includes(term));
+}
+
+async function visibleAdvancedForbiddenTerms(page, selector = "body") {
+  const text = await page.locator(selector).innerText();
+  return ADVANCED_UI_FORBIDDEN_TERMS.filter((term) => text.includes(term));
 }
 
 async function captureStep(page, name) {
@@ -633,7 +645,7 @@ async function main() {
     ));
     const approvalScopeOptionCount = await approvalPanel.locator("select").nth(1).locator("option").count();
     const approvalSaveDisabledInitially = await approvalPanel.getByRole("button", { name: "保存审批设置" }).isDisabled();
-    const approvalAdvancedButtonCount = await approvalPanel.getByRole("button", { name: "高级规则" }).count();
+    const approvalAdvancedButtonCount = await approvalPanel.getByRole("button", { name: "更多规则" }).count();
     const approvalRequiredToggle = approvalPanel.locator(".approval-toggle input[type='checkbox']");
     const approvalWasEnabledInitially = await approvalRequiredToggle.isChecked();
     const approvalStepText = await approvalPanel.locator(".approval-steps").innerText();
@@ -814,7 +826,9 @@ async function main() {
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
     const advancedText = await page.locator("body").innerText();
+    const advancedForbiddenTerms = await visibleAdvancedForbiddenTerms(page);
     const advancedPanelVisible = await page.locator(".scan-panel--admin").count();
+    const advancedConfigCheckPanelCount = await page.locator(".scan-panel--admin").filter({ hasText: "配置检查明细" }).count();
     const snapshotDownloadButtonCount = await page.getByRole("button", { name: "下载当前快照" }).count();
     const snapshotCompareButtonCount = await page.getByRole("button", { name: "对比快照" }).count();
     await page.getByRole("button", { name: "高级设置" }).click();
@@ -907,8 +921,10 @@ async function main() {
       selectedAfterRestore,
       advancedScopeLabels,
       advancedPanelVisible,
+      advancedConfigCheckPanelCount,
       advancedHasUnwiredCopy: advancedText.includes("编辑入口待接入"),
-      advancedHasGovernanceText: advancedText.includes("高级治理视图") && advancedText.includes("治理结论"),
+      advancedHasConfigCheckText: advancedText.includes("配置检查明细") && advancedText.includes("配置状态"),
+      advancedForbiddenTerms,
       snapshotDownloadButtonCount,
       snapshotCompareButtonCount,
       previewUrl,
@@ -982,12 +998,14 @@ async function main() {
     assert(
       advancedScopeLabels.join("|") === "业务对象|页面ID|视图ID|角色编码"
         && advancedPanelVisible === 1
-        && advancedText.includes("高级治理视图")
-        && advancedText.includes("治理结论")
+        && advancedConfigCheckPanelCount === 1
+        && advancedText.includes("配置检查明细")
+        && advancedText.includes("配置状态")
         && snapshotDownloadButtonCount === 1
-        && snapshotCompareButtonCount === 1,
-      "高级设置边界不可用",
-      { advancedScopeLabels, advancedPanelVisible, snapshotDownloadButtonCount, snapshotCompareButtonCount },
+        && snapshotCompareButtonCount === 1
+        && advancedForbiddenTerms.length === 0,
+      "高级设置不可用或露出了治理/技术话术",
+      { advancedScopeLabels, advancedPanelVisible, advancedConfigCheckPanelCount, snapshotDownloadButtonCount, snapshotCompareButtonCount, advancedForbiddenTerms },
     );
     assert(!advancedText.includes("编辑入口待接入"), "高级设置中出现未接入编辑入口", { advancedText });
     assert(previewUrl.includes("/a/562"), "业务页面预览入口不可用", { previewUrl });

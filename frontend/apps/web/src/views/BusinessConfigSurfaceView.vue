@@ -107,15 +107,15 @@
           :disabled="scanLoading || listSearchSaving || !coverageBatchBootstrapRows.length"
           @click="bootstrapCoverageMissing"
         >
-          {{ listSearchSaving ? '生成中...' : '批量补缺配置' }}
+          {{ listSearchSaving ? '生成中...' : '批量补齐配置' }}
         </button>
       </div>
       <div class="scan-summary">
         <span>业务页面 {{ coverageScan.summary.action_count }}</span>
         <span>当前显示 {{ visibleCoverageRows.length }}</span>
         <span v-if="advancedPanelOpen">{{ coverageScopeLabel }}</span>
-        <span v-if="advancedPanelOpen && coverageScan.summary.user_preference_count">已有个人配置 {{ coverageScan.summary.user_preference_count }}</span>
-        <span v-if="advancedPanelOpen">治理结论 {{ overallStatusLabel(coverageScan.summary.overall_status) }}</span>
+        <span v-if="advancedPanelOpen && coverageScan.summary.user_preference_count">已有个人设置 {{ coverageScan.summary.user_preference_count }}</span>
+        <span v-if="advancedPanelOpen">配置状态 {{ overallStatusLabel(coverageScan.summary.overall_status) }}</span>
         <span v-if="advancedPanelOpen">需处理 {{ coverageIssueRows.length }}</span>
         <span v-for="item in advancedPanelOpen ? remediationSummaryItems : []" :key="item.code">
           {{ item.label }} {{ item.count }}
@@ -151,7 +151,7 @@
                 <span>{{ rowCoverageProgressText(row) }}</span>
                 <span v-if="rowActionHintText(row)">{{ rowActionHintText(row) }}</span>
                 <span>{{ pageDesignStatus(row) }}</span>
-                <span v-if="advancedPanelOpen && row.user_preference_count">已有个人配置 {{ row.user_preference_count }}</span>
+                <span v-if="advancedPanelOpen && row.user_preference_count">已有个人设置 {{ row.user_preference_count }}</span>
                 <span v-if="advancedPanelOpen">{{ runtimeEvidenceText(row) }}</span>
                 <span v-if="advancedPanelOpen && runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
               </div>
@@ -280,7 +280,7 @@
                   class="ghost small"
                   @click="openApprovalConfig(section)"
                 >
-                  高级规则
+                  更多规则
                 </button>
               </div>
             </article>
@@ -290,7 +290,7 @@
     </section>
     <section v-if="advancedPanelOpen && coverageScan" class="scan-panel scan-panel--admin">
       <div class="scan-toolbar">
-        <strong>高级治理视图</strong>
+        <strong>配置检查明细</strong>
         <span v-if="snapshotSummary">{{ snapshotSummaryText }}</span>
       </div>
       <div class="scan-list">
@@ -300,7 +300,7 @@
           <span>{{ row.model }}</span>
           <span>{{ row.view_mode || '-' }}</span>
           <span>菜单 {{ row.menu_count }}</span>
-          <span v-if="row.user_preference_count">个人偏好 {{ row.user_preference_count }} · {{ row.user_preference_boundary }}</span>
+          <span v-if="row.user_preference_count">个人设置 {{ row.user_preference_count }} · {{ boundaryLabel(row.user_preference_boundary) }}</span>
           <span v-if="row.missing_view_types.length">需补 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
           <span v-else>配置完整</span>
           <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
@@ -416,7 +416,7 @@
         <div class="edit-meta approval-rule-summary">
           <span>当前步骤：{{ activeApprovalStepCount }} 个</span>
           <span>保存状态：{{ hasApprovalDraftChanges ? '有未保存调整' : '已同步' }}</span>
-          <span v-if="advancedPanelOpen">边界：{{ approvalAudit?.boundary || 'industry_policy_runtime' }}</span>
+          <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(approvalAudit?.boundary || 'industry_policy_runtime') }}</span>
           <span v-if="hasApprovalDraftChanges" class="edit-dirty">配置已调整，可保存</span>
         </div>
         <div class="approval-impact-summary">
@@ -497,7 +497,7 @@
           还原
         </button>
         <button type="button" class="ghost small" :disabled="!approvalSection?.route?.path" @click="approvalSection && openApprovalConfig(approvalSection)">
-          高级规则
+          更多规则
         </button>
       </div>
     </section>
@@ -690,7 +690,7 @@
       </div>
       <div class="edit-meta">
         <span v-if="hasAnalysisDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
-        <span v-if="advancedPanelOpen">边界：{{ analysisAudit?.business_config_boundary || 'business_contract' }}</span>
+        <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(analysisAudit?.business_config_boundary || 'business_contract') }}</span>
       </div>
     </section>
 
@@ -932,8 +932,8 @@
       </div>
       <div class="edit-meta">
         <span v-if="hasListSearchDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
-        <span v-if="advancedPanelOpen">个人偏好记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
-        <span v-if="advancedPanelOpen">边界：{{ listSearchAudit?.user_preference_boundary || 'ui_only' }}</span>
+        <span v-if="advancedPanelOpen">个人设置记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
+        <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(listSearchAudit?.user_preference_boundary || 'ui_only') }}</span>
       </div>
       <div v-if="advancedPanelOpen && listSearchAudit?.user_preferences?.length" class="preference-list">
         <span
@@ -1249,7 +1249,7 @@ const versionPanelGuide = computed(() => {
   if (activeVersionSection.value === 'list_search') {
     return {
       title: '列表与搜索版本怎么用',
-      body: '这里管理页面默认列表列、搜索条件和默认分组，不覆盖用户自己的列宽、排序等个人偏好。',
+      body: '这里管理页面默认列表列、搜索条件和默认分组，不覆盖用户自己的列宽、排序等个人设置。',
     };
   }
   if (activeVersionSection.value === 'analysis') {
@@ -1448,12 +1448,14 @@ function setMessage(text: string, detail = '') {
   message.value = { text, detail };
 }
 
-function boundaryLabel(boundary: string) {
-  if (boundary === 'business_contract') return '业务默认配置';
-  if (boundary === 'business_contract_not_user_preference') return '业务默认配置';
-  if (boundary === 'business_contract_with_policy_runtime') return '菜单显示规则';
-  if (boundary === 'industry_policy_runtime') return '行业业务规则';
-  return boundary || '未声明边界';
+function boundaryLabel(boundary: unknown) {
+  const value = String(boundary || '').trim();
+  if (value === 'ui_only') return '仅页面设置';
+  if (value === 'business_contract') return '业务默认配置';
+  if (value === 'business_contract_not_user_preference') return '业务默认配置';
+  if (value === 'business_contract_with_policy_runtime') return '菜单显示规则';
+  if (value === 'industry_policy_runtime') return '行业业务规则';
+  return value || '未声明来源';
 }
 
 function sectionHelpLabel(sectionKey: string) {
@@ -1606,7 +1608,7 @@ function rowHasAnalysisConfig(row: BusinessConfigCoverageScanItem) {
 }
 
 function runtimeReasonLabel(reason: string) {
-  if (reason === 'missing_contract') return '缺配置';
+  if (reason === 'missing_contract') return '待完善配置';
   if (reason === 'not_published') return '未发布';
   if (reason === 'not_runtime_applicable') return '作用域未命中';
   if (reason === 'not_published_or_not_runtime_applicable') return '未发布/作用域未命中';
@@ -1769,11 +1771,11 @@ function runtimeRouteText(row: BusinessConfigCoverageScanItem) {
 }
 
 function remediationActionLabel(code: string) {
-  if (code === 'configure_contract') return '补配置';
-  if (code === 'publish_contract') return '看版本';
-  if (code === 'fix_scope') return '查作用域';
-  if (code === 'configure_menu') return '配菜单';
-  if (code === 'review_user_preference_boundary') return '查偏好';
+  if (code === 'configure_contract') return '补齐配置';
+  if (code === 'publish_contract') return '查看版本';
+  if (code === 'fix_scope') return '检查范围';
+  if (code === 'configure_menu') return '配置菜单';
+  if (code === 'review_user_preference_boundary') return '检查个人设置';
   return code;
 }
 
@@ -1914,7 +1916,7 @@ function buildCoverageSummaryText() {
     `低代码配置覆盖验收：${overallStatusLabel(summary.overall_status)}`,
     `${coverageScopeLabel.value}；范围：${scan.model || '全部模型'}，动作 ${summary.action_count}`,
     `严重级别：阻断 ${summary.severity_counts.error || 0}，警告 ${summary.severity_counts.warning || 0}，提示 ${summary.severity_counts.notice || 0}`,
-    `缺口：配置缺口 ${summary.missing_count}，运行时缺口 ${summary.runtime_missing_count}，分析缺口 ${summary.runtime_missing_analysis_count || 0}，无菜单 ${summary.no_menu_count}，个人偏好 ${summary.user_preference_count}`,
+    `待完善：配置 ${summary.missing_count}，办理页 ${summary.runtime_missing_count}，分析页 ${summary.runtime_missing_analysis_count || 0}，无菜单 ${summary.no_menu_count}，个人设置 ${summary.user_preference_count}`,
     `原因：未发布 ${summary.not_published_gap_count}，作用域未命中 ${summary.not_runtime_applicable_gap_count}`,
     `整改：${actions}`,
     `运行页面证据：\n${routeEvidence}`,
@@ -2162,7 +2164,7 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
   const missingContractTypes = rowBootstrapMissingViewTypes(row, ['form', 'tree', 'search', 'pivot', 'graph']);
   if (!missingContractTypes.length) {
     await openVersionsForRuntimeGaps(row);
-    setMessage('没有可自动补齐的缺配置项', '当前缺口需要检查发布状态或配置作用域。');
+    setMessage('没有可自动补齐的配置项', '当前待完善项需要检查发布状态或配置作用域。');
     return;
   }
   listSearchSaving.value = true;
@@ -2211,7 +2213,7 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
     await loadSurface();
     await scanCurrentModel();
     setMessage(
-      '已补齐缺配置',
+      '已补齐配置',
       formFieldCount ? `已发布 ${savedCount} 个业务配置，表单字段 ${formFieldCount}` : `已发布 ${savedCount} 个业务配置`,
     );
   } catch (err) {
@@ -2249,7 +2251,7 @@ async function bootstrapCoverageMissing() {
       .slice(0, 5)
       .join('、');
     setMessage(
-      result.failed_count ? '已批量补缺配置，部分页面需手工处理' : '已批量补缺配置',
+      result.failed_count ? '已批量补齐配置，部分页面需手工处理' : '已批量补齐配置',
       result.failed_count
         ? `已发布 ${result.saved_count} 个业务配置，${result.failed_count} 个页面需手工处理${failedNames ? `：${failedNames}` : ''}`
         : `已发布 ${result.saved_count} 个业务配置`,
