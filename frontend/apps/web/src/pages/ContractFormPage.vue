@@ -1172,6 +1172,7 @@ import {
   BUSINESS_CONFIG_INTENTS,
   BUSINESS_CONFIG_MODES,
   BUSINESS_CONFIG_ROUTE_FLAGS,
+  FORM_FIELD_CONFIG_INTENTS,
   isBusinessConfigMode,
   isBusinessConfigRuntimeModel,
 } from '../app/businessConfigBoundaries';
@@ -10171,7 +10172,7 @@ async function setInlineFieldPolicy(fieldKey: string, params: Record<string, unk
   busyKind.value = 'action';
   try {
     await intentRequest({
-      intent: 'ui.form_field_policy.set',
+      intent: FORM_FIELD_CONFIG_INTENTS.policySet,
       params: {
         ...base,
         field_name: fieldKey,
@@ -10279,7 +10280,7 @@ async function submitInlineCustomFieldCreate() {
   busyKind.value = 'action';
   try {
     await intentRequest({
-      intent: 'ui.form_custom_field.create',
+      intent: FORM_FIELD_CONFIG_INTENTS.customFieldCreate,
       params: {
         ...lowCodeApplyBaseParams(),
         label,

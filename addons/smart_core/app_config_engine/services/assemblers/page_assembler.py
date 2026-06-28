@@ -20,6 +20,7 @@ from odoo.addons.smart_core.utils.backend_contract_boundaries import (
     BUSINESS_CONFIG_INTENTS,
     BUSINESS_CONFIG_MODES,
     BUSINESS_CONFIG_OWNER_LAYER,
+    FORM_FIELD_CONFIG_INTENTS,
     is_business_config_runtime_model,
 )
 from ...utils.misc import safe_eval
@@ -1482,7 +1483,7 @@ class PageAssembler:
                 "key": BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_ADD_CUSTOM_FIELD,
                 "label": "添加字段",
                 "kind": "intent",
-                "intent": "ui.form_custom_field.create",
+                "intent": FORM_FIELD_CONFIG_INTENTS["custom_field_create"],
                 "trigger": "click",
                 "sourceWidgetId": "mode.%s" % mode,
                 "target_scope": "mode",
@@ -1594,7 +1595,7 @@ class PageAssembler:
                     "key": "current_form_field_%s_%s" % (field_name, value),
                     "label": "%s%s" % (label_text, label),
                     "kind": "intent",
-                    "intent": "ui.form_field_policy.set",
+                    "intent": FORM_FIELD_CONFIG_INTENTS["policy_set"],
                     "trigger": "change",
                     "sourceWidgetId": "field.%s" % field_name,
                     "target_scope": "widget",

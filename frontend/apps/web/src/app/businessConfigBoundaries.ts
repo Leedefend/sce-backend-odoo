@@ -50,6 +50,11 @@ export const BUSINESS_CONFIG_INTENTS = {
   coverageBootstrapMissing: 'ui.business_config.coverage.bootstrap_missing',
 } as const;
 
+export const FORM_FIELD_CONFIG_INTENTS = {
+  policySet: 'ui.form_field_policy.set',
+  customFieldCreate: 'ui.form_custom_field.create',
+} as const;
+
 export const MENU_CONFIG_INTENTS = {
   panelGet: 'ui.menu_config.panel.get',
   panelSet: 'ui.menu_config.panel.set',

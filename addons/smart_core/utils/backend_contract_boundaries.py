@@ -78,6 +78,11 @@ BUSINESS_CONFIG_INTENTS = {
     "coverage_bootstrap_missing": "ui.business_config.coverage.bootstrap_missing",
 }
 
+FORM_FIELD_CONFIG_INTENTS = {
+    "policy_set": "ui.form_field_policy.set",
+    "custom_field_create": "ui.form_custom_field.create",
+}
+
 MENU_CONFIG_INTENTS = {
     "panel_get": "ui.menu_config.panel.get",
     "panel_set": "ui.menu_config.panel.set",

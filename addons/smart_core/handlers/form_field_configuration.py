@@ -12,6 +12,7 @@ from ..core.base_handler import BaseIntentHandler
 from ..core.request_params import parse_non_negative_int
 from ..utils.backend_contract_boundaries import (
     BUSINESS_CONFIG_INTENTS,
+    FORM_FIELD_CONFIG_INTENTS,
     VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY,
     VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
     ensure_view_orchestration_source,
@@ -727,7 +728,7 @@ def _upsert_view_orchestration_field_rows(
 
 
 class FormFieldPolicySetHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.form_field_policy.set"
+    INTENT_TYPE = FORM_FIELD_CONFIG_INTENTS["policy_set"]
     DESCRIPTION = "Set current form field visibility policy from a contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -856,7 +857,7 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
 
 
 class FormCustomFieldCreateHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.form_custom_field.create"
+    INTENT_TYPE = FORM_FIELD_CONFIG_INTENTS["custom_field_create"]
     DESCRIPTION = "Create a safe custom form field from a contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"

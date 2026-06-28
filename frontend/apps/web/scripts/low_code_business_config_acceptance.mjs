@@ -74,7 +74,7 @@ async function ensureDirs() {
 
 async function auditLowCodeBoundaryConstants() {
   const leaked = [];
-  const pattern = /(?:ui\.(?:business_config|menu_config)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|ui\.menu\.config\.policy|ui\.business\.config\.contract\.menu_orchestration|smart_core\.nav\.(?:user_menu_config(?:\.config_only)?\.enabled|user_data_acceptance_only)|current_form_(?:field_settings|add_custom_field|field_order_save|field_configuration)|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
+  const pattern = /(?:ui\.(?:business_config|menu_config|form_field_policy|form_custom_field)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|ui\.menu\.config\.policy|ui\.business\.config\.contract\.menu_orchestration|smart_core\.nav\.(?:user_menu_config(?:\.config_only)?\.enabled|user_data_acceptance_only)|current_form_(?:field_settings|add_custom_field|field_order_save|field_configuration)|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
   for (const relativePath of LOW_CODE_BOUNDARY_FILES) {
     if (LOW_CODE_BOUNDARY_ALLOW_FILES.has(relativePath)) continue;
     const absolutePath = path.join(ROOT_DIR, relativePath);
