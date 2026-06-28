@@ -36,6 +36,7 @@ const LOW_CODE_BOUNDARY_SCAN_ROOTS = [
   "addons/smart_construction_core",
 ];
 const LOW_CODE_BOUNDARY_SCAN_EXTENSIONS = new Set([".mjs", ".py", ".ts", ".vue"]);
+const LOW_CODE_BOUNDARY_MIN_CHECKED_FILES = 800;
 const LOW_CODE_BOUNDARY_EXCLUDED_SEGMENTS = new Set([
   "__pycache__",
   "data",
@@ -115,6 +116,7 @@ async function auditLowCodeBoundaryConstants() {
   }
   return {
     checkedFiles: files.length,
+    minCheckedFiles: LOW_CODE_BOUNDARY_MIN_CHECKED_FILES,
     scanRoots: LOW_CODE_BOUNDARY_SCAN_ROOTS,
     allowedFiles: Array.from(LOW_CODE_BOUNDARY_ALLOW_FILES),
     leaked,
@@ -573,6 +575,11 @@ async function main() {
   await ensureDirs();
   const boundaryConstants = await auditLowCodeBoundaryConstants();
   const legacyWritePaths = await auditLowCodeLegacyWritePaths();
+  assert(
+    boundaryConstants.checkedFiles >= LOW_CODE_BOUNDARY_MIN_CHECKED_FILES,
+    "低代码边界扫描覆盖文件数异常偏低",
+    boundaryConstants,
+  );
   assert(
     boundaryConstants.leaked.length === 0,
     "低代码边界常量散落在页面、API 或 handler 中",
