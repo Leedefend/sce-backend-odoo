@@ -12,6 +12,10 @@ from odoo.http import request
 from odoo.addons.smart_core.utils.delete_policy import resolve_unlink_policy
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_ADD_CUSTOM_FIELD,
+    BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_CONFIGURATION,
+    BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_ORDER_SAVE,
+    BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_SETTINGS,
     BUSINESS_CONFIG_AUTHORITIES,
     BUSINESS_CONFIG_INTENTS,
     BUSINESS_CONFIG_MODES,
@@ -1387,7 +1391,7 @@ class PageAssembler:
             return
         current_view_id = int(view_id or 0)
         action = {
-            "key": "current_form_field_settings",
+            "key": BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_SETTINGS,
             "label": "表单设置",
             "kind": "client",
             "level": "header",
@@ -1447,7 +1451,7 @@ class PageAssembler:
             view_id=current_view_id,
         )
         governance = data.get("governance") if isinstance(data.get("governance"), dict) else {}
-        governance["current_form_field_settings"] = {
+        governance[BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_SETTINGS] = {
             "enabled": True,
             "model": model,
             "model_label": model_rec.name,
@@ -1475,7 +1479,7 @@ class PageAssembler:
         )
         action_rows = [
             {
-                "key": "current_form_add_custom_field",
+                "key": BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_ADD_CUSTOM_FIELD,
                 "label": "添加字段",
                 "kind": "intent",
                 "intent": "ui.form_custom_field.create",
@@ -1516,7 +1520,7 @@ class PageAssembler:
                 },
             },
             {
-                "key": "current_form_field_order_save",
+                "key": BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_ORDER_SAVE,
                 "label": "保存表单设置",
                 "kind": "intent",
                 "intent": BUSINESS_CONFIG_INTENTS["lowcode_apply"],
@@ -1611,9 +1615,10 @@ class PageAssembler:
                     },
                 })
         groups = data.get("action_groups") if isinstance(data.get("action_groups"), list) else []
-        groups = [row for row in groups if not (isinstance(row, dict) and row.get("key") == "current_form_field_configuration")]
+        group_key = BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_CONFIGURATION
+        groups = [row for row in groups if not (isinstance(row, dict) and row.get("key") == group_key)]
         groups.append({
-            "key": "current_form_field_configuration",
+            "key": group_key,
             "label": "业务配置（低代码）",
             "sourceWidgetId": "mode.%s" % mode,
             "mode_aliases": [mode, low_code_mode],

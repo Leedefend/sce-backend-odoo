@@ -14,6 +14,13 @@ export const BUSINESS_CONFIG_MODES = {
   lowCode: 'business_config_lowcode',
 } as const;
 
+export const BUSINESS_CONFIG_ACTION_KEYS = {
+  currentFormFieldSettings: 'current_form_field_settings',
+  currentFormAddCustomField: 'current_form_add_custom_field',
+  currentFormFieldOrderSave: 'current_form_field_order_save',
+  currentFormFieldConfiguration: 'current_form_field_configuration',
+} as const;
+
 export const BUSINESS_CONFIG_ROUTE_FLAGS = {
   returnToBusinessConfig: 'return_to_business_config',
   openPages: 'open_pages',

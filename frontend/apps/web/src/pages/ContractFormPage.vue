@@ -1168,6 +1168,7 @@ import {
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import {
+  BUSINESS_CONFIG_ACTION_KEYS,
   BUSINESS_CONFIG_INTENTS,
   BUSINESS_CONFIG_MODES,
   BUSINESS_CONFIG_ROUTE_FLAGS,
@@ -2113,7 +2114,7 @@ const activeContractModeActions = computed(() => {
   const source = `mode.${mode}`;
   return contractV2ActionRules()
     .filter((rule) => {
-      if (ruleKey(rule) === 'current_form_field_order_save') return false;
+      if (ruleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave) return false;
       const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
       if (sourceWidgetId !== source) return false;
       const expectedMode = ruleClientMode(rule);
@@ -10146,7 +10147,7 @@ function onContractInlineFieldOrderDragEnd() {
 }
 
 function lowCodeApplyBaseParams() {
-  const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
+  const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave);
   const target = parseMaybeJsonRecord(configAction?.target);
   return normalizeLowCodeApplyParams({
     action_id: Number(actionId.value || route.query.action_id || 0) || 0,
@@ -10587,7 +10588,7 @@ function formConfigSaveOperationSummary(changedVisibility: Record<string, boolea
 
 async function saveContractFieldOrder() {
   if (!hasCurrentFormFieldDraftChanges.value) return true;
-  const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
+  const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave);
   const target = parseMaybeJsonRecord(configAction?.target);
   const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
   const changedVisibility = changedFieldVisibilityDraft();

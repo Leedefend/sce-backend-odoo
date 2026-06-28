@@ -33,6 +33,17 @@ BUSINESS_CONFIG_MODES = {
     "lowcode": "business_config_lowcode",
 }
 
+BUSINESS_CONFIG_ACTION_KEYS = {
+    "current_form_field_settings": "current_form_field_settings",
+    "current_form_add_custom_field": "current_form_add_custom_field",
+    "current_form_field_order_save": "current_form_field_order_save",
+    "current_form_field_configuration": "current_form_field_configuration",
+}
+BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_SETTINGS = BUSINESS_CONFIG_ACTION_KEYS["current_form_field_settings"]
+BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_ADD_CUSTOM_FIELD = BUSINESS_CONFIG_ACTION_KEYS["current_form_add_custom_field"]
+BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_ORDER_SAVE = BUSINESS_CONFIG_ACTION_KEYS["current_form_field_order_save"]
+BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_CONFIGURATION = BUSINESS_CONFIG_ACTION_KEYS["current_form_field_configuration"]
+
 BUSINESS_CONFIG_AUTHORITIES = {
     "contract": "ui.business.config.contract",
     "contract_version": "ui.business.config.contract.version",
