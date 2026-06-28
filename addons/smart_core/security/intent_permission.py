@@ -5,6 +5,7 @@ from odoo.http import request
 from odoo.exceptions import AccessError, MissingError
 from ..core.intent_operation_policy import access_mode_for_intent, nested_params
 from ..core.request_identity import identity_id
+from ..utils.backend_contract_boundaries import APPROVAL_POLICY_INTENTS, BUSINESS_CONFIG_INTENTS
 from ..utils.extension_hooks import call_extension_hook_first
 from .auth import get_user_from_token
 
@@ -176,13 +177,13 @@ def _is_ui_only_config_intent(intent_name):
     return str(intent_name or "").strip() in {
         "user.view.preference.get",
         "user.view.preference.set",
-        "ui.business_config.list_search.set",
-        "ui.business_config.analysis.set",
-        "ui.business_config.contract.save",
-        "ui.business_config.contract.publish",
-        "ui.business_config.contract.rollback",
-        "sc.approval_policy.config.set",
-        "sc.approval_policy.steps.set",
+        BUSINESS_CONFIG_INTENTS["list_search_set"],
+        BUSINESS_CONFIG_INTENTS["analysis_set"],
+        BUSINESS_CONFIG_INTENTS["contract_save"],
+        BUSINESS_CONFIG_INTENTS["contract_publish"],
+        BUSINESS_CONFIG_INTENTS["contract_rollback"],
+        APPROVAL_POLICY_INTENTS["config_set"],
+        APPROVAL_POLICY_INTENTS["steps_set"],
     }
 
 

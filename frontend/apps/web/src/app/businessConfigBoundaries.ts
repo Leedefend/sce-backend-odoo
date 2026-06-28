@@ -53,6 +53,12 @@ export const MENU_CONFIG_INTENTS = {
   versions: 'ui.menu_config.versions',
 } as const;
 
+export const APPROVAL_POLICY_INTENTS = {
+  configGet: 'sc.approval_policy.config.get',
+  configSet: 'sc.approval_policy.config.set',
+  stepsSet: 'sc.approval_policy.steps.set',
+} as const;
+
 export function isBusinessConfigRuntimeModel(model: unknown): boolean {
   return BUSINESS_CONFIG_RUNTIME_MODELS.has(String(model || '').trim());
 }

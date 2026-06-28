@@ -71,6 +71,12 @@ MENU_CONFIG_INTENTS = {
     "versions": "ui.menu_config.versions",
 }
 
+APPROVAL_POLICY_INTENTS = {
+    "config_get": "sc.approval_policy.config.get",
+    "config_set": "sc.approval_policy.config.set",
+    "steps_set": "sc.approval_policy.steps.set",
+}
+
 LAYER_GENERATED_BASELINE = 10
 LAYER_INDUSTRY_STANDARD = 20
 LAYER_USER_PREFERENCE = 30

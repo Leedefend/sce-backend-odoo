@@ -1,5 +1,5 @@
 import { intentRequest } from './intents';
-import { BUSINESS_CONFIG_INTENTS } from '../app/businessConfigBoundaries';
+import { APPROVAL_POLICY_INTENTS, BUSINESS_CONFIG_INTENTS } from '../app/businessConfigBoundaries';
 
 export interface BusinessConfigListSearchAuditPayload {
   model: string;
@@ -430,7 +430,7 @@ export async function loadApprovalPolicyConfig(params: {
   model: string;
 }) {
   return intentRequest<ApprovalPolicyConfigPayload>({
-    intent: 'sc.approval_policy.config.get',
+    intent: APPROVAL_POLICY_INTENTS.configGet,
     params,
   });
 }
@@ -443,7 +443,7 @@ export async function saveApprovalPolicyConfig(params: {
   manager_scope_key?: string;
 }) {
   return intentRequest<ApprovalPolicyConfigPayload>({
-    intent: 'sc.approval_policy.config.set',
+    intent: APPROVAL_POLICY_INTENTS.configSet,
     params,
   });
 }
@@ -462,7 +462,7 @@ export async function saveApprovalPolicySteps(params: {
   }>;
 }) {
   return intentRequest<ApprovalPolicyConfigPayload>({
-    intent: 'sc.approval_policy.steps.set',
+    intent: APPROVAL_POLICY_INTENTS.stepsSet,
     params,
   });
 }

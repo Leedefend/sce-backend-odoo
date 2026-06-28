@@ -32,7 +32,10 @@ const LOW_CODE_BOUNDARY_FILES = [
   "addons/smart_core/handlers/business_config_surface.py",
   "addons/smart_core/handlers/form_field_configuration.py",
   "addons/smart_core/handlers/menu_configuration.py",
+  "addons/smart_core/security/intent_permission.py",
   "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py",
+  "addons/smart_construction_core/handlers/approval_policy_configuration.py",
+  "addons/smart_construction_core/core_extension.py",
 ];
 const LOW_CODE_BOUNDARY_ALLOW_FILES = new Set([
   "frontend/apps/web/src/app/businessConfigBoundaries.ts",
@@ -57,7 +60,7 @@ async function ensureDirs() {
 
 async function auditLowCodeBoundaryConstants() {
   const leaked = [];
-  const pattern = /ui\.(?:business_config|menu_config)\.[a-zA-Z0-9_.]+|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
+  const pattern = /(?:ui\.(?:business_config|menu_config)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
   for (const relativePath of LOW_CODE_BOUNDARY_FILES) {
     if (LOW_CODE_BOUNDARY_ALLOW_FILES.has(relativePath)) continue;
     const absolutePath = path.join(ROOT_DIR, relativePath);

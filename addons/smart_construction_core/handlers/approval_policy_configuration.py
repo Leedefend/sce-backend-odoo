@@ -8,6 +8,7 @@ from odoo.exceptions import AccessError, ValidationError
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    APPROVAL_POLICY_INTENTS,
     APPROVAL_POLICY_RUNTIME_SOURCE,
     APPROVAL_POLICY_SOURCE_TENANT_LOWCODING,
 )
@@ -64,7 +65,7 @@ def _iter_records(records):
 
 
 class ApprovalPolicyConfigGetHandler(BaseIntentHandler):
-    INTENT_TYPE = "sc.approval_policy.config.get"
+    INTENT_TYPE = APPROVAL_POLICY_INTENTS["config_get"]
     DESCRIPTION = "读取当前业务审批启用配置"
     VERSION = "1.0.0"
     ACL_MODE = "explicit_check"
@@ -241,7 +242,7 @@ class ApprovalPolicyConfigGetHandler(BaseIntentHandler):
 
 
 class ApprovalPolicyConfigSetHandler(ApprovalPolicyConfigGetHandler):
-    INTENT_TYPE = "sc.approval_policy.config.set"
+    INTENT_TYPE = APPROVAL_POLICY_INTENTS["config_set"]
     DESCRIPTION = "保存当前业务审批启用配置"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = BUSINESS_CONFIG_GROUPS
@@ -318,7 +319,7 @@ class ApprovalPolicyConfigSetHandler(ApprovalPolicyConfigGetHandler):
 
 
 class ApprovalPolicyStepsSetHandler(ApprovalPolicyConfigSetHandler):
-    INTENT_TYPE = "sc.approval_policy.steps.set"
+    INTENT_TYPE = APPROVAL_POLICY_INTENTS["steps_set"]
     DESCRIPTION = "保存当前业务审批步骤编排"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = BUSINESS_CONFIG_GROUPS
