@@ -22,6 +22,41 @@ MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING = "smart_core.lowcode.menu_config"
 APPROVAL_POLICY_SOURCE_TENANT_LOWCODING = "smart_construction_core.lowcode.approval_policy"
 APPROVAL_POLICY_RUNTIME_SOURCE = "sc.approval.policy"
 
+BUSINESS_CONFIG_INTENTS = {
+    "form_audit": "ui.business_config.form.audit",
+    "lowcode_apply": "ui.business_config.lowcode.apply",
+    "contract_list": "ui.business_config.contract.list",
+    "contract_get": "ui.business_config.contract.get",
+    "contract_save": "ui.business_config.contract.save",
+    "contract_publish": "ui.business_config.contract.publish",
+    "contract_rollback": "ui.business_config.contract.rollback",
+    "contract_versions": "ui.business_config.contract.versions",
+    "list_search_audit": "ui.business_config.list_search.audit",
+    "list_search_set": "ui.business_config.list_search.set",
+    "list_search_bootstrap": "ui.business_config.list_search.bootstrap",
+    "analysis_audit": "ui.business_config.analysis.audit",
+    "analysis_set": "ui.business_config.analysis.set",
+    "analysis_bootstrap": "ui.business_config.analysis.bootstrap",
+    "form_bootstrap": "ui.business_config.form.bootstrap",
+    "surface_get": "ui.business_config.surface.get",
+    "snapshot_summary": "ui.business_config.snapshot.summary",
+    "snapshot_export": "ui.business_config.snapshot.export",
+    "snapshot_compare": "ui.business_config.snapshot.compare",
+    "coverage_scan": "ui.business_config.coverage.scan",
+    "coverage_bootstrap_list_search": "ui.business_config.coverage.bootstrap_list_search",
+    "coverage_bootstrap_missing": "ui.business_config.coverage.bootstrap_missing",
+}
+
+MENU_CONFIG_INTENTS = {
+    "panel_get": "ui.menu_config.panel.get",
+    "panel_set": "ui.menu_config.panel.set",
+    "menu_create": "ui.menu_config.menu.create",
+    "menu_delete": "ui.menu_config.menu.delete",
+    "audit": "ui.menu_config.audit",
+    "rollback": "ui.menu_config.rollback",
+    "versions": "ui.menu_config.versions",
+}
+
 LAYER_GENERATED_BASELINE = 10
 LAYER_INDUSTRY_STANDARD = 20
 LAYER_USER_PREFERENCE = 30

@@ -11,6 +11,7 @@ from odoo.exceptions import ValidationError
 from ..core.base_handler import BaseIntentHandler
 from ..core.request_params import parse_non_negative_int
 from ..utils.backend_contract_boundaries import (
+    BUSINESS_CONFIG_INTENTS,
     VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY,
     VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
     ensure_view_orchestration_source,
@@ -1354,7 +1355,7 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
 
 
 class BusinessConfigLowCodeApplyHandler(FormFieldConfigBatchSetHandler):
-    INTENT_TYPE = "ui.business_config.lowcode.apply"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["lowcode_apply"]
     DESCRIPTION = "Apply low-code business form configuration in current form scope."
 
     def handle(self, payload=None, ctx=None):
@@ -1369,7 +1370,7 @@ class BusinessConfigLowCodeApplyHandler(FormFieldConfigBatchSetHandler):
 
 
 class BusinessConfigFormAuditHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.form.audit"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["form_audit"]
     DESCRIPTION = "Audit low-code form config consistency between business contract and legacy field policy."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_form_audit"
@@ -1495,7 +1496,7 @@ class BusinessConfigFormAuditHandler(BaseIntentHandler):
 
 
 class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.list_search.audit"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["list_search_audit"]
     DESCRIPTION = "Audit business list/search config boundary against UI-only user preferences."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_list_search_audit"
@@ -1770,7 +1771,7 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
 
 
 class BusinessConfigListSearchSetHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.list_search.set"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["list_search_set"]
     DESCRIPTION = "Save business list columns and search filters into view_orchestration contracts."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -1927,7 +1928,7 @@ class BusinessConfigListSearchSetHandler(BaseIntentHandler):
 
 
 class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
-    INTENT_TYPE = "ui.business_config.analysis.audit"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["analysis_audit"]
     DESCRIPTION = "Audit business analysis view config from view_orchestration contracts."
     SOURCE_KIND = "ui_business_config_analysis_audit"
     SOURCE_AUTHORITIES = (
@@ -2064,7 +2065,7 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
 
 
 class BusinessConfigAnalysisSetHandler(BusinessConfigListSearchSetHandler):
-    INTENT_TYPE = "ui.business_config.analysis.set"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["analysis_set"]
     DESCRIPTION = "Save business analysis view config into view_orchestration contracts."
     SOURCE_KIND = "ui_business_config_analysis_set"
     SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
@@ -2175,7 +2176,7 @@ class BusinessConfigAnalysisSetHandler(BusinessConfigListSearchSetHandler):
 
 
 class BusinessConfigListSearchBootstrapHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.list_search.bootstrap"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["list_search_bootstrap"]
     DESCRIPTION = "Bootstrap business list/search contracts from current backend view contracts."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -2345,7 +2346,7 @@ class BusinessConfigListSearchBootstrapHandler(BaseIntentHandler):
 
 
 class BusinessConfigAnalysisBootstrapHandler(BusinessConfigListSearchBootstrapHandler):
-    INTENT_TYPE = "ui.business_config.analysis.bootstrap"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["analysis_bootstrap"]
     DESCRIPTION = "Bootstrap business analysis contracts from current backend pivot/graph view contracts."
     SOURCE_KIND = "ui_business_config_analysis_bootstrap"
     SOURCE_AUTHORITIES = (
@@ -2491,7 +2492,7 @@ class BusinessConfigAnalysisBootstrapHandler(BusinessConfigListSearchBootstrapHa
 
 
 class BusinessConfigFormBootstrapHandler(BusinessConfigListSearchBootstrapHandler):
-    INTENT_TYPE = "ui.business_config.form.bootstrap"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["form_bootstrap"]
     DESCRIPTION = "Bootstrap business form contract from current backend form view contract."
     SOURCE_KIND = "ui_business_config_form_bootstrap"
     SOURCE_AUTHORITIES = (
@@ -2646,7 +2647,7 @@ class BusinessConfigFormBootstrapHandler(BusinessConfigListSearchBootstrapHandle
 
 
 class BusinessConfigContractSaveHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.save"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_save"]
     DESCRIPTION = "Save low-code business config contract payload into contract model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -2812,7 +2813,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
 
 
 class BusinessConfigContractGetHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.get"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_get"]
     DESCRIPTION = "Get low-code business config contract payload by name/model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_get"
@@ -2866,7 +2867,7 @@ class BusinessConfigContractGetHandler(BaseIntentHandler):
 
 
 class BusinessConfigContractListHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.list"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_list"]
     DESCRIPTION = "List low-code business config contracts in current company."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_list"
@@ -2913,7 +2914,7 @@ class BusinessConfigContractListHandler(BaseIntentHandler):
 
 
 class BusinessConfigContractVersionsHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.versions"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_versions"]
     DESCRIPTION = "List low-code business config contract versions in current scope."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_versions"
@@ -2988,7 +2989,7 @@ class BusinessConfigContractVersionsHandler(BaseIntentHandler):
 
 
 class BusinessConfigContractPublishHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.publish"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_publish"]
     DESCRIPTION = "Publish a low-code business config contract by name/model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -3042,7 +3043,7 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
 
 
 class BusinessConfigContractRollbackHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.rollback"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_rollback"]
     DESCRIPTION = "Rollback a low-code business config contract to a previous or specified snapshot."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"

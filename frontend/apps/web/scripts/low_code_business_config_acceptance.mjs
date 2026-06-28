@@ -23,6 +23,20 @@ const ANALYSIS_MENU_ID = process.env.LOW_CODE_ANALYSIS_MENU_ID || "372";
 const ANALYSIS_PAGE_LABEL = process.env.LOW_CODE_ANALYSIS_PAGE_LABEL || "账户收支统计表";
 const ANALYSIS_CONFIG_URL = `${BASE_URL}/admin/business-config?root_menu_xmlid=smart_construction_core.menu_sc_root&db=${encodeURIComponent(DB_NAME)}&model=${encodeURIComponent(ANALYSIS_MODEL)}&action_id=${encodeURIComponent(ANALYSIS_ACTION_ID)}&menu_id=${encodeURIComponent(ANALYSIS_MENU_ID)}&page_label=${encodeURIComponent(ANALYSIS_PAGE_LABEL)}&open_pages=1`;
 const DEFAULT_UI_FORBIDDEN_TERMS = ["已有个人配置", "个人偏好", "契约", "缺口", "治理", "legacy policy"];
+const LOW_CODE_BOUNDARY_FILES = [
+  "frontend/apps/web/src/api/businessConfig.ts",
+  "frontend/apps/web/src/api/menuConfig.ts",
+  "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue",
+  "frontend/apps/web/src/views/MenuConfigView.vue",
+  "frontend/apps/web/src/pages/ContractFormPage.vue",
+  "addons/smart_core/handlers/business_config_surface.py",
+  "addons/smart_core/handlers/form_field_configuration.py",
+  "addons/smart_core/handlers/menu_configuration.py",
+];
+const LOW_CODE_BOUNDARY_ALLOW_FILES = new Set([
+  "frontend/apps/web/src/app/businessConfigBoundaries.ts",
+  "addons/smart_core/utils/backend_contract_boundaries.py",
+]);
 
 function assert(condition, message, details = {}) {
   if (!condition) {
@@ -34,6 +48,28 @@ function assert(condition, message, details = {}) {
 
 async function ensureDirs() {
   await fs.mkdir(ARTIFACT_ROOT, { recursive: true });
+}
+
+async function auditLowCodeBoundaryConstants() {
+  const leaked = [];
+  const pattern = /ui\.(?:business_config|menu_config)\.[a-zA-Z0-9_.]+|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
+  for (const relativePath of LOW_CODE_BOUNDARY_FILES) {
+    if (LOW_CODE_BOUNDARY_ALLOW_FILES.has(relativePath)) continue;
+    const absolutePath = path.join(ROOT_DIR, relativePath);
+    const text = await fs.readFile(absolutePath, "utf8");
+    const lines = text.split(/\r?\n/);
+    lines.forEach((line, index) => {
+      const matches = line.match(pattern) || [];
+      matches.forEach((match) => {
+        leaked.push({ path: relativePath, line: index + 1, value: match });
+      });
+    });
+  }
+  return {
+    checkedFiles: LOW_CODE_BOUNDARY_FILES.length,
+    allowedFiles: Array.from(LOW_CODE_BOUNDARY_ALLOW_FILES),
+    leaked,
+  };
 }
 
 async function visibleForbiddenTerms(page, selector = "body") {
@@ -481,6 +517,12 @@ async function clickFirstAvailableAnalysisField(page, tabLabels) {
 
 async function main() {
   await ensureDirs();
+  const boundaryConstants = await auditLowCodeBoundaryConstants();
+  assert(
+    boundaryConstants.leaked.length === 0,
+    "低代码边界常量散落在页面、API 或 handler 中",
+    boundaryConstants,
+  );
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   let currentStep = "start";
@@ -498,7 +540,9 @@ async function main() {
     baseUrl: BASE_URL,
     dbName: DB_NAME,
     login: LOGIN,
-    checks: {},
+    checks: {
+      boundaryConstants,
+    },
     artifacts: {},
     errors,
     warnings,

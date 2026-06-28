@@ -1,4 +1,5 @@
 import { intentRequest } from './intents';
+import { MENU_CONFIG_INTENTS } from '../app/businessConfigBoundaries';
 
 export interface MenuConfigMenu {
   id: number;
@@ -180,14 +181,14 @@ export async function loadMenuConfigurationPanel(params: {
   root_menu_xmlid?: string;
 } = {}) {
   return intentRequest<MenuConfigPayload>({
-    intent: 'ui.menu_config.panel.get',
+    intent: MENU_CONFIG_INTENTS.panelGet,
     params,
   });
 }
 
 export async function saveMenuConfigurationPanel(params: { company_id?: number; rows: MenuConfigSaveRow[] }) {
   return intentRequest<MenuConfigSavePayload>({
-    intent: 'ui.menu_config.panel.set',
+    intent: MENU_CONFIG_INTENTS.panelSet,
     params,
   });
 }
@@ -203,7 +204,7 @@ export async function createMenuConfigurationEntry(params: {
   note?: string;
 }) {
   return intentRequest<MenuConfigCreatePayload>({
-    intent: 'ui.menu_config.menu.create',
+    intent: MENU_CONFIG_INTENTS.menuCreate,
     params,
   });
 }
@@ -214,28 +215,28 @@ export async function deleteMenuConfigurationEntry(params: {
   recursive?: boolean;
 }) {
   return intentRequest<MenuConfigDeletePayload>({
-    intent: 'ui.menu_config.menu.delete',
+    intent: MENU_CONFIG_INTENTS.menuDelete,
     params,
   });
 }
 
 export async function loadMenuConfigurationAudit(params: { company_id?: number; include_inactive?: boolean } = {}) {
   return intentRequest<MenuConfigAuditPayload>({
-    intent: 'ui.menu_config.audit',
+    intent: MENU_CONFIG_INTENTS.audit,
     params,
   });
 }
 
 export async function rollbackMenuConfiguration(params: { company_id?: number; version_no?: number } = {}) {
   return intentRequest<MenuConfigRollbackPayload>({
-    intent: 'ui.menu_config.rollback',
+    intent: MENU_CONFIG_INTENTS.rollback,
     params,
   });
 }
 
 export async function loadMenuConfigurationVersions(params: { company_id?: number } = {}) {
   return intentRequest<MenuConfigVersionsPayload>({
-    intent: 'ui.menu_config.versions',
+    intent: MENU_CONFIG_INTENTS.versions,
     params,
   });
 }

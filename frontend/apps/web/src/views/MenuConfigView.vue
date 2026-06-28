@@ -673,6 +673,7 @@ import {
 } from '../api/menuConfig';
 import { useSessionStore } from '../stores/session';
 import { config } from '../config';
+import { BUSINESS_CONFIG_ROUTE_FLAGS } from '../app/businessConfigBoundaries';
 
 type DraftPolicy = {
   policy_id: number;
@@ -747,7 +748,7 @@ const roleGroupDomainSelections = reactive<Record<number, string>>({});
 const session = useSessionStore();
 const route = useRoute();
 const router = useRouter();
-const canReturnToBusinessConfig = computed(() => String(route.query.return_to_business_config || '').trim() === '1');
+const canReturnToBusinessConfig = computed(() => String(route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig] || '').trim() === '1');
 const createForm = reactive({
   name: '',
   parent_menu_id: 0,
@@ -2070,7 +2071,7 @@ function returnToBusinessConfig() {
       page_label: route.query.page_label || undefined,
       view_id: route.query.view_id || undefined,
       role_key: route.query.role_key || undefined,
-      open_pages: route.query.open_pages || '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] || '1',
     },
   });
 }

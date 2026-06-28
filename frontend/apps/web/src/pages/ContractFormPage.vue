@@ -1244,7 +1244,13 @@ import {
 } from '../app/contracts/v2';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
-import { isBusinessConfigRuntimeModel } from '../app/businessConfigBoundaries';
+import {
+  BUSINESS_CONFIG_INTENTS,
+  BUSINESS_CONFIG_MODES,
+  BUSINESS_CONFIG_ROUTE_FLAGS,
+  isBusinessConfigMode,
+  isBusinessConfigRuntimeModel,
+} from '../app/businessConfigBoundaries';
 import {
   collectUnifiedPageContractV2ButtonStatus,
   collectUnifiedPageContractV2FieldContainerStatus,
@@ -2234,13 +2240,13 @@ const selectedFormSettingsOrderPlacement = ref<'before' | 'after'>('before');
 const isContractFieldOrderEditable = computed(() => (
   !isBusinessConfigRuntimeModel(model.value)
   && (
-    activeContractMode.value === 'form_field_configuration'
-    || activeContractMode.value === 'business_config_lowcode'
+    activeContractMode.value === BUSINESS_CONFIG_MODES.formFieldConfiguration
+    || activeContractMode.value === BUSINESS_CONFIG_MODES.lowCode
   )
 ));
 const showReturnToBusinessConfigAction = computed(() => (
-  routeQueryText('return_to_business_config') === '1'
-  || activeContractMode.value === 'business_config_lowcode'
+  routeQueryText(BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig) === '1'
+  || activeContractMode.value === BUSINESS_CONFIG_MODES.lowCode
 ));
 const fieldVisibilityBase = ref<Record<string, boolean>>({});
 const fieldVisibilityDirty = ref(false);
@@ -2968,7 +2974,7 @@ async function auditCurrentFormConfiguration() {
       active_legacy_policy_fields?: unknown[];
       has_conflict?: boolean;
     }>({
-      intent: 'ui.business_config.form.audit',
+      intent: BUSINESS_CONFIG_INTENTS.formAudit,
       params: {
         ...params,
         model: modelName,
@@ -2999,7 +3005,7 @@ async function auditCurrentFormConfiguration() {
 
 const showCurrentFormFieldConfigScope = computed(() => isContractFieldOrderEditable.value);
 const showLowCodeTechnicalDetails = computed(() => {
-  if (activeContractMode.value !== 'business_config_lowcode') return showHud.value;
+  if (activeContractMode.value !== BUSINESS_CONFIG_MODES.lowCode) return showHud.value;
   const hudFlag = routeQueryText('hud').toLowerCase();
   const surface = routeQueryText('surface').toLowerCase();
   return hudFlag === '1' || hudFlag === 'true' || surface === 'hud';
@@ -3398,7 +3404,7 @@ async function hydrateLowCodeDraftFromContract() {
     const listResult = await intentRequest<{
       items?: Array<{ name?: string }>;
     }>({
-      intent: 'ui.business_config.contract.list',
+      intent: BUSINESS_CONFIG_INTENTS.contractList,
       params: { ...base, model: modelName, view_type: 'form' },
     }).catch(() => null);
     const availableNames = new Set((Array.isArray(listResult?.items) ? listResult?.items || [] : [])
@@ -3413,7 +3419,7 @@ async function hydrateLowCodeDraftFromContract() {
         objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number }> }>;
       }
     }>({
-      intent: 'ui.business_config.contract.get',
+      intent: BUSINESS_CONFIG_INTENTS.contractGet,
       params: contractName === scopedName
         ? { ...base, model: modelName, name: contractName, view_type: 'form' }
         : { model: modelName, name: contractName },
@@ -3537,7 +3543,7 @@ async function refreshLowCodeFormLayoutBase() {
     const res = await intentRequest<{
       contract_json?: { view_orchestration?: Record<string, unknown> }
     }>({
-      intent: 'ui.business_config.contract.get',
+      intent: BUSINESS_CONFIG_INTENTS.contractGet,
       params: { ...base, model: modelName, name: scopedName, view_type: 'form' },
     }).catch(() => null);
     const viewOrchestration = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
@@ -3585,7 +3591,7 @@ async function loadLowCodeContractList() {
     const result = await intentRequest<{
       items?: Array<{ id?: number; name?: string; model?: string; status?: string; version_no?: number }>;
     }>({
-      intent: 'ui.business_config.contract.list',
+      intent: BUSINESS_CONFIG_INTENTS.contractList,
       params: { ...base, model: modelName, view_type: 'form' },
     });
     const items = Array.isArray(result?.items) ? result.items || [] : [];
@@ -3621,7 +3627,7 @@ async function switchLowCodeContractByName() {
         legacy_lowcode_draft?: Record<string, unknown>;
       }
     }>({
-      intent: 'ui.business_config.contract.get',
+      intent: BUSINESS_CONFIG_INTENTS.contractGet,
       params: { ...base, model: modelName, name, view_type: 'form' },
     });
     lowCodeContractLoaded.value = false;
@@ -3698,7 +3704,7 @@ async function publishSelectedLowCodeContract() {
   try {
     const base = lowCodeApplyBaseParams();
     await intentRequest({
-      intent: 'ui.business_config.contract.publish',
+      intent: BUSINESS_CONFIG_INTENTS.contractPublish,
       params: { ...base, name, model: modelName, view_type: 'form' },
     });
     contractModeFeedback.value = '配置版本已发布，刷新页面后按新配置生效';
@@ -3719,7 +3725,7 @@ async function rollbackSelectedLowCodeContract() {
   try {
     const base = lowCodeApplyBaseParams();
     await intentRequest({
-      intent: 'ui.business_config.contract.rollback',
+      intent: BUSINESS_CONFIG_INTENTS.contractRollback,
       params: { ...base, name, model: modelName, view_type: 'form' },
     });
     contractModeFeedback.value = '配置版本已回滚到上一版并发布生效';
@@ -10045,12 +10051,12 @@ function applyClientMode(mode: string, toggle = true) {
 function applyRouteConfigMode(rawMode: unknown) {
   const mode = String(rawMode || '').trim();
   if (isBusinessConfigRuntimeModel(model.value)) {
-    if (activeContractMode.value === 'form_field_configuration' || activeContractMode.value === 'business_config_lowcode') {
+    if (activeContractMode.value === BUSINESS_CONFIG_MODES.formFieldConfiguration || activeContractMode.value === BUSINESS_CONFIG_MODES.lowCode) {
       activeContractMode.value = '';
     }
     return;
   }
-  if (mode === 'form_field_configuration' || mode === 'business_config_lowcode') {
+  if (isBusinessConfigMode(mode)) {
     applyClientMode(mode, false);
   }
 }
@@ -10866,7 +10872,7 @@ function lowCodeReturnQuery() {
   });
   if (model.value) query.model = model.value;
   if (actionId.value) query.action_id = String(actionId.value);
-  query.open_pages = '1';
+  query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] = '1';
   const pageLabel = routeQueryText('page_label');
   if (pageLabel) query.page_label = pageLabel;
   const viewId = routeQueryText('view_id');
@@ -10888,8 +10894,8 @@ function previewLowCodeConfiguredPage() {
     const value = String(raw || '').trim();
     if (value) query[key] = value;
   });
-  query.return_to_business_config = '1';
-  query.open_pages = '1';
+  query[BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig] = '1';
+  query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] = '1';
   router.push({ path: route.path, query });
 }
 
@@ -10947,7 +10953,7 @@ async function saveContractFieldOrder() {
   try {
     if (hasFieldApplyParams) {
       await intentRequest({
-        intent: 'ui.business_config.lowcode.apply',
+        intent: BUSINESS_CONFIG_INTENTS.lowCodeApply,
         params: applyParams,
         context: { view: 'form' },
       });
@@ -10955,7 +10961,7 @@ async function saveContractFieldOrder() {
     const saveResult = await intentRequest<{
       precheck?: { warnings?: string[]; errors?: string[] }
     }>({
-      intent: 'ui.business_config.contract.save',
+      intent: BUSINESS_CONFIG_INTENTS.contractSave,
       params: {
         ...baseParams,
         name: lowCodeScopedContractName(String(model.value || 'unknown'), baseParams),

@@ -6,7 +6,7 @@ from typing import Any
 from odoo.exceptions import AccessError, ValidationError
 
 from ..core.base_handler import BaseIntentHandler
-from ..utils.backend_contract_boundaries import MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING
+from ..utils.backend_contract_boundaries import MENU_CONFIG_INTENTS, MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING
 
 
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
@@ -155,7 +155,7 @@ def _menu_orchestration_summary(contract_json: dict) -> dict:
 
 
 class MenuConfigurationLoadHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.menu_config.panel.get"
+    INTENT_TYPE = MENU_CONFIG_INTENTS["panel_get"]
     DESCRIPTION = "读取菜单配置面板数据"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_menu_config_panel_projection"
@@ -568,7 +568,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
 
 
 class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
-    INTENT_TYPE = "ui.menu_config.panel.set"
+    INTENT_TYPE = MENU_CONFIG_INTENTS["panel_set"]
     DESCRIPTION = "保存菜单配置面板数据"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]
@@ -740,7 +740,7 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
 
 
 class MenuConfigurationCreateHandler(MenuConfigurationSaveHandler):
-    INTENT_TYPE = "ui.menu_config.menu.create"
+    INTENT_TYPE = MENU_CONFIG_INTENTS["menu_create"]
     DESCRIPTION = "新增菜单入口"
     VERSION = "1.0.0"
     NON_IDEMPOTENT_ALLOWED = "menu creation creates ir.ui.menu records"
@@ -873,7 +873,7 @@ class MenuConfigurationCreateHandler(MenuConfigurationSaveHandler):
 
 
 class MenuConfigurationDeleteHandler(MenuConfigurationSaveHandler):
-    INTENT_TYPE = "ui.menu_config.menu.delete"
+    INTENT_TYPE = MENU_CONFIG_INTENTS["menu_delete"]
     DESCRIPTION = "删除菜单配置新增的菜单入口"
     VERSION = "1.0.0"
     NON_IDEMPOTENT_ALLOWED = "menu deletion removes runtime-created ir.ui.menu records"
@@ -998,7 +998,7 @@ class MenuConfigurationDeleteHandler(MenuConfigurationSaveHandler):
 
 
 class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
-    INTENT_TYPE = "ui.menu_config.audit"
+    INTENT_TYPE = MENU_CONFIG_INTENTS["audit"]
     DESCRIPTION = "审计当前公司和业务角色命中的菜单配置"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]
@@ -1112,7 +1112,7 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
 
 
 class MenuConfigurationRollbackHandler(MenuConfigurationLoadHandler):
-    INTENT_TYPE = "ui.menu_config.rollback"
+    INTENT_TYPE = MENU_CONFIG_INTENTS["rollback"]
     DESCRIPTION = "按菜单配置版本恢复菜单运行时 policy"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]
@@ -1266,7 +1266,7 @@ class MenuConfigurationRollbackHandler(MenuConfigurationLoadHandler):
 
 
 class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
-    INTENT_TYPE = "ui.menu_config.versions"
+    INTENT_TYPE = MENU_CONFIG_INTENTS["versions"]
     DESCRIPTION = "读取菜单配置版本列表和摘要"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]

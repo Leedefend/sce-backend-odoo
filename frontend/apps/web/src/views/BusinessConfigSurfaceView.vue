@@ -979,7 +979,12 @@ import {
   type BusinessConfigSnapshotSummaryPayload,
   type BusinessConfigSurfacePayload,
 } from '../api/businessConfig';
-import { isBusinessConfigRuntimeModel } from '../app/businessConfigBoundaries';
+import {
+  BUSINESS_CONFIG_INTENTS,
+  BUSINESS_CONFIG_MODES,
+  BUSINESS_CONFIG_ROUTE_FLAGS,
+  isBusinessConfigRuntimeModel,
+} from '../app/businessConfigBoundaries';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
 
@@ -1074,7 +1079,7 @@ const scopeViewId = ref(numericQuery('view_id') || 0);
 const scopeRoleKey = ref(String(route.query.role_key || '').trim());
 const selectedPageLabel = ref(String(route.query.page_label || '').trim());
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || '').trim());
-const shouldOpenPageList = computed(() => String(route.query.open_pages || '').trim() === '1');
+const shouldOpenPageList = computed(() => String(route.query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] || '').trim() === '1');
 const shouldOpenListSearch = computed(() => String(route.query.open_list_search || '').trim() === '1');
 const shouldOpenAnalysis = computed(() => String(route.query.open_analysis || '').trim() === '1');
 const shouldOpenFormConfig = computed(() => String(route.query.open_form_config || '').trim() === '1');
@@ -1132,7 +1137,7 @@ const visibleConfigSections = computed(() => {
       key: 'analysis',
       label: '分析视图配置',
       contract_count: 0,
-      intent: 'ui.business_config.analysis.audit',
+      intent: BUSINESS_CONFIG_INTENTS.analysisAudit,
       boundary: 'business_contract',
     });
   }
@@ -2089,8 +2094,8 @@ function buildPreviewRuntimeQuery(
     ...baseQuery,
     root_menu_xmlid: route.query.root_menu_xmlid || undefined,
     page_label: options.pageLabel || selectedPageLabel.value || undefined,
-    return_to_business_config: '1',
-    open_pages: '1',
+    [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
+    [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: '1',
     model: options.model || currentModel.value || undefined,
     action_id: options.actionId ? String(options.actionId) : (scopeAction.value ? String(scopeAction.value) : undefined),
     view_id: options.viewId ? String(options.viewId) : (scopeView.value ? String(scopeView.value) : undefined),
@@ -3081,8 +3086,8 @@ function openMenuConfig() {
       page_label: selectedPageLabel.value || undefined,
       view_id: scopeView.value ? String(scopeView.value) : undefined,
       role_key: scopeRole.value || undefined,
-      return_to_business_config: '1',
-      open_pages: '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: '1',
     },
   });
 }
@@ -3098,8 +3103,8 @@ function openCreateMenuConfig() {
       page_label: selectedPageLabel.value || undefined,
       view_id: scopeView.value ? String(scopeView.value) : undefined,
       role_key: scopeRole.value || undefined,
-      return_to_business_config: '1',
-      open_pages: route.query.open_pages || '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] || '1',
       create_menu: '1',
     },
   });
@@ -3112,7 +3117,7 @@ function openApprovalConfig(section: BusinessConfigSurfacePayload['sections'][nu
     path,
     query: {
       ...(section.route?.query || {}),
-      return_to_business_config: '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
       root_menu_xmlid: route.query.root_menu_xmlid || undefined,
       page_label: selectedPageLabel.value || undefined,
     },
@@ -3130,7 +3135,7 @@ function openFormConfig() {
       view_id: scopeView.value ? String(scopeView.value) : undefined,
       role_key: scopeRole.value || undefined,
       page_label: selectedPageLabel.value || undefined,
-      config_mode: 'business_config_lowcode',
+      config_mode: BUSINESS_CONFIG_MODES.lowCode,
     },
   });
 }
