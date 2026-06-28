@@ -95,6 +95,17 @@ TARGET_SCRIPT_REQUIREMENTS = {
     ),
 }
 
+TARGET_SOURCE_MARKER_REQUIREMENTS = {
+    "verify.business_config.low_code_acceptance": {
+        "frontend/apps/web/scripts/low_code_business_config_acceptance.mjs": (
+            "auditLowCodeBoundaryParity",
+            "boundaryParity",
+            "FRONTEND_BOUNDARY_FILE",
+            "BACKEND_BOUNDARY_FILE",
+        ),
+    },
+}
+
 
 def _target_line(makefile: str, target: str) -> str:
     pattern = re.compile(rf"^{re.escape(target)}\s*:(?P<deps>[^\n]*)$", re.MULTILINE)
@@ -193,6 +204,17 @@ def main() -> int:
                 errors.append("%s does not invoke %s" % (target, invoke))
             if not (ROOT / artifact).is_file():
                 errors.append("missing verification artifact %s" % artifact)
+
+    for target, artifacts in TARGET_SOURCE_MARKER_REQUIREMENTS.items():
+        for artifact, markers in artifacts.items():
+            path = ROOT / artifact
+            if not path.is_file():
+                errors.append("missing verification artifact %s" % artifact)
+                continue
+            text = path.read_text(encoding="utf-8")
+            for marker in markers:
+                if marker not in text:
+                    errors.append("%s artifact %s missing required marker %s" % (target, artifact, marker))
 
     guard_body = _target_body(makefile, "verify.business_config.guard_inventory")
     if "scripts/verify/business_config_guard_inventory.py" not in guard_body:
