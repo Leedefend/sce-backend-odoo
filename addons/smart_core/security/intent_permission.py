@@ -5,6 +5,7 @@ from odoo.http import request
 from odoo.exceptions import AccessError, MissingError
 from ..core.intent_operation_policy import access_mode_for_intent, nested_params
 from ..core.request_identity import identity_id
+from ..utils.backend_contract_boundaries import APPROVAL_POLICY_INTENTS, BUSINESS_CONFIG_INTENTS
 from ..utils.extension_hooks import call_extension_hook_first
 from .auth import get_user_from_token
 
@@ -172,10 +173,17 @@ def _resolve_action(env, action_id, action_type=None):
     return None
 
 
-def _is_ui_only_user_preference_intent(intent_name):
+def _is_ui_only_config_intent(intent_name):
     return str(intent_name or "").strip() in {
         "user.view.preference.get",
         "user.view.preference.set",
+        BUSINESS_CONFIG_INTENTS["list_search_set"],
+        BUSINESS_CONFIG_INTENTS["analysis_set"],
+        BUSINESS_CONFIG_INTENTS["contract_save"],
+        BUSINESS_CONFIG_INTENTS["contract_publish"],
+        BUSINESS_CONFIG_INTENTS["contract_rollback"],
+        APPROVAL_POLICY_INTENTS["config_set"],
+        APPROVAL_POLICY_INTENTS["steps_set"],
     }
 
 
@@ -271,7 +279,7 @@ def check_intent_permission(ctx):
 
         # ✅ 校验模型访问权限
         model_obj = _resolve_model(env, model) if model else None
-        skip_model_acl = _is_ui_only_user_preference_intent(intent_name)
+        skip_model_acl = _is_ui_only_config_intent(intent_name)
         if model and not skip_model_acl:
             model_acl_policy = _model_acl_policy(
                 env,

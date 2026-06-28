@@ -11,6 +11,7 @@ from odoo.addons.smart_core.core.delivery_menu_defaults import (
 )
 from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import MenuDeliveryConvergenceService
 from odoo.addons.smart_core.delivery.native_config_menu_projection import native_config_delivery_groups
+from odoo.addons.smart_core.utils.backend_contract_boundaries import MENU_CONFIG_POLICY_MODEL
 
 
 class MenuService:
@@ -861,7 +862,7 @@ class MenuService:
                 )
                 if (
                     category == "delivery_business_config"
-                    or (model in {"ui.menu.config.policy"} and (is_admin or is_business_config_admin))
+                    or (model in {MENU_CONFIG_POLICY_MODEL} and (is_admin or is_business_config_admin))
                 ):
                     menus.append(menu)
             if menus:

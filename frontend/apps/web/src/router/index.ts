@@ -6,6 +6,7 @@ import { buildCanonicalSceneRouteTarget, normalizeEmbeddedSceneQuery, normalizeL
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { findActionMeta, findActionMetaByMenu, findActionNodeByModel, findMenuNode } from '../app/menu';
 import { config } from '../config';
+import { BUSINESS_CONFIG_MODELS } from '../app/businessConfigBoundaries';
 
 const APP_TITLE = config.appTitle;
 
@@ -300,7 +301,7 @@ router.beforeEach(async (to) => {
     }
   }
   if (to.name === 'form-field-config') {
-    const node = findActionNodeByModel(session.menuTree, 'ui.form.field.policy');
+    const node = findActionNodeByModel(session.menuTree, BUSINESS_CONFIG_MODELS.formFieldPolicy);
     const actionId = positiveInteger(node?.meta?.action_id);
     const menuId = positiveInteger(node?.menu_id || node?.meta?.menu_id);
     if (actionId) {

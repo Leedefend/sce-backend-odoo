@@ -25,6 +25,23 @@ function normalizedRecordId(value: unknown): number {
   return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 0;
 }
 
+function asRecord(value: unknown): ContractV2Dictionary {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as ContractV2Dictionary : {};
+}
+
+function extractContractV2FromIntentResponse(response: { data?: unknown; rawBody?: unknown }): unknown {
+  const data = asRecord(response.data);
+  const rawBody = asRecord(response.rawBody);
+  return (
+    data.unified_page_contract_v2 ||
+    data.__unified_page_contract_v2 ||
+    rawBody.unified_page_contract_v2 ||
+    rawBody.__unified_page_contract_v2 ||
+    response.data ||
+    response.rawBody
+  );
+}
+
 function applyCommonOptions(params: ContractV2Dictionary, options: ContractV2LoadOptions = {}): ContractV2Dictionary {
   const recordId = normalizedRecordId(options.recordId);
   if (recordId) params.record_id = recordId;
@@ -54,10 +71,7 @@ async function loadContractV2(params: ContractV2Dictionary): Promise<ContractV2L
     intent: 'load_contract',
     params,
   });
-  const snapshot = decodeContractV2Snapshot({
-    data: response.data,
-    rawBody: response.rawBody,
-  });
+  const snapshot = decodeContractV2Snapshot(extractContractV2FromIntentResponse(response));
   return {
     snapshot,
     store: createContractV2Store(snapshot),

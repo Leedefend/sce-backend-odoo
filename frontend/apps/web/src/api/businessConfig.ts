@@ -1,4 +1,5 @@
 import { intentRequest } from './intents';
+import { APPROVAL_POLICY_INTENTS, BUSINESS_CONFIG_INTENTS } from '../app/businessConfigBoundaries';
 
 export interface BusinessConfigListSearchAuditPayload {
   model: string;
@@ -408,7 +409,7 @@ export async function auditBusinessListSearchConfig(params: {
   role_key?: string;
 }) {
   return intentRequest<BusinessConfigListSearchAuditPayload>({
-    intent: 'ui.business_config.list_search.audit',
+    intent: BUSINESS_CONFIG_INTENTS.listSearchAudit,
     params,
   });
 }
@@ -420,7 +421,7 @@ export async function auditBusinessAnalysisConfig(params: {
   role_key?: string;
 }) {
   return intentRequest<BusinessConfigAnalysisAuditPayload>({
-    intent: 'ui.business_config.analysis.audit',
+    intent: BUSINESS_CONFIG_INTENTS.analysisAudit,
     params,
   });
 }
@@ -429,7 +430,7 @@ export async function loadApprovalPolicyConfig(params: {
   model: string;
 }) {
   return intentRequest<ApprovalPolicyConfigPayload>({
-    intent: 'sc.approval_policy.config.get',
+    intent: APPROVAL_POLICY_INTENTS.configGet,
     params,
   });
 }
@@ -442,7 +443,7 @@ export async function saveApprovalPolicyConfig(params: {
   manager_scope_key?: string;
 }) {
   return intentRequest<ApprovalPolicyConfigPayload>({
-    intent: 'sc.approval_policy.config.set',
+    intent: APPROVAL_POLICY_INTENTS.configSet,
     params,
   });
 }
@@ -461,7 +462,7 @@ export async function saveApprovalPolicySteps(params: {
   }>;
 }) {
   return intentRequest<ApprovalPolicyConfigPayload>({
-    intent: 'sc.approval_policy.steps.set',
+    intent: APPROVAL_POLICY_INTENTS.stepsSet,
     params,
   });
 }
@@ -477,7 +478,7 @@ export async function saveBusinessListSearchConfig(params: {
   publish?: boolean;
 }) {
   return intentRequest<BusinessConfigListSearchSetPayload>({
-    intent: 'ui.business_config.list_search.set',
+    intent: BUSINESS_CONFIG_INTENTS.listSearchSet,
     params,
   });
 }
@@ -495,7 +496,7 @@ export async function saveBusinessAnalysisConfig(params: {
   publish?: boolean;
 }) {
   return intentRequest<BusinessConfigAnalysisSetPayload>({
-    intent: 'ui.business_config.analysis.set',
+    intent: BUSINESS_CONFIG_INTENTS.analysisSet,
     params,
   });
 }
@@ -509,7 +510,7 @@ export async function bootstrapBusinessListSearchConfig(params: {
   publish?: boolean;
 }) {
   return intentRequest<BusinessConfigListSearchBootstrapPayload>({
-    intent: 'ui.business_config.list_search.bootstrap',
+    intent: BUSINESS_CONFIG_INTENTS.listSearchBootstrap,
     params,
   });
 }
@@ -523,7 +524,7 @@ export async function bootstrapBusinessAnalysisConfig(params: {
   publish?: boolean;
 }) {
   return intentRequest<BusinessConfigAnalysisBootstrapPayload>({
-    intent: 'ui.business_config.analysis.bootstrap',
+    intent: BUSINESS_CONFIG_INTENTS.analysisBootstrap,
     params,
   });
 }
@@ -536,7 +537,7 @@ export async function bootstrapBusinessFormConfig(params: {
   publish?: boolean;
 }) {
   return intentRequest<BusinessConfigFormBootstrapPayload>({
-    intent: 'ui.business_config.form.bootstrap',
+    intent: BUSINESS_CONFIG_INTENTS.formBootstrap,
     params,
   });
 }
@@ -548,7 +549,7 @@ export async function loadBusinessConfigSurface(params: {
   role_key?: string;
 } = {}) {
   return intentRequest<BusinessConfigSurfacePayload>({
-    intent: 'ui.business_config.surface.get',
+    intent: BUSINESS_CONFIG_INTENTS.surfaceGet,
     params,
   });
 }
@@ -557,14 +558,14 @@ export async function compareBusinessConfigSnapshot(params: {
   snapshot: Record<string, unknown>;
 }) {
   return intentRequest<BusinessConfigSnapshotComparePayload>({
-    intent: 'ui.business_config.snapshot.compare',
+    intent: BUSINESS_CONFIG_INTENTS.snapshotCompare,
     params,
   });
 }
 
 export async function exportBusinessConfigSnapshot() {
   return intentRequest<Record<string, unknown>>({
-    intent: 'ui.business_config.snapshot.export',
+    intent: BUSINESS_CONFIG_INTENTS.snapshotExport,
     params: {},
   });
 }
@@ -579,7 +580,7 @@ export async function loadBusinessConfigContractVersions(params: {
   status?: string;
 } = {}) {
   return intentRequest<BusinessConfigContractVersionsPayload>({
-    intent: 'ui.business_config.contract.versions',
+    intent: BUSINESS_CONFIG_INTENTS.contractVersions,
     params,
   });
 }
@@ -594,7 +595,7 @@ export async function rollbackBusinessConfigContract(params: {
   version_no?: number;
 }) {
   return intentRequest<BusinessConfigContractRollbackPayload>({
-    intent: 'ui.business_config.contract.rollback',
+    intent: BUSINESS_CONFIG_INTENTS.contractRollback,
     params,
   });
 }
@@ -609,7 +610,7 @@ export async function scanBusinessConfigCoverage(params: {
   root_menu_xmlid?: string;
 } = {}) {
   return intentRequest<BusinessConfigCoverageScanPayload>({
-    intent: 'ui.business_config.coverage.scan',
+    intent: BUSINESS_CONFIG_INTENTS.coverageScan,
     params,
   });
 }
@@ -625,7 +626,7 @@ export async function bootstrapCoverageListSearchConfig(params: {
   root_menu_xmlid?: string;
 } = {}) {
   return intentRequest<BusinessConfigCoverageBootstrapListSearchPayload>({
-    intent: 'ui.business_config.coverage.bootstrap_list_search',
+    intent: BUSINESS_CONFIG_INTENTS.coverageBootstrapListSearch,
     params,
   });
 }
@@ -641,7 +642,7 @@ export async function bootstrapCoverageMissingConfig(params: {
   root_menu_xmlid?: string;
 } = {}) {
   return intentRequest<BusinessConfigCoverageBootstrapMissingPayload>({
-    intent: 'ui.business_config.coverage.bootstrap_missing',
+    intent: BUSINESS_CONFIG_INTENTS.coverageBootstrapMissing,
     params,
   });
 }

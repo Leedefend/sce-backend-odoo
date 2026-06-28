@@ -11,7 +11,18 @@ from odoo import _
 from odoo.http import request
 from odoo.addons.smart_core.utils.delete_policy import resolve_unlink_policy
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
-from odoo.addons.smart_core.utils.backend_contract_boundaries import is_business_config_runtime_model
+from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_ADD_CUSTOM_FIELD,
+    BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_CONFIGURATION,
+    BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_ORDER_SAVE,
+    BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_SETTINGS,
+    BUSINESS_CONFIG_AUTHORITIES,
+    BUSINESS_CONFIG_INTENTS,
+    BUSINESS_CONFIG_MODES,
+    BUSINESS_CONFIG_OWNER_LAYER,
+    FORM_FIELD_CONFIG_INTENTS,
+    is_business_config_runtime_model,
+)
 from ...utils.misc import safe_eval
 from ...utils.view_utils import extract_tree_columns_strict, normalize_cols_safely
 
@@ -1381,7 +1392,7 @@ class PageAssembler:
             return
         current_view_id = int(view_id or 0)
         action = {
-            "key": "current_form_field_settings",
+            "key": BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_SETTINGS,
             "label": "表单设置",
             "kind": "client",
             "level": "header",
@@ -1394,14 +1405,14 @@ class PageAssembler:
             "target_scope": "page",
             "visible_profiles": ["create", "edit", "readonly"],
             "payload": {
-                "mode": "form_field_configuration",
+                "mode": BUSINESS_CONFIG_MODES["form_field"],
                 "toggle": True,
             },
             "target": {
-                "mode": "form_field_configuration",
+                "mode": BUSINESS_CONFIG_MODES["form_field"],
                 "toggle": True,
             },
-            "target_model": "ui.form.field.policy",
+            "target_model": BUSINESS_CONFIG_AUTHORITIES["form_field_policy"],
             "context": {
                 "source": "current_form_contract",
                 "source_model": model,
@@ -1410,15 +1421,15 @@ class PageAssembler:
             "source_authority": {
                 "kind": self.SOURCE_KIND,
                 "authorities": [
-                    "ui.business.config.contract",
-                    "ui.business.config.contract.version",
-                    "ui.form.field.policy",
+                    BUSINESS_CONFIG_AUTHORITIES["contract"],
+                    BUSINESS_CONFIG_AUTHORITIES["contract_version"],
+                    BUSINESS_CONFIG_AUTHORITIES["form_field_policy"],
                     "ir.actions.act_window",
                     "ir.ui.menu",
                 ],
                 "projection_only": True,
                 "no_business_fact_authority": True,
-                "owner_layer": "business_view_orchestration",
+                "owner_layer": BUSINESS_CONFIG_OWNER_LAYER,
             },
         }
         buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
@@ -1441,7 +1452,7 @@ class PageAssembler:
             view_id=current_view_id,
         )
         governance = data.get("governance") if isinstance(data.get("governance"), dict) else {}
-        governance["current_form_field_settings"] = {
+        governance[BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_SETTINGS] = {
             "enabled": True,
             "model": model,
             "model_label": model_rec.name,
@@ -1450,8 +1461,8 @@ class PageAssembler:
             "view_id": current_view_id if current_view_id > 0 else False,
             "settings_action_id": int(settings_action.id),
             "settings_menu_id": int(settings_menu.id),
-            "config_source": "ui.business.config.contract",
-            "owner_layer": "business_view_orchestration",
+            "config_source": BUSINESS_CONFIG_AUTHORITIES["contract"],
+            "owner_layer": BUSINESS_CONFIG_OWNER_LAYER,
         }
         data["governance"] = governance
 
@@ -1459,8 +1470,8 @@ class PageAssembler:
         fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
         if not fields:
             return
-        mode = "form_field_configuration"
-        low_code_mode = "business_config_lowcode"
+        mode = BUSINESS_CONFIG_MODES["form_field"]
+        low_code_mode = BUSINESS_CONFIG_MODES["lowcode"]
         config_summary = self._current_view_orchestration_config_summary(
             model=model,
             view_type="form",
@@ -1469,10 +1480,10 @@ class PageAssembler:
         )
         action_rows = [
             {
-                "key": "current_form_add_custom_field",
+                "key": BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_ADD_CUSTOM_FIELD,
                 "label": "添加字段",
                 "kind": "intent",
-                "intent": "ui.form_custom_field.create",
+                "intent": FORM_FIELD_CONFIG_INTENTS["custom_field_create"],
                 "trigger": "click",
                 "sourceWidgetId": "mode.%s" % mode,
                 "target_scope": "mode",
@@ -1510,10 +1521,10 @@ class PageAssembler:
                 },
             },
             {
-                "key": "current_form_field_order_save",
+                "key": BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_ORDER_SAVE,
                 "label": "保存表单设置",
                 "kind": "intent",
-                "intent": "ui.business_config.lowcode.apply",
+                "intent": BUSINESS_CONFIG_INTENTS["lowcode_apply"],
                 "trigger": "submit",
                 "sourceWidgetId": "mode.%s" % mode,
                 "target_scope": "mode",
@@ -1584,7 +1595,7 @@ class PageAssembler:
                     "key": "current_form_field_%s_%s" % (field_name, value),
                     "label": "%s%s" % (label_text, label),
                     "kind": "intent",
-                    "intent": "ui.form_field_policy.set",
+                    "intent": FORM_FIELD_CONFIG_INTENTS["policy_set"],
                     "trigger": "change",
                     "sourceWidgetId": "field.%s" % field_name,
                     "target_scope": "widget",
@@ -1605,9 +1616,10 @@ class PageAssembler:
                     },
                 })
         groups = data.get("action_groups") if isinstance(data.get("action_groups"), list) else []
-        groups = [row for row in groups if not (isinstance(row, dict) and row.get("key") == "current_form_field_configuration")]
+        group_key = BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_CONFIGURATION
+        groups = [row for row in groups if not (isinstance(row, dict) and row.get("key") == group_key)]
         groups.append({
-            "key": "current_form_field_configuration",
+            "key": group_key,
             "label": "业务配置（低代码）",
             "sourceWidgetId": "mode.%s" % mode,
             "mode_aliases": [mode, low_code_mode],
@@ -1615,23 +1627,23 @@ class PageAssembler:
                 "enabled": True,
                 "scope": "current_form",
                 "capabilities": ["field_order", "field_visibility", "custom_field_create"],
-                "config_source": "ui.business.config.contract",
+                "config_source": BUSINESS_CONFIG_AUTHORITIES["contract"],
                 "config_contract": config_summary,
-                "legacy_overlay": "ui.form.field.policy",
+                "legacy_overlay": BUSINESS_CONFIG_AUTHORITIES["form_field_policy"],
             },
             "actions": action_rows,
             "source_authority": {
                 "kind": self.SOURCE_KIND,
                 "authorities": [
-                    "ui.business.config.contract",
-                    "ui.business.config.contract.version",
-                    "ui.form.field.policy",
-                    "ui.form.custom.field.wizard",
+                    BUSINESS_CONFIG_AUTHORITIES["contract"],
+                    BUSINESS_CONFIG_AUTHORITIES["contract_version"],
+                    BUSINESS_CONFIG_AUTHORITIES["form_field_policy"],
+                    BUSINESS_CONFIG_AUTHORITIES["custom_field_wizard"],
                     "ir.model.fields",
                 ],
                 "projection_only": True,
                 "no_business_fact_authority": True,
-                "owner_layer": "business_view_orchestration",
+                "owner_layer": BUSINESS_CONFIG_OWNER_LAYER,
             },
         })
         data["action_groups"] = groups
@@ -1663,8 +1675,8 @@ class PageAssembler:
             })
         return {
             "available": True,
-            "source_model": "ui.business.config.contract",
-            "owner_layer": "business_view_orchestration",
+            "source_model": BUSINESS_CONFIG_AUTHORITIES["contract"],
+            "owner_layer": BUSINESS_CONFIG_OWNER_LAYER,
             "items": items,
         }
 
@@ -2079,7 +2091,7 @@ class PageAssembler:
                 any_applied = True
             view_rows[str(view_type or "")] = {
                 "applied": applied,
-                "owner_layer": str(trace.get("owner_layer") or orchestration.get("owner_layer") or "business_view_orchestration"),
+                "owner_layer": str(trace.get("owner_layer") or orchestration.get("owner_layer") or BUSINESS_CONFIG_OWNER_LAYER),
                 "business_config_contracts": business_contracts if isinstance(business_contracts, list) else [],
                 "legacy_field_policy_overlay": legacy_overlay,
                 "business_config_form_fields": business_config_form_fields if isinstance(business_config_form_fields, list) else [],
@@ -2090,7 +2102,7 @@ class PageAssembler:
         governance = data.get("governance") if isinstance(data.get("governance"), dict) else {}
         governance["view_orchestration"] = {
             "applied": any_applied,
-            "owner_layer": "business_view_orchestration",
+            "owner_layer": BUSINESS_CONFIG_OWNER_LAYER,
             "views": view_rows,
         }
         data["governance"] = governance

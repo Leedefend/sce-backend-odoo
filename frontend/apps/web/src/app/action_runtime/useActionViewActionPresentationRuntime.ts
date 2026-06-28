@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { computed, type Ref } from 'vue';
-import { resolveUnifiedPageContractV2 } from '../contracts/unifiedPageContractV2';
+import {
+  resolveUnifiedPageContractV2,
+  resolveUnifiedPageContractV2SurfacePolicies,
+} from '../contracts/unifiedPageContractV2';
 import type { ActionPresentation } from './useActionViewActionGroupingRuntime';
 
 type Dict = Record<string, unknown>;
@@ -129,11 +132,7 @@ export function useActionViewActionPresentationRuntime(options: UseActionViewAct
   });
 
   const actionPrimaryBudget = computed(() => {
-    const surfacePolicies = (
-      options.actionContract.value?.surface_policies
-      && typeof options.actionContract.value.surface_policies === 'object'
-      && !Array.isArray(options.actionContract.value.surface_policies)
-    ) ? options.actionContract.value.surface_policies as Dict : {};
+    const surfacePolicies = resolveUnifiedPageContractV2SurfacePolicies(options.actionContract.value);
     const raw = Number(surfacePolicies.actions_primary_max ?? 4);
     if (!Number.isFinite(raw) || raw < 0) return 4;
     return Math.floor(raw);

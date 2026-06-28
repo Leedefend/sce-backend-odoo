@@ -58,10 +58,19 @@ def main() -> int:
 
     stable = registry.get("clientType", {}).get("stable") or []
     reserved = registry.get("clientType", {}).get("reserved") or []
+    adapt_modes = registry.get("adaptMode") or []
     if stable != snapshot.get("stableClientTypes"):
         fail(errors, "stable client types must match enum registry and snapshot")
     if reserved != snapshot.get("reservedClientTypes"):
         fail(errors, "reserved client types must match enum registry and snapshot")
+    if tuple(stable) != getattr(target, "STABLE_CLIENT_TYPES", ()):
+        fail(errors, "client STABLE_CLIENT_TYPES must match enum_registry.clientType.stable")
+    if tuple(reserved) != getattr(target, "RESERVED_CLIENT_TYPES", ()):
+        fail(errors, "client RESERVED_CLIENT_TYPES must match enum_registry.clientType.reserved")
+    if not set(getattr(target, "MOBILE_CLIENT_TYPES", set())).issubset(set(stable)):
+        fail(errors, "client MOBILE_CLIENT_TYPES must be a subset of enum_registry.clientType.stable")
+    if "pc" not in adapt_modes or "mobile" not in adapt_modes:
+        fail(errors, "enum_registry.adaptMode must include pc and mobile for client trimming")
     if target.resolve_client_type({"X-SC-Client-Type": "mobile_app"}, {}) != "web_pc":
         fail(errors, "mobile_app must remain reserved and default to web_pc in Batch-G")
     if target.resolve_client_type({"X-SC-Client-Type": "wx_mini"}, {}) != "wx_mini":
@@ -77,6 +86,8 @@ def main() -> int:
             fail(errors, f"{client}: pageInfo.clientType mismatch")
         if layout.get("adaptMode") != expected.get("adaptMode"):
             fail(errors, f"{client}: adaptMode mismatch")
+        if layout.get("adaptMode") not in adapt_modes:
+            fail(errors, f"{client}: adaptMode must be listed in enum_registry.adaptMode")
         if hints.get("columns") != expected.get("columns"):
             fail(errors, f"{client}: layout columns mismatch")
         if hints.get("mobileCollapse") != expected.get("mobileCollapse"):

@@ -1,4 +1,5 @@
 import { computed, type Ref } from 'vue';
+import { resolveUnifiedPageContractV2SurfacePolicies } from '../contracts/unifiedPageContractV2';
 
 type Dict = Record<string, unknown>;
 
@@ -18,7 +19,8 @@ type UseActionViewSurfaceIntentRuntimeOptions = {
 
 export function useActionViewSurfaceIntentRuntime(options: UseActionViewSurfaceIntentRuntimeOptions) {
   const contractSurfaceIntent = computed<Dict>(() => {
-    const fromSurfacePolicies = options.actionContract.value?.surface_policies?.intent_profile;
+    const surfacePolicies = resolveUnifiedPageContractV2SurfacePolicies(options.actionContract.value);
+    const fromSurfacePolicies = surfacePolicies.intent_profile;
     if (fromSurfacePolicies && typeof fromSurfacePolicies === 'object' && !Array.isArray(fromSurfacePolicies)) {
       return fromSurfacePolicies as Dict;
     }

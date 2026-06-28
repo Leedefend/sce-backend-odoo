@@ -4,11 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import re
 import sys
 from pathlib import Path
 from typing import Any
+
+from jsonschema import Draft202012Validator
 
 
 TOP_LEVEL_KEYS = {
@@ -34,6 +37,10 @@ REQUIRED_DEFS = {
     "actionContract",
     "actionRule",
     "dataContract",
+    "dataMeta",
+    "visibleFields",
+    "fieldGroups",
+    "sourceAuthority",
     "runtimeContract",
     "formStructureContract",
     "formStructureSlot",
@@ -42,12 +49,88 @@ REQUIRED_DEFS = {
     "meta",
 }
 
+REQUIRED_CLOSED_OBJECT_DEFS = {
+    "containerStatus",
+    "widgetStatus",
+    "buttonStatus",
+    "selectorStatus",
+}
+
 LEGACY_ROOT_KEYS = {
     "scene_contract_v1",
     "page_orchestration_v1",
     "ui_contract",
     "ui.contract",
     "api.onchange",
+}
+
+FORMAL_V2_FIELD_PATHS = {
+    "$defs.layoutContract.properties.listProfile",
+    "$defs.actionContract.properties.deletePolicy",
+    "$defs.actionContract.properties.surfacePolicies",
+    "$defs.dataMeta.properties.businessOperationProfile",
+    "$defs.dataMeta.properties.visibleFields",
+    "$defs.dataMeta.properties.fieldGroups",
+}
+
+SCHEMA_ENUM_REGISTRY_MAP = {
+    ("pageInfo", "viewType"): ("viewType",),
+    ("pageInfo", "layoutType"): ("layoutType",),
+    ("pageInfo", "renderMode"): ("renderMode",),
+    ("pageInfo", "clientType"): ("clientType", "stable"),
+    ("layoutContract", "layoutType"): ("layoutType",),
+    ("layoutContract", "adaptMode"): ("adaptMode",),
+    ("container", "containerType"): ("containerType",),
+    ("widget", "widgetType"): ("widgetType",),
+    ("widgetStatus", "auth"): ("authLevel",),
+    ("actionRule", "triggerType"): ("triggerType",),
+    ("actionRule", "dispatchMode"): ("dispatchMode",),
+    ("actionRule", "targetScope"): ("targetScope",),
+    ("actionRule", "refreshMode"): ("refreshMode",),
+    ("runtimeContract", "patchStrategy"): ("patchStrategy",),
+    ("runtimeContract", "cachePolicy"): ("cachePolicy",),
+    ("runtimeContract", "renderStrategy"): ("renderStrategy",),
+}
+
+FORBIDDEN_FORMAL_SCHEMA_KEYS = {
+    "list_profile",
+    "delete_policy",
+    "surface_policies",
+    "business_operation_profile",
+    "visible_fields",
+    "field_groups",
+    "form_structure_contract",
+    "legacyContractProjection",
+    "legacy_contract_projection",
+}
+
+FORBIDDEN_SCHEMA_ALIAS_CASES = {
+    "$.delete_policy": ("delete_policy",),
+    "$.surface_policies": ("surface_policies",),
+    "$.list_profile": ("list_profile",),
+    "$.form_structure_contract": ("form_structure_contract",),
+    "$.legacyContractProjection": ("legacyContractProjection",),
+    "$.legacy_contract_projection": ("legacy_contract_projection",),
+    "$.layoutContract.list_profile": ("layoutContract", "list_profile"),
+    "$.actionContract.delete_policy": ("actionContract", "delete_policy"),
+    "$.actionContract.surface_policies": ("actionContract", "surface_policies"),
+    "$.dataContract.dataMeta.business_operation_profile": (
+        "dataContract",
+        "dataMeta",
+        "business_operation_profile",
+    ),
+    "$.dataContract.dataMeta.visible_fields": ("dataContract", "dataMeta", "visible_fields"),
+    "$.dataContract.dataMeta.field_groups": ("dataContract", "dataMeta", "field_groups"),
+    "$.dataContract.dataMeta.legacyContractProjection": (
+        "dataContract",
+        "dataMeta",
+        "legacyContractProjection",
+    ),
+    "$.dataContract.dataMeta.legacy_contract_projection": (
+        "dataContract",
+        "dataMeta",
+        "legacy_contract_projection",
+    ),
 }
 
 ID_KEYS = {
@@ -93,6 +176,24 @@ def fail(errors: list[str], message: str) -> None:
     errors.append(message)
 
 
+def dict_path(value: dict[str, Any], path: str) -> Any:
+    node: Any = value
+    for item in path.split("."):
+        if not isinstance(node, dict):
+            return None
+        node = node.get(item)
+    return node
+
+
+def registry_path(value: dict[str, Any], path: tuple[str, ...]) -> Any:
+    node: Any = value
+    for item in path:
+        if not isinstance(node, dict):
+            return None
+        node = node.get(item)
+    return node
+
+
 def validate_schema(schema: dict[str, Any], registry: dict[str, Any], errors: list[str]) -> None:
     required = set(schema.get("required", []))
     if required != TOP_LEVEL_KEYS:
@@ -106,14 +207,38 @@ def validate_schema(schema: dict[str, Any], registry: dict[str, Any], errors: li
     missing_defs = REQUIRED_DEFS - defs
     if missing_defs:
         fail(errors, f"schema missing $defs: {sorted(missing_defs)}")
+    for name in sorted(REQUIRED_CLOSED_OBJECT_DEFS):
+        definition = schema.get("$defs", {}).get(name, {})
+        if definition.get("additionalProperties") is not False:
+            fail(errors, f"schema $defs.{name} must set additionalProperties=false")
+    for path in sorted(FORMAL_V2_FIELD_PATHS):
+        if dict_path(schema, path) is None:
+            fail(errors, f"schema missing formal v2 field path: {path}")
+    for node_path, node in walk(schema):
+        if not isinstance(node, dict):
+            continue
+        for key in node:
+            if key in FORBIDDEN_FORMAL_SCHEMA_KEYS:
+                fail(errors, f"schema must not declare compatibility field {key!r} at {node_path}")
 
-    stable_clients = registry.get("clientType", {}).get("stable", [])
-    page_info = schema.get("$defs", {}).get("pageInfo", {})
-    schema_clients = (
-        page_info.get("properties", {}).get("clientType", {}).get("enum", [])
-    )
-    if schema_clients != stable_clients:
-        fail(errors, "schema clientType enum must match enum_registry.clientType.stable")
+    schema_defs = schema.get("$defs", {})
+    for (def_name, field_name), registry_key_path in sorted(SCHEMA_ENUM_REGISTRY_MAP.items()):
+        schema_enum = (
+            schema_defs.get(def_name, {})
+            .get("properties", {})
+            .get(field_name, {})
+            .get("enum")
+        )
+        registry_enum = registry_path(registry, registry_key_path)
+        if not isinstance(schema_enum, list):
+            fail(errors, f"schema $defs.{def_name}.properties.{field_name}.enum is required")
+            continue
+        if schema_enum != registry_enum:
+            fail(
+                errors,
+                f"schema $defs.{def_name}.properties.{field_name}.enum must match "
+                f"enum_registry.{'.'.join(registry_key_path)}",
+            )
 
     patch_ops = set(registry.get("patchOperation", []))
     expected_patch_ops = {"replace", "merge", "append", "remove", "reorder", "invalidate"}
@@ -170,6 +295,44 @@ def validate_example(path: Path, payload: dict[str, Any], registry: dict[str, An
                 fail(errors, f"{path}: unknown capabilities {sorted(unknown)} at {node_path}")
 
 
+def validate_example_against_schema(
+    path: Path,
+    payload: dict[str, Any],
+    validator: Draft202012Validator,
+    errors: list[str],
+) -> None:
+    for issue in sorted(validator.iter_errors(payload), key=lambda item: list(item.absolute_path)):
+        location = "$"
+        if issue.absolute_path:
+            location = "$." + ".".join(str(item) for item in issue.absolute_path)
+        fail(errors, f"{path}: schema validation failed at {location}: {issue.message}")
+
+
+def validate_schema_rejects_compatibility_aliases(
+    path: Path,
+    payload: dict[str, Any],
+    validator: Draft202012Validator,
+    errors: list[str],
+) -> None:
+    for alias_path, path_parts in sorted(FORBIDDEN_SCHEMA_ALIAS_CASES.items()):
+        mutated = copy.deepcopy(payload)
+        parent: Any = mutated
+        for part in path_parts[:-1]:
+            if not isinstance(parent, dict):
+                fail(errors, f"{path}: {alias_path} parent must be an object before alias rejection check")
+                parent = None
+                break
+            parent = parent.setdefault(part, {})
+        if parent is None:
+            continue
+        if not isinstance(parent, dict):
+            fail(errors, f"{path}: {alias_path} parent must be an object before alias rejection check")
+            continue
+        parent[path_parts[-1]] = {}
+        if not list(validator.iter_errors(mutated)):
+            fail(errors, f"{path}: schema must reject compatibility alias {alias_path}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--schema", required=True, type=Path)
@@ -181,6 +344,7 @@ def main() -> int:
     schema = load_json(args.schema)
     registry = load_json(args.enum_registry)
     validate_schema(schema, registry, errors)
+    validator = Draft202012Validator(schema)
 
     example_paths = sorted(args.examples.glob("*.json"))
     if not example_paths:
@@ -188,6 +352,8 @@ def main() -> int:
 
     for example_path in example_paths:
         payload = load_json(example_path)
+        validate_example_against_schema(example_path, payload, validator, errors)
+        validate_schema_rejects_compatibility_aliases(example_path, payload, validator, errors)
         validate_example(example_path, payload, registry, errors)
 
     if errors:

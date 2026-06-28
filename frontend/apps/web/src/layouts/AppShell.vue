@@ -2,11 +2,12 @@
   <div
     class="shell layout-shell"
     data-component="LayoutShell"
+    :class="{ 'shell--configuration': isConfigurationRoute, 'shell--sidebar-hidden': sidebarHidden }"
     :data-layout-kind="activeLayout.kind"
     :data-sidebar-mode="activeLayout.sidebar"
     :data-header-mode="activeLayout.header"
   >
-    <aside class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
+    <aside v-if="!sidebarHidden" class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
       <div class="brand">
         <div class="logo">{{ shellLogoText }}</div>
         <div>
@@ -195,6 +196,21 @@
         </div>
         <div class="topbar-actions">
           <GlobalMessagePanel />
+          <button
+            class="sidebar-toggle sc-btn sc-btn-sm"
+            type="button"
+            @click="toggleSidebar"
+          >
+            {{ sidebarHidden ? '显示侧边栏' : '隐藏侧边栏' }}
+          </button>
+          <button
+            v-if="isConfigurationRoute"
+            class="config-return sc-btn sc-btn-sm"
+            type="button"
+            @click="returnToBusinessSurface"
+          >
+            返回业务办理
+          </button>
           <button class="theme-switch sc-btn sc-btn-sm" type="button" @click="toggleTheme">主题：{{ themeLabel }}</button>
         </div>
       </header>
@@ -308,6 +324,7 @@ type PublishedApp = {
 };
 const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 const BUSINESS_CONFIG_ROOT_MENU_XMLID = 'smart_construction_core.menu_sc_root';
+const SIDEBAR_HIDDEN_STORAGE_KEY = 'sc_shell_sidebar_hidden';
 
 function asDict(value: unknown): UnknownDict | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -354,6 +371,7 @@ const session = useSessionStore();
 const route = useRoute();
 const router = useRouter();
 const query = ref('');
+const sidebarHidden = ref(false);
 const projectMenuOpen = ref(false);
 const projectSearch = ref('');
 const projectSearching = ref(false);
@@ -424,19 +442,9 @@ const operationOptions = computed(() => projectContext.value?.operation_options 
 const selectedCompanyId = computed(() =>
   Number(projectContext.value?.company_id || selectedProject.value?.company_id || 0) || 0,
 );
-const selectedCompanyLabel = computed(() => {
-  const companyId = selectedCompanyId.value;
-  const match = companyOptions.value.find((item) => Number(item.company_id || 0) === companyId);
-  return String(match?.company_name || projectContext.value?.company_name || selectedProject.value?.company_name || '').trim();
-});
 const selectedOperationStrategy = computed(() =>
   String(projectContext.value?.operation_strategy || '').trim(),
 );
-const selectedOperationLabel = computed(() => {
-  const strategy = selectedOperationStrategy.value;
-  const match = operationOptions.value.find((item) => String(item.operation_strategy || '') === strategy);
-  return String(match?.operation_strategy_label || projectContext.value?.operation_strategy_label || '').trim();
-});
 const recordContextLabel = computed(() =>
   String(projectContext.value?.selector?.label || '当前记录').trim() || '当前记录'
 );
@@ -881,7 +889,17 @@ const routeBusinessCategoryLabel = computed(() => asText(
   || route.query.default_business_category_label,
 ));
 
+const configurationRouteTitle = computed(() => {
+  if (route.name === 'menu-config') return '菜单配置';
+  if (route.name === 'business-config') return '业务配置工作台';
+  if (route.path.startsWith('/admin/')) return '配置中心';
+  return '';
+});
+
 const pageTitle = computed(() => {
+  if (configurationRouteTitle.value) {
+    return configurationRouteTitle.value;
+  }
   if (routeBusinessCategoryLabel.value) {
     return routeBusinessCategoryLabel.value;
   }
@@ -954,6 +972,28 @@ function toggleTheme(): void {
   themeMode.value = nextTheme(themeMode.value);
   persistTheme(themeMode.value);
 }
+
+function loadSidebarHidden(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_HIDDEN_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function persistSidebarHidden(hidden: boolean): void {
+  try {
+    localStorage.setItem(SIDEBAR_HIDDEN_STORAGE_KEY, hidden ? '1' : '0');
+  } catch {
+    // ignore
+  }
+}
+
+function toggleSidebar(): void {
+  sidebarHidden.value = !sidebarHidden.value;
+  persistSidebarHidden(sidebarHidden.value);
+}
+
 const runtimeNavigationRegistry = computed(() =>
   buildRuntimeNavigationRegistry({
     scenes: session.scenes || [],
@@ -1185,6 +1225,7 @@ function exportSuggestedActionJson(filter: { success?: boolean; kind?: string; s
 
 onMounted(() => {
   themeMode.value = loadThemeMode();
+  sidebarHidden.value = loadSidebarHidden();
   applyTheme(themeMode.value);
   showExtractionStats.value = String(route.query.hud_stats || '').trim() === '1';
   void loadPublishedApps();
@@ -1261,6 +1302,11 @@ function isRootContainerMenuId(menuId?: number): boolean {
 
 const breadcrumb = computed(() => {
   const crumbs: Array<{ label: string; to?: string }> = [];
+  if (configurationRouteTitle.value) {
+    crumbs.push({ label: '配置中心', to: route.name === 'business-config' ? undefined : '/admin/business-config' });
+    crumbs.push({ label: configurationRouteTitle.value });
+    return crumbs;
+  }
   const menuId = activeMenuId.value;
   const menuPath = findMenuPath(menuTree.value, menuId);
   if (menuPath.length) {
@@ -1339,8 +1385,9 @@ function filterNodes(nodes: NavNode[], q: string): NavNode[] {
 }
 
 const filteredMenu = computed(() => filterNodes(visibleMenuNodes.value, query.value));
-const activityPages = computed(() => session.activityPages);
-const activeActivityPageKey = computed(() => session.activeActivityPageKey);
+const isConfigurationRoute = computed(() => route.path.startsWith('/admin/'));
+const activityPages = computed(() => (isConfigurationRoute.value ? [] : session.activityPages));
+const activeActivityPageKey = computed(() => (isConfigurationRoute.value ? '' : session.activeActivityPageKey));
 
 function buildMenuSelectionQuery(): LocationQueryRaw {
   const next: LocationQueryRaw = {};
@@ -1395,6 +1442,10 @@ function handleSelect(node: NavNode) {
 
 function openRoleLanding() {
   router.push(roleLandingPath.value).catch(() => {});
+}
+
+function returnToBusinessSurface() {
+  router.push(roleLandingPath.value || '/').catch(() => {});
 }
 
 function resolveActivityPageRoute(page: ActivityPage): string {
@@ -1460,14 +1511,22 @@ async function logout() {
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   background: var(--sc-app-bg);
   color: var(--ink);
   font-family: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
 }
 
+.shell--sidebar-hidden {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.shell--configuration .content {
+  padding: 8px 24px;
+}
+
 .sidebar {
-  padding: 18px 14px 14px;
+  padding: 18px 16px 14px;
   display: grid;
   grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
   gap: 10px;
@@ -1527,10 +1586,10 @@ async function logout() {
 }
 
 .nav-shell {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 0;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
+  padding: 8px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 6px;
@@ -1540,7 +1599,7 @@ async function logout() {
 
 .search input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 9px 10px;
   border-radius: 6px;
   border: 1px solid var(--sc-app-border);
   background: var(--sc-app-input-bg);
@@ -1903,7 +1962,7 @@ async function logout() {
 .menu {
   overflow: auto;
   padding-right: 2px;
-  padding-top: 0;
+  padding-top: 2px;
   min-height: 0;
   display: flex;
   flex-direction: column;

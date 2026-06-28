@@ -74,6 +74,22 @@ export type UnifiedPageContractV2ContainerStatus = {
   reasonCode?: string;
 };
 
+export type UnifiedPageContractV2VisibleFields = {
+  fields: string[];
+  sourceAuthority?: Record<string, unknown>;
+};
+
+export type UnifiedPageContractV2FieldGroups = {
+  groups: Array<Record<string, unknown>>;
+  sourceAuthority?: Record<string, unknown>;
+};
+
+export type UnifiedPageContractV2DataMeta = Record<string, unknown> & {
+  businessOperationProfile?: Record<string, unknown>;
+  visibleFields?: UnifiedPageContractV2VisibleFields;
+  fieldGroups?: UnifiedPageContractV2FieldGroups;
+};
+
 export type UnifiedPageContractV2 = {
   pageInfo: {
     pageId: string;
@@ -89,18 +105,21 @@ export type UnifiedPageContractV2 = {
     layoutType: string;
     adaptMode: string;
     containerTree: UnifiedPageContractV2Container[];
+    listProfile?: Record<string, unknown>;
     componentRegistry: Record<string, unknown>;
   };
   statusContract: Record<string, unknown>;
   actionContract: {
     actionRuleList: UnifiedPageContractV2Action[];
     dependencyGraph?: Record<string, string[]>;
+    deletePolicy?: Record<string, unknown>;
+    surfacePolicies?: Record<string, unknown>;
   };
   searchContract?: Record<string, unknown>;
   dataContract: {
     dataSource?: Record<string, unknown>;
     search?: Record<string, unknown>;
-    dataMeta?: Record<string, unknown>;
+    dataMeta?: UnifiedPageContractV2DataMeta;
   };
   runtimeContract: Record<string, unknown>;
   formStructureContract?: Record<string, unknown>;
@@ -465,4 +484,94 @@ export function resolveUnifiedPageContractV2PrimaryDataSource(contract: unknown)
   const data = readDictAlias(asDict(v2), 'dataContract', 'data_contract');
   const dataSource = readDictAlias(data, 'dataSource', 'data_source');
   return asDict(dataSource.primary);
+}
+
+export function resolveUnifiedPageContractV2DeletePolicy(contract: unknown): Record<string, unknown> {
+  const root = asDict(contract);
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const source = v2 ? asDict(v2) : root;
+  const action = readDictAlias(source, 'actionContract', 'action_contract');
+  const formal = readDictAlias(action, 'deletePolicy', 'delete_policy');
+  if (Object.keys(formal).length) return formal;
+  return asDict(source.delete_policy);
+}
+
+export function resolveUnifiedPageContractV2SurfacePolicies(contract: unknown): Record<string, unknown> {
+  const root = asDict(contract);
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const source = v2 ? asDict(v2) : root;
+  const action = readDictAlias(source, 'actionContract', 'action_contract');
+  const formal = readDictAlias(action, 'surfacePolicies', 'surface_policies');
+  if (Object.keys(formal).length) return formal;
+  return asDict(source.surface_policies);
+}
+
+export function resolveUnifiedPageContractV2ListProfile(contract: unknown): Record<string, unknown> {
+  const root = asDict(contract);
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const source = v2 ? asDict(v2) : root;
+  const layout = readDictAlias(source, 'layoutContract', 'layout_contract');
+  const formal = readDictAlias(layout, 'listProfile', 'list_profile');
+  if (Object.keys(formal).length) return formal;
+  return asDict(source.list_profile);
+}
+
+function resolveUnifiedPageContractV2DataMeta(contract: unknown): Dict {
+  const root = asDict(contract);
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const source = v2 ? asDict(v2) : root;
+  const data = readDictAlias(source, 'dataContract', 'data_contract');
+  return readDictAlias(data, 'dataMeta', 'data_meta');
+}
+
+export function resolveUnifiedPageContractV2BusinessOperationProfile(contract: unknown): Record<string, unknown> {
+  const root = asDict(contract);
+  const dataMeta = resolveUnifiedPageContractV2DataMeta(contract);
+  const formal = readDictAlias(dataMeta, 'businessOperationProfile', 'business_operation_profile');
+  if (Object.keys(formal).length) return formal;
+  return asDict(root.business_operation_profile);
+}
+
+export function resolveUnifiedPageContractV2VisibleFields(contract: unknown): string[] {
+  const dataMeta = resolveUnifiedPageContractV2DataMeta(contract);
+  const formal = dataMeta.visibleFields || dataMeta.visible_fields;
+  const formalRow = asDict(formal);
+  const formalFields = Array.isArray(formal)
+    ? formal
+    : asList(formalRow.fields || formalRow.fieldNames || formalRow.field_names);
+  if (formalFields.length) {
+    return formalFields.map((item) => asText(item)).filter(Boolean);
+  }
+  const root = asDict(contract);
+  const rootFields = asList(root.visible_fields);
+  if (rootFields.length) {
+    return rootFields.map((item) => asText(item)).filter(Boolean);
+  }
+  return collectUnifiedPageContractV2FieldWidgets(contract)
+    .map((widget) => asText(widget.fieldCode))
+    .filter(Boolean);
+}
+
+export function resolveUnifiedPageContractV2FieldGroups(contract: unknown): Array<Record<string, unknown>> {
+  const dataMeta = resolveUnifiedPageContractV2DataMeta(contract);
+  const formal = dataMeta.fieldGroups || dataMeta.field_groups;
+  const formalRow = asDict(formal);
+  const groups = Array.isArray(formal)
+    ? formal
+    : asList(formalRow.groups || formalRow.items || formalRow.fieldGroups || formalRow.field_groups);
+  if (groups.length) {
+    return groups.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item));
+  }
+  const root = asDict(contract);
+  return asList(root.field_groups)
+    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item));
+}
+
+export function resolveUnifiedPageContractV2FormStructureContract(contract: unknown): Record<string, unknown> {
+  const root = asDict(contract);
+  const v2 = resolveUnifiedPageContractV2(contract);
+  const source = v2 ? asDict(v2) : root;
+  const formal = readDictAlias(source, 'formStructureContract', 'form_structure_contract');
+  if (Object.keys(formal).length) return formal;
+  return {};
 }

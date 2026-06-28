@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { computed, type ComputedRef, type Ref } from 'vue';
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
+import { resolveUnifiedPageContractV2SurfacePolicies } from '../contracts/unifiedPageContractV2';
 
 type ActionContractLike = {
   head?: {
@@ -44,7 +45,8 @@ export function useActionViewPageDisplayStateRuntime(options: UseActionViewPageD
     if (options.searchTerm.value.trim() || options.activeContractFilterKey.value) {
       return options.t('empty_reason_filter', '可能由当前筛选条件导致无数据，建议先清除筛选后重试。');
     }
-    const fromSurfacePolicy = String(options.actionContract.value?.surface_policies?.empty_reason || '').trim();
+    const surfacePolicies = resolveUnifiedPageContractV2SurfacePolicies(options.actionContract.value);
+    const fromSurfacePolicy = String(surfacePolicies.empty_reason || '').trim();
     if (fromSurfacePolicy) return fromSurfacePolicy;
     return options.t('empty_reason_default', '');
   });

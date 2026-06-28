@@ -159,7 +159,50 @@
     },
     "pagination": {},
     "dataSource": {},
-    "dataMeta": {}
+    "dataMeta": {
+      "businessOperationProfile": {
+        "common_fields": [
+          "name",
+          "stage_id"
+        ],
+        "sourceAuthority": {
+          "projection_only": true,
+          "no_business_fact_authority": true,
+          "formal_projection": true,
+          "source_key": "business_operation_profile"
+        }
+      },
+      "visibleFields": {
+        "fields": [
+          "name",
+          "stage_id"
+        ],
+        "sourceAuthority": {
+          "projection_only": true,
+          "no_business_fact_authority": true,
+          "formal_projection": true,
+          "source_key": "visible_fields"
+        }
+      },
+      "fieldGroups": {
+        "groups": [
+          {
+            "name": "basic",
+            "title": "Basic",
+            "fields": [
+              "name",
+              "stage_id"
+            ]
+          }
+        ],
+        "sourceAuthority": {
+          "projection_only": true,
+          "no_business_fact_authority": true,
+          "formal_projection": true,
+          "source_key": "field_groups"
+        }
+      }
+    }
   },
   "runtimeContract": {
     "patchStrategy": "incremental",

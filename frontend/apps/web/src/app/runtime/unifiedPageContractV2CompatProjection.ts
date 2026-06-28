@@ -2,9 +2,16 @@ import type { ActionContract } from '@sc/schema';
 import type { IntentRawResult } from '../../api/intents';
 import {
   collectUnifiedPageContractV2FieldWidgets,
+  resolveUnifiedPageContractV2BusinessOperationProfile,
+  resolveUnifiedPageContractV2DeletePolicy,
+  resolveUnifiedPageContractV2FieldGroups,
+  resolveUnifiedPageContractV2FormStructureContract,
   resolveUnifiedPageContractV2GlobalStatus,
+  resolveUnifiedPageContractV2ListProfile,
   resolveUnifiedPageContractV2MainData,
   resolveUnifiedPageContractV2SourceContext,
+  resolveUnifiedPageContractV2SurfacePolicies,
+  resolveUnifiedPageContractV2VisibleFields,
   type UnifiedPageContractV2Widget,
 } from '../contracts/unifiedPageContractV2';
 
@@ -38,13 +45,6 @@ function resolveV2CollaborationContract(v2Contract: unknown): Dict {
   const root = asDict(v2Contract);
   const runtime = asDict(root.runtimeContract);
   return asDict(runtime.collaboration);
-}
-
-function resolveV2LegacyContractProjection(v2Contract: unknown): Dict {
-  const root = asDict(v2Contract);
-  const dataContract = asDict(root.dataContract);
-  const dataMeta = asDict(dataContract.dataMeta);
-  return asDict(dataMeta.legacyContractProjection || dataMeta.legacy_contract_projection);
 }
 
 function stableFieldName(name: string) {
@@ -325,31 +325,14 @@ function buildSurfaceMapping(surface: string, renderMode: string, sourceMode: st
   };
 }
 
-function collectV2DeletePolicyCandidates(value: unknown, out: Dict[] = []): Dict[] {
-  if (!value) return out;
-  if (Array.isArray(value)) {
-    value.forEach((item) => collectV2DeletePolicyCandidates(item, out));
-    return out;
-  }
-  if (typeof value !== 'object') return out;
-  const node = asDict(value);
-  const candidate = asDict(node.delete_policy);
-  if (candidate.model) {
-    out.push(candidate);
-  }
-  Object.values(node).forEach((child) => collectV2DeletePolicyCandidates(child, out));
-  return out;
-}
-
 function resolveV2DeletePolicy(v2Contract: Dict, model: string): Dict {
   const targetModel = String(model || '').trim();
   if (!targetModel) return {};
-  const topLevel = asDict(v2Contract.delete_policy);
-  if (String(topLevel.model || '').trim() === targetModel) {
+  const topLevel = resolveUnifiedPageContractV2DeletePolicy(v2Contract);
+  if (Object.keys(topLevel).length && (!String(topLevel.model || '').trim() || String(topLevel.model || '').trim() === targetModel)) {
     return topLevel;
   }
-  const candidates = collectV2DeletePolicyCandidates(v2Contract, []);
-  return candidates.find((item) => String(item.model || '').trim() === targetModel) || {};
+  return {};
 }
 
 function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}): Dict {
@@ -366,15 +349,12 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
   const v2SearchContract = resolveV2SearchContract(v2Contract);
   const v2Collaboration = resolveV2CollaborationContract(v2Contract);
-  const legacyProjection = resolveV2LegacyContractProjection(v2Contract);
-  const legacyListProfile = asDict(legacyProjection.list_profile);
-  const v2ListProfile = asDict(v2Contract.list_profile);
-  const sourceListProfile = Object.keys(v2ListProfile).length ? v2ListProfile : legacyListProfile;
-  const legacyFieldGroups = Array.isArray(legacyProjection.field_groups) ? legacyProjection.field_groups : [];
-  const legacyVisibleFields = Array.isArray(legacyProjection.visible_fields)
-    ? legacyProjection.visible_fields.map((name) => String(name || '').trim()).filter(Boolean)
-    : [];
-  const legacyBusinessProfile = asDict(legacyProjection.business_operation_profile);
+  const v2ListProfile = resolveUnifiedPageContractV2ListProfile(v2Contract);
+  const sourceListProfile = v2ListProfile;
+  const formalFieldGroups = resolveUnifiedPageContractV2FieldGroups(v2Contract);
+  const formalVisibleFields = resolveUnifiedPageContractV2VisibleFields(v2Contract);
+  const formalBusinessProfile = resolveUnifiedPageContractV2BusinessOperationProfile(v2Contract);
+  const formalFormStructureContract = resolveUnifiedPageContractV2FormStructureContract(v2Contract);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
   const workflowContract = Object.keys(asDict(v2Contract.workflowContract)).length
     ? asDict(v2Contract.workflowContract)
@@ -452,7 +432,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const unlinkRightAllowed = rights.unlink !== false;
   const deletePolicy = resolveV2DeletePolicy(v2Contract, model);
   const unlinkAllowed = deletePolicy.allowed === true && String(deletePolicy.delete_mode || '').trim().toLowerCase() === 'unlink';
-  const sourceSurfacePolicies = asDict(v2Contract.surface_policies);
+  const sourceSurfacePolicies = resolveUnifiedPageContractV2SurfacePolicies(v2Contract);
   const sourceBatchPolicy = asDict(sourceSurfacePolicies.batch_policy);
   const sourceBatchActions = Array.isArray(sourceBatchPolicy.available_actions)
     ? sourceBatchPolicy.available_actions.map((item) => String(item || '').trim()).filter(Boolean)
@@ -550,7 +530,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
       ...(viewType !== 'form' ? { [viewType]: formView } : {}),
     },
     ...(Object.keys(v2SearchContract).length ? { search: v2SearchContract } : {}),
-    visible_fields: legacyVisibleFields.length ? legacyVisibleFields : fieldNames,
+    visible_fields: formalVisibleFields.length ? formalVisibleFields : fieldNames,
     list_profile: Object.keys(sourceListProfile).length
       ? sourceListProfile
       : (
@@ -579,8 +559,9 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
           batch_policy: batchPolicy,
         }
         : undefined,
-    field_groups: legacyFieldGroups,
-    ...(Object.keys(legacyBusinessProfile).length ? { business_operation_profile: legacyBusinessProfile } : {}),
+    field_groups: formalFieldGroups,
+    ...(Object.keys(formalBusinessProfile).length ? { business_operation_profile: formalBusinessProfile } : {}),
+    ...(Object.keys(formalFormStructureContract).length ? { form_structure_contract: formalFormStructureContract } : {}),
     contract_surface: contractSurface,
     render_mode: renderMode,
     source_mode: sourceMode,

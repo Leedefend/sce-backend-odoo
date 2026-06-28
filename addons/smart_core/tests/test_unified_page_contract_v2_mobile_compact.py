@@ -129,6 +129,69 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
 
         self.assertEqual(full["pageInfo"]["pageName"], "项目")
 
+    def test_top_level_header_buttons_project_to_form_header(self):
+        source = {
+            "model": "project.project",
+            "view_type": "form",
+            "head": {"title": "项目"},
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "项目名称"},
+            },
+            "header_buttons": [
+                {
+                    "name": "action_submit",
+                    "label": "提交",
+                    "kind": "object",
+                    "payload": {"method": "action_submit", "type": "object"},
+                }
+            ],
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.top.level.header.buttons",
+        )
+
+        header = full["layoutContract"]["containerTree"][0]
+        self.assertEqual(header["type"], "header")
+        self.assertEqual(header["children"][0]["type"], "button")
+        self.assertEqual(header["children"][0]["name"], "action_submit")
+        self.assertEqual(header["children"][0]["label"], "提交")
+
+    def test_data_source_and_formal_metadata_projection_carry_source_authority(self):
+        source = {
+            "model": "project.project",
+            "view_type": "form",
+            "head": {"title": "项目"},
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "项目名称"},
+            },
+            "business_operation_profile": {
+                "source": "test",
+                "common_fields": ["name"],
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.data.source.authority",
+        )
+
+        primary = full["dataContract"]["dataSource"]["primary"]
+        self.assertEqual(primary["sourceAuthority"]["runtime_carrier"], "ui.contract.v2.dataContract.dataSource")
+        self.assertTrue(primary["sourceAuthority"]["projection_only"])
+        self.assertTrue(primary["sourceAuthority"]["no_business_fact_authority"])
+        profile = full["dataContract"]["dataMeta"]["businessOperationProfile"]
+        self.assertEqual(profile["sourceAuthority"]["runtime_carrier"], "ui.contract.v2.dataMeta.businessOperationProfile")
+        self.assertTrue(profile["sourceAuthority"]["projection_only"])
+        self.assertTrue(profile["sourceAuthority"]["no_business_fact_authority"])
+        self.assertTrue(profile["sourceAuthority"]["formal_projection"])
+        self.assertNotIn("legacyContractProjection", full["dataContract"]["dataMeta"])
+
     def test_form_data_source_keeps_deep_form_fields(self):
         fields = {
             f"field_{index}": {
@@ -677,6 +740,136 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
             [node["name"] for node in group["children"]],
             ["name", "company_type", "vat"],
         )
+
+    def test_form_structure_contract_preserves_configured_group_columns(self):
+        source = {
+            "model": "res.partner",
+            "view_type": "form",
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "children": [
+                                {
+                                    "type": "group",
+                                    "name": "native_group",
+                                    "cols": 2,
+                                    "children": [
+                                        {"type": "field", "name": "name"},
+                                        {"type": "field", "name": "company_type"},
+                                        {"type": "field", "name": "vat"},
+                                    ],
+                                }
+                            ],
+                        }
+                    ]
+                }
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "名称"},
+                "company_type": {"name": "company_type", "type": "selection", "string": "客户类型"},
+                "vat": {"name": "vat", "type": "char", "string": "税号"},
+            },
+            "form_structure_contract": {
+                "source": "ui.contract.v2.form_structure_contract",
+                "mode": "business_task_form",
+                "slots": [
+                    {
+                        "slot": "configured_form",
+                        "title": "表单字段",
+                        "groups": [
+                            {
+                                "name": "configured_group_1",
+                                "title": "基础信息",
+                                "cols": 3,
+                                "fieldRefs": ["name", "company_type", "vat"],
+                            },
+                        ],
+                    },
+                ],
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.structure.configured.columns",
+        )
+
+        group = full["layoutContract"]["containerTree"][0]["children"][0]
+        self.assertEqual(group["label"], "基础信息")
+        self.assertEqual(group["cols"], 3)
+        self.assertEqual(group["attributes"]["col"], "3")
+
+    def test_form_structure_columns_apply_to_governed_form_layout(self):
+        source = {
+            "model": "res.partner",
+            "view_type": "form",
+            "governance": {
+                "view_orchestration": {
+                    "applied": True,
+                    "form_layout_overlay": True,
+                }
+            },
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "children": [
+                                {
+                                    "type": "group",
+                                    "name": "configured_business_fields",
+                                    "string": "业务配置字段",
+                                    "columns": 3,
+                                    "children": [
+                                        {"type": "field", "name": "name"},
+                                        {"type": "field", "name": "company_type"},
+                                    ],
+                                }
+                            ],
+                        }
+                    ]
+                }
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "名称"},
+                "company_type": {"name": "company_type", "type": "selection", "string": "客户类型"},
+            },
+            "form_structure_contract": {
+                "source": "ui.contract.v2.form_structure_contract",
+                "mode": "business_task_form",
+                "columns": 2,
+                "slots": [
+                    {
+                        "slot": "configured_form",
+                        "title": "表单字段",
+                        "groups": [
+                            {
+                                "name": "configured_group_1",
+                                "title": "业务配置字段",
+                                "fieldRefs": ["name", "company_type"],
+                            },
+                        ],
+                    },
+                ],
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.structure.columns.overlay",
+        )
+
+        group = full["layoutContract"]["containerTree"][0]["children"][0]
+        self.assertEqual(group["label"], "业务配置字段")
+        self.assertEqual(group["cols"], 2)
+        self.assertEqual(group["columns"], 2)
+        self.assertEqual(group["attributes"]["col"], "2")
 
     def test_ui_contract_v2_preserves_relation_entry_search_dialog(self):
         search_dialog = {

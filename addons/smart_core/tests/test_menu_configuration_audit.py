@@ -50,7 +50,47 @@ def _load_handler():
     return module
 
 
+def _load_policy_model():
+    root = Path(__file__).resolve().parents[1]
+    api_mod = types.SimpleNamespace(
+        model=lambda fn: fn,
+        model_create_multi=lambda fn: fn,
+        depends=lambda *args, **kwargs: (lambda fn: fn),
+        onchange=lambda *args, **kwargs: (lambda fn: fn),
+        constrains=lambda *args, **kwargs: (lambda fn: fn),
+    )
+    fields_mod = types.SimpleNamespace(
+        Char=lambda *args, **kwargs: None,
+        Many2one=lambda *args, **kwargs: None,
+        Many2many=lambda *args, **kwargs: None,
+        Integer=lambda *args, **kwargs: None,
+        Boolean=lambda *args, **kwargs: None,
+        Text=lambda *args, **kwargs: None,
+    )
+    models_mod = types.SimpleNamespace(Model=object)
+    exc_mod = _install_module(
+        "odoo.exceptions",
+        AccessError=type("AccessError", (Exception,), {}),
+        ValidationError=type("ValidationError", (Exception,), {}),
+    )
+    _install_module("odoo", api=api_mod, fields=fields_mod, models=models_mod, exceptions=exc_mod)
+
+    sys.modules.pop("odoo.addons.smart_core.model.ui_menu_config_policy", None)
+    spec = importlib.util.spec_from_file_location(
+        "odoo.addons.smart_core.model.ui_menu_config_policy",
+        root / "model" / "ui_menu_config_policy.py",
+    )
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 class _RecordSet(list):
+    @property
+    def ids(self):
+        return [int(getattr(record, "id", 0) or 0) for record in self]
+
     def sudo(self):
         return self
 
@@ -66,6 +106,22 @@ class _RecordSet(list):
 
     def exists(self):
         return self
+
+    def mapped(self, name):
+        values = _RecordSet([])
+        scalars = []
+        for record in self:
+            value = getattr(record, name, None)
+            if isinstance(value, (list, _RecordSet)):
+                values.extend(value)
+            elif hasattr(value, "id"):
+                values.append(value)
+            elif value is not None:
+                scalars.append(value)
+        return values if values else scalars
+
+    def sorted(self, key=None, reverse=False):
+        return _RecordSet(sorted(list(self), key=key, reverse=reverse))
 
 
 class _Group:
@@ -86,12 +142,24 @@ class _Menu:
         self.action = action
         self.web_icon = web_icon
         self.groups_id = _RecordSet([])
+        self._owner = None
 
     def exists(self):
         return self
 
+    def unlink(self):
+        if self._owner is not None and self in self._owner:
+            self._owner.remove(self)
+        return True
+
 
 class _MenuModel(_RecordSet):
+    def __init__(self, menus=(), visible_ids=None):
+        super().__init__(menus)
+        self.visible_ids = visible_ids
+        for menu in self:
+            menu._owner = self
+
     def sudo(self):
         return self
 
@@ -99,7 +167,15 @@ class _MenuModel(_RecordSet):
         self.context = kwargs
         return self
 
+    def _visible_menu_ids(self, debug=False):
+        if self.visible_ids is None:
+            raise AttributeError("_visible_menu_ids")
+        return list(self.visible_ids)
+
     def browse(self, record_id):
+        if isinstance(record_id, (list, tuple, set)):
+            wanted = {int(item or 0) for item in record_id}
+            return _RecordSet([record for record in self if int(record.id or 0) in wanted])
         for record in self:
             if int(record.id or 0) == int(record_id or 0):
                 return record
@@ -135,6 +211,7 @@ class _MenuModel(_RecordSet):
             action=vals.get("action") or "",
             web_icon=vals.get("web_icon") or "",
         )
+        menu._owner = self
         self.append(menu)
         return menu
 
@@ -144,6 +221,35 @@ class _ModelDataModel(_RecordSet):
         return self
 
     def search(self, domain):
+        model = next((value for field, op, value in domain if field == "model" and op == "="), "")
+        res_ids = next((value for field, op, value in domain if field == "res_id" and op == "in"), None)
+        rows = list(self)
+        if model:
+            rows = [row for row in rows if getattr(row, "model", "") == model]
+        if res_ids is not None:
+            ids = {int(item or 0) for item in res_ids}
+            rows = [row for row in rows if int(getattr(row, "res_id", 0) or 0) in ids]
+        return _RecordSet(rows)
+
+
+class _ActionWindow:
+    def __init__(self, ident, res_model="", view_mode="tree,form"):
+        self.id = ident
+        self.res_model = res_model
+        self.view_mode = view_mode
+
+    def exists(self):
+        return self
+
+
+class _ActionWindowModel(_RecordSet):
+    def sudo(self):
+        return self
+
+    def browse(self, record_id):
+        for record in self:
+            if int(getattr(record, "id", 0) or 0) == int(record_id or 0):
+                return record
         return _RecordSet([])
 
 
@@ -171,7 +277,7 @@ class _Policy:
         self.role_group_ids = _RecordSet(role_groups or [])
         self.active = active
         self.note = ""
-        self.scope_summary = "、".join(group.display_name for group in self.role_group_ids) or "当前公司所有用户"
+        self.scope_summary = "、".join(group.display_name for group in self.role_group_ids) or "所有业务角色"
         self.effect_summary = "隐藏菜单" if not visible else "保持原样显示"
         self.preview_summary = ""
 
@@ -214,14 +320,26 @@ class _PolicyModel(_RecordSet):
         self.domain = domain
         self.order = order
         company_id = next((value for field, op, value in domain if field == "company_id" and op == "="), 0)
+        menu_id = next((value for field, op, value in domain if field == "menu_id" and op == "="), 0)
+        menu_ids = next((value for field, op, value in domain if field == "menu_id" and op == "in"), None)
+        menu_id_set = {int(item or 0) for item in (menu_ids or [])} if menu_ids is not None else set()
         active_required = any(field == "active" and op == "=" and value is True for field, op, value in domain)
         rows = [
             policy
             for policy in self
             if int(policy.company_id.id or 0) == int(company_id or 0)
             and policy.menu_id
+            and (not menu_id or int(policy.menu_id.id or 0) == int(menu_id or 0))
+            and (not menu_id_set or int(policy.menu_id.id or 0) in menu_id_set)
             and (not active_required or policy.active)
         ]
+        if order and "menu_id" in order:
+            rows.sort(key=lambda policy: (
+                int(policy.menu_id.id or 0),
+                -int(policy.id or 0) if "id desc" in order else int(policy.id or 0),
+            ))
+        elif order:
+            rows.sort(key=lambda policy: int(policy.id or 0), reverse="desc" in order)
         result = _RecordSet(rows)
         return _RecordSet(result[:limit]) if limit else result
 
@@ -306,6 +424,27 @@ class _ContractModel(_RecordSet):
         contract = _Contract(max([int(getattr(row, "id", 0) or 0) for row in self] + [0]) + 1, vals)
         self.append(contract)
         return contract
+
+
+class _RuntimeContractModel(_RecordSet):
+    def sudo(self):
+        return self
+
+    def search(self, domain, order=None, limit=None):
+        name = next((value for field, op, value in domain if field == "name" and op == "="), "")
+        model = next((value for field, op, value in domain if field == "model" and op == "="), "")
+        rows = [
+            contract
+            for contract in self
+            if getattr(contract, "name", "") == name
+            and getattr(contract, "model", "") == model
+            and getattr(contract, "active", True)
+            and getattr(contract, "status", "") == "published"
+        ]
+        rows.sort(key=lambda row: (int(getattr(row, "version_no", 0) or 0), int(getattr(row, "id", 0) or 0)), reverse=True)
+        if limit == 1:
+            return rows[0] if rows else _RecordSet([])
+        return _RecordSet(rows[:limit] if limit else rows)
 
 
 class _ContractVersion:
@@ -472,6 +611,276 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(contract.contract_json["menu_orchestration"]["source"], "smart_core.lowcode.menu_config")
         self.assertTrue(result["meta"]["contract_mirrored"])
 
+    def test_menu_config_panel_scopes_rows_to_business_root_after_policy_moves(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        business_root = _Menu(291, "智慧施工管理平台")
+        system_settings = _Menu(297, "系统设置", parent=business_root, sequence=90)
+        unrelated_root = _Menu(1, "设置")
+        unrelated_child = _Menu(2, "技术参数", parent=unrelated_root, sequence=10)
+        menus = _MenuModel([business_root, system_settings, unrelated_root, unrelated_child])
+        policies = _PolicyModel(
+            [
+                _Policy(1, business_root, company=company, target_parent=None),
+                _Policy(2, system_settings, company=company, target_parent=business_root),
+                _Policy(3, unrelated_root, company=company, target_parent=None),
+                _Policy(4, unrelated_child, company=company, target_parent=unrelated_root),
+            ],
+            user=user,
+        )
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([]),
+                "ui.menu.config.policy": policies,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationLoadHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "root_menu_id": 291,
+                "menu_ids": [291, 297, 1, 2],
+            },
+        )
+        handler._group_option_records = lambda menus, policies: _RecordSet([])
+        handler._expand_with_parent_ids = lambda menus: [int(menu.id) for menu in menus]
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertEqual(result["meta"]["scope_root_menu_id"], 291)
+        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 297])
+        self.assertEqual(set(result["data"]["policies"].keys()), {291, 297})
+        self.assertEqual([(row["id"], row["name"]) for row in result["data"]["tree"]], [(291, "智慧施工管理平台")])
+        self.assertEqual(
+            [(row["id"], row["name"]) for row in result["data"]["tree"][0]["children"]],
+            [(297, "系统设置")],
+        )
+
+    def test_menu_config_panel_keeps_hidden_business_root_menu_recoverable(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        business_root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=business_root, sequence=20)
+        visible_entry = _Menu(379, "项目台账", parent=project_center, sequence=10)
+        hidden_policy_entry = _Menu(999, "历史隐藏菜单", parent=project_center, sequence=90)
+        menus = _MenuModel([business_root, project_center, visible_entry, hidden_policy_entry])
+        policies = _PolicyModel(
+            [
+                _Policy(1, business_root, company=company),
+                _Policy(2, project_center, company=company),
+                _Policy(3, visible_entry, company=company),
+                _Policy(4, hidden_policy_entry, company=company, visible=False),
+            ],
+            user=user,
+        )
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([]),
+                "ui.menu.config.policy": policies,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationLoadHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "root_menu_id": 291,
+                "menu_ids": [291, 292, 379],
+            },
+        )
+        handler._group_option_records = lambda menus, policies: _RecordSet([])
+        handler._expand_with_parent_ids = lambda menus: [int(menu.id) for menu in menus]
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 292, 379, 999])
+        self.assertEqual(set(result["data"]["policies"].keys()), {291, 292, 379, 999})
+        self.assertFalse(result["data"]["policies"][999]["visible"])
+        self.assertEqual(result["meta"]["scoped_menu_count"], 4)
+
+    def test_menu_config_panel_includes_unconfigured_business_root_menu(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        business_root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=business_root, sequence=20)
+        visible_entry = _Menu(379, "项目台账", parent=project_center, sequence=10)
+        unconfigured_entry = _Menu(410, "未配置业务入口", parent=project_center, sequence=30)
+        menus = _MenuModel([business_root, project_center, visible_entry, unconfigured_entry])
+        policies = _PolicyModel(
+            [
+                _Policy(1, business_root, company=company),
+                _Policy(2, project_center, company=company),
+                _Policy(3, visible_entry, company=company),
+            ],
+            user=user,
+        )
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([]),
+                "ui.menu.config.policy": policies,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationLoadHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "root_menu_id": 291,
+                "menu_ids": [291, 292, 379],
+            },
+        )
+        handler._group_option_records = lambda menus, policies: _RecordSet([])
+        handler._expand_with_parent_ids = lambda menus: [int(menu.id) for menu in menus]
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 292, 379, 410])
+        self.assertEqual(set(result["data"]["policies"].keys()), {291, 292, 379})
+        self.assertEqual(result["meta"]["scoped_menu_count"], 4)
+
+    def test_menu_config_panel_excludes_hidden_policy_outside_business_root(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        business_root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=business_root, sequence=20)
+        visible_entry = _Menu(379, "项目台账", parent=project_center, sequence=10)
+        settings_root = _Menu(1, "设置")
+        technical_menu = _Menu(42, "菜单项", parent=settings_root, sequence=10)
+        menus = _MenuModel([business_root, project_center, visible_entry, settings_root, technical_menu])
+        policies = _PolicyModel(
+            [
+                _Policy(1, business_root, company=company),
+                _Policy(2, project_center, company=company),
+                _Policy(3, visible_entry, company=company),
+                _Policy(4, technical_menu, company=company, visible=False),
+            ],
+            user=user,
+        )
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([]),
+                "ui.menu.config.policy": policies,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationLoadHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "root_menu_id": 291,
+                "menu_ids": [291, 292, 379],
+            },
+        )
+        handler._group_option_records = lambda menus, policies: _RecordSet([])
+        handler._expand_with_parent_ids = lambda menus: [int(menu.id) for menu in menus]
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 292, 379])
+        self.assertEqual(set(result["data"]["policies"].keys()), {291, 292, 379})
+        self.assertNotIn(42, {row["id"] for row in result["data"]["menus"]})
+
+    def test_menu_config_save_rejects_menu_outside_business_root(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        business_root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=business_root, sequence=20)
+        settings_root = _Menu(1, "设置")
+        technical_menu = _Menu(42, "菜单项", parent=settings_root, sequence=10)
+        policies = _PolicyModel([], user=user)
+        contracts = _ContractModel([])
+        env = _Env(
+            {
+                "ir.ui.menu": _MenuModel([business_root, project_center, settings_root, technical_menu]),
+                "ui.menu.config.policy": policies,
+                "ui.business.config.contract": contracts,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationSaveHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "root_menu_id": 291,
+                "rows": [
+                    {
+                        "menu_id": 42,
+                        "target_parent_menu_id": 1,
+                        "visible": False,
+                    }
+                ],
+            },
+        )
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["reason_code"], "MENU_CONFIG_SCOPE_VIOLATION")
+        self.assertEqual(len(policies), 0)
+        self.assertEqual(len(contracts), 0)
+
+    def test_menu_config_save_deactivates_superseded_same_scope_policy(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        menu = _Menu(11, "合同中心")
+        old_parent = _Menu(20, "旧分组")
+        new_parent = _Menu(21, "新分组")
+        old_policy = _Policy(1, menu, company=company, target_parent=old_parent)
+        current_policy = _Policy(2, menu, company=company, target_parent=old_parent)
+        policies = _PolicyModel([old_policy, current_policy], user=user)
+        contracts = _ContractModel([])
+        env = _Env(
+            {
+                "ui.menu.config.policy": policies,
+                "ui.business.config.contract": contracts,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationSaveHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "rows": [
+                    {
+                        "policy_id": 2,
+                        "menu_id": 11,
+                        "target_parent_menu_id": 21,
+                        "visible": True,
+                    }
+                ],
+            },
+        )
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertTrue(result["ok"])
+        self.assertFalse(old_policy.active)
+        self.assertTrue(current_policy.active)
+        self.assertEqual(current_policy.target_parent_menu_id.id, new_parent.id)
+        active_rows = [
+            row for row in contracts[0].contract_json["menu_orchestration"]["policies"]
+            if row["menu_id"] == 11 and row["active"]
+        ]
+        self.assertEqual(len(active_rows), 1)
+        self.assertEqual(active_rows[0]["target_parent_menu_id"], 21)
+
     def test_menu_config_create_adds_menu_policy_and_contract_version(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
         user = _User([])
@@ -519,12 +928,83 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(created.action, "ir.actions.act_window,88")
         self.assertEqual(len(policies), 1)
         self.assertEqual(policies[0].menu_id.id, created.id)
+        self.assertEqual(policies[0].target_parent_menu_id.id, 20)
         self.assertEqual(policies[0].sequence_override, 30)
         self.assertEqual(len(contracts), 1)
         self.assertEqual(contracts[0].contract_json["menu_orchestration"]["policy_count"], 1)
         self.assertEqual(contracts[0].contract_json["menu_orchestration"]["source"], "smart_core.lowcode.menu_config")
         self.assertEqual(result["meta"]["source_authority"]["kind"], "ui_menu_config_menu_create_write_proxy")
         self.assertEqual(result["meta"]["source_authority"]["lowcode_boundary"], "menu_config")
+
+    def test_menu_config_delete_removes_created_menu_and_deactivates_policy(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        parent = _Menu(20, "业务配置", "智慧施工 / 业务配置")
+        created = _Menu(31, "临时菜单", "智慧施工 / 业务配置 / 临时菜单", parent=parent, sequence=30)
+        menus = _MenuModel([parent, created])
+        policy = _Policy(1, created, company=company, custom_label="临时菜单", sequence_override=30)
+        policies = _PolicyModel([policy], user=user)
+        contracts = _ContractModel([])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([]),
+                "ui.menu.config.policy": policies,
+                "ui.business.config.contract": contracts,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationDeleteHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "menu_id": 31,
+            },
+        )
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["deleted_menu_ids"], [31])
+        self.assertEqual([menu.id for menu in menus], [20])
+        self.assertFalse(policy.active)
+        self.assertFalse(policy.visible)
+        self.assertEqual(len(contracts), 1)
+        self.assertEqual(result["meta"]["source_authority"]["kind"], "ui_menu_config_menu_delete_write_proxy")
+
+    def test_menu_config_delete_rejects_module_menu_with_xmlid(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        menu = _Menu(31, "系统菜单", "智慧施工 / 系统菜单", sequence=30)
+        menus = _MenuModel([menu])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.model.data": _ModelDataModel([
+                    types.SimpleNamespace(model="ir.ui.menu", res_id=31, module="smart_core", name="menu_system"),
+                ]),
+                "ui.menu.config.policy": _PolicyModel([], user=user),
+                "ui.business.config.contract": _ContractModel([]),
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationDeleteHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "menu_id": 31,
+            },
+        )
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["reason_code"], "PROTECTED_MENU")
+        self.assertEqual([row.id for row in menus], [31])
 
     def test_menu_config_rollback_restores_policy_rows_from_contract_version(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
@@ -662,6 +1142,824 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(result["data"]["contract"]["summary"]["hidden_count"], 1)
         self.assertEqual(result["data"]["contract"]["summary"]["renamed_count"], 1)
         self.assertTrue(result["meta"]["bootstrapped_from_current_policies"])
+
+    def test_runtime_contract_policy_skips_deleted_menu_and_ignores_deleted_target_parent(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(10, "智慧施工管理平台")
+        menu = _Menu(11, "施工管理", parent=root)
+        menus = _MenuModel([root, menu])
+        contract_json = {
+            "menu_orchestration": {
+                "schema_version": "menu_orchestration.v1",
+                "policies": [
+                    {
+                        "active": True,
+                        "menu_id": 845,
+                        "menu_label": "已删除临时菜单",
+                        "visible": True,
+                        "target_parent_menu_id": 10,
+                    },
+                    {
+                        "active": True,
+                        "menu_id": 11,
+                        "menu_label": "施工管理",
+                        "visible": True,
+                        "target_parent_menu_id": 999,
+                        "sequence_override": 40,
+                    },
+                ],
+            },
+        }
+        contract = types.SimpleNamespace(
+            id=1,
+            active=True,
+            status="published",
+            name="menu.config.company.7",
+            model="ir.ui.menu",
+            company_id=company,
+            version_no=3,
+            contract_json=contract_json,
+        )
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ui.business.config.contract": _RuntimeContractModel([contract]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+
+        result = policy_model._runtime_contract_policies_for_user(user=user)
+
+        self.assertNotIn(845, result)
+        self.assertIn(11, result)
+        self.assertEqual(result[11]["target_parent_menu_id"], 0)
+
+    def test_runtime_overlay_creates_parent_before_child_move(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        tax_center = _Menu(840, "税务中心", parent=root, sequence=50)
+        tax_group = _Menu(527, "开票与税务办理", parent=tax_center, sequence=25)
+        prepaid_tax = _Menu(530, "预缴税款", parent=tax_group, sequence=30)
+        menus = _MenuModel([root, tax_center, tax_group, prepaid_tax])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {
+                    "active": True,
+                    "menu_id": 291,
+                    "menu_label": "智慧施工管理平台",
+                    "visible": True,
+                    "sequence_override": 30,
+                },
+                530: {
+                    "active": True,
+                    "menu_id": 530,
+                    "menu_label": "预缴税款",
+                    "visible": True,
+                    "target_parent_menu_id": 840,
+                    "sequence_override": 110,
+                },
+                840: {
+                    "active": True,
+                    "menu_id": 840,
+                    "menu_label": "税务中心",
+                    "visible": True,
+                    "target_parent_menu_id": 291,
+                    "sequence_override": 50,
+                },
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "sequence": 30,
+                        "children": [],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        tax_node = next(child for child in root_node["children"] if child["menu_id"] == 840)
+        prepaid_node = next(child for child in tax_node["children"] if child["menu_id"] == 530)
+        self.assertEqual(tax_node["name"], "税务中心")
+        self.assertEqual(prepaid_node["name"], "预缴税款")
+        self.assertEqual(prepaid_node["sequence"], 110)
+        self.assertEqual(prepaid_node["parent_id"], 840)
+        self.assertEqual(stats["moved_count"], 2)
+
+    def test_runtime_overlay_inserts_config_created_root_child(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        office = _Menu(842, "综合办公", parent=root, sequence=70, action="")
+        menus = _MenuModel([root, office], visible_ids=[291])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {
+                    "active": True,
+                    "menu_id": 291,
+                    "menu_label": "智慧施工管理平台",
+                    "visible": True,
+                    "sequence_override": 30,
+                },
+                842: {
+                    "active": True,
+                    "menu_id": 842,
+                    "menu_label": "综合办公",
+                    "visible": True,
+                    "target_parent_menu_id": 291,
+                    "sequence_override": 70,
+                },
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "sequence": 30,
+                        "children": [],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        office_node = next(child for child in root_node["children"] if child["menu_id"] == 842)
+        self.assertEqual(office_node["name"], "综合办公")
+        self.assertEqual(office_node["parent_id"], 291)
+        self.assertEqual(office_node["sequence"], 70)
+        self.assertEqual(stats["moved_count"], 1)
+
+    def test_runtime_overlay_moves_node_when_real_menu_id_is_in_meta(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=root, sequence=20)
+        tender_group = _Menu(299, "投标管理", parent=project_center, sequence=30)
+        tender_fee = _Menu(477, "投标报名费申请", parent=tender_group, sequence=40)
+        menus = _MenuModel([root, project_center, tender_group, tender_fee])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {
+                    "active": True,
+                    "menu_id": 291,
+                    "menu_label": "智慧施工管理平台",
+                    "visible": True,
+                    "sequence_override": 30,
+                },
+                292: {
+                    "active": True,
+                    "menu_id": 292,
+                    "menu_label": "项目中心",
+                    "visible": True,
+                    "target_parent_menu_id": 291,
+                    "sequence_override": 20,
+                },
+                299: {
+                    "active": True,
+                    "menu_id": 299,
+                    "menu_label": "投标管理",
+                    "visible": True,
+                    "target_parent_menu_id": 0,
+                    "sequence_override": 30,
+                },
+                477: {
+                    "active": True,
+                    "menu_id": 477,
+                    "menu_label": "投标报名费申请",
+                    "visible": True,
+                    "target_parent_menu_id": 299,
+                    "sequence_override": 40,
+                },
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "sequence": 30,
+                        "children": [
+                            {
+                                "menu_id": 292,
+                                "name": "项目中心",
+                                "sequence": 20,
+                                "children": [],
+                            },
+                            {
+                                "menu_id": 900477,
+                                "name": "投标报名费申请",
+                                "sequence": 5,
+                                "meta": {"menu_id": 477},
+                                "children": [],
+                            },
+                        ],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        top_ids = [child["menu_id"] for child in root_node["children"]]
+        project_node = next(child for child in root_node["children"] if child["menu_id"] == 292)
+        tender_node = next(child for child in project_node["children"] if child["menu_id"] == 299)
+        fee_node = next(child for child in tender_node["children"] if child.get("meta", {}).get("menu_id") == 477)
+        self.assertNotIn(900477, top_ids)
+        self.assertEqual(fee_node["parent_id"], 299)
+        self.assertEqual(fee_node["sequence"], 40)
+        self.assertEqual(fee_node["meta"]["parent_menu_id"], 299)
+        self.assertEqual(stats["moved_count"], 2)
+
+    def test_runtime_overlay_materializes_visible_menu_even_when_odoo_menu_hidden(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        finance = _Menu(306, "财务中心", parent=root, sequence=30)
+        payment = _Menu(342, "付款申请明细", parent=finance, sequence=25, action="ir.actions.act_window,624")
+        menus = _MenuModel([root, finance, payment], visible_ids=[291, 306])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([_ActionWindow(624, "account.payment.request")]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                306: {"active": True, "menu_id": 306, "menu_label": "财务中心", "visible": True},
+                342: {"active": True, "menu_id": 342, "menu_label": "付款申请明细", "visible": True, "sequence_override": 25},
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, _stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [{"menu_id": 306, "name": "财务中心", "children": []}],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        finance_node = next(child for child in root_node["children"] if child["menu_id"] == 306)
+        payment_node = next(child for child in finance_node["children"] if child["menu_id"] == 342)
+        self.assertEqual(payment_node["name"], "付款申请明细")
+        self.assertEqual(payment_node["sequence"], 25)
+
+    def test_runtime_overlay_materializes_missing_parent_and_child_once(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        finance = _Menu(306, "财务中心", parent=root, sequence=30)
+        deposit_group = _Menu(570, "保证金管理", parent=finance, sequence=60)
+        deposit_payment = _Menu(615, "付款还保证金", parent=deposit_group, sequence=80, action="ir.actions.act_window,814")
+        menus = _MenuModel([root, finance, deposit_group, deposit_payment])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([_ActionWindow(814, "sc.deposit.payment")]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                306: {"active": True, "menu_id": 306, "menu_label": "财务中心", "visible": True},
+                570: {"active": True, "menu_id": 570, "menu_label": "保证金管理", "visible": True, "sequence_override": 60},
+                615: {"active": True, "menu_id": 615, "menu_label": "付款还保证金", "visible": True, "sequence_override": 30},
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, _stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [{"menu_id": 306, "name": "财务中心", "children": []}],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        seen = []
+
+        def walk(nodes):
+            for node in nodes:
+                seen.append(node["menu_id"])
+                walk(node.get("children") or [])
+
+        walk(overlaid["tree"])
+        root_node = overlaid["tree"][0]
+        finance_node = next(child for child in root_node["children"] if child["menu_id"] == 306)
+        deposit_node = next(child for child in finance_node["children"] if child["menu_id"] == 570)
+        payment_node = next(child for child in deposit_node["children"] if child["menu_id"] == 615)
+        self.assertEqual(seen.count(615), 1)
+        self.assertEqual(payment_node["sequence"], 30)
+        self.assertEqual(payment_node["meta"]["parent_menu_id"], 570)
+
+    def test_runtime_overlay_reparents_existing_orphan_to_configured_parent(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        finance = _Menu(306, "财务中心", parent=root, sequence=30)
+        deposit_group = _Menu(570, "保证金管理", parent=finance, sequence=60)
+        deposit_collect = _Menu(612, "保证金收取", parent=deposit_group, sequence=70, action="ir.actions.act_window,812")
+        menus = _MenuModel([root, finance, deposit_group, deposit_collect])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([_ActionWindow(812, "sc.deposit.collect")]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                306: {"active": True, "menu_id": 306, "menu_label": "财务中心", "visible": True},
+                570: {"active": True, "menu_id": 570, "menu_label": "保证金管理", "visible": True, "sequence_override": 60},
+                612: {"active": True, "menu_id": 612, "menu_label": "保证金收取", "visible": True, "sequence_override": 70},
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [{"menu_id": 306, "name": "财务中心", "children": []}],
+                    },
+                    {"menu_id": 612, "name": "保证金收取", "children": []},
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        top_level_ids = [node["menu_id"] for node in overlaid["tree"]]
+        root_node = next(node for node in overlaid["tree"] if node["menu_id"] == 291)
+        finance_node = next(child for child in root_node["children"] if child["menu_id"] == 306)
+        deposit_node = next(child for child in finance_node["children"] if child["menu_id"] == 570)
+        collect_node = next(child for child in deposit_node["children"] if child["menu_id"] == 612)
+        self.assertNotIn(612, top_level_ids)
+        self.assertEqual(collect_node["meta"]["parent_menu_id"], 570)
+        self.assertGreaterEqual(stats["parent_aligned_count"], 1)
+
+    def test_runtime_overlay_attaches_visible_child_to_nearest_visible_parent_when_parent_hidden(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        contract = _Menu(293, "合同中心", parent=root, sequence=40)
+        expense_group = _Menu(488, "支出合同台账", parent=contract, sequence=20)
+        material_contract = _Menu(602, "材料合同", parent=expense_group, sequence=11, action="ir.actions.act_window,799")
+        menus = _MenuModel([root, contract, expense_group, material_contract])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([_ActionWindow(799, "sc.material.contract")]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                293: {"active": True, "menu_id": 293, "menu_label": "合同中心", "visible": True},
+                488: {"active": True, "menu_id": 488, "menu_label": "支出合同台账", "visible": False},
+                602: {"active": True, "menu_id": 602, "menu_label": "材料合同", "visible": True, "sequence_override": 11},
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, _stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [{"menu_id": 293, "name": "合同中心", "children": []}],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        contract_node = next(child for child in root_node["children"] if child["menu_id"] == 293)
+        child_ids = [child["menu_id"] for child in contract_node["children"]]
+        material_node = next(child for child in contract_node["children"] if child["menu_id"] == 602)
+        self.assertIn(602, child_ids)
+        self.assertNotIn(488, child_ids)
+        self.assertEqual(material_node["name"], "材料合同")
+        self.assertEqual(material_node["meta"]["parent_menu_id"], 293)
+
+    def test_runtime_overlay_does_not_treat_same_label_different_menu_as_present(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        contract = _Menu(293, "合同中心", parent=root, sequence=40)
+        old_fact = _Menu(425, "历史采购/一般合同事实", parent=contract, sequence=90, action="ir.actions.act_window,714")
+        new_fact = _Menu(601, "历史采购/一般合同事实", parent=contract, sequence=60, action="ir.actions.act_window,798")
+        menus = _MenuModel([root, contract, old_fact, new_fact])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([
+                    _ActionWindow(714, "sc.legacy.purchase.contract.fact"),
+                    _ActionWindow(798, "sc.general.contract.fact"),
+                ]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                293: {"active": True, "menu_id": 293, "menu_label": "合同中心", "visible": True},
+                425: {"active": True, "menu_id": 425, "menu_label": "历史采购/一般合同事实", "visible": True, "sequence_override": 90},
+                601: {"active": True, "menu_id": 601, "menu_label": "历史采购/一般合同事实", "visible": True, "sequence_override": 60},
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, _stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [
+                            {
+                                "menu_id": 293,
+                                "name": "合同中心",
+                                "children": [
+                                    {
+                                        "menu_id": 425,
+                                        "name": "历史采购/一般合同事实",
+                                        "meta": {"menu_id": 425, "parent_menu_id": 293},
+                                        "children": [],
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        contract_node = next(child for child in root_node["children"] if child["menu_id"] == 293)
+        child_ids = [child["menu_id"] for child in contract_node["children"]]
+        self.assertIn(425, child_ids)
+        self.assertIn(601, child_ids)
+        self.assertEqual(child_ids.count(601), 1)
+
+    def test_runtime_overlay_config_only_removes_unconfigured_system_menu_root(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        home = _Menu(464, "首页", parent=root, sequence=10)
+        menus = _MenuModel([root, home])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                464: {"active": True, "menu_id": 464, "menu_label": "首页", "visible": True, "sequence_override": 10},
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 880204900,
+                        "name": "系统菜单",
+                        "children": [
+                            {
+                                "menu_id": 880204901,
+                                "name": "菜单配置",
+                                "model": "ui.menu.config.policy",
+                                "meta": {"delivery_bucket": "delivery_business_config"},
+                                "children": [],
+                            }
+                        ],
+                    },
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [{"menu_id": 464, "name": "首页", "children": []}],
+                    },
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        self.assertEqual([node["menu_id"] for node in overlaid["tree"]], [291])
+        self.assertEqual([child["menu_id"] for child in overlaid["tree"][0]["children"]], [464])
+        self.assertEqual(stats["protected_count"], 0)
+
+    def test_runtime_overlay_config_only_does_not_match_unconfigured_node_by_label(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        business_customer = _Menu(500, "客户", parent=root, sequence=10)
+        menus = _MenuModel([root, business_customer])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                500: {"active": True, "menu_id": 500, "menu_label": "客户", "visible": True},
+            },
+            "ui.business.config.contract.menu_orchestration",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {"menu_id": 145, "name": "客户", "children": [{"menu_id": 151, "name": "客户", "children": []}]},
+                    {"menu_id": 291, "name": "智慧施工管理平台", "children": []},
+                ],
+                "flat": [
+                    {"menu_id": 145, "name": "客户"},
+                    {"menu_id": 151, "name": "客户"},
+                    {"menu_id": 291, "name": "智慧施工管理平台"},
+                ],
+            },
+            user=user,
+        )
+
+        def collect_ids(nodes):
+            out = []
+            for node in nodes:
+                out.append(node["menu_id"])
+                out.extend(collect_ids(node.get("children") or []))
+            return out
+
+        runtime_ids = collect_ids(overlaid["tree"])
+        self.assertIn(500, runtime_ids)
+        self.assertNotIn(145, runtime_ids)
+        self.assertNotIn(151, runtime_ids)
+        self.assertTrue(stats["config_only"])
+
+    def test_runtime_overlay_builds_children_for_missing_moved_group(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=root, sequence=20)
+        material_center = _Menu(295, "物资与分包", parent=root, sequence=45)
+        labor_group = _Menu(301, "劳务管理", parent=material_center, sequence=20)
+        labor_plan = _Menu(500, "劳务计划", parent=labor_group, sequence=10)
+        labor_request = _Menu(501, "劳务申请", parent=labor_group, sequence=20)
+        labor_check = _Menu(822, "劳务结算候选核对", parent=labor_group, sequence=39)
+        menus = _MenuModel([root, project_center, material_center, labor_group, labor_plan, labor_request, labor_check])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {
+                    "active": True,
+                    "menu_id": 291,
+                    "menu_label": "智慧施工管理平台",
+                    "visible": True,
+                    "sequence_override": 30,
+                },
+                292: {
+                    "active": True,
+                    "menu_id": 292,
+                    "menu_label": "项目中心",
+                    "visible": True,
+                    "target_parent_menu_id": 291,
+                    "sequence_override": 20,
+                },
+                301: {
+                    "active": True,
+                    "menu_id": 301,
+                    "menu_label": "劳务管理",
+                    "visible": True,
+                    "target_parent_menu_id": 292,
+                    "sequence_override": 60,
+                },
+                500: {
+                    "active": True,
+                    "menu_id": 500,
+                    "menu_label": "劳务计划",
+                    "visible": True,
+                    "sequence_override": 10,
+                },
+                501: {
+                    "active": True,
+                    "menu_id": 501,
+                    "menu_label": "劳务申请",
+                    "visible": False,
+                    "sequence_override": 20,
+                },
+                822: {
+                    "active": True,
+                    "menu_id": 822,
+                    "menu_label": "劳务结算候选核对",
+                    "visible": True,
+                    "sequence_override": 39,
+                },
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "sequence": 30,
+                        "children": [
+                            {
+                                "menu_id": 292,
+                                "name": "项目中心",
+                                "sequence": 20,
+                                "children": [],
+                            }
+                        ],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        project_node = next(child for child in root_node["children"] if child["menu_id"] == 292)
+        labor_node = next(child for child in project_node["children"] if child["menu_id"] == 301)
+        child_ids = [child["menu_id"] for child in labor_node["children"]]
+        self.assertEqual(labor_node["sequence"], 60)
+        self.assertEqual(labor_node["parent_id"], 292)
+        self.assertIn(500, child_ids)
+        self.assertIn(822, child_ids)
+        self.assertNotIn(501, child_ids)
+        self.assertEqual(stats["moved_count"], 2)
+
+    def test_runtime_overlay_config_only_hides_unconfigured_leaf(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        configured_menu = _Menu(11, "合同办理")
+        hidden_menu = _Menu(12, "未配置办理")
+        env = _Env(
+            {
+                "ir.ui.menu": _MenuModel([configured_menu, hidden_menu]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                11: {
+                    "active": True,
+                    "menu_id": 11,
+                    "menu_label": "合同办理",
+                    "visible": True,
+                    "sequence_override": 10,
+                },
+            },
+            "ui.menu.config.policy",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "sequence": 30,
+                        "children": [
+                            {"menu_id": 11, "name": "合同办理", "sequence": 10, "children": []},
+                            {"menu_id": 12, "name": "未配置办理", "sequence": 20, "children": []},
+                        ],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        self.assertEqual([node["menu_id"] for node in overlaid["tree"]], [11])
+        self.assertEqual(stats["unconfigured_hidden_count"], 2)
 
 
 if __name__ == "__main__":

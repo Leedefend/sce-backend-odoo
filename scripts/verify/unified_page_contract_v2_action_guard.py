@@ -62,17 +62,28 @@ def compare_subset(actual: dict[str, Any], expected: dict[str, Any], path: str, 
             fail(errors, f"{path}.{key}: expected {expected_value!r}, got {actual.get(key)!r}")
 
 
+def registry_path(value: dict[str, Any], path: tuple[str, ...]) -> Any:
+    node: Any = value
+    for item in path:
+        if not isinstance(node, dict):
+            return None
+        node = node.get(item)
+    return node
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixture", required=True, type=Path)
     parser.add_argument("--patch-fixture", required=True, type=Path)
     parser.add_argument("--snapshot", required=True, type=Path)
+    parser.add_argument("--enum-registry", required=True, type=Path)
     args = parser.parse_args()
 
     target = load_action_module()
     source = load_json(args.fixture)
     patch_source = load_json(args.patch_fixture)
     snapshot = load_json(args.snapshot)
+    registry = load_json(args.enum_registry)
     action_contract = target.build_action_contract_v2(source)
     patch = target.build_action_partial_update_v2(patch_source, action_id="form.save")
     errors: list[str] = []
@@ -85,6 +96,17 @@ def main() -> int:
         fail(errors, f"action ids mismatch: expected {expected_ids}, got {action_ids}")
     if len(action_ids) != len(rules):
         fail(errors, "actionId uniqueness guard failed")
+
+    trigger_types = registry_path(registry, ("triggerType",))
+    dispatch_modes = registry_path(registry, ("dispatchMode",))
+    target_scopes = registry_path(registry, ("targetScope",))
+    refresh_modes = registry_path(registry, ("refreshMode",))
+    if set(getattr(target, "TRIGGER_TYPES", set())) != set(trigger_types or []):
+        fail(errors, "action TRIGGER_TYPES must match enum_registry.triggerType")
+    if set(getattr(target, "DISPATCH_MODES", set())) != set(dispatch_modes or []):
+        fail(errors, "action DISPATCH_MODES must match enum_registry.dispatchMode")
+    if set(getattr(target, "REFRESH_MODES", set())) != set(refresh_modes or []):
+        fail(errors, "action REFRESH_MODES must match enum_registry.refreshMode")
 
     for action_id, expected_rule in (snapshot.get("expectedRules") or {}).items():
         if action_id not in rule_index:
@@ -104,6 +126,15 @@ def main() -> int:
                     fail(errors, f"forbidden executable key {key!r} at {node_path}")
                 if key in {"actionId", "sourceWidgetId"} and isinstance(value, str) and DRIFT_SUFFIX.search(value):
                     fail(errors, f"unstable suffix in {key}={value!r}")
+            if {"triggerType", "dispatchMode", "targetScope", "refreshMode"}.issubset(node):
+                if node.get("triggerType") not in trigger_types:
+                    fail(errors, f"{node_path}.triggerType must be listed in enum_registry.triggerType")
+                if node.get("dispatchMode") not in dispatch_modes:
+                    fail(errors, f"{node_path}.dispatchMode must be listed in enum_registry.dispatchMode")
+                if node.get("targetScope") not in target_scopes:
+                    fail(errors, f"{node_path}.targetScope must be listed in enum_registry.targetScope")
+                if node.get("refreshMode") not in refresh_modes:
+                    fail(errors, f"{node_path}.refreshMode must be listed in enum_registry.refreshMode")
 
     expected_patch = snapshot.get("expectedPatch") or {}
     if patch.get("updateType") != expected_patch.get("updateType"):

@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 
 from odoo import fields
 from odoo.exceptions import AccessError
+from odoo.addons.smart_core.utils.backend_contract_boundaries import APPROVAL_POLICY_INTENTS
 
 _logger = logging.getLogger(__name__)
 
@@ -1449,9 +1450,9 @@ def get_intent_handler_contributions():
         ("my.work.complete_batch", MyWorkCompleteBatchHandler),
         ("telemetry.track", TelemetryTrackHandler),
         ("capability.visibility.report", CapabilityVisibilityReportHandler),
-        ("sc.approval_policy.config.get", ApprovalPolicyConfigGetHandler),
-        ("sc.approval_policy.config.set", ApprovalPolicyConfigSetHandler),
-        ("sc.approval_policy.steps.set", ApprovalPolicyStepsSetHandler),
+        (APPROVAL_POLICY_INTENTS["config_get"], ApprovalPolicyConfigGetHandler),
+        (APPROVAL_POLICY_INTENTS["config_set"], ApprovalPolicyConfigSetHandler),
+        (APPROVAL_POLICY_INTENTS["steps_set"], ApprovalPolicyStepsSetHandler),
         ("payment.request.submit", PaymentRequestSubmitHandler),
         ("payment.request.approve", PaymentRequestApproveHandler),
         ("payment.request.reject", PaymentRequestRejectHandler),

@@ -95,7 +95,12 @@
         "query": "project.read",
         "cachePolicy": "etag",
         "consistency": "strong",
-        "subscription": false
+        "subscription": false,
+        "sourceAuthority": {
+          "projection_only": true,
+          "no_business_fact_authority": true,
+          "fact_authority": "odoo.model:project.project"
+        }
       }
     },
     "dataMeta": {}

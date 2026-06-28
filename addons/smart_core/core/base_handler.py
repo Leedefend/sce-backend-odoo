@@ -104,19 +104,14 @@ class BaseIntentHandler:
                 return True
         except Exception:
             pass
-        missing = []
         for xmlid in required_xmlids:
             try:
                 if user.has_group(xmlid):
-                    continue
+                    return True
             except Exception:
                 pass
-            missing.append(xmlid)
-        if not missing:
-            return True
         raise AccessError(
-            "PERMISSION_DENIED: missing required groups [{}] for intent {} (required=[{}])".format(
-                ", ".join(missing),
+            "PERMISSION_DENIED: missing any required group for intent {} (required=[{}])".format(
                 str(getattr(self, "INTENT_TYPE", "") or self.__class__.__name__),
                 ", ".join(required_xmlids),
             )

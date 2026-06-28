@@ -49,6 +49,14 @@ PROJECT_RELATION_FIELDS = [
     "payment_request_ids",
 ]
 
+OBSERVABILITY_CONTEXT_KEYS = {"trace_id"}
+
+
+def _contract_context(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+    return {key: item for key, item in value.items() if key not in OBSERVABILITY_CONTEXT_KEYS}
+
 
 def _post(intent: str, params: dict[str, Any], token: str | None = None) -> dict[str, Any]:
     body = json.dumps({"intent": intent, "params": {"db": DB_NAME, **params}}, ensure_ascii=False).encode()
@@ -182,8 +190,8 @@ def _web_contract_matrix(token: str) -> list[dict[str, Any]]:
             _norm_view(page_info.get("viewType")),
             source_context.get("renderProfile"),
         )
-        old_context = (old.get("head") or {}).get("context") or old.get("context") or {}
-        v2_context = source_context.get("context") or {}
+        old_context = _contract_context((old.get("head") or {}).get("context") or old.get("context") or {})
+        v2_context = _contract_context(source_context.get("context") or {})
         old_domain = old.get("domain") or (old.get("head") or {}).get("domain") or []
         v2_domain = source_context.get("domain") or []
         old_fields = old.get("fields") if isinstance(old.get("fields"), dict) else {}
@@ -257,7 +265,7 @@ def _mobile_compact_matrix(token: str) -> list[dict[str, Any]]:
         mobile_main = (mobile.get("dataContract") or {}).get("mainData") or {}
         is_create = extra.get("render_profile") == "create"
         signature_ok = (full_info.get("model"), full_info.get("viewType")) == (mobile_info.get("model"), mobile_info.get("viewType"))
-        context_ok = (full_context.get("context") or full_params.get("context") or {}) == (
+        context_ok = _contract_context(full_context.get("context") or full_params.get("context") or {}) == _contract_context(
             mobile_context.get("context") or mobile_params.get("context") or {}
         )
         domain_ok = (full_context.get("domain") or full_params.get("domain") or []) == (

@@ -56,6 +56,22 @@
         },
         "fallback": "sc.list.basic"
       }
+    },
+    "listProfile": {
+      "columns": [
+        "name",
+        "stage_id"
+      ],
+      "columnLabels": {
+        "name": "Name",
+        "stage_id": "Stage"
+      },
+      "sourceAuthority": {
+        "projection_only": true,
+        "no_business_fact_authority": true,
+        "formal_projection": true,
+        "source_key": "list_profile"
+      }
     }
   },
   "statusContract": {
@@ -105,6 +121,26 @@
     ],
     "dependencyGraph": {
       "table.project": []
+    },
+    "deletePolicy": {
+      "allowed": false,
+      "delete_mode": "none",
+      "sourceAuthority": {
+        "projection_only": true,
+        "no_business_fact_authority": true,
+        "formal_projection": true,
+        "source_key": "delete_policy"
+      }
+    },
+    "surfacePolicies": {
+      "filters_primary_max": 4,
+      "actions_primary_max": 3,
+      "sourceAuthority": {
+        "projection_only": true,
+        "no_business_fact_authority": true,
+        "formal_projection": true,
+        "source_key": "surface_policies"
+      }
     }
   },
   "dataContract": {

@@ -52,17 +52,8 @@ function indexBy<T>(rows: T[], readKey: (row: T) => string): Map<string, T> {
   return out;
 }
 
-function collectUnsupported(snapshot: ContractV2Snapshot): ContractV2UnsupportedFeature[] {
-  const required = snapshot.meta.requiredCapabilities;
-  if (!Array.isArray(required)) return [];
-  return required
-    .map((item) => String(item || '').trim())
-    .filter(Boolean)
-    .map((capability) => ({
-      code: 'required_capability_not_bound',
-      message: `required capability is not bound in web v2 store: ${capability}`,
-      path: `meta.requiredCapabilities.${capability}`,
-    }));
+function collectUnsupported(_snapshot: ContractV2Snapshot): ContractV2UnsupportedFeature[] {
+  return [];
 }
 
 function primaryDataSource(snapshot: ContractV2Snapshot): ContractV2Dictionary | null {
@@ -80,6 +71,11 @@ function asList(value: unknown): unknown[] {
 
 function asText(value: unknown): string {
   return String(value || '').trim();
+}
+
+function spanValue(value: unknown): number {
+  const numberValue = Number(value);
+  return Number.isInteger(numberValue) && numberValue >= 1 && numberValue <= 24 ? numberValue : 24;
 }
 
 function synthesizeWidgetFromContainer(container: ContractV2Container): ContractV2Widget | null {
@@ -109,8 +105,10 @@ function synthesizeWidgetFromContainer(container: ContractV2Container): Contract
     widgetType: asText(container.widget || fieldInfo.widget || fieldType || container.containerType) || 'display',
     fieldCode,
     label: asText(container.label || container.string || fieldInfo.label || fieldInfo.string) || fieldCode,
+    span: spanValue(container.span || fieldInfo.span || attributes.span),
     componentKey: asText(fieldInfo.componentKey || fieldInfo.component_key || attributes.componentKey || attributes.component_key) || 'sc.display.text',
-    ...(Object.keys(mergedComponentConfig).length ? { componentConfig: mergedComponentConfig } : {}),
+    capabilities: [],
+    componentConfig: mergedComponentConfig,
     ...(fieldType ? { fieldType } : {}),
     ...(relation ? { relation } : {}),
   };

@@ -191,6 +191,92 @@ class UiContractV2Handler(BaseIntentHandler):
             "runtime_carrier": cls.INTENT_TYPE,
         }
 
+    def _set_v2_container_tree(self, contract: dict[str, Any], container_tree: list[Any]) -> None:
+        if not isinstance(contract, dict):
+            return
+        layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+        layout_contract["containerTree"] = container_tree
+        contract["layoutContract"] = layout_contract
+
+    def _set_v2_widget_status(self, contract: dict[str, Any], widget_status: list[dict[str, Any]]) -> None:
+        if not isinstance(contract, dict):
+            return
+        status_contract = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
+        status_contract["widgetStatus"] = widget_status
+        contract["statusContract"] = status_contract
+
+    def _set_v2_data_meta(self, contract: dict[str, Any], patch: dict[str, Any]) -> None:
+        if not isinstance(contract, dict) or not isinstance(patch, dict):
+            return
+        data_contract = contract.get("dataContract") if isinstance(contract.get("dataContract"), dict) else {}
+        data_meta = data_contract.get("dataMeta") if isinstance(data_contract.get("dataMeta"), dict) else {}
+        data_meta.update(patch)
+        data_contract["dataMeta"] = data_meta
+        contract["dataContract"] = data_contract
+
+    def _replace_v2_contract_content(self, contract: dict[str, Any], replacement: dict[str, Any]) -> None:
+        if not isinstance(contract, dict) or not isinstance(replacement, dict):
+            return
+        contract.clear()
+        contract.update(replacement)
+
+    def _set_v2_governance_patch(self, contract: dict[str, Any], key: str, patch: dict[str, Any]) -> None:
+        if not isinstance(contract, dict) or not key or not isinstance(patch, dict):
+            return
+        governance = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
+        governance[key] = patch
+        contract["governance"] = governance
+
+    def _v2_policy_projection_source_authority(self, *, runtime_carrier: str, source_key: str) -> dict[str, Any]:
+        return {
+            "kind": self.SOURCE_KIND,
+            "runtime_carrier": runtime_carrier,
+            "projection_only": True,
+            "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            "formal_projection": True,
+            "fact_authority": "source_contract_projection",
+            "source_key": source_key,
+        }
+
+    def _v2_policy_projection(self, value: dict[str, Any], *, runtime_carrier: str, source_key: str) -> dict[str, Any]:
+        projection = deepcopy(value or {})
+        projection["sourceAuthority"] = self._v2_policy_projection_source_authority(
+            runtime_carrier=runtime_carrier,
+            source_key=source_key,
+        )
+        return projection
+
+    def _project_v2_source_policies(self, contract: dict[str, Any], source_contract: dict[str, Any]) -> None:
+        if not isinstance(contract, dict) or not isinstance(source_contract, dict):
+            return
+        if isinstance(source_contract.get("delete_policy"), dict):
+            delete_policy = dict(source_contract.get("delete_policy") or {})
+            action_contract = contract.get("actionContract") if isinstance(contract.get("actionContract"), dict) else {}
+            action_contract["deletePolicy"] = self._v2_policy_projection(
+                delete_policy,
+                runtime_carrier="ui.contract.v2.actionContract.deletePolicy",
+                source_key="delete_policy",
+            )
+            contract["actionContract"] = action_contract
+        if isinstance(source_contract.get("surface_policies"), dict):
+            surface_policies = deepcopy(source_contract.get("surface_policies") or {})
+            action_contract = contract.get("actionContract") if isinstance(contract.get("actionContract"), dict) else {}
+            action_contract["surfacePolicies"] = self._v2_policy_projection(
+                surface_policies,
+                runtime_carrier="ui.contract.v2.actionContract.surfacePolicies",
+                source_key="surface_policies",
+            )
+            contract["actionContract"] = action_contract
+        if isinstance(source_contract.get("list_profile"), dict):
+            list_profile = deepcopy(source_contract.get("list_profile") or {})
+            layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+            layout_contract["listProfile"] = self._v2_policy_projection(
+                list_profile,
+                runtime_carrier="ui.contract.v2.layoutContract.listProfile",
+                source_key="list_profile",
+            )
+            contract["layoutContract"] = layout_contract
+
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         params = self._params(payload)
         client_type = resolve_client_type(self._headers(), params)
@@ -375,15 +461,11 @@ class UiContractV2Handler(BaseIntentHandler):
         )
         if isinstance(hook_payload, dict):
             contract_v2 = dict(hook_payload)
+        self._project_v2_source_policies(contract_v2, source_contract)
         self._normalize_general_contract_tax_contract(contract_v2, source_contract=source_contract)
         self._normalize_general_contract_company_form(contract_v2, source_contract=source_contract)
         self._normalize_construction_diary_form(contract_v2, source_contract=source_contract)
-        if isinstance(source_contract.get("delete_policy"), dict):
-            contract_v2["delete_policy"] = dict(source_contract.get("delete_policy") or {})
-        if isinstance(source_contract.get("surface_policies"), dict):
-            contract_v2["surface_policies"] = deepcopy(source_contract.get("surface_policies") or {})
-        if isinstance(source_contract.get("list_profile"), dict):
-            contract_v2["list_profile"] = deepcopy(source_contract.get("list_profile") or {})
+        self._apply_business_config_form_groups_to_v2(contract_v2, source_contract=source_contract)
         contract_v2 = trim_unified_page_contract_v2(
             contract_v2,
             client_type=client_type,
@@ -501,8 +583,7 @@ class UiContractV2Handler(BaseIntentHandler):
 
         cleaned = clean(contract)
         if isinstance(cleaned, dict):
-            contract.clear()
-            contract.update(cleaned)
+            self._replace_v2_contract_content(contract, cleaned)
 
         status_contract = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
         widget_status = status_contract.get("widgetStatus") if isinstance(status_contract.get("widgetStatus"), list) else []
@@ -526,11 +607,10 @@ class UiContractV2Handler(BaseIntentHandler):
             row["disabled"] = False
             row["auth"] = "edit"
         if widget_status:
-            status_contract["widgetStatus"] = [
+            self._set_v2_widget_status(contract, [
                 row for row in widget_status
                 if not (isinstance(row, dict) and str(row.get("widgetId") or "").strip() == "field.tax_rate")
-            ]
-            contract["statusContract"] = status_contract
+            ])
 
         def has_tax_id_layout_node(value: Any) -> bool:
             if is_tax_id_node(value) and (
@@ -570,8 +650,129 @@ class UiContractV2Handler(BaseIntentHandler):
             return False
 
         if append_after_amount_node(container_tree):
-            layout_contract["containerTree"] = container_tree
-            contract["layoutContract"] = layout_contract
+            self._set_v2_container_tree(contract, container_tree)
+
+    def _apply_business_config_form_groups_to_v2(
+        self,
+        contract: dict[str, Any],
+        *,
+        source_contract: dict[str, Any] | None = None,
+    ) -> None:
+        if not isinstance(contract, dict):
+            return
+        view_type = str(
+            contract.get("viewType")
+            or ((contract.get("pageInfo") or {}).get("viewType") if isinstance(contract.get("pageInfo"), dict) else "")
+            or (source_contract or {}).get("view_type")
+            or ""
+        ).strip().lower()
+        if view_type != "form":
+            return
+        layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+        container_tree = layout_contract.get("containerTree") if isinstance(layout_contract.get("containerTree"), list) else []
+        if not container_tree:
+            return
+        governance = self._form_layout_governance(source_contract)
+        field_groups = governance.get("field_groups") if isinstance(governance.get("field_groups"), dict) else {}
+        if not field_groups:
+            return
+        hidden_field_names = {
+            str(item or "").strip()
+            for item in (governance.get("hidden_field_names") or [])
+            if str(item or "").strip()
+        }
+
+        configured_groups: list[tuple[str, list[str]]] = []
+        configured_names: set[str] = set()
+        for raw_title, raw_names in field_groups.items():
+            title = str(raw_title or "").strip()
+            names = [
+                str(name or "").strip()
+                for name in (raw_names if isinstance(raw_names, list) else [])
+                if str(name or "").strip()
+            ]
+            names = [name for name in names if name not in hidden_field_names]
+            names = [name for name in names if name not in configured_names]
+            if not title or not names:
+                continue
+            configured_names.update(names)
+            configured_groups.append((title, names))
+        if not configured_groups:
+            return
+
+        moved_nodes: dict[str, dict[str, Any]] = {}
+
+        def node_field_name(node: Any) -> str:
+            if not isinstance(node, dict):
+                return ""
+            return str(node.get("name") or node.get("field") or node.get("fieldCode") or "").strip()
+
+        def remove_configured_fields(nodes: list[Any]) -> list[Any]:
+            out: list[Any] = []
+            for node in nodes:
+                if not isinstance(node, dict):
+                    out.append(node)
+                    continue
+                node_type = str(node.get("type") or node.get("containerType") or "").strip().lower()
+                name = node_field_name(node)
+                if node_type == "field" and name in configured_names:
+                    moved_nodes.setdefault(name, deepcopy(node))
+                    continue
+                next_node = node
+                for key in ("children", "pages", "tabs", "nodes", "items", "widgetList"):
+                    children = next_node.get(key)
+                    if isinstance(children, list):
+                        cleaned = remove_configured_fields(children)
+                        if cleaned is not children:
+                            next_node = dict(next_node)
+                            next_node[key] = cleaned
+                out.append(next_node)
+            return out
+
+        container_tree = remove_configured_fields(container_tree)
+
+        def group_title(node: Any) -> str:
+            if not isinstance(node, dict):
+                return ""
+            if str(node.get("type") or node.get("containerType") or "").strip().lower() != "group":
+                return ""
+            return str(node.get("string") or node.get("label") or node.get("title") or "").strip()
+
+        def find_group(nodes: list[Any], title: str) -> dict[str, Any] | None:
+            for node in nodes:
+                if not isinstance(node, dict):
+                    continue
+                if group_title(node) == title:
+                    return node
+                for key in ("children", "pages", "tabs", "nodes", "items"):
+                    children = node.get(key)
+                    if isinstance(children, list):
+                        found = find_group(children, title)
+                        if found is not None:
+                            return found
+            return None
+
+        for index, (title, names) in enumerate(configured_groups, start=1):
+            group = find_group(container_tree, title)
+            if group is None:
+                group = {
+                    "type": "group",
+                    "name": "business_config_group_%s" % index,
+                    "string": title,
+                    "label": title,
+                    "children": [],
+                    "widgetList": [],
+                }
+                container_tree.append(group)
+            self._apply_form_layout_governance_to_group(group, title, source_contract=source_contract)
+            children = group.get("children") if isinstance(group.get("children"), list) else []
+            for name in names:
+                node = moved_nodes.get(name)
+                if isinstance(node, dict):
+                    children.append(deepcopy(node))
+            group["children"] = children
+
+        self._set_v2_container_tree(contract, container_tree)
 
     def _normalize_general_contract_company_form(self, contract: dict[str, Any], source_contract: dict[str, Any] | None = None) -> None:
         if not isinstance(contract, dict):
@@ -591,7 +792,6 @@ class UiContractV2Handler(BaseIntentHandler):
         ).strip().lower()
         if model != "sc.general.contract" or view_type != "form":
             return
-
         groups: list[tuple[str, list[str]]] = [
             ("合同基本信息", ["contract_name", "contract_no", "contract_type", "contract_direction", "project_id"]),
             ("合同方", ["partner_id", "partner_name_text", "credit_code", "contact_name", "contact_phone", "engineering_address", "bank_name", "bank_account"]),
@@ -601,6 +801,14 @@ class UiContractV2Handler(BaseIntentHandler):
         ]
         ordered_fields = [name for _title, names in groups for name in names]
         visible = set(ordered_fields)
+        governance = self._form_layout_governance(source_contract)
+        hidden_field_names = {
+            str(item or "").strip()
+            for item in (governance.get("hidden_field_names") or [])
+            if str(item or "").strip()
+        }
+        if hidden_field_names:
+            visible.difference_update(hidden_field_names)
         labels = {
             "project_id": "关联项目",
             "partner_name_text": "合同方",
@@ -679,19 +887,19 @@ class UiContractV2Handler(BaseIntentHandler):
             children = [normalize_node(name) for name in names if name in visible and (name in field_map or name in existing)]
             if not children:
                 continue
-            container_tree.append({
+            group_node = {
                 "type": "group",
                 "name": "general_contract_%s" % index,
                 "string": title,
                 "label": title,
                 "children": children,
                 "widgetList": [],
-            })
+            }
+            self._apply_form_layout_governance_to_group(group_node, title, source_contract=source_contract)
+            container_tree.append(group_node)
 
-        layout_contract["containerTree"] = container_tree
-        contract["layoutContract"] = layout_contract
+        self._set_v2_container_tree(contract, container_tree)
 
-        status_contract = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
         widget_status = []
         for name in ["state"] + ordered_fields:
             if name == "state" or name in visible:
@@ -703,17 +911,14 @@ class UiContractV2Handler(BaseIntentHandler):
                     "disabled": name in readonly,
                     "auth": "readonly" if name in readonly else "edit",
                 })
-        status_contract["widgetStatus"] = widget_status
-        contract["statusContract"] = status_contract
+        self._set_v2_widget_status(contract, widget_status)
 
-        governance = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
-        governance["general_contract_company_form"] = {
+        self._set_v2_governance_patch(contract, "general_contract_company_form", {
             "applied": True,
             "model": model,
             "visible_fields": ordered_fields,
             "hidden_reason": "company_general_contract_handling_projection",
-        }
-        contract["governance"] = governance
+        })
 
         def replace_amount_label(value: Any) -> Any:
             if isinstance(value, str):
@@ -726,8 +931,64 @@ class UiContractV2Handler(BaseIntentHandler):
 
         replaced = replace_amount_label(contract)
         if isinstance(replaced, dict):
-            contract.clear()
-            contract.update(replaced)
+            self._replace_v2_contract_content(contract, replaced)
+
+    def _form_layout_governance(self, source_contract: dict[str, Any] | None) -> dict[str, Any]:
+        if not isinstance(source_contract, dict):
+            return {}
+        profile = source_contract.get("business_operation_profile")
+        if not isinstance(profile, dict):
+            return {}
+        governance = profile.get("form_structure_governance")
+        return governance if isinstance(governance, dict) else {}
+
+    def _form_layout_governance_columns(self, source_contract: dict[str, Any] | None, title: str = "") -> int:
+        governance = self._form_layout_governance(source_contract)
+        return self._form_layout_columns_from_governance(governance, title)
+
+    def _form_layout_columns_from_governance(self, governance: dict[str, Any] | None, title: str = "") -> int:
+        if not isinstance(governance, dict):
+            return 0
+        group_columns = governance.get("group_columns") if isinstance(governance.get("group_columns"), dict) else {}
+        columns = 0
+        key = str(title or "").strip()
+        if key:
+            try:
+                columns = int(group_columns.get(key) or 0)
+            except (TypeError, ValueError):
+                columns = 0
+        if columns <= 0:
+            try:
+                columns = int(governance.get("form_columns") or 0)
+            except (TypeError, ValueError):
+                columns = 0
+        return columns if columns > 0 else 0
+
+    def _apply_form_layout_governance_to_group(
+        self,
+        node: dict[str, Any],
+        title: str = "",
+        *,
+        source_contract: dict[str, Any] | None = None,
+    ) -> None:
+        if not isinstance(node, dict):
+            return
+        resolved_title = str(
+            title
+            or node.get("string")
+            or node.get("label")
+            or node.get("title")
+            or node.get("name")
+            or ""
+        ).strip()
+        columns = self._form_layout_governance_columns(source_contract, resolved_title)
+        if columns <= 0:
+            return
+        node["cols"] = columns
+        node["columns"] = columns
+        attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
+        attrs["col"] = str(columns)
+        node["attributes"] = attrs
 
     def _normalize_construction_diary_form(self, contract: dict[str, Any], source_contract: dict[str, Any] | None = None) -> None:
         if not isinstance(contract, dict):
@@ -841,18 +1102,18 @@ class UiContractV2Handler(BaseIntentHandler):
             children = [normalize_node(name) for name in names if name in visible and (name in field_map or name in existing)]
             if not children:
                 continue
-            container_tree.append({
+            group_node = {
                 "type": "group",
                 "name": "construction_diary_%s" % index,
                 "string": title,
                 "label": title,
                 "children": children,
                 "widgetList": [],
-            })
-        layout_contract["containerTree"] = container_tree
-        contract["layoutContract"] = layout_contract
+            }
+            self._apply_form_layout_governance_to_group(group_node, title, source_contract=source_contract)
+            container_tree.append(group_node)
+        self._set_v2_container_tree(contract, container_tree)
 
-        status_contract = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
         widget_status = []
         for name in ["state"] + ordered_fields:
             if name == "state" or name in visible:
@@ -864,17 +1125,14 @@ class UiContractV2Handler(BaseIntentHandler):
                     "disabled": name in readonly,
                     "auth": "readonly" if name in readonly else "edit",
                 })
-        status_contract["widgetStatus"] = widget_status
-        contract["statusContract"] = status_contract
+        self._set_v2_widget_status(contract, widget_status)
 
-        governance = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
-        governance["construction_diary_form"] = {
+        self._set_v2_governance_patch(contract, "construction_diary_form", {
             "applied": True,
             "model": model,
             "visible_fields": ordered_fields,
             "hidden_reason": "construction_diary_handling_projection",
-        }
-        contract["governance"] = governance
+        })
 
     def _apply_legacy_visible_list_layout(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
         profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
@@ -980,11 +1238,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 **(layout.get("componentRegistry") if isinstance(layout.get("componentRegistry"), dict) else {}),
                 "sc.table.data": {"componentKey": "sc.table.data"},
             }
-            data_contract = contract_v2.get("dataContract") if isinstance(contract_v2.get("dataContract"), dict) else {}
-            data_meta = data_contract.get("dataMeta") if isinstance(data_contract.get("dataMeta"), dict) else {}
-            data_meta["fieldCount"] = len(columns)
-            data_contract["dataMeta"] = data_meta
-            contract_v2["dataContract"] = data_contract
+            self._set_v2_data_meta(contract_v2, {"fieldCount": len(columns)})
 
     def _apply_field_policies_to_v2_status(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
         field_policies = source_contract.get("field_policies") if isinstance(source_contract.get("field_policies"), dict) else {}
@@ -1046,8 +1300,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 rows = [row]
             for row in rows:
                 apply_policy(row, policy)
-        status_contract["widgetStatus"] = widget_status
-        contract_v2["statusContract"] = status_contract
+        self._set_v2_widget_status(contract_v2, widget_status)
 
     def _ensure_native_layout_widget_status_visible(self, contract_v2: dict[str, Any]) -> None:
         layout_contract = contract_v2.get("layoutContract") if isinstance(contract_v2.get("layoutContract"), dict) else {}
@@ -1123,8 +1376,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "disabled": False,
                 "auth": "edit",
             })
-        status_contract["widgetStatus"] = widget_status
-        contract_v2["statusContract"] = status_contract
+        self._set_v2_widget_status(contract_v2, widget_status)
 
     def _inject_action_window_contract(
         self,
@@ -1977,7 +2229,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 type_for=field_type,
             )
 
-        if form_structure_governance and not form_structure_governance.get("form_layout_overlay"):
+        if form_structure_governance:
             source_contract["form_structure_contract"] = self._build_form_structure_contract(
                 model=model,
                 profile=profile,
@@ -1985,9 +2237,9 @@ class UiContractV2Handler(BaseIntentHandler):
                 unique=unique,
                 governance=form_structure_governance,
             )
-            form = _ensure_source_form_contract(source_contract)
             if attachment_field:
-                attachments = form.get("attachments") if isinstance(form.get("attachments"), dict) else {}
+                collaboration = source_contract.get("collaboration") if isinstance(source_contract.get("collaboration"), dict) else {}
+                attachments = collaboration.get("attachments") if isinstance(collaboration.get("attachments"), dict) else {}
                 attachments.update({
                     "enabled": True,
                     "field": attachment_field,
@@ -2002,7 +2254,8 @@ class UiContractV2Handler(BaseIntentHandler):
                         "size_exceeded": "文件过大",
                     },
                 })
-                form["attachments"] = attachments
+                collaboration["attachments"] = attachments
+                source_contract["collaboration"] = collaboration
 
     def _merge_business_kanban_profile(
         self,
@@ -2137,7 +2390,36 @@ class UiContractV2Handler(BaseIntentHandler):
         field_labels: dict[str, str] = {}
         section_titles: list[str] = []
         field_groups: dict[str, list[str]] = {}
+        group_columns: dict[str, int] = {}
+        form_columns = 0
         config_summaries: list[dict[str, Any]] = []
+
+        def normalize_columns(value: Any) -> int:
+            try:
+                columns = int(value)
+            except (TypeError, ValueError):
+                return 0
+            return columns if columns > 0 else 0
+
+        def collect_layout_group_columns(nodes: Any) -> None:
+            for item in nodes if isinstance(nodes, list) else []:
+                if not isinstance(item, dict):
+                    continue
+                node_type = str(item.get("type") or item.get("kind") or "").strip().lower()
+                title = str(item.get("string") or item.get("label") or item.get("title") or item.get("name") or "").strip()
+                attrs = item.get("attributes") if isinstance(item.get("attributes"), dict) else {}
+                columns = (
+                    normalize_columns(item.get("columns"))
+                    or normalize_columns(item.get("cols"))
+                    or normalize_columns(item.get("col"))
+                    or normalize_columns(attrs.get("columns"))
+                    or normalize_columns(attrs.get("cols"))
+                    or normalize_columns(attrs.get("col"))
+                )
+                if node_type == "group" and title and columns:
+                    group_columns[title] = columns
+                for child_key in ("children", "pages", "tabs", "nodes", "items"):
+                    collect_layout_group_columns(item.get(child_key))
         try:
             view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
             configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
@@ -2160,8 +2442,10 @@ class UiContractV2Handler(BaseIntentHandler):
             orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
             views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
             form_spec = views.get("form") if isinstance(views.get("form"), dict) else {}
+            form_columns = normalize_columns(form_spec.get("columns")) or normalize_columns(form_spec.get("cols")) or form_columns
             if isinstance(form_spec.get("layout"), list) and form_spec.get("layout"):
                 form_layout_overlay = True
+                collect_layout_group_columns(form_spec.get("layout"))
             rows = form_spec.get("fields") if isinstance(form_spec.get("fields"), list) else []
             for row in rows:
                 if isinstance(row, dict):
@@ -2200,6 +2484,9 @@ class UiContractV2Handler(BaseIntentHandler):
                     for name in fields:
                         if name not in existing:
                             existing.append(name)
+                    columns = normalize_columns(row.get("columns")) or normalize_columns(row.get("cols"))
+                    if columns:
+                        group_columns[title] = columns
         applied = bool(view_governance.get("applied") or business_contracts or legacy_overlay or field_names)
         if not applied:
             return {}
@@ -2213,6 +2500,9 @@ class UiContractV2Handler(BaseIntentHandler):
             "field_labels": field_labels,
             "section_titles": section_titles,
             "field_groups": field_groups,
+            "hidden_field_names": sorted(hidden_field_names),
+            "form_columns": form_columns,
+            "group_columns": group_columns,
         }
 
     def _build_form_structure_contract(
@@ -2300,6 +2590,7 @@ class UiContractV2Handler(BaseIntentHandler):
             group_rows: list[dict[str, Any]] = []
             configured_roles: dict[str, dict[str, Any]] = {}
             assigned_configured_fields: set[str] = set()
+
             for index, (raw_title, raw_fields) in enumerate(configured_field_groups.items(), start=1):
                 title = str(raw_title or "").strip() or "业务配置字段"
                 names = [
@@ -2322,19 +2613,26 @@ class UiContractV2Handler(BaseIntentHandler):
                         "slot": "configured_form",
                         "group": group_name,
                     }
-                group_rows.append({
+                row = {
                     "name": group_name,
                     "title": title,
                     "role": "configured_field_group",
                     "fieldRefs": refs,
                     "fieldLabels": {name: field_display_label(name) for name in refs},
-                })
+                }
+                columns = self._form_layout_columns_from_governance(governance, title)
+                if columns:
+                    row["cols"] = columns
+                    row["columns"] = columns
+                group_rows.append(row)
             if group_rows:
+                form_columns = self._form_layout_columns_from_governance(governance)
                 return {
                     "source": "ui.contract.v2.form_structure_contract",
                     "structureVersion": "1.0",
                     "model": model,
                     "viewType": "form",
+                    **({"columns": form_columns} if form_columns > 0 else {}),
                     "mode": "business_task_form",
                     "layoutPolicy": "business_config_sections",
                     "objectProfile": {
@@ -2999,9 +3297,9 @@ class UiContractV2Handler(BaseIntentHandler):
             _logger.debug("ui.contract.v2 collaboration injection skipped: model inspect failed", exc_info=True)
             return
 
-        form = _ensure_source_form_contract(source_contract)
-        chatter = form.get("chatter") if isinstance(form.get("chatter"), dict) else {}
-        attachments = form.get("attachments") if isinstance(form.get("attachments"), dict) else {}
+        collaboration = source_contract.get("collaboration") if isinstance(source_contract.get("collaboration"), dict) else {}
+        chatter = collaboration.get("chatter") if isinstance(collaboration.get("chatter"), dict) else {}
+        attachments = collaboration.get("attachments") if isinstance(collaboration.get("attachments"), dict) else {}
         upload_allowed = model in _allowed_models_from_hook(self.env, "smart_core_file_upload_allowed_models")
         download_allowed = model in _allowed_models_from_hook(self.env, "smart_core_file_download_allowed_models")
         chatter_fields = [
@@ -3016,7 +3314,6 @@ class UiContractV2Handler(BaseIntentHandler):
         if not chatter_enabled and not attachment_enabled:
             return
 
-        collaboration = source_contract.get("collaboration") if isinstance(source_contract.get("collaboration"), dict) else {}
         if chatter_enabled:
             chatter = {
                 **chatter,
@@ -3033,7 +3330,6 @@ class UiContractV2Handler(BaseIntentHandler):
                     activity_capable=bool(activity_capable),
                 ),
             }
-            form["chatter"] = chatter
             collaboration["chatter"] = deepcopy(chatter)
         if attachment_enabled:
             upload_contract = attachments.get("upload") if isinstance(attachments.get("upload"), dict) else {}
@@ -3066,7 +3362,6 @@ class UiContractV2Handler(BaseIntentHandler):
             attachments["upload"]["enabled"] = bool(upload_allowed)
             attachments["download"].update(download_contract)
             attachments["download"]["enabled"] = bool(download_allowed)
-            form["attachments"] = attachments
             collaboration["attachments"] = deepcopy(attachments)
         collaboration["timeline"] = {
             "enabled": True,
@@ -3113,15 +3408,14 @@ class UiContractV2Handler(BaseIntentHandler):
         )
         if not method:
             return
-        form = _ensure_source_form_contract(source_contract)
-        header_buttons = form.get("header_buttons") if isinstance(form.get("header_buttons"), list) else []
+        header_buttons = source_contract.get("header_buttons") if isinstance(source_contract.get("header_buttons"), list) else []
         for button in header_buttons:
             if not isinstance(button, dict):
                 continue
             payload = button.get("payload") if isinstance(button.get("payload"), dict) else {}
             existing_method = str(button.get("name") or payload.get("method") or "").strip()
             if existing_method == method:
-                form["header_buttons"] = header_buttons
+                source_contract["header_buttons"] = header_buttons
                 return
         header_buttons.append({
             "name": method,
@@ -3153,7 +3447,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "runtime_carrier": "ui.contract.v2.standard_submit",
             },
         })
-        form["header_buttons"] = header_buttons
+        source_contract["header_buttons"] = header_buttons
 
     def _inject_record_business_category_context(self, source_contract: dict[str, Any], *, model: str, record_id: Any) -> None:
         if not model:
@@ -3389,6 +3683,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 columns = match.get("cols") if match else dominant_group_columns()
                 if columns:
                     node["cols"] = columns
+                    node["columns"] = columns
                     attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
                     attrs["col"] = str(columns)
                     node["attributes"] = attrs
@@ -3631,18 +3926,6 @@ class UiContractV2Handler(BaseIntentHandler):
             },
             code=code,
         )
-
-
-def _ensure_source_form_contract(source_contract: dict[str, Any]) -> dict[str, Any]:
-    views = source_contract.get("views")
-    if not isinstance(views, dict):
-        views = {}
-        source_contract["views"] = views
-    form = views.get("form")
-    if not isinstance(form, dict):
-        form = {}
-        views["form"] = form
-    return form
 
 
 def _safe_eval_action_value(value: Any, default: Any) -> Any:

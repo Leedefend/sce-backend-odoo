@@ -87,6 +87,19 @@
         ])]"/>
     </record>
 
+    <record id="menu_sc_tax_center" model="ir.ui.menu">
+        <field name="name">税务中心</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">75</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+
     <record id="menu_sc_data_center" model="ir.ui.menu">
         <field name="name">统计分析</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
@@ -1696,19 +1709,19 @@
     </record>
     <menuitem id="menu_sc_invoice_tax_user_group"
               name="发票税务"
-              parent="smart_construction_core.menu_sc_finance_center"
+              parent="smart_construction_core.menu_sc_tax_center"
               sequence="33"/>
     <menuitem id="menu_sc_invoice_application_user"
               name="销项开票申请"
-              parent="smart_construction_core.menu_sc_finance_center"
+              parent="smart_construction_core.menu_sc_invoice_tax_user_group"
               action="smart_construction_core.action_sc_invoice_application_user"
-              sequence="33"
+              sequence="10"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_invoice_registration_user"
               name="销项开票登记"
-              parent="smart_construction_core.menu_sc_finance_center"
+              parent="smart_construction_core.menu_sc_invoice_tax_user_group"
               action="smart_construction_core.action_sc_invoice_registration_user"
-              sequence="34"
+              sequence="20"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_invoice_prepaid_tax_user"
               name="预缴税款"
@@ -2272,7 +2285,7 @@
               sequence="20"/>
     <menuitem id="menu_sc_tax_finance_report_group"
               name="财税报表"
-              parent="smart_construction_core.menu_sc_data_center"
+              parent="smart_construction_core.menu_sc_tax_center"
               sequence="18"/>
     <record id="action_sc_project_operation_statistics_report" model="ir.actions.act_window">
         <field name="name">项目经营统计表</field>

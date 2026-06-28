@@ -53,11 +53,21 @@ def walk(value: Any, path: str = "$"):
             yield from walk(child, f"{path}[{index}]")
 
 
+def registry_path(value: dict[str, Any], path: tuple[str, ...]) -> Any:
+    node: Any = value
+    for item in path:
+        if not isinstance(node, dict):
+            return None
+        node = node.get(item)
+    return node
+
+
 def validate_contract(
     payload: dict[str, Any],
     *,
     expected_source_type: str,
     snapshot: dict[str, Any],
+    registry: dict[str, Any],
     errors: list[str],
 ) -> None:
     required = {
@@ -80,13 +90,41 @@ def validate_contract(
         fail(errors, f"meta.sourceType must be {expected_source_type}")
     if "compat" in meta:
         fail(errors, "meta.compat must be removed")
+    page_info = payload.get("pageInfo", {}) if isinstance(payload.get("pageInfo"), dict) else {}
+    layout = payload.get("layoutContract", {}) if isinstance(payload.get("layoutContract"), dict) else {}
+    enum_checks = (
+        ("pageInfo.clientType", page_info.get("clientType"), ("clientType", "stable")),
+        ("pageInfo.viewType", page_info.get("viewType"), ("viewType",)),
+        ("pageInfo.layoutType", page_info.get("layoutType"), ("layoutType",)),
+        ("pageInfo.renderMode", page_info.get("renderMode"), ("renderMode",)),
+        ("layoutContract.layoutType", layout.get("layoutType"), ("layoutType",)),
+        ("layoutContract.adaptMode", layout.get("adaptMode"), ("adaptMode",)),
+    )
+    for label, value, registry_key_path in enum_checks:
+        if value not in (registry_path(registry, registry_key_path) or []):
+            fail(errors, f"{expected_source_type}: {label} must be listed in enum_registry.{'.'.join(registry_key_path)}")
     container_count = len(payload.get("layoutContract", {}).get("containerTree") or [])
-    widget_status_count = len(payload.get("statusContract", {}).get("widgetStatus") or [])
+    widget_status = payload.get("statusContract", {}).get("widgetStatus") or []
+    widget_status_count = len(widget_status)
     action_count = len(payload.get("actionContract", {}).get("actionRuleList") or [])
     if container_count < int(snapshot.get("minContainerCount") or 0):
         fail(errors, f"{expected_source_type}: container snapshot below baseline")
     if widget_status_count < int(snapshot.get("minWidgetStatusCount") or 0):
         fail(errors, f"{expected_source_type}: widget status snapshot below baseline")
+    expected_widget_ids = [
+        str(item)
+        for item in snapshot.get("expectedWidgetIds") or []
+        if str(item)
+    ]
+    if expected_widget_ids:
+        actual_widget_ids = {
+            str(row.get("widgetId"))
+            for row in widget_status
+            if isinstance(row, dict) and str(row.get("widgetId"))
+        }
+        for widget_id in expected_widget_ids:
+            if widget_id not in actual_widget_ids:
+                fail(errors, f"{expected_source_type}: expected widgetStatus {widget_id!r} missing")
     if action_count < int(snapshot.get("minActionCount") or 0):
         fail(errors, f"{expected_source_type}: action snapshot below baseline")
     expected_form_structure = snapshot.get("requiresFormStructureContract") is True
@@ -107,6 +145,10 @@ def validate_contract(
             for key in node:
                 if str(key).lower() in {"script", "function", "eval", "jsonlogic", "workflowdsl", "frontendprivate"}:
                     fail(errors, f"forbidden executable/private key {key!r} at {node_path}")
+            if "containerType" in node and node["containerType"] not in (registry_path(registry, ("containerType",)) or []):
+                fail(errors, f"{node_path}.containerType must be listed in enum_registry.containerType")
+            if "widgetType" in node and node["widgetType"] not in (registry_path(registry, ("widgetType",)) or []):
+                fail(errors, f"{node_path}.widgetType must be listed in enum_registry.widgetType")
 
 
 def _layout_has_form_structure(rows: list[Any]) -> bool:
@@ -149,10 +191,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixtures", required=True, type=Path)
     parser.add_argument("--snapshot", required=True, type=Path)
+    parser.add_argument("--enum-registry", required=True, type=Path)
     args = parser.parse_args()
     target = load_assembler()
     errors: list[str] = []
     snapshot = load_json(args.snapshot)
+    registry = load_json(args.enum_registry)
     source_snapshots = snapshot.get("sources") if isinstance(snapshot.get("sources"), dict) else {}
 
     scene_source = load_json(args.fixtures / "scene_contract_v1_source.json")
@@ -169,18 +213,21 @@ def main() -> int:
         scene_contract,
         expected_source_type="scene_contract_v1",
         snapshot=source_snapshots.get("scene_contract_v1") or {},
+        registry=registry,
         errors=errors,
     )
     validate_contract(
         page_contract,
         expected_source_type="page_orchestration_v1",
         snapshot=source_snapshots.get("page_orchestration_v1") or {},
+        registry=registry,
         errors=errors,
     )
     validate_contract(
         ui_contract,
         expected_source_type="ui.contract",
         snapshot=source_snapshots.get("ui_contract") or {},
+        registry=registry,
         errors=errors,
     )
     validate_patch(onchange_patch, source_snapshots.get("api_onchange") or {}, errors)

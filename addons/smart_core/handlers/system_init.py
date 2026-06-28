@@ -33,6 +33,11 @@ from odoo.addons.smart_core.core.system_init_diagnostics_helper import SystemIni
 from odoo.addons.smart_core.core.system_init_identity_payload import SystemInitIdentityPayload
 from odoo.addons.smart_core.core.system_init_nav_request_builder import SystemInitNavRequestBuilder
 from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPayloadBuilder
+from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    MENU_CONFIG_NAV_ENABLED_PARAM,
+    MENU_CONFIG_POLICY_MODEL,
+    NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM,
+)
 from odoo.addons.smart_core.core.system_init_response_meta_builder import SystemInitResponseMetaBuilder
 from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
 from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
@@ -658,7 +663,7 @@ def _node_is_runtime_business_config_entry(node: dict) -> bool:
     if menu_xmlid.startswith("smart_construction_core.menu_scbsly_joint_acceptance_"):
         return True
     model = _text(node.get("model") or meta.get("model"))
-    if model in {"ui.menu.config.policy"}:
+    if model in {MENU_CONFIG_POLICY_MODEL}:
         return True
     return False
 
@@ -727,7 +732,7 @@ def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[
     if not isinstance(nav, list):
         return [], {"applied": False, "applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
     try:
-        raw = env["ir.config_parameter"].sudo().get_param("smart_core.nav.user_menu_config.enabled", "")
+        raw = env["ir.config_parameter"].sudo().get_param(MENU_CONFIG_NAV_ENABLED_PARAM, "")
     except Exception:
         raw = ""
     normalized = str(raw or "").strip().lower()
@@ -735,7 +740,7 @@ def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[
         return nav, {
             "applied": False,
             "reason": "disabled",
-            "smart_core.nav.user_menu_config.enabled": normalized,
+            MENU_CONFIG_NAV_ENABLED_PARAM: normalized,
             "applied_count": 0,
             "hidden_count": 0,
             "renamed_count": 0,
@@ -743,7 +748,7 @@ def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[
             "moved_count": 0,
         }
     try:
-        policy_model = env["ui.menu.config.policy"]
+        policy_model = env[MENU_CONFIG_POLICY_MODEL]
     except Exception:
         return nav, {"applied": False, "applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
     overlaid, stats = policy_model.apply_runtime_overlay({"tree": nav, "flat": []}, user=env.user)
@@ -756,7 +761,7 @@ def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[
 
 def _user_data_acceptance_nav_only_enabled(env) -> bool:
     try:
-        raw = env["ir.config_parameter"].sudo().get_param("smart_core.nav.user_data_acceptance_only", "")
+        raw = env["ir.config_parameter"].sudo().get_param(NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM, "")
     except Exception:
         raw = ""
     return str(raw or "").strip().lower() in {"1", "true", "yes", "on"}
@@ -894,7 +899,7 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
                 "source": "user_data_acceptance_only_runtime_completion",
                 "source_authority": {
                     "kind": "user_data_acceptance_only_runtime_completion",
-                    "authorities": ["ir.ui.menu", "ir.actions", "ui.menu.config.policy"],
+                    "authorities": ["ir.ui.menu", "ir.actions", MENU_CONFIG_POLICY_MODEL],
                     "projection_only": True,
                     "no_business_fact_authority": True,
                     "rebuildable": True,

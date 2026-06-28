@@ -5,7 +5,8 @@
         <field name="model">res.users</field>
         <field name="arch" type="xml">
             <tree string="用户账号" create="1" edit="1" delete="0" default_order="active desc, login asc">
-                <field name="login" string="用户名"/>
+                <field name="sc_runtime_source_login" string="用户名"/>
+                <field name="login" string="登录账号"/>
                 <field name="name" string="姓名"/>
                 <field name="phone" string="手机号"/>
                 <field name="email" string="邮箱"/>
@@ -24,7 +25,8 @@
                 <sheet>
                     <group>
                         <group string="账号信息">
-                            <field name="login" string="用户名" required="1"/>
+                            <field name="sc_runtime_source_login" string="用户名" readonly="1"/>
+                            <field name="login" string="登录账号" required="1"/>
                             <field name="name" string="姓名" required="1"/>
                             <field name="active" string="启用"/>
                             <field name="password" string="重置密码" password="True" placeholder="新建默认 123456；编辑时为空则不调整"/>
@@ -56,7 +58,8 @@
         <field name="model">res.users</field>
         <field name="arch" type="xml">
             <search string="用户账号">
-                <field name="login" string="用户名"/>
+                <field name="sc_runtime_source_login" string="用户名"/>
+                <field name="login" string="登录账号"/>
                 <field name="name" string="姓名"/>
                 <field name="phone" string="手机号"/>
                 <field name="email" string="邮箱"/>

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+from odoo.addons.smart_core.utils.backend_contract_boundaries import MENU_CONFIG_POLICY_MODEL
 
 CONFIG_ROOT_XMLID = "smart_construction_core.menu_sc_business_config_center"
 CONFIG_APP_ID = "config"
@@ -11,7 +12,7 @@ CONFIG_GROUP_KEY = "construction.基础设置"
 CONFIG_GROUP_LABEL = "基础设置"
 
 SOURCE_KIND = "native_business_config_menu_projection"
-SOURCE_AUTHORITIES = ("ir.ui.menu", "ir.actions", "res.groups", "ui.menu.config.policy")
+SOURCE_AUTHORITIES = ("ir.ui.menu", "ir.actions", "res.groups", MENU_CONFIG_POLICY_MODEL)
 NO_BUSINESS_FACT_AUTHORITY = True
 
 

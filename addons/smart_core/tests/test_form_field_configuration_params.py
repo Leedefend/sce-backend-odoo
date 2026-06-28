@@ -350,6 +350,36 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["errors"], [])
         self.assertNotIn("objects 为空，契约不会产生业务对象配置。", result["warnings"])
 
+    def test_business_config_contract_precheck_requires_view_orchestration(self):
+        handler = self.module.BusinessConfigContractSaveHandler(env={}, params={})
+
+        result = handler._precheck_contract_payload({
+            "objects": [{"name": "res.partner", "fields": []}],
+        })
+
+        self.assertIn("contract_json 必须包含 view_orchestration。", result["errors"])
+
+    def test_business_config_contract_save_rejects_legacy_lowcode_draft(self):
+        handler = self.module.BusinessConfigContractSaveHandler(
+            env={},
+            params={
+                "name": "demo",
+                "model": "res.partner",
+                "view_type": "form",
+                "contract_json": {
+                    "view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}},
+                    "legacy_lowcode_draft": {"objects": []},
+                },
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertIn("legacy_lowcode_draft", result["error"]["message"])
+
     def test_business_config_contract_precheck_accepts_form_layout_schema(self):
         handler = self.module.BusinessConfigContractSaveHandler(env={}, params={})
 
@@ -440,7 +470,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                 "action_id": 11,
                 "view_id": 22,
                 "role_key": "sales",
-                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+                "contract_json": {"view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}}},
             },
         )
 
@@ -491,7 +521,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                 "name": "demo",
                 "model": "res.partner",
                 "view_type": "form",
-                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+                "contract_json": {"view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}}},
             },
         )
 
@@ -509,7 +539,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                 "model": "res.partner",
                 "view_type": "form",
                 "role_group_ids": [1, 2],
-                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+                "contract_json": {"view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}}},
             },
         )
 
@@ -803,6 +833,76 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(
             contract_model.record.contract_json["view_orchestration"]["context"]["source"],
             "smart_core.lowcode.form_field_policy",
+        )
+        self.assertTrue(contract_model.record.published)
+
+    def test_low_code_field_group_update_rebuilds_form_layout(self):
+        class Company:
+            id = 7
+
+        class Record:
+            id = 1
+
+            def __init__(self):
+                self.contract_json = {
+                    "view_orchestration": {
+                        "views": {
+                            "form": {
+                                "fields": [
+                                    {"name": "name", "label": "Name", "sequence": 10, "group_title": "基础信息"},
+                                    {"name": "phone", "label": "Phone", "sequence": 20, "group_title": "联系信息"},
+                                ],
+                                "layout": [
+                                    {"type": "group", "string": "基础信息", "children": [{"type": "field", "name": "name"}]},
+                                    {"type": "group", "string": "联系信息", "children": [{"type": "field", "name": "phone"}]},
+                                ],
+                            }
+                        }
+                    }
+                }
+
+            def write(self, vals):
+                self.contract_json = vals["contract_json"]
+
+            def action_publish(self):
+                self.published = True
+
+        class ContractModel:
+            def __init__(self):
+                self.record = Record()
+
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return self.record
+
+            def create(self, vals):
+                raise AssertionError("existing contract should be updated")
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        env = Env({"ui.business.config.contract": contract_model})
+
+        self.module._upsert_view_orchestration_field_rows(
+            env,
+            model="res.partner",
+            view_type="form",
+            rows=[
+                {"name": "phone", "label": "Phone", "sequence": 15, "group_title": "基础信息"},
+            ],
+        )
+
+        form_spec = contract_model.record.contract_json["view_orchestration"]["views"]["form"]
+        fields = form_spec["fields"]
+        self.assertEqual(fields[1]["name"], "phone")
+        self.assertEqual(fields[1]["group_title"], "基础信息")
+        self.assertEqual([group["string"] for group in form_spec["layout"]], ["基础信息"])
+        self.assertEqual(
+            [child["name"] for child in form_spec["layout"][0]["children"]],
+            ["name", "phone"],
         )
         self.assertTrue(contract_model.record.published)
 

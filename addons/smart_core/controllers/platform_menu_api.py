@@ -14,6 +14,7 @@ from odoo.addons.smart_core.delivery.menu_target_interpreter_service import Menu
 from odoo.addons.smart_core.security.auth import get_user_from_token
 from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+from odoo.addons.smart_core.utils.backend_contract_boundaries import MENU_CONFIG_NAV_ENABLED_PARAM, MENU_CONFIG_POLICY_MODEL
 from odoo.addons.smart_core.core.exceptions import (
     AUTH_REQUIRED,
     BAD_REQUEST,
@@ -28,7 +29,7 @@ SOURCE_AUTHORITIES = (
     "ir.ui.menu",
     "ir.actions.act_window",
     "res.groups",
-    "ui.menu.config.policy",
+    MENU_CONFIG_POLICY_MODEL,
     "extension_business_config_role_resolver",
     "legacy_construction_business_config_group",
 )
@@ -247,7 +248,7 @@ def _is_business_config_user(env) -> bool:
 
 def _apply_user_menu_config(env, nav_fact: dict) -> tuple[dict, dict]:
     try:
-        raw = env["ir.config_parameter"].sudo().get_param("smart_core.nav.user_menu_config.enabled", "")
+        raw = env["ir.config_parameter"].sudo().get_param(MENU_CONFIG_NAV_ENABLED_PARAM, "")
     except Exception:
         raw = ""
     normalized = str(raw or "").strip().lower()
@@ -255,16 +256,16 @@ def _apply_user_menu_config(env, nav_fact: dict) -> tuple[dict, dict]:
         return nav_fact, {
             "applied": False,
             "reason": "disabled",
-            "smart_core.nav.user_menu_config.enabled": normalized,
+            MENU_CONFIG_NAV_ENABLED_PARAM: normalized,
             "applied_count": 0,
             "hidden_count": 0,
             "renamed_count": 0,
             "reordered_count": 0,
             "moved_count": 0,
         }
-    if "ui.menu.config.policy" not in env:
+    if MENU_CONFIG_POLICY_MODEL not in env:
         return nav_fact, {"applied": False, "applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
-    overlaid, stats = env["ui.menu.config.policy"].apply_runtime_overlay(nav_fact, user=env.user)
+    overlaid, stats = env[MENU_CONFIG_POLICY_MODEL].apply_runtime_overlay(nav_fact, user=env.user)
     if not isinstance(stats, dict):
         stats = {}
     stats.setdefault("applied", True)

@@ -1,4 +1,5 @@
 import { computed, type Ref } from 'vue';
+import { resolveUnifiedPageContractV2SurfacePolicies } from '../contracts/unifiedPageContractV2';
 
 type ActionContractLike = {
   surface_policies?: {
@@ -18,10 +19,11 @@ export function useActionViewSurfaceDisplayRuntime(options: UseActionViewSurface
   const sortLabel = computed(() => options.sortValue.value || 'id asc');
 
   const surfaceKind = computed(() => {
+    const surfacePolicies = resolveUnifiedPageContractV2SurfacePolicies(options.actionContract.value);
     return options.resolveActionViewSurfaceKind({
       strictContractMode: options.strictContractMode.value,
       strictSurfaceContract: options.strictSurfaceContract.value,
-      contractSurfaceKind: options.actionContract.value?.surface_policies?.kind,
+      contractSurfaceKind: surfacePolicies.kind,
       extensionSurfaceKind: '',
     });
   });

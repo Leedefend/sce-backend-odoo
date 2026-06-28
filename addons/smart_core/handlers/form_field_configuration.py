@@ -11,6 +11,8 @@ from odoo.exceptions import ValidationError
 from ..core.base_handler import BaseIntentHandler
 from ..core.request_params import parse_non_negative_int
 from ..utils.backend_contract_boundaries import (
+    BUSINESS_CONFIG_INTENTS,
+    FORM_FIELD_CONFIG_INTENTS,
     VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY,
     VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
     ensure_view_orchestration_source,
@@ -590,6 +592,46 @@ def _upsert_view_orchestration_field_rows(
     views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
     spec = views.get(view_type) if isinstance(views.get(view_type), dict) else {}
     fields_rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
+    layout_group_by_field: dict[str, str] = {}
+    group_meta_by_title: dict[str, dict] = {}
+    field_layout_meta_by_name: dict[str, dict] = {}
+
+    def collect_layout_groups(nodes, group_title: str = "") -> None:
+        for node in nodes if isinstance(nodes, list) else []:
+            if not isinstance(node, dict):
+                continue
+            node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+            title = str(node.get("string") or node.get("label") or node.get("title") or "").strip()
+            next_group = title if node_type == "group" and title else group_title
+            if node_type == "group" and title:
+                attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
+                group_meta_by_title[title] = {
+                    "visible": node.get("visible"),
+                    "columns": node.get("columns") or node.get("cols") or attrs.get("columns") or attrs.get("cols"),
+                }
+            field_name = str(node.get("name") or node.get("field") or "").strip()
+            if node_type == "field" and field_name and next_group:
+                layout_group_by_field[field_name] = next_group
+            if node_type == "field" and field_name:
+                field_layout_meta_by_name[field_name] = {
+                    "class": node.get("class") or node.get("className"),
+                    "field_size": node.get("field_size") or node.get("fieldSize") or node.get("size"),
+                }
+            for child_key in ("children", "pages", "tabs", "nodes", "items"):
+                collect_layout_groups(node.get(child_key), next_group)
+
+    collect_layout_groups(spec.get("layout"))
+    for section in spec.get("sections") if isinstance(spec.get("sections"), list) else []:
+        if not isinstance(section, dict):
+            continue
+        title = str(section.get("title") or section.get("label") or section.get("name") or "").strip()
+        if not title:
+            continue
+        current = group_meta_by_title.get(title, {})
+        group_meta_by_title[title] = {
+            "visible": current.get("visible") if current.get("visible") is not None else section.get("visible"),
+            "columns": current.get("columns") or section.get("columns") or section.get("cols"),
+        }
     by_name = {
         str(row.get("name") or row.get("field") or row.get("field_name") or "").strip(): dict(row)
         for row in fields_rows
@@ -600,10 +642,16 @@ def _upsert_view_orchestration_field_rows(
         if not field_name:
             continue
         current = by_name.get(field_name, {"name": field_name})
-        for key in ("label", "visible", "sequence", "group_title"):
+        for key in ("label", "visible", "sequence", "group_title", "class", "field_size", "width"):
             if key in row and row.get(key) is not None:
                 current[key] = row.get(key)
         by_name[field_name] = current
+    for field_name, current in by_name.items():
+        if not str(current.get("group_title") or "").strip() and layout_group_by_field.get(field_name):
+            current["group_title"] = layout_group_by_field[field_name]
+        for key, value in field_layout_meta_by_name.get(field_name, {}).items():
+            if value and not current.get(key):
+                current[key] = value
     spec["fields"] = sorted(by_name.values(), key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or "")))
     grouped: dict[str, list[dict]] = {}
     for row in spec["fields"]:
@@ -614,13 +662,15 @@ def _upsert_view_orchestration_field_rows(
             continue
         group_title = str(row.get("group_title") or "").strip()
         if not group_title:
-            continue
+            group_title = "业务配置字段"
         grouped.setdefault(group_title, []).append(row)
     if grouped:
         spec["sections"] = [
             {
                 "name": "business_config_section_%s" % (index + 1),
                 "title": title,
+                **({"visible": group_meta_by_title.get(title, {}).get("visible")} if group_meta_by_title.get(title, {}).get("visible") is not None else {}),
+                **({"columns": group_meta_by_title.get(title, {}).get("columns")} if group_meta_by_title.get(title, {}).get("columns") else {}),
                 "sequence": (index + 1) * 10,
                 "fields": [
                     str(item.get("name") or item.get("field") or item.get("field_name") or "").strip()
@@ -632,6 +682,28 @@ def _upsert_view_orchestration_field_rows(
                 grouped.items(),
                 key=lambda item: (min(int(row.get("sequence") or 100) for row in item[1]), item[0]),
             ))
+        ]
+        spec["layout"] = [
+            {
+                "type": "group",
+                "string": title,
+                **({"visible": group_meta_by_title.get(title, {}).get("visible")} if group_meta_by_title.get(title, {}).get("visible") is not None else {}),
+                **({"columns": group_meta_by_title.get(title, {}).get("columns")} if group_meta_by_title.get(title, {}).get("columns") else {}),
+                "children": [
+                    {
+                        "type": "field",
+                        "name": str(item.get("name") or item.get("field") or item.get("field_name") or "").strip(),
+                        **({"class": item.get("class")} if item.get("class") else {}),
+                        **({"field_size": item.get("field_size")} if item.get("field_size") else {}),
+                    }
+                    for item in sorted(items, key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or "")))
+                    if str(item.get("name") or item.get("field") or item.get("field_name") or "").strip()
+                ],
+            }
+            for title, items in sorted(
+                grouped.items(),
+                key=lambda item: (min(int(row.get("sequence") or 100) for row in item[1]), item[0]),
+            )
         ]
     views[view_type] = spec
     orchestration["views"] = views
@@ -656,7 +728,7 @@ def _upsert_view_orchestration_field_rows(
 
 
 class FormFieldPolicySetHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.form_field_policy.set"
+    INTENT_TYPE = FORM_FIELD_CONFIG_INTENTS["policy_set"]
     DESCRIPTION = "Set current form field visibility policy from a contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -785,7 +857,7 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
 
 
 class FormCustomFieldCreateHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.form_custom_field.create"
+    INTENT_TYPE = FORM_FIELD_CONFIG_INTENTS["custom_field_create"]
     DESCRIPTION = "Create a safe custom form field from a contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -1284,7 +1356,7 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
 
 
 class BusinessConfigLowCodeApplyHandler(FormFieldConfigBatchSetHandler):
-    INTENT_TYPE = "ui.business_config.lowcode.apply"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["lowcode_apply"]
     DESCRIPTION = "Apply low-code business form configuration in current form scope."
 
     def handle(self, payload=None, ctx=None):
@@ -1299,7 +1371,7 @@ class BusinessConfigLowCodeApplyHandler(FormFieldConfigBatchSetHandler):
 
 
 class BusinessConfigFormAuditHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.form.audit"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["form_audit"]
     DESCRIPTION = "Audit low-code form config consistency between business contract and legacy field policy."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_form_audit"
@@ -1425,7 +1497,7 @@ class BusinessConfigFormAuditHandler(BaseIntentHandler):
 
 
 class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.list_search.audit"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["list_search_audit"]
     DESCRIPTION = "Audit business list/search config boundary against UI-only user preferences."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_list_search_audit"
@@ -1700,7 +1772,7 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
 
 
 class BusinessConfigListSearchSetHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.list_search.set"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["list_search_set"]
     DESCRIPTION = "Save business list columns and search filters into view_orchestration contracts."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -1857,7 +1929,7 @@ class BusinessConfigListSearchSetHandler(BaseIntentHandler):
 
 
 class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
-    INTENT_TYPE = "ui.business_config.analysis.audit"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["analysis_audit"]
     DESCRIPTION = "Audit business analysis view config from view_orchestration contracts."
     SOURCE_KIND = "ui_business_config_analysis_audit"
     SOURCE_AUTHORITIES = (
@@ -1994,7 +2066,7 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
 
 
 class BusinessConfigAnalysisSetHandler(BusinessConfigListSearchSetHandler):
-    INTENT_TYPE = "ui.business_config.analysis.set"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["analysis_set"]
     DESCRIPTION = "Save business analysis view config into view_orchestration contracts."
     SOURCE_KIND = "ui_business_config_analysis_set"
     SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
@@ -2105,7 +2177,7 @@ class BusinessConfigAnalysisSetHandler(BusinessConfigListSearchSetHandler):
 
 
 class BusinessConfigListSearchBootstrapHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.list_search.bootstrap"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["list_search_bootstrap"]
     DESCRIPTION = "Bootstrap business list/search contracts from current backend view contracts."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -2275,7 +2347,7 @@ class BusinessConfigListSearchBootstrapHandler(BaseIntentHandler):
 
 
 class BusinessConfigAnalysisBootstrapHandler(BusinessConfigListSearchBootstrapHandler):
-    INTENT_TYPE = "ui.business_config.analysis.bootstrap"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["analysis_bootstrap"]
     DESCRIPTION = "Bootstrap business analysis contracts from current backend pivot/graph view contracts."
     SOURCE_KIND = "ui_business_config_analysis_bootstrap"
     SOURCE_AUTHORITIES = (
@@ -2421,7 +2493,7 @@ class BusinessConfigAnalysisBootstrapHandler(BusinessConfigListSearchBootstrapHa
 
 
 class BusinessConfigFormBootstrapHandler(BusinessConfigListSearchBootstrapHandler):
-    INTENT_TYPE = "ui.business_config.form.bootstrap"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["form_bootstrap"]
     DESCRIPTION = "Bootstrap business form contract from current backend form view contract."
     SOURCE_KIND = "ui_business_config_form_bootstrap"
     SOURCE_AUTHORITIES = (
@@ -2576,7 +2648,7 @@ class BusinessConfigFormBootstrapHandler(BusinessConfigListSearchBootstrapHandle
 
 
 class BusinessConfigContractSaveHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.save"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_save"]
     DESCRIPTION = "Save low-code business config contract payload into contract model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -2618,6 +2690,8 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         if not isinstance(contract_json, dict):
             return self._err(400, "contract_json 必须是对象", REASON_USER_ERROR)
+        if "legacy_lowcode_draft" in contract_json:
+            return self._err(400, "legacy_lowcode_draft 已停止作为保存来源，请使用 view_orchestration", REASON_USER_ERROR)
         contract_json = _lowcode_view_orchestration_payload(contract_json)
         precheck = self._precheck_contract_payload(contract_json)
         if precheck["errors"]:
@@ -2674,13 +2748,10 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
         errors = []
         view_orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
         self._precheck_view_orchestration_layout(view_orchestration, warnings, errors)
-        legacy_draft = payload.get("legacy_lowcode_draft") if isinstance(payload.get("legacy_lowcode_draft"), dict) else {}
         explicit_objects = isinstance(payload.get("objects"), list)
         objects = payload.get("objects") if explicit_objects else []
-        if not objects and isinstance(legacy_draft.get("objects"), list):
-            objects = legacy_draft.get("objects") or []
-        if not objects and not view_orchestration:
-            warnings.append("objects 为空，契约不会产生业务对象配置。")
+        if not view_orchestration:
+            errors.append("contract_json 必须包含 view_orchestration。")
         has_view_fields = bool(_view_orchestration_field_names(payload, "form"))
         for obj in objects:
             if not isinstance(obj, dict):
@@ -2693,8 +2764,6 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             if not fields_rows and (explicit_objects or not has_view_fields):
                 warnings.append("业务对象 %s 未配置字段。" % (obj_name or "<unknown>"))
         rules = payload.get("rules") if isinstance(payload.get("rules"), list) else []
-        if not rules and isinstance(legacy_draft.get("rules"), list):
-            rules = legacy_draft.get("rules") or []
         for idx, rule in enumerate(rules):
             if not isinstance(rule, dict):
                 errors.append("rules[%s] 非对象。" % idx)
@@ -2742,7 +2811,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
 
 
 class BusinessConfigContractGetHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.get"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_get"]
     DESCRIPTION = "Get low-code business config contract payload by name/model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_get"
@@ -2796,7 +2865,7 @@ class BusinessConfigContractGetHandler(BaseIntentHandler):
 
 
 class BusinessConfigContractListHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.list"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_list"]
     DESCRIPTION = "List low-code business config contracts in current company."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_list"
@@ -2843,7 +2912,7 @@ class BusinessConfigContractListHandler(BaseIntentHandler):
 
 
 class BusinessConfigContractVersionsHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.versions"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_versions"]
     DESCRIPTION = "List low-code business config contract versions in current scope."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_versions"
@@ -2918,7 +2987,7 @@ class BusinessConfigContractVersionsHandler(BaseIntentHandler):
 
 
 class BusinessConfigContractPublishHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.publish"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_publish"]
     DESCRIPTION = "Publish a low-code business config contract by name/model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -2972,7 +3041,7 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
 
 
 class BusinessConfigContractRollbackHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.business_config.contract.rollback"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["contract_rollback"]
     DESCRIPTION = "Rollback a low-code business config contract to a previous or specified snapshot."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"

@@ -19,8 +19,85 @@ VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING = "smart_core.lowcode.business_config
 VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY = "smart_core.lowcode.form_field_policy"
 VIEW_ORCHESTRATION_SOURCE_ANALYSIS_EDITOR = "business_config_analysis_editor"
 MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING = "smart_core.lowcode.menu_config"
+MENU_CONFIG_POLICY_MODEL = "ui.menu.config.policy"
+MENU_CONFIG_RUNTIME_SOURCE_POLICY = "ui.menu.config.policy"
+MENU_CONFIG_RUNTIME_SOURCE_CONTRACT = "ui.business.config.contract.menu_orchestration"
+MENU_CONFIG_NAV_ENABLED_PARAM = "smart_core.nav.user_menu_config.enabled"
+MENU_CONFIG_CONFIG_ONLY_PARAM = "smart_core.nav.user_menu_config.config_only.enabled"
+NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM = "smart_core.nav.user_data_acceptance_only"
 APPROVAL_POLICY_SOURCE_TENANT_LOWCODING = "smart_construction_core.lowcode.approval_policy"
 APPROVAL_POLICY_RUNTIME_SOURCE = "sc.approval.policy"
+
+BUSINESS_CONFIG_MODES = {
+    "form_field": "form_field_configuration",
+    "lowcode": "business_config_lowcode",
+}
+
+BUSINESS_CONFIG_ACTION_KEYS = {
+    "current_form_field_settings": "current_form_field_settings",
+    "current_form_add_custom_field": "current_form_add_custom_field",
+    "current_form_field_order_save": "current_form_field_order_save",
+    "current_form_field_configuration": "current_form_field_configuration",
+}
+BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_SETTINGS = BUSINESS_CONFIG_ACTION_KEYS["current_form_field_settings"]
+BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_ADD_CUSTOM_FIELD = BUSINESS_CONFIG_ACTION_KEYS["current_form_add_custom_field"]
+BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_ORDER_SAVE = BUSINESS_CONFIG_ACTION_KEYS["current_form_field_order_save"]
+BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_CONFIGURATION = BUSINESS_CONFIG_ACTION_KEYS["current_form_field_configuration"]
+
+BUSINESS_CONFIG_AUTHORITIES = {
+    "contract": "ui.business.config.contract",
+    "contract_version": "ui.business.config.contract.version",
+    "form_field_policy": "ui.form.field.policy",
+    "custom_field_wizard": "ui.form.custom.field.wizard",
+}
+
+BUSINESS_CONFIG_OWNER_LAYER = "business_view_orchestration"
+
+BUSINESS_CONFIG_INTENTS = {
+    "form_audit": "ui.business_config.form.audit",
+    "lowcode_apply": "ui.business_config.lowcode.apply",
+    "contract_list": "ui.business_config.contract.list",
+    "contract_get": "ui.business_config.contract.get",
+    "contract_save": "ui.business_config.contract.save",
+    "contract_publish": "ui.business_config.contract.publish",
+    "contract_rollback": "ui.business_config.contract.rollback",
+    "contract_versions": "ui.business_config.contract.versions",
+    "list_search_audit": "ui.business_config.list_search.audit",
+    "list_search_set": "ui.business_config.list_search.set",
+    "list_search_bootstrap": "ui.business_config.list_search.bootstrap",
+    "analysis_audit": "ui.business_config.analysis.audit",
+    "analysis_set": "ui.business_config.analysis.set",
+    "analysis_bootstrap": "ui.business_config.analysis.bootstrap",
+    "form_bootstrap": "ui.business_config.form.bootstrap",
+    "surface_get": "ui.business_config.surface.get",
+    "snapshot_summary": "ui.business_config.snapshot.summary",
+    "snapshot_export": "ui.business_config.snapshot.export",
+    "snapshot_compare": "ui.business_config.snapshot.compare",
+    "coverage_scan": "ui.business_config.coverage.scan",
+    "coverage_bootstrap_list_search": "ui.business_config.coverage.bootstrap_list_search",
+    "coverage_bootstrap_missing": "ui.business_config.coverage.bootstrap_missing",
+}
+
+FORM_FIELD_CONFIG_INTENTS = {
+    "policy_set": "ui.form_field_policy.set",
+    "custom_field_create": "ui.form_custom_field.create",
+}
+
+MENU_CONFIG_INTENTS = {
+    "panel_get": "ui.menu_config.panel.get",
+    "panel_set": "ui.menu_config.panel.set",
+    "menu_create": "ui.menu_config.menu.create",
+    "menu_delete": "ui.menu_config.menu.delete",
+    "audit": "ui.menu_config.audit",
+    "rollback": "ui.menu_config.rollback",
+    "versions": "ui.menu_config.versions",
+}
+
+APPROVAL_POLICY_INTENTS = {
+    "config_get": "sc.approval_policy.config.get",
+    "config_set": "sc.approval_policy.config.set",
+    "steps_set": "sc.approval_policy.steps.set",
+}
 
 LAYER_GENERATED_BASELINE = 10
 LAYER_INDUSTRY_STANDARD = 20

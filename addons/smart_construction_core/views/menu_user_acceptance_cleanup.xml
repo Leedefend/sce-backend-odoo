@@ -16,7 +16,7 @@
         <record id="menu_sc_invoice_tax_user_group" model="ir.ui.menu">
             <field name="name">开票与税务办理</field>
             <field name="sequence">20</field>
-            <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_tax_center"/>
             <field name="active">1</field>
         </record>
         <record id="menu_sc_expense_reimbursement_group" model="ir.ui.menu">

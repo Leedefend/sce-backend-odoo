@@ -11,15 +11,21 @@
           v-for="field in fields"
           :key="field.key"
           :class="fieldClass(field)"
+          :data-field-name="field.name"
+          :data-field-key="field.key"
           :tabindex="fieldSelectionMode ? 0 : undefined"
           :role="fieldSelectionMode ? 'button' : undefined"
           :aria-pressed="fieldSelectionMode ? selectedFieldKey === fieldIdentity(field) : undefined"
+          :draggable="fieldOrderEditable"
           @click.capture="emitFieldSelect(field, $event)"
           @keydown.enter="emitFieldSelect(field, $event)"
           @keydown.space="emitFieldSelect(field, $event)"
-          @dragover.prevent="emitFieldOrderDragOver(field)"
+          @dragstart.stop="emitFieldOrderDragStart(field, $event)"
+          @dragend.stop="emitFieldOrderDragEnd(field)"
+          @dragover.prevent="emitFieldOrderDragOver(field, $event)"
           @dragleave="emitFieldOrderDragLeave(field)"
-          @drop.prevent="emitFieldOrderDrop(field)"
+          @drop.prevent="emitFieldOrderDrop(field, $event)"
+          @mouseup="emitFieldOrderPointerDrop(field, $event)"
         >
           <div class="field-label-row">
             <label v-if="!fieldConfigEditable" class="label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
@@ -32,43 +38,7 @@
               @change="emitFieldLabelChange(field, ($event.target as HTMLInputElement).value)"
               @keydown.enter.prevent="emitFieldLabelChange(field, ($event.target as HTMLInputElement).value)"
             />
-            <div v-if="fieldOrderEditable || fieldActionsFor(field).length" class="field-inline-config">
-              <div v-if="fieldOrderEditable" class="field-order-inline-tools" :aria-label="`${field.label}字段排序`">
-                <span
-                  class="field-order-handle"
-                  role="button"
-                  tabindex="0"
-                  :draggable="fieldOrderEditable"
-                  :aria-label="`拖动${field.label}调整顺序`"
-                  title="按住拖动调整顺序"
-                  @dragstart.stop="emitFieldOrderDragStart(field, $event)"
-                  @dragend.stop="emitFieldOrderDragEnd(field)"
-                >⋮⋮</span>
-                <button
-                  class="field-order-btn"
-                  type="button"
-                  :disabled="!canMoveFieldOrder(field, -1)"
-                  :aria-label="`上移${field.label}`"
-                  title="上移"
-                  @click.stop="emitFieldOrderMove(field, -1)"
-                >↑</button>
-                <button
-                  class="field-order-btn"
-                  type="button"
-                  :disabled="!canMoveFieldOrder(field, 1)"
-                  :aria-label="`下移${field.label}`"
-                  title="下移"
-                  @click.stop="emitFieldOrderMove(field, 1)"
-                >↓</button>
-                <button
-                  v-if="fieldConfigEditable"
-                  class="field-order-btn"
-                  type="button"
-                  :aria-label="`在${field.label}后新增字段`"
-                  title="新增字段"
-                  @click.stop="emitFieldAddAfter(field)"
-                >新增</button>
-              </div>
+            <div v-if="fieldActionsFor(field).length" class="field-inline-config">
               <div
                 v-if="fieldActionsFor(field).length"
                 class="field-inline-actions"
@@ -310,6 +280,7 @@ const props = withDefaults(defineProps<{
   fieldOrderCount?: number;
   fieldOrderDraggingKey?: string;
   fieldOrderDropTargetKey?: string;
+  fieldOrderDropPlacement?: 'before' | 'after' | '';
   fieldConfigEditable?: boolean;
   fieldGroupTitle?: string;
   fieldSelectionMode?: boolean;
@@ -328,6 +299,7 @@ const props = withDefaults(defineProps<{
   fieldOrderCount: 0,
   fieldOrderDraggingKey: '',
   fieldOrderDropTargetKey: '',
+  fieldOrderDropPlacement: '',
   fieldConfigEditable: false,
   fieldGroupTitle: '',
   fieldSelectionMode: false,
@@ -341,9 +313,9 @@ const emit = defineEmits<{
   (e: 'field-action', payload: FormSectionFieldActionPayload): void;
   (e: 'field-order-move', payload: { field: FormSectionFieldSchema; delta: number }): void;
   (e: 'field-order-drag-start', payload: { field: FormSectionFieldSchema; event: DragEvent }): void;
-  (e: 'field-order-drag-over', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
+  (e: 'field-order-drag-over', payload: { field: FormSectionFieldSchema; groupTitle: string; placement: 'before' | 'after' | '' }): void;
   (e: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
-  (e: 'field-order-drop', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
+  (e: 'field-order-drop', payload: { field: FormSectionFieldSchema; groupTitle: string; placement: 'before' | 'after' | '' }): void;
   (e: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (e: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
   (e: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
@@ -406,18 +378,28 @@ function fieldIdentity(field: FormSectionFieldSchema) {
   return String(field.name || field.key || '').trim();
 }
 
+function fieldSpanClass(field: FormSectionFieldSchema) {
+  const span = field.spanClass || defaultSpanClass(field.type);
+  if (props.columns === 1 && span.includes('field--wide')) return span.replace('field--wide', 'field--full');
+  return span;
+}
+
 function fieldClass(field: FormSectionFieldSchema) {
   const fieldKey = fieldIdentity(field);
+  const isDropTarget = props.fieldOrderDropTargetKey === fieldKey && props.fieldOrderDraggingKey !== fieldKey;
   return [
     'field',
-    field.spanClass || defaultSpanClass(field.type),
+    fieldSpanClass(field),
     fieldWidgetClass(field),
     {
       'field--order-editable': props.fieldOrderEditable,
       'field--order-dragging': props.fieldOrderDraggingKey === fieldKey,
-      'field--order-drop-target': props.fieldOrderDropTargetKey === fieldKey && props.fieldOrderDraggingKey !== fieldKey,
+      'field--order-drop-target': isDropTarget,
+      'field--order-drop-before': isDropTarget && props.fieldOrderDropPlacement !== 'after',
+      'field--order-drop-after': isDropTarget && props.fieldOrderDropPlacement === 'after',
       'field--selectable': props.fieldSelectionMode,
       'field--selected': props.fieldSelectionMode && props.selectedFieldKey === fieldKey,
+      'field--config-hidden': props.fieldSelectionMode && isFieldMarkedHidden(field),
     },
   ];
 }
@@ -486,17 +468,11 @@ function fieldActionsFor(field: FormSectionFieldSchema) {
   return props.fieldActions?.(field) || [];
 }
 
-function resolveFieldOrderIndex(field: FormSectionFieldSchema) {
-  return props.fieldOrderIndex?.(field) ?? -1;
-}
-
-function canMoveFieldOrder(field: FormSectionFieldSchema, delta: number) {
-  if (!props.fieldOrderEditable) return false;
-  const index = resolveFieldOrderIndex(field);
-  const count = Number(props.fieldOrderCount || 0);
-  if (index < 0 || count <= 0) return false;
-  const nextIndex = index + delta;
-  return nextIndex >= 0 && nextIndex < count;
+function isFieldMarkedHidden(field: FormSectionFieldSchema) {
+  return fieldActionsFor(field).some((action) => (
+    Boolean(action.checked)
+    && String(action.value || action.key || '').trim().toLowerCase() === 'hide'
+  ));
 }
 
 function emitFieldChange(field: FormSectionFieldSchema, value: string | number | boolean | null) {
@@ -510,8 +486,12 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
 }
 
 function collapseMany2oneDropdown(event: Event) {
-  const target = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
-  const input = target?.closest('.many2one-combobox')?.querySelector('input');
+  const target = event.currentTarget;
+  const targetElement = target as unknown as { closest?: (selector: string) => { querySelector?: (selector: string) => HTMLInputElement | null } | null };
+  const closest = target && typeof targetElement.closest === 'function'
+    ? targetElement.closest.bind(target)
+    : null;
+  const input = closest?.('.many2one-combobox')?.querySelector?.('input') || null;
   window.setTimeout(() => input?.blur(), 0);
 }
 
@@ -575,19 +555,24 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
   emit('field-action', { field, action });
 }
 
-function emitFieldOrderMove(field: FormSectionFieldSchema, delta: number) {
-  if (!canMoveFieldOrder(field, delta)) return;
-  emit('field-order-move', { field, delta });
-}
-
 function emitFieldOrderDragStart(field: FormSectionFieldSchema, event: DragEvent) {
   if (!props.fieldOrderEditable) return;
   emit('field-order-drag-start', { field, event });
 }
 
-function emitFieldOrderDragOver(field: FormSectionFieldSchema) {
+function fieldOrderDropPlacement(event?: DragEvent | MouseEvent): 'before' | 'after' | '' {
+  const target = event?.currentTarget as HTMLElement | null | undefined;
+  if (!target || typeof target.getBoundingClientRect !== 'function') return '';
+  const rect = target.getBoundingClientRect();
+  if (!rect.height) return '';
+  const clientY = Number(event?.clientY || 0);
+  if (!Number.isFinite(clientY) || clientY <= 0) return '';
+  return clientY >= rect.top + rect.height / 2 ? 'after' : 'before';
+}
+
+function emitFieldOrderDragOver(field: FormSectionFieldSchema, event?: DragEvent) {
   if (!props.fieldOrderEditable) return;
-  emit('field-order-drag-over', { field, groupTitle: props.fieldGroupTitle || '' });
+  emit('field-order-drag-over', { field, groupTitle: props.fieldGroupTitle || '', placement: fieldOrderDropPlacement(event) });
 }
 
 function emitFieldOrderDragLeave(field: FormSectionFieldSchema) {
@@ -595,9 +580,15 @@ function emitFieldOrderDragLeave(field: FormSectionFieldSchema) {
   emit('field-order-drag-leave', { field, groupTitle: props.fieldGroupTitle || '' });
 }
 
-function emitFieldOrderDrop(field: FormSectionFieldSchema) {
+function emitFieldOrderDrop(field: FormSectionFieldSchema, event?: DragEvent | MouseEvent) {
   if (!props.fieldOrderEditable) return;
-  emit('field-order-drop', { field, groupTitle: props.fieldGroupTitle || '' });
+  emit('field-order-drop', { field, groupTitle: props.fieldGroupTitle || '', placement: fieldOrderDropPlacement(event) });
+}
+
+function emitFieldOrderPointerDrop(field: FormSectionFieldSchema, event: MouseEvent) {
+  if (!props.fieldOrderEditable || !props.fieldOrderDraggingKey) return;
+  emitFieldOrderDrop(field, event);
+  emitFieldOrderDragEnd(field);
 }
 
 function emitFieldOrderDragEnd(field: FormSectionFieldSchema) {
@@ -612,15 +603,14 @@ function emitFieldLabelChange(field: FormSectionFieldSchema, label: string) {
   emit('field-label-change', { field, label: normalized });
 }
 
-function emitFieldAddAfter(field: FormSectionFieldSchema) {
-  if (!props.fieldConfigEditable) return;
-  emit('field-add-after', { field, groupTitle: props.fieldGroupTitle || '' });
-}
-
 function isInteractiveFieldTarget(event?: Event) {
   const target = event?.target;
-  if (!(target instanceof Element)) return false;
-  return Boolean(target.closest('button, input, select, textarea, a, .field-inline-config, .field-control-row'));
+  const targetElement = target as unknown as { closest?: (selector: string) => unknown };
+  if (!target || typeof targetElement.closest !== 'function') return false;
+  if (props.fieldSelectionMode) {
+    return Boolean(targetElement.closest('button, a, .field-inline-config, .field-label-editor'));
+  }
+  return Boolean(targetElement.closest('button, input, select, textarea, a, .field-inline-config, .field-control-row'));
 }
 
 function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
@@ -708,7 +698,14 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 .field--order-drop-target {
   border-color: var(--sc-semantic-surface-interactive);
   background: var(--sc-app-info-bg);
-  box-shadow: inset 3px 0 0 var(--sc-semantic-surface-interactive);
+}
+
+.field--order-drop-before {
+  box-shadow: inset 0 3px 0 var(--sc-semantic-surface-interactive);
+}
+
+.field--order-drop-after {
+  box-shadow: inset 0 -3px 0 var(--sc-semantic-surface-interactive);
 }
 
 .field--selectable {
@@ -730,12 +727,27 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
 }
 
+.field--config-hidden {
+  border-style: dashed;
+  opacity: 0.68;
+  background: color-mix(in srgb, var(--sc-app-muted-bg) 72%, transparent);
+}
+
 .field--half {
   grid-column: span 1;
 }
 
+.field--wide {
+  grid-column: span 2;
+}
+
 .field--full {
   grid-column: 1 / -1;
+}
+
+.field--large .input,
+.field--large textarea.input {
+  min-height: 92px;
 }
 
 .field-label-row {
@@ -814,57 +826,12 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   min-width: 0;
 }
 
-.field-order-inline-tools {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-}
-
-.field-order-handle,
-.field-order-btn {
-  flex: 0 0 auto;
-  min-width: 26px;
-  height: 28px;
-  padding: 0 7px;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 5px;
-  background: var(--sc-app-bg);
-  color: var(--sc-app-text-secondary);
-  font-size: 13px;
-  line-height: 1;
-}
-
-.field-order-handle {
-  min-width: 28px;
-  border-color: var(--sc-app-border-strong);
-  background: var(--sc-app-panel-muted);
-  color: var(--sc-semantic-surface-interactive);
-  font-size: 15px;
-  font-weight: 700;
+.field--order-editable {
   cursor: grab;
-  letter-spacing: 0;
 }
 
-.field-order-handle:active {
+.field--order-editable:active {
   cursor: grabbing;
-}
-
-.field-order-btn {
-  cursor: pointer;
-}
-
-.field-order-btn:hover:not(:disabled) {
-  border-color: var(--sc-app-border-strong);
-  background: var(--sc-app-hover-bg);
-  color: var(--sc-app-text-primary);
-}
-
-.field-order-btn:disabled {
-  cursor: default;
-  opacity: 0.42;
 }
 
 .field-inline-actions {
@@ -1109,6 +1076,10 @@ select.input {
     grid-template-columns: 1fr !important;
     row-gap: 16px;
     column-gap: 0;
+  }
+
+  .field--wide {
+    grid-column: 1 / -1;
   }
 
   .native-date-range {

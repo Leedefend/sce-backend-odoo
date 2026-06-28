@@ -38,11 +38,11 @@
       <article class="flow-card">
         <span class="flow-step">2</span>
         <div>
-          <h2>{{ currentModelIsRuntimeConfig ? '使用专用配置' : '拖拽设计表单' }}</h2>
-          <p>{{ currentModelIsRuntimeConfig ? '审批、菜单等配置对象使用对应的专用配置面板。' : '进入设计器后拖动字段、隐藏字段、调整分组。' }}</p>
+          <h2>{{ currentModelIsRuntimeConfig ? '使用专用配置' : '配置表单字段' }}</h2>
+          <p>{{ currentModelIsRuntimeConfig ? '审批、菜单等配置对象使用对应的专用配置面板。' : '按旧表单分区调整字段显示、顺序和分组。' }}</p>
         </div>
         <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">
-          {{ currentModelIsRuntimeConfig ? '使用专用配置' : '进入设计' }}
+          {{ currentModelIsRuntimeConfig ? '使用专用配置' : '配置表单字段' }}
         </button>
       </article>
       <article class="flow-card">
@@ -107,77 +107,190 @@
           :disabled="scanLoading || listSearchSaving || !coverageBatchBootstrapRows.length"
           @click="bootstrapCoverageMissing"
         >
-          {{ listSearchSaving ? '生成中...' : '批量补缺配置' }}
+          {{ listSearchSaving ? '生成中...' : '批量补齐配置' }}
         </button>
       </div>
       <div class="scan-summary">
         <span>业务页面 {{ coverageScan.summary.action_count }}</span>
         <span>当前显示 {{ visibleCoverageRows.length }}</span>
         <span v-if="advancedPanelOpen">{{ coverageScopeLabel }}</span>
-        <span v-if="advancedPanelOpen && coverageScan.summary.user_preference_count">已有个人配置 {{ coverageScan.summary.user_preference_count }}</span>
-        <span v-if="advancedPanelOpen">治理结论 {{ overallStatusLabel(coverageScan.summary.overall_status) }}</span>
+        <span v-if="advancedPanelOpen && coverageScan.summary.user_preference_count">已有个人设置 {{ coverageScan.summary.user_preference_count }}</span>
+        <span v-if="advancedPanelOpen">配置状态 {{ overallStatusLabel(coverageScan.summary.overall_status) }}</span>
         <span v-if="advancedPanelOpen">需处理 {{ coverageIssueRows.length }}</span>
         <span v-for="item in advancedPanelOpen ? remediationSummaryItems : []" :key="item.code">
           {{ item.label }} {{ item.count }}
         </span>
       </div>
-      <div v-if="visibleCoverageRows.length" class="scan-list">
-        <div v-for="row in visibleCoverageRows" :key="coverageRowKey(row)" class="scan-row" :class="{ 'scan-row--selected': coverageRowMatchesScope(row) }">
-          <div class="scan-row-main">
-            <strong>{{ row.name || row.model }}</strong>
-            <span v-if="advancedPanelOpen">{{ row.model }}</span>
+      <div class="config-workspace">
+        <aside class="page-picker-panel" aria-label="业务页面列表">
+          <div class="page-picker-head">
+            <div>
+              <span>业务页面目录</span>
+              <strong>{{ visibleCoverageRows.length }} 个匹配页面</strong>
+            </div>
+            <em>{{ selectedCoverageRow?.name || selectedPageLabel || '未选择' }}</em>
           </div>
-          <div class="scan-row-meta">
-            <span>{{ pageViewModeText(row) }}</span>
-            <span>{{ rowCoverageProgressText(row) }}</span>
-            <span v-if="rowActionHintText(row)">{{ rowActionHintText(row) }}</span>
-            <span>{{ pageDesignStatus(row) }}</span>
-            <span v-if="advancedPanelOpen && row.user_preference_count">已有个人配置 {{ row.user_preference_count }}</span>
-            <span v-if="advancedPanelOpen">{{ runtimeEvidenceText(row) }}</span>
-            <span v-if="advancedPanelOpen && runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
-          </div>
-          <div v-if="advancedPanelOpen" class="scan-row-admin-actions">
-            <span>{{ severityLabel(row.severity) }}</span>
-            <span v-if="row.missing_view_types.length">需补 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
-            <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
-          </div>
-          <div class="scan-row-actions">
-            <button v-if="rowHasFormConfig(row)" type="button" class="ghost small primary" @click="openDesignerForRow(row)">设计表单</button>
-            <button
-              v-if="rowHasListSearchConfig(row)"
-              type="button"
-              class="ghost small"
-              @click="openListSearchForRow(row)"
+          <div v-if="visibleCoverageRows.length" class="scan-list">
+            <div
+              v-for="row in visibleCoverageRows"
+              :key="coverageRowKey(row)"
+              class="scan-row"
+              :class="{ 'scan-row--selected': coverageRowMatchesScope(row), 'scan-row--clickable': !coverageRowMatchesScope(row) }"
+              role="button"
+              tabindex="0"
+              @click="focusScanRow(row)"
+              @keydown.enter.prevent="focusScanRow(row)"
+              @keydown.space.prevent="focusScanRow(row)"
             >
-              配置列表与搜索
-            </button>
-            <button
-              type="button"
-              class="ghost small"
-              :disabled="!row.runtime_route?.path"
-              @click="openRuntimeRoute(row)"
-            >
-              预览页面
-            </button>
-            <button
-              v-for="action in visibleRowRemediationActions(row)"
-              :key="`row-remediation-${coverageRowKey(row)}-${action.code}`"
-              type="button"
-              class="ghost small"
-              :disabled="listSearchSaving || versionsLoading"
-              @click="runRemediationAction(row, action)"
-            >
-              {{ action.label }}
-            </button>
-            <button type="button" class="ghost small" @click="focusScanRow(row)">选择</button>
+              <div class="scan-row-main">
+                <strong :title="row.name || row.model">{{ row.name || row.model }}</strong>
+                <span v-if="advancedPanelOpen">{{ row.model }}</span>
+              </div>
+              <div class="scan-row-meta">
+                <span>{{ pageViewModeText(row) }}</span>
+                <span>{{ rowCoverageProgressText(row) }}</span>
+                <span v-if="rowActionHintText(row)">{{ rowActionHintText(row) }}</span>
+                <span>{{ pageDesignStatus(row) }}</span>
+                <span v-if="advancedPanelOpen && row.user_preference_count">已有个人设置 {{ row.user_preference_count }}</span>
+                <span v-if="advancedPanelOpen">{{ runtimeEvidenceText(row) }}</span>
+                <span v-if="advancedPanelOpen && runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
+              </div>
+              <div v-if="advancedPanelOpen" class="scan-row-admin-actions">
+                <span>{{ severityLabel(row.severity) }}</span>
+                <span v-if="row.missing_view_types.length">需补 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
+                <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
+              </div>
+              <div class="scan-row-actions">
+                <button
+                  v-for="action in advancedPanelOpen ? visibleRowRemediationActions(row) : []"
+                  :key="`row-remediation-${coverageRowKey(row)}-${action.code}`"
+                  type="button"
+                  class="ghost small"
+                  :disabled="listSearchSaving || versionsLoading"
+                  @click.stop="runRemediationAction(row, action)"
+                >
+                  {{ action.label }}
+                </button>
+                <span v-if="coverageRowMatchesScope(row)" class="scan-row-current">当前配置</span>
+                <button v-else type="button" class="ghost small" @click.stop="focusScanRow(row)">选择</button>
+              </div>
+            </div>
           </div>
-        </div>
+          <div v-else class="empty-state">当前没有匹配的业务页面，可调整搜索条件或取消“只看需处理”。</div>
+        </aside>
+
+        <section v-if="!loading && (currentModel || visibleConfigSections.length)" class="page-config-panel" aria-label="已选页面配置">
+          <div class="selected-page-overview">
+            <div>
+              <span>正在配置</span>
+              <strong>{{ selectedCoverageRow?.name || selectedPageLabel || currentModel || '当前页面' }}</strong>
+            </div>
+            <div class="selected-page-overview-side">
+              <div class="selected-page-overview-meta">
+                <span>{{ selectedCoverageRow ? pageViewModeText(selectedCoverageRow) : '页面配置' }}</span>
+                <span v-if="selectedCoverageRow">{{ rowCoverageProgressText(selectedCoverageRow) }}</span>
+                <span v-if="selectedCoverageRow">{{ pageDesignStatus(selectedCoverageRow) }}</span>
+              </div>
+              <button
+                type="button"
+                class="ghost small"
+                :disabled="!previewRouteTarget.path"
+                @click="previewSelectedRuntimeRoute"
+              >
+                预览页面
+              </button>
+            </div>
+          </div>
+          <div class="section-grid">
+            <article v-for="section in visibleConfigSections" :key="section.key" class="config-card">
+              <div class="config-card-head">
+                <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
+                <strong :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
+              </div>
+              <p>{{ sectionPrimaryCopy(section.key) }}</p>
+              <div class="config-card-meta">
+                <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
+                <span v-if="sectionConfigProgressText(section.key, section.contract_count)">{{ sectionConfigProgressText(section.key, section.contract_count) }}</span>
+              </div>
+              <div class="config-card-actions">
+                <button
+                  v-if="section.key === 'form' || section.key === 'list_search' || section.key === 'analysis'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || versionsLoading"
+                  @click="loadVersions(section.key)"
+                >
+                  {{ versionsLoading ? '读取中...' : '版本记录' }}
+                </button>
+                <button
+                  v-if="section.key === 'list_search'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || listSearchBusy"
+                  @click="loadListSearchConfig"
+                >
+                  {{ listSearchBusy ? '读取中...' : '配置列表与搜索' }}
+                </button>
+                <button
+                  v-else-if="section.key === 'form'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!canOpenDesigner"
+                  @click="openFormConfig"
+                >
+                  配置表单字段
+                </button>
+                <button
+                  v-else-if="section.key === 'menu'"
+                  type="button"
+                  class="ghost small"
+                  @click="openMenuConfig"
+                >
+                  调整菜单入口
+                </button>
+                <button
+                  v-if="section.key === 'menu'"
+                  type="button"
+                  class="ghost small primary"
+                  @click="openCreateMenuConfig"
+                >
+                  新增菜单
+                </button>
+                <button
+                  v-else-if="section.key === 'analysis'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || listSearchBusy"
+                  @click="loadAnalysisConfig"
+                >
+                  {{ listSearchBusy ? '读取中...' : '配置分析视图' }}
+                </button>
+                <button
+                  v-else-if="section.key === 'approval'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || approvalLoading"
+                  @click="loadApprovalConfig"
+                >
+                  {{ approvalLoading ? '读取中...' : '设置审批' }}
+                </button>
+                <button
+                  v-if="section.key === 'approval' && section.route?.path"
+                  type="button"
+                  class="ghost small"
+                  @click="openApprovalConfig(section)"
+                >
+                  更多规则
+                </button>
+              </div>
+            </article>
+          </div>
+        </section>
       </div>
-      <div v-else class="empty-state">当前没有匹配的业务页面，可调整搜索条件或取消“只看需处理”。</div>
     </section>
     <section v-if="advancedPanelOpen && coverageScan" class="scan-panel scan-panel--admin">
       <div class="scan-toolbar">
-        <strong>高级治理视图</strong>
+        <strong>配置检查明细</strong>
         <span v-if="snapshotSummary">{{ snapshotSummaryText }}</span>
       </div>
       <div class="scan-list">
@@ -187,7 +300,7 @@
           <span>{{ row.model }}</span>
           <span>{{ row.view_mode || '-' }}</span>
           <span>菜单 {{ row.menu_count }}</span>
-          <span v-if="row.user_preference_count">个人偏好 {{ row.user_preference_count }} · {{ row.user_preference_boundary }}</span>
+          <span v-if="row.user_preference_count">个人设置 {{ row.user_preference_count }} · {{ boundaryLabel(row.user_preference_boundary) }}</span>
           <span v-if="row.missing_view_types.length">需补 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
           <span v-else>配置完整</span>
           <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
@@ -253,92 +366,7 @@
         </div>
       </div>
     </section>
-    <section v-if="!loading && (currentModel || visibleConfigSections.length)" class="section-grid">
-      <article v-for="section in visibleConfigSections" :key="section.key" class="config-card">
-        <div class="config-card-head">
-          <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
-          <strong :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
-        </div>
-        <p>{{ sectionPrimaryCopy(section.key) }}</p>
-        <div class="config-card-meta">
-          <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
-          <span v-if="sectionConfigProgressText(section.key, section.contract_count)">{{ sectionConfigProgressText(section.key, section.contract_count) }}</span>
-        </div>
-        <div class="config-card-actions">
-          <button
-            v-if="section.key === 'form' || section.key === 'list_search' || section.key === 'analysis'"
-            type="button"
-            class="ghost small"
-            :disabled="!currentModel || versionsLoading"
-            @click="loadVersions(section.key)"
-          >
-            {{ versionsLoading ? '读取中...' : '版本记录' }}
-          </button>
-          <button
-            v-if="section.key === 'list_search'"
-            type="button"
-            class="ghost small"
-            :disabled="!currentModel || listSearchBusy"
-            @click="loadListSearchConfig"
-          >
-            {{ listSearchBusy ? '读取中...' : '配置列表与搜索' }}
-          </button>
-          <button
-            v-else-if="section.key === 'form'"
-            type="button"
-            class="ghost small"
-            :disabled="!canOpenDesigner"
-            @click="openFormConfig"
-          >
-            拖拽设计表单
-          </button>
-          <button
-            v-else-if="section.key === 'menu'"
-            type="button"
-            class="ghost small"
-            @click="openMenuConfig"
-          >
-            调整菜单入口
-          </button>
-          <button
-            v-if="section.key === 'menu'"
-            type="button"
-            class="ghost small primary"
-            @click="openCreateMenuConfig"
-          >
-            新增菜单
-          </button>
-          <button
-            v-else-if="section.key === 'analysis'"
-            type="button"
-            class="ghost small"
-            :disabled="!currentModel || listSearchBusy"
-            @click="loadAnalysisConfig"
-          >
-            {{ listSearchBusy ? '读取中...' : '配置分析视图' }}
-          </button>
-          <button
-            v-else-if="section.key === 'approval'"
-            type="button"
-            class="ghost small"
-            :disabled="!currentModel || approvalLoading"
-            @click="loadApprovalConfig"
-          >
-            {{ approvalLoading ? '读取中...' : '设置审批' }}
-          </button>
-          <button
-            v-if="section.key === 'approval' && section.route?.path"
-            type="button"
-            class="ghost small"
-            @click="openApprovalConfig(section)"
-          >
-            高级规则
-          </button>
-        </div>
-      </article>
-    </section>
-
-    <section v-if="approvalPanelOpen" class="edit-panel approval-panel">
+    <section v-if="approvalPanelOpen" class="edit-panel config-editor-panel approval-panel">
       <div class="edit-panel-head">
         <div>
           <h2>审批规则</h2>
@@ -348,44 +376,66 @@
           关闭
         </button>
       </div>
-      <div class="approval-config-grid">
-        <label class="approval-toggle">
-          <input v-model="approvalForm.approval_required" type="checkbox" @change="onApprovalRequiredChange" />
-          <span>启用审批</span>
-        </label>
-        <label>
-          <span>审批方式</span>
-          <select v-model="approvalForm.mode" :disabled="!approvalForm.approval_required">
-            <option
-              v-for="option in approvalModeOptions"
-              :key="option.value"
-              :value="option.value"
-              :disabled="approvalForm.approval_required && option.value === 'none'"
-            >
-              {{ option.label }}
-            </option>
-          </select>
-        </label>
-        <label>
-          <span>默认审批岗位</span>
-          <select v-model="approvalForm.manager_scope_key" :disabled="!approvalForm.approval_required">
-            <option value="">暂不指定</option>
-            <option v-for="option in approvalScopeOptions" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
-        </label>
-      </div>
-      <section class="approval-steps">
+      <aside class="approval-rule-panel" aria-label="审批规则设置">
+        <div class="approval-guide">
+          <strong>审批配置怎么生效</strong>
+          <span>{{ approvalEffectGuideText }}</span>
+        </div>
+        <div class="approval-rule-head">
+          <strong>规则开关</strong>
+          <span>{{ approvalRuntimeText }}</span>
+        </div>
+        <div class="approval-config-grid">
+          <label class="approval-toggle">
+            <input v-model="approvalForm.approval_required" type="checkbox" @change="onApprovalRequiredChange" />
+            <span>启用审批</span>
+          </label>
+          <label>
+            <span>审批方式</span>
+            <select v-model="approvalForm.mode" :disabled="!approvalForm.approval_required">
+              <option
+                v-for="option in approvalModeOptions"
+                :key="option.value"
+                :value="option.value"
+                :disabled="approvalForm.approval_required && option.value === 'none'"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+          <label>
+            <span>默认审批岗位</span>
+            <select v-model="approvalForm.manager_scope_key" :disabled="!approvalForm.approval_required">
+              <option value="">暂不指定</option>
+              <option v-for="option in approvalScopeOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+        </div>
+        <div class="edit-meta approval-rule-summary">
+          <span>当前步骤：{{ activeApprovalStepCount }} 个</span>
+          <span>保存状态：{{ hasApprovalDraftChanges ? '有未保存调整' : '已同步' }}</span>
+          <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(approvalAudit?.boundary || 'industry_policy_runtime') }}</span>
+          <span v-if="hasApprovalDraftChanges" class="edit-dirty">配置已调整，可保存</span>
+        </div>
+        <div class="approval-impact-summary">
+          <strong>{{ hasApprovalDraftChanges ? '本次调整' : '当前规则' }}</strong>
+          <span>{{ approvalImpactSummaryText }}</span>
+        </div>
+      </aside>
+      <section class="approval-steps" :class="{ 'approval-steps--disabled': !approvalForm.approval_required }">
         <header>
           <div>
-            <strong>审批步骤</strong>
-            <span>{{ activeApprovalStepCount }} 个启用步骤，可拖动排序</span>
+            <strong>审批步骤编排</strong>
+            <span>{{ approvalForm.approval_required ? `${activeApprovalStepCount} 个启用步骤，拖动整行调整顺序` : '启用审批后配置办理节点' }}</span>
           </div>
+          <button type="button" class="ghost small" :disabled="approvalLoading || !approvalForm.approval_required" @click="addApprovalStep">
+            添加步骤
+          </button>
         </header>
         <div v-if="approvalSteps.length" class="approval-step-table" role="table" aria-label="审批步骤">
           <div class="approval-step-table-head" role="row">
-            <span></span>
             <span>序号</span>
             <span>步骤名称</span>
             <span>审批岗位</span>
@@ -402,27 +452,20 @@
               'approval-step-row--drop-target': approvalStepDropIndex === index && approvalStepDragIndex !== index,
             }"
             role="row"
+            :draggable="approvalForm.approval_required"
+            :aria-label="`拖动第${index + 1}步调整顺序`"
+            @dragstart="startApprovalStepDrag(index, $event)"
             @dragover.prevent
             @dragenter.prevent="approvalStepDropIndex = index"
             @drop.prevent="dropApprovalStep(index)"
             @dragend="clearApprovalStepDrag"
           >
-            <span
-              class="approval-step-drag"
-              title="拖动排序"
-              role="button"
-              tabindex="0"
-              draggable="true"
-              :aria-label="`拖动第${index + 1}步调整顺序`"
-              @dragstart.stop="startApprovalStepDrag(index, $event)"
-              @dragend.stop="clearApprovalStepDrag"
-            >⋮⋮</span>
             <span class="approval-step-seq">{{ index + 1 }}</span>
             <div class="approval-step-cell">
-              <input v-model="step.name" type="text" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步名称`" />
+              <input v-model="step.name" type="text" placeholder="例如：合同中心审核" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步名称`" />
             </div>
             <div class="approval-step-cell">
-              <select v-model="step.approval_scope_key" :disabled="!approvalForm.approval_required">
+              <select v-model="step.approval_scope_key" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步审批岗位`">
                 <option value="">请选择</option>
                 <option v-for="option in approvalScopeOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
@@ -430,40 +473,31 @@
               </select>
             </div>
             <div class="approval-step-cell">
-              <input v-model="step.amount_min" type="number" min="0" step="0.01" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额下限`" />
+              <input v-model="step.amount_min" type="number" min="0" step="0.01" placeholder="不限制" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额下限`" />
             </div>
             <div class="approval-step-cell">
-              <input v-model="step.amount_max" type="number" min="0" step="0.01" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额上限`" />
+              <input v-model="step.amount_max" type="number" min="0" step="0.01" placeholder="不限制" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额上限`" />
             </div>
             <div class="approval-step-actions">
-              <button type="button" title="上移" :disabled="index === 0 || approvalLoading || !approvalForm.approval_required" @click="moveApprovalStep(index, -1)">↑</button>
-              <button type="button" title="下移" :disabled="index === approvalSteps.length - 1 || approvalLoading || !approvalForm.approval_required" @click="moveApprovalStep(index, 1)">↓</button>
               <button type="button" title="移除" :disabled="approvalLoading || !approvalForm.approval_required" @click="removeApprovalStep(index)">×</button>
             </div>
           </div>
         </div>
         <div v-else class="approval-step-empty">
           当前没有审批步骤，启用审批后可添加办理节点。
+          <button type="button" class="ghost small" :disabled="approvalLoading" @click="enableApprovalWithDefaultStep">启用并添加步骤</button>
         </div>
-        <button type="button" class="approval-step-add-line" :disabled="approvalLoading || !approvalForm.approval_required" @click="addApprovalStep">
-          添加一行
-        </button>
+        <div v-if="approvalValidationMessage" class="approval-validation">{{ approvalValidationMessage }}</div>
       </section>
-      <div class="edit-meta">
-        <span>运行状态：{{ approvalRuntimeText }}</span>
-        <span>步骤数：{{ approvalAudit?.policy.step_count ?? 0 }}</span>
-        <span v-if="advancedPanelOpen">边界：{{ approvalAudit?.boundary || 'industry_policy_runtime' }}</span>
-        <span v-if="hasApprovalDraftChanges" class="edit-dirty">配置已调整，可保存</span>
-      </div>
       <div class="edit-panel-actions">
-        <button type="button" class="ghost small primary" :disabled="approvalLoading || !hasApprovalDraftChanges" @click="saveApprovalConfig">
+        <button type="button" class="ghost small primary" :disabled="approvalLoading || !canSaveApprovalDraft" @click="saveApprovalConfig">
           {{ approvalLoading ? '保存中...' : '保存审批设置' }}
         </button>
         <button type="button" class="ghost small" :disabled="approvalLoading || !hasApprovalDraftChanges" @click="resetApprovalDraft">
           还原
         </button>
         <button type="button" class="ghost small" :disabled="!approvalSection?.route?.path" @click="approvalSection && openApprovalConfig(approvalSection)">
-          高级规则
+          更多规则
         </button>
       </div>
     </section>
@@ -478,6 +512,10 @@
           关闭
         </button>
       </div>
+      <div class="version-guide">
+        <strong>{{ versionPanelGuide.title }}</strong>
+        <span>{{ versionPanelGuide.body }}</span>
+      </div>
       <div v-if="!versionContracts.length" class="empty-state">{{ versionEmptyText }}</div>
       <div v-else class="version-list">
         <article v-for="contract in versionContracts" :key="contract.id" class="version-card">
@@ -485,16 +523,17 @@
             <div class="version-card-title">
               <strong>{{ viewTypeLabel(contract.view_type) }}</strong>
               <span>{{ versionContractDisplayName(contract) }}</span>
+              <em>{{ versionContractImpactText(contract) }}</em>
             </div>
             <div class="version-card-actions">
-              <em>当前 v{{ contract.version_no }}</em>
+              <span class="version-current-badge">当前生效 v{{ contract.version_no }}</span>
               <button
                 type="button"
                 class="ghost small"
                 :disabled="versionsLoading || listSearchSaving || contract.versions.length < 2"
                 @click="rollbackContractFromWorkbench(contract)"
               >
-                回滚上一版
+                {{ versionRollbackButtonLabel(contract) }}
               </button>
             </div>
           </div>
@@ -505,23 +544,31 @@
             <span>分组 {{ contract.summary.search_group_by_count }}</span>
             <span v-if="contract.summary.analysis_item_count">分析项 {{ contract.summary.analysis_item_count }}</span>
           </div>
+          <div class="version-decision-note">
+            <span>{{ versionContractDecisionText(contract) }}</span>
+          </div>
           <div v-if="contract.summary.analysis_items?.length" class="analysis-summary-list">
             <span v-for="item in contract.summary.analysis_items.slice(0, 12)" :key="item">{{ analysisItemLabel(item) }}</span>
           </div>
           <div class="version-rows">
-            <div v-for="version in contract.versions" :key="version.id" class="version-row">
-              <span>v{{ version.version_no }}</span>
-              <span>{{ versionStatusLabel(version.status) }}</span>
-              <span>{{ version.created_by || '-' }}</span>
+            <div
+              v-for="version in contract.versions"
+              :key="version.id"
+              class="version-row"
+              :class="{ 'version-row--current': version.version_no === contract.version_no }"
+            >
+              <span class="version-row-no">v{{ version.version_no }}</span>
+              <span>{{ version.version_no === contract.version_no ? '当前生效' : versionStatusLabel(version.status) }}</span>
+              <span>保存人 {{ version.created_by || '-' }}</span>
               <span>{{ versionSummaryText(version.summary) }}</span>
-              <span>{{ versionDeltaText(contract.summary, version.summary, version.version_no === contract.version_no) }}</span>
+              <span class="version-row-delta">{{ versionDeltaText(contract.summary, version.summary, version.version_no === contract.version_no) }}</span>
               <button
                 type="button"
                 class="link-button"
                 :disabled="versionsLoading || listSearchSaving || version.version_no === contract.version_no"
                 @click="rollbackContractFromWorkbench(contract, version.version_no)"
               >
-                回滚到此版
+                {{ version.version_no === contract.version_no ? '当前版本' : '恢复此版本' }}
               </button>
             </div>
           </div>
@@ -529,7 +576,7 @@
       </div>
     </section>
 
-    <section v-if="analysisPanelOpen" class="edit-panel">
+    <section v-if="analysisPanelOpen" class="edit-panel config-editor-panel">
       <div class="edit-panel-head">
         <div>
           <h2>分析视图设置</h2>
@@ -643,11 +690,11 @@
       </div>
       <div class="edit-meta">
         <span v-if="hasAnalysisDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
-        <span v-if="advancedPanelOpen">边界：{{ analysisAudit?.business_config_boundary || 'business_contract' }}</span>
+        <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(analysisAudit?.business_config_boundary || 'business_contract') }}</span>
       </div>
     </section>
 
-    <section v-if="listSearchPanelOpen" class="edit-panel">
+    <section v-if="listSearchPanelOpen" class="edit-panel config-editor-panel">
       <div class="edit-panel-head">
         <div>
           <h2>列表与搜索设置</h2>
@@ -885,8 +932,8 @@
       </div>
       <div class="edit-meta">
         <span v-if="hasListSearchDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
-        <span v-if="advancedPanelOpen">个人偏好记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
-        <span v-if="advancedPanelOpen">边界：{{ listSearchAudit?.user_preference_boundary || 'ui_only' }}</span>
+        <span v-if="advancedPanelOpen">个人设置记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
+        <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(listSearchAudit?.user_preference_boundary || 'ui_only') }}</span>
       </div>
       <div v-if="advancedPanelOpen && listSearchAudit?.user_preferences?.length" class="preference-list">
         <span
@@ -932,7 +979,14 @@ import {
   type BusinessConfigSnapshotSummaryPayload,
   type BusinessConfigSurfacePayload,
 } from '../api/businessConfig';
-import { isBusinessConfigRuntimeModel } from '../app/businessConfigBoundaries';
+import {
+  BUSINESS_CONFIG_INTENTS,
+  BUSINESS_CONFIG_MODES,
+  BUSINESS_CONFIG_ROUTE_FLAGS,
+  isBusinessConfigRuntimeModel,
+} from '../app/businessConfigBoundaries';
+
+const SURFACE_LOAD_TIMEOUT_MS = 20000;
 
 const route = useRoute();
 const router = useRouter();
@@ -993,6 +1047,7 @@ const approvalStepsBaseJson = ref('[]');
 const approvalStepDragIndex = ref<number | null>(null);
 const approvalStepDropIndex = ref<number | null>(null);
 let approvalStepTempId = 0;
+let surfaceLoadSeq = 0;
 const listColumnDraft = ref('');
 const searchFilterDraft = ref('');
 const searchGroupDraft = ref('');
@@ -1024,7 +1079,7 @@ const scopeViewId = ref(numericQuery('view_id') || 0);
 const scopeRoleKey = ref(String(route.query.role_key || '').trim());
 const selectedPageLabel = ref(String(route.query.page_label || '').trim());
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || '').trim());
-const shouldOpenPageList = computed(() => String(route.query.open_pages || '').trim() === '1');
+const shouldOpenPageList = computed(() => String(route.query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] || '').trim() === '1');
 const shouldOpenListSearch = computed(() => String(route.query.open_list_search || '').trim() === '1');
 const shouldOpenAnalysis = computed(() => String(route.query.open_analysis || '').trim() === '1');
 const shouldOpenFormConfig = computed(() => String(route.query.open_form_config || '').trim() === '1');
@@ -1082,7 +1137,7 @@ const visibleConfigSections = computed(() => {
       key: 'analysis',
       label: '分析视图配置',
       contract_count: 0,
-      intent: 'ui.business_config.analysis.audit',
+      intent: BUSINESS_CONFIG_INTENTS.analysisAudit,
       boundary: 'business_contract',
     });
   }
@@ -1108,9 +1163,28 @@ const approvalRuntimeText = computed(() => {
   if (!approvalAudit.value) return '未读取';
   return approvalAudit.value.runtime_approval_required ? '当前需要审批' : '当前无需审批';
 });
+const approvalEffectGuideText = computed(() => {
+  const target = approvalAudit.value?.policy?.target_model_label || selectedPageLabel.value || '当前业务';
+  return `保存后立即影响${target}的办理审批判断；未保存调整可用“还原”放弃。`;
+});
+const approvalImpactSummaryText = computed(() => {
+  if (!approvalForm.value.approval_required) {
+    return '保存后当前业务不再要求审批。';
+  }
+  const modeLabel = approvalModeOptions.value.find((option) => option.value === approvalForm.value.mode)?.label || '审批';
+  const scopeLabel = approvalScopeOptions.value.find((option) => option.value === approvalForm.value.manager_scope_key)?.label || '未指定默认审批岗位';
+  const activeSteps = approvalSteps.value.filter((step) => step.active);
+  const stepPreview = activeSteps
+    .slice(0, 3)
+    .map((step) => String(step.name || '').trim())
+    .filter(Boolean)
+    .join('、');
+  const suffix = activeSteps.length > 3 ? `等 ${activeSteps.length} 个步骤` : `${activeSteps.length} 个步骤`;
+  return `${modeLabel}，默认岗位：${scopeLabel}，${suffix}${stepPreview ? `：${stepPreview}` : ''}。`;
+});
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value && !currentModelIsRuntimeConfig.value));
 const headerDesignerButtonLabel = computed(() => {
-  if (canOpenDesigner.value) return '进入拖拽设计';
+  if (canOpenDesigner.value) return '配置表单字段';
   if (currentModelIsRuntimeConfig.value) return '使用专用配置';
   return '先选择页面';
 });
@@ -1165,6 +1239,30 @@ const versionPanelDescription = computed(() => (
     ? '按当前模型、动作、视图、角色作用域读取正式业务配置版本。'
     : '查看这个页面的配置保存记录，可在需要时回滚到历史版本。'
 ));
+const versionPanelGuide = computed(() => {
+  if (activeVersionSection.value === 'form') {
+    return {
+      title: '表单版本怎么用',
+      body: '当前生效版决定办理页面的字段、分组和布局。恢复历史版本后会立即发布为新的当前配置。',
+    };
+  }
+  if (activeVersionSection.value === 'list_search') {
+    return {
+      title: '列表与搜索版本怎么用',
+      body: '这里管理页面默认列表列、搜索条件和默认分组，不覆盖用户自己的列宽、排序等个人设置。',
+    };
+  }
+  if (activeVersionSection.value === 'analysis') {
+    return {
+      title: '分析版本怎么用',
+      body: '这里管理透视、图表等分析视图的默认指标和维度。恢复历史版本后刷新业务页面即可生效。',
+    };
+  }
+  return {
+    title: '配置版本怎么用',
+    body: '先确认当前生效版，再选择需要恢复的历史版本。恢复操作会发布为新的当前配置。',
+  };
+});
 const versionEmptyText = computed(() => (
   advancedPanelOpen.value ? '当前作用域暂无版本记录。' : '当前页面暂无版本记录。'
 ));
@@ -1280,6 +1378,25 @@ const approvalStepsJson = computed(() => JSON.stringify(approvalSteps.value.map(
   condition_note: String(step.condition_note || '').trim(),
   note: String(step.note || '').trim(),
 }))));
+const approvalValidationMessage = computed(() => {
+  if (!approvalForm.value.approval_required) return '';
+  if (!approvalSteps.value.length) return '启用审批后至少需要配置一个审批步骤。';
+  const invalidNameIndex = approvalSteps.value.findIndex((step) => !String(step.name || '').trim());
+  if (invalidNameIndex >= 0) return `第 ${invalidNameIndex + 1} 步需要填写步骤名称。`;
+  const invalidScopeIndex = approvalSteps.value.findIndex((step) => !String(step.approval_scope_key || '').trim());
+  if (invalidScopeIndex >= 0) return `第 ${invalidScopeIndex + 1} 步需要选择审批岗位。`;
+  const invalidAmountIndex = approvalSteps.value.findIndex((step) => {
+    const minText = normalizeAmountText(step.amount_min);
+    const maxText = normalizeAmountText(step.amount_max);
+    if (!minText || !maxText) return false;
+    const min = Number(minText);
+    const max = Number(maxText);
+    return Number.isFinite(min) && Number.isFinite(max) && min > max;
+  });
+  if (invalidAmountIndex >= 0) return `第 ${invalidAmountIndex + 1} 步金额下限不能大于上限。`;
+  return '';
+});
+const canSaveApprovalDraft = computed(() => hasApprovalDraftChanges.value && !approvalValidationMessage.value);
 
 function numericQuery(name: string) {
   const parsed = Number(route.query[name] || 0);
@@ -1331,12 +1448,14 @@ function setMessage(text: string, detail = '') {
   message.value = { text, detail };
 }
 
-function boundaryLabel(boundary: string) {
-  if (boundary === 'business_contract') return '业务默认配置';
-  if (boundary === 'business_contract_not_user_preference') return '业务默认配置';
-  if (boundary === 'business_contract_with_policy_runtime') return '菜单显示规则';
-  if (boundary === 'industry_policy_runtime') return '行业业务规则';
-  return boundary || '未声明边界';
+function boundaryLabel(boundary: unknown) {
+  const value = String(boundary || '').trim();
+  if (value === 'ui_only') return '仅页面设置';
+  if (value === 'business_contract') return '业务默认配置';
+  if (value === 'business_contract_not_user_preference') return '业务默认配置';
+  if (value === 'business_contract_with_policy_runtime') return '菜单显示规则';
+  if (value === 'industry_policy_runtime') return '行业业务规则';
+  return value || '未声明来源';
 }
 
 function sectionHelpLabel(sectionKey: string) {
@@ -1489,7 +1608,7 @@ function rowHasAnalysisConfig(row: BusinessConfigCoverageScanItem) {
 }
 
 function runtimeReasonLabel(reason: string) {
-  if (reason === 'missing_contract') return '缺配置';
+  if (reason === 'missing_contract') return '待完善配置';
   if (reason === 'not_published') return '未发布';
   if (reason === 'not_runtime_applicable') return '作用域未命中';
   if (reason === 'not_published_or_not_runtime_applicable') return '未发布/作用域未命中';
@@ -1523,6 +1642,26 @@ function versionContractDisplayName(contract: BusinessConfigContractVersionsPayl
   const page = selectedPageLabel.value || surface.value?.model || contract.model || '当前页面';
   const view = viewTypeLabel(contract.view_type);
   return view ? `${page} · ${view}` : page;
+}
+
+function versionContractImpactText(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
+  const view = viewTypeLabel(contract.view_type);
+  if (contract.view_type === 'form') return '影响办理页字段、分组、显示隐藏和布局。';
+  if (contract.view_type === 'tree' || contract.view_type === 'list') return '影响办理页默认列表列。';
+  if (contract.view_type === 'search') return '影响办理页搜索条件和默认分组。';
+  if (['pivot', 'graph', 'calendar', 'dashboard'].includes(contract.view_type)) return `影响${view}视图的默认展示。`;
+  return `影响${view}配置的默认运行效果。`;
+}
+
+function versionRollbackButtonLabel(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
+  return contract.versions.length < 2 ? '暂无可回滚版本' : '恢复上一版';
+}
+
+function versionContractDecisionText(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
+  const historyCount = Math.max(0, contract.versions.length - 1);
+  const currentSummary = versionSummaryText(contract.summary);
+  if (!historyCount) return `当前只有一个版本：${currentSummary}。`;
+  return `当前生效：${currentSummary}。可恢复 ${historyCount} 个历史版本，恢复后会发布为新的当前配置。`;
 }
 
 function versionSummaryNames(summary: BusinessConfigContractVersionsPayload['contracts'][number]['summary']) {
@@ -1632,29 +1771,51 @@ function runtimeRouteText(row: BusinessConfigCoverageScanItem) {
 }
 
 function remediationActionLabel(code: string) {
-  if (code === 'configure_contract') return '补配置';
-  if (code === 'publish_contract') return '看版本';
-  if (code === 'fix_scope') return '查作用域';
-  if (code === 'configure_menu') return '配菜单';
-  if (code === 'review_user_preference_boundary') return '查偏好';
+  if (code === 'configure_contract') return '补齐配置';
+  if (code === 'publish_contract') return '查看版本';
+  if (code === 'fix_scope') return '检查范围';
+  if (code === 'configure_menu') return '配置菜单';
+  if (code === 'review_user_preference_boundary') return '检查个人设置';
   return code;
 }
 
+function withSurfaceLoadTimeout<T>(request: Promise<T>) {
+  let timer: number | undefined;
+  const timeout = new Promise<T>((_, reject) => {
+    timer = window.setTimeout(() => {
+      reject(new Error('配置能力读取超时，请检查网络或稍后点击“读取配置对象”重试。'));
+    }, SURFACE_LOAD_TIMEOUT_MS);
+  });
+  return Promise.race([request, timeout]).finally(() => {
+    if (timer) {
+      window.clearTimeout(timer);
+    }
+  });
+}
+
 async function loadSurface() {
+  const seq = ++surfaceLoadSeq;
   loading.value = true;
   error.value = '';
   clearMessage();
   try {
-    surface.value = await loadBusinessConfigSurface({
-      model: currentModel.value || undefined,
-      action_id: scopeAction.value,
-      view_id: scopeView.value,
-      role_key: scopeRole.value,
-    });
+    const nextSurface = await withSurfaceLoadTimeout(
+      loadBusinessConfigSurface({
+        model: currentModel.value || undefined,
+        action_id: scopeAction.value,
+        view_id: scopeView.value,
+        role_key: scopeRole.value,
+      }),
+    );
+    if (seq !== surfaceLoadSeq) return;
+    surface.value = nextSurface;
   } catch (err) {
+    if (seq !== surfaceLoadSeq) return;
     error.value = err instanceof Error ? err.message : '业务配置工作台加载失败';
   } finally {
-    loading.value = false;
+    if (seq === surfaceLoadSeq) {
+      loading.value = false;
+    }
   }
 }
 
@@ -1755,7 +1916,7 @@ function buildCoverageSummaryText() {
     `低代码配置覆盖验收：${overallStatusLabel(summary.overall_status)}`,
     `${coverageScopeLabel.value}；范围：${scan.model || '全部模型'}，动作 ${summary.action_count}`,
     `严重级别：阻断 ${summary.severity_counts.error || 0}，警告 ${summary.severity_counts.warning || 0}，提示 ${summary.severity_counts.notice || 0}`,
-    `缺口：配置缺口 ${summary.missing_count}，运行时缺口 ${summary.runtime_missing_count}，分析缺口 ${summary.runtime_missing_analysis_count || 0}，无菜单 ${summary.no_menu_count}，个人偏好 ${summary.user_preference_count}`,
+    `待完善：配置 ${summary.missing_count}，办理页 ${summary.runtime_missing_count}，分析页 ${summary.runtime_missing_analysis_count || 0}，无菜单 ${summary.no_menu_count}，个人设置 ${summary.user_preference_count}`,
     `原因：未发布 ${summary.not_published_gap_count}，作用域未命中 ${summary.not_runtime_applicable_gap_count}`,
     `整改：${actions}`,
     `运行页面证据：\n${routeEvidence}`,
@@ -1935,8 +2096,8 @@ function buildPreviewRuntimeQuery(
     ...baseQuery,
     root_menu_xmlid: route.query.root_menu_xmlid || undefined,
     page_label: options.pageLabel || selectedPageLabel.value || undefined,
-    return_to_business_config: '1',
-    open_pages: '1',
+    [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
+    [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: '1',
     model: options.model || currentModel.value || undefined,
     action_id: options.actionId ? String(options.actionId) : (scopeAction.value ? String(scopeAction.value) : undefined),
     view_id: options.viewId ? String(options.viewId) : (scopeView.value ? String(scopeView.value) : undefined),
@@ -2003,7 +2164,7 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
   const missingContractTypes = rowBootstrapMissingViewTypes(row, ['form', 'tree', 'search', 'pivot', 'graph']);
   if (!missingContractTypes.length) {
     await openVersionsForRuntimeGaps(row);
-    setMessage('没有可自动补齐的缺配置项', '当前缺口需要检查发布状态或配置作用域。');
+    setMessage('没有可自动补齐的配置项', '当前待完善项需要检查发布状态或配置作用域。');
     return;
   }
   listSearchSaving.value = true;
@@ -2052,7 +2213,7 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
     await loadSurface();
     await scanCurrentModel();
     setMessage(
-      '已补齐缺配置',
+      '已补齐配置',
       formFieldCount ? `已发布 ${savedCount} 个业务配置，表单字段 ${formFieldCount}` : `已发布 ${savedCount} 个业务配置`,
     );
   } catch (err) {
@@ -2062,66 +2223,6 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
     } else {
       await loadListSearchConfig();
     }
-  } finally {
-    listSearchSaving.value = false;
-  }
-}
-
-async function bootstrapFormConfig(row: BusinessConfigCoverageScanItem) {
-  if (!row.model) return;
-  if (!rowBootstrapMissingViewTypes(row, ['form']).length) {
-    await openVersionsForRuntimeGaps(row);
-    setMessage('没有可自动补齐的表单缺配置项', '当前缺口需要检查发布状态或配置作用域。');
-    return;
-  }
-  listSearchSaving.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const result = await bootstrapBusinessFormConfig({
-      model: row.model,
-      action_id: coverageRowActionId(row),
-      view_id: coverageRowViewId(row),
-      role_key: scopeRole.value,
-      publish: true,
-    });
-    await loadSurface();
-    await scanCurrentModel();
-    setMessage('已补齐表单缺配置', `字段 ${result.field_count}`);
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '表单缺配置补齐失败，已打开手工配置';
-    openFormConfig();
-  } finally {
-    listSearchSaving.value = false;
-  }
-}
-
-async function bootstrapListSearchConfig(row: BusinessConfigCoverageScanItem) {
-  if (!row.model) return;
-  const viewTypes = rowBootstrapMissingViewTypes(row, ['tree', 'search']);
-  if (!viewTypes.length) {
-    await openVersionsForRuntimeGaps(row);
-    setMessage('没有可自动补齐的列表/搜索缺配置项', '当前缺口需要检查发布状态或配置作用域。');
-    return;
-  }
-  listSearchSaving.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const result = await bootstrapBusinessListSearchConfig({
-      model: row.model,
-      action_id: coverageRowActionId(row),
-      view_id: coverageRowViewId(row),
-      role_key: scopeRole.value,
-      view_types: viewTypes,
-      publish: true,
-    });
-    await loadSurface();
-    await scanCurrentModel();
-    setMessage('已补齐列表/搜索缺配置', `已发布 ${result.saved_count} 个业务配置`);
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '列表与搜索缺配置补齐失败';
-    await loadListSearchConfig();
   } finally {
     listSearchSaving.value = false;
   }
@@ -2150,7 +2251,7 @@ async function bootstrapCoverageMissing() {
       .slice(0, 5)
       .join('、');
     setMessage(
-      result.failed_count ? '已批量补缺配置，部分页面需手工处理' : '已批量补缺配置',
+      result.failed_count ? '已批量补齐配置，部分页面需手工处理' : '已批量补齐配置',
       result.failed_count
         ? `已发布 ${result.saved_count} 个业务配置，${result.failed_count} 个页面需手工处理${failedNames ? `：${failedNames}` : ''}`
         : `已发布 ${result.saved_count} 个业务配置`,
@@ -2304,12 +2405,33 @@ function fieldDisplayLabel(name: string) {
 
 function fieldOptionLabel(field: { name: string; label: string; type: string }) {
   const label = field.label || field.name;
-  if (!advancedPanelOpen.value) return label;
-  return duplicatedFieldLabels.value.has(label) ? `${label}（${field.name}）` : label;
+  if (!duplicatedFieldLabels.value.has(label)) return label;
+  const type = fieldTypeLabel(field.type);
+  const hint = shortFieldNameHint(field.name);
+  return `${label}（${[type, hint].filter(Boolean).join(' · ')}）`;
 }
 
 function fieldOptionHelpText(field: { name: string; label: string; type: string }) {
   return [field.label || field.name, field.name, field.type].filter(Boolean).join(' · ');
+}
+
+function fieldTypeLabel(type: string) {
+  const value = String(type || '').trim();
+  if (value === 'many2one') return '关联';
+  if (value === 'many2many' || value === 'one2many') return '明细';
+  if (value === 'monetary' || value === 'float' || value === 'integer') return '数值';
+  if (value === 'date' || value === 'datetime') return '日期';
+  if (value === 'boolean') return '是/否';
+  if (value === 'selection') return '选项';
+  if (value === 'text' || value === 'html') return '长文本';
+  if (value === 'char') return '文本';
+  return value;
+}
+
+function shortFieldNameHint(name: string) {
+  const cleaned = String(name || '').trim();
+  if (!cleaned) return '';
+  return cleaned.length > 28 ? `${cleaned.slice(0, 12)}...${cleaned.slice(-10)}` : cleaned;
 }
 
 function fieldHelpText(name: string) {
@@ -2630,6 +2752,14 @@ function onApprovalRequiredChange() {
   if (!approvalForm.value.mode || approvalForm.value.mode === 'none') {
     approvalForm.value.mode = 'single';
   }
+  if (!approvalSteps.value.length) {
+    addApprovalStep();
+  }
+}
+
+function enableApprovalWithDefaultStep() {
+  approvalForm.value.approval_required = true;
+  onApprovalRequiredChange();
 }
 
 async function loadApprovalConfig() {
@@ -2652,6 +2782,10 @@ async function loadApprovalConfig() {
 
 async function saveApprovalConfig() {
   if (!currentModel.value || !hasApprovalDraftChanges.value) return false;
+  if (approvalValidationMessage.value) {
+    error.value = approvalValidationMessage.value;
+    return false;
+  }
   approvalLoading.value = true;
   error.value = '';
   clearMessage();
@@ -2736,15 +2870,6 @@ function addApprovalStep() {
 
 function removeApprovalStep(index: number) {
   approvalSteps.value.splice(index, 1);
-}
-
-function moveApprovalStep(index: number, delta: number) {
-  const targetIndex = index + delta;
-  if (targetIndex < 0 || targetIndex >= approvalSteps.value.length) return;
-  const next = [...approvalSteps.value];
-  const [item] = next.splice(index, 1);
-  next.splice(targetIndex, 0, item);
-  approvalSteps.value = next;
 }
 
 function startApprovalStepDrag(index: number, event: DragEvent) {
@@ -2913,7 +3038,11 @@ async function rollbackContractFromWorkbench(
 ) {
   if (!contract?.name || (versionNo ? versionNo === contract.version_no : contract.versions.length < 2)) return;
   const targetText = versionNo ? `v${versionNo}` : '上一版';
-  const confirmed = window.confirm(`确认将${viewTypeLabel(contract.view_type)}配置回滚到${targetText}？`);
+  const confirmed = window.confirm([
+    `确认恢复${versionContractDisplayName(contract)}的${targetText}？`,
+    versionContractImpactText(contract),
+    '恢复后会立即发布为新的当前配置，刷新业务页面后生效。',
+  ].join('\n'));
   if (!confirmed) return;
   listSearchSaving.value = true;
   error.value = '';
@@ -2959,8 +3088,8 @@ function openMenuConfig() {
       page_label: selectedPageLabel.value || undefined,
       view_id: scopeView.value ? String(scopeView.value) : undefined,
       role_key: scopeRole.value || undefined,
-      return_to_business_config: '1',
-      open_pages: '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: '1',
     },
   });
 }
@@ -2976,8 +3105,8 @@ function openCreateMenuConfig() {
       page_label: selectedPageLabel.value || undefined,
       view_id: scopeView.value ? String(scopeView.value) : undefined,
       role_key: scopeRole.value || undefined,
-      return_to_business_config: '1',
-      open_pages: route.query.open_pages || '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] || '1',
       create_menu: '1',
     },
   });
@@ -2990,7 +3119,7 @@ function openApprovalConfig(section: BusinessConfigSurfacePayload['sections'][nu
     path,
     query: {
       ...(section.route?.query || {}),
-      return_to_business_config: '1',
+      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
       root_menu_xmlid: route.query.root_menu_xmlid || undefined,
       page_label: selectedPageLabel.value || undefined,
     },
@@ -3008,7 +3137,7 @@ function openFormConfig() {
       view_id: scopeView.value ? String(scopeView.value) : undefined,
       role_key: scopeRole.value || undefined,
       page_label: selectedPageLabel.value || undefined,
-      config_mode: 'business_config_lowcode',
+      config_mode: BUSINESS_CONFIG_MODES.lowCode,
     },
   });
 }
@@ -3311,9 +3440,133 @@ h1 {
   color: var(--sc-app-text-primary);
 }
 
+.config-workspace {
+  display: grid;
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.page-picker-panel,
+.page-config-panel {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.page-picker-panel {
+  align-content: start;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-bg);
+  overflow: hidden;
+}
+
+.page-picker-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 54px;
+  padding: 12px;
+  border-bottom: 1px solid var(--sc-app-border);
+  color: var(--sc-app-text-primary);
+}
+
+.page-picker-head > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.page-picker-head span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.page-picker-head strong {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+}
+
+.page-picker-head em {
+  max-width: 128px;
+  overflow: hidden;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-page-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-bg);
+}
+
+.selected-page-overview-side {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.selected-page-overview > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.selected-page-overview span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.selected-page-overview strong {
+  color: var(--sc-app-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-page-overview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.selected-page-overview-meta span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  background: var(--sc-app-panel-muted);
+}
+
 .scan-list {
   display: grid;
-  gap: 8px;
+  gap: 0;
+}
+
+.page-picker-panel .scan-list {
+  max-height: clamp(260px, calc(100vh - 360px), 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .scan-row {
@@ -3331,7 +3584,17 @@ h1 {
 
 .scan-row--selected {
   border-color: var(--sc-app-accent);
+  background: var(--sc-app-panel-muted);
   box-shadow: inset 3px 0 0 var(--sc-app-accent);
+}
+
+.scan-row--clickable {
+  cursor: pointer;
+}
+
+.scan-row--clickable:hover {
+  border-color: var(--sc-app-accent);
+  background: var(--sc-app-panel-muted);
 }
 
 .scan-row-main {
@@ -3362,6 +3625,21 @@ h1 {
   min-width: 0;
 }
 
+.scan-row-current {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sc-app-accent);
+  border-radius: 999px;
+  padding: 0 10px;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .scan-row-meta span,
 .scan-row-admin-actions span {
   min-height: 24px;
@@ -3380,6 +3658,59 @@ h1 {
   justify-content: flex-end;
   gap: 6px;
   white-space: nowrap;
+}
+
+.page-picker-panel .scan-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 10px;
+  align-items: start;
+  border: 0;
+  border-bottom: 1px solid var(--sc-app-border);
+  border-radius: 0;
+  padding: 12px;
+  background: transparent;
+}
+
+.page-picker-panel .scan-row-main strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.page-picker-panel .scan-row-actions {
+  align-self: start;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  white-space: normal;
+}
+
+.page-picker-panel .scan-row-meta {
+  grid-column: 1 / -1;
+  gap: 4px;
+}
+
+.page-picker-panel .scan-row-meta span {
+  min-height: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.page-picker-panel .scan-row-admin-actions {
+  grid-column: 1 / -1;
+}
+
+.page-picker-panel .scan-row--selected {
+  background: var(--sc-app-panel-muted);
+}
+
+.page-picker-panel .scan-row:last-child {
+  border-bottom: 0;
 }
 
 .scan-panel--admin .scan-row {
@@ -3441,7 +3772,6 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
-  padding: 0 18px;
 }
 
 .config-card {
@@ -3511,6 +3841,23 @@ h1 {
   background: var(--sc-app-panel);
 }
 
+.config-editor-panel {
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: start;
+}
+
+.config-editor-panel .edit-panel-head,
+.config-editor-panel .edit-meta,
+.config-editor-panel .preference-list {
+  grid-column: 1 / -1;
+}
+
+.config-editor-panel .edit-panel-head {
+  min-height: 48px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
 .version-panel {
   display: grid;
   gap: 12px;
@@ -3543,9 +3890,70 @@ h1 {
 
 .approval-config-grid {
   display: grid;
-  grid-template-columns: minmax(140px, 0.6fr) repeat(2, minmax(180px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
-  align-items: end;
+  align-items: stretch;
+}
+
+.approval-rule-panel {
+  position: sticky;
+  top: 12px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--sc-app-bg);
+}
+
+.approval-guide,
+.approval-impact-summary {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.approval-guide strong,
+.approval-impact-summary strong {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+}
+
+.approval-rule-head {
+  display: grid;
+  gap: 3px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.approval-rule-head strong {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+}
+
+.approval-rule-head span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.approval-panel .approval-rule-summary {
+  grid-column: auto;
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--sc-app-border);
+}
+
+.approval-panel .edit-panel-actions {
+  grid-column: 1 / -1;
+  justify-self: end;
 }
 
 .approval-config-grid label {
@@ -3571,7 +3979,17 @@ h1 {
 .approval-steps {
   display: grid;
   gap: 10px;
-  margin-top: 12px;
+  min-width: 0;
+  min-height: 360px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--sc-app-surface);
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 6%);
+}
+
+.approval-steps--disabled {
+  background: var(--sc-app-panel-muted);
 }
 
 .approval-steps header {
@@ -3597,7 +4015,7 @@ h1 {
 }
 
 .approval-step-table {
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid var(--sc-app-border);
   border-radius: 6px;
   background: var(--sc-app-surface);
@@ -3606,9 +4024,10 @@ h1 {
 .approval-step-table-head,
 .approval-step-row {
   display: grid;
-  grid-template-columns: 34px 44px minmax(150px, 1.2fr) minmax(170px, 1.1fr) minmax(106px, 0.7fr) minmax(106px, 0.7fr) 106px;
+  grid-template-columns: 44px minmax(180px, 1.2fr) minmax(190px, 1.1fr) minmax(118px, 0.7fr) minmax(118px, 0.7fr) 42px;
   gap: 8px;
   align-items: center;
+  min-width: 780px;
 }
 
 .approval-step-table-head {
@@ -3626,6 +4045,14 @@ h1 {
   padding: 6px 8px;
   border-bottom: 1px solid var(--sc-app-border);
   background: var(--sc-app-bg);
+}
+
+.approval-step-row[draggable="true"] {
+  cursor: grab;
+}
+
+.approval-step-row[draggable="true"]:active {
+  cursor: grabbing;
 }
 
 .approval-step-row:last-child {
@@ -3652,7 +4079,6 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
-.approval-step-drag,
 .approval-step-actions button {
   min-width: 30px;
   min-height: 30px;
@@ -3662,21 +4088,29 @@ h1 {
   color: var(--sc-app-text-secondary);
 }
 
-.approval-step-drag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: grab;
-}
-
-.approval-step-drag:active {
-  cursor: grabbing;
-}
-
 .approval-step-actions {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+.approval-step-empty {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  border: 1px dashed var(--sc-app-border);
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--sc-app-bg);
+}
+
+.approval-validation {
+  border: 1px solid var(--sc-app-warning-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
+  font-size: 12px;
 }
 
 .approval-step-add-line {
@@ -3717,6 +4151,22 @@ h1 {
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
   background: var(--sc-app-bg);
+}
+
+.config-editor-panel .list-search-tabs {
+  position: sticky;
+  top: 12px;
+  display: grid;
+  align-content: start;
+  justify-self: stretch;
+  gap: 6px;
+  padding: 8px;
+}
+
+.config-editor-panel .list-search-tabs button {
+  width: 100%;
+  justify-content: space-between;
+  min-height: 36px;
 }
 
 .list-search-tabs button {
@@ -3763,10 +4213,26 @@ h1 {
   gap: 10px;
 }
 
+.version-guide {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+}
+
+.version-guide strong {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+}
+
 .version-card {
   display: grid;
-  gap: 8px;
-  padding: 10px;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid var(--sc-app-border);
   border-radius: 6px;
   background: var(--sc-app-bg);
@@ -3783,7 +4249,7 @@ h1 {
 .version-card-title {
   min-width: 0;
   display: grid;
-  gap: 3px;
+  gap: 4px;
 }
 
 .version-card-head strong {
@@ -3799,9 +4265,9 @@ h1 {
 }
 
 .version-card-head em {
-  flex: none;
   color: var(--sc-app-text-secondary);
   font-style: normal;
+  white-space: normal;
 }
 
 .version-card-actions {
@@ -3811,11 +4277,32 @@ h1 {
   gap: 8px;
 }
 
+.version-current-badge {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 0 10px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-primary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .version-summary,
 .version-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 12px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.version-decision-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
@@ -3845,8 +4332,24 @@ h1 {
 }
 
 .version-row {
-  padding-top: 6px;
+  align-items: center;
+  padding-top: 8px;
   border-top: 1px solid var(--sc-app-border);
+}
+
+.version-row--current {
+  color: var(--sc-app-text-primary);
+}
+
+.version-row-no {
+  min-width: 42px;
+  color: var(--sc-app-text-primary);
+  font-weight: 600;
+}
+
+.version-row-delta {
+  flex: 1 1 280px;
+  min-width: min(100%, 220px);
 }
 
 .edit-grid {
@@ -3857,6 +4360,10 @@ h1 {
 
 .edit-grid--single {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.config-editor-panel .edit-grid {
+  min-width: 0;
 }
 
 .field-chip-editor {
@@ -3870,6 +4377,12 @@ h1 {
   background: var(--sc-app-bg);
   color: var(--sc-app-text-secondary);
   font-size: 13px;
+}
+
+.config-editor-panel .field-chip-editor {
+  min-height: 360px;
+  padding: 14px;
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 6%);
 }
 
 .field-chip-editor header {
@@ -4089,9 +4602,33 @@ h1 {
 
   .workbench-flow,
   .scope-panel,
+  .config-workspace,
+  .config-editor-panel,
   .approval-config-grid,
   .edit-grid {
     grid-template-columns: 1fr;
+  }
+
+  .config-editor-panel .list-search-tabs {
+    position: static;
+  }
+
+  .approval-rule-panel {
+    position: static;
+  }
+
+  .selected-page-overview {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .selected-page-overview-side {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .selected-page-overview-meta {
+    justify-content: flex-start;
   }
 
   .approval-step-table {
@@ -4104,7 +4641,8 @@ h1 {
   }
 
   .approval-step-row {
-    grid-template-columns: 34px 44px minmax(0, 1fr);
+    grid-template-columns: 44px minmax(0, 1fr);
+    min-width: 0;
     border: 1px solid var(--sc-app-border);
     border-radius: 6px;
     margin-bottom: 8px;

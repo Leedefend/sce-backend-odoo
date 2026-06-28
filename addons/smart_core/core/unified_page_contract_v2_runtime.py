@@ -153,6 +153,7 @@ def find_runtime_guard_issues(contract: dict[str, Any]) -> list[str]:
     action = _dict(contract.get("actionContract"))
     layout = _dict(contract.get("layoutContract"))
     status = _dict(contract.get("statusContract"))
+    data = _dict(contract.get("dataContract"))
     if not runtime:
         issues.append("runtimeContract is required")
     for key in ("etag", "snapshotId", "traceId", "requestId"):
@@ -183,12 +184,160 @@ def find_runtime_guard_issues(contract: dict[str, Any]) -> list[str]:
     for row in _list(status.get("selectorStatus")):
         if isinstance(row, dict) and not _text(row.get("selector")):
             issues.append("selectorStatus row missing selector")
+    issues.extend(find_data_source_authority_issues(data))
+    issues.extend(find_metadata_projection_issues(data))
+    issues.extend(find_policy_contract_issues(contract))
     issues.extend(find_form_structure_contract_issues(contract))
     return issues
 
 
+def find_data_source_authority_issues(data_contract: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    data_sources = _dict(data_contract.get("dataSource"))
+    for key, source in data_sources.items():
+        source_row = _dict(source)
+        if not source_row:
+            continue
+        source_authority = _dict(source_row.get("sourceAuthority") or source_row.get("source_authority"))
+        if not source_authority:
+            issues.append(f"dataContract.dataSource.{key}.sourceAuthority is required")
+            continue
+        if source_authority.get("projection_only") is not True:
+            issues.append(f"dataContract.dataSource.{key}.sourceAuthority.projection_only must be true")
+        if source_authority.get("no_business_fact_authority") is not True:
+            issues.append(f"dataContract.dataSource.{key}.sourceAuthority.no_business_fact_authority must be true")
+        if not _text(source_authority.get("fact_authority")):
+            issues.append(f"dataContract.dataSource.{key}.sourceAuthority.fact_authority is required")
+    return issues
+
+
+def find_metadata_projection_issues(data_contract: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    data_meta = _dict(data_contract.get("dataMeta"))
+    legacy_projection = _dict(data_meta.get("legacyContractProjection") or data_meta.get("legacy_contract_projection"))
+    if "legacyContractProjection" in data_meta or "legacy_contract_projection" in data_meta:
+        issues.append("dataContract.dataMeta.legacyContractProjection must not be emitted in stable V2 contract")
+    for key in ("business_operation_profile", "visible_fields", "field_groups"):
+        if key in data_meta:
+            issues.append(f"dataContract.dataMeta.{key} must not be emitted; use formal V2 camelCase metadata")
+    for key in ("business_operation_profile", "field_groups", "form_structure_contract", "formStructureContract", "list_profile", "visible_fields"):
+        if key in legacy_projection:
+            issues.append(f"legacyContractProjection.{key} must not be emitted; use formal V2 metadata")
+    _validate_metadata_projection_authority(
+        issues,
+        value=data_meta.get("businessOperationProfile"),
+        source_key="business_operation_profile",
+        projected_path="dataContract.dataMeta.businessOperationProfile",
+    )
+    visible_fields = data_meta.get("visibleFields")
+    _validate_metadata_projection_authority(
+        issues,
+        value=visible_fields,
+        source_key="visible_fields",
+        projected_path="dataContract.dataMeta.visibleFields",
+    )
+    visible_fields_row = _dict(visible_fields)
+    if visible_fields_row and not _list(visible_fields_row.get("fields")):
+        issues.append("dataContract.dataMeta.visibleFields.fields is required")
+    field_groups = data_meta.get("fieldGroups")
+    _validate_metadata_projection_authority(
+        issues,
+        value=field_groups,
+        source_key="field_groups",
+        projected_path="dataContract.dataMeta.fieldGroups",
+    )
+    field_groups_row = _dict(field_groups)
+    if field_groups_row and not _list(field_groups_row.get("groups")):
+        issues.append("dataContract.dataMeta.fieldGroups.groups is required")
+    return issues
+
+
+def _validate_metadata_projection_authority(
+    issues: list[str],
+    *,
+    value: Any,
+    source_key: str,
+    projected_path: str,
+) -> None:
+    row = _dict(value)
+    if not row:
+        return
+    source_authority = _dict(row.get("sourceAuthority") or row.get("source_authority"))
+    if not source_authority:
+        issues.append(f"{projected_path}.sourceAuthority is required")
+        return
+    if source_authority.get("projection_only") is not True:
+        issues.append(f"{projected_path}.sourceAuthority.projection_only must be true")
+    if source_authority.get("no_business_fact_authority") is not True:
+        issues.append(f"{projected_path}.sourceAuthority.no_business_fact_authority must be true")
+    if source_authority.get("formal_projection") is not True:
+        issues.append(f"{projected_path}.sourceAuthority.formal_projection must be true")
+    if _text(source_authority.get("source_key")) != source_key:
+        issues.append(f"{projected_path}.sourceAuthority.source_key must be {source_key}")
+
+
+def find_policy_contract_issues(contract: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    source = _dict(contract)
+    action = _dict(source.get("actionContract"))
+    layout = _dict(source.get("layoutContract"))
+    for key in ("delete_policy", "surface_policies", "list_profile"):
+        if key in source:
+            issues.append(f"root compatibility field {key} must not be emitted by V2 contract")
+    for key in ("delete_policy", "surface_policies"):
+        if key in action:
+            issues.append(f"actionContract compatibility field {key} must not be emitted by V2 contract")
+    if "list_profile" in layout:
+        issues.append("layoutContract compatibility field list_profile must not be emitted by V2 contract")
+    _validate_policy_projection(
+        issues,
+        projected_value=action.get("deletePolicy"),
+        source_key="delete_policy",
+        projected_path="actionContract.deletePolicy",
+    )
+    _validate_policy_projection(
+        issues,
+        projected_value=action.get("surfacePolicies"),
+        source_key="surface_policies",
+        projected_path="actionContract.surfacePolicies",
+    )
+    _validate_policy_projection(
+        issues,
+        projected_value=layout.get("listProfile"),
+        source_key="list_profile",
+        projected_path="layoutContract.listProfile",
+    )
+    return issues
+
+
+def _validate_policy_projection(
+    issues: list[str],
+    *,
+    projected_value: Any,
+    source_key: str,
+    projected_path: str,
+) -> None:
+    if not isinstance(projected_value, dict) or not projected_value:
+        return
+    projected = _dict(projected_value)
+    source_authority = _dict(projected.get("sourceAuthority") or projected.get("source_authority"))
+    if not source_authority:
+        issues.append(f"{projected_path}.sourceAuthority is required")
+    else:
+        if source_authority.get("projection_only") is not True:
+            issues.append(f"{projected_path}.sourceAuthority.projection_only must be true")
+        if source_authority.get("no_business_fact_authority") is not True:
+            issues.append(f"{projected_path}.sourceAuthority.no_business_fact_authority must be true")
+        if source_authority.get("formal_projection") is not True:
+            issues.append(f"{projected_path}.sourceAuthority.formal_projection must be true")
+        if _text(source_authority.get("source_key")) != source_key:
+            issues.append(f"{projected_path}.sourceAuthority.source_key must be {source_key}")
+
+
 def find_form_structure_contract_issues(contract: dict[str, Any]) -> list[str]:
     issues: list[str] = []
+    if "form_structure_contract" in contract:
+        issues.append("root compatibility field form_structure_contract must not be emitted by V2 contract")
     structure = _dict(contract.get("formStructureContract") or contract.get("form_structure_contract"))
     if not structure:
         return issues

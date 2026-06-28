@@ -116,6 +116,22 @@ class TestBaseHandlerTypeError(unittest.TestCase):
 
         self.assertTrue(handler.is_write())
 
+    def test_required_groups_allow_any_declared_group(self):
+        base_cls = self.base.BaseIntentHandler
+
+        class Handler(base_cls):
+            INTENT_TYPE = "api.data.write"
+            REQUIRED_GROUPS = ["missing.group", "allowed.group"]
+
+            def handle(self):
+                return {"ok": True}
+
+        handler = Handler(env=_FakeEnv())
+
+        result = handler.run(payload={"intent": "api.data.write", "params": {"model": "x.model"}})
+
+        self.assertEqual(result, {"ok": True})
+
     def test_var_keyword_handler_receives_runtime_mapping(self):
         base_cls = self.base.BaseIntentHandler
 

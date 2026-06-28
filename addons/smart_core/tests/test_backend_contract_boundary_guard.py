@@ -24,9 +24,9 @@ class BackendContractBoundaryGuardTests(unittest.TestCase):
         self.assertEqual(report["errors"], [])
         self.assertEqual(report["contract_writer_count"], 3)
         self.assertEqual(report["approval_policy_writer_count"], 1)
-        self.assertEqual(report["lowcoding_policy_writer_count"], 4)
-        self.assertEqual(report["writer_boundary_count"], 8)
-        self.assertEqual(report["writer_file_count"], 6)
+        self.assertEqual(report["lowcoding_policy_writer_count"], 2)
+        self.assertEqual(report["writer_boundary_count"], 6)
+        self.assertEqual(report["writer_file_count"], 5)
         self.assertIn("addons/smart_core/handlers/form_field_configuration.py", report["writer_paths"])
         self.assertIn("addons/smart_core/handlers/menu_configuration.py", report["writer_paths"])
         self.assertEqual(
@@ -75,6 +75,10 @@ class BackendContractBoundaryGuardTests(unittest.TestCase):
             (row["path"], row["boundary"]): row
             for row in report["writers"]
         }
+        allowed_by_boundary = {
+            (row["path"], row["boundary"]): row
+            for row in report["allowed_lowcoding_policy_runtime_writers"]
+        }
 
         self.assertEqual(
             by_boundary[
@@ -104,7 +108,7 @@ class BackendContractBoundaryGuardTests(unittest.TestCase):
             "smart_construction_core.lowcode.approval_policy",
         )
         self.assertEqual(
-            by_boundary[
+            allowed_by_boundary[
                 (
                     "addons/smart_construction_core/models/support/product_policy_sync.py",
                     "industry_product_menu_policy_projection",
@@ -113,10 +117,10 @@ class BackendContractBoundaryGuardTests(unittest.TestCase):
             "L2",
         )
         self.assertEqual(
-            by_boundary[
+            allowed_by_boundary[
                 ("addons/smart_core/handlers/menu_configuration.py", "menu_config_policy_runtime_configuration")
-            ]["category"],
-            "lowcoding_policy_runtime",
+            ]["expected_source"],
+            "smart_core.lowcode.menu_config",
         )
 
     def test_boundary_document_lists_allowed_writer_paths(self):

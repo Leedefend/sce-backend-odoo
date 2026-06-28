@@ -1,0 +1,226 @@
+import { chromium } from "playwright";
+
+const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:18081";
+const DB_NAME = process.env.DB_NAME || "sc_demo";
+const LOGIN = process.env.E2E_LOGIN || "wutao";
+const PASSWORD = process.env.E2E_PASSWORD || "123456";
+const ROOT_MENU_XMLID = process.env.LOW_CODE_MENU_ROOT_XMLID || "smart_construction_core.menu_sc_root";
+
+function assert(condition, message, details = {}) {
+  if (!condition) {
+    const error = new Error(message);
+    error.details = details;
+    throw error;
+  }
+}
+
+function normalize(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function menuIdOf(node) {
+  const meta = node?.meta && typeof node.meta === "object" ? node.meta : {};
+  for (const candidate of [node?.menu_id, meta.menu_id, node?.id]) {
+    const parsed = Number(candidate || 0);
+    if (Number.isInteger(parsed) && parsed > 0) return parsed;
+  }
+  return 0;
+}
+
+function labelOf(node) {
+  return normalize(node?.name || node?.label || node?.title);
+}
+
+function flattenTree(nodes, parent = null, out = []) {
+  for (const node of Array.isArray(nodes) ? nodes : []) {
+    if (!node || typeof node !== "object") continue;
+    const menuId = menuIdOf(node);
+    const label = labelOf(node);
+    out.push({
+      menuId,
+      parentMenuId: parent?.menuId || 0,
+      label,
+      path: [...(parent?.path || []), label].filter(Boolean).join(" / "),
+      node,
+    });
+    flattenTree(node.children, { menuId, path: [...(parent?.path || []), label].filter(Boolean) }, out);
+  }
+  return out;
+}
+
+async function login(page) {
+  await page.goto(`${BASE_URL}/login?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded" });
+  await page.locator("input").nth(0).fill(LOGIN);
+  await page.locator("input").nth(1).fill(PASSWORD);
+  await page.getByRole("button", { name: /登录|Log in/i }).click();
+  await page.waitForURL((url) => !String(url).includes("/login"), { timeout: 30000 });
+}
+
+async function authToken(page) {
+  return page.evaluate((dbName) => sessionStorage.getItem(`sc_auth_token:${dbName}`) || "", DB_NAME);
+}
+
+async function intentRequest(page, intent, params = {}) {
+  const token = await authToken(page);
+  const response = await page.evaluate(async ({ dbName, tokenValue, intentName, payload }) => {
+    const resp = await fetch(`/api/v1/intent?db=${encodeURIComponent(dbName)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: tokenValue ? `Bearer ${tokenValue}` : "",
+        "X-Trace-Id": `low-code-menu-alignment-${Date.now()}`,
+      },
+      body: JSON.stringify({ intent: intentName, params: { db: dbName, ...payload } }),
+    });
+    const body = await resp.json().catch(() => ({}));
+    return { status: resp.status, body };
+  }, { dbName: DB_NAME, tokenValue: token, intentName: intent, payload: params });
+  assert(response.status >= 200 && response.status < 300 && response.body?.ok === true, `${intent} 请求失败`, response);
+  return response.body.data || {};
+}
+
+async function navigationRequest(page) {
+  const token = await authToken(page);
+  const response = await page.evaluate(async ({ dbName, tokenValue }) => {
+    const resp = await fetch(`/api/menu/navigation?db=${encodeURIComponent(dbName)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: tokenValue ? `Bearer ${tokenValue}` : "",
+        "X-Trace-Id": `low-code-menu-navigation-${Date.now()}`,
+      },
+      body: JSON.stringify({}),
+    });
+    const body = await resp.json().catch(() => ({}));
+    return { status: resp.status, body };
+  }, { dbName: DB_NAME, tokenValue: token });
+  assert(response.status >= 200 && response.status < 300 && response.body?.ok === true, "业务办理导航请求失败", response);
+  return response.body;
+}
+
+function expectedVisiblePolicies(audit, panel) {
+  const menuById = new Map((panel.menus || []).map((menu) => [Number(menu.id || menu.menu_id || 0), menu]));
+  const rows = [];
+  for (const policy of audit.applicable_policies || []) {
+    const menuId = Number(policy.menu_id || 0);
+    if (!menuId || policy.visible !== true) continue;
+    const menu = menuById.get(menuId) || {};
+    const expectedParentId = Number(policy.target_parent_menu_id || menu.parent_id || 0);
+    rows.push({
+      menuId,
+      expectedLabel: normalize(policy.custom_label || policy.menu_label || menu.name),
+      expectedParentId,
+      targetParentId: Number(policy.target_parent_menu_id || 0),
+      policyId: Number(policy.id || 0),
+      menuCompleteName: normalize(policy.menu_complete_name || menu.complete_name),
+    });
+  }
+  return rows;
+}
+
+function analyzeAlignment({ audit, panel, navigation }) {
+  const expected = expectedVisiblePolicies(audit, panel);
+  const expectedById = new Map(expected.map((row) => [row.menuId, row]));
+  const expectedIds = new Set(expectedById.keys());
+  const navTree = navigation.nav_fact?.tree || navigation.nav_explained?.tree || [];
+  const actual = flattenTree(navTree).filter((row) => row.menuId);
+  const actualById = new Map();
+  const duplicates = [];
+  for (const row of actual) {
+    if (actualById.has(row.menuId)) duplicates.push({ menu_id: row.menuId, first_path: actualById.get(row.menuId).path, duplicate_path: row.path });
+    else actualById.set(row.menuId, row);
+  }
+
+  const missing = expected
+    .filter((row) => !actualById.has(row.menuId))
+    .map((row) => ({ menu_id: row.menuId, label: row.expectedLabel, policy_id: row.policyId, configured_path: row.menuCompleteName }));
+  const unexpected = actual
+    .filter((row) => !expectedIds.has(row.menuId))
+    .map((row) => ({ menu_id: row.menuId, label: row.label, path: row.path }))
+    .slice(0, 50);
+  const labelMismatches = expected
+    .filter((row) => {
+      const actualRow = actualById.get(row.menuId);
+      return actualRow && row.expectedLabel && actualRow.label !== row.expectedLabel;
+    })
+    .map((row) => ({
+      menu_id: row.menuId,
+      expected_label: row.expectedLabel,
+      actual_label: actualById.get(row.menuId)?.label || "",
+      actual_path: actualById.get(row.menuId)?.path || "",
+    }));
+  const parentMismatches = expected
+    .filter((row) => {
+      const actualRow = actualById.get(row.menuId);
+      if (!actualRow) return false;
+      if (!row.expectedParentId) return false;
+      if (!row.targetParentId && !expectedIds.has(row.expectedParentId)) return false;
+      return Number(actualRow.parentMenuId || 0) !== Number(row.expectedParentId);
+    })
+    .map((row) => ({
+      menu_id: row.menuId,
+      label: row.expectedLabel,
+      expected_parent_id: row.expectedParentId,
+      actual_parent_id: actualById.get(row.menuId)?.parentMenuId || 0,
+      actual_path: actualById.get(row.menuId)?.path || "",
+    }));
+
+  const userMenuConfig = navigation.meta?.user_menu_config || {};
+  return {
+    ok: expected.length > 0
+      && missing.length === 0
+      && unexpected.length === 0
+      && duplicates.length === 0
+      && labelMismatches.length === 0
+      && parentMismatches.length === 0,
+    summary: {
+      base_url: BASE_URL,
+      db: DB_NAME,
+      login: LOGIN,
+      root_menu_xmlid: ROOT_MENU_XMLID,
+      runtime_source: audit.summary?.runtime_source || "",
+      configured_policy_count: Number(audit.summary?.configured_policy_count || 0),
+      applicable_policy_count: Number(audit.summary?.applicable_policy_count || 0),
+      expected_visible_count: expected.length,
+      actual_navigation_count: actual.length,
+      missing_count: missing.length,
+      unexpected_count: unexpected.length,
+      duplicate_count: duplicates.length,
+      label_mismatch_count: labelMismatches.length,
+      parent_mismatch_count: parentMismatches.length,
+      navigation_config_only: Boolean(userMenuConfig.nav_fact?.config_only ?? userMenuConfig.config_only),
+    },
+    missing,
+    unexpected,
+    duplicates,
+    labelMismatches,
+    parentMismatches,
+    actualSample: actual.slice(0, 20).map((row) => ({ menu_id: row.menuId, label: row.label, path: row.path })),
+    expectedSample: expected.slice(0, 20),
+  };
+}
+
+async function main() {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  try {
+    await login(page);
+    const params = { root_menu_xmlid: ROOT_MENU_XMLID };
+    const [panel, audit, navigation] = await Promise.all([
+      intentRequest(page, "ui.menu_config.panel.get", params),
+      intentRequest(page, "ui.menu_config.audit", params),
+      navigationRequest(page),
+    ]);
+    const result = analyzeAlignment({ audit, panel, navigation });
+    console.log(JSON.stringify(result, null, 2));
+    assert(result.ok, "菜单配置与最终业务办理导航未严格对齐", result);
+  } finally {
+    await browser.close();
+  }
+}
+
+main().catch((error) => {
+  console.error("[low_code_menu_navigation_alignment_acceptance] FAIL", error.message);
+  if (error.details) console.error(JSON.stringify(error.details, null, 2));
+  process.exit(1);
+});

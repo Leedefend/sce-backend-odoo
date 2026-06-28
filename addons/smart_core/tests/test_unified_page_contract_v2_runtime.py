@@ -95,6 +95,213 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
         issues = runtime.find_form_structure_contract_issues(self._contract())
         self.assertEqual(issues, [])
 
+    def test_data_source_authority_rejects_missing_source_authority(self):
+        issues = runtime.find_data_source_authority_issues({
+            "dataSource": {
+                "primary": {
+                    "query": "api.data",
+                    "intent": "api.data",
+                    "params": {"model": "project.project"},
+                }
+            },
+        })
+
+        self.assertIn("dataContract.dataSource.primary.sourceAuthority is required", issues)
+
+    def test_data_source_authority_accepts_projected_sources(self):
+        issues = runtime.find_data_source_authority_issues({
+            "dataSource": {
+                "primary": {
+                    "query": "api.data",
+                    "intent": "api.data",
+                    "sourceAuthority": {
+                        "projection_only": True,
+                        "no_business_fact_authority": True,
+                        "fact_authority": "odoo.model",
+                    },
+                }
+            },
+        })
+
+        self.assertEqual(issues, [])
+
+    def test_metadata_projection_rejects_legacy_projection_payloads(self):
+        issues = runtime.find_metadata_projection_issues({
+            "dataMeta": {
+                "legacyContractProjection": {
+                    "business_operation_profile": {"source": "legacy"},
+                    "field_groups": [{"name": "core", "fields": ["name"]}],
+                    "form_structure_contract": {"source": "legacy"},
+                    "list_profile": {"columns": ["name"]},
+                    "visible_fields": ["name"],
+                }
+            }
+        })
+
+        self.assertIn(
+            "dataContract.dataMeta.legacyContractProjection must not be emitted in stable V2 contract",
+            issues,
+        )
+        self.assertIn(
+            "legacyContractProjection.business_operation_profile must not be emitted; use formal V2 metadata",
+            issues,
+        )
+        self.assertIn(
+            "legacyContractProjection.field_groups must not be emitted; use formal V2 metadata",
+            issues,
+        )
+        self.assertIn(
+            "legacyContractProjection.form_structure_contract must not be emitted; use formal V2 metadata",
+            issues,
+        )
+        self.assertIn(
+            "legacyContractProjection.list_profile must not be emitted; use formal V2 metadata",
+            issues,
+        )
+        self.assertIn(
+            "legacyContractProjection.visible_fields must not be emitted; use formal V2 metadata",
+            issues,
+        )
+
+    def test_metadata_projection_rejects_legacy_projection_alias_presence(self):
+        issues = runtime.find_metadata_projection_issues({
+            "dataMeta": {
+                "legacy_contract_projection": {},
+            }
+        })
+
+        self.assertIn(
+            "dataContract.dataMeta.legacyContractProjection must not be emitted in stable V2 contract",
+            issues,
+        )
+
+    def test_metadata_projection_accepts_formal_v2_metadata(self):
+        issues = runtime.find_metadata_projection_issues({
+            "dataMeta": {
+                "businessOperationProfile": {
+                    "common_fields": ["name"],
+                    "sourceAuthority": self._metadata_source("business_operation_profile"),
+                },
+                "visibleFields": {
+                    "fields": ["name"],
+                    "sourceAuthority": self._metadata_source("visible_fields"),
+                },
+                "fieldGroups": {
+                    "groups": [{"name": "core", "fields": ["name"]}],
+                    "sourceAuthority": self._metadata_source("field_groups"),
+                },
+            }
+        })
+
+        self.assertEqual(issues, [])
+
+    def test_metadata_projection_rejects_snake_case_formal_aliases(self):
+        issues = runtime.find_metadata_projection_issues({
+            "dataMeta": {
+                "business_operation_profile": {
+                    "common_fields": ["name"],
+                    "sourceAuthority": self._metadata_source("business_operation_profile"),
+                },
+                "visible_fields": {
+                    "fields": ["name"],
+                    "sourceAuthority": self._metadata_source("visible_fields"),
+                },
+                "field_groups": {
+                    "groups": [{"name": "core", "fields": ["name"]}],
+                    "sourceAuthority": self._metadata_source("field_groups"),
+                },
+            }
+        })
+
+        self.assertIn(
+            "dataContract.dataMeta.business_operation_profile must not be emitted; use formal V2 camelCase metadata",
+            issues,
+        )
+        self.assertIn(
+            "dataContract.dataMeta.visible_fields must not be emitted; use formal V2 camelCase metadata",
+            issues,
+        )
+        self.assertIn(
+            "dataContract.dataMeta.field_groups must not be emitted; use formal V2 camelCase metadata",
+            issues,
+        )
+
+    def test_policy_contract_rejects_root_compatibility_fields(self):
+        contract = self._contract()
+        contract["delete_policy"] = {"allow": True}
+        contract["surface_policies"] = {"kind": "list"}
+        contract["list_profile"] = {"batch_policy": {"enabled": True}}
+
+        issues = runtime.find_policy_contract_issues(contract)
+
+        self.assertIn("root compatibility field delete_policy must not be emitted by V2 contract", issues)
+        self.assertIn("root compatibility field surface_policies must not be emitted by V2 contract", issues)
+        self.assertIn("root compatibility field list_profile must not be emitted by V2 contract", issues)
+
+    def test_policy_contract_rejects_nested_compatibility_fields(self):
+        contract = self._contract()
+        contract["actionContract"] = {
+            "delete_policy": {"allow": True},
+            "surface_policies": {"kind": "list"},
+        }
+        contract["layoutContract"]["list_profile"] = {"batch_policy": {"enabled": True}}
+
+        issues = runtime.find_policy_contract_issues(contract)
+
+        self.assertIn("actionContract compatibility field delete_policy must not be emitted by V2 contract", issues)
+        self.assertIn("actionContract compatibility field surface_policies must not be emitted by V2 contract", issues)
+        self.assertIn("layoutContract compatibility field list_profile must not be emitted by V2 contract", issues)
+
+    def test_policy_contract_accepts_formal_v2_policy_projection(self):
+        contract = self._contract()
+        contract["actionContract"] = {
+            "deletePolicy": {
+                "allow": True,
+                "sourceAuthority": self._policy_source("delete_policy"),
+            },
+            "surfacePolicies": {
+                "kind": "list",
+                "sourceAuthority": self._policy_source("surface_policies"),
+            },
+        }
+        contract["layoutContract"]["listProfile"] = {
+            "batch_policy": {"enabled": True},
+            "sourceAuthority": self._policy_source("list_profile"),
+        }
+
+        issues = runtime.find_policy_contract_issues(contract)
+
+        self.assertEqual(issues, [])
+
+    def test_policy_contract_rejects_projection_without_authority(self):
+        contract = self._contract()
+        contract["layoutContract"]["listProfile"] = {
+            "batch_policy": {"enabled": False},
+        }
+
+        issues = runtime.find_policy_contract_issues(contract)
+
+        self.assertIn(
+            "layoutContract.listProfile.sourceAuthority is required",
+            issues,
+        )
+
+    def _policy_source(self, source_key):
+        return {
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "formal_projection": True,
+            "source_key": source_key,
+        }
+
+    def _metadata_source(self, source_key):
+        return {
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "formal_projection": True,
+            "source_key": source_key,
+        }
+
     def test_form_structure_contract_rejects_unknown_duplicate_and_unprojected_fields(self):
         contract = self._contract()
         contract["formStructureContract"]["slots"][1]["groups"][0]["fieldRefs"].extend(["subject", "missing_field"])
@@ -107,6 +314,14 @@ class TestUnifiedPageContractV2Runtime(unittest.TestCase):
         self.assertIn("formStructureContract.fieldRoles.missing_role references unknown field", issues)
         self.assertIn("formStructureContract.fieldRoles.missing_role.slot references unknown slot missing_slot", issues)
         self.assertIn("formStructureContract field not projected to layout: missing_field", issues)
+
+    def test_form_structure_contract_rejects_root_compatibility_alias(self):
+        contract = self._contract()
+        contract["form_structure_contract"] = contract["formStructureContract"]
+
+        issues = runtime.find_form_structure_contract_issues(contract)
+
+        self.assertIn("root compatibility field form_structure_contract must not be emitted by V2 contract", issues)
 
     def test_form_structure_contract_allows_overview_summary_references(self):
         contract = self._contract()

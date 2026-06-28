@@ -4,6 +4,11 @@ import importlib.util
 from pathlib import Path
 
 from odoo import api, models
+from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    MENU_CONFIG_NAV_ENABLED_PARAM,
+    MENU_CONFIG_POLICY_MODEL,
+    NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM,
+)
 
 
 FORMAL_CONTRACT_PRODUCT_MENU_XMLIDS = {
@@ -212,8 +217,8 @@ class ScProductPolicy(models.Model):
     @api.model
     def _ensure_formal_product_navigation_runtime_params(self):
         Param = self.env["ir.config_parameter"].sudo()
-        Param.set_param("smart_core.nav.user_data_acceptance_only", "0")
-        Param.set_param("smart_core.nav.user_menu_config.enabled", "1")
+        Param.set_param(NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM, "0")
+        Param.set_param(MENU_CONFIG_NAV_ENABLED_PARAM, "1")
         return True
 
     @api.model
@@ -786,7 +791,7 @@ class ScProductPolicy(models.Model):
 
     @api.model
     def _sync_user_confirmed_formal_menu_overlay(self):
-        Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
+        Policy = self.env[MENU_CONFIG_POLICY_MODEL].sudo().with_context(active_test=False)
         Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
 
         def upsert(menu, visible, note):

@@ -1,4 +1,17 @@
 export type ContractV2ClientType = 'web_pc' | 'wx_mini' | 'harmony_h5';
+export type ContractV2ViewType = 'form' | 'list' | 'table' | 'kanban' | 'tree' | 'gantt' | 'combine';
+export type ContractV2LayoutType = 'form' | 'table' | 'kanban' | 'tree' | 'gantt' | 'combine';
+export type ContractV2AdaptMode = 'pc' | 'mobile';
+export type ContractV2TriggerType = 'change' | 'click' | 'select' | 'refresh' | 'add' | 'delete' | 'confirm' | 'submit' | 'blur' | 'focus';
+export type ContractV2DispatchMode = 'local' | 'server' | 'serverDebounced' | 'serverBlocking';
+export type ContractV2TargetScope = 'widget' | 'container' | 'page' | 'dataSource' | 'runtime';
+export type ContractV2RefreshMode = 'none' | 'partial' | 'full';
+export type ContractV2Auth = 'none' | 'read' | 'edit' | 'admin';
+export type ContractV2PatchStrategy = 'incremental' | 'full';
+export type ContractV2CachePolicy = 'none' | 'etag' | 'snapshot';
+export type ContractV2RenderStrategy = 'sync' | 'scheduled' | 'virtualized';
+export type ContractV2PatchOperation = 'replace' | 'merge' | 'append' | 'remove' | 'reorder' | 'invalidate';
+export type ContractV2PageRenderMode = 'governed';
 export type ContractV2Dictionary = Record<string, unknown>;
 
 export interface ContractV2PageInfo {
@@ -6,8 +19,9 @@ export interface ContractV2PageInfo {
   sceneKey: string;
   pageName: string;
   model: string;
-  viewType: string;
-  layoutType: string;
+  viewType: ContractV2ViewType;
+  layoutType: ContractV2LayoutType;
+  renderMode: ContractV2PageRenderMode;
   contractVersion: string;
   clientType: ContractV2ClientType;
 }
@@ -17,8 +31,10 @@ export interface ContractV2Widget {
   widgetType: string;
   fieldCode: string;
   label: string;
+  span: number;
   componentKey: string;
-  componentConfig?: ContractV2Dictionary;
+  capabilities: string[];
+  componentConfig: ContractV2Dictionary;
   fieldType?: string;
   relation?: string;
   formStructureRole?: ContractV2Dictionary;
@@ -32,6 +48,8 @@ export interface ContractV2Container {
   string?: string;
   label?: string;
   title: string;
+  span: number;
+  styleToken?: string;
   cols?: number;
   columns?: number;
   widget?: string;
@@ -55,30 +73,53 @@ export interface ContractV2Container {
 }
 
 export interface ContractV2LayoutContract {
-  layoutType: string;
-  adaptMode: string;
+  pageId: string;
+  layoutType: ContractV2LayoutType;
+  adaptMode: ContractV2AdaptMode;
   containerTree: ContractV2Container[];
+  layoutHints: ContractV2Dictionary;
   componentRegistry: ContractV2Dictionary;
+  listProfile?: ContractV2Dictionary;
 }
 
 export interface ContractV2ActionRule {
   actionId: string;
-  triggerType: string;
+  triggerType: ContractV2TriggerType;
   sourceWidgetId: string;
   targetIds: string[];
-  dispatchMode: string;
-  targetScope: string;
-  refreshMode: string;
+  dispatchMode: ContractV2DispatchMode;
+  targetScope: ContractV2TargetScope;
+  refreshMode: ContractV2RefreshMode;
   actionKey?: string;
   label?: string;
   intent?: string;
   target?: ContractV2Dictionary;
   button?: ContractV2Dictionary;
+  submitPolicy?: ContractV2Dictionary;
+  tracePolicy?: ContractV2Dictionary;
 }
 
 export interface ContractV2ActionContract {
   actionRuleList: ContractV2ActionRule[];
-  dependencyGraph?: Record<string, string[]>;
+  dependencyGraph: Record<string, string[]>;
+  deletePolicy?: ContractV2Dictionary;
+  surfacePolicies?: ContractV2Dictionary;
+}
+
+export interface ContractV2VisibleFields {
+  fields: string[];
+  sourceAuthority?: ContractV2Dictionary;
+}
+
+export interface ContractV2FieldGroups {
+  groups: ContractV2Dictionary[];
+  sourceAuthority?: ContractV2Dictionary;
+}
+
+export interface ContractV2DataMeta extends ContractV2Dictionary {
+  businessOperationProfile?: ContractV2Dictionary;
+  visibleFields?: ContractV2VisibleFields;
+  fieldGroups?: ContractV2FieldGroups;
 }
 
 export interface ContractV2DataContract {
@@ -88,7 +129,7 @@ export interface ContractV2DataContract {
   dictData: Record<string, unknown>;
   pagination: Record<string, unknown>;
   dataSource: Record<string, ContractV2Dictionary>;
-  dataMeta: ContractV2Dictionary;
+  dataMeta: ContractV2DataMeta;
   treeData?: Record<string, unknown[]>;
   ganttData?: Record<string, unknown[]>;
 }
@@ -105,6 +146,8 @@ export interface ContractV2WidgetStatus {
   readonly?: boolean;
   required?: boolean;
   disabled?: boolean;
+  placeholder?: string;
+  auth?: ContractV2Auth;
   reasonCode?: string;
 }
 
@@ -139,16 +182,38 @@ export interface ContractV2StatusContract {
   selectorStatus: ContractV2SelectorStatus[];
 }
 
+export interface ContractV2RuntimeContract {
+  patchStrategy: ContractV2PatchStrategy;
+  cachePolicy: ContractV2CachePolicy;
+  optimistic: boolean;
+  lazyContainer: string[];
+  virtualization: ContractV2Dictionary;
+  retryPolicy: ContractV2Dictionary;
+  renderStrategy?: ContractV2RenderStrategy;
+  hydration?: ContractV2Dictionary;
+  patchOperations?: ContractV2PatchOperation[];
+  tracePolicy?: ContractV2Dictionary;
+  complexityBudget?: ContractV2Dictionary;
+  aiEnvelope?: ContractV2Dictionary;
+}
+
+export interface ContractV2Meta {
+  etag: string;
+  snapshotId: string;
+  traceId: string;
+  requestId: string;
+  sourceType: string;
+}
+
 export interface ContractV2Snapshot {
   pageInfo: ContractV2PageInfo;
   layoutContract: ContractV2LayoutContract;
   statusContract: ContractV2StatusContract;
   actionContract: ContractV2ActionContract;
   dataContract: ContractV2DataContract;
-  runtimeContract: ContractV2Dictionary;
-  meta: ContractV2Dictionary;
+  runtimeContract: ContractV2RuntimeContract;
+  meta: ContractV2Meta;
   formStructureContract?: ContractV2Dictionary;
-  searchContract?: ContractV2Dictionary;
 }
 
 export interface ContractV2UnsupportedFeature {

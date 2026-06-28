@@ -8,6 +8,7 @@ from typing import Any
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..utils.backend_contract_boundaries import BUSINESS_CONFIG_INTENTS, MENU_CONFIG_INTENTS, MENU_CONFIG_POLICY_MODEL
 
 
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
@@ -53,7 +54,7 @@ class _BusinessConfigSurfaceBase(BaseIntentHandler):
     ACL_MODE = "explicit_check"
     SOURCE_AUTHORITIES = (
         "ui.business.config.contract",
-        "ui.menu.config.policy",
+        MENU_CONFIG_POLICY_MODEL,
         "ui.form.field.policy",
         "sc.user.view.preference",
     )
@@ -345,7 +346,7 @@ class _BusinessConfigSurfaceBase(BaseIntentHandler):
 
 
 class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
-    INTENT_TYPE = "ui.business_config.surface.get"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["surface_get"]
     DESCRIPTION = "读取当前页面可配置能力摘要"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_surface_projection"
@@ -390,7 +391,7 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
                     view_id=view_id,
                     role_key=role_key,
                 ) if model else 0,
-                "intent": "ui.business_config.form.audit",
+                "intent": BUSINESS_CONFIG_INTENTS["form_audit"],
                 "boundary": "business_contract",
             },
             {
@@ -413,7 +414,7 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
                     )
                     if model else 0
                 ),
-                "intent": "ui.business_config.list_search.audit",
+                "intent": BUSINESS_CONFIG_INTENTS["list_search_audit"],
                 "boundary": "business_contract_not_user_preference",
             },
         ]
@@ -422,14 +423,14 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
                 "key": "analysis",
                 "label": "分析视图配置",
                 "contract_count": analysis_contract_count,
-                "intent": "ui.business_config.contract.versions",
+                "intent": BUSINESS_CONFIG_INTENTS["contract_versions"],
                 "boundary": "business_contract",
             })
         sections.append({
             "key": "menu",
             "label": "菜单配置",
             "contract_count": self._contract_count(model="ir.ui.menu", role_key=role_key),
-            "intent": "ui.menu_config.audit",
+            "intent": MENU_CONFIG_INTENTS["audit"],
             "boundary": "business_contract_with_policy_runtime",
         })
         sections.append(self._approval_policy_section(model))
@@ -451,7 +452,7 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
 
 
 class BusinessConfigSnapshotSummaryHandler(_BusinessConfigSurfaceBase):
-    INTENT_TYPE = "ui.business_config.snapshot.summary"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["snapshot_summary"]
     DESCRIPTION = "读取业务配置快照摘要"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_snapshot_summary"
@@ -480,7 +481,7 @@ class BusinessConfigSnapshotSummaryHandler(_BusinessConfigSurfaceBase):
 
 
 class BusinessConfigSnapshotExportHandler(_BusinessConfigSurfaceBase):
-    INTENT_TYPE = "ui.business_config.snapshot.export"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["snapshot_export"]
     DESCRIPTION = "导出业务配置快照"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_snapshot_export"
@@ -509,7 +510,7 @@ class BusinessConfigSnapshotExportHandler(_BusinessConfigSurfaceBase):
 
 
 class BusinessConfigSnapshotCompareHandler(_BusinessConfigSurfaceBase):
-    INTENT_TYPE = "ui.business_config.snapshot.compare"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["snapshot_compare"]
     DESCRIPTION = "对比业务配置快照"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_snapshot_compare"
@@ -542,7 +543,7 @@ class BusinessConfigSnapshotCompareHandler(_BusinessConfigSurfaceBase):
 
 
 class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
-    INTENT_TYPE = "ui.business_config.coverage.scan"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["coverage_scan"]
     DESCRIPTION = "扫描 action 维度的业务配置覆盖情况"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_coverage_scan"
@@ -988,7 +989,7 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
 
 
 class BusinessConfigCoverageBootstrapListSearchHandler(BusinessConfigCoverageScanHandler):
-    INTENT_TYPE = "ui.business_config.coverage.bootstrap_list_search"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["coverage_bootstrap_list_search"]
     DESCRIPTION = "批量从运行态后端视图固化缺失的列表/搜索业务配置"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_coverage_list_search_bootstrap"
@@ -1103,7 +1104,7 @@ class BusinessConfigCoverageBootstrapListSearchHandler(BusinessConfigCoverageSca
 
 
 class BusinessConfigCoverageBootstrapMissingHandler(BusinessConfigCoverageBootstrapListSearchHandler):
-    INTENT_TYPE = "ui.business_config.coverage.bootstrap_missing"
+    INTENT_TYPE = BUSINESS_CONFIG_INTENTS["coverage_bootstrap_missing"]
     DESCRIPTION = "批量从运行态后端视图固化缺失的表单、列表、搜索、分析业务配置"
     VERSION = "1.0.0"
     SOURCE_KIND = "ui_business_config_coverage_missing_bootstrap"

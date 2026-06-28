@@ -185,6 +185,35 @@ class BusinessConfigContractSchemaTests(unittest.TestCase):
             ["form.layout[0].children[0].children[1]:missing_layout_field"],
         )
 
+    def test_form_columns_accepts_layout_column_count(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "columns": 2,
+                        "fields": [{"name": "name"}],
+                        "layout": [{"type": "field", "name": "name"}],
+                    }
+                }
+            }
+        }
+
+        self.contract._check_view_orchestration_payload(self.contract, payload)
+
+    def test_list_columns_still_requires_array(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "tree": {
+                        "columns": 2,
+                    }
+                }
+            }
+        }
+
+        with self.assertRaises(self.module.ValidationError):
+            self.contract._check_view_orchestration_payload(self.contract, payload)
+
 
 if __name__ == "__main__":
     unittest.main()

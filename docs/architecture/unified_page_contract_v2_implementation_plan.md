@@ -492,6 +492,7 @@ Add the v2+ runtime control plane without turning the contract into a DSL VM.
 
 - `make verify.unified_page_contract.v2`
 - `make verify.unified_page_contract.v2.runtime`
+- runtime pure unit tests and mobile compact contract tests
 - runtime contract snapshot baseline
 - anti-DSL VM guard
 - schema parse check through Makefile
@@ -603,8 +604,11 @@ Make frontend default path consume `UnifiedPageContract v2+`.
 
 ### Verification
 
+- `make verify.unified_page_contract.v2`
 - frontend typecheck
+- frontend static build
 - frontend contract consumer guard
+- stable projection guard for backend formal V2 slots and frontend compatibility boundaries
 - Playwright smoke for selected pages
 - restricted backend gate if API response shape touched
 

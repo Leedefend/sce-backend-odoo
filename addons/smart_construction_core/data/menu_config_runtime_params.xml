@@ -5,5 +5,9 @@
             <value>smart_core.nav.user_menu_config.enabled</value>
             <value>1</value>
         </function>
+        <function model="ir.config_parameter" name="set_param">
+            <value>smart_core.nav.user_menu_config.config_only.enabled</value>
+            <value>1</value>
+        </function>
     </data>
 </odoo>

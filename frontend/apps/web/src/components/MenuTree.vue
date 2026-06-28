@@ -1,5 +1,5 @@
 <template>
-  <ul class="tree" :class="`depth-${level}`" :style="treeStyle">
+  <ul class="tree" :class="[`depth-${level}`, { 'tree--root': level === 0 }]">
     <li v-for="node in sorted" :key="nodeKey(node)">
       <div
         class="node"
@@ -76,14 +76,6 @@ function hideDuplicateLeafBesideGroup(nodes: NavNode[]) {
 }
 
 const level = computed(() => Number(props.level || 0));
-const treeStyle = computed<Record<string, string>>(() => {
-  if (level.value <= 0) return {};
-  return {
-    marginLeft: '12px',
-    paddingLeft: '12px',
-    borderLeft: '1px dashed var(--sc-app-border)',
-  };
-});
 
 function toggle(key: string) {
   session.toggleMenuExpanded(key);
@@ -200,8 +192,8 @@ function ensureExpandedForDefaultGroups(nodes: NavNode[]): Set<string> {
 watchEffect(() => {
   const parents = ensureExpandedForActive(props.nodes, props.activeMenuId);
   const defaults = ensureExpandedForDefaultGroups(props.nodes);
-  if (parents.size || defaults.size) {
-    session.ensureMenuExpanded([...parents, ...defaults]);
+  if (defaults.size) {
+    session.ensureMenuExpanded([...defaults]);
   }
   activeParents.value = parents;
 });
@@ -237,16 +229,35 @@ onMounted(() => {
 <style scoped>
 .tree {
   list-style: none;
-  padding-left: 6px;
+  padding-left: 0;
   margin: 0;
   display: grid;
-  gap: 4px;
+  gap: 3px;
+}
+
+.tree:not(.tree--root) {
+  margin-top: 3px;
+  margin-bottom: 6px;
+  padding-left: 0;
+}
+
+.tree.depth-1 {
+  padding: 3px 0 5px 22px;
+}
+
+.tree.depth-2,
+.tree.depth-3,
+.tree.depth-4,
+.tree.depth-5 {
+  padding: 2px 0 4px 14px;
 }
 
 .node {
-  display: flex;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
   align-items: center;
-  gap: 6px;
+  gap: 2px;
+  min-height: 30px;
 }
 
 .label {
@@ -257,18 +268,21 @@ onMounted(() => {
   color: var(--sc-app-text-primary);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   max-width: 100%;
+  min-width: 0;
 }
 
 .node.active .label {
   font-weight: 600;
-  color: var(--sc-app-info-text);
+  color: var(--sc-app-text-primary);
   background: var(--sc-app-info-bg);
+  box-shadow: inset 3px 0 0 var(--sc-semantic-surface-interactive);
 }
 
 .node.ancestor .label {
-  color: var(--sc-app-text-secondary);
+  color: var(--sc-app-text-primary);
+  background: var(--sc-app-subtle-bg);
 }
 
 .node.disabled .label {
@@ -281,27 +295,55 @@ onMounted(() => {
 }
 
 .toggle {
-  width: 18px;
+  width: 22px;
+  height: 28px;
   border: none;
+  border-radius: 6px;
   background: transparent;
   cursor: pointer;
   color: var(--sc-semantic-text-muted);
   font-size: 12px;
+  line-height: 1;
+}
+
+.toggle:hover {
+  background: var(--sc-app-hover-bg);
+  color: var(--sc-app-text-primary);
 }
 
 .toggle-spacer {
-  width: 18px;
+  width: 22px;
   display: inline-block;
-  flex: 0 0 18px;
+  flex: 0 0 22px;
 }
 
 .label {
-  padding: 5px 8px;
-  border-radius: 4px;
+  width: 100%;
+  min-height: 30px;
+  padding: 6px 8px;
+  border-radius: 7px;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.35;
-  transition: background-color 0.2s;
+  transition: background-color 0.16s, box-shadow 0.16s, color 0.16s;
+}
+
+.tree--root > li > .node .label {
+  min-height: 34px;
+  padding: 7px 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.depth-1 > li > .node .label {
+  font-weight: 600;
+}
+
+.depth-2 > li > .node .label,
+.depth-3 > li > .node .label,
+.depth-4 > li > .node .label,
+.depth-5 > li > .node .label {
+  color: var(--sc-app-text-secondary);
 }
 
 .label-text {
@@ -328,7 +370,7 @@ onMounted(() => {
   min-width: 18px;
   text-align: center;
   color: var(--sc-semantic-text-muted);
-  background: transparent;
+  background: var(--sc-app-panel);
 }
 
 .label:hover {
