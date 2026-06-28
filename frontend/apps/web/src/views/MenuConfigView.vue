@@ -673,7 +673,7 @@ import {
 } from '../api/menuConfig';
 import { useSessionStore } from '../stores/session';
 import { config } from '../config';
-import { BUSINESS_CONFIG_ROUTE_FLAGS } from '../app/businessConfigBoundaries';
+import { BUSINESS_CONFIG_ROUTE_FLAGS, MENU_CONFIG_RUNTIME_SOURCES } from '../app/businessConfigBoundaries';
 
 type DraftPolicy = {
   policy_id: number;
@@ -910,7 +910,7 @@ const auditSummary = computed(() => {
     reorderedCount: Number(summary.reordered_count || 0),
     movedCount: Number(summary.moved_count || 0),
     notApplicableCount: Array.isArray(summary.not_applicable_policy_ids) ? summary.not_applicable_policy_ids.length : 0,
-    runtimeSourceLabel: summary.runtime_source === 'ui.business.config.contract.menu_orchestration' ? '已发布配置' : '兼容配置',
+    runtimeSourceLabel: summary.runtime_source === MENU_CONFIG_RUNTIME_SOURCES.contract ? '已发布配置' : '兼容配置',
   };
 });
 

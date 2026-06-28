@@ -8,7 +8,7 @@ from typing import Any
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
-from ..utils.backend_contract_boundaries import BUSINESS_CONFIG_INTENTS, MENU_CONFIG_INTENTS
+from ..utils.backend_contract_boundaries import BUSINESS_CONFIG_INTENTS, MENU_CONFIG_INTENTS, MENU_CONFIG_POLICY_MODEL
 
 
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
@@ -54,7 +54,7 @@ class _BusinessConfigSurfaceBase(BaseIntentHandler):
     ACL_MODE = "explicit_check"
     SOURCE_AUTHORITIES = (
         "ui.business.config.contract",
-        "ui.menu.config.policy",
+        MENU_CONFIG_POLICY_MODEL,
         "ui.form.field.policy",
         "sc.user.view.preference",
     )

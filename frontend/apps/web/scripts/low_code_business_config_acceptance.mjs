@@ -36,11 +36,14 @@ const LOW_CODE_BOUNDARY_FILES = [
   "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue",
   "frontend/apps/web/src/views/MenuConfigView.vue",
   "frontend/apps/web/src/pages/ContractFormPage.vue",
+  "addons/smart_core/controllers/platform_menu_api.py",
   "addons/smart_core/handlers/business_config_surface.py",
   "addons/smart_core/handlers/form_field_configuration.py",
   "addons/smart_core/handlers/menu_configuration.py",
   "addons/smart_core/security/intent_permission.py",
+  "addons/smart_core/handlers/system_init.py",
   "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py",
+  "addons/smart_core/model/ui_menu_config_policy.py",
   "addons/smart_construction_core/handlers/approval_policy_configuration.py",
   "addons/smart_construction_core/core_extension.py",
 ];
@@ -67,7 +70,7 @@ async function ensureDirs() {
 
 async function auditLowCodeBoundaryConstants() {
   const leaked = [];
-  const pattern = /(?:ui\.(?:business_config|menu_config)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
+  const pattern = /(?:ui\.(?:business_config|menu_config)|sc\.approval_policy)\.[a-zA-Z0-9_.]+|ui\.menu\.config\.policy|ui\.business\.config\.contract\.menu_orchestration|smart_core\.nav\.user_menu_config(?:\.config_only)?\.enabled|["'](?:business_config_lowcode|form_field_configuration|return_to_business_config)["']/g;
   for (const relativePath of LOW_CODE_BOUNDARY_FILES) {
     if (LOW_CODE_BOUNDARY_ALLOW_FILES.has(relativePath)) continue;
     const absolutePath = path.join(ROOT_DIR, relativePath);

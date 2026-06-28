@@ -19,6 +19,11 @@ VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING = "smart_core.lowcode.business_config
 VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY = "smart_core.lowcode.form_field_policy"
 VIEW_ORCHESTRATION_SOURCE_ANALYSIS_EDITOR = "business_config_analysis_editor"
 MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING = "smart_core.lowcode.menu_config"
+MENU_CONFIG_POLICY_MODEL = "ui.menu.config.policy"
+MENU_CONFIG_RUNTIME_SOURCE_POLICY = "ui.menu.config.policy"
+MENU_CONFIG_RUNTIME_SOURCE_CONTRACT = "ui.business.config.contract.menu_orchestration"
+MENU_CONFIG_NAV_ENABLED_PARAM = "smart_core.nav.user_menu_config.enabled"
+MENU_CONFIG_CONFIG_ONLY_PARAM = "smart_core.nav.user_menu_config.config_only.enabled"
 APPROVAL_POLICY_SOURCE_TENANT_LOWCODING = "smart_construction_core.lowcode.approval_policy"
 APPROVAL_POLICY_RUNTIME_SOURCE = "sc.approval.policy"
 

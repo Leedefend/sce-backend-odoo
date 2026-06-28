@@ -5,6 +5,12 @@ import re
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    MENU_CONFIG_CONFIG_ONLY_PARAM,
+    MENU_CONFIG_POLICY_MODEL,
+    MENU_CONFIG_RUNTIME_SOURCE_CONTRACT,
+    MENU_CONFIG_RUNTIME_SOURCE_POLICY,
+)
 
 
 def _to_int(value) -> int:
@@ -30,13 +36,13 @@ def _to_bool(value, default: bool = False) -> bool:
 
 
 class UiMenuConfigPolicy(models.Model):
-    _name = "ui.menu.config.policy"
+    _name = MENU_CONFIG_POLICY_MODEL
     _description = "User Configurable Menu Policy"
     _rec_name = "name"
     _order = "company_id, menu_id, id"
 
     SOURCE_KIND = "ui_menu_config_policy_overlay"
-    SOURCE_AUTHORITIES = ("ui.menu.config.policy", "ir.ui.menu", "res.groups")
+    SOURCE_AUTHORITIES = (MENU_CONFIG_POLICY_MODEL, "ir.ui.menu", "res.groups")
 
     name = fields.Char(string="配置名称", compute="_compute_name", store=True)
     company_id = fields.Many2one(
@@ -206,13 +212,13 @@ class UiMenuConfigPolicy(models.Model):
                 parent = parent.parent_id
 
     @api.model
-    def _source_contract(self, *, runtime_source: str = "ui.menu.config.policy") -> dict:
+    def _source_contract(self, *, runtime_source: str = MENU_CONFIG_RUNTIME_SOURCE_POLICY) -> dict:
         authorities = ["ir.ui.menu", "res.groups"]
-        if runtime_source == "ui.business.config.contract.menu_orchestration":
+        if runtime_source == MENU_CONFIG_RUNTIME_SOURCE_CONTRACT:
             authorities.insert(0, "ui.business.config.contract")
-            authorities.append("ui.menu.config.policy")
+            authorities.append(MENU_CONFIG_POLICY_MODEL)
         else:
-            authorities.insert(0, "ui.menu.config.policy")
+            authorities.insert(0, MENU_CONFIG_POLICY_MODEL)
         return {
             "kind": self.SOURCE_KIND,
             "authorities": authorities,
@@ -305,8 +311,8 @@ class UiMenuConfigPolicy(models.Model):
         if contract_policies:
             merged = dict(contract_policies)
             merged.update(policy_policies)
-            return merged, "ui.business.config.contract.menu_orchestration"
-        return policy_policies, "ui.menu.config.policy"
+            return merged, MENU_CONFIG_RUNTIME_SOURCE_CONTRACT
+        return policy_policies, MENU_CONFIG_RUNTIME_SOURCE_POLICY
 
     @api.model
     def apply_runtime_overlay(self, nav_fact: dict, user=None) -> tuple[dict, dict]:
@@ -346,7 +352,7 @@ class UiMenuConfigPolicy(models.Model):
         def config_only_enabled() -> bool:
             try:
                 raw = self.env["ir.config_parameter"].sudo().get_param(
-                    "smart_core.nav.user_menu_config.config_only.enabled",
+                    MENU_CONFIG_CONFIG_ONLY_PARAM,
                     "1",
                 )
             except Exception:
@@ -442,7 +448,7 @@ class UiMenuConfigPolicy(models.Model):
                 return False
             if str(node.get("delivery_bucket") or meta.get("delivery_bucket") or "").strip() == "delivery_business_config":
                 return True
-            if str(node.get("model") or meta.get("model") or "").strip() == "ui.menu.config.policy":
+            if str(node.get("model") or meta.get("model") or "").strip() == MENU_CONFIG_POLICY_MODEL:
                 return True
             if str(node.get("menu_xmlid") or meta.get("menu_xmlid") or "").strip() == "smart_construction_core.menu_ui_menu_config_policy_business_config":
                 return True
@@ -675,7 +681,7 @@ class UiMenuConfigPolicy(models.Model):
             sequence = policy_sequence_override(policy) if policy else 0
             sequence = sequence or int(menu.sequence or 0)
             meta = {
-                "source": "ui.menu.config.policy",
+                "source": MENU_CONFIG_RUNTIME_SOURCE_POLICY,
                 "menu_id": int(menu.id),
                 "menu_xmlid": "",
                 "parent_menu_id": int(menu.parent_id.id or 0) if menu.parent_id else 0,

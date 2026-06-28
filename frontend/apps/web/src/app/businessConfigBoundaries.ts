@@ -53,6 +53,11 @@ export const MENU_CONFIG_INTENTS = {
   versions: 'ui.menu_config.versions',
 } as const;
 
+export const MENU_CONFIG_RUNTIME_SOURCES = {
+  policy: 'ui.menu.config.policy',
+  contract: 'ui.business.config.contract.menu_orchestration',
+} as const;
+
 export const APPROVAL_POLICY_INTENTS = {
   configGet: 'sc.approval_policy.config.get',
   configSet: 'sc.approval_policy.config.set',
