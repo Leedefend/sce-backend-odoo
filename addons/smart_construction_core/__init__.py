@@ -40,6 +40,7 @@ from .core_extension import (  # noqa: F401
     smart_core_intent_permission_model_acl_policy,
     smart_core_api_data_create_execution_policy,
     smart_core_api_data_unlink_allowed_models,
+    smart_core_api_data_search_fields,
     smart_core_model_code_mapping,
     smart_core_finalize_projected_contract_data,
     smart_core_finalize_unified_page_contract_v2,
