@@ -340,6 +340,50 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
         self.assertNotIn(("p1_visible_remark", "ilike", "保证金"), domain)
         self.assertNotIn(("amount", "ilike", "保证金"), domain)
 
+    def test_search_term_domain_includes_many2one_display_source_fields(self):
+        field = lambda field_type, store=True, search=None, groups="", comodel_name="": types.SimpleNamespace(
+            type=field_type,
+            store=store,
+            search=search,
+            groups=groups,
+            comodel_name=comodel_name,
+        )
+        user = types.SimpleNamespace(has_group=lambda group: True)
+        contract_model = types.SimpleNamespace(
+            _rec_name="name",
+            _fields={
+                "name": field("char"),
+                "legacy_visible_title": field("char"),
+                "amount_total": field("float"),
+            },
+        )
+
+        class Env(dict):
+            pass
+
+        env = Env({"construction.contract": contract_model})
+        env.user = user
+        env_model = types.SimpleNamespace(
+            _name="payment.request",
+            _rec_name="name",
+            env=env,
+            _fields={
+                "name": field("char"),
+                "contract_id": field("many2one", comodel_name="construction.contract"),
+            },
+        )
+
+        domain = self.handler._build_search_term_domain(
+            env_model,
+            "场外墙",
+            ["contract_id"],
+        )
+
+        self.assertIn(("contract_id", "ilike", "场外墙"), domain)
+        self.assertIn(("contract_id.name", "ilike", "场外墙"), domain)
+        self.assertIn(("contract_id.legacy_visible_title", "ilike", "场外墙"), domain)
+        self.assertNotIn(("contract_id.amount_total", "ilike", "场外墙"), domain)
+
     def test_python_order_sorts_date_text_chronologically(self):
         rows = [
             {"apply_date": "2024-10-01"},

@@ -3,6 +3,7 @@ import json
 import re
 
 from odoo import api, fields, models
+from odoo.osv import expression
 
 
 LEGACY_VISIBLE_FIELD_MAP = {
@@ -67,6 +68,42 @@ LEGACY_SETTLEMENT_STATUS_DISPLAY = {
 LEGACY_ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
 LEGACY_ATTACHMENT_ID_RE = re.compile(r"^[0-9a-fA-F]{32}$")
 
+
+def _legacy_visible_search(self, operator, value):
+    op = str(operator or "").strip() or "ilike"
+    if op not in ("ilike", "like", "=ilike", "=like", "not ilike", "not like"):
+        return [("id", "=", 0)]
+    term = str(value or "").strip()
+    if not term:
+        return [("id", "=", 0)]
+    fields_to_search = [
+        "raw_payload",
+        "document_no",
+        "document_title",
+        "project_name",
+        "partner_name",
+        "creator_name",
+        "note",
+    ]
+    tokens = [token for token in re.split(r"\s+", term) if token]
+    leaves = [
+        ("raw_payload", op, term),
+        ("document_no", op, term),
+        ("document_title", op, term),
+        ("project_name", op, term),
+        ("partner_name", op, term),
+        ("creator_name", op, term),
+        ("note", op, term),
+    ]
+    domains = [[leaf] for leaf in leaves]
+    if op in ("ilike", "like", "=ilike", "=like") and len(tokens) > 1:
+        domains.extend(
+            expression.AND([[(field_name, op, token)] for token in tokens])
+            for field_name in fields_to_search
+        )
+    return expression.OR(domains)
+
+
 class ScLegacyDirectAcceptanceFact(models.Model):
     _name = "sc.legacy.direct.acceptance.fact"
     _description = "直营旧系统验收事实"
@@ -104,9 +141,11 @@ class ScLegacyDirectAcceptanceFact(models.Model):
     raw_payload = fields.Text(string="旧系统原始行JSON")
 
     for _legacy_visible_index in range(1, 61):
+        locals()[f"_search_legacy_visible_{_legacy_visible_index:02d}"] = _legacy_visible_search
         locals()[f"legacy_visible_{_legacy_visible_index:02d}"] = fields.Char(
             string="",
             compute="_compute_legacy_visible_fields",
+            search=f"_search_legacy_visible_{_legacy_visible_index:02d}",
         )
     del _legacy_visible_index
 

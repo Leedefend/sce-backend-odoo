@@ -6,6 +6,7 @@ import re
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from odoo import api, fields, models
+from odoo.osv import expression
 
 
 HEX_NAME_RE = re.compile(r"^[0-9a-fA-F]{24,64}(?:\.[A-Za-z0-9]{1,8})?$")
@@ -896,6 +897,177 @@ def _alias_field_name(label):
 
 def _alias_field_string(label):
     return label
+
+
+def _tokenized_search_domain(field_name, operator, value):
+    text = str(value or "").strip()
+    if operator not in ("ilike", "like", "=ilike", "=like") or not text:
+        return [(field_name, operator, value)]
+    tokens = [token for token in re.split(r"\s+", text) if token]
+    if len(tokens) <= 1:
+        return [(field_name, operator, value)]
+    return expression.OR([
+        [(field_name, operator, value)],
+        expression.AND([[(field_name, operator, token)] for token in tokens]),
+    ])
+
+
+def _is_searchable_alias_source_field(model, field_name):
+    field = model._fields.get(field_name)
+    if not field:
+        return False
+    if str(field_name or "").startswith("p1_visible_"):
+        return False
+    field_type = str(getattr(field, "type", "") or "")
+    if field_type not in ("char", "text", "html", "many2one", "selection"):
+        return False
+    return bool(getattr(field, "store", False)) or bool(getattr(field, "search", None))
+
+
+def _p1_alias_search_source_fields(model, label):
+    names = []
+    model_sources = MODEL_LABEL_SOURCE_OVERRIDES.get(model._name, {}).get(label)
+    for field_name in list(model_sources or []) + list(LABEL_SOURCE_OVERRIDES.get(label, ())):
+        value = str(field_name or "").strip()
+        if value and value not in names and _is_searchable_alias_source_field(model, value):
+            names.append(value)
+    for field_name, field in model._fields.items():
+        if (
+            getattr(field, "string", "") == label
+            and not str(field_name or "").startswith("p1_visible_")
+            and field_name not in names
+            and _is_searchable_alias_source_field(model, field_name)
+        ):
+            names.append(field_name)
+    return names
+
+
+def _p1_alias_payload_ids(model, label, operator, value):
+    if operator not in ("ilike", "like", "=ilike", "=like", "not ilike", "not like"):
+        return []
+    text = str(value or "").strip()
+    if not text:
+        return []
+    try:
+        model.env.cr.execute("SELECT to_regclass('public.sc_p1_legacy_visible_alias_payload')")
+        exists = model.env.cr.fetchone()
+        if not exists or not exists[0]:
+            return []
+        sql_operator = "NOT ILIKE" if operator in ("not ilike", "not like") else "ILIKE"
+        pattern = text if operator in ("=ilike", "=like") else "%%%s%%" % text
+        model.env.cr.execute(
+            """
+            SELECT res_id
+              FROM sc_p1_legacy_visible_alias_payload
+             WHERE model = %s
+               AND COALESCE(payload ->> %s, '') {operator} %s
+             LIMIT 50000
+            """.format(operator=sql_operator),
+            [model._name, label, pattern],
+        )
+        return [int(row[0]) for row in model.env.cr.fetchall() if row and row[0]]
+    except Exception:
+        return []
+
+
+def _user_acceptance_alias_search_ids(model, label, operator, value):
+    if operator not in ("ilike", "like", "=ilike", "=like"):
+        return []
+    if "sc.legacy.direct.acceptance.fact" not in model.env:
+        return []
+    specs = []
+    if model._name == "payment.request":
+        specs.append(
+            {
+                "acceptance_label": "支付申请",
+                "base_domain": [("legacy_source_table", "=", "SCBSLY_DIRECT_PAYMENT_APPLY_ACCEPTED")],
+                "doc_fields": ("legacy_visible_document_no", "document_no", "name"),
+            }
+        )
+    elif model._name == "sc.expense.claim":
+        specs.append(
+            {
+                "acceptance_label": "项目费用报销单",
+                "base_domain": [("claim_type", "=", "expense"), ("expense_type", "=", "项目费用报销单")],
+                "doc_fields": ("name",),
+            }
+        )
+    elif model._name == "sc.payment.execution":
+        specs.append(
+            {
+                "acceptance_label": "往来单位付款",
+                "base_domain": [
+                    ("source_kind", "=", "actual_outflow"),
+                    ("legacy_source_model", "=", "online_old_scbsly:T_FK_SUPPLIER:list881"),
+                ],
+                "doc_fields": ("legacy_visible_document_no", "document_no", "name"),
+            }
+        )
+    if not specs:
+        return []
+
+    ids = []
+    Fact = model.env["sc.legacy.direct.acceptance.fact"].sudo()
+    for spec in specs:
+        labels = USER_ACCEPTANCE_ALIAS_LABELS.get(spec["acceptance_label"]) or []
+        if label not in labels:
+            continue
+        visible_index = USER_ACCEPTANCE_ALIAS_INDEXES.get(spec["acceptance_label"], {}).get(label)
+        if not visible_index:
+            try:
+                visible_index = labels.index(label) + 1
+            except ValueError:
+                continue
+        fact_field = "legacy_visible_%02d" % visible_index
+        facts = Fact.search(
+            [
+                ("active", "=", True),
+                ("source_system", "=", "online_old_scbsly"),
+                ("acceptance_label", "=", spec["acceptance_label"]),
+                (fact_field, operator, value),
+            ],
+            limit=50000,
+        )
+        document_values = set()
+        for fact in facts:
+            for value in (fact.document_no, fact.legacy_record_id):
+                text = str(value or "").strip()
+                if text:
+                    document_values.add(text)
+        if not document_values:
+            continue
+        doc_domain = []
+        for doc_field in spec["doc_fields"]:
+            if doc_field not in model._fields:
+                continue
+            doc_domain.append((doc_field, "in", list(document_values)))
+        if not doc_domain:
+            continue
+        domain = list(spec["base_domain"])
+        domain += doc_domain if len(doc_domain) == 1 else expression.OR([[leaf] for leaf in doc_domain])
+        ids.extend(record_id for record_id in model.sudo().search(domain, limit=50000).ids if record_id not in ids)
+    return ids
+
+
+def _p1_visible_alias_search(label):
+    def _search(self, operator, value):
+        op = str(operator or "").strip() or "ilike"
+        domains = []
+        payload_ids = _p1_alias_payload_ids(self, label, op, value)
+        if payload_ids:
+            domains.append([("id", "in", payload_ids)])
+        acceptance_ids = _user_acceptance_alias_search_ids(self, label, op, value)
+        if acceptance_ids:
+            domains.append([("id", "in", acceptance_ids)])
+        for field_name in _p1_alias_search_source_fields(self, label):
+            domains.append(_tokenized_search_domain(field_name, op, value))
+        if not domains:
+            return [("id", "=", 0)]
+        if len(domains) == 1:
+            return domains[0]
+        return expression.OR(domains)
+
+    return _search
 
 
 LABEL_SOURCE_OVERRIDES = {
@@ -2677,9 +2849,12 @@ for _index, (_model_name, _labels) in enumerate(_ALIAS_MODEL_FIELD_LABELS.items(
         "_compute_p1_daily_business_visible_aliases": _compute_p1_daily_business_visible_aliases,
     }
     for _label in _labels:
+        _search_method_name = "_search_%s" % _alias_field_name(_label)
+        _attrs[_search_method_name] = _p1_visible_alias_search(_label)
         _attrs[_alias_field_name(_label)] = fields.Char(
             string=_alias_field_string(_label),
             compute="_compute_p1_daily_business_visible_aliases",
+            search=_search_method_name,
             readonly=True,
         )
     globals()[f"P1DailyBusinessVisibleAlias{_index}"] = type(
