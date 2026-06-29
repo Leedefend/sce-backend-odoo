@@ -1051,6 +1051,42 @@ class ApiDataHandler(BaseIntentHandler):
         cache[model_name] = names
         return list(names)
 
+    def _extension_search_field_names(self, env_model) -> List[str]:
+        model_name = str(getattr(env_model, "_name", "") or "").strip()
+        if not model_name:
+            return []
+        cache = getattr(self, "_extension_search_field_cache", None)
+        if cache is None:
+            cache = {}
+            setattr(self, "_extension_search_field_cache", cache)
+        if model_name in cache:
+            return list(cache.get(model_name) or [])
+
+        names: List[str] = []
+        try:
+            payload = call_extension_hook_first(
+                env_model.env,
+                "smart_core_api_data_search_fields",
+                env_model.env,
+                model_name,
+            )
+        except Exception:
+            payload = None
+        if isinstance(payload, dict):
+            raw_fields = payload.get(model_name) or payload.get("fields") or []
+        else:
+            raw_fields = payload or []
+        if isinstance(raw_fields, str):
+            raw_fields = [raw_fields]
+        if isinstance(raw_fields, (list, tuple, set)):
+            for field_name in raw_fields:
+                value = str(field_name or "").strip()
+                if value and value not in names:
+                    names.append(value)
+
+        cache[model_name] = names
+        return list(names)
+
     def _build_search_term_domain(self, env_model, search_term: str, fields_safe: List[str]) -> List[Any]:
         term = str(search_term or "").strip()
         if not term:
@@ -1064,7 +1100,9 @@ class ApiDataHandler(BaseIntentHandler):
         rec_name = str(getattr(env_model, "_rec_name", "") or "").strip()
         search_view_fields_raw = self._search_view_field_names(env_model)
         search_view_fields = self._filter_readable_fields(env_model, search_view_fields_raw) if search_view_fields_raw else []
-        for field_name in [rec_name, "name"] + list(fields_safe or []) + list(search_view_fields or []):
+        extension_fields_raw = self._extension_search_field_names(env_model)
+        extension_fields = self._filter_readable_fields(env_model, extension_fields_raw) if extension_fields_raw else []
+        for field_name in [rec_name, "name"] + list(fields_safe or []) + list(search_view_fields or []) + list(extension_fields or []):
             if not field_name or field_name == "id" or field_name in candidates:
                 continue
             field = env_model._fields.get(field_name)

@@ -1995,6 +1995,27 @@ def smart_core_api_data_unlink_allowed_models(env):
     return get_api_data_unlink_allowed_model_contributions(env)
 
 
+def smart_core_api_data_search_fields(env, model_name: str):
+    try:
+        from .models.support.p1_daily_business_visible_alias_fields import (
+            LABEL_SOURCE_OVERRIDES,
+            MODEL_LABEL_SOURCE_OVERRIDES,
+            P1_ALIAS_LABELS,
+        )
+    except Exception:
+        return []
+
+    labels = P1_ALIAS_LABELS.get(str(model_name or "").strip()) or []
+    model_overrides = MODEL_LABEL_SOURCE_OVERRIDES.get(str(model_name or "").strip()) or {}
+    names = []
+    for label in labels:
+        for field_name in list(model_overrides.get(label) or []) + list(LABEL_SOURCE_OVERRIDES.get(label) or []):
+            value = str(field_name or "").strip()
+            if value and value not in names:
+                names.append(value)
+    return names
+
+
 def smart_core_model_code_mapping(env):
     return get_model_code_mapping_contributions(env)
 

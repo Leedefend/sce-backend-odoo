@@ -310,6 +310,36 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
         self.assertNotIn(("p1_visible_project", "ilike", "绵阳"), domain)
         self.assertNotIn(("restricted_note", "ilike", "绵阳"), domain)
 
+    def test_search_term_domain_includes_extension_projection_source_fields(self):
+        field = lambda field_type, store=True, search=None, groups="": types.SimpleNamespace(
+            type=field_type,
+            store=store,
+            search=search,
+            groups=groups,
+        )
+        user = types.SimpleNamespace(has_group=lambda group: True)
+        env_model = types.SimpleNamespace(
+            _name="x.guarantee",
+            _rec_name="",
+            env=types.SimpleNamespace(user=user),
+            _fields={
+                "p1_visible_remark": field("char", store=False),
+                "remark": field("char"),
+                "amount": field("monetary"),
+            },
+        )
+        self.handler._extension_search_field_names = lambda model: ["remark", "amount"]
+
+        domain = self.handler._build_search_term_domain(
+            env_model,
+            "保证金",
+            ["p1_visible_remark"],
+        )
+
+        self.assertIn(("remark", "ilike", "保证金"), domain)
+        self.assertNotIn(("p1_visible_remark", "ilike", "保证金"), domain)
+        self.assertNotIn(("amount", "ilike", "保证金"), domain)
+
     def test_python_order_sorts_date_text_chronologically(self):
         rows = [
             {"apply_date": "2024-10-01"},
