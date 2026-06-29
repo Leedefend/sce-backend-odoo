@@ -2005,8 +2005,18 @@ def smart_core_api_data_search_fields(env, model_name: str):
     except Exception:
         return []
 
-    labels = P1_ALIAS_LABELS.get(str(model_name or "").strip()) or []
-    model_overrides = MODEL_LABEL_SOURCE_OVERRIDES.get(str(model_name or "").strip()) or {}
+    model_name = str(model_name or "").strip()
+    labels = list(P1_ALIAS_LABELS.get(model_name) or [])
+    model_overrides = MODEL_LABEL_SOURCE_OVERRIDES.get(model_name) or {}
+    try:
+        model = env[model_name]
+        for field_name, field in model._fields.items():
+            if str(field_name or "").startswith(("user_acceptance_", "legacy_visible_", "accepted_visible_")):
+                label = str(getattr(field, "string", "") or "").strip()
+                if label and label not in labels:
+                    labels.append(label)
+    except Exception:
+        pass
     names = []
     for label in labels:
         for field_name in list(model_overrides.get(label) or []) + list(LABEL_SOURCE_OVERRIDES.get(label) or []):

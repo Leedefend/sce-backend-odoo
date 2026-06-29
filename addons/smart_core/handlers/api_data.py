@@ -1097,6 +1097,7 @@ class ApiDataHandler(BaseIntentHandler):
             search_id = None
 
         candidates: List[str] = []
+        related_candidates: List[str] = []
         rec_name = str(getattr(env_model, "_rec_name", "") or "").strip()
         search_view_fields_raw = self._search_view_field_names(env_model)
         search_view_fields = self._filter_readable_fields(env_model, search_view_fields_raw) if search_view_fields_raw else []
@@ -1113,15 +1114,80 @@ class ApiDataHandler(BaseIntentHandler):
                 continue
             if field_type in ("char", "text", "html", "many2one"):
                 candidates.append(field_name)
+            if field_type == "many2one":
+                relation_model_name = str(getattr(field, "comodel_name", "") or "").strip()
+                relation_model = None
+                if relation_model_name:
+                    try:
+                        relation_model = env_model.env[relation_model_name]
+                    except Exception:
+                        relation_model = None
+                relation_fields = getattr(relation_model, "_fields", {}) if relation_model is not None else {}
+                relation_rec_name = str(getattr(relation_model, "_rec_name", "") or "").strip() if relation_model is not None else ""
+                relation_probe_fields = [
+                    relation_rec_name,
+                    "name",
+                    "display_name",
+                    "title",
+                    "document_no",
+                    "contract_no",
+                    "project_name",
+                    "partner_name",
+                    "legacy_visible_title",
+                    "legacy_visible_project_name",
+                    "legacy_visible_counterparty",
+                    "legacy_visible_contract_no",
+                    "legacy_visible_document_no",
+                ]
+                for relation_field_name in relation_probe_fields:
+                    relation_field_name = str(relation_field_name or "").strip()
+                    if not relation_field_name:
+                        continue
+                    relation_field = relation_fields.get(relation_field_name)
+                    relation_field_type = str(getattr(relation_field, "type", "") or "") if relation_field else ""
+                    if relation_field_type not in ("char", "text", "html"):
+                        continue
+                    if not bool(getattr(relation_field, "store", False)) and not getattr(relation_field, "search", None):
+                        continue
+                    dotted = "%s.%s" % (field_name, relation_field_name)
+                    if dotted not in related_candidates:
+                        related_candidates.append(dotted)
 
-        leaves: List[Any] = [(field_name, "ilike", term) for field_name in candidates]
+        search_candidates = candidates + related_candidates
+        leaves: List[Any] = [(field_name, "ilike", term) for field_name in search_candidates]
+        token_domain: List[Any] = []
+        tokens: List[str] = []
+        for token in re.split(r"[\s/|,，;；()（）]+", term):
+            value = token.strip()
+            if len(value) >= 2 and value not in tokens:
+                tokens.append(value)
+            if len(tokens) >= 5:
+                break
+        if len(tokens) >= 2 and search_candidates:
+            token_groups: List[Any] = []
+            for token in tokens:
+                token_leaves = [(field_name, "ilike", token) for field_name in search_candidates]
+                if len(token_leaves) == 1:
+                    token_groups.append(token_leaves)
+                else:
+                    token_groups.append(["|"] * (len(token_leaves) - 1) + token_leaves)
+            token_domain = token_groups[0]
+            for group in token_groups[1:]:
+                token_domain = ["&"] + token_domain + group
         if search_id is not None:
             leaves.append(("id", "=", search_id))
-        if not leaves:
-            return [("id", "=", 0)]
+        exact_domain: List[Any] = []
         if len(leaves) == 1:
-            return leaves
-        return ["|"] * (len(leaves) - 1) + leaves
+            exact_domain = leaves
+        elif len(leaves) > 1:
+            exact_domain = ["|"] * (len(leaves) - 1) + leaves
+        if exact_domain and token_domain:
+            return ["|"] + exact_domain + token_domain
+        if token_domain:
+            return token_domain
+        if not exact_domain:
+            return [("id", "=", 0)]
+        return exact_domain
 
     def _prepare_create_vals(self, env_model, vals: Dict[str, Any]) -> Dict[str, Any]:
         safe_vals = {k: v for k, v in (vals or {}).items() if k in env_model._fields}
