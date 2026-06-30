@@ -117,7 +117,7 @@ class AppWorkflowConfig(models.Model):
         - filter_runtime=True：按当前用户组过滤“迁移（transitions）”的可见性（基于 groups_xmlids）
         """
         self.ensure_one()
-        wf = json.loads(json.dumps(self.workflows_def or {}, ensure_ascii=False))  # 深拷贝
+        wf = json.loads(json.dumps(self.workflows_def or {}, ensure_ascii=False, default=str))  # 深拷贝
 
         if not filter_runtime:
             return wf

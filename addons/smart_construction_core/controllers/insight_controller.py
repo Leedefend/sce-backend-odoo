@@ -57,6 +57,6 @@ class InsightController(http.Controller):
         return self._json({"ok": True, "data": data}, status=200)
 
     def _json(self, payload, status=200):
-        body = json.dumps(payload, ensure_ascii=False)
+        body = json.dumps(payload, ensure_ascii=False, default=str)
         headers = [("Content-Type", "application/json; charset=utf-8")]
         return request.make_response(body, headers=headers, status=status)

@@ -6,6 +6,8 @@ import importlib.util
 import sys
 import types
 import unittest
+from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 
@@ -31,6 +33,40 @@ def _load_mixin():
 class ContractMixinViewSurfaceTests(unittest.TestCase):
     def setUp(self):
         self.mixin = _load_mixin().__new__(_load_mixin())
+
+    def test_native_sanitize_serializes_non_json_scalars(self):
+        result = self.mixin.sanitize_native_contract(
+            "form",
+            {
+                "layout": {
+                    "updated_on": date(2026, 6, 30),
+                    "amount": Decimal("12.30"),
+                }
+            },
+        )
+
+        self.assertEqual(result["layout"]["updated_on"], "2026-06-30")
+        self.assertEqual(result["layout"]["amount"], "12.30")
+
+    def test_governed_form_passthrough_serializes_non_json_scalars(self):
+        result = self.mixin.sanitize_governed_contract(
+            "form",
+            {
+                "layout": {
+                    "sections": [
+                        {
+                            "name": "base",
+                            "updated_on": date(2026, 6, 30),
+                            "amount": Decimal("12.30"),
+                        }
+                    ]
+                }
+            },
+        )
+
+        section = result["layout"]["sections"][0]
+        self.assertEqual(section["updated_on"], "2026-06-30")
+        self.assertEqual(section["amount"], "12.30")
 
     def test_governed_sanitize_keeps_non_form_view_surface_blocks(self):
         for view_type, surface_key in (

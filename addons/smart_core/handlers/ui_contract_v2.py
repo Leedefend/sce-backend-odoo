@@ -686,6 +686,8 @@ class UiContractV2Handler(BaseIntentHandler):
         configured_names: set[str] = set()
         for raw_title, raw_names in field_groups.items():
             title = str(raw_title or "").strip()
+            if title and not self._form_layout_group_visible_from_governance(governance, title):
+                continue
             names = [
                 str(name or "").strip()
                 for name in (raw_names if isinstance(raw_names, list) else [])
@@ -963,6 +965,15 @@ class UiContractV2Handler(BaseIntentHandler):
             except (TypeError, ValueError):
                 columns = 0
         return columns if columns > 0 else 0
+
+    def _form_layout_group_visible_from_governance(self, governance: dict[str, Any] | None, title: str = "") -> bool:
+        if not isinstance(governance, dict):
+            return True
+        group_visibility = governance.get("group_visibility") if isinstance(governance.get("group_visibility"), dict) else {}
+        key = str(title or "").strip()
+        if not key or key not in group_visibility:
+            return True
+        return bool(group_visibility.get(key))
 
     def _apply_form_layout_governance_to_group(
         self,
@@ -2082,7 +2093,11 @@ class UiContractV2Handler(BaseIntentHandler):
 
         def source_form_field_candidates() -> list[str]:
             governed_field_names = form_structure_governance.get("field_names")
-            if isinstance(governed_field_names, list) and governed_field_names:
+            if isinstance(governed_field_names, list) and (
+                governed_field_names
+                or form_structure_governance.get("field_groups")
+                or form_structure_governance.get("hidden_field_names")
+            ):
                 return unique([str(item or "").strip() for item in governed_field_names])
             field_groups = source_contract.get("field_groups") if isinstance(source_contract.get("field_groups"), list) else []
             group_fields: list[str] = []
@@ -2391,6 +2406,7 @@ class UiContractV2Handler(BaseIntentHandler):
         section_titles: list[str] = []
         field_groups: dict[str, list[str]] = {}
         group_columns: dict[str, int] = {}
+        group_visibility: dict[str, bool] = {}
         form_columns = 0
         config_summaries: list[dict[str, Any]] = []
 
@@ -2479,14 +2495,21 @@ class UiContractV2Handler(BaseIntentHandler):
                     fields = []
                 if title and title not in section_titles:
                     section_titles.append(title)
+                if title and isinstance(row, dict) and isinstance(row.get("visible"), bool):
+                    group_visibility[title] = bool(row.get("visible"))
+                    if row.get("visible") is False:
+                        hidden_field_names.update(fields)
+                        hidden_set = set(fields)
+                        field_names = [item for item in field_names if item not in hidden_set]
                 if title and fields:
                     existing = field_groups.setdefault(title, [])
                     for name in fields:
                         if name not in existing:
                             existing.append(name)
-                    columns = normalize_columns(row.get("columns")) or normalize_columns(row.get("cols"))
-                    if columns:
-                        group_columns[title] = columns
+                    if isinstance(row, dict):
+                        columns = normalize_columns(row.get("columns")) or normalize_columns(row.get("cols"))
+                        if columns:
+                            group_columns[title] = columns
         applied = bool(view_governance.get("applied") or business_contracts or legacy_overlay or field_names)
         if not applied:
             return {}
@@ -2503,6 +2526,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "hidden_field_names": sorted(hidden_field_names),
             "form_columns": form_columns,
             "group_columns": group_columns,
+            "group_visibility": group_visibility,
         }
 
     def _build_form_structure_contract(
@@ -2593,6 +2617,8 @@ class UiContractV2Handler(BaseIntentHandler):
 
             for index, (raw_title, raw_fields) in enumerate(configured_field_groups.items(), start=1):
                 title = str(raw_title or "").strip() or "业务配置字段"
+                if not self._form_layout_group_visible_from_governance(governance, title):
+                    continue
                 names = [
                     str(item or "").strip()
                     for item in (raw_fields if isinstance(raw_fields, list) else [])

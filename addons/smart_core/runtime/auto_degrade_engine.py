@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from odoo import fields
 
 from odoo.addons.smart_core.governance.scene_drift_engine import is_critical_drift_warn
 from odoo.addons.smart_core.utils.contract_governance import is_truthy
+
+
+def _recent_window_start(*, minutes: int = 1) -> str:
+    now = fields.Datetime.to_datetime(fields.Datetime.now())
+    return fields.Datetime.to_string(now - timedelta(minutes=max(int(minutes or 0), 1)))
 
 
 class AutoDegradeEngine:
@@ -156,8 +161,7 @@ class AutoDegradeEngine:
     def _log_once(self, env, *, trace_id: str, user, from_channel: str, to_channel: str, reason_codes: list, action_taken: str):
         try:
             log_model = env["sc.scene.governance.log"].sudo()
-            now = datetime.utcnow()
-            window_start = fields.Datetime.to_string(now - timedelta(minutes=1))
+            window_start = _recent_window_start(minutes=1)
             domain = [
                 ("action", "=", "auto_degrade_triggered"),
                 ("created_at", ">=", window_start),
@@ -186,8 +190,7 @@ class AutoDegradeEngine:
 
         try:
             audit = env["sc.audit.log"].sudo()
-            now = datetime.utcnow()
-            window_start = fields.Datetime.to_string(now - timedelta(minutes=1))
+            window_start = _recent_window_start(minutes=1)
             domain = [
                 ("event_code", "=", "SCENE_AUTO_DEGRADE_TRIGGERED"),
                 ("ts", ">=", window_start),

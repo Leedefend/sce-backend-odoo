@@ -13,6 +13,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 MAKEFILE = ROOT / "Makefile"
 CAPABILITY_MATRIX = ROOT / "docs/architecture/low_code_business_config_capability_matrix_v1.json"
+BACKEND_BOUNDARY_FILE = ROOT / "addons/smart_core/utils/backend_contract_boundaries.py"
+FRONTEND_BOUNDARY_FILE = ROOT / "frontend/apps/web/src/app/businessConfigBoundaries.ts"
 
 
 CAPABILITY_REQUIRED_FIELDS = {
@@ -32,6 +34,60 @@ CAPABILITY_REQUIRED_FIELDS = {
 }
 
 CAPABILITY_STATUS_VALUES = {"ready", "partial", "blocked", "deferred"}
+
+DEPRECATED_INTENT_MARKERS = (
+    "ui.menu_configuration.",
+    "sc.approval_policy_configuration.",
+)
+
+EXPECTED_CAPABILITY_AUTHORING_INTENTS = {
+    "menu_orchestration": {
+        "ui.menu_config.panel.get",
+        "ui.menu_config.panel.set",
+        "ui.menu_config.menu.create",
+        "ui.menu_config.menu.delete",
+        "ui.menu_config.audit",
+        "ui.menu_config.rollback",
+        "ui.menu_config.versions",
+    },
+    "approval_policy_configuration": {
+        "sc.approval_policy.config.get",
+        "sc.approval_policy.config.set",
+        "sc.approval_policy.steps.set",
+    },
+    "form_field_structure": {
+        "ui.form_field_policy.set",
+        "ui.form_custom_field.create",
+        "ui.form_field_order.set",
+        "ui.form_field_config.batch_set",
+        "ui.business_config.lowcode.apply",
+        "ui.business_config.contract.save",
+        "ui.business_config.contract.get",
+        "ui.business_config.contract.publish",
+        "ui.business_config.contract.versions",
+        "ui.business_config.contract.rollback",
+    },
+    "list_search_configuration": {
+        "ui.business_config.list_search.audit",
+        "ui.business_config.list_search.set",
+        "ui.business_config.list_search.bootstrap",
+        "ui.business_config.contract.save",
+    },
+    "version_snapshot_rollback": {
+        "ui.business_config.snapshot.summary",
+        "ui.business_config.snapshot.export",
+        "ui.business_config.snapshot.compare",
+        "ui.business_config.contract.publish",
+        "ui.business_config.contract.versions",
+        "ui.business_config.contract.rollback",
+    },
+    "capability_boundary_and_coverage": {
+        "ui.business_config.surface.get",
+        "ui.business_config.coverage.scan",
+        "ui.business_config.coverage.bootstrap_list_search",
+        "ui.business_config.coverage.bootstrap_missing",
+    },
+}
 
 
 FULL_ACCEPTANCE_TARGETS = {
@@ -138,6 +194,74 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
     },
 }
 
+OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS = {
+    "menu configuration audit observability": {
+        "addons/smart_core/handlers/menu_configuration.py": (
+            '"runtime_source": runtime_source',
+            '"configured_policy_count": len(policy_rows)',
+            '"runtime_policy_count": len(applicable_by_menu)',
+            '"contract_authoritative": runtime_source == MENU_CONFIG_RUNTIME_SOURCE_CONTRACT',
+            '"applicable_policy_count": len(applicable_rows)',
+            '"scope_root_valid": bool(scope_root_menu_id)',
+        ),
+        "frontend/apps/web/src/views/MenuConfigView.vue": (
+            "auditSummary.configuredCount",
+            "auditSummary.applicableCount",
+            "auditSummary.runtimeSourceLabel",
+            "auditMenuConfiguration",
+        ),
+        "addons/smart_core/tests/test_menu_configuration_audit.py": (
+            "test_menu_config_audit_reports_applicable_policy_counts",
+            "test_menu_config_audit_reports_runtime_contract_rows_not_legacy_policy_rows",
+            "runtime_policy_count",
+            "contract_authoritative",
+            "scope_root_valid",
+        ),
+    },
+    "form configuration operation observability": {
+        "addons/smart_core/handlers/form_field_configuration.py": (
+            "def _contract_reload_hint(",
+            '"reason": "view_orchestration_config_changed"',
+            '"precheck": precheck',
+            '"contract_reload": _contract_reload_hint_for_record(rec)',
+        ),
+        "frontend/apps/web/src/pages/ContractFormPage.vue": (
+            "formConfigOperationLog",
+            "formatFormConfigOperationSummary",
+            "lowCodePrecheckWarnings",
+            "saveResult?.precheck?.warnings",
+        ),
+        "addons/smart_core/tests/test_form_field_configuration_params.py": (
+            "test_contract_reload_hint_normalizes_scope",
+            "test_business_config_contract_precheck_accepts_view_orchestration_without_legacy_objects",
+            "test_business_config_contract_precheck_rejects_empty_view_orchestration_views",
+        ),
+    },
+    "version snapshot diff observability": {
+        "addons/smart_core/handlers/business_config_surface.py": (
+            "BusinessConfigSnapshotCompareHandler",
+            '"added_count"',
+            '"removed_count"',
+            '"changed_count"',
+            '"previous_version_no"',
+            '"current_version_no"',
+        ),
+        "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue": (
+            "snapshotCompareSummary",
+            "snapshotCompareChangedRows",
+            "snapshotCompareAddedRows",
+            "snapshotCompareRemovedRows",
+            "versionDeltaText",
+        ),
+        "addons/smart_core/tests/test_business_config_surface.py": (
+            "test_snapshot_compare_reports_added_removed_and_changed_contracts",
+            "added_count",
+            "removed_count",
+            "changed_count",
+        ),
+    },
+}
+
 
 def _target_line(makefile: str, target: str) -> str:
     pattern = re.compile(rf"^{re.escape(target)}\s*:(?P<deps>[^\n]*)$", re.MULTILINE)
@@ -203,6 +327,22 @@ def _validate_capability_matrix(makefile: str, errors: list[str]) -> None:
                 continue
             if field != "release_blockers" and not value:
                 errors.append("low-code capability %s field %s must not be empty" % (capability_id, field))
+            if field == "authoring_intents":
+                deprecated = [
+                    str(item)
+                    for item in value
+                    if any(marker in str(item) for marker in DEPRECATED_INTENT_MARKERS)
+                ]
+                if deprecated:
+                    errors.append(
+                        "low-code capability %s uses deprecated authoring intents %s" % (capability_id, deprecated)
+                    )
+                expected_intents = EXPECTED_CAPABILITY_AUTHORING_INTENTS.get(capability_id)
+                if expected_intents is not None and set(map(str, value)) != expected_intents:
+                    errors.append(
+                        "low-code capability %s authoring intents drifted; expected=%s actual=%s"
+                        % (capability_id, sorted(expected_intents), sorted(map(str, value)))
+                    )
         for target in capability.get("acceptance") or []:
             target_name = str(target or "").strip()
             if target_name.startswith("verify.") and target_name not in target_names:
@@ -217,6 +357,49 @@ def _validate_capability_matrix(makefile: str, errors: list[str]) -> None:
     )
     if missing_matrix_targets:
         errors.append("low-code capability matrix does not own full acceptance targets %s" % missing_matrix_targets)
+
+
+def _quoted_values(path: Path) -> set[str]:
+    if not path.is_file():
+        return set()
+    text = path.read_text(encoding="utf-8")
+    return set(re.findall(r"""["']([^"']+)["']""", text))
+
+
+def _validate_boundary_constant_parity(errors: list[str]) -> None:
+    expected_intents = set().union(*EXPECTED_CAPABILITY_AUTHORING_INTENTS.values())
+    backend_values = _quoted_values(BACKEND_BOUNDARY_FILE)
+    frontend_values = _quoted_values(FRONTEND_BOUNDARY_FILE)
+    missing_backend = sorted(expected_intents - backend_values)
+    missing_frontend = sorted(expected_intents - frontend_values)
+    if missing_backend:
+        errors.append("backend business config boundary constants missing intents %s" % missing_backend)
+    if missing_frontend:
+        errors.append("frontend business config boundary constants missing intents %s" % missing_frontend)
+    for path, values in ((BACKEND_BOUNDARY_FILE, backend_values), (FRONTEND_BOUNDARY_FILE, frontend_values)):
+        deprecated = sorted(
+            value
+            for value in values
+            if any(marker in value for marker in DEPRECATED_INTENT_MARKERS)
+        )
+        if deprecated:
+            errors.append("%s contains deprecated low-code intents %s" % (path.relative_to(ROOT), deprecated))
+
+
+def _validate_observability_source_markers(errors: list[str]) -> None:
+    for capability, artifacts in OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS.items():
+        for artifact, markers in artifacts.items():
+            path = ROOT / artifact
+            if not path.is_file():
+                errors.append("low-code observability %s missing artifact %s" % (capability, artifact))
+                continue
+            text = path.read_text(encoding="utf-8")
+            for marker in markers:
+                if marker not in text:
+                    errors.append(
+                        "low-code observability %s artifact %s missing required marker %s"
+                        % (capability, artifact, marker)
+                    )
 
 
 def main() -> int:
@@ -261,6 +444,8 @@ def main() -> int:
         errors.append("verify.business_config.guard_inventory is not wired to its script")
 
     _validate_capability_matrix(makefile, errors)
+    _validate_boundary_constant_parity(errors)
+    _validate_observability_source_markers(errors)
 
     if errors:
         print("[business_config_guard_inventory] FAIL")

@@ -1,5 +1,6 @@
 # smart_core/utils/response_builder.py
-from odoo import http
+import json
+
 from odoo.http import request
 
 SOURCE_KIND = "http_json_response_builder"
@@ -17,6 +18,15 @@ def source_authority_contract():
         "runtime_carrier": "response_builder",
     }
 
+
+def _iter_headers(headers):
+    if not headers:
+        return []
+    if isinstance(headers, dict):
+        return list(headers.items())
+    return list(headers)
+
+
 def make_response(data=None, error=None, code=200, headers=None):
     result = {
         "status": "error" if error else "success",
@@ -25,18 +35,13 @@ def make_response(data=None, error=None, code=200, headers=None):
         "data": None if error else data,
     }
 
-    # 创建响应对象
     response = request.make_response(
-        data=http.json.dumps(result, ensure_ascii=False),
+        data=json.dumps(result, ensure_ascii=False, default=str),
         status=code,
     )
-    
-    # 设置默认的Content-Type头部
-    response.headers.add("Content-Type", "application/json")
-    
-    # 添加额外的头部信息
-    if headers:
-        for key, value in headers.items():
-            response.headers.add(key, value)
-    
+
+    response.headers["Content-Type"] = "application/json; charset=utf-8"
+    for key, value in _iter_headers(headers):
+        response.headers[str(key)] = str(value)
+
     return response

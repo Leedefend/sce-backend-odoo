@@ -535,10 +535,53 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(summary["renamed_count"], 1)
         self.assertEqual(summary["moved_count"], 1)
         self.assertEqual(summary["not_applicable_policy_ids"], [3])
+        self.assertEqual(summary["scope_root_menu_id"], 0)
+        self.assertFalse(summary["scope_root_valid"])
 
         applicable_ids = [row["id"] for row in result["data"]["applicable_policies"]]
         self.assertEqual(applicable_ids, [1, 2])
         self.assertEqual(result["meta"]["source_authority"]["kind"], "ui_menu_config_audit")
+
+    def test_menu_config_audit_reports_runtime_contract_rows_not_legacy_policy_rows(self):
+        module = _load_handler()
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        legacy_menu = _Menu(11, "旧表菜单")
+        policies = _PolicyModel([_Policy(1, legacy_menu, company=company, visible=True)], user=user)
+        policies._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                99: {
+                    "active": True,
+                    "menu_id": 99,
+                    "menu_label": "合同菜单",
+                    "visible": False,
+                    "custom_label": "合同隐藏菜单",
+                }
+            },
+            module.MENU_CONFIG_RUNTIME_SOURCE_CONTRACT,
+        )
+        env = _Env(
+            {
+                "ui.menu.config.policy": policies,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = module.MenuConfigurationAuditHandler(env=env, params={"company_id": 7})
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        summary = result["data"]["summary"]
+        self.assertEqual(summary["runtime_source"], module.MENU_CONFIG_RUNTIME_SOURCE_CONTRACT)
+        self.assertTrue(summary["contract_authoritative"])
+        self.assertEqual(summary["policy_table_count"], 1)
+        self.assertEqual(summary["runtime_policy_count"], 1)
+        self.assertEqual(summary["applicable_policy_count"], 1)
+        self.assertEqual(summary["hidden_count"], 1)
+        self.assertEqual(result["data"]["applicable_policies"][0]["menu_id"], 99)
+        self.assertEqual(result["data"]["applicable_policies"][0]["runtime_source"], module.MENU_CONFIG_RUNTIME_SOURCE_CONTRACT)
 
     def test_menu_config_contract_json_uses_menu_orchestration_schema(self):
         company = types.SimpleNamespace(id=7)
@@ -610,6 +653,50 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(contract.contract_json["menu_orchestration"]["policy_count"], 1)
         self.assertEqual(contract.contract_json["menu_orchestration"]["source"], "smart_core.lowcode.menu_config")
         self.assertTrue(result["meta"]["contract_mirrored"])
+        self.assertEqual(result["meta"]["scope_root_menu_id"], 0)
+        self.assertFalse(result["meta"]["scope_root_valid"])
+
+    def test_menu_config_save_reports_valid_business_root_scope(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        business_root = _Menu(291, "智慧施工管理平台")
+        project_center = _Menu(292, "项目中心", parent=business_root, sequence=20)
+        policies = _PolicyModel([], user=user)
+        contracts = _ContractModel([])
+        env = _Env(
+            {
+                "ir.ui.menu": _MenuModel([business_root, project_center]),
+                "ui.menu.config.policy": policies,
+                "ui.business.config.contract": contracts,
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationSaveHandler(
+            env=env,
+            params={
+                "company_id": 7,
+                "root_menu_id": 291,
+                "rows": [
+                    {
+                        "menu_id": 292,
+                        "target_parent_menu_id": 291,
+                        "custom_label": "项目中心",
+                        "sequence_override": 20,
+                        "visible": True,
+                    }
+                ],
+            },
+        )
+
+        result = handler.handle({"params": handler.params})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["saved_count"], 1)
+        self.assertEqual(result["meta"]["scope_root_menu_id"], 291)
+        self.assertTrue(result["meta"]["scope_root_valid"])
+        self.assertEqual(len(contracts), 1)
 
     def test_menu_config_panel_scopes_rows_to_business_root_after_policy_moves(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
@@ -652,6 +739,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         result = handler.handle({"params": handler.params})
 
         self.assertEqual(result["meta"]["scope_root_menu_id"], 291)
+        self.assertTrue(result["meta"]["scope_root_valid"])
         self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 297])
         self.assertEqual(set(result["data"]["policies"].keys()), {291, 297})
         self.assertEqual([(row["id"], row["name"]) for row in result["data"]["tree"]], [(291, "智慧施工管理平台")])
@@ -935,6 +1023,8 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(contracts[0].contract_json["menu_orchestration"]["source"], "smart_core.lowcode.menu_config")
         self.assertEqual(result["meta"]["source_authority"]["kind"], "ui_menu_config_menu_create_write_proxy")
         self.assertEqual(result["meta"]["source_authority"]["lowcode_boundary"], "menu_config")
+        self.assertEqual(result["meta"]["scope_root_menu_id"], 0)
+        self.assertFalse(result["meta"]["scope_root_valid"])
 
     def test_menu_config_delete_removes_created_menu_and_deactivates_policy(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
@@ -973,6 +1063,8 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertFalse(policy.visible)
         self.assertEqual(len(contracts), 1)
         self.assertEqual(result["meta"]["source_authority"]["kind"], "ui_menu_config_menu_delete_write_proxy")
+        self.assertEqual(result["meta"]["scope_root_menu_id"], 0)
+        self.assertFalse(result["meta"]["scope_root_valid"])
 
     def test_menu_config_delete_rejects_module_menu_with_xmlid(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
@@ -1111,7 +1203,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(version_two["summary"]["moved_count"], 1)
         self.assertEqual(version_two["summary"]["reordered_count"], 1)
 
-    def test_menu_config_versions_bootstraps_contract_from_existing_policies(self):
+    def test_menu_config_versions_does_not_bootstrap_contract_by_default(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
         user = _User([])
         menu = _Menu(11, "合同中心")
@@ -1132,6 +1224,37 @@ class TestMenuConfigurationAudit(unittest.TestCase):
             user=user,
         )
         handler = self.module.MenuConfigurationVersionsHandler(env=env, params={"company_id": 7})
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(len(contracts), 0)
+        self.assertIsNone(result["data"]["contract"])
+        self.assertEqual(result["data"]["versions"], [])
+        self.assertFalse(result["meta"]["bootstrapped_from_current_policies"])
+        self.assertTrue(result["meta"]["bootstrap_required"])
+
+    def test_menu_config_versions_bootstraps_contract_from_existing_policies_when_explicit(self):
+        company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
+        user = _User([])
+        menu = _Menu(11, "合同中心")
+        hidden_menu = _Menu(12, "费用申请")
+        policies = _PolicyModel([
+            _Policy(1, menu, company=company, custom_label="合同办理", sequence_override=30),
+            _Policy(2, hidden_menu, company=company, visible=False),
+        ], user=user)
+        contracts = _ContractModel([])
+        env = _Env(
+            {
+                "ui.menu.config.policy": policies,
+                "ui.business.config.contract": contracts,
+                "ui.business.config.contract.version": _ContractVersionModel([]),
+                "res.company": _CompanyModel([company]),
+            },
+            company=company,
+            user=user,
+        )
+        handler = self.module.MenuConfigurationVersionsHandler(env=env, params={"company_id": 7, "allow_bootstrap": True})
 
         result = handler.handle()
 
@@ -1198,6 +1321,68 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertNotIn(845, result)
         self.assertIn(11, result)
         self.assertEqual(result[11]["target_parent_menu_id"], 0)
+
+    def test_runtime_menu_config_contract_is_authoritative_over_legacy_policy_rows(self):
+        module = _load_policy_model()
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        contract_policy = {
+            "active": True,
+            "menu_id": 11,
+            "menu_label": "合同中心",
+            "visible": False,
+        }
+        legacy_policy = types.SimpleNamespace(
+            menu_id=types.SimpleNamespace(id=11),
+            visible=True,
+            custom_label="旧表显示名称",
+            role_group_ids=_RecordSet([]),
+        )
+        policy_model._runtime_contract_policy_source_for_user = lambda user=None: ({11: contract_policy}, True)
+        policy_model._runtime_policies_for_user = lambda user=None: {11: legacy_policy, 12: legacy_policy}
+
+        policies, runtime_source = policy_model._runtime_menu_config_source_for_user(user=_User([]))
+
+        self.assertEqual(runtime_source, module.MENU_CONFIG_RUNTIME_SOURCE_CONTRACT)
+        self.assertEqual(policies, {11: contract_policy})
+        self.assertNotIn(12, policies)
+
+    def test_runtime_empty_menu_contract_still_blocks_legacy_policy_fallback(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        menu = _Menu(11, "合同中心")
+        contract = types.SimpleNamespace(
+            id=1,
+            active=True,
+            status="published",
+            name="menu.config.company.7",
+            model="ir.ui.menu",
+            company_id=company,
+            version_no=3,
+            contract_json={
+                "menu_orchestration": {
+                    "schema_version": "menu_orchestration.v1",
+                    "policies": [],
+                },
+            },
+        )
+        legacy_policy = _Policy(1, menu, company=company, visible=True)
+        env = _Env(
+            {
+                "ir.ui.menu": _MenuModel([menu]),
+                "ui.business.config.contract": _RuntimeContractModel([contract]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_policies_for_user = lambda user=None: {11: legacy_policy}
+
+        policies, runtime_source = policy_model._runtime_menu_config_source_for_user(user=user)
+
+        self.assertEqual(runtime_source, module.MENU_CONFIG_RUNTIME_SOURCE_CONTRACT)
+        self.assertEqual(policies, {})
 
     def test_runtime_overlay_creates_parent_before_child_move(self):
         module = _load_policy_model()
@@ -1755,6 +1940,47 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual([node["menu_id"] for node in overlaid["tree"]], [291])
         self.assertEqual([child["menu_id"] for child in overlaid["tree"][0]["children"]], [464])
         self.assertEqual(stats["protected_count"], 0)
+
+    def test_runtime_overlay_config_only_with_no_policies_blocks_system_fallback(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        env = _Env(
+            {
+                "ir.ui.menu": _MenuModel([]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: ({}, "ui.menu.config.policy")
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [
+                            {"menu_id": 464, "name": "首页", "children": []},
+                            {"menu_id": 900, "name": "系统菜单", "children": []},
+                        ],
+                    }
+                ],
+                "flat": [
+                    {"menu_id": 291, "name": "智慧施工管理平台"},
+                    {"menu_id": 464, "name": "首页"},
+                    {"menu_id": 900, "name": "系统菜单"},
+                ],
+            },
+            user=user,
+        )
+
+        self.assertEqual(overlaid["tree"], [])
+        self.assertEqual(overlaid["flat"], [])
+        self.assertTrue(stats["config_only"])
+        self.assertEqual(stats["unconfigured_hidden_count"], 3)
 
     def test_runtime_overlay_config_only_does_not_match_unconfigured_node_by_label(self):
         module = _load_policy_model()

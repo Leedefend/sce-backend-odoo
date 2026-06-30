@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Dict
 
 from odoo.exceptions import UserError
 
@@ -12,38 +11,19 @@ from odoo.addons.smart_core.core.project_context import (
     selected_project_id_from_context,
 )
 from odoo.addons.smart_construction_core.services.cost_tracking_service import CostTrackingService
+from odoo.addons.smart_construction_core.handlers.project_context_resolver import (
+    ProjectContextResolverMixin,
+)
 
 
-class CostTrackingRecordCreateHandler(BaseIntentHandler):
+class CostTrackingRecordCreateHandler(ProjectContextResolverMixin, BaseIntentHandler):
     INTENT_TYPE = "cost.tracking.record.create"
     DESCRIPTION = "创建最小项目成本记录"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
     ACL_MODE = "explicit_check"
-
-    @staticmethod
-    def _coerce_project_id(raw: Any) -> int:
-        try:
-            value = int(raw or 0)
-        except Exception:
-            return 0
-        return value if value > 0 else 0
-
-    def _resolve_project_id(self, params: Dict[str, Any], ctx: Dict[str, Any]) -> int:
-        candidates = [
-            (params or {}).get("project_id"),
-            ((params or {}).get("project_context") or {}).get("project_id")
-            if isinstance((params or {}).get("project_context"), dict)
-            else None,
-            (ctx or {}).get("project_id"),
-            (ctx or {}).get("record_id"),
-        ]
-        for item in candidates:
-            project_id = self._coerce_project_id(item)
-            if project_id > 0:
-                return project_id
-        return 0
+    PROJECT_ID_PARAM_RECORD_ID = False
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()

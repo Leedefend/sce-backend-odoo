@@ -3,6 +3,8 @@ import importlib.util
 import sys
 import types
 import unittest
+from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 
@@ -25,6 +27,8 @@ def _load_module():
     fake_odoo.fields = _Fields()
     fake_odoo.models = types.SimpleNamespace(Model=_Model)
     sys.modules["odoo"] = fake_odoo
+    sys.modules["odoo.osv"] = types.ModuleType("odoo.osv")
+    sys.modules["odoo.osv.expression"] = types.SimpleNamespace(AND=lambda domains: domains, OR=lambda domains: domains)
     try:
         spec = importlib.util.spec_from_file_location("legacy_direct_acceptance_fact_test", MODULE_PATH)
         module = importlib.util.module_from_spec(spec)
@@ -33,6 +37,8 @@ def _load_module():
         return module
     finally:
         sys.modules.pop("odoo", None)
+        sys.modules.pop("odoo.osv", None)
+        sys.modules.pop("odoo.osv.expression", None)
 
 
 class TestLegacyDirectAcceptanceAttachmentDisplay(unittest.TestCase):
@@ -148,6 +154,18 @@ class TestLegacyDirectAcceptanceAttachmentDisplay(unittest.TestCase):
         )
 
         self.assertEqual(value, "12%")
+
+    def test_nested_legacy_payload_value_serializes_projection_scalars(self):
+        module = _load_module()
+        payload = {"BZ": {"day": date(2026, 6, 30), "amount": Decimal("12.30")}}
+
+        value = module.ScLegacyDirectAcceptanceFact._legacy_payload_value(
+            payload,
+            "BZ",
+            acceptance_label="施工日志（新）",
+        )
+
+        self.assertEqual(value, '{"amount": "12.30", "day": "2026-06-30"}')
 
 
 if __name__ == "__main__":

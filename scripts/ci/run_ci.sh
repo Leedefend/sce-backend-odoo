@@ -13,6 +13,8 @@ guard_prod_forbid
 : "${ADDONS_EXTERNAL_MOUNT:?ADDONS_EXTERNAL_MOUNT required}"
 : "${DOCS_MOUNT_HOST:?DOCS_MOUNT_HOST required}"
 : "${DOCS_MOUNT_CONT:?DOCS_MOUNT_CONT required}"
+: "${CONFIG_MOUNT_HOST:?CONFIG_MOUNT_HOST required}"
+: "${CONFIG_MOUNT_CONT:?CONFIG_MOUNT_CONT required}"
 
 mkdir -p "${CI_ARTIFACT_DIR}"
 : > "${CI_ARTIFACT_DIR}/${CI_LOG}"
@@ -61,8 +63,9 @@ bash "$(dirname "$0")/ensure_testdeps.sh"
 # shellcheck disable=SC2086
 compose ${COMPOSE_TEST_FILES} run --rm -T \
   -v "${DOCS_MOUNT_HOST}:${DOCS_MOUNT_CONT}:ro" \
+  -v "${CONFIG_MOUNT_HOST}:${CONFIG_MOUNT_CONT}:ro" \
   --entrypoint bash odoo -lc "
-    pip3 install -q -r /mnt/extra-addons/config/requirements-test.txt >/dev/null 2>&1 || true
+    pip3 install -q -r ${CONFIG_MOUNT_CONT}/requirements-test.txt
     exec /usr/bin/odoo \
       --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_PASSWORD} \
       -d ${DB_CI} \

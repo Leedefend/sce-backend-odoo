@@ -34,6 +34,7 @@ from odoo.addons.smart_core.core.system_init_identity_payload import SystemInitI
 from odoo.addons.smart_core.core.system_init_nav_request_builder import SystemInitNavRequestBuilder
 from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPayloadBuilder
 from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    MENU_CONFIG_CONFIG_ONLY_PARAM,
     MENU_CONFIG_NAV_ENABLED_PARAM,
     MENU_CONFIG_POLICY_MODEL,
     NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM,
@@ -494,6 +495,16 @@ def _release_gate_page_contract_from_snapshot(snapshot: dict) -> dict:
     }
 
 
+def _count_nav_nodes(nodes) -> int:
+    total = 0
+    for node in nodes if isinstance(nodes, list) else []:
+        if not isinstance(node, dict):
+            continue
+        total += 1
+        total += _count_nav_nodes(node.get("children"))
+    return total
+
+
 def _load_platform_release_gate(env, *, product_key: str) -> dict:
     requested_product_key = _text(product_key)
     if not requested_product_key:
@@ -747,10 +758,36 @@ def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[
             "reordered_count": 0,
             "moved_count": 0,
         }
+
+    def config_only_enabled() -> bool:
+        try:
+            raw = env["ir.config_parameter"].sudo().get_param(
+                MENU_CONFIG_CONFIG_ONLY_PARAM,
+                "1",
+            )
+        except Exception:
+            raw = "1"
+        return str(raw or "").strip().lower() not in {"0", "false", "no", "off"}
+
     try:
         policy_model = env[MENU_CONFIG_POLICY_MODEL]
     except Exception:
-        return nav, {"applied": False, "applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+        config_only = config_only_enabled()
+        meta = {
+            "applied": False,
+            "reason": "policy_model_unavailable",
+            "runtime_source": MENU_CONFIG_POLICY_MODEL,
+            "config_only": config_only,
+            "applied_count": 0,
+            "hidden_count": 0,
+            "renamed_count": 0,
+            "reordered_count": 0,
+            "moved_count": 0,
+        }
+        if config_only:
+            meta["unconfigured_hidden_count"] = _count_nav_nodes(nav)
+            return [], meta
+        return nav, meta
     overlaid, stats = policy_model.apply_runtime_overlay({"tree": nav, "flat": []}, user=env.user)
     next_nav = overlaid.get("tree") if isinstance(overlaid, dict) and isinstance(overlaid.get("tree"), list) else nav
     if not isinstance(stats, dict):

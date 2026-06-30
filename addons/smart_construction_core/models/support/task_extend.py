@@ -114,8 +114,8 @@ class ProjectTask(models.Model):
                 task.readiness_status = "missing"
             else:
                 task.readiness_status = "ready"
-            task.readiness_missing_fields = json.dumps(missing_fields, ensure_ascii=False)
-            task.readiness_blockers = json.dumps(blockers, ensure_ascii=False)
+            task.readiness_missing_fields = json.dumps(missing_fields, ensure_ascii=False, default=str)
+            task.readiness_blockers = json.dumps(blockers, ensure_ascii=False, default=str)
 
     def _get_readiness_state(self):
         missing_fields = []

@@ -189,6 +189,137 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertIn("field_order", result["error"]["message"])
 
+    def test_policy_set_requires_formal_contract_before_legacy_policy_write(self):
+        class Company:
+            id = 7
+
+        class FieldRec:
+            id = 5
+            name = "phone"
+            field_description = "电话"
+            ttype = "char"
+
+        class IrModel:
+            id = 9
+            transient = False
+
+            def search(self, domain, limit=None):
+                return self
+
+        class IrFields:
+            def search(self, domain, limit=None):
+                return FieldRec()
+
+        class PolicyModel:
+            def __init__(self):
+                self.created = []
+                self.written = []
+
+            def check_access_rights(self, operation):
+                self.checked_operation = operation
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                self.created.append(vals)
+                return vals
+
+        class Env(dict):
+            company = Company()
+
+        class PartnerModel:
+            _fields = {"phone": object()}
+
+        policy_model = PolicyModel()
+        handler = self.module.FormFieldPolicySetHandler(
+            env=Env({
+                "res.partner": PartnerModel(),
+                "ir.model": IrModel(),
+                "ir.model.fields": IrFields(),
+                "ui.form.field.policy": policy_model,
+            }),
+            params={"model": "res.partner", "field_name": "phone", "visible": False},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 500)
+        self.assertEqual(result["error"]["reason_code"], "WRITE_FAILED")
+        self.assertEqual(policy_model.created, [])
+
+    def test_field_order_set_blocks_legacy_policy_write_when_contract_write_fails(self):
+        class Company:
+            id = 7
+
+        class FieldRec:
+            def __init__(self, name):
+                self.id = 5
+                self.name = name
+                self.field_description = name.title()
+
+        class IrModel:
+            id = 9
+            transient = False
+
+            def search(self, domain, limit=None):
+                return self
+
+        class IrFields:
+            def search(self, domain, limit=None):
+                return [FieldRec("name"), FieldRec("phone")]
+
+        class PolicyModel:
+            def __init__(self):
+                self.created = []
+                self.written = []
+
+            def check_access_rights(self, operation):
+                self.checked_operation = operation
+
+            def search(self, domain):
+                return []
+
+            def create(self, vals):
+                self.created.append(vals)
+                return vals
+
+        class ContractModel:
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                raise RuntimeError("contract unavailable")
+
+        class Env(dict):
+            company = Company()
+
+        class PartnerModel:
+            _fields = {"name": object(), "phone": object()}
+
+        policy_model = PolicyModel()
+        handler = self.module.FormFieldOrderSetHandler(
+            env=Env({
+                "res.partner": PartnerModel(),
+                "ir.model": IrModel(),
+                "ir.model.fields": IrFields(),
+                "ui.form.field.policy": policy_model,
+                "ui.business.config.contract": ContractModel(),
+            }),
+            params={"model": "res.partner", "field_order": ["name", "phone"]},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 500)
+        self.assertEqual(result["error"]["reason_code"], "WRITE_FAILED")
+        self.assertEqual(policy_model.created, [])
+
     def test_batch_config_rejects_unknown_visibility_field_before_order_write(self):
         class Model:
             _fields = {"name": object()}
@@ -316,10 +447,378 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["meta"]["low_code_config"]["formal_authority"], "ui.business.config.contract.view_orchestration")
         self.assertEqual(result["meta"]["low_code_config"]["compatibility_write"], "ui.form.field.policy")
         self.assertEqual(result["meta"]["low_code_config"]["user_preference_boundary"], "not_user_preference")
+        self.assertIn("field_groups", result["meta"]["low_code_config"]["capabilities"])
+        self.assertIn("form_columns", result["meta"]["low_code_config"]["capabilities"])
         self.assertEqual(len(policy_model.created), 1)
         self.assertFalse(policy_model.created[0]["visible"])
         fields = contract_model.record.contract_json["view_orchestration"]["views"]["form"]["fields"]
         self.assertEqual(fields, [{"name": "phone", "visible": False}])
+
+    def test_batch_visibility_blocks_legacy_policy_write_when_contract_write_fails(self):
+        class Company:
+            id = 7
+
+        class FieldRec:
+            id = 5
+            name = "phone"
+            field_description = "电话"
+
+        class IrModel:
+            id = 9
+            transient = False
+
+            def search(self, domain, limit=None):
+                return self
+
+        class IrFields:
+            def search(self, domain, limit=None):
+                return [FieldRec()]
+
+        class PolicyModel:
+            def __init__(self):
+                self.created = []
+
+            def check_access_rights(self, operation):
+                self.checked_operation = operation
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                self.created.append(vals)
+                return vals
+
+        class ContractModel:
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                raise RuntimeError("contract unavailable")
+
+        class Env(dict):
+            company = Company()
+
+        class PartnerModel:
+            _fields = {"phone": object()}
+
+        policy_model = PolicyModel()
+        handler = self.module.FormFieldConfigBatchSetHandler(
+            env=Env({
+                "res.partner": PartnerModel(),
+                "ir.model": IrModel(),
+                "ir.model.fields": IrFields(),
+                "ui.form.field.policy": policy_model,
+                "ui.business.config.contract": ContractModel(),
+            }),
+            params={"model": "res.partner", "field_visibility": {"phone": False}},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 500)
+        self.assertEqual(result["error"]["reason_code"], "WRITE_FAILED")
+        self.assertEqual(policy_model.created, [])
+
+    def test_batch_group_blocks_legacy_policy_write_when_contract_write_fails(self):
+        class Company:
+            id = 7
+
+        class FieldRec:
+            id = 5
+            name = "phone"
+            field_description = "电话"
+
+        class IrModel:
+            id = 9
+            transient = False
+
+            def search(self, domain, limit=None):
+                return self
+
+        class IrFields:
+            def search(self, domain, limit=None):
+                return [FieldRec()]
+
+        class PolicyModel:
+            def __init__(self):
+                self.created = []
+
+            def check_access_rights(self, operation):
+                self.checked_operation = operation
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                self.created.append(vals)
+                return vals
+
+        class ContractModel:
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                raise RuntimeError("contract unavailable")
+
+        class Env(dict):
+            company = Company()
+
+        class PartnerModel:
+            _fields = {"phone": object()}
+
+        policy_model = PolicyModel()
+        handler = self.module.FormFieldConfigBatchSetHandler(
+            env=Env({
+                "res.partner": PartnerModel(),
+                "ir.model": IrModel(),
+                "ir.model.fields": IrFields(),
+                "ui.form.field.policy": policy_model,
+                "ui.business.config.contract": ContractModel(),
+            }),
+            params={"model": "res.partner", "field_groups": {"phone": "基础信息"}},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 500)
+        self.assertEqual(result["error"]["reason_code"], "WRITE_FAILED")
+        self.assertEqual(policy_model.created, [])
+
+    def test_batch_config_mirrors_form_layout_capabilities_to_business_contract(self):
+        class Company:
+            id = 7
+
+        class User:
+            id = 42
+
+        class FieldRec:
+            def __init__(self, name, label):
+                self.id = 5
+                self.name = name
+                self.field_description = label
+
+        class RecordSet(list):
+            def __bool__(self):
+                return bool(len(self))
+
+        class IrModel:
+            id = 9
+            transient = False
+
+            def search(self, domain, limit=None):
+                return self
+
+        class IrFields:
+            def search(self, domain, limit=None):
+                return RecordSet([FieldRec("name", "客户名称"), FieldRec("email", "邮箱")])
+
+        class PolicyModel:
+            def check_access_rights(self, operation):
+                self.checked_operation = operation
+
+        class ContractModel:
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                class Record:
+                    id = 1
+                    contract_json = {}
+
+                    def write(self, write_vals):
+                        self.contract_json = write_vals["contract_json"]
+                        self.status = write_vals["status"]
+
+                    def action_publish(self):
+                        self.published = True
+
+                rec = Record()
+                rec.write(vals)
+                rec.action_publish()
+                self.record = rec
+                return rec
+
+        class Env(dict):
+            company = Company()
+            user = User()
+
+        class PartnerModel:
+            _fields = {"name": object(), "email": object()}
+
+        contract_model = ContractModel()
+        env = Env({
+            "res.partner": PartnerModel(),
+            "ir.model": IrModel(),
+            "ir.model.fields": IrFields(),
+            "ui.form.field.policy": PolicyModel(),
+            "ui.business.config.contract": contract_model,
+        })
+        handler = self.module.FormFieldConfigBatchSetHandler(
+            env=env,
+            params={
+                "model": "res.partner",
+                "action_id": 11,
+                "field_sizes": {"name": "wide", "email": "compact"},
+                "field_widths": {"name": "span-2"},
+                "form_columns": 3,
+                "group_columns": {"基础信息": 2},
+                "group_visibility": {"基础信息": True},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["field_layout_updated_count"], 2)
+        self.assertEqual(result["data"]["business_config_layout_mirrored_count"], 2)
+        self.assertIn("field_size", result["meta"]["low_code_config"]["capabilities"])
+        self.assertIn("group_visibility", result["meta"]["low_code_config"]["capabilities"])
+        form_spec = contract_model.record.contract_json["view_orchestration"]["views"]["form"]
+        self.assertEqual(form_spec["columns"], 3)
+        fields = {row["name"]: row for row in form_spec["fields"]}
+        self.assertEqual(fields["name"]["field_size"], "wide")
+        self.assertEqual(fields["name"]["width"], "span-2")
+        self.assertEqual(fields["email"]["field_size"], "compact")
+
+    def test_batch_config_mirrors_layout_only_without_field_rows(self):
+        class Company:
+            id = 7
+
+        class User:
+            id = 42
+
+        class IrModel:
+            id = 9
+            transient = False
+
+            def search(self, domain, limit=None):
+                return self
+
+        class PolicyModel:
+            def check_access_rights(self, operation):
+                self.checked_operation = operation
+
+        class ContractModel:
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                class Record:
+                    id = 1
+                    contract_json = {}
+
+                    def write(self, write_vals):
+                        self.contract_json = write_vals["contract_json"]
+                        self.status = write_vals["status"]
+
+                    def action_publish(self):
+                        self.published = True
+
+                rec = Record()
+                rec.write(vals)
+                rec.action_publish()
+                self.record = rec
+                return rec
+
+        class Env(dict):
+            company = Company()
+            user = User()
+
+        class PartnerModel:
+            _fields = {"name": object()}
+
+        contract_model = ContractModel()
+        env = Env({
+            "res.partner": PartnerModel(),
+            "ir.model": IrModel(),
+            "ir.model.fields": object(),
+            "ui.form.field.policy": PolicyModel(),
+            "ui.business.config.contract": contract_model,
+        })
+        handler = self.module.FormFieldConfigBatchSetHandler(
+            env=env,
+            params={
+                "model": "res.partner",
+                "form_columns": 4,
+                "group_columns": {"基础信息": 2},
+                "group_visibility": {"基础信息": False},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["field_layout_updated_count"], 0)
+        self.assertEqual(result["data"]["business_config_layout_mirrored_count"], 1)
+        form_spec = contract_model.record.contract_json["view_orchestration"]["views"]["form"]
+        self.assertEqual(form_spec["columns"], 4)
+        self.assertEqual(form_spec["fields"], [])
+        self.assertEqual(form_spec["sections"], [{
+            "name": "business_config_section_1",
+            "title": "基础信息",
+            "visible": False,
+            "columns": 2,
+            "sequence": 10,
+            "fields": [],
+        }])
+
+    def test_batch_layout_returns_write_failed_when_contract_write_fails(self):
+        class Company:
+            id = 7
+
+        class IrModel:
+            id = 9
+            transient = False
+
+            def search(self, domain, limit=None):
+                return self
+
+        class ContractModel:
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                raise RuntimeError("contract unavailable")
+
+        class Env(dict):
+            company = Company()
+
+        class PartnerModel:
+            _fields = {"name": object()}
+
+        handler = self.module.FormFieldConfigBatchSetHandler(
+            env=Env({
+                "res.partner": PartnerModel(),
+                "ir.model": IrModel(),
+                "ir.model.fields": object(),
+                "ui.form.field.policy": object(),
+                "ui.business.config.contract": ContractModel(),
+            }),
+            params={"model": "res.partner", "form_columns": 3},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 500)
+        self.assertEqual(result["error"]["reason_code"], "WRITE_FAILED")
 
     def test_business_config_contract_save_rejects_invalid_contract_json(self):
         handler = self.module.BusinessConfigContractSaveHandler(
@@ -358,6 +857,46 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         })
 
         self.assertIn("contract_json 必须包含 view_orchestration。", result["errors"])
+
+    def test_business_config_contract_precheck_rejects_empty_view_orchestration_views(self):
+        handler = self.module.BusinessConfigContractSaveHandler(env={}, params={})
+
+        result = handler._precheck_contract_payload({
+            "view_orchestration": {
+                "views": {},
+            },
+        })
+
+        self.assertIn("view_orchestration.views 必须至少包含一个非空视图配置。", result["errors"])
+
+    def test_business_config_contract_precheck_rejects_empty_view_specs(self):
+        handler = self.module.BusinessConfigContractSaveHandler(env={}, params={})
+
+        result = handler._precheck_contract_payload({
+            "view_orchestration": {
+                "views": {
+                    "form": {},
+                    "tree": {"columns": []},
+                },
+            },
+        })
+
+        self.assertIn("view_orchestration.views 必须至少包含一个非空视图配置。", result["errors"])
+
+    def test_business_config_contract_precheck_accepts_layout_only_view_config(self):
+        handler = self.module.BusinessConfigContractSaveHandler(env={}, params={})
+
+        result = handler._precheck_contract_payload({
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "form_columns": 3,
+                    },
+                },
+            },
+        })
+
+        self.assertEqual(result["errors"], [])
 
     def test_business_config_contract_save_rejects_legacy_lowcode_draft(self):
         handler = self.module.BusinessConfigContractSaveHandler(
@@ -550,6 +1089,36 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertIn("role_key", result["error"]["message"])
 
+    def test_business_config_contract_save_returns_write_failed_on_system_write_error(self):
+        class Company:
+            id = 7
+
+        class ContractModel:
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                raise RuntimeError("database unavailable")
+
+        class Env(dict):
+            company = Company()
+
+        handler = self.module.BusinessConfigContractSaveHandler(
+            env=Env({"ui.business.config.contract": ContractModel()}),
+            params={
+                "name": "demo",
+                "model": "res.partner",
+                "view_type": "form",
+                "contract_json": {"view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}}},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 500)
+        self.assertEqual(result["error"]["reason_code"], "WRITE_FAILED")
+
     def test_business_config_contract_get_requires_name_or_model(self):
         handler = self.module.BusinessConfigContractGetHandler(
             env={},
@@ -573,6 +1142,38 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["reason_code"], "MISSING_PARAMS")
+
+    def test_business_config_contract_publish_returns_write_failed_on_system_publish_error(self):
+        class Company:
+            id = 7
+
+        class Contract:
+            id = 3
+            name = "contract"
+            model = "res.partner"
+            status = "draft"
+            version_no = 1
+
+            def action_publish(self):
+                raise RuntimeError("publish failed")
+
+        class ContractModel:
+            def search(self, domain, limit=None):
+                return Contract()
+
+        class Env(dict):
+            company = Company()
+
+        handler = self.module.BusinessConfigContractPublishHandler(
+            env=Env({"ui.business.config.contract": ContractModel()}),
+            params={"model": "res.partner"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 500)
+        self.assertEqual(result["error"]["reason_code"], "WRITE_FAILED")
 
     def test_business_config_contract_rollback_requires_name_or_model(self):
         handler = self.module.BusinessConfigContractRollbackHandler(
@@ -672,6 +1273,48 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(version_model.limit, 1)
         self.assertEqual(result["data"]["rolled_back_to_version"], 2)
         self.assertEqual(result["data"]["status"], "published")
+
+    def test_business_config_contract_rollback_returns_write_failed_on_system_write_error(self):
+        class Company:
+            id = 7
+
+        class Contract:
+            id = 3
+            name = "contract"
+            model = "res.partner"
+            version_no = 4
+
+            def write(self, vals):
+                raise RuntimeError("rollback write failed")
+
+        class Version:
+            version_no = 2
+            snapshot_json = {"view_orchestration": {"views": {"form": {"fields": [{"name": "name"}]}}}}
+
+        class ContractModel:
+            def search(self, domain, limit=None):
+                return Contract()
+
+        class VersionModel:
+            def search(self, domain, order=None, limit=None):
+                return [Version()]
+
+        class Env(dict):
+            company = Company()
+
+        handler = self.module.BusinessConfigContractRollbackHandler(
+            env=Env({
+                "ui.business.config.contract": ContractModel(),
+                "ui.business.config.contract.version": VersionModel(),
+            }),
+            params={"model": "res.partner", "version_no": 2},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 500)
+        self.assertEqual(result["error"]["reason_code"], "WRITE_FAILED")
 
     def test_business_config_contract_rollback_specific_version_not_found(self):
         class Company:
@@ -1181,6 +1824,9 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         data = result["data"]
+        self.assertEqual(data["runtime_source"], "ui.business.config.contract.view_orchestration")
+        self.assertTrue(data["contract_authoritative"])
+        self.assertFalse(data["legacy_policy_runtime_enabled"])
         self.assertEqual(data["business_config_form_fields"], ["email", "name"])
         self.assertEqual(data["business_config_form_layout_fields"], ["email", "name"])
         self.assertEqual(data["business_config_form_layout_field_count"], 2)
@@ -1191,8 +1837,62 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertTrue(data["business_config_contracts"][0]["layout_matches_fields"])
         self.assertEqual(data["legacy_policy_fields"], ["email", "phone"])
         self.assertEqual(data["skipped_legacy_policy_fields"], ["email"])
-        self.assertEqual(data["active_legacy_policy_fields"], ["phone"])
+        self.assertEqual(data["legacy_only_policy_fields"], ["phone"])
+        self.assertEqual(data["suppressed_legacy_policy_fields"], ["email", "phone"])
+        self.assertEqual(data["active_legacy_policy_fields"], [])
         self.assertTrue(data["has_conflict"])
+
+    def test_business_config_form_audit_uses_legacy_policy_only_without_contract(self):
+        class Company:
+            id = 7
+
+        class User:
+            groups_id = []
+
+        class PartnerModel:
+            _fields = {"name": object(), "phone": object()}
+
+        class ContractModel:
+            def _effective_view_orchestration_contracts(self, model, **kwargs):
+                return []
+
+        class Groups:
+            ids = []
+
+        class Policy:
+            id = 9
+            field_name = "phone"
+            visible = True
+            label = "Phone"
+            sequence = 100
+            role_group_ids = Groups()
+
+        class PolicyModel:
+            def _effective_policies(self, model, **kwargs):
+                return [Policy()]
+
+        class Env(dict):
+            company = Company()
+            user = User()
+
+        handler = self.module.BusinessConfigFormAuditHandler(
+            env=Env({
+                "res.partner": PartnerModel(),
+                "ui.business.config.contract": ContractModel(),
+                "ui.form.field.policy": PolicyModel(),
+            }),
+            params={"model": "res.partner"},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        data = result["data"]
+        self.assertEqual(data["runtime_source"], "ui.form.field.policy")
+        self.assertFalse(data["contract_authoritative"])
+        self.assertTrue(data["legacy_policy_runtime_enabled"])
+        self.assertEqual(data["active_legacy_policy_fields"], ["phone"])
+        self.assertEqual(data["suppressed_legacy_policy_fields"], [])
 
     def test_business_config_list_search_audit_reports_contract_and_preference_boundary(self):
         class Company:
@@ -1294,6 +1994,9 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         data = result["data"]
+        self.assertEqual(data["runtime_source"], "ui.business.config.contract.view_orchestration")
+        self.assertTrue(data["contract_authoritative"])
+        self.assertFalse(data["suggested_defaults_only"])
         self.assertEqual(data["business_config_list_columns"], ["name", "email"])
         self.assertEqual(data["business_config_search_filters"], ["state"])
         self.assertEqual(data["business_config_search_group_by"], ["partner_id"])
@@ -1417,6 +2120,9 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         data = result["data"]
+        self.assertEqual(data["runtime_source"], "runtime_backend_view_contract")
+        self.assertFalse(data["contract_authoritative"])
+        self.assertTrue(data["suggested_defaults_only"])
         self.assertEqual(data["business_config_list_columns"], [])
         self.assertEqual(data["business_config_search_filters"], [])
         self.assertEqual(data["business_config_search_group_by"], [])
@@ -1569,6 +2275,50 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertIn("missing_field", result["error"]["message"])
         self.assertEqual(len(contracts), 0)
 
+    def test_business_config_list_search_set_returns_write_failed_when_contract_write_fails(self):
+        class Company:
+            id = 7
+
+        class PartnerModel:
+            _fields = {"name": object()}
+
+        class ContractModel:
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                raise RuntimeError("contract unavailable")
+
+        class PreferenceModel:
+            touched = False
+
+            def search(self, *args, **kwargs):
+                self.touched = True
+                return []
+
+        class Env(dict):
+            company = Company()
+
+        preferences = PreferenceModel()
+        handler = self.module.BusinessConfigListSearchSetHandler(
+            env=Env({
+                "res.partner": PartnerModel(),
+                "ui.business.config.contract": ContractModel(),
+                "sc.user.view.preference": preferences,
+            }),
+            params={"model": "res.partner", "list_columns": ["name"]},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 500)
+        self.assertEqual(result["error"]["reason_code"], "WRITE_FAILED")
+        self.assertFalse(preferences.touched)
+
     def test_business_config_analysis_set_writes_contracts_not_preferences(self):
         class Company:
             id = 7
@@ -1710,6 +2460,40 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertIn("missing_field", result["error"]["message"])
         self.assertEqual(len(contracts), 0)
+
+    def test_business_config_analysis_set_returns_write_failed_when_contract_write_fails(self):
+        class Company:
+            id = 7
+
+        class PartnerModel:
+            _fields = {"amount_total": object()}
+
+        class ContractModel:
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return None
+
+            def create(self, vals):
+                raise RuntimeError("contract unavailable")
+
+        class Env(dict):
+            company = Company()
+
+        handler = self.module.BusinessConfigAnalysisSetHandler(
+            env=Env({
+                "res.partner": PartnerModel(),
+                "ui.business.config.contract": ContractModel(),
+            }),
+            params={"model": "res.partner", "pivot_measures": ["amount_total"]},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 500)
+        self.assertEqual(result["error"]["reason_code"], "WRITE_FAILED")
 
     def test_business_config_analysis_set_rejects_internal_lowcode_fields(self):
         class Company:

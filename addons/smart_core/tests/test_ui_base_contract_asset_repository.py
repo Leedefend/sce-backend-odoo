@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import importlib.util
+import json
 import os
 import sys
 import types
 import unittest
+from datetime import date
+from decimal import Decimal
 from unittest.mock import patch
 from pathlib import Path
 
@@ -40,6 +43,74 @@ target = _load_module(
 
 
 class TestUiBaseContractAssetRepository(unittest.TestCase):
+    def test_upsert_asset_serializes_projection_scalars(self):
+        class _Savepoint:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+        class _Cursor:
+            def savepoint(self):
+                return _Savepoint()
+
+        class _Record:
+            def __init__(self, vals):
+                self.id = 1
+                self.vals = vals
+                self.payload_json = vals.get("payload_json")
+
+            def write(self, vals):
+                self.vals.update(vals)
+                self.payload_json = vals.get("payload_json", self.payload_json)
+
+        class _Model:
+            def __init__(self):
+                self.created = None
+
+            def sudo(self):
+                return self
+
+            def search(self, _domain, limit=None):
+                return None if limit else []
+
+            def create(self, vals):
+                self.created = _Record(vals)
+                return self.created
+
+        class _Env:
+            def __init__(self, model):
+                self.model = model
+                self.cr = _Cursor()
+
+            def __contains__(self, item):
+                return item == target.ASSET_MODEL
+
+            def __getitem__(self, item):
+                if item != target.ASSET_MODEL:
+                    raise KeyError(item)
+                return self.model
+
+        model = _Model()
+        env = _Env(model)
+        original_table_available = target._asset_table_available
+        original_get_latest = target.get_latest_asset
+        target._asset_table_available = lambda _env: True
+        target.get_latest_asset = lambda *_args, **_kwargs: {"ok": True}
+        try:
+            result = target.upsert_asset(
+                env,
+                scene_key="project.list",
+                payload={"day": date(2026, 6, 30), "amount": Decimal("12.30")},
+            )
+        finally:
+            target._asset_table_available = original_table_available
+            target.get_latest_asset = original_get_latest
+
+        self.assertEqual(result, {"ok": True})
+        self.assertEqual(json.loads(model.created.payload_json), {"amount": "12.30", "day": "2026-06-30"})
+
     def test_auto_refresh_missing_assets_defaults_on_for_dev_and_off_for_prod(self):
         class _Config:
             def sudo(self):

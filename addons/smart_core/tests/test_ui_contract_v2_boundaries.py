@@ -3,6 +3,7 @@ import importlib.util
 import sys
 import types
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -24,7 +25,51 @@ def _install_module(name, **attrs):
     return module
 
 
+class _ElementWrapper:
+    def __init__(self, element):
+        self._element = element
+        self.tag = element.tag
+        self.attrib = element.attrib
+
+    def get(self, key, default=None):
+        return self._element.get(key, default)
+
+    def xpath(self, expr):
+        if not expr.startswith(".//"):
+            return []
+        tag = expr[3:]
+        attr = None
+        if "[@" in tag and tag.endswith("]"):
+            tag, attr = tag[:-1].split("[@", 1)
+        rows = []
+        for item in self._element.iter(tag):
+            if attr and item.get(attr) is None:
+                continue
+            rows.append(_ElementWrapper(item))
+        return rows
+
+
+def _install_lxml_shim():
+    if "lxml" in sys.modules:
+        return
+    try:
+        import lxml  # noqa: F401
+        return
+    except Exception:
+        pass
+
+    etree = types.SimpleNamespace()
+    etree._Element = _ElementWrapper
+    etree.fromstring = lambda raw: _ElementWrapper(ET.fromstring(raw.decode("utf-8") if isinstance(raw, bytes) else raw))
+    etree.tostring = lambda node, encoding="unicode": ET.tostring(node._element, encoding=encoding)
+    lxml_mod = types.ModuleType("lxml")
+    lxml_mod.etree = etree
+    sys.modules["lxml"] = lxml_mod
+    sys.modules["lxml.etree"] = etree
+
+
 def _load_handler():
+    _install_lxml_shim()
     root = Path(__file__).resolve().parents[1]
     _install_module("odoo")
     _install_module("odoo.addons")
@@ -1013,6 +1058,112 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertIn("name", structure["fieldRoles"])
         self.assertIn("amount", structure["fieldRoles"])
         self.assertNotIn("line_ids", structure["fieldRoles"])
+
+    def test_form_structure_governance_hides_configured_groups(self):
+        class _Field:
+            def __init__(self, field_type, string="", relation=""):
+                self.type = field_type
+                self.string = string
+                self.comodel_name = relation
+
+        class _Model:
+            _fields = {
+                "name": _Field("char", "名称"),
+                "amount": _Field("monetary", "金额"),
+                "tax_note": _Field("char", "税务说明"),
+            }
+
+            def fields_get(self, names):
+                return {
+                    name: {
+                        "type": field.type,
+                        "string": field.string,
+                        "relation": field.comodel_name,
+                    }
+                    for name, field in self._fields.items()
+                    if name in names
+                }
+
+        class _Config:
+            id = 9
+            name = "demo_form_sections"
+            priority = 80
+            view_type = "form"
+            contract_json = {
+                "view_orchestration": {
+                    "views": {
+                        "form": {
+                            "columns": 3,
+                            "fields": [
+                                {"name": "name", "sequence": 10},
+                                {"name": "amount", "sequence": 20},
+                                {"name": "tax_note", "sequence": 30},
+                            ],
+                            "sections": [
+                                {
+                                    "title": "基础信息",
+                                    "visible": True,
+                                    "columns": 2,
+                                    "fields": ["name", "amount"],
+                                },
+                                {
+                                    "title": "税务信息",
+                                    "visible": False,
+                                    "columns": 1,
+                                    "fields": ["tax_note"],
+                                },
+                            ],
+                        }
+                    }
+                }
+            }
+
+        class _ConfigModel:
+            def _effective_view_orchestration_contracts(self, *args, **kwargs):
+                return [_Config()]
+
+        class _Env:
+            def __contains__(self, model):
+                return model in {"demo.business", "ui.business.config.contract"}
+
+            def __getitem__(self, model):
+                if model == "demo.business":
+                    return _Model()
+                if model == "ui.business.config.contract":
+                    return _ConfigModel()
+                raise KeyError(model)
+
+        handler = self.module.UiContractV2Handler(env=_Env())
+        source_contract = {
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "名称"},
+                "amount": {"name": "amount", "type": "monetary", "string": "金额"},
+                "tax_note": {"name": "tax_note", "type": "char", "string": "税务说明"},
+            },
+            "views": {"form": {"layout": []}},
+            "governance": {"view_orchestration": {"applied": True}},
+        }
+
+        handler._inject_business_operation_contract(
+            source_contract,
+            model="demo.business",
+            view_type="form",
+        )
+
+        governance = source_contract["business_operation_profile"]["form_structure_governance"]
+        self.assertEqual(governance["form_columns"], 3)
+        self.assertEqual(governance["group_columns"], {"基础信息": 2, "税务信息": 1})
+        self.assertEqual(governance["group_visibility"], {"基础信息": True, "税务信息": False})
+        self.assertEqual(governance["hidden_field_names"], ["tax_note"])
+
+        structure = source_contract["form_structure_contract"]
+        self.assertEqual(structure["columns"], 3)
+        groups = structure["slots"][0]["groups"]
+        self.assertEqual([group["title"] for group in groups], ["基础信息"])
+        self.assertEqual(groups[0]["columns"], 2)
+        self.assertIn("name", structure["fieldRoles"])
+        self.assertIn("amount", structure["fieldRoles"])
+        self.assertNotIn("tax_note", structure["fieldRoles"])
 
     def test_tree_projection_does_not_import_form_structure_fields_into_list_profile(self):
         class _Field:

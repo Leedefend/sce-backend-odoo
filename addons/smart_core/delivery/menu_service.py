@@ -804,6 +804,7 @@ class MenuService:
                 preview_menus_by_group[group_key] = {
                     "group_key": group_key,
                     "group_label": anchor_label,
+                    "native_preview": True,
                     "menus": [],
                 }
                 group_order.append(group_key)
@@ -817,7 +818,8 @@ class MenuService:
                     "product_key": "",
                     "capability_key": "",
                     "menu_xmlid": str((meta.get("menu_xmlid")) or ""),
-                    "scene_source": str((meta.get("scene_source")) or "native_nav"),
+                    "scene_source": str((meta.get("scene_source")) or "native_preview"),
+                    "native_preview": True,
                     "action_id": meta.get("action_id") or leaf.get("action_id"),
                     "action_xmlid": str(meta.get("action_xmlid") or leaf.get("action_xmlid") or ""),
                     "model": str(meta.get("model") or leaf.get("model") or ""),
@@ -931,6 +933,7 @@ class MenuService:
             groups_by_key[group_key] = {
                 "group_key": group_key,
                 "group_label": group_label,
+                "native_preview": bool(group.get("native_preview")),
                 "menus": [],
             }
             group_order.append(group_key)
@@ -1044,9 +1047,12 @@ class MenuService:
                 merged_groups_by_key[canonical_key] = {
                     "group_key": canonical_key,
                     "group_label": str(canonical_row.get("group_label") or group_label or "系统菜单"),
+                    "native_preview": bool(canonical_row.get("native_preview")),
                     "menus": [],
                 }
                 merged_group_order.append(canonical_key)
+            if row.get("native_preview"):
+                merged_groups_by_key[canonical_key]["native_preview"] = True
             merged_groups_by_key[canonical_key]["menus"].extend(row.get("menus") if isinstance(row.get("menus"), list) else [])
 
         groups_by_key = merged_groups_by_key
@@ -1088,13 +1094,17 @@ class MenuService:
                 )
             if not children:
                 continue
-            group_nodes.append(
-                build_delivery_menu_group(
-                    str(row.get("group_key") or group_key),
-                    group_label,
-                    children,
-                )
+            group_node = build_delivery_menu_group(
+                str(row.get("group_key") or group_key),
+                group_label,
+                children,
             )
+            if row.get("native_preview"):
+                group_meta = dict(group_node.get("meta") if isinstance(group_node.get("meta"), dict) else {})
+                group_meta["native_preview"] = True
+                group_meta["runtime_authority"] = "native_preview_only"
+                group_node["meta"] = group_meta
+            group_nodes.append(group_node)
 
         group_nodes = self._sort_delivery_nodes(group_nodes, top_level=True)
         root = build_delivery_menu_root(group_nodes, role_code)
@@ -1129,19 +1139,20 @@ class MenuService:
         for group in groups:
             if not isinstance(group, dict):
                 continue
-            group_key = str(((group.get("meta") or {}).get("group_key")) or "").strip()
-            if group_key == self.NATIVE_PREVIEW_GROUP_KEY:
+            meta = group.get("meta") if isinstance(group.get("meta"), dict) else {}
+            group_key = str(meta.get("group_key") or "").strip()
+            if meta.get("native_preview") or group_key == self.NATIVE_PREVIEW_GROUP_KEY:
                 native_preview_groups.append(group)
             else:
                 stable_groups.append(group)
         return {
             "source_authority": self.source_authority_contract(),
             "group_count": len(groups),
-            "stable_group_count": len(groups),
-            "native_preview_group_count": 0,
-            "stable_leaf_count": sum(self._count_leaf_nodes(group.get("children") or []) for group in groups),
-            "native_preview_leaf_count": 0,
-            "native_preview_group_key": "",
+            "stable_group_count": len(stable_groups),
+            "native_preview_group_count": len(native_preview_groups),
+            "stable_leaf_count": sum(self._count_leaf_nodes(group.get("children") or []) for group in stable_groups),
+            "native_preview_leaf_count": sum(self._count_leaf_nodes(group.get("children") or []) for group in native_preview_groups),
+            "native_preview_group_key": self.NATIVE_PREVIEW_GROUP_KEY if native_preview_groups else "",
             "group_keys": [
                 str(((group.get("meta") or {}).get("group_key")) or "").strip()
                 for group in groups

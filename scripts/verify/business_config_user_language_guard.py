@@ -43,6 +43,15 @@ BANNED_PHRASES = [
     "适用用户组",
 ]
 
+REQUIRED_CONTRACT_FORM_SNIPPETS = [
+    "function readableFallbackFieldLabel(fieldKey: string)",
+    "return rowLabel || readableFallbackFieldLabel(key);",
+]
+
+FORBIDDEN_CONTRACT_FORM_SNIPPETS = [
+    "return rowLabel || key;",
+]
+
 TEXT_EXTENSIONS = {".py", ".ts", ".tsx", ".js", ".jsx", ".vue", ".md"}
 
 
@@ -74,6 +83,21 @@ def main() -> int:
         print("[business_config_user_language_guard] FAIL")
         for file_path, line_no, phrase, line in violations:
             print(f" - {file_path}:{line_no}: banned phrase {phrase!r}: {line}")
+        return 1
+
+    contract_form = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
+    contract_form_text = contract_form.read_text(encoding="utf-8")
+    snippet_violations = []
+    for snippet in REQUIRED_CONTRACT_FORM_SNIPPETS:
+        if snippet not in contract_form_text:
+            snippet_violations.append(f"missing required ContractFormPage snippet: {snippet}")
+    for snippet in FORBIDDEN_CONTRACT_FORM_SNIPPETS:
+        if snippet in contract_form_text:
+            snippet_violations.append(f"forbidden ContractFormPage snippet: {snippet}")
+    if snippet_violations:
+        print("[business_config_user_language_guard] FAIL")
+        for violation in snippet_violations:
+            print(" - " + violation)
         return 1
 
     print("[business_config_user_language_guard] PASS")

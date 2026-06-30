@@ -129,7 +129,7 @@ class ScLegacyDirectAcceptanceFact(models.Model):
     creator_name = fields.Char(string="录入人", index=True)
     creator_legacy_user_id = fields.Char(string="录入人ID", index=True)
     created_time = fields.Datetime(string="录入时间", index=True)
-    attachment_ref = fields.Char(string="附件")
+    attachment_ref = fields.Char(string="历史附件引用")
     attachment_ids = fields.Many2many(
         "ir.attachment",
         "sc_legacy_direct_acceptance_fact_attachment_rel",
@@ -246,7 +246,7 @@ class ScLegacyDirectAcceptanceFact(models.Model):
             if value is None or value is False:
                 continue
             if isinstance(value, (list, dict)):
-                return json.dumps(value, ensure_ascii=False, sort_keys=True)
+                return json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
             text = str(value).strip()
             if text:
                 if field_name in {"SLV", "SLVS", "D_SCBSJS_SL1", "SLV$C_JXXP_ZYFPJJD_CB"}:

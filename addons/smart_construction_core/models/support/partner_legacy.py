@@ -87,7 +87,7 @@ class ResPartner(models.Model):
         string="供应商类型",
     )
     sc_supplier_type_label = fields.Char(
-        string="供应商类型",
+        string="供应商类型汇总",
         compute="_compute_sc_supplier_type_label",
         store=True,
         readonly=True,

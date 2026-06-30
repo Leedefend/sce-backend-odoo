@@ -72,7 +72,7 @@ class SmartCoreContractController(http.Controller):
                 contract_version=DEFAULT_CONTRACT_VERSION,
             )
             return request.make_response(
-                (json.dumps(payload, ensure_ascii=False)).encode('utf-8'),
+                (json.dumps(payload, ensure_ascii=False, default=str)).encode('utf-8'),
                 headers=[('Content-Type', 'application/json; charset=utf-8'), ("X-Trace-Id", trace_id)],
                 status=500
             )

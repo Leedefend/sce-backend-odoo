@@ -15,7 +15,7 @@ import io
 import hashlib
 import json
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import unquote
 
 from odoo.tools.safe_eval import safe_eval
@@ -328,6 +328,19 @@ class ApiDataHandler(BaseIntentHandler):
                 return None, None
             return (items if len(items) > 1 else items[0]), None
         return None, self._err(400, f"{key} 无效")
+
+    def _read_search_term_param(self, p: Dict[str, Any]) -> str:
+        for key in ("search_term", "searchTerm", "search", "keyword", "q"):
+            value = self._dig(p, key, None)
+            if value is None:
+                continue
+            try:
+                term = str(value).strip()
+            except Exception:
+                term = ""
+            if term:
+                return term
+        return ""
 
     def _read_ids_param(self, p: Dict[str, Any], key: str = "ids"):
         raw = self._dig(p, key, None)
@@ -1087,6 +1100,44 @@ class ApiDataHandler(BaseIntentHandler):
         cache[model_name] = names
         return list(names)
 
+    def _fallback_search_field_names(self, env_model, limit: int = 16) -> List[str]:
+        fields = getattr(env_model, "_fields", {}) or {}
+        preferred_names = [
+            str(getattr(env_model, "_rec_name", "") or "").strip(),
+            "name",
+            "display_name",
+            "title",
+            "document_no",
+            "contract_no",
+            "project_name",
+            "partner_name",
+            "remark",
+            "notes",
+            "description",
+        ]
+        ordered_names = []
+        for name in preferred_names + list(fields.keys()):
+            name = str(name or "").strip()
+            if name and name != "id" and name not in ordered_names:
+                ordered_names.append(name)
+
+        readable_names = self._filter_readable_fields(env_model, ordered_names)
+        out: List[str] = []
+        for field_name in readable_names:
+            field = fields.get(field_name)
+            if not field:
+                continue
+            field_type = str(getattr(field, "type", "") or "")
+            if field_type not in ("char", "text", "html", "many2one"):
+                continue
+            if not bool(getattr(field, "store", False)) and not getattr(field, "search", None):
+                continue
+            if field_name not in out:
+                out.append(field_name)
+            if len(out) >= max(1, int(limit or 16)):
+                break
+        return out
+
     def _build_search_term_domain(self, env_model, search_term: str, fields_safe: List[str]) -> List[Any]:
         term = str(search_term or "").strip()
         if not term:
@@ -1153,6 +1204,11 @@ class ApiDataHandler(BaseIntentHandler):
                     if dotted not in related_candidates:
                         related_candidates.append(dotted)
 
+        if not candidates and not related_candidates:
+            for field_name in self._fallback_search_field_names(env_model):
+                if field_name and field_name not in candidates:
+                    candidates.append(field_name)
+
         search_candidates = candidates + related_candidates
         leaves: List[Any] = [(field_name, "ilike", term) for field_name in search_candidates]
         token_domain: List[Any] = []
@@ -1188,6 +1244,12 @@ class ApiDataHandler(BaseIntentHandler):
         if not exact_domain:
             return [("id", "=", 0)]
         return exact_domain
+
+    def _apply_search_term_domain(self, env_model, domain: List[Any], p: Dict[str, Any], fields_safe: List[str]) -> Tuple[List[Any], str]:
+        search_term = self._read_search_term_param(p)
+        if not search_term:
+            return list(domain or []), ""
+        return list(domain or []) + self._build_search_term_domain(env_model, search_term, fields_safe), search_term
 
     def _prepare_create_vals(self, env_model, vals: Dict[str, Any]) -> Dict[str, Any]:
         safe_vals = {k: v for k, v in (vals or {}).items() if k in env_model._fields}
@@ -1526,7 +1588,7 @@ class ApiDataHandler(BaseIntentHandler):
         group_sample_limit, group_sample_limit_error = self._read_positive_param(p, "group_sample_limit", 3)
         if group_sample_limit_error:
             return group_sample_limit_error
-        search_term = self._get_str(p, "search_term", "").strip()
+        search_term = ""
 
         if context_raw:
             parsed_ctx = self._safe_eval_with_runtime(context_raw)
@@ -1559,8 +1621,7 @@ class ApiDataHandler(BaseIntentHandler):
 
         # 先按 groups 过滤一遍，避免 AccessError
         fields_safe = self._filter_readable_fields(env_model, fields or ["id", "name"])
-        if search_term:
-            domain = domain + self._build_search_term_domain(env_model, search_term, fields_safe)
+        domain, search_term = self._apply_search_term_domain(env_model, domain, p, fields_safe)
         domain, project_scope_meta = self._apply_project_scope(env_model, domain, p, ctx)
 
         try:
@@ -1803,6 +1864,8 @@ class ApiDataHandler(BaseIntentHandler):
         env_model = self.env[model].with_context(ctx)
         if sudo:
             env_model = env_model.sudo()
+        fields_safe = self._filter_readable_fields(env_model, ["id", "name"])
+        domain, search_term = self._apply_search_term_domain(env_model, domain, p, fields_safe)
         domain, project_scope_meta = self._apply_project_scope(env_model, domain, p, ctx)
 
         total = env_model.search_count(domain or [])
@@ -1814,6 +1877,8 @@ class ApiDataHandler(BaseIntentHandler):
             "project_scope": project_scope_meta,
             "record_scope": project_scope_meta,
         }
+        if search_term:
+            meta["search_term_applied"] = True
         return data, meta
 
     def _op_create(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
@@ -2056,6 +2121,7 @@ class ApiDataHandler(BaseIntentHandler):
             _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
             recs = env_model.browse(ids).exists()
         else:
+            domain, _search_term = self._apply_search_term_domain(env_model, domain, p, fields_safe)
             domain, project_scope_meta = self._apply_project_scope(env_model, domain, p, ctx)
             recs = env_model.search(domain or [], order=order or None, limit=limit)
         if not recs:
@@ -2091,7 +2157,7 @@ class ApiDataHandler(BaseIntentHandler):
             writer.writerow([self._format_csv_value(row.get(col)) for col in fields_safe])
         raw = buf.getvalue().encode("utf-8-sig")
         b64 = base64.b64encode(raw).decode("ascii")
-        stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
         data = {
             "file_name": f"{model.replace('.', '_')}_{stamp}.csv",

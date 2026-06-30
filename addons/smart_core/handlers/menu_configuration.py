@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from odoo.exceptions import AccessError, ValidationError
@@ -17,6 +18,7 @@ from ..utils.backend_contract_boundaries import (
 
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
 PLATFORM_ADMIN_GROUP = "smart_core.group_smart_core_admin"
+_logger = logging.getLogger(__name__)
 
 
 def _to_int(value: Any) -> int:
@@ -225,6 +227,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 ("name", "=", "智慧施工管理平台"),
             ], limit=1)
         except Exception:
+            _logger.debug("MENU_CONFIG_DEFAULT_ROOT_LOOKUP_FAILED", exc_info=True)
             return 0
         if fallback and _to_text(getattr(fallback, "name", "")) == "智慧施工管理平台":
             return int(getattr(fallback, "id", 0) or 0)
@@ -293,6 +296,12 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 if target_parent_id:
                     self._ensure_menu_config_scope(target_parent_id, root_menu_id, field_label="上级菜单")
             except ValidationError:
+                _logger.debug(
+                    "MENU_CONFIG_POLICY_FILTERED_OUT_OF_SCOPE menu_id=%s target_parent_menu_id=%s root_menu_id=%s",
+                    menu_id,
+                    _to_int(row.get("target_parent_menu_id")),
+                    root_menu_id,
+                )
                 continue
             scoped_rows.append(dict(row))
         return _menu_config_contract_json_from_rows(company_id, scoped_rows)
@@ -566,6 +575,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 "menu_count": len(menu_rows),
                 "policy_count": len(policy_by_menu),
                 "scope_root_menu_id": root_menu_id,
+                "scope_root_valid": bool(root_menu_id),
                 "scoped_menu_count": len(effective_menu_rows),
                 "requested_menu_count": len(requested_menu_ids),
                 "group_option_count": len(group_rows),
@@ -741,6 +751,8 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
                 "intent": self.INTENT_TYPE,
                 "source_authority": self.source_authority_contract(),
                 "contract_mirrored": bool(contract),
+                "scope_root_menu_id": root_menu_id,
+                "scope_root_valid": bool(root_menu_id),
             },
         }
 
@@ -874,6 +886,8 @@ class MenuConfigurationCreateHandler(MenuConfigurationSaveHandler):
                 "intent": self.INTENT_TYPE,
                 "source_authority": self.source_authority_contract(),
                 "contract_mirrored": bool(contract),
+                "scope_root_menu_id": root_menu_id,
+                "scope_root_valid": bool(root_menu_id),
             },
         }
 
@@ -949,8 +963,9 @@ class MenuConfigurationDeleteHandler(MenuConfigurationSaveHandler):
         menu = Menu.browse(menu_id).exists()
         if not menu:
             return self._err(404, "菜单不存在或已删除。", "NOT_FOUND")
+        root_menu_id = self._scope_root_menu_id(params)
         try:
-            self._ensure_menu_config_scope(menu_id, self._scope_root_menu_id(params))
+            self._ensure_menu_config_scope(menu_id, root_menu_id)
         except ValidationError as exc:
             return self._err(400, str(exc), "MENU_CONFIG_SCOPE_VIOLATION")
 
@@ -999,6 +1014,8 @@ class MenuConfigurationDeleteHandler(MenuConfigurationSaveHandler):
                 "intent": self.INTENT_TYPE,
                 "source_authority": self.source_authority_contract(),
                 "contract_mirrored": bool(contract),
+                "scope_root_menu_id": root_menu_id,
+                "scope_root_valid": bool(root_menu_id),
             },
         }
 
@@ -1054,6 +1071,40 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
             "flags": flags,
         }
 
+    def _serialize_runtime_contract_policy(self, policy: dict) -> dict:
+        menu_id = _to_int(policy.get("menu_id"))
+        visible = _to_bool(policy.get("visible"), True)
+        custom_label = _to_text(policy.get("custom_label"))
+        sequence_override = _to_int(policy.get("sequence_override"))
+        target_parent_id = _to_int(policy.get("target_parent_menu_id"))
+        flags = {
+            "hidden": not visible,
+            "renamed": bool(custom_label),
+            "reordered": bool(sequence_override),
+            "moved": bool(target_parent_id),
+        }
+        return {
+            "id": _to_int(policy.get("policy_id")),
+            "menu_id": menu_id,
+            "menu_label": _to_text(policy.get("menu_label")),
+            "menu_complete_name": _to_text(policy.get("menu_complete_name")),
+            "company_id": _to_int(policy.get("company_id")) or self._company_id(self.params if isinstance(self.params, dict) else {}),
+            "active": _to_bool(policy.get("active"), True),
+            "visible": visible,
+            "custom_label": custom_label,
+            "sequence_override": sequence_override,
+            "target_parent_menu_id": target_parent_id,
+            "target_parent_label": _to_text(policy.get("target_parent_menu_complete_name")),
+            "role_group_ids": [_to_int(item) for item in (policy.get("role_group_ids") or []) if _to_int(item)],
+            "role_group_names": [],
+            "scope_summary": "合同运行时策略",
+            "effect_summary": "隐藏菜单" if not visible else "合同配置显示",
+            "preview_summary": "",
+            "applicable": True,
+            "runtime_source": MENU_CONFIG_RUNTIME_SOURCE_CONTRACT,
+            "flags": flags,
+        }
+
     def handle(self, payload=None, ctx=None):
         del payload, ctx
         self._ensure_access()
@@ -1069,7 +1120,8 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
         if not include_inactive:
             domain.append(("active", "=", True))
         policies = Policy.search(domain, order="menu_id, id desc")
-        policies = self._policies_in_menu_config_scope(policies, self._scope_root_menu_id(params))
+        scope_root_menu_id = self._scope_root_menu_id(params)
+        policies = self._policies_in_menu_config_scope(policies, scope_root_menu_id)
         runtime_model = self.env[MENU_CONFIG_POLICY_MODEL]
         if hasattr(runtime_model, "_runtime_menu_config_source_for_user"):
             applicable_by_menu, runtime_source = runtime_model._runtime_menu_config_source_for_user(user=self.env.user)
@@ -1086,14 +1138,20 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
             self._serialize_audit_policy(policy, applicable_policy_ids=applicable_policy_ids)
             for policy in policies
         ]
-        applicable_rows = [
-            row for row in policy_rows
-            if row["applicable"]
-            or (runtime_source == MENU_CONFIG_RUNTIME_SOURCE_CONTRACT and row["menu_id"] in applicable_menu_ids)
-        ]
+        if runtime_source == MENU_CONFIG_RUNTIME_SOURCE_CONTRACT:
+            applicable_rows = [
+                self._serialize_runtime_contract_policy(policy)
+                for _menu_id, policy in sorted(applicable_by_menu.items(), key=lambda item: int(item[0] or 0))
+                if isinstance(policy, dict)
+            ]
+        else:
+            applicable_rows = [row for row in policy_rows if row["applicable"]]
         summary = {
             "runtime_source": runtime_source,
             "configured_policy_count": len(policy_rows),
+            "policy_table_count": len(policy_rows),
+            "runtime_policy_count": len(applicable_by_menu),
+            "contract_authoritative": runtime_source == MENU_CONFIG_RUNTIME_SOURCE_CONTRACT,
             "applicable_policy_count": len(applicable_rows),
             "hidden_count": sum(1 for row in applicable_rows if row["flags"]["hidden"]),
             "renamed_count": sum(1 for row in applicable_rows if row["flags"]["renamed"]),
@@ -1101,6 +1159,8 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
             "moved_count": sum(1 for row in applicable_rows if row["flags"]["moved"]),
             "inactive_policy_count": sum(1 for row in policy_rows if not row["active"]),
             "not_applicable_policy_ids": [row["id"] for row in policy_rows if not row["applicable"]],
+            "scope_root_menu_id": scope_root_menu_id,
+            "scope_root_valid": bool(scope_root_menu_id),
         }
         return {
             "ok": True,
@@ -1289,7 +1349,8 @@ class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
                 MENU_CONFIG_POLICY_MODEL,
             ],
             "projection_only": True,
-            "bootstraps_missing_contract_from_current_policies": True,
+            "bootstraps_missing_contract_from_current_policies": False,
+            "explicit_bootstrap_required": True,
             "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
             "runtime_carrier": cls.INTENT_TYPE,
         }
@@ -1352,9 +1413,13 @@ class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
         self._ensure_access()
         params = self.params if isinstance(self.params, dict) else {}
         company_id = self._company_id(params)
+        allow_bootstrap = _to_bool(
+            params.get("allow_bootstrap") or params.get("allowBootstrap") or params.get("bootstrap"),
+            False,
+        )
         contract = self._contract_for_company(company_id)
         bootstrapped = False
-        if not contract:
+        if not contract and allow_bootstrap:
             contract = self._bootstrap_contract_from_current_policies(company_id)
             bootstrapped = bool(contract)
         if not contract:
@@ -1365,7 +1430,12 @@ class MenuConfigurationVersionsHandler(MenuConfigurationLoadHandler):
                     "contract": None,
                     "versions": [],
                 },
-                "meta": {"intent": self.INTENT_TYPE, "source_authority": self.source_authority_contract()},
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "source_authority": self.source_authority_contract(),
+                    "bootstrapped_from_current_policies": False,
+                    "bootstrap_required": not allow_bootstrap,
+                },
             }
         versions = self.env["ui.business.config.contract.version"].sudo().search([
             ("contract_id", "=", contract.id),

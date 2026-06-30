@@ -85,9 +85,9 @@ class ScLegacyFuelCardFact(models.Model):
     attachment_ref = fields.Char(string="附件")
     note = fields.Text(string="备注")
     active = fields.Boolean(string="有效", default=True, index=True)
-    accepted_visible_01 = fields.Char(string="单据状态", compute="_compute_accepted_visible_fields")
-    accepted_visible_06 = fields.Char(string="初始金额", compute="_compute_accepted_visible_fields")
-    accepted_visible_09 = fields.Char(string="附件", compute="_compute_accepted_visible_fields")
+    accepted_visible_01 = fields.Char(string="验收可见单据状态", compute="_compute_accepted_visible_fields")
+    accepted_visible_06 = fields.Char(string="验收可见初始金额", compute="_compute_accepted_visible_fields")
+    accepted_visible_09 = fields.Char(string="验收可见附件", compute="_compute_accepted_visible_fields")
 
     _sql_constraints = [
         ("legacy_fuel_card_fact_unique", "unique(legacy_source_model, legacy_record_id)", "同一历史油卡登记只能导入一次。"),
@@ -129,10 +129,10 @@ class ScLegacyFuelCardRechargeFact(models.Model):
     attachment_ref = fields.Char(string="附件")
     note = fields.Text(string="备注")
     active = fields.Boolean(string="有效", default=True, index=True)
-    accepted_visible_01 = fields.Char(string="单据状态", compute="_compute_accepted_visible_fields")
-    accepted_visible_06 = fields.Char(string="充值总额", compute="_compute_accepted_visible_fields")
-    accepted_visible_07 = fields.Char(string="充值日期", compute="_compute_accepted_visible_fields")
-    accepted_visible_10 = fields.Char(string="附件", compute="_compute_accepted_visible_fields")
+    accepted_visible_01 = fields.Char(string="验收可见单据状态", compute="_compute_accepted_visible_fields")
+    accepted_visible_06 = fields.Char(string="验收可见充值总额", compute="_compute_accepted_visible_fields")
+    accepted_visible_07 = fields.Char(string="验收可见充值日期", compute="_compute_accepted_visible_fields")
+    accepted_visible_10 = fields.Char(string="验收可见附件", compute="_compute_accepted_visible_fields")
 
     _sql_constraints = [
         (
@@ -183,12 +183,12 @@ class ScLegacyFuelCardRefuelFact(models.Model):
     attachment_ref = fields.Char(string="附件")
     note = fields.Text(string="备注")
     active = fields.Boolean(string="有效", default=True, index=True)
-    accepted_visible_01 = fields.Char(string="单据状态", compute="_compute_accepted_visible_fields")
-    accepted_visible_05 = fields.Char(string="加油金额", compute="_compute_accepted_visible_fields")
-    accepted_visible_06 = fields.Char(string="累计加油金额", compute="_compute_accepted_visible_fields")
-    accepted_visible_07 = fields.Char(string="油卡剩余金额", compute="_compute_accepted_visible_fields")
-    accepted_visible_09 = fields.Char(string="累计充值金额", compute="_compute_accepted_visible_fields")
-    accepted_visible_11 = fields.Char(string="附件", compute="_compute_accepted_visible_fields")
+    accepted_visible_01 = fields.Char(string="验收可见单据状态", compute="_compute_accepted_visible_fields")
+    accepted_visible_05 = fields.Char(string="验收可见加油金额", compute="_compute_accepted_visible_fields")
+    accepted_visible_06 = fields.Char(string="验收可见累计加油金额", compute="_compute_accepted_visible_fields")
+    accepted_visible_07 = fields.Char(string="验收可见油卡剩余金额", compute="_compute_accepted_visible_fields")
+    accepted_visible_09 = fields.Char(string="验收可见累计充值金额", compute="_compute_accepted_visible_fields")
+    accepted_visible_11 = fields.Char(string="验收可见附件", compute="_compute_accepted_visible_fields")
 
     _sql_constraints = [
         ("legacy_fuel_card_refuel_fact_unique", "unique(legacy_source_model, legacy_record_id)", "同一历史加油登记只能导入一次。"),

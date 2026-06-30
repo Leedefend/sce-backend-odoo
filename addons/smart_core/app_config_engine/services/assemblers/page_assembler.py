@@ -1557,6 +1557,7 @@ class PageAssembler:
         layout_field_names = set()
         layout_field_names.update(self._collect_layout_field_names(data.get("layout")))
         layout_field_names.update(self._collect_layout_field_names(form_view.get("layout")))
+        layout_field_names.update(str(name or "").strip() for name in fields.keys() if str(name or "").strip())
         eligible_names = sorted(set(layout_field_names) | set(policy_by_field.keys()))
         if not eligible_names:
             return

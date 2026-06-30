@@ -85,7 +85,7 @@ class ScSettlementOrder(models.Model):
     )
     legacy_settlement_category = fields.Char(string="迁移结算分类", index=True)
     settlement_category_display = fields.Char(
-        string="结算分类",
+        string="结算分类显示",
         compute="_compute_settlement_category_display",
         store=True,
         index=True,
@@ -100,7 +100,7 @@ class ScSettlementOrder(models.Model):
             ("final", "结算定案"),
             ("spot_check", "结算抽查"),
         ],
-        string="结算阶段",
+        string="结算阶段编码",
         default="declared",
         index=True,
     )
@@ -195,7 +195,7 @@ class ScSettlementOrder(models.Model):
     payment_request_ids = fields.One2many(
         "payment.request",
         "settlement_id",
-        string="付款申请",
+        string="关联付款申请",
         readonly=True,
     )
     payment_request_line_ids = fields.One2many(

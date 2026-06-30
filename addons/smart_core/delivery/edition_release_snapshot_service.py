@@ -47,7 +47,7 @@ def _to_int(value: Any) -> int:
 
 
 def _stable_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, default=str, separators=(",", ":"))
 
 
 class EditionReleaseSnapshotService:

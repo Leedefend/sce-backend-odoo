@@ -182,7 +182,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             },
             "replay_result": result,
         }
-        raw = json.dumps(payload, ensure_ascii=True, sort_keys=True)
+        raw = json.dumps(payload, ensure_ascii=True, sort_keys=True, default=str)
         if len(raw.encode("utf-8")) <= self.AUDIT_MAX_PAYLOAD_BYTES:
             return payload
         compact_result = dict(result)

@@ -2251,7 +2251,7 @@ class ScMaterialSettlement(models.Model):
     payment_request_ids = fields.One2many(
         "payment.request",
         "material_settlement_id",
-        string="付款申请",
+        string="关联付款申请",
         readonly=True,
     )
     payment_request_count = fields.Integer(

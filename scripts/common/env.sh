@@ -85,6 +85,11 @@ DB_CI="${DB_CI:-sc_test}"
 DB_USER="${DB_USER:-}"
 MODULE="${MODULE:-smart_construction_core}"
 ODOO_CONF="${ODOO_CONF:-/var/lib/odoo/odoo.conf}"
+ADDONS_EXTERNAL_MOUNT="${ADDONS_EXTERNAL_MOUNT:-/mnt/addons_external/oca_server_ux}"
+DOCS_MOUNT_HOST="${DOCS_MOUNT_HOST:-${ROOT_DIR}/docs}"
+DOCS_MOUNT_CONT="${DOCS_MOUNT_CONT:-/mnt/docs}"
+CONFIG_MOUNT_HOST="${CONFIG_MOUNT_HOST:-${ROOT_DIR}/config}"
+CONFIG_MOUNT_CONT="${CONFIG_MOUNT_CONT:-/mnt/config}"
 
 # =========================================================
 # Required env gate (fail fast)
@@ -137,3 +142,4 @@ export COMPOSE_ANSI="${COMPOSE_ANSI:-never}"
 export MSYS_NO_PATHCONV="${MSYS_NO_PATHCONV:-1}"
 export MSYS2_ARG_CONV_EXCL="${MSYS2_ARG_CONV_EXCL:---test-tags}"
 export ODOO_CONF
+export ADDONS_EXTERNAL_MOUNT DOCS_MOUNT_HOST DOCS_MOUNT_CONT CONFIG_MOUNT_HOST CONFIG_MOUNT_CONT

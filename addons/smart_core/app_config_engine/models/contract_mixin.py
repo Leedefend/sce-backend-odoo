@@ -145,4 +145,4 @@ class ContractSchemaMixin(models.AbstractModel):
     @api.model
     def json_clone(self, data):
         """JSON 方式深复制，便于去除 Odoo 的特殊对象"""
-        return json.loads(json.dumps(data or {}, ensure_ascii=False))
+        return json.loads(json.dumps(data or {}, ensure_ascii=False, default=str))

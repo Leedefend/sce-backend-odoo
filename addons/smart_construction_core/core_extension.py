@@ -180,7 +180,8 @@ def _sc_append_project_responsibility_group(contract: dict, *, include_collabora
 def smart_core_finalize_unified_page_contract_v2(env, contract, context):
     if not isinstance(contract, dict):
         return None
-    source = context.get("source_contract") if isinstance(context, dict) and isinstance(context.get("source_contract"), dict) else {}
+    context = context if isinstance(context, dict) else {}
+    source = context.get("source_contract") if isinstance(context.get("source_contract"), dict) else {}
     head = source.get("head") if isinstance(source.get("head"), dict) else {}
     model = _sc_text(source.get("model") or head.get("model"))
     view_type = _sc_text(source.get("view_type") or head.get("view_type") or (context or {}).get("view_type")).lower()
@@ -206,6 +207,8 @@ def smart_core_finalize_unified_page_contract_v2(env, contract, context):
 
 def _sc_inject_workflow_contract(env, contract, source, *, model, view_type):
     if view_type != "form" or not model:
+        return
+    if env is None or not getattr(env, "registry", None):
         return
     record_id = (
         source.get("record_id")
@@ -2000,30 +2003,41 @@ def smart_core_api_data_search_fields(env, model_name: str):
         from .models.support.p1_daily_business_visible_alias_fields import (
             LABEL_SOURCE_OVERRIDES,
             MODEL_LABEL_SOURCE_OVERRIDES,
+            P1_ALIAS_COMPAT_LABELS,
             P1_ALIAS_LABELS,
         )
+        from .models.support.user_confirmed_formal_visible_fields import USER_CONFIRMED_FORMAL_VISIBLE_FIELDS
     except Exception:
         return []
 
     model_name = str(model_name or "").strip()
-    labels = list(P1_ALIAS_LABELS.get(model_name) or [])
+    labels = []
+    for label in list(P1_ALIAS_LABELS.get(model_name) or []) + list(P1_ALIAS_COMPAT_LABELS.get(model_name) or []):
+        value = str(label or "").strip()
+        if value and value not in labels:
+            labels.append(value)
+    for entry in USER_CONFIRMED_FORMAL_VISIBLE_FIELDS.get(model_name) or []:
+        label = str((entry or {}).get("label") or "").strip()
+        if label and label not in labels:
+            labels.append(label)
     model_overrides = MODEL_LABEL_SOURCE_OVERRIDES.get(model_name) or {}
-    try:
-        model = env[model_name]
-        for field_name, field in model._fields.items():
-            if str(field_name or "").startswith(("user_acceptance_", "legacy_visible_", "accepted_visible_")):
-                label = str(getattr(field, "string", "") or "").strip()
-                if label and label not in labels:
-                    labels.append(label)
-    except Exception:
-        pass
+    for label in model_overrides:
+        value = str(label or "").strip()
+        if value and value not in labels:
+            labels.append(value)
     names = []
     for label in labels:
         for field_name in list(model_overrides.get(label) or []) + list(LABEL_SOURCE_OVERRIDES.get(label) or []):
             value = str(field_name or "").strip()
             if value and value not in names:
                 names.append(value)
-    return names
+    if env is None:
+        return names
+    try:
+        model_fields = getattr(env[model_name], "_fields", {}) or {}
+    except Exception:
+        return names
+    return [field_name for field_name in names if field_name in model_fields]
 
 
 def smart_core_model_code_mapping(env):
