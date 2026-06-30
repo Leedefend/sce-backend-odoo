@@ -46,9 +46,10 @@ green. The next iteration should not reopen release blockers unless a live gate 
    - Evidence target: `make verify.delivery.executive.readonly`, `artifacts/backend/executive_readonly_smoke.json`, and the scoreboard row `Executive readonly smoke`.
 
 2. Treasury/settlement ledger snapshot
+   - Status: done
    - Scope: `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders`
    - Target: ledger list/search/count snapshots are stable across refresh and company scope.
-   - Evidence target: ledger snapshot JSON with row counts and domain trace.
+   - Evidence target: `make verify.delivery.ledger.snapshot`, `artifacts/backend/ledger_snapshot_smoke.json`, and the scoreboard row `Ledger snapshot smoke`.
 
 3. Cost search and pagination smoke
    - Scope: `cost.project_budget`, `cost.project_cost_ledger`, `cost.profit_compare`
