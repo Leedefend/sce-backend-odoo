@@ -26,6 +26,7 @@ EXECUTIVE_READONLY_REPORT_PATH = ROOT / "artifacts" / "backend" / "executive_rea
 LEDGER_SNAPSHOT_REPORT_PATH = ROOT / "artifacts" / "backend" / "ledger_snapshot_smoke.json"
 COST_SEARCH_PAGINATION_REPORT_PATH = ROOT / "artifacts" / "backend" / "cost_search_pagination_smoke.json"
 QUALITY_SAFETY_CLOSURE_REPORT_PATH = ROOT / "artifacts" / "backend" / "site_quality_safety_closure_audit.json"
+LIFECYCLE_AUDIT_EXPORT_REPORT_PATH = ROOT / "artifacts" / "backend" / "lifecycle_audit_export.json"
 
 PROFILE_COMMANDS = {
     "strict": "CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness",
@@ -452,6 +453,11 @@ def main() -> int:
     quality_safety_ok = bool(quality_safety_payload.get("ok")) if quality_safety_present else False
     quality_safety_label = _bool_status_label(quality_safety_ok) if quality_safety_present else "UNKNOWN"
 
+    lifecycle_audit_payload = _load_json(LIFECYCLE_AUDIT_EXPORT_REPORT_PATH)
+    lifecycle_audit_present = bool(lifecycle_audit_payload)
+    lifecycle_audit_ok = bool(lifecycle_audit_payload.get("ok")) if lifecycle_audit_present else False
+    lifecycle_audit_label = _bool_status_label(lifecycle_audit_ok) if lifecycle_audit_present else "UNKNOWN"
+
     lines = _upsert_evidence_row(
         lines,
         "CI strict profile readiness",
@@ -523,6 +529,12 @@ def main() -> int:
         "Quality safety closure smoke",
         quality_safety_label,
         str(QUALITY_SAFETY_CLOSURE_REPORT_PATH.relative_to(ROOT)),
+    )
+    lines = _upsert_evidence_row(
+        lines,
+        "Lifecycle audit export",
+        lifecycle_audit_label,
+        str(LIFECYCLE_AUDIT_EXPORT_REPORT_PATH.relative_to(ROOT)),
     )
     lines = _normalize_evidence_table(lines)
     lines = _upsert_release_gap_profile_posture(lines, strict_label, restricted_label)
