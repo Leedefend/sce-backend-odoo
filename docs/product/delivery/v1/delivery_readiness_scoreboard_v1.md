@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T07:45:29Z
-- branch: `topic/lowcode-release-closure`
-- commit_ref: `de1308b8f`
+- generated_at_utc: 2026-06-30T07:51:52Z
+- branch: `topic/delivery-action-evidence`
+- commit_ref: `f1eb896b4`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -27,6 +27,7 @@
 | Mainline one-command summary | PASS | `artifacts/backend/delivery_mainline_run_summary.json` |
 | Product delivery action closure smoke | PASS | `artifacts/backend/product_delivery_action_closure_report.json` |
 | Product delivery module capability smoke | PASS | `artifacts/backend/product_delivery_module9_smoke_report.json` |
+| Payment approval chain smoke | PASS | `artifacts/backend/payment_request_approval_chain_summary.json` |
 ## 10-Module Readiness Board
 
 | Module | Entry Scenes | Key Roles | Data Prerequisites | Smoke/Gate Status | Known Limits |
