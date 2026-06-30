@@ -2936,7 +2936,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 if not isinstance(rows, list):
                     continue
                 normalized_rows = []
-                for row in rows:
+                for index, row in enumerate(rows):
                     if isinstance(row, str):
                         name = str(row or "").strip()
                         label = ""
@@ -2954,8 +2954,8 @@ class UiContractV2Handler(BaseIntentHandler):
                         continue
                     if not name:
                         continue
-                    normalized_rows.append((sequence, name, label, visible))
-                for _sequence, name, label, visible in sorted(normalized_rows, key=lambda item: (item[0], item[1])):
+                    normalized_rows.append((sequence, index, name, label, visible))
+                for _sequence, _index, name, label, visible in sorted(normalized_rows, key=lambda item: (item[0], item[1])):
                     if not visible:
                         direct_orchestration_hidden.add(name)
                         direct_orchestration_columns = [item for item in direct_orchestration_columns if item != name]

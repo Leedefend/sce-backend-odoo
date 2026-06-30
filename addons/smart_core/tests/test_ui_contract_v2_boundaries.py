@@ -417,6 +417,62 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             profile_columns,
         )
 
+    def test_business_list_profile_preserves_business_config_column_order(self):
+        class _Config:
+            contract_json = {
+                "view_orchestration": {
+                    "views": {
+                        "tree": {
+                            "columns": [
+                                {"name": "state", "sequence": 10},
+                                {"name": "name", "sequence": 10},
+                                {"name": "project_id", "sequence": 10},
+                            ]
+                        }
+                    }
+                }
+            }
+
+        class _ConfigModel:
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0):
+                self.request = (model_name, view_type, action_id)
+                return [_Config()]
+
+        class _Env(dict):
+            def __contains__(self, key):
+                return dict.__contains__(self, key)
+
+        config_model = _ConfigModel()
+        handler = self.module.UiContractV2Handler(env=_Env({
+            "ui.business.config.contract": config_model,
+        }))
+        source_contract = {
+            "action_id": 949,
+            "model": "sc.demo",
+            "views": {"tree": {"columns": [{"name": "id"}, {"name": "name"}]}},
+            "list_profile": {},
+        }
+
+        handler._merge_business_list_profile(
+            source_contract,
+            common_fields=["fallback_field"],
+            amount_fields=[],
+            note_field="",
+            status_field="",
+            label_for=lambda name: name,
+            type_for=lambda name: "char",
+        )
+
+        self.assertEqual(config_model.request, ("sc.demo", "tree", 949))
+        self.assertEqual(
+            source_contract["list_profile"]["columns"][:3],
+            ["state", "name", "project_id"],
+        )
+        self.assertEqual(
+            source_contract["views"]["tree"]["columns"][:3],
+            ["state", "name", "project_id"],
+        )
+
     def test_form_structure_contract_uses_generic_slots_not_contract_template(self):
         handler = self.module.UiContractV2Handler(env=object())
         field_types = {
