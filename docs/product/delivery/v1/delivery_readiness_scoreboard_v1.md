@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T09:07:00Z
+- generated_at_utc: 2026-06-30T09:07:43Z
 - branch: `topic/ledger-reconciliation-trend`
-- commit_ref: `416002a60`
+- commit_ref: `098d897f8`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
