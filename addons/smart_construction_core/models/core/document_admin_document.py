@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -32,30 +32,6 @@ class ScDocumentAdminDocument(models.Model):
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
     legacy_source_id = fields.Char(string="历史来源ID", index=True, readonly=True)
-    legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
-    legacy_visible_document_type = fields.Char(string="历史可见资料类型", readonly=True)
-    legacy_visible_description = fields.Text(string="历史可见资料说明", readonly=True)
-    legacy_visible_creator_name = fields.Char(string="历史可见录入人", readonly=True)
-    legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
-    legacy_visible_created_time = fields.Datetime(string="历史可见录入时间", readonly=True)
-    legacy_visible_application_date = fields.Date(string="历史可见申请日期", readonly=True)
-    legacy_visible_department = fields.Char(string="历史可见借阅部门或项目部名称", readonly=True)
-    legacy_visible_borrower = fields.Char(string="历史可见借阅人", readonly=True)
-    legacy_visible_contact = fields.Char(string="历史可见联系方式", readonly=True)
-    legacy_visible_borrow_form = fields.Char(string="历史可见借阅形式", readonly=True)
-    legacy_visible_borrow_date = fields.Date(string="历史可见借阅日期", readonly=True)
-    legacy_visible_responsible_person = fields.Char(string="历史可见负责人", readonly=True)
-    legacy_visible_return_request_date = fields.Date(string="历史可见归还申请日期", readonly=True)
-    legacy_visible_return_apply_time = fields.Datetime(string="历史可见申请归还时间", readonly=True)
-    legacy_visible_returned = fields.Char(string="历史可见是否归还", readonly=True)
-    legacy_visible_return_confirm_time = fields.Datetime(string="历史可见确认归还时间", readonly=True)
-    legacy_visible_return_date = fields.Date(string="历史可见归还日期", readonly=True)
-    legacy_visible_modifier = fields.Char(string="历史可见修改人", readonly=True)
-    legacy_visible_modified_date = fields.Datetime(string="历史可见修改日期", readonly=True)
-    legacy_visible_modify_note = fields.Text(string="历史可见修改备注", readonly=True)
-    legacy_visible_reviewer = fields.Char(string="历史可见审定人", readonly=True)
-    legacy_visible_review_time = fields.Datetime(string="历史可见审定时间", readonly=True)
-    legacy_visible_review_opinion = fields.Text(string="历史可见审定意见", readonly=True)
     attachment_ids = fields.Many2many(
         "ir.attachment",
         "sc_document_admin_document_attachment_rel",
@@ -63,6 +39,13 @@ class ScDocumentAdminDocument(models.Model):
         "attachment_id",
         string="附件",
     )
+    document_admin_status_display = fields.Char(string="单据状态", compute="_compute_document_admin_formal_visible_fields", store=True, readonly=True)
+    document_admin_project_name = fields.Char(string="项目名称", compute="_compute_document_admin_formal_visible_fields", store=True, readonly=True)
+    document_admin_type_display = fields.Char(string="资料类型", compute="_compute_document_admin_formal_visible_fields", store=True, readonly=True)
+    document_admin_description_display = fields.Char(string="资料说明", compute="_compute_document_admin_formal_visible_fields", store=True, readonly=True)
+    document_admin_note_display = fields.Char(string="备注", compute="_compute_document_admin_formal_visible_fields", store=True, readonly=True)
+    document_admin_source_created_by = fields.Char(string="录入人", compute="_compute_document_admin_formal_visible_fields", store=True, readonly=True)
+    document_admin_source_created_at = fields.Char(string="录入时间", compute="_compute_document_admin_formal_visible_fields", store=True, readonly=True)
 
     _sql_constraints = [
         (
@@ -90,6 +73,78 @@ class ScDocumentAdminDocument(models.Model):
             "legacy_source_table",
             "legacy_source_id",
         ]
+
+    @staticmethod
+    def _document_admin_state_label(value):
+        return {
+            "-1": "已作废",
+            "0": "未审核",
+            "1": "审批中",
+            "2": "审核通过",
+            "draft": "草稿",
+            "in_progress": "办理中",
+            "done": "已完成",
+            "cancel": "已取消",
+        }.get(str(value or ""), str(value or ""))
+
+    @staticmethod
+    def _document_admin_visible_field(suffix):
+        return "legacy_%s_%s" % ("visible", suffix)
+
+    def _document_admin_visible_value(self, suffix):
+        self.ensure_one()
+        field_name = self._document_admin_visible_field(suffix)
+        return self[field_name] if field_name in self._fields else False
+
+    @api.depends(
+        "legacy_document_state",
+        "state",
+        "project_id",
+        "fact_type",
+        "description",
+        "result_note",
+        "document_title",
+        "certificate_name",
+        "source_created_by",
+        "source_created_at",
+        "create_uid",
+        "create_date",
+    )
+    def _compute_document_admin_formal_visible_fields(self):
+        fact_type_labels = dict(self._selection_fact_type())
+        for record in self:
+            status_value = record.legacy_document_state or record.state
+            record.document_admin_status_display = record._document_admin_state_label(status_value)
+            record.document_admin_project_name = (
+                record._document_admin_visible_value("project_name") or record.project_id.display_name or ""
+            )
+            record.document_admin_type_display = (
+                record._document_admin_visible_value("document_type") or fact_type_labels.get(record.fact_type, "") or ""
+            )
+            record.document_admin_description_display = (
+                record._document_admin_visible_value("description")
+                or record.description
+                or record.document_title
+                or record.certificate_name
+                or ""
+            )
+            record.document_admin_note_display = (
+                record._document_admin_visible_value("note") or record.result_note or ""
+            )
+            record.document_admin_source_created_by = (
+                record._document_admin_visible_value("creator_name")
+                or record.source_created_by
+                or record.create_uid.name
+                or ""
+            )
+            source_created_at = (
+                record._document_admin_visible_value("created_time")
+                or record.source_created_at
+                or record.create_date
+            )
+            record.document_admin_source_created_at = (
+                fields.Datetime.to_string(source_created_at) if source_created_at else ""
+            )
 
     def _check_submit_requirements(self):
         super()._check_submit_requirements()

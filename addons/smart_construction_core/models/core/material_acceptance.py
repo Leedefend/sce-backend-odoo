@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-import re
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
@@ -331,6 +330,53 @@ class ScMaterialPurchaseRequest(models.Model):
     supplier_id = fields.Many2one("res.partner", string="拟采购供应商", domain=[("supplier_rank", ">", 0)], index=True)
     purpose = fields.Char(string="采购用途")
     source_material_plan_id = fields.Many2one("project.material.plan", string="来源材料计划", index=True)
+    currency_id = fields.Many2one(
+        "res.currency",
+        string="币种",
+        required=True,
+        default=lambda self: self.env.company.currency_id.id,
+    )
+    amount_total = fields.Monetary(
+        string="总金额",
+        currency_field="currency_id",
+        compute="_compute_purchase_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    invoice_amount = fields.Monetary(
+        string="已开票金额",
+        currency_field="currency_id",
+        compute="_compute_purchase_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    payment_paid_amount = fields.Monetary(
+        string="已付款金额",
+        currency_field="currency_id",
+        compute="_compute_purchase_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    payment_unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_purchase_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    uninvoiced_amount = fields.Monetary(
+        string="未开票金额",
+        currency_field="currency_id",
+        compute="_compute_purchase_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    tax_rate_text = fields.Char(
+        string="税率",
+        compute="_compute_purchase_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
     rfq_count = fields.Integer("询价单", compute="_compute_downstream_counts")
     purchase_order_count = fields.Integer("采购订单", compute="_compute_downstream_counts")
     state = fields.Selection(
@@ -393,6 +439,17 @@ class ScMaterialPurchaseRequest(models.Model):
                AND category.target_model = 'sc.material.purchase.request'
             """
         )
+
+    @api.depends("line_ids.estimated_amount")
+    def _compute_purchase_request_boundary_fields(self):
+        for record in self:
+            amount = sum(record.line_ids.mapped("estimated_amount"))
+            record.amount_total = amount
+            record.invoice_amount = 0.0
+            record.payment_paid_amount = 0.0
+            record.payment_unpaid_amount = amount
+            record.uninvoiced_amount = amount
+            record.tax_rate_text = False
 
     def action_submit(self):
         self._sc_require_material_user(_("提交采购申请"))
@@ -1111,6 +1168,18 @@ class ScMaterialInbound(models.Model):
         readonly=True,
         index=True,
     )
+    document_status = fields.Char(
+        string="单据状态",
+        compute="_compute_inbound_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    project_name_display = fields.Char(
+        string="项目名称",
+        compute="_compute_inbound_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
     amount_total = fields.Monetary(string="金额合计", currency_field="currency_id", compute="_compute_amount_total", store=True)
     tax_included_amount = fields.Monetary(
         string="含税金额",
@@ -1119,12 +1188,70 @@ class ScMaterialInbound(models.Model):
         store=True,
         readonly=True,
     )
+    tax_rate_text = fields.Char(
+        string="税率",
+        compute="_compute_inbound_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    payment_paid_amount = fields.Monetary(
+        string="已付款金额",
+        currency_field="currency_id",
+        compute="_compute_inbound_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    payment_unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_inbound_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    settlement_settled_amount = fields.Monetary(
+        string="已结算金额",
+        currency_field="currency_id",
+        compute="_compute_inbound_boundary_fields",
+        store=True,
+        readonly=True,
+    )
     material_name_summary = fields.Char(string="材料名称", compute="_compute_inbound_line_summaries", store=True)
     material_spec_summary = fields.Char(string="规格型号", compute="_compute_inbound_line_summaries", store=True)
     material_uom_summary = fields.Char(string="单位", compute="_compute_inbound_line_summaries", store=True)
+    quantity_summary = fields.Char(string="数量", compute="_compute_inbound_line_summaries", store=True)
     total_qty = fields.Float(string="入库数量合计", compute="_compute_inbound_line_summaries", store=True)
     unit_price_summary = fields.Char(string="单价", compute="_compute_inbound_line_summaries", store=True)
     line_note_summary = fields.Char(string="备注", compute="_compute_inbound_line_summaries", store=True)
+    payment_status_text = fields.Char(
+        string="付款状态",
+        compute="_compute_inbound_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    settlement_status_text = fields.Char(
+        string="结算状态",
+        compute="_compute_inbound_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    source_created_by = fields.Char(
+        string="录入人",
+        compute="_compute_inbound_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    source_created_at = fields.Datetime(
+        string="录入时间",
+        compute="_compute_inbound_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    buyer_name = fields.Char(
+        string="采购人",
+        compute="_compute_inbound_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -1183,24 +1310,36 @@ class ScMaterialInbound(models.Model):
         for record in self:
             record.amount_total = sum(record.line_ids.mapped("amount"))
 
-    @api.depends("amount_total", "legacy_visible_10")
+    @api.depends("amount_total")
     def _compute_tax_included_amount(self):
         for record in self:
-            legacy_value = record._parse_legacy_amount(getattr(record, "legacy_visible_10", False))
-            record.tax_included_amount = legacy_value if legacy_value is not False else record.amount_total
+            record.tax_included_amount = record.amount_total
 
-    @api.model
-    def _parse_legacy_amount(self, value):
-        text = str(value or "").replace(",", "").replace("￥", "").replace("¥", "").strip()
-        if not text:
-            return False
-        match = re.search(r"-?\d+(?:\.\d+)?", text)
-        if not match:
-            return False
-        try:
-            return float(match.group(0))
-        except ValueError:
-            return False
+    @api.depends("amount_total")
+    def _compute_inbound_boundary_fields(self):
+        for record in self:
+            amount = record.amount_total or 0.0
+            record.tax_rate_text = False
+            record.payment_paid_amount = 0.0
+            record.payment_unpaid_amount = amount
+            record.settlement_settled_amount = 0.0
+
+    @api.depends(
+        "project_id",
+        "create_uid",
+        "create_date",
+        "state",
+    )
+    def _compute_inbound_formal_visible_fields(self):
+        state_labels = dict(self._fields["state"].selection)
+        for record in self:
+            record.document_status = state_labels.get(record.state) or False
+            record.project_name_display = record.project_id.display_name if record.project_id else False
+            record.payment_status_text = False
+            record.settlement_status_text = False
+            record.source_created_by = record.create_uid.name if record.create_uid else False
+            record.source_created_at = record.create_date or False
+            record.buyer_name = False
 
     @api.depends(
         "line_ids.product_id",
@@ -1222,6 +1361,9 @@ class ScMaterialInbound(models.Model):
             )
             record.material_uom_summary = record._summarize_inbound_line_text(
                 record.line_ids.mapped("product_uom_id.name")
+            )
+            record.quantity_summary = record._summarize_inbound_line_text(
+                record._format_summary_number(line.qty) for line in record.line_ids
             )
             record.total_qty = sum(record.line_ids.mapped("qty"))
             record.unit_price_summary = record._summarize_inbound_line_text(
@@ -1275,6 +1417,15 @@ class ScMaterialInbound(models.Model):
              WHERE inbound.business_category_id IS NULL
                AND category.code = 'material.inbound'
                AND category.target_model = 'sc.material.inbound'
+            """
+        )
+        self.env.cr.execute(
+            """
+            UPDATE sc_material_inbound inbound
+               SET project_name_display = COALESCE(project.name->>'zh_CN', project.name->>'en_US')
+              FROM project_project project
+             WHERE inbound.project_id = project.id
+               AND inbound.project_name_display IS NULL
             """
         )
 

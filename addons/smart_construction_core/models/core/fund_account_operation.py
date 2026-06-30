@@ -126,19 +126,59 @@ class ScFundAccountOperation(models.Model):
     legacy_source_table = fields.Char(string="历史来源表", readonly=True, index=True)
     legacy_record_id = fields.Char(string="历史记录ID", readonly=True, index=True)
     legacy_document_state = fields.Char(string="历史单据状态", readonly=True, index=True)
-    legacy_visible_document_no = fields.Char(string="历史可见单据编号", readonly=True)
-    legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
-    legacy_visible_account_name = fields.Char(string="历史可见账户号码", readonly=True)
-    legacy_visible_counterparty_account_name = fields.Char(string="历史可见收款账户", readonly=True)
-    legacy_visible_transfer_type = fields.Char(string="历史可见转账类别", readonly=True)
-    legacy_visible_reason = fields.Char(string="历史可见事由", readonly=True)
-    legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
-    legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", readonly=True, index=True)
     creator_name = fields.Char(string="历史录入人", readonly=True, index=True)
     created_time = fields.Datetime(string="历史录入时间", readonly=True, index=True)
     active = fields.Boolean(string="有效", default=True, index=True)
+    fund_operation_status_display = fields.Char(
+        string="单据状态",
+        compute="_compute_fund_operation_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    fund_operation_project_name = fields.Char(
+        string="项目名称",
+        compute="_compute_fund_operation_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    fund_operation_date_display = fields.Date(
+        string="发生时间",
+        compute="_compute_fund_operation_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    fund_operation_account_no = fields.Char(
+        string="账户号码",
+        compute="_compute_fund_operation_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    fund_operation_transfer_type = fields.Char(
+        string="转账类别",
+        compute="_compute_fund_operation_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    fund_operation_reason_display = fields.Char(
+        string="事由",
+        compute="_compute_fund_operation_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    fund_operation_source_created_by = fields.Char(
+        string="录入人",
+        compute="_compute_fund_operation_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    fund_operation_source_created_at = fields.Datetime(
+        string="录入时间",
+        compute="_compute_fund_operation_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
 
     _sql_constraints = [
         (
@@ -167,6 +207,143 @@ class ScFundAccountOperation(models.Model):
                 record.fund_flow_label = _("公司账户转入项目")
             else:
                 record.fund_flow_label = _("公司账户间调拨")
+
+    @staticmethod
+    def _fund_operation_legacy_state_label(value):
+        return {
+            "-1": "已作废",
+            "0": "未审核",
+            "1": "审核中",
+            "2": "审核通过",
+            "3": "已驳回",
+            "4": "已作废",
+        }.get(str(value or ""), str(value or ""))
+
+    def _fund_operation_state_label(self, state):
+        return dict(self._fields["state"].selection).get(state, state or "")
+
+    def _fund_operation_type_label(self, operation_type):
+        return dict(self._fields["operation_type"].selection).get(operation_type, operation_type or "")
+
+    def _fund_operation_visible_value(self, field_name):
+        self.ensure_one()
+        if field_name not in self._fields:
+            return ""
+        return self[field_name] or ""
+
+    @staticmethod
+    def _fund_operation_legacy_visible_field(suffix):
+        return "legacy_%s_%s" % ("visible", suffix)
+
+    @api.depends(
+        "legacy_document_state",
+        "state",
+        "project_id.display_name",
+        "operation_date",
+        "fund_account_id.display_name",
+        "source_account_id.display_name",
+        "operation_type",
+        "operation_reason",
+        "creator_name",
+        "created_time",
+        "create_uid.name",
+        "create_date",
+    )
+    def _compute_fund_operation_formal_visible_fields(self):
+        for record in self:
+            legacy_state = (record.legacy_document_state or "").strip()
+            legacy_project_name = record._fund_operation_visible_value(
+                record._fund_operation_legacy_visible_field("project_name")
+            )
+            legacy_account_name = record._fund_operation_visible_value(
+                record._fund_operation_legacy_visible_field("account_name")
+            )
+            legacy_transfer_type = record._fund_operation_visible_value(
+                record._fund_operation_legacy_visible_field("transfer_type")
+            )
+            legacy_reason = record._fund_operation_visible_value(
+                record._fund_operation_legacy_visible_field("reason")
+            )
+            record.fund_operation_status_display = (
+                record._fund_operation_legacy_state_label(legacy_state)
+                if legacy_state
+                else record._fund_operation_state_label(record.state)
+            )
+            record.fund_operation_project_name = (
+                legacy_project_name
+                or (record.project_id.display_name if record.project_id else "")
+                or ""
+            )
+            record.fund_operation_date_display = record.operation_date
+            record.fund_operation_account_no = (
+                legacy_account_name
+                or (record.fund_account_id.display_name if record.fund_account_id else "")
+                or (record.source_account_id.display_name if record.source_account_id else "")
+                or ""
+            )
+            record.fund_operation_transfer_type = (
+                legacy_transfer_type
+                or record._fund_operation_type_label(record.operation_type)
+            )
+            record.fund_operation_reason_display = record.operation_reason or legacy_reason or ""
+            record.fund_operation_source_created_by = (
+                record.creator_name
+                or (record.create_uid.name if record.create_uid else "")
+                or ""
+            )
+            record.fund_operation_source_created_at = record.created_time or record.create_date
+
+    def init(self):
+        visible_columns = {
+            "project_name": self._fund_operation_legacy_visible_field("project_name"),
+            "account_name": self._fund_operation_legacy_visible_field("account_name"),
+            "transfer_type": self._fund_operation_legacy_visible_field("transfer_type"),
+            "reason": self._fund_operation_legacy_visible_field("reason"),
+        }
+        self.env.cr.execute(
+            """
+            SELECT column_name
+              FROM information_schema.columns
+             WHERE table_name = 'sc_fund_account_operation'
+               AND column_name = ANY(%s)
+            """,
+            [list(visible_columns.values())],
+        )
+        available = {row[0] for row in self.env.cr.fetchall()}
+        updates = []
+        project_name = visible_columns["project_name"]
+        account_name = visible_columns["account_name"]
+        transfer_type = visible_columns["transfer_type"]
+        reason = visible_columns["reason"]
+        if project_name in available:
+            updates.append(
+                "fund_operation_project_name = COALESCE(NULLIF(fund_operation_project_name, ''), NULLIF(%s, ''))"
+                % project_name
+            )
+        if account_name in available:
+            updates.append(
+                "fund_operation_account_no = COALESCE(NULLIF(fund_operation_account_no, ''), NULLIF(%s, ''))"
+                % account_name
+            )
+        if transfer_type in available:
+            updates.append(
+                "fund_operation_transfer_type = COALESCE(NULLIF(fund_operation_transfer_type, ''), NULLIF(%s, ''))"
+                % transfer_type
+            )
+        if reason in available:
+            updates.append(
+                "fund_operation_reason_display = COALESCE(NULLIF(fund_operation_reason_display, ''), NULLIF(%s, ''))"
+                % reason
+            )
+        if not updates:
+            return
+        self.env.cr.execute(
+            """
+            UPDATE sc_fund_account_operation
+               SET %s
+            """
+            % ", ".join(updates)
+        )
 
     @api.model
     def _context_project_id(self):

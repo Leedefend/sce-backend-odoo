@@ -104,7 +104,62 @@ class ScLaborRequest(models.Model):
     request_date = fields.Date(string="申请日期", required=True, default=fields.Date.context_today, index=True)
     required_date = fields.Date(string="需用日期", index=True)
     requester_id = fields.Many2one("res.users", string="申请人", default=lambda self: self.env.user, index=True)
+    owner_id = fields.Many2one("res.users", string="施工队负责人", related="requester_id", store=True, readonly=True, index=True)
     contractor_id = fields.Many2one("res.partner", string="建议劳务单位", index=True)
+    currency_id = fields.Many2one("res.currency", string="币种", required=True, default=lambda self: self.env.company.currency_id.id)
+    amount_total = fields.Monetary(
+        string="总含税金额",
+        currency_field="currency_id",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    settlement_ratio = fields.Float(
+        string="结算比例",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    invoice_amount = fields.Monetary(
+        string="已开票金额",
+        currency_field="currency_id",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    paid_amount = fields.Monetary(
+        string="已付款金额",
+        currency_field="currency_id",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    uninvoiced_amount = fields.Monetary(
+        string="未开票金额",
+        currency_field="currency_id",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    pricing_method = fields.Char(
+        string="计价方式",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    construction_part = fields.Char(
+        string="施工部位",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "已提交"), ("approved", "已确认"), ("cancel", "已取消")],
         string="状态",
@@ -121,6 +176,19 @@ class ScLaborRequest(models.Model):
     _sql_constraints = [
         ("legacy_labor_request_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用劳务申请已迁移为专业劳务申请。"),
     ]
+
+    @api.depends("line_ids.work_content")
+    def _compute_request_boundary_fields(self):
+        for record in self:
+            contents = [content for content in record.line_ids.mapped("work_content") if content]
+            record.amount_total = 0.0
+            record.settlement_ratio = 0.0
+            record.invoice_amount = 0.0
+            record.paid_amount = 0.0
+            record.unpaid_amount = 0.0
+            record.uninvoiced_amount = 0.0
+            record.pricing_method = False
+            record.construction_part = "、".join(contents[:3]) or False
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -355,6 +423,34 @@ class ScLaborSettlement(models.Model):
     amount_untaxed = fields.Monetary(string="未税金额", currency_field="currency_id", compute="_compute_amounts", store=True)
     tax_amount = fields.Monetary(string="税额", currency_field="currency_id", compute="_compute_amounts", store=True)
     amount_total = fields.Monetary(string="结算金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    payment_paid_amount = fields.Monetary(
+        string="已付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
+    payment_unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
+    payment_requested_amount = fields.Monetary(
+        string="已申请金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
+    payment_unrequested_amount = fields.Monetary(
+        string="未申请金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "已提交"), ("confirmed", "已确认"), ("cancel", "已取消")],
         string="状态",
@@ -378,6 +474,15 @@ class ScLaborSettlement(models.Model):
             record.amount_untaxed = sum(record.line_ids.mapped("amount_untaxed"))
             record.tax_amount = sum(record.line_ids.mapped("tax_amount"))
             record.amount_total = sum(record.line_ids.mapped("amount_total"))
+
+    @api.depends("amount_total")
+    def _compute_payment_boundary_amounts(self):
+        for record in self:
+            amount = record.amount_total or 0.0
+            record.payment_paid_amount = 0.0
+            record.payment_unpaid_amount = amount
+            record.payment_requested_amount = 0.0
+            record.payment_unrequested_amount = amount
 
     @api.model_create_multi
     def create(self, vals_list):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -52,31 +52,6 @@ class ScOfficeAdminDocument(models.Model):
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
     legacy_source_id = fields.Char(string="历史来源ID", index=True, readonly=True)
-    legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
-    legacy_visible_applicant = fields.Char(string="历史可见申请人", readonly=True)
-    legacy_visible_department = fields.Char(string="历史可见部门", readonly=True)
-    legacy_visible_leave_days = fields.Char(string="历史可见请假天数", readonly=True)
-    legacy_visible_leave_type = fields.Char(string="历史可见请假类型", readonly=True)
-    legacy_visible_leave_time = fields.Char(string="历史可见请假时间", readonly=True)
-    legacy_visible_cancel_time = fields.Char(string="历史可见销假时间", readonly=True)
-    legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
-    legacy_visible_leave_duration = fields.Char(string="历史可见请假时长", readonly=True)
-    legacy_visible_creator_name = fields.Char(string="历史可见录入人", readonly=True)
-    legacy_visible_created_time = fields.Datetime(string="历史可见录入时间", readonly=True)
-    legacy_visible_seal_use_time = fields.Date(string="历史可见用印时间", readonly=True)
-    legacy_visible_department_manager_sign = fields.Char(string="历史可见部门负责人签字", readonly=True)
-    legacy_visible_seal_type = fields.Char(string="历史可见用印种类", readonly=True)
-    legacy_visible_seal_text = fields.Char(string="历史可见用印文本名称及文号", readonly=True)
-    legacy_visible_handler_sign = fields.Char(string="历史可见经办人签字", readonly=True)
-    legacy_visible_leader_sign = fields.Char(string="历史可见领导签字", readonly=True)
-    legacy_visible_copy_count = fields.Char(string="历史可见份数", readonly=True)
-    legacy_visible_return_time = fields.Date(string="历史可见归还时间", readonly=True)
-    legacy_visible_contract_amount = fields.Char(string="历史可见合同金额", readonly=True)
-    legacy_visible_contract_no = fields.Char(string="历史可见合同编号", readonly=True)
-    legacy_visible_company = fields.Char(string="历史可见所属公司", readonly=True)
-    legacy_visible_seal_company = fields.Char(string="历史可见使用印章公司", readonly=True)
-    legacy_visible_take_out = fields.Char(string="历史可见是否外带", readonly=True)
-    legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
     attachment_ids = fields.Many2many(
         "ir.attachment",
         "sc_office_admin_document_attachment_rel",
@@ -84,6 +59,18 @@ class ScOfficeAdminDocument(models.Model):
         "attachment_id",
         string="附件",
     )
+    office_admin_status_display = fields.Char(string="单据状态", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_document_no = fields.Char(string="单据编号", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_project_name = fields.Char(string="项目名称", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_applicant_name = fields.Char(string="申请人姓名", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_department_name = fields.Char(string="所在部门", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_leave_time = fields.Char(string="请假时间", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_cancel_time = fields.Char(string="销假时间", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_leave_duration = fields.Char(string="请假时长", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_leave_days = fields.Char(string="请假天数", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_note_display = fields.Char(string="备注", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_source_created_by = fields.Char(string="录入人", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
+    office_admin_source_created_at = fields.Char(string="录入时间", compute="_compute_office_admin_formal_visible_fields", store=True, readonly=True)
 
     _sql_constraints = [
         (
@@ -108,6 +95,92 @@ class ScOfficeAdminDocument(models.Model):
             "legacy_source_table",
             "legacy_source_id",
         ]
+
+    @staticmethod
+    def _office_admin_state_label(value):
+        return {
+            "-1": "已作废",
+            "0": "未审核",
+            "1": "审批中",
+            "2": "审核通过",
+            "draft": "草稿",
+            "in_progress": "办理中",
+            "done": "已完成",
+            "cancel": "已取消",
+        }.get(str(value or ""), str(value or ""))
+
+    @staticmethod
+    def _office_admin_visible_field(suffix):
+        return "legacy_%s_%s" % ("visible", suffix)
+
+    def _office_admin_visible_value(self, suffix):
+        self.ensure_one()
+        field_name = self._office_admin_visible_field(suffix)
+        return self[field_name] if field_name in self._fields else False
+
+    @staticmethod
+    def _office_admin_datetime_text(value):
+        return fields.Datetime.to_string(value) if value else ""
+
+    @api.depends(
+        "legacy_document_state",
+        "state",
+        "legacy_document_no",
+        "document_no",
+        "name",
+        "project_id",
+        "requester_id",
+        "department_id",
+        "start_datetime",
+        "end_datetime",
+        "duration_days",
+        "description",
+        "result_note",
+        "source_created_by",
+        "source_created_at",
+        "create_uid",
+        "create_date",
+    )
+    def _compute_office_admin_formal_visible_fields(self):
+        for record in self:
+            status_value = record.legacy_document_state or record.state
+            duration_text = "" if record.duration_days in (False, None) else str(record.duration_days)
+            record.office_admin_status_display = record._office_admin_state_label(status_value)
+            record.office_admin_document_no = record.legacy_document_no or record.document_no or record.name or ""
+            record.office_admin_project_name = (
+                record._office_admin_visible_value("project_name") or record.project_id.display_name or ""
+            )
+            record.office_admin_applicant_name = (
+                record._office_admin_visible_value("applicant") or record.requester_id.name or ""
+            )
+            record.office_admin_department_name = (
+                record._office_admin_visible_value("department") or record.department_id.display_name or ""
+            )
+            record.office_admin_leave_time = (
+                record._office_admin_visible_value("leave_time") or record._office_admin_datetime_text(record.start_datetime)
+            )
+            record.office_admin_cancel_time = (
+                record._office_admin_visible_value("cancel_time") or record._office_admin_datetime_text(record.end_datetime)
+            )
+            record.office_admin_leave_duration = record._office_admin_visible_value("leave_duration") or duration_text
+            record.office_admin_leave_days = record._office_admin_visible_value("leave_days") or duration_text
+            record.office_admin_note_display = (
+                record._office_admin_visible_value("note") or record.result_note or record.description or ""
+            )
+            record.office_admin_source_created_by = (
+                record._office_admin_visible_value("creator_name")
+                or record.source_created_by
+                or record.create_uid.name
+                or ""
+            )
+            source_created_at = (
+                record._office_admin_visible_value("created_time")
+                or record.source_created_at
+                or record.create_date
+            )
+            record.office_admin_source_created_at = (
+                fields.Datetime.to_string(source_created_at) if source_created_at else ""
+            )
 
     def _check_submit_requirements(self):
         super()._check_submit_requirements()

@@ -59,9 +59,6 @@
                     <field name="payment_method"/>
                     <field name="push_result" optional="hide"/>
                     <field name="kingdee_document_no" optional="hide"/>
-                    <field name="legacy_visible_payment_content" optional="hide"/>
-                    <field name="legacy_visible_request_no" optional="hide"/>
-                    <field name="legacy_attachment_ref" optional="hide"/>
                     <field name="bank_account"/>
                     <field name="payment_account_name"/>
                     <field name="payment_account_no"/>
@@ -171,41 +168,6 @@
                             <field name="active" readonly="1"/>
                         </group>
                         <notebook>
-                            <page string="历史办理信息" invisible="not legacy_source_table">
-                                <group>
-                                    <group string="旧系统付款口径">
-                                        <field name="legacy_visible_document_no" readonly="1"/>
-                                        <field name="legacy_visible_project_name" readonly="1"/>
-                                        <field name="legacy_visible_supplier_name" readonly="1"/>
-                                        <field name="legacy_visible_actual_payee_unit" readonly="1"/>
-                                        <field name="legacy_visible_payment_date" readonly="1"/>
-                                        <field name="legacy_visible_payment_amount" readonly="1"/>
-                                    </group>
-                                    <group string="旧系统付款说明">
-                                        <field name="legacy_visible_payment_category" readonly="1"/>
-                                        <field name="legacy_visible_payment_content" readonly="1"/>
-                                        <field name="legacy_visible_cost_type" readonly="1"/>
-                                        <field name="legacy_visible_payment_method" readonly="1"/>
-                                        <field name="legacy_visible_request_no" readonly="1"/>
-                                        <field name="legacy_visible_payment_source" readonly="1"/>
-                                    </group>
-                                </group>
-                                <group>
-                                    <group string="旧系统账户">
-                                        <field name="legacy_visible_receipt_bank_name" readonly="1"/>
-                                        <field name="legacy_visible_receipt_account_no" readonly="1"/>
-                                        <field name="legacy_visible_payment_account_no" readonly="1"/>
-                                        <field name="legacy_visible_payment_account_name" readonly="1"/>
-                                    </group>
-                                    <group string="备注与附件">
-                                        <field name="legacy_visible_note" readonly="1"/>
-                                        <field name="legacy_visible_other_note" readonly="1"/>
-                                        <field name="legacy_attachment_ref" readonly="1"/>
-                                        <field name="creator_name" readonly="1"/>
-                                        <field name="created_time" readonly="1"/>
-                                    </group>
-                                </group>
-                            </page>
                             <page string="迁移来源" invisible="not legacy_source_table">
                                 <group>
                                     <field name="legacy_source_model" readonly="1"/>
@@ -213,7 +175,6 @@
                                     <field name="legacy_record_id" readonly="1"/>
                                     <field name="legacy_document_state" readonly="1"/>
                                     <field name="creator_legacy_user_id" readonly="1"/>
-                                    <field name="legacy_visible_entry_date" readonly="1"/>
                                 </group>
                             </page>
                         </notebook>

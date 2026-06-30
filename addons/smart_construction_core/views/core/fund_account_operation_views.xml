@@ -45,10 +45,6 @@
                 <field name="amount" string="调拨金额" sum="金额合计"/>
                 <field name="operation_reason"/>
                 <field name="business_category_id" optional="show"/>
-                <field name="legacy_visible_account_name" optional="hide"/>
-                <field name="legacy_visible_counterparty_account_name" optional="hide"/>
-                <field name="legacy_visible_transfer_type" optional="hide"/>
-                <field name="legacy_visible_attachment" optional="hide"/>
                 <field name="operation_type" optional="hide"/>
                 <field name="fund_account_id" optional="hide"/>
                 <field name="daily_income" sum="收入合计"/>
@@ -175,32 +171,12 @@
                                 <field name="attachment_ids" widget="many2many_binary"/>
                             </group>
                         </page>
-                        <page string="历史办理信息" invisible="not legacy_source_table">
-                            <group>
-                                <group string="旧系统办理口径">
-                                    <field name="legacy_visible_document_no" readonly="1"/>
-                                    <field name="legacy_visible_project_name" readonly="1"/>
-                                    <field name="legacy_visible_account_name" readonly="1"/>
-                                    <field name="legacy_visible_counterparty_account_name" readonly="1"/>
-                                    <field name="legacy_visible_transfer_type" readonly="1"/>
-                                </group>
-                                <group string="旧系统办理说明">
-                                    <field name="legacy_document_state" readonly="1"/>
-                                    <field name="legacy_visible_reason" readonly="1"/>
-                                    <field name="legacy_visible_note" readonly="1"/>
-                                    <field name="legacy_visible_attachment" readonly="1"/>
-                                    <field name="creator_name" readonly="1"/>
-                                    <field name="created_time" readonly="1"/>
-                                </group>
-                            </group>
-                        </page>
                         <page string="迁移来源" invisible="not legacy_source_table">
                             <group>
                                 <field name="legacy_source_model"/>
                                 <field name="legacy_source_table"/>
                                 <field name="legacy_record_id"/>
                                 <field name="legacy_document_state"/>
-                                <field name="legacy_visible_attachment" readonly="1"/>
                                 <field name="legacy_attachment_ref" readonly="1"/>
                                 <field name="creator_legacy_user_id"/>
                                 <field name="creator_name"/>

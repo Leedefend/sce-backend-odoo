@@ -41,6 +41,8 @@
                     <field name="company_contractor_self_funding_balance" string="自筹未退余额" optional="show" sum="自筹未退余额"/>
                     <field name="company_contractor_responsibility_state" optional="show"/>
                     <field name="summary"/>
+                    <field name="source_created_by" string="录入人" optional="show"/>
+                    <field name="source_created_at" string="录入时间" optional="show"/>
                     <field name="document_no" optional="hide"/>
                     <field name="state"/>
                 </tree>
@@ -157,6 +159,12 @@
                                     <field name="legacy_source_table" readonly="1"/>
                                     <field name="legacy_record_id" readonly="1"/>
                                     <field name="legacy_line_type" readonly="1"/>
+                                </group>
+                            </page>
+                            <page string="录入信息">
+                                <group>
+                                    <field name="source_created_by" readonly="1"/>
+                                    <field name="source_created_at" readonly="1"/>
                                 </group>
                             </page>
                         </notebook>

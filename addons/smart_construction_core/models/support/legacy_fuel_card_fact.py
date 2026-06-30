@@ -88,6 +88,9 @@ class ScLegacyFuelCardFact(models.Model):
     accepted_visible_01 = fields.Char(string="验收可见单据状态", compute="_compute_accepted_visible_fields")
     accepted_visible_06 = fields.Char(string="验收可见初始金额", compute="_compute_accepted_visible_fields")
     accepted_visible_09 = fields.Char(string="验收可见附件", compute="_compute_accepted_visible_fields")
+    fuel_card_status_display = fields.Char(string="单据状态", compute="_compute_accepted_visible_fields")
+    fuel_card_initial_amount_display = fields.Char(string="初始金额", compute="_compute_accepted_visible_fields")
+    fuel_card_attachment_text = fields.Char(string="附件", compute="_compute_accepted_visible_fields")
 
     _sql_constraints = [
         ("legacy_fuel_card_fact_unique", "unique(legacy_source_model, legacy_record_id)", "同一历史油卡登记只能导入一次。"),
@@ -97,9 +100,15 @@ class ScLegacyFuelCardFact(models.Model):
     def _compute_accepted_visible_fields(self):
         for record in self:
             state = _text(record.document_state)
-            record.accepted_visible_01 = DOCUMENT_STATE_LABELS.get(state, state)
-            record.accepted_visible_06 = _amount_text(record.initial_amount)
-            record.accepted_visible_09 = _attachment_label(record, record.attachment_ref)
+            status = DOCUMENT_STATE_LABELS.get(state, state)
+            initial_amount = _amount_text(record.initial_amount)
+            attachment = _attachment_label(record, record.attachment_ref)
+            record.accepted_visible_01 = status
+            record.accepted_visible_06 = initial_amount
+            record.accepted_visible_09 = attachment
+            record.fuel_card_status_display = status
+            record.fuel_card_initial_amount_display = initial_amount
+            record.fuel_card_attachment_text = attachment
 
 
 class ScLegacyFuelCardRechargeFact(models.Model):
@@ -133,6 +142,10 @@ class ScLegacyFuelCardRechargeFact(models.Model):
     accepted_visible_06 = fields.Char(string="验收可见充值总额", compute="_compute_accepted_visible_fields")
     accepted_visible_07 = fields.Char(string="验收可见充值日期", compute="_compute_accepted_visible_fields")
     accepted_visible_10 = fields.Char(string="验收可见附件", compute="_compute_accepted_visible_fields")
+    fuel_recharge_status_display = fields.Char(string="单据状态", compute="_compute_accepted_visible_fields")
+    fuel_recharge_amount_display = fields.Char(string="充值总额", compute="_compute_accepted_visible_fields")
+    fuel_recharge_date_display = fields.Char(string="充值日期", compute="_compute_accepted_visible_fields")
+    fuel_recharge_attachment_text = fields.Char(string="附件", compute="_compute_accepted_visible_fields")
 
     _sql_constraints = [
         (
@@ -146,12 +159,20 @@ class ScLegacyFuelCardRechargeFact(models.Model):
     def _compute_accepted_visible_fields(self):
         for record in self:
             state = _text(record.document_state)
-            record.accepted_visible_01 = DOCUMENT_STATE_LABELS.get(state, state)
-            record.accepted_visible_06 = _amount_text(record.recharge_amount, blank_zero=False)
-            record.accepted_visible_07 = _accepted_fact_visible(record, "充值登记", record.document_no, 7) or (
+            status = DOCUMENT_STATE_LABELS.get(state, state)
+            amount = _amount_text(record.recharge_amount, blank_zero=False)
+            recharge_date = _accepted_fact_visible(record, "充值登记", record.document_no, 7) or (
                 fields.Datetime.to_string(record.document_date) if record.document_date else ""
             )
-            record.accepted_visible_10 = _attachment_label(record, record.attachment_ref)
+            attachment = _attachment_label(record, record.attachment_ref)
+            record.accepted_visible_01 = status
+            record.accepted_visible_06 = amount
+            record.accepted_visible_07 = recharge_date
+            record.accepted_visible_10 = attachment
+            record.fuel_recharge_status_display = status
+            record.fuel_recharge_amount_display = amount
+            record.fuel_recharge_date_display = recharge_date
+            record.fuel_recharge_attachment_text = attachment
 
 
 class ScLegacyFuelCardRefuelFact(models.Model):
@@ -189,6 +210,12 @@ class ScLegacyFuelCardRefuelFact(models.Model):
     accepted_visible_07 = fields.Char(string="验收可见油卡剩余金额", compute="_compute_accepted_visible_fields")
     accepted_visible_09 = fields.Char(string="验收可见累计充值金额", compute="_compute_accepted_visible_fields")
     accepted_visible_11 = fields.Char(string="验收可见附件", compute="_compute_accepted_visible_fields")
+    fuel_refuel_status_display = fields.Char(string="单据状态", compute="_compute_accepted_visible_fields")
+    fuel_refuel_amount_display = fields.Char(string="加油金额", compute="_compute_accepted_visible_fields")
+    fuel_refuel_total_amount_display = fields.Char(string="累计加油金额", compute="_compute_accepted_visible_fields")
+    fuel_refuel_balance_amount_display = fields.Char(string="油卡剩余金额", compute="_compute_accepted_visible_fields")
+    fuel_refuel_total_recharge_amount_display = fields.Char(string="累计充值金额", compute="_compute_accepted_visible_fields")
+    fuel_refuel_attachment_text = fields.Char(string="附件", compute="_compute_accepted_visible_fields")
 
     _sql_constraints = [
         ("legacy_fuel_card_refuel_fact_unique", "unique(legacy_source_model, legacy_record_id)", "同一历史加油登记只能导入一次。"),
@@ -206,11 +233,23 @@ class ScLegacyFuelCardRefuelFact(models.Model):
     def _compute_accepted_visible_fields(self):
         for record in self:
             state = _text(record.document_state)
-            record.accepted_visible_01 = DOCUMENT_STATE_LABELS.get(state, state)
-            record.accepted_visible_05 = _amount_text(record.fuel_amount)
-            record.accepted_visible_06 = _amount_text(record.total_fuel_amount)
-            record.accepted_visible_07 = _amount_text(record.balance_amount)
-            record.accepted_visible_09 = _amount_text(record.total_recharge_amount)
-            record.accepted_visible_11 = _accepted_fact_visible(record, "加油登记", record.document_no, 11) or _attachment_label(
+            status = DOCUMENT_STATE_LABELS.get(state, state)
+            fuel_amount = _amount_text(record.fuel_amount)
+            total_fuel_amount = _amount_text(record.total_fuel_amount)
+            balance_amount = _amount_text(record.balance_amount)
+            total_recharge_amount = _amount_text(record.total_recharge_amount)
+            attachment = _accepted_fact_visible(record, "加油登记", record.document_no, 11) or _attachment_label(
                 record, record.attachment_ref
             )
+            record.accepted_visible_01 = status
+            record.accepted_visible_05 = fuel_amount
+            record.accepted_visible_06 = total_fuel_amount
+            record.accepted_visible_07 = balance_amount
+            record.accepted_visible_09 = total_recharge_amount
+            record.accepted_visible_11 = attachment
+            record.fuel_refuel_status_display = status
+            record.fuel_refuel_amount_display = fuel_amount
+            record.fuel_refuel_total_amount_display = total_fuel_amount
+            record.fuel_refuel_balance_amount_display = balance_amount
+            record.fuel_refuel_total_recharge_amount_display = total_recharge_amount
+            record.fuel_refuel_attachment_text = attachment

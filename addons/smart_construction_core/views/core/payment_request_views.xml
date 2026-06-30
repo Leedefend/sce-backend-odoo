@@ -184,41 +184,6 @@
                                     <field name="partner_bank_account" readonly="1"/>
                                 </group>
                             </page>
-                            <page string="历史办理信息" invisible="not legacy_source_table">
-                                <group>
-                                    <group string="旧系统单据口径">
-                                        <field name="legacy_visible_document_no" readonly="1"/>
-                                        <field name="legacy_document_state" readonly="1"/>
-                                        <field name="legacy_visible_project_name" readonly="1"/>
-                                        <field name="legacy_visible_request_date" readonly="1"/>
-                                        <field name="legacy_visible_writer" readonly="1"/>
-                                    </group>
-                                    <group string="旧系统单位与金额">
-                                        <field name="legacy_visible_payee_unit" readonly="1"/>
-                                        <field name="legacy_visible_actual_payee_unit" readonly="1"/>
-                                        <field name="legacy_visible_payer_unit" readonly="1"/>
-                                        <field name="legacy_visible_request_amount" readonly="1"/>
-                                        <field name="legacy_visible_actual_paid_amount" readonly="1"/>
-                                        <field name="legacy_visible_available_balance" readonly="1"/>
-                                        <field name="legacy_visible_amount_uppercase" readonly="1"/>
-                                    </group>
-                                </group>
-                                <group>
-                                    <group string="旧系统成本与备注">
-                                        <field name="legacy_visible_cost_category_name" readonly="1"/>
-                                        <field name="legacy_visible_cost_type" readonly="1"/>
-                                        <field name="legacy_visible_remark" readonly="1"/>
-                                        <field name="legacy_visible_attachment" readonly="1"/>
-                                    </group>
-                                    <group string="旧系统账户线索">
-                                        <field name="legacy_payment_account_name" readonly="1"/>
-                                        <field name="legacy_payment_account_no" readonly="1"/>
-                                        <field name="legacy_payee_account_name" readonly="1"/>
-                                        <field name="legacy_payee_bank_name" readonly="1"/>
-                                        <field name="legacy_payee_account_no" readonly="1"/>
-                                    </group>
-                                </group>
-                            </page>
                             <page string="迁移来源" invisible="not legacy_source_table">
                                 <group>
                                     <field name="legacy_source_table" readonly="1"/>

@@ -215,23 +215,6 @@
                                     <field name="amount_after_adjustment" readonly="1"/>
                                 </group>
                             </page>
-                            <page string="历史办理信息" invisible="not legacy_fact_model">
-                                <group>
-                                    <field name="legacy_document_state" readonly="1"/>
-                                    <field name="legacy_payment_state" readonly="1"/>
-                                    <field name="legacy_paid_amount" readonly="1"/>
-                                    <field name="legacy_unpaid_amount" readonly="1"/>
-                                    <field name="legacy_payment_request_state" readonly="1"/>
-                                    <field name="legacy_unrequested_amount" readonly="1"/>
-                                    <field name="legacy_contract_no" readonly="1"/>
-                                    <field name="contract_subject" readonly="1"/>
-                                    <field name="contract_total_amount" readonly="1"/>
-                                    <field name="employer_name" readonly="1"/>
-                                    <field name="contractor_name" readonly="1"/>
-                                    <field name="engineering_address" readonly="1"/>
-                                    <field name="legacy_visible_attachment" string="历史附件"/>
-                                </group>
-                            </page>
                             <page string="迁移来源" invisible="not legacy_fact_model">
                                 <group>
                                     <field name="source_created_by" readonly="1" string="录入人"/>
@@ -404,20 +387,6 @@
                                        invisible="not reject_reason and validation_status not in ('waiting', 'pending', 'rejected')">
                                     <field name="validation_status" readonly="1"/>
                                     <field name="reject_reason" readonly="1"/>
-                                </group>
-                            </page>
-                            <page string="历史办理信息" invisible="source_origin != 'legacy'">
-                                <group>
-                                    <group>
-                                        <field name="legacy_document_no" readonly="1"/>
-                                        <field name="legacy_document_state" readonly="1"/>
-                                        <field name="legacy_fund_confirmation_id" readonly="1"/>
-                                    </group>
-                                    <group>
-                                        <field name="source_origin" readonly="1"/>
-                                        <field name="legacy_line_id" readonly="1"/>
-                                        <field name="legacy_source_table" readonly="1"/>
-                                    </group>
                                 </group>
                             </page>
                         </notebook>

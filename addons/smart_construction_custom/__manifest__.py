@@ -21,6 +21,7 @@
         "data/user_data_baseline.xml",
         "data/user_preferences.xml",
         "data/user_menu_preferences.xml",
+        "views/user_data_history_views.xml",
     ],
     "post_init_hook": "post_init_hook",
     "installable": True,

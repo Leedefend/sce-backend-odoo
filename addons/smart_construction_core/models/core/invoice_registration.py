@@ -63,7 +63,6 @@ class ScInvoiceRegistration(models.Model):
         required=True,
         index=True,
     )
-    legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True, index=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True)
     company_id = fields.Many2one(
         "res.company",
@@ -104,22 +103,6 @@ class ScInvoiceRegistration(models.Model):
     invoice_type = fields.Char(string="发票类型", index=True)
     tax_rate = fields.Char(string="税率", index=True)
     tax_type = fields.Char(string="交税类型", index=True)
-    legacy_visible_data_type = fields.Char(string="历史可见数据类型", readonly=True, index=True)
-    legacy_visible_contract_no = fields.Char(string="历史可见合同编号", readonly=True)
-    legacy_visible_application_date = fields.Datetime(string="历史可见申请日期", readonly=True)
-    legacy_visible_invoice_state = fields.Char(string="历史可见开票状态", readonly=True)
-    legacy_visible_partner_name = fields.Char(string="历史可见受票方名称", readonly=True)
-    legacy_visible_cumulative_invoice_amount = fields.Char(string="历史可见累计开票金额", readonly=True)
-    legacy_visible_invoice_count = fields.Char(string="历史可见开票张数", readonly=True)
-    legacy_visible_current_invoice_amount = fields.Char(string="历史可见本次开票金额", readonly=True)
-    legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
-    legacy_visible_kingdee_no = fields.Char(string="历史可见金蝶单据编号", readonly=True)
-    legacy_visible_surcharge_amount = fields.Char(string="历史可见附加税", readonly=True)
-    legacy_visible_tax_rate = fields.Char(string="历史可见税率", readonly=True)
-    legacy_visible_related_receipt_amount = fields.Char(string="历史可见关联回款金额", readonly=True)
-    legacy_visible_invoice_no = fields.Char(string="历史可见发票号", readonly=True)
-    legacy_visible_invoice_type = fields.Char(string="历史可见发票种类", readonly=True)
-    legacy_visible_invoice_issue_company = fields.Char(string="历史可见开票单位", readonly=True)
     prepaid_tax_date = fields.Date(string="预缴税款日期", index=True)
     tax_certificate_no = fields.Char(string="完税凭证号码", index=True)
     invoice_content = fields.Char(string="开票内容", index=True)
@@ -184,6 +167,66 @@ class ScInvoiceRegistration(models.Model):
         string="附件",
     )
     active = fields.Boolean(string="有效", default=True, index=True)
+    document_status_display = fields.Char(
+        string="单据状态",
+        compute="_compute_formal_list_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    project_name_display = fields.Char(
+        string="项目名称",
+        compute="_compute_formal_list_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    recipient_unit_display = fields.Char(
+        string="受票单位",
+        compute="_compute_formal_list_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    invoice_issue_company_display = fields.Char(
+        string="开票单位",
+        compute="_compute_formal_list_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    actual_invoice_issue_company_display = fields.Char(
+        string="实际开票单位",
+        compute="_compute_formal_list_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    invoice_quantity_display = fields.Char(
+        string="数量/开票张数",
+        compute="_compute_formal_list_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    note_display = fields.Char(
+        string="备注",
+        compute="_compute_formal_list_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    invoice_attachment_text = fields.Char(
+        string="附件",
+        compute="_compute_formal_list_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    source_created_by = fields.Char(
+        string="录入人",
+        compute="_compute_formal_list_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    source_created_at = fields.Datetime(
+        string="录入时间",
+        compute="_compute_formal_list_visible_fields",
+        store=True,
+        readonly=True,
+    )
 
     _sql_constraints = [
         (
@@ -260,6 +303,59 @@ class ScInvoiceRegistration(models.Model):
             else:
                 rec.invoice_flow_label = _("发票登记")
 
+    @api.depends(
+        "state",
+        "project_id",
+        "recipient_unit_name",
+        "legacy_partner_name",
+        "partner_id",
+        "invoice_issue_company",
+        "actual_invoice_issue_company",
+        "invoice_count",
+        "note",
+        "legacy_attachment_ref",
+        "attachment_ids",
+        "creator_name",
+        "created_time",
+    )
+    def _compute_formal_list_visible_fields(self):
+        state_labels = dict(self._fields["state"].selection)
+        for record in self:
+            record.document_status_display = state_labels.get(record.state) or ""
+            record.project_name_display = record.project_id.display_name or ""
+            record.recipient_unit_display = (
+                record.recipient_unit_name
+                or record.legacy_partner_name
+                or record.partner_id.display_name
+                or ""
+            )
+            record.invoice_issue_company_display = record.invoice_issue_company or ""
+            record.actual_invoice_issue_company_display = (
+                record.actual_invoice_issue_company
+                or record.invoice_issue_company
+                or ""
+            )
+            record.invoice_quantity_display = str(record.invoice_count) if record.invoice_count else ""
+            record.note_display = record.note or ""
+            record.invoice_attachment_text = (
+                record._invoice_attachment_ref_label()
+                or ("附件(%s)" % len(record.attachment_ids) if record.attachment_ids else "")
+            )
+            record.source_created_by = record.creator_name or ""
+            record.source_created_at = record.created_time or False
+
+    def _invoice_attachment_ref_label(self):
+        self.ensure_one()
+        text = str(self.legacy_attachment_ref or "").strip()
+        if not text:
+            return ""
+        if text.startswith("附件("):
+            return text
+        tokens = [item.strip() for item in text.replace(";", ",").split(",") if item.strip()]
+        if tokens and all(len(item) == 32 and all(char in "0123456789abcdefABCDEF" for char in item) for item in tokens):
+            return "附件(%s)" % len(tokens)
+        return text
+
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
             allowed = {
@@ -293,79 +389,6 @@ class ScInvoiceRegistration(models.Model):
         return super().write(vals)
 
     def init(self):
-        self.env.cr.execute(
-            """
-            UPDATE sc_invoice_registration
-               SET application_date = COALESCE(application_date, legacy_visible_application_date::date, document_date),
-                   invoice_state = COALESCE(NULLIF(invoice_state, ''), NULLIF(legacy_visible_invoice_state, ''), NULLIF(legacy_document_state, ''), state),
-                   recipient_unit_name = COALESCE(NULLIF(recipient_unit_name, ''), NULLIF(legacy_visible_partner_name, ''), NULLIF(legacy_partner_name, '')),
-                   caliber = COALESCE(NULLIF(caliber, ''), NULLIF(legacy_visible_data_type, ''), source_kind),
-                   actual_invoice_issue_company = COALESCE(
-                       NULLIF(actual_invoice_issue_company, ''),
-                       NULLIF(legacy_visible_invoice_issue_company, ''),
-                       NULLIF(invoice_issue_company, '')
-                   ),
-                   actual_invoice_amount = COALESCE(
-                       actual_invoice_amount,
-                       CASE
-                           WHEN regexp_replace(COALESCE(legacy_visible_current_invoice_amount, ''), '[^0-9\\.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
-                           THEN regexp_replace(legacy_visible_current_invoice_amount, '[^0-9\\.-]', '', 'g')::numeric
-                           ELSE NULL
-                       END,
-                       amount_total
-                   ),
-                   invoice_count = COALESCE(
-                       NULLIF(invoice_count, 0),
-                       CASE
-                           WHEN regexp_replace(COALESCE(legacy_visible_invoice_count, ''), '[^0-9-]', '', 'g') ~ '^-?[0-9]+$'
-                           THEN regexp_replace(legacy_visible_invoice_count, '[^0-9-]', '', 'g')::integer
-                           ELSE NULL
-                       END,
-                       0
-                   ),
-                   invoice_issue_company = COALESCE(NULLIF(invoice_issue_company, ''), NULLIF(legacy_visible_invoice_issue_company, '')),
-                   invoice_no = COALESCE(NULLIF(invoice_no, ''), NULLIF(legacy_visible_invoice_no, '')),
-                   invoice_type = COALESCE(NULLIF(invoice_type, ''), NULLIF(legacy_visible_invoice_type, '')),
-                   tax_rate = COALESCE(NULLIF(tax_rate, ''), NULLIF(legacy_visible_tax_rate, '')),
-                   surcharge_amount = COALESCE(
-                       surcharge_amount,
-                       CASE
-                           WHEN regexp_replace(COALESCE(legacy_visible_surcharge_amount, ''), '[^0-9\\.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
-                           THEN regexp_replace(legacy_visible_surcharge_amount, '[^0-9\\.-]', '', 'g')::numeric
-                           ELSE NULL
-                       END
-                   ),
-                   related_receipt_amount = COALESCE(
-                       related_receipt_amount,
-                       CASE
-                           WHEN regexp_replace(COALESCE(legacy_visible_related_receipt_amount, ''), '[^0-9\\.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
-                           THEN regexp_replace(legacy_visible_related_receipt_amount, '[^0-9\\.-]', '', 'g')::numeric
-                           ELSE NULL
-                       END
-                   ),
-                   kingdee_document_no = COALESCE(NULLIF(kingdee_document_no, ''), NULLIF(legacy_visible_kingdee_no, '')),
-                   note = COALESCE(NULLIF(note, ''), NULLIF(legacy_visible_note, '')),
-                   business_category_id = COALESCE(
-                       business_category_id,
-                       CASE
-                           WHEN source_kind = 'prepaid_tax' OR direction = 'prepaid' THEN (
-                               SELECT id FROM sc_business_category WHERE code = 'invoice.prepaid_tax' LIMIT 1
-                           )
-                           WHEN source_kind = 'input_invoice_tax' OR direction = 'input' THEN (
-                               SELECT id FROM sc_business_category WHERE code = 'invoice.input.report' LIMIT 1
-                           )
-                           WHEN source_kind = 'output_invoice_tax' AND invoice_content = '销项开票申请' THEN (
-                               SELECT id FROM sc_business_category WHERE code = 'invoice.output.application' LIMIT 1
-                           )
-                           WHEN source_kind = 'output_invoice_tax' OR direction = 'output' THEN (
-                               SELECT id FROM sc_business_category WHERE code = 'invoice.output.registration' LIMIT 1
-                           )
-                           ELSE NULL
-                       END
-                   )
-             WHERE legacy_source_model IS NOT NULL OR legacy_source_table IS NOT NULL
-            """
-        )
         self.env.cr.execute(
             """
             UPDATE sc_invoice_registration

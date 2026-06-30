@@ -35,12 +35,12 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
-                    <field name="p1_visible_8fa8662ad38f" readonly="1"/>
-                    <field name="p1_visible_3e7255522b33" readonly="1"/>
-                    <field name="p1_visible_3f2c92346bec" readonly="1"/>
-                    <field name="p1_visible_f22832ce4781" readonly="1"/>
-                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
+                    <field name="tender_bid_status_display" readonly="1"/>
+                    <field name="tender_bid_document_no" readonly="1"/>
+                    <field name="tender_bid_project_name" readonly="1"/>
+                    <field name="tender_bid_registration_time" readonly="1"/>
+                    <field name="tender_bid_push_result" readonly="1"/>
+                    <field name="tender_bid_source_created_by" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -53,13 +53,13 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="legacy_visible_contract_date" readonly="1"/>
-                    <field name="legacy_visible_counterparty" readonly="1"/>
-                    <field name="legacy_visible_title" readonly="1"/>
-                    <field name="legacy_visible_invoice_amount" readonly="1"/>
-                    <field name="legacy_visible_invoice_unreceived_amount" readonly="1"/>
-                    <field name="legacy_visible_received_amount" readonly="1"/>
-                    <field name="legacy_visible_engineering_content" readonly="1"/>
+                    <field name="expense_execution_contract_date" readonly="1"/>
+                    <field name="expense_execution_counterparty" readonly="1"/>
+                    <field name="expense_execution_title" readonly="1"/>
+                    <field name="expense_execution_invoice_amount" readonly="1"/>
+                    <field name="expense_execution_uninvoiced_amount" readonly="1"/>
+                    <field name="expense_execution_paid_amount" readonly="1"/>
+                    <field name="expense_execution_engineering_content" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -73,16 +73,16 @@
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据" invisible="not legacy_acceptance_label">
                     <field name="legacy_acceptance_label" readonly="1"/>
-                    <field name="user_acceptance_document_state" readonly="1"/>
-                    <field name="user_acceptance_document_no" readonly="1"/>
-                    <field name="user_acceptance_project_name" readonly="1"/>
-                    <field name="user_acceptance_title" readonly="1"/>
-                    <field name="user_acceptance_paid_amount" readonly="1"/>
-                    <field name="user_acceptance_requested_amount" readonly="1"/>
-                    <field name="user_acceptance_unrequested_amount" readonly="1"/>
-                    <field name="user_acceptance_note" readonly="1"/>
-                    <field name="user_acceptance_attachment" readonly="1"/>
-                    <field name="user_acceptance_created_at" readonly="1"/>
+                    <field name="settlement_acceptance_document_state" readonly="1"/>
+                    <field name="settlement_acceptance_document_no" readonly="1"/>
+                    <field name="settlement_acceptance_project_name" readonly="1"/>
+                    <field name="settlement_acceptance_title" readonly="1"/>
+                    <field name="settlement_acceptance_paid_amount" readonly="1"/>
+                    <field name="settlement_acceptance_requested_amount" readonly="1"/>
+                    <field name="settlement_acceptance_unrequested_amount" readonly="1"/>
+                    <field name="settlement_acceptance_note" readonly="1"/>
+                    <field name="settlement_acceptance_attachment" readonly="1"/>
+                    <field name="settlement_acceptance_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -95,15 +95,15 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="legacy_visible_01" readonly="1"/>
-                    <field name="legacy_visible_02" readonly="1"/>
-                    <field name="legacy_visible_03" readonly="1"/>
-                    <field name="legacy_visible_04" readonly="1"/>
-                    <field name="legacy_visible_05" readonly="1"/>
-                    <field name="legacy_visible_06" readonly="1"/>
-                    <field name="legacy_visible_07" readonly="1"/>
-                    <field name="legacy_visible_10" readonly="1"/>
-                    <field name="legacy_visible_11" readonly="1"/>
+                    <field name="diary_status_display" readonly="1"/>
+                    <field name="diary_project_name" readonly="1"/>
+                    <field name="diary_document_no" readonly="1"/>
+                    <field name="diary_date_display" readonly="1"/>
+                    <field name="diary_construction_part" readonly="1"/>
+                    <field name="diary_manpower_count_display" readonly="1"/>
+                    <field name="diary_equipment_attendance" readonly="1"/>
+                    <field name="diary_source_created_by" readonly="1"/>
+                    <field name="diary_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -116,19 +116,19 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="legacy_visible_01" readonly="1"/>
-                    <field name="legacy_visible_02" readonly="1"/>
-                    <field name="legacy_visible_03" readonly="1"/>
-                    <field name="legacy_visible_04" readonly="1"/>
-                    <field name="legacy_visible_05" readonly="1"/>
-                    <field name="legacy_visible_06" readonly="1"/>
-                    <field name="legacy_visible_07" readonly="1"/>
-                    <field name="legacy_visible_08" readonly="1"/>
-                    <field name="legacy_visible_09" readonly="1"/>
-                    <field name="legacy_visible_10" readonly="1"/>
-                    <field name="legacy_visible_12" readonly="1"/>
-                    <field name="legacy_visible_13" readonly="1"/>
-                    <field name="legacy_visible_14" readonly="1"/>
+                    <field name="material_plan_status_display" readonly="1"/>
+                    <field name="material_plan_document_no" readonly="1"/>
+                    <field name="material_plan_document_date" readonly="1"/>
+                    <field name="material_plan_arrival_date" readonly="1"/>
+                    <field name="material_plan_material_name" readonly="1"/>
+                    <field name="material_plan_specification" readonly="1"/>
+                    <field name="material_plan_unit" readonly="1"/>
+                    <field name="material_plan_quantity" readonly="1"/>
+                    <field name="material_plan_material_alias" readonly="1"/>
+                    <field name="material_plan_note" readonly="1"/>
+                    <field name="material_plan_project_name" readonly="1"/>
+                    <field name="material_plan_source_created_by" readonly="1"/>
+                    <field name="material_plan_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -141,21 +141,23 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="legacy_visible_01" readonly="1"/>
-                    <field name="legacy_visible_02" readonly="1"/>
-                    <field name="legacy_visible_03" readonly="1"/>
-                    <field name="legacy_visible_04" readonly="1"/>
-                    <field name="legacy_visible_05" readonly="1"/>
-                    <field name="legacy_visible_06" readonly="1"/>
-                    <field name="legacy_visible_07" readonly="1"/>
-                    <field name="legacy_visible_08" readonly="1"/>
-                    <field name="legacy_visible_09" readonly="1"/>
-                    <field name="legacy_visible_10" readonly="1"/>
-                    <field name="legacy_visible_11" readonly="1"/>
-                    <field name="legacy_visible_12" readonly="1"/>
-                    <field name="legacy_visible_13" readonly="1"/>
-                    <field name="legacy_visible_14" readonly="1"/>
-                    <field name="legacy_visible_15" readonly="1"/>
+                    <field name="labor_usage_status_display" readonly="1"/>
+                    <field name="labor_usage_document_no" readonly="1"/>
+                    <field name="labor_usage_project_name" readonly="1"/>
+                    <field name="labor_usage_document_date" readonly="1"/>
+                    <field name="labor_usage_title" readonly="1"/>
+                    <field name="labor_usage_labor_team_name" readonly="1"/>
+                    <field name="labor_usage_work_type" readonly="1"/>
+                    <field name="labor_usage_construction_part" readonly="1"/>
+                    <field name="labor_usage_quantity" readonly="1"/>
+                    <field name="labor_usage_price_unit" readonly="1"/>
+                    <field name="labor_usage_amount" readonly="1"/>
+                    <field name="labor_usage_work_content" readonly="1"/>
+                    <field name="labor_usage_attachment_text" readonly="1"/>
+                    <field name="labor_usage_settlement_status" readonly="1"/>
+                    <field name="labor_usage_note" readonly="1"/>
+                    <field name="labor_usage_source_created_by" readonly="1"/>
+                    <field name="labor_usage_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -168,20 +170,21 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
-                    <field name="p1_visible_8fa8662ad38f" readonly="1"/>
-                    <field name="p1_visible_3e7255522b33" readonly="1"/>
-                    <field name="p1_visible_748d7dc7e321" readonly="1"/>
-                    <field name="p1_visible_c2183068c097" readonly="1"/>
-                    <field name="p1_visible_cd47577e8847" readonly="1"/>
-                    <field name="p1_visible_6b40af3eee21" readonly="1"/>
-                    <field name="p1_visible_b9ae89319036" readonly="1"/>
-                    <field name="p1_visible_0b370511a765" readonly="1"/>
-                    <field name="p1_visible_34943c40c9af" readonly="1"/>
-                    <field name="p1_visible_ac666c1a3967" readonly="1"/>
-                    <field name="p1_visible_99f6fe6c41ad" readonly="1"/>
-                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
-                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                    <field name="subcontract_request_status_display" readonly="1"/>
+                    <field name="subcontract_request_document_no" readonly="1"/>
+                    <field name="subcontract_request_project_name" readonly="1"/>
+                    <field name="subcontract_request_title" readonly="1"/>
+                    <field name="subcontract_request_subcontractor" readonly="1"/>
+                    <field name="subcontract_request_type_display" readonly="1"/>
+                    <field name="subcontract_request_content" readonly="1"/>
+                    <field name="subcontract_request_quantity_display" readonly="1"/>
+                    <field name="subcontract_request_price_unit_display" readonly="1"/>
+                    <field name="subcontract_request_amount_display" readonly="1"/>
+                    <field name="subcontract_request_monthly_amount_display" readonly="1"/>
+                    <field name="subcontract_request_note_display" readonly="1"/>
+                    <field name="subcontract_request_attachment_text" readonly="1"/>
+                    <field name="subcontract_request_source_created_by" readonly="1"/>
+                    <field name="subcontract_request_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -194,22 +197,22 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="legacy_visible_01" readonly="1"/>
-                    <field name="legacy_visible_02" readonly="1"/>
-                    <field name="legacy_visible_03" readonly="1"/>
-                    <field name="legacy_visible_04" readonly="1"/>
-                    <field name="legacy_visible_05" readonly="1"/>
-                    <field name="legacy_visible_06" readonly="1"/>
-                    <field name="legacy_visible_07" readonly="1"/>
-                    <field name="legacy_visible_08" readonly="1"/>
-                    <field name="legacy_visible_09" readonly="1"/>
-                    <field name="legacy_visible_10" readonly="1"/>
-                    <field name="legacy_visible_11" readonly="1"/>
-                    <field name="legacy_visible_12" readonly="1"/>
-                    <field name="legacy_visible_13" readonly="1"/>
-                    <field name="legacy_visible_14" readonly="1"/>
-                    <field name="legacy_visible_15" readonly="1"/>
-                    <field name="legacy_visible_16" readonly="1"/>
+                    <field name="state" readonly="1"/>
+                    <field name="project_id" readonly="1"/>
+                    <field name="name" readonly="1"/>
+                    <field name="document_date" readonly="1"/>
+                    <field name="supplier_id" readonly="1"/>
+                    <field name="former_supplier_name" readonly="1"/>
+                    <field name="equipment_name" readonly="1"/>
+                    <field name="specification" readonly="1"/>
+                    <field name="uom_text" readonly="1"/>
+                    <field name="work_hours" readonly="1"/>
+                    <field name="price_unit" readonly="1"/>
+                    <field name="amount" readonly="1"/>
+                    <field name="attachment_ids" readonly="1" widget="many2many_binary"/>
+                    <field name="note" readonly="1"/>
+                    <field name="source_created_by" readonly="1"/>
+                    <field name="source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -222,23 +225,23 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="legacy_visible_01" readonly="1"/>
-                    <field name="legacy_visible_02" readonly="1"/>
-                    <field name="legacy_visible_03" readonly="1"/>
-                    <field name="legacy_visible_04" readonly="1"/>
-                    <field name="legacy_visible_05" readonly="1"/>
-                    <field name="legacy_visible_06" readonly="1"/>
-                    <field name="legacy_visible_07" readonly="1"/>
-                    <field name="legacy_visible_08" readonly="1"/>
-                    <field name="legacy_visible_09" readonly="1"/>
-                    <field name="legacy_visible_10" readonly="1"/>
-                    <field name="legacy_visible_11" readonly="1"/>
-                    <field name="legacy_visible_12" readonly="1"/>
-                    <field name="legacy_visible_15" readonly="1"/>
-                    <field name="legacy_visible_16" readonly="1"/>
-                    <field name="legacy_visible_17" readonly="1"/>
-                    <field name="legacy_visible_18" readonly="1"/>
-                    <field name="legacy_visible_19" readonly="1"/>
+                    <field name="quote_status_display" readonly="1"/>
+                    <field name="quote_document_no" readonly="1"/>
+                    <field name="quote_supplier_name" readonly="1"/>
+                    <field name="quote_inquiry_time" readonly="1"/>
+                    <field name="quote_material_name" readonly="1"/>
+                    <field name="quote_material_spec" readonly="1"/>
+                    <field name="quote_quantity_display" readonly="1"/>
+                    <field name="quote_tax_price_display" readonly="1"/>
+                    <field name="quote_tax_amount_display" readonly="1"/>
+                    <field name="quote_total_quantity_display" readonly="1"/>
+                    <field name="quote_total_amount_display" readonly="1"/>
+                    <field name="quote_note_display" readonly="1"/>
+                    <field name="quote_attachment_text" readonly="1"/>
+                    <field name="quote_selected_text" readonly="1"/>
+                    <field name="quote_project_name" readonly="1"/>
+                    <field name="quote_source_created_by" readonly="1"/>
+                    <field name="quote_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -251,41 +254,26 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="legacy_visible_01" readonly="1"/>
-                    <field name="legacy_visible_03" readonly="1"/>
-                    <field name="legacy_visible_04" readonly="1"/>
-                    <field name="legacy_visible_05" readonly="1"/>
-                    <field name="legacy_visible_06" readonly="1"/>
-                    <field name="legacy_visible_07" readonly="1"/>
-                    <field name="legacy_visible_08" readonly="1"/>
-                    <field name="legacy_visible_09" readonly="1"/>
-                    <field name="legacy_visible_11" readonly="1"/>
-                    <field name="legacy_visible_12" readonly="1"/>
-                    <field name="legacy_visible_13" readonly="1"/>
-                    <field name="legacy_visible_14" readonly="1"/>
-                    <field name="legacy_visible_15" readonly="1"/>
-                    <field name="legacy_visible_16" readonly="1"/>
-                    <field name="legacy_visible_17" readonly="1"/>
-                    <field name="legacy_visible_18" readonly="1"/>
-                    <field name="legacy_visible_19" readonly="1"/>
-                    <field name="legacy_visible_20" readonly="1"/>
-                    <field name="legacy_visible_21" readonly="1"/>
-                    <field name="legacy_visible_22" readonly="1"/>
-                </group>
-            </xpath>
-        </field>
-    </record>
-
-    <record id="view_sc_receipt_income_user_confirmed_form_fields" model="ir.ui.view">
-        <field name="name">sc.receipt.income.user.confirmed.form.fields</field>
-        <field name="model">sc.receipt.income</field>
-        <field name="inherit_id" ref="smart_construction_core.view_sc_receipt_income_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//sheet" position="inside">
-                <group string="用户确认数据">
-                    <field name="legacy_visible_03" readonly="1"/>
-                    <field name="legacy_visible_04" readonly="1"/>
-                    <field name="legacy_visible_07" readonly="1"/>
+                    <field name="document_status" readonly="1"/>
+                    <field name="inbound_date" readonly="1"/>
+                    <field name="supplier_id" readonly="1"/>
+                    <field name="material_name_summary" readonly="1"/>
+                    <field name="material_spec_summary" readonly="1"/>
+                    <field name="quantity_summary" readonly="1"/>
+                    <field name="unit_price_summary" readonly="1"/>
+                    <field name="tax_rate_text" readonly="1"/>
+                    <field name="total_qty" readonly="1"/>
+                    <field name="payment_status_text" readonly="1"/>
+                    <field name="payment_paid_amount" readonly="1"/>
+                    <field name="payment_unpaid_amount" readonly="1"/>
+                    <field name="settlement_status_text" readonly="1"/>
+                    <field name="settlement_settled_amount" readonly="1"/>
+                    <field name="project_name_display" readonly="1"/>
+                    <field name="line_note_summary" readonly="1"/>
+                    <field name="attachment_ids" readonly="1" widget="many2many_binary"/>
+                    <field name="source_created_by" readonly="1"/>
+                    <field name="source_created_at" readonly="1"/>
+                    <field name="buyer_name" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -298,12 +286,12 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="legacy_visible_05" readonly="1"/>
-                    <field name="legacy_visible_06" readonly="1"/>
-                    <field name="legacy_visible_07" readonly="1"/>
-                    <field name="legacy_visible_08" readonly="1"/>
-                    <field name="legacy_visible_09" readonly="1"/>
-                    <field name="legacy_visible_10" readonly="1"/>
+                    <field name="payroll_document_salary_month" readonly="1"/>
+                    <field name="payroll_document_net_salary" readonly="1"/>
+                    <field name="payroll_document_gross_salary" readonly="1"/>
+                    <field name="payroll_document_payment_status" readonly="1"/>
+                    <field name="payroll_document_paid_amount" readonly="1"/>
+                    <field name="payroll_document_unpaid_amount" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -316,7 +304,7 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                    <field name="deduction_bill_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -329,14 +317,14 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
-                    <field name="p1_visible_3e7255522b33" readonly="1"/>
-                    <field name="p1_visible_51f85a78cac4" readonly="1"/>
-                    <field name="p1_visible_43f67c096554" readonly="1"/>
-                    <field name="p1_visible_df6e7b1e9eac" readonly="1"/>
-                    <field name="p1_visible_0675851fc19e" readonly="1"/>
-                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
-                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                    <field name="fund_operation_status_display" readonly="1"/>
+                    <field name="fund_operation_project_name" readonly="1"/>
+                    <field name="fund_operation_date_display" readonly="1"/>
+                    <field name="fund_operation_account_no" readonly="1"/>
+                    <field name="fund_operation_transfer_type" readonly="1"/>
+                    <field name="fund_operation_reason_display" readonly="1"/>
+                    <field name="fund_operation_source_created_by" readonly="1"/>
+                    <field name="fund_operation_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -349,26 +337,26 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
-                    <field name="p1_visible_8fa8662ad38f" readonly="1"/>
-                    <field name="p1_visible_3e7255522b33" readonly="1"/>
-                    <field name="p1_visible_f65ab1a8427f" readonly="1"/>
-                    <field name="p1_visible_f75550069cae" readonly="1"/>
-                    <field name="p1_visible_7c49c8f25a7a" readonly="1"/>
-                    <field name="p1_visible_0f6aab17d203" readonly="1"/>
-                    <field name="p1_visible_547c71732ac4" readonly="1"/>
-                    <field name="p1_visible_628f2a7878b3" readonly="1"/>
-                    <field name="p1_visible_099f8b5c680a" readonly="1"/>
-                    <field name="p1_visible_e242a03dd5b6" readonly="1"/>
-                    <field name="p1_visible_ed43f478ec3d" readonly="1"/>
-                    <field name="p1_visible_a12b85cb38e6" readonly="1"/>
-                    <field name="p1_visible_3bee2141cdb1" readonly="1"/>
-                    <field name="p1_visible_8ab2d41e7757" readonly="1"/>
-                    <field name="p1_visible_9c075c710f62" readonly="1"/>
-                    <field name="p1_visible_982d68c74aeb" readonly="1"/>
-                    <field name="p1_visible_701ce5416c52" readonly="1"/>
-                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
-                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                    <field name="financing_loan_status_display" readonly="1"/>
+                    <field name="financing_loan_document_no" readonly="1"/>
+                    <field name="financing_loan_project_name" readonly="1"/>
+                    <field name="financing_loan_borrower_name" readonly="1"/>
+                    <field name="financing_loan_borrow_amount" readonly="1"/>
+                    <field name="financing_loan_purpose_display" readonly="1"/>
+                    <field name="financing_loan_term_display" readonly="1"/>
+                    <field name="financing_loan_interest_display" readonly="1"/>
+                    <field name="loan_bank_name" readonly="1"/>
+                    <field name="loan_account" readonly="1"/>
+                    <field name="financing_loan_date_display" readonly="1"/>
+                    <field name="financing_loan_days_display" readonly="1"/>
+                    <field name="financing_loan_annual_rate_display" readonly="1"/>
+                    <field name="financing_loan_due_interest_display" readonly="1"/>
+                    <field name="financing_loan_amount_display" readonly="1"/>
+                    <field name="financing_loan_repayment_amount" readonly="1"/>
+                    <field name="financing_loan_repayment_date" readonly="1"/>
+                    <field name="financing_loan_unpaid_amount" readonly="1"/>
+                    <field name="financing_loan_source_created_by" readonly="1"/>
+                    <field name="financing_loan_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -381,8 +369,8 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="p1_visible_3f91cf4fc953" readonly="1"/>
-                    <field name="p1_visible_cf2988988f42" readonly="1"/>
+                    <field name="payer_unit_display" readonly="1"/>
+                    <field name="actual_payee_unit_display" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -395,12 +383,12 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="p1_visible_cf2988988f42" readonly="1"/>
-                    <field name="p1_visible_9b388243bdd8" readonly="1"/>
-                    <field name="p1_visible_c7133de10947" readonly="1"/>
-                    <field name="p1_visible_cdac00d3097d" readonly="1"/>
-                    <field name="p1_visible_6c5a21ae4538" readonly="1"/>
-                    <field name="p1_visible_876617c2cb2b" readonly="1"/>
+                    <field name="partner_payment_actual_payee_unit" readonly="1"/>
+                    <field name="partner_payment_category_display" readonly="1"/>
+                    <field name="partner_payment_content_display" readonly="1"/>
+                    <field name="partner_payment_cost_type_display" readonly="1"/>
+                    <field name="partner_payment_voucher_no" readonly="1"/>
+                    <field name="partner_payment_source_text" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -413,39 +401,39 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="p1_visible_2559d3f7672e" readonly="1"/>
-                    <field name="p1_visible_8fa8662ad38f" readonly="1"/>
-                    <field name="p1_visible_9664566d48ce" readonly="1"/>
-                    <field name="p1_visible_e32341fe14e8" readonly="1"/>
-                    <field name="p1_visible_ccfa1326c88f" readonly="1"/>
-                    <field name="p1_visible_f22832ce4781" readonly="1"/>
-                    <field name="p1_visible_9909f5df1a75" readonly="1"/>
-                    <field name="p1_visible_6b05c4e240c0" readonly="1"/>
-                    <field name="p1_visible_9ea4037225af" readonly="1"/>
-                    <field name="p1_visible_a0b2e8bb26c8" readonly="1"/>
-                    <field name="p1_visible_c6baf132e1dd" readonly="1"/>
-                    <field name="p1_visible_3e7255522b33" readonly="1"/>
-                    <field name="p1_visible_af37d8d6ef07" readonly="1"/>
-                    <field name="p1_visible_87fa6ef6554a" readonly="1"/>
-                    <field name="p1_visible_1932637f45ee" readonly="1"/>
-                    <field name="p1_visible_e1182de05c3f" readonly="1"/>
-                    <field name="p1_visible_488cfebeaf9d" readonly="1"/>
-                    <field name="p1_visible_8ec8c8c712be" readonly="1"/>
-                    <field name="p1_visible_93997ec88a8a" readonly="1"/>
-                    <field name="p1_visible_3e5fd432c9df" readonly="1"/>
-                    <field name="p1_visible_1ccf3b6408df" readonly="1"/>
-                    <field name="p1_visible_c8839fd18cdd" readonly="1"/>
-                    <field name="p1_visible_6ef508189cc0" readonly="1"/>
-                    <field name="p1_visible_667eee716adf" readonly="1"/>
-                    <field name="p1_visible_efb7cd864aa6" readonly="1"/>
-                    <field name="p1_visible_6eceee6e57dd" readonly="1"/>
-                    <field name="p1_visible_1484fc99a1d3" readonly="1"/>
-                    <field name="p1_visible_2f40d268a798" readonly="1"/>
-                    <field name="p1_visible_7f5da566c14e" readonly="1"/>
-                    <field name="p1_visible_e626b428509f" readonly="1"/>
-                    <field name="p1_visible_fff7e95a48d8" readonly="1"/>
-                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
-                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                    <field name="deposit_company_name" readonly="1"/>
+                    <field name="deposit_document_no" readonly="1"/>
+                    <field name="deposit_type_display" readonly="1"/>
+                    <field name="deposit_bid_project_title" readonly="1"/>
+                    <field name="deposit_payee_unit" readonly="1"/>
+                    <field name="deposit_push_result" readonly="1"/>
+                    <field name="deposit_return_date" readonly="1"/>
+                    <field name="deposit_return_amount" readonly="1"/>
+                    <field name="deposit_return_project" readonly="1"/>
+                    <field name="deposit_return_document_no" readonly="1"/>
+                    <field name="deposit_return_account" readonly="1"/>
+                    <field name="deposit_project_name" readonly="1"/>
+                    <field name="deposit_transfer_unit" readonly="1"/>
+                    <field name="deposit_remittance_method" readonly="1"/>
+                    <field name="deposit_receipt_account_name" readonly="1"/>
+                    <field name="deposit_received_amount_display" readonly="1"/>
+                    <field name="deposit_receipt_document_no" readonly="1"/>
+                    <field name="deposit_unit_name" readonly="1"/>
+                    <field name="deposit_refund_amount" readonly="1"/>
+                    <field name="deposit_receipt_account_no" readonly="1"/>
+                    <field name="deposit_receipt_bank_name" readonly="1"/>
+                    <field name="deposit_refund_account_no" readonly="1"/>
+                    <field name="deposit_refund_bank_name" readonly="1"/>
+                    <field name="deposit_bid_project_name" readonly="1"/>
+                    <field name="deposit_engineering_project_name" readonly="1"/>
+                    <field name="deposit_amount_display" readonly="1"/>
+                    <field name="deposit_payment_account" readonly="1"/>
+                    <field name="deposit_need_return_text" readonly="1"/>
+                    <field name="deposit_kingdee_document_no" readonly="1"/>
+                    <field name="deposit_returned_amount_display" readonly="1"/>
+                    <field name="deposit_unreturned_amount_display" readonly="1"/>
+                    <field name="deposit_source_created_by" readonly="1"/>
+                    <field name="deposit_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -458,8 +446,8 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="accepted_visible_06" readonly="1"/>
-                    <field name="accepted_visible_07" readonly="1"/>
+                    <field name="fuel_recharge_amount_display" readonly="1"/>
+                    <field name="fuel_recharge_date_display" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -472,18 +460,18 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
-                    <field name="p1_visible_8fa8662ad38f" readonly="1"/>
-                    <field name="p1_visible_3e7255522b33" readonly="1"/>
-                    <field name="p1_visible_342372602a87" readonly="1"/>
-                    <field name="p1_visible_a8e78b10a188" readonly="1"/>
-                    <field name="p1_visible_3f36b5502196" readonly="1"/>
-                    <field name="p1_visible_4f1b37216d49" readonly="1"/>
-                    <field name="p1_visible_b03bc1337add" readonly="1"/>
-                    <field name="p1_visible_b56f68e8a4db" readonly="1"/>
-                    <field name="p1_visible_e0361480e3a5" readonly="1"/>
-                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
-                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                    <field name="office_admin_status_display" readonly="1"/>
+                    <field name="office_admin_document_no" readonly="1"/>
+                    <field name="office_admin_project_name" readonly="1"/>
+                    <field name="office_admin_applicant_name" readonly="1"/>
+                    <field name="office_admin_department_name" readonly="1"/>
+                    <field name="office_admin_leave_time" readonly="1"/>
+                    <field name="office_admin_cancel_time" readonly="1"/>
+                    <field name="office_admin_leave_duration" readonly="1"/>
+                    <field name="office_admin_leave_days" readonly="1"/>
+                    <field name="office_admin_note_display" readonly="1"/>
+                    <field name="office_admin_source_created_by" readonly="1"/>
+                    <field name="office_admin_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>
@@ -496,13 +484,13 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="用户确认数据">
-                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
-                    <field name="p1_visible_3e7255522b33" readonly="1"/>
-                    <field name="p1_visible_8fdc4ab6f3dc" readonly="1"/>
-                    <field name="p1_visible_0791e483b4d2" readonly="1"/>
-                    <field name="p1_visible_e0361480e3a5" readonly="1"/>
-                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
-                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                    <field name="document_admin_status_display" readonly="1"/>
+                    <field name="document_admin_project_name" readonly="1"/>
+                    <field name="document_admin_type_display" readonly="1"/>
+                    <field name="document_admin_description_display" readonly="1"/>
+                    <field name="document_admin_note_display" readonly="1"/>
+                    <field name="document_admin_source_created_by" readonly="1"/>
+                    <field name="document_admin_source_created_at" readonly="1"/>
                 </group>
             </xpath>
         </field>

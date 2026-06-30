@@ -1,0 +1,12 @@
+{
+  "mode": "formal_config_p1_candidate_runtime_budget_v1",
+  "policy": "Counts are allowed to decrease only. Static p1 alias candidates are not enough; candidate fields must exist on the runtime Odoo model, and stable model-view candidates must not use p1/legacy/accepted/user_acceptance transition prefixes.",
+  "max": {
+    "total_hits": 0,
+    "model_missing_hits": 0,
+    "alias_field_missing_hits": 0,
+    "without_existing_runtime_candidate_hits": 0,
+    "without_stable_formal_candidate_hits": 0,
+    "transition_candidate_only_hits": 0
+  }
+}

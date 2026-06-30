@@ -13,6 +13,35 @@ from ..support.state_machine import ScStateMachine
 
 _logger = logging.getLogger(__name__)
 
+PAYMENT_REQUEST_DOCUMENT_STATE_LABELS = {
+    "-1": "已作废",
+    "0": "未审核",
+    "1": "审批中",
+    "2": "审核通过",
+}
+
+PAYMENT_APPLY_ACCEPTANCE_VISIBLE_INDEXES = {
+    "单据状态": 1,
+    "单据编号": 2,
+    "申请日期": 3,
+    "项目名称": 4,
+    "收款单位": 5,
+    "实际收款单位": 6,
+    "付款单位": 7,
+    "申请付款金额": 8,
+    "实际付款金额": 9,
+    "类型（成本）": 11,
+    "备注": 12,
+    "是否关联单据": 13,
+    "付款账号": 14,
+    "金额大写": 15,
+    "户名": 16,
+    "开户行": 17,
+    "账号": 18,
+    "录入人": 20,
+    "录入时间": 21,
+}
+
 
 def _amount_to_chinese_upper(value):
     amount = Decimal(str(value or 0)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -80,16 +109,11 @@ class PaymentRequest(models.Model):
     _order = "id desc"
     _rec_names_search = [
         "name",
-        "legacy_visible_document_no",
         "project_id.name",
-        "legacy_visible_project_name",
         "partner_id.name",
         "actual_payee_unit",
         "payer_unit",
         "payment_account_name",
-        "legacy_visible_payee_unit",
-        "legacy_visible_actual_payee_unit",
-        "legacy_visible_payer_unit",
         "contract_id.subject",
         "contract_id.legacy_contract_no",
         "contract_id.legacy_document_no",
@@ -307,37 +331,108 @@ class PaymentRequest(models.Model):
         tracking=True,
         help="用户确认验收口径的金额大写；用于历史数据延续和后续业务办理。",
     )
-    legacy_visible_document_no = fields.Char(
-        string="历史可见单据编号",
-        readonly=True,
-        index=True,
-    )
-    legacy_visible_project_name = fields.Char(
-        string="历史可见项目名称",
-        readonly=True,
-        index=True,
-    )
-    legacy_visible_request_date = fields.Char(
-        string="历史可见申请日期",
+    document_status_display = fields.Char(
+        string="单据状态",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
         readonly=True,
     )
-    legacy_visible_payee_unit = fields.Char(
-        string="历史可见收款单位",
+    project_name_display = fields.Char(
+        string="项目名称",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
         readonly=True,
-        index=True,
     )
-    legacy_visible_actual_payee_unit = fields.Char(
-        string="历史可见实际收款单位",
+    payee_unit_display = fields.Char(
+        string="收款单位",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
         readonly=True,
-        index=True,
     )
-    legacy_visible_payer_unit = fields.Char(
-        string="历史可见付款单位",
+    actual_payee_unit_display = fields.Char(
+        string="实际收款单位",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
         readonly=True,
-        index=True,
     )
-    legacy_visible_request_amount = fields.Char(
-        string="历史申请付款金额",
+    payer_unit_display = fields.Char(
+        string="付款单位",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    request_amount_display = fields.Monetary(
+        string="申请付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    actual_paid_amount_display = fields.Monetary(
+        string="实际付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    cost_type_display = fields.Char(
+        string="类型（成本）",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    note_display = fields.Char(
+        string="备注",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    related_document_text = fields.Char(
+        string="是否关联单据",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    payment_account_no_display = fields.Char(
+        string="付款账号",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    amount_uppercase_display = fields.Char(
+        string="金额大写",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    payee_account_name_display = fields.Char(
+        string="户名",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    payee_bank_name_display = fields.Char(
+        string="开户行",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    payee_account_no_display = fields.Char(
+        string="账号",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    source_created_by = fields.Char(
+        string="录入人",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    source_created_at = fields.Datetime(
+        string="录入时间",
+        compute="_compute_payment_apply_formal_visible_fields",
+        store=True,
         readonly=True,
     )
     cost_category_name = fields.Char(
@@ -346,32 +441,6 @@ class PaymentRequest(models.Model):
         store=True,
         readonly=True,
         index=True,
-    )
-    legacy_visible_cost_category_name = fields.Char(
-        string="历史成本分类名称",
-        readonly=True,
-        index=True,
-    )
-    legacy_visible_cost_type = fields.Char(
-        string="历史类型（成本）",
-        readonly=True,
-        index=True,
-    )
-    legacy_visible_remark = fields.Text(
-        string="历史备注",
-        readonly=True,
-    )
-    legacy_visible_amount_uppercase = fields.Char(
-        string="历史金额大写",
-        readonly=True,
-    )
-    legacy_visible_actual_paid_amount = fields.Char(
-        string="历史实际付款金额",
-        readonly=True,
-    )
-    legacy_visible_available_balance = fields.Char(
-        string="历史可用余额",
-        readonly=True,
     )
     legacy_payment_account_name = fields.Char(
         string="历史付款户名",
@@ -427,15 +496,6 @@ class PaymentRequest(models.Model):
         index=True,
         tracking=True,
         help="付款申请自身确认的收款账号；不覆盖往来单位主数据。",
-    )
-    legacy_visible_writer = fields.Char(
-        string="历史填写人",
-        readonly=True,
-        index=True,
-    )
-    legacy_visible_attachment = fields.Char(
-        string="历史可见附件",
-        readonly=True,
     )
     partner_account_name = fields.Char(
         string="往来单位默认户名",
@@ -539,37 +599,26 @@ class PaymentRequest(models.Model):
         "amount",
         "currency_id.symbol",
         "project_id.display_name",
-        "legacy_visible_project_name",
         "partner_id.display_name",
         "actual_payee_unit",
         "payer_unit",
-        "legacy_visible_payee_unit",
-        "legacy_visible_actual_payee_unit",
-        "legacy_visible_payer_unit",
-        "legacy_visible_document_no",
-        "legacy_visible_request_amount",
     )
     def _compute_display_name(self):
         for record in self:
             flow = _("收款申请") if record.type == "receive" else _("付款申请")
             project_name = (
                 record.project_id.display_name
-                or record.legacy_visible_project_name
                 or ""
             ).strip()
             partner_name = (
                 record.actual_payee_unit
                 or record.payer_unit
                 or record.partner_id.display_name
-                or record.legacy_visible_actual_payee_unit
-                or record.legacy_visible_payee_unit
-                or record.legacy_visible_payer_unit
                 or ""
             ).strip()
             amount_text = record._display_amount_label()
             document_no = (
                 record.name
-                or record.legacy_visible_document_no
                 or ""
             ).strip()
             parts = [part for part in (flow, project_name, partner_name, amount_text, document_no) if part]
@@ -580,9 +629,9 @@ class PaymentRequest(models.Model):
         if self.amount:
             symbol = (self.currency_id.symbol or "").strip()
             return "%s%s" % (symbol, "{:,.2f}".format(self.amount))
-        return (self.legacy_visible_request_amount or "").strip()
+        return ""
 
-    @api.depends("outflow_line_ids.source_line_type", "legacy_visible_cost_category_name")
+    @api.depends("outflow_line_ids.source_line_type")
     def _compute_reconciliation_summary(self):
         for record in self:
             line_types = [
@@ -591,12 +640,96 @@ class PaymentRequest(models.Model):
                 if line_type
             ]
             unique_types = sorted(set(line_types))
-            record.cost_category_name = " / ".join(unique_types[:5]) or record.legacy_visible_cost_category_name
+            record.cost_category_name = " / ".join(unique_types[:5])
 
     @api.depends("amount")
     def _compute_amount_uppercase(self):
         for record in self:
             record.amount_uppercase = _amount_to_chinese_upper(record.amount)
+
+    @api.depends(
+        "legacy_document_state",
+        "state",
+        "project_id",
+        "partner_id",
+        "actual_payee_unit",
+        "payer_unit",
+        "amount",
+        "cost_category_name",
+        "note",
+        "settlement_id",
+        "line_settlement_summary",
+        "legacy_relation_summary",
+        "material_settlement_id",
+        "contract_id",
+        "payment_account_no",
+        "legacy_payment_account_no",
+        "partner_bank_account",
+        "accepted_amount_uppercase",
+        "amount_uppercase",
+        "payment_account_name",
+        "legacy_payee_account_name",
+        "partner_account_name",
+        "payment_bank_name",
+        "legacy_payee_bank_name",
+        "partner_bank_name",
+        "legacy_payee_account_no",
+        "creator_name",
+        "created_time",
+        "name",
+    )
+    def _compute_payment_apply_formal_visible_fields(self):
+        state_labels = dict(self._fields["state"].selection)
+        for record in self:
+            state_text = ""
+            if record.legacy_document_state:
+                state_text = PAYMENT_REQUEST_DOCUMENT_STATE_LABELS.get(record.legacy_document_state, record.legacy_document_state)
+            has_related = any(
+                (
+                    record.settlement_id,
+                    record.line_settlement_summary,
+                    record.legacy_relation_summary,
+                    record.material_settlement_id,
+                    record.contract_id,
+                )
+            )
+            record.document_status_display = state_text or state_labels.get(record.state) or ""
+            record.project_name_display = record.project_id.display_name or ""
+            record.payee_unit_display = record.partner_id.display_name or ""
+            record.actual_payee_unit_display = record.actual_payee_unit or record.partner_id.display_name or ""
+            record.payer_unit_display = record.payer_unit or record.legacy_payment_account_name or ""
+            record.request_amount_display = record.amount or 0.0
+            record.actual_paid_amount_display = record.paid_amount_total
+            record.cost_type_display = record.cost_category_name or ""
+            record.note_display = record.note or ""
+            record.related_document_text = "是" if has_related else "否"
+            record.payment_account_no_display = record.payment_account_no or record.legacy_payment_account_no or record.partner_bank_account or ""
+            record.amount_uppercase_display = record.accepted_amount_uppercase or record.amount_uppercase or ""
+            record.payee_account_name_display = record.payment_account_name or record.legacy_payee_account_name or record.partner_account_name or ""
+            record.payee_bank_name_display = record.payment_bank_name or record.legacy_payee_bank_name or record.partner_bank_name or ""
+            record.payee_account_no_display = record.payment_account_no or record.legacy_payee_account_no or record.partner_bank_account or ""
+            record.source_created_by = record.creator_name or ""
+            record.source_created_at = record.created_time or False
+
+    @api.model
+    def _parse_legacy_amount(self, value):
+        text = str(value or "").replace(",", "").replace("￥", "").replace("¥", "").strip()
+        if not text:
+            return None
+        match = re.search(r"-?\d+(?:\.\d+)?", text)
+        if not match:
+            return None
+        try:
+            return float(match.group(0))
+        except ValueError:
+            return None
+
+    @api.model
+    def _strip_legacy_file_suffix(self, value):
+        text = str(value or "").strip()
+        if " | legacy-file-id://" in text:
+            return text.split(" | legacy-file-id://", 1)[0].strip()
+        return text
 
     @api.model
     def _context_project_id(self):
@@ -740,7 +873,7 @@ class PaymentRequest(models.Model):
             "default_receipt_account_no": self.payment_account_no or self.partner_bank_account,
             "default_payment_account_name": self.legacy_payment_account_name or self.payer_unit,
             "default_payment_account_no": self.legacy_payment_account_no,
-            "default_note": self.note or self.legacy_visible_remark,
+            "default_note": self.note,
         }
         return action
 

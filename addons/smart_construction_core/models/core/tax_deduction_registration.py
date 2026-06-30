@@ -44,7 +44,6 @@ class ScTaxDeductionRegistration(models.Model):
     document_no = fields.Char(string="单据编号", index=True)
     document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     deduction_confirm_date = fields.Date(string="认证抵扣日期", index=True)
-    legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True, index=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True)
     company_id = fields.Many2one(
         "res.company",
@@ -105,6 +104,66 @@ class ScTaxDeductionRegistration(models.Model):
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     note = fields.Text(string="备注")
     active = fields.Boolean(string="有效", default=True, index=True)
+    deduction_bill_status_display = fields.Char(
+        string="单据状态",
+        compute="_compute_deduction_bill_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    deduction_bill_document_no = fields.Char(
+        string="单据编号",
+        compute="_compute_deduction_bill_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    deduction_bill_project_name = fields.Char(
+        string="项目名称",
+        compute="_compute_deduction_bill_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    deduction_bill_unit_name = fields.Char(
+        string="扣款单位",
+        compute="_compute_deduction_bill_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    deduction_bill_amount_display = fields.Char(
+        string="扣款金额",
+        compute="_compute_deduction_bill_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    deduction_bill_reason_display = fields.Char(
+        string="扣款事由",
+        compute="_compute_deduction_bill_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    deduction_bill_date_display = fields.Char(
+        string="单据日期",
+        compute="_compute_deduction_bill_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    deduction_bill_attachment_text = fields.Char(
+        string="附件",
+        compute="_compute_deduction_bill_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    deduction_bill_source_created_by = fields.Char(
+        string="录入人",
+        compute="_compute_deduction_bill_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    deduction_bill_source_created_at = fields.Char(
+        string="录入时间",
+        compute="_compute_deduction_bill_visible_fields",
+        store=True,
+        readonly=True,
+    )
 
     _sql_constraints = [
         (
@@ -224,6 +283,76 @@ class ScTaxDeductionRegistration(models.Model):
                 continue
             rate = tax / untaxed * 100
             record.tax_rate_text = f"{rate:.2f}".rstrip("0").rstrip(".") + "%"
+
+    @staticmethod
+    def _deduction_bill_state_label(value):
+        return {
+            "-1": "已作废",
+            "0": "未审核",
+            "1": "审核中",
+            "2": "审核通过",
+            "3": "已驳回",
+            "4": "已作废",
+            "draft": "草稿",
+            "confirmed": "已确认",
+            "deducted": "已抵扣",
+            "legacy_confirmed": "历史已确认",
+            "cancel": "已取消",
+        }.get(str(value or ""), str(value or ""))
+
+    def _deduction_bill_attachment_label(self):
+        self.ensure_one()
+        count = len(self.attachment_ids)
+        return "附件(%s)" % count if count else ""
+
+    @api.depends(
+        "state",
+        "legacy_document_state",
+        "document_no",
+        "name",
+        "project_id",
+        "deduction_unit_name",
+        "partner_id",
+        "partner_name",
+        "withholding_amount",
+        "deduction_reason",
+        "note",
+        "document_date",
+        "attachment_ids",
+        "creator_name",
+        "created_time",
+    )
+    def _compute_deduction_bill_visible_fields(self):
+        for record in self:
+            status_value = record.legacy_document_state or record.state
+            reason = record.deduction_reason or record.note or ""
+            if reason:
+                lines = [
+                    line.strip()
+                    for line in reason.splitlines()
+                    if line.strip()
+                    and line.strip() != "not_promoted_to_runtime_payment_request"
+                    and line.strip() != "missing_partner_anchor"
+                    and not line.strip().startswith("[migration:")
+                ]
+                reason = " ".join(lines)
+            record.deduction_bill_status_display = record._deduction_bill_state_label(status_value)
+            record.deduction_bill_document_no = record.document_no or record.name or ""
+            record.deduction_bill_project_name = record.project_id.display_name or ""
+            record.deduction_bill_unit_name = (
+                record.deduction_unit_name
+                or record.partner_id.display_name
+                or record.partner_name
+                or ""
+            )
+            record.deduction_bill_amount_display = str(record.withholding_amount or "")
+            record.deduction_bill_reason_display = reason
+            record.deduction_bill_date_display = fields.Date.to_string(record.document_date) if record.document_date else ""
+            record.deduction_bill_attachment_text = record._deduction_bill_attachment_label()
+            record.deduction_bill_source_created_by = record.creator_name or ""
+            record.deduction_bill_source_created_at = (
+                fields.Datetime.to_string(record.created_time) if record.created_time else ""
+            )
 
     @api.depends("is_transfer_out", "withholding_amount", "deduction_tax_amount", "deduction_amount")
     def _compute_deduction_flow_label(self):

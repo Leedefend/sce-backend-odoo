@@ -234,39 +234,6 @@
                             <field name="attachment_ids" widget="many2many_binary"/>
                         </group>
                         <notebook>
-                            <page string="历史办理信息" invisible="source_origin != 'legacy'">
-                                <group>
-                                    <group string="旧系统发票口径">
-                                        <field name="legacy_document_state" readonly="1"/>
-                                        <field name="legacy_visible_data_type" readonly="1"/>
-                                        <field name="legacy_visible_contract_no" readonly="1"/>
-                                        <field name="legacy_visible_application_date" readonly="1"/>
-                                        <field name="legacy_visible_invoice_state" readonly="1"/>
-                                        <field name="legacy_visible_partner_name" readonly="1"/>
-                                        <field name="legacy_visible_note" readonly="1"/>
-                                    </group>
-                                    <group string="旧系统开票与金额">
-                                        <field name="legacy_visible_current_invoice_amount" readonly="1"/>
-                                        <field name="legacy_visible_cumulative_invoice_amount" readonly="1"/>
-                                        <field name="legacy_visible_invoice_count" readonly="1"/>
-                                        <field name="legacy_visible_tax_rate" readonly="1"/>
-                                        <field name="legacy_visible_surcharge_amount" readonly="1"/>
-                                        <field name="legacy_visible_related_receipt_amount" readonly="1"/>
-                                    </group>
-                                </group>
-                                <group>
-                                    <group string="旧系统票据线索">
-                                        <field name="legacy_visible_invoice_no" readonly="1"/>
-                                        <field name="legacy_visible_invoice_type" readonly="1"/>
-                                        <field name="legacy_visible_invoice_issue_company" readonly="1"/>
-                                        <field name="legacy_visible_kingdee_no" readonly="1"/>
-                                    </group>
-                                    <group string="旧系统往来与税号">
-                                        <field name="legacy_partner_name" readonly="1"/>
-                                        <field name="legacy_partner_tax_no" readonly="1"/>
-                                    </group>
-                                </group>
-                            </page>
                             <page string="红冲关联" invisible="not red_flush_adjustment_id and not red_flush_origin_invoice_no">
                                 <group>
                                     <field name="red_flush_adjustment_id" readonly="1"/>

@@ -98,6 +98,7 @@
 | `addons/smart_core/handlers/form_field_configuration.py` | L4 | 表单低代码运行时配置：`form_lowcode_runtime_config` | `smart_core.lowcode.form_field_policy` |
 | `addons/smart_core/handlers/menu_configuration.py` | L4 | 菜单低代码运行时配置：`menu_lowcode_runtime_config` | `smart_core.lowcode.menu_config` |
 | `addons/smart_construction_custom/models/user_preferences.py` | L3 | 用户偏好投影初始化：`user_preference_projection` | `smart_construction_custom.*preference` |
+| `addons/smart_construction_core/models/support/formal_list_contract_sync.py` | L2 | 行业正式列表契约投影：`industry_formal_list_contract_projection` | `smart_construction_core.formal_settlement_list_contract_sync` |
 
 ## 当前允许直接写审批运行时策略的入口
 

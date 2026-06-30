@@ -15,7 +15,7 @@ class TestApiDataSearchFieldsExtension(TransactionCase):
         self.assertIn("legacy_visible_project_name", fields)
         self.assertIn("project_id", fields)
 
-    def test_user_acceptance_visible_fields_contribute_source_fields(self):
+    def test_settlement_acceptance_visible_fields_contribute_source_fields(self):
         fields = smart_core_api_data_search_fields(self.env, "sc.settlement.order")
 
         self.assertIn("settlement_unit_id", fields)
@@ -104,10 +104,10 @@ class TestApiDataSearchFieldsExtension(TransactionCase):
             if name.startswith("uc_formal_")
         ]
         settlement_fields = self.env["sc.settlement.order"]._fields
-        user_acceptance_fields = [
+        settlement_acceptance_fields = [
             name
             for name in settlement_fields
-            if name.startswith("user_acceptance_")
+            if name.startswith("settlement_acceptance_")
         ]
         fuel_card_fields = self.env["sc.legacy.fuel.card.fact"]._fields
         accepted_visible_fields = [
@@ -117,10 +117,10 @@ class TestApiDataSearchFieldsExtension(TransactionCase):
         ]
 
         self.assertTrue(formal_fields)
-        self.assertTrue(user_acceptance_fields)
+        self.assertTrue(settlement_acceptance_fields)
         self.assertTrue(accepted_visible_fields)
         self.assertTrue(all(contract_expense_fields[name].string.startswith("用户确认") for name in formal_fields))
-        self.assertTrue(all(settlement_fields[name].string.startswith("用户验收") for name in user_acceptance_fields))
+        self.assertTrue(all(not settlement_fields[name].string.startswith("用户验收") for name in settlement_acceptance_fields))
         self.assertTrue(all(fuel_card_fields[name].string.startswith("验收可见") for name in accepted_visible_fields))
 
     def test_known_duplicate_model_labels_are_namespaced(self):

@@ -95,6 +95,7 @@ FULL_ACCEPTANCE_TARGETS = {
     "verify.business_config.unit",
     "verify.frontend.build",
     "verify.business_config.coverage",
+    "verify.business_config.list_config_boundary",
     "verify.business_config.snapshot",
     "verify.business_config.approval_runtime",
     "verify.business_config.browser_acceptance",

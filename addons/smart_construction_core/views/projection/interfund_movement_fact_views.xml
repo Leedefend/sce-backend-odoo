@@ -98,7 +98,7 @@
                             </group>
                         </group>
                         <group>
-                            <field name="legacy_visible_note"/>
+                            <field name="source_note"/>
                         </group>
                     </sheet>
                 </form>

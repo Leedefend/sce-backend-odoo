@@ -90,7 +90,7 @@ class ScFinanceBusinessFact(models.Model):
     legacy_source_model = fields.Char(string="历史来源模型", readonly=True, index=True)
     legacy_source_table = fields.Char(string="历史来源表", readonly=True, index=True)
     legacy_record_id = fields.Char(string="历史记录ID", readonly=True, index=True)
-    legacy_visible_note = fields.Text(string="历史可见说明", readonly=True)
+    source_note = fields.Text(string="来源说明", readonly=True)
 
     def _raise_readonly_projection(self):
         raise UserError("项目收付款来源明细是只读汇总，请从来源业务单据维护数据。")
@@ -213,7 +213,7 @@ class ScFinanceBusinessFact(models.Model):
             self.display_name,
             "来源入口：%s" % self.source_menu_hint if self.source_menu_hint else False,
             "来源单号：%s" % source_no if source_no else False,
-            self.legacy_visible_note,
+            self.source_note,
         ]
         context.setdefault("default_note", "\n".join(part for part in note_parts if part))
         if self.fact_type == "tax_deducted":
@@ -340,7 +340,7 @@ class ScFinanceBusinessFact(models.Model):
                         'online_old_scbs:fund_confirmation' AS legacy_source_model,
                         'sc_legacy_fund_confirmation_document' AS legacy_source_table,
                         d.legacy_header_id AS legacy_record_id,
-                        d.attachment_links AS legacy_visible_note
+                        d.attachment_links AS source_note
                     FROM sc_legacy_fund_confirmation_document d
                     CROSS JOIN default_company dc
                     LEFT JOIN project_company pc ON pc.project_id = d.project_id
@@ -357,7 +357,7 @@ class ScFinanceBusinessFact(models.Model):
                         'sc.expense.claim' AS source_model,
                         c.id AS source_res_id,
                         c.name AS source_record_name,
-                        COALESCE(c.legacy_document_no, c.legacy_visible_document_no, c.name) AS source_document_no,
+                        COALESCE(c.legacy_document_no, c.name) AS source_document_no,
                         '扣款实缴登记' AS source_menu_hint,
                         c.date_claim AS document_date,
                         c.company_id,
@@ -376,7 +376,7 @@ class ScFinanceBusinessFact(models.Model):
                         c.legacy_source_model,
                         c.legacy_source_table,
                         c.legacy_record_id,
-                        COALESCE(c.legacy_visible_note, c.legacy_visible_summary, c.summary) AS legacy_visible_note
+                        COALESCE(c.note, c.summary) AS source_note
                     FROM sc_expense_claim c
                     LEFT JOIN res_partner rp ON rp.id = c.partner_id
                     WHERE c.active IS TRUE
@@ -393,7 +393,7 @@ class ScFinanceBusinessFact(models.Model):
                         'sc.expense.claim' AS source_model,
                         c.id AS source_res_id,
                         c.name AS source_record_name,
-                        COALESCE(c.legacy_document_no, c.legacy_visible_document_no, c.name) AS source_document_no,
+                        COALESCE(c.legacy_document_no, c.name) AS source_document_no,
                         '扣款实缴退回' AS source_menu_hint,
                         c.date_claim AS document_date,
                         c.company_id,
@@ -412,7 +412,7 @@ class ScFinanceBusinessFact(models.Model):
                         c.legacy_source_model,
                         c.legacy_source_table,
                         c.legacy_record_id,
-                        COALESCE(c.legacy_visible_note, c.legacy_visible_summary, c.summary) AS legacy_visible_note
+                        COALESCE(c.note, c.summary) AS source_note
                     FROM sc_expense_claim c
                     LEFT JOIN res_partner rp ON rp.id = c.partner_id
                     WHERE c.active IS TRUE
@@ -448,7 +448,7 @@ class ScFinanceBusinessFact(models.Model):
                         t.legacy_source_model,
                         t.legacy_source_table,
                         t.legacy_record_id,
-                        COALESCE(t.deduction_reason, t.note) AS legacy_visible_note
+                        COALESCE(t.deduction_reason, t.note) AS source_note
                     FROM sc_tax_deduction_registration t
                     LEFT JOIN res_partner rp ON rp.id = t.partner_id
                     WHERE t.active IS TRUE
@@ -509,7 +509,7 @@ class ScFinanceBusinessFact(models.Model):
                         'online_old_scbs:self_funding' AS legacy_source_model,
                         f.source_table AS legacy_source_table,
                         f.legacy_record_id,
-                        COALESCE(f.note, f.attachment_text, f.kingdee_document_no) AS legacy_visible_note
+                        COALESCE(f.note, f.attachment_text, f.kingdee_document_no) AS source_note
                     FROM sc_legacy_self_funding_fact f
                     CROSS JOIN default_company dc
                     LEFT JOIN project_company pc ON pc.project_id = f.project_id
@@ -547,7 +547,7 @@ class ScFinanceBusinessFact(models.Model):
                         CASE WHEN r.source_origin = 'legacy' THEN 'online_old_scbs:self_funding' ELSE NULL::varchar END AS legacy_source_model,
                         r.legacy_source_table AS legacy_source_table,
                         r.legacy_record_id AS legacy_record_id,
-                        COALESCE(r.note, r.summary) AS legacy_visible_note
+                        COALESCE(r.note, r.summary) AS source_note
                     FROM sc_self_funding_registration r
                     LEFT JOIN res_partner rp ON rp.id = r.partner_id
                     WHERE r.active IS TRUE
@@ -556,15 +556,15 @@ class ScFinanceBusinessFact(models.Model):
                 guarantee AS (
                     SELECT
                         500000000 + g.id AS id,
-                        COALESCE(g.legacy_visible_document_no, b.name, b.tender_name, '保证金') AS display_name,
+                        COALESCE(b.name, b.tender_name, '保证金') AS display_name,
                         'guarantee_deposit' AS business_domain,
                         CASE WHEN g.type = 'return' THEN 'guarantee_return' ELSE 'guarantee_out' END AS fact_type,
                         'canonical' AS balance_policy,
                         'formal tender.guarantee preserves out/return balance; legacy source family remains available in source report facts' AS classification_reason,
                         'tender.guarantee' AS source_model,
                         g.id AS source_res_id,
-                        COALESCE(g.legacy_visible_document_no, b.name) AS source_record_name,
-                        COALESCE(g.legacy_visible_document_no, b.name) AS source_document_no,
+                        b.name AS source_record_name,
+                        b.name AS source_document_no,
                         CASE WHEN g.type = 'return' THEN '保证金退回' ELSE '保证金支出' END AS source_menu_hint,
                         g.date AS document_date,
                         COALESCE(pc.company_id, dc.company_id) AS company_id,
@@ -583,7 +583,7 @@ class ScFinanceBusinessFact(models.Model):
                         b.legacy_fact_model AS legacy_source_model,
                         'tender_guarantee' AS legacy_source_table,
                         NULLIF(b.legacy_fact_id::varchar, '') AS legacy_record_id,
-                        COALESCE(g.remark, b.legacy_note) AS legacy_visible_note
+                        COALESCE(g.remark, b.legacy_note) AS source_note
                     FROM tender_guarantee g
                     JOIN tender_bid b ON b.id = g.bid_id
                     CROSS JOIN default_company dc

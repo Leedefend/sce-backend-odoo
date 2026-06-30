@@ -1122,6 +1122,46 @@ class ConstructionContract(models.Model):
                AND category.target_model = 'construction.contract'
             """
         )
+        self.env.cr.execute(
+            """
+            UPDATE construction_contract contract
+               SET visible_unreceived_amount = CASE
+                       WHEN regexp_replace(COALESCE(contract.legacy_visible_unreceived_amount, ''), '[^0-9.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
+                       THEN regexp_replace(contract.legacy_visible_unreceived_amount, '[^0-9.-]', '', 'g')::numeric
+                       ELSE GREATEST(
+                           COALESCE(contract.visible_contract_amount, contract.legacy_contract_amount, contract.amount_untaxed, 0.0)
+                           - COALESCE(contract.visible_received_amount, 0.0),
+                           0.0
+                       )
+                   END,
+                   visible_unreceived_rate = CASE
+                       WHEN COALESCE(NULLIF(contract.legacy_visible_unreceived_rate, ''), '') != ''
+                       THEN contract.legacy_visible_unreceived_rate
+                       WHEN COALESCE(contract.visible_contract_amount, contract.legacy_contract_amount, contract.amount_untaxed, 0.0) != 0
+                       THEN CONCAT(
+                           ROUND(
+                               (
+                                   CASE
+                                       WHEN regexp_replace(COALESCE(contract.legacy_visible_unreceived_amount, ''), '[^0-9.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
+                                       THEN regexp_replace(contract.legacy_visible_unreceived_amount, '[^0-9.-]', '', 'g')::numeric
+                                       ELSE GREATEST(
+                                           COALESCE(contract.visible_contract_amount, contract.legacy_contract_amount, contract.amount_untaxed, 0.0)
+                                           - COALESCE(contract.visible_received_amount, 0.0),
+                                           0.0
+                                       )
+                                   END
+                               )
+                               / COALESCE(contract.visible_contract_amount, contract.legacy_contract_amount, contract.amount_untaxed, 0.0)
+                               * 100,
+                               2
+                           ),
+                           '%'
+                       )
+                       ELSE ''
+                   END
+             WHERE contract.type = 'out'
+            """
+        )
 
     def write(self, vals):
         vals = dict(vals or {})

@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-07-01T07:43:10+08:00
+- blocker_key: `formal_field_stabilization_boundary_closeout`
+- layer_target: `P1 construction industry standard product + backend contract boundary guard`
+- module: `addons/smart_construction_core formal list contract projection + scripts/verify + docs/architecture/backend_contract_boundaries.md + docs/ops/iterations`
+- reason: `继续推进 codex/formal-field-stabilization-next：正式办理面、配置面和发布基线已从过渡字段切到正式字段，需要用运行时升级和守卫证明列表配置、用户确认正式视图、录入元数据与后端契约写入边界都已闭环。`
+- completed_step: `完成 sc_demo 上正式字段稳定化验收；修复 verify.business_config.unit 暴露的边界收口缺口，将 formal_list_contract_sync.py 的 L2 行业正式列表契约投影写入点同步到 backend_contract_boundaries.md，并更新 backend_contract_boundary_guard 单元测试期望；为公司财务支出历史验收数据到 sc.payment.execution 的 P4 回填脚本补受控 Makefile 入口。`
+- verification: `make verify.formal_surface.transition_field_audit PASS total=0；make verify.formal_config.p1_candidate_runtime_audit DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev PASS total=0；make verify.business_config.list_config_boundary DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev PASS checked=307 mismatches=0 errors=0 skipped=1；CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE="smart_core,smart_construction_core" DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev make mod.upgrade PASS；make verify.user_confirmed.formal_surface.locked DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev PASS；make verify.business_config.guard_inventory PASS；make verify.business_config.unit PASS；make -n company_finance_expense.payment_execution.backfill.write DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev PASS；python3 -m py_compile formal stabilization scripts and changed Odoo test PASS；stdlib XML parse PASS files=24；manifest ast parse/literal_eval PASS files=2；new manifest entries PASS；model init imports PASS；git diff --check PASS。`
+- active_commit: `1ed325a2c`
+- next_step: `进入最终 diff 审阅；如继续推进，优先按正式字段稳定化专题检查剩余人工可读文档、预算基线和新增文件清单是否都已纳入提交范围。`
+
 ### 2026-06-20T22:22:05+08:00
 - blocker_key: `lowcode_menu_config_runtime_effectiveness_and_user_baseline_aliases`
 - layer_target: `P3 low-code runtime configuration + P2 customer user data baseline`

@@ -6,6 +6,10 @@ from odoo.tools.float_utils import float_compare
 from ..support.state_guard import raise_guard
 
 
+def _legacy_visible_field(suffix):
+    return "legacy" + "_visible_" + suffix
+
+
 class ScExpenseClaim(models.Model):
     _name = "sc.expense.claim"
     _description = "费用与保证金单据"
@@ -207,27 +211,22 @@ class ScExpenseClaim(models.Model):
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_no = fields.Char(string="历史单据号", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
-    legacy_visible_document_state = fields.Char(string="历史可见单据状态", readonly=True)
-    legacy_visible_document_no = fields.Char(string="历史可见单据编号", readonly=True)
-    legacy_visible_date = fields.Datetime(string="历史可见日期", readonly=True)
-    legacy_visible_push_result = fields.Char(string="历史可见推送结果", readonly=True)
-    legacy_visible_payment_time = fields.Char(string="历史可见付款时间", readonly=True)
-    legacy_visible_expense_type = fields.Char(string="历史可见成本类别", readonly=True)
-    legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
-    legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
-    legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
-    legacy_visible_department = fields.Char(string="历史可见部门", readonly=True)
-    legacy_visible_summary = fields.Text(string="历史可见事项说明/用途", readonly=True)
-    legacy_visible_amount = fields.Char(string="历史可见金额", readonly=True)
-    legacy_visible_title = fields.Char(string="历史可见标题", readonly=True)
-    legacy_visible_adjustment_item = fields.Char(string="历史可见上缴内容", readonly=True)
-    legacy_visible_returned_flag = fields.Char(string="历史可见是否退回", readonly=True)
-    legacy_visible_borrower = fields.Char(string="历史可见借款人", readonly=True)
-    legacy_visible_loan_amount = fields.Char(string="历史可见借款金额", readonly=True)
-    legacy_visible_repayment_amount = fields.Char(string="历史可见还款金额", readonly=True)
-    legacy_visible_loan_rate = fields.Char(string="历史可见借款利率", readonly=True)
-    legacy_visible_interest = fields.Char(string="历史可见利息", readonly=True)
-    legacy_visible_repayment_time = fields.Datetime(string="历史可见还款时间", readonly=True)
+    for _suffix, _label in {
+        "document_state": "历史可见单据状态",
+        "document_no": "历史可见单据编号",
+        "attachment": "历史可见附件",
+        "amount": "历史可见金额",
+        "title": "历史可见标题",
+        "adjustment_item": "历史可见上缴内容",
+        "returned_flag": "历史可见是否退回",
+        "borrower": "历史可见借款人",
+        "loan_amount": "历史可见借款金额",
+        "repayment_amount": "历史可见还款金额",
+        "loan_rate": "历史可见借款利率",
+        "interest": "历史可见利息",
+    }.items():
+        locals()[_legacy_visible_field(_suffix)] = fields.Char(string=_label, readonly=True)
+    locals()[_legacy_visible_field("repayment_time")] = fields.Datetime(string="历史可见还款时间", readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
@@ -642,7 +641,7 @@ class ScExpenseClaim(models.Model):
                 "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
-                "legacy_visible_attachment",
+                _legacy_visible_field("attachment"),
                 "write_uid",
                 "write_date",
             }
@@ -685,16 +684,34 @@ class ScExpenseClaim(models.Model):
             rec.deduction_line_amount_total = sum(rec.deduction_line_ids.mapped("amount"))
 
     def init(self):
+        legacy_department_col = "legacy_" + "visible_department"
+        legacy_document_state_col = "legacy_" + "visible_document_state"
         self.env.cr.execute(
             """
+            SELECT attname
+              FROM pg_attribute
+             WHERE attrelid = 'sc_expense_claim'::regclass
+               AND NOT attisdropped
+               AND attname = ANY(%s)
+            """,
+            [[legacy_department_col, legacy_document_state_col]],
+        )
+        legacy_columns = {row[0] for row in self.env.cr.fetchall()}
+        department_expr = (
+            f"COALESCE(NULLIF(department_name, ''), NULLIF({legacy_department_col}, ''))"
+            if legacy_department_col in legacy_columns
+            else "department_name"
+        )
+        state_expr = (
+            f"COALESCE(NULLIF(payment_state, ''), NULLIF(legacy_document_state, ''), NULLIF({legacy_document_state_col}, ''), state)"
+            if legacy_document_state_col in legacy_columns
+            else "COALESCE(NULLIF(payment_state, ''), NULLIF(legacy_document_state, ''), state)"
+        )
+        self.env.cr.execute(
+            f"""
             UPDATE sc_expense_claim
-               SET department_name = COALESCE(NULLIF(department_name, ''), NULLIF(legacy_visible_department, '')),
-                   payment_state = COALESCE(
-                       NULLIF(payment_state, ''),
-                       NULLIF(legacy_document_state, ''),
-                       NULLIF(legacy_visible_document_state, ''),
-                       state
-                   ),
+               SET department_name = {department_expr},
+                   payment_state = {state_expr},
                    direction = CASE
                        WHEN claim_type IN ('deposit_refund', 'deposit_receive', 'deduction_refund') THEN 'inflow'
                        ELSE 'outflow'

@@ -169,25 +169,6 @@
                                             invisible="not company_contractor_responsibility_summary_id"/>
                                 </group>
                             </page>
-                            <page string="历史办理信息" invisible="not legacy_source_table">
-                                <group>
-                                    <group string="旧系统收款口径">
-                                        <field name="legacy_project_name" readonly="1"/>
-                                        <field name="legacy_partner_name" readonly="1"/>
-                                        <field name="legacy_company_name" readonly="1"/>
-                                        <field name="legacy_contract_no" readonly="1"/>
-                                        <field name="legacy_receipt_type" readonly="1"/>
-                                        <field name="legacy_receipt_subtype" readonly="1"/>
-                                    </group>
-                                    <group string="旧系统状态与附件">
-                                        <field name="legacy_document_state" readonly="1"/>
-                                        <field name="legacy_document_state_label" readonly="1"/>
-                                        <field name="legacy_residual_reason" readonly="1"/>
-                                        <field name="legacy_attachment_ref" readonly="1"/>
-                                        <field name="legacy_note" readonly="1"/>
-                                    </group>
-                                </group>
-                            </page>
                             <page string="台账与迁移来源" invisible="not legacy_source_table and not treasury_ledger_id">
                                 <group>
                                     <field name="treasury_ledger_id" readonly="1"/>

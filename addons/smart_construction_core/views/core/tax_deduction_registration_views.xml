@@ -141,13 +141,6 @@
                                             invisible="not company_contractor_responsibility_summary_id"/>
                                 </group>
                             </page>
-                            <page string="历史办理信息" invisible="source_origin != 'legacy'">
-                                <group>
-                                    <field name="legacy_visible_project_name" readonly="1"/>
-                                    <field name="partner_name" readonly="1"/>
-                                    <field name="legacy_document_state" readonly="1"/>
-                                </group>
-                            </page>
                             <page string="迁移来源" invisible="source_origin != 'legacy'">
                                 <group>
                                     <field name="legacy_source_model" readonly="1"/>

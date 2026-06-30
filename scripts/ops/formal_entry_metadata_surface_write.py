@@ -44,7 +44,7 @@ EXCLUDE_PREFIXES = (
     "payment.transaction",
 )
 ENTRY_FIELDS = ("source_created_by", "source_created_at")
-ACCEPTED_ENTRY_FIELDS = ("user_acceptance_creator", "user_acceptance_created_at")
+ACCEPTED_ENTRY_FIELDS = ("settlement_acceptance_creator", "settlement_acceptance_created_at")
 ENTRY_PAIRS = (
     ("legacy_source_created_by", "legacy_source_created_at"),
     ("creator_name", "created_time"),
@@ -192,10 +192,10 @@ def sync_from_accepted_entry_fields(Model):
         updated = 0
         for record in Model.search([]):
             vals = {}
-            creator = clean(record.user_acceptance_creator)
+            creator = clean(record.settlement_acceptance_creator)
             if creator and clean(record.source_created_by) != creator:
                 vals["source_created_by"] = creator
-            created_at = record.user_acceptance_created_at
+            created_at = record.settlement_acceptance_created_at
             if created_at and not record.source_created_at:
                 vals["source_created_at"] = created_at
             if vals:
@@ -205,25 +205,25 @@ def sync_from_accepted_entry_fields(Model):
     query = sql.SQL(
         """
         UPDATE {table} AS t
-           SET source_created_by = COALESCE(NULLIF(BTRIM(t.user_acceptance_creator), ''), NULLIF(BTRIM(t.source_created_by), '')),
+           SET source_created_by = COALESCE(NULLIF(BTRIM(t.settlement_acceptance_creator), ''), NULLIF(BTRIM(t.source_created_by), '')),
                source_created_at = COALESCE(
                    CASE
-                     WHEN NULLIF(BTRIM(t.user_acceptance_created_at), '') ~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}'
-                     THEN NULLIF(BTRIM(t.user_acceptance_created_at), '')::timestamp
+                     WHEN NULLIF(BTRIM(t.settlement_acceptance_created_at), '') ~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}'
+                     THEN NULLIF(BTRIM(t.settlement_acceptance_created_at), '')::timestamp
                      ELSE NULL
                    END,
                    t.source_created_at
                )
          WHERE (
-                NULLIF(BTRIM(t.user_acceptance_creator), '') IS NOT NULL
-            AND COALESCE(NULLIF(BTRIM(t.source_created_by), ''), '') <> NULLIF(BTRIM(t.user_acceptance_creator), '')
+                NULLIF(BTRIM(t.settlement_acceptance_creator), '') IS NOT NULL
+            AND COALESCE(NULLIF(BTRIM(t.source_created_by), ''), '') <> NULLIF(BTRIM(t.settlement_acceptance_creator), '')
          )
             OR (
-                t.user_acceptance_created_at IS NOT NULL
-            AND NULLIF(BTRIM(t.user_acceptance_created_at), '') ~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}'
+                t.settlement_acceptance_created_at IS NOT NULL
+            AND NULLIF(BTRIM(t.settlement_acceptance_created_at), '') ~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}'
             AND (
                    t.source_created_at IS NULL
-                OR t.source_created_at <> NULLIF(BTRIM(t.user_acceptance_created_at), '')::timestamp
+                OR t.source_created_at <> NULLIF(BTRIM(t.settlement_acceptance_created_at), '')::timestamp
             )
          )
         """

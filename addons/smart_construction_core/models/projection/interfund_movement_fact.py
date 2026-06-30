@@ -86,7 +86,7 @@ class ScInterfundMovementFact(models.Model):
     legacy_source_model = fields.Char(string="历史来源模型", readonly=True, index=True)
     legacy_source_table = fields.Char(string="历史来源表", readonly=True, index=True)
     legacy_record_id = fields.Char(string="历史记录ID", readonly=True, index=True)
-    legacy_visible_note = fields.Text(string="历史可见说明", readonly=True)
+    source_note = fields.Text(string="来源说明", readonly=True)
 
     def _raise_readonly_projection(self):
         raise UserError("借款还款与调拨明细是只读汇总，请从来源业务单据维护数据。")
@@ -216,7 +216,7 @@ class ScInterfundMovementFact(models.Model):
             "来源单号：%s" % source_no if source_no else False,
             "付款账户：%s" % self.source_account_name if self.source_account_name else False,
             "收款账户：%s" % self.target_account_name if self.target_account_name else False,
-            self.legacy_visible_note,
+            self.source_note,
         ]
         context.setdefault("default_note", "\n".join(part for part in note_parts if part))
         if self.source_account_id:
@@ -339,7 +339,7 @@ class ScInterfundMovementFact(models.Model):
                         'sc.fund.account.operation' AS source_model,
                         op.id AS source_res_id,
                         op.name AS source_record_name,
-                        op.legacy_visible_document_no AS source_document_no,
+                        op.name AS source_document_no,
                         '账户间资金往来' AS source_menu_hint,
                         op.operation_date AS document_date,
                         op.company_id,
@@ -353,14 +353,14 @@ class ScInterfundMovementFact(models.Model):
                         NULL::integer AS partner_id,
                         NULL::varchar AS partner_name,
                         op.source_account_id,
-                        COALESCE(src.display_name, op.legacy_visible_account_name) AS source_account_name,
+                        src.display_name AS source_account_name,
                         op.target_account_id,
-                        COALESCE(dst.display_name, op.legacy_visible_counterparty_account_name) AS target_account_name,
+                        dst.display_name AS target_account_name,
                         op.state,
                         op.legacy_source_model,
                         op.legacy_source_table,
                         op.legacy_record_id,
-                        COALESCE(op.legacy_visible_reason, op.operation_reason, op.legacy_visible_note) AS legacy_visible_note
+                        COALESCE(op.operation_reason, op.note) AS source_note
                     FROM sc_fund_account_operation op
                     LEFT JOIN sc_fund_account src ON src.id = op.source_account_id
                     LEFT JOIN sc_fund_account dst ON dst.id = op.target_account_id
@@ -440,16 +440,16 @@ class ScInterfundMovementFact(models.Model):
                         END AS target_project_name,
                         loan.project_id,
                         loan.partner_id,
-                        COALESCE(rp.name, loan.legacy_visible_counterparty_name, loan.legacy_counterparty_name) AS partner_name,
+                        COALESCE(rp.name, loan.counterparty_name, loan.legacy_counterparty_name) AS partner_name,
                         NULL::integer AS source_account_id,
-                        COALESCE(loan.legacy_visible_payer_unit, loan.legacy_visible_loan_account, loan.legacy_visible_company_name) AS source_account_name,
+                        COALESCE(loan.payer_unit, loan.loan_account, loan.company_name) AS source_account_name,
                         NULL::integer AS target_account_id,
-                        COALESCE(loan.legacy_visible_receiver_unit, loan.legacy_visible_receipt_account, loan.legacy_visible_counterparty_account) AS target_account_name,
+                        COALESCE(loan.receiver_unit, loan.receipt_account, loan.counterparty_account, loan.repayment_account) AS target_account_name,
                         loan.state,
                         loan.legacy_source_model,
                         loan.legacy_source_table,
                         loan.legacy_record_id,
-                        COALESCE(loan.purpose, loan.legacy_visible_note) AS legacy_visible_note
+                        COALESCE(loan.purpose, loan.note) AS source_note
                     FROM sc_financing_loan loan
                     LEFT JOIN project_names p ON p.id = loan.project_id
                     LEFT JOIN res_partner rp ON rp.id = loan.partner_id
@@ -536,7 +536,7 @@ class ScInterfundMovementFact(models.Model):
                         END AS target_project_name,
                         claim.project_id,
                         claim.partner_id,
-                        COALESCE(rp.name, claim.payee, claim.legacy_visible_borrower) AS partner_name,
+                        COALESCE(rp.name, claim.payee, claim.applicant_name) AS partner_name,
                         NULL::integer AS source_account_id,
                         claim.payment_account_name AS source_account_name,
                         NULL::integer AS target_account_id,
@@ -545,7 +545,7 @@ class ScInterfundMovementFact(models.Model):
                         claim.legacy_source_model,
                         claim.legacy_source_table,
                         claim.legacy_record_id,
-                        COALESCE(claim.summary, claim.legacy_visible_summary, claim.legacy_visible_note) AS legacy_visible_note
+                        COALESCE(claim.summary, claim.note) AS source_note
                     FROM sc_expense_claim claim
                     LEFT JOIN project_names p ON p.id = claim.project_id
                     LEFT JOIN res_partner rp ON rp.id = claim.partner_id

@@ -50,6 +50,12 @@ ALLOWED_DIRECT_CONTRACT_WRITERS = {
         "reason": "initializes customer-specific menu and form preferences",
         "expected_source": "smart_construction_custom.*preference",
     },
+    "addons/smart_construction_core/models/support/formal_list_contract_sync.py": {
+        "layer": "L2",
+        "boundary": "industry_formal_list_contract_projection",
+        "reason": "upgrades released industry list contracts from transition fields to formal product fields",
+        "expected_source": "smart_construction_core.formal_settlement_list_contract_sync",
+    },
 }
 ALLOWED_APPROVAL_POLICY_RUNTIME_WRITERS = {
     "addons/smart_construction_core/handlers/approval_policy_configuration.py": {

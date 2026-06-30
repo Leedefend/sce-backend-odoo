@@ -17,27 +17,24 @@ VIEW_XMLID = "smart_construction_core.view_sc_receipt_income_engineering_progres
 ACTION_NAME = "工程进度款收入登记"
 MODEL_NAME = "sc.receipt.income"
 EXPECTED_DOMAIN = [
-    ("source_kind", "=", "receipt_income"),
-    ("legacy_source_model", "=", "sc.legacy.receipt.income.fact"),
-    ("legacy_source_table", "=", "C_JFHKLR"),
-    ("source_family", "=", "engineering_progress_receipt_visible"),
+    ("business_category_id.code", "=", "finance.receipt.income.progress"),
 ]
 EXPECTED_FIELDS = [
-    ("p1_visible_06fa8c6f628f", "单据状态"),
-    ("p1_visible_3e7255522b33", "项目名称"),
-    ("p1_visible_00381a68b952", "往来单位"),
-    ("p1_visible_8cd973ab9373", "承包单位"),
-    ("p1_visible_205fcc1bc5d4", "施工管理合同"),
-    ("p1_visible_8fa8662ad38f", "单据编号"),
-    ("p1_visible_71e47f617269", "填写人"),
-    ("p1_visible_49a5d541678c", "收款账户"),
-    ("p1_visible_2ff90909b29b", "进账金额"),
-    ("p1_visible_807b71479e35", "收入类别"),
-    ("p1_visible_0d20172efa91", "收款时间"),
-    ("p1_visible_e0361480e3a5", "备注"),
-    ("p1_visible_99f6fe6c41ad", "附件"),
-    ("p1_visible_ee6a4d9e2956", "录入人"),
-    ("p1_visible_dfc25d77dc39", "录入时间"),
+    ("state", "单据状态"),
+    ("project_id", "项目名称"),
+    ("partner_id", "往来单位"),
+    ("company_id", "承包单位"),
+    ("legacy_contract_no", "施工管理合同"),
+    ("name", "单据编号"),
+    ("creator_name", "填写人"),
+    ("receiving_account", "收款账户"),
+    ("amount", "进账金额"),
+    ("income_category", "收入类别"),
+    ("date_receipt", "收款时间"),
+    ("note", "备注"),
+    ("legacy_attachment_ref", "附件"),
+    ("creator_name", "录入人"),
+    ("created_time", "录入时间"),
 ]
 
 
@@ -119,7 +116,7 @@ records = Model.search(EXPECTED_DOMAIN, order="id desc", limit=50)
 blank_counts: dict[str, int] = {}
 for field_name, _label in EXPECTED_FIELDS:
     blank_counts[field_name] = sum(1 for record in records if not clean(record[field_name]))
-critical_fields = ["p1_visible_8fa8662ad38f", "p1_visible_3e7255522b33", "p1_visible_2ff90909b29b", "p1_visible_0d20172efa91"]
+critical_fields = ["name", "project_id", "amount", "date_receipt"]
 critical_blank = {name: blank_counts[name] for name in critical_fields if blank_counts[name] == len(records)}
 if critical_blank:
     fail("critical_visible_fields_all_blank", {"critical_blank": critical_blank, "sample_size": len(records)})

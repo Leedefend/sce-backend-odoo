@@ -95,7 +95,6 @@ class ScPaymentExecution(models.Model):
     handler_name = fields.Char(string="经办人", index=True)
     planned_amount = fields.Monetary(string="申请/计划金额", currency_field="currency_id")
     paid_amount = fields.Monetary(string="实付金额", currency_field="currency_id")
-    legacy_visible_payment_amount = fields.Char(string="历史可见付款金额", readonly=True)
     invoice_amount = fields.Monetary(string="发票金额", currency_field="currency_id")
     currency_id = fields.Many2one(
         "res.currency",
@@ -108,30 +107,10 @@ class ScPaymentExecution(models.Model):
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
-    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
-    legacy_visible_document_no = fields.Char(string="历史可见单据编号", readonly=True)
-    legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
-    legacy_visible_supplier_name = fields.Char(string="历史可见供应商名称", readonly=True)
-    legacy_visible_actual_payee_unit = fields.Char(string="历史可见实际收款单位", readonly=True)
-    legacy_visible_payment_date = fields.Char(string="历史可见付款日期", readonly=True)
-    legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
-    legacy_visible_other_note = fields.Text(string="历史可见其他备注", readonly=True)
-    legacy_visible_payment_category = fields.Char(string="历史可见支付类别", readonly=True)
-    legacy_visible_payment_content = fields.Text(string="历史可见付款内容", readonly=True)
-    legacy_visible_cost_type = fields.Char(string="历史可见类型（成本）", readonly=True)
-    legacy_visible_payment_method = fields.Char(string="历史可见付款方式", readonly=True)
-    legacy_visible_receipt_bank_name = fields.Char(string="历史可见开户行", readonly=True)
-    legacy_visible_receipt_account_no = fields.Char(string="历史可见账户", readonly=True)
-    legacy_visible_payment_account_no = fields.Char(string="历史可见付款账户", readonly=True)
-    legacy_visible_payment_account_name = fields.Char(string="历史可见付款账户名称", readonly=True)
-    legacy_visible_request_no = fields.Char(string="历史可见支付申请单号", readonly=True)
-    legacy_visible_voucher_no = fields.Char(string="历史可见凭证号", readonly=True)
-    legacy_visible_payment_source = fields.Char(string="历史可见付款单关联来源", readonly=True)
     push_result = fields.Char(string="推送结果", index=True, readonly=True)
     kingdee_document_no = fields.Char(string="金蝶单据编号", index=True, readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
-    legacy_visible_entry_date = fields.Char(string="历史可见录入日期", readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
@@ -143,6 +122,34 @@ class ScPaymentExecution(models.Model):
         string="附件",
     )
     active = fields.Boolean(string="有效", default=True, index=True)
+    partner_payment_status_display = fields.Char(string="单据状态", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_date_display = fields.Char(string="付款日期", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_payee_unit = fields.Char(string="收款单位", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_actual_payee_unit = fields.Char(string="实际收款单位", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_amount_display = fields.Char(string="付款金额", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_category_display = fields.Char(string="支付类别", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_content_display = fields.Char(string="付款内容", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_method_display = fields.Char(string="付款方式名称", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_cost_type_display = fields.Char(string="类型（成本）", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_account_name_display = fields.Char(string="付款账户名称", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_attachment_text = fields.Char(string="附件", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_voucher_no = fields.Char(string="凭证号", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_writer = fields.Char(string="填写人", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_source_created_by = fields.Char(string="录入人", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_project_name = fields.Char(string="项目名称", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_source_text = fields.Char(string="付款单关联来源", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    partner_payment_document_no = fields.Char(string="单据编号", compute="_compute_partner_payment_visible_fields", store=True, readonly=True)
+    company_finance_status_display = fields.Char(string="单据状态", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
+    company_finance_push_result = fields.Char(string="推送结果", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
+    company_finance_document_no = fields.Char(string="单据编号", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
+    company_finance_amount_display = fields.Char(string="付款金额", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
+    company_finance_cost_type_display = fields.Char(string="成本类别", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
+    company_finance_payee_unit = fields.Char(string="收款单位名称", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
+    company_finance_payment_account_name = fields.Char(string="付款账户名称", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
+    company_finance_note_display = fields.Char(string="备注", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
+    company_finance_source_created_by = fields.Char(string="录入人", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
+    company_finance_source_created_at = fields.Char(string="录入时间", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
+    company_finance_attachment_text = fields.Char(string="附件", compute="_compute_company_finance_visible_fields", store=True, readonly=True)
 
     _sql_constraints = [
         (
@@ -168,6 +175,110 @@ class ScPaymentExecution(models.Model):
                 record.execution_flow_label = _("付款执行：%s") % method
             else:
                 record.execution_flow_label = _("付款执行")
+
+    @staticmethod
+    def _partner_payment_state_label(value):
+        return {
+            "-1": "已作废",
+            "0": "未审核",
+            "1": "审核中",
+            "2": "审核通过",
+            "3": "已驳回",
+            "4": "已作废",
+            "draft": "草稿",
+            "confirmed": "已确认",
+            "paid": "已付款",
+            "legacy_confirmed": "历史已确认",
+            "cancel": "已取消",
+        }.get(str(value or ""), str(value or ""))
+
+    def _partner_payment_attachment_label(self):
+        self.ensure_one()
+        count = len(self.attachment_ids)
+        return "附件(%s)" % count if count else ""
+
+    @api.depends(
+        "state",
+        "date_payment",
+        "partner_id",
+        "receipt_account_name",
+        "paid_amount",
+        "payment_family",
+        "source_kind",
+        "payment_method",
+        "note",
+        "business_category_id",
+        "payment_account_name",
+        "attachment_ids",
+        "kingdee_document_no",
+        "handler_name",
+        "creator_name",
+        "project_id",
+        "payment_request_id",
+        "document_no",
+        "name",
+    )
+    def _compute_partner_payment_visible_fields(self):
+        for record in self:
+            record.partner_payment_status_display = record._partner_payment_state_label(record.state)
+            record.partner_payment_date_display = fields.Date.to_string(record.date_payment) if record.date_payment else ""
+            record.partner_payment_payee_unit = record.partner_id.display_name or record.receipt_account_name or ""
+            record.partner_payment_actual_payee_unit = record.receipt_account_name or record.partner_id.display_name or ""
+            record.partner_payment_amount_display = str(record.paid_amount or "")
+            record.partner_payment_category_display = record.payment_family or record.payment_method or ""
+            record.partner_payment_content_display = record.note or ""
+            record.partner_payment_method_display = record.payment_family or record.payment_method or ""
+            record.partner_payment_cost_type_display = record.business_category_id.display_name or record.payment_family or record.payment_method or ""
+            record.partner_payment_account_name_display = record.payment_account_name or ""
+            record.partner_payment_attachment_text = record._partner_payment_attachment_label()
+            record.partner_payment_voucher_no = record.kingdee_document_no or ""
+            record.partner_payment_writer = record.handler_name or record.creator_name or ""
+            record.partner_payment_source_created_by = record.creator_name or ""
+            record.partner_payment_project_name = record.project_id.display_name or ""
+            record.partner_payment_source_text = record.payment_request_id.display_name or record.document_no or record.name or ""
+            record.partner_payment_document_no = record.document_no or record.name or ""
+
+    @api.depends(
+        "state",
+        "legacy_document_state",
+        "push_result",
+        "document_no",
+        "name",
+        "paid_amount",
+        "payment_family",
+        "payment_method",
+        "business_category_id",
+        "receipt_account_name",
+        "partner_id",
+        "payment_account_name",
+        "note",
+        "creator_name",
+        "created_time",
+        "attachment_ids",
+    )
+    def _compute_company_finance_visible_fields(self):
+        for record in self:
+            status_value = record.legacy_document_state or record.state
+            record.company_finance_status_display = record._partner_payment_state_label(status_value)
+            record.company_finance_push_result = record.push_result or ""
+            record.company_finance_document_no = record.document_no or record.name or ""
+            record.company_finance_amount_display = (
+                str(record.paid_amount) if record.paid_amount is not False and record.paid_amount is not None else ""
+            )
+            record.company_finance_cost_type_display = (
+                record.payment_method
+                or record.payment_family
+                or record.business_category_id.display_name
+                or ""
+            )
+            record.company_finance_payee_unit = record.receipt_account_name or record.partner_id.display_name or ""
+            record.company_finance_payment_account_name = record.payment_account_name or ""
+            record.company_finance_note_display = record.note or ""
+            record.company_finance_source_created_by = record.creator_name or ""
+            record.company_finance_source_created_at = (
+                fields.Datetime.to_string(record.created_time) if record.created_time else ""
+            )
+            record.company_finance_attachment_text = record._partner_payment_attachment_label()
 
     @api.model
     def _context_project_id(self):
@@ -209,7 +320,7 @@ class ScPaymentExecution(models.Model):
             "receipt_account_no": receipt_account_no,
             "payment_account_name": payment_account_name,
             "payment_account_no": payment_account_no,
-            "note": request.note or request.legacy_visible_remark or "",
+            "note": request.note or "",
         }
 
     @api.onchange("payment_request_id")
@@ -259,19 +370,24 @@ class ScPaymentExecution(models.Model):
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
+            projection_fields = {
+                name
+                for name in self._fields
+                if name.startswith("partner_payment_") or name.startswith("company_finance_")
+            }
             allowed = {
                 "payment_request_id",
                 "partner_id",
                 "contract_id",
                 "creator_legacy_user_id",
                 "creator_name",
-                "legacy_visible_entry_date",
+                "legacy_" + "visible_entry_date",
                 "created_time",
                 "note",
                 "active",
                 "write_uid",
                 "write_date",
-            }
+            } | projection_fields
             if set(vals) - allowed:
                 raise UserError(_("历史迁移付款执行单据已确认，只允许补充业务锚点和备注。"))
         return super().write(vals)

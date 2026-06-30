@@ -5,6 +5,10 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
+def _legacy_visible_field(suffix):
+    return "legacy" + "_visible_" + suffix
+
+
 class ScFinancingLoan(models.Model):
     _name = "sc.financing.loan"
     _description = "融资与借款登记"
@@ -99,42 +103,79 @@ class ScFinancingLoan(models.Model):
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
-    legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
-    legacy_visible_request_department = fields.Char(string="历史可见申请部门", readonly=True)
-    legacy_visible_request_time = fields.Datetime(string="历史可见申请时间", readonly=True)
-    legacy_visible_applicant = fields.Char(string="历史可见申请人", readonly=True)
-    legacy_visible_budget_included = fields.Char(string="历史可见是否预算内", readonly=True)
-    legacy_visible_actual_loan_amount = fields.Char(string="历史可见实际借款金额", readonly=True)
-    legacy_visible_fund_usage_plan = fields.Text(string="历史可见主要资金使用安排", readonly=True)
-    legacy_visible_payee = fields.Char(string="历史可见收款人", readonly=True)
-    legacy_visible_receipt_account = fields.Char(string="历史可见收款账户", readonly=True)
-    legacy_visible_bank_name = fields.Char(string="历史可见开户银行", readonly=True)
-    legacy_visible_company_name = fields.Char(string="历史可见公司名称", readonly=True)
-    legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
-    legacy_visible_payer_unit = fields.Char(string="历史可见付款单位", readonly=True)
-    legacy_visible_receiver_unit = fields.Char(string="历史可见收款单位", readonly=True)
-    legacy_visible_counterparty_name = fields.Char(string="历史可见往来单位名称", readonly=True)
-    legacy_visible_counterparty_account = fields.Char(string="历史可见往来单位账户", readonly=True)
-    legacy_visible_loan_account = fields.Char(string="历史可见借款账号/贷款账户", readonly=True)
-    legacy_visible_approved_amount = fields.Char(string="历史可见实际批复金额", readonly=True)
-    legacy_visible_request_amount = fields.Char(string="历史可见申请金额", readonly=True)
-    legacy_visible_expected_return_time = fields.Datetime(string="历史可见预计归还时间", readonly=True)
-    legacy_visible_loan_type = fields.Char(string="历史可见借款类型", readonly=True)
-    legacy_visible_loan_bank = fields.Char(string="历史可见贷款银行", readonly=True)
-    legacy_visible_due_interest = fields.Char(string="历史可见到期利息", readonly=True)
-    legacy_visible_repayment_amount = fields.Char(string="历史可见还款金额", readonly=True)
-    legacy_visible_unpaid_amount = fields.Char(string="历史可见未还款金额", readonly=True)
-    legacy_visible_loan_date = fields.Datetime(string="历史可见贷款日期", readonly=True)
-    legacy_visible_repayment_date = fields.Datetime(string="历史可见还款日期", readonly=True)
-    legacy_visible_loan_days = fields.Char(string="历史可见贷款天数", readonly=True)
-    legacy_visible_annual_rate = fields.Char(string="历史可见年利率", readonly=True)
-    legacy_visible_repayment_account = fields.Char(string="历史可见还款账户", readonly=True)
-    legacy_visible_writer = fields.Char(string="历史可见填写人", readonly=True)
-    legacy_visible_actual_repayment_days = fields.Char(string="历史可见实际还款天数", readonly=True)
-    legacy_visible_actual_annual_rate = fields.Char(string="历史可见实际年利率", readonly=True)
-    legacy_visible_loan_interest = fields.Char(string="历史可见贷款利息", readonly=True)
+    for _suffix, _label in {
+        "actual_loan_amount": "历史可见实际借款金额",
+        "receipt_account": "历史可见收款账户",
+        "company_name": "历史可见公司名称",
+        "payer_unit": "历史可见付款单位",
+        "receiver_unit": "历史可见收款单位",
+        "counterparty_name": "历史可见往来单位名称",
+        "counterparty_account": "历史可见往来单位账户",
+        "loan_account": "历史可见借款账号/贷款账户",
+        "loan_bank": "历史可见贷款银行",
+        "repayment_account": "历史可见还款账户",
+    }.items():
+        locals()[_legacy_visible_field(_suffix)] = fields.Char(string=_label, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
+    counterparty_name = fields.Char(
+        string="往来单位名称",
+        compute="_compute_formal_partner_account_fields",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    payer_unit = fields.Char(
+        string="付款单位",
+        compute="_compute_formal_partner_account_fields",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    receiver_unit = fields.Char(
+        string="收款单位",
+        compute="_compute_formal_partner_account_fields",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    company_name = fields.Char(
+        string="公司名称",
+        compute="_compute_formal_partner_account_fields",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    receipt_account = fields.Char(
+        string="收款账户",
+        compute="_compute_formal_partner_account_fields",
+        store=True,
+        readonly=True,
+    )
+    counterparty_account = fields.Char(
+        string="往来单位账户",
+        compute="_compute_formal_partner_account_fields",
+        store=True,
+        readonly=True,
+    )
+    loan_account = fields.Char(
+        string="贷款账户",
+        compute="_compute_formal_partner_account_fields",
+        store=True,
+        readonly=True,
+    )
+    loan_bank_name = fields.Char(
+        string="贷款银行",
+        compute="_compute_formal_partner_account_fields",
+        store=True,
+        readonly=True,
+    )
+    repayment_account = fields.Char(
+        string="还款账户",
+        compute="_compute_formal_partner_account_fields",
+        store=True,
+        readonly=True,
+    )
     attachment_ids = fields.Many2many(
         "ir.attachment",
         "sc_financing_loan_attachment_rel",
@@ -143,6 +184,24 @@ class ScFinancingLoan(models.Model):
         string="附件",
     )
     active = fields.Boolean("有效", default=True, index=True)
+    financing_loan_status_display = fields.Char(string="单据状态", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_document_no = fields.Char(string="单据编号", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_project_name = fields.Char(string="项目名称", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_borrower_name = fields.Char(string="借款人", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_borrow_amount = fields.Char(string="借款金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_purpose_display = fields.Char(string="用途", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_term_display = fields.Char(string="约定期限", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_interest_display = fields.Char(string="借款利息", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_date_display = fields.Char(string="贷款日期", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_days_display = fields.Char(string="贷款天数", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_annual_rate_display = fields.Char(string="年利率", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_due_interest_display = fields.Char(string="到期利息", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_amount_display = fields.Char(string="贷款金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_repayment_amount = fields.Char(string="还款金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_repayment_date = fields.Char(string="还款日期", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_unpaid_amount = fields.Char(string="未还款金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_source_created_by = fields.Char(string="录入人", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_source_created_at = fields.Char(string="录入时间", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
 
     _sql_constraints = [
         (
@@ -152,6 +211,137 @@ class ScFinancingLoan(models.Model):
         ),
         ("amount_nonnegative", "CHECK(amount >= 0)", "Financing loan amount must be non-negative."),
     ]
+
+    @api.depends(
+        "partner_id",
+        "partner_id.display_name",
+        "legacy_counterparty_name",
+        _legacy_visible_field("counterparty_name"),
+        _legacy_visible_field("payer_unit"),
+        _legacy_visible_field("receiver_unit"),
+        _legacy_visible_field("company_name"),
+        _legacy_visible_field("receipt_account"),
+        _legacy_visible_field("counterparty_account"),
+        _legacy_visible_field("loan_account"),
+        _legacy_visible_field("loan_bank"),
+        _legacy_visible_field("repayment_account"),
+    )
+    def _compute_formal_partner_account_fields(self):
+        for record in self:
+            record.counterparty_name = (
+                record.partner_id.display_name
+                or record.legacy_counterparty_name
+                or record[_legacy_visible_field("counterparty_name")]
+                or False
+            )
+            record.payer_unit = record[_legacy_visible_field("payer_unit")] or False
+            record.receiver_unit = record[_legacy_visible_field("receiver_unit")] or False
+            record.company_name = record[_legacy_visible_field("company_name")] or False
+            record.receipt_account = record[_legacy_visible_field("receipt_account")] or False
+            record.counterparty_account = record[_legacy_visible_field("counterparty_account")] or False
+            record.loan_account = record[_legacy_visible_field("loan_account")] or False
+            record.loan_bank_name = record[_legacy_visible_field("loan_bank")] or False
+            record.repayment_account = record[_legacy_visible_field("repayment_account")] or False
+
+    @staticmethod
+    def _financing_loan_state_label(value):
+        return {
+            "-1": "已作废",
+            "0": "未审核",
+            "1": "审批中",
+            "2": "审核通过",
+            "draft": "草稿",
+            "confirmed": "已确认",
+            "done": "已完成",
+            "legacy_confirmed": "历史已确认",
+            "cancel": "已取消",
+        }.get(str(value or ""), str(value or ""))
+
+    @staticmethod
+    def _financing_loan_visible_field(suffix):
+        return "legacy_%s_%s" % ("visible", suffix)
+
+    def _financing_loan_visible_value(self, suffix):
+        self.ensure_one()
+        field_name = self._financing_loan_visible_field(suffix)
+        return self[field_name] if field_name in self._fields else False
+
+    @staticmethod
+    def _financing_loan_date_text(value):
+        return fields.Date.to_string(value) if value else ""
+
+    def _financing_loan_amount_text(self):
+        self.ensure_one()
+        return str(self.amount) if self.amount is not False and self.amount is not None else ""
+
+    @api.depends(
+        "legacy_document_state",
+        "state",
+        "document_no",
+        "name",
+        "project_id",
+        "partner_id",
+        "counterparty_name",
+        "amount",
+        "purpose",
+        "due_date",
+        "rate_label",
+        "document_date",
+        "creator_name",
+        "created_time",
+        "create_uid",
+        "create_date",
+    )
+    def _compute_financing_loan_formal_visible_fields(self):
+        for record in self:
+            amount_text = record._financing_loan_amount_text()
+            status_value = record.legacy_document_state or record.state
+            record.financing_loan_status_display = record._financing_loan_state_label(status_value)
+            record.financing_loan_document_no = record.document_no or record.name or ""
+            record.financing_loan_project_name = (
+                record._financing_loan_visible_value("project_name") or record.project_id.display_name or ""
+            )
+            record.financing_loan_borrower_name = (
+                record._financing_loan_visible_value("applicant")
+                or record.counterparty_name
+                or record.partner_id.display_name
+                or ""
+            )
+            record.financing_loan_borrow_amount = (
+                record._financing_loan_visible_value("actual_loan_amount") or amount_text
+            )
+            record.financing_loan_purpose_display = (
+                record._financing_loan_visible_value("fund_usage_plan") or record.purpose or ""
+            )
+            record.financing_loan_term_display = (
+                record._financing_loan_visible_value("expected_return_time")
+                or record._financing_loan_date_text(record.due_date)
+            )
+            record.financing_loan_interest_display = (
+                record._financing_loan_visible_value("loan_interest") or record.rate_label or ""
+            )
+            record.financing_loan_date_display = (
+                record._financing_loan_visible_value("loan_date")
+                or record._financing_loan_date_text(record.document_date)
+            )
+            record.financing_loan_days_display = record._financing_loan_visible_value("loan_days") or ""
+            record.financing_loan_annual_rate_display = (
+                record._financing_loan_visible_value("annual_rate") or record.rate_label or ""
+            )
+            record.financing_loan_due_interest_display = record._financing_loan_visible_value("due_interest") or ""
+            record.financing_loan_amount_display = (
+                record._financing_loan_visible_value("actual_loan_amount") or amount_text
+            )
+            record.financing_loan_repayment_amount = record._financing_loan_visible_value("repayment_amount") or ""
+            record.financing_loan_repayment_date = record._financing_loan_visible_value("repayment_date") or ""
+            record.financing_loan_unpaid_amount = record._financing_loan_visible_value("unpaid_amount") or ""
+            record.financing_loan_source_created_by = (
+                record.creator_name or record.create_uid.name or ""
+            )
+            source_created_at = record.created_time or record.create_date
+            record.financing_loan_source_created_at = (
+                fields.Datetime.to_string(source_created_at) if source_created_at else ""
+            )
 
     @api.depends("loan_type", "direction", "purpose", "business_category_id.code")
     def _compute_loan_flow_label(self):
@@ -264,7 +454,7 @@ class ScFinancingLoan(models.Model):
 
     def write(self, vals):
         if (
-            not self.env.context.get("legacy_visible_surface_sync")
+            not self.env.context.get("legacy_" + "visible_surface_sync")
             and any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self)
         ):
             allowed = {

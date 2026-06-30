@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import json
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
@@ -98,6 +100,42 @@ class TenderBid(models.Model):
     legacy_visible_registration_time = fields.Datetime("历史登记时间", readonly=True)
     legacy_visible_creator_name = fields.Char("历史录入人", readonly=True)
     legacy_attachment_ref = fields.Char("历史附件引用", readonly=True, index=True)
+    tender_bid_status_display = fields.Char(
+        "单据状态",
+        compute="_compute_tender_bid_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    tender_bid_document_no = fields.Char(
+        "单据编号",
+        compute="_compute_tender_bid_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    tender_bid_project_name = fields.Char(
+        "项目名称",
+        compute="_compute_tender_bid_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    tender_bid_registration_time = fields.Datetime(
+        "登记时间",
+        compute="_compute_tender_bid_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    tender_bid_push_result = fields.Char(
+        "推送结果",
+        compute="_compute_tender_bid_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
+    tender_bid_source_created_by = fields.Char(
+        "录入人",
+        compute="_compute_tender_bid_formal_visible_fields",
+        store=True,
+        readonly=True,
+    )
 
     _sql_constraints = [
         ("legacy_tender_bid_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用投标事实已迁移为投标记录。"),
@@ -115,6 +153,60 @@ class TenderBid(models.Model):
                 project_name if project_name and project_name != title else "",
             ]
             record.display_name = " / ".join(part for part in parts if part) or bid_no or "投标记录"
+
+    def _state_label(self, state):
+        return dict(self._fields["state"].selection).get(state, state or "")
+
+    @api.model
+    def _legacy_document_state_label(self, state):
+        return {
+            "-1": "已作废",
+            "0": "未审核",
+            "1": "审核中",
+            "2": "审核通过",
+            "3": "已驳回",
+            "4": "已作废",
+        }.get(state, state or "")
+
+    @api.depends(
+        "name",
+        "state",
+        "project_id.display_name",
+        "legacy_visible_document_state",
+        "legacy_visible_project_name",
+        "legacy_visible_registration_time",
+        "legacy_visible_creator_name",
+        "source_created_by",
+        "source_created_at",
+        "create_date",
+        "create_uid.name",
+    )
+    def _compute_tender_bid_formal_visible_fields(self):
+        for record in self:
+            legacy_state = (record.legacy_visible_document_state or "").strip()
+            record.tender_bid_status_display = (
+                record._legacy_document_state_label(legacy_state)
+                if legacy_state
+                else record._state_label(record.state)
+            )
+            record.tender_bid_document_no = record.name or ""
+            record.tender_bid_project_name = (
+                record.legacy_visible_project_name
+                or (record.project_id.display_name if record.project_id else "")
+                or ""
+            )
+            record.tender_bid_registration_time = (
+                record.legacy_visible_registration_time
+                or record.source_created_at
+                or record.create_date
+            )
+            record.tender_bid_push_result = record._state_label(record.state)
+            record.tender_bid_source_created_by = (
+                record.legacy_visible_creator_name
+                or record.source_created_by
+                or (record.create_uid.name if record.create_uid else "")
+                or ""
+            )
 
     @api.model
     def _context_project_id(self):
@@ -522,6 +614,188 @@ class TenderGuarantee(models.Model):
     currency_id = fields.Many2one(
         "res.currency", related="bid_id.currency_id", store=True, readonly=True
     )
+    deposit_status_display = fields.Char("状态", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_push_result = fields.Char("推送结果", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_kingdee_document_no = fields.Char("金蝶单据编号", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_document_no = fields.Char("单据编号", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_bid_project_title = fields.Char("投标项目名称", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_bid_project_name = fields.Char("投标项目", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_engineering_project_name = fields.Char("工程项目", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_type_display = fields.Char("保证金类型", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_company_name = fields.Char("所属公司", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_amount_display = fields.Char("保证金金额", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_return_date = fields.Char("退回日期", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_return_amount = fields.Char("退回金额", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_return_project = fields.Char("退回项目", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_return_document_no = fields.Char("退回单编号", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_return_account = fields.Char("退回账户", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_project_name = fields.Char("项目名称", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_transfer_unit = fields.Char("转款单位", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_remittance_method = fields.Char("汇款方式", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_receipt_account_name = fields.Char("收款账户名称", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_received_amount_display = fields.Char("已退保证金金额", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_receipt_document_no = fields.Char("收保证金单号", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_unit_name = fields.Char("单位", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_refund_amount = fields.Char("退还金额", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_receipt_account_no = fields.Char("收款账号", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_receipt_bank_name = fields.Char("收款开户行", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_refund_account_no = fields.Char("退还账号", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_refund_bank_name = fields.Char("退还开户行", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_returned_amount_display = fields.Char("已退金额", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_unreturned_amount_display = fields.Char("未退金额", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_need_return_text = fields.Char("是否需要退回", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_payee_unit = fields.Char("收款单位", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_payment_account = fields.Char("支付账户", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_note_display = fields.Char("备注", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_attachment_text = fields.Char("附件", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_source_created_by = fields.Char("录入人", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+    deposit_source_created_at = fields.Char("录入时间", compute="_compute_deposit_return_visible_fields", store=True, readonly=True)
+
+    def _deposit_return_payload_by_id(self):
+        payload_by_id = {}
+        ids = [record.id for record in self if record.id]
+        if not ids:
+            return payload_by_id
+        try:
+            self.env.cr.execute("SELECT to_regclass('public.sc_p1_legacy_visible_alias_payload')")
+            exists = self.env.cr.fetchone()
+            if not exists or not exists[0]:
+                return payload_by_id
+            self.env.cr.execute(
+                """
+                SELECT res_id, payload
+                  FROM sc_p1_legacy_visible_alias_payload
+                 WHERE model = %s AND res_id = ANY(%s)
+                """,
+                [self._name, ids],
+            )
+            for res_id, payload in self.env.cr.fetchall():
+                if isinstance(payload, str):
+                    try:
+                        payload = json.loads(payload)
+                    except ValueError:
+                        payload = {}
+                payload_by_id[int(res_id)] = payload if isinstance(payload, dict) else {}
+        except Exception:
+            return payload_by_id
+        return payload_by_id
+
+    @staticmethod
+    def _deposit_return_payload_value(payload, label):
+        value = payload.get(label) if isinstance(payload, dict) else ""
+        return "" if value is None else str(value)
+
+    @staticmethod
+    def _deposit_return_state_label(value):
+        labels = {
+            "-1": "已作废",
+            "0": "未审核",
+            "1": "审核中",
+            "2": "审核通过",
+            "3": "已驳回",
+            "4": "已作废",
+            "draft": "草稿",
+            "confirmed": "已确认",
+            "cancel": "已取消",
+        }
+        return labels.get(str(value or ""), str(value or ""))
+
+    @staticmethod
+    def _deposit_return_amount_text(value):
+        if value in (False, None, ""):
+            return ""
+        if float(value).is_integer():
+            return str(int(value))
+        return str(value)
+
+    @staticmethod
+    def _deposit_return_clean_note(value):
+        note = str(value or "").strip()
+        if not note:
+            return ""
+        if note.startswith("历史投标保证金"):
+            return ""
+        if "old_id=" in note and "; " in note:
+            suffix = note.rsplit("; ", 1)[-1].strip()
+            return suffix if suffix and "old_id=" not in suffix else note
+        return note
+
+    def _deposit_return_attachment_text(self, payload_value):
+        value = str(payload_value or self.legacy_visible_attachment or "").strip()
+        if value:
+            compact = value.replace("-", "").replace("_", "")
+            if len(compact) == 32 and compact.isalnum():
+                return "附件(1)"
+            return value
+        count = len(self.attachment_ids)
+        return "附件(%s)" % count if count else ""
+
+    @api.depends(
+        "legacy_visible_document_state",
+        "legacy_visible_document_no",
+        "legacy_visible_project_name",
+        "legacy_visible_creator_name",
+        "legacy_visible_created_time",
+        "legacy_visible_attachment",
+        "project_id",
+        "type",
+        "amount",
+        "state",
+        "receipt_bank_account_id",
+        "receipt_bank_account_id.partner_id",
+        "bank_account_id",
+        "remark",
+        "attachment_ids",
+    )
+    def _compute_deposit_return_visible_fields(self):
+        payload_by_id = self._deposit_return_payload_by_id()
+        type_labels = dict(self._fields["type"].selection)
+        for record in self:
+            payload = payload_by_id.get(record.id, {})
+            value = lambda label: record._deposit_return_payload_value(payload, label)
+            project_name = record.legacy_visible_project_name or record.project_id.display_name or ""
+            status = value("状态") or record._deposit_return_state_label(record.legacy_visible_document_state or record.state)
+            payment_account = value("支付账户") or record.bank_account_id.acc_number or ""
+            payee_unit = value("收款单位") or record.receipt_bank_account_id.partner_id.display_name or ""
+            created_at = value("录入时间")
+            if not created_at and record.legacy_visible_created_time:
+                created_at = fields.Datetime.to_string(record.legacy_visible_created_time)
+            record.deposit_status_display = status
+            record.deposit_push_result = value("推送结果")
+            record.deposit_kingdee_document_no = value("金蝶单据编号")
+            record.deposit_document_no = value("单据编号") or record.legacy_visible_document_no or ""
+            record.deposit_bid_project_title = value("投标项目名称") or project_name
+            record.deposit_bid_project_name = value("投标项目") or project_name
+            record.deposit_engineering_project_name = value("工程项目") or project_name
+            record.deposit_type_display = value("保证金类型") or type_labels.get(record.type, "") or ""
+            record.deposit_company_name = value("所属公司")
+            record.deposit_amount_display = value("保证金金额") or record._deposit_return_amount_text(record.amount)
+            record.deposit_return_date = value("退回日期")
+            record.deposit_return_amount = value("退回金额")
+            record.deposit_return_project = value("退回项目")
+            record.deposit_return_document_no = value("退回单编号")
+            record.deposit_return_account = value("退回账户")
+            record.deposit_project_name = value("项目名称") or project_name
+            record.deposit_transfer_unit = value("转款单位")
+            record.deposit_remittance_method = value("汇款方式")
+            record.deposit_receipt_account_name = value("收款账户名称")
+            record.deposit_received_amount_display = value("已退保证金金额")
+            record.deposit_receipt_document_no = value("收保证金单号")
+            record.deposit_unit_name = value("单位")
+            record.deposit_refund_amount = value("退还金额")
+            record.deposit_receipt_account_no = value("收款账号")
+            record.deposit_receipt_bank_name = value("收款开户行")
+            record.deposit_refund_account_no = value("退还账号")
+            record.deposit_refund_bank_name = value("退还开户行")
+            record.deposit_returned_amount_display = value("已退金额")
+            record.deposit_unreturned_amount_display = value("未退金额")
+            record.deposit_need_return_text = value("是否需要退回")
+            record.deposit_payee_unit = payee_unit
+            record.deposit_payment_account = payment_account
+            record.deposit_note_display = value("备注") or record._deposit_return_clean_note(record.remark)
+            record.deposit_attachment_text = record._deposit_return_attachment_text(value("附件"))
+            record.deposit_source_created_by = value("录入人") or record.legacy_visible_creator_name or ""
+            record.deposit_source_created_at = created_at
 
     @api.model
     def default_get(self, fields_list):

@@ -150,6 +150,39 @@ class ScSubcontractRequest(models.Model):
     )
     currency_id = fields.Many2one("res.currency", string="币种", required=True, default=lambda self: self.env.company.currency_id.id)
     estimated_amount = fields.Monetary(string="申请预计金额", currency_field="currency_id", compute="_compute_estimated_amount", store=True)
+    subcontract_type_text = fields.Char(
+        string="分包类型",
+        compute="_compute_request_formal_amount_fields",
+        store=True,
+        readonly=True,
+    )
+    quantity_total = fields.Float(
+        string="数量",
+        compute="_compute_request_formal_amount_fields",
+        store=True,
+        readonly=True,
+    )
+    price_unit = fields.Monetary(
+        string="单价",
+        currency_field="currency_id",
+        compute="_compute_request_formal_amount_fields",
+        store=True,
+        readonly=True,
+    )
+    amount_total = fields.Monetary(
+        string="金额",
+        currency_field="currency_id",
+        compute="_compute_request_formal_amount_fields",
+        store=True,
+        readonly=True,
+    )
+    monthly_amount_total = fields.Monetary(
+        string="本月合价",
+        currency_field="currency_id",
+        compute="_compute_request_formal_amount_fields",
+        store=True,
+        readonly=True,
+    )
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "已提交"), ("approved", "已确认"), ("cancel", "已取消")],
         string="状态",
@@ -179,6 +212,17 @@ class ScSubcontractRequest(models.Model):
     def _compute_estimated_amount(self):
         for record in self:
             record.estimated_amount = sum(record.line_ids.mapped("estimated_amount"))
+
+    @api.depends("line_ids.required_qty", "estimated_amount")
+    def _compute_request_formal_amount_fields(self):
+        for record in self:
+            quantity = sum(record.line_ids.mapped("required_qty"))
+            amount = record.estimated_amount or 0.0
+            record.subcontract_type_text = False
+            record.quantity_total = quantity
+            record.price_unit = amount / quantity if quantity else 0.0
+            record.amount_total = amount
+            record.monthly_amount_total = amount
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -320,6 +364,43 @@ class ScSubcontractRegister(models.Model):
     responsible_id = fields.Many2one("res.users", string="现场负责人", default=lambda self: self.env.user, index=True)
     currency_id = fields.Many2one("res.currency", string="币种", required=True, default=lambda self: self.env.company.currency_id.id)
     registered_amount = fields.Monetary(string="登记合同金额", currency_field="currency_id", compute="_compute_registered_amount", store=True)
+    sign_date = fields.Date(string="签订时间", compute="_compute_register_boundary_fields", store=True, readonly=True)
+    quantity_total = fields.Float(string="总数量", compute="_compute_register_boundary_fields", store=True, readonly=True)
+    amount_total = fields.Monetary(
+        string="金额",
+        currency_field="currency_id",
+        compute="_compute_register_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    invoice_amount = fields.Monetary(
+        string="已开票金额",
+        currency_field="currency_id",
+        compute="_compute_register_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    paid_amount = fields.Monetary(
+        string="已付款金额",
+        currency_field="currency_id",
+        compute="_compute_register_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_register_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    uninvoiced_amount = fields.Monetary(
+        string="未开票金额",
+        currency_field="currency_id",
+        compute="_compute_register_boundary_fields",
+        store=True,
+        readonly=True,
+    )
     state = fields.Selection(
         [("draft", "草稿"), ("active", "已登记"), ("closed", "已关闭"), ("cancel", "已取消")],
         string="状态",
@@ -342,6 +423,18 @@ class ScSubcontractRegister(models.Model):
     def _compute_registered_amount(self):
         for record in self:
             record.registered_amount = sum(record.line_ids.mapped("registered_amount"))
+
+    @api.depends("register_date", "registered_amount", "line_ids.contract_qty")
+    def _compute_register_boundary_fields(self):
+        for record in self:
+            amount = record.registered_amount or 0.0
+            record.sign_date = record.register_date or False
+            record.quantity_total = sum(record.line_ids.mapped("contract_qty"))
+            record.amount_total = amount
+            record.invoice_amount = 0.0
+            record.paid_amount = 0.0
+            record.unpaid_amount = amount
+            record.uninvoiced_amount = amount
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -455,6 +548,34 @@ class ScSubcontractSettlement(models.Model):
     amount_untaxed = fields.Monetary(string="未税金额", currency_field="currency_id", compute="_compute_amounts", store=True)
     tax_amount = fields.Monetary(string="税额", currency_field="currency_id", compute="_compute_amounts", store=True)
     amount_total = fields.Monetary(string="结算金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    payment_paid_amount = fields.Monetary(
+        string="已付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
+    payment_unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
+    payment_requested_amount = fields.Monetary(
+        string="已申请金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
+    payment_unrequested_amount = fields.Monetary(
+        string="未申请金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "已提交"), ("confirmed", "已确认"), ("cancel", "已取消")],
         string="状态",
@@ -478,6 +599,15 @@ class ScSubcontractSettlement(models.Model):
             record.amount_untaxed = sum(record.line_ids.mapped("amount_untaxed"))
             record.tax_amount = sum(record.line_ids.mapped("tax_amount"))
             record.amount_total = sum(record.line_ids.mapped("amount_total"))
+
+    @api.depends("amount_total")
+    def _compute_payment_boundary_amounts(self):
+        for record in self:
+            amount = record.amount_total or 0.0
+            record.payment_paid_amount = 0.0
+            record.payment_unpaid_amount = amount
+            record.payment_requested_amount = 0.0
+            record.payment_unrequested_amount = amount
 
     @api.model_create_multi
     def create(self, vals_list):

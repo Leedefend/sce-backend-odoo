@@ -643,22 +643,22 @@
         <field name="inherit_id" ref="view_sc_equipment_usage_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
-                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
-                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
-                <field name="p1_visible_1e62803e196c" string="单据日期" optional="show" readonly="1"/>
-                <field name="p1_visible_a2cf2d1a84c3" string="租赁单位" optional="show" readonly="1"/>
-                <field name="p1_visible_0e3888031cb3" string="曾用名单" optional="show" readonly="1"/>
-                <field name="p1_visible_2c6b2e0dc811" string="机械名称" optional="show" readonly="1"/>
-                <field name="p1_visible_6a92ad6d5d73" string="规格型号" optional="show" readonly="1"/>
-                <field name="p1_visible_8ec8c8c712be" string="单位" optional="show" readonly="1"/>
-                <field name="p1_visible_e6412d7d7f6a" string="工作时间" optional="show" readonly="1"/>
-                <field name="p1_visible_0b370511a765" string="单价" optional="show" readonly="1"/>
-                <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1"/>
-                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
-                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
-                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
-                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+                <field name="state" string="单据状态" optional="show" readonly="1"/>
+                <field name="project_id" string="项目名称" optional="show" readonly="1"/>
+                <field name="name" string="单据编号" optional="show" readonly="1"/>
+                <field name="document_date" string="单据日期" optional="show" readonly="1"/>
+                <field name="supplier_id" string="租赁单位" optional="show" readonly="1"/>
+                <field name="former_supplier_name" string="曾用名单" optional="show" readonly="1"/>
+                <field name="equipment_name" string="机械名称" optional="show" readonly="1"/>
+                <field name="specification" string="规格型号" optional="show" readonly="1"/>
+                <field name="uom_text" string="单位" optional="show" readonly="1"/>
+                <field name="work_hours" string="工作时间" optional="show" readonly="1"/>
+                <field name="price_unit" string="单价" optional="show" readonly="1"/>
+                <field name="amount" string="金额" optional="show" readonly="1"/>
+                <field name="attachment_ids" string="附件" optional="show" readonly="1" widget="many2many_binary"/>
+                <field name="note" string="备注" optional="show" readonly="1"/>
+                <field name="source_created_by" string="录入人" optional="show" readonly="1"/>
+                <field name="source_created_at" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>

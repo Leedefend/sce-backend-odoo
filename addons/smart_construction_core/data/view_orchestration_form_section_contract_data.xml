@@ -181,19 +181,7 @@
                                 {'name': 'business_direction', 'sequence': 994, 'visible': False},
                                 {'name': 'carrier_type', 'sequence': 995, 'visible': False},
                                 {'name': 'carrier_model', 'sequence': 996, 'visible': False},
-                                {'name': 'carrier_res_id', 'sequence': 997, 'visible': False},
-                                {'name': 'p1_visible_06fa8c6f628f', 'sequence': 998, 'visible': False},
-                                {'name': 'p1_visible_f22832ce4781', 'sequence': 999, 'visible': False},
-                                {'name': 'p1_visible_8fa8662ad38f', 'sequence': 1000, 'visible': False},
-                                {'name': 'p1_visible_3e7255522b33', 'sequence': 1001, 'visible': False},
-                                {'name': 'p1_visible_3f2c92346bec', 'sequence': 1002, 'visible': False},
-                                {'name': 'p1_visible_880ab989a872', 'sequence': 1003, 'visible': False},
-                                {'name': 'p1_visible_2c346345746e', 'sequence': 1004, 'visible': False},
-                                {'name': 'p1_visible_34943c40c9af', 'sequence': 1005, 'visible': False},
-                                {'name': 'p1_visible_e0361480e3a5', 'sequence': 1006, 'visible': False},
-                                {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 1007, 'visible': False},
-                                {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 1008, 'visible': False},
-                                {'name': 'p1_visible_dfc25d77dc39', 'sequence': 1009, 'visible': False}
+                                {'name': 'carrier_res_id', 'sequence': 997, 'visible': False}
                             ]
                         }
                     }
@@ -313,7 +301,7 @@
             <field name="active" eval="True"/>
             <field name="status">published</field>
             <field name="version_no">1</field>
-            <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "p1_visible_3e7255522b33", "sequence": 10}, {"name": "p1_visible_8fa8662ad38f", "sequence": 20}, {"name": "p1_visible_a82dee991619", "sequence": 30}, {"name": "p1_visible_f63da5b6950e", "sequence": 40}, {"name": "p1_visible_0b959af0bd69", "sequence": 50}, {"name": "p1_visible_256ffb1df96a", "sequence": 60}, {"name": "p1_visible_f462c3c4fc87", "sequence": 70}, {"name": "p1_visible_c9bb0821eed9", "sequence": 80}]}}}}'/>
+            <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "project_id", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "opening_balance", "sequence": 30}, {"name": "account_type", "sequence": 40}, {"name": "account_no", "sequence": 50}, {"name": "is_default", "sequence": 60}, {"name": "fixed_account", "sequence": 70}, {"name": "sequence", "sequence": 80}]}}}}'/>
         </record>
         <record id="business_config_contract_sc_construction_diary_form_p1_fields_v1" model="ui.business.config.contract">
             <field name="name">sc_construction_diary_form_p1_fields_v1</field>
@@ -324,7 +312,7 @@
             <field name="active" eval="True"/>
             <field name="status">published</field>
             <field name="version_no">1</field>
-            <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "p1_visible_8fa8662ad38f", "sequence": 10}, {"name": "p1_visible_3e7255522b33", "sequence": 20}, {"name": "p1_visible_ae8c5d45f392", "sequence": 30}, {"name": "p1_visible_c27cdbf90458", "sequence": 40}, {"name": "p1_visible_73bf794d61b3", "sequence": 50}, {"name": "p1_visible_d3bea9efb1b9", "sequence": 60}, {"name": "p1_visible_364d38fc2b37", "sequence": 70}, {"name": "p1_visible_853e6ba25fc5", "sequence": 80}, {"name": "p1_visible_bd3c202b3612", "sequence": 90}, {"name": "p1_visible_b18125817eb9", "sequence": 100}, {"name": "p1_visible_df39195d3c5c", "sequence": 110}, {"name": "p1_visible_f11e4f6f4dbe", "sequence": 120}]}}}}'/>
+            <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "diary_document_no", "sequence": 10}, {"name": "diary_project_name", "sequence": 20}, {"name": "diary_construction_part", "sequence": 30}, {"name": "diary_manpower_count_display", "sequence": 40}, {"name": "diary_equipment_attendance", "sequence": 50}, {"name": "diary_temperature_display", "sequence": 60}, {"name": "diary_morning_weather_display", "sequence": 70}, {"name": "diary_afternoon_weather_display", "sequence": 80}, {"name": "diary_daily_construction_content_display", "sequence": 90}, {"name": "diary_operator_manager_display", "sequence": 100}, {"name": "quality_name", "sequence": 110}, {"name": "diary_construction_worker_display", "sequence": 120}]}}}}'/>
         </record>
         <record id="business_config_contract_sc_receipt_income_form_sections_v1" model="ui.business.config.contract">
             <field name="name">sc_receipt_income_form_sections_v1</field>

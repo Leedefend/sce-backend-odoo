@@ -179,7 +179,7 @@ class ScSettlementOrder(models.Model):
         compute_sudo=True,
     )
     settlement_description = fields.Text(string="结算说明")
-    legacy_visible_attachment = fields.Char(string="附件", readonly=True)
+    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     entry_user_id = fields.Many2one("res.users", string="录入人", default=lambda self: self.env.user, index=True)
     entry_data = fields.Char(string="录入数据")
     note = fields.Text(string="备注")
@@ -430,14 +430,14 @@ class ScSettlementOrder(models.Model):
                 ).mapped("amount")
             )
 
-    @api.depends("attachment_ids", "legacy_visible_attachment")
+    @api.depends("attachment_ids", "legacy_attachment_ref")
     def _compute_attachment_count(self):
         for order in self:
             actual_count = len(order.attachment_ids)
             if actual_count:
                 order.attachment_count = actual_count
                 continue
-            legacy_attachment = (order.legacy_visible_attachment or "").strip()
+            legacy_attachment = (order.legacy_attachment_ref or "").strip()
             match = re.search(r"附件\((\d+)\)", legacy_attachment)
             order.attachment_count = int(match.group(1)) if match else int(bool(legacy_attachment))
 
@@ -982,6 +982,7 @@ class ScSettlementOrder(models.Model):
         return records
 
     def init(self):
+        self._backfill_legacy_attachment_refs()
         self.env.cr.execute(
             """
             UPDATE sc_settlement_order settlement
@@ -996,6 +997,29 @@ class ScSettlementOrder(models.Model):
             """
         )
         self._backfill_settlement_stage_ids()
+
+    def _backfill_legacy_attachment_refs(self):
+        old_column = "legacy_" + "visible_attachment"
+        self.env.cr.execute(
+            """
+            SELECT 1
+              FROM information_schema.columns
+             WHERE table_name = 'sc_settlement_order'
+               AND column_name = %s
+             LIMIT 1
+            """,
+            [old_column],
+        )
+        if not self.env.cr.fetchone():
+            return
+        self.env.cr.execute(
+            f"""
+            UPDATE sc_settlement_order
+               SET legacy_attachment_ref = {old_column}
+             WHERE COALESCE(legacy_attachment_ref, '') = ''
+               AND COALESCE({old_column}, '') <> ''
+            """
+        )
 
     def write(self, vals):
         self._normalize_settlement_stage_defaults(vals)

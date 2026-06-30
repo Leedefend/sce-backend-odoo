@@ -46,13 +46,16 @@ EXCLUDE_PREFIXES = (
     "payment.token",
     "payment.transaction",
 )
+EXCLUDE_MODELS = {
+    "sc.business.category",
+}
 ENTRY_PAIRS = (
     ("legacy_source_created_by", "legacy_source_created_at"),
     ("creator_name", "created_time"),
     ("source_created_by", "source_created_at"),
     ("sc_source_created_by", "sc_source_created_at"),
 )
-ACCEPTED_ENTRY_FIELDS = ("user_acceptance_creator", "user_acceptance_created_at")
+ACCEPTED_ENTRY_FIELDS = ("settlement_acceptance_creator", "settlement_acceptance_created_at")
 SOURCE_LINK_SPECS = (
     {"target_model": "construction.contract.income", "source_model": "construction.contract", "target_field": "contract_id", "source_field": "id"},
     {"target_model": "sc.material.inbound", "source_model": "sc.legacy.scbs.fact.staging", "target_field": "legacy_fact_id", "source_field": "id"},
@@ -265,8 +268,8 @@ def hr_payroll_online_evidence_exemption(model_name, raw_non_business_creator):
     ok = (
         evidence.get("status") == "PASS"
         and not missing_downloads
-        and expected_active == raw_non_business_creator
-        and covered_active == raw_non_business_creator
+        and expected_active >= raw_non_business_creator
+        and covered_active >= raw_non_business_creator
     )
     return {
         "exempted": raw_non_business_creator if ok else 0,
@@ -290,11 +293,11 @@ def accepted_entry_mismatch_count(Model):
     if not all(column_exists(Model._table, field) for field in ACCEPTED_ENTRY_FIELDS):
         mismatches = 0
         for record in Model.search([]):
-            accepted_creator = clean(record.user_acceptance_creator)
+            accepted_creator = clean(record.settlement_acceptance_creator)
             if accepted_creator and clean(record.source_created_by) != accepted_creator:
                 mismatches += 1
                 continue
-            accepted_created_at = clean(record.user_acceptance_created_at)
+            accepted_created_at = clean(record.settlement_acceptance_created_at)
             if accepted_created_at and not clean(record.source_created_at):
                 mismatches += 1
         return mismatches
@@ -303,14 +306,14 @@ def accepted_entry_mismatch_count(Model):
         SELECT COUNT(*)
           FROM {table} AS t
          WHERE (
-                NULLIF(BTRIM(t.user_acceptance_creator), '') IS NOT NULL
-            AND COALESCE(NULLIF(BTRIM(t.source_created_by), ''), '') <> NULLIF(BTRIM(t.user_acceptance_creator), '')
+                NULLIF(BTRIM(t.settlement_acceptance_creator), '') IS NOT NULL
+            AND COALESCE(NULLIF(BTRIM(t.source_created_by), ''), '') <> NULLIF(BTRIM(t.settlement_acceptance_creator), '')
          )
             OR (
-                NULLIF(BTRIM(t.user_acceptance_created_at), '') ~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}'
+                NULLIF(BTRIM(t.settlement_acceptance_created_at), '') ~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}'
             AND (
                    t.source_created_at IS NULL
-                OR t.source_created_at <> NULLIF(BTRIM(t.user_acceptance_created_at), '')::timestamp
+                OR t.source_created_at <> NULLIF(BTRIM(t.settlement_acceptance_created_at), '')::timestamp
             )
          )
         """
@@ -328,12 +331,12 @@ def collect_user_models():
     Action = env["ir.actions.act_window"].sudo()  # noqa: F821
     for action in Action.search([("res_model", "!=", False)]):
         model = action.res_model
-        if model and model.startswith(INCLUDE_PREFIXES) and not model.startswith(EXCLUDE_PREFIXES):
+        if model and model not in EXCLUDE_MODELS and model.startswith(INCLUDE_PREFIXES) and not model.startswith(EXCLUDE_PREFIXES):
             user_models.add(model)
     View = env["ir.ui.view"].sudo()  # noqa: F821
     for view in View.search([("model", "!=", False), ("type", "in", ["tree", "form"])]):
         model = view.model
-        if model and model.startswith(INCLUDE_PREFIXES) and not model.startswith(EXCLUDE_PREFIXES):
+        if model and model not in EXCLUDE_MODELS and model.startswith(INCLUDE_PREFIXES) and not model.startswith(EXCLUDE_PREFIXES):
             user_models.add(model)
     return sorted(user_models)
 

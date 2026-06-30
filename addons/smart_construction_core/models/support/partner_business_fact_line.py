@@ -103,12 +103,12 @@ class ScPartnerBusinessFactLine(models.Model):
                     UNION ALL
                     SELECT
                         'sc.payment.execution', e.id, e.partner_id, 'supplier', '付款执行',
-                        e.project_id, e.legacy_visible_project_name,
-                        COALESCE(NULLIF(e.document_no, ''), NULLIF(e.legacy_visible_document_no, ''), e.name),
+                        e.project_id, NULL::varchar,
+                        COALESCE(NULLIF(e.document_no, ''), e.name),
                         e.date_payment, COALESCE(e.paid_amount, e.planned_amount, 0.0), e.currency_id,
                         COALESCE(NULLIF(e.legacy_document_state, ''), e.state),
                         e.creator_name, e.created_time,
-                        COALESCE(e.legacy_visible_note, e.note)
+                        e.note
                     FROM sc_payment_execution e
                     WHERE e.partner_id IS NOT NULL
 

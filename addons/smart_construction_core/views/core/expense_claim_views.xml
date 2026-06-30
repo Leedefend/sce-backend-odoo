@@ -43,7 +43,6 @@
                     <field name="claim_type" optional="hide"/>
                     <field name="legacy_document_no"/>
                     <field name="legacy_document_state"/>
-                    <field name="legacy_visible_attachment" optional="show"/>
                     <field name="creator_name" optional="show"/>
                     <field name="created_time" optional="show"/>
                     <field name="state"/>
@@ -98,8 +97,6 @@
                     <field name="company_contractor_arrival_unprocessed_amount" optional="show" sum="到款可处理余额合计"/>
                     <field name="company_contractor_arrival_over_processed_amount" optional="show" sum="到款超处理金额合计"/>
                     <field name="company_contractor_self_funding_balance" optional="hide" sum="自筹未退余额合计"/>
-                    <field name="legacy_visible_adjustment_item" optional="show"/>
-                    <field name="legacy_visible_document_no" optional="show"/>
                     <field name="creator_name" optional="show"/>
                     <field name="created_time" optional="hide"/>
                     <field name="state"/>
@@ -207,7 +204,6 @@
                         </group>
                         <group string="扣款说明">
                             <field name="summary" string="整体说明" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
-                            <field name="legacy_visible_adjustment_item" readonly="1" invisible="not legacy_visible_adjustment_item"/>
                         </group>
                         <group string="扣款单明细">
                             <field name="deduction_line_ids"
@@ -246,25 +242,6 @@
                                             string="查看责任余额"
                                             class="btn-secondary"
                                             invisible="not company_contractor_responsibility_summary_id"/>
-                                </group>
-                            </page>
-                            <page string="历史办理信息" invisible="not legacy_source_table">
-                                <group>
-                                    <group string="旧系统单据口径">
-                                        <field name="legacy_visible_document_no" readonly="1"/>
-                                        <field name="legacy_document_no" readonly="1"/>
-                                        <field name="legacy_visible_document_state" readonly="1"/>
-                                        <field name="legacy_document_state" readonly="1"/>
-                                        <field name="legacy_visible_date" readonly="1"/>
-                                        <field name="legacy_visible_project_name" readonly="1"/>
-                                        <field name="legacy_visible_department" readonly="1"/>
-                                    </group>
-                                    <group string="旧系统事项与金额">
-                                        <field name="legacy_visible_title" readonly="1"/>
-                                        <field name="legacy_visible_expense_type" readonly="1"/>
-                                        <field name="legacy_visible_summary" readonly="1"/>
-                                        <field name="legacy_visible_amount" readonly="1"/>
-                                    </group>
                                 </group>
                             </page>
                         </notebook>
@@ -360,8 +337,6 @@
                         <group string="事项说明">
                             <field name="expense_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="summary" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
-                            <field name="legacy_visible_title" readonly="1" invisible="not legacy_visible_title"/>
-                            <field name="legacy_visible_adjustment_item" readonly="1" invisible="not legacy_visible_adjustment_item"/>
                         </group>
                         <group string="办理说明与附件">
                             <field name="note"/>
@@ -381,43 +356,6 @@
                                             string="查看责任余额"
                                             class="btn-secondary"
                                             invisible="not company_contractor_responsibility_summary_id"/>
-                                </group>
-                            </page>
-                            <page string="历史办理信息" invisible="not legacy_source_table">
-                                <group>
-                                    <group string="旧系统单据口径">
-                                        <field name="legacy_visible_document_no" readonly="1"/>
-                                        <field name="legacy_document_no" readonly="1"/>
-                                        <field name="legacy_visible_document_state" readonly="1"/>
-                                        <field name="legacy_document_state" readonly="1"/>
-                                        <field name="legacy_visible_date" readonly="1"/>
-                                        <field name="legacy_visible_project_name" readonly="1"/>
-                                        <field name="legacy_visible_department" readonly="1"/>
-                                    </group>
-                                    <group string="旧系统事项与金额">
-                                        <field name="legacy_visible_title" readonly="1"/>
-                                        <field name="legacy_visible_expense_type" readonly="1"/>
-                                        <field name="legacy_visible_summary" readonly="1"/>
-                                        <field name="legacy_visible_amount" readonly="1"/>
-                                        <field name="legacy_visible_adjustment_item" readonly="1"/>
-                                        <field name="legacy_visible_returned_flag" readonly="1"/>
-                                    </group>
-                                </group>
-                                <group>
-                                    <group string="还款与利息线索">
-                                        <field name="legacy_visible_borrower" readonly="1"/>
-                                        <field name="legacy_visible_loan_amount" readonly="1"/>
-                                        <field name="legacy_visible_repayment_amount" readonly="1"/>
-                                        <field name="legacy_visible_loan_rate" readonly="1"/>
-                                        <field name="legacy_visible_interest" readonly="1"/>
-                                        <field name="legacy_visible_repayment_time" readonly="1"/>
-                                    </group>
-                                    <group string="状态、备注与附件">
-                                        <field name="legacy_visible_push_result" readonly="1"/>
-                                        <field name="legacy_visible_payment_time" readonly="1"/>
-                                        <field name="legacy_visible_note" readonly="1"/>
-                                        <field name="legacy_visible_attachment" readonly="1"/>
-                                    </group>
                                 </group>
                             </page>
                             <page string="迁移来源" invisible="not legacy_source_table">

@@ -120,6 +120,60 @@ class ScEquipmentRequest(models.Model):
     usage_location = fields.Char(string="使用地点", index=True)
     requester_id = fields.Many2one("res.users", string="申请人", default=lambda self: self.env.user, index=True)
     supplier_id = fields.Many2one("res.partner", string="建议供应单位", index=True)
+    currency_id = fields.Many2one("res.currency", string="币种", required=True, default=lambda self: self.env.company.currency_id.id)
+    quantity_total = fields.Float(
+        string="总数量",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    amount_total = fields.Monetary(
+        string="总金额",
+        currency_field="currency_id",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    invoice_amount = fields.Monetary(
+        string="已开票金额",
+        currency_field="currency_id",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    paid_amount = fields.Monetary(
+        string="已付款金额",
+        currency_field="currency_id",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    uninvoiced_amount = fields.Monetary(
+        string="未开票金额",
+        currency_field="currency_id",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    tax_rate_text = fields.Char(
+        string="税率",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
+    vat_type_text = fields.Char(
+        string="增值税类型",
+        compute="_compute_request_boundary_fields",
+        store=True,
+        readonly=True,
+    )
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "已提交"), ("approved", "已确认"), ("cancel", "已取消")],
         string="状态",
@@ -136,6 +190,18 @@ class ScEquipmentRequest(models.Model):
     _sql_constraints = [
         ("legacy_equipment_request_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用设备申请已迁移为专业设备申请。"),
     ]
+
+    @api.depends("line_ids.requested_qty")
+    def _compute_request_boundary_fields(self):
+        for record in self:
+            record.quantity_total = sum(record.line_ids.mapped("requested_qty"))
+            record.amount_total = 0.0
+            record.invoice_amount = 0.0
+            record.paid_amount = 0.0
+            record.unpaid_amount = 0.0
+            record.uninvoiced_amount = 0.0
+            record.tax_rate_text = False
+            record.vat_type_text = False
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -332,6 +398,40 @@ class ScEquipmentSettlement(models.Model):
     amount_untaxed = fields.Monetary(string="未税金额", currency_field="currency_id", compute="_compute_amounts", store=True)
     tax_amount = fields.Monetary(string="税额", currency_field="currency_id", compute="_compute_amounts", store=True)
     amount_total = fields.Monetary(string="结算金额", currency_field="currency_id", compute="_compute_amounts", store=True)
+    settlement_content = fields.Char(
+        string="结算内容",
+        compute="_compute_settlement_content",
+        store=True,
+        readonly=True,
+    )
+    payment_paid_amount = fields.Monetary(
+        string="已付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
+    payment_unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
+    payment_requested_amount = fields.Monetary(
+        string="已申请金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
+    payment_unrequested_amount = fields.Monetary(
+        string="未申请金额",
+        currency_field="currency_id",
+        compute="_compute_payment_boundary_amounts",
+        store=True,
+        readonly=True,
+    )
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "已提交"), ("confirmed", "已确认"), ("cancel", "已取消")],
         string="状态",
@@ -355,6 +455,21 @@ class ScEquipmentSettlement(models.Model):
             record.amount_untaxed = sum(record.line_ids.mapped("amount_untaxed"))
             record.tax_amount = sum(record.line_ids.mapped("tax_amount"))
             record.amount_total = sum(record.line_ids.mapped("amount_total"))
+
+    @api.depends("line_ids.equipment_name", "note")
+    def _compute_settlement_content(self):
+        for record in self:
+            names = [name for name in record.line_ids.mapped("equipment_name") if name]
+            record.settlement_content = "、".join(names[:3]) or record.note or False
+
+    @api.depends("amount_total")
+    def _compute_payment_boundary_amounts(self):
+        for record in self:
+            amount = record.amount_total or 0.0
+            record.payment_paid_amount = 0.0
+            record.payment_unpaid_amount = amount
+            record.payment_requested_amount = 0.0
+            record.payment_unrequested_amount = amount
 
     @api.model_create_multi
     def create(self, vals_list):

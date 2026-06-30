@@ -44,7 +44,7 @@
       "publish_versioning": "ui.business.config.contract action_publish",
       "rollback": "ui.business_config.contract.rollback",
       "audit": "business config snapshot + coverage scan + list/search audit boundary",
-      "acceptance": ["verify.business_config.coverage", "verify.business_config.snapshot", "verify.business_config.low_code_acceptance"],
+      "acceptance": ["verify.business_config.coverage", "verify.business_config.list_config_boundary", "verify.business_config.snapshot", "verify.business_config.low_code_acceptance"],
       "status": "ready",
       "release_blockers": []
     },

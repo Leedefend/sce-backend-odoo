@@ -94,18 +94,14 @@
                 <field name="partner_id" string="供应商/分包方"/>
                 <field name="project_id"/>
                 <field name="subject"/>
-                <field name="legacy_visible_engineering_content" string="合同内容"/>
                 <field name="expense_contract_category_id"/>
                 <field name="legacy_contract_no"/>
-                <field name="legacy_visible_attachment" string="附件"/>
                 <field name="visible_contract_amount" sum="支出合同金额合计"/>
                 <field name="settlement_amount" sum="结算金额合计"/>
                 <field name="paid_amount" sum="付款金额合计"/>
                 <field name="unpaid_amount" sum="未付款金额合计"/>
                 <field name="operation_strategy"/>
                 <field name="state"/>
-                <field name="legacy_visible_creator_name" string="录入人"/>
-                <field name="legacy_visible_created_time" string="录入时间"/>
                 <field name="note" string="备注"/>
                 <field name="handler_id"/>
             </tree>
@@ -471,22 +467,8 @@
                                 <field name="attachment_ids" widget="many2many_binary"/>
                             </group>
                         </page>
-                        <page string="历史办理信息">
-                            <group>
-                                <field name="legacy_contract_no"/>
-                                <field name="legacy_external_contract_no"/>
-                                <field name="legacy_document_no"/>
-                                <field name="entry_user_id"/>
-                                <field name="entry_user_text"/>
-                                <field name="entry_time"/>
-                                <field name="legacy_visible_creator_name" readonly="1"/>
-                                <field name="legacy_visible_created_time" readonly="1"/>
-                                <field name="legacy_status"/>
-                            </group>
-                        </page>
                         <page string="审批信息">
                             <field name="approval_info"/>
-                            <field name="legacy_visible_attachment" string="附件"/>
                             <field name="attachment_text" string="平台附件文本"/>
                         </page>
                     </notebook>
