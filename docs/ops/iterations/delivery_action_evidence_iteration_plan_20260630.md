@@ -67,7 +67,9 @@ green. The next iteration should not reopen release blockers unless a live gate 
 
 2. Lifecycle audit export evidence
    - Scope: `portal.lifecycle`, `portal.capability_matrix`
-   - Target: audit export or equivalent machine-readable evidence is produced and linked.
+   - Status: done
+   - Target: lifecycle dashboard and capability matrix machine-readable export is produced and linked.
+   - Evidence target: `make verify.delivery.lifecycle.audit_export`, `artifacts/backend/lifecycle_audit_export.json`, and the scoreboard row `Lifecycle audit export`.
 
 3. Default scene semantic monitoring
    - Scope: `default`
