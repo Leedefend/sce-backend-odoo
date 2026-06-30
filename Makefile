@@ -4005,6 +4005,10 @@ verify.delivery.quality_safety.closure: guard.prod.forbid check-compose-project 
 verify.delivery.lifecycle.audit_export: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/lifecycle_audit_export.py
 
+.PHONY: verify.delivery.default_scene.semantic_monitor
+verify.delivery.default_scene.semantic_monitor: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/default_scene_semantic_monitor.py
+
 .PHONY: verify.product.delivery.module_capability.smoke verify.product.delivery.module9.smoke
 verify.product.delivery.module_capability.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_module9_smoke.py
