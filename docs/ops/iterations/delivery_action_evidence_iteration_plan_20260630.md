@@ -61,7 +61,9 @@ green. The next iteration should not reopen release blockers unless a live gate 
 
 1. Quality/safety closure action proof
    - Scope: `quality.center`, `safety.center`
-   - Target: close one safe quality/safety loop in demo data or prove no-op readonly closure.
+   - Status: done
+   - Target: close one safe quality/safety loop in demo data and prove audit/photo evidence guardrails.
+   - Evidence target: `make verify.delivery.quality_safety.closure`, `artifacts/backend/site_quality_safety_closure_audit.json`, and the scoreboard row `Quality safety closure smoke`.
 
 2. Lifecycle audit export evidence
    - Scope: `portal.lifecycle`, `portal.capability_matrix`

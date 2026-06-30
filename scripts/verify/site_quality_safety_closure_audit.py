@@ -2,8 +2,23 @@
 import base64
 import json
 import traceback
+from datetime import datetime, timezone
+from pathlib import Path
 
 from odoo import fields
+
+
+ROOT = Path("/mnt") if Path("/mnt/scripts").exists() else Path(__file__).resolve().parents[2]
+REPORT_PATH = ROOT / "artifacts" / "backend" / "site_quality_safety_closure_audit.json"
+
+
+def _utc_now():
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _write_report(payload):
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    REPORT_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def _token():
@@ -283,10 +298,15 @@ except Exception as err:
 
 result = {
     "audit": "site_quality_safety_closure_audit",
+    "generated_at_utc": _utc_now(),
+    "ok": not failures,
     "status": "PASS" if not failures else "FAIL",
     "evidence": evidence,
     "failures": failures,
+    "report_path": str(REPORT_PATH.relative_to(ROOT)),
 }
+_write_report(result)
+print(REPORT_PATH)
 print("SITE_QUALITY_SAFETY_CLOSURE_AUDIT: %s" % json.dumps(result, ensure_ascii=False, sort_keys=True))
 if failures:
     print("FAILURES:")
