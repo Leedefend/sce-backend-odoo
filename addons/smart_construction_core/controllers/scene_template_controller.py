@@ -417,7 +417,7 @@ def _normalize_pack_payload(payload):
 
 def _pack_hash(payload):
     normalized = _normalize_pack_payload(dict(payload))
-    raw = json.dumps(normalized, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    raw = json.dumps(normalized, ensure_ascii=False, sort_keys=True, default=str, separators=(",", ":"))
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 

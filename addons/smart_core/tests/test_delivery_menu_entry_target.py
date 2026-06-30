@@ -398,6 +398,39 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         self.assertEqual([group.get("group_label") for group in groups], ["基础资料", "发票税务"])
         self.assertEqual([group["menus"][0]["label"] for group in groups], ["供应商/合作单位", "预缴税款"])
 
+    def test_empty_policy_native_preview_is_marked_outside_stable_menu_authority(self):
+        nav = menu_service.MenuService().build_nav(
+            policy={},
+            role_surface={"role_code": "employee"},
+            native_nav=[
+                {
+                    "label": "项目中心",
+                    "children": [
+                        self._native_leaf(
+                            label="项目台账",
+                            menu_id=379,
+                            route="/a/506?menu_id=379",
+                            action_id=506,
+                            model="project.project",
+                        )
+                    ],
+                }
+            ],
+        )
+
+        service = menu_service.MenuService()
+        meta = service.describe_nav(nav)
+        group = nav[0]["children"][0]
+        child = group["children"][0]
+
+        self.assertTrue(group["meta"]["native_preview"])
+        self.assertEqual(group["meta"]["runtime_authority"], "native_preview_only")
+        self.assertEqual(child["meta"]["scene_source"], "native_preview")
+        self.assertEqual(meta["stable_group_count"], 0)
+        self.assertEqual(meta["native_preview_group_count"], 1)
+        self.assertEqual(meta["stable_leaf_count"], 0)
+        self.assertEqual(meta["native_preview_leaf_count"], 1)
+
     def test_user_acceptance_policy_menu_keeps_legacy_subgroups(self):
         nav = menu_service.MenuService().build_nav(
             policy={

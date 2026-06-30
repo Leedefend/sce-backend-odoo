@@ -47,7 +47,7 @@ def normalize_ids_for_fingerprint(values):
 
 
 def sha1_json(payload):
-    raw = json.dumps(payload, ensure_ascii=True, sort_keys=True)
+    raw = json.dumps(payload, ensure_ascii=True, sort_keys=True, default=str)
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 
 

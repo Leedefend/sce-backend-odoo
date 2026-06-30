@@ -153,11 +153,11 @@ class AppSearchConfig(models.Model):
             return {
                 "model": self.model,
                 "version": self.version,
-                **block
+                **json.loads(json.dumps(block, ensure_ascii=False, default=str)),
             }
 
         # 深拷贝，避免污染存库
-        data = json.loads(json.dumps(block, ensure_ascii=False))
+        data = json.loads(json.dumps(block, ensure_ascii=False, default=str))
 
         # 运行态：过滤视图 filter 的 groups 限制
         if filter_runtime:

@@ -42,7 +42,7 @@ class ContractGovernanceFilterService:
                 "search": {"filters": [], "group_by": [], "facets": {"enabled": True}},
             }
 
-        vp = json.loads(json.dumps(parsed or {}, ensure_ascii=False))
+        vp = json.loads(json.dumps(parsed or {}, ensure_ascii=False, default=str))
 
         def _resolve_groups_xmlids(xmlids):
             ids = set()

@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import importlib.util
+import json
 import sys
 import types
 import unittest
+from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 
@@ -129,6 +132,26 @@ class TestSearchFavoriteHandlerBoundaries(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result["error"]["message"], "action_id 无效")
         self.assertEqual(filters.search_domains, [])
+
+    def test_serializes_projection_scalars_in_domain_and_context(self):
+        module = _load_handler()
+        filters = _FilterModel()
+        env = _Env({"x.model": _Model(), "ir.filters": filters})
+        handler = module.SearchFavoriteSetHandler(
+            env=env,
+            payload={
+                "model": "x.model",
+                "name": "Mine",
+                "domain": [["date", "=", date(2026, 6, 30)]],
+                "context": {"amount": Decimal("12.30")},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(json.loads(filters.created_vals["domain"]), [["date", "=", "2026-06-30"]])
+        self.assertEqual(json.loads(filters.created_vals["context"]), {"amount": "12.30"})
 
     def test_invalid_params_shape_returns_bad_request(self):
         module = _load_handler()

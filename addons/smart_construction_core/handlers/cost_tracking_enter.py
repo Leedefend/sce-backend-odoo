@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Dict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.core.project_context import (
@@ -16,41 +15,20 @@ from odoo.addons.smart_construction_core.services.project_context_contract impor
 from odoo.addons.smart_core.orchestration.cost_tracking_contract_orchestrator import (
     CostTrackingContractOrchestrator,
 )
+from odoo.addons.smart_construction_core.handlers.project_context_resolver import (
+    ProjectContextResolverMixin,
+)
 from odoo.addons.smart_construction_scene.services.project_management_entry_target import (
     resolve_project_management_entry_target,
 )
 
 
-class CostTrackingEnterHandler(BaseIntentHandler):
+class CostTrackingEnterHandler(ProjectContextResolverMixin, BaseIntentHandler):
     INTENT_TYPE = "cost.tracking.enter"
     DESCRIPTION = "返回成本跟踪最小 scene-ready contract"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
-
-    @staticmethod
-    def _coerce_project_id(raw: Any) -> int:
-        try:
-            value = int(raw or 0)
-        except Exception:
-            return 0
-        return value if value > 0 else 0
-
-    def _resolve_project_id(self, params: Dict[str, Any], ctx: Dict[str, Any]) -> int:
-        candidates = [
-            (params or {}).get("project_id"),
-            (params or {}).get("record_id"),
-            ((params or {}).get("project_context") or {}).get("project_id")
-            if isinstance((params or {}).get("project_context"), dict)
-            else None,
-            (ctx or {}).get("project_id"),
-            (ctx or {}).get("record_id"),
-        ]
-        for item in candidates:
-            project_id = self._coerce_project_id(item)
-            if project_id > 0:
-                return project_id
-        return 0
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()

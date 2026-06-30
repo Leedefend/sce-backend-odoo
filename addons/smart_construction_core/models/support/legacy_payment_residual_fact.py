@@ -49,7 +49,7 @@ class ScLegacyPaymentResidualFact(models.Model):
     creator_name = fields.Char(string="录入人", index=True)
     created_time = fields.Datetime(string="录入时间", index=True)
     attachment_ref = fields.Char(string="历史附件ID")
-    attachment_links = fields.Char(string="附件", compute="_compute_attachment_links")
+    attachment_links = fields.Char(string="历史附件链接", compute="_compute_attachment_links")
     attachment_ids = fields.Many2many(
         "ir.attachment",
         "sc_legacy_payment_residual_fact_attachment_rel",

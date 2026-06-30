@@ -896,7 +896,7 @@ def _alias_field_name(label):
 
 
 def _alias_field_string(label):
-    return label
+    return "P1可见%s" % label
 
 
 def _tokenized_search_domain(field_name, operator, value):

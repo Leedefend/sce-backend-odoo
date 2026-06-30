@@ -392,6 +392,13 @@ class ProductPolicyService:
         edition = str(edition_key or "").strip() or "standard"
         return _minimal_default_product_policy(base_product_key=base_key, edition_key=edition)
 
+    def _minimal_policy_for_resolved_identity(self, *, product_key: str, base_product_key: str, edition_key: str) -> dict:
+        payload = self._default_policy_for_identity(base_product_key=base_product_key, edition_key=edition_key)
+        payload["product_key"] = str(product_key or "").strip() or payload.get("product_key")
+        payload["base_product_key"] = str(base_product_key or "").strip() or payload.get("base_product_key")
+        payload["edition_key"] = str(edition_key or "").strip() or payload.get("edition_key")
+        return payload
+
     def _construction_catalog_policy(self, *, product_key: str) -> dict | None:
         if not self._model_registered("ir.ui.menu"):
             return None
@@ -609,6 +616,15 @@ class ProductPolicyService:
                     catalog_payload = self._construction_catalog_policy(product_key=key)
                     if catalog_payload:
                         payload = catalog_payload
+                if (
+                    not isinstance(payload.get("policy_source_authority"), dict)
+                    or not self._policy_has_surface(payload)
+                ):
+                    payload = self._minimal_policy_for_resolved_identity(
+                        product_key=key,
+                        base_product_key=resolved_base_product_key,
+                        edition_key=resolved_edition_key,
+                    )
                 payload = self._sanitize_scene_version_bindings(payload)
                 access_allowed = self._access_allowed(payload, role_code=resolved_role_code) if enforce_access else True
                 release_allowed = self._policy_releaseable(payload) if enforce_release else True
@@ -640,6 +656,15 @@ class ProductPolicyService:
                 catalog_payload = self._construction_catalog_policy(product_key=key)
                 if catalog_payload:
                     platform_payload = catalog_payload
+            if (
+                not isinstance(platform_payload.get("policy_source_authority"), dict)
+                or not self._policy_has_surface(platform_payload)
+            ):
+                platform_payload = self._minimal_policy_for_resolved_identity(
+                    product_key=key,
+                    base_product_key=resolved_base_product_key,
+                    edition_key=resolved_edition_key,
+                )
             payload = self._sanitize_scene_version_bindings(platform_payload)
             access_allowed = self._access_allowed(payload, role_code=resolved_role_code) if enforce_access else True
             release_allowed = self._policy_releaseable(payload) if enforce_release else True
@@ -665,13 +690,11 @@ class ProductPolicyService:
                 fallback_reason=fallback_reason,
                 access_allowed=access_allowed,
             )
-        fallback = self._default_policy_for_identity(
+        fallback = self._minimal_policy_for_resolved_identity(
+            product_key=key,
             base_product_key=resolved_base_product_key,
             edition_key=resolved_edition_key,
         )
-        fallback["product_key"] = key
-        fallback["base_product_key"] = resolved_base_product_key
-        fallback["edition_key"] = resolved_edition_key
         catalog_fallback_applied = False
         if resolved_base_product_key == "construction":
             catalog_payload = self._construction_catalog_policy(product_key=key)

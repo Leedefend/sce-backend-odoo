@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from odoo import fields, http
@@ -17,7 +17,7 @@ CONTRACT_VERSION = "v1"
 
 
 def _server_time() -> str:
-    return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _json_response(payload: dict[str, Any], status: int = 200):

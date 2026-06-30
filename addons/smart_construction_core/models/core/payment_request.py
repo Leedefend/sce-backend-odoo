@@ -302,7 +302,7 @@ class PaymentRequest(models.Model):
         index=True,
     )
     accepted_amount_uppercase = fields.Char(
-        string="金额大写",
+        string="用户确认金额大写",
         index=True,
         tracking=True,
         help="用户确认验收口径的金额大写；用于历史数据延续和后续业务办理。",

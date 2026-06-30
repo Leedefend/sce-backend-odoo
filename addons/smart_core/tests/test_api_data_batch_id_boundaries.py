@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import importlib.util
+import base64
+import re
 import sys
 import types
 import unittest
@@ -154,6 +156,21 @@ class TestApiDataBatchIdBoundaries(unittest.TestCase):
                 self.assertFalse(result["ok"])
                 self.assertEqual(result["code"], 400)
                 self.assertEqual(result["error"]["message"], "if_match_map 无效")
+
+    def test_failed_csv_uses_utc_timestamped_filename(self):
+        handler = self.module.ApiDataBatchHandler()
+
+        result = handler._build_failed_csv(
+            "x.model",
+            "write",
+            [{"id": 7, "reason_code": "WRITE_FAILED", "message": "failed"}],
+        )
+
+        self.assertRegex(result["file_name"], r"^x_model_write_failed_\d{8}_\d{6}\.csv$")
+        self.assertEqual(result["count"], 1)
+        content = base64.b64decode(result["content_b64"]).decode("utf-8-sig")
+        self.assertIn("WRITE_FAILED", content)
+        self.assertIsNotNone(re.search(r"x\.model,write,7", content))
 
 
 if __name__ == "__main__":

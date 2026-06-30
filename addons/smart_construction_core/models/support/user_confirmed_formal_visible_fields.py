@@ -259,7 +259,7 @@ def _inject_formal_visible_fields(self, result, view_type):
     parent = sheet[0] if sheet else root
     group = etree.Element("group", string="用户确认业务字段")
     for entry in missing:
-        etree.SubElement(group, "field", name=entry["field_name"])
+        etree.SubElement(group, "field", name=entry["field_name"], string=entry["label"])
     parent.append(group)
     result["arch"] = etree.tostring(root, encoding="unicode")
     return result
@@ -278,9 +278,19 @@ def _extension_attrs(model_name, entries, class_name):
         "_inherit": model_name,
         "__module__": __name__,
     }
+    label_totals = {}
     for entry in entries:
+        label = entry["label"]
+        label_totals[label] = label_totals.get(label, 0) + 1
+    label_seen = {}
+    for entry in entries:
+        label = entry["label"]
+        label_seen[label] = label_seen.get(label, 0) + 1
+        field_string = "用户确认%s" % label
+        if label_totals.get(label, 0) > 1:
+            field_string = "%s%s" % (field_string, label_seen[label])
         attrs[entry["field_name"]] = fields.Text(
-            string=entry["label"],
+            string=field_string,
             help="用户确认数据正式承接字段；用于历史数据延续和后续业务办理。",
             copy=False,
         )

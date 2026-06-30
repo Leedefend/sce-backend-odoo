@@ -5,7 +5,7 @@ import base64
 import csv
 import io
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 from uuid import uuid4
 
@@ -245,7 +245,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
             ])
         raw = buf.getvalue().encode("utf-8-sig")
         b64 = base64.b64encode(raw).decode("ascii")
-        stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         return {
             "file_name": f"{model.replace('.', '_')}_{action}_failed_{stamp}.csv",
             "content_b64": b64,

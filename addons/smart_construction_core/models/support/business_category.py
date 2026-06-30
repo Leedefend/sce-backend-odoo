@@ -5,8 +5,8 @@ import xml.etree.ElementTree as ET
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
-from odoo.modules.module import get_module_resource
 from odoo.osv import expression
+from odoo.tools.misc import file_path
 
 
 BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-13.1"
@@ -570,13 +570,13 @@ class ScBusinessCategory(models.Model):
                 vals["display_name"] = category.name or category.code or ""
             default_values = BUSINESS_CATEGORY_DEFAULT_VALUE_DEFAULTS.get(code)
             if default_values is not None:
-                vals["default_values_json"] = json.dumps(default_values, ensure_ascii=False, sort_keys=True)
+                vals["default_values_json"] = json.dumps(default_values, ensure_ascii=False, sort_keys=True, default=str)
             ledger_policy = self._merge_template_ledger_policy(
                 category.ledger_policy_json,
                 BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS.get(code),
             )
             if ledger_policy is not None:
-                vals["ledger_policy_json"] = json.dumps(ledger_policy, ensure_ascii=False, sort_keys=True)
+                vals["ledger_policy_json"] = json.dumps(ledger_policy, ensure_ascii=False, sort_keys=True, default=str)
             effective_ledger_policy = ledger_policy
             if effective_ledger_policy is None:
                 try:
@@ -590,7 +590,7 @@ class ScBusinessCategory(models.Model):
                 obsolete=BUSINESS_CATEGORY_OBSOLETE_REQUIRED_FIELDS.get(code),
             )
             if required_fields is not None:
-                vals["required_fields_json"] = json.dumps(required_fields, ensure_ascii=False)
+                vals["required_fields_json"] = json.dumps(required_fields, ensure_ascii=False, default=str)
             attachment_policy = BUSINESS_CATEGORY_ATTACHMENT_POLICY_DEFAULTS.get(code)
             if attachment_policy and category.attachment_policy in (False, "none", "recommended"):
                 vals["attachment_policy"] = attachment_policy
@@ -623,11 +623,10 @@ class ScBusinessCategory(models.Model):
             "attachment_policy",
             "note",
         }
-        seed_path = get_module_resource(
-            "smart_construction_core",
-            "data",
-            "business_category_seed.xml",
-        )
+        try:
+            seed_path = file_path("smart_construction_core/data/business_category_seed.xml")
+        except FileNotFoundError:
+            seed_path = None
         if seed_path:
             try:
                 root = ET.parse(seed_path).getroot()
@@ -686,7 +685,7 @@ class ScBusinessCategory(models.Model):
             if not category:
                 continue
             vals = {}
-            form_policy = json.dumps(policy or {}, ensure_ascii=False, sort_keys=True)
+            form_policy = json.dumps(policy or {}, ensure_ascii=False, sort_keys=True, default=str)
             if form_policy and form_policy != "{}" and (category.form_policy_json or "").strip() != form_policy:
                 vals["form_policy_json"] = form_policy
             required_fields = [
@@ -695,7 +694,7 @@ class ScBusinessCategory(models.Model):
                 if field.get("name") and "create" in (field.get("required_profiles") or [])
             ]
             if required_fields:
-                required_fields_json = json.dumps(required_fields, ensure_ascii=False)
+                required_fields_json = json.dumps(required_fields, ensure_ascii=False, default=str)
                 if (category.required_fields_json or "").strip() != required_fields_json:
                     vals["required_fields_json"] = required_fields_json
             if vals:

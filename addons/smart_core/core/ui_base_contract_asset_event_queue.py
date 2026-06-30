@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from .source_authority import build_source_authority_contract
@@ -27,6 +27,10 @@ def source_authority_contract() -> dict:
 
 def _text(value: Any) -> str:
     return str(value or "").strip()
+
+
+def _utc_z() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def _normalize_scene_key(value: Any) -> str:
@@ -115,7 +119,7 @@ def enqueue_scene_keys(
     _save_queue(config, current)
     meta = {
         "reason": _text(reason) or "event",
-        "updated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "updated_at": _utc_z(),
         "size": len(current),
         "added": int(added),
     }
@@ -141,7 +145,7 @@ def pop_scene_keys(env, *, limit: int = 50) -> dict:
     meta.update(
         {
             "last_operation": "pop",
-            "consumed_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            "consumed_at": _utc_z(),
             "popped_count": len(selected),
             "remaining_count": len(remain),
             "size": len(remain),
@@ -166,7 +170,7 @@ def get_queue_metrics(env) -> dict:
         meta.update(
             {
                 "last_operation": "compact",
-                "updated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                "updated_at": _utc_z(),
                 "remaining_count": len(queue),
                 "size": len(queue),
             }

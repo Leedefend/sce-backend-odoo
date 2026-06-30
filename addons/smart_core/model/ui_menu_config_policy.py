@@ -257,9 +257,9 @@ class UiMenuConfigPolicy(models.Model):
         return applicable
 
     @api.model
-    def _runtime_contract_policies_for_user(self, user=None):
+    def _runtime_contract_policy_source_for_user(self, user=None) -> tuple[dict, bool]:
         if "ui.business.config.contract" not in self.env:
-            return {}
+            return {}, False
         user = user or self.env.user
         user_group_ids = set(user.groups_id.ids)
         Contract = self.env["ui.business.config.contract"].sudo()
@@ -271,11 +271,11 @@ class UiMenuConfigPolicy(models.Model):
             ("company_id", "in", [False, self.env.company.id]),
         ], order="version_no desc, id desc", limit=1)
         if not contract:
-            return {}
+            return {}, False
         payload = contract.contract_json if isinstance(contract.contract_json, dict) else {}
         orchestration = payload.get("menu_orchestration") if isinstance(payload.get("menu_orchestration"), dict) else {}
         if str(orchestration.get("schema_version") or "").strip() != "menu_orchestration.v1":
-            return {}
+            return {}, False
         rows = orchestration.get("policies") if isinstance(orchestration.get("policies"), list) else []
         applicable = {}
         Menu = self.env["ir.ui.menu"].sudo()
@@ -302,25 +302,65 @@ class UiMenuConfigPolicy(models.Model):
             if existing and existing_specific == current_specific:
                 continue
             applicable[menu_id] = dict(row)
-        return applicable
+        return applicable, True
+
+    @api.model
+    def _runtime_contract_policies_for_user(self, user=None):
+        policies, _contract_found = self._runtime_contract_policy_source_for_user(user=user)
+        return policies
 
     @api.model
     def _runtime_menu_config_source_for_user(self, user=None):
-        contract_policies = self._runtime_contract_policies_for_user(user=user)
-        policy_policies = self._runtime_policies_for_user(user=user)
-        if contract_policies:
-            merged = dict(contract_policies)
-            merged.update(policy_policies)
-            return merged, MENU_CONFIG_RUNTIME_SOURCE_CONTRACT
-        return policy_policies, MENU_CONFIG_RUNTIME_SOURCE_POLICY
+        contract_policies, contract_found = self._runtime_contract_policy_source_for_user(user=user)
+        if contract_found:
+            return contract_policies, MENU_CONFIG_RUNTIME_SOURCE_CONTRACT
+        return self._runtime_policies_for_user(user=user), MENU_CONFIG_RUNTIME_SOURCE_POLICY
 
     @api.model
     def apply_runtime_overlay(self, nav_fact: dict, user=None) -> tuple[dict, dict]:
         if not isinstance(nav_fact, dict):
             return nav_fact, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0, "moved_count": 0}
         policies_by_menu, runtime_source = self._runtime_menu_config_source_for_user(user=user)
+
+        def config_only_enabled() -> bool:
+            try:
+                raw = self.env["ir.config_parameter"].sudo().get_param(
+                    MENU_CONFIG_CONFIG_ONLY_PARAM,
+                    "1",
+                )
+            except Exception:
+                raw = "1"
+            return str(raw or "").strip().lower() not in {"0", "false", "no", "off"}
+
         if not policies_by_menu:
-            return nav_fact, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0, "moved_count": 0}
+            config_only = config_only_enabled()
+            stats = {
+                "source_authority": self._source_contract(runtime_source=runtime_source),
+                "runtime_source": runtime_source,
+                "applied_count": 0,
+                "hidden_count": 0,
+                "unconfigured_hidden_count": 0,
+                "protected_count": 0,
+                "renamed_count": 0,
+                "reordered_count": 0,
+                "moved_count": 0,
+                "parent_aligned_count": 0,
+                "config_only": config_only,
+            }
+            if not config_only:
+                return nav_fact, stats
+
+            def count_nodes(nodes) -> int:
+                total = 0
+                for node in nodes if isinstance(nodes, list) else []:
+                    if not isinstance(node, dict):
+                        continue
+                    total += 1
+                    total += count_nodes(node.get("children"))
+                return total
+
+            stats["unconfigured_hidden_count"] = count_nodes(nav_fact.get("tree"))
+            return {**nav_fact, "tree": [], "flat": []}, stats
 
         def policy_visible(policy) -> bool:
             return _to_bool(policy.get("visible"), True) if isinstance(policy, dict) else bool(policy.visible)
@@ -348,16 +388,6 @@ class UiMenuConfigPolicy(models.Model):
 
         def policy_menu_exists(policy) -> bool:
             return bool(policy_menu_record(policy).exists())
-
-        def config_only_enabled() -> bool:
-            try:
-                raw = self.env["ir.config_parameter"].sudo().get_param(
-                    MENU_CONFIG_CONFIG_ONLY_PARAM,
-                    "1",
-                )
-            except Exception:
-                raw = "1"
-            return str(raw or "").strip().lower() not in {"0", "false", "no", "off"}
 
         stats = {
             "source_authority": self._source_contract(runtime_source=runtime_source),

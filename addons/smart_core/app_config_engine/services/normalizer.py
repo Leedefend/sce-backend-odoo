@@ -115,7 +115,12 @@ def _ensure_str_list(x: Any, field_name: str, warns: List[str]) -> List[str]:
     return out
 
 def _now_iso() -> str:
-    return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    return (
+        datetime.datetime.now(datetime.timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 # ========== 保险丝实现 ==========
 

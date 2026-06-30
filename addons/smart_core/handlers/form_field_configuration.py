@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import time
 
@@ -17,9 +18,10 @@ from ..utils.backend_contract_boundaries import (
     VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
     ensure_view_orchestration_source,
 )
-from ..utils.reason_codes import REASON_MISSING_PARAMS, REASON_NOT_FOUND, REASON_OK, REASON_USER_ERROR
+from ..utils.reason_codes import REASON_MISSING_PARAMS, REASON_NOT_FOUND, REASON_OK, REASON_USER_ERROR, REASON_WRITE_FAILED
 
 BUSINESS_CONFIG_ADMIN_GROUP = "smart_core.group_smart_core_business_config_admin"
+_logger = logging.getLogger(__name__)
 BUSINESS_CONFIG_CONTRACT_AUTHORITIES = ("ui.business.config.contract", "ui.business.config.contract.version")
 LOWCODE_BUSINESS_FIELD_TYPES = {
     "boolean",
@@ -381,6 +383,59 @@ def _sanitize_config_name_list(value) -> list[str]:
     return names
 
 
+def _sanitize_layout_token(value) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if not re.match(r"^[A-Za-z0-9_.:-]{1,64}$", text):
+        return ""
+    return text
+
+
+def _sanitize_field_string_map(value) -> dict[str, str]:
+    rows = value if isinstance(value, dict) else {}
+    return {
+        str(name or "").strip(): _sanitize_layout_token(raw)
+        for name, raw in rows.items()
+        if str(name or "").strip() and _sanitize_layout_token(raw)
+    }
+
+
+def _sanitize_positive_int_map(value, *, minimum: int = 1, maximum: int = 4) -> dict[str, int]:
+    rows = value if isinstance(value, dict) else {}
+    out: dict[str, int] = {}
+    for name, raw in rows.items():
+        key = str(name or "").strip()
+        if not key:
+            continue
+        try:
+            number = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if minimum <= number <= maximum:
+            out[key] = number
+    return out
+
+
+def _sanitize_bool_map(value) -> dict[str, bool]:
+    rows = value if isinstance(value, dict) else {}
+    out: dict[str, bool] = {}
+    for name, raw in rows.items():
+        key = str(name or "").strip()
+        if not key:
+            continue
+        out[key] = str(raw).strip().lower() not in {"0", "false", "no", "hide", "hidden"}
+    return out
+
+
+def _normalize_form_column_count(value) -> int:
+    try:
+        columns = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return columns if 1 <= columns <= 4 else 0
+
+
 def _business_config_view_orchestration_payload(
     *,
     view_type: str,
@@ -507,6 +562,27 @@ def _view_orchestration_analysis_config(contract_json: dict, view_type: str) -> 
     return {}
 
 
+def _view_orchestration_has_configured_view(view_orchestration: dict) -> bool:
+    views = view_orchestration.get("views") if isinstance(view_orchestration.get("views"), dict) else {}
+    if not views:
+        return False
+    for view_spec in views.values():
+        if not isinstance(view_spec, dict):
+            continue
+        for value in view_spec.values():
+            if isinstance(value, bool):
+                return True
+            if isinstance(value, (int, float)) and value:
+                return True
+            if isinstance(value, str) and value.strip():
+                return True
+            if isinstance(value, (list, tuple, set)) and len(value) > 0:
+                return True
+            if isinstance(value, dict) and len(value) > 0:
+                return True
+    return False
+
+
 def _business_config_analysis_payload(*, view_type: str, measures: list[str], dimensions: list[str], chart_type: str = "") -> dict:
     sequence = lambda idx: (idx + 1) * 10
     spec = {
@@ -550,6 +626,54 @@ def _lowcode_form_source_authority(handler) -> dict:
     }
 
 
+def _lowcode_contract_write_unavailable(env) -> bool:
+    if "ui.business.config.contract" not in env:
+        return True
+    Contract = env["ui.business.config.contract"]
+    return not all(hasattr(Contract, attr) for attr in ("sudo", "search", "create"))
+
+
+def _lowcode_form_contract_write_error(handler, message: str, exc: Exception | None = None) -> dict:
+    suffix = "：%s" % exc if exc is not None else ""
+    return handler._err(500, "%s，已阻止兼容策略表单独生效%s" % (message, suffix), REASON_WRITE_FAILED)
+
+
+def _lowcode_contract_write_failed_error(handler, exc: Exception) -> dict:
+    return handler._err(500, "正式低代码契约写入失败：%s" % exc, REASON_WRITE_FAILED)
+
+
+def _write_lowcode_form_contract_or_error(
+    handler,
+    *,
+    model: str,
+    action_id: int,
+    view_id: int,
+    rows: list[dict],
+    form_columns: int = 0,
+    group_columns: dict[str, int] | None = None,
+    group_visibility: dict[str, bool] | None = None,
+) -> tuple[int, dict | None]:
+    if _lowcode_contract_write_unavailable(handler.env):
+        return 0, _lowcode_form_contract_write_error(handler, "正式低代码契约不可写")
+    try:
+        count = _upsert_view_orchestration_field_rows(
+            handler.env,
+            model=model,
+            view_type="form",
+            action_id=action_id,
+            view_id=view_id,
+            rows=rows,
+            form_columns=form_columns,
+            group_columns=group_columns,
+            group_visibility=group_visibility,
+        )
+    except Exception as exc:
+        return 0, _lowcode_form_contract_write_error(handler, "正式低代码契约写入失败", exc)
+    if count <= 0 and (rows or form_columns or group_columns or group_visibility):
+        return 0, _lowcode_form_contract_write_error(handler, "正式低代码契约未写入")
+    return count, None
+
+
 def _search_published_view_orchestration_contracts(env, *, model: str, view_type: str, action_id: int = 0, view_id: int = 0, role_key: str = ""):
     if "ui.business.config.contract" not in env:
         return []
@@ -580,8 +704,13 @@ def _upsert_view_orchestration_field_rows(
     action_id: int | None = None,
     view_id: int | None = None,
     rows: list[dict] | None = None,
+    form_columns: int = 0,
+    group_columns: dict[str, int] | None = None,
+    group_visibility: dict[str, bool] | None = None,
 ) -> int:
-    if not rows or "ui.business.config.contract" not in env:
+    if not rows and not form_columns and not group_columns and not group_visibility:
+        return 0
+    if "ui.business.config.contract" not in env:
         return 0
     Contract = env["ui.business.config.contract"].sudo()
     name = _business_config_contract_name(model, view_type, action_id, view_id)
@@ -591,10 +720,15 @@ def _upsert_view_orchestration_field_rows(
     orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
     views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
     spec = views.get(view_type) if isinstance(views.get(view_type), dict) else {}
+    normalized_form_columns = _normalize_form_column_count(form_columns)
+    if normalized_form_columns:
+        spec["columns"] = normalized_form_columns
     fields_rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
     layout_group_by_field: dict[str, str] = {}
     group_meta_by_title: dict[str, dict] = {}
     field_layout_meta_by_name: dict[str, dict] = {}
+    sanitized_group_columns = dict(group_columns or {})
+    sanitized_group_visibility = dict(group_visibility or {})
 
     def collect_layout_groups(nodes, group_title: str = "") -> None:
         for node in nodes if isinstance(nodes, list) else []:
@@ -632,6 +766,18 @@ def _upsert_view_orchestration_field_rows(
             "visible": current.get("visible") if current.get("visible") is not None else section.get("visible"),
             "columns": current.get("columns") or section.get("columns") or section.get("cols"),
         }
+    for title, columns in sanitized_group_columns.items():
+        group_title = str(title or "").strip()
+        if not group_title:
+            continue
+        current = group_meta_by_title.get(group_title, {})
+        group_meta_by_title[group_title] = {**current, "columns": columns}
+    for title, visible in sanitized_group_visibility.items():
+        group_title = str(title or "").strip()
+        if not group_title:
+            continue
+        current = group_meta_by_title.get(group_title, {})
+        group_meta_by_title[group_title] = {**current, "visible": bool(visible)}
     by_name = {
         str(row.get("name") or row.get("field") or row.get("field_name") or "").strip(): dict(row)
         for row in fields_rows
@@ -705,6 +851,18 @@ def _upsert_view_orchestration_field_rows(
                 key=lambda item: (min(int(row.get("sequence") or 100) for row in item[1]), item[0]),
             )
         ]
+    elif group_meta_by_title:
+        spec["sections"] = [
+            {
+                "name": "business_config_section_%s" % (index + 1),
+                "title": title,
+                **({"visible": meta.get("visible")} if meta.get("visible") is not None else {}),
+                **({"columns": meta.get("columns")} if meta.get("columns") else {}),
+                "sequence": (index + 1) * 10,
+                "fields": [],
+            }
+            for index, (title, meta) in enumerate(sorted(group_meta_by_title.items()))
+        ]
     views[view_type] = spec
     orchestration["views"] = views
     payload["view_orchestration"] = orchestration
@@ -724,7 +882,8 @@ def _upsert_view_orchestration_field_rows(
     else:
         rec = Contract.create(vals)
     rec.action_publish()
-    return len(rows)
+    layout_changed = bool(normalized_form_columns or sanitized_group_columns or sanitized_group_visibility)
+    return len(rows or []) or (1 if layout_changed else 0)
 
 
 class FormFieldPolicySetHandler(BaseIntentHandler):
@@ -815,25 +974,27 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
             vals["group_title"] = group_title
         if sequence > 0:
             vals["sequence"] = sequence
+        mirror_row = {
+            "name": field_name,
+            "label": label,
+            "visible": bool(visible),
+            "sequence": int(sequence or getattr(policy, "sequence", 0) or 100),
+            **({"group_title": group_title} if group_title else {}),
+        }
+        mirrored_count, contract_error = _write_lowcode_form_contract_or_error(
+            self,
+            model=model,
+            action_id=action_id,
+            view_id=view_id,
+            rows=[mirror_row],
+        )
+        if contract_error:
+            return contract_error
         if policy:
             policy.check_access_rights("write")
             policy.write(vals)
         else:
             policy = Policy.create(vals)
-        mirrored_count = _upsert_view_orchestration_field_rows(
-            self.env,
-            model=model,
-            view_type="form",
-            action_id=action_id,
-            view_id=view_id,
-            rows=[{
-                "name": field_name,
-                "label": label,
-                "visible": bool(visible),
-                "sequence": int(policy.sequence or sequence or 100),
-                **({"group_title": str(policy.group_title or group_title or "").strip()} if str(policy.group_title or group_title or "").strip() else {}),
-            }],
-        )
         return {
             "ok": True,
             "data": {
@@ -1080,6 +1241,25 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
             ("view_id", "=", view_id or False),
         ])
         policy_map = {str(row.field_name or "").strip(): row for row in policies}
+        mirror_rows = [
+            {
+                "name": field_name,
+                "label": str((field_map.get(field_name).field_description if field_map.get(field_name) else field_name) or field_name),
+                "visible": True,
+                "sequence": (index + 1) * 10,
+                **({"group_title": field_groups[field_name]} if field_groups.get(field_name) else {}),
+            }
+            for index, field_name in enumerate(field_order)
+        ]
+        mirrored_count, contract_error = _write_lowcode_form_contract_or_error(
+            self,
+            model=model,
+            action_id=action_id,
+            view_id=view_id,
+            rows=mirror_rows,
+        )
+        if contract_error:
+            return contract_error
         for index, field_name in enumerate(field_order):
             sequence = (index + 1) * 10
             policy = policy_map.get(field_name)
@@ -1109,23 +1289,6 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
             if group_title:
                 vals["group_title"] = group_title
             Policy.create(vals)
-        mirrored_count = _upsert_view_orchestration_field_rows(
-            self.env,
-            model=model,
-            view_type="form",
-            action_id=action_id,
-            view_id=view_id,
-            rows=[
-                {
-                    "name": field_name,
-                    "label": str((field_map.get(field_name).field_description if field_map.get(field_name) else field_name) or field_name),
-                    "visible": True,
-                    "sequence": (index + 1) * 10,
-                    **({"group_title": field_groups[field_name]} if field_groups.get(field_name) else {}),
-                }
-                for index, field_name in enumerate(field_order)
-            ],
-        )
         return {
             "ok": True,
             "data": {
@@ -1154,11 +1317,20 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
         visibility = params.get("field_visibility") or params.get("fieldVisibility")
         raw_field_order = params.get("field_order") or params.get("fieldOrder")
         raw_field_groups = params.get("field_groups") or params.get("fieldGroups") or {}
+        field_sizes = _sanitize_field_string_map(params.get("field_sizes") or params.get("fieldSizes"))
+        field_widths = _sanitize_field_string_map(params.get("field_widths") or params.get("fieldWidths"))
+        field_classes = _sanitize_field_string_map(params.get("field_classes") or params.get("fieldClasses"))
+        group_columns = _sanitize_positive_int_map(params.get("group_columns") or params.get("groupColumns"))
+        group_visibility = _sanitize_bool_map(params.get("group_visibility") or params.get("groupVisibility"))
+        form_columns = _normalize_form_column_count(params.get("form_columns") or params.get("formColumns"))
         has_field_order = isinstance(raw_field_order, list) and bool(raw_field_order)
         has_field_groups = isinstance(raw_field_groups, dict) and any(
             str(name or "").strip() and str(value or "").strip()
             for name, value in raw_field_groups.items()
         )
+        has_field_layout = bool(field_sizes or field_widths or field_classes)
+        has_form_layout = bool(form_columns or group_columns or group_visibility)
+        layout_field_names = set(field_sizes) | set(field_widths) | set(field_classes)
         if model and isinstance(visibility, dict) and model in self.env:
             unknown = [
                 str(field_name or "").strip()
@@ -1175,6 +1347,10 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
             ]
             if unknown:
                 return self._err(404, "字段不存在：%s.%s" % (model, unknown[0]), REASON_NOT_FOUND)
+        if model and has_field_layout and model in self.env:
+            unknown = [name for name in layout_field_names if name not in self.env[model]._fields]
+            if unknown:
+                return self._err(404, "字段不存在：%s.%s" % (model, sorted(unknown)[0]), REASON_NOT_FOUND)
         if has_field_order:
             order_result = super().handle(payload=payload, ctx=ctx)
             if not order_result.get("ok"):
@@ -1184,8 +1360,8 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                 return self._err(400, "缺少 model", REASON_MISSING_PARAMS)
             if model not in self.env:
                 return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
-            if (not isinstance(visibility, dict) or not visibility) and not has_field_groups:
-                return self._err(400, "field_order、field_visibility 或 field_groups 必须至少提供一项", REASON_USER_ERROR)
+            if (not isinstance(visibility, dict) or not visibility) and not has_field_groups and not has_field_layout and not has_form_layout:
+                return self._err(400, "field_order、field_visibility、field_groups 或布局配置必须至少提供一项", REASON_USER_ERROR)
             action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
             if invalid_field:
                 return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
@@ -1208,6 +1384,17 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                 },
                 "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
             }
+
+        def field_layout_attrs(name: str) -> dict:
+            attrs = {}
+            if field_classes.get(name):
+                attrs["class"] = field_classes[name]
+            if field_sizes.get(name):
+                attrs["field_size"] = field_sizes[name]
+            if field_widths.get(name):
+                attrs["width"] = field_widths[name]
+            return attrs
+
         if has_field_groups:
             Policy = self.env["ui.form.field.policy"]
             action_id, _ = _optional_non_negative_int(params, "action_id", "actionId")
@@ -1224,8 +1411,7 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                 ("ttype", "!=", "binary"),
             ])
             field_map = {str(row.name or "").strip(): row for row in field_rows}
-            updates = 0
-            mirror_rows = []
+            plans = []
             for name, group_title in group_names.items():
                 policy = Policy.search([
                     ("active", "=", True),
@@ -1236,17 +1422,16 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                     ("view_id", "=", view_id or False),
                 ], limit=1)
                 if policy:
-                    policy.write({"group_title": group_title})
                     sequence = int(policy.sequence or 100)
                     label = str(policy.label or "")
                     visible = bool(policy.visible)
-                    updates += 1
+                    policy_vals = {"group_title": group_title}
                 elif model_rec:
                     field_rec = field_map.get(name)
                     label = str((field_rec.field_description if field_rec else name) or name).strip()
                     sequence = 100
                     visible = True
-                    Policy.create({
+                    policy_vals = {
                         "active": True,
                         "model_id": model_rec.id,
                         "model": model,
@@ -1259,25 +1444,41 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                         "company_id": self.env.company.id,
                         "action_id": action_id or False,
                         "view_id": view_id or False,
-                    })
-                    updates += 1
+                    }
                 else:
                     continue
-                mirror_rows.append({
-                    "name": name,
-                    "label": label or name,
-                    "visible": visible,
-                    "sequence": sequence,
-                    "group_title": group_title,
+                plans.append({
+                    "policy": policy,
+                    "policy_vals": policy_vals,
+                    "mirror": {
+                        "name": name,
+                        "label": label or name,
+                        "visible": visible,
+                        "sequence": sequence,
+                        "group_title": group_title,
+                        **field_layout_attrs(name),
+                    },
                 })
-            mirrored_count = _upsert_view_orchestration_field_rows(
-                self.env,
+            mirrored_count, contract_error = _write_lowcode_form_contract_or_error(
+                self,
                 model=model,
-                view_type="form",
+                rows=[plan["mirror"] for plan in plans],
                 action_id=action_id,
                 view_id=view_id,
-                rows=mirror_rows,
+                form_columns=form_columns,
+                group_columns=group_columns,
+                group_visibility=group_visibility,
             )
+            if contract_error:
+                return contract_error
+            updates = 0
+            for plan in plans:
+                policy = plan["policy"]
+                if policy:
+                    policy.write(plan["policy_vals"])
+                else:
+                    Policy.create(plan["policy_vals"])
+                updates += 1
             order_result["data"]["group_updated_count"] = updates
             order_result["data"]["business_config_group_mirrored_count"] = mirrored_count
         if visibility and isinstance(visibility, dict):
@@ -1291,8 +1492,7 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                 ("ttype", "!=", "binary"),
             ])
             field_map = {str(row.name or "").strip(): row for row in field_rows}
-            updates = 0
-            mirror_rows = []
+            plans = []
             for field_name, raw_visible in visibility.items():
                 name = str(field_name or "").strip()
                 if not name:
@@ -1307,12 +1507,11 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                     ("view_id", "=", view_id or False),
                 ], limit=1)
                 if policy:
-                    policy.write({"visible": bool(visible)})
-                    updates += 1
+                    policy_vals = {"visible": bool(visible)}
                 elif model_rec:
                     field_rec = field_map.get(name)
                     label = str((field_rec.field_description if field_rec else name) or name).strip()
-                    Policy.create({
+                    policy_vals = {
                         "active": True,
                         "model_id": model_rec.id,
                         "model": model,
@@ -1324,19 +1523,67 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                         "company_id": self.env.company.id,
                         "action_id": action_id or False,
                         "view_id": view_id or False,
-                    })
-                    updates += 1
-                mirror_rows.append({"name": name, "visible": bool(visible)})
-            mirrored_count = _upsert_view_orchestration_field_rows(
-                self.env,
+                    }
+                else:
+                    continue
+                plans.append({
+                    "policy": policy,
+                    "policy_vals": policy_vals,
+                    "mirror": {"name": name, "visible": bool(visible), **field_layout_attrs(name)},
+                })
+            mirrored_count, contract_error = _write_lowcode_form_contract_or_error(
+                self,
                 model=model,
-                view_type="form",
+                rows=[plan["mirror"] for plan in plans],
                 action_id=action_id,
                 view_id=view_id,
-                rows=mirror_rows,
+                form_columns=form_columns,
+                group_columns=group_columns,
+                group_visibility=group_visibility,
             )
+            if contract_error:
+                return contract_error
+            updates = 0
+            for plan in plans:
+                policy = plan["policy"]
+                if policy:
+                    policy.write(plan["policy_vals"])
+                else:
+                    Policy.create(plan["policy_vals"])
+                updates += 1
             order_result["data"]["visibility_updated_count"] = updates
             order_result["data"]["business_config_visibility_mirrored_count"] = mirrored_count
+        if has_field_layout or (has_form_layout and not (has_field_groups or (visibility and isinstance(visibility, dict)))):
+            action_id, _ = _optional_non_negative_int(params, "action_id", "actionId")
+            view_id, _ = _optional_non_negative_int(params, "view_id", "viewId")
+            field_rows = self.env["ir.model.fields"].search([
+                ("model", "=", model),
+                ("name", "in", list(layout_field_names)),
+                ("ttype", "!=", "binary"),
+            ]) if layout_field_names else []
+            field_map = {str(row.name or "").strip(): row for row in field_rows}
+            mirror_rows = [
+                {
+                    "name": name,
+                    "label": str((field_map.get(name).field_description if field_map.get(name) else name) or name).strip(),
+                    **field_layout_attrs(name),
+                }
+                for name in sorted(layout_field_names)
+            ]
+            mirrored_count, contract_error = _write_lowcode_form_contract_or_error(
+                self,
+                model=model,
+                rows=mirror_rows,
+                action_id=action_id,
+                view_id=view_id,
+                form_columns=form_columns,
+                group_columns=group_columns,
+                group_visibility=group_visibility,
+            )
+            if contract_error:
+                return contract_error
+            order_result["data"]["field_layout_updated_count"] = len(mirror_rows)
+            order_result["data"]["business_config_layout_mirrored_count"] = mirrored_count
         order_result["data"]["business_config_boundary"] = {
             "formal_authority": "ui.business.config.contract.view_orchestration",
             "compatibility_write": "ui.form.field.policy",
@@ -1347,7 +1594,16 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
         order_result["meta"]["low_code_config"] = {
             "enabled": True,
             "scope": "current_form",
-            "capabilities": ["field_order", "field_visibility"],
+            "capabilities": [
+                "field_order",
+                "field_visibility",
+                "field_groups",
+                "field_size",
+                "field_width",
+                "form_columns",
+                "group_columns",
+                "group_visibility",
+            ],
             "formal_authority": "ui.business.config.contract.view_orchestration",
             "compatibility_write": "ui.form.field.policy",
             "user_preference_boundary": "not_user_preference",
@@ -1470,8 +1726,11 @@ class BusinessConfigFormAuditHandler(BaseIntentHandler):
 
         contract_field_set = set(contract_fields)
         policy_field_set = set(policy_fields)
+        contract_authoritative = bool(contract_items)
         skipped_legacy_policy_fields = sorted(contract_field_set & policy_field_set)
-        active_legacy_policy_fields = sorted(policy_field_set - contract_field_set)
+        legacy_only_policy_fields = sorted(policy_field_set - contract_field_set)
+        suppressed_legacy_policy_fields = sorted(policy_field_set) if contract_authoritative else []
+        active_legacy_policy_fields = [] if contract_authoritative else sorted(policy_field_set)
         return {
             "ok": True,
             "data": {
@@ -1479,6 +1738,13 @@ class BusinessConfigFormAuditHandler(BaseIntentHandler):
                 "action_id": int(action_id or 0),
                 "view_id": int(view_id or 0),
                 "role_key": role_key,
+                "runtime_source": (
+                    "ui.business.config.contract.view_orchestration"
+                    if contract_authoritative
+                    else "ui.form.field.policy"
+                ),
+                "contract_authoritative": contract_authoritative,
+                "legacy_policy_runtime_enabled": not contract_authoritative,
                 "business_config_contracts": contract_items,
                 "business_config_form_fields": sorted(contract_fields),
                 "business_config_form_layout_fields": contract_layout_fields,
@@ -1488,6 +1754,8 @@ class BusinessConfigFormAuditHandler(BaseIntentHandler):
                 "layout_mismatch_contracts": sorted(contract_layout_mismatch_names),
                 "legacy_policy_fields": sorted(policy_fields),
                 "skipped_legacy_policy_fields": skipped_legacy_policy_fields,
+                "legacy_only_policy_fields": legacy_only_policy_fields,
+                "suppressed_legacy_policy_fields": suppressed_legacy_policy_fields,
                 "active_legacy_policy_fields": active_legacy_policy_fields,
                 "has_conflict": bool(skipped_legacy_policy_fields),
                 "policies": policy_items,
@@ -1605,6 +1873,13 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
         try:
             contract = self._runtime_view_contract(model=model, view_type="tree", action_id=action_id, view_id=view_id)
         except Exception:
+            _logger.debug(
+                "BUSINESS_CONFIG_LIST_SUGGESTED_COLUMNS_FAILED model=%s action_id=%s view_id=%s",
+                model,
+                action_id,
+                view_id,
+                exc_info=True,
+            )
             return []
         columns = _sanitize_config_name_list(contract.get("columns"))
         if not columns:
@@ -1623,6 +1898,13 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
             filters = _sanitize_config_name_list(search.get("filters"))
             group_by = _sanitize_config_name_list(search.get("group_by") or search.get("groupBys"))
         except Exception:
+            _logger.debug(
+                "BUSINESS_CONFIG_SEARCH_SUGGESTED_CONTRACT_FAILED model=%s action_id=%s view_id=%s",
+                model,
+                action_id,
+                view_id,
+                exc_info=True,
+            )
             filters = []
             group_by = []
         if (filters or group_by) or "app.search.config" not in self.env:
@@ -1636,6 +1918,13 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
             cfg = SearchConfig._generate_from_search(model)
             contract = cfg.get_search_contract(filter_runtime=True, include_user_filters=False) or {}
         except Exception:
+            _logger.debug(
+                "BUSINESS_CONFIG_SEARCH_SUGGESTED_FALLBACK_FAILED model=%s action_id=%s view_id=%s",
+                model,
+                action_id,
+                view_id,
+                exc_info=True,
+            )
             return [], []
         business_fields = self._business_field_name_set(model)
         filters = _sanitize_config_name_list(contract.get("filters"))
@@ -1745,6 +2034,8 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
                 action_id=int(action_id or 0),
                 view_id=int(view_id or 0),
             )
+        contract_authoritative = bool(list_items or search_items)
+        has_suggested_defaults = bool(suggested_columns or suggested_filters or suggested_group_by)
         return {
             "ok": True,
             "data": {
@@ -1752,6 +2043,13 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
                 "action_id": int(action_id or 0),
                 "view_id": int(view_id or 0),
                 "role_key": role_key,
+                "runtime_source": (
+                    "ui.business.config.contract.view_orchestration"
+                    if contract_authoritative
+                    else ("runtime_backend_view_contract" if has_suggested_defaults else "none")
+                ),
+                "contract_authoritative": contract_authoritative,
+                "suggested_defaults_only": not contract_authoritative and has_suggested_defaults,
                 "business_config_list_contracts": list_items,
                 "business_config_search_contracts": search_items,
                 "business_config_list_columns": list_columns,
@@ -1797,6 +2095,8 @@ class BusinessConfigListSearchSetHandler(BaseIntentHandler):
         return _lowcode_business_field_name_set(self.env, model)
 
     def _upsert_contract(self, *, model: str, view_type: str, action_id: int, view_id: int, role_key: str, payload: dict, publish: bool):
+        if _lowcode_contract_write_unavailable(self.env):
+            raise RuntimeError("ui.business.config.contract is not writable")
         Contract = self.env["ui.business.config.contract"].sudo()
         name = _business_config_contract_name(model, view_type, action_id, view_id)
         domain = [
@@ -1914,6 +2214,8 @@ class BusinessConfigListSearchSetHandler(BaseIntentHandler):
                 })
         except ValidationError as exc:
             return self._err(400, str(exc), REASON_USER_ERROR)
+        except Exception as exc:
+            return _lowcode_contract_write_failed_error(self, exc)
         return {
             "ok": True,
             "data": {
@@ -1943,6 +2245,14 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
         try:
             contract = self._runtime_view_contract(model=model, view_type=view_type, action_id=action_id, view_id=view_id)
         except Exception:
+            _logger.debug(
+                "BUSINESS_CONFIG_ANALYSIS_SUGGESTED_CONTRACT_FAILED model=%s view_type=%s action_id=%s view_id=%s",
+                model,
+                view_type,
+                action_id,
+                view_id,
+                exc_info=True,
+            )
             contract = {}
         view = contract.get(view_type) if isinstance(contract.get(view_type), dict) else {}
         measures = _sanitize_config_name_list(view.get("measures"))
@@ -2160,6 +2470,8 @@ class BusinessConfigAnalysisSetHandler(BusinessConfigListSearchSetHandler):
                 })
         except ValidationError as exc:
             return self._err(400, str(exc), REASON_USER_ERROR)
+        except Exception as exc:
+            return _lowcode_contract_write_failed_error(self, exc)
         return {
             "ok": True,
             "data": {
@@ -2725,6 +3037,8 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
                 rec.action_publish()
         except ValidationError as exc:
             return self._err(400, str(exc), REASON_USER_ERROR)
+        except Exception as exc:
+            return _lowcode_contract_write_failed_error(self, exc)
         return {
             "ok": True,
             "data": {
@@ -2752,6 +3066,8 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
         objects = payload.get("objects") if explicit_objects else []
         if not view_orchestration:
             errors.append("contract_json 必须包含 view_orchestration。")
+        elif not _view_orchestration_has_configured_view(view_orchestration):
+            errors.append("view_orchestration.views 必须至少包含一个非空视图配置。")
         has_view_fields = bool(_view_orchestration_field_names(payload, "form"))
         for obj in objects:
             if not isinstance(obj, dict):
@@ -3025,7 +3341,12 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
         rec = self.env["ui.business.config.contract"].search(domain, limit=1)
         if not rec:
             return self._err(404, "未找到业务配置", REASON_NOT_FOUND)
-        rec.action_publish()
+        try:
+            rec.action_publish()
+        except ValidationError as exc:
+            return self._err(400, str(exc), REASON_USER_ERROR)
+        except Exception as exc:
+            return _lowcode_contract_write_failed_error(self, exc)
         return {
             "ok": True,
             "data": {
@@ -3095,12 +3416,17 @@ class BusinessConfigContractRollbackHandler(BaseIntentHandler):
         if not target_version_no and len(versions) < 2:
             return self._err(400, "无可回滚版本", REASON_USER_ERROR)
         target = versions[0] if target_version_no else versions[1]
-        rec.write({
-            "contract_json": target.snapshot_json or {},
-            "status": "published",
-            "version_no": int(target.version_no or rec.version_no or 1),
-        })
-        rec.action_publish()
+        try:
+            rec.write({
+                "contract_json": target.snapshot_json or {},
+                "status": "published",
+                "version_no": int(target.version_no or rec.version_no or 1),
+            })
+            rec.action_publish()
+        except ValidationError as exc:
+            return self._err(400, str(exc), REASON_USER_ERROR)
+        except Exception as exc:
+            return _lowcode_contract_write_failed_error(self, exc)
         return {
             "ok": True,
             "data": {

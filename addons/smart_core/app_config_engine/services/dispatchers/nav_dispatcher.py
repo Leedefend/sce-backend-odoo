@@ -679,7 +679,7 @@ class NavDispatcher:
                 "action_id": n.get("action_id") or (n.get("action") or {}).get("id"),
                 "model": n.get("model") or (n.get("action") or {}).get("res_model"),
             }
-            raw = json.dumps(sig, sort_keys=True, ensure_ascii=False)
+            raw = json.dumps(sig, sort_keys=True, ensure_ascii=False, default=str)
             return "sig:" + hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
 
         def label_of(n: Dict[str, Any]) -> str:
@@ -799,7 +799,7 @@ class NavDispatcher:
         base = {
             "cfg": int(cfg_version or 1),
             "scene": scene,
-            "groups": sorted(set(groups_xmlids or [])),
+            "groups": sorted({str(group or "") for group in (groups_xmlids or []) if str(group or "")}),
         }
-        raw = json.dumps(base, sort_keys=True, ensure_ascii=False)
+        raw = json.dumps(base, sort_keys=True, ensure_ascii=False, default=str)
         return hashlib.md5(raw.encode("utf-8")).hexdigest()

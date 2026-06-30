@@ -34,7 +34,7 @@ def _ref_id(value: Any) -> int:
 
 def _hash_payload(payload: Any) -> str:
     value = payload if isinstance(payload, dict) else {}
-    text = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    text = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str, separators=(",", ":"))
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 

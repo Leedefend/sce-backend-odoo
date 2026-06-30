@@ -180,7 +180,7 @@ class CachingMiddleware(BaseMiddleware):
             "ctx": ctx
         }
         
-        key_string = json.dumps(key_data, sort_keys=True, separators=(',', ':'))
+        key_string = json.dumps(key_data, sort_keys=True, default=str, separators=(',', ':'))
         return hashlib.md5(key_string.encode('utf-8')).hexdigest()
     
     def _get_from_cache(self, key: str) -> Dict:

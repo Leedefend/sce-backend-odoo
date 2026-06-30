@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 
 
@@ -37,6 +38,7 @@ def build_usage_report_data(env, params=None):
         days=days,
         day_from=params.get("day_from"),
         day_to=params.get("day_to"),
+        user=getattr(env, "user", None),
     )
     day_set = set(day_window)
 
@@ -180,8 +182,8 @@ def build_usage_report_data(env, params=None):
     }
 
 
-def _empty_report(days=7, day_window=None):
-    day_window = day_window or _build_day_window(days=days)
+def _empty_report(days=7, day_window=None, user=None):
+    day_window = day_window or _build_day_window(days=days, user=user)
     return {
         "generated_at": "",
         "totals": {"scene_open_total": 0, "capability_open_total": 0},
@@ -241,14 +243,14 @@ def _matches_prefix(value, prefix):
     return str(value or "").lower().startswith(prefix)
 
 
-def _build_day_window(*, days=7, day_from=None, day_to=None):
+def _build_day_window(*, days=7, day_from=None, day_to=None, user=None):
     parsed_from = _parse_day(day_from)
     parsed_to = _parse_day(day_to)
     if parsed_from and parsed_to and parsed_from <= parsed_to:
         delta = (parsed_to - parsed_from).days + 1
         if delta <= 30:
             return [(parsed_from + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(delta)]
-    today = datetime.utcnow().date()
+    today = fields.Date.context_today(user)
     safe_days = _normalize_int(days, default=7, min_value=1, max_value=30)
     return [(today - timedelta(days=offset)).strftime("%Y-%m-%d") for offset in range(safe_days - 1, -1, -1)]
 

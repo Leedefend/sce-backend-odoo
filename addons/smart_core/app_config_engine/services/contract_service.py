@@ -96,7 +96,7 @@ class ContractService:
                 ("Content-Type", "application/json; charset=utf-8"),
                 ("X-Trace-Id", trace_id),
             ]
-            return False, status, headers, json.dumps(body, ensure_ascii=False).encode("utf-8")
+            return False, status, headers, json.dumps(body, ensure_ascii=False, default=str).encode("utf-8")
 
         # 1) 读取 body 与请求头
         payload = read_json_body()
@@ -215,6 +215,9 @@ class ContractService:
     # =========================
     # 具体修复实现
     # =========================
+    def _log_finalize_step_error(self, step: str):
+        _logger.debug("CONTRACT_FINALIZE_STEP_FAILED step=%s", step, exc_info=True)
+
     def _merge_view_buttons_to_top(self, data):
         try:
             root = data.get("data") or {}
@@ -242,7 +245,7 @@ class ContractService:
             root["buttons"] = list(merged.values())
             data["data"] = root
         except Exception:
-            pass
+            self._log_finalize_step_error("merge_view_buttons_to_top")
 
     def _fix_form_statusbar_field(self, data):
         """
@@ -274,8 +277,7 @@ class ContractService:
             views['form'] = form
             data['data']['views'] = views
         except Exception:
-            # 容错：任何异常不影响主流程
-            pass
+            self._log_finalize_step_error("fix_form_statusbar_field")
 
     def _fill_statusbar_states_from_selection(self, data):
         """当 statusbar.field == 'state' 且 states 为空时，从 fields.state.selection 构造 states。"""
@@ -289,7 +291,7 @@ class ContractService:
                 form["statusbar"] = sb
                 data["data"]["views"]["form"] = form
         except Exception:
-            pass
+            self._log_finalize_step_error("fill_statusbar_states_from_selection")
 
     def _cleanup_object_buttons(self, data):
         """
@@ -320,7 +322,7 @@ class ContractService:
 
             data['data']['buttons'] = cleaned
         except Exception:
-            pass
+            self._log_finalize_step_error("cleanup_object_buttons")
 
     def _normalize_search_filter_keys(self, data):
         """
@@ -336,7 +338,7 @@ class ContractService:
                 snake = self._to_snake_case(key)
                 f['key'] = snake
         except Exception:
-            pass
+            self._log_finalize_step_error("normalize_search_filter_keys")
 
     @staticmethod
     def _to_snake_case(s):
@@ -378,7 +380,7 @@ class ContractService:
                     except Exception:
                         pass
         except Exception:
-            pass
+            self._log_finalize_step_error("unify_domains_from_raw")
 
     def _sanitize_permissions(self, data):
         """
@@ -480,7 +482,7 @@ class ContractService:
                 normalized = [g for g in groups if not (isinstance(g, str) and g.startswith('!'))]
                 btn['groups_xmlids'] = normalized
         except Exception:
-            pass
+            self._log_finalize_step_error("strip_negative_groups_syntax.buttons")
         try:
             views = (data.get('data') or {}).get('views') or {}
             form = (views.get('form') or {})
@@ -489,7 +491,7 @@ class ContractService:
                     groups = btn.get('groups_xmlids', []) or []
                     btn['groups_xmlids'] = [g for g in groups if not (isinstance(g, str) and g.startswith('!'))]
         except Exception:
-            pass
+            self._log_finalize_step_error("strip_negative_groups_syntax.form_buttons")
 
     @staticmethod
     def _norm_str(s):
@@ -537,4 +539,4 @@ class ContractService:
             raise
         except Exception:
             # 容错：自检异常不影响主流程
-            pass
+            self._log_finalize_step_error("self_check_strict")

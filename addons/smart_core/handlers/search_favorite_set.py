@@ -119,8 +119,8 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
         vals = {
             "name": name,
             "model_id": model,
-            "domain": json.dumps(domain, ensure_ascii=False),
-            "context": json.dumps(context, ensure_ascii=False),
+            "domain": json.dumps(domain, ensure_ascii=False, default=str),
+            "context": json.dumps(context, ensure_ascii=False, default=str),
             "sort": order,
             "user_id": False if is_shared else self.env.uid,
             "is_default": is_default,

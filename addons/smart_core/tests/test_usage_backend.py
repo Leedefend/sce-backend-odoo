@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from uuid import uuid4
 
 from odoo.tests.common import TransactionCase, tagged
+from odoo import fields
 
 from odoo.addons.smart_core.handlers.usage_export_csv import build_usage_csv
 from odoo.addons.smart_core.handlers.usage_report import (
@@ -24,7 +25,7 @@ class TestUsageBackend(TransactionCase):
     def test_usage_report_supports_days_and_prefix_filter(self):
         Usage = self.env["sc.usage.counter"].sudo()
         company = self.env.user.company_id
-        today = datetime.utcnow().date()
+        today = fields.Date.context_today(self.env.user)
         day0 = today.strftime("%Y-%m-%d")
         day1 = (today - timedelta(days=1)).strftime("%Y-%m-%d")
         marker = f"u{uuid4().hex[:8]}"
@@ -62,7 +63,7 @@ class TestUsageBackend(TransactionCase):
     def test_usage_report_role_and_user_slice(self):
         Usage = self.env["sc.usage.counter"].sudo()
         company = self.env.user.company_id
-        today = datetime.utcnow().date().strftime("%Y-%m-%d")
+        today = fields.Date.context_today(self.env.user).strftime("%Y-%m-%d")
         role_code = f"pm_{uuid4().hex[:4]}"
         user_id = 999001
         scene_key = f"slice.scene.{uuid4().hex[:4]}"

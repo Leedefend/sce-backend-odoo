@@ -9,7 +9,7 @@ class ProjectProject(models.Model):
     # Migration carriers used by replay scripts. Business-useful values are
     # labeled as product fields; source/provenance values stay as history facts.
     partner_id = fields.Many2one("res.partner", string="关联单位")
-    sc_partner_display_name = fields.Char(string="关联单位", compute="_compute_sc_partner_display_name")
+    sc_partner_display_name = fields.Char(string="关联单位显示名称", compute="_compute_sc_partner_display_name")
     short_name = fields.Char(string="项目简称")
     project_environment = fields.Char(string="项目环境")
     legacy_project_id = fields.Char(string="历史项目ID", index=True)

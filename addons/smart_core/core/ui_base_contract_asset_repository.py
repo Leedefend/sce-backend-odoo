@@ -393,7 +393,7 @@ def upsert_asset(
         "asset_hash": _text(asset_hash),
         "source_ref": _text(source_ref),
         "code_version": _text(code_version),
-        "payload_json": json.dumps(payload_body, ensure_ascii=False, separators=(",", ":")),
+        "payload_json": json.dumps(payload_body, ensure_ascii=False, default=str, separators=(",", ":")),
     }
     with env.cr.savepoint():
         try:

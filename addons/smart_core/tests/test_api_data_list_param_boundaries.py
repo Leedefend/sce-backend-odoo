@@ -178,6 +178,158 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
         self.assertEqual(result["error"]["code"], 400)
         self.assertEqual(result["error"]["message"], "context_raw 无效")
 
+    def test_search_term_param_accepts_legacy_aliases(self):
+        self.assertEqual(self.handler._read_search_term_param({"searchTerm": " 绵阳 "}), "绵阳")
+        self.assertEqual(self.handler._read_search_term_param({"search": " 项目 "}), "项目")
+        self.assertEqual(self.handler._read_search_term_param({"keyword": " 保证金 "}), "保证金")
+        self.assertEqual(self.handler._read_search_term_param({"q": " 收款 "}), "收款")
+        self.assertEqual(
+            self.handler._read_search_term_param({"search_term": "正式", "search": "通用参数", "searchTerm": "旧参数"}),
+            "正式",
+        )
+
+    def test_list_applies_search_term_alias_to_domain(self):
+        field = lambda field_type, store=True, groups="": types.SimpleNamespace(
+            type=field_type,
+            store=store,
+            groups=groups,
+        )
+
+        class _Recordset:
+            def read(self, fields):
+                return [{"id": 1, "name": "绵阳项目"}]
+
+        class _Model:
+            _name = "x.model"
+            _rec_name = "name"
+
+            def __init__(self):
+                self.env = None
+                self._fields = {
+                    "id": field("integer"),
+                    "name": field("char"),
+                }
+                self.search_domains = []
+
+            def with_context(self, ctx):
+                self.context = ctx
+                return self
+
+            def search(self, domain, order=None, limit=None, offset=0):
+                self.search_domains.append(list(domain or []))
+                return _Recordset()
+
+            def search_count(self, domain):
+                return 1
+
+            def read_group(self, domain, fields, groupby, **kwargs):
+                return []
+
+        class _Env(dict):
+            pass
+
+        user = types.SimpleNamespace(has_group=lambda group: True)
+        env = _Env()
+        env.user = user
+        env.context = {}
+        model = _Model()
+        model.env = env
+        env["x.model"] = model
+        handler = _load_handler().ApiDataHandler(env=env)
+
+        result = handler._op_list("x.model", {"searchTerm": "绵阳", "need_total": True}, {}, False)
+
+        self.assertIsInstance(result, tuple)
+        self.assertIn(("name", "ilike", "绵阳"), model.search_domains[0])
+
+    def test_count_applies_search_term_alias_to_domain(self):
+        field = lambda field_type, store=True, groups="": types.SimpleNamespace(
+            type=field_type,
+            store=store,
+            groups=groups,
+        )
+
+        class _Model:
+            _name = "x.model"
+            _rec_name = "name"
+
+            def __init__(self):
+                self.env = None
+                self._fields = {"id": field("integer"), "name": field("char")}
+                self.count_domains = []
+
+            def with_context(self, ctx):
+                self.context = ctx
+                return self
+
+            def search_count(self, domain):
+                self.count_domains.append(list(domain or []))
+                return 7
+
+        class _Env(dict):
+            pass
+
+        user = types.SimpleNamespace(has_group=lambda group: True)
+        env = _Env()
+        env.user = user
+        env.context = {}
+        model = _Model()
+        model.env = env
+        env["x.model"] = model
+        handler = _load_handler().ApiDataHandler(env=env)
+
+        data, meta = handler._op_count("x.model", {"keyword": "绵阳"}, {}, False)
+
+        self.assertEqual(data["total"], 7)
+        self.assertTrue(meta["search_term_applied"])
+        self.assertIn(("name", "ilike", "绵阳"), model.count_domains[0])
+
+    def test_export_csv_applies_search_term_alias_to_domain(self):
+        field = lambda field_type, store=True, groups="": types.SimpleNamespace(
+            type=field_type,
+            store=store,
+            groups=groups,
+        )
+
+        class _Recordset:
+            def read(self, fields):
+                return [{"id": 1, "name": "绵阳项目"}]
+
+        class _Model:
+            _name = "x.model"
+            _rec_name = "name"
+
+            def __init__(self):
+                self.env = None
+                self._fields = {"id": field("integer"), "name": field("char")}
+                self.search_domains = []
+
+            def with_context(self, ctx):
+                self.context = ctx
+                return self
+
+            def search(self, domain, order=None, limit=None):
+                self.search_domains.append(list(domain or []))
+                return _Recordset()
+
+        class _Env(dict):
+            pass
+
+        user = types.SimpleNamespace(has_group=lambda group: True)
+        env = _Env()
+        env.user = user
+        env.context = {}
+        model = _Model()
+        model.env = env
+        env["x.model"] = model
+        handler = _load_handler().ApiDataHandler(env=env)
+
+        data, meta = handler._op_export_csv("x.model", {"q": "绵阳", "fields": ["id", "name"]}, {}, False)
+
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(meta["count"], 1)
+        self.assertIn(("name", "ilike", "绵阳"), model.search_domains[0])
+
     def test_safe_eval_runtime_supports_allowed_company_ids(self):
         module = _load_handler()
 
@@ -339,6 +491,43 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
         self.assertIn(("remark", "ilike", "保证金"), domain)
         self.assertNotIn(("p1_visible_remark", "ilike", "保证金"), domain)
         self.assertNotIn(("amount", "ilike", "保证金"), domain)
+
+    def test_search_term_domain_falls_back_to_model_text_fields_when_projection_has_no_source(self):
+        field = lambda field_type, store=True, search=None, groups="": types.SimpleNamespace(
+            type=field_type,
+            store=store,
+            search=search,
+            groups=groups,
+        )
+        user = types.SimpleNamespace(has_group=lambda group: group == "allowed.group")
+        env_model = types.SimpleNamespace(
+            _name="x.receipt",
+            _rec_name="",
+            env=types.SimpleNamespace(user=user),
+            _fields={
+                "id": field("integer"),
+                "p1_visible_project": field("char", store=False),
+                "project_name": field("char"),
+                "remark": field("text"),
+                "restricted_note": field("char", groups="blocked.group"),
+                "amount": field("monetary"),
+            },
+        )
+        self.handler._search_view_field_names = lambda model: []
+        self.handler._extension_search_field_names = lambda model: []
+
+        domain = self.handler._build_search_term_domain(
+            env_model,
+            "绵阳",
+            ["p1_visible_project"],
+        )
+
+        self.assertIn(("project_name", "ilike", "绵阳"), domain)
+        self.assertIn(("remark", "ilike", "绵阳"), domain)
+        self.assertNotIn(("p1_visible_project", "ilike", "绵阳"), domain)
+        self.assertNotIn(("restricted_note", "ilike", "绵阳"), domain)
+        self.assertNotIn(("amount", "ilike", "绵阳"), domain)
+        self.assertNotEqual(domain, [("id", "=", 0)])
 
     def test_search_term_domain_includes_many2one_display_source_fields(self):
         field = lambda field_type, store=True, search=None, groups="", comodel_name="": types.SimpleNamespace(

@@ -12,8 +12,9 @@ TEST_TAGS_FINAL="$(normalize_test_tags "${MODULE}" "sc_gate,sc_perm")"
 # shellcheck disable=SC2086
 compose ${COMPOSE_TEST_FILES} run --rm -T \
   -v "${DOCS_MOUNT_HOST}:${DOCS_MOUNT_CONT}:ro" \
+  -v "${CONFIG_MOUNT_HOST}:${CONFIG_MOUNT_CONT}:ro" \
   --entrypoint bash odoo -lc "
-    pip3 install -q -r /mnt/extra-addons/config/requirements-test.txt >/dev/null 2>&1 || true
+    pip3 install -q -r ${CONFIG_MOUNT_CONT}/requirements-test.txt
     exec /usr/bin/odoo \
       --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_USER} \
       -d ${DB_CI} \
