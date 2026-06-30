@@ -89,6 +89,8 @@ class ScProductPolicy(models.Model):
         return True
 
     def to_runtime_dict(self) -> dict[str, Any]:
+        from odoo.addons.smart_core.delivery.product_policy_service import ProductPolicyService
+
         self.ensure_one()
         return {
             "id": int(self.id),
@@ -106,6 +108,7 @@ class ScProductPolicy(models.Model):
             "scenes": self.scenes if isinstance(self.scenes, list) else [],
             "capabilities": self.capabilities if isinstance(self.capabilities, list) else [],
             "note": _text(self.note),
+            "policy_source_authority": ProductPolicyService.source_authority_contract(),
         }
 
     def action_freeze_candidate(self):

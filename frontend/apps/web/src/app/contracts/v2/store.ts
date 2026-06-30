@@ -52,7 +52,7 @@ function indexBy<T>(rows: T[], readKey: (row: T) => string): Map<string, T> {
   return out;
 }
 
-function collectUnsupported(_snapshot: ContractV2Snapshot): ContractV2UnsupportedFeature[] {
+function collectUnsupported(): ContractV2UnsupportedFeature[] {
   return [];
 }
 
@@ -140,7 +140,7 @@ export function createContractV2Store(snapshot: ContractV2Snapshot): ContractV2N
     buttonStatusById: indexBy<ContractV2ButtonStatus>(snapshot.statusContract.buttonStatus, (status) => status.btnId),
     containerStatusById: indexBy<ContractV2ContainerStatus>(snapshot.statusContract.containerStatus, (status) => status.containerId),
     primaryDataSource: primaryDataSource(snapshot),
-    unsupported: collectUnsupported(snapshot),
+    unsupported: collectUnsupported(),
   };
 }
 

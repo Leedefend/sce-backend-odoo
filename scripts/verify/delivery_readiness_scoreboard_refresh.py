@@ -326,7 +326,7 @@ def _upsert_release_gap_profile_posture(lines: list[str], strict_label: str, res
         end = len(lines)
 
     posture_line = (
-        f"5. CI profile posture: strict={strict_label}, restricted={restricted_label}; "
+        f"3. CI profile posture: strict={strict_label}, restricted={restricted_label}; "
         "release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs."
     )
 
@@ -334,7 +334,7 @@ def _upsert_release_gap_profile_posture(lines: list[str], strict_label: str, res
         posture_line += " Recovery: `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`."
 
     for index in range(start + 1, end):
-        if lines[index].startswith("5. CI profile posture:"):
+        if lines[index].startswith("3. CI profile posture:") or lines[index].startswith("5. CI profile posture:"):
             lines[index] = posture_line
             return lines
 

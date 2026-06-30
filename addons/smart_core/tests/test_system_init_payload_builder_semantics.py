@@ -126,6 +126,26 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         self.assertEqual(workspace_home_ref.get("scene_key"), "workspace.home")
         self.assertFalse(bool(workspace_home_ref.get("loaded")))
 
+    def test_build_startup_surface_keeps_action_surface_strategy(self):
+        strategy = {
+            "default": {"force_primary_keys": ["open_projects"]},
+            "by_role": {"pm": {"hide_keys": ["legacy_action"]}},
+        }
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {"scene_key": "workspace.home"},
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {"landing_scene_key": "workspace.home"},
+                "scene_action_surface_strategy": strategy,
+            }
+        )
+
+        self.assertEqual(payload.get("scene_action_surface_strategy"), strategy)
+
     def test_build_startup_surface_exposes_capabilities_by_explicit_with_token(self):
         payload = target.SystemInitPayloadBuilder.build_startup_surface(
             {

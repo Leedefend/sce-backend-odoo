@@ -2040,38 +2040,6 @@ function hydrateSelectedCoverageRowFromScan() {
   selectedRuntimeRoute.value = matched.runtime_route || selectedRuntimeRoute.value;
 }
 
-async function openDesignerForRow(row: BusinessConfigCoverageScanItem) {
-  await focusScanRow(row);
-  openFormConfig();
-}
-
-async function openListSearchForRow(row: BusinessConfigCoverageScanItem) {
-  scopeModel.value = row.model;
-  scopeActionId.value = row.action_id;
-  scopeViewId.value = Number(row.view_id || 0);
-  selectedPageLabel.value = row.name || row.model;
-  selectedRuntimeRoute.value = row.runtime_route || null;
-  analysisPanelOpen.value = false;
-  analysisAudit.value = null;
-  versionsPanelOpen.value = false;
-  versionContracts.value = [];
-  await router.replace({
-    path: route.path,
-    query: {
-      ...route.query,
-      model: row.model || undefined,
-      action_id: row.action_id ? String(row.action_id) : undefined,
-      view_id: row.view_id ? String(row.view_id) : undefined,
-      role_key: scopeRole.value || undefined,
-      page_label: row.name || undefined,
-      open_list_search: '1',
-      list_search_tab: route.query.list_search_tab || undefined,
-    },
-  });
-  await loadSurface();
-  await loadListSearchConfig();
-}
-
 async function openRuntimeRoute(row: BusinessConfigCoverageScanItem) {
   const runtimeRoute = row.runtime_route || {};
   const path = String(runtimeRoute.path || '').trim();

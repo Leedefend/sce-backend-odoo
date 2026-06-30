@@ -370,6 +370,8 @@ class SystemInitPayloadBuilder:
         minimal_ext_facts = cls._build_minimal_ext_facts(row)
         if minimal_ext_facts:
             minimal["ext_facts"] = minimal_ext_facts
+        if isinstance(row.get("scene_action_surface_strategy"), dict):
+            minimal["scene_action_surface_strategy"] = row.get("scene_action_surface_strategy")
         if isinstance(row.get("delivery_engine_v1"), dict):
             minimal["delivery_engine_v1"] = row.get("delivery_engine_v1")
         if isinstance(row.get("edition_runtime_v1"), dict):

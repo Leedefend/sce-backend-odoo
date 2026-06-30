@@ -307,6 +307,44 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         labels = [child.get("label") for group in groups for child in group.get("children") or []]
         self.assertEqual(labels, ["项目台账"])
 
+    def test_policy_menu_without_native_fact_is_not_authorized_by_env_fallback(self):
+        class _Model:
+            def check_access_rights(self, *_args, **_kwargs):
+                return True
+
+        class _Env:
+            user = types.SimpleNamespace(groups_id=types.SimpleNamespace(ids=[]))
+
+            def __contains__(self, key):
+                return key == "project.project"
+
+            def __getitem__(self, key):
+                if key == "project.project":
+                    return _Model()
+                raise KeyError(key)
+
+            def ref(self, *_args, **_kwargs):
+                return types.SimpleNamespace(
+                    active=True,
+                    groups_id=types.SimpleNamespace(ids=[]),
+                    action=types.SimpleNamespace(res_model="project.project"),
+                )
+
+        allowed = menu_service.MenuService(_Env())._policy_menu_user_authorized(
+            {
+                "menu_key": "project",
+                "label": "项目台账",
+                "menu_xmlid": "smart_construction_core.menu_project",
+                "menu_id": 379,
+                "route": "/a/506?menu_id=379",
+                "res_model": "project.project",
+            },
+            {"ids": set(), "xmlids": set(), "scenes": set(), "routes": set()},
+            is_admin=False,
+        )
+
+        self.assertFalse(allowed)
+
     def test_policy_scene_route_menu_is_allowed_when_authorized_by_route(self):
         nav = menu_service.MenuService().build_nav(
             policy={
