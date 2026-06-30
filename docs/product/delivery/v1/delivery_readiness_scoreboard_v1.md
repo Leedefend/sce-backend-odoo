@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T08:18:07Z
-- branch: `topic/material-action-replay-evidence`
-- commit_ref: `16a8a5b37`
+- generated_at_utc: 2026-06-30T08:29:12Z
+- branch: `topic/executive-readonly-evidence`
+- commit_ref: `576e4d567`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -30,6 +30,7 @@
 | Payment approval chain smoke | PASS | `artifacts/backend/payment_request_approval_chain_summary.json` |
 | Project task action smoke | PASS | `artifacts/backend/project_task_action_smoke.json` |
 | Material action replay smoke | PASS | `artifacts/backend/material_action_replay_smoke.json` |
+| Executive readonly smoke | PASS | `artifacts/backend/executive_readonly_smoke.json` |
 ## 10-Module Readiness Board
 
 | Module | Entry Scenes | Key Roles | Data Prerequisites | Smoke/Gate Status | Known Limits |
@@ -41,7 +42,7 @@
 | 付款申请与审批 | `finance.payment_requests`, `finance.center` | 财务, PM | 付款申请、审批角色 | Strict scene gate (`PASS`), payment approval chain smoke (`PASS`) | field consumer audit deprecated refs remain non-strict follow-up |
 | 资金与结算台账 | `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders` | 财务 | 账户、结算基础数据 | Covered by strict scene gate (`PASS`) | 需补台账对账快照证据 |
 | 成本预算与利润分析 | `cost.project_budget`, `cost.project_cost_ledger`, `cost.profit_compare` | PM, 财务 | 预算、成本流水、BOQ | Covered by strict scene gate (`PASS`) | 需补搜索/分页动作证据 |
-| 经营指标与领导看板 | `portal.dashboard`, `finance.operating_metrics` | 领导/老板 | 指标快照数据 | Covered by strict scene gate (`PASS`) | 需补只读角色验收脚本 |
+| 经营指标与领导看板 | `portal.dashboard`, `finance.operating_metrics` | 领导/老板 | 指标快照数据 | Strict scene gate (`PASS`), executive readonly smoke (`PASS`) | 只读验收已脚本化；后续补长周期趋势证据 |
 | 生命周期与治理审计 | `portal.lifecycle`, `portal.capability_matrix` | 管理员, 领导 | capability/scene baseline | Covered by strict scene gate (`PASS`) | 需补审计导出证据链 |
 | 主数据与工作台 | `data.dictionary`, `default` | 全角色 | 用户角色、字典主数据 | Covered by strict scene gate (`PASS`) | `default` 场景需持续监控占位语义 |
 
