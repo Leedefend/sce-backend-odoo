@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T08:49:26Z
-- branch: `topic/lifecycle-audit-export-evidence`
-- commit_ref: `a345c497c`
+- generated_at_utc: 2026-06-30T08:54:58Z
+- branch: `topic/default-scene-semantic-monitoring`
+- commit_ref: `9fd8830a9`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -35,6 +35,7 @@
 | Cost search pagination smoke | PASS | `artifacts/backend/cost_search_pagination_smoke.json` |
 | Quality safety closure smoke | PASS | `artifacts/backend/site_quality_safety_closure_audit.json` |
 | Lifecycle audit export | PASS | `artifacts/backend/lifecycle_audit_export.json` |
+| Default scene semantic monitor | PASS | `artifacts/backend/default_scene_semantic_monitor.json` |
 ## 10-Module Readiness Board
 
 | Module | Entry Scenes | Key Roles | Data Prerequisites | Smoke/Gate Status | Known Limits |
@@ -48,7 +49,7 @@
 | 成本预算与利润分析 | `cost.project_budget`, `cost.project_cost_ledger`, `cost.profit_compare` | PM, 财务 | 预算、成本流水、BOQ | Strict scene gate (`PASS`), cost search pagination smoke (`PASS`) | 搜索/分页已脚本化；后续补成本偏差趋势证据 |
 | 经营指标与领导看板 | `portal.dashboard`, `finance.operating_metrics` | 领导/老板 | 指标快照数据 | Strict scene gate (`PASS`), executive readonly smoke (`PASS`) | 只读验收已脚本化；后续补长周期趋势证据 |
 | 生命周期与治理审计 | `portal.lifecycle`, `portal.capability_matrix` | 管理员, 领导 | capability/scene baseline | Strict scene gate (`PASS`), lifecycle audit export (`PASS`) | 审计导出已脚本化；后续补长期趋势归档 |
-| 主数据与工作台 | `data.dictionary`, `default` | 全角色 | 用户角色、字典主数据 | Covered by strict scene gate (`PASS`) | `default` 场景需持续监控占位语义 |
+| 主数据与工作台 | `data.dictionary`, `default` | 全角色 | 用户角色、字典主数据 | Strict scene gate (`PASS`), default scene semantic monitor (`PASS`) | `default` 占位语义已脚本化；后续补字典变更趋势 |
 
 ## 4 Key Journey Status
 

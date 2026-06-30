@@ -72,8 +72,10 @@ green. The next iteration should not reopen release blockers unless a live gate 
    - Evidence target: `make verify.delivery.lifecycle.audit_export`, `artifacts/backend/lifecycle_audit_export.json`, and the scoreboard row `Lifecycle audit export`.
 
 3. Default scene semantic monitoring
+   - Status: done
    - Scope: `default`
    - Target: keep placeholder/default semantics explicit and non-regressive.
+   - Evidence target: `make verify.delivery.default_scene.semantic_monitor`, `artifacts/backend/default_scene_semantic_monitor.json`, and the scoreboard row `Default scene semantic monitor`.
 
 ## Exit Rules
 
