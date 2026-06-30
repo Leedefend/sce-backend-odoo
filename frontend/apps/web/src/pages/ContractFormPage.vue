@@ -2702,6 +2702,15 @@ function formatFormConfigOperationSummary(summary: string) {
   return text;
 }
 
+function readableFallbackFieldLabel(fieldKey: string) {
+  const key = String(fieldKey || '').trim();
+  if (!key) return '';
+  return key
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 watch(formConfigOperationLogStorageKey, () => {
   hydrateFormConfigOperationLog();
 }, { immediate: true });
@@ -2743,7 +2752,7 @@ function formDesignFieldLabel(fieldKey: string) {
   if (nativeLabel && nativeLabel !== key) return nativeLabel;
   if (rowLabel && rowLabel !== key) return rowLabel;
   if (descriptorLabel && descriptorLabel !== key) return descriptorLabel;
-  return rowLabel || key;
+  return rowLabel || readableFallbackFieldLabel(key);
 }
 
 function rememberFormConfigFieldLabel(fieldKey: string, label: string) {
@@ -3671,8 +3680,8 @@ function effectiveLowCodeFieldLabel(name: string, descriptor?: FieldDescriptor) 
     contractFieldLabel(fieldName)
     || lowCodeLayoutFieldLabel(fieldName)
     || descriptor?.string
-    || fieldName,
-  ).trim() || fieldName;
+    || readableFallbackFieldLabel(fieldName),
+  ).trim() || readableFallbackFieldLabel(fieldName);
 }
 
 function normalizeLowCodeApplyParams(raw: Record<string, unknown>): Record<string, unknown> {
