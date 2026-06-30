@@ -268,35 +268,6 @@ class MenuService:
         route = str(menu.get("route") or "").strip()
         if route and route in native_index.get("routes", set()):
             return True
-        if self.env is not None:
-            resolved_menu = None
-            if menu_xmlid:
-                try:
-                    resolved_menu = self.env.ref(menu_xmlid, raise_if_not_found=False)
-                except Exception:
-                    resolved_menu = None
-            if not resolved_menu and menu_id_int > 0:
-                try:
-                    resolved_menu = self.env["ir.ui.menu"].sudo().browse(menu_id_int).exists()
-                except Exception:
-                    resolved_menu = None
-            if resolved_menu:
-                if hasattr(resolved_menu, "active") and not bool(resolved_menu.active):
-                    return False
-                try:
-                    required_group_ids = set(resolved_menu.groups_id.ids)
-                    if required_group_ids and not (required_group_ids & set(self.env.user.groups_id.ids)):
-                        return False
-                except Exception:
-                    return False
-                try:
-                    action = resolved_menu.action
-                    model = str(getattr(action, "res_model", "") or "").strip()
-                    if model and model in self.env:
-                        return bool(self.env[model].check_access_rights("read", raise_exception=False))
-                except Exception:
-                    return False
-                return True
         return False
 
     def _flatten_policy_menus(self, policy: dict) -> list[dict]:

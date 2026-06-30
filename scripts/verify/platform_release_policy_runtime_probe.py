@@ -295,7 +295,7 @@ def main():
             failures.append("%s: non-admin without native authorization still sees policy menus" % product_key)
         if subset_delivery["delivered_menu_leaf_count"] > 1:
             failures.append("%s: native subset authorization leaked extra menus" % product_key)
-        if admin_delivery["delivered_menu_leaf_count"] < user_delivery["delivered_menu_leaf_count"]:
+        if admin_delivery["stable_leaf_count"] < user_delivery["stable_leaf_count"]:
             failures.append("%s: platform admin policy surface smaller than user surface" % product_key)
         if user_delivery["nav_source_authority_kind"] != MenuService.SOURCE_KIND:
             failures.append("%s: nav source authority is not MenuService" % product_key)

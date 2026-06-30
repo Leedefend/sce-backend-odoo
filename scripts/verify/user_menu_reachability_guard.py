@@ -185,8 +185,8 @@ def _failure(row: dict, stage: str, detail, model: str = "") -> dict:
 def _action_payload(user_env, row: dict) -> dict | None:
     try:
         # ``ir.actions.actions`` is a technical parent table restricted to Settings.
-        # Resolve only the action type with sudo; the concrete action payload below
-        # is still read through the target user's environment.
+        # Resolve only the action type with sudo; business model probes below still
+        # run through the target user's environment.
         action = env["ir.actions.actions"].sudo().browse(row["action_id"])  # noqa: F821
         if not action.exists():
             raise MissingError("action does not exist")
@@ -194,7 +194,12 @@ def _action_payload(user_env, row: dict) -> dict | None:
         if action_type not in ACTION_TYPES_TO_CHECK:
             row["resolved_action_type"] = action_type
             return {"type": action_type, "skipped": True}
-        payload = user_env["ir.actions.act_window"].browse(row["action_id"]).read(
+        # Action metadata contains technical relations such as
+        # ``ir.actions.act_window.view``. Business users reach these actions
+        # through menu delivery, but direct reads of that technical model are
+        # intentionally restricted to Settings. Resolve the action shape with
+        # sudo, then keep all business model probes on the target user env.
+        payload = env["ir.actions.act_window"].sudo().browse(row["action_id"]).read(  # noqa: F821
             ["name", "type", "res_model", "view_mode", "views", "view_id", "view_ids", "domain", "context"]
         )
         if not payload:

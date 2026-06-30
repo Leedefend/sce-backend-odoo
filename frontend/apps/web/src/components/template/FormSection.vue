@@ -560,7 +560,7 @@ function emitFieldOrderDragStart(field: FormSectionFieldSchema, event: DragEvent
   emit('field-order-drag-start', { field, event });
 }
 
-function fieldOrderDropPlacement(event?: DragEvent | MouseEvent): 'before' | 'after' | '' {
+function resolveFieldOrderDropPlacement(event?: DragEvent | MouseEvent): 'before' | 'after' | '' {
   const target = event?.currentTarget as HTMLElement | null | undefined;
   if (!target || typeof target.getBoundingClientRect !== 'function') return '';
   const rect = target.getBoundingClientRect();
@@ -572,7 +572,7 @@ function fieldOrderDropPlacement(event?: DragEvent | MouseEvent): 'before' | 'af
 
 function emitFieldOrderDragOver(field: FormSectionFieldSchema, event?: DragEvent) {
   if (!props.fieldOrderEditable) return;
-  emit('field-order-drag-over', { field, groupTitle: props.fieldGroupTitle || '', placement: fieldOrderDropPlacement(event) });
+  emit('field-order-drag-over', { field, groupTitle: props.fieldGroupTitle || '', placement: resolveFieldOrderDropPlacement(event) });
 }
 
 function emitFieldOrderDragLeave(field: FormSectionFieldSchema) {
@@ -582,7 +582,7 @@ function emitFieldOrderDragLeave(field: FormSectionFieldSchema) {
 
 function emitFieldOrderDrop(field: FormSectionFieldSchema, event?: DragEvent | MouseEvent) {
   if (!props.fieldOrderEditable) return;
-  emit('field-order-drop', { field, groupTitle: props.fieldGroupTitle || '', placement: fieldOrderDropPlacement(event) });
+  emit('field-order-drop', { field, groupTitle: props.fieldGroupTitle || '', placement: resolveFieldOrderDropPlacement(event) });
 }
 
 function emitFieldOrderPointerDrop(field: FormSectionFieldSchema, event: MouseEvent) {

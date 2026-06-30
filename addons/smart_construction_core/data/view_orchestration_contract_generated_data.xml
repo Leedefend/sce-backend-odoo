@@ -330,6 +330,28 @@
         <field name="version_no">1</field>
         <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "company_id", "sequence": 20}, {"name": "partner_id", "sequence": 30}, {"name": "entity_type", "sequence": 40}, {"name": "mapping_state", "sequence": 50}, {"name": "map_ids", "sequence": 60}, {"name": "note", "sequence": 70}]}}}}'/>
     </record>
+    <record id="business_config_contract_sc_business_entity_tree_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_business_entity_tree_structure_generated_v1</field>
+        <field name="model">sc.business.entity</field>
+        <field name="view_type">tree</field>
+        <field name="priority">89</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"tree": {"columns": [{"name": "sequence", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "company_id", "sequence": 30}, {"name": "entity_type", "sequence": 40}, {"name": "mapping_state", "sequence": 50}, {"name": "partner_id", "sequence": 60}, {"name": "legacy_xmid", "sequence": 70}, {"name": "legacy_xmmc", "sequence": 80}, {"name": "map_count", "sequence": 90}, {"name": "active", "sequence": 100}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_business_entity_search_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_business_entity_search_structure_generated_v1</field>
+        <field name="model">sc.business.entity</field>
+        <field name="view_type">search</field>
+        <field name="priority">89</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"search": {"filters": [{"field": "name", "sequence": 10}, {"field": "legacy_xmid", "sequence": 20}, {"field": "legacy_xmmc", "sequence": 30}, {"field": "partner_id", "sequence": 40}], "group_by": [{"field": "company_id", "sequence": 10}, {"field": "legacy_xmmc", "sequence": 20}, {"field": "partner_id", "sequence": 30}, {"field": "create_date", "sequence": 40}, {"field": "entity_type", "sequence": 50}, {"field": "mapping_state", "sequence": 60}]}}}}'/>
+    </record>
     <record id="business_config_contract_sc_check_standard_form_structure_generated" model="ui.business.config.contract">
         <field name="name">sc_check_standard_form_structure_generated_v1</field>
         <field name="model">sc.check.standard</field>
