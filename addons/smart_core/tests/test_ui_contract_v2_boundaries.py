@@ -544,6 +544,240 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             ["entry_user_text", "source_created_by", "entry_time", "source_created_at"],
         )
 
+    def test_business_list_profile_prefers_config_over_legacy_visible_override(self):
+        class _Config:
+            contract_json = {
+                "view_orchestration": {
+                    "views": {
+                        "tree": {
+                            "columns": [
+                                {"name": "p1_visible_a", "sequence": 10},
+                                {"name": "p1_visible_b", "sequence": 20},
+                                {"name": "source_created_by", "sequence": 30},
+                                {"name": "source_created_at", "sequence": 40},
+                            ]
+                        }
+                    }
+                }
+            }
+
+        class _ConfigModel:
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0):
+                return [_Config()]
+
+        class _Env(dict):
+            def __contains__(self, key):
+                return dict.__contains__(self, key)
+
+        handler = self.module.UiContractV2Handler(env=_Env({
+            "ui.business.config.contract": _ConfigModel(),
+        }))
+        handler._scbs55_legacy_visible_list_override = lambda source_contract: {
+            "columns": ["p1_visible_a", "p1_visible_b"],
+            "column_labels": {"p1_visible_a": "单据状态", "p1_visible_b": "项目名称"},
+        }
+        source_contract = {
+            "action_id": 856,
+            "model": "sc.demo",
+            "views": {
+                "tree": {
+                    "columns": ["p1_visible_a", "p1_visible_b", "source_created_by", "source_created_at"],
+                }
+            },
+            "list_profile": {},
+        }
+
+        handler._merge_business_list_profile(
+            source_contract,
+            common_fields=[],
+            amount_fields=[],
+            note_field="",
+            status_field="",
+            label_for=lambda name: name,
+            type_for=lambda name: "char",
+        )
+
+        self.assertEqual(
+            source_contract["list_profile"]["columns"],
+            ["p1_visible_a", "p1_visible_b", "source_created_by", "source_created_at"],
+        )
+        self.assertEqual(
+            source_contract["list_profile"]["column_policy"]["reason"],
+            "business_list_config_contract_authoritative",
+        )
+
+    def test_business_list_profile_does_not_append_native_tail_to_direct_config(self):
+        class _Config:
+            contract_json = {
+                "view_orchestration": {
+                    "views": {
+                        "tree": {
+                            "columns": [
+                                {"name": "contract_name", "sequence": 10},
+                                {"name": "contract_no", "sequence": 20},
+                                {"name": "amount_total", "sequence": 30},
+                            ]
+                        }
+                    }
+                }
+            }
+
+        class _ConfigModel:
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0):
+                return [_Config()]
+
+        class _Env(dict):
+            def __contains__(self, key):
+                return dict.__contains__(self, key)
+
+        handler = self.module.UiContractV2Handler(env=_Env({
+            "ui.business.config.contract": _ConfigModel(),
+        }))
+        source_contract = {
+            "action_id": 669,
+            "model": "sc.general.contract",
+            "views": {
+                "tree": {
+                    "columns": [
+                        "contract_name",
+                        "contract_no",
+                        "amount_total",
+                        "state",
+                        "project_id",
+                    ],
+                }
+            },
+            "list_profile": {},
+        }
+
+        handler._merge_business_list_profile(
+            source_contract,
+            common_fields=[],
+            amount_fields=[],
+            note_field="",
+            status_field="",
+            label_for=lambda name: name,
+            type_for=lambda name: "char",
+        )
+
+        self.assertEqual(
+            source_contract["list_profile"]["columns"],
+            ["contract_name", "contract_no", "amount_total"],
+        )
+
+    def test_business_list_profile_does_not_extend_direct_config_with_existing_profile(self):
+        class _Config:
+            contract_json = {
+                "view_orchestration": {
+                    "views": {
+                        "tree": {
+                            "columns": [
+                                {"name": "legacy_visible_status", "sequence": 10},
+                                {"name": "legacy_visible_project", "sequence": 20},
+                                {"name": "source_created_by", "sequence": 30},
+                            ]
+                        }
+                    }
+                }
+            }
+
+        class _ConfigModel:
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0):
+                return [_Config()]
+
+        class _Env(dict):
+            def __contains__(self, key):
+                return dict.__contains__(self, key)
+
+        handler = self.module.UiContractV2Handler(env=_Env({
+            "ui.business.config.contract": _ConfigModel(),
+        }))
+        source_contract = {
+            "action_id": 525,
+            "model": "sc.material.plan",
+            "views": {"tree": {"columns": []}},
+            "list_profile": {
+                "columns": ["name", "project_id", "state"],
+                "column_labels": {"name": "名称", "project_id": "项目", "state": "状态"},
+            },
+        }
+
+        handler._merge_business_list_profile(
+            source_contract,
+            common_fields=["name", "project_id", "state"],
+            amount_fields=[],
+            note_field="remark",
+            status_field="state",
+            label_for=lambda name: name,
+            type_for=lambda name: "char",
+        )
+
+        self.assertEqual(
+            source_contract["list_profile"]["columns"],
+            ["legacy_visible_status", "legacy_visible_project", "source_created_by"],
+        )
+        self.assertEqual(
+            source_contract["list_profile"]["column_policy"]["reason"],
+            "business_list_config_contract_authoritative",
+        )
+
+    def test_business_list_config_projection_enforces_exact_final_columns(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        source_contract = {
+            "list_profile": {
+                "columns": ["name", "source_created_by"],
+                "fact_columns": ["name", "source_created_by"],
+                "column_labels": {"name": "名称", "source_created_by": "来源录入人"},
+                "column_policy": {
+                    "mode": "strict",
+                    "reason": "business_list_config_contract_authoritative",
+                },
+            }
+        }
+        contract = {
+            "layoutContract": {
+                "listProfile": {
+                    "columns": ["name", "source_created_by", "governance_extra"],
+                    "fact_columns": ["name", "source_created_by", "governance_extra"],
+                }
+            }
+        }
+
+        handler._enforce_business_list_config_projection(contract, source_contract)
+
+        profile = contract["layoutContract"]["listProfile"]
+        self.assertEqual(profile["columns"], ["name", "source_created_by"])
+        self.assertEqual(profile["preference_policy"]["locked_columns"], ["name", "source_created_by"])
+        self.assertEqual(profile["sourceAuthority"]["source_key"], "list_profile.business_config_contract_authoritative")
+
+    def test_business_list_config_projection_repairs_columns_from_fact_columns(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        source_contract = {
+            "list_profile": {
+                "columns": ["legacy_visible_01", "legacy_visible_02"],
+                "fact_columns": [
+                    "legacy_visible_01",
+                    "legacy_visible_02",
+                    "source_created_by",
+                    "source_created_at",
+                ],
+                "column_policy": {
+                    "mode": "strict",
+                    "reason": "business_list_config_contract_authoritative",
+                },
+            }
+        }
+        contract = {"layoutContract": {"listProfile": {"columns": ["legacy_visible_01", "legacy_visible_02"]}}}
+
+        handler._enforce_business_list_config_projection(contract, source_contract)
+
+        profile = contract["layoutContract"]["listProfile"]
+        self.assertEqual(
+            profile["columns"],
+            ["legacy_visible_01", "legacy_visible_02", "source_created_by", "source_created_at"],
+        )
+        self.assertEqual(profile["preference_policy"]["locked_columns"], profile["columns"])
+
     def test_form_structure_contract_uses_generic_slots_not_contract_template(self):
         handler = self.module.UiContractV2Handler(env=object())
         field_types = {

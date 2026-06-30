@@ -277,6 +277,53 @@ class UiContractV2Handler(BaseIntentHandler):
             )
             contract["layoutContract"] = layout_contract
 
+    def _enforce_business_list_config_projection(self, contract: dict[str, Any], source_contract: dict[str, Any]) -> None:
+        if not isinstance(contract, dict) or not isinstance(source_contract, dict):
+            return
+        profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
+        policy = profile.get("column_policy") if isinstance(profile.get("column_policy"), dict) else {}
+        if str(policy.get("reason") or "").strip() != "business_list_config_contract_authoritative":
+            return
+        columns = [
+            str(name or "").strip()
+            for name in (profile.get("columns") if isinstance(profile.get("columns"), list) else [])
+            if str(name or "").strip()
+        ]
+        fact_columns = [
+            str(name or "").strip()
+            for name in (profile.get("fact_columns") if isinstance(profile.get("fact_columns"), list) else [])
+            if str(name or "").strip()
+        ]
+        if fact_columns and any(name not in columns for name in fact_columns):
+            columns = list(fact_columns)
+        if not columns:
+            return
+        locked_profile = deepcopy(profile)
+        locked_profile["columns"] = columns
+        locked_profile["fact_columns"] = list(fact_columns or columns)
+        locked_profile["hidden_columns"] = [
+            str(name or "").strip()
+            for name in (locked_profile.get("hidden_columns") if isinstance(locked_profile.get("hidden_columns"), list) else [])
+            if str(name or "").strip() in set(columns)
+        ]
+        pref = locked_profile.get("preference_policy") if isinstance(locked_profile.get("preference_policy"), dict) else {}
+        locked_profile["preference_policy"] = {
+            **pref,
+            "scope": "business_config_contract",
+            "allow_visibility": False,
+            "allow_order": False,
+            "allow_width": bool(pref.get("allow_width", True)),
+            "locked_columns": list(columns),
+            "must_request_columns": list(locked_profile.get("fact_columns") or columns),
+        }
+        layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+        layout_contract["listProfile"] = self._v2_policy_projection(
+            locked_profile,
+            runtime_carrier="ui.contract.v2.layoutContract.listProfile",
+            source_key="list_profile.business_config_contract_authoritative",
+        )
+        contract["layoutContract"] = layout_contract
+
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         params = self._params(payload)
         client_type = resolve_client_type(self._headers(), params)
@@ -466,6 +513,7 @@ class UiContractV2Handler(BaseIntentHandler):
         self._normalize_general_contract_company_form(contract_v2, source_contract=source_contract)
         self._normalize_construction_diary_form(contract_v2, source_contract=source_contract)
         self._apply_business_config_form_groups_to_v2(contract_v2, source_contract=source_contract)
+        self._enforce_business_list_config_projection(contract_v2, source_contract)
         contract_v2 = trim_unified_page_contract_v2(
             contract_v2,
             client_type=client_type,
@@ -2985,7 +3033,7 @@ class UiContractV2Handler(BaseIntentHandler):
             name = str(row.get("name") or "").strip()
             if name.startswith("legacy_visible_") and name not in legacy_view_columns:
                 legacy_view_columns.append(name)
-        legacy_override = self._scbs55_legacy_visible_list_override(source_contract)
+        legacy_override = None if direct_orchestration_columns else self._scbs55_legacy_visible_list_override(source_contract)
         columns: list[str] = []
         explicit_view_columns: list[str] = []
         has_explicit_view_columns = False
@@ -2996,15 +3044,15 @@ class UiContractV2Handler(BaseIntentHandler):
                 explicit_view_columns.append(name)
                 has_explicit_view_columns = True
         if direct_orchestration_columns:
-            tail = [name for name in columns if name and name not in set(direct_orchestration_columns) and name not in direct_orchestration_hidden]
-            columns = list(direct_orchestration_columns) + tail
+            columns = list(direct_orchestration_columns)
             explicit_view_columns = list(direct_orchestration_columns)
             has_explicit_view_columns = True
         profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
-        for name in profile.get("columns") if isinstance(profile.get("columns"), list) else []:
-            normalized = str(name or "").strip()
-            if normalized and normalized not in columns:
-                columns.append(normalized)
+        if not direct_orchestration_columns:
+            for name in profile.get("columns") if isinstance(profile.get("columns"), list) else []:
+                normalized = str(name or "").strip()
+                if normalized and normalized not in columns:
+                    columns.append(normalized)
         column_policy = profile.get("column_policy") if isinstance(profile.get("column_policy"), dict) else {}
         column_policy_mode = str(column_policy.get("mode") or "").strip().lower()
         strict_columns = column_policy_mode == "strict" or (has_explicit_view_columns and column_policy_mode != "extend")
@@ -3145,6 +3193,12 @@ class UiContractV2Handler(BaseIntentHandler):
                 "must_request_columns": columns,
             },
         })
+        if direct_orchestration_columns:
+            profile["column_policy"] = {
+                "mode": "strict",
+                "reason": "business_list_config_contract_authoritative",
+                "owner_layer": "ui.business.config.contract.view_orchestration",
+            }
         source_contract["list_profile"] = profile
 
         if tree:

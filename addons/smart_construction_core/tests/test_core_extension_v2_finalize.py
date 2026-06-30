@@ -132,3 +132,32 @@ class TestCoreExtensionV2Finalize(TransactionCase):
         )
 
         self.assertIsNone(projected)
+
+    def test_projected_data_finalize_does_not_override_business_list_config_columns(self):
+        data = {
+            "model": "project.material.plan",
+            "view_type": "tree",
+            "action_id": 525,
+            "list_profile": {
+                "columns": [
+                    "legacy_visible_01",
+                    "legacy_visible_02",
+                    "source_created_by",
+                    "source_created_at",
+                ],
+                "fact_columns": [
+                    "legacy_visible_01",
+                    "legacy_visible_02",
+                    "source_created_by",
+                    "source_created_at",
+                ],
+                "column_policy": {
+                    "mode": "strict",
+                    "reason": "business_list_config_contract_authoritative",
+                },
+            },
+        }
+
+        projected = core_extension.smart_core_finalize_projected_contract_data(self.env, data, {"view_type": "tree"})
+
+        self.assertIsNone(projected)

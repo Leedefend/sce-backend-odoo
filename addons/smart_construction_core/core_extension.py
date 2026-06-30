@@ -2091,6 +2091,10 @@ def smart_core_finalize_projected_contract_data(env, data, context):
         action_id = int(data.get("action_id") or head.get("action_id") or 0)
     except Exception:
         action_id = 0
+    list_profile = data.get("list_profile") if isinstance(data.get("list_profile"), dict) else {}
+    column_policy = list_profile.get("column_policy") if isinstance(list_profile.get("column_policy"), dict) else {}
+    if str(column_policy.get("reason") or "").strip() == "business_list_config_contract_authoritative":
+        return None
     if not action_id or action_id not in _user_confirmed_formal_list_action_ids(env):
         return None
     action = env["ir.actions.act_window"].sudo().browse(action_id)
