@@ -43,3 +43,15 @@ class TestActionGroupsGate(TransactionCase):
             risky,
             "存在菜单有限流但 Action 无 groups 的绕过风险：%s" % ", ".join(risky),
         )
+
+    def test_business_entity_entry_uses_business_config_group(self):
+        expected_group = self.env.ref("smart_construction_core.group_sc_cap_business_config_admin")
+        action = self.env.ref("smart_construction_core.action_sc_business_entity")
+        menu = self.env.ref("smart_construction_core.menu_sc_business_entity")
+        legacy_action = self.env.ref("smart_construction_core.action_sc_legacy_business_entity_map")
+        legacy_menu = self.env.ref("smart_construction_core.menu_sc_legacy_business_entity_map")
+
+        self.assertEqual(action.groups_id, expected_group)
+        self.assertEqual(menu.groups_id, expected_group)
+        self.assertNotIn(expected_group, legacy_action.groups_id)
+        self.assertNotIn(expected_group, legacy_menu.groups_id)
