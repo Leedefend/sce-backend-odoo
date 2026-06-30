@@ -283,6 +283,8 @@ def _view_orchestration_field_names(contract_json: dict, view_type: str = "form"
         rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
     names = []
     for row in rows:
+        if _view_orchestration_row_hidden(row):
+            continue
         if isinstance(row, str):
             name = row.strip()
         elif isinstance(row, dict):
@@ -292,6 +294,43 @@ def _view_orchestration_field_names(contract_json: dict, view_type: str = "form"
         if name and name not in names:
             names.append(name)
     return names
+
+
+def _view_orchestration_row_hidden(row) -> bool:
+    if not isinstance(row, dict):
+        return False
+
+    def truthy(value) -> bool:
+        if value is True or value == 1:
+            return True
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "hide", "hidden"}
+        return False
+
+    if row.get("visible") is False:
+        return True
+    if truthy(row.get("invisible")) or truthy(row.get("column_invisible")):
+        return True
+    attrs = row.get("attrs") if isinstance(row.get("attrs"), dict) else {}
+    modifiers = row.get("modifiers") if isinstance(row.get("modifiers"), dict) else {}
+    attributes = row.get("attributes") if isinstance(row.get("attributes"), dict) else {}
+    attribute_modifiers = attributes.get("modifiers") if isinstance(attributes.get("modifiers"), dict) else {}
+    if any(
+        truthy(value)
+        for value in (
+            attrs.get("invisible"),
+            attrs.get("column_invisible"),
+            modifiers.get("invisible"),
+            modifiers.get("column_invisible"),
+            attributes.get("invisible"),
+            attributes.get("column_invisible"),
+            attribute_modifiers.get("invisible"),
+            attribute_modifiers.get("column_invisible"),
+        )
+    ):
+        return True
+    label = str(row.get("label") or row.get("string") or "").strip()
+    return label.upper().endswith("_HIDDEN")
 
 
 def _collect_view_orchestration_layout_field_names(value) -> list[str]:
@@ -344,12 +383,14 @@ def _view_orchestration_field_label_map(contract_json: dict, view_type: str = "f
     if not isinstance(spec, dict) and normalized_view_type == "tree":
         spec = views.get("list")
     if not isinstance(spec, dict):
-        return []
+        return {}
     rows = spec.get("fields") if normalized_view_type == "form" else spec.get("columns")
     if not isinstance(rows, list):
         rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
     labels = {}
     for row in rows:
+        if _view_orchestration_row_hidden(row):
+            continue
         if isinstance(row, str):
             name = row.strip()
             label = name

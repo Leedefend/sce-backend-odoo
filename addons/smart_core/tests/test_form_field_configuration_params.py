@@ -1930,7 +1930,11 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                             "view_orchestration": {
                                 "views": {
                                     "tree": {
-                                        "columns": [{"name": "name", "label": "客户名称"}, {"name": "email", "label": "邮箱"}]
+                                        "columns": [
+                                            {"name": "name", "label": "客户名称"},
+                                            {"name": "stage_id", "label": "CODEX_STAGE_HIDDEN", "visible": False},
+                                            {"name": "email", "label": "邮箱"},
+                                        ]
                                     }
                                 }
                             }
