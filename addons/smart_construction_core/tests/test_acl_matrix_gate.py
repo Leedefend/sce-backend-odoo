@@ -47,6 +47,7 @@ ACL_AUDIT_MODELS = [
     "sc.treasury.ledger",
     "sc.settlement.order",
     "sc.settlement.order.line",
+    "sc.legacy.business.entity.map",
 ]
 
 # Models that are intentionally excluded from P0 ACL expectations and tracked as P1.
@@ -88,6 +89,7 @@ ACL_EXPECTATIONS = [
     {"role": "settlement_read", "model": "sc.settlement.order.line", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
     {"role": "settlement_user", "model": "sc.settlement.order.line", "rights": {"read": True, "create": True, "write": True, "unlink": False}},
     {"role": "settlement_manager", "model": "sc.settlement.order.line", "rights": {"read": True, "create": True, "write": True, "unlink": True}},
+    {"role": "business_config_admin", "model": "sc.legacy.business.entity.map", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
     {"role": "platform_admin", "model": "project.project", "rights": {"read": False, "create": False, "write": False, "unlink": False}},
     {"role": "platform_admin", "model": "construction.contract", "rights": {"read": False, "create": False, "write": False, "unlink": False}},
     {"role": "platform_admin", "model": "payment.request", "rights": {"read": False, "create": False, "write": False, "unlink": False}},
