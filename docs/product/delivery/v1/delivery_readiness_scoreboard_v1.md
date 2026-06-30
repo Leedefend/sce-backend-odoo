@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T09:03:14Z
+- generated_at_utc: 2026-06-30T09:03:40Z
 - branch: `topic/material-cross-document-progress`
-- commit_ref: `6d7393acb`
+- commit_ref: `5af7de140`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
