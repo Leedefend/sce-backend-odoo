@@ -67,7 +67,7 @@ def _configured_action_keys(env_obj):
     return contracts, keys
 
 
-def _config_surface_columns(env_obj, *, model, action_id, view_id, role_key):
+def _config_surface_profile(env_obj, *, model, action_id, view_id, role_key):
     result = _unwrap(BusinessConfigListSearchAuditHandler(
         env=env_obj,
         payload={
@@ -79,10 +79,13 @@ def _config_surface_columns(env_obj, *, model, action_id, view_id, role_key):
     ).handle())
     if not result.get("ok"):
         raise UserError("列表配置审计失败：%s action_id=%s" % (model, action_id))
-    return list((result.get("data") or {}).get("business_config_list_columns") or [])
+    data = result.get("data") or {}
+    columns = list(data.get("business_config_list_columns") or [])
+    labels = data.get("business_config_list_column_labels") if isinstance(data.get("business_config_list_column_labels"), dict) else {}
+    return columns, {name: _text(labels.get(name) or name) for name in columns}
 
 
-def _handling_surface_columns(env_obj, *, model, action_id):
+def _handling_surface_profile(env_obj, *, model, action_id):
     payload = {
         "action_id": action_id,
         "model": model,
@@ -95,7 +98,19 @@ def _handling_surface_columns(env_obj, *, model, action_id):
     data = result.get("data") or {}
     layout = data.get("layoutContract") if isinstance(data.get("layoutContract"), dict) else {}
     profile = layout.get("listProfile") if isinstance(layout.get("listProfile"), dict) else {}
-    return list(profile.get("columns") or [])
+    columns = list(profile.get("columns") or [])
+    labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
+    return columns, {name: _text(labels.get(name) or name) for name in columns}
+
+
+def _label_leaks_technical_identity(field_name, label):
+    name = _text(field_name)
+    text = _text(label)
+    if not text:
+        return True
+    if text == name:
+        return name.startswith(("p1_visible_", "legacy_visible_", "accepted_visible_", "user_acceptance_"))
+    return text.startswith(("p1_visible_", "legacy_visible_", "accepted_visible_", "user_acceptance_", "P1可见"))
 
 
 def _view_modes(action):
@@ -124,26 +139,50 @@ def _audit(env_obj):
             })
             continue
         try:
-            config_columns = _config_surface_columns(env_obj, **item)
-            surface_columns = _handling_surface_columns(
+            config_columns, config_labels = _config_surface_profile(env_obj, **item)
+            surface_columns, surface_labels = _handling_surface_profile(
                 env_obj,
                 model=item["model"],
                 action_id=item["action_id"],
             )
+            label_mismatches = [
+                {
+                    "field": name,
+                    "config_label": config_labels.get(name),
+                    "surface_label": surface_labels.get(name),
+                }
+                for name in config_columns
+                if config_labels.get(name) != surface_labels.get(name)
+            ]
+            label_leaks = [
+                {
+                    "field": name,
+                    "config_label": config_labels.get(name),
+                    "surface_label": surface_labels.get(name),
+                }
+                for name in config_columns
+                if _label_leaks_technical_identity(name, config_labels.get(name))
+            ]
             row = {
                 **item,
                 "name": _text(action.name),
                 "view_mode": _text(action.view_mode),
                 "config_count": len(config_columns),
                 "surface_count": len(surface_columns),
+                "label_mismatch_count": len(label_mismatches),
+                "label_leak_count": len(label_leaks),
             }
             checked.append(row)
-            if config_columns != surface_columns:
+            if config_columns != surface_columns or label_mismatches or label_leaks:
                 row.update({
                     "missing_in_surface": [name for name in config_columns if name not in surface_columns],
                     "extra_in_surface": [name for name in surface_columns if name not in config_columns],
                     "config_head": config_columns[:8],
                     "surface_head": surface_columns[:8],
+                    "config_label_head": {name: config_labels.get(name) for name in config_columns[:8]},
+                    "surface_label_head": {name: surface_labels.get(name) for name in surface_columns[:8]},
+                    "label_mismatches": label_mismatches[:20],
+                    "label_leaks": label_leaks[:20],
                 })
                 mismatches.append(row)
         except Exception as exc:
@@ -166,8 +205,9 @@ def _audit(env_obj):
         "error_items": errors[:50],
         "boundary": {
             "config_authority": "ui.business.config.contract.view_orchestration.views.tree.columns",
-            "config_surface": "BusinessConfigListSearchAuditHandler.business_config_list_columns",
-            "handling_surface": "ui.contract.v2.layoutContract.listProfile.columns",
+            "config_surface": "BusinessConfigListSearchAuditHandler.business_config_list_columns + business_config_list_column_labels",
+            "handling_surface": "ui.contract.v2.layoutContract.listProfile.columns + column_labels",
+            "user_visible_label_boundary": "configured list labels must match handling surface labels and must not expose technical alias prefixes",
             "user_preference_boundary": "sc.user.view.preference is ui_only",
         },
     }

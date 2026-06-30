@@ -1930,7 +1930,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
                             "view_orchestration": {
                                 "views": {
                                     "tree": {
-                                        "columns": [{"name": "name"}, {"name": "email"}]
+                                        "columns": [{"name": "name", "label": "客户名称"}, {"name": "email", "label": "邮箱"}]
                                     }
                                 }
                             }
@@ -1998,6 +1998,8 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertTrue(data["contract_authoritative"])
         self.assertFalse(data["suggested_defaults_only"])
         self.assertEqual(data["business_config_list_columns"], ["name", "email"])
+        self.assertEqual(data["business_config_list_column_labels"], {"name": "客户名称", "email": "邮箱"})
+        self.assertEqual(data["business_config_list_contracts"][0]["column_labels"], {"name": "客户名称", "email": "邮箱"})
         self.assertEqual(data["business_config_search_filters"], ["state"])
         self.assertEqual(data["business_config_search_group_by"], ["partner_id"])
         self.assertEqual(

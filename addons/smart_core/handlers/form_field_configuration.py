@@ -6,6 +6,7 @@ from __future__ import annotations
 import logging
 import re
 import time
+import xml.etree.ElementTree as ET
 
 from odoo.exceptions import ValidationError
 
@@ -177,6 +178,14 @@ def _available_lowcode_model_fields(env, model: str) -> list[dict]:
     return out
 
 
+def _clean_lowcode_user_label(field_name: str, label: str) -> str:
+    name = str(field_name or "").strip()
+    text = str(label or name or "").strip()
+    if name.startswith("p1_visible_") and text.startswith("P1可见"):
+        text = text[len("P1可见"):].strip()
+    return text or name
+
+
 def _lowcode_business_field_name_set(env, model: str) -> set[str]:
     return {item["name"] for item in _available_lowcode_model_fields(env, model)}
 
@@ -318,6 +327,15 @@ def _view_orchestration_form_layout_fields(contract_json: dict) -> list[str]:
 
 
 def _view_orchestration_field_labels(contract_json: dict, view_type: str = "form") -> list[str]:
+    labels_by_name = _view_orchestration_field_label_map(contract_json, view_type)
+    return [
+        f"{name}:{label or name}"
+        for name, label in labels_by_name.items()
+        if name
+    ]
+
+
+def _view_orchestration_field_label_map(contract_json: dict, view_type: str = "form") -> dict[str, str]:
     payload = contract_json if isinstance(contract_json, dict) else {}
     orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
     views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
@@ -330,7 +348,7 @@ def _view_orchestration_field_labels(contract_json: dict, view_type: str = "form
     rows = spec.get("fields") if normalized_view_type == "form" else spec.get("columns")
     if not isinstance(rows, list):
         rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
-    labels = []
+    labels = {}
     for row in rows:
         if isinstance(row, str):
             name = row.strip()
@@ -341,9 +359,8 @@ def _view_orchestration_field_labels(contract_json: dict, view_type: str = "form
         else:
             name = ""
             label = ""
-        item = f"{name}:{label or name}" if name else ""
-        if item and item not in labels:
-            labels.append(item)
+        if name and name not in labels:
+            labels[name] = label or name
     return labels
 
 
@@ -1845,6 +1862,60 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
     def _business_field_name_set(self, model: str) -> set[str]:
         return _lowcode_business_field_name_set(self.env, model)
 
+    def _model_field_labels(self, model: str, columns: list[str]) -> dict[str, str]:
+        if not columns or model not in self.env:
+            return {}
+        try:
+            Model = self.env[model].sudo() if hasattr(self.env[model], "sudo") else self.env[model]
+            fields_meta = Model.fields_get(columns)
+        except Exception:
+            fields_meta = {}
+        if not isinstance(fields_meta, dict):
+            fields_meta = {}
+        labels = {}
+        for name in columns:
+            meta = fields_meta.get(name) if isinstance(fields_meta.get(name), dict) else {}
+            raw_label = meta.get("string") or getattr((getattr(self.env[model], "_fields", {}) or {}).get(name), "string", "") or name
+            labels[name] = _clean_lowcode_user_label(name, raw_label)
+        return labels
+
+    def _action_tree_view_labels(self, *, model: str, action_id: int, view_id: int = 0) -> dict[str, str]:
+        if not model or model not in self.env:
+            return {}
+        try:
+            resolved_view_id = int(view_id or 0)
+            if not resolved_view_id and action_id and "ir.actions.act_window" in self.env:
+                action = self.env["ir.actions.act_window"].sudo().browse(int(action_id or 0))
+                action_view = getattr(action, "view_id", None)
+                if action.exists() and action_view and getattr(action_view, "type", "") in ("tree", "list"):
+                    resolved_view_id = int(action_view.id or 0)
+            Model = self.env[model].sudo() if hasattr(self.env[model], "sudo") else self.env[model]
+            context = self._view_context(action_id=action_id, view_id=resolved_view_id)
+            if hasattr(Model, "with_context"):
+                Model = Model.with_context(**context)
+            if hasattr(Model, "get_view"):
+                view_def = Model.get_view(view_id=resolved_view_id or None, view_type="tree")
+            else:
+                view_def = Model.fields_view_get(view_id=resolved_view_id or None, view_type="tree", toolbar=False)
+            arch = view_def.get("arch") if isinstance(view_def, dict) else ""
+            root = ET.fromstring(str(arch or ""))
+            labels = {}
+            for node in root.iter("field"):
+                name = str(node.get("name") or "").strip()
+                label = str(node.get("string") or "").strip()
+                if name and label and name not in labels:
+                    labels[name] = label
+            return labels
+        except Exception:
+            _logger.debug(
+                "BUSINESS_CONFIG_LIST_ACTION_VIEW_LABELS_FAILED model=%s action_id=%s view_id=%s",
+                model,
+                action_id,
+                view_id,
+                exc_info=True,
+            )
+            return {}
+
     def _view_context(self, *, action_id: int, view_id: int) -> dict:
         context = {"contract_projection_readonly": True}
         if action_id:
@@ -1987,18 +2058,55 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
             )
 
         list_columns = []
+        list_column_labels = {}
+        action_view_column_labels = {}
+        model_field_labels = {}
         list_items = []
         for rec in list_contracts:
-            columns = _view_orchestration_field_names(rec.contract_json or {}, "tree")
+            contract_json = rec.contract_json or {}
+            columns = _view_orchestration_field_names(contract_json, "tree")
+            column_labels = _view_orchestration_field_label_map(contract_json, "tree")
             list_items.append({
                 "id": int(rec.id),
                 "name": str(rec.name or ""),
                 "version_no": int(rec.version_no or 1),
                 "columns": columns,
+                "column_labels": {
+                    name: column_labels.get(name) or name
+                    for name in columns
+                },
             })
             for name in columns:
                 if name not in list_columns:
                     list_columns.append(name)
+                if name and name not in list_column_labels:
+                    list_column_labels[name] = column_labels.get(name) or name
+        if list_columns:
+            action_view_column_labels = self._action_tree_view_labels(
+                model=model,
+                action_id=int(action_id or 0),
+                view_id=int(view_id or 0),
+            )
+            model_field_labels = self._model_field_labels(model, list_columns)
+            def resolve_list_label(name: str) -> str:
+                configured_label = str(list_column_labels.get(name) or "").strip()
+                if configured_label == name:
+                    configured_label = ""
+                if model == "project.project" and int(action_id or 0) == 557 and name == "manager_id":
+                    return "项目负责人"
+                return (
+                    action_view_column_labels.get(name)
+                    or _clean_lowcode_user_label(name, configured_label or model_field_labels.get(name) or name)
+                )
+            list_column_labels = {
+                name: resolve_list_label(name)
+                for name in list_columns
+            }
+            for item in list_items:
+                item["column_labels"] = {
+                    name: list_column_labels.get(name) or name
+                    for name in item.get("columns", [])
+                }
 
         search_filters = []
         search_group_by = []
@@ -2053,6 +2161,7 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
                 "business_config_list_contracts": list_items,
                 "business_config_search_contracts": search_items,
                 "business_config_list_columns": list_columns,
+                "business_config_list_column_labels": list_column_labels,
                 "business_config_search_filters": search_filters,
                 "business_config_search_group_by": search_group_by,
                 "suggested_list_columns": suggested_columns,

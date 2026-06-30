@@ -2056,11 +2056,19 @@ class UiContractV2Handler(BaseIntentHandler):
         form_structure_field_labels: dict[str, str] = {}
 
         def field_label(name: str) -> str:
-            override = form_structure_field_labels.get(str(name or "").strip())
+            field_name = str(name or "").strip()
+            override = form_structure_field_labels.get(field_name)
             if override:
                 return override
-            meta = descriptor(name)
-            return str(meta.get("string") or getattr(model_fields.get(name), "string", "") or name).strip()
+            meta = descriptor(field_name)
+            label = str(meta.get("string") or getattr(model_fields.get(field_name), "string", "") or field_name).strip()
+            if field_name == "source_created_by":
+                return "录入人"
+            if field_name == "source_created_at":
+                return "录入时间"
+            if field_name.startswith("p1_visible_") and label.startswith("P1可见"):
+                label = label[len("P1可见"):].strip()
+            return label or field_name
 
         def is_technical(name: str) -> bool:
             return (

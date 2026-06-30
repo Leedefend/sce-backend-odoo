@@ -1319,12 +1319,21 @@ const availableModelFields = computed(() => (listSearchAudit.value?.available_mo
   .concat(analysisAudit.value?.available_model_fields || [])
   .map((field) => ({
     name: String(field.name || '').trim(),
-    label: String(field.label || field.name || '').trim(),
+    label: cleanBusinessFieldLabel(field.name, field.label || field.name),
     type: String(field.type || '').trim(),
   }))
   .filter((field) => field.name)
   .filter((field, index, rows) => rows.findIndex((row) => row.name === field.name) === index)
 );
+const configuredListColumnLabels = computed(() => {
+  const labels = listSearchAudit.value?.business_config_list_column_labels || {};
+  return Object.entries(labels).reduce<Record<string, string>>((acc, [name, label]) => {
+    const fieldName = String(name || '').trim();
+    const cleanLabel = cleanBusinessFieldLabel(fieldName, label);
+    if (fieldName && cleanLabel) acc[fieldName] = cleanLabel;
+    return acc;
+  }, {});
+});
 const duplicatedFieldLabels = computed(() => {
   const counts = new Map<string, number>();
   availableModelFields.value.forEach((field) => {
@@ -2366,8 +2375,10 @@ function analysisFieldOptionCandidates() {
 
 function fieldDisplayLabel(name: string) {
   const fieldName = String(name || '').trim();
+  const configuredLabel = configuredListColumnLabels.value[fieldName];
+  if (configuredLabel) return configuredLabel;
   const field = availableModelFields.value.find((item) => item.name === fieldName);
-  if (!field) return fieldName;
+  if (!field) return cleanBusinessFieldLabel(fieldName, fieldName);
   return fieldOptionLabel(field);
 }
 
@@ -2381,6 +2392,15 @@ function fieldOptionLabel(field: { name: string; label: string; type: string }) 
 
 function fieldOptionHelpText(field: { name: string; label: string; type: string }) {
   return [field.label || field.name, field.name, field.type].filter(Boolean).join(' · ');
+}
+
+function cleanBusinessFieldLabel(name: unknown, label: unknown) {
+  const fieldName = String(name || '').trim();
+  let text = String(label || fieldName || '').trim();
+  if (fieldName.startsWith('p1_visible_') && text.startsWith('P1可见')) {
+    text = text.slice('P1可见'.length).trim();
+  }
+  return text || fieldName;
 }
 
 function fieldTypeLabel(type: string) {
@@ -2404,8 +2424,10 @@ function shortFieldNameHint(name: string) {
 
 function fieldHelpText(name: string) {
   const fieldName = String(name || '').trim();
+  const configuredLabel = configuredListColumnLabels.value[fieldName];
+  if (configuredLabel) return [configuredLabel, fieldName].filter(Boolean).join(' · ');
   const field = availableModelFields.value.find((item) => item.name === fieldName);
-  return field ? fieldOptionHelpText(field) : fieldName;
+  return field ? fieldOptionHelpText(field) : cleanBusinessFieldLabel(fieldName, fieldName);
 }
 
 function addListSearchName(kind: ListSearchEditorKind, explicitName = '') {

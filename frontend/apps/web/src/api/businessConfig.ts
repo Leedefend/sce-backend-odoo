@@ -20,6 +20,7 @@ export interface BusinessConfigListSearchAuditPayload {
     group_by: string[];
   }>;
   business_config_list_columns: string[];
+  business_config_list_column_labels?: Record<string, string>;
   business_config_search_filters: string[];
   business_config_search_group_by: string[];
   suggested_list_columns?: string[];
