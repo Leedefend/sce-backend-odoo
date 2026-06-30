@@ -23,6 +23,7 @@ PAYMENT_APPROVAL_CHAIN_REPORT_PATH = ROOT / "artifacts" / "backend" / "payment_r
 PROJECT_TASK_ACTION_REPORT_PATH = ROOT / "artifacts" / "backend" / "project_task_action_smoke.json"
 PROJECT_JOURNEY_TRACE_REPORT_PATH = ROOT / "artifacts" / "backend" / "project_journey_trace_archive.json"
 MATERIAL_ACTION_REPLAY_REPORT_PATH = ROOT / "artifacts" / "backend" / "material_action_replay_smoke.json"
+MATERIAL_CROSS_DOCUMENT_PROGRESS_REPORT_PATH = ROOT / "artifacts" / "backend" / "material_cross_document_progress_audit.json"
 EXECUTIVE_READONLY_REPORT_PATH = ROOT / "artifacts" / "backend" / "executive_readonly_smoke.json"
 LEDGER_SNAPSHOT_REPORT_PATH = ROOT / "artifacts" / "backend" / "ledger_snapshot_smoke.json"
 COST_SEARCH_PAGINATION_REPORT_PATH = ROOT / "artifacts" / "backend" / "cost_search_pagination_smoke.json"
@@ -440,6 +441,11 @@ def main() -> int:
     material_replay_ok = bool(material_replay_payload.get("ok")) if material_replay_present else False
     material_replay_label = _bool_status_label(material_replay_ok) if material_replay_present else "UNKNOWN"
 
+    material_progress_payload = _load_json(MATERIAL_CROSS_DOCUMENT_PROGRESS_REPORT_PATH)
+    material_progress_present = bool(material_progress_payload)
+    material_progress_ok = bool(material_progress_payload.get("ok")) if material_progress_present else False
+    material_progress_label = _bool_status_label(material_progress_ok) if material_progress_present else "UNKNOWN"
+
     executive_readonly_payload = _load_json(EXECUTIVE_READONLY_REPORT_PATH)
     executive_readonly_present = bool(executive_readonly_payload)
     executive_readonly_ok = bool(executive_readonly_payload.get("ok")) if executive_readonly_present else False
@@ -523,6 +529,12 @@ def main() -> int:
         "Material action replay smoke",
         material_replay_label,
         str(MATERIAL_ACTION_REPLAY_REPORT_PATH.relative_to(ROOT)),
+    )
+    lines = _upsert_evidence_row(
+        lines,
+        "Material cross-document progress audit",
+        material_progress_label,
+        str(MATERIAL_CROSS_DOCUMENT_PROGRESS_REPORT_PATH.relative_to(ROOT)),
     )
     lines = _upsert_evidence_row(
         lines,

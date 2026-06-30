@@ -3986,6 +3986,10 @@ verify.delivery.material.action_replay: guard.prod.forbid check-compose-project 
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_MATERIAL_LOGIN=$(or $(ROLE_MATERIAL_LOGIN),demo_business_full) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/material_action_replay_seed.py
 	@ROLE_MATERIAL_LOGIN=$(or $(ROLE_MATERIAL_LOGIN),demo_business_full) python3 scripts/verify/material_action_replay_smoke.py
 
+.PHONY: verify.delivery.material.cross_document_progress
+verify.delivery.material.cross_document_progress: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/material_settlement_payment_execution_traceability_audit.py
+
 .PHONY: verify.delivery.executive.readonly
 verify.delivery.executive.readonly: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_EXECUTIVE_READONLY_LOGIN=$(or $(ROLE_EXECUTIVE_READONLY_LOGIN),executive_readonly_smoke) ROLE_EXECUTIVE_READONLY_PASSWORD=$(or $(ROLE_EXECUTIVE_READONLY_PASSWORD),demo) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/executive_readonly_seed.py

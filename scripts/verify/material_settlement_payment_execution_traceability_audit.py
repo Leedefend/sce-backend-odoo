@@ -3,8 +3,24 @@ import base64
 import json
 import sys
 import traceback
+from datetime import datetime, timezone
+from pathlib import Path
 
 from odoo import fields
+
+
+ROOT = Path("/mnt") if Path("/mnt/artifacts").exists() else Path.cwd()
+REPORT_JSON = ROOT / "artifacts" / "backend" / "material_cross_document_progress_audit.json"
+REPORT_MD = ROOT / "artifacts" / "backend" / "material_cross_document_progress_audit.md"
+
+
+def _utc_now():
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _write(path, content):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
 
 
 def _token():
@@ -80,6 +96,105 @@ def _audit_count(record, event_code, action=False):
     if action:
         domain.append(("action", "=", action))
     return env["sc.audit.log"].sudo().search_count(domain)  # noqa: F821
+
+
+def _progress_chain(evidence, failures):
+    ok = not failures
+    return [
+        {
+            "kind": "document_state",
+            "document": "sc.material.settlement",
+            "record_id": evidence.get("settlement") or 0,
+            "from_state": "draft",
+            "to_state": "submitted",
+            "action": "action_submit",
+            "ok": ok and bool(evidence.get("settlement")),
+        },
+        {
+            "kind": "document_state",
+            "document": "sc.material.settlement",
+            "record_id": evidence.get("settlement") or 0,
+            "from_state": "submitted",
+            "to_state": "confirmed",
+            "action": "action_confirm",
+            "ok": ok and bool(evidence.get("settlement")),
+        },
+        {
+            "kind": "downstream_link",
+            "document": "payment.request",
+            "record_id": evidence.get("payment_request") or 0,
+            "source_document": "sc.material.settlement",
+            "source_record_id": evidence.get("settlement") or 0,
+            "action": "material_settlement_confirmed",
+            "ok": ok and bool(evidence.get("payment_request")),
+        },
+        {
+            "kind": "document_state",
+            "document": "payment.request",
+            "record_id": evidence.get("payment_request") or 0,
+            "from_state": "draft",
+            "to_state": "approved",
+            "action": "action_submit/action_on_tier_approved",
+            "ok": ok and bool(evidence.get("payment_request")),
+        },
+        {
+            "kind": "downstream_link",
+            "document": "sc.payment.execution",
+            "record_id": evidence.get("payment_execution") or 0,
+            "source_document": "payment.request",
+            "source_record_id": evidence.get("payment_request") or 0,
+            "action": "action_create_payment_execution",
+            "ok": ok and bool(evidence.get("payment_execution")),
+        },
+        {
+            "kind": "document_state",
+            "document": "sc.payment.execution",
+            "record_id": evidence.get("payment_execution") or 0,
+            "from_state": "draft",
+            "to_state": "paid",
+            "action": "action_confirm/action_paid",
+            "ok": ok and bool(evidence.get("payment_execution")),
+        },
+        {
+            "kind": "downstream_link",
+            "document": "payment.ledger",
+            "record_id": evidence.get("payment_ledger") or 0,
+            "source_document": "payment.request",
+            "source_record_id": evidence.get("payment_request") or 0,
+            "action": "payment_execution_paid",
+            "ok": ok and bool(evidence.get("payment_ledger")),
+        },
+    ]
+
+
+def _to_markdown(result):
+    lines = [
+        "# Material Cross-Document Progress Audit",
+        "",
+        f"- generated_at_utc: {result.get('generated_at_utc', '')}",
+        f"- ok: {result.get('ok')}",
+        f"- status: {result.get('status', '')}",
+        "",
+        "## Progress Chain",
+        "",
+        "| kind | document | record_id | action | ok |",
+        "|---|---|---|---|---|",
+    ]
+    for row in result.get("progress_chain") or []:
+        lines.append(
+            "| {kind} | `{document}` | `{record_id}` | `{action}` | {ok} |".format(
+                kind=row.get("kind", ""),
+                document=row.get("document", ""),
+                record_id=row.get("record_id", ""),
+                action=row.get("action", ""),
+                ok=bool(row.get("ok")),
+            )
+        )
+    failures = result.get("failures") or []
+    if failures:
+        lines.extend(["", "## Failures", ""])
+        lines.extend("- %s" % failure for failure in failures)
+    return "\n".join(lines) + "\n"
 
 
 def _project():
@@ -236,11 +351,22 @@ except Exception as err:
     failures.append(traceback.format_exc())
 
 result = {
+    "generated_at_utc": _utc_now(),
     "audit": "material_settlement_payment_execution_traceability_audit",
+    "ok": not failures,
     "status": "PASS" if not failures else "FAIL",
     "evidence": evidence,
+    "progress_chain": _progress_chain(evidence, failures),
+    "reports": {
+        "json": str(REPORT_JSON.relative_to(ROOT)),
+        "md": str(REPORT_MD.relative_to(ROOT)),
+    },
     "failures": failures,
 }
+_write(REPORT_JSON, json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+_write(REPORT_MD, _to_markdown(result))
+print(REPORT_JSON)
+print(REPORT_MD)
 print("MATERIAL_SETTLEMENT_PAYMENT_EXECUTION_TRACEABILITY_AUDIT: %s" % json.dumps(result, ensure_ascii=False, sort_keys=True))
 if failures:
     print("FAILURES:")
