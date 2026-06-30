@@ -4000,6 +4000,10 @@ verify.delivery.ledger.snapshot: guard.prod.forbid check-compose-project check-c
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_LEDGER_READONLY_LOGIN=$(or $(ROLE_LEDGER_READONLY_LOGIN),ledger_readonly_smoke) ROLE_LEDGER_READONLY_PASSWORD=$(or $(ROLE_LEDGER_READONLY_PASSWORD),demo) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/ledger_snapshot_seed.py
 	@ROLE_LEDGER_READONLY_LOGIN=$(or $(ROLE_LEDGER_READONLY_LOGIN),ledger_readonly_smoke) ROLE_LEDGER_READONLY_PASSWORD=$(or $(ROLE_LEDGER_READONLY_PASSWORD),demo) python3 scripts/verify/ledger_snapshot_smoke.py
 
+.PHONY: verify.delivery.ledger.reconciliation_trend
+verify.delivery.ledger.reconciliation_trend: guard.prod.forbid verify.delivery.ledger.snapshot
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/ledger_reconciliation_trend.py
+
 .PHONY: verify.delivery.cost.search_pagination
 verify.delivery.cost.search_pagination: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_COST_READONLY_LOGIN=$(or $(ROLE_COST_READONLY_LOGIN),cost_readonly_smoke) ROLE_COST_READONLY_PASSWORD=$(or $(ROLE_COST_READONLY_PASSWORD),demo) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/cost_search_pagination_seed.py

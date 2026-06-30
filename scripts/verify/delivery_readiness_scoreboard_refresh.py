@@ -26,6 +26,7 @@ MATERIAL_ACTION_REPLAY_REPORT_PATH = ROOT / "artifacts" / "backend" / "material_
 MATERIAL_CROSS_DOCUMENT_PROGRESS_REPORT_PATH = ROOT / "artifacts" / "backend" / "material_cross_document_progress_audit.json"
 EXECUTIVE_READONLY_REPORT_PATH = ROOT / "artifacts" / "backend" / "executive_readonly_smoke.json"
 LEDGER_SNAPSHOT_REPORT_PATH = ROOT / "artifacts" / "backend" / "ledger_snapshot_smoke.json"
+LEDGER_RECONCILIATION_TREND_REPORT_PATH = ROOT / "artifacts" / "backend" / "ledger_reconciliation_trend.json"
 COST_SEARCH_PAGINATION_REPORT_PATH = ROOT / "artifacts" / "backend" / "cost_search_pagination_smoke.json"
 QUALITY_SAFETY_CLOSURE_REPORT_PATH = ROOT / "artifacts" / "backend" / "site_quality_safety_closure_audit.json"
 LIFECYCLE_AUDIT_EXPORT_REPORT_PATH = ROOT / "artifacts" / "backend" / "lifecycle_audit_export.json"
@@ -456,6 +457,11 @@ def main() -> int:
     ledger_snapshot_ok = bool(ledger_snapshot_payload.get("ok")) if ledger_snapshot_present else False
     ledger_snapshot_label = _bool_status_label(ledger_snapshot_ok) if ledger_snapshot_present else "UNKNOWN"
 
+    ledger_trend_payload = _load_json(LEDGER_RECONCILIATION_TREND_REPORT_PATH)
+    ledger_trend_present = bool(ledger_trend_payload)
+    ledger_trend_ok = bool(ledger_trend_payload.get("ok")) if ledger_trend_present else False
+    ledger_trend_label = _bool_status_label(ledger_trend_ok) if ledger_trend_present else "UNKNOWN"
+
     cost_search_payload = _load_json(COST_SEARCH_PAGINATION_REPORT_PATH)
     cost_search_present = bool(cost_search_payload)
     cost_search_ok = bool(cost_search_payload.get("ok")) if cost_search_present else False
@@ -547,6 +553,12 @@ def main() -> int:
         "Ledger snapshot smoke",
         ledger_snapshot_label,
         str(LEDGER_SNAPSHOT_REPORT_PATH.relative_to(ROOT)),
+    )
+    lines = _upsert_evidence_row(
+        lines,
+        "Ledger reconciliation trend",
+        ledger_trend_label,
+        str(LEDGER_RECONCILIATION_TREND_REPORT_PATH.relative_to(ROOT)),
     )
     lines = _upsert_evidence_row(
         lines,
