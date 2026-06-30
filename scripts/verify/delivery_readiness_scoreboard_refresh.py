@@ -23,6 +23,7 @@ PAYMENT_APPROVAL_CHAIN_REPORT_PATH = ROOT / "artifacts" / "backend" / "payment_r
 PROJECT_TASK_ACTION_REPORT_PATH = ROOT / "artifacts" / "backend" / "project_task_action_smoke.json"
 MATERIAL_ACTION_REPLAY_REPORT_PATH = ROOT / "artifacts" / "backend" / "material_action_replay_smoke.json"
 EXECUTIVE_READONLY_REPORT_PATH = ROOT / "artifacts" / "backend" / "executive_readonly_smoke.json"
+LEDGER_SNAPSHOT_REPORT_PATH = ROOT / "artifacts" / "backend" / "ledger_snapshot_smoke.json"
 
 PROFILE_COMMANDS = {
     "strict": "CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness",
@@ -434,6 +435,11 @@ def main() -> int:
     executive_readonly_ok = bool(executive_readonly_payload.get("ok")) if executive_readonly_present else False
     executive_readonly_label = _bool_status_label(executive_readonly_ok) if executive_readonly_present else "UNKNOWN"
 
+    ledger_snapshot_payload = _load_json(LEDGER_SNAPSHOT_REPORT_PATH)
+    ledger_snapshot_present = bool(ledger_snapshot_payload)
+    ledger_snapshot_ok = bool(ledger_snapshot_payload.get("ok")) if ledger_snapshot_present else False
+    ledger_snapshot_label = _bool_status_label(ledger_snapshot_ok) if ledger_snapshot_present else "UNKNOWN"
+
     lines = _upsert_evidence_row(
         lines,
         "CI strict profile readiness",
@@ -487,6 +493,12 @@ def main() -> int:
         "Executive readonly smoke",
         executive_readonly_label,
         str(EXECUTIVE_READONLY_REPORT_PATH.relative_to(ROOT)),
+    )
+    lines = _upsert_evidence_row(
+        lines,
+        "Ledger snapshot smoke",
+        ledger_snapshot_label,
+        str(LEDGER_SNAPSHOT_REPORT_PATH.relative_to(ROOT)),
     )
     lines = _normalize_evidence_table(lines)
     lines = _upsert_release_gap_profile_posture(lines, strict_label, restricted_label)
