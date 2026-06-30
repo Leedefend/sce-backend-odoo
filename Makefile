@@ -3968,6 +3968,10 @@ verify.product.delivery.governance_truth: guard.prod.forbid
 verify.product.delivery.action_closure.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_action_closure_smoke.py
 
+.PHONY: verify.delivery.payment_approval.chain_summary
+verify.delivery.payment_approval.chain_summary: guard.prod.forbid
+	@python3 scripts/verify/payment_request_approval_chain_summary.py
+
 .PHONY: verify.product.delivery.module_capability.smoke verify.product.delivery.module9.smoke
 verify.product.delivery.module_capability.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_module9_smoke.py

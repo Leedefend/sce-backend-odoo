@@ -24,9 +24,11 @@ green. The next iteration should not reopen release blockers unless a live gate 
    - Evidence target: new or extended make target under `verify.delivery.journey.*`
 
 2. Payment approval chain scoreboard integration
+   - Status: done
    - Scope: `finance.payment_requests`, `finance.center`
    - Target: existing payment approval smoke result is written into the delivery readiness scoreboard evidence summary.
-   - Evidence target: scoreboard row references the smoke artifact and latest status.
+   - Evidence target: `artifacts/backend/payment_request_approval_chain_summary.json` and the scoreboard row `Payment approval chain smoke`.
+   - Note: `payment_request_approval_field_consumer_audit` still reports deprecated field references in non-strict mode; this is not part of the action handoff smoke closure.
 
 3. Purchase/material action replay
    - Scope: `material.center`, `material.procurement`, `material.inbound`, `labor.request`, `equipment.request`, `subcontract.request`
