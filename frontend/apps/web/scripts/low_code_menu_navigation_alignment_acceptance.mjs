@@ -100,17 +100,35 @@ async function navigationRequest(page) {
 
 function expectedVisiblePolicies(audit, panel) {
   const menuById = new Map((panel.menus || []).map((menu) => [Number(menu.id || menu.menu_id || 0), menu]));
+  const policyByMenuId = new Map((audit.applicable_policies || [])
+    .map((policy) => [Number(policy.menu_id || 0), policy])
+    .filter(([menuId]) => menuId > 0));
+  const isPolicyVisible = (menuId) => policyByMenuId.get(menuId)?.visible === true;
+  const effectiveVisibleParentId = (parentId) => {
+    let currentId = Number(parentId || 0);
+    const seen = new Set();
+    while (currentId && !seen.has(currentId)) {
+      seen.add(currentId);
+      if (isPolicyVisible(currentId)) return currentId;
+      const parentPolicy = policyByMenuId.get(currentId) || {};
+      const parentMenu = menuById.get(currentId) || {};
+      currentId = Number(parentPolicy.target_parent_menu_id || parentMenu.parent_id || 0);
+    }
+    return 0;
+  };
   const rows = [];
   for (const policy of audit.applicable_policies || []) {
     const menuId = Number(policy.menu_id || 0);
     if (!menuId || policy.visible !== true) continue;
     const menu = menuById.get(menuId) || {};
-    const expectedParentId = Number(policy.target_parent_menu_id || menu.parent_id || 0);
+    const configuredParentId = Number(policy.target_parent_menu_id || menu.parent_id || 0);
+    const expectedParentId = effectiveVisibleParentId(configuredParentId);
     rows.push({
       menuId,
       expectedLabel: normalize(policy.custom_label || policy.menu_label || menu.name),
       expectedParentId,
       targetParentId: Number(policy.target_parent_menu_id || 0),
+      configuredParentId,
       policyId: Number(policy.id || 0),
       menuCompleteName: normalize(policy.menu_complete_name || menu.complete_name),
     });
