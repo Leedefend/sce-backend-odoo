@@ -81,7 +81,9 @@
 - 已收敛：新增 `ui.business_config.list_search.audit`，可输出业务级列表列、搜索筛选、搜索分组配置，并同时报告个人偏好数量和 `ui_only` 边界
 - 已开始收敛：新增 `ui.business_config.list_search.set`，保存业务默认列表列、搜索筛选、搜索分组到 `ui.business.config.contract.view_orchestration`，不写 `sc.user.view.preference`
 - 已收敛：统一配置工作台已接入列表/搜索编辑区，按模型/action/view/role_key 写入正式业务配置，不写个人偏好
-- 主要风险：列表/搜索运行时消费面仍需全量扫描确认，避免只有配置端可写、业务页面未消费
+- 边界冻结：正式业务列表页面发布时必须已有 `ui.business.config.contract.view_orchestration.views.tree.columns` 发布基线；管理员后续列表配置仍写入同一承载并形成新版本，不存在“没有配置也可以作为正式业务页面发布”的运行时兜底边界。
+- 已收敛：`ui.contract.v2.layoutContract.listProfile.columns` 必须精确等于 `BusinessConfigListSearchAuditHandler.business_config_list_columns`，legacy visible、native tree tail、governance、existing profile 和 extension hook 都不得在正式配置之后增删改用户可见列。
+- 已补门禁：`make verify.business_config.list_config_boundary` 扫描所有已发布 tree/list 配置合同，核对配置面字段和办理面最终字段完全一致；缺发布基线配置由 `make verify.business_config.coverage` 作为发布缺口拦截。
 
 ### 前端低代码页面
 
@@ -164,12 +166,15 @@
 - 已补第一步：新增列表/搜索配置审计 intent，明确业务配置与个人偏好边界。
 - 已补第二步：新增列表/搜索配置写入 intent，只写正式业务配置，不写个人偏好。
 - 已补第三步：个人偏好只作为 UI-only 审计信号展示数量和明细，不参与业务配置覆盖是否通过的判定。
+- 已补第四步：列表配置发布边界冻结。正式业务列表页面发布时必须存在业务配置基线；运行态建议和原生 tree 只能用于生成草稿或补发布基线，不能作为用户办理面的字段权威。
+- 已补第五步：新增 `make verify.business_config.list_config_boundary`，对已发布列表配置合同做配置面到办理面的全量对齐审计。
 - 个人列宽、个人隐藏列继续留在用户偏好，不能影响业务默认配置。
 
 验收：
 - 管理员配置默认列表列后，所有目标用户默认一致。
 - 普通用户个人列宽/隐藏不会覆盖业务默认结构。
 - 搜索筛选项与业务分类契约一致。
+- 配置工作台列表字段与用户办理面列表字段完全一致；字段缺失、多出或顺序不同均为发布失败。
 
 ### P4 配置工作台
 
