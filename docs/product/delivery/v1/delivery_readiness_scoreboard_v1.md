@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T08:54:58Z
+- generated_at_utc: 2026-06-30T08:55:36Z
 - branch: `topic/default-scene-semantic-monitoring`
-- commit_ref: `9fd8830a9`
+- commit_ref: `996020225`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
