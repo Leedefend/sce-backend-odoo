@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T08:29:12Z
-- branch: `topic/executive-readonly-evidence`
-- commit_ref: `576e4d567`
+- generated_at_utc: 2026-06-30T08:37:03Z
+- branch: `topic/ledger-snapshot-evidence`
+- commit_ref: `55b4e4792`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -31,6 +31,7 @@
 | Project task action smoke | PASS | `artifacts/backend/project_task_action_smoke.json` |
 | Material action replay smoke | PASS | `artifacts/backend/material_action_replay_smoke.json` |
 | Executive readonly smoke | PASS | `artifacts/backend/executive_readonly_smoke.json` |
+| Ledger snapshot smoke | PASS | `artifacts/backend/ledger_snapshot_smoke.json` |
 ## 10-Module Readiness Board
 
 | Module | Entry Scenes | Key Roles | Data Prerequisites | Smoke/Gate Status | Known Limits |
@@ -40,7 +41,7 @@
 | 采购与物资协同 | `material.center`, `material.procurement`, `material.inbound`, `labor.request`, `equipment.request`, `subcontract.request` | 采购经理, PM | BOQ、供应商主数据、物资目录 | Strict scene gate (`PASS`), material action replay smoke (`PASS`) | 动作回放已脚本化；后续补跨单据状态推进证据 |
 | 现场执行与质量安全 | `construction.plan`, `construction.plan_report`, `construction.diary`, `quality.center`, `safety.center` | PM, 领导/老板 | 项目、现场执行角色、质量安全基础字典 | Covered by strict scene gate (`PASS`) | 需补质量安全闭环动作证据 |
 | 付款申请与审批 | `finance.payment_requests`, `finance.center` | 财务, PM | 付款申请、审批角色 | Strict scene gate (`PASS`), payment approval chain smoke (`PASS`) | field consumer audit deprecated refs remain non-strict follow-up |
-| 资金与结算台账 | `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders` | 财务 | 账户、结算基础数据 | Covered by strict scene gate (`PASS`) | 需补台账对账快照证据 |
+| 资金与结算台账 | `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders` | 财务 | 账户、结算基础数据 | Strict scene gate (`PASS`), ledger snapshot smoke (`PASS`) | 台账快照已脚本化；后续补对账差异趋势证据 |
 | 成本预算与利润分析 | `cost.project_budget`, `cost.project_cost_ledger`, `cost.profit_compare` | PM, 财务 | 预算、成本流水、BOQ | Covered by strict scene gate (`PASS`) | 需补搜索/分页动作证据 |
 | 经营指标与领导看板 | `portal.dashboard`, `finance.operating_metrics` | 领导/老板 | 指标快照数据 | Strict scene gate (`PASS`), executive readonly smoke (`PASS`) | 只读验收已脚本化；后续补长周期趋势证据 |
 | 生命周期与治理审计 | `portal.lifecycle`, `portal.capability_matrix` | 管理员, 领导 | capability/scene baseline | Covered by strict scene gate (`PASS`) | 需补审计导出证据链 |
