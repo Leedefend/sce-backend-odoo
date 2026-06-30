@@ -3080,7 +3080,9 @@ class UiContractV2Handler(BaseIntentHandler):
                 view_column_labels[name] = label
         labels = {**{name: label_for(name) for name in columns}, **labels, **view_column_labels, **direct_orchestration_labels, **override_labels}
         deduped_columns: list[str] = []
-        preserve_duplicate_labels = bool(columns) and all(str(name or "").startswith("legacy_visible_") for name in columns)
+        preserve_duplicate_labels = bool(direct_orchestration_columns) or (
+            bool(columns) and all(str(name or "").startswith("legacy_visible_") for name in columns)
+        )
         seen_keys: set[str] = set()
         for name in columns:
             label = str(labels.get(name) or label_for(name) or name).strip()

@@ -473,6 +473,77 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             ["state", "name", "project_id"],
         )
 
+    def test_business_list_profile_keeps_configured_columns_with_duplicate_schema_labels(self):
+        class _Config:
+            contract_json = {
+                "view_orchestration": {
+                    "views": {
+                        "tree": {
+                            "columns": [
+                                {"name": "entry_user_text", "sequence": 10},
+                                {"name": "source_created_by", "sequence": 20},
+                                {"name": "entry_time", "sequence": 30},
+                                {"name": "source_created_at", "sequence": 40},
+                            ]
+                        }
+                    }
+                }
+            }
+
+        class _ConfigModel:
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0):
+                return [_Config()]
+
+        class _Env(dict):
+            def __contains__(self, key):
+                return dict.__contains__(self, key)
+
+        labels = {
+            "entry_user_text": "录入人",
+            "source_created_by": "来源录入人",
+            "entry_time": "录入时间",
+            "source_created_at": "来源录入时间",
+        }
+        handler = self.module.UiContractV2Handler(env=_Env({
+            "ui.business.config.contract": _ConfigModel(),
+        }))
+        source_contract = {
+            "action_id": 949,
+            "model": "sc.demo",
+            "views": {
+                "tree": {
+                    "columns": [
+                        "entry_user_text",
+                        "source_created_by",
+                        "entry_time",
+                        "source_created_at",
+                    ],
+                    "columns_schema": [
+                        {"name": "entry_user_text", "label": "录入人"},
+                        {"name": "source_created_by", "label": "录入人"},
+                        {"name": "entry_time", "label": "录入时间"},
+                        {"name": "source_created_at", "label": "录入时间"},
+                    ],
+                }
+            },
+            "list_profile": {},
+        }
+
+        handler._merge_business_list_profile(
+            source_contract,
+            common_fields=[],
+            amount_fields=[],
+            note_field="",
+            status_field="",
+            label_for=lambda name: labels.get(name, name),
+            type_for=lambda name: "char",
+        )
+
+        self.assertEqual(
+            source_contract["list_profile"]["columns"],
+            ["entry_user_text", "source_created_by", "entry_time", "source_created_at"],
+        )
+
     def test_form_structure_contract_uses_generic_slots_not_contract_template(self):
         handler = self.module.UiContractV2Handler(env=object())
         field_types = {
