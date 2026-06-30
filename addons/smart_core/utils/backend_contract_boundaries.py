@@ -81,6 +81,8 @@ BUSINESS_CONFIG_INTENTS = {
 FORM_FIELD_CONFIG_INTENTS = {
     "policy_set": "ui.form_field_policy.set",
     "custom_field_create": "ui.form_custom_field.create",
+    "order_set": "ui.form_field_order.set",
+    "batch_set": "ui.form_field_config.batch_set",
 }
 
 MENU_CONFIG_INTENTS = {

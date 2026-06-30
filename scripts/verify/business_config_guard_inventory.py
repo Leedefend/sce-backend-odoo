@@ -13,6 +13,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 MAKEFILE = ROOT / "Makefile"
 CAPABILITY_MATRIX = ROOT / "docs/architecture/low_code_business_config_capability_matrix_v1.json"
+BACKEND_BOUNDARY_FILE = ROOT / "addons/smart_core/utils/backend_contract_boundaries.py"
+FRONTEND_BOUNDARY_FILE = ROOT / "frontend/apps/web/src/app/businessConfigBoundaries.ts"
 
 
 CAPABILITY_REQUIRED_FIELDS = {
@@ -289,6 +291,33 @@ def _validate_capability_matrix(makefile: str, errors: list[str]) -> None:
         errors.append("low-code capability matrix does not own full acceptance targets %s" % missing_matrix_targets)
 
 
+def _quoted_values(path: Path) -> set[str]:
+    if not path.is_file():
+        return set()
+    text = path.read_text(encoding="utf-8")
+    return set(re.findall(r"""["']([^"']+)["']""", text))
+
+
+def _validate_boundary_constant_parity(errors: list[str]) -> None:
+    expected_intents = set().union(*EXPECTED_CAPABILITY_AUTHORING_INTENTS.values())
+    backend_values = _quoted_values(BACKEND_BOUNDARY_FILE)
+    frontend_values = _quoted_values(FRONTEND_BOUNDARY_FILE)
+    missing_backend = sorted(expected_intents - backend_values)
+    missing_frontend = sorted(expected_intents - frontend_values)
+    if missing_backend:
+        errors.append("backend business config boundary constants missing intents %s" % missing_backend)
+    if missing_frontend:
+        errors.append("frontend business config boundary constants missing intents %s" % missing_frontend)
+    for path, values in ((BACKEND_BOUNDARY_FILE, backend_values), (FRONTEND_BOUNDARY_FILE, frontend_values)):
+        deprecated = sorted(
+            value
+            for value in values
+            if any(marker in value for marker in DEPRECATED_INTENT_MARKERS)
+        )
+        if deprecated:
+            errors.append("%s contains deprecated low-code intents %s" % (path.relative_to(ROOT), deprecated))
+
+
 def main() -> int:
     makefile = MAKEFILE.read_text(encoding="utf-8")
     errors: list[str] = []
@@ -331,6 +360,7 @@ def main() -> int:
         errors.append("verify.business_config.guard_inventory is not wired to its script")
 
     _validate_capability_matrix(makefile, errors)
+    _validate_boundary_constant_parity(errors)
 
     if errors:
         print("[business_config_guard_inventory] FAIL")

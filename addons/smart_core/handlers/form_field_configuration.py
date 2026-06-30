@@ -1170,7 +1170,7 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
 
 
 class FormFieldOrderSetHandler(BaseIntentHandler):
-    INTENT_TYPE = "ui.form_field_order.set"
+    INTENT_TYPE = FORM_FIELD_CONFIG_INTENTS["order_set"]
     DESCRIPTION = "Set form field order for current form scope from contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     ACL_MODE = "explicit_check"
@@ -1308,7 +1308,7 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
 
 
 class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
-    INTENT_TYPE = "ui.form_field_config.batch_set"
+    INTENT_TYPE = FORM_FIELD_CONFIG_INTENTS["batch_set"]
     DESCRIPTION = "Batch set form field order and visibility for current form scope."
 
     def handle(self, payload=None, ctx=None):

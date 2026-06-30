@@ -56,6 +56,8 @@ export const BUSINESS_CONFIG_INTENTS = {
 export const FORM_FIELD_CONFIG_INTENTS = {
   policySet: 'ui.form_field_policy.set',
   customFieldCreate: 'ui.form_custom_field.create',
+  orderSet: 'ui.form_field_order.set',
+  batchSet: 'ui.form_field_config.batch_set',
 } as const;
 
 export const MENU_CONFIG_INTENTS = {
