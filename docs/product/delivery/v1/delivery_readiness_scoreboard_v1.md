@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T09:03:40Z
-- branch: `topic/material-cross-document-progress`
-- commit_ref: `5af7de140`
+- generated_at_utc: 2026-06-30T09:07:00Z
+- branch: `topic/ledger-reconciliation-trend`
+- commit_ref: `416002a60`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -34,6 +34,7 @@
 | Material cross-document progress audit | PASS | `artifacts/backend/material_cross_document_progress_audit.json` |
 | Executive readonly smoke | PASS | `artifacts/backend/executive_readonly_smoke.json` |
 | Ledger snapshot smoke | PASS | `artifacts/backend/ledger_snapshot_smoke.json` |
+| Ledger reconciliation trend | PASS | `artifacts/backend/ledger_reconciliation_trend.json` |
 | Cost search pagination smoke | PASS | `artifacts/backend/cost_search_pagination_smoke.json` |
 | Quality safety closure smoke | PASS | `artifacts/backend/site_quality_safety_closure_audit.json` |
 | Lifecycle audit export | PASS | `artifacts/backend/lifecycle_audit_export.json` |
@@ -47,7 +48,7 @@
 | 采购与物资协同 | `material.center`, `material.procurement`, `material.inbound`, `labor.request`, `equipment.request`, `subcontract.request` | 采购经理, PM | BOQ、供应商主数据、物资目录 | Strict scene gate (`PASS`), material action replay smoke (`PASS`), material cross-document progress audit (`PASS`) | 跨单据状态推进已脚本化；后续补采购申请到验收链路细化 |
 | 现场执行与质量安全 | `construction.plan`, `construction.plan_report`, `construction.diary`, `quality.center`, `safety.center` | PM, 领导/老板 | 项目、现场执行角色、质量安全基础字典 | Strict scene gate (`PASS`), quality safety closure smoke (`PASS`) | 质量/安全闭环已脚本化；后续补现场日报联动证据 |
 | 付款申请与审批 | `finance.payment_requests`, `finance.center` | 财务, PM | 付款申请、审批角色 | Strict scene gate (`PASS`), payment approval chain smoke (`PASS`) | field consumer audit deprecated refs remain non-strict follow-up |
-| 资金与结算台账 | `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders` | 财务 | 账户、结算基础数据 | Strict scene gate (`PASS`), ledger snapshot smoke (`PASS`) | 台账快照已脚本化；后续补对账差异趋势证据 |
+| 资金与结算台账 | `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders` | 财务 | 账户、结算基础数据 | Strict scene gate (`PASS`), ledger snapshot smoke (`PASS`), ledger reconciliation trend (`PASS`) | 对账差异趋势已脚本化；后续补异常 drill-down 样本 |
 | 成本预算与利润分析 | `cost.project_budget`, `cost.project_cost_ledger`, `cost.profit_compare` | PM, 财务 | 预算、成本流水、BOQ | Strict scene gate (`PASS`), cost search pagination smoke (`PASS`) | 搜索/分页已脚本化；后续补成本偏差趋势证据 |
 | 经营指标与领导看板 | `portal.dashboard`, `finance.operating_metrics` | 领导/老板 | 指标快照数据 | Strict scene gate (`PASS`), executive readonly smoke (`PASS`) | 只读验收已脚本化；后续补长周期趋势证据 |
 | 生命周期与治理审计 | `portal.lifecycle`, `portal.capability_matrix` | 管理员, 领导 | capability/scene baseline | Strict scene gate (`PASS`), lifecycle audit export (`PASS`) | 审计导出已脚本化；后续补长期趋势归档 |
