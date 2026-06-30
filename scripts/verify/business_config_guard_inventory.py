@@ -104,10 +104,12 @@ FULL_ACCEPTANCE_TARGETS = {
     "verify.business_config.low_code_layout_runtime",
     "verify.business_config.low_code_menu_navigation_alignment",
     "verify.business_config.low_code_global_stability",
+    "verify.user_menu.reachability.guard",
 }
 
 FULL_ACCEPTANCE_TARGETS_WITHOUT_CAPABILITY_OWNER = {
     "verify.frontend.build",
+    "verify.user_menu.reachability.guard",
 }
 
 TARGET_SCRIPT_REQUIREMENTS = {
