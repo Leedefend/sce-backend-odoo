@@ -194,6 +194,74 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
     },
 }
 
+OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS = {
+    "menu configuration audit observability": {
+        "addons/smart_core/handlers/menu_configuration.py": (
+            '"runtime_source": runtime_source',
+            '"configured_policy_count": len(policy_rows)',
+            '"runtime_policy_count": len(applicable_by_menu)',
+            '"contract_authoritative": runtime_source == MENU_CONFIG_RUNTIME_SOURCE_CONTRACT',
+            '"applicable_policy_count": len(applicable_rows)',
+            '"scope_root_valid": bool(scope_root_menu_id)',
+        ),
+        "frontend/apps/web/src/views/MenuConfigView.vue": (
+            "auditSummary.configuredCount",
+            "auditSummary.applicableCount",
+            "auditSummary.runtimeSourceLabel",
+            "auditMenuConfiguration",
+        ),
+        "addons/smart_core/tests/test_menu_configuration_audit.py": (
+            "test_menu_config_audit_reports_applicable_policy_counts",
+            "test_menu_config_audit_reports_runtime_contract_rows_not_legacy_policy_rows",
+            "runtime_policy_count",
+            "contract_authoritative",
+            "scope_root_valid",
+        ),
+    },
+    "form configuration operation observability": {
+        "addons/smart_core/handlers/form_field_configuration.py": (
+            "def _contract_reload_hint(",
+            '"reason": "view_orchestration_config_changed"',
+            '"precheck": precheck',
+            '"contract_reload": _contract_reload_hint_for_record(rec)',
+        ),
+        "frontend/apps/web/src/pages/ContractFormPage.vue": (
+            "formConfigOperationLog",
+            "formatFormConfigOperationSummary",
+            "lowCodePrecheckWarnings",
+            "saveResult?.precheck?.warnings",
+        ),
+        "addons/smart_core/tests/test_form_field_configuration_params.py": (
+            "test_contract_reload_hint_normalizes_scope",
+            "test_business_config_contract_precheck_accepts_view_orchestration_without_legacy_objects",
+            "test_business_config_contract_precheck_rejects_empty_view_orchestration_views",
+        ),
+    },
+    "version snapshot diff observability": {
+        "addons/smart_core/handlers/business_config_surface.py": (
+            "BusinessConfigSnapshotCompareHandler",
+            '"added_count"',
+            '"removed_count"',
+            '"changed_count"',
+            '"previous_version_no"',
+            '"current_version_no"',
+        ),
+        "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue": (
+            "snapshotCompareSummary",
+            "snapshotCompareChangedRows",
+            "snapshotCompareAddedRows",
+            "snapshotCompareRemovedRows",
+            "versionDeltaText",
+        ),
+        "addons/smart_core/tests/test_business_config_surface.py": (
+            "test_snapshot_compare_reports_added_removed_and_changed_contracts",
+            "added_count",
+            "removed_count",
+            "changed_count",
+        ),
+    },
+}
+
 
 def _target_line(makefile: str, target: str) -> str:
     pattern = re.compile(rf"^{re.escape(target)}\s*:(?P<deps>[^\n]*)$", re.MULTILINE)
@@ -318,6 +386,22 @@ def _validate_boundary_constant_parity(errors: list[str]) -> None:
             errors.append("%s contains deprecated low-code intents %s" % (path.relative_to(ROOT), deprecated))
 
 
+def _validate_observability_source_markers(errors: list[str]) -> None:
+    for capability, artifacts in OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS.items():
+        for artifact, markers in artifacts.items():
+            path = ROOT / artifact
+            if not path.is_file():
+                errors.append("low-code observability %s missing artifact %s" % (capability, artifact))
+                continue
+            text = path.read_text(encoding="utf-8")
+            for marker in markers:
+                if marker not in text:
+                    errors.append(
+                        "low-code observability %s artifact %s missing required marker %s"
+                        % (capability, artifact, marker)
+                    )
+
+
 def main() -> int:
     makefile = MAKEFILE.read_text(encoding="utf-8")
     errors: list[str] = []
@@ -361,6 +445,7 @@ def main() -> int:
 
     _validate_capability_matrix(makefile, errors)
     _validate_boundary_constant_parity(errors)
+    _validate_observability_source_markers(errors)
 
     if errors:
         print("[business_config_guard_inventory] FAIL")
