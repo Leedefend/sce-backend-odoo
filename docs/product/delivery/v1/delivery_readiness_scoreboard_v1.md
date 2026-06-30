@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T08:55:36Z
-- branch: `topic/default-scene-semantic-monitoring`
-- commit_ref: `996020225`
+- generated_at_utc: 2026-06-30T08:59:27Z
+- branch: `topic/project-journey-trace-archive`
+- commit_ref: `d633e86cd`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -29,6 +29,7 @@
 | Product delivery module capability smoke | PASS | `artifacts/backend/product_delivery_module9_smoke_report.json` |
 | Payment approval chain smoke | PASS | `artifacts/backend/payment_request_approval_chain_summary.json` |
 | Project task action smoke | PASS | `artifacts/backend/project_task_action_smoke.json` |
+| Project journey trace archive | PASS | `artifacts/backend/project_journey_trace_archive.json` |
 | Material action replay smoke | PASS | `artifacts/backend/material_action_replay_smoke.json` |
 | Executive readonly smoke | PASS | `artifacts/backend/executive_readonly_smoke.json` |
 | Ledger snapshot smoke | PASS | `artifacts/backend/ledger_snapshot_smoke.json` |
@@ -40,8 +41,8 @@
 
 | Module | Entry Scenes | Key Roles | Data Prerequisites | Smoke/Gate Status | Known Limits |
 |---|---|---|---|---|---|
-| 项目立项与台账 | `projects.intake`, `projects.list`, `projects.ledger` | PM, 采购经理 | 项目类型、组织字典、用户 | Covered by strict scene gate (`PASS`) | 需补旅程级 trace 固化 |
-| 项目执行与任务协同 | `projects.dashboard`, `projects.execution` | PM | 项目、任务、周报样例 | Strict scene gate (`PASS`), project task action smoke (`PASS`) | 任务动作推进已脚本化；后续补旅程级 trace 趋势 |
+| 项目立项与台账 | `projects.intake`, `projects.list`, `projects.ledger` | PM, 采购经理 | 项目类型、组织字典、用户 | Strict scene gate (`PASS`), project journey trace archive (`PASS`) | 旅程 trace 已归档；后续补立项动作推进证据 |
+| 项目执行与任务协同 | `projects.dashboard`, `projects.execution` | PM | 项目、任务、周报样例 | Strict scene gate (`PASS`), project task action smoke (`PASS`), project journey trace archive (`PASS`) | 任务动作与 PM 旅程 trace 已脚本化；后续补长期趋势 |
 | 采购与物资协同 | `material.center`, `material.procurement`, `material.inbound`, `labor.request`, `equipment.request`, `subcontract.request` | 采购经理, PM | BOQ、供应商主数据、物资目录 | Strict scene gate (`PASS`), material action replay smoke (`PASS`) | 动作回放已脚本化；后续补跨单据状态推进证据 |
 | 现场执行与质量安全 | `construction.plan`, `construction.plan_report`, `construction.diary`, `quality.center`, `safety.center` | PM, 领导/老板 | 项目、现场执行角色、质量安全基础字典 | Strict scene gate (`PASS`), quality safety closure smoke (`PASS`) | 质量/安全闭环已脚本化；后续补现场日报联动证据 |
 | 付款申请与审批 | `finance.payment_requests`, `finance.center` | 财务, PM | 付款申请、审批角色 | Strict scene gate (`PASS`), payment approval chain smoke (`PASS`) | field consumer audit deprecated refs remain non-strict follow-up |
