@@ -159,6 +159,20 @@ BOUNDARY_RULES = [
     },
 ]
 
+REQUIRED_BOUNDARY_MARKERS = {
+    "addons/smart_core/handlers/form_field_configuration.py": [
+        "formal_authority\": \"ui.business.config.contract.view_orchestration",
+        "compatibility_write\": \"ui.form.field.policy",
+        "已阻止兼容策略表单独生效",
+        "def _write_lowcode_form_contract_or_error(",
+    ],
+    "addons/smart_core/handlers/menu_configuration.py": [
+        "contract_source\": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING",
+        "lowcode_boundary\": \"menu_config",
+        "MENU_CONFIG_SCOPE_VIOLATION",
+    ],
+}
+
 
 def _scan_allowed_boundary(
     *,
@@ -221,6 +235,24 @@ def build_report() -> dict:
         "errors": errors,
     })
     report.update(rows_by_key)
+    marker_errors = []
+    for rel, markers in REQUIRED_BOUNDARY_MARKERS.items():
+        path = ROOT / rel
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        for marker in markers:
+            if marker not in text:
+                marker_errors.append({
+                    "category": "required_boundary_marker",
+                    "path": rel,
+                    "message": "missing required boundary marker: %s" % marker,
+                })
+    errors.extend(marker_errors)
+    report["required_boundary_marker_errors"] = marker_errors
+    report["error_count"] = len(errors)
+    report["errors"] = errors
     return report
 
 
