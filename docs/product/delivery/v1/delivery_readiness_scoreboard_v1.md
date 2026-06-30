@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T07:42:36Z
+- generated_at_utc: 2026-06-30T07:45:29Z
 - branch: `topic/lowcode-release-closure`
-- commit_ref: `5f320992e`
+- commit_ref: `de1308b8f`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -55,7 +55,7 @@
 
 1. Frontend/action closure/module capability/journey evidence are all script-bound and green in current mainline run.
 2. Remaining blocking posture is strict live-fetch dependency in network-restricted runners; use strict on live-enabled runners, restricted for local restricted verification.
-5. CI profile posture: strict=PASS (2026-06-30T07:05:38Z), restricted=PASS (2026-06-30T07:07:16Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs.
+3. CI profile posture: strict=PASS (2026-06-30T07:05:38Z), restricted=PASS (2026-06-30T07:07:16Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs.
 
 ## Repro Command Set (Default)
 
