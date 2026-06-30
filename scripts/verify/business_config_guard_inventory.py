@@ -185,6 +185,14 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
             "sampleCount",
         ),
     },
+    "verify.business_config.low_code_menu_navigation_alignment": {
+        "frontend/apps/web/scripts/low_code_menu_navigation_alignment_acceptance.mjs": (
+            "effectiveVisibleParentId",
+            "configuredParentId",
+            "policy.visible !== true",
+            "navigation_config_only",
+        ),
+    },
     "verify.business_config.low_code_global_stability": {
         "frontend/apps/web/scripts/low_code_global_stability_acceptance.mjs": (
             "sanitizedContractJson",
