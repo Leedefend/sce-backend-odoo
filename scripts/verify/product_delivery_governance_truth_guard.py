@@ -85,6 +85,44 @@ def _commit_exists(commit_ref: str) -> bool:
     return result.returncode == 0
 
 
+def _current_head_short_sha() -> str:
+    result = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"],
+        cwd=str(ROOT),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return _norm(result.stdout)
+
+
+def _changed_files_since(commit_ref: str) -> list[str]:
+    if not commit_ref:
+        return []
+    result = subprocess.run(
+        ["git", "diff", "--name-only", f"{commit_ref}..HEAD"],
+        cwd=str(ROOT),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return []
+    return [line.strip() for line in (result.stdout or "").splitlines() if line.strip()]
+
+
+def _is_allowed_post_snapshot_evidence_path(path: str) -> bool:
+    allowed_exact = {
+        "docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md",
+        "docs/ops/audit/product_delivery_governance_truth_guard_report.md",
+        "artifacts/backend/delivery_ci_profile_status.json",
+        "artifacts/backend/delivery_readiness_ci_summary.json",
+        "artifacts/backend/delivery_readiness_ci_summary.md",
+        "artifacts/backend/product_delivery_governance_truth_guard_report.json",
+    }
+    return path in allowed_exact
+
+
 def _parse_utc_timestamp(text: str) -> datetime | None:
     value = _norm(text)
     if not value:
@@ -155,6 +193,16 @@ def main() -> int:
 
     if snapshot_commit and not _commit_exists(snapshot_commit):
         errors.append("scoreboard_commit_ref_not_found_in_repo")
+    current_head_short_sha = _current_head_short_sha()
+    post_snapshot_changed_files = _changed_files_since(snapshot_commit)
+    post_snapshot_source_changes = [
+        path for path in post_snapshot_changed_files if not _is_allowed_post_snapshot_evidence_path(path)
+    ]
+    if post_snapshot_source_changes:
+        errors.append(
+            "scoreboard_commit_ref_has_unverified_post_snapshot_changes="
+            + ",".join(post_snapshot_source_changes[:20])
+        )
 
     ts = _parse_utc_timestamp(snapshot_generated_at)
     if snapshot_generated_at and ts is None:
@@ -206,6 +254,8 @@ def main() -> int:
             "generated_at_utc": snapshot_generated_at,
             "branch": snapshot_branch,
             "commit_ref": snapshot_commit,
+            "current_head_short_sha": current_head_short_sha,
+            "post_snapshot_changed_files": post_snapshot_changed_files,
             "gate_result": snapshot_gate_result,
         },
         "errors": errors,
