@@ -3972,6 +3972,11 @@ verify.product.delivery.action_closure.smoke: guard.prod.forbid
 verify.delivery.payment_approval.chain_summary: guard.prod.forbid
 	@python3 scripts/verify/payment_request_approval_chain_summary.py
 
+.PHONY: verify.delivery.project_task.action_smoke
+verify.delivery.project_task.action_smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_PM_LOGIN=$(or $(ROLE_PM_LOGIN),demo_role_pm) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/project_task_action_seed.py
+	@python3 scripts/verify/project_task_action_smoke.py
+
 .PHONY: verify.product.delivery.module_capability.smoke verify.product.delivery.module9.smoke
 verify.product.delivery.module_capability.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_module9_smoke.py

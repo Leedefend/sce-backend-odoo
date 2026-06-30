@@ -19,9 +19,10 @@ green. The next iteration should not reopen release blockers unless a live gate 
 ## P0: Script-Bound Action Evidence
 
 1. Project execution task action smoke
+   - Status: done
    - Scope: `projects.dashboard`, `projects.execution`
    - Target: PM role can open task list/board, advance one safe task action, and refresh the scene without losing contract shape.
-   - Evidence target: new or extended make target under `verify.delivery.journey.*`
+   - Evidence target: `make verify.delivery.project_task.action_smoke`, `artifacts/backend/project_task_action_smoke.json`, and the scoreboard row `Project task action smoke`.
 
 2. Payment approval chain scoreboard integration
    - Status: done

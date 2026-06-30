@@ -20,6 +20,7 @@ CONTRACT_CLOSURE_MAINLINE_SUMMARY_PATH = ROOT / "artifacts" / "backend" / "backe
 ACTION_CLOSURE_REPORT_PATH = ROOT / "artifacts" / "backend" / "product_delivery_action_closure_report.json"
 MODULE9_SMOKE_REPORT_PATH = ROOT / "artifacts" / "backend" / "product_delivery_module9_smoke_report.json"
 PAYMENT_APPROVAL_CHAIN_REPORT_PATH = ROOT / "artifacts" / "backend" / "payment_request_approval_chain_summary.json"
+PROJECT_TASK_ACTION_REPORT_PATH = ROOT / "artifacts" / "backend" / "project_task_action_smoke.json"
 
 PROFILE_COMMANDS = {
     "strict": "CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness",
@@ -416,6 +417,11 @@ def main() -> int:
     payment_approval_ok = bool(payment_approval_payload.get("ok")) if payment_approval_present else False
     payment_approval_label = _bool_status_label(payment_approval_ok) if payment_approval_present else "UNKNOWN"
 
+    project_task_payload = _load_json(PROJECT_TASK_ACTION_REPORT_PATH)
+    project_task_present = bool(project_task_payload)
+    project_task_ok = bool(project_task_payload.get("ok")) if project_task_present else False
+    project_task_label = _bool_status_label(project_task_ok) if project_task_present else "UNKNOWN"
+
     lines = _upsert_evidence_row(
         lines,
         "CI strict profile readiness",
@@ -451,6 +457,12 @@ def main() -> int:
         "Payment approval chain smoke",
         payment_approval_label,
         str(PAYMENT_APPROVAL_CHAIN_REPORT_PATH.relative_to(ROOT)),
+    )
+    lines = _upsert_evidence_row(
+        lines,
+        "Project task action smoke",
+        project_task_label,
+        str(PROJECT_TASK_ACTION_REPORT_PATH.relative_to(ROOT)),
     )
     lines = _normalize_evidence_table(lines)
     lines = _upsert_release_gap_profile_posture(lines, strict_label, restricted_label)
