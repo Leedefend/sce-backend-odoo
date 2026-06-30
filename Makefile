@@ -3982,6 +3982,11 @@ verify.delivery.material.action_replay: guard.prod.forbid check-compose-project 
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_MATERIAL_LOGIN=$(or $(ROLE_MATERIAL_LOGIN),demo_business_full) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/material_action_replay_seed.py
 	@ROLE_MATERIAL_LOGIN=$(or $(ROLE_MATERIAL_LOGIN),demo_business_full) python3 scripts/verify/material_action_replay_smoke.py
 
+.PHONY: verify.delivery.executive.readonly
+verify.delivery.executive.readonly: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_EXECUTIVE_READONLY_LOGIN=$(or $(ROLE_EXECUTIVE_READONLY_LOGIN),executive_readonly_smoke) ROLE_EXECUTIVE_READONLY_PASSWORD=$(or $(ROLE_EXECUTIVE_READONLY_PASSWORD),demo) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/executive_readonly_seed.py
+	@ROLE_EXECUTIVE_READONLY_LOGIN=$(or $(ROLE_EXECUTIVE_READONLY_LOGIN),executive_readonly_smoke) ROLE_EXECUTIVE_READONLY_PASSWORD=$(or $(ROLE_EXECUTIVE_READONLY_PASSWORD),demo) python3 scripts/verify/executive_readonly_smoke.py
+
 .PHONY: verify.product.delivery.module_capability.smoke verify.product.delivery.module9.smoke
 verify.product.delivery.module_capability.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_module9_smoke.py

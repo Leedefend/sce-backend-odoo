@@ -40,9 +40,10 @@ green. The next iteration should not reopen release blockers unless a live gate 
 ## P1: Read-Only and Ledger Evidence
 
 1. Executive read-only acceptance
-   - Scope: `portal.dashboard`, `finance.operating_metrics`
-   - Target: executive role can read KPI surfaces and cannot trigger write-oriented actions.
-   - Evidence target: read-only browser or API acceptance report.
+   - Status: done
+   - Scope: `portal.dashboard`, `finance.operating_metrics`, `portal.capability_matrix`; `projects.dashboard_showcase` is recorded when the demo action is installed.
+   - Target: executive role can see the read-only journey scenes, read operating metrics, and cannot create/write operating metric records.
+   - Evidence target: `make verify.delivery.executive.readonly`, `artifacts/backend/executive_readonly_smoke.json`, and the scoreboard row `Executive readonly smoke`.
 
 2. Treasury/settlement ledger snapshot
    - Scope: `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders`
