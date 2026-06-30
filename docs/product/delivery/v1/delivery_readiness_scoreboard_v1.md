@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T08:59:27Z
+- generated_at_utc: 2026-06-30T08:59:54Z
 - branch: `topic/project-journey-trace-archive`
-- commit_ref: `d633e86cd`
+- commit_ref: `41a2b146a`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
