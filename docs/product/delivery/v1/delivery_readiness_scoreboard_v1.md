@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T08:09:20Z
-- branch: `topic/project-task-action-evidence`
-- commit_ref: `07eb6f3ed`
+- generated_at_utc: 2026-06-30T08:18:07Z
+- branch: `topic/material-action-replay-evidence`
+- commit_ref: `16a8a5b37`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -29,13 +29,14 @@
 | Product delivery module capability smoke | PASS | `artifacts/backend/product_delivery_module9_smoke_report.json` |
 | Payment approval chain smoke | PASS | `artifacts/backend/payment_request_approval_chain_summary.json` |
 | Project task action smoke | PASS | `artifacts/backend/project_task_action_smoke.json` |
+| Material action replay smoke | PASS | `artifacts/backend/material_action_replay_smoke.json` |
 ## 10-Module Readiness Board
 
 | Module | Entry Scenes | Key Roles | Data Prerequisites | Smoke/Gate Status | Known Limits |
 |---|---|---|---|---|---|
 | 项目立项与台账 | `projects.intake`, `projects.list`, `projects.ledger` | PM, 采购经理 | 项目类型、组织字典、用户 | Covered by strict scene gate (`PASS`) | 需补旅程级 trace 固化 |
 | 项目执行与任务协同 | `projects.dashboard`, `projects.execution` | PM | 项目、任务、周报样例 | Strict scene gate (`PASS`), project task action smoke (`PASS`) | 任务动作推进已脚本化；后续补旅程级 trace 趋势 |
-| 采购与物资协同 | `material.center`, `material.procurement`, `material.inbound`, `labor.request`, `equipment.request`, `subcontract.request` | 采购经理, PM | BOQ、供应商主数据、物资目录 | Covered by strict scene gate (`PASS`) | 需补采购/材料/租赁动作回放证据 |
+| 采购与物资协同 | `material.center`, `material.procurement`, `material.inbound`, `labor.request`, `equipment.request`, `subcontract.request` | 采购经理, PM | BOQ、供应商主数据、物资目录 | Strict scene gate (`PASS`), material action replay smoke (`PASS`) | 动作回放已脚本化；后续补跨单据状态推进证据 |
 | 现场执行与质量安全 | `construction.plan`, `construction.plan_report`, `construction.diary`, `quality.center`, `safety.center` | PM, 领导/老板 | 项目、现场执行角色、质量安全基础字典 | Covered by strict scene gate (`PASS`) | 需补质量安全闭环动作证据 |
 | 付款申请与审批 | `finance.payment_requests`, `finance.center` | 财务, PM | 付款申请、审批角色 | Strict scene gate (`PASS`), payment approval chain smoke (`PASS`) | field consumer audit deprecated refs remain non-strict follow-up |
 | 资金与结算台账 | `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders` | 财务 | 账户、结算基础数据 | Covered by strict scene gate (`PASS`) | 需补台账对账快照证据 |

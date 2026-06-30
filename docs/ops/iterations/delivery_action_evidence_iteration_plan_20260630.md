@@ -32,9 +32,10 @@ green. The next iteration should not reopen release blockers unless a live gate 
    - Note: `payment_request_approval_field_consumer_audit` still reports deprecated field references in non-strict mode; this is not part of the action handoff smoke closure.
 
 3. Purchase/material action replay
+   - Status: done
    - Scope: `material.center`, `material.procurement`, `material.inbound`, `labor.request`, `equipment.request`, `subcontract.request`
    - Target: list/search/open action replay for采购/材料/租赁 entry scenes using stable demo seed data.
-   - Evidence target: machine-readable replay report plus scoreboard status row.
+   - Evidence target: `make verify.delivery.material.action_replay`, `artifacts/backend/material_action_replay_smoke.json`, and the scoreboard row `Material action replay smoke`.
 
 ## P1: Read-Only and Ledger Evidence
 
