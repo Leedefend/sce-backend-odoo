@@ -1,0 +1,20 @@
+{
+  "description": "Initial debt budget for transition fields in formal product surfaces. Budgets must only decrease as fields are promoted to formal model/view names.",
+  "budgets": {
+    "formal_config_contract.legacy_visible": 0,
+    "formal_config_contract.p1_visible": 455,
+    "formal_confirmed_view.accepted_visible": 15,
+    "formal_confirmed_view.legacy_visible": 375,
+    "formal_confirmed_view.p1_visible": 202,
+    "formal_confirmed_view.user_acceptance": 28,
+    "formal_core_model.legacy_visible": 254,
+    "formal_core_model.user_acceptance": 17,
+    "formal_core_view.legacy_visible": 213,
+    "formal_projection_model.legacy_visible": 47
+  },
+  "zero_budget_policy": [
+    "codex_sentinel",
+    "new category/prefix combinations",
+    "any budget increase"
+  ]
+}
