@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T07:07:17Z
+- generated_at_utc: 2026-06-30T07:39:56Z
 - branch: `topic/lowcode-release-closure`
-- commit_ref: `9db9eb7ac`
+- commit_ref: `29d9791d0`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
