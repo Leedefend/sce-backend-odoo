@@ -21,6 +21,7 @@ ACTION_CLOSURE_REPORT_PATH = ROOT / "artifacts" / "backend" / "product_delivery_
 MODULE9_SMOKE_REPORT_PATH = ROOT / "artifacts" / "backend" / "product_delivery_module9_smoke_report.json"
 PAYMENT_APPROVAL_CHAIN_REPORT_PATH = ROOT / "artifacts" / "backend" / "payment_request_approval_chain_summary.json"
 PROJECT_TASK_ACTION_REPORT_PATH = ROOT / "artifacts" / "backend" / "project_task_action_smoke.json"
+PROJECT_JOURNEY_TRACE_REPORT_PATH = ROOT / "artifacts" / "backend" / "project_journey_trace_archive.json"
 MATERIAL_ACTION_REPLAY_REPORT_PATH = ROOT / "artifacts" / "backend" / "material_action_replay_smoke.json"
 EXECUTIVE_READONLY_REPORT_PATH = ROOT / "artifacts" / "backend" / "executive_readonly_smoke.json"
 LEDGER_SNAPSHOT_REPORT_PATH = ROOT / "artifacts" / "backend" / "ledger_snapshot_smoke.json"
@@ -429,6 +430,11 @@ def main() -> int:
     project_task_ok = bool(project_task_payload.get("ok")) if project_task_present else False
     project_task_label = _bool_status_label(project_task_ok) if project_task_present else "UNKNOWN"
 
+    project_journey_trace_payload = _load_json(PROJECT_JOURNEY_TRACE_REPORT_PATH)
+    project_journey_trace_present = bool(project_journey_trace_payload)
+    project_journey_trace_ok = bool(project_journey_trace_payload.get("ok")) if project_journey_trace_present else False
+    project_journey_trace_label = _bool_status_label(project_journey_trace_ok) if project_journey_trace_present else "UNKNOWN"
+
     material_replay_payload = _load_json(MATERIAL_ACTION_REPLAY_REPORT_PATH)
     material_replay_present = bool(material_replay_payload)
     material_replay_ok = bool(material_replay_payload.get("ok")) if material_replay_present else False
@@ -505,6 +511,12 @@ def main() -> int:
         "Project task action smoke",
         project_task_label,
         str(PROJECT_TASK_ACTION_REPORT_PATH.relative_to(ROOT)),
+    )
+    lines = _upsert_evidence_row(
+        lines,
+        "Project journey trace archive",
+        project_journey_trace_label,
+        str(PROJECT_JOURNEY_TRACE_REPORT_PATH.relative_to(ROOT)),
     )
     lines = _upsert_evidence_row(
         lines,

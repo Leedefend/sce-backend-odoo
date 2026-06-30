@@ -3977,6 +3977,10 @@ verify.delivery.project_task.action_smoke: guard.prod.forbid check-compose-proje
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_PM_LOGIN=$(or $(ROLE_PM_LOGIN),demo_role_pm) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/project_task_action_seed.py
 	@python3 scripts/verify/project_task_action_smoke.py
 
+.PHONY: verify.delivery.project_journey.trace_archive
+verify.delivery.project_journey.trace_archive: guard.prod.forbid verify.delivery.journey.role_matrix.guard verify.delivery.project_task.action_smoke
+	@python3 scripts/verify/project_journey_trace_archive.py
+
 .PHONY: verify.delivery.material.action_replay
 verify.delivery.material.action_replay: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_MATERIAL_LOGIN=$(or $(ROLE_MATERIAL_LOGIN),demo_business_full) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/material_action_replay_seed.py
