@@ -25,6 +25,7 @@ MATERIAL_ACTION_REPLAY_REPORT_PATH = ROOT / "artifacts" / "backend" / "material_
 EXECUTIVE_READONLY_REPORT_PATH = ROOT / "artifacts" / "backend" / "executive_readonly_smoke.json"
 LEDGER_SNAPSHOT_REPORT_PATH = ROOT / "artifacts" / "backend" / "ledger_snapshot_smoke.json"
 COST_SEARCH_PAGINATION_REPORT_PATH = ROOT / "artifacts" / "backend" / "cost_search_pagination_smoke.json"
+QUALITY_SAFETY_CLOSURE_REPORT_PATH = ROOT / "artifacts" / "backend" / "site_quality_safety_closure_audit.json"
 
 PROFILE_COMMANDS = {
     "strict": "CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness",
@@ -446,6 +447,11 @@ def main() -> int:
     cost_search_ok = bool(cost_search_payload.get("ok")) if cost_search_present else False
     cost_search_label = _bool_status_label(cost_search_ok) if cost_search_present else "UNKNOWN"
 
+    quality_safety_payload = _load_json(QUALITY_SAFETY_CLOSURE_REPORT_PATH)
+    quality_safety_present = bool(quality_safety_payload)
+    quality_safety_ok = bool(quality_safety_payload.get("ok")) if quality_safety_present else False
+    quality_safety_label = _bool_status_label(quality_safety_ok) if quality_safety_present else "UNKNOWN"
+
     lines = _upsert_evidence_row(
         lines,
         "CI strict profile readiness",
@@ -511,6 +517,12 @@ def main() -> int:
         "Cost search pagination smoke",
         cost_search_label,
         str(COST_SEARCH_PAGINATION_REPORT_PATH.relative_to(ROOT)),
+    )
+    lines = _upsert_evidence_row(
+        lines,
+        "Quality safety closure smoke",
+        quality_safety_label,
+        str(QUALITY_SAFETY_CLOSURE_REPORT_PATH.relative_to(ROOT)),
     )
     lines = _normalize_evidence_table(lines)
     lines = _upsert_release_gap_profile_posture(lines, strict_label, restricted_label)

@@ -3997,6 +3997,10 @@ verify.delivery.cost.search_pagination: guard.prod.forbid check-compose-project 
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_COST_READONLY_LOGIN=$(or $(ROLE_COST_READONLY_LOGIN),cost_readonly_smoke) ROLE_COST_READONLY_PASSWORD=$(or $(ROLE_COST_READONLY_PASSWORD),demo) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/cost_search_pagination_seed.py
 	@ROLE_COST_READONLY_LOGIN=$(or $(ROLE_COST_READONLY_LOGIN),cost_readonly_smoke) ROLE_COST_READONLY_PASSWORD=$(or $(ROLE_COST_READONLY_PASSWORD),demo) python3 scripts/verify/cost_search_pagination_smoke.py
 
+.PHONY: verify.delivery.quality_safety.closure
+verify.delivery.quality_safety.closure: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/site_quality_safety_closure_audit.py
+
 .PHONY: verify.product.delivery.module_capability.smoke verify.product.delivery.module9.smoke
 verify.product.delivery.module_capability.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_module9_smoke.py
