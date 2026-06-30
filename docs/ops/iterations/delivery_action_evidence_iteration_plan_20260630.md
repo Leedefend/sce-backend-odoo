@@ -1,0 +1,71 @@
+# Delivery Action Evidence Iteration Plan 2026-06-30
+
+## Objective
+
+Turn the non-blocking "Known Limits" in `docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md`
+into script-bound journey/action evidence after the low-code release closure PR.
+
+This plan starts after PR `#858` because release-blocking low-code and delivery readiness gates are already
+green. The next iteration should not reopen release blockers unless a live gate regresses.
+
+## Baseline
+
+- source PR: `https://github.com/Leedefend/sce-backend-odoo/pull/858`
+- branch: `topic/lowcode-release-closure`
+- latest release closure head at planning time: `f0631df5a`
+- current scoreboard posture: strict `PASS`, restricted `PASS`
+- current governance truth guard: `PASS`
+
+## P0: Script-Bound Action Evidence
+
+1. Project execution task action smoke
+   - Scope: `projects.dashboard`, `projects.execution`
+   - Target: PM role can open task list/board, advance one safe task action, and refresh the scene without losing contract shape.
+   - Evidence target: new or extended make target under `verify.delivery.journey.*`
+
+2. Payment approval chain scoreboard integration
+   - Scope: `finance.payment_requests`, `finance.center`
+   - Target: existing payment approval smoke result is written into the delivery readiness scoreboard evidence summary.
+   - Evidence target: scoreboard row references the smoke artifact and latest status.
+
+3. Purchase/material action replay
+   - Scope: `material.center`, `material.procurement`, `material.inbound`, `labor.request`, `equipment.request`, `subcontract.request`
+   - Target: list/search/open action replay for采购/材料/租赁 entry scenes using stable demo seed data.
+   - Evidence target: machine-readable replay report plus scoreboard status row.
+
+## P1: Read-Only and Ledger Evidence
+
+1. Executive read-only acceptance
+   - Scope: `portal.dashboard`, `finance.operating_metrics`
+   - Target: executive role can read KPI surfaces and cannot trigger write-oriented actions.
+   - Evidence target: read-only browser or API acceptance report.
+
+2. Treasury/settlement ledger snapshot
+   - Scope: `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders`
+   - Target: ledger list/search/count snapshots are stable across refresh and company scope.
+   - Evidence target: ledger snapshot JSON with row counts and domain trace.
+
+3. Cost search and pagination smoke
+   - Scope: `cost.project_budget`, `cost.project_cost_ledger`, `cost.profit_compare`
+   - Target: search, pagination, and detail open actions work under PM and finance roles.
+   - Evidence target: API-level smoke report.
+
+## P2: Governance and Long-Run Proof
+
+1. Quality/safety closure action proof
+   - Scope: `quality.center`, `safety.center`
+   - Target: close one safe quality/safety loop in demo data or prove no-op readonly closure.
+
+2. Lifecycle audit export evidence
+   - Scope: `portal.lifecycle`, `portal.capability_matrix`
+   - Target: audit export or equivalent machine-readable evidence is produced and linked.
+
+3. Default scene semantic monitoring
+   - Scope: `default`
+   - Target: keep placeholder/default semantics explicit and non-regressive.
+
+## Exit Rules
+
+- Do not mark a Known Limit closed unless a repeatable command produces an artifact.
+- Each closed item must update both the artifact path and the scoreboard evidence row.
+- If a smoke needs live browser access, provide a restricted API fallback and document the profile boundary.
