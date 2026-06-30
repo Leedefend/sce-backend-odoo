@@ -33,6 +33,60 @@ CAPABILITY_REQUIRED_FIELDS = {
 
 CAPABILITY_STATUS_VALUES = {"ready", "partial", "blocked", "deferred"}
 
+DEPRECATED_INTENT_MARKERS = (
+    "ui.menu_configuration.",
+    "sc.approval_policy_configuration.",
+)
+
+EXPECTED_CAPABILITY_AUTHORING_INTENTS = {
+    "menu_orchestration": {
+        "ui.menu_config.panel.get",
+        "ui.menu_config.panel.set",
+        "ui.menu_config.menu.create",
+        "ui.menu_config.menu.delete",
+        "ui.menu_config.audit",
+        "ui.menu_config.rollback",
+        "ui.menu_config.versions",
+    },
+    "approval_policy_configuration": {
+        "sc.approval_policy.config.get",
+        "sc.approval_policy.config.set",
+        "sc.approval_policy.steps.set",
+    },
+    "form_field_structure": {
+        "ui.form_field_policy.set",
+        "ui.form_custom_field.create",
+        "ui.form_field_order.set",
+        "ui.form_field_config.batch_set",
+        "ui.business_config.lowcode.apply",
+        "ui.business_config.contract.save",
+        "ui.business_config.contract.get",
+        "ui.business_config.contract.publish",
+        "ui.business_config.contract.versions",
+        "ui.business_config.contract.rollback",
+    },
+    "list_search_configuration": {
+        "ui.business_config.list_search.audit",
+        "ui.business_config.list_search.set",
+        "ui.business_config.list_search.bootstrap",
+        "ui.business_config.contract.save",
+    },
+    "version_snapshot_rollback": {
+        "ui.business_config.snapshot.summary",
+        "ui.business_config.snapshot.export",
+        "ui.business_config.snapshot.compare",
+        "ui.business_config.contract.publish",
+        "ui.business_config.contract.versions",
+        "ui.business_config.contract.rollback",
+    },
+    "capability_boundary_and_coverage": {
+        "ui.business_config.surface.get",
+        "ui.business_config.coverage.scan",
+        "ui.business_config.coverage.bootstrap_list_search",
+        "ui.business_config.coverage.bootstrap_missing",
+    },
+}
+
 
 FULL_ACCEPTANCE_TARGETS = {
     "verify.business_config.guard_inventory",
@@ -203,6 +257,22 @@ def _validate_capability_matrix(makefile: str, errors: list[str]) -> None:
                 continue
             if field != "release_blockers" and not value:
                 errors.append("low-code capability %s field %s must not be empty" % (capability_id, field))
+            if field == "authoring_intents":
+                deprecated = [
+                    str(item)
+                    for item in value
+                    if any(marker in str(item) for marker in DEPRECATED_INTENT_MARKERS)
+                ]
+                if deprecated:
+                    errors.append(
+                        "low-code capability %s uses deprecated authoring intents %s" % (capability_id, deprecated)
+                    )
+                expected_intents = EXPECTED_CAPABILITY_AUTHORING_INTENTS.get(capability_id)
+                if expected_intents is not None and set(map(str, value)) != expected_intents:
+                    errors.append(
+                        "low-code capability %s authoring intents drifted; expected=%s actual=%s"
+                        % (capability_id, sorted(expected_intents), sorted(map(str, value)))
+                    )
         for target in capability.get("acceptance") or []:
             target_name = str(target or "").strip()
             if target_name.startswith("verify.") and target_name not in target_names:
