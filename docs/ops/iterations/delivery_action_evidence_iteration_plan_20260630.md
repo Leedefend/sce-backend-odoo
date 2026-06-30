@@ -52,9 +52,10 @@ green. The next iteration should not reopen release blockers unless a live gate 
    - Evidence target: `make verify.delivery.ledger.snapshot`, `artifacts/backend/ledger_snapshot_smoke.json`, and the scoreboard row `Ledger snapshot smoke`.
 
 3. Cost search and pagination smoke
+   - Status: done
    - Scope: `cost.project_budget`, `cost.project_cost_ledger`, `cost.profit_compare`
    - Target: search, pagination, and detail open actions work under PM and finance roles.
-   - Evidence target: API-level smoke report.
+   - Evidence target: `make verify.delivery.cost.search_pagination`, `artifacts/backend/cost_search_pagination_smoke.json`, and the scoreboard row `Cost search pagination smoke`.
 
 ## P2: Governance and Long-Run Proof
 
