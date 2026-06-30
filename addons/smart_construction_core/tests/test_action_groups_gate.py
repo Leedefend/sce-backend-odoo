@@ -55,3 +55,23 @@ class TestActionGroupsGate(TransactionCase):
         self.assertEqual(menu.groups_id, expected_group)
         self.assertNotIn(expected_group, legacy_action.groups_id)
         self.assertNotIn(expected_group, legacy_menu.groups_id)
+
+    def test_business_config_user_can_read_business_entity_action_payload(self):
+        group = self.env.ref("smart_construction_core.group_sc_cap_business_config_admin")
+        company = self.env.ref("base.main_company")
+        user = self.env["res.users"].with_context(no_reset_password=True).create(
+            {
+                "name": "action_payload_business_config",
+                "login": "action_payload_business_config",
+                "email": "action_payload_business_config@example.com",
+                "company_id": company.id,
+                "company_ids": [(6, 0, [company.id])],
+                "groups_id": [(6, 0, [group.id])],
+            }
+        )
+        action = self.env.ref("smart_construction_core.action_sc_business_entity").with_user(user)
+
+        payload = action.read()[0]
+
+        self.assertEqual(payload["res_model"], "sc.business.entity")
+        self.assertEqual(payload["id"], action.id)
