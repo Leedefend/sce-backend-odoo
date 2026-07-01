@@ -103,14 +103,32 @@ def _handling_surface_profile(env_obj, *, model, action_id):
     return columns, {name: _text(labels.get(name) or name) for name in columns}
 
 
+TECHNICAL_FIELD_PREFIXES = ("p1_visible_", "legacy_visible_", "accepted_visible_", "user_acceptance_")
+EXPLICIT_HISTORY_CARRIER_FIELDS = {
+    "legacy_attachment_ref",
+    "legacy_line_attachment_ref",
+    "legacy_attachment_name",
+    "legacy_attachment_path",
+    "creator_legacy_user_id",
+    "legacy_residual_reason",
+}
+
+
+def _name_leaks_history_carrier(field_name):
+    name = _text(field_name)
+    return name in EXPLICIT_HISTORY_CARRIER_FIELDS
+
+
 def _label_leaks_technical_identity(field_name, label):
     name = _text(field_name)
     text = _text(label)
+    if _name_leaks_history_carrier(name):
+        return True
     if not text:
         return True
     if text == name:
-        return name.startswith(("p1_visible_", "legacy_visible_", "accepted_visible_", "user_acceptance_"))
-    return text.startswith(("p1_visible_", "legacy_visible_", "accepted_visible_", "user_acceptance_", "P1可见"))
+        return name.startswith(TECHNICAL_FIELD_PREFIXES) or _name_leaks_history_carrier(name)
+    return text.startswith(TECHNICAL_FIELD_PREFIXES + ("P1可见",)) or text in EXPLICIT_HISTORY_CARRIER_FIELDS
 
 
 def _view_modes(action):
@@ -207,7 +225,7 @@ def _audit(env_obj):
             "config_authority": "ui.business.config.contract.view_orchestration.views.tree.columns",
             "config_surface": "BusinessConfigListSearchAuditHandler.business_config_list_columns + business_config_list_column_labels",
             "handling_surface": "ui.contract.v2.layoutContract.listProfile.columns + column_labels",
-            "user_visible_label_boundary": "configured list labels must match handling surface labels and must not expose technical alias prefixes",
+            "user_visible_label_boundary": "configured list labels must match handling surface labels; explicit history carriers are forbidden, and transition aliases must not expose technical labels",
             "user_preference_boundary": "sc.user.view.preference is ui_only",
         },
     }

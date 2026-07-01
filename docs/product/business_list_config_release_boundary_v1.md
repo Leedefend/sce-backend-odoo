@@ -44,6 +44,8 @@
 
 用于回答：已经发布的列表配置是否被用户办理面精确消费。该门禁只审计 `ui.business.config.contract` 中已发布的 tree/list 配置合同，不扫描无配置 action，也不把 runtime suggested defaults 当业务配置。
 
+显式历史载体字段名不得进入已发布列表配置，包括 `legacy_attachment_ref`、`legacy_line_attachment_ref`、`legacy_attachment_name`、`legacy_attachment_path`、`creator_legacy_user_id`、`legacy_residual_reason`。既有 `p1_visible_*` / `legacy_visible_*` 过渡字段在完全稳定化前仍按技术标签泄漏规则治理：用户可见标签不得暴露技术字段名或 P1 可见字段身份。
+
 ## 运行时兜底的边界
 
 允许存在 runtime suggested defaults，但它只能用于：

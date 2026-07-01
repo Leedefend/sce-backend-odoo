@@ -121,7 +121,7 @@ make verify.formal_surface.transition_field_audit
 - `sc.business.category` 属于发布配置字典，不属于用户办理面单据，录入元数据门禁不对它强制要求；`sc.self.funding.registration` 属于用户办理面，必须展示正式录入人/录入时间字段
 - 配置面字段来源是 `ui.business.config.contract.view_orchestration.views.tree.columns`，办理面字段来源是 `ui.contract.v2.layoutContract.listProfile.columns`；正式产品要求字段顺序、字段集合和用户可见标签三者同时一致，不能只看字段名对齐
 - `收入合同结算` / `支出合同结算` 曾存在历史发布契约仍引用 `user_acceptance_*` 的问题；已通过 `ui.business.config.contract.sc_sync_settlement_formal_list_contracts()` 在模块升级链路中将两个 action 的已发布 tree 契约稳定为 `settlement_acceptance_*` 字段和中文标签
-- 当前 `make verify.business_config.list_config_boundary` 本地校验结果为 `checked=307 mismatches=0 errors=0 skipped=1`；唯一 skipped 是默认视图非列表的 `项目驾驶舱`
+- 当前 `make verify.business_config.list_config_boundary` 本地校验结果为 `checked=307 mismatches=0 errors=0 skipped=1`；唯一 skipped 是默认视图非列表的 `项目驾驶舱`。该门禁已拦截 `legacy_attachment_ref`、`legacy_line_attachment_ref`、`legacy_attachment_name`、`legacy_attachment_path`、`creator_legacy_user_id`、`legacy_residual_reason` 这类显式历史载体字段名回流到已发布列表配置；既有 P1/legacy 过渡字段仍按技术标签泄漏规则逐步治理
 
 目标：
 
