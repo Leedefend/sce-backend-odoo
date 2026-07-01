@@ -403,6 +403,25 @@ class ScUserPreferenceInitialization(models.TransientModel):
         return True
 
     @api.model
+    def backfill_lowcode_contract_source_status(self):
+        if "ui.business.config.contract" not in self.env:
+            return False
+        Contract = self.env["ui.business.config.contract"].sudo()
+        updated = 0
+        for rec in Contract.search([], order="id"):
+            payload = rec.contract_json if isinstance(rec.contract_json, dict) else {}
+            next_payload = ensure_lowcode_contract_source_status(payload)
+            if next_payload == payload:
+                continue
+            rec.write({"contract_json": next_payload})
+            updated += 1
+        self.env["ir.config_parameter"].sudo().set_param(
+            "sc.custom.lowcode_contract_source_status_backfill_count",
+            str(updated),
+        )
+        return True
+
+    @api.model
     def _apply_split_handling_menu_rules(self, menu_groups):
         changed = False
         split_count = 0

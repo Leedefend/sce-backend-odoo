@@ -2,5 +2,6 @@
 <odoo>
     <data noupdate="0">
         <function model="sc.user.preference.initialization" name="apply_user_menu_preferences"/>
+        <function model="sc.user.preference.initialization" name="backfill_lowcode_contract_source_status"/>
     </data>
 </odoo>
