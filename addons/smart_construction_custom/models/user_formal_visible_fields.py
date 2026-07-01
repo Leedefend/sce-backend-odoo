@@ -76,7 +76,11 @@ class DocumentAdminDocumentUserHistoryFields(models.Model):
 class TaxDeductionRegistrationUserHistoryFields(models.Model):
     _inherit = "sc.tax.deduction.registration"
 
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True, index=True)
+
+    def _history_surface_allowed_write_fields(self):
+        return super()._history_surface_allowed_write_fields() | {"creator_legacy_user_id"}
 
 
 class SettlementOrderUserHistoryFields(models.Model):
@@ -111,6 +115,7 @@ class SettlementOrderUserHistoryFields(models.Model):
 class InvoiceRegistrationUserHistoryFields(models.Model):
     _inherit = "sc.invoice.registration"
 
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True, index=True)
     legacy_visible_data_type = fields.Char(string="历史可见数据类型", readonly=True, index=True)
     legacy_visible_contract_no = fields.Char(string="历史可见合同编号", readonly=True)
@@ -128,6 +133,9 @@ class InvoiceRegistrationUserHistoryFields(models.Model):
     legacy_visible_invoice_no = fields.Char(string="历史可见发票号", readonly=True)
     legacy_visible_invoice_type = fields.Char(string="历史可见发票种类", readonly=True)
     legacy_visible_invoice_issue_company = fields.Char(string="历史可见开票单位", readonly=True)
+
+    def _history_surface_allowed_write_fields(self):
+        return super()._history_surface_allowed_write_fields() | {"creator_legacy_user_id"}
 
 
 class HrPayrollDocumentUserHistoryFields(models.Model):
@@ -202,6 +210,7 @@ class HrPayrollDocumentUserHistoryFields(models.Model):
 class FundAccountOperationUserHistoryFields(models.Model):
     _inherit = "sc.fund.account.operation"
 
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", readonly=True, index=True)
     legacy_visible_document_no = fields.Char(string="历史可见单据编号", readonly=True)
     legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
     legacy_visible_account_name = fields.Char(string="历史可见账户号码", readonly=True)
@@ -220,6 +229,7 @@ class FundAccountOperationUserHistoryFields(models.Model):
 class ExpenseClaimUserHistoryFields(models.Model):
     _inherit = "sc.expense.claim"
 
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     legacy_visible_document_state = fields.Char(string="历史可见单据状态", readonly=True)
     legacy_visible_document_no = fields.Char(string="历史可见单据编号", readonly=True)
     legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
@@ -276,10 +286,14 @@ class ExpenseClaimUserHistoryFields(models.Model):
             """
         )
 
+    def _history_surface_allowed_write_fields(self):
+        return super()._history_surface_allowed_write_fields() | {"creator_legacy_user_id"}
+
 
 class FinancingLoanUserHistoryFields(models.Model):
     _inherit = "sc.financing.loan"
 
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
     legacy_visible_actual_loan_amount = fields.Char(string="历史可见实际借款金额", readonly=True)
     legacy_visible_receipt_account = fields.Char(string="历史可见收款账户", readonly=True)
@@ -336,6 +350,27 @@ class FinancingLoanUserHistoryFields(models.Model):
         self.ensure_one()
         field_name = "legacy_visible_%s" % suffix
         return self[field_name] if field_name in self._fields else False
+
+    def _history_surface_allowed_write_fields(self):
+        return super()._history_surface_allowed_write_fields() | {"creator_legacy_user_id"}
+
+
+class ReceiptIncomeUserHistoryFields(models.Model):
+    _inherit = "sc.receipt.income"
+
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
+
+    def _history_surface_allowed_write_fields(self):
+        return super()._history_surface_allowed_write_fields() | {"creator_legacy_user_id"}
+
+
+class PaymentExecutionUserHistoryFields(models.Model):
+    _inherit = "sc.payment.execution"
+
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
+
+    def _history_surface_allowed_write_fields(self):
+        return super()._history_surface_allowed_write_fields() | {"creator_legacy_user_id"}
 
 
 class MaterialInboundUserVisibleFields(models.Model):
@@ -775,6 +810,8 @@ PAYMENT_APPLY_ACCEPTANCE_VISIBLE_INDEXES = {
 
 class PaymentRequestUserVisibleFields(models.Model):
     _inherit = "payment.request"
+
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
 
     legacy_visible_document_no = fields.Char(
         string="历史可见单据编号",

@@ -118,7 +118,6 @@ class ScReceiptIncome(models.Model):
     legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     legacy_note = fields.Text(string="历史备注", readonly=True)
-    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
@@ -274,6 +273,9 @@ class ScReceiptIncome(models.Model):
             else:
                 rec.receipt_flow_label = _("收款收入")
 
+    def _history_surface_allowed_write_fields(self):
+        return set()
+
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
             allowed = {
@@ -281,14 +283,13 @@ class ScReceiptIncome(models.Model):
                 "treasury_ledger_id",
                 "partner_id",
                 "contract_id",
-                "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
                 "note",
                 "active",
                 "write_uid",
                 "write_date",
-            }
+            } | self._history_surface_allowed_write_fields()
             if set(vals) - allowed:
                 raise UserError(_("历史迁移收款/收入单据已确认，只允许补充业务锚点和备注。"))
         return super().write(vals)

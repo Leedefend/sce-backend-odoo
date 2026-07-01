@@ -96,7 +96,6 @@ class ScFinancingLoan(models.Model):
     legacy_counterparty_name = fields.Char(string="历史往来方", index=True, readonly=True)
     legacy_amount_field = fields.Char(string="历史金额字段", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", index=True, readonly=True)
-    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
@@ -420,6 +419,9 @@ class ScFinancingLoan(models.Model):
                 vals["name"] = seq.next_by_code("sc.financing.loan") or _("Financing Loan")
         return super().create(vals_list)
 
+    def _history_surface_allowed_write_fields(self):
+        return set()
+
     def write(self, vals):
         if (
             not self.env.context.get("history_surface_sync")
@@ -430,12 +432,11 @@ class ScFinancingLoan(models.Model):
                 "business_category_id",
                 "note",
                 "active",
-                "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
                 "write_uid",
                 "write_date",
-            }
+            } | self._history_surface_allowed_write_fields()
             blocked = set(vals) - allowed
             for field_name in list(blocked):
                 if all(rec[field_name] == vals[field_name] for rec in self):

@@ -109,7 +109,6 @@ class ScPaymentExecution(models.Model):
     legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
     push_result = fields.Char(string="推送结果", index=True, readonly=True)
     kingdee_document_no = fields.Char(string="金蝶单据编号", index=True, readonly=True)
-    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
@@ -368,6 +367,9 @@ class ScPaymentExecution(models.Model):
         )
         return category.id if category else False
 
+    def _history_surface_allowed_write_fields(self):
+        return set()
+
     def write(self, vals):
         if (
             any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self)
@@ -382,14 +384,13 @@ class ScPaymentExecution(models.Model):
                 "payment_request_id",
                 "partner_id",
                 "contract_id",
-                "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
                 "note",
                 "active",
                 "write_uid",
                 "write_date",
-            } | projection_fields
+            } | projection_fields | self._history_surface_allowed_write_fields()
             if set(vals) - allowed:
                 raise UserError(_("历史迁移付款执行单据已确认，只允许补充业务锚点和备注。"))
         return super().write(vals)

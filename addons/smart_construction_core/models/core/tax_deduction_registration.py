@@ -99,7 +99,6 @@ class ScTaxDeductionRegistration(models.Model):
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
-    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     note = fields.Text(string="备注")
@@ -366,13 +365,15 @@ class ScTaxDeductionRegistration(models.Model):
             else:
                 rec.deduction_flow_label = _("抵扣登记")
 
+    def _history_surface_allowed_write_fields(self):
+        return set()
+
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
             allowed = {
                 "partner_id",
                 "note",
                 "active",
-                "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
                 "deduction_unit_name",
@@ -381,7 +382,7 @@ class ScTaxDeductionRegistration(models.Model):
                 "attachment_ids",
                 "write_uid",
                 "write_date",
-            }
+            } | self._history_surface_allowed_write_fields()
             if set(vals) - allowed:
                 raise UserError(_("历史迁移抵扣登记已确认，只允许补充往来单位和备注。"))
         return super().write(vals)

@@ -174,7 +174,6 @@
                                     <field name="legacy_source_table" readonly="1"/>
                                     <field name="legacy_record_id" readonly="1"/>
                                     <field name="legacy_document_state" readonly="1"/>
-                                    <field name="creator_legacy_user_id" readonly="1"/>
                                 </group>
                             </page>
                         </notebook>

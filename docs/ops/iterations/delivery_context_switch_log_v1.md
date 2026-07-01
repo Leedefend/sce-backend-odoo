@@ -76,6 +76,16 @@ Each entry must include:
 - active_commit: `current HEAD containing this entry`
 - next_step: `提交 strengthened audit 批次；后续继续保持 core/projection 物理边界预算为 0。`
 
+### 2026-07-01T09:05:00+08:00
+- blocker_key: `creator_legacy_user_id_core_boundary_guard`
+- layer_target: `P1 core/projection boundary + P2 custom user history carrier`
+- module: `scripts/verify + core finance model fields/views + smart_construction_custom history fields`
+- reason: `core/projection 的 legacy_visible 预算归零后，仍有 creator_legacy_user_id 这种历史用户 ID 载体由 P1 core 模型声明并在 core 视图展示；该字段属于历史用户数据审计事实，应由 smart_construction_custom 承载。`
+- completed_step: `将 payment.request、sc.expense.claim、sc.receipt.income、sc.payment.execution、sc.invoice.registration、sc.financing.loan、sc.fund.account.operation、sc.tax.deduction.registration 的 creator_legacy_user_id 字段声明迁入 smart_construction_custom；删除 core 视图中的该技术 ID 展示；core 历史确认写保护改为 _history_surface_allowed_write_fields hook，custom override 加回历史录入人 ID 补录权限；core_history_field_physical_boundary_audit 新增 creator_legacy_user_id marker，预算仍为 0。`
+- verification: `python3 -m py_compile scripts/verify/core_history_field_physical_boundary_audit.py addons/smart_construction_core/models/core/payment_request.py addons/smart_construction_core/models/core/expense_claim.py addons/smart_construction_core/models/core/receipt_income.py addons/smart_construction_core/models/core/payment_execution.py addons/smart_construction_core/models/core/invoice_registration.py addons/smart_construction_core/models/core/financing_loan.py addons/smart_construction_core/models/core/fund_account_operation.py addons/smart_construction_core/models/core/tax_deduction_registration.py addons/smart_construction_custom/models/user_formal_visible_fields.py PASS；make verify.core_history_field.physical_boundary_audit PASS total=0；CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE="smart_construction_core,smart_construction_custom" DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev make mod.upgrade PASS；make verify.formal_surface.transition_field_audit PASS total=0；make verify.user_confirmed.formal_surface.locked DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev PASS；git diff --check PASS。`
+- active_commit: `current HEAD containing this entry`
+- next_step: `提交 creator_legacy_user_id core boundary 批次；后续继续查找 core/projection 中其他历史用户数据载体。`
+
 ### 2026-07-01T07:43:10+08:00
 - blocker_key: `formal_field_stabilization_boundary_closeout`
 - layer_target: `P1 construction industry standard product + backend contract boundary guard`

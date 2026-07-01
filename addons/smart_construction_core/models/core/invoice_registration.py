@@ -143,7 +143,6 @@ class ScInvoiceRegistration(models.Model):
     legacy_partner_name = fields.Char(string="历史往来单位", index=True, readonly=True)
     legacy_partner_tax_no = fields.Char(string="历史税号", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
-    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     red_flush_adjustment_id = fields.Many2one(
@@ -356,6 +355,9 @@ class ScInvoiceRegistration(models.Model):
             return "附件(%s)" % len(tokens)
         return text
 
+    def _history_surface_allowed_write_fields(self):
+        return set()
+
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
             allowed = {
@@ -364,7 +366,6 @@ class ScInvoiceRegistration(models.Model):
                 "settlement_id",
                 "note",
                 "active",
-                "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
                 "tax_type",
@@ -383,7 +384,7 @@ class ScInvoiceRegistration(models.Model):
                 "legacy_acceptance_sort_id",
                 "write_uid",
                 "write_date",
-            }
+            } | self._history_surface_allowed_write_fields()
             if set(vals) - allowed:
                 raise UserError(_("历史迁移发票登记已确认，只允许补充业务锚点和备注。"))
         return super().write(vals)

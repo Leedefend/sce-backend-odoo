@@ -34,6 +34,7 @@ MARKERS = {
     "user_acceptance": re.compile(r"user_acceptance"),
     "accepted_visible": re.compile(r"accepted_visible"),
     "p1_visible": re.compile(r"p1_visible"),
+    "creator_legacy_user_id": re.compile(r"creator_legacy_user_id"),
 }
 
 

@@ -207,7 +207,6 @@ class ScExpenseClaim(models.Model):
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_no = fields.Char(string="历史单据号", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
-    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
@@ -602,6 +601,9 @@ class ScExpenseClaim(models.Model):
             vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
         return super().create(vals_list)
 
+    def _history_surface_allowed_write_fields(self):
+        return set()
+
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
             allowed = {
@@ -618,13 +620,12 @@ class ScExpenseClaim(models.Model):
                 "business_axis",
                 "financial_flow",
                 "payment_anchor_policy",
-                "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
                 "legacy" + "_visible_" + "attachment",
                 "write_uid",
                 "write_date",
-            }
+            } | self._history_surface_allowed_write_fields()
             blocked = set(vals) - allowed
             for field_name in list(blocked):
                 if all(rec[field_name] == vals[field_name] for rec in self):
