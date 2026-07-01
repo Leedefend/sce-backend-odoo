@@ -5,6 +5,30 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
+FINANCING_LOAN_FORMAL_BUSINESS_FIELDS = {
+    "financing_loan_request_department",
+    "financing_loan_request_time",
+    "financing_loan_budget_included",
+    "financing_loan_actual_loan_amount",
+    "financing_loan_fund_usage_plan",
+    "financing_loan_bank_name",
+    "financing_loan_borrow_account",
+    "financing_loan_approved_amount",
+    "financing_loan_request_amount",
+    "financing_loan_expected_return_time",
+    "financing_loan_loan_type_display",
+}
+FINANCING_LOAN_FORMAL_CANONICAL_FIELDS = {
+    "amount",
+    "purpose",
+    "due_date",
+    "document_date",
+    "loan_type",
+    "loan_bank_name",
+    "loan_account",
+}
+
+
 class ScFinancingLoan(models.Model):
     _name = "sc.financing.loan"
     _description = "融资与借款登记"
@@ -181,17 +205,17 @@ class ScFinancingLoan(models.Model):
     financing_loan_unpaid_amount = fields.Char(string="未还款金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
     financing_loan_source_created_by = fields.Char(string="录入人", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
     financing_loan_source_created_at = fields.Char(string="录入时间", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_request_department = fields.Char(string="申请部门", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_request_time = fields.Char(string="申请时间", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_budget_included = fields.Char(string="是否预算内", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_actual_loan_amount = fields.Char(string="实际借款金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_fund_usage_plan = fields.Char(string="主要资金使用安排", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_bank_name = fields.Char(string="开户银行", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_borrow_account = fields.Char(string="借款账号", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_approved_amount = fields.Char(string="实际批复金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_request_amount = fields.Char(string="申请金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_expected_return_time = fields.Char(string="预计归还时间", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
-    financing_loan_loan_type_display = fields.Char(string="借款类型", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_request_department = fields.Char(string="申请部门", index=True)
+    financing_loan_request_time = fields.Char(string="申请时间", index=True)
+    financing_loan_budget_included = fields.Char(string="是否预算内", index=True)
+    financing_loan_actual_loan_amount = fields.Char(string="实际借款金额", index=True)
+    financing_loan_fund_usage_plan = fields.Text(string="主要资金使用安排")
+    financing_loan_bank_name = fields.Char(string="开户银行", index=True)
+    financing_loan_borrow_account = fields.Char(string="借款账号", index=True)
+    financing_loan_approved_amount = fields.Char(string="实际批复金额", index=True)
+    financing_loan_request_amount = fields.Char(string="申请金额", index=True)
+    financing_loan_expected_return_time = fields.Char(string="预计归还时间", index=True)
+    financing_loan_loan_type_display = fields.Char(string="借款类型", index=True)
 
     _sql_constraints = [
         (
@@ -252,6 +276,23 @@ class ScFinancingLoan(models.Model):
     @staticmethod
     def _financing_loan_selection_label(selection, value):
         return dict(selection).get(value, value or "")
+
+    @staticmethod
+    def _financing_loan_parse_amount(value):
+        if value in (None, False, ""):
+            return None
+        text = str(value).replace(",", "").strip()
+        match = re.search(r"-?\d+(?:\.\d+)?", text)
+        return float(match.group(0)) if match else None
+
+    @staticmethod
+    def _financing_loan_parse_date(value):
+        if not value:
+            return False
+        try:
+            return fields.Date.to_date(str(value)[:10])
+        except Exception:
+            return False
 
     @api.depends(
         "legacy_document_state",
@@ -321,42 +362,6 @@ class ScFinancingLoan(models.Model):
             record.financing_loan_source_created_at = (
                 fields.Datetime.to_string(source_created_at) if source_created_at else ""
             )
-            request_time = record._financing_loan_visible_value("request_time") or source_created_at
-            expected_return_time = record._financing_loan_visible_value("expected_return_time") or record.due_date
-            loan_type_value = record._financing_loan_visible_value("loan_type")
-            record.financing_loan_request_department = (
-                record._financing_loan_visible_value("request_department") or ""
-            )
-            record.financing_loan_request_time = str(request_time or "")
-            record.financing_loan_budget_included = (
-                record._financing_loan_visible_value("budget_included") or ""
-            )
-            record.financing_loan_actual_loan_amount = (
-                record._financing_loan_visible_value("actual_loan_amount") or amount_text
-            )
-            record.financing_loan_fund_usage_plan = (
-                record._financing_loan_visible_value("fund_usage_plan") or record.purpose or ""
-            )
-            record.financing_loan_bank_name = (
-                record._financing_loan_visible_value("bank_name")
-                or record._financing_loan_visible_value("loan_bank")
-                or record.loan_bank_name
-                or ""
-            )
-            record.financing_loan_borrow_account = (
-                record._financing_loan_visible_value("loan_account") or record.loan_account or ""
-            )
-            record.financing_loan_approved_amount = (
-                record._financing_loan_visible_value("approved_amount") or amount_text
-            )
-            record.financing_loan_request_amount = (
-                record._financing_loan_visible_value("request_amount") or amount_text
-            )
-            record.financing_loan_expected_return_time = str(expected_return_time or "")
-            record.financing_loan_loan_type_display = (
-                loan_type_value
-                or record._financing_loan_selection_label(self._fields["loan_type"].selection, record.loan_type)
-            )
 
     @api.depends("loan_type", "direction", "purpose", "business_category_id.code")
     def _compute_loan_flow_label(self):
@@ -422,6 +427,57 @@ class ScFinancingLoan(models.Model):
         )
         return category.id if category else False
 
+    def _prepare_formal_business_values(self, vals):
+        result = {}
+        if "amount" not in vals:
+            parsed_amount = self._financing_loan_parse_amount(
+                vals.get("financing_loan_actual_loan_amount")
+                or vals.get("financing_loan_request_amount")
+                or vals.get("financing_loan_approved_amount")
+            )
+            if parsed_amount is not None:
+                result["amount"] = parsed_amount
+                vals = {**vals, "amount": parsed_amount}
+        if "purpose" not in vals and vals.get("financing_loan_fund_usage_plan"):
+            result["purpose"] = vals["financing_loan_fund_usage_plan"]
+            vals = {**vals, "purpose": result["purpose"]}
+        if "due_date" not in vals and vals.get("financing_loan_expected_return_time"):
+            due_date = self._financing_loan_parse_date(vals["financing_loan_expected_return_time"])
+            if due_date:
+                result["due_date"] = due_date
+                vals = {**vals, "due_date": due_date}
+        if "document_date" not in vals and vals.get("financing_loan_request_time"):
+            document_date = self._financing_loan_parse_date(vals["financing_loan_request_time"])
+            if document_date:
+                result["document_date"] = document_date
+                vals = {**vals, "document_date": document_date}
+        amount_value = vals.get("amount")
+        if amount_value is None:
+            amount_value = vals.get("financing_loan_actual_loan_amount") or vals.get("financing_loan_request_amount")
+        amount_text = str(amount_value) if amount_value is not None and amount_value is not False else ""
+        purpose_value = vals.get("purpose") or vals.get("financing_loan_fund_usage_plan") or ""
+        due_date_value = vals.get("due_date") or vals.get("financing_loan_expected_return_time") or ""
+        document_date_value = vals.get("document_date") or vals.get("financing_loan_request_time") or ""
+        loan_type_value = vals.get("loan_type") or "loan_registration"
+        loan_type_label = vals.get("financing_loan_loan_type_display")
+        if not loan_type_label:
+            loan_type_label = self._financing_loan_selection_label(self._fields["loan_type"].selection, loan_type_value)
+        defaults = {
+            "financing_loan_request_time": document_date_value,
+            "financing_loan_actual_loan_amount": amount_text,
+            "financing_loan_fund_usage_plan": purpose_value,
+            "financing_loan_bank_name": vals.get("loan_bank_name") or "",
+            "financing_loan_borrow_account": vals.get("loan_account") or "",
+            "financing_loan_approved_amount": amount_text,
+            "financing_loan_request_amount": amount_text,
+            "financing_loan_expected_return_time": due_date_value,
+            "financing_loan_loan_type_display": loan_type_label,
+        }
+        for field_name, value in defaults.items():
+            if field_name not in vals and value not in (None, False, ""):
+                result[field_name] = value
+        return result
+
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
@@ -463,6 +519,7 @@ class ScFinancingLoan(models.Model):
                 value = self.env.context.get("default_%s" % field_name)
                 if value:
                     vals.setdefault(field_name, value)
+            vals.update(self._prepare_formal_business_values(vals))
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.financing.loan") or _("Financing Loan")
         return super().create(vals_list)
@@ -484,14 +541,14 @@ class ScFinancingLoan(models.Model):
                 "created_time",
                 "write_uid",
                 "write_date",
-            } | self._history_surface_allowed_write_fields()
+            } | FINANCING_LOAN_FORMAL_BUSINESS_FIELDS | FINANCING_LOAN_FORMAL_CANONICAL_FIELDS | self._history_surface_allowed_write_fields()
             blocked = set(vals) - allowed
             for field_name in list(blocked):
                 if all(rec[field_name] == vals[field_name] for rec in self):
                     blocked.remove(field_name)
             if blocked:
-                raise UserError(_("历史迁移融资/借款单据已确认，只允许补充往来单位、备注和历史录入审计事实。"))
-        return super().write(vals)
+                raise UserError(_("历史迁移融资/借款单据已确认，只允许补充正式业务字段、往来单位、备注和历史录入审计事实。"))
+        return super().write({**self._prepare_formal_business_values(vals), **vals})
 
     def action_confirm(self):
         policy = self.env["sc.approval.policy"]

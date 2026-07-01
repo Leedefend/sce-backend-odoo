@@ -44,6 +44,10 @@
                     <field name="partner_id"/>
                     <field name="business_category_id" optional="show"/>
                     <field name="amount" string="借款金额" sum="金额"/>
+                    <field name="financing_loan_request_department" optional="hide"/>
+                    <field name="financing_loan_budget_included" optional="hide"/>
+                    <field name="financing_loan_request_amount" optional="hide"/>
+                    <field name="financing_loan_approved_amount" optional="hide"/>
                     <field name="due_date"/>
                     <field name="purpose"/>
                     <field name="loan_type" optional="hide"/>
@@ -109,6 +113,21 @@
                                     <field name="rate_label" readonly="state == 'legacy_confirmed'"/>
                                     <field name="extra_ref" readonly="state == 'legacy_confirmed'"/>
                                     <field name="extra_label" readonly="state == 'legacy_confirmed'"/>
+                                </group>
+                            </page>
+                            <page string="申请信息">
+                                <group>
+                                    <field name="financing_loan_request_department"/>
+                                    <field name="financing_loan_request_time"/>
+                                    <field name="financing_loan_budget_included"/>
+                                    <field name="financing_loan_request_amount"/>
+                                    <field name="financing_loan_actual_loan_amount"/>
+                                    <field name="financing_loan_approved_amount"/>
+                                    <field name="financing_loan_fund_usage_plan"/>
+                                    <field name="financing_loan_bank_name"/>
+                                    <field name="financing_loan_borrow_account"/>
+                                    <field name="financing_loan_expected_return_time"/>
+                                    <field name="financing_loan_loan_type_display"/>
                                 </group>
                             </page>
                             <page string="办理说明">
