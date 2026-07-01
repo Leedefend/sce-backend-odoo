@@ -42,7 +42,6 @@ from . import general_contract
 from . import income_contract_ledger
 from . import expense_contract_ledger
 from . import construction_diary
-from . import direct_acceptance_formal_visible_fields
 from . import payment_request
 from . import payment_request_line
 from . import receipt_invoice_line

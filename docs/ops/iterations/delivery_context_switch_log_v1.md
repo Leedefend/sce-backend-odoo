@@ -56,6 +56,16 @@ Each entry must include:
 - active_commit: `de7bdfa67`
 - next_step: `提交本批预算下降；后续处理 direct_acceptance_formal_visible_fields 共用历史验收载体。`
 
+### 2026-07-01T08:36:00+08:00
+- blocker_key: `direct_acceptance_history_carrier_to_support`
+- layer_target: `P1 core model boundary + support/history carrier`
+- module: `addons/smart_construction_core/models/core/direct_acceptance_formal_visible_fields.py -> addons/smart_construction_core/models/support/direct_acceptance_formal_visible_fields.py + scripts/verify`
+- reason: `direct acceptance 共用历史验收字段是历史回放和审计支撑载体，不属于 P1 core 模型声明面；直接迁到 custom 会破坏 smart_construction_core 视图加载顺序，因此先归类到 support/history carrier。`
+- completed_step: `将 direct_acceptance_formal_visible_fields 从 models/core 移至 models/support，并在顶层 models/__init__.py 于 core 完成加载后显式导入；core_history_field_physical_boundary_budget_v1 从 18 下调到 0。`
+- verification: `python3 -m py_compile addons/smart_construction_core/models/__init__.py addons/smart_construction_core/models/core/__init__.py addons/smart_construction_core/models/support/direct_acceptance_formal_visible_fields.py PASS；make verify.core_history_field.physical_boundary_audit PASS total=0；CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE="smart_construction_core" DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev make mod.upgrade PASS；make verify.formal_surface.transition_field_audit PASS total=0；make verify.user_confirmed.formal_surface.locked DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev PASS。`
+- active_commit: `582b86084`
+- next_step: `提交物理边界预算归零；后续保持 verify.core_history_field.physical_boundary_audit 为 0，禁止 P1 core/projection 重新引入历史/user 字段载体。`
+
 ### 2026-07-01T07:43:10+08:00
 - blocker_key: `formal_field_stabilization_boundary_closeout`
 - layer_target: `P1 construction industry standard product + backend contract boundary guard`

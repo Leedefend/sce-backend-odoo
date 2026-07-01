@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from . import core
+from .support import direct_acceptance_formal_visible_fields
 from . import projection
 from . import support
 from .core import formal_config_contract_fields
