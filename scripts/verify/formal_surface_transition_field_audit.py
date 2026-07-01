@@ -23,6 +23,12 @@ OUT_CSV = ROOT / "artifacts/backend/formal_surface_transition_field_audit_rows.c
 TRANSITION_PATTERNS = {
     "p1_visible": re.compile(r"\bp1_visible_[A-Za-z0-9_]+\b"),
     "legacy_visible": re.compile(r"\blegacy_visible_[A-Za-z0-9_]+\b"),
+    "legacy_attachment_ref": re.compile(r"\blegacy_attachment_ref\b"),
+    "legacy_line_attachment_ref": re.compile(r"\blegacy_line_attachment_ref\b"),
+    "legacy_attachment_name": re.compile(r"\blegacy_attachment_name\b"),
+    "legacy_attachment_path": re.compile(r"\blegacy_attachment_path\b"),
+    "creator_legacy_user_id": re.compile(r"\bcreator_legacy_user_id\b"),
+    "legacy_residual_reason": re.compile(r"\blegacy_residual_reason\b"),
     "accepted_visible": re.compile(r"\baccepted_visible_[A-Za-z0-9_]+\b"),
     "user_acceptance": re.compile(r"\buser_acceptance_[A-Za-z0-9_]+\b"),
     "codex_sentinel": re.compile(r"\bCODEX_[A-Za-z0-9_]+\b"),

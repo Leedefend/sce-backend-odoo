@@ -29,6 +29,9 @@
 
 - `p1_visible_*`
 - `legacy_visible_*`
+- `legacy_attachment_ref` / `legacy_line_attachment_ref` / `legacy_attachment_name` / `legacy_attachment_path`
+- `creator_legacy_user_id`
+- `legacy_residual_reason`
 - `accepted_visible_*`
 - `user_acceptance_*`
 - `CODEX_*`
@@ -75,6 +78,7 @@ make verify.formal_surface.transition_field_audit
 - 增加预算基线 `formal_surface_transition_field_budget_v1.json`
 - 接入 `make verify.formal_surface.transition_field_audit`
 - 接入 `verify.user_confirmed.formal_surface.locked`
+- `formal_surface_transition_field_audit` 已扩展覆盖历史附件引用、历史附件名/路径、历史录入人 ID 和历史残余原因载体，正式面保持零预算
 - 增加 `scripts/verify/formal_config_p1_alias_contract_audit.py`，静态输出配置合同中剩余 `p1_visible_*` 的模型、中文标签和可见性来源；隐藏别名或未知来源别名直接失败
 - 增加 `scripts/verify/formal_config_p1_candidate_runtime_audit.py`，在 Odoo 运行时验证静态候选字段是否真实存在，并区分稳定模型字段候选与 `legacy_visible_*` / `accepted_visible_*` / `user_acceptance_*` 等过渡候选
 

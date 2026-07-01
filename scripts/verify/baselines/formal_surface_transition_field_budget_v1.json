@@ -1,5 +1,5 @@
 {
-  "description": "Debt budget for transition fields in formal product surfaces. Formal runtime model/view surfaces and released configuration contracts must use product fields.",
+  "description": "Debt budget for transition fields and explicit history carriers in formal product surfaces. Formal runtime model/view surfaces and released configuration contracts must use product fields.",
   "budgets": {
     "formal_config_contract.legacy_visible": 0,
     "formal_config_contract.p1_visible": 0,
