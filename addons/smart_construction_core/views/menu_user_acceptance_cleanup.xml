@@ -111,6 +111,9 @@
             <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
             <field name="sequence">40</field>
         </record>
+        <record id="menu_sc_deduction_user_group" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
         <record id="menu_sc_bid_deposit_pay" model="ir.ui.menu">
             <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
             <field name="sequence">50</field>

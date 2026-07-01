@@ -963,7 +963,7 @@
     <record id="menu_sc_operating_metrics_project" model="ir.ui.menu">
         <field name="name">公司驾驶舱</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_projection_root"/>
-        <field name="action" eval="False"/>
+        <field name="action" ref="smart_construction_core.action_sc_operating_metrics_project"/>
         <field name="active" eval="True"/>
         <field name="sequence">10</field>
     </record>
@@ -1083,6 +1083,7 @@
               groups="smart_construction_core.group_sc_cap_project_read"/>
     <record id="menu_sc_project_management_scene" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_project_management_group"/>
+        <field name="action" ref="smart_construction_core.action_project_dashboard"/>
         <field name="sequence">35</field>
     </record>
     <record id="menu_sc_project_documents" model="ir.ui.menu">
@@ -1630,7 +1631,7 @@
         <field name="name">成本汇总</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_cost_center"/>
         <field name="sequence">50</field>
-        <field name="action" eval="False"/>
+        <field name="action" ref="smart_construction_core.action_project_cost_compare"/>
     </record>
     <record id="menu_sc_profit_reports" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_cost_center"/>

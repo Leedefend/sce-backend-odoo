@@ -4000,6 +4000,14 @@ verify.product.delivery.execute_button_whitelist: guard.prod.forbid
 verify.product.delivery.menu: guard.prod.forbid
 	@python3 scripts/verify/delivery_menu_tree_report.py
 
+.PHONY: verify.product.menu.catalog
+verify.product.menu.catalog: guard.prod.forbid check-compose-project check-compose-env
+	@mkdir -p artifacts/product docs/product
+	@python3 -m py_compile scripts/verify/product_menu_catalog_runtime_audit.py scripts/verify/product_menu_catalog_report.py
+	@$(RUN_ENV) PRODUCT_MENU_CATALOG_RUNTIME_PATH=/tmp/product_menu_catalog_runtime_v1.json DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/product_menu_catalog_runtime_audit.py
+	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/product_menu_catalog_runtime_v1.json artifacts/product/product_menu_catalog_runtime_v1.json >/dev/null
+	@python3 scripts/verify/product_menu_catalog_report.py
+
 .PHONY: verify.product.delivery.freshness
 verify.product.delivery.freshness: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_freshness_guard.py
