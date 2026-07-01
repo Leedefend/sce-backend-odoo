@@ -46,8 +46,15 @@
           <field name="end_datetime" optional="hide"/>
           <field name="duration_days" optional="show" sum="天数合计"/>
           <field name="seal_type" optional="show"/>
+          <field name="seal_type_name" optional="hide"/>
+          <field name="seal_department_name" optional="hide"/>
+          <field name="seal_applicant_name" optional="hide"/>
           <field name="use_purpose" optional="show"/>
           <field name="use_date" optional="show"/>
+          <field name="seal_copy_count" optional="hide"/>
+          <field name="seal_contract_amount" optional="hide" sum="合同金额合计"/>
+          <field name="seal_company_name" optional="hide"/>
+          <field name="seal_using_company_name" optional="hide"/>
           <field name="legacy_document_no" optional="hide"/>
           <field name="legacy_document_state" optional="hide"/>
           <field name="state"/>
@@ -86,9 +93,24 @@
               </group>
               <group string="印章使用" invisible="fact_type != 'seal_use'">
                 <field name="seal_type" required="fact_type == 'seal_use'"/>
-                <field name="use_purpose" required="fact_type == 'seal_use'"/>
-                <field name="use_date" required="fact_type == 'seal_use'"/>
-                <field name="return_date"/>
+                <field name="seal_type_name"/>
+                <field name="seal_text" required="fact_type == 'seal_use'"/>
+                <field name="seal_use_date" required="fact_type == 'seal_use'"/>
+                <field name="seal_return_date"/>
+                <field name="use_purpose" invisible="1"/>
+                <field name="use_date" invisible="1"/>
+                <field name="return_date" invisible="1"/>
+                <field name="seal_department_name"/>
+                <field name="seal_applicant_name"/>
+                <field name="seal_department_manager_sign"/>
+                <field name="seal_handler_sign"/>
+                <field name="seal_leader_sign"/>
+                <field name="seal_copy_count"/>
+                <field name="seal_contract_amount"/>
+                <field name="seal_contract_no"/>
+                <field name="seal_company_name"/>
+                <field name="seal_using_company_name"/>
+                <field name="seal_take_out_flag"/>
               </group>
             </group>
             <group>

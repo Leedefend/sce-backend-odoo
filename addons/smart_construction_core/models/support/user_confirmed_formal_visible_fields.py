@@ -231,7 +231,7 @@ USER_CONFIRMED_FORMAL_VISIBLE_SOURCES = {
     ],
     "sc.office.admin.document": _p1_field_pairs(
         "sc.office.admin.document",
-        ["单据状态", "单据编号", "项目名称", "申请人姓名", "所在部门", "请假天数", "请假时间", "销假时间", "备注", "请假时长", "录入人", "录入时间"],
+        [label for label in P1_ALIAS_LABELS.get("sc.office.admin.document", []) if label != "附件"],
     ),
     "sc.hr.payroll.document": [
         ("payroll_document_status_display", "单据状态"),

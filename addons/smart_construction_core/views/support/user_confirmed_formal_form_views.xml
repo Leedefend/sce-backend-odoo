@@ -483,6 +483,21 @@
                     <field name="office_admin_note_display" readonly="1"/>
                     <field name="office_admin_source_created_by" readonly="1"/>
                     <field name="office_admin_source_created_at" readonly="1"/>
+                    <field name="seal_use_date" readonly="1"/>
+                    <field name="seal_department_name" readonly="1"/>
+                    <field name="seal_applicant_name" readonly="1"/>
+                    <field name="seal_department_manager_sign" readonly="1"/>
+                    <field name="seal_type_name" readonly="1"/>
+                    <field name="seal_text" readonly="1"/>
+                    <field name="seal_handler_sign" readonly="1"/>
+                    <field name="seal_leader_sign" readonly="1"/>
+                    <field name="seal_copy_count" readonly="1"/>
+                    <field name="seal_return_date" readonly="1"/>
+                    <field name="seal_contract_amount" readonly="1"/>
+                    <field name="seal_contract_no" readonly="1"/>
+                    <field name="seal_company_name" readonly="1"/>
+                    <field name="seal_using_company_name" readonly="1"/>
+                    <field name="seal_take_out_flag" readonly="1"/>
                 </group>
             </xpath>
         </field>

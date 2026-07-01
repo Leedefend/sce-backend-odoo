@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -26,6 +27,19 @@ def parse_datetime(value):
         except ValueError:
             continue
     return None
+
+
+def parse_amount(value):
+    text = clean(value)
+    if not text:
+        return None
+    normalized = re.sub(r"[^0-9.\-]", "", text)
+    if normalized in {"", "-", ".", "-."}:
+        return None
+    try:
+        return float(normalized)
+    except ValueError:
+        return None
 
 
 def ensure_column(table, column, ddl):
@@ -242,6 +256,21 @@ ensure_column("sc_office_admin_document", "legacy_visible_contract_no", "varchar
 ensure_column("sc_office_admin_document", "legacy_visible_company", "varchar")
 ensure_column("sc_office_admin_document", "legacy_visible_seal_company", "varchar")
 ensure_column("sc_office_admin_document", "legacy_visible_take_out", "varchar")
+ensure_column("sc_office_admin_document", "seal_use_date", "date")
+ensure_column("sc_office_admin_document", "seal_department_name", "varchar")
+ensure_column("sc_office_admin_document", "seal_applicant_name", "varchar")
+ensure_column("sc_office_admin_document", "seal_department_manager_sign", "varchar")
+ensure_column("sc_office_admin_document", "seal_type_name", "varchar")
+ensure_column("sc_office_admin_document", "seal_text", "varchar")
+ensure_column("sc_office_admin_document", "seal_handler_sign", "varchar")
+ensure_column("sc_office_admin_document", "seal_leader_sign", "varchar")
+ensure_column("sc_office_admin_document", "seal_copy_count", "varchar")
+ensure_column("sc_office_admin_document", "seal_return_date", "date")
+ensure_column("sc_office_admin_document", "seal_contract_amount", "numeric")
+ensure_column("sc_office_admin_document", "seal_contract_no", "varchar")
+ensure_column("sc_office_admin_document", "seal_company_name", "varchar")
+ensure_column("sc_office_admin_document", "seal_using_company_name", "varchar")
+ensure_column("sc_office_admin_document", "seal_take_out_flag", "varchar")
 
 salary_rows = read_csv("/mnt/artifacts/migration/fresh_db_legacy_salary_line_replay_payload_v1.csv")
 profile_rows = read_csv("/mnt/artifacts/migration/fresh_db_legacy_user_profile_replay_payload_v1.csv")
@@ -1220,6 +1249,25 @@ for legacy_id, row in business_residual_rows.items():
                legacy_visible_company = %s,
                legacy_visible_seal_company = %s,
                legacy_visible_take_out = %s,
+               seal_use_date = %s,
+               seal_department_name = %s,
+               seal_applicant_name = %s,
+               seal_department_manager_sign = %s,
+               seal_type_name = %s,
+               seal_text = %s,
+               seal_handler_sign = %s,
+               seal_leader_sign = %s,
+               seal_copy_count = %s,
+               seal_return_date = %s,
+               seal_contract_amount = %s,
+               seal_contract_no = %s,
+               seal_company_name = %s,
+               seal_using_company_name = %s,
+               seal_take_out_flag = %s,
+               use_date = %s,
+               return_date = %s,
+               use_purpose = COALESCE(%s, use_purpose),
+               amount = COALESCE(%s, amount),
                legacy_visible_note = %s,
                legacy_visible_creator_name = %s,
                legacy_visible_created_time = %s
@@ -1239,11 +1287,30 @@ for legacy_id, row in business_residual_rows.items():
             clean(row.get("LDQZ")) or None,
             clean(row.get("FS")) or None,
             parse_datetime(row.get("GHSJ")),
-            clean(row.get("HTJE")) or None,
+            parse_amount(row.get("HTJE")),
             clean(row.get("HTBH")) or None,
             clean(row.get("SSGS")) or None,
             clean(row.get("D_JCLY_SYYZGS")) or None,
             clean(row.get("D_JCLY_SFWD")) or None,
+            parse_datetime(row.get("YYSJ")),
+            clean(row.get("YYBM")) or None,
+            clean(row.get("YYSQR")) or None,
+            clean(row.get("YYBMFZRQZ")) or None,
+            clean(row.get("YYZL")) or None,
+            clean(row.get("YYWBMCJWH") or row.get("GZWJNBGY")) or None,
+            clean(row.get("JBRQZ")) or None,
+            clean(row.get("LDQZ")) or None,
+            clean(row.get("FS")) or None,
+            parse_datetime(row.get("GHSJ")),
+            parse_amount(row.get("HTJE")),
+            clean(row.get("HTBH")) or None,
+            clean(row.get("SSGS")) or None,
+            clean(row.get("D_JCLY_SYYZGS")) or None,
+            clean(row.get("D_JCLY_SFWD")) or None,
+            parse_datetime(row.get("YYSJ")),
+            parse_datetime(row.get("GHSJ")),
+            clean(row.get("YYWBMCJWH") or row.get("GZWJNBGY")) or None,
+            clean(row.get("HTJE")) or None,
             clean(row.get("BZ")) or None,
             clean(row.get("LRR")) or None,
             parse_datetime(row.get("LRSJ")),

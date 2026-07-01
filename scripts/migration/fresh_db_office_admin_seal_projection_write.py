@@ -8,6 +8,7 @@ Run with:
 import csv
 import json
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -51,6 +52,19 @@ def parse_datetime(value):
 def parse_date(value):
     parsed = parse_datetime(value)
     return parsed.date() if parsed else None
+
+
+def parse_amount(value):
+    text = str(value or "").strip()
+    if not text:
+        return None
+    normalized = re.sub(r"[^0-9.\-]", "", text)
+    if normalized in {"", "-", ".", "-."}:
+        return None
+    try:
+        return float(normalized)
+    except ValueError:
+        return None
 
 
 def state(value):
@@ -226,6 +240,21 @@ for row, raw, legacy_source_id in iter_rows():
             seal_type,
             use_purpose,
             use_date,
+            seal_use_date,
+            seal_department_name,
+            seal_applicant_name,
+            seal_department_manager_sign,
+            seal_type_name,
+            seal_text,
+            seal_handler_sign,
+            seal_leader_sign,
+            seal_copy_count,
+            seal_return_date,
+            seal_contract_amount,
+            seal_contract_no,
+            seal_company_name,
+            seal_using_company_name,
+            seal_take_out_flag,
             description,
             legacy_document_no,
             legacy_document_state,
@@ -253,6 +282,21 @@ for row, raw, legacy_source_id in iter_rows():
             %s,
             %s,
             %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
             %s
         )
         """,
@@ -265,6 +309,21 @@ for row, raw, legacy_source_id in iter_rows():
             seal_type(text),
             use_purpose[:255] if use_purpose else title,
             document_date,
+            document_date,
+            department or None,
+            applicant or None,
+            str(raw.get("YYBMFZRQZ") or "").strip() or None,
+            str(raw.get("YYZL") or "").strip() or None,
+            str(raw.get("YYWBMCJWH") or raw.get("GZWJNBGY") or "").strip() or None,
+            str(raw.get("JBRQZ") or "").strip() or None,
+            str(raw.get("LDQZ") or "").strip() or None,
+            str(raw.get("FS") or "").strip() or None,
+            row_use_date(source_table, {"document_date": raw.get("GHSJ")}, {"YYSJ": raw.get("GHSJ")}),
+            parse_amount(raw.get("HTJE")),
+            str(raw.get("HTBH") or "").strip() or None,
+            str(raw.get("SSGS") or "").strip() or None,
+            str(raw.get("D_JCLY_SYYZGS") or "").strip() or None,
+            str(raw.get("D_JCLY_SFWD") or "").strip() or None,
             "\n".join(description_parts),
             document_no or None,
             str(raw.get("DJZT") or ""),
