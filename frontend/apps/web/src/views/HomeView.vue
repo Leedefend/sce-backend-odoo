@@ -364,7 +364,7 @@
       </template>
     </div>
 
-    <div v-else-if="isHomeSectionEnabled('scene_groups') && isHomeSectionTag('scene_groups', 'div')" class="scene-groups" :class="homeSectionClass('scene_groups')" :style="homeSectionStyle('scene_groups')">
+    <section v-else-if="isHomeSectionEnabled('scene_groups') && isHomeSectionTag('scene_groups', 'section')" class="scene-groups" :class="homeSectionClass('scene_groups')" :style="homeSectionStyle('scene_groups')">
       <section v-for="group in groupedEntries" :key="`scene-${group.sceneKey}`" class="scene-group">
         <header class="scene-group-header">
           <button class="scene-toggle" @click="toggleSceneGroup(group.sceneKey)">
@@ -417,7 +417,7 @@
           </article>
         </div>
       </section>
-    </div>
+    </section>
   </section>
 </template>
 
@@ -425,7 +425,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { NavNode } from '@sc/schema';
-import { useSessionStore, type CapabilityRuntimeMeta, type WorkspaceAdviceRow, type WorkspaceCapabilityGroupRow, type WorkspaceSceneEntryRow } from '../stores/session';
+import { useSessionStore, type CapabilityRuntimeMeta, type WorkspaceCapabilityGroupRow, type WorkspaceSceneEntryRow } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
@@ -771,6 +771,9 @@ const workspaceHomeOps = computed<Record<string, unknown>>(() => {
   return (workspaceHome.value.ops && typeof workspaceHome.value.ops === 'object')
     ? workspaceHome.value.ops as Record<string, unknown>
     : {};
+});
+const workspaceHomeAdvice = computed<unknown[]>(() => {
+  return Array.isArray(workspaceHome.value.advice) ? workspaceHome.value.advice : [];
 });
 const workspaceHeroEffective = computed<Record<string, unknown>>(() => {
   return (blockHeroData.value.hero && typeof blockHeroData.value.hero === 'object')
@@ -1336,16 +1339,21 @@ function todoActionLabel(label: string) {
 }
 
 const systemAdvice = computed<AdviceItem[]>(() => {
-  return session.workspaceAdviceRows.map((item: WorkspaceAdviceRow, idx) => ({
-    id: item.id || `advice-${idx + 1}`,
-    level: item.level,
-    title: item.title || `${pageText('advice_title_fallback_prefix', '建议 ')}${idx + 1}`,
-    description: item.description,
-    actionLabel: item.actionLabel,
-    actionEntryId: item.actionEntryId,
-    actionPath: item.actionPath,
-    actionQuery: item.actionQuery,
-  }));
+  return workspaceHomeAdvice.value.map((item: unknown, idx) => {
+    const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
+    const levelRaw = asText(row.level).toLowerCase();
+    const level: MetricLevel = levelRaw === 'red' || levelRaw === 'amber' ? levelRaw : 'green';
+    return {
+      id: asText(row.id) || `advice-${idx + 1}`,
+      level,
+      title: asText(row.title) || `${pageText('advice_title_fallback_prefix', '建议 ')}${idx + 1}`,
+      description: asText(row.description),
+      actionLabel: asText(row.action_label),
+      actionEntryId: asText(row.action_entry_id),
+      actionPath: asText(row.action_path),
+      actionQuery: normalizeContextQuery(row.action_query),
+    };
+  });
 });
 
 function openAdvice(item: AdviceItem) {

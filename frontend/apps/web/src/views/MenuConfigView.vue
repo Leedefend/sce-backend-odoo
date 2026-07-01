@@ -1,5 +1,5 @@
 <template>
-  <section class="menu-config-page">
+  <section v-if="pageSectionsReady" class="menu-config-page" :style="pageSectionStyle('root')" :data-contract-sections="pageSectionsFingerprint">
     <header class="menu-config-header">
       <div>
         <p class="eyebrow">{{ companyLabel }}</p>
@@ -7,6 +7,16 @@
       </div>
       <div class="header-actions">
         <span v-if="dirtyCount" class="dirty-count">{{ dirtyCount }} 项未保存</span>
+        <button
+          v-for="action in pageGlobalActions"
+          :key="action.key"
+          type="button"
+          class="ghost"
+          :disabled="action.disabled"
+          @click="executeGlobalPageAction(action.key)"
+        >
+          {{ action.label }}
+        </button>
         <button v-if="canReturnToBusinessConfig" type="button" class="ghost" @click="returnToBusinessConfig">
           返回配置工作台
         </button>
@@ -674,6 +684,8 @@ import {
 import { useSessionStore } from '../stores/session';
 import { config } from '../config';
 import { BUSINESS_CONFIG_ROUTE_FLAGS, MENU_CONFIG_RUNTIME_SOURCES } from '../app/businessConfigBoundaries';
+import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 
 type DraftPolicy = {
   policy_id: number;
@@ -696,6 +708,39 @@ type RuntimeMenuConfigGroup = MenuConfigMenu & { runtime_group?: boolean };
 type MenuConfigTreeNode = MenuConfigMenu & { menu_config_missing?: boolean };
 
 const MENU_CONFIG_SAVE_NOTICE_KEY = 'sc_menu_config_save_notice';
+const pageContract = usePageContract('menu_config');
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
+const pageSectionsReady = computed(() => (
+  pageSectionEnabled('root', true)
+  && pageSectionEnabled('header', true)
+  && pageSectionEnabled('tree', true)
+  && pageSectionEnabled('editor', true)
+  && pageSectionTagIs('root', 'section')
+  && pageSectionTagIs('header', 'header')
+  && pageSectionTagIs('tree', 'section')
+  && pageSectionTagIs('editor', 'section')
+));
+const pageSectionsFingerprint = computed(() => JSON.stringify([
+  pageSectionStyle('header'),
+  pageSectionStyle('tree'),
+  pageSectionStyle('editor'),
+]));
+
+async function executeGlobalPageAction(actionKey: string) {
+  await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: route.query,
+    onRefresh: () => loadPanel(),
+  });
+}
 
 function storedSaveNotice() {
   if (typeof window === 'undefined') return '';

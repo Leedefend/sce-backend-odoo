@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from importlib.util import module_from_spec, spec_from_file_location
+import importlib
 from pathlib import Path
 import sys
 from types import ModuleType
@@ -22,13 +22,26 @@ def _fail(errors: list[str]) -> int:
     return 1
 
 
+def _ensure_odoo_addons_namespace() -> None:
+    packages = {
+        "odoo": ROOT,
+        "odoo.addons": ROOT / "addons",
+        "odoo.addons.smart_core": ROOT / "addons/smart_core",
+        "odoo.addons.smart_core.core": ROOT / "addons/smart_core/core",
+    }
+    for name, path in packages.items():
+        mod = sys.modules.get(name)
+        if mod is None:
+            mod = ModuleType(name)
+            mod.__path__ = [str(path)]  # type: ignore[attr-defined]
+            sys.modules[name] = mod
+        elif hasattr(mod, "__path__") and str(path) not in mod.__path__:  # type: ignore[attr-defined]
+            mod.__path__.append(str(path))  # type: ignore[attr-defined]
+
+
 def _load_builder_module(path: Path) -> ModuleType:
-    spec = spec_from_file_location("page_contracts_builder_action_semantics_guard", path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"cannot load module spec: {path}")
-    mod = module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+    _ensure_odoo_addons_namespace()
+    return importlib.import_module("odoo.addons.smart_core.core.page_contracts_builder")
 
 
 def _validate_action(page_key: str, action_key: str, action: Any, errors: list[str]) -> None:

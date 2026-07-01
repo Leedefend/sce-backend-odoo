@@ -63,12 +63,12 @@ def main() -> int:
         "const showSearchFilters = computed(() => {",
         "if (renderProfile.value !== 'create') return true;",
         "return !contract.value.hide_filters_on_create;",
-        "const hasPrimaryHeaderAction = computed(() => headerActionsVisible.value.some((item) => item.semantic === 'primary_action'));",
+        "action.semantic === 'primary_action' && !isHeaderConfigAction(action) ? 'sc-btn-primary' : 'sc-btn-ghost'",
         "advancedExpanded.value = renderProfile.value !== 'create'",
         "isFieldVisible(node.name)",
         "收起高级信息",
         "展开高级信息",
-        "v-if=\"showDebugActions\" class=\"ghost\" :disabled=\"busy || !contract\" @click=\"exportContractJson\"",
+        "v-if=\"showDebugActionsVisible && !isProjectIntakeCreateMode\" class=\"sc-btn sc-btn-ghost sc-btn-sm\" :disabled=\"busy || !contract\" @click=\"exportContractJson\"",
     ]
     for token in required_frontend_tokens:
         if token not in form_text:

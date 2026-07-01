@@ -4,19 +4,11 @@
 - check: verify.frontend.actionview.scene_specialcase.guard
 - files:
   - frontend/apps/web/src/views/ActionView.vue
-  - frontend/apps/web/src/app/runtime/actionViewAssigneeExportRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewBatchActionFlowRuntime.ts
-  - frontend/apps/web/src/app/runtime/actionViewBatchArtifactStateFlowRuntime.ts
-  - frontend/apps/web/src/app/runtime/actionViewBatchArtifactsRuntime.ts
-  - frontend/apps/web/src/app/runtime/actionViewBatchAssignFlowRuntime.ts
-  - frontend/apps/web/src/app/runtime/actionViewBatchErrorDetailFlowRuntime.ts
-  - frontend/apps/web/src/app/runtime/actionViewBatchExportFlowRuntime.ts
-  - frontend/apps/web/src/app/runtime/actionViewBatchFailureApplyFlowRuntime.ts
-  - frontend/apps/web/src/app/runtime/actionViewBatchHintResolverRuntime.ts
-  - frontend/apps/web/src/app/runtime/actionViewBatchRequestSeedRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewBatchRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewContractActionRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewContractLoadRuntime.ts
+  - frontend/apps/web/src/app/runtime/actionViewDataRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewGroupPagingRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewGroupRuntimeState.ts
   - frontend/apps/web/src/app/runtime/actionViewGroupWindowRuntime.ts
@@ -26,7 +18,6 @@
   - frontend/apps/web/src/app/runtime/actionViewLoadErrorRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewLoadFinalizeRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewLoadGuardRuntime.ts
-  - frontend/apps/web/src/app/runtime/actionViewLoadMoreFailuresFlowRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewLoadPreflightRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewLoadRedirectErrorRuntime.ts
   - frontend/apps/web/src/app/runtime/actionViewLoadResetRuntime.ts

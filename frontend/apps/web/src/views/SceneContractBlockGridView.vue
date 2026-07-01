@@ -1,5 +1,5 @@
 <template>
-  <section class="scene-contract-block-grid">
+  <section v-if="pageSectionsReady" class="scene-contract-block-grid" :style="pageSectionStyle('root')" :data-contract-sections="pageSectionsFingerprint">
     <StatusPanel v-if="status === 'loading'" title="正在加载场景..." variant="info" />
     <StatusPanel v-else-if="status === 'error'" title="场景加载失败" :message="errorMessage" variant="error" />
     <PageRenderer
@@ -21,6 +21,7 @@ import PageRenderer from '../components/page/PageRenderer.vue';
 import { useSessionStore } from '../stores/session';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import type { PageBlockActionEvent, PageOrchestrationBlock, PageOrchestrationContract } from '../app/pageOrchestration';
+import { usePageContract } from '../app/pageContract';
 
 type SceneBlock = Record<string, unknown> & {
   key?: string;
@@ -53,6 +54,19 @@ const props = defineProps<{
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const runtimePageContract = usePageContract('scene_contract_block_grid', { allowSceneContractFallback: true });
+const pageSectionEnabled = runtimePageContract.sectionEnabled;
+const pageSectionStyle = runtimePageContract.sectionStyle;
+const pageSectionTagIs = runtimePageContract.sectionTagIs;
+const pageSectionsReady = computed(() => (
+  pageSectionEnabled('root', true)
+  && pageSectionEnabled('main', true)
+  && pageSectionTagIs('root', 'section')
+  && pageSectionTagIs('main', 'section')
+));
+const pageSectionsFingerprint = computed(() => JSON.stringify([
+  pageSectionStyle('main'),
+]));
 const status = ref<'loading' | 'error' | 'idle'>('loading');
 const errorMessage = ref('');
 const rawContract = ref<SceneContract | null>(null);

@@ -1016,8 +1016,8 @@ def _workspace_v1_zone_order(role_code: str) -> List[str]:
 
     default_order = {
         "pm": ["today_focus", "analysis", "quick_entries"],
-        "finance": ["today_focus", "analysis", "quick_entries"],
-        "owner": ["today_focus", "analysis", "quick_entries"],
+        "finance": ["analysis", "today_focus", "quick_entries"],
+        "owner": ["quick_entries", "analysis", "today_focus"],
     }
     return list(default_order.get(_to_text(role_code).lower(), default_order["owner"]))
 
@@ -2065,7 +2065,7 @@ def _v1_data_sources() -> Dict[str, Dict[str, Any]]:
         "ds_risk_alerts": {"source_type": "computed", "provider": "workspace.risk.alerts", "section_keys": ["risk"]},
         "ds_ops_progress": {"source_type": "computed", "provider": "workspace.progress.summary", "section_keys": ["ops"]},
         "ds_scene_groups": {"source_type": "scene_context", "provider": "workspace.scene.groups", "section_keys": ["scene_groups"]},
-        "ds_menu_entries": {"source_type": "nav_context", "provider": "workspace.menu.entries", "section_keys": ["menu_entries"]},
+        "ds_menu_entries": {"source_type": "computed", "provider": "workspace.menu.entries", "section_keys": ["menu_entries"]},
         "ds_capability_groups": {
             "source_type": "capability_registry",
             "provider": "workspace.capability.groups",
@@ -2513,7 +2513,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
                     "actions": [],
-                    "payload": {"layout": "3x4", "show_icon": True, "show_hint": True, "max_items": 12},
+                    "payload": {"layout": "3x4", "show_icon": True, "show_hint": True},
                 },
             ],
         },

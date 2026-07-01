@@ -23,12 +23,18 @@ def main() -> int:
     required_tokens = [
         "path: '/f/:model/:id'",
         "name: 'model-form'",
-        "component: ContractFormPage",
         "path: '/r/:model/:id'",
         "name: 'record'",
-        "component: ContractFormPage",
     ]
     missing = [token for token in required_tokens if token not in text]
+    contract_form_tokens = [
+        "component: ContractFormPage",
+        "component: () => import('../pages/ContractFormPage.vue')",
+        'component: () => import("../pages/ContractFormPage.vue")',
+    ]
+    contract_form_count = sum(text.count(token) for token in contract_form_tokens)
+    if contract_form_count < 2:
+        missing.extend(["component: ContractFormPage-compatible route target"] * (2 - contract_form_count))
     if missing:
         return fail("missing required router tokens: " + ", ".join(missing))
 

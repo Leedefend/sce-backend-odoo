@@ -2171,7 +2171,7 @@ function syncRouteListState(extra?: Record<string, unknown>): void {
   suppressNextRouteReload.value = true;
   routePresetRuntime.syncRouteListState(extra);
   const routeState = normalizeActivityRuntimeRouteQuery({
-    ...route.query,
+    ...normalizeActivityRuntimeRouteQuery(route.query),
     search: searchTerm.value,
     active_filter: filterValue.value !== 'all' ? filterValue.value : undefined,
     saved_filter: activeSavedFilterKey.value,

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import importlib
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
@@ -12,12 +13,42 @@ ROOT = Path(__file__).resolve().parents[2]
 HOME_BUILDER = ROOT / "addons/smart_core/core/workspace_home_contract_builder.py"
 SEMANTICS = ROOT / "addons/smart_core/core/orchestration_semantics.py"
 
+
+def _ensure_odoo_addons_namespace() -> None:
+    addons_path = str(ROOT / "addons")
+    smart_core_path = str(ROOT / "addons/smart_core")
+    core_path = str(ROOT / "addons/smart_core/core")
+    odoo_mod = sys.modules.get("odoo")
+    if odoo_mod is None:
+        odoo_mod = types.ModuleType("odoo")
+        odoo_mod.__path__ = []  # type: ignore[attr-defined]
+        sys.modules["odoo"] = odoo_mod
+    addons_mod = sys.modules.get("odoo.addons")
+    if addons_mod is None:
+        addons_mod = types.ModuleType("odoo.addons")
+        addons_mod.__path__ = [addons_path]  # type: ignore[attr-defined]
+        sys.modules["odoo.addons"] = addons_mod
+    elif hasattr(addons_mod, "__path__") and addons_path not in addons_mod.__path__:  # type: ignore[attr-defined]
+        addons_mod.__path__.append(addons_path)  # type: ignore[attr-defined]
+    smart_core_mod = sys.modules.get("odoo.addons.smart_core")
+    if smart_core_mod is None:
+        smart_core_mod = types.ModuleType("odoo.addons.smart_core")
+        smart_core_mod.__path__ = [smart_core_path]  # type: ignore[attr-defined]
+        sys.modules["odoo.addons.smart_core"] = smart_core_mod
+    elif hasattr(smart_core_mod, "__path__") and smart_core_path not in smart_core_mod.__path__:  # type: ignore[attr-defined]
+        smart_core_mod.__path__.append(smart_core_path)  # type: ignore[attr-defined]
+    core_mod = sys.modules.get("odoo.addons.smart_core.core")
+    if core_mod is None:
+        core_mod = types.ModuleType("odoo.addons.smart_core.core")
+        core_mod.__path__ = [core_path]  # type: ignore[attr-defined]
+        sys.modules["odoo.addons.smart_core.core"] = core_mod
+    elif hasattr(core_mod, "__path__") and core_path not in core_mod.__path__:  # type: ignore[attr-defined]
+        core_mod.__path__.append(core_path)  # type: ignore[attr-defined]
+
+
 def _load_semantics(path: Path) -> dict[str, Any]:
-    spec = spec_from_file_location("orchestration_semantics_guard_workspace_home", path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"cannot load module spec: {path}")
-    mod = module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    _ensure_odoo_addons_namespace()
+    mod = importlib.import_module("odoo.addons.smart_core.core.orchestration_semantics")
     return {
         "BLOCK_TYPES": set(getattr(mod, "BLOCK_TYPES", ()) or ()),
         "STATE_TONES": set(getattr(mod, "STATE_TONES", ()) or ()),
@@ -74,9 +105,11 @@ def _fail(errors: list[str]) -> int:
 
 
 def _stub_odoo_module() -> None:
-    if "odoo" in sys.modules:
-        return
-    odoo_mod = types.ModuleType("odoo")
+    _ensure_odoo_addons_namespace()
+    odoo_mod = sys.modules.get("odoo")
+    if odoo_mod is None:
+        odoo_mod = types.ModuleType("odoo")
+        sys.modules["odoo"] = odoo_mod
 
     class _Datetime:
         @staticmethod
@@ -87,7 +120,6 @@ def _stub_odoo_module() -> None:
         Datetime = _Datetime
 
     odoo_mod.fields = _Fields  # type: ignore[attr-defined]
-    sys.modules["odoo"] = odoo_mod
 
 
 def _load_builder():

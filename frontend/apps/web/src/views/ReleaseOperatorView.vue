@@ -1,5 +1,5 @@
 <template>
-  <main class="release-operator">
+  <main v-if="pageSectionsReady" class="release-operator" :style="pageSectionStyle('root')" :data-contract-sections="pageSectionsFingerprint">
     <section class="release-operator__header">
       <div>
         <p class="eyebrow">{{ copy.eyebrow || 'Release Operator Surface' }}</p>
@@ -14,6 +14,16 @@
         </select>
         <button class="sc-btn sc-btn-ghost" type="button" :disabled="loading" @click="loadSurface">
           {{ copy.action_refresh || '刷新' }}
+        </button>
+        <button
+          v-for="action in pageGlobalActions"
+          :key="action.key"
+          class="sc-btn sc-btn-ghost"
+          type="button"
+          :disabled="action.disabled"
+          @click="executeGlobalPageAction(action.key)"
+        >
+          {{ action.label }}
         </button>
         <button
           class="sc-btn sc-btn-ghost"
@@ -419,9 +429,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
+import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 
 type AnyRecord = Record<string, unknown>;
 
@@ -466,6 +478,47 @@ interface ReleaseOperatorSurface {
 }
 
 const route = useRoute();
+const router = useRouter();
+const pageContract = usePageContract('release_operator');
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
+const pageSectionsReady = computed(() => (
+  pageSectionEnabled('root', true)
+  && pageSectionEnabled('hero', true)
+  && pageSectionEnabled('release_state', true)
+  && pageSectionEnabled('candidate_snapshots', true)
+  && pageSectionEnabled('pending_approvals', true)
+  && pageSectionEnabled('rollback', true)
+  && pageSectionTagIs('root', 'section')
+  && pageSectionTagIs('hero', 'header')
+  && pageSectionTagIs('release_state', 'section')
+  && pageSectionTagIs('candidate_snapshots', 'section')
+  && pageSectionTagIs('pending_approvals', 'section')
+  && pageSectionTagIs('rollback', 'section')
+));
+const pageSectionsFingerprint = computed(() => JSON.stringify([
+  pageSectionStyle('hero'),
+  pageSectionStyle('release_state'),
+  pageSectionStyle('candidate_snapshots'),
+  pageSectionStyle('pending_approvals'),
+  pageSectionStyle('rollback'),
+]));
+
+async function executeGlobalPageAction(actionKey: string) {
+  await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: route.query,
+    onRefresh: loadSurface,
+  });
+}
+
 const initialProduct = String(route.query.product_key || '').trim();
 const surface = ref<ReleaseOperatorSurface | null>(null);
 const selectedProduct = ref(initialProduct);

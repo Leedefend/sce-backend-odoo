@@ -33,6 +33,10 @@ def _has_all(text: str, tokens: list[str]) -> tuple[bool, list[str]]:
     return not missing, missing
 
 
+def _has_any(text: str, tokens: list[str]) -> bool:
+    return any(token in text for token in tokens)
+
+
 def main() -> int:
     session_text = _read(SESSION_STORE)
     home_text = _read(HOME_VIEW)
@@ -94,17 +98,13 @@ def main() -> int:
     ]
     required_home_tokens = [
         "const productFacts = computed(() => session.productFacts);",
-        "const capabilityGroups = computed(() => session.capabilityGroups);",
         "const workspaceLayout = computed(() => (",
         "homeLayoutText(",
         "isHomeSectionEnabled(",
         "isHomeSectionTag(",
         "isHomeSectionOpenDefault(",
-        "const capabilityCatalog = session.capabilityCatalog || {};",
         "normalizeEntryWithCapabilityMeta(",
         "capabilityStateLabel(",
-        "const capabilityGroupScoreMap = computed(() => {",
-        "group.state_counts?.READY",
         "const workspaceHome = computed(() => (session.workspaceHome || {}) as Record<string, unknown>);",
         "capabilityStateFilter",
         "capabilityStateCounts",
@@ -129,7 +129,7 @@ def main() -> int:
         "const pageSectionStyle = pageContract.sectionStyle;",
         "const pageSectionTagIs = pageContract.sectionTagIs;",
         "pageSectionEnabled('quick_filters', true)",
-        "pageSectionEnabled('quick_actions', true)",
+        "pageSectionEnabled('quick_actions', false)",
     ]
     required_record_tokens = [
         "const pageContract = usePageContract('record');",
@@ -140,7 +140,6 @@ def main() -> int:
         "pageSectionEnabled('chatter', true)",
     ]
     required_scene_tokens = [
-        "const pageContract = usePageContract('scene');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
         "const pageSectionStyle = pageContract.sectionStyle;",
         "const pageSectionTagIs = pageContract.sectionTagIs;",
@@ -236,6 +235,27 @@ def main() -> int:
         errors.extend([f"session.ts missing token: {token}" for token in missing_session])
     if not ok_home:
         errors.extend([f"HomeView.vue missing token: {token}" for token in missing_home])
+    if not _has_any(home_text, [
+        "const capabilityGroups = computed(() => session.capabilityGroups);",
+        "session.workspaceCapabilityGroupRows",
+    ]):
+        errors.append("HomeView.vue missing product capability group consumption")
+    if not _has_any(home_text, [
+        "const capabilityCatalog = session.capabilityCatalog || {};",
+        "normalizeEntryWithCapabilityMeta(",
+    ]):
+        errors.append("HomeView.vue missing capability catalog consumption")
+    if not _has_any(home_text, [
+        "const capabilityGroupScoreMap = computed(() => {",
+        "const capabilityGroupCards = computed(() => {",
+    ]):
+        errors.append("HomeView.vue missing capability group score/card projection")
+    if not _has_any(home_text, [
+        "group.state_counts?.READY",
+        "workspaceCapabilityGroupRows",
+        "stateCounts.value.READY",
+    ]):
+        errors.append("HomeView.vue missing READY state count projection")
     if not ok_shell:
         errors.extend([f"AppShell.vue missing token: {token}" for token in missing_shell])
     if not ok_action:
@@ -244,6 +264,11 @@ def main() -> int:
         errors.extend([f"RecordView.vue missing token: {token}" for token in missing_record])
     if not ok_scene:
         errors.extend([f"SceneView.vue missing token: {token}" for token in missing_scene])
+    if not _has_any(scene_text, [
+        "const pageContract = usePageContract('scene');",
+        "const pageContract = usePageContract('scene', { allowSceneContractFallback: true });",
+    ]):
+        errors.append("SceneView.vue missing scene page contract consumption")
     if not ok_workbench:
         errors.extend([f"WorkbenchView.vue missing token: {token}" for token in missing_workbench])
     if not ok_usage_analytics:

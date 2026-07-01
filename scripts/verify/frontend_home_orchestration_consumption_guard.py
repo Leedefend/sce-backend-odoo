@@ -70,7 +70,7 @@ def main() -> int:
             "const orchestrationSectionOrderMap = computed(() => orchestrationSectionDerived.value.orderMap);",
             "const orchestrationSectionSemanticMap = computed(() => orchestrationSectionDerived.value.semanticMap);",
             "const roleVariantCode = computed(() => {",
-            "const orchestrationPage = workspacePageOrchestrationV1.value.page;",
+            "const orchestrationPage = homePageOrchestrationV1.value.page;",
             "function homeSectionClass(key: string) {",
             "orchestrationSectionOrderMap.value.get(key)",
             ":class=\"homeSectionClass('hero')\"",

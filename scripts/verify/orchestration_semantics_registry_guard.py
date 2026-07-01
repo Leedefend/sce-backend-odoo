@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from importlib.util import module_from_spec, spec_from_file_location
+import importlib
 from pathlib import Path
 import sys
 import types
@@ -21,18 +21,33 @@ def _fail(errors: list[str]) -> int:
 
 
 def _load_module(path: Path, name: str):
-    spec = spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"cannot load module spec: {path}")
-    mod = module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+    _ensure_odoo_addons_namespace()
+    return importlib.import_module(name)
+
+
+def _ensure_odoo_addons_namespace() -> None:
+    packages = {
+        "odoo": ROOT,
+        "odoo.addons": ROOT / "addons",
+        "odoo.addons.smart_core": ROOT / "addons/smart_core",
+        "odoo.addons.smart_core.core": ROOT / "addons/smart_core/core",
+    }
+    for name, path in packages.items():
+        mod = sys.modules.get(name)
+        if mod is None:
+            mod = types.ModuleType(name)
+            mod.__path__ = [str(path)]  # type: ignore[attr-defined]
+            sys.modules[name] = mod
+        elif hasattr(mod, "__path__") and str(path) not in mod.__path__:  # type: ignore[attr-defined]
+            mod.__path__.append(str(path))  # type: ignore[attr-defined]
 
 
 def _stub_odoo_module() -> None:
-    if "odoo" in sys.modules:
-        return
-    odoo_mod = types.ModuleType("odoo")
+    _ensure_odoo_addons_namespace()
+    odoo_mod = sys.modules.get("odoo")
+    if odoo_mod is None:
+        odoo_mod = types.ModuleType("odoo")
+        sys.modules["odoo"] = odoo_mod
 
     class _Datetime:
         @staticmethod
@@ -45,7 +60,6 @@ def _stub_odoo_module() -> None:
         Datetime = _Datetime
 
     odoo_mod.fields = _Fields  # type: ignore[attr-defined]
-    sys.modules["odoo"] = odoo_mod
 
 
 def _sample_home(role_code: str) -> dict[str, Any]:
@@ -67,10 +81,10 @@ def main() -> int:
         return _fail([f"missing file: {HOME_BUILDER.relative_to(ROOT).as_posix()}"])
 
     try:
-        sem = _load_module(SEMANTICS, "orchestration_semantics_registry_guard_semantics")
-        page_builder = _load_module(PAGE_BUILDER, "orchestration_semantics_registry_guard_page_builder")
+        sem = _load_module(SEMANTICS, "odoo.addons.smart_core.core.orchestration_semantics")
+        page_builder = _load_module(PAGE_BUILDER, "odoo.addons.smart_core.core.page_contracts_builder")
         _stub_odoo_module()
-        home_builder = _load_module(HOME_BUILDER, "orchestration_semantics_registry_guard_home_builder")
+        home_builder = _load_module(HOME_BUILDER, "odoo.addons.smart_core.core.workspace_home_contract_builder")
     except Exception as exc:  # pragma: no cover
         return _fail([f"load module failed: {exc}"])
 

@@ -1,11 +1,21 @@
 <template>
-  <section class="business-config-page">
+  <section v-if="pageSectionsReady" class="business-config-page" :style="pageSectionStyle('root')" :data-contract-sections="pageSectionsFingerprint">
     <header class="business-config-header">
       <div>
         <p class="eyebrow">低代码页面设计器</p>
         <h1>{{ designerTitle }}</h1>
       </div>
       <div class="header-actions">
+        <button
+          v-for="action in pageGlobalActions"
+          :key="action.key"
+          type="button"
+          class="ghost"
+          :disabled="action.disabled"
+          @click="executeGlobalPageAction(action.key)"
+        >
+          {{ action.label }}
+        </button>
         <button type="button" class="ghost primary" :disabled="!canOpenDesigner" @click="openFormConfig">
           {{ headerDesignerButtonLabel }}
         </button>
@@ -985,11 +995,47 @@ import {
   BUSINESS_CONFIG_ROUTE_FLAGS,
   isBusinessConfigRuntimeModel,
 } from '../app/businessConfigBoundaries';
+import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
 
 const route = useRoute();
 const router = useRouter();
+const pageContract = usePageContract('business_config');
+const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
+const pageSectionsReady = computed(() => (
+  pageSectionEnabled('root', true)
+  && pageSectionEnabled('header', true)
+  && pageSectionEnabled('coverage', true)
+  && pageSectionEnabled('designer', true)
+  && pageSectionTagIs('root', 'section')
+  && pageSectionTagIs('header', 'header')
+  && pageSectionTagIs('coverage', 'section')
+  && pageSectionTagIs('designer', 'section')
+));
+const pageSectionsFingerprint = computed(() => JSON.stringify([
+  pageSectionStyle('header'),
+  pageSectionStyle('coverage'),
+  pageSectionStyle('designer'),
+]));
+
+async function executeGlobalPageAction(actionKey: string) {
+  await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: route.query,
+    onRefresh: loadSurface,
+  });
+}
+
 const loading = ref(false);
 const scanLoading = ref(false);
 const listSearchBusy = ref(false);

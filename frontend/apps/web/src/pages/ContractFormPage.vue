@@ -3823,11 +3823,21 @@ const runtimeCapabilities = computed(() => {
   });
   return out;
 });
+const runtimeUserGroups = computed(() => {
+  const out = new Set<string>();
+  const user = (session.user || {}) as Record<string, unknown>;
+  const groups = Array.isArray(user.groups_xmlids) ? user.groups_xmlids : [];
+  groups.forEach((group) => {
+    const key = String(group || '').trim();
+    if (key) out.add(key);
+  });
+  return out;
+});
 const policyContext = computed(() => ({
   profile: renderProfile.value,
   formData: formData as Record<string, unknown>,
   capabilities: runtimeCapabilities.value,
-  userGroups: new Set<string>(),
+  userGroups: runtimeUserGroups.value,
   roleCode: runtimeRoleCode.value,
 }));
 
@@ -11018,10 +11028,12 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
       fieldLabels: labels,
       values: editableMap,
     });
-    const policyIssues = collectPolicyValidationErrors(contract.value, {
+    const basePolicyIssues = collectPolicyValidationErrors(contract.value, policyContext.value);
+    const submittedPolicyIssues = collectPolicyValidationErrors(contract.value, {
       ...policyContext.value,
       submittedFields: new Set(Object.keys(editableMap)),
     });
+    const policyIssues = [...basePolicyIssues, ...submittedPolicyIssues];
     if (policyIssues.length) {
       validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
       submissionFeedback.value = { kind: 'warn', message: '请先补充必填信息，再保存草稿或提交。' };

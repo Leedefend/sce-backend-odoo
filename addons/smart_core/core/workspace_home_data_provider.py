@@ -101,6 +101,15 @@ def build_v1_focus_map() -> Dict[str, List[str]]:
     return _call_provider("build_v1_focus_map", default)
 
 
+def build_v1_zone_order() -> Dict[str, List[str]]:
+    default = {
+        "pm": ["today_focus", "analysis", "quick_entries"],
+        "finance": ["analysis", "today_focus", "quick_entries"],
+        "owner": ["quick_entries", "analysis", "today_focus"],
+    }
+    return _call_provider("build_v1_zone_order", default)
+
+
 def build_v1_page_profile(role_code: str) -> Dict[str, Any]:
     role = _to_text(role_code).lower()
     default = {
@@ -119,6 +128,7 @@ def build_v1_data_sources() -> Dict[str, Dict[str, Any]]:
         "ds_risk_alerts": {"source_type": "computed", "provider": "workspace.risk.alerts", "section_keys": ["risk"]},
         "ds_ops_progress": {"source_type": "computed", "provider": "workspace.progress.summary", "section_keys": ["ops"]},
         "ds_scene_groups": {"source_type": "scene_context", "provider": "workspace.scene.groups", "section_keys": ["scene_groups"]},
+        "ds_menu_entries": {"source_type": "computed", "provider": "workspace.menu.entries", "section_keys": ["menu_entries"]},
         "ds_capability_groups": {"source_type": "capability_registry", "provider": "workspace.capability.groups", "section_keys": ["group_overview"]},
         "ds_advice": {"source_type": "computed", "provider": "workspace.advice", "section_keys": ["advice"]},
         "ds_filters": {"source_type": "static", "provider": "workspace.filters", "section_keys": ["filters"]},

@@ -10,15 +10,15 @@ HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
 REQUIRED_TOKENS = [
     "<PageRenderer",
     "v-if=\"useUnifiedHomeRenderer\"",
-    ":contract=\"homeOrchestrationContract\"",
+    ":contract=\"strictHomeOrchestrationContract\"",
     ":datasets=\"homeOrchestrationDatasets\"",
     "@action=\"handleHomeBlockAction\"",
     "const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {",
-    "ds_metrics",
-    "ds_today_todos",
-    "ds_risk_alerts",
-    "ds_scene_groups",
-    "ds_capability_groups",
+    "provider === 'workspace.metrics.summary'",
+    "provider === 'workspace.todo.today'",
+    "provider === 'workspace.risk.alerts'",
+    "provider === 'workspace.scene.groups'",
+    "provider === 'workspace.capability.groups'",
 ]
 
 

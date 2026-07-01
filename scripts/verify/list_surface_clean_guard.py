@@ -57,7 +57,8 @@ def main() -> int:
             errors.append(f"ActionView missing token: {token}")
 
     action_presentation_tokens = [
-        "surface_policies?.actions_primary_max",
+        "resolveUnifiedPageContractV2SurfacePolicies",
+        "surfacePolicies.actions_primary_max",
         "contractActionGroupsRaw",
         "resolveContractActionPresentation",
         "contractOverflowActionGroups",
@@ -67,7 +68,8 @@ def main() -> int:
             errors.append(f"useActionViewActionPresentationRuntime missing token: {token}")
 
     filter_runtime_tokens = [
-        "surface_policies?.filters_primary_max",
+        "resolveUnifiedPageContractV2SurfacePolicies",
+        "surfacePolicies.filters_primary_max",
         "contractFilterChips",
         "filterPrimaryBudget",
     ]
