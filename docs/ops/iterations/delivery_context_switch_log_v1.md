@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-07-01T08:00:00+08:00
+- blocker_key: `core_history_field_physical_separation_budget`
+- layer_target: `P1 core model boundary + P2/P4 history data separation`
+- module: `scripts/verify + Makefile + docs/product/formal_field_stabilization_plan_v1.md`
+- reason: `正式面已完成过渡字段稳定化，但 core/projection 模型仍有历史用户数据载体；本轮先建立物理边界预算，防止 core 新增 legacy/user acceptance 字段载体，并为后续迁移到 smart_construction_custom 或 support/history carrier 提供下降门禁。`
+- completed_step: `新增 verify.core_history_field.physical_boundary_audit，扫描 smart_construction_core core/projection 模型中的 legacy_visible/user_acceptance/accepted_visible/p1_visible 文本载体；建立 core_history_field_physical_boundary_budget_v1 基线。`
+- verification: `make verify.core_history_field.physical_boundary_audit PASS total=51 core_model.legacy_visible=51；git diff --check PASS。`
+- active_commit: `a1d39eaf0`
+- next_step: `运行物理边界审计并修正预算/文档；之后选择 financing_loan、fund_account_operation、expense_claim、direct_acceptance_formal_visible_fields 中最小可迁移批次。`
+
 ### 2026-07-01T07:43:10+08:00
 - blocker_key: `formal_field_stabilization_boundary_closeout`
 - layer_target: `P1 construction industry standard product + backend contract boundary guard`
