@@ -2,10 +2,30 @@
 
 本矩阵只定义低代码配置产品的能力状态。正式产品归属必须先按 `docs/product/formal_product_boundary_v1.md` 判断：低代码是运行时编辑面和配置承载，不是所有配置的最终产品归属。
 
+## 使用者定位
+
+低代码配置默认面向客户管理员、实施管理员和平台运营管理员。研发人员可以使用低代码做候选配置验证、运行时合同调试和配置生成，但结果必须通过代码、数据、迁移、产品策略或发布合同沉淀后才算正式产品基线。普通业务用户不直接使用全局低代码配置；普通用户只使用个人偏好能力，个人偏好不得影响他人、不得进入产品发布基线。
+
+| 使用者 | 允许使用 | 输出状态 | 不允许 |
+| --- | --- | --- | --- |
+| 研发人员 | 本地/测试环境试配、生成候选配置、调试合同和覆盖顺序 | `developer_draft` | 直接把手工低代码结果当 P0/P1/P2 正式发布事实 |
+| 实施/客户管理员 | 当前租户菜单、字段、列表、搜索、审批运行时配置 | `tenant_runtime` | 修改业务事实；隐藏系统配置恢复入口；绕过版本审计 |
+| 产品发布流程 | 读取已确认配置并生成正式发布基线 | `product_release` | 依赖无法重放的数据库手工状态 |
+| 普通业务用户 | 个人筛选、列宽、收藏、快捷入口等个人偏好 | `ui_only` / personal preference | 修改全局菜单、字段、审批、权限和发布合同 |
+
+## 菜单配置对象边界
+
+| 菜单对象 | 典型入口 | 低代码显隐 | 低代码命名/排序/移动 | 正式归属 |
+| --- | --- | --- | --- | --- |
+| 系统配置入口 | 配置中心、菜单配置、字段配置、权限/角色/策略配置、发布/合同治理入口 | 禁止彻底隐藏；必须保留恢复路径和原菜单权限校验 | 允许有限调整，但不得移动到不可达位置 | P0 平台治理能力 |
+| 产品发布菜单 | 项目、合同、结算、付款、材料、劳务等正式业务办理入口 | 允许按租户/角色覆盖，必须有版本和来源 | 允许按租户/角色覆盖，不能反向污染行业发布基线 | P1/P2/P3 视确认状态分流 |
+| 用户/租户配置菜单 | 客户确认的菜单拆分、标签、分组、角色可见性 | 允许，需版本、审计、回滚 | 允许，长期生效需沉淀到用户模块或保留 P3 版本 | P2 用户产品或 P3 运行时配置 |
+
 ## 低代码到正式产品的分流规则
 
 | 用户动作/配置结果 | 运行时承载 | 最终归属 | 后续动作 |
 | --- | --- | --- | --- |
+| 研发试配或调试生成的菜单、字段、列表、审批候选配置 | 低代码草稿或临时合同 | `developer_draft` | 转成代码、数据 XML、迁移脚本、产品策略或发布合同后才可发布 |
 | 管理员试调菜单、字段、列表、搜索、审批 | 低代码运行时配置 | P3 低代码配置产品 | 保留版本、审计、回滚，不写入模块 |
 | 当前客户确认长期生效的看面和初始化偏好 | 低代码运行时配置先承载 | P2 用户产品 | 沉淀到 `smart_construction_custom` 或独立客户模块，升级可重放 |
 | 当前客户确认长期生效的数据整理结果 | 迁移/修复脚本先承载 | P2 用户数据基线 | 和功能偏好分开沉淀到 `smart_construction_custom/data`、客户数据模块或幂等初始化 |
@@ -22,7 +42,7 @@
 | 表单字段标签 | `ui.form.field.policy.label` + `view_orchestration.views.form.fields[].label` | 当前表单内联修改 | `ui.business.config.contract` | 可用，写入已镜像契约，版本摘要和差异按业务标签对比 | P1 继续压缩 legacy policy 兼容层 |
 | 表单字段新增 | `ui.form.custom.field.wizard` + `ir.model.fields` + field policy | 当前表单“添加字段” | 平台元数据 + `ui.business.config.contract` | 可用，intent 支持 dry-run 预检且正式执行后镜像契约，返回字段元数据回滚边界：契约回滚不删除 `ir.model.fields` | P1 补字段元数据清理工具前置评估 |
 | 表单布局/分组 | `view_orchestration.views.form.layout` + 前端草稿 | 当前表单低代码区域 | `ui.business.config.contract` | 可用，保存表单设置会写入正式 layout，预检约束正式 layout schema，表单检查会输出正式布局字段数和字段顺序是否对齐 | P1 继续压缩 legacy 草稿兼容展示 |
-| 菜单显隐 | `ui.menu.config.policy.visible` + `ui.business.config.contract.menu_orchestration` | 统一配置工作台菜单卡片 / 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、运行来源提示、版本列表、指定版本回滚，工作台可进入并返回，运行时优先读 `menu_orchestration` 契约，policy 作为兼容回退 | P4 继续压缩 policy 回退层 |
+| 菜单显隐 | `ui.menu.config.policy.visible` + `ui.business.config.contract.menu_orchestration` | 统一配置工作台菜单卡片 / 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、运行来源提示、版本列表、指定版本回滚，工作台可进入并返回，运行时优先读 `menu_orchestration` 契约，policy 作为兼容回退；系统配置恢复入口不可被彻底隐藏，仍按原菜单权限校验 | P4 继续压缩 policy 回退层，并补系统配置保护矩阵门禁 |
 | 菜单改名 | `ui.menu.config.policy.custom_label` + `ui.business.config.contract.menu_orchestration` | 统一配置工作台菜单卡片 / 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、运行来源提示、版本列表、指定版本回滚，工作台可进入并返回，运行时优先读 `menu_orchestration` 契约，policy 作为兼容回退 | P4 继续压缩 policy 回退层 |
 | 菜单排序/移动 | `ui.menu.config.policy.sequence_override/target_parent_menu_id` + `ui.business.config.contract.menu_orchestration` | 统一配置工作台菜单卡片 / 菜单配置面板 / `ui.menu_config.audit` / `ui.menu_config.versions` / `ui.menu_config.rollback` | `ui.business.config.contract` | 可用，有页面生效检查、运行来源提示、版本列表、指定版本回滚，工作台可进入并返回，运行时优先读 `menu_orchestration` 契约，policy 作为兼容回退 | P4 继续压缩 policy 回退层 |
 | 菜单新增/复制入口 | `ir.ui.menu` + `ui.menu.config.policy` + `ui.business.config.contract.menu_orchestration` | 菜单配置面板“新增菜单 / 新增同级 / 新增下级 / 复制当前入口” / `ui.menu_config.menu.create` | 低代码运行时配置；长期交付归用户模块或行业模块 | 可用，支持创建分组菜单或复制已有菜单页面动作，创建后同步生成 policy 并发布菜单配置版本；默认提醒长期入口需沉淀到用户模块 | P4 扩展为从业务页面库选择 action |
@@ -50,6 +70,7 @@
 
 ## 优先修复缺口
 
+0. 低代码定位边界必须落成代码和门禁。下一步收口必须实现：系统配置入口保护矩阵、`developer_draft` / `tenant_runtime` / `product_release` 来源标识、普通业务用户与管理员配置入口隔离、产品发布菜单不得依赖不可重放手工数据库状态的发布门禁。
 1. 表单配置写入时统一处理 `role_group_ids` 与正式 `role_key` 的边界。已收敛：业务配置保存、查询、版本、回滚等统一作用域入口拒绝 `role_group_ids`，避免旧角色组输入被误认为正式配置作用域；低代码表单批量保存返回 `business_config_boundary`，明确正式归属、兼容写入和非用户偏好边界。
 2. 表单低代码草稿输入统一从当前运行时契约读取，不再混用 legacy `objects/layout/rules` 作为主输入。已开始收敛：字段顺序/可见性优先使用 `view_orchestration.views.form.fields`，保存时同步写入 `view_orchestration.views.form.layout`；legacy `objects` 只做兜底和历史草稿兼容；新保存的兼容草稿下沉到 `legacy_lowcode_draft`。
 3. 保存表单设置时，避免无变化字段被重写，防止“只改布局导致字段顺序变化”。已开始收敛：前端只提交变化项，后端支持 visibility-only 保存。
