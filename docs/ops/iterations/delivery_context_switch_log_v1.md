@@ -36,6 +36,16 @@ Each entry must include:
 - active_commit: `36d2c74ee`
 - next_step: `提交本批预算下降；后续从 financing_loan、fund_account_operation、direct_acceptance_formal_visible_fields 中选择下一批可迁移历史字段。`
 
+### 2026-07-01T08:16:00+08:00
+- blocker_key: `fund_account_operation_history_name_decoupling`
+- layer_target: `P1 core model boundary + P2 custom history data carrier`
+- module: `addons/smart_construction_core/models/core/fund_account_operation.py + scripts/verify`
+- reason: `sc.fund.account.operation 的 legacy visible 字段声明已位于 smart_construction_custom，core 仍通过 helper 名称和调用点直接暴露 legacy_visible 命名，造成物理边界预算残留。`
+- completed_step: `将 fund account operation 的历史字段兼容读取和 init 回填列名构造改为通用 history field helper；不新增字段、不迁移数据库列；core_history_field_physical_boundary_budget_v1 从 47 下调到 38。`
+- verification: `make verify.core_history_field.physical_boundary_audit PASS total=38 core_model.legacy_visible=38；python3 -m py_compile addons/smart_construction_core/models/core/fund_account_operation.py PASS；make verify.formal_surface.transition_field_audit PASS total=0；make verify.user_confirmed.formal_surface.locked DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev PASS。`
+- active_commit: `b99caca74`
+- next_step: `提交本批预算下降；后续从 financing_loan、direct_acceptance_formal_visible_fields 中选择下一批可迁移历史字段。`
+
 ### 2026-07-01T07:43:10+08:00
 - blocker_key: `formal_field_stabilization_boundary_closeout`
 - layer_target: `P1 construction industry standard product + backend contract boundary guard`

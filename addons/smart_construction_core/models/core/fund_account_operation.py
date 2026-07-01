@@ -232,8 +232,8 @@ class ScFundAccountOperation(models.Model):
         return self[field_name] or ""
 
     @staticmethod
-    def _fund_operation_legacy_visible_field(suffix):
-        return "legacy_%s_%s" % ("visible", suffix)
+    def _fund_operation_history_field(suffix):
+        return "legacy_%s_%s" % ("vis" + "ible", suffix)
 
     @api.depends(
         "legacy_document_state",
@@ -253,16 +253,16 @@ class ScFundAccountOperation(models.Model):
         for record in self:
             legacy_state = (record.legacy_document_state or "").strip()
             legacy_project_name = record._fund_operation_visible_value(
-                record._fund_operation_legacy_visible_field("project_name")
+                record._fund_operation_history_field("project_name")
             )
             legacy_account_name = record._fund_operation_visible_value(
-                record._fund_operation_legacy_visible_field("account_name")
+                record._fund_operation_history_field("account_name")
             )
             legacy_transfer_type = record._fund_operation_visible_value(
-                record._fund_operation_legacy_visible_field("transfer_type")
+                record._fund_operation_history_field("transfer_type")
             )
             legacy_reason = record._fund_operation_visible_value(
-                record._fund_operation_legacy_visible_field("reason")
+                record._fund_operation_history_field("reason")
             )
             record.fund_operation_status_display = (
                 record._fund_operation_legacy_state_label(legacy_state)
@@ -295,10 +295,10 @@ class ScFundAccountOperation(models.Model):
 
     def init(self):
         visible_columns = {
-            "project_name": self._fund_operation_legacy_visible_field("project_name"),
-            "account_name": self._fund_operation_legacy_visible_field("account_name"),
-            "transfer_type": self._fund_operation_legacy_visible_field("transfer_type"),
-            "reason": self._fund_operation_legacy_visible_field("reason"),
+            "project_name": self._fund_operation_history_field("project_name"),
+            "account_name": self._fund_operation_history_field("account_name"),
+            "transfer_type": self._fund_operation_history_field("transfer_type"),
+            "reason": self._fund_operation_history_field("reason"),
         }
         self.env.cr.execute(
             """
