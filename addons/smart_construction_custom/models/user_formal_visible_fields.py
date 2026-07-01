@@ -4,6 +4,12 @@ import re
 from odoo import api, fields, models
 
 
+class ProjectProjectUserHistoryFields(models.Model):
+    _inherit = "project.project"
+
+    legacy_attachment_ref = fields.Char(string="历史附件引用")
+
+
 class OfficeAdminDocumentUserHistoryFields(models.Model):
     _inherit = "sc.office.admin.document"
 

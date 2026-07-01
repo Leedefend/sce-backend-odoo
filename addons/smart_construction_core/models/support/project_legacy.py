@@ -36,7 +36,6 @@ class ProjectProject(models.Model):
     legacy_is_shared_base = fields.Char(string="共享库标识")
     legacy_sort = fields.Char(string="历史排序")
     legacy_note = fields.Text(string="备注")
-    legacy_attachment_ref = fields.Char(string="历史附件引用")
     legacy_source_created_by = fields.Char(string="原始录入人")
     legacy_source_created_by_id = fields.Char(string="历史录入人ID", index=True)
     legacy_source_created_at = fields.Char(string="录入时间")

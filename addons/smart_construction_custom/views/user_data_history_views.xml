@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="view_project_project_user_history_form_inherit" model="ir.ui.view">
+        <field name="name">project.project.user.history.form.inherit</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="smart_construction_core.view_project_form_sc_core"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='legacy_project_file']" position="after">
+                <field name="legacy_attachment_ref" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
     <record id="view_sc_financing_loan_user_history_form_inherit" model="ir.ui.view">
         <field name="name">sc.financing.loan.user.history.form.inherit</field>
         <field name="model">sc.financing.loan</field>

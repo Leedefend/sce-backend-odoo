@@ -103,7 +103,6 @@
                                 {'name': 'legacy_stage_name', 'sequence': 9790, 'visible': False},
                                 {'name': 'legacy_state', 'sequence': 9800, 'visible': False},
                                 {'name': 'legacy_region_id', 'sequence': 9810, 'visible': False},
-                                {'name': 'legacy_attachment_ref', 'sequence': 9820, 'visible': False},
                                 {'name': 'legacy_source_created_by', 'sequence': 9830, 'visible': False},
                                 {'name': 'legacy_source_created_by_id', 'sequence': 9840, 'visible': False},
                                 {'name': 'legacy_source_created_at', 'sequence': 9850, 'visible': False},
@@ -176,7 +175,6 @@
                                 {'name': 'legacy_fact_model', 'sequence': 989, 'visible': False},
                                 {'name': 'legacy_fact_id', 'sequence': 990, 'visible': False},
                                 {'name': 'legacy_fact_type', 'sequence': 991, 'visible': False},
-                                {'name': 'legacy_attachment_ref', 'sequence': 992, 'visible': False},
                                 {'name': 'business_scope_key', 'sequence': 993, 'visible': False},
                                 {'name': 'business_direction', 'sequence': 994, 'visible': False},
                                 {'name': 'carrier_type', 'sequence': 995, 'visible': False},
@@ -228,8 +226,7 @@
                                 {'name': 'currency_id', 'sequence': 980, 'visible': False},
                                 {'name': 'attachment_ids', 'sequence': 981, 'visible': False},
                                 {'name': 'legacy_record_id', 'sequence': 982, 'visible': False},
-                                {'name': 'legacy_source_table', 'sequence': 983, 'visible': False},
-                                {'name': 'legacy_attachment_ref', 'sequence': 984, 'visible': False}
+                                {'name': 'legacy_source_table', 'sequence': 983, 'visible': False}
                             ]
                         }
                     }
