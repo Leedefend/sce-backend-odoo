@@ -4009,6 +4009,19 @@ verify.product.menu.catalog: guard.prod.forbid check-compose-project check-compo
 	@python3 scripts/verify/product_menu_catalog_report.py
 	@python3 scripts/verify/product_menu_blueprint_report.py
 
+.PHONY: verify.system_init.menu_boundary.guard
+verify.system_init.menu_boundary.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/system_init_menu_boundary_guard.py
+	@python3 scripts/verify/system_init_menu_boundary_guard.py
+
+.PHONY: verify.product.menu.release.ready
+verify.product.menu.release.ready: guard.prod.forbid \
+	verify.product.menu.catalog \
+	verify.system_init.menu_boundary.guard \
+	verify.platform.release_policy.runtime \
+	verify.product.surface.clean
+	@echo "[OK] verify.product.menu.release.ready done"
+
 .PHONY: verify.product.delivery.freshness
 verify.product.delivery.freshness: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_freshness_guard.py
