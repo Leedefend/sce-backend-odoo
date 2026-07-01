@@ -87,6 +87,11 @@ class SettlementOrderUserHistoryFields(models.Model):
     _inherit = "sc.settlement.order"
 
     legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
+    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
+
+    def _settlement_attachment_ref_value(self):
+        self.ensure_one()
+        return self.legacy_attachment_ref or ""
 
     def _backfill_legacy_attachment_refs(self):
         old_column = "legacy_visible_attachment"

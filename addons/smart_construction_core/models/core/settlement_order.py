@@ -179,7 +179,6 @@ class ScSettlementOrder(models.Model):
         compute_sudo=True,
     )
     settlement_description = fields.Text(string="结算说明")
-    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     entry_user_id = fields.Many2one("res.users", string="录入人", default=lambda self: self.env.user, index=True)
     entry_data = fields.Char(string="录入数据")
     note = fields.Text(string="备注")
@@ -430,16 +429,19 @@ class ScSettlementOrder(models.Model):
                 ).mapped("amount")
             )
 
-    @api.depends("attachment_ids", "legacy_attachment_ref")
+    @api.depends("attachment_ids")
     def _compute_attachment_count(self):
         for order in self:
             actual_count = len(order.attachment_ids)
             if actual_count:
                 order.attachment_count = actual_count
                 continue
-            legacy_attachment = (order.legacy_attachment_ref or "").strip()
+            legacy_attachment = (order._settlement_attachment_ref_value() or "").strip()
             match = re.search(r"附件\((\d+)\)", legacy_attachment)
             order.attachment_count = int(match.group(1)) if match else int(bool(legacy_attachment))
+
+    def _settlement_attachment_ref_value(self):
+        return ""
 
     @api.onchange("settlement_stage_id")
     def _onchange_settlement_stage_id(self):
