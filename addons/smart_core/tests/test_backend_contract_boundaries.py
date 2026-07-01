@@ -16,6 +16,8 @@ spec.loader.exec_module(boundaries)
 classify_view_orchestration_contract = boundaries.classify_view_orchestration_contract
 ensure_view_orchestration_source = boundaries.ensure_view_orchestration_source
 is_business_config_runtime_model = boundaries.is_business_config_runtime_model
+LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE = boundaries.LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
+LOWCODE_SOURCE_STATUS_TENANT_RUNTIME = boundaries.LOWCODE_SOURCE_STATUS_TENANT_RUNTIME
 MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING = boundaries.MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING
 APPROVAL_POLICY_RUNTIME_SOURCE = boundaries.APPROVAL_POLICY_RUNTIME_SOURCE
 APPROVAL_POLICY_SOURCE_TENANT_LOWCODING = boundaries.APPROVAL_POLICY_SOURCE_TENANT_LOWCODING
@@ -52,7 +54,16 @@ class BackendContractBoundaryTests(unittest.TestCase):
         result = ensure_view_orchestration_source(payload, "smart_core.lowcode.business_config")
 
         self.assertEqual(result["view_orchestration"]["context"]["source"], "smart_core.lowcode.business_config")
+        self.assertEqual(result["view_orchestration"]["context"]["source_status"], LOWCODE_SOURCE_STATUS_TENANT_RUNTIME)
         self.assertEqual(result["view_orchestration"]["views"]["form"]["fields"][0]["name"], "name")
+
+    def test_view_orchestration_product_release_source_status_is_default_for_product_payload(self):
+        boundary = classify_view_orchestration_contract(
+            "project_project_form_structure_v1",
+            {"view_orchestration": {"context": {"source": "smart_construction_core.product_release"}}},
+        )
+
+        self.assertEqual(boundary["source_status"], LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE)
 
     def test_menu_lowcode_source_constant_is_explicit(self):
         self.assertEqual(MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING, "smart_core.lowcode.menu_config")

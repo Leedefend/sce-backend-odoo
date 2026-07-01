@@ -606,6 +606,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         orchestration = payload["menu_orchestration"]
         self.assertEqual(orchestration["schema_version"], "menu_orchestration.v1")
         self.assertEqual(orchestration["source"], "smart_core.lowcode.menu_config")
+        self.assertEqual(orchestration["source_status"], "tenant_runtime")
         self.assertEqual(orchestration["runtime_source"], "ui.menu.config.policy")
         self.assertEqual(orchestration["policy_count"], 1)
         self.assertEqual(orchestration["policies"][0]["menu_id"], 11)

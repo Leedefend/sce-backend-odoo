@@ -18,6 +18,8 @@ def _load_boundary_constants() -> dict:
     assert spec and spec.loader
     spec.loader.exec_module(module)
     return {
+        "LOWCODE_SOURCE_STATUS_TENANT_RUNTIME": module.LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
+        "LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS": module.LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS,
         "VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY": module.VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY,
         "MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING": module.MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
         "APPROVAL_POLICY_SOURCE_TENANT_LOWCODING": module.APPROVAL_POLICY_SOURCE_TENANT_LOWCODING,
@@ -171,11 +173,16 @@ REQUIRED_BOUNDARY_MARKERS = {
         "compatibility_write\": \"ui.form.field.policy",
         "已阻止兼容策略表单独生效",
         "def _write_lowcode_form_contract_or_error(",
+        "LOWCODE_SOURCE_STATUS_TENANT_RUNTIME",
     ],
     "addons/smart_core/handlers/menu_configuration.py": [
         "contract_source\": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING",
         "lowcode_boundary\": \"menu_config",
         "MENU_CONFIG_SCOPE_VIOLATION",
+        "LOWCODE_SOURCE_STATUS_TENANT_RUNTIME",
+    ],
+    "addons/smart_core/model/ui_menu_config_policy.py": [
+        "LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS",
     ],
 }
 

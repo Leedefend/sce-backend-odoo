@@ -28,6 +28,21 @@ NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM = "smart_core.nav.user_data_acceptance_only"
 APPROVAL_POLICY_SOURCE_TENANT_LOWCODING = "smart_construction_core.lowcode.approval_policy"
 APPROVAL_POLICY_RUNTIME_SOURCE = "sc.approval.policy"
 
+LOWCODE_SOURCE_STATUS_DEVELOPER_DRAFT = "developer_draft"
+LOWCODE_SOURCE_STATUS_TENANT_RUNTIME = "tenant_runtime"
+LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE = "product_release"
+LOWCODE_SOURCE_STATUSES = {
+    LOWCODE_SOURCE_STATUS_DEVELOPER_DRAFT,
+    LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
+    LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE,
+}
+
+LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS = frozenset({
+    "smart_construction_core.menu_sc_business_config_center",
+    "smart_construction_core.menu_sc_business_config_workbench",
+    "smart_construction_core.menu_ui_menu_config_policy_business_config",
+})
+
 BUSINESS_CONFIG_MODES = {
     "form_field": "form_field_configuration",
     "lowcode": "business_config_lowcode",
@@ -124,9 +139,38 @@ def _payload_source(payload: Any) -> str:
     return str(payload.get("source") or "").strip()
 
 
+def normalize_lowcode_source_status(value: Any, default: str = LOWCODE_SOURCE_STATUS_TENANT_RUNTIME) -> str:
+    status = str(value or "").strip()
+    if status in LOWCODE_SOURCE_STATUSES:
+        return status
+    return default
+
+
+def view_orchestration_source_status(payload: Any) -> str:
+    if not isinstance(payload, dict):
+        return LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
+    view_orchestration = payload.get("view_orchestration")
+    if isinstance(view_orchestration, dict):
+        context = view_orchestration.get("context")
+        if isinstance(context, dict):
+            status = normalize_lowcode_source_status(context.get("source_status"), default="")
+            if status:
+                return status
+    source = _payload_source(payload).lower()
+    if source.startswith("smart_core.lowcode.") or source in {
+        VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY,
+        VIEW_ORCHESTRATION_SOURCE_ANALYSIS_EDITOR,
+    }:
+        return LOWCODE_SOURCE_STATUS_TENANT_RUNTIME
+    if source.startswith("smart_construction_custom."):
+        return LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
+    return LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
+
+
 def classify_view_orchestration_contract(name: Any, payload: Any = None) -> dict[str, Any]:
     contract_name = str(name or "").strip()
     source = _payload_source(payload)
+    source_status = view_orchestration_source_status(payload)
     lower_name = contract_name.lower()
     lower_source = source.lower()
     legacy_user_flat = (
@@ -140,6 +184,7 @@ def classify_view_orchestration_contract(name: Any, payload: Any = None) -> dict
             "layer": LAYER_USER_PREFERENCE,
             "kind": "user_preference_projection",
             "source": source,
+            "source_status": source_status,
             "compatibility": True,
         }
     if (
@@ -155,6 +200,7 @@ def classify_view_orchestration_contract(name: Any, payload: Any = None) -> dict
             "layer": LAYER_TENANT_LOWCODING,
             "kind": "tenant_lowcode_configuration",
             "source": source,
+            "source_status": source_status,
             "compatibility": False,
         }
     if "_generated_" in lower_name or lower_name.endswith("_generated_v1"):
@@ -162,12 +208,14 @@ def classify_view_orchestration_contract(name: Any, payload: Any = None) -> dict
             "layer": LAYER_GENERATED_BASELINE,
             "kind": "generated_industry_baseline",
             "source": source,
+            "source_status": source_status,
             "compatibility": False,
         }
     return {
         "layer": LAYER_INDUSTRY_STANDARD,
         "kind": "industry_standard_configuration",
         "source": source,
+        "source_status": source_status,
         "compatibility": False,
     }
 
@@ -189,7 +237,11 @@ def view_orchestration_apply_order_key(contract: Any) -> tuple:
     )
 
 
-def ensure_view_orchestration_source(payload: Any, source: str) -> dict:
+def ensure_view_orchestration_source(
+    payload: Any,
+    source: str,
+    source_status: str = LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
+) -> dict:
     next_payload = dict(payload or {}) if isinstance(payload, dict) else {}
     view_orchestration = next_payload.get("view_orchestration")
     if not isinstance(view_orchestration, dict):
@@ -198,6 +250,18 @@ def ensure_view_orchestration_source(payload: Any, source: str) -> dict:
     context = next_orchestration.get("context")
     next_context = dict(context or {}) if isinstance(context, dict) else {}
     next_context["source"] = str(source or "").strip()
+    next_context["source_status"] = normalize_lowcode_source_status(source_status)
     next_orchestration["context"] = next_context
     next_payload["view_orchestration"] = next_orchestration
+    return next_payload
+
+
+def ensure_menu_orchestration_source_status(payload: Any, source_status: str = LOWCODE_SOURCE_STATUS_TENANT_RUNTIME) -> dict:
+    next_payload = dict(payload or {}) if isinstance(payload, dict) else {}
+    menu_orchestration = next_payload.get("menu_orchestration")
+    if not isinstance(menu_orchestration, dict):
+        return next_payload
+    next_orchestration = dict(menu_orchestration)
+    next_orchestration["source_status"] = normalize_lowcode_source_status(source_status)
+    next_payload["menu_orchestration"] = next_orchestration
     return next_payload

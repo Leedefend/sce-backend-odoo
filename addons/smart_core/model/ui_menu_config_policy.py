@@ -6,6 +6,7 @@ import re
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.addons.smart_core.utils.backend_contract_boundaries import (
+    LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS,
     MENU_CONFIG_CONFIG_ONLY_PARAM,
     MENU_CONFIG_POLICY_MODEL,
     MENU_CONFIG_RUNTIME_SOURCE_CONTRACT,
@@ -33,13 +34,6 @@ def _to_bool(value, default: bool = False) -> bool:
         if text in {"0", "false", "no", "off"}:
             return False
     return default
-
-
-CONFIG_RECOVERY_MENU_XMLIDS = frozenset({
-    "smart_construction_core.menu_sc_business_config_center",
-    "smart_construction_core.menu_sc_business_config_workbench",
-    "smart_construction_core.menu_ui_menu_config_policy_business_config",
-})
 
 
 class UiMenuConfigPolicy(models.Model):
@@ -468,8 +462,8 @@ class UiMenuConfigPolicy(models.Model):
                 ModelData = self.env["ir.model.data"].sudo()
             except Exception:
                 return protected_config_menu_xmlids_by_id_cache
-            modules = {xmlid.split(".", 1)[0] for xmlid in CONFIG_RECOVERY_MENU_XMLIDS}
-            names = {xmlid.split(".", 1)[1] for xmlid in CONFIG_RECOVERY_MENU_XMLIDS}
+            modules = {xmlid.split(".", 1)[0] for xmlid in LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS}
+            names = {xmlid.split(".", 1)[1] for xmlid in LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS}
             try:
                 rows = ModelData.search([
                     ("model", "=", "ir.ui.menu"),
@@ -481,7 +475,7 @@ class UiMenuConfigPolicy(models.Model):
             for row in rows or []:
                 xmlid = "%s.%s" % (str(getattr(row, "module", "") or ""), str(getattr(row, "name", "") or ""))
                 menu_id = _to_int(getattr(row, "res_id", 0))
-                if xmlid in CONFIG_RECOVERY_MENU_XMLIDS and menu_id:
+                if xmlid in LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS and menu_id:
                     protected_config_menu_xmlids_by_id_cache[menu_id] = xmlid
             return protected_config_menu_xmlids_by_id_cache
 
@@ -498,7 +492,7 @@ class UiMenuConfigPolicy(models.Model):
 
         def is_protected_runtime_config_xmlid(xmlid: str) -> bool:
             xmlid = str(xmlid or "").strip()
-            if xmlid not in CONFIG_RECOVERY_MENU_XMLIDS:
+            if xmlid not in LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS:
                 return False
             for menu_id, candidate_xmlid in protected_config_menu_xmlids_by_id().items():
                 if candidate_xmlid == xmlid:

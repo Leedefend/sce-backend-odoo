@@ -8,11 +8,13 @@ from odoo.exceptions import AccessError, ValidationError
 
 from ..core.base_handler import BaseIntentHandler
 from ..utils.backend_contract_boundaries import (
+    LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
     MENU_CONFIG_INTENTS,
     MENU_CONFIG_POLICY_MODEL,
     MENU_CONFIG_RUNTIME_SOURCE_CONTRACT,
     MENU_CONFIG_RUNTIME_SOURCE_POLICY,
     MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+    ensure_menu_orchestration_source_status,
 )
 
 
@@ -117,6 +119,7 @@ def _menu_config_contract_json(company_id: int, policies) -> dict:
         "menu_orchestration": {
             "schema_version": "menu_orchestration.v1",
             "source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+            "source_status": LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
             "runtime_source": MENU_CONFIG_RUNTIME_SOURCE_POLICY,
             "company_id": int(company_id or 0),
             "policies": rows,
@@ -130,6 +133,7 @@ def _menu_config_contract_json_from_rows(company_id: int, rows: list[dict]) -> d
         "menu_orchestration": {
             "schema_version": "menu_orchestration.v1",
             "source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+            "source_status": LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
             "runtime_source": MENU_CONFIG_RUNTIME_SOURCE_POLICY,
             "company_id": int(company_id or 0),
             "policies": rows,
@@ -304,7 +308,10 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 )
                 continue
             scoped_rows.append(dict(row))
-        return _menu_config_contract_json_from_rows(company_id, scoped_rows)
+        return ensure_menu_orchestration_source_status(
+            _menu_config_contract_json_from_rows(company_id, scoped_rows),
+            LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
+        )
 
     def _menu_subtree_ids(self, menus, root_menu_id: int) -> list[int]:
         root_menu_id = _to_int(root_menu_id)

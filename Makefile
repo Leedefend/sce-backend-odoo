@@ -4190,7 +4190,11 @@ verify.runtime_contract.test_placeholder.guard: guard.prod.forbid check-compose-
 	@$(RUN_ENV) RUNTIME_CONTRACT_TEST_PLACEHOLDER_GUARD_PATH=/tmp/runtime_contract_test_placeholder_guard.json DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/runtime_contract_test_placeholder_guard.py
 	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/runtime_contract_test_placeholder_guard.json artifacts/backend/runtime_contract_test_placeholder_guard.json >/dev/null
 
-verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready verify.runtime_contract.test_placeholder.guard
+.PHONY: verify.lowcode_config.boundary.guard
+verify.lowcode_config.boundary.guard: guard.prod.forbid
+	@python3 scripts/verify/lowcode_config_boundary_guard.py
+
+verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready verify.runtime_contract.test_placeholder.guard verify.lowcode_config.boundary.guard
 	@echo "[OK] verify.product.surface.clean done"
 
 verify.product.complexity.bound: guard.prod.forbid verify.complexity.guard

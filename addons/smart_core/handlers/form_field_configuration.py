@@ -15,6 +15,7 @@ from ..core.request_params import parse_non_negative_int
 from ..utils.backend_contract_boundaries import (
     BUSINESS_CONFIG_INTENTS,
     FORM_FIELD_CONFIG_INTENTS,
+    LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
     VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY,
     VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
     ensure_view_orchestration_source,
@@ -662,6 +663,7 @@ def _business_config_analysis_payload(*, view_type: str, measures: list[str], di
             },
             "context": {
                 "source": "business_config_analysis_editor",
+                "source_status": LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
             },
         }
     }
