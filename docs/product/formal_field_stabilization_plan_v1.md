@@ -185,6 +185,18 @@ make verify.formal_config.p1_candidate_runtime_audit DB_NAME=sc_demo PROJECT=sc-
 make verify.business_config.list_config_boundary DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev
 ```
 
+## 用户数据产品字段覆盖矩阵
+
+正式产品必须完整承载用户数据，但不能把旧系统页面列名原样固化为产品逻辑。`make verify.user_data.product_field_coverage.matrix` 以 P1 用户可见历史标签为输入，输出每个标签当前由哪类字段承载：
+
+- `formal_product`：已经由正式产品字段承载
+- `source_trace`：仍主要依赖来源/旧系统追溯字段，可对账但未完全产品化
+- `transition_alias`：仍依赖 `p1_visible_*` / `legacy_visible_*` 等过渡别名
+- `history_carrier`：仍依赖显式历史载体
+- `missing`：未找到当前承载字段
+
+当前 `sc_demo` 基线：`label_count=832`，`formal_product=747`，`backlog_count=85`，其中 `transition_alias=41`、`source_trace=33`、`missing=11`。backlog 主要集中在 `sc.document.admin.document`、`sc.business.entity`、`sc.office.admin.document`、`sc.financing.loan` 等模型。后续补字段优先级以 `artifacts/backend/user_data_product_field_coverage_matrix.json` 的 `backlog` 为准：先把有真实填充值的 `missing` / `transition_alias` 吸纳为正式产品字段，再处理仅为来源追溯的标签。
+
 ## 后续专题：core 历史字段物理剥离
 
 正式面稳定化已证明过渡字段不再进入用户办理面、配置面和发布基线。下一阶段处理更严格的物理分离：`smart_construction_core` 的 core/projection 模型不再新增历史用户数据载体，既有 `legacy_visible_*` 动态字段和引用必须逐批迁往 `smart_construction_custom` 或 support/history carrier。
