@@ -5,11 +5,12 @@
             parent="smart_construction_core.menu_sc_business_config_center"
             action="smart_core.action_ui_menu_config_policy"
             sequence="6"
-            groups="smart_construction_core.group_sc_cap_business_config_admin,smart_core.group_smart_core_admin"/>
+            groups="smart_construction_core.group_sc_cap_business_config_admin,smart_core.group_smart_core_business_config_admin,smart_core.group_smart_core_admin"/>
 
   <record id="menu_ui_menu_config_policy_business_config" model="ir.ui.menu">
     <field name="groups_id" eval="[(6, 0, [
       ref('smart_construction_core.group_sc_cap_business_config_admin'),
+      ref('smart_core.group_smart_core_business_config_admin'),
       ref('smart_core.group_smart_core_admin')
     ])]"/>
   </record>

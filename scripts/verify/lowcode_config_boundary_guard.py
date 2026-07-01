@@ -20,6 +20,29 @@ REQUIRED_SYSTEM_CONFIG_MENU_XMLIDS = {
     "smart_construction_core.menu_sc_business_config_workbench",
     "smart_construction_core.menu_ui_menu_config_policy_business_config",
 }
+REQUIRED_GLOBAL_CONFIG_MENU_GROUPS = {
+    "smart_construction_core.group_sc_cap_business_config_admin",
+    "smart_core.group_smart_core_business_config_admin",
+    "smart_core.group_smart_core_admin",
+}
+REQUIRED_PLATFORM_CONFIG_ACTION_GROUPS = {
+    "smart_core.group_smart_core_business_config_admin",
+    "smart_core.group_smart_core_admin",
+}
+GLOBAL_CONFIG_ENTRY_FILES = {
+    "business_config_workbench": (
+        ROOT / "addons" / "smart_construction_core" / "views" / "support" / "business_config_workbench_views.xml",
+        REQUIRED_GLOBAL_CONFIG_MENU_GROUPS,
+    ),
+    "menu_config_policy_menu": (
+        ROOT / "addons" / "smart_construction_core" / "views" / "support" / "menu_config_policy_views.xml",
+        REQUIRED_GLOBAL_CONFIG_MENU_GROUPS,
+    ),
+    "menu_config_policy_action": (
+        ROOT / "addons" / "smart_core" / "views" / "ui_menu_config_policy_views.xml",
+        REQUIRED_PLATFORM_CONFIG_ACTION_GROUPS,
+    ),
+}
 REQUIRED_DOC_FILES = [
     ROOT / "docs" / "product" / "formal_product_boundary_v1.md",
     ROOT / "docs" / "low_code_config_capability_matrix.md",
@@ -66,6 +89,18 @@ def build_report() -> dict:
             "category": "runtime_protection",
             "message": "menu runtime overlay must use LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS",
         })
+
+    for key, (path, required_groups) in GLOBAL_CONFIG_ENTRY_FILES.items():
+        text = _read(path)
+        missing_groups = sorted(group for group in required_groups if group not in text)
+        if missing_groups:
+            errors.append({
+                "category": "global_config_entry_groups",
+                "path": path.relative_to(ROOT).as_posix(),
+                "entry": key,
+                "message": "global low-code config entries must be limited to configuration administrator groups",
+                "missing_groups": missing_groups,
+            })
 
     menu_handler_text = _read(ROOT / "addons" / "smart_core" / "handlers" / "menu_configuration.py")
     if "source_status" not in menu_handler_text or "LOWCODE_SOURCE_STATUS_TENANT_RUNTIME" not in menu_handler_text:
