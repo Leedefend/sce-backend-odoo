@@ -6,9 +6,8 @@ Run inside Odoo shell:
 
 The matrix answers a product-boundary question: for each historical user-visible
 business label, is the current carrier a formal product field, a source-trace
-field, a transition alias, or still missing?  It is intentionally report-only
-for now; the output gives the next productization backlog without weakening
-existing formal-surface gates.
+field, a transition alias, or still missing?  The accepted baseline is zero
+backlog: every user-visible label must resolve to a formal product carrier.
 """
 
 from __future__ import annotations
@@ -218,14 +217,18 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(
-        "[user_data_product_field_coverage_matrix] PASS labels=%s formal=%s backlog=%s"
+        "[user_data_product_field_coverage_matrix] %s labels=%s formal=%s backlog=%s"
         % (
+            "PASS" if report["summary"]["backlog_count"] == 0 else "FAIL",
             report["summary"]["label_count"],
             report["summary"]["by_field_class"].get("formal_product", 0),
             report["summary"]["backlog_count"],
         )
     )
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))
+    if report["summary"]["backlog_count"]:
+        print(json.dumps(report["backlog"][:20], ensure_ascii=False, indent=2))
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

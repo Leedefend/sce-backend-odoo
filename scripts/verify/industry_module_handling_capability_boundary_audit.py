@@ -266,14 +266,18 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(
-        "[industry_module_handling_capability_boundary_audit] PASS labels=%s industry_editable=%s action_required=%s"
+        "[industry_module_handling_capability_boundary_audit] %s labels=%s industry_editable=%s action_required=%s"
         % (
+            "PASS" if report["summary"]["action_required_count"] == 0 else "FAIL",
             report["summary"]["label_count"],
             report["summary"]["by_capability_class"].get("industry_editable_product_field", 0),
             report["summary"]["action_required_count"],
         )
     )
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))
+    if report["summary"]["action_required_count"]:
+        print(json.dumps(report["action_required"][:20], ensure_ascii=False, indent=2))
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
