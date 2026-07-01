@@ -212,6 +212,15 @@ class HrPayrollDocumentUserHistoryFields(models.Model):
         )
 
 
+class ConstructionDiaryUserHistoryFields(models.Model):
+    _inherit = "sc.construction.diary"
+
+    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
+    legacy_line_attachment_ref = fields.Char(string="历史明细附件引用", readonly=True)
+    legacy_attachment_name = fields.Char(string="历史附件名", readonly=True)
+    legacy_attachment_path = fields.Char(string="历史附件路径", readonly=True)
+
+
 class FundAccountOperationUserHistoryFields(models.Model):
     _inherit = "sc.fund.account.operation"
 

@@ -1393,7 +1393,6 @@ class ConstructionDiaryDirectAcceptanceVisible(models.Model):
         "note",
         "header_description",
         "description",
-        "legacy_attachment_ref",
         "attachment_ids",
         *[_lv(index) for index in range(1, 12)],
     )

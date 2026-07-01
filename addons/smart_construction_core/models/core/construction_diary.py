@@ -73,10 +73,6 @@ class ScConstructionDiary(models.Model):
     legacy_business_id = fields.Char(string="历史业务ID", index=True, readonly=True)
     legacy_related_business_id = fields.Char(string="历史关联业务ID", index=True, readonly=True)
     legacy_related_quality_type = fields.Char(string="历史质量类型", index=True, readonly=True)
-    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
-    legacy_line_attachment_ref = fields.Char(string="历史明细附件引用", readonly=True)
-    legacy_attachment_name = fields.Char(string="历史附件名", readonly=True)
-    legacy_attachment_path = fields.Char(string="历史附件路径", readonly=True)
     attachment_ids = fields.Many2many(
         "ir.attachment",
         "sc_construction_diary_attachment_rel",
