@@ -14,6 +14,36 @@ import json
 import os
 
 from odoo.addons.smart_core.handlers.form_field_configuration import _business_config_contract_summary
+from odoo.addons.smart_core.utils.backend_contract_boundaries import view_orchestration_source_status
+
+
+def _menu_source_status(payload):
+    orchestration = payload.get("menu_orchestration") if isinstance(payload.get("menu_orchestration"), dict) else {}
+    explicit = str(orchestration.get("source_status") or "").strip()
+    if explicit:
+        return explicit, True
+    source = str(orchestration.get("source") or "").strip()
+    if source == "smart_core.lowcode.menu_config":
+        return "tenant_runtime", False
+    return "product_release", False
+
+
+def _view_source_status(payload):
+    orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+    context = orchestration.get("context") if isinstance(orchestration.get("context"), dict) else {}
+    return view_orchestration_source_status(payload), bool(str(context.get("source_status") or "").strip())
+
+
+def _source_status(payload):
+    if not isinstance(payload, dict):
+        return "product_release", False, "unknown"
+    if isinstance(payload.get("menu_orchestration"), dict):
+        status, explicit = _menu_source_status(payload)
+        return status, explicit, "menu_orchestration"
+    if isinstance(payload.get("view_orchestration"), dict):
+        status, explicit = _view_source_status(payload)
+        return status, explicit, "view_orchestration"
+    return "product_release", False, "unknown"
 
 
 def _env():
@@ -42,6 +72,7 @@ def _hash_payload(payload):
 
 def _contract_row(rec):
     payload = rec.contract_json or {}
+    source_status, source_status_explicit, carrier = _source_status(payload)
     return {
         "id": int(rec.id or 0),
         "name": str(rec.name or ""),
@@ -52,6 +83,9 @@ def _contract_row(rec):
         "role_key": str(rec.role_key or ""),
         "status": str(rec.status or ""),
         "version_no": int(rec.version_no or 0),
+        "source_status": source_status,
+        "source_status_explicit": source_status_explicit,
+        "config_carrier": carrier,
         "payload_hash": _hash_payload(payload),
         "summary": _business_config_contract_summary(payload),
     }
@@ -63,14 +97,20 @@ def _snapshot(env_obj):
     rows = sorted(rows, key=_contract_key)
     status_counts = {}
     view_type_counts = {}
+    source_status_counts = {}
+    carrier_counts = {}
     for row in rows:
         status_counts[row["status"]] = status_counts.get(row["status"], 0) + 1
         view_type_counts[row["view_type"] or "all"] = view_type_counts.get(row["view_type"] or "all", 0) + 1
+        source_status_counts[row["source_status"]] = source_status_counts.get(row["source_status"], 0) + 1
+        carrier_counts[row["config_carrier"]] = carrier_counts.get(row["config_carrier"], 0) + 1
     return {
         "database": env_obj.cr.dbname,
         "contract_count": len(rows),
         "status_counts": dict(sorted(status_counts.items())),
         "view_type_counts": dict(sorted(view_type_counts.items())),
+        "source_status_counts": dict(sorted(source_status_counts.items())),
+        "config_carrier_counts": dict(sorted(carrier_counts.items())),
         "contracts": rows,
     }
 

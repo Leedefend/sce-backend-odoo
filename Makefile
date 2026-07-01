@@ -4194,7 +4194,13 @@ verify.runtime_contract.test_placeholder.guard: guard.prod.forbid check-compose-
 verify.lowcode_config.boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/lowcode_config_boundary_guard.py
 
-verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready verify.runtime_contract.test_placeholder.guard verify.lowcode_config.boundary.guard
+.PHONY: verify.lowcode_config.runtime_boundary.guard
+verify.lowcode_config.runtime_boundary.guard: guard.prod.forbid check-compose-project check-compose-env
+	@mkdir -p artifacts/backend
+	@$(RUN_ENV) BUSINESS_CONFIG_LOWCODE_RUNTIME_BOUNDARY_GUARD_PATH=/tmp/lowcode_config_runtime_boundary_guard.json DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/lowcode_config_runtime_boundary_guard.py
+	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/lowcode_config_runtime_boundary_guard.json artifacts/backend/lowcode_config_runtime_boundary_guard.json >/dev/null
+
+verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready verify.runtime_contract.test_placeholder.guard verify.lowcode_config.boundary.guard verify.lowcode_config.runtime_boundary.guard
 	@echo "[OK] verify.product.surface.clean done"
 
 verify.product.complexity.bound: guard.prod.forbid verify.complexity.guard
