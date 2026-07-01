@@ -181,6 +181,7 @@ def main() -> int:
         f"- 正式产品一级中心：`{len(centers)}` 个",
         f"- 正式产品 active 菜单：`{int(active_layer_counts.get('formal_product', 0))}` 个",
         f"- 系统配置菜单：`{int(layer_counts.get('system_config', 0))}` 个，其中 active `{int(active_layer_counts.get('system_config', 0))}` 个",
+        f"- 用户配置菜单：`{int(layer_counts.get('user_config', 0))}` 个，其中 active `{int(active_layer_counts.get('user_config', 0))}` 个",
         f"- 历史验收菜单：`{int(layer_counts.get('history_acceptance', 0))}` 个，其中 active `{int(active_layer_counts.get('history_acceptance', 0))}` 个",
         f"- 开发治理菜单：`{int(layer_counts.get('dev_governance', 0))}` 个，其中 active `{int(active_layer_counts.get('dev_governance', 0))}` 个",
         f"- 待复核菜单：`{len(review_rows)}` 个",

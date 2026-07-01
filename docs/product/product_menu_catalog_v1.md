@@ -5,7 +5,7 @@
 ## 运行时来源
 
 - database: `sc_demo`
-- generated_at: `2026-07-01T14:12:18.616963+00:00`
+- generated_at: `2026-07-01T14:22:02.004722+00:00`
 - roots: `smart_construction_core.menu_sc_root, smart_core.menu_smart_core_platform_root`
 - visible_login_probe: `admin, wutao, demo_business_full, demo_role_finance, demo_role_executive`
 
@@ -20,6 +20,7 @@
 - ordinary_business_system_config_visible_count: `0`
 - business_config_legacy_count: `0`
 - business_config_legacy_active_count: `0`
+- runtime_user_menu_without_xmlid_count: `0`
 
 ## 分层定义
 

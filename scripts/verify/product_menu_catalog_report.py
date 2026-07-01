@@ -97,6 +97,7 @@ def main() -> int:
         f"- ordinary_business_system_config_visible_count: `{summary.get('ordinary_business_system_config_visible_count', 0)}`",
         f"- business_config_legacy_count: `{summary.get('business_config_legacy_count', 0)}`",
         f"- business_config_legacy_active_count: `{summary.get('business_config_legacy_active_count', 0)}`",
+        f"- runtime_user_menu_without_xmlid_count: `{summary.get('runtime_user_menu_without_xmlid_count', 0)}`",
         "",
         "## 分层定义",
         "",

@@ -226,6 +226,16 @@ def _groups(menu) -> list[dict[str, object]]:
     return sorted(rows, key=lambda item: (item["xmlid"] or "", item["name"]))
 
 
+def _user_meta(user) -> dict[str, object]:
+    if not user:
+        return {"id": None, "login": "", "name": ""}
+    return {
+        "id": int(user.id),
+        "login": _text(getattr(user, "login", "")),
+        "name": _text(getattr(user, "name", "")),
+    }
+
+
 def _visible_by_login(menu_ids: set[int]) -> dict[str, list[str]]:
     out = {str(menu_id): [] for menu_id in sorted(menu_ids)}
     for login in VISIBLE_LOGINS:
@@ -269,6 +279,10 @@ def _classify(row: dict[str, object]) -> tuple[str, list[str], bool]:
         ]
     ).lower()
     reasons = []
+    create_user = row.get("create_user") if isinstance(row.get("create_user"), dict) else {}
+    create_login = _text(create_user.get("login"))
+    if not xmlid and create_login not in ("", "__system__"):
+        return "user_config", ["runtime_user_menu_without_xmlid"], False
     if xmlid in SYSTEM_CONFIG_XMLIDS:
         return "system_config", ["explicit_system_config_xmlid"], False
     if xmlid in SCENE_ONLY_MENU_SCENE_KEYS:
@@ -362,6 +376,10 @@ def _export() -> dict[str, object]:
             "parent_xmlid": _xmlid(menu.parent_id) if menu.parent_id else "",
             "sequence": int(menu.sequence or 0),
             "active": bool(getattr(menu, "active", True)),
+            "create_date": _text(getattr(menu, "create_date", "")),
+            "write_date": _text(getattr(menu, "write_date", "")),
+            "create_user": _user_meta(getattr(menu, "create_uid", None)),
+            "write_user": _user_meta(getattr(menu, "write_uid", None)),
             "root_xmlid": _xmlid(menu if menu_id in root_ids else _root_for(menu, root_ids)),
             "action_raw": raw,
             "action_model": action_model,
@@ -406,10 +424,23 @@ def _export() -> dict[str, object]:
     ordinary_business_system_config_visible = []
     business_config_legacy = []
     business_config_legacy_active = []
+    runtime_user_menus_without_xmlid = []
     for row in rows:
         visible_business_logins = sorted(BUSINESS_VISIBLE_LOGINS.intersection(row.get("visible_logins") or []))
         path = _text(row.get("path"))
         xmlid = _text(row.get("xmlid")).lower()
+        create_user = row.get("create_user") if isinstance(row.get("create_user"), dict) else {}
+        create_login = _text(create_user.get("login"))
+        if not xmlid and create_login and create_login != "__system__":
+            runtime_user_menus_without_xmlid.append(
+                {
+                    "id": row.get("id"),
+                    "path": path,
+                    "active": row.get("active"),
+                    "create_login": create_login,
+                    "create_date": row.get("create_date"),
+                }
+            )
         if (
             row.get("active")
             and row.get("layer") == "history_acceptance"
@@ -487,6 +518,7 @@ def _export() -> dict[str, object]:
             "ordinary_business_system_config_visible_count": len(ordinary_business_system_config_visible),
             "business_config_legacy_count": len(business_config_legacy),
             "business_config_legacy_active_count": len(business_config_legacy_active),
+            "runtime_user_menu_without_xmlid_count": len(runtime_user_menus_without_xmlid),
             "layer_counts": layer_counts,
         },
         "top_level": [
