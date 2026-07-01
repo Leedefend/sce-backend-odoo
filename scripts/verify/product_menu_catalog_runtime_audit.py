@@ -404,6 +404,7 @@ def _export() -> dict[str, object]:
     internal_history_business_visible = []
     config_admin_logins = _config_admin_logins()
     ordinary_business_system_config_visible = []
+    business_config_legacy = []
     business_config_legacy_active = []
     for row in rows:
         visible_business_logins = sorted(BUSINESS_VISIBLE_LOGINS.intersection(row.get("visible_logins") or []))
@@ -422,18 +423,20 @@ def _export() -> dict[str, object]:
                     "visible_logins": visible_business_logins,
                 }
             )
-        if (
-            row.get("active")
-            and (path == BUSINESS_CONFIG_PATH_PREFIX or path.startswith(BUSINESS_CONFIG_PATH_PREFIX + " / "))
-            and ("legacy" in xmlid or "历史" in path)
-        ):
-            business_config_legacy_active.append(
-                {
-                    "xmlid": row.get("xmlid"),
-                    "path": path,
-                    "layer": row.get("layer"),
-                }
-            )
+        is_business_config_path = (
+            path == BUSINESS_CONFIG_PATH_PREFIX or path.startswith(BUSINESS_CONFIG_PATH_PREFIX + " / ")
+        )
+        is_legacy_or_history = "legacy" in xmlid or "历史" in path
+        if is_business_config_path and is_legacy_or_history:
+            legacy_payload = {
+                "xmlid": row.get("xmlid"),
+                "path": path,
+                "layer": row.get("layer"),
+                "active": row.get("active"),
+            }
+            business_config_legacy.append(legacy_payload)
+            if row.get("active"):
+                business_config_legacy_active.append(legacy_payload)
         visible_ordinary_business_logins = [
             login for login in visible_business_logins if login not in config_admin_logins
         ]
@@ -455,10 +458,10 @@ def _export() -> dict[str, object]:
             "system config menus must not be visible to ordinary business users: %s"
             % json.dumps(ordinary_business_system_config_visible[:20], ensure_ascii=False)
         )
-    if business_config_legacy_active:
+    if business_config_legacy:
         raise AssertionError(
-            "business config must not contain active legacy/history entries: %s"
-            % json.dumps(business_config_legacy_active[:20], ensure_ascii=False)
+            "business config must not contain legacy/history entries: %s"
+            % json.dumps(business_config_legacy[:20], ensure_ascii=False)
         )
 
     top_level = [
@@ -482,6 +485,7 @@ def _export() -> dict[str, object]:
             "needs_review_count": sum(1 for row in rows if row["needs_review"]),
             "internal_history_business_visible_count": len(internal_history_business_visible),
             "ordinary_business_system_config_visible_count": len(ordinary_business_system_config_visible),
+            "business_config_legacy_count": len(business_config_legacy),
             "business_config_legacy_active_count": len(business_config_legacy_active),
             "layer_counts": layer_counts,
         },

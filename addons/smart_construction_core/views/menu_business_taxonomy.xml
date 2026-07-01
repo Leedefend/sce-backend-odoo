@@ -2444,10 +2444,10 @@
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_data_read')])]"/>
     </record>
     <record id="menu_sc_legacy_material_detail" model="ir.ui.menu">
-        <field name="name">材料档案</field>
-        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
-        <field name="action" ref="smart_construction_core.action_sc_material_product_template"/>
-        <field name="sequence">60</field>
+        <field name="name">历史物料档案（内部）</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_config_center"/>
+        <field name="action" ref="smart_construction_core.action_sc_legacy_material_detail"/>
+        <field name="sequence">30</field>
         <field name="active">False</field>
     </record>
     <record id="menu_sc_approval_policy" model="ir.ui.menu">

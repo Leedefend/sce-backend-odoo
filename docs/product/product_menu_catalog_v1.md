@@ -5,7 +5,7 @@
 ## 运行时来源
 
 - database: `sc_demo`
-- generated_at: `2026-07-01T14:04:00.212511+00:00`
+- generated_at: `2026-07-01T14:12:18.616963+00:00`
 - roots: `smart_construction_core.menu_sc_root, smart_core.menu_smart_core_platform_root`
 - visible_login_probe: `admin, wutao, demo_business_full, demo_role_finance, demo_role_executive`
 
@@ -18,6 +18,7 @@
 - needs_review_count: `0`
 - internal_history_business_visible_count: `0`
 - ordinary_business_system_config_visible_count: `0`
+- business_config_legacy_count: `0`
 - business_config_legacy_active_count: `0`
 
 ## 分层定义
@@ -116,7 +117,6 @@
     - 审批配置 [`system_config`] -> `sc.approval.policy`
     - 数据字典 [`system_config`] -> `sc.dictionary`
     - 新增表单字段 [`system_config`] -> `ui.form.custom.field.wizard`
-    - 材料档案 [`history_acceptance` inactive] -> `sc.material.catalog`
     - 菜单配置 [`system_config`] -> `ui.menu.config.policy`
     - 表单字段配置 [`system_config`] -> `ui.form.field.policy`
     - 阶段要求配置 [`system_config`] -> `sc.project.stage.requirement.item`
@@ -377,6 +377,7 @@
       - 应收应付报表 [`formal_product` inactive] -> `sc.ar.ap.company.summary`
       - 项目经营统计表 [`formal_product`] -> `sc.operating.metrics.project`
   - 系统配置 [`system_config`]
+    - 历史物料档案（内部） [`history_acceptance` inactive] -> `sc.legacy.material.detail`
     - 历史财务事实（内部） [`system_config`]
       - 历史供应商合同计价方式 [`history_acceptance`] -> `sc.legacy.supplier.contract.pricing.fact`
       - 历史发票登记 [`history_acceptance`] -> `sc.legacy.invoice.registration.line`
