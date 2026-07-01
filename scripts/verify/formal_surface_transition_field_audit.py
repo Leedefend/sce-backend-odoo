@@ -45,6 +45,7 @@ SCAN_PATHS = {
         "addons/smart_construction_core/views/menu_user_acceptance_cleanup.xml",
     ],
     "formal_config_contract": [
+        "addons/smart_construction_core/data/business_category_seed.xml",
         "addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml",
         "addons/smart_construction_core/data/view_orchestration_contract_data.xml",
         "addons/smart_construction_core/data/view_orchestration_form_section_contract_data.xml",
