@@ -357,6 +357,17 @@
                     <field name="financing_loan_unpaid_amount" readonly="1"/>
                     <field name="financing_loan_source_created_by" readonly="1"/>
                     <field name="financing_loan_source_created_at" readonly="1"/>
+                    <field name="financing_loan_request_department" readonly="1"/>
+                    <field name="financing_loan_request_time" readonly="1"/>
+                    <field name="financing_loan_budget_included" readonly="1"/>
+                    <field name="financing_loan_actual_loan_amount" readonly="1"/>
+                    <field name="financing_loan_fund_usage_plan" readonly="1"/>
+                    <field name="financing_loan_bank_name" readonly="1"/>
+                    <field name="financing_loan_borrow_account" readonly="1"/>
+                    <field name="financing_loan_approved_amount" readonly="1"/>
+                    <field name="financing_loan_request_amount" readonly="1"/>
+                    <field name="financing_loan_expected_return_time" readonly="1"/>
+                    <field name="financing_loan_loan_type_display" readonly="1"/>
                 </group>
             </xpath>
         </field>

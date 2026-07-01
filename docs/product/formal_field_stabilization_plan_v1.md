@@ -195,7 +195,7 @@ make verify.business_config.list_config_boundary DB_NAME=sc_demo PROJECT=sc-back
 - `history_carrier`：仍依赖显式历史载体
 - `missing`：未找到当前承载字段
 
-当前 `sc_demo` 基线：`label_count=832`，`formal_product=747`，`backlog_count=85`，其中 `transition_alias=41`、`source_trace=33`、`missing=11`。backlog 主要集中在 `sc.document.admin.document`、`sc.business.entity`、`sc.office.admin.document`、`sc.financing.loan` 等模型。后续补字段优先级以 `artifacts/backend/user_data_product_field_coverage_matrix.json` 的 `backlog` 为准：先把有真实填充值的 `missing` / `transition_alias` 吸纳为正式产品字段，再处理仅为来源追溯的标签。
+当前 `sc_demo` 基线：`label_count=832`，`formal_product=758`，`backlog_count=74`，其中 `transition_alias=41`、`source_trace=33`、`missing=0`。`sc.financing.loan` 已将 `申请部门`、`申请时间`、`是否预算内`、`实际借款金额`、`主要资金使用安排`、`开户银行`、`借款账号`、`实际批复金额`、`申请金额`、`预计归还时间`、`借款类型` 从矩阵 `missing` 吸纳为正式产品字段，645 条历史融资借款记录均有正式承载值。剩余 backlog 主要集中在 `sc.document.admin.document`、`sc.business.entity`、`sc.office.admin.document` 等模型。后续补字段优先级以 `artifacts/backend/user_data_product_field_coverage_matrix.json` 的 `backlog` 为准：先把有真实填充值的 `transition_alias` 吸纳为正式产品字段，再处理仅为来源追溯的标签。
 
 ## 后续专题：core 历史字段物理剥离
 

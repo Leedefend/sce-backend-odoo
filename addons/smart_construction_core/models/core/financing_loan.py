@@ -181,6 +181,17 @@ class ScFinancingLoan(models.Model):
     financing_loan_unpaid_amount = fields.Char(string="未还款金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
     financing_loan_source_created_by = fields.Char(string="录入人", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
     financing_loan_source_created_at = fields.Char(string="录入时间", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_request_department = fields.Char(string="申请部门", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_request_time = fields.Char(string="申请时间", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_budget_included = fields.Char(string="是否预算内", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_actual_loan_amount = fields.Char(string="实际借款金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_fund_usage_plan = fields.Char(string="主要资金使用安排", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_bank_name = fields.Char(string="开户银行", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_borrow_account = fields.Char(string="借款账号", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_approved_amount = fields.Char(string="实际批复金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_request_amount = fields.Char(string="申请金额", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_expected_return_time = fields.Char(string="预计归还时间", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
+    financing_loan_loan_type_display = fields.Char(string="借款类型", compute="_compute_financing_loan_formal_visible_fields", store=True, readonly=True)
 
     _sql_constraints = [
         (
@@ -237,6 +248,10 @@ class ScFinancingLoan(models.Model):
     def _financing_loan_amount_text(self):
         self.ensure_one()
         return str(self.amount) if self.amount is not False and self.amount is not None else ""
+
+    @staticmethod
+    def _financing_loan_selection_label(selection, value):
+        return dict(selection).get(value, value or "")
 
     @api.depends(
         "legacy_document_state",
@@ -305,6 +320,42 @@ class ScFinancingLoan(models.Model):
             source_created_at = record.created_time or record.create_date
             record.financing_loan_source_created_at = (
                 fields.Datetime.to_string(source_created_at) if source_created_at else ""
+            )
+            request_time = record._financing_loan_visible_value("request_time") or source_created_at
+            expected_return_time = record._financing_loan_visible_value("expected_return_time") or record.due_date
+            loan_type_value = record._financing_loan_visible_value("loan_type")
+            record.financing_loan_request_department = (
+                record._financing_loan_visible_value("request_department") or ""
+            )
+            record.financing_loan_request_time = str(request_time or "")
+            record.financing_loan_budget_included = (
+                record._financing_loan_visible_value("budget_included") or ""
+            )
+            record.financing_loan_actual_loan_amount = (
+                record._financing_loan_visible_value("actual_loan_amount") or amount_text
+            )
+            record.financing_loan_fund_usage_plan = (
+                record._financing_loan_visible_value("fund_usage_plan") or record.purpose or ""
+            )
+            record.financing_loan_bank_name = (
+                record._financing_loan_visible_value("bank_name")
+                or record._financing_loan_visible_value("loan_bank")
+                or record.loan_bank_name
+                or ""
+            )
+            record.financing_loan_borrow_account = (
+                record._financing_loan_visible_value("loan_account") or record.loan_account or ""
+            )
+            record.financing_loan_approved_amount = (
+                record._financing_loan_visible_value("approved_amount") or amount_text
+            )
+            record.financing_loan_request_amount = (
+                record._financing_loan_visible_value("request_amount") or amount_text
+            )
+            record.financing_loan_expected_return_time = str(expected_return_time or "")
+            record.financing_loan_loan_type_display = (
+                loan_type_value
+                or record._financing_loan_selection_label(self._fields["loan_type"].selection, record.loan_type)
             )
 
     @api.depends("loan_type", "direction", "purpose", "business_category_id.code")
