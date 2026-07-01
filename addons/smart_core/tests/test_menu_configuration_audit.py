@@ -493,6 +493,9 @@ class _Env(dict):
         self.company = company
         self.user = user
 
+    def __call__(self, user=None):
+        return self
+
 
 class TestMenuConfigurationAudit(unittest.TestCase):
     def setUp(self):
@@ -1940,6 +1943,154 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual([node["menu_id"] for node in overlaid["tree"]], [291])
         self.assertEqual([child["menu_id"] for child in overlaid["tree"][0]["children"]], [464])
         self.assertEqual(stats["protected_count"], 0)
+
+    def test_runtime_overlay_config_only_keeps_hidden_config_recovery_entries(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        home = _Menu(464, "首页", parent=root, sequence=10)
+        settings = _Menu(297, "基础设置", parent=root, sequence=70)
+        workbench = _Menu(827, "配置中心", parent=settings, sequence=10, action="ir.actions.act_window(1009,)")
+        menu_config = _Menu(646, "菜单配置", parent=settings, sequence=20, action="ir.actions.act_window(1014,)")
+        menus = _MenuModel([root, home, settings, workbench, menu_config], visible_ids=[291, 464, 297, 827, 646])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([
+                    _ActionWindow(1009, res_model="sc.business.config.workbench"),
+                    _ActionWindow(1014, res_model="ui.menu.config.policy"),
+                ]),
+                "ir.model.data": _ModelDataModel([
+                    types.SimpleNamespace(
+                        model="ir.ui.menu",
+                        res_id=297,
+                        module="smart_construction_core",
+                        name="menu_sc_business_config_center",
+                    ),
+                    types.SimpleNamespace(
+                        model="ir.ui.menu",
+                        res_id=827,
+                        module="smart_construction_core",
+                        name="menu_sc_business_config_workbench",
+                    ),
+                    types.SimpleNamespace(
+                        model="ir.ui.menu",
+                        res_id=646,
+                        module="smart_construction_core",
+                        name="menu_ui_menu_config_policy_business_config",
+                    ),
+                ]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                464: {"active": True, "menu_id": 464, "menu_label": "首页", "visible": True, "sequence_override": 10},
+                297: {
+                    "active": True,
+                    "menu_id": 297,
+                    "menu_label": "基础设置",
+                    "visible": False,
+                    "custom_label": "系统设置",
+                    "sequence_override": 70,
+                },
+                827: {
+                    "active": True,
+                    "menu_id": 827,
+                    "menu_label": "配置中心",
+                    "visible": False,
+                    "sequence_override": 10,
+                },
+                646: {
+                    "active": True,
+                    "menu_id": 646,
+                    "menu_label": "菜单配置",
+                    "visible": False,
+                    "sequence_override": 20,
+                },
+            },
+            "ui.business.config.contract.menu_orchestration",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [{"menu_id": 464, "name": "首页", "children": []}],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        settings_node = next(child for child in root_node["children"] if child["menu_id"] == 297)
+        self.assertEqual(settings_node["name"], "系统设置")
+        self.assertEqual([child["menu_id"] for child in settings_node["children"]], [827, 646])
+        self.assertEqual(stats["hidden_count"], 0)
+        self.assertTrue(stats["config_only"])
+
+    def test_runtime_overlay_config_recovery_entries_do_not_bypass_menu_acl(self):
+        module = _load_policy_model()
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        settings = _Menu(297, "系统设置", parent=root, sequence=70)
+        menu_config = _Menu(646, "菜单配置", parent=settings, sequence=20, action="ir.actions.act_window(1014,)")
+        menus = _MenuModel([root, settings, menu_config], visible_ids=[291])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([
+                    _ActionWindow(1014, res_model="ui.menu.config.policy"),
+                ]),
+                "ir.model.data": _ModelDataModel([
+                    types.SimpleNamespace(
+                        model="ir.ui.menu",
+                        res_id=297,
+                        module="smart_construction_core",
+                        name="menu_sc_business_config_center",
+                    ),
+                    types.SimpleNamespace(
+                        model="ir.ui.menu",
+                        res_id=646,
+                        module="smart_construction_core",
+                        name="menu_ui_menu_config_policy_business_config",
+                    ),
+                ]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                297: {"active": True, "menu_id": 297, "menu_label": "系统设置", "visible": False},
+                646: {"active": True, "menu_id": 646, "menu_label": "菜单配置", "visible": False},
+            },
+            "ui.business.config.contract.menu_orchestration",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [{"menu_id": 291, "name": "智慧施工管理平台", "children": []}],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        self.assertEqual(overlaid["tree"], [{"menu_id": 291, "name": "智慧施工管理平台", "children": []}])
+        self.assertEqual(stats["hidden_count"], 0)
 
     def test_runtime_overlay_config_only_with_no_policies_blocks_system_fallback(self):
         module = _load_policy_model()

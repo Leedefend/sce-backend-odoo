@@ -35,6 +35,13 @@ def _to_bool(value, default: bool = False) -> bool:
     return default
 
 
+CONFIG_RECOVERY_MENU_XMLIDS = frozenset({
+    "smart_construction_core.menu_sc_business_config_center",
+    "smart_construction_core.menu_sc_business_config_workbench",
+    "smart_construction_core.menu_ui_menu_config_policy_business_config",
+})
+
+
 class UiMenuConfigPolicy(models.Model):
     _name = MENU_CONFIG_POLICY_MODEL
     _description = "User Configurable Menu Policy"
@@ -450,11 +457,61 @@ class UiMenuConfigPolicy(models.Model):
                     candidates.append(value)
             return next((value for value in candidates if value in policies_by_menu), candidates[0] if candidates else 0)
 
-        def is_protected_runtime_config_node(node: dict) -> bool:
-            if stats.get("config_only"):
+        protected_config_menu_xmlids_by_id_cache = None
+
+        def protected_config_menu_xmlids_by_id() -> dict[int, str]:
+            nonlocal protected_config_menu_xmlids_by_id_cache
+            if protected_config_menu_xmlids_by_id_cache is not None:
+                return protected_config_menu_xmlids_by_id_cache
+            protected_config_menu_xmlids_by_id_cache = {}
+            try:
+                ModelData = self.env["ir.model.data"].sudo()
+            except Exception:
+                return protected_config_menu_xmlids_by_id_cache
+            modules = {xmlid.split(".", 1)[0] for xmlid in CONFIG_RECOVERY_MENU_XMLIDS}
+            names = {xmlid.split(".", 1)[1] for xmlid in CONFIG_RECOVERY_MENU_XMLIDS}
+            try:
+                rows = ModelData.search([
+                    ("model", "=", "ir.ui.menu"),
+                    ("module", "in", list(modules)),
+                    ("name", "in", list(names)),
+                ])
+            except Exception:
+                rows = []
+            for row in rows or []:
+                xmlid = "%s.%s" % (str(getattr(row, "module", "") or ""), str(getattr(row, "name", "") or ""))
+                menu_id = _to_int(getattr(row, "res_id", 0))
+                if xmlid in CONFIG_RECOVERY_MENU_XMLIDS and menu_id:
+                    protected_config_menu_xmlids_by_id_cache[menu_id] = xmlid
+            return protected_config_menu_xmlids_by_id_cache
+
+        def node_menu_xmlid(node: dict) -> str:
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            return str(node.get("menu_xmlid") or meta.get("menu_xmlid") or "").strip()
+
+        def is_protected_runtime_config_menu_id(menu_id: int) -> bool:
+            menu_id = _to_int(menu_id)
+            if not menu_id or menu_id not in protected_config_menu_xmlids_by_id():
                 return False
+            menu = self.env["ir.ui.menu"].browse(menu_id).exists()
+            return bool(menu and menu_visible_to_user(menu))
+
+        def is_protected_runtime_config_xmlid(xmlid: str) -> bool:
+            xmlid = str(xmlid or "").strip()
+            if xmlid not in CONFIG_RECOVERY_MENU_XMLIDS:
+                return False
+            for menu_id, candidate_xmlid in protected_config_menu_xmlids_by_id().items():
+                if candidate_xmlid == xmlid:
+                    return is_protected_runtime_config_menu_id(menu_id)
+            return False
+
+        def is_protected_runtime_config_node(node: dict) -> bool:
             meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
             menu_id = node_menu_id(node)
+            if is_protected_runtime_config_menu_id(menu_id) or is_protected_runtime_config_xmlid(node_menu_xmlid(node)):
+                return True
+            if stats.get("config_only"):
+                return False
             try:
                 if int(menu_id or 0) in {727, 729, 735, 770}:
                     return False
@@ -699,9 +756,10 @@ class UiMenuConfigPolicy(models.Model):
             if menu_id in seen:
                 return None
             seen.add(menu_id)
-            if stats.get("config_only") and not policy:
+            protected_config_menu = is_protected_runtime_config_menu_id(menu_id)
+            if stats.get("config_only") and not policy and not protected_config_menu:
                 return None
-            if policy and not policy_visible(policy):
+            if policy and not policy_visible(policy) and not protected_config_menu:
                 return None
             label = policy_custom_label(policy) if policy else ""
             label = label or str(menu.name or "").strip()
@@ -813,7 +871,7 @@ class UiMenuConfigPolicy(models.Model):
                 parent_id = int(parent.id or 0)
                 seen.add(parent_id)
                 parent_policy = policies_by_menu.get(parent_id)
-                if parent_policy and policy_visible(parent_policy):
+                if parent_policy and (policy_visible(parent_policy) or is_protected_runtime_config_menu_id(parent_id)):
                     return parent
                 if node_matches_any_menu(nodes, parent):
                     return parent
@@ -883,7 +941,7 @@ class UiMenuConfigPolicy(models.Model):
             visible_policies = [
                 (int(menu_id), policy)
                 for menu_id, policy in policies_by_menu.items()
-                if policy_visible(policy) and policy_menu_exists(policy)
+                if (policy_visible(policy) or is_protected_runtime_config_menu_id(menu_id)) and policy_menu_exists(policy)
             ]
             visible_policies.sort(key=lambda item: (
                 menu_depth(policy_menu_record(item[1])),
@@ -891,6 +949,15 @@ class UiMenuConfigPolicy(models.Model):
             ))
             for _menu_id, policy in visible_policies:
                 next_nodes = ensure_menu_present(next_nodes, policy_menu_record(policy))
+            protected_menus = [
+                self.env["ir.ui.menu"].browse(menu_id).exists()
+                for menu_id in protected_config_menu_xmlids_by_id()
+                if is_protected_runtime_config_menu_id(menu_id)
+            ]
+            protected_menus = [menu for menu in protected_menus if menu]
+            protected_menus.sort(key=lambda menu: (menu_depth(menu), int(menu.id or 0)))
+            for menu in protected_menus:
+                next_nodes = ensure_menu_present(next_nodes, menu)
             return sort_children(next_nodes)
 
         def align_visible_configured_parentage(nodes: list[dict]) -> list[dict]:
@@ -898,7 +965,7 @@ class UiMenuConfigPolicy(models.Model):
             visible_policies = [
                 (int(menu_id), policy)
                 for menu_id, policy in policies_by_menu.items()
-                if policy_visible(policy) and policy_menu_exists(policy)
+                if (policy_visible(policy) or is_protected_runtime_config_menu_id(menu_id)) and policy_menu_exists(policy)
             ]
             visible_policies.sort(key=lambda item: (
                 menu_depth(policy_menu_record(item[1])),

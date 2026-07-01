@@ -11,6 +11,7 @@ from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
 from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
 from odoo.addons.smart_core.handlers.api_onchange import ApiOnchangeHandler
+from odoo.addons.smart_core.handlers.menu_configuration import _menu_config_contract_json
 from odoo.addons.smart_core.handlers.system_init import (
     _apply_user_menu_config_to_delivery_nav,
     _filter_nav_by_release_gate,
@@ -35,6 +36,32 @@ business_config_center = ref("smart_construction_core.menu_sc_business_config_ce
 business_config_group = ref("smart_construction_core.group_sc_cap_business_config_admin")
 smart_core_admin_group = ref("smart_core.group_smart_core_admin")
 smart_core_business_config_group = ref("smart_core.group_smart_core_business_config_admin")
+
+
+def publish_temp_menu_contract(policies):
+    Contract = env["ui.business.config.contract"].sudo()  # noqa: F821
+    company_id = int(env.company.id or 0)  # noqa: F821
+    values = {
+        "name": "menu.config.company.%s" % company_id,
+        "model": "ir.ui.menu",
+        "company_id": company_id,
+        "active": True,
+        "status": "draft",
+        "contract_json": _menu_config_contract_json(company_id, policies),
+    }
+    contract = Contract.search([
+        ("active", "=", True),
+        ("name", "=", values["name"]),
+        ("model", "=", "ir.ui.menu"),
+        ("company_id", "in", [False, company_id]),
+    ], order="version_no desc, id desc", limit=1)
+    if contract:
+        contract.write(values)
+    else:
+        contract = Contract.create(values)
+    contract.action_publish()
+    return contract
+
 
 if menu and business_config_center and menu.parent_id != business_config_center:
     errors.append({"menu_parent": menu.parent_id.get_external_id(), "expected": business_config_center.get_external_id()})
@@ -80,6 +107,14 @@ try:
         }
     )
     created_menus |= probe_destination_menu | probe_target_menu | probe_hidden_menu
+    if probe_destination_menu:
+        created |= Policy.create(
+            {
+                "menu_id": probe_destination_menu.id,
+                "company_id": env.company.id,  # noqa: F821
+                "visible": True,
+            }
+        )
     if probe_target_menu:
         created |= Policy.create(
             {
@@ -178,6 +213,7 @@ try:
             }
         ],
     }
+    publish_temp_menu_contract(created)
     overlaid, stats = Policy.apply_runtime_overlay(nav_fact, user=env.user)  # noqa: F821
     flat_by_id = {row.get("menu_id"): row for row in overlaid.get("flat", [])}
     if flat_by_id.get(probe_target_menu.id, {}).get("name") != "业务配置中心":
@@ -190,12 +226,16 @@ try:
         errors.append({"overlay_hidden_count": stats})
     if (stats or {}).get("moved_count", 0) < 1:
         errors.append({"overlay_moved_count": stats})
-    destination_rows = [
-        row
-        for root in overlaid.get("tree", [])
-        for row in (root.get("children") if isinstance(root.get("children"), list) else [])
-        if row.get("menu_id") == probe_destination_menu.id
-    ]
+    def flatten_nav(nodes):
+        out = []
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            out.append(node)
+            out.extend(flatten_nav(node.get("children") if isinstance(node.get("children"), list) else []))
+        return out
+
+    destination_rows = [row for row in flatten_nav(overlaid.get("tree")) if row.get("menu_id") == probe_destination_menu.id]
     destination_children = destination_rows[0].get("children", []) if destination_rows else []
     if probe_target_menu.id not in {row.get("menu_id") for row in destination_children if isinstance(row, dict)}:
         errors.append({"overlay_move_failed": destination_children})
@@ -212,7 +252,15 @@ if not wutao:
 elif menu:
     runtime_policy = Policy.browse()
     try:
-        runtime_policy = Policy.create(
+        if destination_menu:
+            runtime_policy |= Policy.create(
+                {
+                    "menu_id": destination_menu.id,
+                    "company_id": env.company.id,  # noqa: F821
+                    "visible": True,
+                }
+            )
+        runtime_policy |= Policy.create(
             {
                 "menu_id": menu.id,
                 "company_id": env.company.id,  # noqa: F821
@@ -222,6 +270,7 @@ elif menu:
                 "visible": True,
             }
         )
+        publish_temp_menu_contract(runtime_policy)
         wutao_env = env(user=wutao.id)  # noqa: F821
         su_env = api.Environment(env.cr, SUPERUSER_ID, dict(wutao_env.context or {}))  # noqa: F821
         nav_data, _nav_versions = NavDispatcher(wutao_env, su_env).build_nav(
