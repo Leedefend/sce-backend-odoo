@@ -73,6 +73,10 @@ make mod.upgrade MODULE=smart_construction_core DB_NAME=sc_demo CODEX_NEED_UPGRA
 make verify.product.menu.release.ready DB_NAME=sc_demo
 ```
 
+正式产品总发布门禁 `verify.product.release.ready` 已固定依赖
+`verify.product.menu.release.ready`。因此正式发布不能绕过菜单发布流程；专项菜单变更可以单独先跑
+`verify.product.menu.release.ready`，进入总发布时仍会再次纳入总门禁。
+
 `verify.product.menu.release.ready` 固定包含：
 
 - `verify.product.menu.catalog`

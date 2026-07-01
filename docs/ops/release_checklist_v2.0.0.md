@@ -44,6 +44,9 @@ before the final tag.
 The readiness chain includes `make verify.docs.product_boundary`, so new addon
 modules and product-boundary edits must keep the formal product boundary
 catalog complete before release.
+The readiness chain also includes `make verify.product.menu.release.ready`, so
+formal product menu changes, system configuration entries, and runtime user
+menu configuration boundaries must pass the menu release gate before release.
 
 The platform performance sub-gate must measure the Web boot path with
 `scene_ready_mode=registry`; full scene hydration remains a deep-link/runtime
