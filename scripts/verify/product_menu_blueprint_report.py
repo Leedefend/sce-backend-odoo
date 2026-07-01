@@ -133,7 +133,7 @@ def _render_boundary_section(rows: list[dict], layer: str, title: str) -> list[s
     return lines
 
 
-def _history_inside_formal_centers(rows: list[dict]) -> list[dict]:
+def _history_inside_formal_centers(rows: list[dict], formal_center_names: set[str]) -> list[dict]:
     out = []
     for row in rows:
         parts = _parts(row)
@@ -142,7 +142,7 @@ def _history_inside_formal_centers(rows: list[dict]) -> list[dict]:
             and row.get("layer") == "history_acceptance"
             and len(parts) >= 3
             and parts[0] == PRODUCT_ROOT
-            and parts[1] not in {"用户核对菜单", "用户验收", "基础设置", "系统配置"}
+            and parts[1] in formal_center_names
         ):
             out.append(row)
     return sorted(out, key=lambda item: _text(item.get("path")))
@@ -168,7 +168,8 @@ def main() -> int:
         and _parts(row)[0] == PRODUCT_ROOT
     ]
     centers = sorted(centers, key=lambda item: (int(item.get("sequence") or 0), _text(item.get("path"))))
-    mixed_history_rows = _history_inside_formal_centers(rows)
+    formal_center_names = {_parts(row)[1] for row in centers if len(_parts(row)) >= 2}
+    mixed_history_rows = _history_inside_formal_centers(rows, formal_center_names)
 
     lines = [
         "# 产品菜单蓝图 V1",

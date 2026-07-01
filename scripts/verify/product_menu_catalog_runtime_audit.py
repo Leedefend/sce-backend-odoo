@@ -43,6 +43,12 @@ INTERNAL_HISTORY_PATH_TOKENS = (
     "系统配置",
     "历史财务事实（内部）",
 )
+CONFIG_ADMIN_GROUP_XMLIDS = (
+    "smart_construction_core.group_sc_cap_business_config_admin",
+    "smart_construction_core.group_sc_cap_config_admin",
+    "smart_core.group_smart_core_business_config_admin",
+    "smart_core.group_smart_core_admin",
+)
 
 SYSTEM_CONFIG_XMLIDS = set(LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS) | {
     "smart_construction_core.menu_sc_business_config_center",
@@ -233,6 +239,18 @@ def _visible_by_login(menu_ids: set[int]) -> dict[str, list[str]]:
     return out
 
 
+def _config_admin_logins() -> set[str]:
+    group_ids = []
+    for xmlid in CONFIG_ADMIN_GROUP_XMLIDS:
+        group = env.ref(xmlid, raise_if_not_found=False)  # noqa: F821
+        if group:
+            group_ids.append(int(group.id))
+    if not group_ids:
+        return set()
+    users = env["res.users"].sudo().search([("groups_id", "in", group_ids)])  # noqa: F821
+    return {str(user.login or "").strip() for user in users if str(user.login or "").strip()}
+
+
 def _classify(row: dict[str, object]) -> tuple[str, list[str], bool]:
     xmlid = _text(row.get("xmlid"))
     path = _text(row.get("path"))
@@ -381,6 +399,8 @@ def _export() -> dict[str, object]:
         layer_counts[row["layer"]] = layer_counts.get(row["layer"], 0) + 1
 
     internal_history_business_visible = []
+    config_admin_logins = _config_admin_logins()
+    ordinary_business_system_config_visible = []
     for row in rows:
         visible_business_logins = sorted(BUSINESS_VISIBLE_LOGINS.intersection(row.get("visible_logins") or []))
         path = _text(row.get("path"))
@@ -397,10 +417,26 @@ def _export() -> dict[str, object]:
                     "visible_logins": visible_business_logins,
                 }
             )
+        visible_ordinary_business_logins = [
+            login for login in visible_business_logins if login not in config_admin_logins
+        ]
+        if row.get("active") and row.get("layer") == "system_config" and visible_ordinary_business_logins:
+            ordinary_business_system_config_visible.append(
+                {
+                    "xmlid": row.get("xmlid"),
+                    "path": path,
+                    "visible_logins": visible_ordinary_business_logins,
+                }
+            )
     if internal_history_business_visible:
         raise AssertionError(
             "internal history menus must not be visible to business users: %s"
             % json.dumps(internal_history_business_visible[:20], ensure_ascii=False)
+        )
+    if ordinary_business_system_config_visible:
+        raise AssertionError(
+            "system config menus must not be visible to ordinary business users: %s"
+            % json.dumps(ordinary_business_system_config_visible[:20], ensure_ascii=False)
         )
 
     top_level = [
@@ -423,6 +459,7 @@ def _export() -> dict[str, object]:
             "action_menu_count": sum(1 for row in rows if row["action_raw"]),
             "needs_review_count": sum(1 for row in rows if row["needs_review"]),
             "internal_history_business_visible_count": len(internal_history_business_visible),
+            "ordinary_business_system_config_visible_count": len(ordinary_business_system_config_visible),
             "layer_counts": layer_counts,
         },
         "top_level": [

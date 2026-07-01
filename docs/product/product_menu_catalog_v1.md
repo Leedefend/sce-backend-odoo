@@ -5,17 +5,19 @@
 ## 运行时来源
 
 - database: `sc_demo`
-- generated_at: `2026-07-01T13:37:34.204581+00:00`
+- generated_at: `2026-07-01T13:48:08.404544+00:00`
 - roots: `smart_construction_core.menu_sc_root, smart_core.menu_smart_core_platform_root`
 - visible_login_probe: `admin, wutao, demo_business_full, demo_role_finance, demo_role_executive`
 
 ## 总览
 
-- menu_count: `516`
-- active_menu_count: `439`
+- menu_count: `517`
+- active_menu_count: `440`
 - inactive_menu_count: `77`
 - action_menu_count: `428`
 - needs_review_count: `0`
+- internal_history_business_visible_count: `0`
+- ordinary_business_system_config_visible_count: `0`
 
 ## 分层定义
 
@@ -29,8 +31,8 @@
 
 | Layer | Count |
 | --- | ---: |
-| `formal_product` | 262 |
-| `system_config` | 30 |
+| `formal_product` | 266 |
+| `system_config` | 27 |
 | `user_config` | 0 |
 | `history_acceptance` | 194 |
 | `dev_governance` | 30 |
@@ -41,6 +43,7 @@
 | --- | --- | --- |
 | 智慧施工管理平台 / 人事行政 | `smart_construction_core.menu_sc_hr_admin_center` | wutao, demo_business_full, demo_role_finance |
 | 智慧施工管理平台 / 合同中心 | `smart_construction_core.menu_sc_contract_center` | wutao, demo_business_full, demo_role_finance, demo_role_executive |
+| 智慧施工管理平台 / 基础资料 | `smart_construction_core.menu_sc_master_data_center` | wutao, demo_business_full |
 | 智慧施工管理平台 / 成本中心 | `smart_construction_core.menu_sc_cost_center` | wutao, demo_business_full |
 | 智慧施工管理平台 / 施工管理 | `smart_construction_core.menu_sc_construction_management_center` | wutao, demo_business_full, demo_role_executive |
 | 智慧施工管理平台 / 智慧大屏 | `smart_construction_core.menu_sc_projection_root` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive |
@@ -60,9 +63,10 @@
 | 平台内核 / 产品发布 | `dev_governance` |  | `smart_core.menu_smart_core_release_root` |
 | 平台内核 / 公司访问 | `dev_governance` |  | `smart_core.menu_smart_core_company_access_root` |
 | 智慧施工管理平台 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_root` |
+| 智慧施工管理平台 / 业务配置 | `system_config` | wutao | `smart_construction_core.menu_sc_business_config_center` |
 | 智慧施工管理平台 / 人事行政 | `formal_product` | wutao, demo_business_full, demo_role_finance | `smart_construction_core.menu_sc_hr_admin_center` |
 | 智慧施工管理平台 / 合同中心 | `formal_product` | wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_contract_center` |
-| 智慧施工管理平台 / 基础设置 | `system_config` | wutao, demo_business_full | `smart_construction_core.menu_sc_business_config_center` |
+| 智慧施工管理平台 / 基础资料 | `formal_product` | wutao, demo_business_full | `smart_construction_core.menu_sc_master_data_center` |
 | 智慧施工管理平台 / 成本中心 | `formal_product` | wutao, demo_business_full | `smart_construction_core.menu_sc_cost_center` |
 | 智慧施工管理平台 / 施工管理 | `formal_product` | wutao, demo_business_full, demo_role_executive | `smart_construction_core.menu_sc_construction_management_center` |
 | 智慧施工管理平台 / 智慧大屏 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_projection_root` |
@@ -93,6 +97,35 @@
     - 订阅实例 [`dev_governance`] -> `sc.subscription`
     - 运营任务 [`dev_governance`] -> `sc.ops.job`
 - 智慧施工管理平台 [`formal_product`]
+  - 业务配置 [`system_config`]
+    - 业务分类字典 [`system_config`] -> `sc.business.category`
+    - 业务配置工作台 [`system_config`] -> `ui.business.config.contract`
+    - 定额字典 [`system_config`]
+      - 专业 [`system_config`] -> `project.dictionary`
+      - 全部定额字典 [`system_config`] -> `project.dictionary`
+      - 四川定额导入 [`system_config`] -> `quota.import.wizard`
+      - 子目 [`system_config`] -> `project.dictionary`
+      - 定额项目 [`system_config`] -> `project.dictionary`
+      - 章节 [`system_config`] -> `project.dictionary`
+    - 定额库 [`system_config`]
+      - 定额中心（左树右明细） [`system_config`] -> `project.dictionary`
+      - 定额子目 [`system_config`] -> `project.dictionary`
+      - 定额层级 [`system_config`] -> `project.dictionary`
+    - 审批岗位人员 [`system_config`] -> `sc.approval.scope`
+    - 审批配置 [`system_config`] -> `sc.approval.policy`
+    - 数据字典 [`system_config`] -> `sc.dictionary`
+    - 新增表单字段 [`system_config`] -> `ui.form.custom.field.wizard`
+    - 材料档案 [`history_acceptance` inactive] -> `sc.material.catalog`
+    - 用户优先入口迭代计划 [`system_config`] -> `sc.legacy.user.priority.menu.plan`
+    - 用户信息与权限 [`history_acceptance`] -> `res.users`
+      - 历史角色投影 [`history_acceptance`] -> `sc.legacy.user.role`
+      - 用户信息 [`history_acceptance`] -> `sc.legacy.user.profile`
+      - 用户账号与权限 [`system_config`] -> `res.users`
+      - 项目授权范围 [`history_acceptance`] -> `sc.legacy.user.project.scope`
+    - 菜单配置 [`system_config`] -> `ui.menu.config.policy`
+    - 表单字段配置 [`system_config`] -> `ui.form.field.policy`
+    - 阶段要求配置 [`system_config`] -> `sc.project.stage.requirement.item`
+    - 预算类型 [`system_config`] -> `project.cost.code`
   - 人事行政 [`formal_product`]
     - 公司人员名册 [`history_acceptance` inactive] -> `sc.legacy.user.profile`
     - 印章使用审批表 [`formal_product`] -> `sc.office.admin.document`
@@ -133,38 +166,10 @@
       - 收入合同结算 [`formal_product`] -> `sc.settlement.order`
       - 施工合同 [`formal_product`] -> `construction.contract.income`
       - 项目收入合同 [`formal_product`] -> `construction.contract.income`
-  - 基础设置 [`system_config`]
-    - 业务分类字典 [`system_config`] -> `sc.business.category`
-    - 业务配置工作台 [`system_config`] -> `ui.business.config.contract`
-    - 供应商 [`system_config`] -> `res.partner`
-    - 定额字典 [`system_config`]
-      - 专业 [`system_config`] -> `project.dictionary`
-      - 全部定额字典 [`system_config`] -> `project.dictionary`
-      - 四川定额导入 [`system_config`] -> `quota.import.wizard`
-      - 子目 [`system_config`] -> `project.dictionary`
-      - 定额项目 [`system_config`] -> `project.dictionary`
-      - 章节 [`system_config`] -> `project.dictionary`
-    - 定额库 [`system_config`]
-      - 定额中心（左树右明细） [`system_config`] -> `project.dictionary`
-      - 定额子目 [`system_config`] -> `project.dictionary`
-      - 定额层级 [`system_config`] -> `project.dictionary`
-    - 审批岗位人员 [`system_config`] -> `sc.approval.scope`
-    - 审批配置 [`system_config`] -> `sc.approval.policy`
-    - 客户 [`system_config`] -> `res.partner`
-    - 数据字典 [`system_config`] -> `sc.dictionary`
-    - 新增表单字段 [`system_config`] -> `ui.form.custom.field.wizard`
-    - 材料档案 [`history_acceptance` inactive] -> `sc.material.catalog`
-    - 用户优先入口迭代计划 [`system_config`] -> `sc.legacy.user.priority.menu.plan`
-    - 用户信息与权限 [`history_acceptance`] -> `res.users`
-      - 历史角色投影 [`history_acceptance`] -> `sc.legacy.user.role`
-      - 用户信息 [`history_acceptance`] -> `sc.legacy.user.profile`
-      - 用户账号与权限 [`system_config`] -> `res.users`
-      - 项目授权范围 [`history_acceptance`] -> `sc.legacy.user.project.scope`
-    - 组织架构 [`system_config`] -> `hr.department`
-    - 菜单配置 [`system_config`] -> `ui.menu.config.policy`
-    - 表单字段配置 [`system_config`] -> `ui.form.field.policy`
-    - 阶段要求配置 [`system_config`] -> `sc.project.stage.requirement.item`
-    - 预算类型 [`system_config`] -> `project.cost.code`
+  - 基础资料 [`formal_product`]
+    - 供应商 [`formal_product`] -> `res.partner`
+    - 客户 [`formal_product`] -> `res.partner`
+    - 组织架构 [`formal_product`] -> `hr.department`
   - 成本中心 [`formal_product`]
     - WBS/分部分项 [`formal_product`] -> `construction.work.breakdown`
     - 成本台账 [`formal_product`] -> `project.cost.ledger`

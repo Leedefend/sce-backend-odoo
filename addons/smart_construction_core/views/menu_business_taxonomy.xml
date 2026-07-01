@@ -109,9 +109,22 @@
     </record>
 
     <record id="menu_sc_business_config_center" model="ir.ui.menu">
-        <field name="name">基础设置</field>
+        <field name="name">业务配置</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
         <field name="sequence">90</field>
+        <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_config_admin'),
+            ref('smart_construction_core.group_sc_cap_config_admin'),
+            ref('smart_core.group_smart_core_business_config_admin'),
+            ref('smart_core.group_smart_core_admin')
+        ])]"/>
+    </record>
+
+    <record id="menu_sc_master_data_center" model="ir.ui.menu">
+        <field name="name">基础资料</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">85</field>
         <field name="action" eval="False"/>
         <field name="groups_id" eval="[(5, 0, 0)]"/>
     </record>
@@ -2406,16 +2419,16 @@
         <field name="sequence">90</field>
     </record>
 
-    <!-- 基础设置 -->
+    <!-- 基础资料 -->
     <menuitem id="menu_sc_customer_partner"
               name="客户"
-              parent="smart_construction_core.menu_sc_business_config_center"
+              parent="smart_construction_core.menu_sc_master_data_center"
               action="smart_construction_core.action_sc_customer_partner"
               sequence="1"
               groups="smart_construction_core.group_sc_cap_contact_manager"/>
     <menuitem id="menu_sc_supplier_partner"
               name="供应商"
-              parent="smart_construction_core.menu_sc_business_config_center"
+              parent="smart_construction_core.menu_sc_master_data_center"
               action="smart_construction_core.action_sc_supplier_partner"
               sequence="2"
               groups="smart_construction_core.group_sc_cap_contact_manager"/>
@@ -2426,7 +2439,7 @@
     </record>
     <record id="menu_sc_organization_department" model="ir.ui.menu">
         <field name="name">组织架构</field>
-        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_master_data_center"/>
         <field name="sequence">10</field>
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_data_read')])]"/>
     </record>

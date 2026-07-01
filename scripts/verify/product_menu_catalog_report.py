@@ -93,6 +93,8 @@ def main() -> int:
         f"- inactive_menu_count: `{summary.get('inactive_menu_count', 0)}`",
         f"- action_menu_count: `{summary.get('action_menu_count', 0)}`",
         f"- needs_review_count: `{summary.get('needs_review_count', 0)}`",
+        f"- internal_history_business_visible_count: `{summary.get('internal_history_business_visible_count', 0)}`",
+        f"- ordinary_business_system_config_visible_count: `{summary.get('ordinary_business_system_config_visible_count', 0)}`",
         "",
         "## 分层定义",
         "",

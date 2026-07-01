@@ -4,9 +4,9 @@
 
 ## 当前结论
 
-- 正式产品一级中心：`12` 个
-- 正式产品 active 菜单：`237` 个
-- 系统配置菜单：`30` 个，其中 active `30` 个
+- 正式产品一级中心：`13` 个
+- 正式产品 active 菜单：`241` 个
+- 系统配置菜单：`27` 个，其中 active `27` 个
 - 历史验收菜单：`194` 个，其中 active `142` 个
 - 开发治理菜单：`30` 个，其中 active `30` 个
 - 待复核菜单：`0` 个
@@ -27,6 +27,7 @@
 | 财务中心 | 71 | 0 | 0 | 35 | `smart_construction_core.menu_sc_finance_center` |
 | 税务中心 | 9 | 0 | 0 | 2 | `smart_construction_core.menu_sc_tax_center` |
 | 统计分析 | 21 | 0 | 0 | 18 | `smart_construction_core.menu_sc_data_center` |
+| 基础资料 | 3 | 0 | 0 | 0 | `smart_construction_core.menu_sc_master_data_center` |
 
 ## 正式产品菜单结构
 
@@ -332,43 +333,50 @@
   - 资金台账 -> `sc.treasury.ledger`
   - 企业资金日报汇总 -> `sc.fund.daily.summary`
 
+### 基础资料
+
+- formal_active: `3`
+- history_active_under_center: `0`
+- system_config_active_under_center: `0`
+
+- 客户 -> `res.partner`
+- 供应商 -> `res.partner`
+- 组织架构 -> `hr.department`
+
 ## 系统配置边界
 
 | 边界入口 | active 子入口 | action 子入口 | XMLID |
 | --- | ---: | ---: | --- |
-| 智慧施工管理平台 / 基础设置 | 26 | 24 | `smart_construction_core.menu_sc_business_config_center` |
-| 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 用户账号与权限 | 0 | 0 | `smart_construction_core.menu_sc_runtime_user_management` |
+| 智慧施工管理平台 / 业务配置 | 23 | 21 | `smart_construction_core.menu_sc_business_config_center` |
+| 智慧施工管理平台 / 业务配置 / 用户信息与权限 / 用户账号与权限 | 0 | 0 | `smart_construction_core.menu_sc_runtime_user_management` |
 | 智慧施工管理平台 / 系统配置 | 2 | 1 | `smart_construction_core.menu_sc_config_center` |
 
 ### active 明细
 
-- 智慧施工管理平台 / 基础设置
-- 智慧施工管理平台 / 基础设置 / 业务分类字典 -> `sc.business.category`
-- 智慧施工管理平台 / 基础设置 / 业务配置工作台 -> `ui.business.config.contract`
-- 智慧施工管理平台 / 基础设置 / 供应商 -> `res.partner`
-- 智慧施工管理平台 / 基础设置 / 定额字典
-- 智慧施工管理平台 / 基础设置 / 定额字典 / 专业 -> `project.dictionary`
-- 智慧施工管理平台 / 基础设置 / 定额字典 / 全部定额字典 -> `project.dictionary`
-- 智慧施工管理平台 / 基础设置 / 定额字典 / 四川定额导入 -> `quota.import.wizard`
-- 智慧施工管理平台 / 基础设置 / 定额字典 / 子目 -> `project.dictionary`
-- 智慧施工管理平台 / 基础设置 / 定额字典 / 定额项目 -> `project.dictionary`
-- 智慧施工管理平台 / 基础设置 / 定额字典 / 章节 -> `project.dictionary`
-- 智慧施工管理平台 / 基础设置 / 定额库
-- 智慧施工管理平台 / 基础设置 / 定额库 / 定额中心（左树右明细） -> `project.dictionary`
-- 智慧施工管理平台 / 基础设置 / 定额库 / 定额子目 -> `project.dictionary`
-- 智慧施工管理平台 / 基础设置 / 定额库 / 定额层级 -> `project.dictionary`
-- 智慧施工管理平台 / 基础设置 / 审批岗位人员 -> `sc.approval.scope`
-- 智慧施工管理平台 / 基础设置 / 审批配置 -> `sc.approval.policy`
-- 智慧施工管理平台 / 基础设置 / 客户 -> `res.partner`
-- 智慧施工管理平台 / 基础设置 / 数据字典 -> `sc.dictionary`
-- 智慧施工管理平台 / 基础设置 / 新增表单字段 -> `ui.form.custom.field.wizard`
-- 智慧施工管理平台 / 基础设置 / 用户优先入口迭代计划 -> `sc.legacy.user.priority.menu.plan`
-- 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 用户账号与权限 -> `res.users`
-- 智慧施工管理平台 / 基础设置 / 组织架构 -> `hr.department`
-- 智慧施工管理平台 / 基础设置 / 菜单配置 -> `ui.menu.config.policy`
-- 智慧施工管理平台 / 基础设置 / 表单字段配置 -> `ui.form.field.policy`
-- 智慧施工管理平台 / 基础设置 / 阶段要求配置 -> `sc.project.stage.requirement.item`
-- 智慧施工管理平台 / 基础设置 / 预算类型 -> `project.cost.code`
+- 智慧施工管理平台 / 业务配置
+- 智慧施工管理平台 / 业务配置 / 业务分类字典 -> `sc.business.category`
+- 智慧施工管理平台 / 业务配置 / 业务配置工作台 -> `ui.business.config.contract`
+- 智慧施工管理平台 / 业务配置 / 定额字典
+- 智慧施工管理平台 / 业务配置 / 定额字典 / 专业 -> `project.dictionary`
+- 智慧施工管理平台 / 业务配置 / 定额字典 / 全部定额字典 -> `project.dictionary`
+- 智慧施工管理平台 / 业务配置 / 定额字典 / 四川定额导入 -> `quota.import.wizard`
+- 智慧施工管理平台 / 业务配置 / 定额字典 / 子目 -> `project.dictionary`
+- 智慧施工管理平台 / 业务配置 / 定额字典 / 定额项目 -> `project.dictionary`
+- 智慧施工管理平台 / 业务配置 / 定额字典 / 章节 -> `project.dictionary`
+- 智慧施工管理平台 / 业务配置 / 定额库
+- 智慧施工管理平台 / 业务配置 / 定额库 / 定额中心（左树右明细） -> `project.dictionary`
+- 智慧施工管理平台 / 业务配置 / 定额库 / 定额子目 -> `project.dictionary`
+- 智慧施工管理平台 / 业务配置 / 定额库 / 定额层级 -> `project.dictionary`
+- 智慧施工管理平台 / 业务配置 / 审批岗位人员 -> `sc.approval.scope`
+- 智慧施工管理平台 / 业务配置 / 审批配置 -> `sc.approval.policy`
+- 智慧施工管理平台 / 业务配置 / 数据字典 -> `sc.dictionary`
+- 智慧施工管理平台 / 业务配置 / 新增表单字段 -> `ui.form.custom.field.wizard`
+- 智慧施工管理平台 / 业务配置 / 用户优先入口迭代计划 -> `sc.legacy.user.priority.menu.plan`
+- 智慧施工管理平台 / 业务配置 / 用户信息与权限 / 用户账号与权限 -> `res.users`
+- 智慧施工管理平台 / 业务配置 / 菜单配置 -> `ui.menu.config.policy`
+- 智慧施工管理平台 / 业务配置 / 表单字段配置 -> `ui.form.field.policy`
+- 智慧施工管理平台 / 业务配置 / 阶段要求配置 -> `sc.project.stage.requirement.item`
+- 智慧施工管理平台 / 业务配置 / 预算类型 -> `project.cost.code`
 - 智慧施工管理平台 / 系统配置
 - 智慧施工管理平台 / 系统配置 / 历史财务事实（内部）
 - 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 流程工作台 -> `sc.history.todo`
@@ -381,7 +389,7 @@
 
 | 边界入口 | active 子入口 | action 子入口 | XMLID |
 | --- | ---: | ---: | --- |
-| 智慧施工管理平台 / 基础设置 / 用户信息与权限 | 3 | 3 | `smart_construction_core.menu_sc_legacy_user_context` |
+| 智慧施工管理平台 / 业务配置 / 用户信息与权限 | 3 | 3 | `smart_construction_core.menu_sc_legacy_user_context` |
 | 智慧施工管理平台 / 用户核对菜单 | 75 | 54 | `smart_construction_core.menu_scbs55_user_acceptance_root` |
 | 智慧施工管理平台 / 用户验收 | 43 | 35 | `smart_construction_core.menu_sc_user_acceptance_root` |
 | 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史供应商合同计价方式 | 0 | 0 | `smart_construction_core.menu_sc_legacy_supplier_contract_pricing_fact` |
@@ -405,10 +413,10 @@
 
 ### active 明细
 
-- 智慧施工管理平台 / 基础设置 / 用户信息与权限 -> `res.users`
-- 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 历史角色投影 -> `sc.legacy.user.role`
-- 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 用户信息 -> `sc.legacy.user.profile`
-- 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 项目授权范围 -> `sc.legacy.user.project.scope`
+- 智慧施工管理平台 / 业务配置 / 用户信息与权限 -> `res.users`
+- 智慧施工管理平台 / 业务配置 / 用户信息与权限 / 历史角色投影 -> `sc.legacy.user.role`
+- 智慧施工管理平台 / 业务配置 / 用户信息与权限 / 用户信息 -> `sc.legacy.user.profile`
+- 智慧施工管理平台 / 业务配置 / 用户信息与权限 / 项目授权范围 -> `sc.legacy.user.project.scope`
 - 智慧施工管理平台 / 用户核对菜单
 - 智慧施工管理平台 / 用户核对菜单 / 人事行政
 - 智慧施工管理平台 / 用户核对菜单 / 人事行政 / 印章使用审批表 -> `sc.office.admin.document`
