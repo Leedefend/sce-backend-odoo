@@ -1296,6 +1296,7 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '未付款金额': ['payment_unpaid_amount'],
         '已申请金额': ['payment_requested_amount'],
         '未申请金额': ['payment_unrequested_amount'],
+        '录入时间': ['settlement_date', 'source_created_at'],
     },
     'sc.equipment.settlement': {
         '结算内容': ['settlement_content'],
@@ -1303,12 +1304,14 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '未付款金额': ['payment_unpaid_amount'],
         '已申请金额': ['payment_requested_amount'],
         '未申请金额': ['payment_unrequested_amount'],
+        '录入时间': ['settlement_date', 'source_created_at'],
     },
     'sc.subcontract.settlement': {
         '已付款金额': ['payment_paid_amount'],
         '未付款金额': ['payment_unpaid_amount'],
         '已申请金额': ['payment_requested_amount'],
         '未申请金额': ['payment_unrequested_amount'],
+        '录入时间': ['settlement_date', 'source_created_at'],
     },
     'sc.receipt.income': {
         '单据状态': ['legacy_document_state_label', 'legacy_document_state', 'state'],
@@ -1380,8 +1383,8 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '收款人': ['receipt_payee_name', 'receipt_partner_name'],
         '付款方式': ['payment_method'],
         '附件': ['legacy_visible_attachment', 'attachment_ids', 'legacy_attachment_ref'],
-        '录入人': ['legacy_source_created_by'],
-        '录入时间': ['legacy_source_created_at'],
+        '录入人': ['applicant_id', 'legacy_source_created_by'],
+        '录入时间': ['apply_date', 'legacy_source_created_at'],
     },
     'tender.bid': {
         '单据状态': ['tender_bid_status_display', 'legacy_visible_document_state', 'state'],
@@ -1583,6 +1586,7 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '未付款金额': ['payment_remaining_amount'],
         '已申请金额': ['payment_requested_amount'],
         '未申请金额': ['payment_remaining_amount'],
+        '录入时间': ['settlement_date', 'source_created_at'],
     },
     'sc.business.entity': {
         '单据状态': ['document_state_text', 'mapping_state', 'legacy_visible_document_state'],
@@ -1687,6 +1691,8 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '未付款金额': ['payment_unpaid_amount'],
         '已结算金额': ['settlement_settled_amount'],
         '附件': ['attachment_ids'],
+        '录入人': ['keeper_id', 'source_created_by'],
+        '录入时间': ['inbound_date', 'source_created_at'],
     },
     'sc.material.purchase.request': {
         '总金额': ['amount_total'],
@@ -1695,6 +1701,7 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '未付款金额': ['payment_unpaid_amount'],
         '未开票金额': ['uninvoiced_amount'],
         '税率': ['tax_rate_text'],
+        '录入时间': ['request_date', 'source_created_at'],
     },
     'sc.payment.execution': {
         '单据状态': ['partner_payment_status_display', 'state'],
@@ -1764,10 +1771,10 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '补助金额': ['amount'],
         '备注': ['result_note', 'description', 'legacy_visible_note'],
         '附件': ['attachment_ids'],
-        '录入人': ['source_created_by', 'legacy_visible_creator_name'],
-        '登记人': ['source_created_by', 'legacy_visible_creator_name'],
-        '录入时间': ['source_created_at', 'legacy_visible_created_time'],
-        '登记时间': ['source_created_at', 'legacy_visible_created_time'],
+        '录入人': ['requester_id', 'handler_id', 'source_created_by', 'legacy_visible_creator_name'],
+        '登记人': ['requester_id', 'handler_id', 'source_created_by', 'legacy_visible_creator_name'],
+        '录入时间': ['business_date', 'source_created_at', 'legacy_visible_created_time'],
+        '登记时间': ['business_date', 'source_created_at', 'legacy_visible_created_time'],
     },
     'sc.document.admin.document': {
         '单据编号': ['legacy_document_no', 'name'],
@@ -1874,9 +1881,21 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '单价': ['price_unit'],
         '金额': ['amount'],
         '附件': ['attachment_ids'],
+        '录入人': ['recorder_id', 'source_created_by'],
+        '录入时间': ['usage_date', 'source_created_at'],
     },
     'sc.equipment.request': {
         '增值税类型': ['vat_type_text'],
+        '经办人及电话': ['requester_id', 'source_created_by'],
+        '录入时间': ['request_date', 'source_created_at'],
+    },
+    'sc.subcontract.register': {
+        '录入人': ['responsible_id', 'source_created_by'],
+        '录入时间': ['register_date', 'source_created_at'],
+    },
+    'sc.material.rental.settlement': {
+        '录入人': ['owner_id', 'source_created_by'],
+        '录入时间': ['settlement_date', 'source_created_at'],
     },
     'sc.material.rental.order': {
         '单据状态': ['legacy_visible_01', 'state'],
@@ -2835,10 +2854,10 @@ def _alias_value(record, label):
             '补助事由': 'item_type',
             '补助人': 'employee_name',
             '备注': 'result_note',
-            '录入人': 'source_created_by',
-            '登记人': 'source_created_by',
-            '录入时间': 'source_created_at',
-            '登记时间': 'source_created_at',
+            '录入人': 'requester_id',
+            '登记人': 'requester_id',
+            '录入时间': 'business_date',
+            '登记时间': 'business_date',
         }
         field_name = strict_sources.get(label)
         if field_name:

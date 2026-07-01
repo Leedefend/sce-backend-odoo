@@ -46,6 +46,9 @@ SOURCE_TRACE_FIELDS = {
     "old_id",
     "old_code",
 }
+MODEL_FORMAL_SOURCE_NAMED_FIELDS = {
+    ("sc.legacy.user.profile", "legacy_created_at"),
+}
 SKIP_FIELD_TYPES = {"binary", "html", "one2many", "many2many"}
 
 
@@ -106,9 +109,11 @@ def _candidate_fields(model_name: str, label: str) -> list[str]:
     return seen
 
 
-def _classify_field(field_name: str | None) -> str:
+def _classify_field(model_name: str, field_name: str | None) -> str:
     if not field_name:
         return "missing"
+    if (model_name, field_name) in MODEL_FORMAL_SOURCE_NAMED_FIELDS:
+        return "formal_product"
     if field_name in EXPLICIT_HISTORY_CARRIERS:
         return "history_carrier"
     if field_name.startswith(TRANSITION_PREFIXES):
@@ -126,7 +131,7 @@ def _best_candidate(model_name: str, candidates: list[str], domain: list[object]
     scored = []
     for index, field_name in enumerate(candidates):
         filled = _non_empty_count(model_name, field_name, domain)
-        field_class = _classify_field(field_name)
+        field_class = _classify_field(model_name, field_name)
         product_rank = 2 if field_class == "formal_product" else 1 if field_class == "source_trace" else 0
         scored.append((product_rank, filled, -index, field_name))
     product_rank, filled, _neg_index, field_name = max(scored)
@@ -158,7 +163,7 @@ def _audit() -> dict[str, object]:
         for label in labels:
             candidates = _candidate_fields(model_name, label)
             field_name, filled = _best_candidate(model_name, candidates, domain, total)
-            field_class = _classify_field(field_name)
+            field_class = _classify_field(model_name, field_name)
             ratio = round(filled / total, 4) if total else 1.0
             by_model[model_name][field_class] += 1
             totals[field_class] += 1

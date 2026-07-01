@@ -44,6 +44,9 @@ SOURCE_TRACE_FIELDS = {
     "old_id",
     "old_code",
 }
+MODEL_FORMAL_SOURCE_NAMED_FIELDS = {
+    ("sc.legacy.user.profile", "legacy_created_at"),
+}
 SKIP_FIELD_TYPES = {"binary", "html", "one2many", "many2many"}
 SYSTEM_OR_TRACE_LABEL_TOKENS = (
     "状态",
@@ -107,9 +110,11 @@ def _candidate_fields(model_name: str, label: str) -> list[str]:
     return seen
 
 
-def _carrier_class(field_name: str | None) -> str:
+def _carrier_class(model_name: str, field_name: str | None) -> str:
     if not field_name:
         return "missing"
+    if (model_name, field_name) in MODEL_FORMAL_SOURCE_NAMED_FIELDS:
+        return "formal_candidate"
     if field_name in EXPLICIT_HISTORY_CARRIERS:
         return "history_carrier"
     if field_name.startswith(TRANSITION_PREFIXES):
@@ -138,7 +143,7 @@ def _is_system_or_trace_label(label: str) -> bool:
 
 
 def _capability_class(model_name: str, label: str, field_name: str | None) -> str:
-    carrier = _carrier_class(field_name)
+    carrier = _carrier_class(model_name, field_name)
     if carrier != "formal_candidate":
         return carrier
     field = _fields(model_name).get(field_name)
