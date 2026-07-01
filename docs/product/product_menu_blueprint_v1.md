@@ -6,8 +6,8 @@
 
 - 正式产品一级中心：`13` 个
 - 正式产品 active 菜单：`241` 个
-- 系统配置菜单：`27` 个，其中 active `27` 个
-- 历史验收菜单：`194` 个，其中 active `142` 个
+- 系统配置菜单：`28` 个，其中 active `28` 个
+- 历史验收菜单：`193` 个，其中 active `141` 个
 - 开发治理菜单：`30` 个，其中 active `30` 个
 - 待复核菜单：`0` 个
 
@@ -347,9 +347,8 @@
 
 | 边界入口 | active 子入口 | action 子入口 | XMLID |
 | --- | ---: | ---: | --- |
-| 智慧施工管理平台 / 业务配置 | 23 | 21 | `smart_construction_core.menu_sc_business_config_center` |
-| 智慧施工管理平台 / 业务配置 / 用户信息与权限 / 用户账号与权限 | 0 | 0 | `smart_construction_core.menu_sc_runtime_user_management` |
-| 智慧施工管理平台 / 系统配置 | 2 | 1 | `smart_construction_core.menu_sc_config_center` |
+| 智慧施工管理平台 / 业务配置 | 22 | 20 | `smart_construction_core.menu_sc_business_config_center` |
+| 智慧施工管理平台 / 系统配置 | 4 | 3 | `smart_construction_core.menu_sc_config_center` |
 
 ### active 明细
 
@@ -372,7 +371,6 @@
 - 智慧施工管理平台 / 业务配置 / 数据字典 -> `sc.dictionary`
 - 智慧施工管理平台 / 业务配置 / 新增表单字段 -> `ui.form.custom.field.wizard`
 - 智慧施工管理平台 / 业务配置 / 用户优先入口迭代计划 -> `sc.legacy.user.priority.menu.plan`
-- 智慧施工管理平台 / 业务配置 / 用户信息与权限 / 用户账号与权限 -> `res.users`
 - 智慧施工管理平台 / 业务配置 / 菜单配置 -> `ui.menu.config.policy`
 - 智慧施工管理平台 / 业务配置 / 表单字段配置 -> `ui.form.field.policy`
 - 智慧施工管理平台 / 业务配置 / 阶段要求配置 -> `sc.project.stage.requirement.item`
@@ -380,6 +378,8 @@
 - 智慧施工管理平台 / 系统配置
 - 智慧施工管理平台 / 系统配置 / 历史财务事实（内部）
 - 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 流程工作台 -> `sc.history.todo`
+- 智慧施工管理平台 / 系统配置 / 用户信息与权限 -> `res.users`
+- 智慧施工管理平台 / 系统配置 / 用户信息与权限 / 用户账号与权限 -> `res.users`
 
 ## 用户配置边界
 
@@ -389,7 +389,6 @@
 
 | 边界入口 | active 子入口 | action 子入口 | XMLID |
 | --- | ---: | ---: | --- |
-| 智慧施工管理平台 / 业务配置 / 用户信息与权限 | 3 | 3 | `smart_construction_core.menu_sc_legacy_user_context` |
 | 智慧施工管理平台 / 用户核对菜单 | 75 | 54 | `smart_construction_core.menu_scbs55_user_acceptance_root` |
 | 智慧施工管理平台 / 用户验收 | 43 | 35 | `smart_construction_core.menu_sc_user_acceptance_root` |
 | 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史供应商合同计价方式 | 0 | 0 | `smart_construction_core.menu_sc_legacy_supplier_contract_pricing_fact` |
@@ -410,13 +409,12 @@
 | 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史资金日报明细 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_daily_line` |
 | 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史资金确认 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_confirmation_line` |
 | 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史项目资金余额 | 0 | 0 | `smart_construction_core.menu_sc_legacy_project_fund_balance_fact` |
+| 智慧施工管理平台 / 系统配置 / 用户信息与权限 / 历史角色投影 | 0 | 0 | `smart_construction_core.menu_sc_legacy_user_role` |
+| 智慧施工管理平台 / 系统配置 / 用户信息与权限 / 用户信息 | 0 | 0 | `smart_construction_core.menu_sc_legacy_user_profile` |
+| 智慧施工管理平台 / 系统配置 / 用户信息与权限 / 项目授权范围 | 0 | 0 | `smart_construction_core.menu_sc_legacy_user_project_scope` |
 
 ### active 明细
 
-- 智慧施工管理平台 / 业务配置 / 用户信息与权限 -> `res.users`
-- 智慧施工管理平台 / 业务配置 / 用户信息与权限 / 历史角色投影 -> `sc.legacy.user.role`
-- 智慧施工管理平台 / 业务配置 / 用户信息与权限 / 用户信息 -> `sc.legacy.user.profile`
-- 智慧施工管理平台 / 业务配置 / 用户信息与权限 / 项目授权范围 -> `sc.legacy.user.project.scope`
 - 智慧施工管理平台 / 用户核对菜单
 - 智慧施工管理平台 / 用户核对菜单 / 人事行政
 - 智慧施工管理平台 / 用户核对菜单 / 人事行政 / 印章使用审批表 -> `sc.office.admin.document`
@@ -555,6 +553,9 @@
 - 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史资金日报明细 -> `sc.legacy.fund.daily.line`
 - 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史资金确认 -> `sc.legacy.fund.confirmation.line`
 - 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史项目资金余额 -> `sc.legacy.project.fund.balance.fact`
+- 智慧施工管理平台 / 系统配置 / 用户信息与权限 / 历史角色投影 -> `sc.legacy.user.role`
+- 智慧施工管理平台 / 系统配置 / 用户信息与权限 / 用户信息 -> `sc.legacy.user.profile`
+- 智慧施工管理平台 / 系统配置 / 用户信息与权限 / 项目授权范围 -> `sc.legacy.user.project.scope`
 
 ## 开发治理边界
 

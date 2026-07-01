@@ -59,6 +59,8 @@ SYSTEM_CONFIG_XMLIDS = set(LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS) | {
     "smart_construction_core.menu_sc_approval_scope",
     "smart_construction_core.menu_sc_project_stage_requirement_items",
     "smart_construction_core.menu_sc_project_cost_code",
+    "smart_construction_core.menu_sc_legacy_user_context",
+    "smart_construction_core.menu_sc_runtime_user_management",
     "smart_construction_core.menu_sc_legacy_user_priority_menu_plan",
 }
 

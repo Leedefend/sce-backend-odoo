@@ -5,7 +5,7 @@
 ## 运行时来源
 
 - database: `sc_demo`
-- generated_at: `2026-07-01T13:48:08.404544+00:00`
+- generated_at: `2026-07-01T13:55:35.020224+00:00`
 - roots: `smart_construction_core.menu_sc_root, smart_core.menu_smart_core_platform_root`
 - visible_login_probe: `admin, wutao, demo_business_full, demo_role_finance, demo_role_executive`
 
@@ -32,9 +32,9 @@
 | Layer | Count |
 | --- | ---: |
 | `formal_product` | 266 |
-| `system_config` | 27 |
+| `system_config` | 28 |
 | `user_config` | 0 |
-| `history_acceptance` | 194 |
+| `history_acceptance` | 193 |
 | `dev_governance` | 30 |
 
 ## 正式产品入口概览
@@ -117,11 +117,6 @@
     - 新增表单字段 [`system_config`] -> `ui.form.custom.field.wizard`
     - 材料档案 [`history_acceptance` inactive] -> `sc.material.catalog`
     - 用户优先入口迭代计划 [`system_config`] -> `sc.legacy.user.priority.menu.plan`
-    - 用户信息与权限 [`history_acceptance`] -> `res.users`
-      - 历史角色投影 [`history_acceptance`] -> `sc.legacy.user.role`
-      - 用户信息 [`history_acceptance`] -> `sc.legacy.user.profile`
-      - 用户账号与权限 [`system_config`] -> `res.users`
-      - 项目授权范围 [`history_acceptance`] -> `sc.legacy.user.project.scope`
     - 菜单配置 [`system_config`] -> `ui.menu.config.policy`
     - 表单字段配置 [`system_config`] -> `ui.form.field.policy`
     - 阶段要求配置 [`system_config`] -> `sc.project.stage.requirement.item`
@@ -418,6 +413,11 @@
       - 工作流实例 [`dev_governance`] -> `sc.workflow.instance`
       - 工作流日志 [`dev_governance`] -> `sc.workflow.log`
       - 工作项 [`dev_governance`] -> `sc.workflow.workitem`
+    - 用户信息与权限 [`system_config`] -> `res.users`
+      - 历史角色投影 [`history_acceptance`] -> `sc.legacy.user.role`
+      - 用户信息 [`history_acceptance`] -> `sc.legacy.user.profile`
+      - 用户账号与权限 [`system_config`] -> `res.users`
+      - 项目授权范围 [`history_acceptance`] -> `sc.legacy.user.project.scope`
     - 项目管理（后台） [`dev_governance`] -> `project.project`
   - 统计分析 [`formal_product`]
     - SCBS旧库事实暂存 [`history_acceptance` inactive] -> `sc.legacy.scbs.fact.staging`
