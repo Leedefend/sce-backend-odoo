@@ -134,7 +134,6 @@ class ScGeneralContract(models.Model):
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
-    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
     active = fields.Boolean(string="有效", default=True, index=True)

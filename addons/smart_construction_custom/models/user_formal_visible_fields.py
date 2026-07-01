@@ -221,6 +221,12 @@ class ConstructionDiaryUserHistoryFields(models.Model):
     legacy_attachment_path = fields.Char(string="历史附件路径", readonly=True)
 
 
+class GeneralContractUserHistoryFields(models.Model):
+    _inherit = "sc.general.contract"
+
+    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
+
+
 class FundAccountOperationUserHistoryFields(models.Model):
     _inherit = "sc.fund.account.operation"
 

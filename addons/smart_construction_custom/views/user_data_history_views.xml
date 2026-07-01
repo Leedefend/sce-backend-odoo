@@ -193,6 +193,17 @@
         </field>
     </record>
 
+    <record id="view_sc_general_contract_user_history_form_inherit" model="ir.ui.view">
+        <field name="name">sc.general.contract.user.history.form.inherit</field>
+        <field name="model">sc.general.contract</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_general_contract_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='entry_data']" position="after">
+                <field name="legacy_attachment_ref" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
     <record id="view_sc_invoice_registration_user_history_form_inherit" model="ir.ui.view">
         <field name="name">sc.invoice.registration.user.history.form.inherit</field>
         <field name="model">sc.invoice.registration</field>
