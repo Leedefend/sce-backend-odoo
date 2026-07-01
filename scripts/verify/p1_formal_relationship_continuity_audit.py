@@ -106,7 +106,7 @@ CHECKS = OrderedDict(
         (
             "payment_execution_request_scope",
             {
-                "description": "付款登记绑定付款申请时，申请类型和项目不能相冲突。",
+                "description": "付款登记绑定付款申请时，申请类型和项目不能相冲突；申请往来单位与实际收款单位允许以正式字段分别承载。",
                 "count_sql": """
                     SELECT COUNT(*)
                       FROM sc_payment_execution AS e
@@ -146,7 +146,6 @@ CHECKS = OrderedDict(
                             (e.project_id IS NOT NULL AND r.project_id IS NOT NULL AND e.project_id <> r.project_id)
                             OR
                             (e.contract_id IS NOT NULL AND r.contract_id IS NOT NULL AND e.contract_id <> r.contract_id)
-                            OR (e.partner_id IS NOT NULL AND r.partner_id IS NOT NULL AND e.partner_id <> r.partner_id)
                             OR (e.contract_id IS NULL AND r.contract_id IS NOT NULL)
                        )
                 """,
@@ -167,9 +166,47 @@ CHECKS = OrderedDict(
                             (e.project_id IS NOT NULL AND r.project_id IS NOT NULL AND e.project_id <> r.project_id)
                             OR
                             (e.contract_id IS NOT NULL AND r.contract_id IS NOT NULL AND e.contract_id <> r.contract_id)
-                            OR (e.partner_id IS NOT NULL AND r.partner_id IS NOT NULL AND e.partner_id <> r.partner_id)
                             OR (e.contract_id IS NULL AND r.contract_id IS NOT NULL)
                        )
+                     ORDER BY e.id
+                     LIMIT 20
+                """,
+                "accepted_count_sql": """
+                    SELECT COUNT(*)
+                     FROM sc_payment_execution AS e
+                     JOIN payment_request AS r ON r.id = e.payment_request_id
+                     WHERE COALESCE(e.source_origin, '') = 'legacy'
+                       AND e.state = 'legacy_confirmed'
+                       AND e.project_id IS NOT NULL
+                       AND r.project_id IS NOT NULL
+                       AND e.project_id = r.project_id
+                       AND (
+                            r.contract_id IS NULL
+                            OR (e.contract_id IS NOT NULL AND e.contract_id = r.contract_id)
+                       )
+                       AND e.partner_id IS NOT NULL
+                       AND r.partner_id IS NOT NULL
+                       AND e.partner_id <> r.partner_id
+                """,
+                "accepted_sample_sql": """
+                    SELECT e.id, e.name, e.project_id, r.project_id AS request_project_id,
+                           e.contract_id, r.contract_id AS request_contract_id,
+                           e.partner_id AS actual_payee_partner_id, r.partner_id AS request_partner_id,
+                           e.payment_request_id, r.type AS request_type
+                      FROM sc_payment_execution AS e
+                      JOIN payment_request AS r ON r.id = e.payment_request_id
+                     WHERE COALESCE(e.source_origin, '') = 'legacy'
+                       AND e.state = 'legacy_confirmed'
+                       AND e.project_id IS NOT NULL
+                       AND r.project_id IS NOT NULL
+                       AND e.project_id = r.project_id
+                       AND (
+                            r.contract_id IS NULL
+                            OR (e.contract_id IS NOT NULL AND e.contract_id = r.contract_id)
+                       )
+                       AND e.partner_id IS NOT NULL
+                       AND r.partner_id IS NOT NULL
+                       AND e.partner_id <> r.partner_id
                      ORDER BY e.id
                      LIMIT 20
                 """,
@@ -318,6 +355,7 @@ CHECKS = OrderedDict(
 rows = []
 errors = []
 risks = []
+accepted_differences = []
 for key, spec in CHECKS.items():
     mismatch_count = count_rows(spec["count_sql"])
     row = OrderedDict(
@@ -343,6 +381,23 @@ for key, spec in CHECKS.items():
                 ]
             )
             risks.append(risk_row)
+    if spec.get("accepted_count_sql"):
+        accepted_count = count_rows(spec["accepted_count_sql"])
+        row["accepted_difference_count"] = accepted_count
+        if accepted_count:
+            accepted_differences.append(
+                OrderedDict(
+                    [
+                        ("key", key),
+                        (
+                            "description",
+                            "历史付款执行的实际收款单位与付款申请往来单位不同，已由正式字段 payment_request_partner_id / actual_payee_partner_id 分别承载。",
+                        ),
+                        ("accepted_difference_count", accepted_count),
+                        ("sample", fetch_rows(spec["accepted_sample_sql"])),
+                    ]
+                )
+            )
     rows.append(row)
 
 payload = OrderedDict(
@@ -357,6 +412,7 @@ payload = OrderedDict(
         ("checks", rows),
         ("errors", errors),
         ("risks", risks),
+        ("accepted_differences", accepted_differences),
     ]
 )
 

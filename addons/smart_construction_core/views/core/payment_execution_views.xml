@@ -11,6 +11,9 @@
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="payment_request_partner_id"/>
+                    <field name="actual_payee_partner_id"/>
+                    <field name="payment_request_partner_relation"/>
                     <field name="company_contractor_responsibility_state" optional="show"/>
                     <field name="company_contractor_arrival_unprocessed_amount" optional="hide" sum="到款可处理余额合计"/>
                     <field name="company_contractor_arrival_over_processed_amount" optional="show" sum="到款超处理金额合计"/>
@@ -29,6 +32,7 @@
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                     <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按申请/收款方关系" name="group_payment_request_partner_relation" context="{'group_by': 'payment_request_partner_relation'}"/>
                     <separator/>
                     <filter string="按推送结果" name="group_push_result" context="{'group_by': 'push_result'}"/>
                     <filter string="按业务类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
@@ -52,6 +56,9 @@
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="payment_request_partner_id" optional="hide"/>
+                    <field name="actual_payee_partner_id" optional="hide"/>
+                    <field name="payment_request_partner_relation" optional="show"/>
                     <field name="contract_id"/>
                     <field name="source_kind" optional="hide"/>
                     <field name="document_no"/>
@@ -113,6 +120,9 @@
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="payment_request_partner_id" readonly="1"/>
+                                <field name="actual_payee_partner_id" readonly="1"/>
+                                <field name="payment_request_partner_relation" readonly="1"/>
                                 <field name="contract_id" readonly="state == 'legacy_confirmed'"/>
                             </group>
                         </group>

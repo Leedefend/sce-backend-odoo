@@ -81,6 +81,36 @@ class ScPaymentExecution(models.Model):
         ondelete="set null",
         domain="[('project_id', '=', project_id), ('type', '=', 'pay')]",
     )
+    payment_request_partner_id = fields.Many2one(
+        "res.partner",
+        string="申请往来单位",
+        related="payment_request_id.partner_id",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    actual_payee_partner_id = fields.Many2one(
+        "res.partner",
+        string="实际收款单位",
+        related="partner_id",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    payment_request_partner_relation = fields.Selection(
+        [
+            ("no_request", "未关联付款申请"),
+            ("same_partner", "申请方与收款方一致"),
+            ("actual_payee_differs", "实际收款方不同"),
+            ("missing_request_partner", "申请方为空"),
+            ("missing_actual_payee", "实际收款方为空"),
+        ],
+        string="申请/收款方关系",
+        compute="_compute_payment_request_partner_relation",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     date_payment = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     document_no = fields.Char(string="来源单号", index=True)
     payment_family = fields.Char(string="付款族", index=True)
@@ -159,6 +189,20 @@ class ScPaymentExecution(models.Model):
         ("paid_amount_nonnegative", "CHECK(paid_amount >= 0)", "Paid amount must be non-negative."),
         ("invoice_amount_nonnegative", "CHECK(invoice_amount >= 0)", "Invoice amount must be non-negative."),
     ]
+
+    @api.depends("payment_request_id", "payment_request_partner_id", "actual_payee_partner_id")
+    def _compute_payment_request_partner_relation(self):
+        for record in self:
+            if not record.payment_request_id:
+                record.payment_request_partner_relation = "no_request"
+            elif not record.payment_request_partner_id:
+                record.payment_request_partner_relation = "missing_request_partner"
+            elif not record.actual_payee_partner_id:
+                record.payment_request_partner_relation = "missing_actual_payee"
+            elif record.payment_request_partner_id == record.actual_payee_partner_id:
+                record.payment_request_partner_relation = "same_partner"
+            else:
+                record.payment_request_partner_relation = "actual_payee_differs"
 
     @api.depends("source_kind", "payment_family", "payment_method")
     def _compute_execution_flow_label(self):
