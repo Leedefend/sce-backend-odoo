@@ -369,7 +369,10 @@ class ScPaymentExecution(models.Model):
         return category.id if category else False
 
     def write(self, vals):
-        if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
+        if (
+            any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self)
+            and not self.env.context.get("history_surface_sync")
+        ):
             projection_fields = {
                 name
                 for name in self._fields
@@ -381,7 +384,6 @@ class ScPaymentExecution(models.Model):
                 "contract_id",
                 "creator_legacy_user_id",
                 "creator_name",
-                "legacy_" + "visible_entry_date",
                 "created_time",
                 "note",
                 "active",

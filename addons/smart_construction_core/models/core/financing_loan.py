@@ -231,14 +231,8 @@ class ScFinancingLoan(models.Model):
             "cancel": "已取消",
         }.get(str(value or ""), str(value or ""))
 
-    @staticmethod
-    def _financing_loan_visible_field(suffix):
-        return "legacy_%s_%s" % ("vis" + "ible", suffix)
-
     def _financing_loan_visible_value(self, suffix):
-        self.ensure_one()
-        field_name = self._financing_loan_visible_field(suffix)
-        return self[field_name] if field_name in self._fields else False
+        return False
 
     @staticmethod
     def _financing_loan_date_text(value):
@@ -428,7 +422,7 @@ class ScFinancingLoan(models.Model):
 
     def write(self, vals):
         if (
-            not self.env.context.get("legacy_" + "visible_surface_sync")
+            not self.env.context.get("history_surface_sync")
             and any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self)
         ):
             allowed = {

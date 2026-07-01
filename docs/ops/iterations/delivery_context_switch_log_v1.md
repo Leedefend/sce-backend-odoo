@@ -66,6 +66,16 @@ Each entry must include:
 - active_commit: `582b86084`
 - next_step: `提交物理边界预算归零；后续保持 verify.core_history_field.physical_boundary_audit 为 0，禁止 P1 core/projection 重新引入历史/user 字段载体。`
 
+### 2026-07-01T08:50:00+08:00
+- blocker_key: `constructed_history_field_marker_guard`
+- layer_target: `P1 core/projection boundary + custom/support history carrier`
+- module: `scripts/verify + core model helpers + smart_construction_custom history overrides`
+- reason: `旧物理边界审计只捕获直接 legacy_visible 文本，core 中仍可能通过拆分字符串或格式化构造历史字段名，导致预算归零后仍存在隐藏耦合。`
+- completed_step: `增强 core_history_field_physical_boundary_audit，新增 legacy_visible_constructed marker；将 expense_claim、hr_payroll_document、settlement_order 的历史列回填迁到 smart_construction_custom；office_admin_document、document_admin_document、financing_loan、fund_account_operation 的正式可见历史 fallback hook 由 custom override 接管；core 默认实现不再构造 legacy_visible 字段名；sc.financing.loan 与 sc.payment.execution 的历史同步上下文统一为 history_surface_sync。`
+- verification: `python3 -m py_compile scripts/verify/core_history_field_physical_boundary_audit.py addons/smart_construction_core/models/core/office_admin_document.py addons/smart_construction_core/models/core/document_admin_document.py addons/smart_construction_core/models/core/financing_loan.py addons/smart_construction_core/models/core/fund_account_operation.py addons/smart_construction_custom/models/user_formal_visible_fields.py PASS；make verify.core_history_field.physical_boundary_audit PASS total=0；CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE="smart_construction_core,smart_construction_custom" DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev make mod.upgrade PASS；make verify.formal_surface.transition_field_audit PASS total=0；make verify.user_confirmed.formal_surface.locked DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev PASS；git diff --check PASS。`
+- active_commit: `current HEAD containing this entry`
+- next_step: `提交 strengthened audit 批次；后续继续保持 core/projection 物理边界预算为 0。`
+
 ### 2026-07-01T07:43:10+08:00
 - blocker_key: `formal_field_stabilization_boundary_closeout`
 - layer_target: `P1 construction industry standard product + backend contract boundary guard`

@@ -664,34 +664,10 @@ class ScExpenseClaim(models.Model):
             rec.deduction_line_amount_total = sum(rec.deduction_line_ids.mapped("amount"))
 
     def init(self):
-        legacy_department_col = "legacy_" + "visible_department"
-        legacy_document_state_col = "legacy_" + "visible_document_state"
         self.env.cr.execute(
             """
-            SELECT attname
-              FROM pg_attribute
-             WHERE attrelid = 'sc_expense_claim'::regclass
-               AND NOT attisdropped
-               AND attname = ANY(%s)
-            """,
-            [[legacy_department_col, legacy_document_state_col]],
-        )
-        legacy_columns = {row[0] for row in self.env.cr.fetchall()}
-        department_expr = (
-            f"COALESCE(NULLIF(department_name, ''), NULLIF({legacy_department_col}, ''))"
-            if legacy_department_col in legacy_columns
-            else "department_name"
-        )
-        state_expr = (
-            f"COALESCE(NULLIF(payment_state, ''), NULLIF(legacy_document_state, ''), NULLIF({legacy_document_state_col}, ''), state)"
-            if legacy_document_state_col in legacy_columns
-            else "COALESCE(NULLIF(payment_state, ''), NULLIF(legacy_document_state, ''), state)"
-        )
-        self.env.cr.execute(
-            f"""
             UPDATE sc_expense_claim
-               SET department_name = {department_expr},
-                   payment_state = {state_expr},
+               SET payment_state = COALESCE(NULLIF(payment_state, ''), NULLIF(legacy_document_state, ''), state),
                    direction = CASE
                        WHEN claim_type IN ('deposit_refund', 'deposit_receive', 'deduction_refund') THEN 'inflow'
                        ELSE 'outflow'

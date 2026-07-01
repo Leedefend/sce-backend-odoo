@@ -191,7 +191,7 @@ make verify.business_config.list_config_boundary DB_NAME=sc_demo PROJECT=sc-back
 make verify.core_history_field.physical_boundary_audit
 ```
 
-当前基线位于 `scripts/verify/baselines/core_history_field_physical_boundary_budget_v1.json`，`total_hits=0`。该预算只能保持为 0，不能上升。`sc.expense.claim` 与 `sc.financing.loan` 的历史可见字段声明已迁入 `smart_construction_custom`；`sc.fund.account.operation` 的历史字段已由 custom 承载，core 仅保留通用历史字段兼容读取；direct acceptance 共用历史验收载体已从 P1 core 模型目录归类到 support/history carrier。
+当前基线位于 `scripts/verify/baselines/core_history_field_physical_boundary_budget_v1.json`，`total_hits=0`。该预算只能保持为 0，不能上升。审计同时覆盖直接文本和拆分/格式化构造出的 `legacy_visible` 字段名，避免 core/projection 通过字符串拼接重新耦合历史用户数据载体。`sc.expense.claim` 与 `sc.financing.loan` 的历史可见字段声明已迁入 `smart_construction_custom`；`sc.fund.account.operation` 的历史字段已由 custom 承载；direct acceptance 共用历史验收载体已从 P1 core 模型目录归类到 support/history carrier。隐藏的历史列回填和正式可见 fallback hook 已移到 custom/support，core/projection 不再构造 `legacy_visible_*` 历史字段名。
 
 涉及模型字段、XML data 或视图时，还需升级模块并跑正式面锁定验收：
 

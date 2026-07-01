@@ -87,14 +87,8 @@ class ScDocumentAdminDocument(models.Model):
             "cancel": "已取消",
         }.get(str(value or ""), str(value or ""))
 
-    @staticmethod
-    def _document_admin_visible_field(suffix):
-        return "legacy_%s_%s" % ("visible", suffix)
-
     def _document_admin_visible_value(self, suffix):
-        self.ensure_one()
-        field_name = self._document_admin_visible_field(suffix)
-        return self[field_name] if field_name in self._fields else False
+        return False
 
     @api.depends(
         "legacy_document_state",

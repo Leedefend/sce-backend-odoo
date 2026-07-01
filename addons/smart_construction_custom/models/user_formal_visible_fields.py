@@ -33,6 +33,11 @@ class OfficeAdminDocumentUserHistoryFields(models.Model):
     legacy_visible_take_out = fields.Char(string="历史可见是否外带", readonly=True)
     legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
 
+    def _office_admin_visible_value(self, suffix):
+        self.ensure_one()
+        field_name = "legacy_visible_%s" % suffix
+        return self[field_name] if field_name in self._fields else False
+
 
 class DocumentAdminDocumentUserHistoryFields(models.Model):
     _inherit = "sc.document.admin.document"
@@ -62,6 +67,11 @@ class DocumentAdminDocumentUserHistoryFields(models.Model):
     legacy_visible_review_time = fields.Datetime(string="历史可见审定时间", readonly=True)
     legacy_visible_review_opinion = fields.Text(string="历史可见审定意见", readonly=True)
 
+    def _document_admin_visible_value(self, suffix):
+        self.ensure_one()
+        field_name = "legacy_visible_%s" % suffix
+        return self[field_name] if field_name in self._fields else False
+
 
 class TaxDeductionRegistrationUserHistoryFields(models.Model):
     _inherit = "sc.tax.deduction.registration"
@@ -73,6 +83,29 @@ class SettlementOrderUserHistoryFields(models.Model):
     _inherit = "sc.settlement.order"
 
     legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
+
+    def _backfill_legacy_attachment_refs(self):
+        old_column = "legacy_visible_attachment"
+        self.env.cr.execute(
+            """
+            SELECT 1
+              FROM information_schema.columns
+             WHERE table_name = 'sc_settlement_order'
+               AND column_name = %s
+             LIMIT 1
+            """,
+            [old_column],
+        )
+        if not self.env.cr.fetchone():
+            return
+        self.env.cr.execute(
+            f"""
+            UPDATE sc_settlement_order
+               SET legacy_attachment_ref = {old_column}
+             WHERE COALESCE(legacy_attachment_ref, '') = ''
+               AND COALESCE({old_column}, '') <> ''
+            """
+        )
 
 
 class InvoiceRegistrationUserHistoryFields(models.Model):
@@ -108,6 +141,63 @@ class HrPayrollDocumentUserHistoryFields(models.Model):
     legacy_visible_certificate_fee = fields.Char(string="历史证书费用", readonly=True)
     legacy_visible_item_type = fields.Char(string="历史事项类型", readonly=True)
 
+    def init(self):
+        super().init()
+        legacy_columns_by_key = {
+            "creator_name": "legacy_visible_creator_name",
+            "created_time": "legacy_visible_created_time",
+            "people_count": "legacy_visible_people_count",
+            "type": "legacy_visible_type",
+            "note": "legacy_visible_note",
+            "certificate_fee": "legacy_visible_certificate_fee",
+        }
+        self.env.cr.execute(
+            """
+            SELECT array_agg(attname)
+              FROM pg_attribute
+             WHERE attrelid = 'sc_hr_payroll_document'::regclass
+               AND attname = ANY(%s)
+               AND NOT attisdropped
+            """,
+            [list(legacy_columns_by_key.values())],
+        )
+        legacy_columns = set(self.env.cr.fetchone()[0] or [])
+        required_columns = set(legacy_columns_by_key.values())
+        if not required_columns.issubset(legacy_columns):
+            return
+        creator_name_col = legacy_columns_by_key["creator_name"]
+        created_time_col = legacy_columns_by_key["created_time"]
+        people_count_col = legacy_columns_by_key["people_count"]
+        type_col = legacy_columns_by_key["type"]
+        note_col = legacy_columns_by_key["note"]
+        certificate_fee_col = legacy_columns_by_key["certificate_fee"]
+        self.env.cr.execute(
+            f"""
+            UPDATE sc_hr_payroll_document
+               SET employee_type = COALESCE(NULLIF(employee_type, ''), NULLIF({type_col}, ''), NULLIF(item_type, '')),
+                   people_count = COALESCE(
+                       people_count,
+                       CASE
+                           WHEN COALESCE({people_count_col}, '') ~ '^[0-9]+$'
+                           THEN {people_count_col}::integer
+                           ELSE NULL
+                       END
+                   ),
+                   certificate_fee = COALESCE(
+                       certificate_fee,
+                       CASE
+                           WHEN regexp_replace(COALESCE({certificate_fee_col}, ''), '[^0-9\\.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
+                           THEN regexp_replace({certificate_fee_col}, '[^0-9\\.-]', '', 'g')::numeric
+                           ELSE NULL
+                       END
+                   ),
+                   result_note = COALESCE(NULLIF(result_note, ''), NULLIF({note_col}, '')),
+                   source_created_by = COALESCE(NULLIF(source_created_by, ''), NULLIF({creator_name_col}, '')),
+                   source_created_at = COALESCE(source_created_at, {created_time_col})
+             WHERE legacy_source_table IS NOT NULL
+            """
+        )
+
 
 class FundAccountOperationUserHistoryFields(models.Model):
     _inherit = "sc.fund.account.operation"
@@ -120,6 +210,11 @@ class FundAccountOperationUserHistoryFields(models.Model):
     legacy_visible_reason = fields.Char(string="历史可见事由", readonly=True)
     legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
     legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
+
+    def _fund_operation_visible_value(self, suffix):
+        self.ensure_one()
+        field_name = "legacy_visible_%s" % suffix
+        return self[field_name] if field_name in self._fields else ""
 
 
 class ExpenseClaimUserHistoryFields(models.Model):
@@ -146,6 +241,40 @@ class ExpenseClaimUserHistoryFields(models.Model):
     legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
     legacy_visible_department = fields.Char(string="历史可见部门", readonly=True)
     legacy_visible_summary = fields.Text(string="历史可见事项说明/用途", readonly=True)
+
+    def init(self):
+        super().init()
+        legacy_department_col = "legacy_visible_department"
+        legacy_document_state_col = "legacy_visible_document_state"
+        self.env.cr.execute(
+            """
+            SELECT attname
+              FROM pg_attribute
+             WHERE attrelid = 'sc_expense_claim'::regclass
+               AND NOT attisdropped
+               AND attname = ANY(%s)
+            """,
+            [[legacy_department_col, legacy_document_state_col]],
+        )
+        legacy_columns = {row[0] for row in self.env.cr.fetchall()}
+        department_expr = (
+            f"COALESCE(NULLIF(department_name, ''), NULLIF({legacy_department_col}, ''))"
+            if legacy_department_col in legacy_columns
+            else "department_name"
+        )
+        state_expr = (
+            f"COALESCE(NULLIF(payment_state, ''), NULLIF(legacy_document_state, ''), NULLIF({legacy_document_state_col}, ''), state)"
+            if legacy_document_state_col in legacy_columns
+            else "COALESCE(NULLIF(payment_state, ''), NULLIF(legacy_document_state, ''), state)"
+        )
+        self.env.cr.execute(
+            f"""
+            UPDATE sc_expense_claim
+               SET department_name = {department_expr},
+                   payment_state = {state_expr}
+             WHERE source_origin = 'legacy'
+            """
+        )
 
 
 class FinancingLoanUserHistoryFields(models.Model):
@@ -202,6 +331,11 @@ class FinancingLoanUserHistoryFields(models.Model):
     )
     def _compute_formal_partner_account_fields(self):
         return super()._compute_formal_partner_account_fields()
+
+    def _financing_loan_visible_value(self, suffix):
+        self.ensure_one()
+        field_name = "legacy_visible_%s" % suffix
+        return self[field_name] if field_name in self._fields else False
 
 
 class MaterialInboundUserVisibleFields(models.Model):

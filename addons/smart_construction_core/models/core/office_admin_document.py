@@ -109,14 +109,8 @@ class ScOfficeAdminDocument(models.Model):
             "cancel": "已取消",
         }.get(str(value or ""), str(value or ""))
 
-    @staticmethod
-    def _office_admin_visible_field(suffix):
-        return "legacy_%s_%s" % ("visible", suffix)
-
     def _office_admin_visible_value(self, suffix):
-        self.ensure_one()
-        field_name = self._office_admin_visible_field(suffix)
-        return self[field_name] if field_name in self._fields else False
+        return False
 
     @staticmethod
     def _office_admin_datetime_text(value):

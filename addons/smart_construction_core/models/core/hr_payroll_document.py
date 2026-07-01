@@ -116,14 +116,6 @@ class ScHrPayrollDocument(models.Model):
                 raise ValidationError(_("月份必须在 1 到 12 之间。"))
 
     def init(self):
-        legacy_columns_by_key = {
-            "creator_name": "legacy_" + "visible_creator_name",
-            "created_time": "legacy_" + "visible_created_time",
-            "people_count": "legacy_" + "visible_people_count",
-            "type": "legacy_" + "visible_type",
-            "note": "legacy_" + "visible_note",
-            "certificate_fee": "legacy_" + "visible_certificate_fee",
-        }
         self.env.cr.execute(
             """
             UPDATE sc_hr_payroll_document
@@ -134,54 +126,6 @@ class ScHrPayrollDocument(models.Model):
                        NULLIF(substring(COALESCE(description, '') from '联系方式[：:]\\s*([^\\n\\r]+)'), '')
                    ),
                    payout_unit = COALESCE(NULLIF(payout_unit, ''), NULLIF(payer_unit, ''))
-             WHERE legacy_source_table IS NOT NULL
-            """
-        )
-        self.env.cr.execute(
-            """
-            SELECT array_agg(attname)
-              FROM pg_attribute
-             WHERE attrelid = 'sc_hr_payroll_document'::regclass
-               AND attname = ANY(%s)
-               AND NOT attisdropped
-            """,
-            [
-                list(legacy_columns_by_key.values())
-            ],
-        )
-        legacy_columns = set(self.env.cr.fetchone()[0] or [])
-        required_columns = set(legacy_columns_by_key.values())
-        if not required_columns.issubset(legacy_columns):
-            return
-        creator_name_col = legacy_columns_by_key["creator_name"]
-        created_time_col = legacy_columns_by_key["created_time"]
-        people_count_col = legacy_columns_by_key["people_count"]
-        type_col = legacy_columns_by_key["type"]
-        note_col = legacy_columns_by_key["note"]
-        certificate_fee_col = legacy_columns_by_key["certificate_fee"]
-        self.env.cr.execute(
-            f"""
-            UPDATE sc_hr_payroll_document
-               SET employee_type = COALESCE(NULLIF(employee_type, ''), NULLIF({type_col}, ''), NULLIF(item_type, '')),
-                   people_count = COALESCE(
-                       people_count,
-                       CASE
-                           WHEN COALESCE({people_count_col}, '') ~ '^[0-9]+$'
-                           THEN {people_count_col}::integer
-                           ELSE NULL
-                       END
-                   ),
-                   certificate_fee = COALESCE(
-                       certificate_fee,
-                       CASE
-                           WHEN regexp_replace(COALESCE({certificate_fee_col}, ''), '[^0-9\\.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
-                           THEN regexp_replace({certificate_fee_col}, '[^0-9\\.-]', '', 'g')::numeric
-                           ELSE NULL
-                       END
-                   ),
-                   result_note = COALESCE(NULLIF(result_note, ''), NULLIF({note_col}, '')),
-                   source_created_by = COALESCE(NULLIF(source_created_by, ''), NULLIF({creator_name_col}, '')),
-                   source_created_at = COALESCE(source_created_at, {created_time_col})
              WHERE legacy_source_table IS NOT NULL
             """
         )

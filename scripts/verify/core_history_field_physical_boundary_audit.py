@@ -28,6 +28,9 @@ SCAN_PATHS = {
 
 MARKERS = {
     "legacy_visible": re.compile(r"legacy_visible"),
+    "legacy_visible_constructed": re.compile(
+        r"(legacy_[\"']\s*\+\s*[\"']visible|[\"']legacy_%s_%s[\"']\s*%\s*\(\s*[\"']vis(?:ible|[\"']\s*\+\s*[\"']ible))"
+    ),
     "user_acceptance": re.compile(r"user_acceptance"),
     "accepted_visible": re.compile(r"accepted_visible"),
     "p1_visible": re.compile(r"p1_visible"),

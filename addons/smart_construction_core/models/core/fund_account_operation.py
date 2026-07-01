@@ -225,15 +225,8 @@ class ScFundAccountOperation(models.Model):
     def _fund_operation_type_label(self, operation_type):
         return dict(self._fields["operation_type"].selection).get(operation_type, operation_type or "")
 
-    def _fund_operation_visible_value(self, field_name):
-        self.ensure_one()
-        if field_name not in self._fields:
-            return ""
-        return self[field_name] or ""
-
-    @staticmethod
-    def _fund_operation_history_field(suffix):
-        return "legacy_%s_%s" % ("vis" + "ible", suffix)
+    def _fund_operation_visible_value(self, suffix):
+        return ""
 
     @api.depends(
         "legacy_document_state",
@@ -252,18 +245,10 @@ class ScFundAccountOperation(models.Model):
     def _compute_fund_operation_formal_visible_fields(self):
         for record in self:
             legacy_state = (record.legacy_document_state or "").strip()
-            legacy_project_name = record._fund_operation_visible_value(
-                record._fund_operation_history_field("project_name")
-            )
-            legacy_account_name = record._fund_operation_visible_value(
-                record._fund_operation_history_field("account_name")
-            )
-            legacy_transfer_type = record._fund_operation_visible_value(
-                record._fund_operation_history_field("transfer_type")
-            )
-            legacy_reason = record._fund_operation_visible_value(
-                record._fund_operation_history_field("reason")
-            )
+            legacy_project_name = record._fund_operation_visible_value("project_name")
+            legacy_account_name = record._fund_operation_visible_value("account_name")
+            legacy_transfer_type = record._fund_operation_visible_value("transfer_type")
+            legacy_reason = record._fund_operation_visible_value("reason")
             record.fund_operation_status_display = (
                 record._fund_operation_legacy_state_label(legacy_state)
                 if legacy_state
@@ -292,58 +277,6 @@ class ScFundAccountOperation(models.Model):
                 or ""
             )
             record.fund_operation_source_created_at = record.created_time or record.create_date
-
-    def init(self):
-        visible_columns = {
-            "project_name": self._fund_operation_history_field("project_name"),
-            "account_name": self._fund_operation_history_field("account_name"),
-            "transfer_type": self._fund_operation_history_field("transfer_type"),
-            "reason": self._fund_operation_history_field("reason"),
-        }
-        self.env.cr.execute(
-            """
-            SELECT column_name
-              FROM information_schema.columns
-             WHERE table_name = 'sc_fund_account_operation'
-               AND column_name = ANY(%s)
-            """,
-            [list(visible_columns.values())],
-        )
-        available = {row[0] for row in self.env.cr.fetchall()}
-        updates = []
-        project_name = visible_columns["project_name"]
-        account_name = visible_columns["account_name"]
-        transfer_type = visible_columns["transfer_type"]
-        reason = visible_columns["reason"]
-        if project_name in available:
-            updates.append(
-                "fund_operation_project_name = COALESCE(NULLIF(fund_operation_project_name, ''), NULLIF(%s, ''))"
-                % project_name
-            )
-        if account_name in available:
-            updates.append(
-                "fund_operation_account_no = COALESCE(NULLIF(fund_operation_account_no, ''), NULLIF(%s, ''))"
-                % account_name
-            )
-        if transfer_type in available:
-            updates.append(
-                "fund_operation_transfer_type = COALESCE(NULLIF(fund_operation_transfer_type, ''), NULLIF(%s, ''))"
-                % transfer_type
-            )
-        if reason in available:
-            updates.append(
-                "fund_operation_reason_display = COALESCE(NULLIF(fund_operation_reason_display, ''), NULLIF(%s, ''))"
-                % reason
-            )
-        if not updates:
-            return
-        self.env.cr.execute(
-            """
-            UPDATE sc_fund_account_operation
-               SET %s
-            """
-            % ", ".join(updates)
-        )
 
     @api.model
     def _context_project_id(self):

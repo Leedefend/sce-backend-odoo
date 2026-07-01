@@ -999,27 +999,7 @@ class ScSettlementOrder(models.Model):
         self._backfill_settlement_stage_ids()
 
     def _backfill_legacy_attachment_refs(self):
-        old_column = "legacy_" + "visible_attachment"
-        self.env.cr.execute(
-            """
-            SELECT 1
-              FROM information_schema.columns
-             WHERE table_name = 'sc_settlement_order'
-               AND column_name = %s
-             LIMIT 1
-            """,
-            [old_column],
-        )
-        if not self.env.cr.fetchone():
-            return
-        self.env.cr.execute(
-            f"""
-            UPDATE sc_settlement_order
-               SET legacy_attachment_ref = {old_column}
-             WHERE COALESCE(legacy_attachment_ref, '') = ''
-               AND COALESCE({old_column}, '') <> ''
-            """
-        )
+        return
 
     def write(self, vals):
         self._normalize_settlement_stage_defaults(vals)

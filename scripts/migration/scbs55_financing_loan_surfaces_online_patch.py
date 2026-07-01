@@ -423,7 +423,7 @@ def import_surface(seq: int) -> dict[str, Any]:
     spec = SPECS[seq]
     data = json.load(gzip.open(surface_path(spec), "rt", encoding="utf-8"))
     rows = data.get("rows") or []
-    Model = env[spec["model"]].sudo().with_context(active_test=False, legacy_visible_surface_sync=True)  # noqa: F821
+    Model = env[spec["model"]].sudo().with_context(active_test=False, history_surface_sync=True)  # noqa: F821
     created = updated = voided_ledgers = 0
     seen: set[str] = set()
     for index, row in enumerate(rows, start=1):
