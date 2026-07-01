@@ -26,6 +26,16 @@ Each entry must include:
 - active_commit: `a1d39eaf0`
 - next_step: `运行物理边界审计并修正预算/文档；之后选择 financing_loan、fund_account_operation、expense_claim、direct_acceptance_formal_visible_fields 中最小可迁移批次。`
 
+### 2026-07-01T08:08:00+08:00
+- blocker_key: `expense_claim_history_fields_move_to_custom`
+- layer_target: `P1 core model boundary + P2 custom history data carrier`
+- module: `addons/smart_construction_core/models/core/expense_claim.py + addons/smart_construction_custom/models/user_formal_visible_fields.py + scripts/verify`
+- reason: `第一批下降 core 历史字段物理耦合预算：sc.expense.claim 的历史可见字段只服务历史用户数据回放和审计，不应由 smart_construction_core core 模型声明。`
+- completed_step: `将 sc.expense.claim 的 legacy visible 字段声明迁入 smart_construction_custom；core 保留正式字段和历史确认写保护兼容白名单；core_history_field_physical_boundary_budget_v1 从 51 下调到 47。`
+- verification: `make verify.core_history_field.physical_boundary_audit PASS total=47 core_model.legacy_visible=47；make verify.formal_surface.transition_field_audit PASS total=0；CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE="smart_construction_core,smart_construction_custom" DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev make mod.upgrade PASS；make verify.user_confirmed.formal_surface.locked DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev PASS。`
+- active_commit: `36d2c74ee`
+- next_step: `提交本批预算下降；后续从 financing_loan、fund_account_operation、direct_acceptance_formal_visible_fields 中选择下一批可迁移历史字段。`
+
 ### 2026-07-01T07:43:10+08:00
 - blocker_key: `formal_field_stabilization_boundary_closeout`
 - layer_target: `P1 construction industry standard product + backend contract boundary guard`

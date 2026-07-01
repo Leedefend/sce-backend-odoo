@@ -125,6 +125,19 @@ class FundAccountOperationUserHistoryFields(models.Model):
 class ExpenseClaimUserHistoryFields(models.Model):
     _inherit = "sc.expense.claim"
 
+    legacy_visible_document_state = fields.Char(string="历史可见单据状态", readonly=True)
+    legacy_visible_document_no = fields.Char(string="历史可见单据编号", readonly=True)
+    legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
+    legacy_visible_amount = fields.Char(string="历史可见金额", readonly=True)
+    legacy_visible_title = fields.Char(string="历史可见标题", readonly=True)
+    legacy_visible_adjustment_item = fields.Char(string="历史可见上缴内容", readonly=True)
+    legacy_visible_returned_flag = fields.Char(string="历史可见是否退回", readonly=True)
+    legacy_visible_borrower = fields.Char(string="历史可见借款人", readonly=True)
+    legacy_visible_loan_amount = fields.Char(string="历史可见借款金额", readonly=True)
+    legacy_visible_repayment_amount = fields.Char(string="历史可见还款金额", readonly=True)
+    legacy_visible_loan_rate = fields.Char(string="历史可见借款利率", readonly=True)
+    legacy_visible_interest = fields.Char(string="历史可见利息", readonly=True)
+    legacy_visible_repayment_time = fields.Datetime(string="历史可见还款时间", readonly=True)
     legacy_visible_date = fields.Datetime(string="历史可见日期", readonly=True)
     legacy_visible_push_result = fields.Char(string="历史可见推送结果", readonly=True)
     legacy_visible_payment_time = fields.Char(string="历史可见付款时间", readonly=True)

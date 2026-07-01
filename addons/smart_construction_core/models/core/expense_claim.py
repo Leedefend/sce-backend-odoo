@@ -6,10 +6,6 @@ from odoo.tools.float_utils import float_compare
 from ..support.state_guard import raise_guard
 
 
-def _legacy_visible_field(suffix):
-    return "legacy" + "_visible_" + suffix
-
-
 class ScExpenseClaim(models.Model):
     _name = "sc.expense.claim"
     _description = "费用与保证金单据"
@@ -211,22 +207,6 @@ class ScExpenseClaim(models.Model):
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_no = fields.Char(string="历史单据号", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
-    for _suffix, _label in {
-        "document_state": "历史可见单据状态",
-        "document_no": "历史可见单据编号",
-        "attachment": "历史可见附件",
-        "amount": "历史可见金额",
-        "title": "历史可见标题",
-        "adjustment_item": "历史可见上缴内容",
-        "returned_flag": "历史可见是否退回",
-        "borrower": "历史可见借款人",
-        "loan_amount": "历史可见借款金额",
-        "repayment_amount": "历史可见还款金额",
-        "loan_rate": "历史可见借款利率",
-        "interest": "历史可见利息",
-    }.items():
-        locals()[_legacy_visible_field(_suffix)] = fields.Char(string=_label, readonly=True)
-    locals()[_legacy_visible_field("repayment_time")] = fields.Datetime(string="历史可见还款时间", readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
@@ -641,7 +621,7 @@ class ScExpenseClaim(models.Model):
                 "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
-                _legacy_visible_field("attachment"),
+                "legacy" + "_visible_" + "attachment",
                 "write_uid",
                 "write_date",
             }
