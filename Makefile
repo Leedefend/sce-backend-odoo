@@ -4197,7 +4197,7 @@ verify.lowcode_config.boundary.guard: guard.prod.forbid
 .PHONY: verify.lowcode_config.runtime_boundary.guard
 verify.lowcode_config.runtime_boundary.guard: guard.prod.forbid check-compose-project check-compose-env
 	@mkdir -p artifacts/backend
-	@$(RUN_ENV) BUSINESS_CONFIG_LOWCODE_RUNTIME_BOUNDARY_GUARD_PATH=/tmp/lowcode_config_runtime_boundary_guard.json DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/lowcode_config_runtime_boundary_guard.py
+	@$(RUN_ENV) LOWCODE_CONFIG_RUNTIME_SOURCE_STATUS_STRICT=1 BUSINESS_CONFIG_LOWCODE_RUNTIME_BOUNDARY_GUARD_PATH=/tmp/lowcode_config_runtime_boundary_guard.json DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/lowcode_config_runtime_boundary_guard.py
 	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/lowcode_config_runtime_boundary_guard.json artifacts/backend/lowcode_config_runtime_boundary_guard.json >/dev/null
 
 verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready verify.runtime_contract.test_placeholder.guard verify.lowcode_config.boundary.guard verify.lowcode_config.runtime_boundary.guard

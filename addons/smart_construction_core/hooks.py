@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+import json
 import zlib
 from odoo import SUPERUSER_ID, api
+from odoo.addons.smart_core.utils.backend_contract_boundaries import ensure_lowcode_contract_source_status
 
 
 COMMON_TAX_PERCENTAGES = (1, 3, 6, 9, 13)
@@ -186,6 +188,25 @@ def post_init_hook(env):
     _archive_default_project_stages(env)
     _ensure_signup_defaults(env)
     _task_sc_state_backfill(env)
+    _backfill_lowcode_contract_source_status(env)
+
+
+def _backfill_lowcode_contract_source_status(env):
+    Contract = env["ui.business.config.contract"].sudo()
+    for rec in Contract.search([], order="id"):
+        payload = rec.contract_json if isinstance(rec.contract_json, dict) else {}
+        next_payload = ensure_lowcode_contract_source_status(payload)
+        if next_payload == payload:
+            continue
+        env.cr.execute(
+            """
+            UPDATE ui_business_config_contract
+               SET contract_json = %s::jsonb,
+                   write_date = NOW()
+             WHERE id = %s
+            """,
+            (json.dumps(next_payload, ensure_ascii=False), rec.id),
+        )
 
 
 def _ensure_cny_company_currency(env):

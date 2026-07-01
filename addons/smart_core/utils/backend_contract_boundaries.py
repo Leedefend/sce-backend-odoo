@@ -167,6 +167,21 @@ def view_orchestration_source_status(payload: Any) -> str:
     return LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
 
 
+def menu_orchestration_source_status(payload: Any) -> str:
+    if not isinstance(payload, dict):
+        return LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
+    menu_orchestration = payload.get("menu_orchestration")
+    if not isinstance(menu_orchestration, dict):
+        return LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
+    status = normalize_lowcode_source_status(menu_orchestration.get("source_status"), default="")
+    if status:
+        return status
+    source = str(menu_orchestration.get("source") or "").strip()
+    if source == MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING:
+        return LOWCODE_SOURCE_STATUS_TENANT_RUNTIME
+    return LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
+
+
 def classify_view_orchestration_contract(name: Any, payload: Any = None) -> dict[str, Any]:
     contract_name = str(name or "").strip()
     source = _payload_source(payload)
@@ -264,4 +279,26 @@ def ensure_menu_orchestration_source_status(payload: Any, source_status: str = L
     next_orchestration = dict(menu_orchestration)
     next_orchestration["source_status"] = normalize_lowcode_source_status(source_status)
     next_payload["menu_orchestration"] = next_orchestration
+    return next_payload
+
+
+def ensure_lowcode_contract_source_status(payload: Any) -> dict:
+    next_payload = dict(payload or {}) if isinstance(payload, dict) else {}
+    view_orchestration = next_payload.get("view_orchestration")
+    if isinstance(view_orchestration, dict):
+        next_orchestration = dict(view_orchestration)
+        context = next_orchestration.get("context")
+        next_context = dict(context or {}) if isinstance(context, dict) else {}
+        if not str(next_context.get("source_status") or "").strip():
+            next_context["source_status"] = view_orchestration_source_status(next_payload)
+            next_orchestration["context"] = next_context
+            next_payload["view_orchestration"] = next_orchestration
+
+    menu_orchestration = next_payload.get("menu_orchestration")
+    if isinstance(menu_orchestration, dict):
+        next_orchestration = dict(menu_orchestration)
+        if not str(next_orchestration.get("source_status") or "").strip():
+            next_orchestration["source_status"] = menu_orchestration_source_status(next_payload)
+            next_payload["menu_orchestration"] = next_orchestration
+
     return next_payload

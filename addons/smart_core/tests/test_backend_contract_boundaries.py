@@ -15,6 +15,7 @@ spec.loader.exec_module(boundaries)
 
 classify_view_orchestration_contract = boundaries.classify_view_orchestration_contract
 ensure_view_orchestration_source = boundaries.ensure_view_orchestration_source
+ensure_lowcode_contract_source_status = boundaries.ensure_lowcode_contract_source_status
 is_business_config_runtime_model = boundaries.is_business_config_runtime_model
 LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE = boundaries.LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
 LOWCODE_SOURCE_STATUS_TENANT_RUNTIME = boundaries.LOWCODE_SOURCE_STATUS_TENANT_RUNTIME
@@ -64,6 +65,31 @@ class BackendContractBoundaryTests(unittest.TestCase):
         )
 
         self.assertEqual(boundary["source_status"], LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE)
+
+    def test_contract_source_status_backfill_marks_product_view_contracts(self):
+        result = ensure_lowcode_contract_source_status({"view_orchestration": {"views": {"form": {}}}})
+
+        self.assertEqual(
+            result["view_orchestration"]["context"]["source_status"],
+            LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE,
+        )
+
+    def test_contract_source_status_backfill_marks_tenant_menu_contracts(self):
+        result = ensure_lowcode_contract_source_status({
+            "menu_orchestration": {"source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING},
+        })
+
+        self.assertEqual(result["menu_orchestration"]["source_status"], LOWCODE_SOURCE_STATUS_TENANT_RUNTIME)
+
+    def test_contract_source_status_backfill_does_not_override_explicit_status(self):
+        result = ensure_lowcode_contract_source_status({
+            "view_orchestration": {"context": {"source_status": LOWCODE_SOURCE_STATUS_TENANT_RUNTIME}},
+        })
+
+        self.assertEqual(
+            result["view_orchestration"]["context"]["source_status"],
+            LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
+        )
 
     def test_menu_lowcode_source_constant_is_explicit(self):
         self.assertEqual(MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING, "smart_core.lowcode.menu_config")

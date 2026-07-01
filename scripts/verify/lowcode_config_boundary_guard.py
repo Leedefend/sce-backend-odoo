@@ -90,6 +90,62 @@ def build_report() -> dict:
             "message": "menu runtime overlay must use LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS",
         })
 
+    boundary_text = _read(BOUNDARY_MODULE_PATH)
+    if "ensure_lowcode_contract_source_status" not in boundary_text:
+        errors.append({
+            "category": "source_status_backfill_helper",
+            "message": "low-code boundary helper must support explicit source_status backfill",
+        })
+
+    hook_text = _read(ROOT / "addons" / "smart_construction_core" / "hooks.py")
+    if "_backfill_lowcode_contract_source_status" not in hook_text:
+        errors.append({
+            "category": "fresh_install_source_status_backfill",
+            "message": "fresh installs must backfill explicit low-code source_status",
+        })
+
+    custom_hook_text = _read(ROOT / "addons" / "smart_construction_custom" / "hooks.py")
+    if "backfill_lowcode_contract_source_status" not in custom_hook_text:
+        errors.append({
+            "category": "custom_fresh_install_source_status_backfill",
+            "message": "custom fresh installs must backfill explicit low-code source_status after user preferences",
+        })
+
+    custom_user_pref_text = _read(ROOT / "addons" / "smart_construction_custom" / "models" / "user_preferences.py")
+    if "ensure_lowcode_contract_source_status" not in custom_user_pref_text:
+        errors.append({
+            "category": "custom_user_preference_source_status",
+            "message": "custom user preference contracts must stamp explicit source_status when generated",
+        })
+
+    migration_text = _read(ROOT / "addons" / "smart_construction_core" / "migrations" / "17.0.0.59" / "post-migration.py")
+    if "ensure_lowcode_contract_source_status" not in migration_text:
+        errors.append({
+            "category": "upgrade_source_status_backfill",
+            "message": "module upgrades must backfill explicit low-code source_status",
+        })
+
+    custom_migration_text = _read(ROOT / "addons" / "smart_construction_custom" / "migrations" / "17.0.1.1" / "post-migration.py")
+    if "ensure_lowcode_contract_source_status" not in custom_migration_text:
+        errors.append({
+            "category": "custom_upgrade_source_status_backfill",
+            "message": "custom module upgrades must backfill explicit low-code source_status",
+        })
+
+    makefile_text = _read(ROOT / "Makefile")
+    if "LOWCODE_CONFIG_RUNTIME_SOURCE_STATUS_STRICT=1" not in makefile_text:
+        errors.append({
+            "category": "runtime_source_status_strict_gate",
+            "message": "product surface gate must enforce explicit low-code source_status",
+        })
+
+    shell_exec_text = _read(ROOT / "scripts" / "ops" / "odoo_shell_exec.sh")
+    if "LOWCODE_*" not in shell_exec_text:
+        errors.append({
+            "category": "runtime_source_status_strict_env_forward",
+            "message": "Odoo shell runner must forward LOWCODE_* strict gate environment variables",
+        })
+
     for key, (path, required_groups) in GLOBAL_CONFIG_ENTRY_FILES.items():
         text = _read(path)
         missing_groups = sorted(group for group in required_groups if group not in text)

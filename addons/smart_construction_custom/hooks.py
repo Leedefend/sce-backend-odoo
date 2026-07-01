@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+import json
+
 from odoo.exceptions import UserError
+from odoo.addons.smart_core.utils.backend_contract_boundaries import ensure_lowcode_contract_source_status
 
 
 def ensure_company_currency_cny(env):
@@ -27,6 +30,25 @@ def apply_platform_initialization(env):
 def apply_user_preferences(env):
     env["sc.user.preference.initialization"].apply_user_menu_preferences()
     env["sc.user.preference.initialization"].apply_user_form_preferences()
+    backfill_lowcode_contract_source_status(env)
+
+
+def backfill_lowcode_contract_source_status(env):
+    Contract = env["ui.business.config.contract"].sudo()
+    for rec in Contract.search([], order="id"):
+        payload = rec.contract_json if isinstance(rec.contract_json, dict) else {}
+        next_payload = ensure_lowcode_contract_source_status(payload)
+        if next_payload == payload:
+            continue
+        env.cr.execute(
+            """
+            UPDATE ui_business_config_contract
+               SET contract_json = %s::jsonb,
+                   write_date = NOW()
+             WHERE id = %s
+            """,
+            (json.dumps(next_payload, ensure_ascii=False), rec.id),
+        )
 
 
 def apply_user_data_baseline(env):

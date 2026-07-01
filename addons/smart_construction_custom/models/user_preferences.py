@@ -3,6 +3,7 @@ import json
 import xml.etree.ElementTree as ET
 
 from odoo import api, models
+from odoo.addons.smart_core.utils.backend_contract_boundaries import ensure_lowcode_contract_source_status
 from odoo.tools.safe_eval import safe_eval
 
 
@@ -1135,6 +1136,7 @@ class ScUserPreferenceInitialization(models.TransientModel):
     def _upsert_form_contract(self, *, name, model_name, action, view, priority, payload):
         Contract = self.env["ui.business.config.contract"].with_context(active_test=False).sudo()
         rec = Contract.search([("name", "=", name), ("company_id", "=", self.env.company.id)], limit=1)
+        payload = ensure_lowcode_contract_source_status(payload)
         vals = {
             "name": name,
             "model": model_name,

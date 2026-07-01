@@ -2,7 +2,7 @@
 {
     "name": "Smart Construction Custom",
     "summary": "Custom adaptations for Smart Construction without modifying core modules",
-    "version": "17.0.1.0",
+    "version": "17.0.1.1",
     "author": "Leedefend",
     "website": "https://example.com",
     "category": "Customization",

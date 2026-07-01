@@ -11,7 +11,7 @@ from odoo.addons.smart_core.utils.backend_contract_boundaries import (
     LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE,
     LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
     LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS,
-    MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+    menu_orchestration_source_status,
     normalize_lowcode_source_status,
     view_orchestration_source_status,
 )
@@ -45,10 +45,7 @@ def _menu_orchestration_source_status(payload: dict) -> tuple[str, bool]:
     explicit = str(orchestration.get("source_status") or "").strip()
     if explicit:
         return normalize_lowcode_source_status(explicit), True
-    source = str(orchestration.get("source") or "").strip()
-    if source == MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING:
-        return LOWCODE_SOURCE_STATUS_TENANT_RUNTIME, False
-    return LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE, False
+    return menu_orchestration_source_status(payload), False
 
 
 def _view_orchestration_has_explicit_source_status(payload: dict) -> bool:
@@ -68,6 +65,7 @@ def _contract_status(payload: dict) -> tuple[str, bool, str]:
 
 def main() -> int:
     env_obj = _env()
+    strict_source_status = os.getenv("LOWCODE_CONFIG_RUNTIME_SOURCE_STATUS_STRICT", "").strip() in {"1", "true", "True"}
     errors: list[dict] = []
     warnings: list[dict] = []
     admin_xmlids = (
@@ -165,12 +163,17 @@ def main() -> int:
                 "carrier": carrier,
             })
     if missing_source_status_rows:
-        warnings.append({
+        legacy_payload = {
             "category": "legacy_missing_source_status",
             "message": "published config contracts without explicit source_status are tolerated as legacy but must not grow",
             "count": len(missing_source_status_rows),
             "samples": missing_source_status_rows[:20],
-        })
+        }
+        if strict_source_status:
+            legacy_payload["message"] = "published config contracts must have explicit source_status"
+            errors.append(legacy_payload)
+        else:
+            warnings.append(legacy_payload)
     if developer_draft_rows:
         errors.append({
             "category": "developer_draft_published_runtime",
@@ -189,6 +192,7 @@ def main() -> int:
         "config_admin_with_recovery_entry_count": len(admin_visible_rows),
         "contract_source_status_counts": dict(sorted(status_counts.items())),
         "contract_carrier_counts": dict(sorted(carrier_counts.items())),
+        "strict_source_status": strict_source_status,
         "warning_count": len(warnings),
         "warnings": warnings,
         "error_count": len(errors),
