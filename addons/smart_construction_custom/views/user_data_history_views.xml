@@ -149,14 +149,6 @@
         </field>
     </record>
 
-    <record id="view_sc_payment_execution_user_history_entry_date_form_inherit" model="ir.ui.view">
-        <field name="active" eval="False"/>
-    </record>
-
-    <record id="view_sc_payment_execution_user_history_form_inherit" model="ir.ui.view">
-        <field name="active" eval="False"/>
-    </record>
-
     <record id="view_payment_request_user_history_form_inherit" model="ir.ui.view">
         <field name="name">payment.request.user.history.form.inherit</field>
         <field name="model">payment.request</field>
@@ -536,14 +528,6 @@
                 <field name="legacy_visible_attachment" optional="hide"/>
             </xpath>
         </field>
-    </record>
-
-    <record id="view_sc_payment_execution_user_history_tree_inherit" model="ir.ui.view">
-        <field name="active" eval="False"/>
-    </record>
-
-    <record id="view_sc_payment_execution_user_history_entry_date_form_inherit" model="ir.ui.view">
-        <field name="active" eval="False"/>
     </record>
 
     <record id="view_sc_document_admin_document_user_history_search_inherit" model="ir.ui.view">
