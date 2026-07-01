@@ -6,10 +6,10 @@
 
 - 正式产品一级中心：`13` 个
 - 正式产品 active 菜单：`241` 个
-- 系统配置菜单：`28` 个，其中 active `28` 个
+- 系统配置菜单：`29` 个，其中 active `28` 个
 - 用户配置菜单：`0` 个，其中 active `0` 个
 - 历史验收菜单：`193` 个，其中 active `141` 个
-- 正式中心下 inactive 历史残留：`49` 个
+- 正式中心下 inactive 历史残留：`32` 个
 - 开发治理菜单：`30` 个，其中 active `30` 个
 - 待复核菜单：`0` 个
 
@@ -28,7 +28,7 @@
 | 成本中心 | 7 | 0 | 0 | 0 | `smart_construction_core.menu_sc_cost_center` |
 | 财务中心 | 71 | 0 | 0 | 35 | `smart_construction_core.menu_sc_finance_center` |
 | 税务中心 | 9 | 0 | 0 | 2 | `smart_construction_core.menu_sc_tax_center` |
-| 统计分析 | 21 | 0 | 0 | 18 | `smart_construction_core.menu_sc_data_center` |
+| 统计分析 | 21 | 0 | 0 | 1 | `smart_construction_core.menu_sc_data_center` |
 | 基础资料 | 3 | 0 | 0 | 0 | `smart_construction_core.menu_sc_master_data_center` |
 
 ## 正式产品菜单结构
@@ -627,23 +627,6 @@
 | 物资与分包 | 智慧施工管理平台 / 物资与分包 / 物资管理 / 历史物资库存事实 | `sc.legacy.material.stock.fact` | `smart_construction_core.menu_sc_legacy_material_stock_fact` |
 | 物资与分包 | 智慧施工管理平台 / 物资与分包 / 物资管理 / 物料分类 | `sc.legacy.material.category` | `smart_construction_core.menu_sc_legacy_material_category` |
 | 税务中心 | 智慧施工管理平台 / 税务中心 / 开票与税务办理 / 外经证登记 | `sc.legacy.payment.residual.fact` | `smart_construction_core.menu_sc_tax_certificate_registration_user` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / SCBS旧库事实暂存 | `sc.legacy.scbs.fact.staging` | `smart_construction_core.menu_sc_legacy_scbs_fact_staging` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / SCBS旧库材料映射 | `sc.legacy.scbs.material.map` | `smart_construction_core.menu_sc_legacy_scbs_material_map` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 历史业务事实原貌承接 | `sc.legacy.business.fact.residual` | `smart_construction_core.menu_sc_legacy_business_fact_residual` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 供货合同 | `sc.legacy.supplier.contract.pricing.fact` | `smart_construction_core.menu_sc_supplier_contract_analysis_report` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 供货合同 | `sc.legacy.supplier.contract.pricing.fact` | `smart_construction_core.menu_sc_supplier_contract_current` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 供货合同 | `sc.legacy.supplier.contract.pricing.fact` | `smart_construction_core.menu_scbs55_user_acceptance_455_供货合同` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 工程进度收款 | `sc.legacy.engineering.progress.receipt` | `smart_construction_core.menu_sc_legacy_engineering_progress_receipt` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 工程进度收款 | `sc.legacy.engineering.progress.receipt` | `smart_construction_core.menu_scbs55_user_acceptance_445_工程进度收款` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 工程进度收款（直营） | `sc.legacy.engineering.progress.receipt` | `smart_construction_core.menu_scbsly_direct_engineering_progress_receipt_acceptance` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 成本发票明细表 | `sc.legacy.invoice.registration.line` | `smart_construction_core.menu_sc_invoice_cost_progress_report` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 投标保证金报表 | `sc.legacy.expense.deposit.fact` | `smart_construction_core.menu_sc_tender_deposit_statistics_report` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 旧库业务主体映射 | `sc.legacy.business.entity.map` | `smart_construction_core.menu_sc_legacy_business_entity_map` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 旧库往来单位映射 | `sc.legacy.partner.map` | `smart_construction_core.menu_sc_legacy_partner_map` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 旧库项目映射 | `sc.legacy.project.map` | `smart_construction_core.menu_sc_legacy_project_map` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 经营分析 / 旧库报表承载清单 | `sc.legacy.report.inventory` | `smart_construction_core.menu_sc_legacy_report_inventory` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 财务分析 / 历史资金日报明细 | `sc.legacy.fund.daily.line` | `smart_construction_core.menu_sc_fund_daily_line` |
-| 统计分析 | 智慧施工管理平台 / 统计分析 / 财务分析 / 融资台账 | `sc.legacy.financing.loan.fact` | `smart_construction_core.menu_sc_financing_ledger` |
 | 财务中心 | 智慧施工管理平台 / 财务中心 / 付款事实 / 历史付款残余事实 | `sc.legacy.payment.residual.fact` | `smart_construction_core.menu_sc_legacy_payment_residual_fact` |
 | 财务中心 | 智慧施工管理平台 / 财务中心 / 历史付款退款/调整 | `sc.legacy.payment.adjustment.fact` | `smart_construction_core.menu_sc_legacy_payment_adjustment_fact` |
 | 财务中心 | 智慧施工管理平台 / 财务中心 / 历史企业级数据核对 | `sc.legacy.enterprise.business.fact` | `smart_construction_core.menu_sc_legacy_enterprise_business_fact` |
@@ -667,4 +650,4 @@
 
 - 当前无待复核菜单。
 - 当前无独立用户配置入口；低代码和产品配置仍归入系统配置边界。
-- 共 `49` 个 inactive 历史入口仍挂在正式产品中心路径下，建议后续迁出正式中心。
+- 共 `32` 个 inactive 历史入口仍挂在正式产品中心路径下，建议后续迁出正式中心。

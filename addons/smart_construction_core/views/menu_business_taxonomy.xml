@@ -137,6 +137,14 @@
         <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
     </record>
 
+    <record id="menu_sc_history_acceptance_archive_center" model="ir.ui.menu">
+        <field name="name">历史验收归档（内部）</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_config_center"/>
+        <field name="sequence">85</field>
+        <field name="active">False</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+    </record>
+
     <!-- Reusable business actions for taxonomy-specific entries. -->
     <record id="action_sc_tender_prepare" model="ir.actions.act_window">
         <field name="name">投标准备</field>

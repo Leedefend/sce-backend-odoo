@@ -298,54 +298,71 @@
             <field name="active">0</field>
         </record>
         <record id="menu_sc_legacy_scbs_fact_staging" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_legacy_scbs_material_map" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_legacy_business_fact_residual" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_supplier_contract_analysis_report" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_supplier_contract_current" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_scbs55_user_acceptance_455_供货合同" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_legacy_engineering_progress_receipt" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_scbs55_user_acceptance_445_工程进度收款" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_scbsly_direct_engineering_progress_receipt_acceptance" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_invoice_cost_progress_report" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_tender_deposit_statistics_report" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_legacy_business_entity_map" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_legacy_partner_map" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_legacy_project_map" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_legacy_report_inventory" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_fund_daily_line" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_financing_ledger" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
             <field name="active">0</field>
         </record>
         <record id="menu_sc_legacy_payment_adjustment_fact" model="ir.ui.menu">
