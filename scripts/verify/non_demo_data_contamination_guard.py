@@ -1,4 +1,5 @@
 # Run with scripts/ops/odoo_shell_exec.sh.
+import os
 
 DEMO_DBS = {"sc_demo", "sc_test"}
 DEMO_NAME_TOKENS = ("演示", "示例", "某某", "空壳对照", "Demo-")
@@ -24,7 +25,13 @@ def _active_name_count(model_name, field_name="name"):
     return Model.search_count(domain)
 
 
-if _is_demo_db():
+def _is_truthy(value):
+    return str(value or "").strip() in {"1", "true", "True", "yes", "YES"}
+
+
+require_no_demo_data = _is_truthy(os.environ.get("PRODUCT_REQUIRE_NO_DEMO_DATA"))
+
+if _is_demo_db() and not require_no_demo_data:
     print("[non_demo_data_contamination_guard] SKIP demo db", env.cr.dbname)
 else:
     errors = []
@@ -56,4 +63,5 @@ else:
             print(" -", error)
         raise SystemExit(2)
 
-    print("[non_demo_data_contamination_guard] PASS db=%s" % env.cr.dbname)
+    mode = "forced" if require_no_demo_data else "default"
+    print("[non_demo_data_contamination_guard] PASS db=%s mode=%s" % (env.cr.dbname, mode))
