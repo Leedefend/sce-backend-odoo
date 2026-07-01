@@ -2,7 +2,7 @@
   "mode": "core_history_field_physical_boundary_budget_v1",
   "policy": "Counts may only decrease. Core/projection models should not gain new physical history/user-data field carriers while historical storage is separated from formal product functions.",
   "budgets": {
-    "total_hits": 38,
-    "core_model.legacy_visible": 38
+    "total_hits": 18,
+    "core_model.legacy_visible": 18
   }
 }

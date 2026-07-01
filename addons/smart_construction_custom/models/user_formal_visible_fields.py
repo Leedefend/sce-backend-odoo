@@ -152,6 +152,14 @@ class FinancingLoanUserHistoryFields(models.Model):
     _inherit = "sc.financing.loan"
 
     legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
+    legacy_visible_actual_loan_amount = fields.Char(string="历史可见实际借款金额", readonly=True)
+    legacy_visible_receipt_account = fields.Char(string="历史可见收款账户", readonly=True)
+    legacy_visible_company_name = fields.Char(string="历史可见公司名称", readonly=True)
+    legacy_visible_payer_unit = fields.Char(string="历史可见付款单位", readonly=True)
+    legacy_visible_receiver_unit = fields.Char(string="历史可见收款单位", readonly=True)
+    legacy_visible_counterparty_name = fields.Char(string="历史可见往来单位名称", readonly=True)
+    legacy_visible_counterparty_account = fields.Char(string="历史可见往来单位账户", readonly=True)
+    legacy_visible_loan_account = fields.Char(string="历史可见借款账号/贷款账户", readonly=True)
     legacy_visible_request_department = fields.Char(string="历史可见申请部门", readonly=True)
     legacy_visible_request_time = fields.Datetime(string="历史可见申请时间", readonly=True)
     legacy_visible_applicant = fields.Char(string="历史可见申请人", readonly=True)
@@ -177,6 +185,23 @@ class FinancingLoanUserHistoryFields(models.Model):
     legacy_visible_actual_repayment_days = fields.Char(string="历史可见实际还款天数", readonly=True)
     legacy_visible_actual_annual_rate = fields.Char(string="历史可见实际年利率", readonly=True)
     legacy_visible_loan_interest = fields.Char(string="历史可见贷款利息", readonly=True)
+
+    @api.depends(
+        "partner_id",
+        "partner_id.display_name",
+        "legacy_counterparty_name",
+        "legacy_visible_counterparty_name",
+        "legacy_visible_payer_unit",
+        "legacy_visible_receiver_unit",
+        "legacy_visible_company_name",
+        "legacy_visible_receipt_account",
+        "legacy_visible_counterparty_account",
+        "legacy_visible_loan_account",
+        "legacy_visible_loan_bank",
+        "legacy_visible_repayment_account",
+    )
+    def _compute_formal_partner_account_fields(self):
+        return super()._compute_formal_partner_account_fields()
 
 
 class MaterialInboundUserVisibleFields(models.Model):

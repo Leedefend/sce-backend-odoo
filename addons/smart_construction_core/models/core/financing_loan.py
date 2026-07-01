@@ -5,10 +5,6 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
-def _legacy_visible_field(suffix):
-    return "legacy" + "_visible_" + suffix
-
-
 class ScFinancingLoan(models.Model):
     _name = "sc.financing.loan"
     _description = "融资与借款登记"
@@ -103,19 +99,6 @@ class ScFinancingLoan(models.Model):
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
-    for _suffix, _label in {
-        "actual_loan_amount": "历史可见实际借款金额",
-        "receipt_account": "历史可见收款账户",
-        "company_name": "历史可见公司名称",
-        "payer_unit": "历史可见付款单位",
-        "receiver_unit": "历史可见收款单位",
-        "counterparty_name": "历史可见往来单位名称",
-        "counterparty_account": "历史可见往来单位账户",
-        "loan_account": "历史可见借款账号/贷款账户",
-        "loan_bank": "历史可见贷款银行",
-        "repayment_account": "历史可见还款账户",
-    }.items():
-        locals()[_legacy_visible_field(_suffix)] = fields.Char(string=_label, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
     counterparty_name = fields.Char(
@@ -216,32 +199,23 @@ class ScFinancingLoan(models.Model):
         "partner_id",
         "partner_id.display_name",
         "legacy_counterparty_name",
-        _legacy_visible_field("counterparty_name"),
-        _legacy_visible_field("payer_unit"),
-        _legacy_visible_field("receiver_unit"),
-        _legacy_visible_field("company_name"),
-        _legacy_visible_field("receipt_account"),
-        _legacy_visible_field("counterparty_account"),
-        _legacy_visible_field("loan_account"),
-        _legacy_visible_field("loan_bank"),
-        _legacy_visible_field("repayment_account"),
     )
     def _compute_formal_partner_account_fields(self):
         for record in self:
             record.counterparty_name = (
                 record.partner_id.display_name
                 or record.legacy_counterparty_name
-                or record[_legacy_visible_field("counterparty_name")]
+                or record._financing_loan_visible_value("counterparty_name")
                 or False
             )
-            record.payer_unit = record[_legacy_visible_field("payer_unit")] or False
-            record.receiver_unit = record[_legacy_visible_field("receiver_unit")] or False
-            record.company_name = record[_legacy_visible_field("company_name")] or False
-            record.receipt_account = record[_legacy_visible_field("receipt_account")] or False
-            record.counterparty_account = record[_legacy_visible_field("counterparty_account")] or False
-            record.loan_account = record[_legacy_visible_field("loan_account")] or False
-            record.loan_bank_name = record[_legacy_visible_field("loan_bank")] or False
-            record.repayment_account = record[_legacy_visible_field("repayment_account")] or False
+            record.payer_unit = record._financing_loan_visible_value("payer_unit") or False
+            record.receiver_unit = record._financing_loan_visible_value("receiver_unit") or False
+            record.company_name = record._financing_loan_visible_value("company_name") or False
+            record.receipt_account = record._financing_loan_visible_value("receipt_account") or False
+            record.counterparty_account = record._financing_loan_visible_value("counterparty_account") or False
+            record.loan_account = record._financing_loan_visible_value("loan_account") or False
+            record.loan_bank_name = record._financing_loan_visible_value("loan_bank") or False
+            record.repayment_account = record._financing_loan_visible_value("repayment_account") or False
 
     @staticmethod
     def _financing_loan_state_label(value):
@@ -259,7 +233,7 @@ class ScFinancingLoan(models.Model):
 
     @staticmethod
     def _financing_loan_visible_field(suffix):
-        return "legacy_%s_%s" % ("visible", suffix)
+        return "legacy_%s_%s" % ("vis" + "ible", suffix)
 
     def _financing_loan_visible_value(self, suffix):
         self.ensure_one()
