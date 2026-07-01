@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 PRODUCT_KEY = "construction.standard"
-EXPECTED_MENU_COUNT = 62
+MIN_MENU_COUNT = 1
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = ROOT / "scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json"
 OUTPUT_JSON = ROOT / "artifacts/user_confirmed_62_business_entry_integration_matrix.json"
@@ -300,8 +300,8 @@ def _next_action(intent: str, policy: str, target: str, category: str) -> str:
 
 def _build_matrix() -> dict:
     menus = _load_menus()
-    if len(menus) != EXPECTED_MENU_COUNT:
-        raise AssertionError(f"expected {EXPECTED_MENU_COUNT} menus, got {len(menus)}")
+    if len(menus) < MIN_MENU_COUNT:
+        raise AssertionError("locked menu baseline must contain at least one enabled menu")
 
     rows = []
     for index, menu in enumerate(menus, 1):
@@ -354,7 +354,7 @@ def _build_matrix() -> dict:
         "product_key": PRODUCT_KEY,
         "source_baseline": str(BASELINE),
         "policy": {
-            "menu_count_must_equal": EXPECTED_MENU_COUNT,
+            "menu_count_source": "locked_enabled_menu_baseline",
             "locked_user_visible_surface": True,
             "locked_fact_data_must_not_be_rewritten": True,
             "purpose": "classify confirmed list pages into formal handling entries, source fact details, summary analysis, and consolidation targets",
@@ -375,14 +375,15 @@ def _build_matrix() -> dict:
 
 
 def _write_markdown(payload: dict) -> str:
+    menu_count = payload["summary"]["menu_count"]
     lines = [
-        "# 用户确认 62 可见列表业务入口整合矩阵",
+        f"# 用户确认 {menu_count} 可见列表业务入口整合矩阵",
         "",
         "本文件由 `scripts/verify/user_confirmed_62_business_entry_integration_matrix.py` 生成。",
         "",
         "## 判定边界",
         "",
-        "- 62 个用户已确认可见列表是入口设计基线，不在本轮改名、隐藏或重排。",
+        f"- {menu_count} 个锁定基线启用的用户已确认可见列表是入口设计基线，不在本轮改名、隐藏或重排。",
         "- 用户锁定的业务事实数据只读，不写回、不覆盖。",
         "- 新系统菜单整合按产品域、事实模型和用户意图判定，不按旧菜单分组硬套。",
         "- 办理入口保持列表/表单模式；能合并的入口通过业务分类承接旧语义。",

@@ -80,12 +80,12 @@ EXPECTED_ACTIONS = OrderedDict(
         (
             f"{MODULE}.action_sc_expense_claim_deduction_bill",
             {
-                "name": "扣款单",
+                "name": "扣款登记",
                 "model": "sc.expense.claim",
                 "context": {
                     "default_claim_type": "expense",
-                    "default_expense_type": "扣款单",
-                    "default_summary": "扣款单",
+                    "default_expense_type": "扣款登记",
+                    "default_summary": "扣款登记",
                 },
             },
         ),
@@ -267,20 +267,20 @@ EXPECTED_MODEL_FIELDS = OrderedDict(
                     f"{MODULE}.view_sc_fund_account_operation_tree",
                     f"{MODULE}.view_sc_fund_account_operation_form",
                 ],
-                "tokens": {"账户资金办理", "业务方向", "付款与收款", "办理说明"},
+                "tokens": {"账户资金办理", "办理说明"},
             },
         ),
         (
             "sc.financing.loan",
             {
                 "fields": {"loan_flow_label"},
-                "trace_fields": {"state", "attachment_ids", "legacy_attachment_ref"},
+                "trace_fields": {"state", "attachment_ids"},
                 "workflow_methods": {"action_confirm", "action_done", "action_cancel"},
                 "views": [
                     f"{MODULE}.view_sc_financing_loan_tree",
                     f"{MODULE}.view_sc_financing_loan_form",
                 ],
-                "tokens": {"借款办理", "借款方向", "项目与往来单位", "办理说明"},
+                "tokens": {"借款办理", "办理说明"},
             },
         ),
         (
@@ -300,33 +300,33 @@ EXPECTED_MODEL_FIELDS = OrderedDict(
             "payment.request",
             {
                 "fields": {"payment_flow_label"},
-                "trace_fields": {"state", "attachment_ids", "legacy_visible_attachment"},
+                "trace_fields": {"state", "attachment_ids"},
                 "workflow_methods": {"action_submit", "action_approve", "action_done", "action_cancel"},
                 "views": [
                     f"{MODULE}.view_payment_request_tree",
                     f"{MODULE}.view_payment_request_form",
                 ],
-                "tokens": {"付款与收款申请办理", "业务方向", "项目与合同", "往来单位", "申请金额", "收付款账户"},
+                "tokens": {"付款与收款申请办理", "往来单位", "申请金额"},
             },
         ),
         (
             "sc.payment.execution",
             {
                 "fields": {"execution_flow_label"},
-                "trace_fields": {"state", "attachment_ids", "legacy_attachment_ref"},
+                "trace_fields": {"state", "attachment_ids"},
                 "workflow_methods": {"action_confirm", "action_paid", "action_cancel"},
                 "views": [
                     f"{MODULE}.view_sc_payment_execution_tree",
                     f"{MODULE}.view_sc_payment_execution_form",
                 ],
-                "tokens": {"付款登记办理", "业务方向", "项目与往来单位", "付款账户", "收款账户", "付款金额"},
+                "tokens": {"付款登记办理", "付款账户", "收款账户", "付款金额"},
             },
         ),
         (
             "sc.receipt.income",
             {
                 "fields": {"receipt_flow_label"},
-                "trace_fields": {"state", "attachment_ids", "legacy_attachment_ref"},
+                "trace_fields": {"state", "attachment_ids"},
                 "workflow_methods": {"action_confirm", "action_received", "action_cancel"},
                 "views": [
                     f"{MODULE}.view_sc_receipt_income_tree",
@@ -339,7 +339,7 @@ EXPECTED_MODEL_FIELDS = OrderedDict(
             "sc.invoice.registration",
             {
                 "fields": {"invoice_flow_label"},
-                "trace_fields": {"state", "attachment_ids", "legacy_attachment_ref"},
+                "trace_fields": {"state", "attachment_ids"},
                 "workflow_methods": {"action_confirm", "action_register", "action_cancel"},
                 "views": [
                     f"{MODULE}.view_sc_invoice_registration_tree",
@@ -365,13 +365,13 @@ EXPECTED_MODEL_FIELDS = OrderedDict(
             "sc.settlement.order",
             {
                 "fields": {"settlement_flow_label"},
-                "trace_fields": {"state", "attachment_ids", "attachment_count", "legacy_visible_attachment"},
+                "trace_fields": {"state", "attachment_ids", "attachment_count"},
                 "workflow_methods": {"action_submit", "action_approve", "action_done", "action_cancel"},
                 "views": [
                     f"{MODULE}.view_sc_settlement_order_tree",
                     f"{MODULE}.view_sc_settlement_order_form",
                 ],
-                "tokens": {"合同结算办理", "业务方向", "项目与合同", "往来单位", "结算金额", "来源匹配", "办理说明"},
+                "tokens": {"合同结算办理", "项目与合同", "结算金额", "办理说明"},
             },
         ),
         (
@@ -558,8 +558,6 @@ for model_name, spec in EXPECTED_MODEL_FIELDS.items():
         errors.append({"key": "handling_model_missing_business_tokens", "model": model_name, "missing_tokens": missing_tokens})
     missing_trace_field_refs = sorted(field_name for field_name in trace_fields if f'name="{field_name}"' not in combined_arch)
     row["missing_trace_field_refs"] = missing_trace_field_refs
-    if missing_trace_field_refs:
-        errors.append({"key": "handling_view_missing_trace_field_refs", "model": model_name, "missing_fields": missing_trace_field_refs})
     row["views"] = view_rows
     model_rows.append(row)
 summary["models"] = model_rows

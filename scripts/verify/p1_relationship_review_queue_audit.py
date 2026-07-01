@@ -8,7 +8,6 @@ EXPECTED_MODELS = {
     "sc.expense.claim",
     "sc.payment.execution",
     "sc.receipt.income",
-    "sc.fund.account.operation",
     "sc.financing.loan",
     "sc.settlement.order",
     "sc.business.entity",

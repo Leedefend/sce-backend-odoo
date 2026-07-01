@@ -4,9 +4,9 @@
 
 画像：`artifacts/user_business_data_portrait.sc_demo.json`
 
-用户确认 62 可见列表业务入口整合计划：`docs/product/user_confirmed_62_business_entry_integration_plan.md`
+用户确认可见列表业务入口整合计划：`docs/product/user_confirmed_62_business_entry_integration_plan.md`
 
-62 菜单整合矩阵：`artifacts/user_confirmed_62_business_entry_integration_matrix.md`
+锁定菜单整合矩阵：`artifacts/user_confirmed_62_business_entry_integration_matrix.md`
 
 在线可见面核实协议：`docs/product/online_visible_surface_verification_protocol_2026-06-11.md`
 
@@ -29,9 +29,9 @@
 
 ## 第一轮 P1 范围
 
-### 用户确认 62 可见列表先行分析
+### 用户确认可见列表先行分析
 
-功能完善必须先服从用户确认的 62 个可见列表入口。62 个入口不是简单菜单清单，而是用户已验收的业务事实边界。后续办理能力完善不能绕过这套入口体系，也不能因为新增产品化能力改变用户已经确认的菜单和列表数据。
+功能完善必须先服从用户确认的锁定可见列表入口。当前基线启用 60 个入口，这些入口不是简单菜单清单，而是用户已验收的业务事实边界。后续办理能力完善不能绕过这套入口体系，也不能因为新增产品化能力改变用户已经确认的菜单和列表数据。
 
 本轮新增只读整合矩阵：
 
@@ -39,7 +39,7 @@
 - 输出：`artifacts/user_confirmed_62_business_entry_integration_matrix.json`
 - 输出：`artifacts/user_confirmed_62_business_entry_integration_matrix.md`
 
-矩阵将 62 个入口分类为正式办理入口、主数据入口、来源事实明细、汇总分析入口和配置入口，并给出统一承接口径。后续所有办理能力改造必须从该矩阵进入，不能只按单个模型或单个按钮局部修补。
+矩阵按锁定基线实际启用入口分类为正式办理入口、主数据入口、来源事实明细、汇总分析入口和配置入口，并给出统一承接口径。后续所有办理能力改造必须从该矩阵进入，不能只按单个模型或单个按钮局部修补。
 
 ### 首轮缺口优先级
 
@@ -253,7 +253,7 @@
 
 该门禁必须同时覆盖：
 
-- 用户确认 62 菜单整合矩阵。
+- 用户确认锁定菜单整合矩阵。
 - 旧在线系统与在线开发系统真实用户可见面核实；缓存 dump 只能辅助定位，不能单独作为最终验收依据。
 - 用户业务产品化基线。
 - 用户已验收菜单/列表稳定性。
@@ -263,11 +263,14 @@
 - 结算、付款申请、付款登记、收款、发票之间的正式关系连续性。
 - 新正式办理单据的项目/合同/申请类型范围拦截。
 - 项目收付款、借还调拨、项目资金和往来单位资金投影一致性。
+- 用户可见历史标签必须全部由正式产品字段承载，行业模块办理边界 `backlog/action_required` 必须保持 0。
 
 必要时可单独拆跑：
 
 - `python3 scripts/verify/user_business_productization_baseline_guard.py`
 - `python3 -m py_compile scripts/verify/user_business_data_portrait.py scripts/verify/user_business_productization_baseline_guard.py`
+- `DB_NAME=sc_demo make verify.user_data.product_field_coverage.matrix`
+- `DB_NAME=sc_demo make verify.industry_module.handling_capability_boundary`
 - `DB_NAME=sc_demo bash scripts/ops/odoo_shell_exec.sh < scripts/verify/locked_fact_formal_model_continuity_guard.py`
 - `DB_NAME=sc_demo bash scripts/ops/odoo_shell_exec.sh < scripts/verify/p1_formal_relationship_continuity_audit.py`
 - `DB_NAME=sc_demo bash scripts/ops/odoo_shell_exec.sh < scripts/verify/p1_formal_relationship_scope_block_smoke.py`
@@ -279,24 +282,25 @@
 当前本地 `sc_demo` 守卫结论：
 
 - `sc.receipt.income`：13,429 条锁定历史事实，非法改 `amount` 被拦截。
-- `sc.expense.claim`：65,295 条锁定历史事实，非法改 `amount` 被拦截。
+- `sc.expense.claim`：51,246 条锁定历史事实，非法改 `amount` 被拦截。
 - `sc.invoice.registration`：69,485 条锁定历史事实，非法改 `amount_total` 被拦截。
 - `sc.tax.deduction.registration`：5,037 条锁定历史事实，非法改 `invoice_amount_total` 被拦截。
-- `sc.payment.execution`：37,716 条锁定历史事实，非法改 `planned_amount` 被拦截。
-- `sc.financing.loan`：463 条锁定历史事实，非法改 `amount` 被拦截。
-- `payment.request`、`sc.settlement.order`、`sc.fund.account.operation` 已有正式来源载体记录，后续连续办理通过新单据、派生视图或非侵入式映射层承载。
+- `sc.payment.execution`：39,903 条锁定历史事实，非法改 `planned_amount` 被拦截。
+- `sc.financing.loan`：98 条锁定历史事实，非法改 `state` 被拦截；`amount`、`purpose`、`due_date`、`document_date` 等正式借款业务字段可继续维护。
+- `payment.request`、`sc.settlement.order`、`sc.fund.account.operation` 已有正式来源载体记录，后续连续办理通过新单据、派生视图或非侵入式映射层承载；`sc.financing.loan` 历史确认单按正式模型字段承载后续维护，状态和身份字段仍保持锁定。
 
 本轮运行态闭环验证：
 
 - `scripts/verify/finance_interfund_handling_entry_audit.py`：通过，覆盖 P1 办理入口 action、业务方向字段、表单语义、附件/历史附件追溯和关键流转动作。
 - `scripts/verify/user_confirmed_menu_surface_guard.py`：通过，用户确认菜单可见面未漂移。
-- `scripts/verify/locked_fact_formal_model_continuity_guard.py`：通过，锁定历史事实非法写入被拦截，连续办理只能走新单据、派生视图或非侵入式映射层。
+- `scripts/verify/locked_fact_formal_model_continuity_guard.py`：通过，锁定历史事实非法写入被拦截；除借款历史确认单可维护正式业务字段外，连续办理走新单据、派生视图或非侵入式映射层。
 - `scripts/verify/finance_business_fact_projection_audit.py`：通过，项目收付款来源明细与来源事实数量、金额一致。
 - `scripts/verify/finance_business_project_summary_audit.py`：通过，项目收付款汇总与来源明细一致。
 - `scripts/verify/interfund_movement_project_summary_audit.py`：通过，项目借还调拨汇总与来源明细一致。
 - `scripts/verify/finance_project_capital_position_audit.py`：通过，项目资金总览 660 个项目口径与项目收付款汇总、借还调拨汇总一致。
 - `scripts/verify/p1_locked_fact_mapping_candidate_guard.py`：通过，历史事实到正式关系的候选映射阈值未退化。
 - `scripts/verify/p1_formal_relationship_continuity_audit.py`：通过，结算、付款申请、付款登记、收款、发票之间已存在的正式关系没有非锁定办理记录串项目/串合同硬错误。
+- 付款申请绑定结算单时，以结算单 `settlement_unit_id or partner_id` 作为有效往来单位；当前 `sc_demo` 已修正 153 条结算单位锚点，并断开 4 条跨项目错误结算锚点，后续新办由模型约束和 scope smoke 持续阻断。
 - 该审计同时识别出 `payment_execution_request_scope` 关系风险 7,167 条，主要是历史付款登记与付款申请之间合同未带入或实际收款方不同；后续应进入付款办理口径细化，不直接改写锁定历史事实。
 - 付款登记、收款收入、费用/保证金的正式办理动作已增加付款/收款申请关系校验：新单据关联申请时必须匹配申请类型和项目，合同两边都有时必须一致；历史锁定事实继续只作为风险样本，不被回写。
 - 运行态 smoke 已验证新建付款登记、费用/保证金、收款收入在项目与申请不一致时会被拦截并回滚。

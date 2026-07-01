@@ -77,17 +77,27 @@ CHECKS = OrderedDict(
                       JOIN sc_settlement_order AS s ON s.id = r.settlement_id
                      WHERE (r.project_id IS NOT NULL AND s.project_id IS NOT NULL AND r.project_id <> s.project_id)
                         OR (r.contract_id IS NOT NULL AND s.contract_id IS NOT NULL AND r.contract_id <> s.contract_id)
-                        OR (r.partner_id IS NOT NULL AND s.partner_id IS NOT NULL AND r.partner_id <> s.partner_id)
+                        OR (
+                            r.partner_id IS NOT NULL
+                            AND COALESCE(s.settlement_unit_id, s.partner_id) IS NOT NULL
+                            AND r.partner_id <> COALESCE(s.settlement_unit_id, s.partner_id)
+                        )
                 """,
                 "sample_sql": """
                     SELECT r.id, r.name, r.type, r.project_id, s.project_id AS settlement_project_id,
                            r.contract_id, s.contract_id AS settlement_contract_id,
-                           r.partner_id, s.partner_id AS settlement_partner_id, r.settlement_id
+                           r.partner_id, s.partner_id AS settlement_partner_id,
+                           s.settlement_unit_id, COALESCE(s.settlement_unit_id, s.partner_id) AS settlement_effective_partner_id,
+                           r.settlement_id
                       FROM payment_request AS r
                       JOIN sc_settlement_order AS s ON s.id = r.settlement_id
                      WHERE (r.project_id IS NOT NULL AND s.project_id IS NOT NULL AND r.project_id <> s.project_id)
                         OR (r.contract_id IS NOT NULL AND s.contract_id IS NOT NULL AND r.contract_id <> s.contract_id)
-                        OR (r.partner_id IS NOT NULL AND s.partner_id IS NOT NULL AND r.partner_id <> s.partner_id)
+                        OR (
+                            r.partner_id IS NOT NULL
+                            AND COALESCE(s.settlement_unit_id, s.partner_id) IS NOT NULL
+                            AND r.partner_id <> COALESCE(s.settlement_unit_id, s.partner_id)
+                        )
                      ORDER BY r.id
                      LIMIT 20
                 """,

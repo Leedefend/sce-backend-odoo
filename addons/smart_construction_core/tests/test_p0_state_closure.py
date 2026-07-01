@@ -513,6 +513,39 @@ class TestP0StateClosure(TransactionCase):
         self.assertEqual(pr.amount, 188.0)
         self.assertEqual(pr.payment_account_no, "R-DEFAULT-001")
 
+    def test_payment_request_settlement_uses_settlement_unit_as_effective_partner(self):
+        project = self._create_project("P0 Project Payment Settlement Unit", with_boq=True)
+        contract_partner = self._create_partner("P0 Contract Partner")
+        settlement_unit = self._create_partner("P0 Settlement Unit")
+        other_partner = self._create_partner("P0 Other Partner")
+        contract = self._create_contract(project, contract_partner)
+        settlement = self._create_settlement_order(project, contract_partner, contract, amount=188.0, state="approve")
+        settlement.write({"settlement_unit_id": settlement_unit.id})
+
+        pr = self.env["payment.request"].sudo().create(
+            {
+                "name": "P0 PR Settlement Unit",
+                "type": "pay",
+                "settlement_id": settlement.id,
+            }
+        )
+
+        self.assertEqual(pr.project_id, project)
+        self.assertEqual(pr.contract_id, contract)
+        self.assertEqual(pr.partner_id, settlement_unit)
+
+        draft = self.env["payment.request"].new(
+            {
+                "type": "pay",
+                "project_id": project.id,
+                "partner_id": other_partner.id,
+                "contract_id": contract.id,
+                "settlement_id": settlement.id,
+            }
+        )
+        draft._onchange_type_set_contract_domain()
+        self.assertFalse(draft.settlement_id)
+
     def test_payment_request_settlement_domain_follows_project_and_contract(self):
         project = self._create_project("P0 Project Payment Settlement Domain", with_boq=True)
         partner_a = self._create_partner("P0 Settlement Domain Partner A")

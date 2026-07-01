@@ -93,6 +93,8 @@ run_static_check "python_compile_productization_guards" \
     scripts/verify/p1_daily_business_form_usability_audit.py \
     scripts/verify/p1_formal_relationship_continuity_audit.py \
     scripts/verify/p1_formal_relationship_scope_block_smoke.py \
+    scripts/verify/user_data_product_field_coverage_matrix.py \
+    scripts/verify/industry_module_handling_capability_boundary_audit.py \
     scripts/verify/finance_business_fact_projection_audit.py \
     scripts/verify/finance_business_project_summary_audit.py \
     scripts/verify/interfund_movement_project_summary_audit.py \
@@ -103,6 +105,11 @@ run_static_check "user_confirmed_62_business_entry_integration_matrix" \
   python3 scripts/verify/user_confirmed_62_business_entry_integration_matrix.py
 run_static_check "user_business_productization_baseline_guard" \
   python3 scripts/verify/user_business_productization_baseline_guard.py
+
+run_static_check "user_data_product_field_coverage_matrix" \
+  make verify.user_data.product_field_coverage.matrix DB_NAME="$DB_NAME"
+run_static_check "industry_module_handling_capability_boundary" \
+  make verify.industry_module.handling_capability_boundary DB_NAME="$DB_NAME"
 
 run_odoo_shell_check "user_confirmed_menu_surface_guard" \
   scripts/verify/user_confirmed_menu_surface_guard.py

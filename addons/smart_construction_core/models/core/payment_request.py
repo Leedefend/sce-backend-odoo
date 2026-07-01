@@ -1363,6 +1363,7 @@ class PaymentRequest(models.Model):
         self.ensure_one()
         if not settlement:
             return True
+        settlement_partner = settlement.settlement_unit_id or settlement.partner_id
         expected_type = "in" if self.type == "receive" else "out"
         if settlement.state != "approve" or settlement.settlement_type != expected_type:
             return False
@@ -1370,7 +1371,7 @@ class PaymentRequest(models.Model):
             return False
         if self.contract_id and settlement.contract_id and settlement.contract_id != self.contract_id:
             return False
-        if self.partner_id and settlement.partner_id and settlement.partner_id != self.partner_id:
+        if self.partner_id and settlement_partner and settlement_partner != self.partner_id:
             return False
         return True
 
@@ -1462,7 +1463,8 @@ class PaymentRequest(models.Model):
                 raise ValidationError(_("结算单类型必须与付款申请类型一致。"))
             if settle.project_id and rec.project_id and settle.project_id != rec.project_id:
                 raise ValidationError(_("结算单项目必须与付款申请项目一致。"))
-            if settle.partner_id and rec.partner_id and settle.partner_id != rec.partner_id:
+            settlement_partner = settle.settlement_unit_id or settle.partner_id
+            if settlement_partner and rec.partner_id and settlement_partner != rec.partner_id:
                 raise ValidationError(_("结算单往来单位必须与付款申请一致。"))
             if settle.contract_id and rec.contract_id and settle.contract_id != rec.contract_id:
                 raise ValidationError(_("结算单合同必须与付款申请一致。"))
