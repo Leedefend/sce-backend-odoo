@@ -1499,16 +1499,16 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '录入时间': ['created_time'],
     },
     'sc.legacy.invoice.tax.fact': {
-        '状态': ['legacy_state'],
-        '单据状态': ['legacy_state'],
+        '状态': ['document_state_text', 'legacy_state'],
+        '单据状态': ['document_state_text', 'legacy_state'],
         '单据编号': ['document_no'],
         '项目名称': ['legacy_project_name', 'project_id'],
         '发票开具日期': ['document_date'],
-        '开票单位': ['legacy_partner_name'],
-        '发票提供人/单位': ['legacy_partner_name'],
-        '价税合计': ['source_amount'],
-        '税额': ['source_tax_amount'],
-        '不含税金额': ['source_amount'],
+        '开票单位': ['invoice_partner_name', 'legacy_partner_name'],
+        '发票提供人/单位': ['invoice_partner_name', 'legacy_partner_name'],
+        '价税合计': ['amount_total', 'source_amount'],
+        '税额': ['tax_amount', 'source_tax_amount'],
+        '不含税金额': ['amount_untaxed', 'source_amount'],
         '发票号码': ['document_no'],
         '发票类型': ['invoice_type'],
         '发票公司类型': ['invoice_company_type'],
@@ -2859,6 +2859,9 @@ def _alias_value(record, label):
         ]
         return " ".join(lines)
     if record._name == 'sc.legacy.invoice.tax.fact' and label in ('状态', '单据状态'):
+        state_text = _format_alias_value(record, 'document_state_text')
+        if state_text:
+            return INVOICE_DOCUMENT_STATE_LABELS.get(state_text, state_text)
         legacy_state = _format_alias_value(record, 'legacy_state')
         if legacy_state:
             return INVOICE_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)

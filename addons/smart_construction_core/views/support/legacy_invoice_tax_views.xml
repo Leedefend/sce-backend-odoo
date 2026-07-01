@@ -4,16 +4,17 @@
     <field name="name">sc.legacy.invoice.tax.fact.tree</field>
     <field name="model">sc.legacy.invoice.tax.fact</field>
     <field name="arch" type="xml">
-      <tree string="历史发票税额事实" create="false" edit="false" delete="false">
+      <tree string="发票税额事实" create="false" edit="true" delete="false">
         <field name="document_date"/>
         <field name="document_no"/>
         <field name="direction"/>
         <field name="invoice_type"/>
         <field name="project_id"/>
-        <field name="legacy_partner_name"/>
-        <field name="source_amount"/>
-        <field name="source_tax_amount"/>
-        <field name="legacy_state"/>
+        <field name="invoice_partner_name"/>
+        <field name="amount_total"/>
+        <field name="tax_amount"/>
+        <field name="amount_untaxed"/>
+        <field name="document_state_text"/>
         <field name="source_family"/>
         <field name="legacy_source_table"/>
         <field name="legacy_record_id"/>
@@ -26,18 +27,18 @@
     <field name="name">sc.legacy.invoice.tax.fact.search</field>
     <field name="model">sc.legacy.invoice.tax.fact</field>
     <field name="arch" type="xml">
-      <search string="历史发票税额事实">
+      <search string="发票税额事实">
         <field name="document_no"/>
         <field name="document_date"/>
         <field name="project_id"/>
         <field name="legacy_project_name"/>
-        <field name="legacy_partner_name"/>
+        <field name="invoice_partner_name"/>
         <field name="direction"/>
         <field name="invoice_type"/>
         <field name="source_family"/>
         <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
         <filter string="按日期" name="group_document_date" context="{'group_by': 'document_date'}"/>
-        <filter string="按往来单位" name="group_legacy_partner" context="{'group_by': 'legacy_partner_name'}"/>
+        <filter string="按往来单位" name="group_invoice_partner" context="{'group_by': 'invoice_partner_name'}"/>
         <filter string="按方向" name="group_direction" context="{'group_by': 'direction'}"/>
         <filter string="按发票类型" name="group_invoice_type" context="{'group_by': 'invoice_type'}"/>
         <filter string="按来源族" name="group_source_family" context="{'group_by': 'source_family'}"/>
@@ -49,7 +50,7 @@
     <field name="name">sc.legacy.invoice.tax.fact.form</field>
     <field name="model">sc.legacy.invoice.tax.fact</field>
     <field name="arch" type="xml">
-      <form string="历史发票税额事实" create="false" edit="false" delete="false">
+      <form string="发票税额事实" create="false" edit="true" delete="false">
         <sheet>
           <group>
             <group>
@@ -58,16 +59,16 @@
               <field name="direction"/>
               <field name="invoice_type"/>
               <field name="project_id"/>
-              <field name="legacy_partner_id"/>
-              <field name="legacy_partner_name"/>
+              <field name="invoice_partner_name"/>
               <field name="legacy_partner_tax_no"/>
             </group>
             <group>
-              <field name="source_amount"/>
-              <field name="source_tax_amount"/>
+              <field name="amount_total"/>
+              <field name="tax_amount"/>
+              <field name="amount_untaxed"/>
               <field name="source_amount_field"/>
               <field name="note"/>
-              <field name="legacy_state"/>
+              <field name="document_state_text"/>
               <field name="source_family"/>
               <field name="legacy_source_table"/>
               <field name="legacy_record_id"/>
@@ -79,6 +80,11 @@
             <field name="legacy_project_id"/>
             <field name="legacy_project_name"/>
             <field name="legacy_partner_id"/>
+            <field name="legacy_partner_name"/>
+            <field name="legacy_state"/>
+            <field name="source_amount"/>
+            <field name="source_tax_amount"/>
+            <field name="source_amount_untaxed"/>
           </group>
         </sheet>
       </form>
