@@ -17,7 +17,7 @@
 | id | old entry | model | status | create | edit | attachment | chatter | missing sections | missing fields | required fields | gaps |
 |---|---|---|---|---|---|---|---|---:|---:|---:|---|
 | DBS-019 | 投标报名管理 | tender.bid | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 3 |  |
-| DBS-020 | 投标报名费申请 | tender.bid | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 3 |  |
+| DBS-020 | 投标报名费申请 | tender.doc.purchase | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 1 |  |
 | DBS-021 | 承包人借项目款 | sc.financing.loan | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 8 |  |
 | DBS-022 | 承包人还项目款 | sc.financing.loan | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 8 |  |
 | DBS-023 | 支付申请 | payment.request | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 6 |  |

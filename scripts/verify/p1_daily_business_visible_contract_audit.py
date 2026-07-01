@@ -31,7 +31,7 @@ P1_ENTRIES: list[dict[str, Any]] = [
         "name": "投标报名费申请",
         "domain": "投标/付款",
         "images": "image38",
-        "candidates": ["tender.bid", "payment.request"],
+        "candidates": ["tender.doc.purchase", "payment.request"],
         "expected_list_fields": ["单据状态", "项目名称", "单据编号", "申请人", "申请日期", "收款账号", "开户行", "金额", "备注", "收款人", "付款方式", "附件", "录入人", "录入时间"],
     },
     {

@@ -79,6 +79,7 @@ _CONSTRUCTIONDIARY_FORMAL_CONFIG_FIELDS = {
     'diary_afternoon_weather_display': ('下午气候', ('weather',)),
     'diary_daily_construction_content_display': ('当日施工内容', ('description',)),
     'diary_operator_manager_display': ('操作负责人', ('handler_name',)),
+    'diary_quality_status_display': ('质量情况', ('quality_name',)),
     'diary_construction_worker_display': ('施工员', ('handler_name',)),
     'diary_temperature_display': ('温度', ('weather',)),
 }

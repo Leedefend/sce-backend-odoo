@@ -5,6 +5,8 @@ import hashlib
 import re
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
+from lxml import etree
+
 from odoo import api, fields, models
 from odoo.osv import expression
 
@@ -107,10 +109,12 @@ P1_ALIAS_LABELS = {'tender.bid': ['单据状态', '推送结果', '单据编号'
                      '付款方式',
                      '录入人'],
  'sc.tax.deduction.registration': ['单据状态',
+                                   '状态',
                                    '单据编号',
                                    '是否转出',
                                    '项目名称',
                                    '开票单位',
+                                   '发票号码',
                                    '发票号',
                                    '抵扣税额',
                                    '抵扣总额',
@@ -457,6 +461,7 @@ P1_ALIAS_LABELS = {'tender.bid': ['单据状态', '推送结果', '单据编号'
                              '录入人',
                              '录入时间'],
  'sc.material.rental.order': ['单据编号',
+                              '状态',
                               '合同编号',
                               '项目名称',
                               '合同标题',
@@ -2968,6 +2973,95 @@ def _compute_p1_daily_business_visible_aliases(self):
             record[field_name] = _alias_value(record, label)
 
 
+def _inject_p1_daily_business_visible_tree_fields(self, result, view_type):
+    if view_type != "tree" or not isinstance(result, dict):
+        return result
+    labels = list(dict.fromkeys(
+        list(P1_ALIAS_LABELS.get(self._name, ())) + P1_ALIAS_COMPAT_LABELS.get(self._name, [])
+    ))
+    if not labels:
+        return result
+    arch = result.get("arch") or ""
+    if not arch:
+        return result
+    try:
+        root = etree.fromstring(arch.encode("utf-8"))
+    except Exception:
+        return result
+    existing_names = {node.get("name") for node in root.xpath(".//field[@name]")}
+    existing_labels = {
+        (node.get("string") or "").strip()
+        for node in root.xpath(".//field")
+        if (node.get("string") or "").strip()
+    }
+    added = False
+    for label in labels:
+        field_name = _alias_field_name(label)
+        if field_name not in self._fields or field_name in existing_names or label in existing_labels:
+            continue
+        etree.SubElement(
+            root,
+            "field",
+            name=field_name,
+            string=label,
+            optional="show",
+            readonly="1",
+        )
+        added = True
+    if added:
+        result["arch"] = etree.tostring(root, encoding="unicode")
+    return result
+
+
+def _inject_p1_daily_business_visible_form_sections(self, result, view_type):
+    if view_type != "form" or not isinstance(result, dict):
+        return result
+    labels = list(P1_ALIAS_LABELS.get(self._name, ()))
+    if not labels:
+        return result
+    arch = result.get("arch") or ""
+    if not arch:
+        return result
+    try:
+        root = etree.fromstring(arch.encode("utf-8"))
+    except Exception:
+        return result
+    sheet = root.xpath("//sheet")
+    parent = sheet[0] if sheet else root
+    changed = False
+    existing_names = {node.get("name") for node in root.xpath(".//field[@name]")}
+    formal_fields = [
+        (field_name, field.string)
+        for field_name, field in self._fields.items()
+        if field.string in labels and not field_name.startswith("p1_visible_") and field_name not in existing_names
+    ]
+    if formal_fields:
+        group = etree.Element("group", string="P1 正式办理字段")
+        for field_name, label in formal_fields:
+            etree.SubElement(group, "field", name=field_name, string=label, readonly="1")
+            field_meta = result.setdefault("fields", {}).setdefault(field_name, {})
+            field_meta.setdefault("string", label)
+        parent.append(group)
+        changed = True
+    if "附件" in labels and 'string="附件"' not in arch:
+        group = etree.Element("group", string="P1 旧系统表单分区")
+        etree.SubElement(group, "separator", string="附件")
+        parent.append(group)
+        changed = True
+    if changed:
+        result["arch"] = etree.tostring(root, encoding="unicode")
+    return result
+
+
+def _make_p1_visible_get_view(class_name):
+    def get_view(self, view_id=None, view_type="form", **options):
+        result = super(globals()[class_name], self).get_view(view_id=view_id, view_type=view_type, **options)
+        result = _inject_p1_daily_business_visible_tree_fields(self, result, view_type)
+        return _inject_p1_daily_business_visible_form_sections(self, result, view_type)
+
+    return get_view
+
+
 _ALIAS_MODEL_FIELD_LABELS = {
     _model_name: list(dict.fromkeys(list(_labels) + P1_ALIAS_COMPAT_LABELS.get(_model_name, [])))
     for _model_name, _labels in P1_ALIAS_LABELS.items()
@@ -2975,10 +3069,12 @@ _ALIAS_MODEL_FIELD_LABELS = {
 
 
 for _index, (_model_name, _labels) in enumerate(_ALIAS_MODEL_FIELD_LABELS.items(), start=1):
+    _class_name = f"P1DailyBusinessVisibleAlias{_index}"
     _attrs = {
         "__module__": __name__,
         "_inherit": _model_name,
         "_compute_p1_daily_business_visible_aliases": _compute_p1_daily_business_visible_aliases,
+        "get_view": _make_p1_visible_get_view(_class_name),
     }
     for _label in _labels:
         _search_method_name = "_search_%s" % _alias_field_name(_label)
@@ -2989,8 +3085,8 @@ for _index, (_model_name, _labels) in enumerate(_ALIAS_MODEL_FIELD_LABELS.items(
             search=_search_method_name,
             readonly=True,
         )
-    globals()[f"P1DailyBusinessVisibleAlias{_index}"] = type(
-        f"P1DailyBusinessVisibleAlias{_index}",
+    globals()[_class_name] = type(
+        _class_name,
         (models.Model,),
         _attrs,
     )

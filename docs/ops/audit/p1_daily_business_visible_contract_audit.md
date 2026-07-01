@@ -14,7 +14,7 @@
 | id | old entry | domain | selected model | status | missing list fields | missing filters | missing form fields | missing form sections | attachment | chatter |
 |---|---|---|---|---|---:|---:|---:|---:|---|---|
 | DBS-019 | 投标报名管理 | 投标 | tender.bid | aligned | 0 | 0 | 0 | 0 | Y | Y |
-| DBS-020 | 投标报名费申请 | 投标/付款 | tender.bid | aligned | 0 | 0 | 0 | 0 | Y | Y |
+| DBS-020 | 投标报名费申请 | 投标/付款 | tender.doc.purchase | aligned | 0 | 0 | 0 | 0 | Y | Y |
 | DBS-021 | 承包人借项目款 | 借款 | sc.financing.loan | aligned | 0 | 0 | 0 | 0 | Y | Y |
 | DBS-022 | 承包人还项目款 | 还款 | sc.financing.loan | aligned | 0 | 0 | 0 | 0 | Y | Y |
 | DBS-023 | 支付申请 | 付款 | payment.request | aligned | 0 | 0 | 0 | 0 | Y | Y |
@@ -28,8 +28,8 @@
 | DBS-031 | 项目借公司款登记 | 借款 | sc.financing.loan | aligned | 0 | 0 | 0 | 0 | Y | Y |
 | DBS-032 | 项目还公司款登记 | 还款 | sc.financing.loan | aligned | 0 | 0 | 0 | 0 | Y | Y |
 | DBS-033 | 开票申请 | 发票税务 | sc.invoice.registration | aligned | 0 | 0 | 0 | 0 | Y | Y |
-| DBS-034 | 开票登记 | 发票税务 | sc.invoice.registration | aligned | 0 | 0 | 0 | 0 | Y | Y |
-| DBS-035 | 预缴税款 | 发票税务 | sc.tax.deduction.registration | aligned | 0 | 0 | 0 | 0 | Y | Y |
+| DBS-034 | 销项发票登记 | 发票税务 | sc.invoice.registration | aligned | 0 | 0 | 0 | 0 | Y | Y |
+| DBS-035 | 预缴税款 | 发票税务 | sc.invoice.registration | aligned | 0 | 0 | 0 | 0 | Y | Y |
 | DBS-036 | 抵扣登记 | 发票税务 | sc.tax.deduction.registration | aligned | 0 | 0 | 0 | 0 | Y | Y |
 | DBS-037 | 账户 | 资金账户基础 | sc.fund.account | aligned | 0 | 0 | 0 | 0 | Y | Y |
 | DBS-038 | 进项上报 | 进项税务 | sc.tax.deduction.registration | aligned | 0 | 0 | 0 | 0 | Y | Y |
