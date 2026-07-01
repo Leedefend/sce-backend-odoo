@@ -96,6 +96,7 @@
                             <field name="legacy_visible_reason" readonly="1"/>
                             <field name="legacy_visible_note" readonly="1"/>
                             <field name="legacy_visible_attachment" readonly="1"/>
+                            <field name="legacy_attachment_ref" readonly="1"/>
                             <field name="creator_name" readonly="1"/>
                             <field name="created_time" readonly="1"/>
                         </group>

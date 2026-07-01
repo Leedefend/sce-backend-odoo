@@ -177,7 +177,6 @@
                                 <field name="legacy_source_table"/>
                                 <field name="legacy_record_id"/>
                                 <field name="legacy_document_state"/>
-                                <field name="legacy_attachment_ref" readonly="1"/>
                                 <field name="creator_name"/>
                                 <field name="created_time"/>
                             </group>

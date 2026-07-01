@@ -126,7 +126,6 @@ class ScFundAccountOperation(models.Model):
     legacy_source_table = fields.Char(string="历史来源表", readonly=True, index=True)
     legacy_record_id = fields.Char(string="历史记录ID", readonly=True, index=True)
     legacy_document_state = fields.Char(string="历史单据状态", readonly=True, index=True)
-    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     creator_name = fields.Char(string="历史录入人", readonly=True, index=True)
     created_time = fields.Datetime(string="历史录入时间", readonly=True, index=True)
     active = fields.Boolean(string="有效", default=True, index=True)

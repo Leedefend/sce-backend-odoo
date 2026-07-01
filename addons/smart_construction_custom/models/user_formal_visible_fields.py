@@ -219,6 +219,7 @@ class FundAccountOperationUserHistoryFields(models.Model):
     legacy_visible_reason = fields.Char(string="历史可见事由", readonly=True)
     legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
     legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
+    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
 
     def _fund_operation_visible_value(self, suffix):
         self.ensure_one()
