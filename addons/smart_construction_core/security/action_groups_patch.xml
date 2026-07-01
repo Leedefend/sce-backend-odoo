@@ -427,7 +427,7 @@
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
     </record>
     <record id="action_sc_legacy_finance_auxiliary_fact" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_finance_read')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
     <record id="action_sc_legacy_tender_registration_fact" model="ir.actions.act_window">
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_project_read')])]"/>

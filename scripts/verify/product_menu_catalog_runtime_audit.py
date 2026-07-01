@@ -31,6 +31,18 @@ VISIBLE_LOGINS = tuple(
     ).split(",")
     if item.strip()
 )
+BUSINESS_VISIBLE_LOGINS = {
+    item.strip()
+    for item in os.getenv(
+        "PRODUCT_MENU_CATALOG_BUSINESS_LOGINS",
+        "wutao,demo_business_full,demo_role_project_manager,demo_role_finance,demo_role_executive",
+    ).split(",")
+    if item.strip()
+}
+INTERNAL_HISTORY_PATH_TOKENS = (
+    "基础设置 / 系统权限",
+    "历史财务事实（内部）",
+)
 
 SYSTEM_CONFIG_XMLIDS = set(LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS) | {
     "smart_construction_core.menu_sc_business_config_center",
@@ -368,6 +380,29 @@ def _export() -> dict[str, object]:
     for row in rows:
         layer_counts[row["layer"]] = layer_counts.get(row["layer"], 0) + 1
 
+    internal_history_business_visible = []
+    for row in rows:
+        visible_business_logins = sorted(BUSINESS_VISIBLE_LOGINS.intersection(row.get("visible_logins") or []))
+        path = _text(row.get("path"))
+        if (
+            row.get("active")
+            and row.get("layer") == "history_acceptance"
+            and visible_business_logins
+            and any(token in path for token in INTERNAL_HISTORY_PATH_TOKENS)
+        ):
+            internal_history_business_visible.append(
+                {
+                    "xmlid": row.get("xmlid"),
+                    "path": path,
+                    "visible_logins": visible_business_logins,
+                }
+            )
+    if internal_history_business_visible:
+        raise AssertionError(
+            "internal history menus must not be visible to business users: %s"
+            % json.dumps(internal_history_business_visible[:20], ensure_ascii=False)
+        )
+
     top_level = [
         row
         for row in rows
@@ -387,6 +422,7 @@ def _export() -> dict[str, object]:
             "inactive_menu_count": sum(1 for row in rows if not row["active"]),
             "action_menu_count": sum(1 for row in rows if row["action_raw"]),
             "needs_review_count": sum(1 for row in rows if row["needs_review"]),
+            "internal_history_business_visible_count": len(internal_history_business_visible),
             "layer_counts": layer_counts,
         },
         "top_level": [

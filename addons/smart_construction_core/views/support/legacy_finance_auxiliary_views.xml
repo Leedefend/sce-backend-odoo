@@ -115,7 +115,7 @@
     <field name="res_model">sc.legacy.finance.auxiliary.fact</field>
     <field name="view_mode">tree,form</field>
     <field name="search_view_id" ref="view_sc_legacy_finance_auxiliary_fact_search"/>
-    <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_finance_read')])]"/>
+    <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
   </record>
 
   <menuitem id="menu_sc_legacy_finance_auxiliary_fact"
@@ -123,5 +123,5 @@
             parent="smart_construction_core.menu_sc_finance_history_center"
             action="action_sc_legacy_finance_auxiliary_fact"
             sequence="9"
-            groups="smart_construction_core.group_sc_cap_finance_read"/>
+            groups="smart_construction_core.group_sc_cap_config_admin"/>
 </odoo>

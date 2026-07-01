@@ -334,18 +334,260 @@
 
 ## 系统配置边界
 
+| 边界入口 | active 子入口 | action 子入口 | XMLID |
+| --- | ---: | ---: | --- |
+| 智慧施工管理平台 / 基础设置 | 29 | 25 | `smart_construction_core.menu_sc_business_config_center` |
+| 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 用户账号与权限 | 0 | 0 | `smart_construction_core.menu_sc_runtime_user_management` |
+
+### active 明细
+
 - 智慧施工管理平台 / 基础设置
+- 智慧施工管理平台 / 基础设置 / 业务分类字典 -> `sc.business.category`
+- 智慧施工管理平台 / 基础设置 / 业务配置工作台 -> `ui.business.config.contract`
+- 智慧施工管理平台 / 基础设置 / 供应商 -> `res.partner`
+- 智慧施工管理平台 / 基础设置 / 定额字典
+- 智慧施工管理平台 / 基础设置 / 定额字典 / 专业 -> `project.dictionary`
+- 智慧施工管理平台 / 基础设置 / 定额字典 / 全部定额字典 -> `project.dictionary`
+- 智慧施工管理平台 / 基础设置 / 定额字典 / 四川定额导入 -> `quota.import.wizard`
+- 智慧施工管理平台 / 基础设置 / 定额字典 / 子目 -> `project.dictionary`
+- 智慧施工管理平台 / 基础设置 / 定额字典 / 定额项目 -> `project.dictionary`
+- 智慧施工管理平台 / 基础设置 / 定额字典 / 章节 -> `project.dictionary`
+- 智慧施工管理平台 / 基础设置 / 定额库
+- 智慧施工管理平台 / 基础设置 / 定额库 / 定额中心（左树右明细） -> `project.dictionary`
+- 智慧施工管理平台 / 基础设置 / 定额库 / 定额子目 -> `project.dictionary`
+- 智慧施工管理平台 / 基础设置 / 定额库 / 定额层级 -> `project.dictionary`
+- 智慧施工管理平台 / 基础设置 / 审批岗位人员 -> `sc.approval.scope`
+- 智慧施工管理平台 / 基础设置 / 审批配置 -> `sc.approval.policy`
+- 智慧施工管理平台 / 基础设置 / 客户 -> `res.partner`
+- 智慧施工管理平台 / 基础设置 / 数据字典 -> `sc.dictionary`
+- 智慧施工管理平台 / 基础设置 / 新增表单字段 -> `ui.form.custom.field.wizard`
+- 智慧施工管理平台 / 基础设置 / 用户优先入口迭代计划 -> `sc.legacy.user.priority.menu.plan`
+- 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 用户账号与权限 -> `res.users`
+- 智慧施工管理平台 / 基础设置 / 系统权限
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部）
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 流程工作台 -> `sc.history.todo`
+- 智慧施工管理平台 / 基础设置 / 组织架构 -> `hr.department`
+- 智慧施工管理平台 / 基础设置 / 菜单配置 -> `ui.menu.config.policy`
+- 智慧施工管理平台 / 基础设置 / 表单字段配置 -> `ui.form.field.policy`
+- 智慧施工管理平台 / 基础设置 / 阶段要求配置 -> `sc.project.stage.requirement.item`
+- 智慧施工管理平台 / 基础设置 / 预算类型 -> `project.cost.code`
+
+## 用户配置边界
+
+无。
 
 ## 历史验收边界
 
+| 边界入口 | active 子入口 | action 子入口 | XMLID |
+| --- | ---: | ---: | --- |
+| 智慧施工管理平台 / 基础设置 / 用户信息与权限 | 3 | 3 | `smart_construction_core.menu_sc_legacy_user_context` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史供应商合同计价方式 | 0 | 0 | `smart_construction_core.menu_sc_legacy_supplier_contract_pricing_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票登记 | 0 | 0 | `smart_construction_core.menu_sc_legacy_invoice_registration_line` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票税额 | 0 | 0 | `smart_construction_core.menu_sc_legacy_invoice_tax_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票附加税 | 0 | 0 | `smart_construction_core.menu_sc_legacy_invoice_surcharge_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史扣款调整 | 0 | 0 | `smart_construction_core.menu_sc_legacy_deduction_adjustment_line` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史抵扣税额 | 0 | 0 | `smart_construction_core.menu_sc_legacy_tax_deduction_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史收款收入 | 0 | 0 | `smart_construction_core.menu_sc_legacy_receipt_income_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史文件索引 | 0 | 0 | `smart_construction_core.menu_sc_legacy_file_index` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史流程扩展事实 | 0 | 0 | `smart_construction_core.menu_sc_legacy_workflow_detail_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史自筹资金 | 0 | 0 | `smart_construction_core.menu_sc_legacy_self_funding_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史融资借款 | 0 | 0 | `smart_construction_core.menu_sc_legacy_financing_loan_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史财税辅助事实 | 0 | 0 | `smart_construction_core.menu_sc_legacy_finance_auxiliary_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史费用/保证金 | 0 | 0 | `smart_construction_core.menu_sc_legacy_expense_deposit_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史费用报销明细 | 0 | 0 | `smart_construction_core.menu_sc_legacy_expense_reimbursement_line` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金日报 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_daily_snapshot_fact` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金日报明细 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_daily_line` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金确认 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_confirmation_line` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史项目资金余额 | 0 | 0 | `smart_construction_core.menu_sc_legacy_project_fund_balance_fact` |
+| 智慧施工管理平台 / 用户核对菜单 | 75 | 54 | `smart_construction_core.menu_scbs55_user_acceptance_root` |
+| 智慧施工管理平台 / 用户验收 | 43 | 35 | `smart_construction_core.menu_sc_user_acceptance_root` |
+
+### active 明细
+
+- 智慧施工管理平台 / 基础设置 / 用户信息与权限 -> `res.users`
+- 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 历史角色投影 -> `sc.legacy.user.role`
+- 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 用户信息 -> `sc.legacy.user.profile`
+- 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 项目授权范围 -> `sc.legacy.user.project.scope`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史供应商合同计价方式 -> `sc.legacy.supplier.contract.pricing.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票登记 -> `sc.legacy.invoice.registration.line`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票税额 -> `sc.legacy.invoice.tax.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票附加税 -> `sc.legacy.invoice.surcharge.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史扣款调整 -> `sc.legacy.deduction.adjustment.line`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史抵扣税额 -> `sc.legacy.tax.deduction.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史收款收入 -> `sc.legacy.receipt.income.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史文件索引 -> `sc.legacy.file.index`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史流程扩展事实 -> `sc.legacy.workflow.detail.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史自筹资金 -> `sc.legacy.self.funding.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史融资借款 -> `sc.legacy.financing.loan.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史财税辅助事实 -> `sc.legacy.finance.auxiliary.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史费用/保证金 -> `sc.legacy.expense.deposit.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史费用报销明细 -> `sc.legacy.expense.reimbursement.line`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金日报 -> `sc.legacy.fund.daily.snapshot.fact`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金日报明细 -> `sc.legacy.fund.daily.line`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金确认 -> `sc.legacy.fund.confirmation.line`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史项目资金余额 -> `sc.legacy.project.fund.balance.fact`
 - 智慧施工管理平台 / 用户核对菜单
+- 智慧施工管理平台 / 用户核对菜单 / 人事行政
+- 智慧施工管理平台 / 用户核对菜单 / 人事行政 / 印章使用审批表 -> `sc.office.admin.document`
+- 智慧施工管理平台 / 用户核对菜单 / 人事行政 / 奖金 -> `sc.hr.payroll.document`
+- 智慧施工管理平台 / 用户核对菜单 / 人事行政 / 工资登记 -> `sc.hr.payroll.document`
+- 智慧施工管理平台 / 用户核对菜单 / 人事行政 / 社保人员登记 -> `sc.hr.payroll.document`
+- 智慧施工管理平台 / 用户核对菜单 / 人事行政 / 社保登记 -> `sc.hr.payroll.document`
+- 智慧施工管理平台 / 用户核对菜单 / 人事行政 / 补助 -> `sc.hr.payroll.document`
+- 智慧施工管理平台 / 用户核对菜单 / 人事行政 / 请假/休假审批单 -> `sc.office.admin.document`
+- 智慧施工管理平台 / 用户核对菜单 / 付款
+- 智慧施工管理平台 / 用户核对菜单 / 付款 / 往来单位付款 -> `sc.payment.execution`
+- 智慧施工管理平台 / 用户核对菜单 / 付款 / 支付申请 -> `payment.request`
+- 智慧施工管理平台 / 用户核对菜单 / 分析大屏
+- 智慧施工管理平台 / 用户核对菜单 / 分析大屏 / 成本大屏 -> `sc.dashboard.cockpit.fact`
+- 智慧施工管理平台 / 用户核对菜单 / 分析大屏 / 经营大屏 -> `sc.operating.metrics.project`
+- 智慧施工管理平台 / 用户核对菜单 / 办公资料
+- 智慧施工管理平台 / 用户核对菜单 / 办公资料 / 公司资料存档 -> `sc.document.admin.document`
+- 智慧施工管理平台 / 用户核对菜单 / 发票税务
+- 智慧施工管理平台 / 用户核对菜单 / 发票税务 / 外经证登记 -> `sc.legacy.payment.residual.fact`
+- 智慧施工管理平台 / 用户核对菜单 / 发票税务 / 开票申请 -> `sc.invoice.registration`
+- 智慧施工管理平台 / 用户核对菜单 / 发票税务 / 开票登记 -> `sc.invoice.registration`
+- 智慧施工管理平台 / 用户核对菜单 / 发票税务 / 抵扣登记 -> `sc.tax.deduction.registration`
+- 智慧施工管理平台 / 用户核对菜单 / 发票税务 / 进项上报 -> `sc.legacy.invoice.tax.fact`
+- 智慧施工管理平台 / 用户核对菜单 / 发票税务 / 预缴税款 -> `sc.invoice.registration`
+- 智慧施工管理平台 / 用户核对菜单 / 合同
+- 智慧施工管理平台 / 用户核对菜单 / 合同 / 施工合同 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户核对菜单 / 基础资料
+- 智慧施工管理平台 / 用户核对菜单 / 基础资料 / 供应商/合作单位 -> `sc.business.entity`
+- 智慧施工管理平台 / 用户核对菜单 / 基础资料 / 往来单位 -> `sc.business.entity`
+- 智慧施工管理平台 / 用户核对菜单 / 成本报表
+- 智慧施工管理平台 / 用户核对菜单 / 成本报表 / 供货合同分析 -> `sc.legacy.supplier.contract.pricing.fact`
+- 智慧施工管理平台 / 用户核对菜单 / 成本报表 / 发票分析报表 -> `sc.invoice.analysis.summary`
+- 智慧施工管理平台 / 用户核对菜单 / 成本报表 / 发票成本进度报表 -> `sc.invoice.cost.progress.summary`
+- 智慧施工管理平台 / 用户核对菜单 / 成本报表 / 库存统计表（新） -> `sc.material.stock.summary`
+- 智慧施工管理平台 / 用户核对菜单 / 成本报表 / 成本统计表（综合） -> `sc.comprehensive.cost.summary`
+- 智慧施工管理平台 / 用户核对菜单 / 成本报表 / 投标保证金报表 -> `sc.tender.guarantee.summary`
+- 智慧施工管理平台 / 用户核对菜单 / 成本报表 / 账户收支统计表 -> `sc.account.income.expense.summary`
+- 智慧施工管理平台 / 用户核对菜单 / 扣款
+- 智慧施工管理平台 / 用户核对菜单 / 扣款 / 扣款单 -> `sc.tax.deduction.registration`
+- 智慧施工管理平台 / 用户核对菜单 / 扣款 / 扣款实缴登记 -> `sc.expense.claim`
+- 智慧施工管理平台 / 用户核对菜单 / 扣款 / 扣款实缴退回 -> `sc.expense.claim`
+- 智慧施工管理平台 / 用户核对菜单 / 投标
+- 智慧施工管理平台 / 用户核对菜单 / 投标 / 投标报名管理 -> `tender.bid`
+- 智慧施工管理平台 / 用户核对菜单 / 投标 / 投标报名费申请 -> `tender.doc.purchase`
+- 智慧施工管理平台 / 用户核对菜单 / 收支
+- 智慧施工管理平台 / 用户核对菜单 / 收支 / 公司财务支出 -> `sc.expense.claim`
+- 智慧施工管理平台 / 用户核对菜单 / 收支 / 收入 -> `sc.receipt.income`
+- 智慧施工管理平台 / 用户核对菜单 / 收款
+- 智慧施工管理平台 / 用户核对菜单 / 收款 / 到款确认表 -> `sc.legacy.fund.confirmation.document`
+- 智慧施工管理平台 / 用户核对菜单 / 组织人员
+- 智慧施工管理平台 / 用户核对菜单 / 组织人员 / 公司人员名册（配置） -> `sc.legacy.user.profile`
+- 智慧施工管理平台 / 用户核对菜单 / 组织人员 / 组织机构 -> `hr.department`
+- 智慧施工管理平台 / 用户核对菜单 / 证照资料
+- 智慧施工管理平台 / 用户核对菜单 / 证照资料 / 借阅申请 -> `sc.document.admin.document`
+- 智慧施工管理平台 / 用户核对菜单 / 证照资料 / 证照登记 -> `sc.document.admin.document`
+- 智慧施工管理平台 / 用户核对菜单 / 财税报表
+- 智慧施工管理平台 / 用户核对菜单 / 财税报表 / 应收应付报表 -> `sc.ar.ap.report.summary`
+- 智慧施工管理平台 / 用户核对菜单 / 财税报表 / 项目经营统计表 -> `sc.project.operation.summary`
+- 智慧施工管理平台 / 用户核对菜单 / 费用报销
+- 智慧施工管理平台 / 用户核对菜单 / 费用报销 / 报销申请 -> `sc.expense.claim`
+- 智慧施工管理平台 / 用户核对菜单 / 资金保证金
+- 智慧施工管理平台 / 用户核对菜单 / 资金保证金 / 付款还保证金 -> `tender.guarantee`
+- 智慧施工管理平台 / 用户核对菜单 / 资金保证金 / 付款还保证金退回 -> `tender.guarantee`
+- 智慧施工管理平台 / 用户核对菜单 / 资金借还
+- 智慧施工管理平台 / 用户核对菜单 / 资金借还 / 借款申请 -> `sc.financing.loan`
+- 智慧施工管理平台 / 用户核对菜单 / 资金借还 / 还款登记 -> `sc.financing.loan`
+- 智慧施工管理平台 / 用户核对菜单 / 资金日报
+- 智慧施工管理平台 / 用户核对菜单 / 资金日报 / 资金日报表 -> `sc.legacy.fund.daily.line`
+- 智慧施工管理平台 / 用户核对菜单 / 资金账户
+- 智慧施工管理平台 / 用户核对菜单 / 资金账户 / 账户间资金往来 -> `sc.fund.account.operation`
+- 智慧施工管理平台 / 用户核对菜单 / 项目台账（公司/项目/经营方式） -> `project.project`
+- 智慧施工管理平台 / 用户核对菜单 / 项目资金
+- 智慧施工管理平台 / 用户核对菜单 / 项目资金 / 承包人借项目款 -> `sc.financing.loan`
+- 智慧施工管理平台 / 用户核对菜单 / 项目资金 / 承包人还项目款 -> `sc.expense.claim`
+- 智慧施工管理平台 / 用户核对菜单 / 项目资金 / 项目借公司款登记 -> `sc.financing.loan`
+- 智慧施工管理平台 / 用户核对菜单 / 项目资金 / 项目还公司款登记 -> `sc.financing.loan`
 - 智慧施工管理平台 / 用户验收
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 分包管理类单据
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 分包管理类单据 / 分包方单 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 分包管理类单据 / 分包结算单 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 劳务管理类单据
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 劳务管理类单据 / 劳务结算 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 劳务管理类单据 / 方单 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 劳务管理类单据 / 零星用工 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 合同类单据
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 合同类单据 / 供货合同 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 合同类单据 / 供货合同（数据） -> `sc.legacy.supplier.contract.pricing.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 合同类单据 / 分包合同 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 合同类单据 / 劳务合同 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 合同类单据 / 施工合同 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 合同类单据 / 机械合同（合同） -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 合同类单据 / 租赁合同 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 机械与租赁管理类单据
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 机械与租赁管理类单据 / 机械台班记录 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 机械与租赁管理类单据 / 机械结算单 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 机械与租赁管理类单据 / 租入 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 机械与租赁管理类单据 / 租赁结算单 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 机械与租赁管理类单据 / 还租 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 材料管理类单据
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 材料管理类单据 / 入库 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 材料管理类单据 / 库存统计表（新） -> `sc.material.stock.summary`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 材料管理类单据 / 报价单 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 材料管理类单据 / 材料结算单 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 材料管理类单据 / 材料计划 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 充值登记 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 加油登记 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 工程结算单 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 工程进度收款 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 往来单位付款 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 总包进项上报 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 成本统计表（数据） -> `sc.comprehensive.cost.summary`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 支付申请 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 油卡登记 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 管理人员工资表 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 进项上报 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 项目费用报销单 -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 项目管理类单据
+- 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 项目管理类单据 / 施工日志（新） -> `sc.legacy.direct.acceptance.fact`
 
 ## 开发治理边界
 
+| 边界入口 | active 子入口 | action 子入口 | XMLID |
+| --- | ---: | ---: | --- |
+| 平台内核 | 12 | 10 | `smart_core.menu_smart_core_platform_root` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 | 10 | 9 | `smart_construction_core.menu_sc_scene_root` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流 | 4 | 4 | `smart_construction_core.menu_sc_workflow_root` |
+| 智慧施工管理平台 / 基础设置 / 系统权限 / 项目管理（后台） | 0 | 0 | `smart_construction_core.menu_sc_project_manage` |
+
+### active 明细
+
 - 平台内核
 - 平台内核 / 产品发布
+- 平台内核 / 产品发布 / 产品策略 -> `sc.product.policy`
+- 平台内核 / 产品发布 / 发布动作 -> `sc.release.action`
+- 平台内核 / 产品发布 / 发布快照 -> `sc.edition.release.snapshot`
+- 平台内核 / 产品发布 / 场景快照 -> `sc.scene.snapshot`
 - 平台内核 / 公司访问
+- 平台内核 / 公司访问 / 授权快照 -> `sc.entitlement`
+- 平台内核 / 公司访问 / 用量统计 -> `sc.usage.counter`
+- 平台内核 / 公司访问 / 统一登录路由 -> `sc.login.route`
+- 平台内核 / 公司访问 / 订阅套餐 -> `sc.subscription.plan`
+- 平台内核 / 公司访问 / 订阅实例 -> `sc.subscription`
+- 平台内核 / 公司访问 / 运营任务 -> `sc.ops.job`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / Scene Governance
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / Scene Governance / Company Channels -> `sc.scene.company.channel`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / Scene Governance / Governance Actions -> `sc.scene.governance.wizard`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / Scene Governance / Governance Logs -> `sc.scene.governance.log`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 交付包安装记录 -> `sc.pack.installation`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 交付包注册表 -> `sc.pack.registry`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 场景版本 -> `sc.scene.version`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 场景编排 -> `sc.scene`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 能力分组 -> `sc.capability.group`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 能力目录 -> `sc.capability`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流 / 工作流定义 -> `sc.workflow.def`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流 / 工作流实例 -> `sc.workflow.instance`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流 / 工作流日志 -> `sc.workflow.log`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流 / 工作项 -> `sc.workflow.workitem`
+- 智慧施工管理平台 / 基础设置 / 系统权限 / 项目管理（后台） -> `project.project`
 
 ## 混入正式中心的历史入口
 

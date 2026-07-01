@@ -104,14 +104,29 @@ def _render_boundary_section(rows: list[dict], layer: str, title: str) -> list[s
     if not scoped:
         lines.append("无。")
         return lines
-    roots = []
-    for row in scoped:
-        parts = _parts(row)
-        if len(parts) <= 2 or (parts and parts[0] != PRODUCT_ROOT and len(parts) <= 2):
-            roots.append(row)
+    scoped_ids = {int(row.get("id") or 0) for row in scoped}
+    roots = [
+        row
+        for row in scoped
+        if not isinstance(row.get("parent_id"), int) or int(row.get("parent_id") or 0) not in scoped_ids
+    ]
     if not roots:
         roots = scoped[:20]
+    lines.extend(["| 边界入口 | active 子入口 | action 子入口 | XMLID |", "| --- | ---: | ---: | --- |"])
     for row in roots:
+        path = _text(row.get("path"))
+        descendants = [item for item in scoped if item is not row and _under(item, path)]
+        lines.append(
+            "| %s | %d | %d | `%s` |"
+            % (
+                _escape(path),
+                len(descendants),
+                sum(1 for item in descendants if item.get("action_raw")),
+                _escape(row.get("xmlid")),
+            )
+        )
+    lines.extend(["", "### active 明细", ""])
+    for row in scoped:
         action = _action_label(row)
         suffix = f" -> `{action}`" if action else ""
         lines.append(f"- {_text(row.get('path'))}{suffix}")
@@ -205,6 +220,8 @@ def main() -> int:
         lines.append("")
 
     lines.extend(_render_boundary_section(rows, "system_config", "系统配置边界"))
+    lines.extend([""])
+    lines.extend(_render_boundary_section(rows, "user_config", "用户配置边界"))
     lines.extend([""])
     lines.extend(_render_boundary_section(rows, "history_acceptance", "历史验收边界"))
     lines.extend([""])
