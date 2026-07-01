@@ -116,6 +116,7 @@ class InvoiceRegistrationUserHistoryFields(models.Model):
     _inherit = "sc.invoice.registration"
 
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
+    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True, index=True)
     legacy_visible_data_type = fields.Char(string="历史可见数据类型", readonly=True, index=True)
     legacy_visible_contract_no = fields.Char(string="历史可见合同编号", readonly=True)
@@ -135,7 +136,11 @@ class InvoiceRegistrationUserHistoryFields(models.Model):
     legacy_visible_invoice_issue_company = fields.Char(string="历史可见开票单位", readonly=True)
 
     def _history_surface_allowed_write_fields(self):
-        return super()._history_surface_allowed_write_fields() | {"creator_legacy_user_id"}
+        return super()._history_surface_allowed_write_fields() | {"creator_legacy_user_id", "legacy_attachment_ref"}
+
+    def _invoice_attachment_ref_value(self):
+        self.ensure_one()
+        return self.legacy_attachment_ref or ""
 
 
 class HrPayrollDocumentUserHistoryFields(models.Model):

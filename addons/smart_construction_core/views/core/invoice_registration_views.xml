@@ -249,7 +249,6 @@
                                     <field name="legacy_source_table" readonly="1"/>
                                     <field name="legacy_record_id" readonly="1"/>
                                     <field name="legacy_partner_id" readonly="1"/>
-                                    <field name="legacy_attachment_ref" readonly="1"/>
                                     <field name="creator_name" readonly="1"/>
                                     <field name="created_time" readonly="1"/>
                                     <field name="active"/>

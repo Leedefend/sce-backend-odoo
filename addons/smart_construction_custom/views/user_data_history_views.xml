@@ -208,6 +208,7 @@
                             <field name="legacy_visible_invoice_type" readonly="1"/>
                             <field name="legacy_visible_invoice_issue_company" readonly="1"/>
                             <field name="legacy_visible_kingdee_no" readonly="1"/>
+                            <field name="legacy_attachment_ref" readonly="1"/>
                         </group>
                         <group string="旧系统往来与税号">
                             <field name="legacy_partner_name" readonly="1"/>

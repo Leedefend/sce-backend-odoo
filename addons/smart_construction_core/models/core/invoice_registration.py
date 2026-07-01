@@ -142,7 +142,6 @@ class ScInvoiceRegistration(models.Model):
     legacy_partner_id = fields.Char(string="历史往来单位ID", index=True, readonly=True)
     legacy_partner_name = fields.Char(string="历史往来单位", index=True, readonly=True)
     legacy_partner_tax_no = fields.Char(string="历史税号", index=True, readonly=True)
-    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     red_flush_adjustment_id = fields.Many2one(
@@ -312,7 +311,6 @@ class ScInvoiceRegistration(models.Model):
         "actual_invoice_issue_company",
         "invoice_count",
         "note",
-        "legacy_attachment_ref",
         "attachment_ids",
         "creator_name",
         "created_time",
@@ -345,7 +343,7 @@ class ScInvoiceRegistration(models.Model):
 
     def _invoice_attachment_ref_label(self):
         self.ensure_one()
-        text = str(self.legacy_attachment_ref or "").strip()
+        text = str(self._invoice_attachment_ref_value() or "").strip()
         if not text:
             return ""
         if text.startswith("附件("):
@@ -354,6 +352,9 @@ class ScInvoiceRegistration(models.Model):
         if tokens and all(len(item) == 32 and all(char in "0123456789abcdefABCDEF" for char in item) for item in tokens):
             return "附件(%s)" % len(tokens)
         return text
+
+    def _invoice_attachment_ref_value(self):
+        return ""
 
     def _history_surface_allowed_write_fields(self):
         return set()
@@ -379,7 +380,6 @@ class ScInvoiceRegistration(models.Model):
                 "actual_invoice_issue_company",
                 "actual_invoice_amount",
                 "invoice_provider_name",
-                "legacy_attachment_ref",
                 "legacy_acceptance_label",
                 "legacy_acceptance_sort_id",
                 "write_uid",
