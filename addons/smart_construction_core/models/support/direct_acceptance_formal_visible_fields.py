@@ -1440,6 +1440,23 @@ class SettlementOrderDirectAcceptanceVisible(models.Model):
     settlement_acceptance_attachment = fields.Char(string="附件", compute="_compute_settlement_acceptance_visible", readonly=True)
     settlement_acceptance_creator = fields.Char(string="录入人", compute="_compute_settlement_acceptance_visible", readonly=True)
     settlement_acceptance_created_at = fields.Char(string="录入时间", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_document_state = fields.Char(string="单据状态", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_document_no = fields.Char(string="单据编号", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_project_name = fields.Char(string="项目名称", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_document_date = fields.Char(string="单据日期", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_title = fields.Char(string="标题/结算内容", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_partner_name = fields.Char(string="结算单位", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_amount = fields.Char(string="结算金额", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_payment_state = fields.Char(string="付款状态", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_paid_amount = fields.Char(string="已付款金额", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_unpaid_amount = fields.Char(string="未付款金额", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_request_state = fields.Char(string="支付申请状态", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_requested_amount = fields.Char(string="已申请金额", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_unrequested_amount = fields.Char(string="未申请金额", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_note = fields.Char(string="结算说明/备注", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_attachment = fields.Char(string="附件", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_creator = fields.Char(string="录入人", compute="_compute_settlement_acceptance_visible", readonly=True)
+    user_acceptance_created_at = fields.Char(string="录入时间", compute="_compute_settlement_acceptance_visible", readonly=True)
 
     def _compute_settlement_acceptance_visible(self):
         def v(record, index):
@@ -1577,3 +1594,4 @@ class SettlementOrderDirectAcceptanceVisible(models.Model):
             for name in field_names:
                 value = v(record, mapping.get(name)) if mapping.get(name) else False
                 setattr(record, "settlement_acceptance_" + name, value)
+                setattr(record, "user_acceptance_" + name, value)
