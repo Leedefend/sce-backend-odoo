@@ -153,7 +153,6 @@
                 {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_final", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
-                {"name": "legacy_visible_attachment", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
                 {"name": "settlement_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
                 {"name": "invoice_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
                 {"name": "uninvoiced_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
@@ -199,7 +198,7 @@
             "sections": [
                 {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "state", "name"]},
                 {"name": "project_counterparty", "title": "项目与发包人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "tax_id", "date_contract", "handler_id"]},
-                {"name": "supplement_scope", "title": "补充事项", "sequence": 30, "fields": ["engineering_content", "note", "attachment_ids", "attachment_text", "legacy_visible_attachment"]},
+                {"name": "supplement_scope", "title": "补充事项", "sequence": 30, "fields": ["engineering_content", "note", "attachment_ids", "attachment_text"]},
                 {"name": "amount_tax", "title": "补充明细与金额", "sequence": 40, "fields": ["line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
                 {"name": "execution", "title": "执行情况", "sequence": 70, "collapsible": true, "collapsed_by_default": true, "fields": ["settlement_amount", "invoice_amount", "uninvoiced_amount", "received_amount", "unreceived_amount", "visible_invoice_amount", "visible_received_amount", "visible_unreceived_amount", "visible_unreceived_rate"]},
                 {"name": "source_trace", "title": "来源与系统追溯", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "fields": ["legacy_contract_no", "legacy_external_contract_no", "legacy_document_no", "document_status", "legacy_visible_title", "legacy_contract_amount", "entry_user_id", "entry_user_text", "entry_time", "legacy_status", "company_id", "reject_reason", "approval_info"]}
@@ -220,7 +219,6 @@
                 {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_final", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
-                {"name": "legacy_visible_attachment", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
                 {"name": "settlement_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
                 {"name": "invoice_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
                 {"name": "uninvoiced_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
@@ -268,7 +266,7 @@
                 {"name": "project_counterparty", "title": "项目与供应商/分包方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "expense_contract_category_id", "tax_id", "date_contract", "handler_id"]},
                 {"name": "contract_scope", "title": "合同范围", "sequence": 30, "fields": ["category_id", "engineering_category_text", "engineering_address", "engineering_content"]},
                 {"name": "amount_tax", "title": "合同明细与金额", "sequence": 40, "fields": ["line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
-                {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["budget_id", "analytic_id", "archived", "note", "attachment_ids", "attachment_text", "legacy_visible_attachment"]},
+                {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["budget_id", "analytic_id", "archived", "note", "attachment_ids", "attachment_text"]},
                 {"name": "execution", "title": "执行情况", "sequence": 70, "collapsible": true, "collapsed_by_default": true, "fields": ["settlement_amount", "paid_amount", "unpaid_amount", "invoice_amount", "uninvoiced_amount"]},
                 {"name": "source_trace", "title": "来源与系统追溯", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "fields": ["legacy_contract_no", "legacy_external_contract_no", "legacy_document_no", "document_status", "legacy_visible_title", "legacy_visible_category", "legacy_contract_amount", "expense_contract_category_auto_id", "entry_user_id", "entry_user_text", "entry_time", "legacy_visible_creator_name", "legacy_visible_created_time", "legacy_status", "company_id", "reject_reason", "approval_info"]}
             ],
@@ -290,7 +288,6 @@
                 {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_final", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
-                {"name": "legacy_visible_attachment", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
                 {"name": "settlement_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
                 {"name": "paid_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
                 {"name": "unpaid_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
@@ -335,7 +332,7 @@
             "sections": [
                 {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "state", "name"]},
                 {"name": "project_counterparty", "title": "项目与供应商/分包方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "expense_contract_category_id", "tax_id", "date_contract", "handler_id"]},
-                {"name": "supplement_scope", "title": "补充事项", "sequence": 30, "fields": ["engineering_content", "note", "attachment_ids", "attachment_text", "legacy_visible_attachment"]},
+                {"name": "supplement_scope", "title": "补充事项", "sequence": 30, "fields": ["engineering_content", "note", "attachment_ids", "attachment_text"]},
                 {"name": "amount_tax", "title": "补充明细与金额", "sequence": 40, "fields": ["line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
                 {"name": "execution", "title": "执行情况", "sequence": 70, "collapsible": true, "collapsed_by_default": true, "fields": ["settlement_amount", "paid_amount", "unpaid_amount", "invoice_amount", "uninvoiced_amount"]},
                 {"name": "source_trace", "title": "来源与系统追溯", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "fields": ["legacy_contract_no", "legacy_external_contract_no", "legacy_document_no", "document_status", "legacy_visible_title", "legacy_visible_category", "legacy_contract_amount", "expense_contract_category_auto_id", "entry_user_id", "entry_user_text", "entry_time", "legacy_visible_creator_name", "legacy_visible_created_time", "legacy_status", "company_id", "reject_reason", "approval_info"]}
@@ -358,7 +355,6 @@
                 {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
                 {"name": "amount_final", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
-                {"name": "legacy_visible_attachment", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
                 {"name": "settlement_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
                 {"name": "paid_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
                 {"name": "unpaid_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
@@ -501,7 +497,7 @@
                 {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank"]},
                 {"name": "payment_account", "title": "付款账户", "sequence": 50, "fields": ["payment_request_id", "payment_account_name", "payer_account", "payer_bank", "payment_state"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_department", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_department", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -547,7 +543,7 @@
                 {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank"]},
                 {"name": "payment_account", "title": "付款账户", "sequence": 50, "fields": ["payment_method", "clearing_method", "payment_account_name", "payer_account", "payer_bank", "payment_state"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -637,7 +633,7 @@
                 {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank"]},
                 {"name": "payment_account", "title": "付款账户", "sequence": 50, "fields": ["payment_request_id", "payment_account_name", "payer_account", "payer_bank", "payment_state"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_department", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_department", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -682,7 +678,7 @@
                 {"name": "refund_amount", "title": "退回事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "paid_amount", "is_returned", "return_reason"]},
                 {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["receipt_account_name", "payee_account", "payee_bank"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "clearing_method", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_returned_flag", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_returned_flag", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -724,7 +720,7 @@
                 {"name": "refund_amount", "title": "退回事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "paid_amount", "is_returned", "return_reason"]},
                 {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["receipt_account_name", "payee_account", "payee_bank"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "clearing_method", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_returned_flag", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_returned_flag", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -768,7 +764,7 @@
                 {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank"]},
                 {"name": "payment_account", "title": "付款账户", "sequence": 50, "fields": ["payment_method", "clearing_method", "payment_account_name", "payer_account", "payer_bank", "payment_state"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -811,7 +807,7 @@
                 {"name": "refund_amount", "title": "退回事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "paid_amount", "is_returned", "return_reason"]},
                 {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["receipt_account_name", "payee_account", "payee_bank"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "clearing_method", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_returned_flag", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_returned_flag", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -855,7 +851,7 @@
                 {"name": "deduction_amount", "title": "金额由扣款单明细汇总", "sequence": 40, "fields": ["deduction_line_amount_total", "amount", "approved_amount"]},
                 {"name": "responsibility_balance", "title": "公司-项目/承包人责任余额", "sequence": 50, "collapsible": true, "fields": ["company_contractor_responsibility_state", "company_contractor_arrival_unprocessed_amount", "company_contractor_arrival_over_processed_amount", "company_contractor_self_funding_balance", "company_contractor_responsibility_notice"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_adjustment_item", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_adjustment_item", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -906,7 +902,7 @@
                 {"name": "deduction_amount", "title": "实缴事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount", "paid_amount"]},
                 {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "clearing_method", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_adjustment_item", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_adjustment_item", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -947,7 +943,7 @@
                 {"name": "refund_amount", "title": "退回事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "paid_amount", "return_reason"]},
                 {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["receipt_account_name", "payee_account", "payee_bank"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "clearing_method", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_adjustment_item", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_adjustment_item", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -987,7 +983,7 @@
                 {"name": "account_object", "title": "项目与账户", "sequence": 20, "fields": ["project_id", "operation_strategy", "source_account_id", "source_project_id", "target_account_id", "target_project_id", "company_id"]},
                 {"name": "transfer_amount", "title": "调拨金额", "sequence": 30, "fields": ["operation_date", "amount"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 40, "fields": ["operation_reason", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_account_name", "legacy_visible_counterparty_account_name", "legacy_visible_transfer_type", "legacy_visible_reason", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_account_name", "legacy_visible_counterparty_account_name", "legacy_visible_transfer_type", "legacy_visible_reason", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -1032,7 +1028,7 @@
                 {"name": "account_object", "title": "项目与账户", "sequence": 20, "fields": ["project_id", "operation_strategy", "fund_account_id", "company_id"]},
                 {"name": "daily_report", "title": "资金日报", "sequence": 30, "fields": ["operation_date", "daily_income", "daily_expense", "account_balance", "bank_balance"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 40, "fields": ["operation_reason", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_account_name", "legacy_visible_reason", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_account_name", "legacy_visible_reason", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -1077,7 +1073,7 @@
                 {"name": "account_object", "title": "项目与账户", "sequence": 20, "fields": ["project_id", "operation_strategy", "fund_account_id", "company_id"]},
                 {"name": "balance_adjustment", "title": "余额调整", "sequence": 30, "fields": ["operation_date", "before_balance", "after_balance"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 40, "fields": ["operation_reason", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_account_name", "legacy_visible_reason", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_account_name", "legacy_visible_reason", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -1166,7 +1162,7 @@
                 {"name": "repayment_amount", "title": "还款事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount", "paid_amount", "unpaid_amount"]},
                 {"name": "payment_account", "title": "付款与收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank", "payment_account_name", "payer_account", "payer_bank"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_borrower", "legacy_visible_loan_amount", "legacy_visible_repayment_amount", "legacy_visible_loan_rate", "legacy_visible_interest", "legacy_visible_repayment_time", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_borrower", "legacy_visible_loan_amount", "legacy_visible_repayment_amount", "legacy_visible_loan_rate", "legacy_visible_interest", "legacy_visible_repayment_time", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -1208,7 +1204,7 @@
                 {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["receipt_account_name", "payee_account", "payee_bank"]},
                 {"name": "responsibility_balance", "title": "责任余额", "sequence": 50, "collapsible": true, "fields": ["company_contractor_responsibility_state", "company_contractor_arrival_unprocessed_amount", "company_contractor_arrival_over_processed_amount", "company_contractor_self_funding_balance", "company_contractor_responsibility_notice"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_borrower", "legacy_visible_repayment_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_borrower", "legacy_visible_repayment_amount", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
@@ -1254,7 +1250,7 @@
                 {"name": "repayment_amount", "title": "还款事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount", "paid_amount"]},
                 {"name": "payment_account", "title": "付款与收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank", "payment_account_name", "payer_account", "payer_bank"]},
                 {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_borrower", "legacy_visible_loan_amount", "legacy_visible_repayment_amount", "legacy_visible_loan_rate", "legacy_visible_interest", "legacy_visible_repayment_time", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_borrower", "legacy_visible_loan_amount", "legacy_visible_repayment_amount", "legacy_visible_loan_rate", "legacy_visible_interest", "legacy_visible_repayment_time", "legacy_visible_note", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
