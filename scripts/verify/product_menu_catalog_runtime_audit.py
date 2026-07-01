@@ -44,6 +44,7 @@ INTERNAL_HISTORY_PATH_TOKENS = (
     "历史财务事实（内部）",
 )
 BUSINESS_CONFIG_PATH_PREFIX = "智慧施工管理平台 / 业务配置"
+PRODUCT_ROOT_LABEL = "智慧施工管理平台"
 CONFIG_ADMIN_GROUP_XMLIDS = (
     "smart_construction_core.group_sc_cap_business_config_admin",
     "smart_construction_core.group_sc_cap_config_admin",
@@ -419,15 +420,26 @@ def _export() -> dict[str, object]:
     for row in rows:
         layer_counts[row["layer"]] = layer_counts.get(row["layer"], 0) + 1
 
+    formal_center_names = {
+        _text(row.get("path")).split(" / ", 2)[1]
+        for row in rows
+        if row.get("active")
+        and row.get("layer") == "formal_product"
+        and _text(row.get("path")).startswith(PRODUCT_ROOT_LABEL + " / ")
+        and len([part for part in _text(row.get("path")).split(" / ") if part]) == 2
+    }
+
     internal_history_business_visible = []
     config_admin_logins = _config_admin_logins()
     ordinary_business_system_config_visible = []
     business_config_legacy = []
     business_config_legacy_active = []
     runtime_user_menus_without_xmlid = []
+    formal_center_inactive_history = []
     for row in rows:
         visible_business_logins = sorted(BUSINESS_VISIBLE_LOGINS.intersection(row.get("visible_logins") or []))
         path = _text(row.get("path"))
+        path_parts = [part for part in path.split(" / ") if part]
         xmlid = _text(row.get("xmlid")).lower()
         create_user = row.get("create_user") if isinstance(row.get("create_user"), dict) else {}
         create_login = _text(create_user.get("login"))
@@ -439,6 +451,23 @@ def _export() -> dict[str, object]:
                     "active": row.get("active"),
                     "create_login": create_login,
                     "create_date": row.get("create_date"),
+                }
+            )
+        if (
+            not row.get("active")
+            and row.get("layer") == "history_acceptance"
+            and len(path_parts) >= 3
+            and path_parts[0] == PRODUCT_ROOT_LABEL
+            and path_parts[1] in formal_center_names
+        ):
+            formal_center_inactive_history.append(
+                {
+                    "xmlid": row.get("xmlid"),
+                    "path": path,
+                    "center": path_parts[1],
+                    "action_res_model": (row.get("action_meta") or {}).get("res_model")
+                    if isinstance(row.get("action_meta"), dict)
+                    else "",
                 }
             )
         if (
@@ -519,6 +548,7 @@ def _export() -> dict[str, object]:
             "business_config_legacy_count": len(business_config_legacy),
             "business_config_legacy_active_count": len(business_config_legacy_active),
             "runtime_user_menu_without_xmlid_count": len(runtime_user_menus_without_xmlid),
+            "formal_center_inactive_history_count": len(formal_center_inactive_history),
             "layer_counts": layer_counts,
         },
         "top_level": [

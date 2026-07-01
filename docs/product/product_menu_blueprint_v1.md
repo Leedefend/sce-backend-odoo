@@ -9,6 +9,7 @@
 - 系统配置菜单：`28` 个，其中 active `28` 个
 - 用户配置菜单：`0` 个，其中 active `0` 个
 - 历史验收菜单：`193` 个，其中 active `141` 个
+- 正式中心下 inactive 历史残留：`49` 个
 - 开发治理菜单：`30` 个，其中 active `30` 个
 - 待复核菜单：`0` 个
 
@@ -606,7 +607,64 @@
 
 无。
 
+## 正式中心下的隐藏历史残留
+
+这些入口已经 inactive，不影响业务用户可见菜单，但仍挂在正式产品中心路径下。后续应逐项迁到历史验收/系统内部边界，或确认删除运行时承载入口。
+
+| 中心 | 菜单 | 模型 | XMLID |
+| --- | --- | --- | --- |
+| 人事行政 | 智慧施工管理平台 / 人事行政 / 公司人员名册 | `sc.legacy.user.profile` | `smart_construction_core.menu_sc_company_user_roster_formal` |
+| 合同中心 | 智慧施工管理平台 / 合同中心 / 历史采购/一般合同事实 | `sc.legacy.purchase.contract.fact` | `smart_construction_core.menu_sc_legacy_purchase_contract_fact` |
+| 合同中心 | 智慧施工管理平台 / 合同中心 / 待我审批（历史采购/一般合同事实） | `sc.legacy.purchase.contract.fact` | `smart_construction_core.menu_sc_tier_review_my_legacy_purchase_contract` |
+| 合同中心 | 智慧施工管理平台 / 合同中心 / 支出合同台账 / 供应商合同计价事实 | `sc.legacy.supplier.contract.pricing.fact` | `smart_construction_core.menu_sc_expense_contract_supplier_pricing_fact` |
+| 合同中心 | 智慧施工管理平台 / 合同中心 / 支出合同台账 / 历史采购/一般合同事实 | `sc.legacy.purchase.contract.fact` | `smart_construction_core.menu_sc_expense_contract_legacy_purchase_fact` |
+| 物资与分包 | 智慧施工管理平台 / 物资与分包 / 专业分包 / 历史劳务/分包事实 | `sc.legacy.labor.subcontract.fact` | `smart_construction_core.menu_sc_legacy_labor_subcontract_fact_subcontract` |
+| 物资与分包 | 智慧施工管理平台 / 物资与分包 / 劳务管理 / 劳务结算候选核对 | `sc.labor.settlement.candidate` | `smart_construction_core.menu_sc_labor_settlement_candidate` |
+| 物资与分包 | 智慧施工管理平台 / 物资与分包 / 劳务管理 / 历史劳务/分包事实 | `sc.legacy.labor.subcontract.fact` | `smart_construction_core.menu_sc_legacy_labor_subcontract_fact_labor` |
+| 物资与分包 | 智慧施工管理平台 / 物资与分包 / 周转材料租赁 / 历史设备/租赁事实 | `sc.legacy.equipment.lease.fact` | `smart_construction_core.menu_sc_legacy_equipment_lease_fact_rental` |
+| 物资与分包 | 智慧施工管理平台 / 物资与分包 / 机械设备 / 历史设备/租赁事实 | `sc.legacy.equipment.lease.fact` | `smart_construction_core.menu_sc_legacy_equipment_lease_fact_equipment` |
+| 物资与分包 | 智慧施工管理平台 / 物资与分包 / 机械设备 / 机械合同（合同） | `sc.legacy.direct.acceptance.fact` | `smart_construction_core.menu_sc_equipment_contract_acceptance` |
+| 物资与分包 | 智慧施工管理平台 / 物资与分包 / 物资管理 / 历史物资库存事实 | `sc.legacy.material.stock.fact` | `smart_construction_core.menu_sc_legacy_material_stock_fact` |
+| 物资与分包 | 智慧施工管理平台 / 物资与分包 / 物资管理 / 物料分类 | `sc.legacy.material.category` | `smart_construction_core.menu_sc_legacy_material_category` |
+| 税务中心 | 智慧施工管理平台 / 税务中心 / 开票与税务办理 / 外经证登记 | `sc.legacy.payment.residual.fact` | `smart_construction_core.menu_sc_tax_certificate_registration_user` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / SCBS旧库事实暂存 | `sc.legacy.scbs.fact.staging` | `smart_construction_core.menu_sc_legacy_scbs_fact_staging` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / SCBS旧库材料映射 | `sc.legacy.scbs.material.map` | `smart_construction_core.menu_sc_legacy_scbs_material_map` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 历史业务事实原貌承接 | `sc.legacy.business.fact.residual` | `smart_construction_core.menu_sc_legacy_business_fact_residual` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 供货合同 | `sc.legacy.supplier.contract.pricing.fact` | `smart_construction_core.menu_sc_supplier_contract_analysis_report` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 供货合同 | `sc.legacy.supplier.contract.pricing.fact` | `smart_construction_core.menu_sc_supplier_contract_current` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 供货合同 | `sc.legacy.supplier.contract.pricing.fact` | `smart_construction_core.menu_scbs55_user_acceptance_455_供货合同` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 工程进度收款 | `sc.legacy.engineering.progress.receipt` | `smart_construction_core.menu_sc_legacy_engineering_progress_receipt` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 工程进度收款 | `sc.legacy.engineering.progress.receipt` | `smart_construction_core.menu_scbs55_user_acceptance_445_工程进度收款` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 工程进度收款（直营） | `sc.legacy.engineering.progress.receipt` | `smart_construction_core.menu_scbsly_direct_engineering_progress_receipt_acceptance` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 成本发票明细表 | `sc.legacy.invoice.registration.line` | `smart_construction_core.menu_sc_invoice_cost_progress_report` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 成本报表 / 投标保证金报表 | `sc.legacy.expense.deposit.fact` | `smart_construction_core.menu_sc_tender_deposit_statistics_report` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 旧库业务主体映射 | `sc.legacy.business.entity.map` | `smart_construction_core.menu_sc_legacy_business_entity_map` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 旧库往来单位映射 | `sc.legacy.partner.map` | `smart_construction_core.menu_sc_legacy_partner_map` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 旧库项目映射 | `sc.legacy.project.map` | `smart_construction_core.menu_sc_legacy_project_map` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 经营分析 / 旧库报表承载清单 | `sc.legacy.report.inventory` | `smart_construction_core.menu_sc_legacy_report_inventory` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 财务分析 / 历史资金日报明细 | `sc.legacy.fund.daily.line` | `smart_construction_core.menu_sc_fund_daily_line` |
+| 统计分析 | 智慧施工管理平台 / 统计分析 / 财务分析 / 融资台账 | `sc.legacy.financing.loan.fact` | `smart_construction_core.menu_sc_financing_ledger` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 付款事实 / 历史付款残余事实 | `sc.legacy.payment.residual.fact` | `smart_construction_core.menu_sc_legacy_payment_residual_fact` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 历史付款退款/调整 | `sc.legacy.payment.adjustment.fact` | `smart_construction_core.menu_sc_legacy_payment_adjustment_fact` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 历史企业级数据核对 | `sc.legacy.enterprise.business.fact` | `smart_construction_core.menu_sc_legacy_enterprise_business_fact` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 发票台账 / 历史收入票据事实 | `sc.legacy.income.invoice.fact` | `smart_construction_core.menu_sc_legacy_income_invoice_fact` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 扣款税费核对 | `` | `smart_construction_core.menu_sc_expense_tax_adjustment_fact_group` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 扣款税费核对 / 扣款/结算调整 | `sc.legacy.deduction.adjustment.line` | `smart_construction_core.menu_sc_legacy_deduction_adjustment_line_finance` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 扣款税费核对 / 抵扣税额 | `sc.legacy.tax.deduction.fact` | `smart_construction_core.menu_sc_legacy_tax_deduction_fact_finance` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 扣款税费核对 / 资金确认 | `sc.legacy.fund.confirmation.line` | `smart_construction_core.menu_sc_legacy_fund_confirmation_line_finance` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 收付款办理 / 充值登记 | `sc.legacy.fuel.card.recharge.fact` | `smart_construction_core.menu_sc_legacy_fuel_card_recharge_fact_acceptance` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 收付款办理 / 到款确认表 | `sc.legacy.fund.confirmation.document` | `smart_construction_core.menu_sc_arrival_confirmation` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 收付款办理 / 加油登记 | `sc.legacy.fuel.card.refuel.fact` | `smart_construction_core.menu_sc_legacy_fuel_card_refuel_fact_acceptance` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 收付款办理 / 油卡登记 | `sc.legacy.fuel.card.fact` | `smart_construction_core.menu_sc_legacy_fuel_card_fact_acceptance` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 历史费用/保证金流入退回 | `sc.legacy.expense.deposit.fact` | `smart_construction_core.menu_sc_legacy_expense_deposit_refund_fact` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 历史费用/保证金流出 | `sc.legacy.expense.deposit.fact` | `smart_construction_core.menu_sc_legacy_expense_deposit_outflow_fact` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 历史费用报销明细 | `sc.legacy.expense.reimbursement.line` | `smart_construction_core.menu_sc_legacy_expense_reimbursement_line_finance` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 资金往来办理 / 账户收支来源明细 | `sc.legacy.account.transaction.line` | `smart_construction_core.menu_sc_legacy_account_transaction_line` |
+| 财务中心 | 智慧施工管理平台 / 财务中心 / 资金往来办理 / 账户管理 | `sc.fund.account` | `smart_construction_core.menu_sc_legacy_account_master` |
+| 项目中心 | 智慧施工管理平台 / 项目中心 / 投标管理 / 历史投标报名 | `sc.legacy.tender.registration.fact` | `smart_construction_core.menu_sc_legacy_tender_registration_fact` |
+
 ## 收口信号
 
 - 当前无待复核菜单。
 - 当前无独立用户配置入口；低代码和产品配置仍归入系统配置边界。
+- 共 `49` 个 inactive 历史入口仍挂在正式产品中心路径下，建议后续迁出正式中心。

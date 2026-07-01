@@ -148,6 +148,21 @@ def _history_inside_formal_centers(rows: list[dict], formal_center_names: set[st
     return sorted(out, key=lambda item: _text(item.get("path")))
 
 
+def _inactive_history_inside_formal_centers(rows: list[dict], formal_center_names: set[str]) -> list[dict]:
+    out = []
+    for row in rows:
+        parts = _parts(row)
+        if (
+            not row.get("active")
+            and row.get("layer") == "history_acceptance"
+            and len(parts) >= 3
+            and parts[0] == PRODUCT_ROOT
+            and parts[1] in formal_center_names
+        ):
+            out.append(row)
+    return sorted(out, key=lambda item: _text(item.get("path")))
+
+
 def main() -> int:
     if not INPUT.is_file():
         raise SystemExit(f"missing runtime product menu catalog: {INPUT}")
@@ -170,6 +185,7 @@ def main() -> int:
     centers = sorted(centers, key=lambda item: (int(item.get("sequence") or 0), _text(item.get("path"))))
     formal_center_names = {_parts(row)[1] for row in centers if len(_parts(row)) >= 2}
     mixed_history_rows = _history_inside_formal_centers(rows, formal_center_names)
+    inactive_history_rows = _inactive_history_inside_formal_centers(rows, formal_center_names)
 
     lines = [
         "# 产品菜单蓝图 V1",
@@ -183,6 +199,7 @@ def main() -> int:
         f"- 系统配置菜单：`{int(layer_counts.get('system_config', 0))}` 个，其中 active `{int(active_layer_counts.get('system_config', 0))}` 个",
         f"- 用户配置菜单：`{int(layer_counts.get('user_config', 0))}` 个，其中 active `{int(active_layer_counts.get('user_config', 0))}` 个",
         f"- 历史验收菜单：`{int(layer_counts.get('history_acceptance', 0))}` 个，其中 active `{int(active_layer_counts.get('history_acceptance', 0))}` 个",
+        f"- 正式中心下 inactive 历史残留：`{len(inactive_history_rows)}` 个",
         f"- 开发治理菜单：`{int(layer_counts.get('dev_governance', 0))}` 个，其中 active `{int(active_layer_counts.get('dev_governance', 0))}` 个",
         f"- 待复核菜单：`{len(review_rows)}` 个",
         "",
@@ -255,6 +272,32 @@ def main() -> int:
                 )
             )
 
+    lines.extend(
+        [
+            "",
+            "## 正式中心下的隐藏历史残留",
+            "",
+            "这些入口已经 inactive，不影响业务用户可见菜单，但仍挂在正式产品中心路径下。后续应逐项迁到历史验收/系统内部边界，或确认删除运行时承载入口。",
+            "",
+        ]
+    )
+    if not inactive_history_rows:
+        lines.append("无。")
+    else:
+        lines.extend(["| 中心 | 菜单 | 模型 | XMLID |", "| --- | --- | --- | --- |"])
+        for row in inactive_history_rows:
+            parts = _parts(row)
+            center = parts[1] if len(parts) > 1 else ""
+            lines.append(
+                "| %s | %s | `%s` | `%s` |"
+                % (
+                    _escape(center),
+                    _escape(row.get("path")),
+                    _escape(_action_label(row)),
+                    _escape(row.get("xmlid")),
+                )
+            )
+
     lines.extend(["", "## 收口信号", ""])
     if review_rows:
         lines.append(f"- 存在 `{len(review_rows)}` 个待复核菜单，必须先归类或隐藏。")
@@ -270,6 +313,8 @@ def main() -> int:
             )
     if mixed_history_rows:
         lines.append(f"- 共 `{len(mixed_history_rows)}` 个历史入口混在正式产品中心下，建议作为下一轮菜单收口清单。")
+    if inactive_history_rows:
+        lines.append(f"- 共 `{len(inactive_history_rows)}` 个 inactive 历史入口仍挂在正式产品中心路径下，建议后续迁出正式中心。")
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
