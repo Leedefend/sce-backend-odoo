@@ -18,6 +18,19 @@ FIELD_COLUMNS = {
     "legacy_visible_main_tax_rate": "varchar",
     "legacy_visible_receipt_amount": "varchar",
     "legacy_visible_payment_amount": "varchar",
+    "document_state_text": "varchar",
+    "push_result": "varchar",
+    "project_name": "varchar",
+    "cooperation_type": "varchar",
+    "bank_name": "varchar",
+    "bank_account_no": "varchar",
+    "bank_account_holder": "varchar",
+    "social_credit_code": "varchar",
+    "main_tax_rate": "varchar",
+    "receipt_amount": "numeric",
+    "payment_amount": "numeric",
+    "entry_user_name": "varchar",
+    "entry_time": "timestamp",
 }
 
 LABEL_FIELDS = {
@@ -35,12 +48,40 @@ LABEL_FIELDS = {
     "付款金额": "legacy_visible_payment_amount",
 }
 
+FORMAL_LABEL_FIELDS = {
+    "单据状态": "document_state_text",
+    "推送结果": "push_result",
+    "项目名称": "project_name",
+    "合作类型": "cooperation_type",
+    "开户银行": "bank_name",
+    "账号": "bank_account_no",
+    "开户账号": "bank_account_no",
+    "银行账号": "bank_account_no",
+    "开户姓名": "bank_account_holder",
+    "统一社会信用代码": "social_credit_code",
+    "主税率": "main_tax_rate",
+    "录入人": "entry_user_name",
+}
+
 
 def clean(value: object) -> str:
     if value in (None, False):
         return ""
     text = re.sub(r"\s+", " ", str(value).replace("\u3000", " ").strip())
     return "" if text in {"False", "false", "None", "NULL"} else text
+
+
+def parse_amount(value: object):
+    text = clean(value)
+    if not text:
+        return None
+    normalized = re.sub(r"[^0-9.\-]", "", text)
+    if normalized in {"", "-", ".", "-."}:
+        return None
+    try:
+        return float(normalized)
+    except ValueError:
+        return None
 
 
 def ensure_columns() -> None:
@@ -75,10 +116,17 @@ def main() -> None:
             value = clean(payload.get(label))
             if value and not values[field_name]:
                 values[field_name] = value
+        for label, field_name in FORMAL_LABEL_FIELDS.items():
+            value = clean(payload.get(label))
+            if value and not values[field_name]:
+                values[field_name] = value
+        values["receipt_amount"] = parse_amount(payload.get("收款金额"))
+        values["payment_amount"] = parse_amount(payload.get("付款金额"))
+        values["entry_time"] = clean(payload.get("录入时间")) or None
         assignments = []
         params = []
         for field_name, value in values.items():
-            if not value:
+            if value in (None, ""):
                 continue
             assignments.append(f"{field_name} = %s")
             params.append(value)

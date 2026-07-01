@@ -35,6 +35,13 @@
                     <field name="entity_type"/>
                     <field name="mapping_state"/>
                     <field name="partner_id"/>
+                    <field name="project_name" optional="hide"/>
+                    <field name="cooperation_type" optional="show"/>
+                    <field name="bank_name" optional="hide"/>
+                    <field name="bank_account_no" optional="hide"/>
+                    <field name="social_credit_code" optional="hide"/>
+                    <field name="payment_amount" optional="hide" sum="付款金额合计"/>
+                    <field name="receipt_amount" optional="hide" sum="收款金额合计"/>
                     <field name="legacy_xmid"/>
                     <field name="legacy_xmmc"/>
                     <field name="map_count"/>
@@ -59,9 +66,31 @@
                             <group>
                                 <field name="entity_type"/>
                                 <field name="mapping_state"/>
+                                <field name="document_state_text"/>
+                                <field name="push_result"/>
                                 <field name="sequence"/>
                                 <field name="map_count" readonly="1"/>
                             </group>
+                        </group>
+                        <group string="业务信息">
+                            <group>
+                                <field name="project_name"/>
+                                <field name="cooperation_type"/>
+                                <field name="social_credit_code"/>
+                                <field name="main_tax_rate"/>
+                            </group>
+                            <group>
+                                <field name="bank_name"/>
+                                <field name="bank_account_no"/>
+                                <field name="bank_account_holder"/>
+                                <field name="receipt_amount"/>
+                                <field name="payment_amount"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                        </group>
+                        <group string="录入信息">
+                            <field name="entry_user_name"/>
+                            <field name="entry_time"/>
                         </group>
                         <group string="旧库来源">
                             <group>

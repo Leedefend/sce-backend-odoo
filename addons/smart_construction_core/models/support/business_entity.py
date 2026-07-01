@@ -20,6 +20,25 @@ class ScBusinessEntity(models.Model):
         ondelete="restrict",
     )
     partner_id = fields.Many2one("res.partner", string="关联往来单位", index=True, ondelete="set null")
+    project_name = fields.Char(string="项目名称", index=True)
+    document_state_text = fields.Char(string="单据状态", index=True)
+    push_result = fields.Char(string="推送结果", index=True)
+    cooperation_type = fields.Char(string="合作类型", index=True)
+    bank_name = fields.Char(string="开户银行", index=True)
+    bank_account_no = fields.Char(string="账号", index=True)
+    bank_account_holder = fields.Char(string="开户姓名", index=True)
+    social_credit_code = fields.Char(string="统一社会信用代码", index=True)
+    main_tax_rate = fields.Char(string="主税率")
+    receipt_amount = fields.Monetary(string="收款金额", currency_field="currency_id")
+    payment_amount = fields.Monetary(string="付款金额", currency_field="currency_id")
+    currency_id = fields.Many2one(
+        "res.currency",
+        string="币种",
+        required=True,
+        default=lambda self: self.env.ref("base.CNY", raise_if_not_found=False).id or self.env.company.currency_id.id,
+    )
+    entry_user_name = fields.Char(string="录入人", index=True)
+    entry_time = fields.Datetime(string="录入时间", index=True)
     entity_type = fields.Selection(
         [
             ("internal", "内部核算"),

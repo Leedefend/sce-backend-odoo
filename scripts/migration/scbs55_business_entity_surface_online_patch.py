@@ -99,6 +99,19 @@ def amount(value: object) -> str:
     return ("%.2f" % number).rstrip("0").rstrip(".")
 
 
+def amount_number(value: object):
+    text = clean(value)
+    if not text:
+        return False
+    normalized = re.sub(r"[^0-9.\-]", "", text)
+    if normalized in {"", "-", ".", "-."}:
+        return False
+    try:
+        return float(normalized)
+    except ValueError:
+        return False
+
+
 def attachment(*values: object) -> str:
     parts = [clean(value) for value in values if clean(value)]
     return "；".join(parts)
@@ -152,6 +165,19 @@ def visible_model_values(payload: dict[str, str]) -> dict[str, object]:
         "legacy_visible_main_tax_rate": clean(payload.get("主税率")) or False,
         "legacy_visible_receipt_amount": clean(payload.get("收款金额")) or False,
         "legacy_visible_payment_amount": clean(payload.get("付款金额")) or False,
+        "document_state_text": clean(payload.get("单据状态")) or False,
+        "push_result": clean(payload.get("推送结果")) or False,
+        "project_name": clean(payload.get("项目名称")) or False,
+        "cooperation_type": clean(payload.get("合作类型")) or False,
+        "bank_name": clean(payload.get("开户银行")) or False,
+        "bank_account_no": clean(payload.get("账号") or payload.get("开户账号") or payload.get("银行账号")) or False,
+        "bank_account_holder": clean(payload.get("开户姓名")) or False,
+        "social_credit_code": clean(payload.get("统一社会信用代码")) or False,
+        "main_tax_rate": clean(payload.get("主税率")) or False,
+        "receipt_amount": amount_number(payload.get("收款金额")),
+        "payment_amount": amount_number(payload.get("付款金额")),
+        "entry_user_name": clean(payload.get("录入人")) or False,
+        "entry_time": parse_dt(payload.get("录入时间")),
     }
 
 
