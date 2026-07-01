@@ -347,8 +347,8 @@
 
 | 边界入口 | active 子入口 | action 子入口 | XMLID |
 | --- | ---: | ---: | --- |
-| 智慧施工管理平台 / 业务配置 | 22 | 20 | `smart_construction_core.menu_sc_business_config_center` |
-| 智慧施工管理平台 / 系统配置 | 4 | 3 | `smart_construction_core.menu_sc_config_center` |
+| 智慧施工管理平台 / 业务配置 | 21 | 19 | `smart_construction_core.menu_sc_business_config_center` |
+| 智慧施工管理平台 / 系统配置 | 5 | 4 | `smart_construction_core.menu_sc_config_center` |
 
 ### active 明细
 
@@ -370,7 +370,6 @@
 - 智慧施工管理平台 / 业务配置 / 审批配置 -> `sc.approval.policy`
 - 智慧施工管理平台 / 业务配置 / 数据字典 -> `sc.dictionary`
 - 智慧施工管理平台 / 业务配置 / 新增表单字段 -> `ui.form.custom.field.wizard`
-- 智慧施工管理平台 / 业务配置 / 用户优先入口迭代计划 -> `sc.legacy.user.priority.menu.plan`
 - 智慧施工管理平台 / 业务配置 / 菜单配置 -> `ui.menu.config.policy`
 - 智慧施工管理平台 / 业务配置 / 表单字段配置 -> `ui.form.field.policy`
 - 智慧施工管理平台 / 业务配置 / 阶段要求配置 -> `sc.project.stage.requirement.item`
@@ -378,6 +377,7 @@
 - 智慧施工管理平台 / 系统配置
 - 智慧施工管理平台 / 系统配置 / 历史财务事实（内部）
 - 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 流程工作台 -> `sc.history.todo`
+- 智慧施工管理平台 / 系统配置 / 用户优先入口迭代计划 -> `sc.legacy.user.priority.menu.plan`
 - 智慧施工管理平台 / 系统配置 / 用户信息与权限 -> `res.users`
 - 智慧施工管理平台 / 系统配置 / 用户信息与权限 / 用户账号与权限 -> `res.users`
 

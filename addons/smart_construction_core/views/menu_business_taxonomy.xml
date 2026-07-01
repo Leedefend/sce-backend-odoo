@@ -2476,6 +2476,7 @@
         <field name="sequence">90</field>
     </record>
     <record id="menu_sc_legacy_user_priority_menu_plan" model="ir.ui.menu">
-        <field name="sequence">100</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_config_center"/>
+        <field name="sequence">20</field>
     </record>
 </odoo>

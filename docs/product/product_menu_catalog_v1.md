@@ -5,7 +5,7 @@
 ## 运行时来源
 
 - database: `sc_demo`
-- generated_at: `2026-07-01T13:55:35.020224+00:00`
+- generated_at: `2026-07-01T14:04:00.212511+00:00`
 - roots: `smart_construction_core.menu_sc_root, smart_core.menu_smart_core_platform_root`
 - visible_login_probe: `admin, wutao, demo_business_full, demo_role_finance, demo_role_executive`
 
@@ -18,6 +18,7 @@
 - needs_review_count: `0`
 - internal_history_business_visible_count: `0`
 - ordinary_business_system_config_visible_count: `0`
+- business_config_legacy_active_count: `0`
 
 ## 分层定义
 
@@ -116,7 +117,6 @@
     - 数据字典 [`system_config`] -> `sc.dictionary`
     - 新增表单字段 [`system_config`] -> `ui.form.custom.field.wizard`
     - 材料档案 [`history_acceptance` inactive] -> `sc.material.catalog`
-    - 用户优先入口迭代计划 [`system_config`] -> `sc.legacy.user.priority.menu.plan`
     - 菜单配置 [`system_config`] -> `ui.menu.config.policy`
     - 表单字段配置 [`system_config`] -> `ui.form.field.policy`
     - 阶段要求配置 [`system_config`] -> `sc.project.stage.requirement.item`
@@ -413,6 +413,7 @@
       - 工作流实例 [`dev_governance`] -> `sc.workflow.instance`
       - 工作流日志 [`dev_governance`] -> `sc.workflow.log`
       - 工作项 [`dev_governance`] -> `sc.workflow.workitem`
+    - 用户优先入口迭代计划 [`system_config`] -> `sc.legacy.user.priority.menu.plan`
     - 用户信息与权限 [`system_config`] -> `res.users`
       - 历史角色投影 [`history_acceptance`] -> `sc.legacy.user.role`
       - 用户信息 [`history_acceptance`] -> `sc.legacy.user.profile`

@@ -43,6 +43,7 @@ INTERNAL_HISTORY_PATH_TOKENS = (
     "系统配置",
     "历史财务事实（内部）",
 )
+BUSINESS_CONFIG_PATH_PREFIX = "智慧施工管理平台 / 业务配置"
 CONFIG_ADMIN_GROUP_XMLIDS = (
     "smart_construction_core.group_sc_cap_business_config_admin",
     "smart_construction_core.group_sc_cap_config_admin",
@@ -403,9 +404,11 @@ def _export() -> dict[str, object]:
     internal_history_business_visible = []
     config_admin_logins = _config_admin_logins()
     ordinary_business_system_config_visible = []
+    business_config_legacy_active = []
     for row in rows:
         visible_business_logins = sorted(BUSINESS_VISIBLE_LOGINS.intersection(row.get("visible_logins") or []))
         path = _text(row.get("path"))
+        xmlid = _text(row.get("xmlid")).lower()
         if (
             row.get("active")
             and row.get("layer") == "history_acceptance"
@@ -417,6 +420,18 @@ def _export() -> dict[str, object]:
                     "xmlid": row.get("xmlid"),
                     "path": path,
                     "visible_logins": visible_business_logins,
+                }
+            )
+        if (
+            row.get("active")
+            and (path == BUSINESS_CONFIG_PATH_PREFIX or path.startswith(BUSINESS_CONFIG_PATH_PREFIX + " / "))
+            and ("legacy" in xmlid or "历史" in path)
+        ):
+            business_config_legacy_active.append(
+                {
+                    "xmlid": row.get("xmlid"),
+                    "path": path,
+                    "layer": row.get("layer"),
                 }
             )
         visible_ordinary_business_logins = [
@@ -440,6 +455,11 @@ def _export() -> dict[str, object]:
             "system config menus must not be visible to ordinary business users: %s"
             % json.dumps(ordinary_business_system_config_visible[:20], ensure_ascii=False)
         )
+    if business_config_legacy_active:
+        raise AssertionError(
+            "business config must not contain active legacy/history entries: %s"
+            % json.dumps(business_config_legacy_active[:20], ensure_ascii=False)
+        )
 
     top_level = [
         row
@@ -462,6 +482,7 @@ def _export() -> dict[str, object]:
             "needs_review_count": sum(1 for row in rows if row["needs_review"]),
             "internal_history_business_visible_count": len(internal_history_business_visible),
             "ordinary_business_system_config_visible_count": len(ordinary_business_system_config_visible),
+            "business_config_legacy_active_count": len(business_config_legacy_active),
             "layer_counts": layer_counts,
         },
         "top_level": [
