@@ -435,7 +435,7 @@
                 <field name="income_category" string="收入类别" readonly="1"/>
                 <field name="date_receipt" string="收款时间" readonly="1"/>
                 <field name="note" string="备注" readonly="1"/>
-                <field name="legacy_attachment_ref" string="附件" readonly="1"/>
+                <field name="receipt_income_attachment_text_display" string="附件" readonly="1"/>
                 <field name="creator_name" string="录入人" readonly="1"/>
                 <field name="created_time" string="录入时间" readonly="1"/>
             </tree>

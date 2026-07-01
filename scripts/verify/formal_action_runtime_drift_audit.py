@@ -271,7 +271,7 @@ EXPECTED_ACTION_CONTRACTS = {
             "income_category",
             "date_receipt",
             "note",
-            "legacy_attachment_ref",
+            "receipt_income_attachment_text_display",
             "creator_name",
             "created_time",
         ],

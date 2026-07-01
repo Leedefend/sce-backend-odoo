@@ -75,7 +75,7 @@
                     <field name="invoice_ref"/>
                     <field name="amount" sum="收款金额"/>
                     <field name="legacy_document_state_label" optional="show"/>
-                    <field name="legacy_attachment_ref" optional="show"/>
+                    <field name="receipt_income_attachment_text_display" optional="show"/>
                     <field name="legacy_note" optional="show"/>
                     <field name="deducted_invoice_amount" sum="已抵发票金额"/>
                     <field name="deducted_tax_amount" sum="已抵税额"/>

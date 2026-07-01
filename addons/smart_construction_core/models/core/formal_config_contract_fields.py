@@ -519,12 +519,17 @@ _RECEIPTINCOME_FORMAL_CONFIG_FIELDS = {
     'receipt_income_business_time_display': ('时间', ('date_receipt',)),
     'receipt_income_current_allocated_amount_display': ('本期拨付金额合计', ('amount',)),
     'receipt_income_current_receipt_amount_display': ('本期收款', ('amount',)),
-    'receipt_income_attachment_text_display': ('附件', ('attachment_ids',)),
     'receipt_income_project_name_display': ('项目名称', ('legacy_project_name',)),
 }
 
 class ReceiptIncomeFormalConfigContractFields(models.Model):
     _inherit = 'sc.receipt.income'
+
+    receipt_income_attachment_text_display = fields.Char(
+        string='附件',
+        compute="_compute_formal_config_contract_fields",
+        readonly=True,
+    )
 
     for _field_name, (_field_label, _field_sources) in _RECEIPTINCOME_FORMAL_CONFIG_FIELDS.items():
         locals()[_field_name] = fields.Char(
@@ -533,12 +538,21 @@ class ReceiptIncomeFormalConfigContractFields(models.Model):
             readonly=True,
         )
 
-    @api.depends()
+    def _receipt_income_attachment_ref_value(self):
+        return ""
+
+    @api.depends("attachment_ids")
     def _compute_formal_config_contract_fields(self):
         _compute_formal_config_contract_fields(
             self,
             {field_name: sources for field_name, (_label, sources) in _RECEIPTINCOME_FORMAL_CONFIG_FIELDS.items()},
         )
+        for record in self:
+            if record.attachment_ids:
+                record.receipt_income_attachment_text_display = "附件(%s)" % len(record.attachment_ids)
+                continue
+            legacy_attachment = (record._receipt_income_attachment_ref_value() or "").strip()
+            record.receipt_income_attachment_text_display = legacy_attachment
 
 _SUBCONTRACTREGISTER_FORMAL_CONFIG_FIELDS = {
     'subcontract_register_subcontract_content_display': ('分包内容', ('subcontract_scope',)),

@@ -32,7 +32,7 @@ EXPECTED_FIELDS = [
     ("income_category", "收入类别"),
     ("date_receipt", "收款时间"),
     ("note", "备注"),
-    ("legacy_attachment_ref", "附件"),
+    ("receipt_income_attachment_text_display", "附件"),
     ("creator_name", "录入人"),
     ("created_time", "录入时间"),
 ]
