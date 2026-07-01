@@ -4185,7 +4185,12 @@ seed.delivery.minimum: guard.prod.forbid
 verify.delivery.business.success.ready: guard.prod.forbid seed.delivery.minimum
 	@python3 scripts/verify/delivery_business_success_ready.py
 
-verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready
+verify.runtime_contract.test_placeholder.guard: guard.prod.forbid check-compose-project check-compose-env
+	@mkdir -p artifacts/backend
+	@$(RUN_ENV) RUNTIME_CONTRACT_TEST_PLACEHOLDER_GUARD_PATH=/tmp/runtime_contract_test_placeholder_guard.json DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/runtime_contract_test_placeholder_guard.py
+	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/runtime_contract_test_placeholder_guard.json artifacts/backend/runtime_contract_test_placeholder_guard.json >/dev/null
+
+verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready verify.runtime_contract.test_placeholder.guard
 	@echo "[OK] verify.product.surface.clean done"
 
 verify.product.complexity.bound: guard.prod.forbid verify.complexity.guard
