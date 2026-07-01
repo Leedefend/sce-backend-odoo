@@ -1265,7 +1265,7 @@ LABEL_SOURCE_OVERRIDES = {
 
 MODEL_LABEL_SOURCE_OVERRIDES = {
     'construction.contract': {
-        '工程内容': ['legacy_visible_engineering_content'],
+        '工程内容': ['engineering_content', 'legacy_visible_engineering_content'],
     },
     'sc.construction.diary': {
         '出勤机械': ['attendance_equipment'],
@@ -2388,7 +2388,7 @@ def _alias_value(record, label):
             '未收款比例': 'legacy_visible_unreceived_rate',
             '挂靠人': 'legacy_visible_affiliated_person',
             '工程地址': 'legacy_visible_engineering_address',
-            '工程内容': 'legacy_visible_engineering_content',
+            '工程内容': 'engineering_content',
             '附件': 'legacy_visible_attachment',
             '录入人': 'legacy_visible_creator_name',
             '录入时间': 'legacy_visible_created_time',

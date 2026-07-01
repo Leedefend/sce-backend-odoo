@@ -245,7 +245,7 @@ class ConstructionContractLegacy(models.Model):
                 or ""
             )
             rec.expense_execution_engineering_content = (
-                rec.legacy_visible_engineering_content or rec.engineering_content or ""
+                rec.engineering_content or rec.legacy_visible_engineering_content or ""
             )
             rec.expense_execution_category = (
                 rec.legacy_visible_category

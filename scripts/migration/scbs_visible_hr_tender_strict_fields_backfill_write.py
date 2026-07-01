@@ -991,6 +991,7 @@ for legacy_id, row in contract_visible_rows.items():
                legacy_visible_affiliated_person = %s,
                legacy_visible_engineering_address = %s,
                legacy_visible_engineering_content = %s,
+               engineering_content = COALESCE(engineering_content, %s),
                legacy_visible_creator_name = %s,
                legacy_visible_created_time = %s
          WHERE legacy_contract_id = %s
@@ -1013,6 +1014,7 @@ for legacy_id, row in contract_visible_rows.items():
             clean(row.get("WSKBL") or row.get("visible_unreceived_rate")) or None,
             clean(row.get("GKR")) or None,
             clean(row.get("f_GCDZ")) or None,
+            clean(row.get("f_GCNR") or row.get("GCCBFW")) or None,
             clean(row.get("f_GCNR") or row.get("GCCBFW")) or None,
             clean(row.get("LRR") or row.get("f_LRR")) or None,
             parse_datetime(row.get("LRRQ") or row.get("f_LRSJ")),
@@ -1041,6 +1043,7 @@ env.cr.execute(  # noqa: F821
            legacy_visible_affiliated_person = COALESCE(c.legacy_visible_affiliated_person, c.affiliated_person),
            legacy_visible_engineering_address = COALESCE(c.legacy_visible_engineering_address, c.engineering_address),
            legacy_visible_engineering_content = COALESCE(c.legacy_visible_engineering_content, c.engineering_content),
+           engineering_content = COALESCE(c.engineering_content, c.legacy_visible_engineering_content),
            legacy_visible_creator_name = COALESCE(c.legacy_visible_creator_name, c.entry_user_text),
            legacy_visible_created_time = COALESCE(c.legacy_visible_created_time, c.entry_time)
       FROM project_project pp,

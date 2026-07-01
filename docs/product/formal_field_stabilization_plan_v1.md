@@ -195,13 +195,13 @@ make verify.business_config.list_config_boundary DB_NAME=sc_demo PROJECT=sc-back
 - `history_carrier`：仍依赖显式历史载体
 - `missing`：未找到当前承载字段
 
-当前 `sc_demo` 基线：`label_count=832`，`formal_product=802`，`backlog_count=30`，其中 `transition_alias=1`、`source_trace=29`、`missing=0`。`sc.financing.loan` 已将 `申请部门`、`申请时间`、`是否预算内`、`实际借款金额`、`主要资金使用安排`、`开户银行`、`借款账号`、`实际批复金额`、`申请金额`、`预计归还时间`、`借款类型` 从矩阵 `missing` 吸纳为可编辑正式产品字段，645 条历史融资借款记录均有正式承载值；新办理可直接录入这些字段，金额、用途、到期日、单据日期会同步到底层办理字段，历史确认单据也允许维护这些正式业务字段。`sc.office.admin.document` 已将印章使用审批表的 `用印时间`、`用印部门`、`用印申请人`、`用印部门负责人签字`、`用印种类`、`用印文本名称及文号`、`经办人签字`、`领导签字`、`份数`、`归还时间`、`合同金额`、`合同编号`、`所属公司`、`使用印章公司`、`是否外带` 吸纳为可编辑正式产品字段，新办/编辑会同步到底层 `use_date/use_purpose/return_date/amount` 办理字段，历史回填脚本负责把 custom 历史列搬入正式字段。`sc.business.entity` 已将单据状态、推送结果、项目名称、合作类型、开户银行、账号/开户账号/银行账号、统一社会信用代码、主税率、收款金额、付款金额、开户姓名、录入人、录入时间吸纳为可编辑正式主数据/业务字段，11077 条历史往来单位记录已回填为正式字段。`sc.document.admin.document` 已将资料借阅的项目名称、申请日期、借阅部门、借阅人、联系方式、借阅形式、负责人、归还申请/确认时间、是否归还、归还日期、修改与审定意见等标签吸纳为可编辑正式办理字段，29 条历史资料借阅记录已回填，新增和编辑可直接维护这些字段。后续补字段优先级以 `artifacts/backend/user_data_product_field_coverage_matrix.json` 的 `backlog` 为准：先把最后的 `transition_alias` 吸纳为正式产品字段，再按填充值和业务含义判断 `source_trace` 中哪些应继续产品化、哪些只保留来源追溯。
+当前 `sc_demo` 基线：`label_count=832`，`formal_product=803`，`backlog_count=29`，其中 `source_trace=29`、`transition_alias=0`、`missing=0`。`sc.financing.loan` 已将 `申请部门`、`申请时间`、`是否预算内`、`实际借款金额`、`主要资金使用安排`、`开户银行`、`借款账号`、`实际批复金额`、`申请金额`、`预计归还时间`、`借款类型` 从矩阵 `missing` 吸纳为可编辑正式产品字段，645 条历史融资借款记录均有正式承载值；新办理可直接录入这些字段，金额、用途、到期日、单据日期会同步到底层办理字段，历史确认单据也允许维护这些正式业务字段。`sc.office.admin.document` 已将印章使用审批表的 `用印时间`、`用印部门`、`用印申请人`、`用印部门负责人签字`、`用印种类`、`用印文本名称及文号`、`经办人签字`、`领导签字`、`份数`、`归还时间`、`合同金额`、`合同编号`、`所属公司`、`使用印章公司`、`是否外带` 吸纳为可编辑正式产品字段，新办/编辑会同步到底层 `use_date/use_purpose/return_date/amount` 办理字段，历史回填脚本负责把 custom 历史列搬入正式字段。`sc.business.entity` 已将单据状态、推送结果、项目名称、合作类型、开户银行、账号/开户账号/银行账号、统一社会信用代码、主税率、收款金额、付款金额、开户姓名、录入人、录入时间吸纳为可编辑正式主数据/业务字段，11077 条历史往来单位记录已回填为正式字段。`sc.document.admin.document` 已将资料借阅的项目名称、申请日期、借阅部门、借阅人、联系方式、借阅形式、负责人、归还申请/确认时间、是否归还、归还日期、修改与审定意见等标签吸纳为可编辑正式办理字段，29 条历史资料借阅记录已回填，新增和编辑可直接维护这些字段。`construction.contract` 的 `工程内容` 已从 `legacy_visible_engineering_content` 过渡列切回正式可编辑 `engineering_content` 字段，合同新办和编辑均可直接维护。后续补字段优先级以 `artifacts/backend/user_data_product_field_coverage_matrix.json` 的 `backlog` 为准：剩余缺口均为 `source_trace`，需要按填充值和业务含义判断哪些应继续产品化、哪些只保留来源追溯。
 
 ## 行业模块办理能力边界审计
 
 `make verify.industry_module.handling_capability_boundary` 用 P1 用户可见标签反查当前承载字段，并按行业模块办理能力边界分类：行业模块必须定义正式字段、表单、可编辑性、流程和下游办理语义；用户模块只负责把历史数据填入正式字段并保留来源痕迹。
 
-当前审计基线：`label_count=832`，`industry_editable_product_field=601`，`industry_derived_product_field=171`，`industry_operational_metadata=30`，`action_required=30`。其中 `user_history_transition_field=1`、`source_trace_only=29` 是后续收口入口；审计产物写入 `artifacts/backend/industry_module_handling_capability_boundary_audit.json`。
+当前审计基线：`label_count=832`，`industry_editable_product_field=602`，`industry_derived_product_field=171`，`industry_operational_metadata=30`，`action_required=29`。当前已无 `user_history_transition_field`，剩余 `source_trace_only=29` 是后续收口入口；审计产物写入 `artifacts/backend/industry_module_handling_capability_boundary_audit.json`。
 
 ## 后续专题：core 历史字段物理剥离
 
