@@ -16,6 +16,6 @@
 
 ## Warnings
 
-- runtime tier coverage mismatch for community: runtime=0, static_policy=14
-- runtime tier coverage mismatch for pro: runtime=0, static_policy=14
-- runtime tier coverage mismatch for enterprise: runtime=0, static_policy=22
+- runtime tier probe skipped for community: failed to set sc.license.level=community
+- runtime tier probe skipped for pro: failed to set sc.license.level=pro
+- runtime tier probe skipped for enterprise: failed to set sc.license.level=enterprise

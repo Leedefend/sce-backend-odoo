@@ -35,12 +35,18 @@ def _load_handler():
     smart_core_mod = _install_module("addons.smart_core")
     handlers_mod = _install_module("addons.smart_core.handlers")
     core_mod = _install_module("addons.smart_core.core")
+    security_mod = _install_module("addons.smart_core.security")
     smart_core_mod.__path__ = [str(root)]
     handlers_mod.__path__ = [str(root / "handlers")]
     core_mod.__path__ = [str(root / "core")]
+    security_mod.__path__ = [str(root / "security")]
 
     _install_module("addons.smart_core.core.base_handler", BaseIntentHandler=_BaseIntentHandler)
     _install_module("addons.smart_core.handlers.load_contract", LoadContractHandler=_LoadContractHandler)
+    _install_module(
+        "addons.smart_core.security.platform_admin",
+        user_is_platform_admin=lambda user, **_kwargs: bool(getattr(user, "is_platform_admin", False)),
+    )
 
     request_params_name = "addons.smart_core.core.request_params"
     sys.modules.pop(request_params_name, None)
@@ -60,16 +66,27 @@ def _load_handler():
     return module
 
 
+class _DummyUser:
+    def __init__(self, is_platform_admin=False):
+        self.is_platform_admin = is_platform_admin
+
+
 class _DummyEnv:
-    pass
+    def __init__(self, user=None):
+        self.user = user or _DummyUser()
 
 
 class TestLoadViewHandler(unittest.TestCase):
     def setUp(self):
         self.module = _load_handler()
 
-    def _make_handler(self, params):
-        return self.module.LoadModelViewHandler(env=_DummyEnv(), su_env=_DummyEnv(), context={}, payload={"params": params})
+    def _make_handler(self, params, *, is_platform_admin=False):
+        return self.module.LoadModelViewHandler(
+            env=_DummyEnv(_DummyUser(is_platform_admin=is_platform_admin)),
+            su_env=_DummyEnv(),
+            context={},
+            payload={"params": params},
+        )
 
     @patch("addons.smart_core.handlers.load_view.LoadContractHandler.handle")
     def test_load_view_proxies_to_load_contract_success(self, proxied_handle):
@@ -139,6 +156,37 @@ class TestLoadViewHandler(unittest.TestCase):
         self.assertEqual(result.get("code"), 400)
         self.assertEqual((result.get("error") or {}).get("message"), "view_id 无效")
         self.assertFalse(proxied_handle.called)
+
+    @patch("addons.smart_core.handlers.load_view.LoadContractHandler.handle")
+    def test_load_view_blocks_sensitive_system_model_for_business_user(self, proxied_handle):
+        handler = self._make_handler({"model": "res.users", "view_type": "form"})
+
+        result = handler.run()
+
+        self.assertFalse(result.get("ok"), result)
+        self.assertEqual(result.get("code"), 403)
+        self.assertEqual((result.get("error") or {}).get("code"), "PERMISSION_DENIED")
+        self.assertEqual((result.get("error") or {}).get("model"), "res.users")
+        self.assertFalse(proxied_handle.called)
+
+    @patch("addons.smart_core.handlers.load_view.LoadContractHandler.handle")
+    def test_load_view_allows_sensitive_system_model_for_platform_admin(self, proxied_handle):
+        proxied_handle.return_value = {
+            "status": "success",
+            "code": 200,
+            "data": {"views": {}},
+            "meta": {},
+        }
+        handler = self._make_handler(
+            {"model": "res.users", "view_type": "form"},
+            is_platform_admin=True,
+        )
+
+        result = handler.run()
+
+        self.assertTrue(result.get("ok"), result)
+        self.assertEqual(result.get("code"), 200)
+        self.assertTrue(proxied_handle.called)
 
 
 if __name__ == "__main__":

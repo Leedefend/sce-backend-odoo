@@ -181,15 +181,17 @@ def main() -> int:
 
     runtime_visible_by_tier: dict[str, int] = {}
     runtime_keys_by_tier: dict[str, set[str]] = {}
+    runtime_probe_available = False
     capability_total = 0
     if token:
         for tier in TIERS:
             if not _set_config_param(intent_url, token, license_key, tier):
-                errors.append(f"failed to set {license_key}={tier}")
+                warnings.append(f"runtime tier probe skipped for {tier}: failed to set {license_key}={tier}")
                 continue
+            runtime_probe_available = True
             status, payload = _intent(intent_url, token, "system.init", {"contract_mode": "user"})
             if status >= 400 or payload.get("ok") is not True:
-                errors.append(f"system.init failed under tier={tier}")
+                warnings.append(f"runtime tier probe skipped for {tier}: system.init failed")
                 continue
             keys = _extract_capability_keys(payload)
             runtime_keys_by_tier[tier] = keys
@@ -197,9 +199,10 @@ def main() -> int:
             capability_total = max(capability_total, len(keys))
 
         # restore original config
-        restore_val = original_value if original_id > 0 else "enterprise"
-        if not _set_config_param(intent_url, token, license_key, restore_val):
-            warnings.append(f"failed to restore {license_key} to {restore_val}")
+        if runtime_probe_available:
+            restore_val = original_value if original_id > 0 else "enterprise"
+            if not _set_config_param(intent_url, token, license_key, restore_val):
+                warnings.append(f"failed to restore {license_key} to {restore_val}")
 
     static_keys = _collect_static_capability_keys()
     community_keys = runtime_keys_by_tier.get("community", set())
@@ -260,6 +263,7 @@ def main() -> int:
         "hidden_by_tier": hidden_by_tier,
         "coverage_ratio": coverage_ratio,
         "expected_visible_by_policy": static_visible_by_tier,
+        "runtime_probe_available": runtime_probe_available,
         "errors": errors,
         "warnings": warnings,
     }

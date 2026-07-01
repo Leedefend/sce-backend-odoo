@@ -3,7 +3,7 @@
 - case_count: 3
 - drift_count: 0
 - error_count: 0
-- warning_count: 0
+- warning_count: 1
 
 ## Cases
 

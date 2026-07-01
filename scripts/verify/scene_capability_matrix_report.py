@@ -143,6 +143,33 @@ def _module_scene_capability_map(capability_key_set: set[str]) -> dict[str, set[
     return out
 
 
+def _module_scene_rows(capability_key_set: set[str]) -> list[dict]:
+    payload = _load_json(MODULE_SCENE_SOURCE_JSON)
+    modules = payload.get("modules") if isinstance(payload.get("modules"), list) else []
+    scene_caps: dict[str, set[str]] = {}
+    for module in modules:
+        if not isinstance(module, dict) or module.get("in_scope") is False:
+            continue
+        capabilities = {
+            str(item or "").strip()
+            for item in (module.get("capabilities") if isinstance(module.get("capabilities"), list) else [])
+            if str(item or "").strip() in capability_key_set
+        }
+        if not capabilities:
+            continue
+        scene_keys: list[str] = []
+        for key in ("entry_scenes", "menu_hints"):
+            scene_keys.extend(module.get(key) if isinstance(module.get(key), list) else [])
+        for scene_key in scene_keys:
+            scene_key = str(scene_key or "").strip()
+            if scene_key:
+                scene_caps.setdefault(scene_key, set()).update(capabilities)
+    return [
+        {"code": scene_key, "capabilities": sorted(capabilities), "required_capabilities": sorted(capabilities)}
+        for scene_key, capabilities in sorted(scene_caps.items())
+    ]
+
+
 def _collect_scene_caps(scene: dict) -> tuple[set[str], set[str]]:
     declared: set[str] = set()
     required: set[str] = set()
@@ -241,6 +268,12 @@ def main() -> int:
     )
     capability_key_set = set(capability_keys)
     module_scene_caps = _module_scene_capability_map(capability_key_set)
+    scene_source = "runtime:system.init"
+    if not scenes:
+        source_scenes = _module_scene_rows(capability_key_set)
+        if source_scenes:
+            scenes = source_scenes
+            scene_source = "formal:module_scene_capability_source_v1"
 
     matrix: list[dict] = []
     used_capabilities: set[str] = set()
@@ -299,6 +332,7 @@ def main() -> int:
         "summary": {
             "probe_login": probe_login,
             "probe_source": probe_source,
+            "scene_source": scene_source,
             "scene_count": len(scenes),
             "capability_count": len(capability_keys),
             "scene_without_binding_count": len(scene_without_binding),
@@ -344,6 +378,7 @@ def main() -> int:
         f"- status: {'PASS' if report['ok'] else 'FAIL'}",
         f"- probe_login: {report['summary']['probe_login']}",
         f"- probe_source: {report['summary']['probe_source']}",
+        f"- scene_source: {report['summary']['scene_source']}",
         f"- role_sample_count: {report['summary']['role_sample_count']}",
         f"- scene_count: {report['summary']['scene_count']}",
         f"- capability_count: {report['summary']['capability_count']}",

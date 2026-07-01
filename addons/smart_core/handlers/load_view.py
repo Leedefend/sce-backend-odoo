@@ -4,7 +4,23 @@
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.request_params import parse_positive_int
+from ..security.platform_admin import user_is_platform_admin
 from .load_contract import LoadContractHandler
+
+
+SENSITIVE_SYSTEM_MODELS = {
+    "ir.actions.actions",
+    "ir.actions.act_window",
+    "ir.config_parameter",
+    "ir.model",
+    "ir.model.access",
+    "ir.model.fields",
+    "ir.rule",
+    "ir.ui.menu",
+    "ir.ui.view",
+    "res.groups",
+    "res.users",
+}
 
 
 class LoadModelViewHandler(BaseIntentHandler):
@@ -15,6 +31,13 @@ class LoadModelViewHandler(BaseIntentHandler):
 
     def run(self, **_kwargs):
         params = dict(self.params or {})
+        model = str(params.get("model") or params.get("model_code") or "").strip()
+        if model in SENSITIVE_SYSTEM_MODELS and not user_is_platform_admin(
+            getattr(self.env, "user", None),
+            include_legacy=True,
+            include_system=True,
+        ):
+            return self._permission_denied(model)
         payload = {
             "params": {
                 "model": params.get("model"),
@@ -93,6 +116,28 @@ class LoadModelViewHandler(BaseIntentHandler):
                     "kind": self.SOURCE_KIND,
                     "authority": self.SOURCE_AUTHORITY,
                     "proxy_only": True,
+                },
+            },
+        }
+
+    def _permission_denied(self, model):
+        return {
+            "ok": False,
+            "error": {
+                "code": "PERMISSION_DENIED",
+                "message": "permission denied",
+                "reason_code": "PERMISSION_DENIED",
+                "model": model,
+            },
+            "code": 403,
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "legacy_proxy": "load_contract",
+                "source_authority": {
+                    "kind": self.SOURCE_KIND,
+                    "authority": self.SOURCE_AUTHORITY,
+                    "proxy_only": True,
+                    "system_model_guard": True,
                 },
             },
         }

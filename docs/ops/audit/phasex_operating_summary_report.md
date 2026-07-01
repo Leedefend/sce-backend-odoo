@@ -2,7 +2,7 @@
 
 - gate_pass_count: 9/9
 - error_count: 0
-- warning_count: 0
+- warning_count: 1
 
 ## Snapshot
 
@@ -14,8 +14,8 @@
 - runtime_scene_count: 66
 - semantic_drift_count: 0
 - stress_error_count: 0
-- stress_status: pass
-- stress_warning_count: 0
+- stress_status: warn
+- stress_warning_count: 6
 - trend_days: 7
 - trend_history_day_count: 1
 - unclassified_404_count: 0

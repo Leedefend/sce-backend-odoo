@@ -3,7 +3,7 @@
 - window_days: 7
 - scene_series_points: 7
 - capability_series_points: 7
-- intent_heatmap_count: 6
+- intent_heatmap_count: 5
 - role_distribution_count: 7
 - role_intent_heatmap_count: 9
 - history_day_count: 1
@@ -12,29 +12,28 @@
 
 ## Scene Count
 
-- 2026-05-17: null
-- 2026-05-18: null
-- 2026-05-19: null
-- 2026-05-20: null
-- 2026-05-21: null
-- 2026-05-22: null
-- 2026-05-23: 66
+- 2026-06-25: null
+- 2026-06-26: null
+- 2026-06-27: null
+- 2026-06-28: null
+- 2026-06-29: null
+- 2026-06-30: null
+- 2026-07-01: 66
 
 ## Capability Usage
 
-- 2026-05-17: null
-- 2026-05-18: null
-- 2026-05-19: null
-- 2026-05-20: null
-- 2026-05-21: null
-- 2026-05-22: null
-- 2026-05-23: avg=52.571, min=46, max=63
+- 2026-06-25: null
+- 2026-06-26: null
+- 2026-06-27: null
+- 2026-06-28: null
+- 2026-06-29: null
+- 2026-06-30: null
+- 2026-07-01: avg=0.0, min=0, max=0
 
 ## Intent Heatmap
 
-- system.init: 9 (probe)
-- ui.contract: 9 (probe)
-- execute_button: 6 (probe)
+- system.init: 3 (probe)
+- ui.contract: 3 (probe)
 - load_view: 1 (probe)
 - my.work.summary: 1 (probe)
 - usage.report: 1 (probe)
