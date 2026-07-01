@@ -5,7 +5,7 @@
 ## 当前结论
 
 - 正式产品一级中心：`12` 个
-- 正式产品菜单：`262` 个，其中 active `237` 个
+- 正式产品 active 菜单：`237` 个
 - 系统配置菜单：`30` 个，其中 active `30` 个
 - 历史验收菜单：`194` 个，其中 active `189` 个
 - 开发治理菜单：`30` 个，其中 active `30` 个
@@ -13,20 +13,20 @@
 
 ## 正式产品一级中心
 
-| 中心 | 正式子入口 | 历史验收子入口 | 系统配置子入口 | 隐藏项 | 主要可见用户 | XMLID |
-| --- | ---: | ---: | ---: | ---: | --- | --- |
-| 智慧大屏 | 6 | 0 | 0 | 1 | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_projection_root` |
-| 首页 | 4 | 0 | 0 | 0 | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_workspace_center` |
-| 项目中心 | 23 | 1 | 0 | 0 | wutao, demo_business_full, demo_role_executive | `smart_construction_core.menu_sc_project_center` |
-| 合同中心 | 22 | 3 | 0 | 4 | wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_contract_center` |
-| 物资与分包 | 40 | 8 | 0 | 1 | wutao, demo_business_full | `smart_construction_core.menu_sc_material_center` |
-| 施工管理 | 10 | 0 | 0 | 0 | wutao, demo_business_full, demo_role_executive | `smart_construction_core.menu_sc_construction_management_center` |
-| 人事行政 | 8 | 1 | 0 | 0 | wutao, demo_business_full, demo_role_finance | `smart_construction_core.menu_sc_hr_admin_center` |
-| 资料证照 | 3 | 0 | 0 | 0 | wutao, demo_business_full, demo_role_finance | `smart_construction_core.menu_sc_document_admin_center` |
-| 成本中心 | 7 | 0 | 0 | 0 | wutao, demo_business_full | `smart_construction_core.menu_sc_cost_center` |
-| 财务中心 | 71 | 16 | 0 | 19 | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_finance_center` |
-| 税务中心 | 9 | 1 | 0 | 1 | wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_tax_center` |
-| 统计分析 | 21 | 17 | 0 | 1 | wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_data_center` |
+| 中心 | 正式子入口 | 历史验收子入口 | 系统配置子入口 | 隐藏项 | XMLID |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 智慧大屏 | 6 | 0 | 0 | 1 | `smart_construction_core.menu_sc_projection_root` |
+| 首页 | 4 | 0 | 0 | 0 | `smart_construction_core.menu_sc_workspace_center` |
+| 项目中心 | 23 | 1 | 0 | 0 | `smart_construction_core.menu_sc_project_center` |
+| 合同中心 | 22 | 3 | 0 | 4 | `smart_construction_core.menu_sc_contract_center` |
+| 物资与分包 | 40 | 8 | 0 | 1 | `smart_construction_core.menu_sc_material_center` |
+| 施工管理 | 10 | 0 | 0 | 0 | `smart_construction_core.menu_sc_construction_management_center` |
+| 人事行政 | 8 | 1 | 0 | 0 | `smart_construction_core.menu_sc_hr_admin_center` |
+| 资料证照 | 3 | 0 | 0 | 0 | `smart_construction_core.menu_sc_document_admin_center` |
+| 成本中心 | 7 | 0 | 0 | 0 | `smart_construction_core.menu_sc_cost_center` |
+| 财务中心 | 71 | 16 | 0 | 19 | `smart_construction_core.menu_sc_finance_center` |
+| 税务中心 | 9 | 1 | 0 | 1 | `smart_construction_core.menu_sc_tax_center` |
+| 统计分析 | 21 | 17 | 0 | 1 | `smart_construction_core.menu_sc_data_center` |
 
 ## 正式产品菜单结构
 

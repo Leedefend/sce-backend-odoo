@@ -163,7 +163,7 @@ def main() -> int:
         "## 当前结论",
         "",
         f"- 正式产品一级中心：`{len(centers)}` 个",
-        f"- 正式产品菜单：`{int(layer_counts.get('formal_product', 0))}` 个，其中 active `{int(active_layer_counts.get('formal_product', 0))}` 个",
+        f"- 正式产品 active 菜单：`{int(active_layer_counts.get('formal_product', 0))}` 个",
         f"- 系统配置菜单：`{int(layer_counts.get('system_config', 0))}` 个，其中 active `{int(active_layer_counts.get('system_config', 0))}` 个",
         f"- 历史验收菜单：`{int(layer_counts.get('history_acceptance', 0))}` 个，其中 active `{int(active_layer_counts.get('history_acceptance', 0))}` 个",
         f"- 开发治理菜单：`{int(layer_counts.get('dev_governance', 0))}` 个，其中 active `{int(active_layer_counts.get('dev_governance', 0))}` 个",
@@ -171,21 +171,19 @@ def main() -> int:
         "",
         "## 正式产品一级中心",
         "",
-        "| 中心 | 正式子入口 | 历史验收子入口 | 系统配置子入口 | 隐藏项 | 主要可见用户 | XMLID |",
-        "| --- | ---: | ---: | ---: | ---: | --- | --- |",
+        "| 中心 | 正式子入口 | 历史验收子入口 | 系统配置子入口 | 隐藏项 | XMLID |",
+        "| --- | ---: | ---: | ---: | ---: | --- |",
     ]
     for center in centers:
         metrics = _center_metrics(rows, center)
-        visible = ", ".join(center.get("visible_logins") or [])
         lines.append(
-            "| %s | %d | %d | %d | %d | %s | `%s` |"
+            "| %s | %d | %d | %d | %d | `%s` |"
             % (
                 _escape(center.get("name")),
                 metrics["active_formal"],
                 metrics["active_history"],
                 metrics["active_system"],
                 metrics["inactive"],
-                _escape(visible),
                 _escape(center.get("xmlid")),
             )
         )
