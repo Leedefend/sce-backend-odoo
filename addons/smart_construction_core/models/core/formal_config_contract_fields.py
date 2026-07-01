@@ -229,26 +229,26 @@ class FundAccountFormalConfigContractFields(models.Model):
             {field_name: sources for field_name, (_label, sources) in _FUNDACCOUNT_FORMAL_CONFIG_FIELDS.items()},
         )
 
-_FUNDOPERATION_FORMAL_CONFIG_FIELDS = {
-    'fund_operation_attachment_text_display': ('附件', ('legacy_attachment_ref',)),
-}
-
 class FundOperationFormalConfigContractFields(models.Model):
     _inherit = 'sc.fund.account.operation'
 
-    for _field_name, (_field_label, _field_sources) in _FUNDOPERATION_FORMAL_CONFIG_FIELDS.items():
-        locals()[_field_name] = fields.Char(
-            string=_field_label,
-            compute="_compute_formal_config_contract_fields",
-            readonly=True,
-        )
+    fund_operation_attachment_text_display = fields.Char(
+        string='附件',
+        compute="_compute_formal_config_contract_fields",
+        readonly=True,
+    )
 
-    @api.depends()
+    def _fund_operation_attachment_ref_value(self):
+        return ""
+
+    @api.depends("attachment_ids")
     def _compute_formal_config_contract_fields(self):
-        _compute_formal_config_contract_fields(
-            self,
-            {field_name: sources for field_name, (_label, sources) in _FUNDOPERATION_FORMAL_CONFIG_FIELDS.items()},
-        )
+        for record in self:
+            if record.attachment_ids:
+                record.fund_operation_attachment_text_display = "附件(%s)" % len(record.attachment_ids)
+                continue
+            legacy_attachment = (record._fund_operation_attachment_ref_value() or "").strip()
+            record.fund_operation_attachment_text_display = legacy_attachment
 
 _INVOICEREGISTRATION_FORMAL_CONFIG_FIELDS = {
     'invoice_registration_document_no_display': ('单据编号', ('document_no',)),

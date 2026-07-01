@@ -1469,7 +1469,7 @@
                 {"name": "invoice_request", "title": "开票申请信息", "sequence": 30, "fields": ["application_date", "invoice_date", "invoice_type", "tax_rate", "invoice_company_type", "recipient_unit_name", "invoice_issue_company", "expected_receipt_date", "applicant_name"]},
                 {"name": "amount", "title": "本次开票金额", "sequence": 40, "fields": ["amount_no_tax", "tax_amount", "amount_total", "contract_amount", "related_receipt_amount"]},
                 {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["handler_name", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "invoice_state", "push_result", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "legacy_attachment_ref", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "invoice_state", "push_result", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
@@ -1488,7 +1488,6 @@
                 {"name": "created_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
-                {"name": "legacy_attachment_ref", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "active", "visible_profiles": ["edit", "readonly"], "group": "advanced"}
             ]
         }]]></field>
@@ -1514,7 +1513,7 @@
                 {"name": "invoice_register", "title": "发票登记信息", "sequence": 30, "fields": ["invoice_date", "invoice_no", "invoice_code", "invoice_type", "tax_rate", "invoice_count", "recipient_unit_name", "invoice_issue_company", "actual_invoice_issue_company"]},
                 {"name": "amount", "title": "发票金额", "sequence": 40, "fields": ["amount_no_tax", "tax_amount", "amount_total", "actual_invoice_amount", "surcharge_amount", "related_receipt_amount", "contract_amount"]},
                 {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["handler_name", "invoice_holder", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "application_date", "invoice_state", "expected_receipt_date", "applicant_name", "push_result", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "legacy_attachment_ref", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "application_date", "invoice_state", "expected_receipt_date", "applicant_name", "push_result", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
@@ -1536,7 +1535,6 @@
                 {"name": "created_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
-                {"name": "legacy_attachment_ref", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "active", "visible_profiles": ["edit", "readonly"], "group": "advanced"}
             ]
         }]]></field>
@@ -1562,7 +1560,7 @@
                 {"name": "invoice_input", "title": "进项发票信息", "sequence": 30, "fields": ["invoice_date", "recognition_date", "invoice_no", "invoice_code", "invoice_type", "tax_rate", "invoice_provider_name", "invoice_company_type", "cost_category_name"]},
                 {"name": "amount", "title": "发票金额", "sequence": 40, "fields": ["amount_no_tax", "tax_amount", "amount_total", "contract_amount"]},
                 {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["handler_name", "invoice_holder", "accounting_state", "voucher_no", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "invoice_state", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "legacy_attachment_ref", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "invoice_state", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
@@ -1580,7 +1578,6 @@
                 {"name": "created_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
-                {"name": "legacy_attachment_ref", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "active", "visible_profiles": ["edit", "readonly"], "group": "advanced"}
             ]
         }]]></field>
@@ -1606,7 +1603,7 @@
                 {"name": "tax_payment", "title": "预缴税款信息", "sequence": 30, "fields": ["invoice_date", "prepaid_tax_date", "tax_certificate_no", "tax_type", "tax_rate", "caliber", "invoice_issue_company"]},
                 {"name": "amount", "title": "税款金额", "sequence": 40, "fields": ["amount_no_tax", "tax_amount", "amount_total", "surcharge_amount"]},
                 {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["handler_name", "accounting_state", "voucher_no", "note", "attachment_ids"]},
-                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "legacy_attachment_ref", "active"]}
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
             ],
             "fields": [
                 {"name": "business_category_id", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
@@ -1625,7 +1622,6 @@
                 {"name": "created_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
-                {"name": "legacy_attachment_ref", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
                 {"name": "active", "visible_profiles": ["edit", "readonly"], "group": "advanced"}
             ]
         }]]></field>

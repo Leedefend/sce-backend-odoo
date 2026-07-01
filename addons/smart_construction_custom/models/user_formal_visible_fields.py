@@ -251,6 +251,10 @@ class FundAccountOperationUserHistoryFields(models.Model):
         field_name = "legacy_visible_%s" % suffix
         return self[field_name] if field_name in self._fields else ""
 
+    def _fund_operation_attachment_ref_value(self):
+        self.ensure_one()
+        return self.legacy_attachment_ref or ""
+
 
 class ExpenseClaimUserHistoryFields(models.Model):
     _inherit = "sc.expense.claim"
