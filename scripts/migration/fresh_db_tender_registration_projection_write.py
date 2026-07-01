@@ -203,6 +203,12 @@ def bid_by_fact(fact):
         "owner_id": partner_by_name(fact.owner_name),
         "legacy_owner_name": fact.owner_name,
         "bid_amount": fact.max_price or 0.0,
+        "applicant_name": first(fact.creator_name, fact.contact_name),
+        "apply_date": (fact.registration_time or fact.created_time).date()
+        if fact.registration_time or fact.created_time
+        else False,
+        "note": fact.note,
+        "created_time": fact.created_time,
         "deadline": fact.bid_time or fact.guarantee_deadline,
         "open_date": fact.opening_time,
         "state": tender_state_from_fact(fact),

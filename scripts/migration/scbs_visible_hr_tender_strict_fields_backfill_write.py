@@ -181,6 +181,10 @@ ensure_column("tender_bid", "legacy_visible_opening_time", "timestamp")
 ensure_column("tender_bid", "legacy_visible_project_name", "varchar")
 ensure_column("tender_bid", "legacy_visible_registration_time", "timestamp")
 ensure_column("tender_bid", "legacy_visible_creator_name", "varchar")
+ensure_column("tender_bid", "applicant_name", "varchar")
+ensure_column("tender_bid", "apply_date", "date")
+ensure_column("tender_bid", "note", "text")
+ensure_column("tender_bid", "created_time", "timestamp")
 ensure_column("tender_guarantee", "legacy_visible_document_state", "varchar")
 ensure_column("tender_guarantee", "legacy_visible_document_no", "varchar")
 ensure_column("tender_guarantee", "legacy_visible_project_name", "varchar")
@@ -893,7 +897,11 @@ for document_no, row in tender_bid_rows.items():
                legacy_visible_opening_time = %s,
                legacy_visible_project_name = %s,
                legacy_visible_registration_time = %s,
-               legacy_visible_creator_name = %s
+               legacy_visible_creator_name = %s,
+               applicant_name = COALESCE(NULLIF(applicant_name, ''), %s),
+               apply_date = COALESCE(apply_date, %s),
+               note = COALESCE(NULLIF(note, ''), %s),
+               created_time = COALESCE(created_time, %s)
          WHERE name = %s
         """,
         (
@@ -902,6 +910,10 @@ for document_no, row in tender_bid_rows.items():
             clean(row.get("project_name")) or None,
             parse_datetime(row.get("registration_time") or row.get("created_time")),
             clean(row.get("creator_name")) or None,
+            clean(row.get("creator_name")) or None,
+            parse_datetime(row.get("registration_time") or row.get("created_time")),
+            clean(row.get("note")) or None,
+            parse_datetime(row.get("created_time") or row.get("registration_time")),
             document_no,
         ),
     )

@@ -30,6 +30,10 @@ class TenderBid(models.Model):
     owner_id = fields.Many2one("res.partner", string="招标人/业主")
     legacy_owner_name = fields.Char("历史招标人/业主文本", index=True)
     bid_amount = fields.Monetary("投标报价", currency_field="currency_id", tracking=True)
+    applicant_name = fields.Char("申请人", index=True, tracking=True)
+    apply_date = fields.Date("申请日期", index=True, tracking=True)
+    note = fields.Text("备注", tracking=True)
+    created_time = fields.Datetime("录入时间", index=True, tracking=True)
     deadline = fields.Datetime("投标截止时间")
     open_date = fields.Datetime("开标时间")
     state = fields.Selection(
