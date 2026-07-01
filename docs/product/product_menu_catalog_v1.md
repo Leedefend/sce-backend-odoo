@@ -5,15 +5,15 @@
 ## 运行时来源
 
 - database: `sc_demo`
-- generated_at: `2026-07-01T11:59:24.435060+00:00`
+- generated_at: `2026-07-01T13:13:38.027727+00:00`
 - roots: `smart_construction_core.menu_sc_root, smart_core.menu_smart_core_platform_root`
 - visible_login_probe: `admin, wutao, demo_business_full, demo_role_finance, demo_role_executive`
 
 ## 总览
 
 - menu_count: `516`
-- active_menu_count: `486`
-- inactive_menu_count: `30`
+- active_menu_count: `439`
+- inactive_menu_count: `77`
 - action_menu_count: `428`
 - needs_review_count: `0`
 
@@ -93,7 +93,7 @@
     - 运营任务 [`dev_governance`] -> `sc.ops.job`
 - 智慧施工管理平台 [`formal_product`]
   - 人事行政 [`formal_product`]
-    - 公司人员名册 [`history_acceptance`] -> `sc.legacy.user.profile`
+    - 公司人员名册 [`history_acceptance` inactive] -> `sc.legacy.user.profile`
     - 印章使用审批表 [`formal_product`] -> `sc.office.admin.document`
     - 奖金 [`formal_product`] -> `sc.hr.payroll.document`
     - 工资登记 [`formal_product`] -> `sc.hr.payroll.document`
@@ -103,7 +103,7 @@
     - 请假/休假审批单 [`formal_product`] -> `sc.office.admin.document`
     - 项目管理人员工资登记 [`formal_product`] -> `sc.hr.payroll.document`
   - 合同中心 [`formal_product`] -> `construction.contract`
-    - 历史采购/一般合同事实 [`history_acceptance`] -> `sc.legacy.purchase.contract.fact`
+    - 历史采购/一般合同事实 [`history_acceptance` inactive] -> `sc.legacy.purchase.contract.fact`
     - 合同办理 [`formal_product`] -> `construction.contract`
     - 合同办理 [`formal_product` inactive] -> `construction.contract`
     - 待我审批（一般合同（公司）） [`formal_product` inactive] -> `sc.general.contract`
@@ -111,11 +111,11 @@
     - 待我审批（项目合同） [`formal_product` inactive] -> `construction.contract`
     - 支出合同台账 [`formal_product`] -> `sc.expense.contract.ledger`
       - 一般合同（公司） [`formal_product`] -> `sc.general.contract`
-      - 供应商合同计价事实 [`history_acceptance`] -> `sc.legacy.supplier.contract.pricing.fact`
+      - 供应商合同计价事实 [`history_acceptance` inactive] -> `sc.legacy.supplier.contract.pricing.fact`
       - 其他合同 [`formal_product`] -> `construction.contract.expense`
       - 分包合同 [`formal_product`] -> `construction.contract.expense`
       - 劳务合同 [`formal_product`] -> `construction.contract.expense`
-      - 历史采购/一般合同事实 [`history_acceptance`] -> `sc.legacy.purchase.contract.fact`
+      - 历史采购/一般合同事实 [`history_acceptance` inactive] -> `sc.legacy.purchase.contract.fact`
       - 支出合同台账 [`formal_product`] -> `sc.expense.contract.ledger`
       - 支出合同执行 [`formal_product`] -> `construction.contract.expense`
       - 支出合同签证 [`formal_product`] -> `sc.settlement.adjustment`
@@ -236,18 +236,18 @@
       - 分包登记 [`formal_product`] -> `sc.subcontract.register`
       - 分包结算 [`formal_product`] -> `sc.subcontract.settlement`
       - 分包计划 [`formal_product`] -> `sc.subcontract.plan`
-      - 历史劳务/分包事实 [`history_acceptance`] -> `sc.legacy.labor.subcontract.fact`
+      - 历史劳务/分包事实 [`history_acceptance` inactive] -> `sc.legacy.labor.subcontract.fact`
     - 劳务管理 [`formal_product`]
       - 劳务申请 [`formal_product`] -> `sc.labor.request`
       - 劳务结算 [`formal_product`] -> `sc.labor.settlement`
-      - 劳务结算候选核对 [`history_acceptance`] -> `sc.labor.settlement.candidate`
+      - 劳务结算候选核对 [`history_acceptance` inactive] -> `sc.labor.settlement.candidate`
       - 劳务计划 [`formal_product`] -> `sc.labor.plan`
-      - 历史劳务/分包事实 [`history_acceptance`] -> `sc.legacy.labor.subcontract.fact`
+      - 历史劳务/分包事实 [`history_acceptance` inactive] -> `sc.legacy.labor.subcontract.fact`
       - 方单 [`formal_product`] -> `sc.labor.usage`
       - 考勤记录 [`formal_product`] -> `sc.attendance.checkin`
       - 零星用工 [`formal_product`] -> `sc.labor.usage`
     - 周转材料租赁 [`formal_product`]
-      - 历史设备/租赁事实 [`history_acceptance`] -> `sc.legacy.equipment.lease.fact`
+      - 历史设备/租赁事实 [`history_acceptance` inactive] -> `sc.legacy.equipment.lease.fact`
       - 租入 [`formal_product`] -> `sc.material.rental.order`
       - 租赁单 [`formal_product`] -> `sc.material.rental.order`
       - 租赁结算 [`formal_product`] -> `sc.material.rental.settlement`
@@ -255,9 +255,9 @@
       - 还租 [`formal_product`] -> `sc.material.rental.order`
     - 待我审批（物资计划） [`formal_product` inactive] -> `tier.review`
     - 机械设备 [`formal_product`]
-      - 历史设备/租赁事实 [`history_acceptance`] -> `sc.legacy.equipment.lease.fact`
+      - 历史设备/租赁事实 [`history_acceptance` inactive] -> `sc.legacy.equipment.lease.fact`
       - 机械台班记录 [`formal_product`] -> `sc.equipment.usage`
-      - 机械合同（合同） [`history_acceptance`] -> `sc.legacy.direct.acceptance.fact`
+      - 机械合同（合同） [`history_acceptance` inactive] -> `sc.legacy.direct.acceptance.fact`
       - 设备使用登记 [`formal_product`] -> `sc.equipment.usage`
       - 设备申请 [`formal_product`] -> `sc.equipment.request`
       - 设备结算 [`formal_product`] -> `sc.equipment.settlement`
@@ -265,7 +265,7 @@
     - 物资管理 [`formal_product`]
       - 入库单 [`formal_product`] -> `sc.material.inbound`
       - 出库单 [`formal_product`] -> `sc.material.outbound`
-      - 历史物资库存事实 [`history_acceptance`] -> `sc.legacy.material.stock.fact`
+      - 历史物资库存事实 [`history_acceptance` inactive] -> `sc.legacy.material.stock.fact`
       - 报价单 [`formal_product`] -> `sc.material.rfq`
       - 材料价格库 [`formal_product`] -> `sc.material.price`
       - 材料损耗 [`formal_product`] -> `sc.material.outbound`
@@ -274,7 +274,7 @@
       - 材料计划 [`formal_product`] -> `project.material.plan`
       - 材料调拨 [`formal_product`] -> `sc.material.outbound`
       - 材料进场验收 [`formal_product`] -> `sc.material.acceptance`
-      - 物料分类 [`history_acceptance`] -> `sc.legacy.material.category`
+      - 物料分类 [`history_acceptance` inactive] -> `sc.legacy.material.category`
       - 询比价 [`formal_product`] -> `sc.material.rfq`
       - 退库办理 [`formal_product`] -> `sc.material.outbound`
       - 采购申请 [`formal_product`] -> `sc.material.purchase.request`
@@ -403,7 +403,7 @@
         - 施工日志（新） [`history_acceptance`] -> `sc.legacy.direct.acceptance.fact`
   - 税务中心 [`formal_product`]
     - 开票与税务办理 [`formal_product`]
-      - 外经证登记 [`history_acceptance`] -> `sc.legacy.payment.residual.fact`
+      - 外经证登记 [`history_acceptance` inactive] -> `sc.legacy.payment.residual.fact`
       - 抵扣登记 [`formal_product`] -> `sc.tax.deduction.registration`
       - 进项税额上报 [`formal_product`] -> `sc.invoice.registration`
       - 销项开票申请 [`formal_product`] -> `sc.invoice.registration`
@@ -414,43 +414,43 @@
       - 应收应付报表 [`formal_product` inactive] -> `sc.ar.ap.company.summary`
       - 项目经营统计表 [`formal_product`] -> `sc.operating.metrics.project`
   - 统计分析 [`formal_product`]
-    - SCBS旧库事实暂存 [`history_acceptance`] -> `sc.legacy.scbs.fact.staging`
-    - SCBS旧库材料映射 [`history_acceptance`] -> `sc.legacy.scbs.material.map`
+    - SCBS旧库事实暂存 [`history_acceptance` inactive] -> `sc.legacy.scbs.fact.staging`
+    - SCBS旧库材料映射 [`history_acceptance` inactive] -> `sc.legacy.scbs.material.map`
     - 业务核算主体 [`formal_product`] -> `sc.business.entity`
-    - 历史业务事实原貌承接 [`history_acceptance`] -> `sc.legacy.business.fact.residual`
+    - 历史业务事实原貌承接 [`history_acceptance` inactive] -> `sc.legacy.business.fact.residual`
     - 客户供应商导入复核 [`formal_product`] -> `sc.partner.import.review`
     - 成本报表 [`formal_product`]
-      - 供货合同 [`history_acceptance`] -> `sc.legacy.supplier.contract.pricing.fact`
-      - 供货合同 [`history_acceptance`] -> `sc.legacy.supplier.contract.pricing.fact`
-      - 供货合同 [`history_acceptance`] -> `sc.legacy.supplier.contract.pricing.fact`
+      - 供货合同 [`history_acceptance` inactive] -> `sc.legacy.supplier.contract.pricing.fact`
+      - 供货合同 [`history_acceptance` inactive] -> `sc.legacy.supplier.contract.pricing.fact`
+      - 供货合同 [`history_acceptance` inactive] -> `sc.legacy.supplier.contract.pricing.fact`
       - 发票分析报表 [`formal_product`] -> `sc.invoice.registration`
       - 发票分类汇总表 [`formal_product`] -> `sc.invoice.category.summary`
-      - 工程进度收款 [`history_acceptance`] -> `sc.legacy.engineering.progress.receipt`
-      - 工程进度收款 [`history_acceptance`] -> `sc.legacy.engineering.progress.receipt`
-      - 工程进度收款（直营） [`history_acceptance`] -> `sc.legacy.engineering.progress.receipt`
+      - 工程进度收款 [`history_acceptance` inactive] -> `sc.legacy.engineering.progress.receipt`
+      - 工程进度收款 [`history_acceptance` inactive] -> `sc.legacy.engineering.progress.receipt`
+      - 工程进度收款（直营） [`history_acceptance` inactive] -> `sc.legacy.engineering.progress.receipt`
       - 工资统计表 [`formal_product`] -> `sc.salary.summary`
       - 库存统计表（新） [`formal_product`] -> `sc.material.stock.summary`
-      - 成本发票明细表 [`history_acceptance`] -> `sc.legacy.invoice.registration.line`
+      - 成本发票明细表 [`history_acceptance` inactive] -> `sc.legacy.invoice.registration.line`
       - 成本统计表（综合） [`formal_product`] -> `sc.comprehensive.cost.summary`
-      - 投标保证金报表 [`history_acceptance`] -> `sc.legacy.expense.deposit.fact`
+      - 投标保证金报表 [`history_acceptance` inactive] -> `sc.legacy.expense.deposit.fact`
       - 报销统计 [`formal_product`] -> `sc.expense.reimbursement.summary`
       - 账户收支统计表 [`formal_product` inactive] -> `sc.account.income.expense.summary`
       - 进项发票明细表 [`formal_product`] -> `sc.invoice.registration`
-    - 旧库业务主体映射 [`history_acceptance`] -> `sc.legacy.business.entity.map`
-    - 旧库往来单位映射 [`history_acceptance`] -> `sc.legacy.partner.map`
-    - 旧库项目映射 [`history_acceptance`] -> `sc.legacy.project.map`
+    - 旧库业务主体映射 [`history_acceptance` inactive] -> `sc.legacy.business.entity.map`
+    - 旧库往来单位映射 [`history_acceptance` inactive] -> `sc.legacy.partner.map`
+    - 旧库项目映射 [`history_acceptance` inactive] -> `sc.legacy.project.map`
     - 经营分析 [`formal_product`]
       - 合同执行表 [`formal_product`] -> `construction.contract`
-      - 旧库报表承载清单 [`history_acceptance`] -> `sc.legacy.report.inventory`
+      - 旧库报表承载清单 [`history_acceptance` inactive] -> `sc.legacy.report.inventory`
       - 项目经营分析 [`formal_product`] -> `sc.operating.metrics.project`
     - 财务分析 [`formal_product`]
       - 付款统计表 [`formal_product`] -> `sc.treasury.ledger`
       - 企业资金日报汇总 [`formal_product`] -> `sc.fund.daily.summary`
       - 供应商账款 [`formal_product`] -> `sc.ar.ap.company.summary`
-      - 历史资金日报明细 [`history_acceptance`] -> `sc.legacy.fund.daily.line`
+      - 历史资金日报明细 [`history_acceptance` inactive] -> `sc.legacy.fund.daily.line`
       - 客户账款 [`formal_product`] -> `sc.ar.ap.project.summary`
       - 收款统计表 [`formal_product`] -> `sc.treasury.ledger`
-      - 融资台账 [`history_acceptance`] -> `sc.legacy.financing.loan.fact`
+      - 融资台账 [`history_acceptance` inactive] -> `sc.legacy.financing.loan.fact`
       - 账户收支统计表 [`formal_product`] -> `sc.account.income.expense.summary`
       - 资金台账 [`formal_product`] -> `sc.treasury.ledger`
   - 财务中心 [`formal_product`]
@@ -469,10 +469,10 @@
       - 自筹保证金 [`formal_product` inactive] -> `tender.guarantee`
       - 自筹保证金退回 [`formal_product` inactive] -> `tender.guarantee`
     - 借还款办理 [`formal_product` inactive]
-    - 历史付款退款/调整 [`history_acceptance`] -> `sc.legacy.payment.adjustment.fact`
-    - 历史企业级数据核对 [`history_acceptance`] -> `sc.legacy.enterprise.business.fact`
+    - 历史付款退款/调整 [`history_acceptance` inactive] -> `sc.legacy.payment.adjustment.fact`
+    - 历史企业级数据核对 [`history_acceptance` inactive] -> `sc.legacy.enterprise.business.fact`
     - 发票台账 [`formal_product`]
-      - 历史收入票据事实 [`history_acceptance`] -> `sc.legacy.income.invoice.fact`
+      - 历史收入票据事实 [`history_acceptance` inactive] -> `sc.legacy.income.invoice.fact`
       - 发票总台账 [`formal_product`] -> `sc.invoice.registration`
       - 收款发票 [`formal_product`] -> `sc.receipt.invoice.line`
       - 进项发票 [`formal_product`] -> `sc.invoice.registration`
@@ -481,15 +481,15 @@
       - 销项调整记录 [`formal_product`] -> `sc.output.invoice.ledger`
     - 待我审批（付款申请） [`formal_product` inactive] -> `tier.review`
     - 扣款 [`formal_product` inactive]
-    - 扣款税费核对 [`history_acceptance`]
-      - 扣款/结算调整 [`history_acceptance`] -> `sc.legacy.deduction.adjustment.line`
-      - 抵扣税额 [`history_acceptance`] -> `sc.legacy.tax.deduction.fact`
-      - 资金确认 [`history_acceptance`] -> `sc.legacy.fund.confirmation.line`
+    - 扣款税费核对 [`history_acceptance` inactive]
+      - 扣款/结算调整 [`history_acceptance` inactive] -> `sc.legacy.deduction.adjustment.line`
+      - 抵扣税额 [`history_acceptance` inactive] -> `sc.legacy.tax.deduction.fact`
+      - 资金确认 [`history_acceptance` inactive] -> `sc.legacy.fund.confirmation.line`
     - 收付款办理 [`formal_product`]
-      - 充值登记 [`history_acceptance`] -> `sc.legacy.fuel.card.recharge.fact`
+      - 充值登记 [`history_acceptance` inactive] -> `sc.legacy.fuel.card.recharge.fact`
       - 公司财务支出 [`formal_product`] -> `sc.payment.execution`
-      - 到款确认表 [`history_acceptance`] -> `sc.legacy.fund.confirmation.document`
-      - 加油登记 [`history_acceptance`] -> `sc.legacy.fuel.card.refuel.fact`
+      - 到款确认表 [`history_acceptance` inactive] -> `sc.legacy.fund.confirmation.document`
+      - 加油登记 [`history_acceptance` inactive] -> `sc.legacy.fuel.card.refuel.fact`
       - 实付登记 [`formal_product`] -> `sc.payment.execution`
       - 工程进度款收入登记 [`formal_product`] -> `sc.receipt.income`
       - 往来单位付款 [`formal_product`] -> `sc.payment.execution`
@@ -497,7 +497,7 @@
       - 收入 [`formal_product`] -> `sc.receipt.income`
       - 收款申请 [`formal_product`] -> `payment.request`
       - 收款登记 [`formal_product`] -> `sc.receipt.income`
-      - 油卡登记 [`history_acceptance`] -> `sc.legacy.fuel.card.fact`
+      - 油卡登记 [`history_acceptance` inactive] -> `sc.legacy.fuel.card.fact`
       - 结算中心 [`formal_product`]
         - 结算单 [`formal_product`] -> `sc.settlement.order`
         - 结算调整 [`formal_product`] -> `sc.settlement.adjustment`
@@ -508,9 +508,9 @@
       - 公司扣款 [`formal_product`] -> `sc.expense.claim`
       - 公司支出 [`formal_product`] -> `sc.payment.execution`
       - 公司收入 [`formal_product`] -> `sc.receipt.income`
-      - 历史费用/保证金流入退回 [`history_acceptance`] -> `sc.legacy.expense.deposit.fact`
-      - 历史费用/保证金流出 [`history_acceptance`] -> `sc.legacy.expense.deposit.fact`
-      - 历史费用报销明细 [`history_acceptance`] -> `sc.legacy.expense.reimbursement.line`
+      - 历史费用/保证金流入退回 [`history_acceptance` inactive] -> `sc.legacy.expense.deposit.fact`
+      - 历史费用/保证金流出 [`history_acceptance` inactive] -> `sc.legacy.expense.deposit.fact`
+      - 历史费用报销明细 [`history_acceptance` inactive] -> `sc.legacy.expense.reimbursement.line`
       - 合同保证金支付 [`formal_product`] -> `sc.expense.claim`
       - 合同保证金退回 [`formal_product`] -> `sc.expense.claim`
       - 备用金 [`formal_product`] -> `sc.expense.claim`
@@ -541,8 +541,8 @@
       - 承包人还项目款 [`formal_product`] -> `sc.expense.claim`
       - 自筹垫付办理 [`formal_product`] -> `sc.self.funding.registration`
       - 自筹退回办理 [`formal_product`] -> `sc.self.funding.registration`
-      - 账户收支来源明细 [`history_acceptance`] -> `sc.legacy.account.transaction.line`
-      - 账户管理 [`history_acceptance`] -> `sc.fund.account`
+      - 账户收支来源明细 [`history_acceptance` inactive] -> `sc.legacy.account.transaction.line`
+      - 账户管理 [`history_acceptance` inactive] -> `sc.fund.account`
       - 账户间资金往来 [`formal_product`] -> `sc.fund.account.operation`
       - 贷款登记 [`formal_product`] -> `sc.financing.loan`
       - 资金划拨 [`formal_product`] -> `sc.fund.account.operation`
@@ -567,7 +567,7 @@
   - 项目中心 [`formal_product`]
     - 投标管理 [`formal_product`]
       - 中标记录 [`formal_product`] -> `tender.bid`
-      - 历史投标报名 [`history_acceptance`] -> `sc.legacy.tender.registration.fact`
+      - 历史投标报名 [`history_acceptance` inactive] -> `sc.legacy.tender.registration.fact`
       - 开标记录 [`formal_product`] -> `tender.opening`
       - 投标保证金 [`formal_product`] -> `tender.guarantee`
       - 投标准备 [`formal_product`] -> `tender.bid`

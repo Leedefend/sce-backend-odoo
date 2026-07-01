@@ -338,6 +338,10 @@ USER_SPLIT_CONTRACT_SETTLEMENT_CATEGORY_CODES = {
     "settlement.expense",
 }
 
+PRODUCT_RUNTIME_INACTIVE_MENU_XMLIDS = (
+    "smart_construction_core.menu_sc_company_user_roster_formal",
+)
+
 
 class ScUserPreferenceInitialization(models.TransientModel):
     _name = "sc.user.preference.initialization"
@@ -418,6 +422,25 @@ class ScUserPreferenceInitialization(models.TransientModel):
         self.env["ir.config_parameter"].sudo().set_param(
             "sc.custom.lowcode_contract_source_status_backfill_count",
             str(updated),
+        )
+        return True
+
+    @api.model
+    def enforce_product_menu_runtime_cleanup(self):
+        deactivated = 0
+        Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
+        for xmlid in PRODUCT_RUNTIME_INACTIVE_MENU_XMLIDS:
+            menu = self.env.ref(xmlid, raise_if_not_found=False)
+            if not menu:
+                continue
+            menu = Menu.browse(menu.id)
+            if not menu.active:
+                continue
+            menu.write({"active": False})
+            deactivated += 1
+        self.env["ir.config_parameter"].sudo().set_param(
+            "sc.custom.product_menu_runtime_cleanup_count",
+            str(deactivated),
         )
         return True
 
