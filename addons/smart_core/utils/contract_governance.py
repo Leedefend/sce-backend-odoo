@@ -833,6 +833,8 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
         route_text = _safe_text(route)
         if not route_text:
             return ""
+        if route_text.startswith("/s/"):
+            return route_text.replace("/s/", "", 1).strip("/")
         marker = "scene="
         idx = route_text.find(marker)
         if idx < 0:
@@ -840,6 +842,41 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
         tail = route_text[idx + len(marker):]
         scene = tail.split("&", 1)[0].strip()
         return scene
+
+    def _entry_target_payload(item: dict) -> dict:
+        entry_target = item.get("entry_target") if isinstance(item.get("entry_target"), dict) else {}
+        if not entry_target:
+            return {}
+        payload: dict[str, Any] = {}
+        scene_key = _safe_text(entry_target.get("scene_key"))
+        route = _safe_text(entry_target.get("route"))
+        if not route and scene_key:
+            route = f"/s/{scene_key}"
+        if route:
+            payload["route"] = route
+        if _safe_text(entry_target.get("model")):
+            payload["model"] = _safe_text(entry_target.get("model"))
+        record_entry = entry_target.get("record_entry") if isinstance(entry_target.get("record_entry"), dict) else {}
+        if _safe_text(record_entry.get("model")) and "model" not in payload:
+            payload["model"] = _safe_text(record_entry.get("model"))
+        refs = entry_target.get("compatibility_refs") if isinstance(entry_target.get("compatibility_refs"), dict) else {}
+        for key in ("action_id", "menu_id", "record_id"):
+            value = entry_target.get(key)
+            if value is None:
+                value = record_entry.get(key)
+            if value is None:
+                value = refs.get(key)
+            if value is not None:
+                payload[key] = value
+        return payload
+
+    def _ensure_default_payload(item: dict) -> None:
+        payload = item.get("default_payload")
+        if isinstance(payload, dict) and any(payload.get(key) for key in ("route", "action_id", "menu_id", "model", "scene_key")):
+            return
+        derived = _entry_target_payload(item)
+        if derived:
+            item["default_payload"] = derived
 
     def _derive_target_scene_key(item: dict) -> str:
         direct = _safe_text(item.get("target_scene_key"))
@@ -853,6 +890,13 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
             route_scene = _extract_scene_key_from_route(payload.get("route"))
             if route_scene:
                 return route_scene
+        entry_target = item.get("entry_target") if isinstance(item.get("entry_target"), dict) else {}
+        entry_scene = _safe_text(entry_target.get("scene_key"))
+        if entry_scene:
+            return entry_scene
+        route_scene = _extract_scene_key_from_route(entry_target.get("route") if isinstance(entry_target, dict) else "")
+        if route_scene:
+            return route_scene
         return ""
 
     def _derive_entry_kind(item: dict, target_scene_key: str) -> str:
@@ -894,6 +938,7 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
             item["group_sequence"] = int(item.get("group_sequence") or 0)
         except Exception:
             item["group_sequence"] = 0
+        _ensure_default_payload(item)
         item["tags"] = _normalized_tags_for_item(item)
         state = _normalize_capability_state(item.get("capability_state"))
         reason_code = _safe_text(item.get("reason_code")).upper()

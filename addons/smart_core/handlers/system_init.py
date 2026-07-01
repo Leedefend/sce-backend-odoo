@@ -87,6 +87,7 @@ from odoo.addons.smart_core.utils.contract_governance import (
     resolve_contract_mode,
 )
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
 
 _logger = logging.getLogger(__name__)
 
@@ -1768,6 +1769,11 @@ class SystemInitHandler(BaseIntentHandler):
         scene_channel = runtime_ctx.scene_channel
         rollback_active = runtime_ctx.rollback_active
         scene_diagnostics = runtime_ctx.scene_diagnostics
+        extension_context = dict(env.context or {})
+        if isinstance(self.context, dict):
+            extension_context.update(self.context)
+        extension_env = api.Environment(env.cr, env.uid, extension_context)
+        run_extension_hooks(extension_env, "smart_core_extend_system_init", data, extension_env, user)
         stage_ts = _mark("execute_scene_runtime", stage_ts)
         surface_ctx = SystemInitSurfaceContext(
             data=data,
@@ -2076,12 +2082,15 @@ class SystemInitHandler(BaseIntentHandler):
                 "asset_binding": bind_result if isinstance(bind_result, dict) else {},
                 "scene_diagnostics": scene_diagnostics if isinstance(scene_diagnostics, dict) else {},
             }
+        if contract_mode == "hud" and isinstance(scene_diagnostics, dict):
+            data["scene_diagnostics"] = scene_diagnostics
         data = SystemInitPayloadBuilder.build_startup_surface(
             data,
             params=params,
             build_mode=build_mode,
             inspect_payload=startup_inspect,
         )
+        SystemInitPayloadBuilder.attach_layered_contract(data)
         try:
             data = apply_dictionary_startup_data(env, data)
         except Exception:
@@ -2135,7 +2144,7 @@ class SystemInitHandler(BaseIntentHandler):
             if isinstance(governance_payload, dict):
                 hud_trace["governance"] = governance_payload
             data["hud"] = hud_trace
-            if not isinstance(data.get("scene_diagnostics"), dict) and isinstance(scene_diagnostics, dict):
+            if isinstance(scene_diagnostics, dict):
                 data["scene_diagnostics"] = scene_diagnostics
         _ = scene_trace_meta
         _ = diag_enabled

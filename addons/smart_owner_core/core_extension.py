@@ -85,6 +85,19 @@ def get_intent_handler_contributions():
     ]
 
 
+def smart_core_register(registry):
+    """Register owner-domain handlers through the Smart Core extension loader."""
+    if not isinstance(registry, dict):
+        return
+    for item in get_intent_handler_contributions():
+        if not isinstance(item, dict):
+            continue
+        intent_name = str(item.get("intent") or "").strip()
+        handler = item.get("handler")
+        if intent_name and handler is not None:
+            registry[intent_name] = handler
+
+
 def smart_core_extend_system_init(data, env, user):
     """
     Optional owner-domain overlay.

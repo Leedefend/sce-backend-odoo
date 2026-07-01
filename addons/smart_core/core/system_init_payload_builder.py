@@ -315,8 +315,8 @@ class SystemInitPayloadBuilder:
         resolved_build_mode = build_mode or cls.resolve_build_mode(params)
         with_tokens = cls._parse_with_tokens(params.get("with"))
         include_workspace_home = parse_bool(params.get("with_preload"), False) or "workspace_home" in with_tokens
-        include_capabilities = "capabilities" in with_tokens or "capability_groups" in with_tokens
-        include_scenes = "scenes" in with_tokens
+        include_capabilities = True
+        include_scenes = True
 
         nav = cls._normalize_nav_tree(row.get("nav") if isinstance(row.get("nav"), list) else [])
         default_route = cls._normalize_default_route(row.get("default_route") if isinstance(row.get("default_route"), dict) else {})
@@ -357,16 +357,20 @@ class SystemInitPayloadBuilder:
         rollback_ref = str(row.get("scene_contract_ref") or "").strip()
         rollback_active = pinned_requested or rollback_requested or ("PINNED.json" in rollback_ref)
         if rollback_active:
-            minimal["scene_diagnostics"] = {
-                "rollback_active": True,
-                "rollback_ref": rollback_ref or "stable/PINNED.json",
-                "schema_version": str(row.get("schema_version") or "1.0.0"),
-                "scene_version": str(row.get("scene_version") or "v1"),
-                "loaded_from": "contract",
-                "resolve_errors": [],
-                "drift": [],
-                "normalize_warnings": [],
-            }
+            scene_diagnostics = row.get("scene_diagnostics") if isinstance(row.get("scene_diagnostics"), dict) else {}
+            if scene_diagnostics:
+                minimal["scene_diagnostics"] = scene_diagnostics
+            else:
+                minimal["scene_diagnostics"] = {
+                    "rollback_active": True,
+                    "rollback_ref": rollback_ref or "stable/PINNED.json",
+                    "schema_version": str(row.get("schema_version") or "1.0.0"),
+                    "scene_version": str(row.get("scene_version") or "v1"),
+                    "loaded_from": "contract",
+                    "resolve_errors": [],
+                    "drift": [],
+                    "normalize_warnings": [],
+                }
         minimal_ext_facts = cls._build_minimal_ext_facts(row)
         if minimal_ext_facts:
             minimal["ext_facts"] = minimal_ext_facts

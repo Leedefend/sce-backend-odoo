@@ -1,6 +1,6 @@
 # Owner Intent Non-Intrusion Report
 
-- owner_intent_count: 2
+- owner_intent_count: 8
 - required_owner_intent_count: 2
 - error_count: 0
 - warning_count: 0

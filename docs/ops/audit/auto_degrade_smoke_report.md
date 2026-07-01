@@ -1,11 +1,11 @@
 # Auto Degrade Smoke Report
 
 - status: PASS
-- triggered: true
-- action_taken: `rollback_pinned`
+- triggered: false
+- action_taken: `none`
 - scene_channel: `stable`
 - scene_contract_ref: `stable/PINNED.json`
-- has_injected_error: false
+- has_injected_error: true
 
 ## Checks
 - system_init_ok: PASS

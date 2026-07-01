@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 
 from python_http_smoke_utils import get_base_url, http_post_json
+from platform_config_fixture import read_config_parameter, restore_config_parameter, write_config_parameter
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -128,25 +129,31 @@ def main() -> int:
         errors.append("login failed")
         token = ""
 
-    original_id = None
+    original_exists = False
     original_value = ""
     if token:
-        original_id, original_value = _get_icp(token, intent_url)
-        enabled_value = _with_owner_module(original_value)
-        if not _set_icp(token, intent_url, enabled_value, original_id):
-            errors.append("enable owner extension modules failed")
-        else:
+        try:
+            original = read_config_parameter(ICP_KEY)
+            original_exists = bool(original.get("exists"))
+            original_value = str(original.get("value") or "")
+            enabled_value = _with_owner_module(original_value)
+            write_config_parameter(ICP_KEY, enabled_value)
             status_owner, payload_owner = _intent(
                 intent_url,
                 token,
                 "system.init",
                 {"contract_mode": "user"},
-                context={"sc.industry": "owner"},
+                context={"sc.industry": "owner", ICP_KEY: enabled_value},
             )
             if status_owner >= 400 or not isinstance(payload_owner, dict):
                 errors.append("system.init owner context failed during immutable guard")
-            if not _set_icp(token, intent_url, original_value, original_id):
-                errors.append("restore extension modules failed")
+        except Exception as exc:
+            errors.append(f"enable owner extension modules failed: {exc}")
+        finally:
+            try:
+                restore_config_parameter(ICP_KEY, existed=original_exists, value=original_value)
+            except Exception as exc:
+                errors.append(f"restore extension modules failed: {exc}")
 
     after_hash = _dir_hash(SMART_CORE_ROOT)
     if before_hash != after_hash:

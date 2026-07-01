@@ -1,174 +1,78 @@
 # Scene Intent Matrix
 
-- scene_count: 164
-- scene_with_capability_binding: 19
+- scene_count: 68
+- scene_with_capability_binding: 67
 
 | scene_key | read intents | write intents | execute intents | 未覆盖 intent | 孤立 scene | capability_refs |
 |---|---|---|---|---|---:|---:|
-| cost.budget_alloc | - | - | - | - | Y | 0 |
-| cost.cost_compare | - | - | - | - | Y | 0 |
-| cost.profit_compare | ui.contract | - | - | - | N | 1 |
-| cost.project_boq | ui.contract | - | - | - | N | 2 |
-| cost.project_budget | ui.contract | - | - | - | N | 1 |
-| cost.project_cost_ledger | ui.contract | - | - | - | N | 1 |
-| cost.project_progress | ui.contract | - | - | - | N | 1 |
-| data.dictionary | - | - | - | - | Y | 0 |
+| construction.diary | ui.contract | - | - | - | N | 9 |
+| construction.execution | ui.contract | - | - | - | N | 9 |
+| construction.plan | ui.contract | - | - | - | N | 9 |
+| construction.plan_report | ui.contract | - | - | - | N | 9 |
+| contract.center | ui.contract | - | - | - | N | 4 |
+| contracts.workspace | ui.contract | - | - | - | N | 4 |
+| cost.analysis | ui.contract | - | - | - | N | 4 |
+| cost.budget_alloc | ui.contract | - | - | - | N | 4 |
+| cost.cost_compare | ui.contract | - | - | - | N | 4 |
+| cost.profit_compare | ui.contract | - | - | - | N | 4 |
+| cost.project_boq | ui.contract | - | - | - | N | 12 |
+| cost.project_budget | ui.contract | - | - | - | N | 4 |
+| cost.project_cost_ledger | ui.contract | - | - | - | N | 4 |
+| cost.project_progress | ui.contract | - | - | - | N | 4 |
+| data.dictionary | ui.contract | - | - | - | N | 4 |
 | default | ui.contract | - | - | - | N | 5 |
-| default__pkg1 | - | - | - | - | Y | 0 |
-| default__pkg10 | - | - | - | - | Y | 0 |
-| default__pkg11 | - | - | - | - | Y | 0 |
-| default__pkg12 | - | - | - | - | Y | 0 |
-| default__pkg13 | - | - | - | - | Y | 0 |
-| default__pkg14 | - | - | - | - | Y | 0 |
-| default__pkg15 | - | - | - | - | Y | 0 |
-| default__pkg16 | - | - | - | - | Y | 0 |
-| default__pkg17 | - | - | - | - | Y | 0 |
-| default__pkg18 | - | - | - | - | Y | 0 |
-| default__pkg19 | - | - | - | - | Y | 0 |
-| default__pkg2 | - | - | - | - | Y | 0 |
-| default__pkg20 | - | - | - | - | Y | 0 |
-| default__pkg21 | - | - | - | - | Y | 0 |
-| default__pkg22 | - | - | - | - | Y | 0 |
-| default__pkg23 | - | - | - | - | Y | 0 |
-| default__pkg24 | - | - | - | - | Y | 0 |
-| default__pkg25 | - | - | - | - | Y | 0 |
-| default__pkg26 | - | - | - | - | Y | 0 |
-| default__pkg27 | - | - | - | - | Y | 0 |
-| default__pkg28 | - | - | - | - | Y | 0 |
-| default__pkg3 | - | - | - | - | Y | 0 |
-| default__pkg4 | - | - | - | - | Y | 0 |
-| default__pkg5 | - | - | - | - | Y | 0 |
-| default__pkg6 | - | - | - | - | Y | 0 |
-| default__pkg7 | - | - | - | - | Y | 0 |
-| default__pkg8 | - | - | - | - | Y | 0 |
-| default__pkg9 | - | - | - | - | Y | 0 |
-| finance.center | ui.contract | - | - | - | N | 3 |
-| finance.operating_metrics | ui.contract | - | - | - | N | 3 |
-| finance.payment_ledger | ui.contract | - | - | - | N | 1 |
-| finance.payment_requests | ui.contract | - | - | - | N | 2 |
-| finance.settlement_orders | ui.contract | - | - | - | N | 2 |
-| finance.treasury_ledger | ui.contract | - | - | - | N | 1 |
-| portal.capability_matrix | ui.contract | - | - | - | N | 2 |
-| portal.dashboard | ui.contract | - | - | - | N | 2 |
-| portal.lifecycle | ui.contract | - | - | - | N | 3 |
-| projects.dashboard | ui.contract | - | - | - | N | 2 |
-| projects.dashboard_showcase | - | - | - | - | Y | 0 |
-| projects.intake | ui.contract | - | - | - | N | 1 |
-| projects.intake__pkg1 | - | - | - | - | Y | 0 |
-| projects.intake__pkg10 | - | - | - | - | Y | 0 |
-| projects.intake__pkg11 | - | - | - | - | Y | 0 |
-| projects.intake__pkg12 | - | - | - | - | Y | 0 |
-| projects.intake__pkg13 | - | - | - | - | Y | 0 |
-| projects.intake__pkg14 | - | - | - | - | Y | 0 |
-| projects.intake__pkg15 | - | - | - | - | Y | 0 |
-| projects.intake__pkg16 | - | - | - | - | Y | 0 |
-| projects.intake__pkg17 | - | - | - | - | Y | 0 |
-| projects.intake__pkg18 | - | - | - | - | Y | 0 |
-| projects.intake__pkg19 | - | - | - | - | Y | 0 |
-| projects.intake__pkg2 | - | - | - | - | Y | 0 |
-| projects.intake__pkg20 | - | - | - | - | Y | 0 |
-| projects.intake__pkg21 | - | - | - | - | Y | 0 |
-| projects.intake__pkg22 | - | - | - | - | Y | 0 |
-| projects.intake__pkg23 | - | - | - | - | Y | 0 |
-| projects.intake__pkg24 | - | - | - | - | Y | 0 |
-| projects.intake__pkg25 | - | - | - | - | Y | 0 |
-| projects.intake__pkg26 | - | - | - | - | Y | 0 |
-| projects.intake__pkg27 | - | - | - | - | Y | 0 |
-| projects.intake__pkg28 | - | - | - | - | Y | 0 |
-| projects.intake__pkg3 | - | - | - | - | Y | 0 |
-| projects.intake__pkg4 | - | - | - | - | Y | 0 |
-| projects.intake__pkg5 | - | - | - | - | Y | 0 |
-| projects.intake__pkg6 | - | - | - | - | Y | 0 |
-| projects.intake__pkg7 | - | - | - | - | Y | 0 |
-| projects.intake__pkg8 | - | - | - | - | Y | 0 |
-| projects.intake__pkg9 | - | - | - | - | Y | 0 |
-| projects.ledger | ui.contract | - | - | - | N | 11 |
-| projects.ledger__pkg1 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg10 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg11 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg12 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg13 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg14 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg15 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg16 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg17 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg18 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg19 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg2 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg20 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg21 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg22 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg23 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg24 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg25 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg26 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg27 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg28 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg3 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg4 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg5 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg6 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg7 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg8 | - | - | - | - | Y | 0 |
-| projects.ledger__pkg9 | - | - | - | - | Y | 0 |
-| projects.list | ui.contract | - | - | - | N | 3 |
-| projects.list__pkg1 | - | - | - | - | Y | 0 |
-| projects.list__pkg10 | - | - | - | - | Y | 0 |
-| projects.list__pkg11 | - | - | - | - | Y | 0 |
-| projects.list__pkg12 | - | - | - | - | Y | 0 |
-| projects.list__pkg13 | - | - | - | - | Y | 0 |
-| projects.list__pkg14 | - | - | - | - | Y | 0 |
-| projects.list__pkg15 | - | - | - | - | Y | 0 |
-| projects.list__pkg16 | - | - | - | - | Y | 0 |
-| projects.list__pkg17 | - | - | - | - | Y | 0 |
-| projects.list__pkg18 | - | - | - | - | Y | 0 |
-| projects.list__pkg19 | - | - | - | - | Y | 0 |
-| projects.list__pkg2 | - | - | - | - | Y | 0 |
-| projects.list__pkg20 | - | - | - | - | Y | 0 |
-| projects.list__pkg21 | - | - | - | - | Y | 0 |
-| projects.list__pkg22 | - | - | - | - | Y | 0 |
-| projects.list__pkg23 | - | - | - | - | Y | 0 |
-| projects.list__pkg24 | - | - | - | - | Y | 0 |
-| projects.list__pkg25 | - | - | - | - | Y | 0 |
-| projects.list__pkg26 | - | - | - | - | Y | 0 |
-| projects.list__pkg27 | - | - | - | - | Y | 0 |
-| projects.list__pkg28 | - | - | - | - | Y | 0 |
-| projects.list__pkg3 | - | - | - | - | Y | 0 |
-| projects.list__pkg4 | - | - | - | - | Y | 0 |
-| projects.list__pkg5 | - | - | - | - | Y | 0 |
-| projects.list__pkg6 | - | - | - | - | Y | 0 |
-| projects.list__pkg7 | - | - | - | - | Y | 0 |
-| projects.list__pkg8 | - | - | - | - | Y | 0 |
-| projects.list__pkg9 | - | - | - | - | Y | 0 |
+| equipment.management | ui.contract | - | - | - | N | 12 |
+| equipment.request | ui.contract | - | - | - | N | 12 |
+| equipment.settlement | ui.contract | - | - | - | N | 12 |
+| equipment.usage | ui.contract | - | - | - | N | 12 |
+| finance.center | ui.contract | - | - | - | N | 4 |
+| finance.operating_metrics | ui.contract | - | - | - | N | 4 |
+| finance.payment_ledger | ui.contract | - | - | - | N | 5 |
+| finance.payment_requests | ui.contract | - | - | - | N | 4 |
+| finance.settlement_orders | ui.contract | - | - | - | N | 5 |
+| finance.treasury_ledger | ui.contract | - | - | - | N | 5 |
+| finance.workspace | ui.contract | - | - | - | N | 4 |
+| labor.attendance | ui.contract | - | - | - | N | 12 |
+| labor.management | ui.contract | - | - | - | N | 12 |
+| labor.request | ui.contract | - | - | - | N | 12 |
+| labor.settlement | ui.contract | - | - | - | N | 12 |
+| material.acceptance | ui.contract | - | - | - | N | 12 |
+| material.catalog | ui.contract | - | - | - | N | 12 |
+| material.center | ui.contract | - | - | - | N | 12 |
+| material.inbound | ui.contract | - | - | - | N | 12 |
+| material.outbound | ui.contract | - | - | - | N | 12 |
+| material.price_library | ui.contract | - | - | - | N | 12 |
+| material.procurement | ui.contract | - | - | - | N | 12 |
+| material.rental | ui.contract | - | - | - | N | 12 |
+| material.rental_order | ui.contract | - | - | - | N | 12 |
+| material.rental_settlement | ui.contract | - | - | - | N | 12 |
+| material.rfq | ui.contract | - | - | - | N | 12 |
+| material.settlement | ui.contract | - | - | - | N | 12 |
+| my_work.workspace | ui.contract | - | - | - | N | 4 |
+| portal.capability_matrix | ui.contract | - | - | - | N | 5 |
+| portal.dashboard | ui.contract | - | - | - | N | 4 |
+| portal.lifecycle | ui.contract | - | - | - | N | 5 |
+| project.management | ui.contract | - | - | - | N | 11 |
+| projects.dashboard | ui.contract | - | - | - | N | 11 |
+| projects.execution | ui.contract | - | - | - | N | 11 |
+| projects.intake | ui.contract | - | - | - | N | 6 |
+| projects.ledger | ui.contract | - | - | - | N | 6 |
+| projects.list | ui.contract | - | - | - | N | 6 |
+| quality.center | ui.contract | - | - | - | N | 9 |
+| quality.recheck | ui.contract | - | - | - | N | 9 |
+| quality.rectification | ui.contract | - | - | - | N | 9 |
+| risk.center | ui.contract | - | - | - | N | 11 |
+| risk.monitor | ui.contract | - | - | - | N | 11 |
+| safety.center | ui.contract | - | - | - | N | 9 |
+| safety.recheck | ui.contract | - | - | - | N | 9 |
+| safety.rectification | ui.contract | - | - | - | N | 9 |
 | scene_smoke_default | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg1 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg10 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg11 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg12 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg13 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg14 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg15 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg16 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg17 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg18 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg19 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg2 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg20 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg21 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg22 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg23 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg24 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg25 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg26 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg27 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg28 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg3 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg4 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg5 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg6 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg7 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg8 | - | - | - | - | Y | 0 |
-| scene_smoke_default__pkg9 | - | - | - | - | Y | 0 |
+| subcontract.management | ui.contract | - | - | - | N | 12 |
+| subcontract.register | ui.contract | - | - | - | N | 12 |
+| subcontract.request | ui.contract | - | - | - | N | 12 |
+| subcontract.settlement | ui.contract | - | - | - | N | 12 |
+| task.center | ui.contract | - | - | - | N | 11 |
+| workspace.home | ui.contract | - | - | - | N | 4 |
 
 ## Orphan Intents
 
@@ -176,25 +80,42 @@
 - `api.data.batch`
 - `api.data.create`
 - `api.data.unlink`
+- `api.onchange`
 - `app.catalog`
 - `app.nav`
 - `app.open`
 - `auth.logout`
+- `business.evidence.trace`
 - `capability.describe`
 - `capability.visibility.report`
+- `chatter.activity.schedule`
+- `chatter.activity.update`
 - `chatter.post`
 - `chatter.timeline`
+- `collaboration.users.search`
+- `cost.tracking.block.fetch`
+- `cost.tracking.enter`
+- `cost.tracking.record.create`
+- `dashboard.company.enter`
 - `execute_button`
 - `file.download`
 - `file.upload`
+- `global.message.conversations`
+- `global.message.inbox`
+- `global.message.read`
+- `global.message.send`
 - `load_contract`
 - `load_metadata`
 - `load_view`
 - `login`
 - `meta.describe_model`
+- `meta.intent_catalog`
 - `my.work.complete`
 - `my.work.complete_batch`
 - `my.work.summary`
+- `payment.block.fetch`
+- `payment.enter`
+- `payment.record.create`
 - `payment.request.approve`
 - `payment.request.available_actions`
 - `payment.request.done`
@@ -202,6 +123,31 @@
 - `payment.request.reject`
 - `payment.request.submit`
 - `permission.check`
+- `project.connection.transition`
+- `project.context.search`
+- `project.dashboard`
+- `project.dashboard.block.fetch`
+- `project.dashboard.enter`
+- `project.dashboard.open`
+- `project.entry.context.options`
+- `project.entry.context.resolve`
+- `project.execution.advance`
+- `project.execution.block.fetch`
+- `project.execution.enter`
+- `project.initiation.enter`
+- `project.plan_bootstrap.block.fetch`
+- `project.plan_bootstrap.enter`
+- `release.operator.approve`
+- `release.operator.freeze`
+- `release.operator.promote`
+- `release.operator.rollback`
+- `release.operator.runtime_probe`
+- `release.operator.set_page_enabled`
+- `release.operator.surface`
+- `release.operator.sync_policy`
+- `release.operator.update_page_policy`
+- `release.operator.update_policy`
+- `risk.action.execute`
 - `scene.governance.export_contract`
 - `scene.governance.pin_stable`
 - `scene.governance.rollback`
@@ -212,182 +158,95 @@
 - `scene.package.import`
 - `scene.package.list`
 - `scene.packages.installed`
+- `search.favorite.set`
 - `session.bootstrap`
+- `settlement.block.fetch`
+- `settlement.enter`
 - `system.init`
 - `system.ping.construction`
+- `telemetry.track`
+- `terminal.shell.v2`
+- `ui.contract.v2`
 - `usage.export.csv`
 - `usage.report`
 - `usage.track`
+- `user.view.preference.get`
+- `user.view.preference.set`
+- `workspace.home.enter`
 
 ## Uncovered Scenes
 
-- `cost.budget_alloc`
-- `cost.cost_compare`
-- `data.dictionary`
-- `default__pkg1`
-- `default__pkg10`
-- `default__pkg11`
-- `default__pkg12`
-- `default__pkg13`
-- `default__pkg14`
-- `default__pkg15`
-- `default__pkg16`
-- `default__pkg17`
-- `default__pkg18`
-- `default__pkg19`
-- `default__pkg2`
-- `default__pkg20`
-- `default__pkg21`
-- `default__pkg22`
-- `default__pkg23`
-- `default__pkg24`
-- `default__pkg25`
-- `default__pkg26`
-- `default__pkg27`
-- `default__pkg28`
-- `default__pkg3`
-- `default__pkg4`
-- `default__pkg5`
-- `default__pkg6`
-- `default__pkg7`
-- `default__pkg8`
-- `default__pkg9`
-- `projects.dashboard_showcase`
-- `projects.intake__pkg1`
-- `projects.intake__pkg10`
-- `projects.intake__pkg11`
-- `projects.intake__pkg12`
-- `projects.intake__pkg13`
-- `projects.intake__pkg14`
-- `projects.intake__pkg15`
-- `projects.intake__pkg16`
-- `projects.intake__pkg17`
-- `projects.intake__pkg18`
-- `projects.intake__pkg19`
-- `projects.intake__pkg2`
-- `projects.intake__pkg20`
-- `projects.intake__pkg21`
-- `projects.intake__pkg22`
-- `projects.intake__pkg23`
-- `projects.intake__pkg24`
-- `projects.intake__pkg25`
-- `projects.intake__pkg26`
-- `projects.intake__pkg27`
-- `projects.intake__pkg28`
-- `projects.intake__pkg3`
-- `projects.intake__pkg4`
-- `projects.intake__pkg5`
-- `projects.intake__pkg6`
-- `projects.intake__pkg7`
-- `projects.intake__pkg8`
-- `projects.intake__pkg9`
-- `projects.ledger__pkg1`
-- `projects.ledger__pkg10`
-- `projects.ledger__pkg11`
-- `projects.ledger__pkg12`
-- `projects.ledger__pkg13`
-- `projects.ledger__pkg14`
-- `projects.ledger__pkg15`
-- `projects.ledger__pkg16`
-- `projects.ledger__pkg17`
-- `projects.ledger__pkg18`
-- `projects.ledger__pkg19`
-- `projects.ledger__pkg2`
-- `projects.ledger__pkg20`
-- `projects.ledger__pkg21`
-- `projects.ledger__pkg22`
-- `projects.ledger__pkg23`
-- `projects.ledger__pkg24`
-- `projects.ledger__pkg25`
-- `projects.ledger__pkg26`
-- `projects.ledger__pkg27`
-- `projects.ledger__pkg28`
-- `projects.ledger__pkg3`
-- `projects.ledger__pkg4`
-- `projects.ledger__pkg5`
-- `projects.ledger__pkg6`
-- `projects.ledger__pkg7`
-- `projects.ledger__pkg8`
-- `projects.ledger__pkg9`
-- `projects.list__pkg1`
-- `projects.list__pkg10`
-- `projects.list__pkg11`
-- `projects.list__pkg12`
-- `projects.list__pkg13`
-- `projects.list__pkg14`
-- `projects.list__pkg15`
-- `projects.list__pkg16`
-- `projects.list__pkg17`
-- `projects.list__pkg18`
-- `projects.list__pkg19`
-- `projects.list__pkg2`
-- `projects.list__pkg20`
-- `projects.list__pkg21`
-- `projects.list__pkg22`
-- `projects.list__pkg23`
-- `projects.list__pkg24`
-- `projects.list__pkg25`
-- `projects.list__pkg26`
-- `projects.list__pkg27`
-- `projects.list__pkg28`
-- `projects.list__pkg3`
-- `projects.list__pkg4`
-- `projects.list__pkg5`
-- `projects.list__pkg6`
-- `projects.list__pkg7`
-- `projects.list__pkg8`
-- `projects.list__pkg9`
 - `scene_smoke_default`
-- `scene_smoke_default__pkg1`
-- `scene_smoke_default__pkg10`
-- `scene_smoke_default__pkg11`
-- `scene_smoke_default__pkg12`
-- `scene_smoke_default__pkg13`
-- `scene_smoke_default__pkg14`
-- `scene_smoke_default__pkg15`
-- `scene_smoke_default__pkg16`
-- `scene_smoke_default__pkg17`
-- `scene_smoke_default__pkg18`
-- `scene_smoke_default__pkg19`
-- `scene_smoke_default__pkg2`
-- `scene_smoke_default__pkg20`
-- `scene_smoke_default__pkg21`
-- `scene_smoke_default__pkg22`
-- `scene_smoke_default__pkg23`
-- `scene_smoke_default__pkg24`
-- `scene_smoke_default__pkg25`
-- `scene_smoke_default__pkg26`
-- `scene_smoke_default__pkg27`
-- `scene_smoke_default__pkg28`
-- `scene_smoke_default__pkg3`
-- `scene_smoke_default__pkg4`
-- `scene_smoke_default__pkg5`
-- `scene_smoke_default__pkg6`
-- `scene_smoke_default__pkg7`
-- `scene_smoke_default__pkg8`
-- `scene_smoke_default__pkg9`
 
 ## No Write/Execute Scenes
 
+- `construction.diary`
+- `construction.execution`
+- `construction.plan`
+- `construction.plan_report`
+- `contract.center`
+- `contracts.workspace`
+- `cost.analysis`
+- `cost.budget_alloc`
+- `cost.cost_compare`
 - `cost.profit_compare`
 - `cost.project_boq`
 - `cost.project_budget`
 - `cost.project_cost_ledger`
 - `cost.project_progress`
+- `data.dictionary`
 - `default`
+- `equipment.management`
+- `equipment.request`
+- `equipment.settlement`
+- `equipment.usage`
 - `finance.center`
 - `finance.operating_metrics`
 - `finance.payment_ledger`
 - `finance.payment_requests`
 - `finance.settlement_orders`
 - `finance.treasury_ledger`
+- `finance.workspace`
+- `labor.attendance`
+- `labor.management`
+- `labor.request`
+- `labor.settlement`
+- `material.acceptance`
+- `material.catalog`
+- `material.center`
+- `material.inbound`
+- `material.outbound`
+- `material.price_library`
+- `material.procurement`
+- `material.rental`
+- `material.rental_order`
+- `material.rental_settlement`
+- `material.rfq`
+- `material.settlement`
+- `my_work.workspace`
 - `portal.capability_matrix`
 - `portal.dashboard`
 - `portal.lifecycle`
+- `project.management`
 - `projects.dashboard`
+- `projects.execution`
 - `projects.intake`
 - `projects.ledger`
 - `projects.list`
+- `quality.center`
+- `quality.recheck`
+- `quality.rectification`
+- `risk.center`
+- `risk.monitor`
+- `safety.center`
+- `safety.recheck`
+- `safety.rectification`
+- `subcontract.management`
+- `subcontract.register`
+- `subcontract.request`
+- `subcontract.settlement`
+- `task.center`
+- `workspace.home`
 
 ## Scene Missing Intent Refs
 

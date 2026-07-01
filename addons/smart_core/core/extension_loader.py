@@ -27,6 +27,18 @@ def _parse_modules(raw: str):
         return []
     return [m.strip() for m in raw.split(",") if m.strip()]
 
+
+def _merge_context_modules(env, modules):
+    merged = list(modules or [])
+    try:
+        raw = (env.context or {}).get("sc.core.extension_modules") or ""
+    except Exception:
+        raw = ""
+    for mod in _parse_modules(str(raw or "")):
+        if mod not in merged:
+            merged.append(mod)
+    return merged
+
 def _is_true(val: str | None) -> bool:
     if not val:
         return False
@@ -54,7 +66,7 @@ def load_extensions(env, registry):
     debug = _is_true(debug_raw)
     log = _logger.info if debug else _logger.debug
 
-    modules = _parse_modules(raw)
+    modules = _merge_context_modules(env, _parse_modules(raw))
     if not modules:
         log("[extension_loader] extension_modules empty, skip")
         _loaded = True
@@ -116,7 +128,7 @@ def run_extension_hooks(env, hook_name: str, *args, **kwargs):
         _logger.warning("[extension_loader] failed to read config: %s", e)
         return
 
-    modules = _parse_modules(raw)
+    modules = _merge_context_modules(env, _parse_modules(raw))
     if not modules:
         return
 

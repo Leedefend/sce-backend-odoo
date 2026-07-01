@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from python_http_smoke_utils import get_base_url, http_post_json
+from platform_config_fixture import MARKER, _run_shell
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +44,42 @@ TARGETS = [
         "params": {"reason": "intent_write_runtime_smoke"},
     },
 ]
+
+SCENE_ADMIN_LOGIN = "sc_fx_scene_admin"
+SCENE_ADMIN_PASSWORD = "prod_like"
+
+
+def _ensure_scene_admin_probe_user() -> None:
+    code = f"""
+import json
+Users = env["res.users"].sudo()
+login = {json.dumps(SCENE_ADMIN_LOGIN)}
+password = {json.dumps(SCENE_ADMIN_PASSWORD)}
+group_xmlids = ["base.group_user", "smart_core.group_smart_core_scene_admin"]
+groups = []
+for xmlid in group_xmlids:
+    try:
+        groups.append(env.ref(xmlid).id)
+    except Exception:
+        pass
+user = Users.search([("login", "=", login)], limit=1)
+vals = {{
+    "name": "Scene Admin Smoke",
+    "login": login,
+    "email": login + "@example.com",
+    "active": True,
+    "groups_id": [(6, 0, groups)],
+}}
+if user:
+    user.write(vals)
+    user.password = password
+else:
+    vals["password"] = password
+    user = Users.create(vals)
+env.cr.commit()
+print("{MARKER}" + json.dumps({{"ok": True, "login": login}}, ensure_ascii=False))
+"""
+    _run_shell(code)
 
 
 def _intent_post(intent_url: str, *, token: str | None, intent: str, params: dict | None = None) -> tuple[int, dict]:
@@ -108,6 +145,7 @@ def _resolve_probe_users(intent_url: str, db_name: str) -> list[dict[str, str]]:
         "sc_fx_contract_admin",
         "sc_fx_material_user",
         "sc_fx_cost_user",
+        SCENE_ADMIN_LOGIN,
         "demo",
     ]
     candidate_passwords = [
@@ -146,6 +184,11 @@ def main() -> int:
     db_name = str(os.getenv("DB_NAME") or os.getenv("ODOO_DB") or "sc_dev").strip()
     intent_url = f"{base_url}/api/v1/intent"
     failures: list[str] = []
+
+    try:
+        _ensure_scene_admin_probe_user()
+    except Exception as exc:
+        failures.append(f"scene admin probe user setup failed: {exc}")
 
     probe_users = _resolve_probe_users(intent_url, db_name)
     if len(probe_users) < 2:

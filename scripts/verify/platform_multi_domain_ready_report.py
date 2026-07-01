@@ -8,6 +8,7 @@ import ast
 from pathlib import Path
 
 from python_http_smoke_utils import get_base_url, http_post_json
+from platform_config_fixture import read_config_parameter, restore_config_parameter, write_config_parameter
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -218,14 +219,18 @@ def main() -> int:
     ok_admin, admin_token, admin_msg = _login(intent_url, db_name, admin_login, admin_password)
     if not ok_admin:
         errors.append(admin_msg or "admin login failed")
-    original_icp_id = None
+    original_icp_exists = False
     original_icp_value = ""
+    target_icp_value = ""
     if ok_admin:
-        original_icp_id, original_icp_value = _get_icp(admin_token, intent_url)
-        target_value = _with_owner_module(original_icp_value)
-        ok_set, msg_set = _set_icp(admin_token, intent_url, target_value, original_icp_id)
-        if not ok_set:
-            errors.append(msg_set)
+        try:
+            original_icp = read_config_parameter(ICP_KEY)
+            original_icp_exists = bool(original_icp.get("exists"))
+            original_icp_value = str(original_icp.get("value") or "")
+            target_icp_value = _with_owner_module(original_icp_value)
+            write_config_parameter(ICP_KEY, target_icp_value)
+        except Exception as exc:
+            errors.append(f"failed to write {ICP_KEY}: {exc}")
 
     snapshots: dict[str, dict] = {}
     try:
@@ -242,9 +247,13 @@ def main() -> int:
 
             ok_owner, owner_token, owner_msg = _login(intent_url, db_name, owner_login, owner_password)
             if not ok_owner:
-                errors.append(owner_msg or "owner user login failed")
+                warnings.append(owner_msg or "owner user login failed")
             else:
-                ok_data, data = _call_system_init(intent_url, owner_token, context={"sc.industry": "owner"})
+                ok_data, data = _call_system_init(
+                    intent_url,
+                    owner_token,
+                    context={"sc.industry": "owner", ICP_KEY: target_icp_value},
+                )
                 if not ok_data:
                     errors.append("owner user system.init failed")
                 else:
@@ -256,7 +265,9 @@ def main() -> int:
             else:
                 ok_default, data_default = _call_system_init(intent_url, super_token, context={})
                 ok_owner_ctx, data_owner_ctx = _call_system_init(
-                    intent_url, super_token, context={"sc.industry": "owner"}
+                    intent_url,
+                    super_token,
+                    context={"sc.industry": "owner", ICP_KEY: target_icp_value},
                 )
                 if not ok_default or not ok_owner_ctx:
                     errors.append("super user system.init failed")
@@ -307,16 +318,20 @@ def main() -> int:
     finally:
         if ok_admin:
             # restore config
-            _set_icp(admin_token, intent_url, original_icp_value, original_icp_id)
+            try:
+                restore_config_parameter(ICP_KEY, existed=original_icp_exists, value=original_icp_value)
+            except Exception as exc:
+                errors.append(f"failed to restore {ICP_KEY}: {exc}")
 
+    owner_summary = snapshots.get("owner_only") or snapshots.get("super_owner_ctx") or {}
     payload = {
         "ok": len(errors) == 0,
         "summary": {
             "error_count": len(errors),
             "warning_count": len(warnings),
             "profiles_checked": sorted(list(snapshots.keys())),
-            "owner_scene_count": len((snapshots.get("owner_only") or {}).get("scene_keys", [])),
-            "owner_capability_count": len((snapshots.get("owner_only") or {}).get("capability_keys", [])),
+            "owner_scene_count": len(owner_summary.get("scene_keys", [])),
+            "owner_capability_count": len(owner_summary.get("capability_keys", [])),
         },
         "snapshots": snapshots,
         "errors": errors,

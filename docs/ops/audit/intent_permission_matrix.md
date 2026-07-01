@@ -1,11 +1,11 @@
 # Intent Permission Matrix
 
-- intent_count: 104
-- write_intent_count: 43
+- intent_count: 98
+- write_intent_count: 37
 
 | intent | is_write | required_groups | ACL_MODE | smoke | test | source |
 |---|---:|---|---|---:|---:|---|
-| api.data | N | base.group_user | - | N | Y | addons/smart_core/handlers/api_data.py |
+| api.data | N | base.group_user | - | Y | Y | addons/smart_core/handlers/api_data.py |
 | api.data.batch | Y | smart_core.group_smart_core_data_operator | explicit_check | N | Y | addons/smart_core/handlers/api_data_batch.py |
 | api.data.create | Y | smart_core.group_smart_core_data_operator | explicit_check | N | Y | addons/smart_core/handlers/api_data_write.py |
 | api.data.unlink | Y | smart_core.group_smart_core_data_operator | explicit_check | N | Y | addons/smart_core/handlers/api_data_unlink.py |
@@ -18,8 +18,10 @@
 | capability.describe | N | - | - | N | Y | addons/smart_construction_core/handlers/capability_describe.py |
 | capability.visibility.report | N | - | - | N | N | addons/smart_construction_core/handlers/capability_visibility_report.py |
 | chatter.activity.schedule | Y | smart_core.group_smart_core_data_operator | explicit_check | N | N | addons/smart_core/handlers/chatter_activity_schedule.py |
+| chatter.activity.update | Y | smart_core.group_smart_core_data_operator | explicit_check | N | N | addons/smart_core/handlers/chatter_activity_update.py |
 | chatter.post | Y | smart_core.group_smart_core_data_operator | explicit_check | N | Y | addons/smart_core/handlers/chatter_post.py |
 | chatter.timeline | N | - | - | N | Y | addons/smart_core/handlers/chatter_timeline.py |
+| collaboration.users.search | N | - | - | N | N | addons/smart_core/handlers/collaboration_users.py |
 | cost.tracking.block.fetch | N | base.group_user | - | N | Y | addons/smart_construction_core/handlers/cost_tracking_block_fetch.py |
 | cost.tracking.enter | N | base.group_user | - | N | Y | addons/smart_construction_core/handlers/cost_tracking_enter.py |
 | cost.tracking.record.create | Y | base.group_user | explicit_check | N | Y | addons/smart_construction_core/handlers/cost_tracking_record_create.py |
@@ -27,6 +29,10 @@
 | execute_button | Y | smart_core.group_smart_core_data_operator | explicit_check | Y | Y | addons/smart_core/handlers/execute_button.py |
 | file.download | N | - | - | N | Y | addons/smart_core/handlers/file_download.py |
 | file.upload | Y | smart_core.group_smart_core_data_operator | explicit_check | Y | Y | addons/smart_core/handlers/file_upload.py |
+| global.message.conversations | N | - | - | N | N | addons/smart_core/handlers/global_messages.py |
+| global.message.inbox | N | - | - | N | N | addons/smart_core/handlers/global_messages.py |
+| global.message.read | Y | smart_core.group_smart_core_data_operator | explicit_check | N | N | addons/smart_core/handlers/global_messages.py |
+| global.message.send | Y | smart_core.group_smart_core_data_operator | explicit_check | N | N | addons/smart_core/handlers/global_messages.py |
 | load_contract | N | - | - | Y | Y | addons/smart_core/handlers/load_contract.py |
 | load_metadata | N | - | - | N | Y | addons/smart_core/handlers/load_metadata.py |
 | load_view | N | - | - | Y | Y | addons/smart_core/handlers/load_view.py |
@@ -47,7 +53,7 @@
 | payment.request.submit | Y | smart_core.group_smart_core_finance_approver | explicit_check | N | Y | addons/smart_construction_core/handlers/payment_request_approval.py |
 | permission.check | N | - | - | N | Y | addons/smart_core/handlers/permission_check.py |
 | project.connection.transition | N | base.group_user | - | N | N | addons/smart_construction_core/handlers/project_connection_transition.py |
-| project.context.search | N | - | - | N | N | addons/smart_core/handlers/project_context.py |
+| project.context.search | N | - | - | N | Y | addons/smart_core/handlers/project_context.py |
 | project.dashboard | N | - | - | Y | Y | addons/smart_construction_core/handlers/project_dashboard.py |
 | project.dashboard.block.fetch | N | base.group_user | - | N | Y | addons/smart_construction_core/handlers/project_dashboard_block_fetch.py |
 | project.dashboard.enter | N | base.group_user | - | N | Y | addons/smart_construction_core/handlers/project_dashboard_enter.py |
@@ -89,20 +95,8 @@
 | system.ping.construction | N | smart_core.group_smart_core_data_operator | record_rule | N | Y | addons/smart_construction_core/handlers/system_ping_construction.py |
 | telemetry.track | Y | base.group_user | explicit_check | N | Y | addons/smart_construction_core/handlers/telemetry_track.py |
 | terminal.shell.v2 | N | - | - | N | Y | addons/smart_core/handlers/terminal_shell_v2.py |
-| ui.business_config.contract.get | N | smart_core.group_smart_core_business_config_admin | - | N | N | addons/smart_core/handlers/form_field_configuration.py |
-| ui.business_config.contract.list | N | smart_core.group_smart_core_business_config_admin | - | N | N | addons/smart_core/handlers/form_field_configuration.py |
-| ui.business_config.contract.publish | Y | smart_core.group_smart_core_business_config_admin | explicit_check | N | Y | addons/smart_core/handlers/form_field_configuration.py |
-| ui.business_config.contract.rollback | Y | smart_core.group_smart_core_business_config_admin | explicit_check | N | N | addons/smart_core/handlers/form_field_configuration.py |
-| ui.business_config.contract.save | Y | smart_core.group_smart_core_business_config_admin | explicit_check | N | Y | addons/smart_core/handlers/form_field_configuration.py |
-| ui.business_config.lowcode.apply | Y | smart_core.group_smart_core_business_config_admin | explicit_check | N | N | addons/smart_core/handlers/form_field_configuration.py |
 | ui.contract | N | - | - | Y | Y | addons/smart_core/handlers/ui_contract.py |
-| ui.contract.v2 | N | - | - | N | Y | addons/smart_core/handlers/ui_contract_v2.py |
-| ui.form_custom_field.create | Y | smart_core.group_smart_core_business_config_admin | explicit_check | N | Y | addons/smart_core/handlers/form_field_configuration.py |
-| ui.form_field_config.batch_set | Y | smart_core.group_smart_core_business_config_admin | explicit_check | N | N | addons/smart_core/handlers/form_field_configuration.py |
-| ui.form_field_order.set | Y | smart_core.group_smart_core_business_config_admin | explicit_check | N | N | addons/smart_core/handlers/form_field_configuration.py |
-| ui.form_field_policy.set | Y | smart_core.group_smart_core_business_config_admin | explicit_check | N | Y | addons/smart_core/handlers/form_field_configuration.py |
-| ui.menu_config.panel.get | N | - | - | N | Y | addons/smart_core/handlers/menu_configuration.py |
-| ui.menu_config.panel.set | Y | smart_core.group_smart_core_business_config_admin | explicit_check | N | Y | addons/smart_core/handlers/menu_configuration.py |
+| ui.contract.v2 | N | - | - | Y | Y | addons/smart_core/handlers/ui_contract_v2.py |
 | usage.export.csv | N | base.group_user | - | N | Y | addons/smart_core/handlers/usage_export_csv.py |
 | usage.report | N | - | - | N | Y | addons/smart_core/handlers/usage_report.py |
 | usage.track | Y | base.group_user | explicit_check | Y | Y | addons/smart_core/handlers/usage_track.py |

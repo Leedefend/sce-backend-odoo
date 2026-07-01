@@ -8,9 +8,9 @@
 
 | intent | count | statuses | shape_variants | p95_ms |
 |---|---:|---|---:|---:|
-| system.init | 4 | 200 | 1 | 3854.26 |
-| ui.contract | 4 | 200 | 1 | 6022.19 |
-| execute_button | 4 | 200 | 1 | 277.26 |
+| system.init | 4 | 200 | 1 | 10830.44 |
+| ui.contract | 4 | 200 | 1 | 10518.42 |
+| execute_button | 4 | 200 | 1 | 469.19 |
 
 ## Errors
 

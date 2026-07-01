@@ -139,8 +139,6 @@ class SceneRuntimeOrchestrator:
     def _inject_critical_error(self, *, runtime_ctx):
         if not is_truthy(runtime_ctx.params.get("scene_inject_critical_error")):
             return
-        if not runtime_ctx.diagnostics_collector.diagnostics_enabled(runtime_ctx.env):
-            return
         runtime_ctx.append_resolve_error_fn(
             runtime_ctx.scene_diagnostics["resolve_errors"],
             scene_key="workspace.home",

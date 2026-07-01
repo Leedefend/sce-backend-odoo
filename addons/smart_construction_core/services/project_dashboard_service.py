@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from pathlib import Path
+
 from odoo import fields
 
 from odoo.addons.smart_construction_core.services.evidence_chain_service import EvidenceChainService
@@ -61,12 +63,28 @@ class ProjectDashboardService:
         self._builder_map = {builder.block_key: builder for builder in self._builders}
 
     def source_authority_contract(self):
+        provider_path = self._registry_provider_path()
         return {
             "kind": self.SOURCE_KIND,
             "authorities": list(self.SOURCE_AUTHORITIES),
             "projection_only": True,
             "no_frontend_synthetic_metrics": True,
+            "scene_provider_registry": {
+                "scene_key": "project.management",
+                "provider_path": str(provider_path) if provider_path else "",
+                "resolved": bool(provider_path),
+            },
         }
+
+    def _registry_provider_path(self):
+        try:
+            from odoo.addons.smart_scene.core.scene_provider_registry import resolve_scene_provider_path
+        except Exception:
+            return None
+        try:
+            return resolve_scene_provider_path("project.management", Path(__file__).resolve())
+        except Exception:
+            return None
 
     def build(self, project_id=0, context=None):
         """Compatibility envelope retained for project.dashboard handler callers."""

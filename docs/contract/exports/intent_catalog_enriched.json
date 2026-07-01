@@ -1,6 +1,6 @@
 {
   "source": "intent_capability_matrix_report",
-  "intent_count": 85,
+  "intent_count": 101,
   "intents": [
     {
       "intent_type": "api.data",
@@ -10,8 +10,10 @@
       ],
       "etag_enabled": false,
       "has_test_file": true,
-      "has_smoke_make_target": false,
-      "smoke_make_targets": [],
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.business_config.unit"
+      ],
       "is_write_operation": false,
       "is_write": false,
       "acl_mode": "",
@@ -46,14 +48,16 @@
       ],
       "etag_enabled": false,
       "has_test_file": true,
-      "has_smoke_make_target": false,
-      "smoke_make_targets": [],
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.business_config.unit"
+      ],
       "is_write_operation": true,
       "is_write": true,
       "acl_mode": "explicit_check",
       "layer": "core",
       "orm_used": true,
-      "may_trigger_sudo": false,
+      "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/api_data_write.py"
     },
     {
@@ -285,6 +289,24 @@
       "source": "addons/smart_core/handlers/chatter_activity_schedule.py"
     },
     {
+      "intent_type": "chatter.activity.update",
+      "class_name": "ChatterActivityUpdateHandler",
+      "required_groups": [
+        "smart_core.group_smart_core_data_operator"
+      ],
+      "etag_enabled": false,
+      "has_test_file": false,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/chatter_activity_update.py"
+    },
+    {
       "intent_type": "chatter.post",
       "class_name": "ChatterPostHandler",
       "required_groups": [
@@ -317,6 +339,22 @@
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/chatter_timeline.py"
+    },
+    {
+      "intent_type": "collaboration.users.search",
+      "class_name": "CollaborationUsersSearchHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": false,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/collaboration_users.py"
     },
     {
       "intent_type": "cost.tracking.block.fetch",
@@ -447,6 +485,74 @@
       "orm_used": true,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/file_upload.py"
+    },
+    {
+      "intent_type": "global.message.conversations",
+      "class_name": "GlobalMessageConversationsHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": false,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/global_messages.py"
+    },
+    {
+      "intent_type": "global.message.inbox",
+      "class_name": "GlobalMessageInboxHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": false,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/global_messages.py"
+    },
+    {
+      "intent_type": "global.message.read",
+      "class_name": "GlobalMessageReadHandler",
+      "required_groups": [
+        "smart_core.group_smart_core_data_operator"
+      ],
+      "etag_enabled": false,
+      "has_test_file": false,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/global_messages.py"
+    },
+    {
+      "intent_type": "global.message.send",
+      "class_name": "GlobalMessageSendHandler",
+      "required_groups": [
+        "smart_core.group_smart_core_data_operator"
+      ],
+      "etag_enabled": false,
+      "has_test_file": false,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_core/handlers/global_messages.py"
     },
     {
       "intent_type": "load_contract",
@@ -673,6 +779,7 @@
       "has_test_file": true,
       "has_smoke_make_target": true,
       "smoke_make_targets": [
+        "verify.delivery.payment_approval.chain_summary",
         "verify.portal.payment_request_approval.prepare.container",
         "verify.portal.payment_request_approval_all_smoke.container",
         "verify.portal.payment_request_approval_field_consumer_audit",
@@ -711,6 +818,7 @@
       "has_test_file": true,
       "has_smoke_make_target": true,
       "smoke_make_targets": [
+        "verify.delivery.payment_approval.chain_summary",
         "verify.portal.payment_request_approval.prepare.container",
         "verify.portal.payment_request_approval_all_smoke.container",
         "verify.portal.payment_request_approval_field_consumer_audit",
@@ -751,6 +859,7 @@
       "has_test_file": true,
       "has_smoke_make_target": true,
       "smoke_make_targets": [
+        "verify.delivery.payment_approval.chain_summary",
         "verify.portal.payment_request_approval.prepare.container",
         "verify.portal.payment_request_approval_all_smoke.container",
         "verify.portal.payment_request_approval_field_consumer_audit",
@@ -775,6 +884,7 @@
       "has_test_file": true,
       "has_smoke_make_target": true,
       "smoke_make_targets": [
+        "verify.delivery.payment_approval.chain_summary",
         "verify.portal.payment_request_approval.prepare.container",
         "verify.portal.payment_request_approval_all_smoke.container",
         "verify.portal.payment_request_approval_field_consumer_audit",
@@ -1059,6 +1169,166 @@
       "source": "addons/smart_construction_core/handlers/project_plan_bootstrap_enter.py"
     },
     {
+      "intent_type": "release.operator.approve",
+      "class_name": "ReleaseOperatorApproveHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/release_operator.py"
+    },
+    {
+      "intent_type": "release.operator.freeze",
+      "class_name": "ReleaseOperatorFreezeHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/release_operator.py"
+    },
+    {
+      "intent_type": "release.operator.promote",
+      "class_name": "ReleaseOperatorPromoteHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/release_operator.py"
+    },
+    {
+      "intent_type": "release.operator.rollback",
+      "class_name": "ReleaseOperatorRollbackHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/release_operator.py"
+    },
+    {
+      "intent_type": "release.operator.runtime_probe",
+      "class_name": "ReleaseOperatorRuntimeProbeHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/release_operator.py"
+    },
+    {
+      "intent_type": "release.operator.set_page_enabled",
+      "class_name": "ReleaseOperatorSetPageEnabledHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/release_operator.py"
+    },
+    {
+      "intent_type": "release.operator.surface",
+      "class_name": "ReleaseOperatorSurfaceHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/release_operator.py"
+    },
+    {
+      "intent_type": "release.operator.sync_policy",
+      "class_name": "ReleaseOperatorSyncPolicyHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/release_operator.py"
+    },
+    {
+      "intent_type": "release.operator.update_page_policy",
+      "class_name": "ReleaseOperatorUpdatePagePolicyHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/release_operator.py"
+    },
+    {
+      "intent_type": "release.operator.update_policy",
+      "class_name": "ReleaseOperatorUpdatePolicyHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
+      "orm_used": true,
+      "may_trigger_sudo": true,
+      "source": "addons/smart_core/handlers/release_operator.py"
+    },
+    {
       "intent_type": "risk.action.execute",
       "class_name": "RiskActionExecuteHandler",
       "required_groups": [
@@ -1309,7 +1579,7 @@
       "smoke_make_targets": [],
       "is_write_operation": true,
       "is_write": true,
-      "acl_mode": "",
+      "acl_mode": "explicit_check",
       "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
@@ -1448,7 +1718,8 @@
       "smoke_make_targets": [
         "verify.unified_page_contract.lite",
         "verify.unified_page_contract.lite.frontend_pilot_readiness",
-        "verify.unified_page_contract.lite.phase3_ui_contract_risk"
+        "verify.unified_page_contract.lite.phase3_ui_contract_risk",
+        "verify.unified_page_contract.v2.stable_projection"
       ],
       "is_write_operation": false,
       "is_write": false,
@@ -1464,14 +1735,16 @@
       "required_groups": [],
       "etag_enabled": false,
       "has_test_file": true,
-      "has_smoke_make_target": false,
-      "smoke_make_targets": [],
+      "has_smoke_make_target": true,
+      "smoke_make_targets": [
+        "verify.unified_page_contract.v2.stable_projection"
+      ],
       "is_write_operation": false,
       "is_write": false,
       "acl_mode": "",
       "layer": "domain",
       "orm_used": true,
-      "may_trigger_sudo": false,
+      "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/ui_contract_v2.py"
     },
     {
@@ -1490,7 +1763,7 @@
       "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
-      "source": "addons/smart_construction_core/handlers/usage_export_csv.py"
+      "source": "addons/smart_core/handlers/usage_export_csv.py"
     },
     {
       "intent_type": "usage.report",
@@ -1506,7 +1779,7 @@
       "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
-      "source": "addons/smart_construction_core/handlers/usage_report.py"
+      "source": "addons/smart_core/handlers/usage_report.py"
     },
     {
       "intent_type": "usage.track",
@@ -1526,7 +1799,7 @@
       "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": true,
-      "source": "addons/smart_construction_core/handlers/usage_track.py"
+      "source": "addons/smart_core/handlers/usage_track.py"
     },
     {
       "intent_type": "user.view.preference.get",
@@ -1556,7 +1829,7 @@
       "smoke_make_targets": [],
       "is_write_operation": true,
       "is_write": true,
-      "acl_mode": "",
+      "acl_mode": "explicit_check",
       "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": false,

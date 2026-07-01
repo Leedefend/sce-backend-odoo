@@ -2,7 +2,7 @@
 
 - status: PASS
 - scanned_file_count: 5
-- scanned_row_count: 398
+- scanned_row_count: 899
 - violation_count: 0
 
 ## Rule

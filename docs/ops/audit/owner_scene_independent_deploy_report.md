@@ -1,9 +1,9 @@
 # Owner Scene Independent Deploy Report
 
-- owner_scene_count: 2
-- owner_capability_count: 3
-- baseline_key_count: 20
-- simulated_key_count: 22
+- owner_scene_count: 4
+- owner_capability_count: 8
+- baseline_key_count: 29
+- simulated_key_count: 31
 - error_count: 0
 - warning_count: 0
 

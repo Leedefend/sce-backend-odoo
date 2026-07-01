@@ -2,12 +2,67 @@
   "max_unallowlisted": 0,
   "allowlist": [
     {
+      "source": "addons/smart_construction_core/handlers/risk_action_execute.py",
+      "intents": [
+        "risk.action.execute"
+      ],
+      "max_sudo_calls": 6,
+      "reason": "risk action execution bridges project risk actions with optional evidence exception records after explicit intent permission and project-scope checks"
+    },
+    {
+      "source": "addons/smart_core/handlers/api_data_write.py",
+      "intents": [
+        "api.data.create"
+      ],
+      "max_sudo_calls": 2,
+      "reason": "api.data write allowlist expands business-configured manual fields through metadata reads before user-scoped writes"
+    },
+    {
+      "source": "addons/smart_core/handlers/chatter_activity_schedule.py",
+      "intents": [
+        "chatter.activity.schedule"
+      ],
+      "max_sudo_calls": 1,
+      "reason": "activity scheduling needs ir.model metadata lookup after record write access is checked on the target business record"
+    },
+    {
+      "source": "addons/smart_core/handlers/chatter_activity_update.py",
+      "intents": [
+        "chatter.activity.update"
+      ],
+      "max_sudo_calls": 1,
+      "reason": "activity updates need ir.model metadata lookup before operating on user-visible mail.activity records"
+    },
+    {
       "source": "addons/smart_core/handlers/execute_button.py",
       "intents": [
         "execute_button"
       ],
-      "max_sudo_calls": 3,
-      "reason": "follow-up activity creation queries framework models and activities under controlled explicit_check path"
+      "max_sudo_calls": 5,
+      "reason": "execute_button resolves server actions and follow-up activity metadata under explicit_check path before executing model-scoped actions"
+    },
+    {
+      "source": "addons/smart_core/handlers/release_operator.py",
+      "intents": [
+        "release.operator.approve",
+        "release.operator.freeze",
+        "release.operator.promote",
+        "release.operator.rollback",
+        "release.operator.set_page_enabled",
+        "release.operator.sync_policy",
+        "release.operator.update_page_policy",
+        "release.operator.update_policy"
+      ],
+      "max_sudo_calls": 5,
+      "reason": "release operator writes platform release and product policy governance records behind explicit operator intents"
+    },
+    {
+      "source": "addons/smart_core/handlers/search_favorite_set.py",
+      "intents": [
+        "search.favorite.set"
+      ],
+      "max_sudo_calls": 2,
+      "reason": "search favorite writes ir.filters and regenerates search config through a user-scoped favorite policy"
     },
     {
       "source": "addons/smart_core/handlers/usage_track.py",
