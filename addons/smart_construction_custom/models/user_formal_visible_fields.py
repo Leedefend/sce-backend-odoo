@@ -359,6 +359,7 @@ class ReceiptIncomeUserHistoryFields(models.Model):
     _inherit = "sc.receipt.income"
 
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
+    legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
 
     def _history_surface_allowed_write_fields(self):
         return super()._history_surface_allowed_write_fields() | {"creator_legacy_user_id"}
@@ -368,6 +369,7 @@ class PaymentExecutionUserHistoryFields(models.Model):
     _inherit = "sc.payment.execution"
 
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
+    legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
 
     def _history_surface_allowed_write_fields(self):
         return super()._history_surface_allowed_write_fields() | {"creator_legacy_user_id"}

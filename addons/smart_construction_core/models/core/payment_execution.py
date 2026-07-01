@@ -106,7 +106,6 @@ class ScPaymentExecution(models.Model):
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
-    legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
     push_result = fields.Char(string="推送结果", index=True, readonly=True)
     kingdee_document_no = fields.Char(string="金蝶单据编号", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)

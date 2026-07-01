@@ -86,6 +86,16 @@ Each entry must include:
 - active_commit: `current HEAD containing this entry`
 - next_step: `提交 creator_legacy_user_id core boundary 批次；后续继续查找 core/projection 中其他历史用户数据载体。`
 
+### 2026-07-01T09:15:00+08:00
+- blocker_key: `legacy_residual_reason_core_boundary_guard`
+- layer_target: `P1 core/projection boundary + P2 custom user history carrier`
+- module: `scripts/verify + sc.payment.execution/sc.receipt.income + smart_construction_custom history fields`
+- reason: `creator_legacy_user_id 迁出后，sc.payment.execution 与 sc.receipt.income 仍在 P1 core 模型声明 legacy_residual_reason；该字段是历史残余说明，不参与正式业务状态计算，应由 custom 历史数据层承载。`
+- completed_step: `将 sc.payment.execution 与 sc.receipt.income 的 legacy_residual_reason 字段声明迁入 smart_construction_custom；core_history_field_physical_boundary_audit 新增 legacy_residual_reason marker，core/projection 预算保持 total=0。`
+- verification: `python3 -m py_compile scripts/verify/core_history_field_physical_boundary_audit.py addons/smart_construction_core/models/core/payment_execution.py addons/smart_construction_core/models/core/receipt_income.py addons/smart_construction_custom/models/user_formal_visible_fields.py PASS；make verify.core_history_field.physical_boundary_audit PASS total=0；CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE="smart_construction_core,smart_construction_custom" DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev make mod.upgrade PASS；make verify.formal_surface.transition_field_audit PASS total=0；make verify.user_confirmed.formal_surface.locked DB_NAME=sc_demo PROJECT=sc-backend-odoo-dev COMPOSE_PROJECT_NAME=sc-backend-odoo-dev PASS；git diff --check PASS。`
+- active_commit: `current HEAD containing this entry`
+- next_step: `提交 legacy_residual_reason core boundary 批次；后续继续区分 core 中业务溯源锚点与可迁出的历史用户数据字段。`
+
 ### 2026-07-01T07:43:10+08:00
 - blocker_key: `formal_field_stabilization_boundary_closeout`
 - layer_target: `P1 construction industry standard product + backend contract boundary guard`
