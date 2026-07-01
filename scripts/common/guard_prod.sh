@@ -65,12 +65,27 @@ is_demo_db() {
   return 1
 }
 
+is_truthy() {
+  [[ "${1:-}" =~ ^(1|true|True|yes|YES)$ ]]
+}
+
+is_daily_dev_project() {
+  [[ "${COMPOSE_PROJECT_NAME:-${PROJECT:-}}" == "sc-backend-odoo-dev" ]]
+}
+
 guard_demo_module_db() {
   local module="${MODULE:-}"
   if [[ ",${module}," != *",smart_construction_demo,"* ]]; then
     return 0
   fi
-  if is_demo_db || [[ "${SC_ALLOW_DEMO_DATA:-}" =~ ^(1|true|True|yes|YES)$ ]]; then
+  if is_truthy "${SC_ALLOW_DEMO_DATA:-}"; then
+    return 0
+  fi
+  if is_daily_dev_project; then
+    echo "❌ demo data guard: smart_construction_demo is forbidden in daily dev project ${COMPOSE_PROJECT_NAME:-${PROJECT:-}}. Set SC_ALLOW_DEMO_DATA=1 only for an intentional demo rebuild." >&2
+    exit 2
+  fi
+  if is_demo_db; then
     return 0
   fi
   echo "❌ demo data guard: smart_construction_demo is forbidden for DB_NAME=${DB_NAME:-}. Use sc_demo/sc_test or set SC_ALLOW_DEMO_DATA=1 intentionally." >&2
@@ -82,7 +97,14 @@ guard_seed_demo_steps_db() {
   if [[ ! "${selected}" =~ (demo|showroom) ]]; then
     return 0
   fi
-  if is_demo_db || [[ "${SC_ALLOW_DEMO_DATA:-}" =~ ^(1|true|True|yes|YES)$ ]]; then
+  if is_truthy "${SC_ALLOW_DEMO_DATA:-}"; then
+    return 0
+  fi
+  if is_daily_dev_project; then
+    echo "❌ demo data guard: demo/showroom seed steps are forbidden in daily dev project ${COMPOSE_PROJECT_NAME:-${PROJECT:-}}. Set SC_ALLOW_DEMO_DATA=1 only for an intentional demo rebuild." >&2
+    exit 2
+  fi
+  if is_demo_db; then
     return 0
   fi
   echo "❌ demo data guard: demo/showroom seed steps are forbidden for DB_NAME=${DB_NAME:-}. Use sc_demo/sc_test or set SC_ALLOW_DEMO_DATA=1 intentionally." >&2
