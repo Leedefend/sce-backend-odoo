@@ -99,7 +99,8 @@ class SettlementOrderUserHistoryFields(models.Model):
         self.ensure_one()
         return self.legacy_attachment_ref or ""
 
-    def _backfill_legacy_attachment_refs(self):
+    def _backfill_history_surface_fields(self):
+        super()._backfill_history_surface_fields()
         old_column = "legacy_visible_attachment"
         self.env.cr.execute(
             """

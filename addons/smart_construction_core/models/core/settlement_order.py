@@ -436,9 +436,9 @@ class ScSettlementOrder(models.Model):
             if actual_count:
                 order.attachment_count = actual_count
                 continue
-            legacy_attachment = (order._settlement_attachment_ref_value() or "").strip()
-            match = re.search(r"附件\((\d+)\)", legacy_attachment)
-            order.attachment_count = int(match.group(1)) if match else int(bool(legacy_attachment))
+            attachment_text = (order._settlement_attachment_ref_value() or "").strip()
+            match = re.search(r"附件\((\d+)\)", attachment_text)
+            order.attachment_count = int(match.group(1)) if match else int(bool(attachment_text))
 
     def _settlement_attachment_ref_value(self):
         return ""
@@ -984,7 +984,7 @@ class ScSettlementOrder(models.Model):
         return records
 
     def init(self):
-        self._backfill_legacy_attachment_refs()
+        self._backfill_history_surface_fields()
         self.env.cr.execute(
             """
             UPDATE sc_settlement_order settlement
@@ -1000,7 +1000,7 @@ class ScSettlementOrder(models.Model):
         )
         self._backfill_settlement_stage_ids()
 
-    def _backfill_legacy_attachment_refs(self):
+    def _backfill_history_surface_fields(self):
         return
 
     def write(self, vals):
