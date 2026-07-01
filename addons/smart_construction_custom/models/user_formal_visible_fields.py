@@ -295,6 +295,9 @@ class FinancingLoanUserHistoryFields(models.Model):
     _inherit = "sc.financing.loan"
 
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
+    legacy_counterparty_id = fields.Char(string="历史往来方ID", index=True, readonly=True)
+    legacy_amount_field = fields.Char(string="历史金额字段", index=True, readonly=True)
+    legacy_attachment_ref = fields.Char(string="历史附件引用", index=True, readonly=True)
     legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
     legacy_visible_actual_loan_amount = fields.Char(string="历史可见实际借款金额", readonly=True)
     legacy_visible_receipt_account = fields.Char(string="历史可见收款账户", readonly=True)
