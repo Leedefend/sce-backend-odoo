@@ -5,7 +5,7 @@
 ## 运行时来源
 
 - database: `sc_demo`
-- generated_at: `2026-07-01T13:13:38.027727+00:00`
+- generated_at: `2026-07-01T13:37:34.204581+00:00`
 - roots: `smart_construction_core.menu_sc_root, smart_core.menu_smart_core_platform_root`
 - visible_login_probe: `admin, wutao, demo_business_full, demo_role_finance, demo_role_executive`
 
@@ -70,6 +70,7 @@
 | 智慧施工管理平台 / 用户核对菜单 | `history_acceptance` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_scbs55_user_acceptance_root` |
 | 智慧施工管理平台 / 用户验收 | `history_acceptance` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_user_acceptance_root` |
 | 智慧施工管理平台 / 税务中心 | `formal_product` | wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_tax_center` |
+| 智慧施工管理平台 / 系统配置 | `system_config` |  | `smart_construction_core.menu_sc_config_center` |
 | 智慧施工管理平台 / 统计分析 | `formal_product` | wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_data_center` |
 | 智慧施工管理平台 / 财务中心 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_finance_center` |
 | 智慧施工管理平台 / 资料证照 | `formal_product` | wutao, demo_business_full, demo_role_finance | `smart_construction_core.menu_sc_document_admin_center` |
@@ -159,44 +160,6 @@
       - 用户信息 [`history_acceptance`] -> `sc.legacy.user.profile`
       - 用户账号与权限 [`system_config`] -> `res.users`
       - 项目授权范围 [`history_acceptance`] -> `sc.legacy.user.project.scope`
-    - 系统权限 [`system_config`]
-      - 历史财务事实（内部） [`system_config`]
-        - 历史供应商合同计价方式 [`history_acceptance`] -> `sc.legacy.supplier.contract.pricing.fact`
-        - 历史发票登记 [`history_acceptance`] -> `sc.legacy.invoice.registration.line`
-        - 历史发票税额 [`history_acceptance`] -> `sc.legacy.invoice.tax.fact`
-        - 历史发票附加税 [`history_acceptance`] -> `sc.legacy.invoice.surcharge.fact`
-        - 历史扣款调整 [`history_acceptance`] -> `sc.legacy.deduction.adjustment.line`
-        - 历史抵扣税额 [`history_acceptance`] -> `sc.legacy.tax.deduction.fact`
-        - 历史收款收入 [`history_acceptance`] -> `sc.legacy.receipt.income.fact`
-        - 历史文件索引 [`history_acceptance`] -> `sc.legacy.file.index`
-        - 历史流程扩展事实 [`history_acceptance`] -> `sc.legacy.workflow.detail.fact`
-        - 历史自筹资金 [`history_acceptance`] -> `sc.legacy.self.funding.fact`
-        - 历史融资借款 [`history_acceptance`] -> `sc.legacy.financing.loan.fact`
-        - 历史财税辅助事实 [`history_acceptance`] -> `sc.legacy.finance.auxiliary.fact`
-        - 历史费用/保证金 [`history_acceptance`] -> `sc.legacy.expense.deposit.fact`
-        - 历史费用报销明细 [`history_acceptance`] -> `sc.legacy.expense.reimbursement.line`
-        - 历史资金日报 [`history_acceptance`] -> `sc.legacy.fund.daily.snapshot.fact`
-        - 历史资金日报明细 [`history_acceptance`] -> `sc.legacy.fund.daily.line`
-        - 历史资金确认 [`history_acceptance`] -> `sc.legacy.fund.confirmation.line`
-        - 历史项目资金余额 [`history_acceptance`] -> `sc.legacy.project.fund.balance.fact`
-        - 流程工作台 [`system_config`] -> `sc.history.todo`
-      - 场景与能力 [`dev_governance`]
-        - Scene Governance [`dev_governance`]
-          - Company Channels [`dev_governance`] -> `sc.scene.company.channel`
-          - Governance Actions [`dev_governance`] -> `sc.scene.governance.wizard`
-          - Governance Logs [`dev_governance`] -> `sc.scene.governance.log`
-        - 交付包安装记录 [`dev_governance`] -> `sc.pack.installation`
-        - 交付包注册表 [`dev_governance`] -> `sc.pack.registry`
-        - 场景版本 [`dev_governance`] -> `sc.scene.version`
-        - 场景编排 [`dev_governance`] -> `sc.scene`
-        - 能力分组 [`dev_governance`] -> `sc.capability.group`
-        - 能力目录 [`dev_governance`] -> `sc.capability`
-      - 工作流 [`dev_governance`]
-        - 工作流定义 [`dev_governance`] -> `sc.workflow.def`
-        - 工作流实例 [`dev_governance`] -> `sc.workflow.instance`
-        - 工作流日志 [`dev_governance`] -> `sc.workflow.log`
-        - 工作项 [`dev_governance`] -> `sc.workflow.workitem`
-      - 项目管理（后台） [`dev_governance`] -> `project.project`
     - 组织架构 [`system_config`] -> `hr.department`
     - 菜单配置 [`system_config`] -> `ui.menu.config.policy`
     - 表单字段配置 [`system_config`] -> `ui.form.field.policy`
@@ -413,6 +376,44 @@
       - 公司经营情况表 [`formal_product`] -> `sc.company.operation.summary`
       - 应收应付报表 [`formal_product` inactive] -> `sc.ar.ap.company.summary`
       - 项目经营统计表 [`formal_product`] -> `sc.operating.metrics.project`
+  - 系统配置 [`system_config`]
+    - 历史财务事实（内部） [`system_config`]
+      - 历史供应商合同计价方式 [`history_acceptance`] -> `sc.legacy.supplier.contract.pricing.fact`
+      - 历史发票登记 [`history_acceptance`] -> `sc.legacy.invoice.registration.line`
+      - 历史发票税额 [`history_acceptance`] -> `sc.legacy.invoice.tax.fact`
+      - 历史发票附加税 [`history_acceptance`] -> `sc.legacy.invoice.surcharge.fact`
+      - 历史扣款调整 [`history_acceptance`] -> `sc.legacy.deduction.adjustment.line`
+      - 历史抵扣税额 [`history_acceptance`] -> `sc.legacy.tax.deduction.fact`
+      - 历史收款收入 [`history_acceptance`] -> `sc.legacy.receipt.income.fact`
+      - 历史文件索引 [`history_acceptance`] -> `sc.legacy.file.index`
+      - 历史流程扩展事实 [`history_acceptance`] -> `sc.legacy.workflow.detail.fact`
+      - 历史自筹资金 [`history_acceptance`] -> `sc.legacy.self.funding.fact`
+      - 历史融资借款 [`history_acceptance`] -> `sc.legacy.financing.loan.fact`
+      - 历史财税辅助事实 [`history_acceptance`] -> `sc.legacy.finance.auxiliary.fact`
+      - 历史费用/保证金 [`history_acceptance`] -> `sc.legacy.expense.deposit.fact`
+      - 历史费用报销明细 [`history_acceptance`] -> `sc.legacy.expense.reimbursement.line`
+      - 历史资金日报 [`history_acceptance`] -> `sc.legacy.fund.daily.snapshot.fact`
+      - 历史资金日报明细 [`history_acceptance`] -> `sc.legacy.fund.daily.line`
+      - 历史资金确认 [`history_acceptance`] -> `sc.legacy.fund.confirmation.line`
+      - 历史项目资金余额 [`history_acceptance`] -> `sc.legacy.project.fund.balance.fact`
+      - 流程工作台 [`system_config`] -> `sc.history.todo`
+    - 场景与能力 [`dev_governance`]
+      - Scene Governance [`dev_governance`]
+        - Company Channels [`dev_governance`] -> `sc.scene.company.channel`
+        - Governance Actions [`dev_governance`] -> `sc.scene.governance.wizard`
+        - Governance Logs [`dev_governance`] -> `sc.scene.governance.log`
+      - 交付包安装记录 [`dev_governance`] -> `sc.pack.installation`
+      - 交付包注册表 [`dev_governance`] -> `sc.pack.registry`
+      - 场景版本 [`dev_governance`] -> `sc.scene.version`
+      - 场景编排 [`dev_governance`] -> `sc.scene`
+      - 能力分组 [`dev_governance`] -> `sc.capability.group`
+      - 能力目录 [`dev_governance`] -> `sc.capability`
+    - 工作流 [`dev_governance`]
+      - 工作流定义 [`dev_governance`] -> `sc.workflow.def`
+      - 工作流实例 [`dev_governance`] -> `sc.workflow.instance`
+      - 工作流日志 [`dev_governance`] -> `sc.workflow.log`
+      - 工作项 [`dev_governance`] -> `sc.workflow.workitem`
+    - 项目管理（后台） [`dev_governance`] -> `project.project`
   - 统计分析 [`formal_product`]
     - SCBS旧库事实暂存 [`history_acceptance` inactive] -> `sc.legacy.scbs.fact.staging`
     - SCBS旧库材料映射 [`history_acceptance` inactive] -> `sc.legacy.scbs.material.map`

@@ -142,7 +142,7 @@ def _history_inside_formal_centers(rows: list[dict]) -> list[dict]:
             and row.get("layer") == "history_acceptance"
             and len(parts) >= 3
             and parts[0] == PRODUCT_ROOT
-            and parts[1] not in {"用户核对菜单", "用户验收", "基础设置"}
+            and parts[1] not in {"用户核对菜单", "用户验收", "基础设置", "系统配置"}
         ):
             out.append(row)
     return sorted(out, key=lambda item: _text(item.get("path")))

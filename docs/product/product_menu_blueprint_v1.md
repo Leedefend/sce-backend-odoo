@@ -336,8 +336,9 @@
 
 | 边界入口 | active 子入口 | action 子入口 | XMLID |
 | --- | ---: | ---: | --- |
-| 智慧施工管理平台 / 基础设置 | 29 | 25 | `smart_construction_core.menu_sc_business_config_center` |
+| 智慧施工管理平台 / 基础设置 | 26 | 24 | `smart_construction_core.menu_sc_business_config_center` |
 | 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 用户账号与权限 | 0 | 0 | `smart_construction_core.menu_sc_runtime_user_management` |
+| 智慧施工管理平台 / 系统配置 | 2 | 1 | `smart_construction_core.menu_sc_config_center` |
 
 ### active 明细
 
@@ -363,14 +364,14 @@
 - 智慧施工管理平台 / 基础设置 / 新增表单字段 -> `ui.form.custom.field.wizard`
 - 智慧施工管理平台 / 基础设置 / 用户优先入口迭代计划 -> `sc.legacy.user.priority.menu.plan`
 - 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 用户账号与权限 -> `res.users`
-- 智慧施工管理平台 / 基础设置 / 系统权限
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部）
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 流程工作台 -> `sc.history.todo`
 - 智慧施工管理平台 / 基础设置 / 组织架构 -> `hr.department`
 - 智慧施工管理平台 / 基础设置 / 菜单配置 -> `ui.menu.config.policy`
 - 智慧施工管理平台 / 基础设置 / 表单字段配置 -> `ui.form.field.policy`
 - 智慧施工管理平台 / 基础设置 / 阶段要求配置 -> `sc.project.stage.requirement.item`
 - 智慧施工管理平台 / 基础设置 / 预算类型 -> `project.cost.code`
+- 智慧施工管理平台 / 系统配置
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部）
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 流程工作台 -> `sc.history.todo`
 
 ## 用户配置边界
 
@@ -381,26 +382,26 @@
 | 边界入口 | active 子入口 | action 子入口 | XMLID |
 | --- | ---: | ---: | --- |
 | 智慧施工管理平台 / 基础设置 / 用户信息与权限 | 3 | 3 | `smart_construction_core.menu_sc_legacy_user_context` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史供应商合同计价方式 | 0 | 0 | `smart_construction_core.menu_sc_legacy_supplier_contract_pricing_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票登记 | 0 | 0 | `smart_construction_core.menu_sc_legacy_invoice_registration_line` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票税额 | 0 | 0 | `smart_construction_core.menu_sc_legacy_invoice_tax_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票附加税 | 0 | 0 | `smart_construction_core.menu_sc_legacy_invoice_surcharge_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史扣款调整 | 0 | 0 | `smart_construction_core.menu_sc_legacy_deduction_adjustment_line` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史抵扣税额 | 0 | 0 | `smart_construction_core.menu_sc_legacy_tax_deduction_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史收款收入 | 0 | 0 | `smart_construction_core.menu_sc_legacy_receipt_income_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史文件索引 | 0 | 0 | `smart_construction_core.menu_sc_legacy_file_index` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史流程扩展事实 | 0 | 0 | `smart_construction_core.menu_sc_legacy_workflow_detail_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史自筹资金 | 0 | 0 | `smart_construction_core.menu_sc_legacy_self_funding_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史融资借款 | 0 | 0 | `smart_construction_core.menu_sc_legacy_financing_loan_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史财税辅助事实 | 0 | 0 | `smart_construction_core.menu_sc_legacy_finance_auxiliary_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史费用/保证金 | 0 | 0 | `smart_construction_core.menu_sc_legacy_expense_deposit_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史费用报销明细 | 0 | 0 | `smart_construction_core.menu_sc_legacy_expense_reimbursement_line` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金日报 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_daily_snapshot_fact` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金日报明细 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_daily_line` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金确认 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_confirmation_line` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史项目资金余额 | 0 | 0 | `smart_construction_core.menu_sc_legacy_project_fund_balance_fact` |
 | 智慧施工管理平台 / 用户核对菜单 | 75 | 54 | `smart_construction_core.menu_scbs55_user_acceptance_root` |
 | 智慧施工管理平台 / 用户验收 | 43 | 35 | `smart_construction_core.menu_sc_user_acceptance_root` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史供应商合同计价方式 | 0 | 0 | `smart_construction_core.menu_sc_legacy_supplier_contract_pricing_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史发票登记 | 0 | 0 | `smart_construction_core.menu_sc_legacy_invoice_registration_line` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史发票税额 | 0 | 0 | `smart_construction_core.menu_sc_legacy_invoice_tax_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史发票附加税 | 0 | 0 | `smart_construction_core.menu_sc_legacy_invoice_surcharge_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史扣款调整 | 0 | 0 | `smart_construction_core.menu_sc_legacy_deduction_adjustment_line` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史抵扣税额 | 0 | 0 | `smart_construction_core.menu_sc_legacy_tax_deduction_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史收款收入 | 0 | 0 | `smart_construction_core.menu_sc_legacy_receipt_income_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史文件索引 | 0 | 0 | `smart_construction_core.menu_sc_legacy_file_index` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史流程扩展事实 | 0 | 0 | `smart_construction_core.menu_sc_legacy_workflow_detail_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史自筹资金 | 0 | 0 | `smart_construction_core.menu_sc_legacy_self_funding_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史融资借款 | 0 | 0 | `smart_construction_core.menu_sc_legacy_financing_loan_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史财税辅助事实 | 0 | 0 | `smart_construction_core.menu_sc_legacy_finance_auxiliary_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史费用/保证金 | 0 | 0 | `smart_construction_core.menu_sc_legacy_expense_deposit_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史费用报销明细 | 0 | 0 | `smart_construction_core.menu_sc_legacy_expense_reimbursement_line` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史资金日报 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_daily_snapshot_fact` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史资金日报明细 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_daily_line` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史资金确认 | 0 | 0 | `smart_construction_core.menu_sc_legacy_fund_confirmation_line` |
+| 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史项目资金余额 | 0 | 0 | `smart_construction_core.menu_sc_legacy_project_fund_balance_fact` |
 
 ### active 明细
 
@@ -408,24 +409,6 @@
 - 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 历史角色投影 -> `sc.legacy.user.role`
 - 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 用户信息 -> `sc.legacy.user.profile`
 - 智慧施工管理平台 / 基础设置 / 用户信息与权限 / 项目授权范围 -> `sc.legacy.user.project.scope`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史供应商合同计价方式 -> `sc.legacy.supplier.contract.pricing.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票登记 -> `sc.legacy.invoice.registration.line`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票税额 -> `sc.legacy.invoice.tax.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史发票附加税 -> `sc.legacy.invoice.surcharge.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史扣款调整 -> `sc.legacy.deduction.adjustment.line`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史抵扣税额 -> `sc.legacy.tax.deduction.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史收款收入 -> `sc.legacy.receipt.income.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史文件索引 -> `sc.legacy.file.index`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史流程扩展事实 -> `sc.legacy.workflow.detail.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史自筹资金 -> `sc.legacy.self.funding.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史融资借款 -> `sc.legacy.financing.loan.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史财税辅助事实 -> `sc.legacy.finance.auxiliary.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史费用/保证金 -> `sc.legacy.expense.deposit.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史费用报销明细 -> `sc.legacy.expense.reimbursement.line`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金日报 -> `sc.legacy.fund.daily.snapshot.fact`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金日报明细 -> `sc.legacy.fund.daily.line`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史资金确认 -> `sc.legacy.fund.confirmation.line`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 历史财务事实（内部） / 历史项目资金余额 -> `sc.legacy.project.fund.balance.fact`
 - 智慧施工管理平台 / 用户核对菜单
 - 智慧施工管理平台 / 用户核对菜单 / 人事行政
 - 智慧施工管理平台 / 用户核对菜单 / 人事行政 / 印章使用审批表 -> `sc.office.admin.document`
@@ -546,15 +529,33 @@
 - 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 费用与资金管理类单据 / 项目费用报销单 -> `sc.legacy.direct.acceptance.fact`
 - 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 项目管理类单据
 - 智慧施工管理平台 / 用户验收 / 直营项目系统菜单 / 项目管理类单据 / 施工日志（新） -> `sc.legacy.direct.acceptance.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史供应商合同计价方式 -> `sc.legacy.supplier.contract.pricing.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史发票登记 -> `sc.legacy.invoice.registration.line`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史发票税额 -> `sc.legacy.invoice.tax.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史发票附加税 -> `sc.legacy.invoice.surcharge.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史扣款调整 -> `sc.legacy.deduction.adjustment.line`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史抵扣税额 -> `sc.legacy.tax.deduction.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史收款收入 -> `sc.legacy.receipt.income.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史文件索引 -> `sc.legacy.file.index`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史流程扩展事实 -> `sc.legacy.workflow.detail.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史自筹资金 -> `sc.legacy.self.funding.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史融资借款 -> `sc.legacy.financing.loan.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史财税辅助事实 -> `sc.legacy.finance.auxiliary.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史费用/保证金 -> `sc.legacy.expense.deposit.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史费用报销明细 -> `sc.legacy.expense.reimbursement.line`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史资金日报 -> `sc.legacy.fund.daily.snapshot.fact`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史资金日报明细 -> `sc.legacy.fund.daily.line`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史资金确认 -> `sc.legacy.fund.confirmation.line`
+- 智慧施工管理平台 / 系统配置 / 历史财务事实（内部） / 历史项目资金余额 -> `sc.legacy.project.fund.balance.fact`
 
 ## 开发治理边界
 
 | 边界入口 | active 子入口 | action 子入口 | XMLID |
 | --- | ---: | ---: | --- |
 | 平台内核 | 12 | 10 | `smart_core.menu_smart_core_platform_root` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 | 10 | 9 | `smart_construction_core.menu_sc_scene_root` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流 | 4 | 4 | `smart_construction_core.menu_sc_workflow_root` |
-| 智慧施工管理平台 / 基础设置 / 系统权限 / 项目管理（后台） | 0 | 0 | `smart_construction_core.menu_sc_project_manage` |
+| 智慧施工管理平台 / 系统配置 / 场景与能力 | 10 | 9 | `smart_construction_core.menu_sc_scene_root` |
+| 智慧施工管理平台 / 系统配置 / 工作流 | 4 | 4 | `smart_construction_core.menu_sc_workflow_root` |
+| 智慧施工管理平台 / 系统配置 / 项目管理（后台） | 0 | 0 | `smart_construction_core.menu_sc_project_manage` |
 
 ### active 明细
 
@@ -571,23 +572,23 @@
 - 平台内核 / 公司访问 / 订阅套餐 -> `sc.subscription.plan`
 - 平台内核 / 公司访问 / 订阅实例 -> `sc.subscription`
 - 平台内核 / 公司访问 / 运营任务 -> `sc.ops.job`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / Scene Governance
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / Scene Governance / Company Channels -> `sc.scene.company.channel`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / Scene Governance / Governance Actions -> `sc.scene.governance.wizard`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / Scene Governance / Governance Logs -> `sc.scene.governance.log`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 交付包安装记录 -> `sc.pack.installation`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 交付包注册表 -> `sc.pack.registry`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 场景版本 -> `sc.scene.version`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 场景编排 -> `sc.scene`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 能力分组 -> `sc.capability.group`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 场景与能力 / 能力目录 -> `sc.capability`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流 / 工作流定义 -> `sc.workflow.def`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流 / 工作流实例 -> `sc.workflow.instance`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流 / 工作流日志 -> `sc.workflow.log`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 工作流 / 工作项 -> `sc.workflow.workitem`
-- 智慧施工管理平台 / 基础设置 / 系统权限 / 项目管理（后台） -> `project.project`
+- 智慧施工管理平台 / 系统配置 / 场景与能力
+- 智慧施工管理平台 / 系统配置 / 场景与能力 / Scene Governance
+- 智慧施工管理平台 / 系统配置 / 场景与能力 / Scene Governance / Company Channels -> `sc.scene.company.channel`
+- 智慧施工管理平台 / 系统配置 / 场景与能力 / Scene Governance / Governance Actions -> `sc.scene.governance.wizard`
+- 智慧施工管理平台 / 系统配置 / 场景与能力 / Scene Governance / Governance Logs -> `sc.scene.governance.log`
+- 智慧施工管理平台 / 系统配置 / 场景与能力 / 交付包安装记录 -> `sc.pack.installation`
+- 智慧施工管理平台 / 系统配置 / 场景与能力 / 交付包注册表 -> `sc.pack.registry`
+- 智慧施工管理平台 / 系统配置 / 场景与能力 / 场景版本 -> `sc.scene.version`
+- 智慧施工管理平台 / 系统配置 / 场景与能力 / 场景编排 -> `sc.scene`
+- 智慧施工管理平台 / 系统配置 / 场景与能力 / 能力分组 -> `sc.capability.group`
+- 智慧施工管理平台 / 系统配置 / 场景与能力 / 能力目录 -> `sc.capability`
+- 智慧施工管理平台 / 系统配置 / 工作流
+- 智慧施工管理平台 / 系统配置 / 工作流 / 工作流定义 -> `sc.workflow.def`
+- 智慧施工管理平台 / 系统配置 / 工作流 / 工作流实例 -> `sc.workflow.instance`
+- 智慧施工管理平台 / 系统配置 / 工作流 / 工作流日志 -> `sc.workflow.log`
+- 智慧施工管理平台 / 系统配置 / 工作流 / 工作项 -> `sc.workflow.workitem`
+- 智慧施工管理平台 / 系统配置 / 项目管理（后台） -> `project.project`
 
 ## 混入正式中心的历史入口
 

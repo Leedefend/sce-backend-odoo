@@ -40,7 +40,7 @@ BUSINESS_VISIBLE_LOGINS = {
     if item.strip()
 }
 INTERNAL_HISTORY_PATH_TOKENS = (
-    "基础设置 / 系统权限",
+    "系统配置",
     "历史财务事实（内部）",
 )
 

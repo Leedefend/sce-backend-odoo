@@ -117,10 +117,11 @@
     </record>
 
     <record id="menu_sc_config_center" model="ir.ui.menu">
-        <field name="name">系统权限</field>
-        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
-        <field name="sequence">90</field>
+        <field name="name">系统配置</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
+        <field name="sequence">95</field>
         <field name="action" eval="False"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
     </record>
 
     <!-- Reusable business actions for taxonomy-specific entries. -->
