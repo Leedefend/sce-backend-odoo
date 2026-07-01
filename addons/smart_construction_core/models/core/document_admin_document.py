@@ -25,9 +25,26 @@ class ScDocumentAdminDocument(models.Model):
     valid_until = fields.Date(string="有效期至", index=True)
     document_title = fields.Char(string="资料名称", index=True, tracking=True)
     borrow_user_id = fields.Many2one("res.users", string="借阅人", default=lambda self: self.env.user, index=True)
+    borrow_project_name = fields.Char(string="借阅项目名称", index=True)
+    borrow_department_name = fields.Char(string="借阅部门或项目部名称", index=True)
+    borrower_name = fields.Char(string="借阅人姓名", index=True)
+    borrower_contact = fields.Char(string="联系方式")
+    borrow_form = fields.Char(string="借阅形式")
     borrow_date = fields.Date(string="借阅日期", default=fields.Date.context_today, index=True)
+    application_date = fields.Date(string="申请日期", index=True)
+    responsible_person = fields.Char(string="负责人", index=True)
+    return_request_date = fields.Date(string="归还申请日期", index=True)
+    return_apply_time = fields.Datetime(string="申请归还时间", index=True)
+    returned_flag = fields.Char(string="是否归还", index=True)
+    return_confirm_time = fields.Datetime(string="确认归还时间", index=True)
     expected_return_date = fields.Date(string="预计归还日期", index=True)
     actual_return_date = fields.Date(string="实际归还日期", index=True)
+    modifier_name = fields.Char(string="修改人", index=True)
+    modified_at = fields.Datetime(string="修改日期", index=True)
+    modify_note = fields.Text(string="修改备注")
+    reviewer_name = fields.Char(string="审定人", index=True)
+    review_time = fields.Datetime(string="审定时间", index=True)
+    review_opinion = fields.Text(string="审定意见")
     legacy_document_no = fields.Char(string="历史单号", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
@@ -65,9 +82,26 @@ class ScDocumentAdminDocument(models.Model):
             "issue_date",
             "valid_until",
             "borrow_user_id",
+            "borrow_project_name",
+            "borrow_department_name",
+            "borrower_name",
+            "borrower_contact",
+            "borrow_form",
             "borrow_date",
+            "application_date",
+            "responsible_person",
+            "return_request_date",
+            "return_apply_time",
+            "returned_flag",
+            "return_confirm_time",
             "expected_return_date",
             "actual_return_date",
+            "modifier_name",
+            "modified_at",
+            "modify_note",
+            "reviewer_name",
+            "review_time",
+            "review_opinion",
             "legacy_document_no",
             "legacy_document_state",
             "legacy_source_table",

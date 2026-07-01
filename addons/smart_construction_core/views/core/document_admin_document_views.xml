@@ -48,8 +48,14 @@
           <field name="valid_until" optional="show"/>
           <field name="document_title" optional="show"/>
           <field name="borrow_user_id" optional="show"/>
+          <field name="borrow_department_name" optional="hide"/>
+          <field name="borrower_name" optional="hide"/>
+          <field name="borrow_form" optional="hide"/>
           <field name="borrow_date" optional="show"/>
+          <field name="return_request_date" optional="hide"/>
+          <field name="returned_flag" optional="hide"/>
           <field name="expected_return_date" optional="show"/>
+          <field name="actual_return_date" optional="hide"/>
           <field name="legacy_document_no" optional="hide"/>
           <field name="legacy_document_state" optional="hide"/>
           <field name="state"/>
@@ -94,9 +100,26 @@
               <group string="借阅申请" invisible="fact_type != 'document_borrow'">
                 <field name="document_title" required="fact_type == 'document_borrow'"/>
                 <field name="borrow_user_id" required="fact_type == 'document_borrow'"/>
+                <field name="borrower_name"/>
+                <field name="borrow_project_name"/>
+                <field name="borrow_department_name"/>
+                <field name="borrower_contact"/>
+                <field name="borrow_form"/>
                 <field name="borrow_date" required="fact_type == 'document_borrow'"/>
+                <field name="application_date"/>
+                <field name="responsible_person"/>
                 <field name="expected_return_date" required="fact_type == 'document_borrow'"/>
+                <field name="return_request_date"/>
+                <field name="return_apply_time"/>
+                <field name="returned_flag"/>
+                <field name="return_confirm_time"/>
                 <field name="actual_return_date"/>
+                <field name="modifier_name"/>
+                <field name="modified_at"/>
+                <field name="modify_note"/>
+                <field name="reviewer_name"/>
+                <field name="review_time"/>
+                <field name="review_opinion"/>
               </group>
             </group>
             <group>

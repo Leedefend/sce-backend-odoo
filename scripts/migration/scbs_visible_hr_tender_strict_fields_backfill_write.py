@@ -232,6 +232,23 @@ ensure_column("sc_document_admin_document", "legacy_visible_modify_note", "text"
 ensure_column("sc_document_admin_document", "legacy_visible_reviewer", "varchar")
 ensure_column("sc_document_admin_document", "legacy_visible_review_time", "timestamp")
 ensure_column("sc_document_admin_document", "legacy_visible_review_opinion", "text")
+ensure_column("sc_document_admin_document", "application_date", "date")
+ensure_column("sc_document_admin_document", "borrow_project_name", "varchar")
+ensure_column("sc_document_admin_document", "borrow_department_name", "varchar")
+ensure_column("sc_document_admin_document", "borrower_name", "varchar")
+ensure_column("sc_document_admin_document", "borrower_contact", "varchar")
+ensure_column("sc_document_admin_document", "borrow_form", "varchar")
+ensure_column("sc_document_admin_document", "responsible_person", "varchar")
+ensure_column("sc_document_admin_document", "return_request_date", "date")
+ensure_column("sc_document_admin_document", "return_apply_time", "timestamp")
+ensure_column("sc_document_admin_document", "returned_flag", "varchar")
+ensure_column("sc_document_admin_document", "return_confirm_time", "timestamp")
+ensure_column("sc_document_admin_document", "modifier_name", "varchar")
+ensure_column("sc_document_admin_document", "modified_at", "timestamp")
+ensure_column("sc_document_admin_document", "modify_note", "text")
+ensure_column("sc_document_admin_document", "reviewer_name", "varchar")
+ensure_column("sc_document_admin_document", "review_time", "timestamp")
+ensure_column("sc_document_admin_document", "review_opinion", "text")
 ensure_column("sc_office_admin_document", "legacy_visible_project_name", "varchar")
 ensure_column("sc_office_admin_document", "legacy_visible_applicant", "varchar")
 ensure_column("sc_office_admin_document", "legacy_visible_department", "varchar")
@@ -1159,7 +1176,18 @@ for legacy_id, row in borrow_visible_rows.items():
                legacy_visible_creator_name = %s,
                legacy_visible_created_time = %s,
                legacy_visible_modifier = %s,
-               legacy_visible_modified_date = %s
+               legacy_visible_modified_date = %s,
+               borrow_project_name = %s,
+               application_date = %s,
+               borrow_department_name = %s,
+               borrower_name = %s,
+               borrow_form = %s,
+               return_request_date = %s,
+               returned_flag = %s,
+               return_confirm_time = %s,
+               actual_return_date = COALESCE(%s, actual_return_date),
+               modifier_name = %s,
+               modified_at = %s
          WHERE fact_type = 'document_borrow'
            AND legacy_source_id = %s
         """,
@@ -1180,6 +1208,17 @@ for legacy_id, row in borrow_visible_rows.items():
             clean(row.get("WJNR")) or None,
             clean(row.get("LRR")) or None,
             parse_datetime(row.get("LRSJ")),
+            clean(row.get("XGR")) or None,
+            parse_datetime(row.get("XGSJ")),
+            clean(row.get("XMMC")) or None,
+            parse_datetime(row.get("DJRQ") or row.get("WJTJRQ")),
+            clean(row.get("SSDW") or row.get("SS单位") or row.get("FWBM")) or None,
+            clean(row.get("QSR") or row.get("WJNGR")) or None,
+            clean(row.get("JJCD") or row.get("WJLX") or row.get("LXMC")) or None,
+            parse_datetime(row.get("HQWCSJ")),
+            "是" if clean(row.get("HQWCSJ")) else "否",
+            parse_datetime(row.get("HQWCSJ")),
+            parse_datetime(row.get("HQWCSJ")),
             clean(row.get("XGR")) or None,
             parse_datetime(row.get("XGSJ")),
             legacy_id,
