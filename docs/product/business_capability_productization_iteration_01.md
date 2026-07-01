@@ -301,7 +301,8 @@
 - `scripts/verify/p1_locked_fact_mapping_candidate_guard.py`：通过，历史事实到正式关系的候选映射阈值未退化。
 - `scripts/verify/p1_formal_relationship_continuity_audit.py`：通过，结算、付款申请、付款登记、收款、发票之间已存在的正式关系没有非锁定办理记录串项目/串合同硬错误。
 - 付款申请绑定结算单时，以结算单 `settlement_unit_id or partner_id` 作为有效往来单位；当前 `sc_demo` 已修正 153 条结算单位锚点，并断开 4 条跨项目错误结算锚点，后续新办由模型约束和 scope smoke 持续阻断。
-- 该审计同时识别出 `payment_execution_request_scope` 关系风险 7,167 条，主要是历史付款登记与付款申请之间合同未带入或实际收款方不同；后续应进入付款办理口径细化，不直接改写锁定历史事实。
+- 该审计同时识别出 `payment_execution_request_scope` 关系风险 1,034 条，均为历史付款登记与付款申请之间实际往来单位不同；后续应进入付款办理口径细化，不直接改写锁定历史事实。
+- 付款登记到付款申请的安全合同锚点已补齐 6,319 条：仅在项目一致、往来单位一致、付款登记合同为空且付款申请合同存在时写入 `contract_id`。
 - 付款登记、收款收入、费用/保证金的正式办理动作已增加付款/收款申请关系校验：新单据关联申请时必须匹配申请类型和项目，合同两边都有时必须一致；历史锁定事实继续只作为风险样本，不被回写。
 - 运行态 smoke 已验证新建付款登记、费用/保证金、收款收入在项目与申请不一致时会被拦截并回滚。
 - 固化脚本：`scripts/verify/p1_formal_relationship_scope_block_smoke.py`，用于后续持续验证正式办理动作不会再产生项目串线关系。
