@@ -94,8 +94,16 @@ cat
 make
 artifacts/*
 !artifacts/migration/
-artifacts/migration/*
-!artifacts/migration/README.md
+!artifacts/migration/**
+artifacts/migration/fresh_db_legacy_material_detail_replay_payload_v1.csv
+!artifacts/migration/fresh_db_legacy_material_detail_replay_payload_v1.csv.parts/
+!artifacts/migration/fresh_db_legacy_material_detail_replay_payload_v1.csv.parts/**
+artifacts/migration/fresh_db_legacy_workflow_detail_replay_payload_v1.csv
+!artifacts/migration/fresh_db_legacy_workflow_detail_replay_payload_v1.csv.parts/
+!artifacts/migration/fresh_db_legacy_workflow_detail_replay_payload_v1.csv.parts/**
+artifacts/migration/scbsly_direct_select3_status_online_dump_20260603.json
+!artifacts/migration/scbsly_direct_select3_status_online_dump_20260603.json.parts/
+!artifacts/migration/scbsly_direct_select3_status_online_dump_20260603.json.parts/**
 docs/tmp/
 # audit artifacts (generated)
 docs/audit/*.csv

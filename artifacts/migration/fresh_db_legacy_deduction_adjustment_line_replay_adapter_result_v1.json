@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_deduction_adjustment_line_replay_adapter",
+  "total_rows": 13521,
+  "header_rows": 2636,
+  "active_header_rows": 2572,
+  "orphan_line_rows": 0,
+  "current_actual_amount": "264765389.5800",
+  "current_planned_amount": "264765389.5800",
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_deduction_adjustment_line_replay_payload_v1.csv",
+  "decision": "legacy_deduction_adjustment_line_payload_ready"
+}
