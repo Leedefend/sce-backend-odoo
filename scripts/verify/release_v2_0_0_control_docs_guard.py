@@ -119,7 +119,7 @@ VERIFY_README_TOKENS = (
     "Enforces RC and formal-release command blocks exactly.",
     "versioning/release-index review",
     "`make verify.release.v2_0_0.evidence_manifest.guard`",
-    "evidence table rows/order",
+    "evidence table row content/order",
     "current local verification status structure",
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
