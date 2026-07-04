@@ -58,6 +58,12 @@
   - Rejects treating the original 23 migration asset packages as the full user data baseline.
   - Ensures P1 industry modules do not carry P2 real-user data payloads such as `legacy_user_sc_*` or `user_master_v1.xml`.
   - Ensures form preference initializers do not perform hidden data dictionary creation or partner backfill.
+- `make verify.non_demo_data_contamination`
+  - Default non-demo contamination audit for a selected `DB_NAME`.
+  - Demo databases such as `sc_demo` may return `SKIP`; release hardening must use `make verify.product.no_demo_data` instead.
+  - Copies runtime evidence back from the Odoo container for SKIP/PASS/FAIL:
+    - `artifacts/backend/non_demo_data_contamination_guard.json`
+    - `artifacts/backend/non_demo_data_contamination_guard.md`
 - `make verify.product.no_demo_data`
   - Formal release hardening sub-gate used by `verify.product.surface.clean`.
   - Forces no-demo mode even on development databases; demo databases may skip only when the command is not run with `PRODUCT_REQUIRE_NO_DEMO_DATA=1`.
