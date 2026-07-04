@@ -202,6 +202,21 @@ def _reset_action_views(action) -> None:
     action.write({"view_id": False, "view_ids": [(5, 0, 0)]})
 
 
+def _bind_action_views(action, *, tree_xmlid: str | None = None, form_xmlid: str | None = None) -> dict:
+    tree_view = env.ref(tree_xmlid) if tree_xmlid else False  # noqa: F821
+    form_view = env.ref(form_xmlid) if form_xmlid else False  # noqa: F821
+    commands = [(5, 0, 0)]
+    if tree_view:
+        commands.append((0, 0, {"view_mode": "tree", "view_id": tree_view.id}))
+    if form_view:
+        commands.append((0, 0, {"view_mode": "form", "view_id": form_view.id}))
+    action.write({"view_id": tree_view.id if tree_view else False, "view_ids": commands})
+    return {
+        "tree": tree_view.name if tree_view else "",
+        "form": form_view.name if form_view else "",
+    }
+
+
 def run() -> dict:
     ensure_allowed_db()
     result = {"database": env.cr.dbname, "changes": {}}  # noqa: F821
@@ -225,7 +240,11 @@ def run() -> dict:
         "domain": "[('business_category_id.code', '=', 'material.plan')]",
         "context": "{'search_default_active_rows': 1, 'default_business_category_code': 'material.plan', 'current_business_category_code': 'material.plan'}",
     })
-    material_plan_action.write({"view_ids": [(5, 0, 0)]})
+    result["changes"]["material_plan_action_views"] = _bind_action_views(
+        material_plan_action,
+        tree_xmlid="smart_construction_core.view_project_material_plan_tree",
+        form_xmlid="smart_construction_core.view_project_material_plan_form",
+    )
 
     tender_registration_action = env.ref("smart_construction_core.action_sc_tender_registration")  # noqa: F821
     result["changes"]["tender_registration_action"] = _write_action(tender_registration_action, {
@@ -261,7 +280,11 @@ def run() -> dict:
         "domain": "[('business_category_id.code', '=', 'settlement.income')]",
         "context": "{'create': True, 'edit': True, 'default_settlement_type': 'in', 'default_business_category_code': 'settlement.income', 'search_default_group_project': 1}",
     })
-    _reset_action_views(settlement_income_action)
+    result["changes"]["settlement_income_action_views"] = _bind_action_views(
+        settlement_income_action,
+        tree_xmlid="smart_construction_core.view_sc_settlement_order_tree",
+        form_xmlid="smart_construction_core.view_sc_settlement_order_form",
+    )
 
     settlement_expense_action = env.ref("smart_construction_core.action_sc_settlement_order_expense")  # noqa: F821
     result["changes"]["settlement_expense_action"] = _write_action(settlement_expense_action, {
@@ -273,7 +296,11 @@ def run() -> dict:
         "domain": "[('business_category_id.code', '=', 'settlement.expense')]",
         "context": "{'create': True, 'edit': True, 'default_settlement_type': 'out', 'default_business_category_code': 'settlement.expense', 'search_default_group_project': 1}",
     })
-    _reset_action_views(settlement_expense_action)
+    result["changes"]["settlement_expense_action_views"] = _bind_action_views(
+        settlement_expense_action,
+        tree_xmlid="smart_construction_core.view_sc_settlement_order_tree",
+        form_xmlid="smart_construction_core.view_sc_settlement_order_form",
+    )
 
     material_quote_action = env.ref("smart_construction_core.action_sc_material_quote_user_confirmed")  # noqa: F821
     result["changes"]["material_quote_action"] = _write_action(material_quote_action, {
@@ -284,7 +311,11 @@ def run() -> dict:
         "domain": "[]",
         "context": "{'search_default_group_project': 1}",
     })
-    _reset_action_views(material_quote_action)
+    result["changes"]["material_quote_action_views"] = _bind_action_views(
+        material_quote_action,
+        tree_xmlid="smart_construction_core.view_sc_material_rfq_quote_formal_tree",
+        form_xmlid="smart_construction_core.view_sc_material_rfq_form",
+    )
 
     subcontract_request_acceptance_action = env.ref("smart_construction_core.action_sc_subcontract_request_user_confirmed")  # noqa: F821
     result["changes"]["subcontract_request_acceptance_action"] = _write_action(subcontract_request_acceptance_action, {
@@ -295,7 +326,11 @@ def run() -> dict:
         "domain": "[]",
         "context": "{'search_default_group_project': 1}",
     })
-    _reset_action_views(subcontract_request_acceptance_action)
+    result["changes"]["subcontract_request_acceptance_action_views"] = _bind_action_views(
+        subcontract_request_acceptance_action,
+        tree_xmlid="smart_construction_core.view_sc_subcontract_request_tree",
+        form_xmlid="smart_construction_core.view_sc_subcontract_request_form",
+    )
 
     partner_payment_action = env.ref("smart_construction_core.action_sc_payment_execution_partner_payment")  # noqa: F821
     result["changes"]["partner_payment_action"] = _write_action(partner_payment_action, {
@@ -307,7 +342,11 @@ def run() -> dict:
         "domain": "[('source_kind', '=', 'actual_outflow'), ('business_category_id.code', '=', 'finance.payment.execution.partner')]",
         "context": "{'default_source_kind': 'actual_outflow', 'default_payment_family': '往来单位付款', 'default_business_category_code': 'finance.payment.execution.partner', 'search_default_group_project': 1}",
     })
-    _reset_action_views(partner_payment_action)
+    result["changes"]["partner_payment_action_views"] = _bind_action_views(
+        partner_payment_action,
+        tree_xmlid="smart_construction_core.view_sc_payment_execution_partner_formal_tree",
+        form_xmlid="smart_construction_core.view_sc_payment_execution_form",
+    )
 
     payment_apply_action = env.ref("smart_construction_core.action_payment_request_user_payment_apply")  # noqa: F821
     result["changes"]["payment_apply_action"] = _write_action(payment_apply_action, {
@@ -319,7 +358,11 @@ def run() -> dict:
         "domain": "[('business_category_id.code', '=', 'finance.payment.apply.pay')]",
         "context": "{'default_type': 'pay', 'default_business_category_code': 'finance.payment.apply.pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}",
     })
-    _reset_action_views(payment_apply_action)
+    result["changes"]["payment_apply_action_views"] = _bind_action_views(
+        payment_apply_action,
+        tree_xmlid="smart_construction_core.view_payment_request_formal_payment_apply_tree",
+        form_xmlid="smart_construction_core.view_payment_request_form",
+    )
 
     receipt_progress_action = env.ref("smart_construction_core.action_sc_receipt_income_engineering_progress")  # noqa: F821
     result["changes"]["receipt_progress_action"] = _write_action(receipt_progress_action, {
@@ -331,7 +374,11 @@ def run() -> dict:
         "domain": "[('business_category_id.code', '=', 'finance.receipt.income.progress')]",
         "context": "{'create': True, 'edit': True, 'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'default_business_category_code': 'finance.receipt.income.progress', 'search_default_group_project': 1}",
     })
-    _reset_action_views(receipt_progress_action)
+    result["changes"]["receipt_progress_action_views"] = _bind_action_views(
+        receipt_progress_action,
+        tree_xmlid="smart_construction_core.view_sc_receipt_income_engineering_progress_formal_tree",
+        form_xmlid="smart_construction_core.view_sc_receipt_income_form",
+    )
 
     payment_receive_action = env.ref("smart_construction_core.action_payment_request_receive")  # noqa: F821
     result["changes"]["payment_receive_action"] = _write_action(payment_receive_action, {
@@ -355,7 +402,11 @@ def run() -> dict:
         "domain": "[('business_category_id.code', '=', 'invoice.output.registration')]",
         "context": "{'create': True, 'edit': True, 'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票登记', 'default_business_category_code': 'invoice.output.registration', 'search_default_group_project': 1}",
     })
-    _reset_action_views(invoice_output_action)
+    result["changes"]["invoice_output_action_views"] = _bind_action_views(
+        invoice_output_action,
+        tree_xmlid="smart_construction_core.view_sc_invoice_registration_output_registration_formal_tree",
+        form_xmlid="smart_construction_core.view_sc_invoice_registration_form",
+    )
 
     salary_menu = env.ref("smart_construction_core.menu_sc_salary_registration_scbs55_formal", raise_if_not_found=False)  # noqa: F821
     salary_action = salary_menu.action if salary_menu and salary_menu.action and salary_menu.action._name == "ir.actions.act_window" else env.ref("smart_construction_core.action_sc_salary_registration")  # noqa: F821
@@ -368,7 +419,27 @@ def run() -> dict:
         "domain": "[('fact_type', '=', 'salary_registration')]",
         "context": "{'default_fact_type': 'salary_registration', 'search_default_salary_registration': 1}",
     })
-    _reset_action_views(salary_action)
+    result["changes"]["salary_registration_action_views"] = _bind_action_views(
+        salary_action,
+        tree_xmlid="smart_construction_core.view_sc_hr_payroll_document_formal_manager_salary_tree",
+        form_xmlid="smart_construction_core.view_sc_hr_payroll_document_form",
+    )
+    canonical_salary_action = env.ref("smart_construction_core.action_sc_salary_registration")  # noqa: F821
+    if canonical_salary_action.id != salary_action.id:
+        result["changes"]["canonical_salary_registration_action"] = _write_action(canonical_salary_action, {
+            "name": "项目管理人员工资登记",
+            "res_model": "sc.hr.payroll.document",
+            "view_mode": "tree,form",
+            "view_id": False,
+            "search_view_id": env.ref("smart_construction_core.view_sc_hr_payroll_document_search").id,  # noqa: F821
+            "domain": "[('fact_type', '=', 'salary_registration')]",
+            "context": "{'default_fact_type': 'salary_registration', 'search_default_salary_registration': 1}",
+        })
+        result["changes"]["canonical_salary_registration_action_views"] = _bind_action_views(
+            canonical_salary_action,
+            tree_xmlid="smart_construction_core.view_sc_hr_payroll_document_formal_manager_salary_tree",
+            form_xmlid="smart_construction_core.view_sc_hr_payroll_document_form",
+        )
 
     labor_usage_ticket_action = env.ref("smart_construction_core.action_sc_labor_usage_ticket")  # noqa: F821
     result["changes"]["labor_usage_ticket_action"] = _write_action(labor_usage_ticket_action, {
@@ -379,7 +450,11 @@ def run() -> dict:
         "domain": "[]",
         "context": "{'search_default_group_project': 1}",
     })
-    labor_usage_ticket_action.write({"view_ids": [(5, 0, 0)]})
+    result["changes"]["labor_usage_ticket_action_views"] = _bind_action_views(
+        labor_usage_ticket_action,
+        tree_xmlid="smart_construction_core.view_sc_labor_usage_tree",
+        form_xmlid="smart_construction_core.view_sc_labor_usage_form",
+    )
 
     labor_usage_casual_action = env.ref("smart_construction_core.action_sc_labor_usage_casual")  # noqa: F821
     result["changes"]["labor_usage_casual_action"] = _write_action(labor_usage_casual_action, {
@@ -390,7 +465,11 @@ def run() -> dict:
         "domain": "[]",
         "context": "{'search_default_group_project': 1}",
     })
-    labor_usage_casual_action.write({"view_ids": [(5, 0, 0)]})
+    result["changes"]["labor_usage_casual_action_views"] = _bind_action_views(
+        labor_usage_casual_action,
+        tree_xmlid="smart_construction_core.view_sc_labor_usage_tree",
+        form_xmlid="smart_construction_core.view_sc_labor_usage_form",
+    )
 
     equipment_usage_shift_action = env.ref("smart_construction_core.action_sc_equipment_usage_shift_user_confirmed")  # noqa: F821
     result["changes"]["equipment_usage_shift_action"] = _write_action(equipment_usage_shift_action, {
@@ -401,7 +480,11 @@ def run() -> dict:
         "domain": "[]",
         "context": "{'search_default_group_project': 1}",
     })
-    equipment_usage_shift_action.write({"view_ids": [(5, 0, 0)]})
+    result["changes"]["equipment_usage_shift_action_views"] = _bind_action_views(
+        equipment_usage_shift_action,
+        tree_xmlid="smart_construction_core.view_sc_equipment_usage_shift_formal_tree",
+        form_xmlid="smart_construction_core.view_sc_equipment_usage_form",
+    )
 
     payment_action = env.ref("smart_construction_core.action_sc_payment_deposit_return")  # noqa: F821
     result["changes"]["payment_deposit_return_action"] = _write_action(payment_action, {
