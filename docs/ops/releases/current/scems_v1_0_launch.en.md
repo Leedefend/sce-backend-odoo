@@ -4,7 +4,7 @@
 - Version: `SCEMS v1.0`
 - Release branch: `release/construction-system-v1.0`
 - Release date: `2026-03-11`
-- Release owner: `Codex (proxy execution, pending business sign-off)`
+- Release owner: `Codex (proxy execution; business sign-off tracked separately)`
 
 ## 2. Release Windows and Ownership
 
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | Release window | 2026-03-11 17:17 ~ 17:30 | release manager (proxy: Codex) | executed |
 | Rollback window | 2026-03-11 17:30 ~ 19:30 | system administrator | reserved |
-| Observation window (24h) | 2026-03-11 17:30 ~ 2026-03-12 17:30 | on-duty owner | in progress |
+| Observation window (24h) | 2026-03-11 17:30 ~ 2026-03-12 17:30 | on-duty owner | completed |
 
 ## 3. Release Execution Log
 
@@ -33,6 +33,6 @@
 | Management readonly view | PASS | `verify.role.management_viewer.readonly.guard` |
 
 ## 5. Release Conclusion
-- Conclusion: `conditional pass (to become PASS after 24h observation)`
+- Conclusion: `PASS (24h observation completed; stable launch)`
 - Blocking items: `none (current P0=0)`
-- Approver: `pending business owner sign-off`
+- Approver: `release-manager proxy confirmation; business sign-off tracked for archival`

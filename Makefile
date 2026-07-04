@@ -4068,6 +4068,11 @@ verify.release.phase2.core_scenarios_closure.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/release_phase2_core_scenarios_closure_guard.py
 	@python3 scripts/verify/release_phase2_core_scenarios_closure_guard.py
 
+.PHONY: verify.release.phase6.launch_closeout.guard
+verify.release.phase6.launch_closeout.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/release_phase6_launch_closeout_guard.py
+	@python3 scripts/verify/release_phase6_launch_closeout_guard.py
+
 .PHONY: verify.product.menu.release.ready
 verify.product.menu.release.ready: guard.prod.forbid \
 	verify.product.menu.catalog \

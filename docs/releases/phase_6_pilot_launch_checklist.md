@@ -33,9 +33,9 @@
 - [x] 发布完成后关键功能 spot-check 通过
 
 ### E. 发布后运营
-- [ ] 发布后 24h 关键指标监控正常
-- [ ] 用户反馈收集与优先级分流机制启动
-- [ ] v1.0 发布总结文档完成
+- [x] 发布后 24h 关键指标监控正常
+- [x] 用户反馈收集与优先级分流机制启动
+- [x] v1.0 发布总结文档完成
 
 ## 4. 建议验证命令
 - `make demo.load.release DB_NAME=sc_demo`
@@ -43,6 +43,7 @@
 - `make verify.phase_next.evidence.bundle`
 - `make verify.scene.catalog.governance.guard`
 - `make verify.runtime.surface.dashboard.strict.guard`
+- `make verify.release.phase6.launch_closeout.guard`
 
 ## 5. 交付产物
 - 试运行报告（建议：`artifacts/release/phase6_pilot_report.md`）

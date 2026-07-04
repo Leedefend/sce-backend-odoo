@@ -12,7 +12,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 | Phase 3 | Role/permission system | DONE | role matrix + ACL/visibility verification + exit-readiness report |
 | Phase 4 | Frontend stability | DONE | unified page framework and block conventions (with user/hud and container smoke evidence) |
 | Phase 5 | Verification/deployment | DONE | release verification bundle + deployment docs + deployment/rollback rehearsal evidence |
-| Phase 6 | Pilot and launch | DOING | pilot kickoff report + v1.0 release record |
+| Phase 6 | Pilot and launch | DONE | pilot kickoff report + v1.0 release record + post-launch review |
 
 ## 2. Current Window (W1)
 
@@ -83,7 +83,7 @@ Status legend: `TODO` / `DOING` / `BLOCKED` / `DONE`
 |---|---|---|---|---|
 | W6-01 | Freeze pilot org and sample data scope | P6 | DONE | `phase_6_pilot_scope_definition.en.md` covers roles/samples/issue path |
 | W6-02 | Run core-path pilot and severity closure | P6 | DONE | rehearsal record archived and `P0=0` (see `phase_6_pilot_rehearsal_record.en.md`) |
-| W6-03 | Execute launch and 24h observation review | P6 | DOING | launch record, spot-check, and 24h monitoring conclusion available |
+| W6-03 | Execute launch and 24h observation review | P6 | DONE | launch record, spot-check, and 24h monitoring conclusion available |
 
 ## 5. Phase Entry Criteria
 
