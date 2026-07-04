@@ -357,7 +357,7 @@ def main() -> int:
                 journey.append({"intent": intent, "ok": ok, "reason": reason})
                 if not ok:
                     raise RuntimeError(f"journey intent failed: {intent} ({reason})")
-            read_models = [] if relaxed_env else [str(x).strip() for x in (fixture.get("read_models") or []) if str(x).strip()]
+            read_models = [str(x).strip() for x in (fixture.get("read_models") or []) if str(x).strip()]
             read_probes = []
             for model in read_models:
                 ok, reason = _probe_model_read(intent_url, token, model)
