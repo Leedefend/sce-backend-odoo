@@ -124,7 +124,7 @@ VERIFY_README_TOKENS = (
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target dependencies",
-    "Enforces release document list, release-control boundary and gate command blocks, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, and promotion order shape",
+    "Enforces release document list, release-control boundary and gate command blocks, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, versioning formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -188,6 +188,12 @@ README_PROMOTION_ORDER = (
     "Run `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`.",
     "Create `v2.0.0-rc1` after RC evidence passes.",
     "Create `v2.0.0` after formal release signoff.",
+)
+
+VERSIONING_FORMAL_RELEASE_ITEMS = (
+    "gate baseline: `gate-release-v2.0`",
+    "release candidates: `v2.0.0-rc1`, `v2.0.0-rc2` only when blocker fixes require a new candidate",
+    "formal release: `v2.0.0`",
 )
 
 VERSIONING_PROMOTION_ORDER = (
@@ -592,6 +598,22 @@ def _contains_release_index_planned_items(
         )
 
 
+def _contains_versioning_formal_release_items(errors: list[str]) -> None:
+    if not VERSIONING.is_file():
+        errors.append(f"missing versioning doc: {VERSIONING.relative_to(ROOT).as_posix()}")
+        return
+    text = VERSIONING.read_text(encoding="utf-8")
+    actual_items = _list_items_after_heading(text, "## 8) v2.0.0 Formal Release Line")
+    if actual_items is None:
+        errors.append("versioning doc missing section: ## 8) v2.0.0 Formal Release Line")
+        return
+    if actual_items != VERSIONING_FORMAL_RELEASE_ITEMS:
+        errors.append(
+            "versioning formal release items mismatch: "
+            f"expected={VERSIONING_FORMAL_RELEASE_ITEMS!r} actual={actual_items!r}"
+        )
+
+
 def _contains_promotion_order(path: Path, marker: str, expected_order: tuple[str, ...], errors: list[str]) -> None:
     if not path.is_file():
         errors.append(f"missing promotion-order doc: {path.relative_to(ROOT).as_posix()}")
@@ -654,6 +676,7 @@ def main() -> int:
         RELEASE_INDEX_ZH_PLANNED_ITEMS,
         errors,
     )
+    _contains_versioning_formal_release_items(errors)
     _contains_promotion_order(CONTROL_README, "## Promotion Order", README_PROMOTION_ORDER, errors)
     _contains_promotion_order(VERSIONING, "Promotion order:", VERSIONING_PROMOTION_ORDER, errors)
     _contains_makefile_targets(errors)
