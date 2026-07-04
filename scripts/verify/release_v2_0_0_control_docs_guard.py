@@ -127,6 +127,16 @@ VERIFY_README_TOKENS = (
     "final release signoff requires the recorded prod-sim acceptance run directory",
 )
 
+README_RELEASE_DOCUMENTS = (
+    "Versioning: `docs/ops/versioning.md`",
+    "Release index: `docs/ops/releases/README.md`",
+    "Release index (zh): `docs/ops/releases/README.zh.md`",
+    "Verify catalog: `docs/ops/verify/README.md`",
+    "Release notes: `docs/ops/release_notes_v2.0.0.md`",
+    "Release checklist: `docs/ops/release_checklist_v2.0.0.md`",
+    "Evidence manifest: `docs/ops/releases/v2.0.0/evidence_manifest.md`",
+)
+
 MAKEFILE_TARGET_PREREQS = (
     (
         "verify.release.v2_0_0.preflight",
@@ -208,6 +218,37 @@ def _makefile_prereqs(text: str, target: str) -> tuple[str, ...] | None:
     return None
 
 
+def _list_items_after_heading(text: str, heading: str) -> tuple[str, ...] | None:
+    lines = text.splitlines()
+    try:
+        start = lines.index(heading)
+    except ValueError:
+        return None
+    items: list[str] = []
+    for line in lines[start + 1 :]:
+        if line.startswith("## "):
+            break
+        if line.startswith("- "):
+            items.append(line[2:].strip())
+    return tuple(items)
+
+
+def _contains_readme_release_documents(errors: list[str]) -> None:
+    if not CONTROL_README.is_file():
+        errors.append(f"missing release-control README: {CONTROL_README.relative_to(ROOT).as_posix()}")
+        return
+    text = CONTROL_README.read_text(encoding="utf-8")
+    actual_documents = _list_items_after_heading(text, "## Release Documents")
+    if actual_documents is None:
+        errors.append("release-control README missing section: ## Release Documents")
+        return
+    if actual_documents != README_RELEASE_DOCUMENTS:
+        errors.append(
+            "release-control README documents mismatch: "
+            f"expected={README_RELEASE_DOCUMENTS!r} actual={actual_documents!r}"
+        )
+
+
 def _contains_makefile_targets(errors: list[str]) -> None:
     if not MAKEFILE.is_file():
         errors.append(f"missing Makefile: {MAKEFILE.relative_to(ROOT).as_posix()}")
@@ -233,6 +274,7 @@ def main() -> int:
     _contains_all(RELEASE_INDEX_EN, RELEASE_INDEX_EN_TOKENS, errors)
     _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
     _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
+    _contains_readme_release_documents(errors)
     _contains_makefile_targets(errors)
     if errors:
         print("[release_v2_0_0_control_docs_guard] FAIL")
