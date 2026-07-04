@@ -3404,6 +3404,12 @@ verify.business.capability_baseline.guard: guard.prod.forbid verify.scene.catalo
 .PHONY: verify.system.capability_baseline.report
 verify.system.capability_baseline.report: guard.prod.forbid
 	@python3 scripts/verify/system_capability_baseline_report.py
+	@python3 scripts/verify/system_capability_baseline_report_schema_guard.py
+
+.PHONY: verify.system.capability_baseline.report.schema.guard
+verify.system.capability_baseline.report.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/system_capability_baseline_report_schema_guard.py
+	@python3 scripts/verify/system_capability_baseline_report_schema_guard.py
 
 verify.contract.evidence.export: guard.prod.forbid audit.intent.surface verify.scene.contract.shape verify.business.capability_baseline.guard verify.contract.scene_coverage.brief verify.backend.architecture.full.report.schema.guard
 	@python3 scripts/contract/export_evidence.py

@@ -175,6 +175,9 @@
 - `make verify.intent.canonical_alias.snapshot.schema.guard`
   - Verifies the intent canonical/alias snapshot artifact shape.
   - Enforces source identity, canonical/alias counts, unique sorted rows, and canonical self-reference rules.
+- `make verify.system.capability_baseline.report.schema.guard`
+  - Verifies the system capability baseline JSON/MD report shape.
+  - Enforces baseline metadata, summary/check count consistency, sorted checks, and required Markdown sections.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
