@@ -94,6 +94,7 @@ results = [
     fix_records("sc.expense.claim", expense_claim_creator),
     fix_records("sc.receipt.income", receipt_income_creator),
 ]
+env.cr.commit()  # noqa: F821
 result = OrderedDict(
     [
         ("status", "PASS"),
