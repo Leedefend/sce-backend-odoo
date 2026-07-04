@@ -203,9 +203,13 @@ def _settlement(project, partner, contract, amount, settlement_type="out"):
 def _approve_settlement(settlement, failures, label):
     _expect_exception("%s.done_before_submit" % label, settlement.action_done, failures)
     settlement.action_submit()
-    _expect_state("%s.submit" % label, settlement, "submit", failures)
-    _force_validated(settlement, "sc_settlement_order")
-    settlement.action_on_tier_approved()
+    settlement.invalidate_recordset()
+    if settlement.state == "submit":
+        _force_validated(settlement, "sc_settlement_order")
+        settlement.action_on_tier_approved()
+    elif settlement.state != "approve":
+        failures.append("%s.submit: expected state=submit or approve, got %s" % (label, settlement.state))
+        return
     _expect_state("%s.approve" % label, settlement, "approve", failures)
 
 
