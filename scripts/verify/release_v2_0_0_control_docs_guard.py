@@ -122,7 +122,7 @@ VERIFY_README_TOKENS = (
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target dependencies",
-    "Enforces release document list, rollback list, release-index planned entries, release-notes tag plan and minimum verification commands, and promotion order shape",
+    "Enforces release document list, release-control boundary and gate command blocks, rollback list, release-index planned entries, release-notes tag plan and minimum verification commands, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -138,6 +138,14 @@ README_RELEASE_DOCUMENTS = (
     "Evidence manifest: `docs/ops/releases/v2.0.0/evidence_manifest.md`",
 )
 
+README_BOUNDARY_EXCLUSIONS = (
+    "create Git tags",
+    "deploy production",
+    "reset or replace databases",
+    "change public intent semantics",
+    "change frontend runtime behavior",
+)
+
 README_ROLLBACK_ITEMS = (
     "remove `docs/ops/releases/v2.0.0/`",
     "remove `docs/ops/release_notes_v2.0.0.md`",
@@ -150,6 +158,21 @@ README_ROLLBACK_ITEMS = (
     "restore `docs/ops/releases/README.md` edits",
     "restore `docs/ops/releases/README.zh.md` edits",
     "restore `docs/ops/verify/README.md` edits",
+)
+
+README_REQUIRED_GATES_COMMANDS = (
+    "make verify.release.v2_0_0.preflight",
+    "git diff --check",
+)
+
+README_SUPPORTING_GATES_COMMANDS = (
+    "make verify.system.capability_baseline.report",
+    "make verify.backend.contract.closure.mainline",
+    "make verify.restricted",
+)
+
+README_HARDENING_GATE_COMMANDS = (
+    "make verify.release.v2_0_0.product_hardening",
 )
 
 README_PROMOTION_ORDER = (
@@ -386,6 +409,44 @@ def _contains_readme_release_documents(errors: list[str]) -> None:
         )
 
 
+def _contains_readme_boundaries(errors: list[str]) -> None:
+    if not CONTROL_README.is_file():
+        errors.append(f"missing release-control README: {CONTROL_README.relative_to(ROOT).as_posix()}")
+        return
+    text = CONTROL_README.read_text(encoding="utf-8")
+    actual_boundaries = _list_items_after_heading(text, "It does not:")
+    if actual_boundaries is None:
+        errors.append("release-control README missing boundary marker: It does not:")
+        return
+    if actual_boundaries != README_BOUNDARY_EXCLUSIONS:
+        errors.append(
+            "release-control README boundary exclusions mismatch: "
+            f"expected={README_BOUNDARY_EXCLUSIONS!r} actual={actual_boundaries!r}"
+        )
+
+
+def _contains_readme_gate_commands(errors: list[str]) -> None:
+    if not CONTROL_README.is_file():
+        errors.append(f"missing release-control README: {CONTROL_README.relative_to(ROOT).as_posix()}")
+        return
+    text = CONTROL_README.read_text(encoding="utf-8")
+    expected_blocks = (
+        ("## Required Gates", README_REQUIRED_GATES_COMMANDS),
+        ("Supporting gates:", README_SUPPORTING_GATES_COMMANDS),
+        ("Formal-release hardening gate:", README_HARDENING_GATE_COMMANDS),
+    )
+    for marker, expected_commands in expected_blocks:
+        actual_commands = _command_block_after_marker(text, marker)
+        if actual_commands is None:
+            errors.append(f"release-control README missing gate command block after marker: {marker}")
+            continue
+        if actual_commands != expected_commands:
+            errors.append(
+                "release-control README gate command block mismatch: "
+                f"{marker} expected={expected_commands!r} actual={actual_commands!r}"
+            )
+
+
 def _contains_readme_rollback_items(errors: list[str]) -> None:
     if not CONTROL_README.is_file():
         errors.append(f"missing release-control README: {CONTROL_README.relative_to(ROOT).as_posix()}")
@@ -497,6 +558,8 @@ def main() -> int:
     _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
     _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
     _contains_readme_release_documents(errors)
+    _contains_readme_boundaries(errors)
+    _contains_readme_gate_commands(errors)
     _contains_readme_rollback_items(errors)
     _contains_notes_minimum_verification(errors)
     _contains_notes_tag_plan(errors)
