@@ -124,23 +124,44 @@ VERIFY_README_TOKENS = (
     "final release signoff requires the recorded prod-sim acceptance run directory",
 )
 
-MAKEFILE_TOKENS = (
-    "verify.release.v2_0_0.preflight: guard.prod.forbid \\",
-    "verify.system.capability_baseline.report \\",
-    "verify.platform.release_policy.runtime \\",
-    "verify.backend.contract.closure.mainline \\",
-    "verify.restricted",
-    "verify.release.v2_0_0.product_hardening: guard.prod.forbid verify.product.release.ready",
-    "verify.release.v2_0_0.governance.guard: guard.prod.forbid \\",
-    "verify.release.v2_0_0.control_docs.guard \\",
-    "verify.release.v2_0_0.evidence_manifest.guard \\",
-    "verify.release.v2_0_0.checklist.guard",
-    "verify.release.v2_0_0.formal_evidence.schema.guard: guard.prod.forbid \\",
-    "verify.release.v2_0_0.governance.guard \\",
-    "verify.bundle.installation.ready.schema.guard \\",
-    "verify.platform.performance.smoke.schema.guard \\",
-    "verify.dev.acceptance.release.schema.guard \\",
-    "verify.prod.sim.acceptance.evidence.schema.guard",
+MAKEFILE_TARGET_PREREQS = (
+    (
+        "verify.release.v2_0_0.preflight",
+        (
+            "guard.prod.forbid",
+            "verify.system.capability_baseline.report",
+            "verify.platform.release_policy.runtime",
+            "verify.backend.contract.closure.mainline",
+            "verify.restricted",
+        ),
+    ),
+    (
+        "verify.release.v2_0_0.product_hardening",
+        (
+            "guard.prod.forbid",
+            "verify.product.release.ready",
+        ),
+    ),
+    (
+        "verify.release.v2_0_0.governance.guard",
+        (
+            "guard.prod.forbid",
+            "verify.release.v2_0_0.control_docs.guard",
+            "verify.release.v2_0_0.evidence_manifest.guard",
+            "verify.release.v2_0_0.checklist.guard",
+        ),
+    ),
+    (
+        "verify.release.v2_0_0.formal_evidence.schema.guard",
+        (
+            "guard.prod.forbid",
+            "verify.release.v2_0_0.governance.guard",
+            "verify.bundle.installation.ready.schema.guard",
+            "verify.platform.performance.smoke.schema.guard",
+            "verify.dev.acceptance.release.schema.guard",
+            "verify.prod.sim.acceptance.evidence.schema.guard",
+        ),
+    ),
 )
 
 FORBIDDEN_TOKENS = (
@@ -165,6 +186,42 @@ def _contains_all(path: Path, tokens: tuple[str, ...], errors: list[str]) -> Non
             errors.append(f"{path.relative_to(ROOT).as_posix()} contains forbidden token: {token}")
 
 
+def _makefile_prereqs(text: str, target: str) -> tuple[str, ...] | None:
+    prefix = f"{target}:"
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if not line.startswith(prefix):
+            continue
+        chunks = [line[len(prefix):].strip()]
+        cursor = index
+        while chunks[-1].endswith("\\"):
+            chunks[-1] = chunks[-1][:-1].strip()
+            cursor += 1
+            if cursor >= len(lines):
+                return ()
+            chunks.append(lines[cursor].strip())
+        prereq_text = " ".join(chunk for chunk in chunks if chunk)
+        return tuple(prereq_text.split())
+    return None
+
+
+def _contains_makefile_targets(errors: list[str]) -> None:
+    if not MAKEFILE.is_file():
+        errors.append(f"missing Makefile: {MAKEFILE.relative_to(ROOT).as_posix()}")
+        return
+    text = MAKEFILE.read_text(encoding="utf-8")
+    for target, expected_prereqs in MAKEFILE_TARGET_PREREQS:
+        actual_prereqs = _makefile_prereqs(text, target)
+        if actual_prereqs is None:
+            errors.append(f"Makefile missing target: {target}")
+            continue
+        if actual_prereqs != expected_prereqs:
+            errors.append(
+                "Makefile target prereqs mismatch: "
+                f"{target} expected={expected_prereqs!r} actual={actual_prereqs!r}"
+            )
+
+
 def main() -> int:
     errors: list[str] = []
     _contains_all(CONTROL_README, README_TOKENS, errors)
@@ -173,7 +230,7 @@ def main() -> int:
     _contains_all(RELEASE_INDEX_EN, RELEASE_INDEX_EN_TOKENS, errors)
     _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
     _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
-    _contains_all(MAKEFILE, MAKEFILE_TOKENS, errors)
+    _contains_makefile_targets(errors)
     if errors:
         print("[release_v2_0_0_control_docs_guard] FAIL")
         for error in errors:
