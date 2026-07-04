@@ -98,5 +98,9 @@ Promotion order:
 6. Create `v2.0.0-rc1` only after RC evidence passes.
 7. Create `v2.0.0` only after prod-sim acceptance and release checklist signoff.
 
+Recorded sample artifact directories may validate schema shape only; final
+release signoff requires the recorded prod-sim acceptance run directory for that
+release candidate.
+
 Production deployment is not implied by creating `v2.0.0`; deployment remains a
 separate supervised operation under `docs/ops/production_deployment_runbook_v1.md`.
