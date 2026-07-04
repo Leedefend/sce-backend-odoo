@@ -80,6 +80,7 @@
                         <group string="客户身份" col="3">
                             <field name="name" string="客户名称"/>
                             <field name="company_type" string="客户类型"/>
+                            <field name="is_company" string="企业/组织"/>
                             <field name="active" string="启用"/>
                             <field name="user_id" string="负责人"/>
                             <field name="category_id" widget="many2many_tags" string="标签"/>
@@ -289,6 +290,7 @@
                         <group string="供应商身份" col="3">
                             <field name="name" string="供应商名称"/>
                             <field name="company_type" string="主体类型"/>
+                            <field name="is_company" string="企业/组织"/>
                             <field name="active" string="启用"/>
                             <field name="sc_supplier_type_ids" widget="many2many_tags" string="业务类型"/>
                             <field name="sc_supplier_type_label" string="供应商类型" readonly="1"/>

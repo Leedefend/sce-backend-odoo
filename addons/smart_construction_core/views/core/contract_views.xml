@@ -294,6 +294,7 @@
                             <field name="legacy_document_no"/>
                             <field name="document_status"/>
                             <field name="subject"/>
+                            <field name="business_category_id"/>
                             <field name="type" readonly="1" invisible="1"/>
                             <field name="project_id" required="1"/>
                             <field name="operation_strategy" readonly="1"/>
