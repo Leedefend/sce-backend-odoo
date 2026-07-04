@@ -103,6 +103,10 @@ run_static_check "python_compile_productization_guards" \
     scripts/verify/finance_counterparty_position_summary_audit.py
 run_static_check "user_confirmed_62_business_entry_integration_matrix" \
   python3 scripts/verify/user_confirmed_62_business_entry_integration_matrix.py
+run_odoo_shell_json_artifact_check "user_business_data_portrait" \
+  scripts/verify/user_business_data_portrait.py \
+  "artifacts/user_business_data_portrait.${DB_NAME}.json" \
+  real_user_business_data_portrait
 run_static_check "user_business_productization_baseline_guard" \
   python3 scripts/verify/user_business_productization_baseline_guard.py
 
