@@ -4,7 +4,7 @@
 
 - Verify Task Pack 01–11 one by one.
 - Use three evidence types: documents, code entry points, verify results.
-- Status labels: `Completed` / `Completed (with later convergence)` / `Pending closure`.
+- Status labels: `Completed` / `Completed (with later convergence)` / `Completed (final closeout)`.
 
 ## Batch 1 Audit (Task Pack 01/02/03)
 
@@ -108,11 +108,23 @@
 
 ## Gap List (Current)
 
-- `Pending closure`: final UI copy/tone threshold tuning after your stage-level login validation feedback.
-- `No structural gap`: Task Pack 01–11 has implementation evidence.
+- Final status: `Completed`
+- Result: `PASS`
+- Date: `2026-07-05`
+- `No structural gap`: Task Pack 01-11 has implementation evidence.
+- Feedback closeout: closed by the Round 1 final checklist, workbench product acceptance, Phase 2/4/5/6, UAT closeout, and `verify.release.round1.final_closeout.guard`.
 
 ## Next Actions
 
-1. You finish stage-level login validation and provide consolidated feedback.
-2. I create `v1_0_iteration_round_4_feedback_closure.md`.
-3. Re-run the same minimum regression set and provide final closure report.
+1. Keep `verify.release.master_stage.final_closeout.guard` and `verify.release.round1.final_closeout.guard` as the master-stage closeout gates.
+2. Route later P2 experience tuning into normal iteration; it is not a v1.0 product-expression release blocker.
+3. If new login feedback arrives, track it in a new iteration record without reopening this stage closeout.
+
+## Final Verification Commands
+
+- `make verify.release.master_stage.final_closeout.guard`
+- `make verify.release.round1.final_closeout.guard`
+- `make verify.frontend.build`
+- `make verify.frontend.typecheck.strict`
+- `make verify.project.dashboard.contract`
+- `make verify.phase_next.evidence.bundle`

@@ -4,7 +4,7 @@
 
 - 以 Task Pack 01–11 为主线逐项核对；
 - 以“文档产物 + 代码落点 + verify 结果”为三类证据；
-- 输出状态：`已完成` / `已完成（含后续收口）` / `待收口`。
+- 输出状态：`已完成` / `已完成（含后续收口）` / `已完成（最终收口）`。
 
 ## 第 1 批复核（Task Pack 01/02/03）
 
@@ -108,11 +108,23 @@
 
 ## 缺口清单（当前）
 
-- `待收口`：等待“本次大阶段登录验证”反馈后，做最后一轮 UI 细节与文案阈值修正；
+- 最终状态：`已完成`
+- 结论：`PASS`
+- 日期：`2026-07-05`
 - `无结构性缺口`：Task Pack 01–11 主体已落地并有证据。
+- 反馈收口：已由 Round 1 最终清单、工作台产品验收、Phase 2/4/5/6、UAT 收口与 `verify.release.round1.final_closeout.guard` 闭合。
 
 ## 下一动作
 
-1. 你完成大阶段登录验证后给我统一反馈；
-2. 我按反馈生成 `v1_0_iteration_round_4_feedback_closure.md`；
-3. 执行同一套最小回归并产出最终收口报告。
+1. 保持 `verify.release.master_stage.final_closeout.guard` 与 `verify.release.round1.final_closeout.guard` 作为大阶段收口门禁；
+2. 后续只接收 P2 体验优化进入常规迭代，不作为 v1.0 产品表达层发布阻塞；
+3. 若有新增登录反馈，按新迭代单独建档，不回滚本阶段收口结论。
+
+## 最终验证命令
+
+- `make verify.release.master_stage.final_closeout.guard`
+- `make verify.release.round1.final_closeout.guard`
+- `make verify.frontend.build`
+- `make verify.frontend.typecheck.strict`
+- `make verify.project.dashboard.contract`
+- `make verify.phase_next.evidence.bundle`

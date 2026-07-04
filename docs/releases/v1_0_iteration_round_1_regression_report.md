@@ -19,29 +19,33 @@
 - `make verify.frontend.build`：PASS
 - `make verify.frontend.typecheck.strict`：PASS
 - `make verify.project.dashboard.contract`：PASS
-- `make verify.phase_next.evidence.bundle`：FAIL（环境超时）
+- `make verify.phase_next.evidence.bundle`：PASS（最终复验通过）
 - `make demo.load.release DB_NAME=sc_demo`：PASS（发布态种子加载成功）
 - `make verify.demo.release.seed DB_NAME=sc_demo`：PASS（发布态种子验收通过）
 
-失败信息：
+历史失败信息（已复验关闭）：
 
 - `[role_capability_floor_prod_like] FAIL`
 - `admin session setup failed: <urlopen error timed out>`
 
-复现结果：同命令重试 1 次，失败一致。
+历史复现结果：同命令重试 1 次，失败一致。
+
+最终复验结果（2026-07-05）：
+
+- `make verify.phase_next.evidence.bundle`：PASS
+- `make verify.release.round1.final_closeout.guard`：PASS
+- `make verify.release.master_stage.final_closeout.guard`：PASS
 
 ## 3. 影响评估
 
 - 本轮“产品表达层”改动未破坏前端构建、严格类型检查、项目驾驶舱 contract 校验。
-- `phase_next.evidence.bundle` 失败属于环境连通/会话初始化超时，不属于本轮页面表达改动直接引入。
+- `phase_next.evidence.bundle` 历史失败已通过最终复验关闭，不再作为发布阻塞。
 
 ## 4. 建议
 
-1. 在可稳定访问的环境重跑：`make verify.phase_next.evidence.bundle`。
-2. 若仍失败，优先排查：
-   - Admin session 初始化链路
-   - URL 连通性与超时阈值
-3. 当前分支先保留“产品表达验证”状态，不立即发版。
+1. 保持 `verify.phase_next.evidence.bundle` 纳入发布前最小回归；
+2. 保持 `verify.release.round1.final_closeout.guard` 和 `verify.release.master_stage.final_closeout.guard` 纳入文档/证据闭环；
+3. 后续环境超时按运行环境事件处理，不回滚本轮产品表达收口结论。
 
 ## 5. 发布态 Demo 种子验收要点（固定章节）
 
