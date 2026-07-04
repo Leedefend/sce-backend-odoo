@@ -68,6 +68,7 @@ def main() -> int:
         "v-else-if=\"field.type === 'one2many'\"",
         "adapter.one2manyCanCreate(field.name)",
         "adapter.addOne2manyRow(field.name)",
+        "adapter.one2manyCreateLabel(field.name, field.label)",
         "adapter.one2manyColumns(field.name)",
         "adapter.setOne2manyRowField(field.name, row.key, column",
         "adapter.removeOne2manyRow(field.name, row.key)",
@@ -80,7 +81,7 @@ def main() -> int:
 
     adapter_markers = [
         "one2manyCanCreate: (name: string) => boolean;",
-        "one2manyCreateLabel: (name: string) => string;",
+        "one2manyCreateLabel: (name: string, fieldLabel?: string) => string;",
         "addOne2manyRow: (name: string) => void;",
         "setOne2manyRowField: (name: string, rowKey: string, column: RelationFieldColumn, value: unknown) => void;",
         "removeOne2manyRow: (name: string, rowKey: string) => void;",

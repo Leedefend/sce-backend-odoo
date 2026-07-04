@@ -2628,6 +2628,10 @@ verify.frontend.view_type_render_coverage.guard: guard.prod.forbid
 verify.frontend.view_type_contract_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/view_type_contract_semantic_guard.py
 
+.PHONY: verify.frontend.widget_richness.post_ga.guard
+verify.frontend.widget_richness.post_ga.guard: guard.prod.forbid verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.unified_page_contract.v2.web_consumer
+	@echo "[OK] verify.frontend.widget_richness.post_ga.guard done"
+
 verify.frontend.search_groupby_savedfilters.guard: guard.prod.forbid
 	@python3 scripts/verify/search_groupby_savedfilters_guard.py
 
