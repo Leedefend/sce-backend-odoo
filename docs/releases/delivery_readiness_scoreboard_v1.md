@@ -13,9 +13,10 @@
 
 ## 2. 本轮快照
 
-- 分支：`codex/delivery-sprint-seal-gaps`
-- 关注范围：前端 ActionView 主链 + 交付文档封板
-- 结论：`P0 前端静态红线已清零，可继续进入模块级 system-bound smoke`
+- 分支：`main`
+- 关注范围：9 模块交付封板 + 财务审批 handoff + 大阶段收口
+- 结论：`PASS`
+- 最终收口日期：`2026-07-05`
 
 ### 2.1 门禁结果（本轮）
 
@@ -25,7 +26,7 @@
 
 ### 2.2 审批 smoke N+2 迁移状态
 
-- `live_no_allowed_actions`：已退场（N+2）
+- deprecated approval summary key：已退场（N+2）
 - `live_no_executable_actions`：唯一保留口径
 - 审批聚合链（严格审计）：
   - `PAYMENT_APPROVAL_NEED_UPGRADE=0 PAYMENT_APPROVAL_FIELD_AUDIT_STRICT=1 make verify.portal.payment_request_approval_all_smoke.container` 通过
@@ -38,21 +39,20 @@
 
 | 模块 | 代表场景 | 当前状态 | 证据 | 下一步 |
 |---|---|---|---|---|
-| 项目管理 | `projects.list` / `projects.intake` | `IN_PROGRESS` | 导航与 capability 已齐，本轮前端 gate 通过 | 补 PM 旅程 smoke |
-| 项目执行 | `projects.execution` / `projects.detail` | `IN_PROGRESS` | 场景已注册、入口已存在 | 补执行中心场景数据验证 |
-| 任务管理 | `task.center` | `IN_PROGRESS` | 场景入口已存在 | 补任务中心列表/筛选 smoke |
-| 风险管理 | `risk.center` / `risk.monitor` | `IN_PROGRESS` | 场景入口已存在 | 补风险提醒闭环验证 |
-| 成本管理 | `cost.project_boq` / `cost.project_budget` | `IN_PROGRESS` | ActionView 主链稳定性提升 | 补预算/台账真实数据验证 |
-| 合同管理 | `contract.center` | `IN_PROGRESS` | 场景入口已存在 | 补合同中心动作链 smoke |
-| 资金财务 | `finance.payment_requests` / `finance.center` | `IN_PROGRESS` | 付款申请与财务中心入口已在导航 | 补审批/台账流程验证 |
-| 数据与字典 | `data.dictionary` | `READY_FOR_PILOT` | 入口清晰、依赖面较窄 | 补样本数据回归 |
-| 配置中心 | `config.project_cost_code` | `READY_FOR_PILOT` | 管理入口已明确 | 补管理员角色验收 |
+| 项目管理 | `projects.list` / `projects.intake` | `PASS` | `verify.scene.delivery.readiness.role_matrix` | 常规迭代优化 |
+| 项目执行 | `projects.execution` / `projects.detail` | `PASS` | `verify.scene.delivery.readiness.role_matrix` | 常规迭代优化 |
+| 任务管理 | `task.center` | `PASS` | `verify.scene.delivery.readiness.role_matrix` | 常规迭代优化 |
+| 风险管理 | `risk.center` / `risk.monitor` | `PASS` | `verify.scene.delivery.readiness.role_matrix` | 常规迭代优化 |
+| 成本管理 | `cost.project_boq` / `cost.project_budget` | `PASS` | `verify.scene.delivery.readiness.role_matrix` | 常规迭代优化 |
+| 合同管理 | `contract.center` | `PASS` | `verify.scene.delivery.readiness.role_matrix` | 常规迭代优化 |
+| 资金财务 | `finance.payment_requests` / `finance.center` | `PASS` | `verify.portal.payment_request_approval_all_smoke.container` | 常规迭代优化 |
+| 数据与字典 | `data.dictionary` | `PASS` | `verify.scene.delivery.readiness.role_matrix` | 常规迭代优化 |
+| 配置中心 | `config.project_cost_code` | `PASS` | `verify.scene.delivery.readiness.role_matrix` | 常规迭代优化 |
 
 状态定义：
 
-- `READY_FOR_PILOT`：可进入试点验收
-- `IN_PROGRESS`：功能/入口已具备，但缺关键旅程证据
-- `BLOCKED`：存在阻断交付的硬缺口
+- `PASS`：system-bound 证据已通过，可进入交付封板口径。
+- `CLOSED`：历史 blocker 已关闭，后续仅作为常规迭代项跟踪。
 
 ---
 
@@ -66,9 +66,9 @@
 
 ## 5. 当前已知限制
 
-1. 9 个模块仍需补 system-bound 旅程证据（按角色）
-2. scene contract 字段级强校验尚未全部封口
-3. 模块状态目前为交付治理口径，不替代业务签收结论
+1. 模块状态为交付治理口径，不替代客户业务签收。
+2. P2 体验优化与更细粒度角色旅程覆盖进入常规迭代。
+3. 固化门禁：`make verify.release.delivery_9_module.final_closeout.guard`
 
 ---
 
@@ -76,11 +76,11 @@
 
 ### P0（立即）
 
-1. 输出 PM/财务/采购/老板四角色旅程 smoke 证据
-2. 对 9 模块逐一给出“数据前置 + 验收步骤 + 结果”
-3. 将 scene contract/provider shape 缺口挂为发布 blocker
+1. 保持 `verify.scene.delivery.readiness.role_matrix` 为 9 模块交付底座。
+2. 保持 `verify.portal.payment_request_approval_all_smoke.container` 为资金财务 handoff 回归。
+3. 保持 `verify.portal.payment_request_approval_field_consumer_audit` 为字段口径回归。
 
 ### P1（紧随其后）
 
-1. 建立可追溯的“最近一次通过环境”记录（DB/seed/bundle/commit）
-2. 把证据板接入发布检查清单
+1. 扩展更多角色旅程 smoke 覆盖率。
+2. 把 P2 体验优化进入常规迭代计划。

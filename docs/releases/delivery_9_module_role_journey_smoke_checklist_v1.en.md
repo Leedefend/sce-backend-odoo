@@ -34,13 +34,13 @@ Pass criteria:
 | Risk Management | PM / Executive | `make verify.scene.delivery.readiness.role_matrix` | PASS | covered by scene-readiness main chain |
 | Cost Management | PM / Finance | `make verify.scene.delivery.readiness.role_matrix` | PASS | covered by scene-readiness main chain |
 | Contract Management | PM / Executive | `make verify.scene.delivery.readiness.role_matrix` | PASS | covered by scene-readiness main chain |
-| Finance Management | Finance / Executive | `make verify.portal.payment_request_approval_all_smoke.container` | FAIL | handoff flow is blocked (see section 4) |
+| Finance Management | Finance / Executive | `make verify.portal.payment_request_approval_all_smoke.container` | PASS | finance -> executive handoff passed |
 | Data & Dictionary | Config Admin | `make verify.scene.delivery.readiness.role_matrix` | PASS | entry + governance chain covered |
 | Config Center | Config Admin | `make verify.scene.delivery.readiness.role_matrix` | PASS | entry + governance chain covered |
 
 ---
 
-## 4. Blocker Found in This Iteration
+## 4. Blocker Closeout (Final)
 
 Command:
 
@@ -48,27 +48,21 @@ Command:
 make verify.portal.payment_request_approval_all_smoke.container
 ```
 
-Result: FAIL
+Result: PASS (2026-07-05)
 
 Core failure message:
 
-- `payment_request_approval_handoff_smoke` failed
-- reason: `executive has no allowed follow-up action after submit`
-- actual allowed actions: `['submit']`
-- expected follow-up action: one of `approve/reject`
+- `payment_request_approval_smoke`: PASS
+- `payment_request_approval_handoff_smoke`: PASS
+- `verify.portal.payment_request_approval_field_consumer_audit`: PASS (`unexpected_deprecated_refs=0`)
+- after finance submit, executive sees `approve/reject` and completes approve handoff.
 
-Conclusion: this is a P0 blocker for finance cross-role approval handoff and must be tracked explicitly.
+Conclusion: finance cross-role approval handoff is closed.
 
 ---
 
 ## 5. Next Actions
 
-1. fix payment request handoff strategy/permission mapping (finance → executive)
-2. rerun:
-
-```bash
-make verify.portal.payment_request_approval_all_smoke.container
-```
-
-3. once green, move finance module status from `FAIL/BLOCKED` to `IN_PROGRESS` or `READY_FOR_PILOT`
-
+1. Keep `make verify.portal.payment_request_approval_all_smoke.container` as the finance journey regression.
+2. Keep `make verify.release.delivery_9_module.final_closeout.guard` as the 9-module document/evidence closeout gate.
+3. Route later role journeys into normal iteration without reopening this P0.

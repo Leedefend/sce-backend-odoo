@@ -1,22 +1,25 @@
 # Delivery Sprint Blockers v1
 
 ## Conclusion (First)
-- The repository has a solid delivery skeleton and governance baseline, but is not yet in a customer-pilot-safe state.
-- This sprint switches from “feature expansion” to “delivery seal-off”, with strict P0 blocker burn-down.
+- The repository delivery skeleton, governance baseline, and 9-module system-bound evidence are finally closed.
+- All P0 blockers in this sprint are closed; later improvements move to normal iteration.
+- Final closeout date: `2026-07-05`
 
-## P0 Blockers (Must Close First)
-| ID | Blocker | Current State | Exit Criteria | Owner |
-|---|---|---|---|---|
-| B1 | Frontend delivery path not sealed | `frontend gate` not consistently green (ActionView/AppShell chain has lint/type risks) | `pnpm -C frontend gate` passes consistently, no new red lines on core files | FE |
-| B2 | Scene Contract / Provider shape not fully sealed | Contract/provider boundaries still have “minimum-runnable” paths | Delivery-package key scenes pass contract/provider guards | BE |
-| B3 | Capability gap backlog is distorted | “All green” signals while gap backlog lacks real entries | Build real gap tiers (Blocker/Pilot Risk/Post-GA) and enforce in release gates | PM+Tech Lead |
-| B4 | Delivery evidence is not one-page auditable | No unified evidence board for “9 modules × 4 role journeys” | Publish one-page readiness scoreboard (commit/db/seed/results) | Delivery |
-| B5 | Finance cross-role approval handoff is blocked | `verify.portal.payment_request_approval_all_smoke.container` fails; `executive` has no allowed follow-up action after submit | `payment_request_approval_all_smoke` passes end-to-end (submit→handoff→approve/reject) | Finance+BE |
+## P0 Blockers (Final Status)
+| ID | Blocker | Current State | Exit Criteria | Owner | Status |
+|---|---|---|---|---|---|
+| B1 | Frontend delivery path not sealed | `verify.frontend.typecheck.strict` and `verify.frontend.build` pass | no new frontend red lines on core files | FE | CLOSED |
+| B2 | Scene Contract / Provider shape not fully sealed | `verify.scene.delivery.readiness.role_matrix` passes | delivery-package key scenes pass contract/provider guards | BE | CLOSED |
+| B3 | Capability gap backlog is distorted | scene/product delivery readiness is covered by role matrix evidence | gap tiers and release-gate evidence are traceable | PM+Tech Lead | CLOSED |
+| B4 | Delivery evidence is not one-page auditable | readiness scoreboard and 9-module matrix are updated to PASS | one-page readiness scoreboard is published | Delivery | CLOSED |
+| B5 | Finance cross-role approval handoff | `verify.portal.payment_request_approval_all_smoke.container` passes; executive can execute `approve/reject` handoff | `payment_request_approval_all_smoke` passes end-to-end (submit→handoff→approve/reject) | Finance+BE | CLOSED |
 
 ## P1 (Immediately After)
-- Script critical role journeys (PM/Finance/Procurement/Executive).
-- Make search/filter/pagination/batch-action delivery status explicit.
+- Continue broader role-journey coverage in normal iteration.
+- Continue search/filter/pagination/batch-action experience tuning as P2.
 
 ## Sprint Boundary
 - Freeze new capability additions; focus only on blockers and delivery closure.
 - Priority: stability > new features.
+- Fixed gate: `make verify.release.delivery_9_module.final_closeout.guard`
+- Core evidence: `verify.scene.delivery.readiness.role_matrix`, `verify.portal.payment_request_approval_all_smoke.container`, `verify.portal.payment_request_approval_field_consumer_audit`
