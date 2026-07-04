@@ -51,6 +51,32 @@ FORBIDDEN_TOKENS = (
     "ENV=prod make",
 )
 
+REQUIRED_SECTION_ORDER = (
+    "## Preconditions",
+    "## Version And Tag Checks",
+    "## Local / CI Gate",
+    "## Contract And Startup Gate",
+    "## Product Hardening Gate",
+    "## Dev Acceptance Gate",
+    "## Prod-Sim Gate",
+    "## Production Safety",
+    "## Post-Release",
+    "## Stop Conditions",
+)
+
+
+def _heading_order(text: str) -> tuple[str, ...]:
+    return tuple(line.strip() for line in text.splitlines() if line.startswith("## "))
+
+
+def _contains_required_section_order(text: str, errors: list[str]) -> None:
+    actual_order = _heading_order(text)
+    if actual_order != REQUIRED_SECTION_ORDER:
+        errors.append(
+            "checklist section order mismatch: "
+            f"expected={REQUIRED_SECTION_ORDER!r} actual={actual_order!r}"
+        )
+
 
 def main() -> int:
     errors: list[str] = []
@@ -64,6 +90,7 @@ def main() -> int:
         for token in FORBIDDEN_TOKENS:
             if token in text:
                 errors.append(f"checklist contains forbidden token: {token}")
+        _contains_required_section_order(text, errors)
 
     if errors:
         print("[release_v2_0_0_checklist_guard] FAIL")
