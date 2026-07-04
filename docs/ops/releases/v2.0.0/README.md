@@ -13,7 +13,7 @@
 ## Layer Target / Module / Reason
 
 - Layer Target: Ops / Release Governance
-- Module: versioning, release index, release checklist, release notes, release evidence manifest
+- Module: versioning, release index, release checklist, release notes, release evidence manifest, verify catalog
 - Reason: establish the active formal release line before RC and production
   deployment work begins, avoiding reuse of the existing remote `v1.0.0` tag.
 
@@ -55,6 +55,7 @@ make verify.release.v2_0_0.product_hardening
 - Versioning: `docs/ops/versioning.md`
 - Release index: `docs/ops/releases/README.md`
 - Release index (zh): `docs/ops/releases/README.zh.md`
+- Verify catalog: `docs/ops/verify/README.md`
 - Release notes: `docs/ops/release_notes_v2.0.0.md`
 - Release checklist: `docs/ops/release_checklist_v2.0.0.md`
 - Evidence manifest: `docs/ops/releases/v2.0.0/evidence_manifest.md`
@@ -86,6 +87,7 @@ Release governance rollback is file-level:
 - restore `docs/ops/versioning.md` edits
 - restore `docs/ops/releases/README.md` edits
 - restore `docs/ops/releases/README.zh.md` edits
+- restore `docs/ops/verify/README.md` edits
 
 Runtime rollback is outside this governance batch and must follow the production
 runbook if production deployment has started.

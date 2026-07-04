@@ -33,6 +33,7 @@ REQUIRED_TOKENS = (
     "`docs/ops/versioning.md`",
     "`docs/ops/releases/README.md`",
     "`docs/ops/releases/README.zh.md`",
+    "`docs/ops/verify/README.md`",
     "`make verify.release.v2_0_0.governance.guard`",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Evidence from `sc_prod_sim` must not be presented as `sc_prod` evidence.",

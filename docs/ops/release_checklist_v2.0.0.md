@@ -10,6 +10,7 @@
 - Versioning reviewed: `docs/ops/versioning.md`.
 - Release indexes reviewed: `docs/ops/releases/README.md` and
   `docs/ops/releases/README.zh.md`.
+- Verify catalog reviewed: `docs/ops/verify/README.md`.
 - No production command is executed from a dirty worktree.
 
 ## Version And Tag Checks
