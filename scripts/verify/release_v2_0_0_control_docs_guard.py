@@ -7,6 +7,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
+MAKEFILE = ROOT / "Makefile"
 CONTROL_README = ROOT / "docs" / "ops" / "releases" / "v2.0.0" / "README.md"
 RELEASE_NOTES = ROOT / "docs" / "ops" / "release_notes_v2.0.0.md"
 VERSIONING = ROOT / "docs" / "ops" / "versioning.md"
@@ -123,6 +124,25 @@ VERIFY_README_TOKENS = (
     "final release signoff requires the recorded prod-sim acceptance run directory",
 )
 
+MAKEFILE_TOKENS = (
+    "verify.release.v2_0_0.preflight: guard.prod.forbid \\",
+    "verify.system.capability_baseline.report \\",
+    "verify.platform.release_policy.runtime \\",
+    "verify.backend.contract.closure.mainline \\",
+    "verify.restricted",
+    "verify.release.v2_0_0.product_hardening: guard.prod.forbid verify.product.release.ready",
+    "verify.release.v2_0_0.governance.guard: guard.prod.forbid \\",
+    "verify.release.v2_0_0.control_docs.guard \\",
+    "verify.release.v2_0_0.evidence_manifest.guard \\",
+    "verify.release.v2_0_0.checklist.guard",
+    "verify.release.v2_0_0.formal_evidence.schema.guard: guard.prod.forbid \\",
+    "verify.release.v2_0_0.governance.guard \\",
+    "verify.bundle.installation.ready.schema.guard \\",
+    "verify.platform.performance.smoke.schema.guard \\",
+    "verify.dev.acceptance.release.schema.guard \\",
+    "verify.prod.sim.acceptance.evidence.schema.guard",
+)
+
 FORBIDDEN_TOKENS = (
     "Product delivery baseline: 9 modules",
     "reuse `v1.0.0`",
@@ -153,6 +173,7 @@ def main() -> int:
     _contains_all(RELEASE_INDEX_EN, RELEASE_INDEX_EN_TOKENS, errors)
     _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
     _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
+    _contains_all(MAKEFILE, MAKEFILE_TOKENS, errors)
     if errors:
         print("[release_v2_0_0_control_docs_guard] FAIL")
         for error in errors:
