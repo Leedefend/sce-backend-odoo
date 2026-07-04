@@ -640,7 +640,10 @@ verify.full_product_capability_scope: guard.prod.forbid check-compose-project ch
 	@python3 -m py_compile scripts/verify/full_product_capability_scope_audit.py
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/full_product_capability_scope_audit.py
 	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/full_product_capability_scope_v1.json artifacts/product/full_product_capability_scope_v1.json >/dev/null
-	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/full_product_capability_scope_v1.md docs/product/full_product_capability_scope_v1.md >/dev/null
+	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/full_product_capability_scope_v1.md artifacts/product/full_product_capability_scope_v1.md >/dev/null
+	@if [[ "$(UPDATE_PRODUCT_DOCS)" == "1" ]]; then \
+	  $(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/full_product_capability_scope_v1.md docs/product/full_product_capability_scope_v1.md >/dev/null; \
+	fi
 
 verify.formal_business_operation_capability_matrix: guard.prod.forbid check-compose-project check-compose-env
 	@mkdir -p artifacts/product docs/product
@@ -657,7 +660,10 @@ verify.formal_business_operation_core_flow_smoke: guard.prod.forbid check-compos
 	@python3 -m py_compile scripts/verify/formal_business_operation_core_flow_smoke.py
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/formal_business_operation_core_flow_smoke.py
 	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/formal_business_operation_core_flow_smoke_v1.json artifacts/product/formal_business_operation_core_flow_smoke_v1.json >/dev/null
-	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/formal_business_operation_core_flow_smoke_v1.md docs/product/formal_business_operation_core_flow_smoke_v1.md >/dev/null
+	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/formal_business_operation_core_flow_smoke_v1.md artifacts/product/formal_business_operation_core_flow_smoke_v1.md >/dev/null
+	@if [[ "$(UPDATE_PRODUCT_DOCS)" == "1" ]]; then \
+	  $(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/formal_business_operation_core_flow_smoke_v1.md docs/product/formal_business_operation_core_flow_smoke_v1.md >/dev/null; \
+	fi
 
 verify.user_data.product_field_coverage.matrix: guard.prod.forbid check-compose-project check-compose-env
 	@mkdir -p artifacts/backend
