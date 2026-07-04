@@ -25,6 +25,10 @@ README_TOKENS = (
     "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard",
     "Run prod-sim acceptance.",
     "Create `v2.0.0` after formal release signoff.",
+    "remove `verify.release.v2_0_0.preflight` from `Makefile`",
+    "remove `verify.release.v2_0_0.product_hardening` from `Makefile`",
+    "remove `verify.release.v2_0_0.governance.guard` from `Makefile`",
+    "remove `verify.release.v2_0_0.formal_evidence.schema.guard` from `Makefile`",
     "Runtime rollback is outside this governance batch",
 )
 
