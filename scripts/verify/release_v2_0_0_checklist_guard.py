@@ -120,6 +120,14 @@ REQUIRED_SECTION_LISTS = (
         ),
     ),
     (
+        "The preflight target expands to:",
+        (
+            "`make verify.system.capability_baseline.report`",
+            "`make verify.backend.contract.closure.mainline`",
+            "`make verify.restricted`",
+        ),
+    ),
+    (
         "## Contract And Startup Gate",
         (
             "`login -> system.init -> ui.contract` must remain unchanged.",
