@@ -4226,6 +4226,12 @@ verify.backend.contract.closure.snapshot.guard: guard.prod.forbid
 .PHONY: verify.intent.canonical_alias.snapshot.guard
 verify.intent.canonical_alias.snapshot.guard: guard.prod.forbid
 	@python3 scripts/verify/intent_canonical_alias_snapshot_guard.py
+	@python3 scripts/verify/intent_canonical_alias_snapshot_schema_guard.py
+
+.PHONY: verify.intent.canonical_alias.snapshot.schema.guard
+verify.intent.canonical_alias.snapshot.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/intent_canonical_alias_snapshot_schema_guard.py
+	@python3 scripts/verify/intent_canonical_alias_snapshot_schema_guard.py
 
 .PHONY: verify.backend.contract.closure.mainline
 verify.backend.contract.closure.mainline: guard.prod.forbid

@@ -172,6 +172,9 @@
     - `docs/ops/audit/product_delivery_module9_smoke_report.md`
 - `make verify.product.delivery.module_capability.schema.guard`
   - Verifies product delivery module capability JSON/MD report shape and runtime count consistency.
+- `make verify.intent.canonical_alias.snapshot.schema.guard`
+  - Verifies the intent canonical/alias snapshot artifact shape.
+  - Enforces source identity, canonical/alias counts, unique sorted rows, and canonical self-reference rules.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.

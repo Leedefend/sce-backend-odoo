@@ -23,6 +23,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 | Module capability smoke | `make verify.product.delivery.module_capability.smoke` | PASS | `artifacts/backend/product_delivery_module9_smoke_report.json` |
 | Module capability schema | `make verify.product.delivery.module_capability.schema.guard` | PASS | `artifacts/backend/product_delivery_module9_smoke_report.json` |
 | Intent alias snapshot | `make verify.intent.canonical_alias.snapshot.guard` | PASS | `artifacts/backend/intent_canonical_alias_snapshot.json` |
+| Intent alias snapshot schema | `make verify.intent.canonical_alias.snapshot.schema.guard` | PASS | `artifacts/backend/intent_canonical_alias_snapshot.json` |
 
 ## Required Product Hardening Before Formal `v2.0.0`
 
