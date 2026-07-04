@@ -19,6 +19,10 @@ README_TOKENS = (
     "- Planned gate tag: `gate-release-v2.0`",
     "- Planned RC tag: `v2.0.0-rc1`",
     "- Planned final tag: `v2.0.0`",
+    "- Module: versioning, release index, release checklist, release notes, release evidence manifest",
+    "- Versioning: `docs/ops/versioning.md`",
+    "- Release index: `docs/ops/releases/README.md`",
+    "- Release index (zh): `docs/ops/releases/README.zh.md`",
     "make verify.release.v2_0_0.preflight",
     "make verify.release.v2_0_0.product_hardening",
     "make verify.release.v2_0_0.governance.guard",
@@ -29,6 +33,9 @@ README_TOKENS = (
     "remove `verify.release.v2_0_0.product_hardening` from `Makefile`",
     "remove `verify.release.v2_0_0.governance.guard` from `Makefile`",
     "remove `verify.release.v2_0_0.formal_evidence.schema.guard` from `Makefile`",
+    "restore `docs/ops/versioning.md` edits",
+    "restore `docs/ops/releases/README.md` edits",
+    "restore `docs/ops/releases/README.zh.md` edits",
     "Runtime rollback is outside this governance batch",
 )
 
