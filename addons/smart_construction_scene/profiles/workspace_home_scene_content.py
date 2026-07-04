@@ -488,9 +488,9 @@ def build_v1_focus_map() -> Dict[str, List[str]]:
 
 def build_v1_zone_order() -> Dict[str, List[str]]:
     return {
-        "pm": ["today_focus", "analysis", "quick_entries"],
-        "finance": ["analysis", "today_focus", "quick_entries"],
-        "owner": ["quick_entries", "analysis", "today_focus"],
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["today_focus", "quick_entries", "analysis", "hero"],
+        "owner": ["today_focus", "analysis", "hero", "quick_entries"],
     }
 
 
@@ -533,9 +533,9 @@ def build_v1_page_profile(role_code: str) -> Dict[str, Any]:
     audience = audience_map.get(role, ["owner"])
     priority_model = "task_first" if role == "pm" else "metric_first" if role == "finance" else "role_first"
     mobile_priority_map = {
-        "pm": ["today_focus", "analysis", "quick_entries"],
-        "finance": ["today_focus", "analysis", "quick_entries"],
-        "owner": ["today_focus", "analysis", "quick_entries"],
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["today_focus", "quick_entries", "analysis", "hero"],
+        "owner": ["today_focus", "analysis", "hero", "quick_entries"],
     }
     return {
         "audience": audience,
@@ -867,9 +867,9 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
     ]
 
     role_zone_order: Dict[str, List[str]] = {
-        "pm": ["today_focus", "analysis", "quick_entries"],
-        "finance": ["analysis", "today_focus", "quick_entries"],
-        "owner": ["quick_entries", "analysis", "today_focus"],
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["today_focus", "quick_entries", "analysis", "hero"],
+        "owner": ["today_focus", "analysis", "hero", "quick_entries"],
     }
     preferred_order = role_zone_order.get(_to_text(role_code), role_zone_order["owner"])
     allowed_zone_keys = set(preferred_order)
