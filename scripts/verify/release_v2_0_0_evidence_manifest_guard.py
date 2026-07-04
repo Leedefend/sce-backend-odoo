@@ -30,6 +30,7 @@ REQUIRED_TOKENS = (
     "`make verify.release.v2_0_0.checklist.guard`",
     "`make verify.release.v2_0_0.evidence_manifest.guard`",
     "`make verify.release.v2_0_0.control_docs.guard`",
+    "`make verify.release.v2_0_0.governance.guard`",
     "Evidence from `sc_prod_sim` must not be presented as `sc_prod` evidence.",
     "Production deployment evidence is recorded separately after supervised",
     "Failed evidence is not overwritten without preserving the failure reason",

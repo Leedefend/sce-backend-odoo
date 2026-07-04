@@ -4480,6 +4480,13 @@ verify.release.v2_0_0.control_docs.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/release_v2_0_0_control_docs_guard.py
 	@python3 scripts/verify/release_v2_0_0_control_docs_guard.py
 
+.PHONY: verify.release.v2_0_0.governance.guard
+verify.release.v2_0_0.governance.guard: guard.prod.forbid \
+	verify.release.v2_0_0.control_docs.guard \
+	verify.release.v2_0_0.evidence_manifest.guard \
+	verify.release.v2_0_0.checklist.guard
+	@echo "[OK] verify.release.v2_0_0.governance.guard done"
+
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
 
