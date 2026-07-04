@@ -37,6 +37,7 @@ Required before formal `v2.0.0`:
 
 ```bash
 make verify.release.v2_0_0.product_hardening
+make verify.release.v2_0_0.evidence_manifest.guard
 ```
 
 This target expands to `make verify.product.release.ready` and must be green

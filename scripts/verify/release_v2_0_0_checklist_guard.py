@@ -22,6 +22,7 @@ REQUIRED_TOKENS = (
     "## Stop Conditions",
     "make verify.release.v2_0_0.preflight",
     "make verify.release.v2_0_0.product_hardening",
+    "make verify.release.v2_0_0.evidence_manifest.guard",
     "make release.dev.acceptance.publish",
     "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard",
     "artifacts/backend/dev_acceptance_release_probe.json",

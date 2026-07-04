@@ -196,6 +196,8 @@
 - `make verify.release.v2_0_0.checklist.guard`
   - Verifies the v2.0.0 release checklist keeps required preflight, product hardening, dev acceptance, prod-sim, production safety, post-release, and stop-condition sections.
   - Enforces required release tag names and prod/prod-sim evidence separation language.
+- `make verify.release.v2_0_0.evidence_manifest.guard`
+  - Verifies the v2.0.0 evidence manifest keeps required gate sections, evidence tables, schema guard rows, evidence rules, and explicit prod-sim evidence directory validation.
 - `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard`
   - Verifies explicit prod-sim acceptance evidence under the recorded run directory.
   - Requires strict SCBS release acceptance JSON/MD and no-legacy replay acceptance JSON to target `sc_prod_sim`; no default run directory is inferred.
