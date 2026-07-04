@@ -111,6 +111,47 @@ REQUIRED_SECTION_LISTS = (
         ),
     ),
     (
+        "## Contract And Startup Gate",
+        (
+            "`login -> system.init -> ui.contract` must remain unchanged.",
+            "`role_surface.role_code` remains the role source of truth.",
+            "`default_route` must come from the backend contract.",
+            "Public intents must not be renamed.",
+            "Intent canonical/alias snapshot must pass.",
+            "Contract closure mainline must pass.",
+        ),
+    ),
+    (
+        "## Product Hardening Gate",
+        (
+            "`make verify.release.v2_0_0.product_hardening` must pass before formal tag.",
+            "If `verify.bundle.installation.ready` fails, update or repair the bundle",
+            "If `verify.platform.performance.smoke` fails on `system.init` payload size,",
+            "Product hardening failures must not be hidden by the governance preflight.",
+        ),
+    ),
+    (
+        "Required evidence:",
+        (
+            "`artifacts/backend/dev_acceptance_release_probe.json`",
+            "uploaded package checksum validation",
+            "served frontend bundle DB/env verification",
+            "`/api/v1/intent?db=sc_demo` OPTIONS/GET behavior",
+            "optional real-user login and `system.init` result when credentials are provided",
+        ),
+    ),
+    (
+        "## Prod-Sim Gate",
+        (
+            "`sc_prod_sim` upgrade or replay path is executed only through Makefile targets.",
+            "Prod-sim acceptance evidence is validated with",
+            "Recorded sample artifact directories may validate schema shape only; they are",
+            "Frontend static assets are rebuilt for the intended target DB/env.",
+            "Real-user acceptance uses named business users, not only service smoke users.",
+            "Prod-sim evidence is kept separate from production evidence.",
+        ),
+    ),
+    (
         "## Production Safety",
         (
             "Follow `docs/ops/production_deployment_runbook_v1.md`.",
@@ -119,6 +160,15 @@ REQUIRED_SECTION_LISTS = (
             "Production database is `sc_prod`.",
             "Production destructive reset is forbidden.",
             "Any production module upgrade requires `PROD_DANGER=1` and an allowed Makefile target.",
+        ),
+    ),
+    (
+        "## Post-Release",
+        (
+            "Confirm `git rev-parse v2.0.0` equals the intended `main` commit.",
+            "Publish GitHub Release for `v2.0.0`.",
+            "Attach or link evidence from `docs/ops/releases/v2.0.0/evidence_manifest.md`.",
+            "Record deployment acceptance separately if production deployment follows.",
         ),
     ),
     (
@@ -144,7 +194,7 @@ def _contains_required_section_order(text: str, errors: list[str]) -> None:
         errors.append(
             "checklist section order mismatch: "
             f"expected={REQUIRED_SECTION_ORDER!r} actual={actual_order!r}"
-            )
+        )
 
 
 def _top_level_bullets_after_heading(text: str, heading: str) -> tuple[str, ...] | None:

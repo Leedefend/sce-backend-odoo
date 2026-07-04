@@ -115,7 +115,7 @@ VERIFY_README_TOKENS = (
     "`make verify.release.v2_0_0.checklist.guard`",
     "controlled-doc review",
     "sections in the expected order",
-    "key safety lists locked by section",
+    "key safety and evidence lists locked by section",
     "Enforces RC and formal-release command blocks exactly.",
     "versioning/release-index review",
     "`make verify.release.v2_0_0.evidence_manifest.guard`",
