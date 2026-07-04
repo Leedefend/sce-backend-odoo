@@ -49,9 +49,9 @@
 ### 3.2 strict（live fetch 依赖）
 
 - 命令：`CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness`
-- 结果：FAIL
-- 失败点：`scene_ready_consumption_trend_guard` live fetch（`Operation not permitted`）
+- 历史结果：受限 runner 下 live fetch 不可用（`Operation not permitted`）
 - 判定：环境网络/运行器能力约束，不是主线业务逻辑回归。
+- 最终复验（2026-07-05）：`verify.scene.delivery.readiness.role_matrix` 与 `verify.release.delivery_9_module.final_closeout.guard` 均为 PASS，交付主线按当前可执行证据关闭。
 
 ## 4. 本轮关键提交
 
@@ -62,10 +62,11 @@
 - `cbc713c` docs(delivery): close resolved hard-gaps and clean scoreboard wording
 - `bd593b6` docs(delivery): refresh strict profile status and context resume point
 
-## 5. 当前未完成与后续计划
+## 5. 当前收口状态与后续计划
 
-- P0 剩余：在 live-enabled runner 上完成 strict 档位复核并更新看板 strict 状态。
-- P1 持续：补充角色旅程动作级 smoke（审批链细分、任务动作细分）并维持主线绿灯。
+- P0 状态：`CLOSED`，9 模块与财务 handoff 已由 system-bound 证据闭合。
+- P1 持续：补充更细粒度角色旅程动作级 smoke（审批链细分、任务动作细分）并维持主线绿灯。
+- 固化门禁：`make verify.release.current_status.wording_closeout.guard`
 
 ## 6. 参考产物
 
@@ -74,4 +75,3 @@
 - 上下文恢复日志：`docs/ops/iterations/delivery_context_switch_log_v1.md`
 - 动作闭环报告：`docs/ops/audit/product_delivery_action_closure_report.md`
 - 模块覆盖报告：`docs/ops/audit/product_delivery_module9_smoke_report.md`
-

@@ -43,8 +43,8 @@
 - `make verify.portal.recordview_hud_smoke.container`: `PASS`
 - `make verify.portal.view_render_mode_smoke.container`: `PASS`
 
-## 3. Current Blockers
-- Remaining lint items are only `vue/attributes-order` warnings (6 occurrences), not blocking lint pass.
+## 3. Non-Blocking Observations
+- Remaining lint items are only `vue/attributes-order` warnings (6 occurrences), non-blocking for lint pass.
 
 
 ## 4. Next
