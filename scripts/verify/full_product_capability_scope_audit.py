@@ -133,6 +133,14 @@ HISTORY_TOKENS = (
 NATIVE_MENU_ALIASES_COVERED_BY_RELEASE = {
     "smart_construction_core.menu_sc_invoice_input_report_user": "smart_construction_core.menu_sc_invoice_input",
 }
+PRODUCT_POLICY_DOMAIN_OVERRIDES = {
+    # These entries are finance cash handling capabilities even when an
+    # environment still carries an older intermediate "费用" path segment.
+    "smart_construction_core.menu_sc_payment_deposit_return": "费用与保证金",
+    "smart_construction_core.menu_sc_payment_deposit_return_refund_formal": "费用与保证金",
+    "smart_construction_core.menu_sc_reimbursement_request": "费用与保证金",
+    "smart_construction_core.menu_sc_project_expense_claim": "费用与保证金",
+}
 
 
 def _text(value) -> str:
@@ -204,18 +212,19 @@ def _policy_handling_rows(policy) -> list[dict]:
             if not isinstance(menu, dict) or _text(menu.get("entry_intent")) != "handling":
                 continue
             path = _text(menu.get("visible_menu_path"))
+            menu_xmlid = _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"))
             rows.append(
                 {
                     "source": "product_policy",
                     "status": "released_formal_handling" if menu.get("enabled", True) and _text(menu.get("release_state") or "released") == "released" else "modeled_policy_not_released",
                     "center": center or _center_from_path(path),
-                    "domain": _domain_from_path(path, center),
+                    "domain": PRODUCT_POLICY_DOMAIN_OVERRIDES.get(menu_xmlid) or _domain_from_path(path, center),
                     "label": _text(menu.get("label") or menu.get("page_label")),
                     "path": path,
                     "model": _text(menu.get("integration_model") or menu.get("fact_model") or menu.get("res_model")),
                     "target": _text(menu.get("integration_target")),
                     "business_category_code": _text(menu.get("default_business_category_code")),
-                    "menu_xmlid": _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key")),
+                    "menu_xmlid": menu_xmlid,
                     "release_state": _text(menu.get("release_state")) or "released",
                     "enabled": bool(menu.get("enabled", True)),
                 }
