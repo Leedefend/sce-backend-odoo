@@ -178,6 +178,9 @@
 - `make verify.system.capability_baseline.report.schema.guard`
   - Verifies the system capability baseline JSON/MD report shape.
   - Enforces baseline metadata, summary/check count consistency, sorted checks, and required Markdown sections.
+- `make verify.backend.contract.closure.snapshot.schema.guard`
+  - Verifies the backend contract closure snapshot artifact shape.
+  - Enforces meta intent and scene governance payload key lists are non-empty, sorted, and duplicate-free.
 - `make verify.platform.release_policy.runtime.schema.guard`
   - Verifies the platform release-policy runtime probe JSON/MD shape.
   - Enforces product coverage, policy/catalog counts, user/no-native/subset/admin delivery summaries, and failure consistency.
