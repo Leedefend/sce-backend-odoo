@@ -198,7 +198,7 @@
   - Enforces RC and formal-release command blocks exactly.
   - Enforces required release tag names, versioning/release-index review, and prod/prod-sim evidence separation language.
 - `make verify.release.v2_0_0.evidence_manifest.guard`
-  - Verifies the v2.0.0 evidence manifest keeps required gate sections, evidence table rows/order, current local verification status structure, schema guard rows, controlled-doc artifact coverage, evidence rules, and explicit prod-sim evidence directory validation.
+  - Verifies the v2.0.0 evidence manifest keeps required gate sections, evidence table row content/order, current local verification status structure, schema guard rows, controlled-doc artifact coverage, evidence rules, and explicit prod-sim evidence directory validation.
 - `make verify.release.v2_0_0.control_docs.guard`
   - Verifies the v2.0.0 release-control README, release notes, versioning guide, release indexes, verification catalog, and Makefile target dependencies keep planned tag names, release boundaries, required gates, immutable RC guidance, and the current 10-module product delivery baseline.
   - Enforces release document list, release-control boundary and gate command blocks, rollback list, release-index planned entries, release-notes tag plan and minimum verification commands, and promotion order shape for the v2.0.0 control README and versioning guide.

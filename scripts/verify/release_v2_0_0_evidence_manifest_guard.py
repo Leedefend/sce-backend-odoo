@@ -53,45 +53,45 @@ FORBIDDEN_TOKENS = (
     "sc_prod evidence",
 )
 
-REQUIRED_TABLE_EVIDENCE = {
+REQUIRED_TABLE_ROWS = {
     "## Required Before `gate-release-v2.0`": (
-        "System capability baseline",
-        "System capability baseline schema",
-        "Platform release policy runtime",
-        "Platform release policy runtime schema",
-        "Backend contract closure",
-        "Backend contract closure snapshot schema",
-        "Restricted product mainline",
-        "Restricted product mainline schema",
-        "Diff hygiene",
+        ("System capability baseline", "`make verify.system.capability_baseline.report`", "PASS", "`artifacts/backend/system_capability_baseline_report.json`"),
+        ("System capability baseline schema", "`make verify.system.capability_baseline.report.schema.guard`", "PASS", "`artifacts/backend/system_capability_baseline_report.json`"),
+        ("Platform release policy runtime", "`make verify.platform.release_policy.runtime`", "PASS", "`artifacts/backend/platform_release_policy_runtime_probe.json`"),
+        ("Platform release policy runtime schema", "`make verify.platform.release_policy.runtime.schema.guard`", "PASS", "`artifacts/backend/platform_release_policy_runtime_probe.json`"),
+        ("Backend contract closure", "`make verify.backend.contract.closure.mainline`", "PASS", "`artifacts/backend/backend_contract_closure_mainline_summary.json`"),
+        ("Backend contract closure snapshot schema", "`make verify.backend.contract.closure.snapshot.schema.guard`", "PASS", "`artifacts/backend/backend_contract_closure_snapshot.json`"),
+        ("Restricted product mainline", "`make verify.restricted`", "PASS", "`artifacts/backend/delivery_mainline_run_summary.json`"),
+        ("Restricted product mainline schema", "`make verify.product.delivery.mainline.summary.schema.guard`", "PASS", "`artifacts/backend/delivery_mainline_run_summary.json`"),
+        ("Diff hygiene", "`git diff --check`", "PASS", "terminal output"),
     ),
     "## Required Before `v2.0.0-rc1`": (
-        "Release preflight",
-        "Action closure smoke",
-        "Action closure schema",
-        "Module capability smoke",
-        "Module capability schema",
-        "Intent alias snapshot",
-        "Intent alias snapshot schema",
+        ("Release preflight", "`make verify.release.v2_0_0.preflight`", "PASS", "aggregate terminal output"),
+        ("Action closure smoke", "`make verify.product.delivery.action_closure.smoke`", "PASS", "`artifacts/backend/product_delivery_action_closure_report.json`"),
+        ("Action closure schema", "`make verify.product.delivery.action_closure.schema.guard`", "PASS", "`artifacts/backend/product_delivery_action_closure_report.json`"),
+        ("Module capability smoke", "`make verify.product.delivery.module_capability.smoke`", "PASS", "`artifacts/backend/product_delivery_module9_smoke_report.json`"),
+        ("Module capability schema", "`make verify.product.delivery.module_capability.schema.guard`", "PASS", "`artifacts/backend/product_delivery_module9_smoke_report.json`"),
+        ("Intent alias snapshot", "`make verify.intent.canonical_alias.snapshot.guard`", "PASS", "`artifacts/backend/intent_canonical_alias_snapshot.json`"),
+        ("Intent alias snapshot schema", "`make verify.intent.canonical_alias.snapshot.schema.guard`", "PASS", "`artifacts/backend/intent_canonical_alias_snapshot.json`"),
     ),
     "## Required Product Hardening Before Formal `v2.0.0`": (
-        "Product release readiness",
-        "Bundle installation schema",
-        "View richness hardening",
-        "Platform performance smoke",
-        "Platform performance schema",
+        ("Product release readiness", "`make verify.release.v2_0_0.product_hardening`", "PASS", "`artifacts/backend/bundle_installation_report.json` and related product gate artifacts"),
+        ("Bundle installation schema", "`make verify.bundle.installation.ready.schema.guard`", "PASS", "`artifacts/backend/bundle_installation_report.json`"),
+        ("View richness hardening", "included in `make verify.release.v2_0_0.product_hardening`", "PASS", "`docs/product/view_richness_post_ga_report_v1.md`"),
+        ("Platform performance smoke", "included in `make verify.release.v2_0_0.product_hardening`", "PASS", "`artifacts/backend/platform_performance_smoke.json`"),
+        ("Platform performance schema", "`make verify.platform.performance.smoke.schema.guard`", "PASS", "`artifacts/backend/platform_performance_smoke.json`"),
     ),
     "## Required Before Formal `v2.0.0`": (
-        "Dev acceptance publish",
-        "Dev acceptance schema",
-        "Prod-sim acceptance",
-        "Prod-sim acceptance schema",
-        "Release checklist signoff",
-        "Release checklist guard",
-        "Evidence manifest guard",
-        "Release control docs guard",
-        "Release governance guard",
-        "Formal evidence schema guard",
+        ("Dev acceptance publish", "`make release.dev.acceptance.publish` with dev env vars", "PASS", "`artifacts/backend/dev_acceptance_release_probe.json`"),
+        ("Dev acceptance schema", "`make verify.dev.acceptance.release.schema.guard`", "PASS", "`artifacts/backend/dev_acceptance_release_probe.json`"),
+        ("Prod-sim acceptance", "governed prod-sim Makefile flow", "PASS", "prod-sim acceptance artifact path to be recorded"),
+        ("Prod-sim acceptance schema", "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard`", "PASS", "`scbs_release_acceptance_strict_result_v1.json`, `scbs_release_acceptance_strict_v1.md`, and `scbs_no_legacy_replay_acceptance_result_v1.json` under the recorded run dir"),
+        ("Release checklist signoff", "manual review", "PASS", "`docs/ops/release_checklist_v2.0.0.md`"),
+        ("Release checklist guard", "`make verify.release.v2_0_0.checklist.guard`", "PASS", "`docs/ops/release_checklist_v2.0.0.md`"),
+        ("Evidence manifest guard", "`make verify.release.v2_0_0.evidence_manifest.guard`", "PASS", "`docs/ops/releases/v2.0.0/evidence_manifest.md`"),
+        ("Release control docs guard", "`make verify.release.v2_0_0.control_docs.guard`", "PASS", "`docs/ops/releases/v2.0.0/README.md`, `docs/ops/release_notes_v2.0.0.md`, `docs/ops/versioning.md`, `docs/ops/releases/README.md`, `docs/ops/releases/README.zh.md`, and `docs/ops/verify/README.md`"),
+        ("Release governance guard", "`make verify.release.v2_0_0.governance.guard`", "PASS", "release-control docs, evidence manifest, and checklist guard terminal output"),
+        ("Formal evidence schema guard", "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`", "PASS", "governance, hardening, dev acceptance, and prod-sim acceptance evidence shape guard terminal output"),
     ),
 }
 
@@ -112,7 +112,7 @@ REQUIRED_LOCAL_STATUS_ITEMS = (
 )
 
 
-def _table_evidence_for_section(text: str, heading: str) -> tuple[str, ...] | None:
+def _table_rows_for_section(text: str, heading: str) -> tuple[tuple[str, str, str, str], ...] | None:
     lines = text.splitlines()
     try:
         start = lines.index(heading)
@@ -130,13 +130,15 @@ def _table_evidence_for_section(text: str, heading: str) -> tuple[str, ...] | No
         elif in_table and line.strip():
             break
 
-    evidence: list[str] = []
+    rows: list[tuple[str, str, str, str]] = []
     for row in table_rows:
         cells = [cell.strip() for cell in row.strip().strip("|").split("|")]
         if not cells or cells[0] in {"Evidence", "---"}:
             continue
-        evidence.append(cells[0])
-    return tuple(evidence)
+        if len(cells) != 4:
+            return ()
+        rows.append((cells[0], cells[1], cells[2], cells[3]))
+    return tuple(rows)
 
 
 def _top_level_bullets_after_heading(text: str, heading: str) -> tuple[str, ...] | None:
@@ -155,16 +157,16 @@ def _top_level_bullets_after_heading(text: str, heading: str) -> tuple[str, ...]
     return tuple(items)
 
 
-def _contains_required_table_evidence(text: str, errors: list[str]) -> None:
-    for heading, expected_evidence in REQUIRED_TABLE_EVIDENCE.items():
-        actual_evidence = _table_evidence_for_section(text, heading)
-        if actual_evidence is None:
+def _contains_required_table_rows(text: str, errors: list[str]) -> None:
+    for heading, expected_rows in REQUIRED_TABLE_ROWS.items():
+        actual_rows = _table_rows_for_section(text, heading)
+        if actual_rows is None:
             errors.append(f"manifest missing section table: {heading}")
             continue
-        if actual_evidence != expected_evidence:
+        if actual_rows != expected_rows:
             errors.append(
-                "manifest evidence table mismatch: "
-                f"{heading} expected={expected_evidence!r} actual={actual_evidence!r}"
+                "manifest evidence table rows mismatch: "
+                f"{heading} expected={expected_rows!r} actual={actual_rows!r}"
             )
 
 
@@ -194,7 +196,7 @@ def main() -> int:
                 errors.append(f"manifest contains forbidden token: {token}")
         if text.count("| Evidence | Command | Required Result | Artifact |") != 4:
             errors.append("manifest must contain four evidence tables")
-        _contains_required_table_evidence(text, errors)
+        _contains_required_table_rows(text, errors)
         _contains_required_local_status_items(text, errors)
 
     if errors:
