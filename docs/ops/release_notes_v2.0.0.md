@@ -20,6 +20,8 @@ track to `v2.0.0`.
 - Dev acceptance path: uploaded backup validation, static rebuild, API lock, and
   optional real-user `system.init` probe.
 - Release gate: one-command preflight through `make verify.release.v2_0_0.preflight`.
+- Release governance docs: release-control README, release notes, versioning,
+  release indexes, evidence manifest, checklist, and verify catalog.
 
 ## Tag Plan
 
