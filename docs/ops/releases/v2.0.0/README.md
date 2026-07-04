@@ -73,6 +73,10 @@ make verify.release.v2_0_0.product_hardening
 9. Create `v2.0.0-rc1` after RC evidence passes.
 10. Create `v2.0.0` after formal release signoff.
 
+Recorded sample artifact directories may validate schema shape only; final
+release signoff requires the recorded prod-sim acceptance run directory for that
+release candidate.
+
 ## Rollback
 
 Release governance rollback is file-level:
