@@ -156,7 +156,7 @@
         <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_payment_execution_formal_company_finance_expense_tree')})]"/>
     </record>
 
-    <record id="action_sc_payment_deposit_return" model="ir.actions.act_window">
+    <record id="action_tender_guarantee_formal_payment_deposit_return" model="ir.actions.act_window">
         <field name="name">付款还保证金</field>
         <field name="res_model">tender.guarantee</field>
         <field name="view_mode">tree,form</field>

@@ -2022,9 +2022,12 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             ):
                 self.assertNotIn("'%s': 1" % old_key, action.context)
 
-        tender_action = self.env.ref("smart_construction_core.action_sc_payment_deposit_return")
+        tender_action = self.env.ref("smart_construction_core.action_tender_guarantee_formal_payment_deposit_return")
         self.assertEqual(tender_action.res_model, "tender.guarantee")
         self.assertEqual(tender_action.search_view_id, tender_search)
+        payment_deposit_return = self.env.ref("smart_construction_core.action_sc_payment_deposit_return")
+        self.assertEqual(payment_deposit_return.res_model, "sc.expense.claim")
+        self.assertEqual(payment_deposit_return.search_view_id, deposit_search)
 
         for arch in (deposit_search.arch_db, tender_search.arch_db):
             for token in (

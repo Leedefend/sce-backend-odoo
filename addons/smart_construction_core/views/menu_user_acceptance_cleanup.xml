@@ -316,8 +316,8 @@
             <field name="active">0</field>
         </record>
         <record id="menu_sc_tax_certificate_registration_user" model="ir.ui.menu">
-            <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
-            <field name="active">0</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_invoice_tax_user_group"/>
+            <field name="active">1</field>
         </record>
         <record id="menu_sc_legacy_scbs_fact_staging" model="ir.ui.menu">
             <field name="parent_id" ref="smart_construction_core.menu_sc_history_acceptance_archive_center"/>
