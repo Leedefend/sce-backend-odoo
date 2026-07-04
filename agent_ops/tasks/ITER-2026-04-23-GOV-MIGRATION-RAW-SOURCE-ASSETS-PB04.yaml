@@ -139,6 +139,8 @@ validation_result:
   blocked:
     - command: python3 scripts/migration/legacy_workflow_audit_asset_generator.py --asset-root migration_assets --check
       reason: local legacy-sqlserver container is absent
+  notes:
+    - Rechecked on origin/main b131a165d; raw source presence, py_compile, and scoped git diff checks still pass, and the generator check still fails only with "No such container: legacy-sqlserver".
 
 rollback:
   - git restore .gitignore .gitattributes docs/ops/iterations/delivery_context_switch_log_v1.md
