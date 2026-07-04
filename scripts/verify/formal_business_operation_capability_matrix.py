@@ -105,6 +105,32 @@ def _field_count_from_tree(nodes) -> int:
     return total
 
 
+def _field_names_from_tree(nodes) -> list[str]:
+    names = []
+    for node in nodes if isinstance(nodes, list) else []:
+        if not isinstance(node, dict):
+            continue
+        name = _text(node.get("name") or node.get("field"))
+        node_type = _text(node.get("type") or node.get("containerType")).lower()
+        if name and (node_type == "field" or node.get("field") or node.get("name")):
+            names.append(name)
+        for key in ("children", "pages", "tabs", "nodes", "items", "widgetList"):
+            names.extend(_field_names_from_tree(node.get(key)))
+    return names
+
+
+def _column_names(columns) -> list[str]:
+    names = []
+    for column in columns if isinstance(columns, list) else []:
+        if isinstance(column, str):
+            names.append(column)
+        elif isinstance(column, dict):
+            value = _text(column.get("name") or column.get("field") or column.get("key"))
+            if value:
+                names.append(value)
+    return names
+
+
 def _contract_payload(env_obj, *, action_id: int, menu_id: int, model: str, view_type: str) -> dict:
     payload = {
         "action_id": action_id,
@@ -158,10 +184,10 @@ def _contract_summary(env_obj, *, action_id: int, menu_id: int, model: str, view
         if view_type in {"tree", "list"}:
             profile = layout.get("listProfile") if isinstance(layout.get("listProfile"), dict) else {}
             columns = list(profile.get("columns") or [])
-            return {"ok": bool(result.get("ok")), "count": len(columns), "head": columns[:8]}
+            return {"ok": bool(result.get("ok")), "count": len(columns), "fields": _column_names(columns), "head": columns[:8]}
         if view_type == "form":
             tree = layout.get("containerTree") if isinstance(layout.get("containerTree"), list) else []
-            return {"ok": bool(result.get("ok")), "count": _field_count_from_tree(tree)}
+            return {"ok": bool(result.get("ok")), "count": _field_count_from_tree(tree), "fields": sorted(set(_field_names_from_tree(tree)))}
         if view_type == "search":
             search = layout.get("searchProfile") if isinstance(layout.get("searchProfile"), dict) else {}
             filters = list(search.get("filters") or [])
@@ -170,6 +196,38 @@ def _contract_summary(env_obj, *, action_id: int, menu_id: int, model: str, view
         return {"ok": bool(result.get("ok")), "count": 0}
     except Exception as exc:
         return {"ok": False, "count": 0, "error": repr(exc)}
+
+
+def _action_defaults(action) -> dict:
+    return {
+        key.replace("default_", "", 1): value
+        for key, value in _safe_action_context(action).items()
+        if isinstance(key, str) and key.startswith("default_")
+    }
+
+
+def _is_stored_input_field(field) -> bool:
+    return not bool(getattr(field, "compute", False)) and not bool(getattr(field, "related", False))
+
+
+def _required_user_input_fields(env_obj, model: str, action) -> list[str]:
+    Model = env_obj[model].with_context(**_safe_action_context(action))
+    required_names = []
+    for name, field in Model._fields.items():
+        if name == "id" or name.startswith("__"):
+            continue
+        if not bool(getattr(field, "required", False)) or not _is_stored_input_field(field):
+            continue
+        if getattr(field, "type", "") in {"boolean", "one2many", "many2many"}:
+            continue
+        required_names.append(name)
+    defaults = {}
+    try:
+        defaults.update(Model.default_get(required_names))
+    except Exception:
+        defaults = {}
+    defaults.update(_action_defaults(action))
+    return sorted(name for name in required_names if defaults.get(name) in (None, False, ""))
 
 
 def _has_contract(env_obj, *, action_id: int, model: str, view_type: str) -> bool:
@@ -279,6 +337,14 @@ def _audit_row(env_obj, row: dict) -> dict:
             issues.append("runtime_list_fields_empty")
         if runtime.get("form", {}).get("count", 0) <= 0:
             issues.append("runtime_form_fields_empty")
+        required_form_fields = _required_user_input_fields(env_obj, model, action)
+        form_fields = set(runtime.get("form", {}).get("fields") or [])
+        missing_required_form_fields = sorted(name for name in required_form_fields if name not in form_fields)
+        if missing_required_form_fields:
+            issues.append("runtime_form_required_fields_missing")
+    else:
+        required_form_fields = []
+        missing_required_form_fields = []
 
     return {
         **row,
@@ -292,6 +358,8 @@ def _audit_row(env_obj, row: dict) -> dict:
         "access": access,
         "published_contracts": contracts,
         "runtime": runtime,
+        "required_form_fields": required_form_fields,
+        "missing_required_form_fields": missing_required_form_fields,
         "runtime_url": "/a/%s?menu_id=%s" % (action_id, menu_id) if action_id and menu_id else "",
     }
 

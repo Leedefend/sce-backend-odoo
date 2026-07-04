@@ -21,6 +21,7 @@
 - 是否具备 read/create/write 基础权限。
 - 是否有 list/tree、form、search 运行态合同。
 - list/form 运行态是否能生成字段结构。
+- form 运行态是否保留无默认值的 ORM 必填字段，低代码配置不得隐藏正式办理必填项。
 - 是否能形成可访问办理 URL。
 
 门禁：`make verify.formal_business_operation_capability_matrix`
