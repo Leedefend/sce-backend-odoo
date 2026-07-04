@@ -1,7 +1,7 @@
 task_id: ITER-2026-04-23-GOV-CONTRACT-CATALOG-VIEWTYPE-NORMALIZE-PB01
 title: Normalize contract catalog case view_type samples onto canonical catalog values
 type: governance_task
-status: active
+status: review
 priority: high
 mode: implement
 
@@ -67,6 +67,18 @@ deliverables:
   - normalized contract catalog sample task contract
   - docs-only view_type sample normalization
   - delivery log checkpoint
+
+validation_result:
+  status: superseded-pass
+  passed:
+    - docs/contract/cases.yml currently contains only canonical sample view_type values form/list/kanban
+    - no tree or pivot sample view_type values remain to normalize
+    - scoped git diff --check for task file and iteration log
+  blocked:
+    - command: make verify.contract.catalog
+      reason: current failure is unrelated to PB01 view_type normalization and reports inferred intent examples still present in the contract catalog guard
+  notes:
+    - PB01's intended docs-only change has already been absorbed by current main; the next real blocker needs a dedicated inferred-intent catalog cleanup task
 
 rollback:
   - git restore agent_ops/tasks/ITER-2026-04-23-GOV-CONTRACT-CATALOG-VIEWTYPE-NORMALIZE-PB01.yaml docs/contract/cases.yml docs/ops/iterations/delivery_context_switch_log_v1.md
