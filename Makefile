@@ -4417,7 +4417,16 @@ verify.product.release.ready: guard.prod.forbid \
 
 .PHONY: verify.platform.release_policy.runtime
 verify.platform.release_policy.runtime: guard.prod.forbid check-compose-project check-compose-env
+	@mkdir -p artifacts/backend
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/platform_release_policy_runtime_probe.py
+	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/platform_release_policy_runtime_probe.json artifacts/backend/platform_release_policy_runtime_probe.json >/dev/null
+	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/platform_release_policy_runtime_probe.md artifacts/backend/platform_release_policy_runtime_probe.md >/dev/null
+	@python3 scripts/verify/platform_release_policy_runtime_schema_guard.py
+
+.PHONY: verify.platform.release_policy.runtime.schema.guard
+verify.platform.release_policy.runtime.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/platform_release_policy_runtime_schema_guard.py
+	@python3 scripts/verify/platform_release_policy_runtime_schema_guard.py
 
 .PHONY: verify.release.v2_0_0.preflight
 verify.release.v2_0_0.preflight: guard.prod.forbid \

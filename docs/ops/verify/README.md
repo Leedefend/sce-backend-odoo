@@ -178,6 +178,9 @@
 - `make verify.system.capability_baseline.report.schema.guard`
   - Verifies the system capability baseline JSON/MD report shape.
   - Enforces baseline metadata, summary/check count consistency, sorted checks, and required Markdown sections.
+- `make verify.platform.release_policy.runtime.schema.guard`
+  - Verifies the platform release-policy runtime probe JSON/MD shape.
+  - Enforces product coverage, policy/catalog counts, user/no-native/subset/admin delivery summaries, and failure consistency.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
