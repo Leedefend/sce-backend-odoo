@@ -40,6 +40,10 @@ REQUIRED_TOKENS = (
     "Production deployment evidence is recorded separately after supervised",
     "Failed evidence is not overwritten without preserving the failure reason",
     "prod-sim acceptance artifact path to be recorded",
+    "Schema-only guard runs may use recorded artifact directories to verify evidence",
+    "recorded sample artifacts are not release signoff evidence",
+    "before creating final `v2.0.0`, rerun",
+    "against the recorded prod-sim acceptance run directory for that release",
 )
 
 FORBIDDEN_TOKENS = (
