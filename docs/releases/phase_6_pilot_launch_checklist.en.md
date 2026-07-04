@@ -33,9 +33,9 @@ Complete pilot run, feedback closure, and official launch to ensure v1.0 is prod
 - [x] Post-release key feature spot-check passes
 
 ### E. Post-launch Operation
-- [ ] Key indicators are healthy in first 24 hours
-- [ ] User feedback intake and triage flow is active
-- [ ] v1.0 post-launch summary is completed
+- [x] Key indicators are healthy in first 24 hours
+- [x] User feedback intake and triage flow is active
+- [x] v1.0 post-launch summary is completed
 
 ## 4. Suggested Verification Commands
 - `make demo.load.release DB_NAME=sc_demo`
@@ -43,6 +43,7 @@ Complete pilot run, feedback closure, and official launch to ensure v1.0 is prod
 - `make verify.phase_next.evidence.bundle`
 - `make verify.scene.catalog.governance.guard`
 - `make verify.runtime.surface.dashboard.strict.guard`
+- `make verify.release.phase6.launch_closeout.guard`
 
 ## 5. Deliverables
 - Pilot report (suggested: `artifacts/release/phase6_pilot_report.md`)

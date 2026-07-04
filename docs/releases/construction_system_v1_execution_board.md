@@ -12,7 +12,7 @@
 | Phase 3 | 角色权限体系 | DONE | 角色矩阵 + ACL/可见性校验 + 退出就绪报告 |
 | Phase 4 | 前端体验稳定 | DONE | 页面框架和 block 规范收敛（含 user/hud 与容器 smoke 证据） |
 | Phase 5 | 验证与部署 | DONE | 发布验证包 + 部署文档 + 部署/回滚演练证据 |
-| Phase 6 | 试运行首发 | DOING | 试运行启动报告 + v1.0 发布记录 |
+| Phase 6 | 试运行首发 | DONE | 试运行启动报告 + v1.0 发布记录 + 发布后复盘 |
 
 ## 2. 当前执行窗口（W1）
 
@@ -83,7 +83,7 @@
 |---|---|---|---|---|
 | W6-01 | 试运行组织与样本数据冻结 | P6 | DONE | `phase_6_pilot_scope_definition.md` 已产出并覆盖角色/样本/提报路径 |
 | W6-02 | 核心路径试运行与问题分级闭环 | P6 | DONE | 演练记录已归档且 `P0=0`（见 `phase_6_pilot_rehearsal_record.md`） |
-| W6-03 | 首发发布与 24h 观测复盘 | P6 | DOING | 发布记录、spot-check、24h 监控结论齐套 |
+| W6-03 | 首发发布与 24h 观测复盘 | P6 | DONE | 发布记录、spot-check、24h 监控结论齐套 |
 
 ## 5. 进入下一阶段条件
 
