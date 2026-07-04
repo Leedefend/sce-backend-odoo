@@ -1,5 +1,30 @@
 # Release v2.0.0 Version Governance Batch 20260512
 
+## 0. Follow-up Governance Closure 2026-07-05
+
+This historical batch is superseded by the current v2.0.0 release-governance
+guards on `main`.
+
+Current follow-up closure added:
+
+- `make verify.release.v2_0_0.governance.guard`
+- `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
+- control-doc coverage for `docs/ops/releases/v2.0.0/README.md`,
+  `docs/ops/release_notes_v2.0.0.md`, `docs/ops/versioning.md`,
+  `docs/ops/releases/README.md`, `docs/ops/releases/README.zh.md`, and
+  `docs/ops/verify/README.md`
+- evidence-manifest, checklist, and verify-catalog guards for the expanded
+  release-governance scope
+
+Current validation shape:
+
+- `make verify.release.v2_0_0.governance.guard`
+- `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
+- `git diff --check`
+
+No tag creation, production deployment, production database operation, or
+prod-sim destructive runtime operation is implied by this follow-up closure.
+
 ## 1. This Batch
 
 - Goal: establish the active formal release line governance for `v2.0.0` after
