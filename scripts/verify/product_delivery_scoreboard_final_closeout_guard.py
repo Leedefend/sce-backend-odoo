@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-
 from datetime import date
 from pathlib import Path
 
@@ -60,10 +59,12 @@ def main() -> int:
     hits = [token for token in forbidden if token in text]
     if hits:
         errors.append(f"{SCOREBOARD.name} still has stale scoreboard wording: {', '.join(hits)}")
+    if text.count("CI profile posture:") > 1:
+        errors.append(f"{SCOREBOARD.name} has duplicated CI profile posture lines")
     _contains_all(
         text,
         [
-            "bcf4e581d",
+            "commit_ref:",
             date.today().isoformat(),
             "verify.release.delivery_9_module.final_closeout.guard",
             "verify.release.current_status.wording_closeout.guard",
