@@ -54,6 +54,8 @@ NOTES_TOKENS = (
     "make verify.release.v2_0_0.governance.guard",
     "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard",
     "ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo",
+    "Release governance docs: release-control README, release notes, versioning,",
+    "release indexes, evidence manifest, checklist, and verify catalog.",
     "Production deployment is not part of this release-note batch.",
     "RC tags are immutable once published.",
 )
