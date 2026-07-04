@@ -333,10 +333,12 @@ function normalizeDatasetByBlock(block: RawBlock) {
     const delayedTasks = asNumber(data.task_overdue);
     const delayedMilestones = asNumber(data.milestone_delay);
     const upcomingDays = asNumber(data.milestone_upcoming_days);
+    const criticalPathHealth = metricStatusLabel(data.critical_path_health);
     return [
       { key: 'completion_percent', label: '总体完成率', value: completion, unit: '%' },
       { key: 'task_done_rate', label: '任务完成率', value: doneRate, unit: '%' },
       { key: 'milestone_progress', label: '里程碑完成率', value: milestoneProgress, unit: '%' },
+      { key: 'critical_path_health', label: '关键路径健康度', value: criticalPathHealth },
       { key: 'task_open', label: '未完成任务', value: openCount, unit: '项' },
       { key: 'task_critical', label: '关键任务', value: criticalTasks, unit: '项' },
       { key: 'task_blocked', label: '阻塞任务', value: blockedTasks, unit: '项' },

@@ -36,8 +36,7 @@
 
 ## F. 回归链路
 
-- [ ] `make verify.frontend.build`
-- [ ] `make verify.frontend.typecheck.strict`
-- [ ] `make verify.project.dashboard.contract`
+- [x] `make verify.frontend.build`
+- [x] `make verify.frontend.typecheck.strict`
+- [x] `make verify.project.dashboard.contract`
 - [ ] `make verify.phase_next.evidence.bundle`
-

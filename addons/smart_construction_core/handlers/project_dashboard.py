@@ -21,6 +21,22 @@ class ProjectDashboardHandler(ProjectContextResolverMixin, BaseIntentHandler):
     PROJECT_ID_PROJECT_CONTEXT = False
     PROJECT_ID_CTX_RECORD_MODEL_ONLY = "project.project"
 
+    def _resolve_project_id(self, params, ctx):
+        payload = self.payload if isinstance(getattr(self, "payload", None), dict) else {}
+        model = str((ctx or {}).get("model") or "").strip()
+        candidates = [
+            (params or {}).get("project_id"),
+            payload.get("project_id"),
+            (ctx or {}).get("project_id"),
+        ]
+        if model == "project.project":
+            candidates.append((ctx or {}).get("record_id"))
+        for raw in candidates:
+            project_id = self._coerce_project_id(raw)
+            if project_id > 0:
+                return project_id
+        return 0
+
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
         ctx = ctx or {}
