@@ -63,9 +63,11 @@ make verify.release.v2_0_0.product_hardening
 3. Run release preflight on `main`.
 4. Create `gate-release-v2.0` after gate evidence passes.
 5. Close product hardening gate.
-6. Create `v2.0.0-rc1` after RC evidence passes.
+6. Run `make verify.release.v2_0_0.governance.guard`.
 7. Run prod-sim acceptance.
-8. Create `v2.0.0` after formal release signoff.
+8. Run `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`.
+9. Create `v2.0.0-rc1` after RC evidence passes.
+10. Create `v2.0.0` after formal release signoff.
 
 ## Rollback
 
