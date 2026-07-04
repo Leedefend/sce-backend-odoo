@@ -109,6 +109,8 @@ Before formal release:
 - `sc_prod_sim` upgrade or replay path is executed only through Makefile targets.
 - Prod-sim acceptance evidence is validated with
   `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard`.
+- Recorded sample artifact directories may validate schema shape only; they are
+  not release signoff evidence.
 - Frontend static assets are rebuilt for the intended target DB/env.
 - Real-user acceptance uses named business users, not only service smoke users.
 - Prod-sim evidence is kept separate from production evidence.

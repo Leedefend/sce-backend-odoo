@@ -32,6 +32,8 @@ REQUIRED_TOKENS = (
     "Verify catalog reviewed: `docs/ops/verify/README.md`.",
     "make release.dev.acceptance.publish",
     "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard",
+    "Recorded sample artifact directories may validate schema shape only",
+    "not release signoff evidence.",
     "artifacts/backend/dev_acceptance_release_probe.json",
     "gate-release-v2.0",
     "v2.0.0-rc1",
