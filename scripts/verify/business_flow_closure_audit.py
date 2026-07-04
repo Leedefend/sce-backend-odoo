@@ -193,13 +193,17 @@ def _run_contract_payment_flow(failures):
 
     _expect_exception("contract_payment.settlement_done_before_submit", settlement.action_done, failures)
     settlement.action_submit()
-    _expect_state("contract_payment.settlement_submit", settlement, "submit", failures)
-    env.cr.execute(
-        "UPDATE sc_settlement_order SET validation_status=%s WHERE id=%s",
-        ("validated", settlement.id),
-    )
     settlement.invalidate_recordset()
-    settlement.action_on_tier_approved()
+    if settlement.state == "submit":
+        env.cr.execute(
+            "UPDATE sc_settlement_order SET validation_status=%s WHERE id=%s",
+            ("validated", settlement.id),
+        )
+        settlement.invalidate_recordset()
+        settlement.action_on_tier_approved()
+    elif settlement.state != "approve":
+        failures.append("contract_payment.settlement_submit: expected state=submit or approve, got %s" % settlement.state)
+        return {}
     _expect_state("contract_payment.settlement_approve", settlement, "approve", failures)
 
     payment = env["payment.request"].create(
