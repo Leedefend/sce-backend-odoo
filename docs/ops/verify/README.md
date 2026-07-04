@@ -201,7 +201,7 @@
   - Verifies the v2.0.0 evidence manifest keeps required gate sections, evidence table row content/order, current local verification status structure, schema guard rows, controlled-doc artifact coverage, evidence rules, and explicit prod-sim evidence directory validation.
 - `make verify.release.v2_0_0.control_docs.guard`
   - Verifies the v2.0.0 release-control README, release notes, versioning guide, release indexes, verification catalog, and Makefile target dependencies keep planned tag names, release boundaries, required gates, immutable RC guidance, and the current 10-module product delivery baseline.
-  - Enforces release document list, release-control boundary and gate command blocks, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, versioning formal release line, and promotion order shape for the v2.0.0 control README and versioning guide.
+  - Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, versioning formal release line, and promotion order shape for the v2.0.0 control README and versioning guide.
 - `make verify.release.v2_0_0.governance.guard`
   - Runs the v2.0.0 release-control docs, evidence manifest, and checklist guards as one governance closure target.
 - `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
