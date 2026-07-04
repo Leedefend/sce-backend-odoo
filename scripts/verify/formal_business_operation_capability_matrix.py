@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from odoo.exceptions import AccessError
+from odoo.tools.safe_eval import safe_eval
 
 from odoo.addons.smart_core.handlers.ui_contract_v2 import UiContractV2Handler
 
@@ -116,6 +117,39 @@ def _contract_payload(env_obj, *, action_id: int, menu_id: int, model: str, view
     return _unwrap(handler.handle(payload, None))
 
 
+def _safe_action_context(action) -> dict:
+    try:
+        value = safe_eval(action.context or "{}", {})
+        return value if isinstance(value, dict) else {}
+    except Exception:
+        return {}
+
+
+def _action_domain_history_scoped(action) -> bool:
+    domain_text = _text(action.domain)
+    return any(token in domain_text for token in ("legacy_", "legacy_source_", "source_table", "history_", "uc_"))
+
+
+def _view_looks_user_confirmed(view) -> bool:
+    if not view:
+        return False
+    value = " ".join([
+        _text(view.name),
+        _text(view.key),
+        _text(view.xml_id),
+    ]).lower()
+    return "user_confirmed" in value or "用户确认" in value
+
+
+def _action_user_confirmed_view_scoped(action) -> bool:
+    if _view_looks_user_confirmed(action.view_id):
+        return True
+    for view_link in action.view_ids:
+        if _view_looks_user_confirmed(view_link.view_id):
+            return True
+    return False
+
+
 def _contract_summary(env_obj, *, action_id: int, menu_id: int, model: str, view_type: str) -> dict:
     try:
         result = _contract_payload(env_obj, action_id=action_id, menu_id=menu_id, model=model, view_type=view_type)
@@ -209,6 +243,14 @@ def _audit_row(env_obj, row: dict) -> dict:
         issues.append("act_window_missing")
     elif _text(action.res_model) != model:
         issues.append("action_model_mismatch")
+    elif action:
+        action_context = _safe_action_context(action)
+        if action_context.get("create") is False:
+            issues.append("action_create_disabled")
+        if _action_domain_history_scoped(action):
+            issues.append("action_domain_history_scoped")
+        if _action_user_confirmed_view_scoped(action):
+            issues.append("action_user_confirmed_view_scoped")
     if model not in env_obj:
         issues.append("model_missing")
 

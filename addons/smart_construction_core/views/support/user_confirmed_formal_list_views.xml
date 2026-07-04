@@ -527,18 +527,20 @@
         <field name="name">报价单</field>
         <field name="res_model">sc.material.rfq</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" ref="smart_construction_core.view_sc_material_rfq_quote_user_confirmed_tree"/>
-        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:报价单')]</field>
-        <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+        <field name="view_id" eval="False"/>
+        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <record id="action_sc_subcontract_request_user_confirmed" model="ir.actions.act_window">
         <field name="name">分包方单</field>
         <field name="res_model">sc.subcontract.request</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" ref="smart_construction_core.view_sc_subcontract_request_user_confirmed_tree"/>
-        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:分包方单')]</field>
-        <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+        <field name="view_id" eval="False"/>
+        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <record id="action_sc_equipment_usage_shift_user_confirmed" model="ir.actions.act_window">
@@ -564,18 +566,13 @@
         <field name="view_ids" eval="[(5, 0, 0)]"/>
     </record>
     <record id="action_payment_request_user_payment_apply" model="ir.actions.act_window">
-        <field name="view_id" ref="smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree"/>
-        <field name="views" eval="[(ref('smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree'), 'tree'), (ref('smart_construction_core.view_payment_request_form'), 'form')]"/>
-        <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree')}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_payment_request_form')})
-        ]"/>
+        <field name="view_id" eval="False"/>
+        <field name="views" eval="[(False, 'tree'), (ref('smart_construction_core.view_payment_request_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_payment_request_form')})]"/>
     </record>
     <record id="action_sc_payment_execution_partner_payment" model="ir.actions.act_window">
-        <field name="view_id" ref="smart_construction_core.view_sc_payment_execution_partner_user_confirmed_tree"/>
-        <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_payment_execution_partner_user_confirmed_tree')})
-        ]"/>
+        <field name="view_id" eval="False"/>
+        <field name="view_ids" eval="[(5, 0, 0)]"/>
     </record>
     <record id="action_sc_legacy_fuel_card_fact" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_fact_user_confirmed_tree"/>
@@ -639,12 +636,10 @@
     </record>
     <record id="action_sc_salary_registration" model="ir.actions.act_window">
         <field name="name">项目管理人员工资登记</field>
-        <field name="view_id" ref="smart_construction_core.view_sc_hr_payroll_document_user_confirmed_tree"/>
-        <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_hr_payroll_document_user_confirmed_tree')})
-        ]"/>
-        <field name="domain">[('legacy_source_table', '=', 'direct_acceptance:管理人员工资表')]</field>
-        <field name="context">{'create': False, 'default_fact_type': 'salary_registration'}</field>
+        <field name="view_id" eval="False"/>
+        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="domain">[('fact_type', '=', 'salary_registration')]</field>
+        <field name="context">{'default_fact_type': 'salary_registration', 'search_default_salary_registration': 1}</field>
     </record>
     <record id="action_sc_construction_diary" model="ir.actions.act_window">
         <field name="name">施工日志</field>
@@ -658,11 +653,8 @@
     </record>
     <record id="action_sc_receipt_income_engineering_progress" model="ir.actions.act_window">
         <field name="name">工程进度款收入登记</field>
-        <field name="view_id" ref="smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree"/>
-        <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree')}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_receipt_income_form')})
-        ]"/>
+        <field name="view_id" eval="False"/>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_receipt_income_form')})]"/>
         <field name="domain">[('business_category_id.code', '=', 'finance.receipt.income.progress')]</field>
         <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'default_business_category_code': 'finance.receipt.income.progress', 'search_default_group_project': 1}</field>
     </record>
@@ -678,29 +670,20 @@
     </record>
     <record id="action_sc_invoice_registration_user" model="ir.actions.act_window">
         <field name="name">销项开票登记</field>
-        <field name="view_id" ref="smart_construction_core.view_sc_invoice_registration_general_input_tax_user_confirmed_tree"/>
-        <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_general_input_tax_user_confirmed_tree')}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_form')})
-        ]"/>
+        <field name="view_id" eval="False"/>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_form')})]"/>
         <field name="domain">[('business_category_id.code', '=', 'invoice.output.registration')]</field>
         <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票登记', 'default_business_category_code': 'invoice.output.registration', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_settlement_order_income" model="ir.actions.act_window">
-        <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
-        <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})
-        ]"/>
+        <field name="view_id" eval="False"/>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})]"/>
         <field name="domain">[('business_category_id.code', '=', 'settlement.income')]</field>
         <field name="context">{'create': True, 'edit': True, 'default_settlement_type': 'in', 'default_business_category_code': 'settlement.income', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_settlement_order_expense" model="ir.actions.act_window">
-        <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
-        <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})
-        ]"/>
+        <field name="view_id" eval="False"/>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})]"/>
         <field name="domain">[('business_category_id.code', '=', 'settlement.expense')]</field>
         <field name="context">{'create': True, 'edit': True, 'default_settlement_type': 'out', 'default_business_category_code': 'settlement.expense', 'search_default_group_project': 1}</field>
     </record>

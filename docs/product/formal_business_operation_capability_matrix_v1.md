@@ -67,18 +67,18 @@
 | 财务中心 | 自筹资金 | 自筹退回 | `sc.self.funding.registration` | `RCW` | `tree:Y/form:Y/search:Y` | `list=13 form=29 search=0` | `/a/999?menu_id=732` | PASS |
 | 财务中心 | 账户资金 | 账户间资金往来 | `sc.fund.account.operation` | `RCW` | `tree:Y/form:Y/search:Y` | `list=23 form=24 search=0` | `/a/782?menu_id=557` | PASS |
 | 财务中心 | 账户资金 | 资金对账 | `sc.treasury.reconciliation` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=32 search=0` | `/a/627?menu_id=345` | PASS |
+| 财务中心 | 费用 | 付款还保证金 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=10 form=16 search=0` | `/a/814?menu_id=615` | PASS |
+| 财务中心 | 费用 | 付款还保证金退回 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=10 form=16 search=0` | `/a/1010?menu_id=806` | PASS |
+| 财务中心 | 费用 | 报销申请 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=33 search=0` | `/a/764?menu_id=568` | PASS |
+| 财务中心 | 费用 | 项目费用报销单 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=33 search=0` | `/a/773?menu_id=569` | PASS |
 | 财务中心 | 费用与保证金 | 付款保证金退回 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=69 search=0` | `/a/815?menu_id=616` | PASS |
-| 财务中心 | 费用与保证金 | 付款还保证金 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=10 form=16 search=0` | `/a/814?menu_id=615` | PASS |
-| 财务中心 | 费用与保证金 | 付款还保证金退回 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=10 form=16 search=0` | `/a/1010?menu_id=806` | PASS |
 | 财务中心 | 费用与保证金 | 合同保证金支付 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=33 search=0` | `/a/985?menu_id=573` | PASS |
 | 财务中心 | 费用与保证金 | 合同保证金退回 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=33 search=0` | `/a/986?menu_id=574` | PASS |
 | 财务中心 | 费用与保证金 | 扣款实缴登记 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=14 form=33 search=0` | `/a/771?menu_id=554` | PASS |
 | 财务中心 | 费用与保证金 | 扣款实缴退回 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=14 form=33 search=0` | `/a/772?menu_id=555` | PASS |
 | 财务中心 | 费用与保证金 | 投标保证金支付 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=33 search=0` | `/a/983?menu_id=571` | PASS |
 | 财务中心 | 费用与保证金 | 投标保证金退回 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=33 search=0` | `/a/984?menu_id=572` | PASS |
-| 财务中心 | 费用与保证金 | 报销申请 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=33 search=0` | `/a/764?menu_id=568` | PASS |
 | 财务中心 | 费用与保证金 | 费用报销单 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=69 search=0` | `/a/763?menu_id=344` | PASS |
-| 财务中心 | 费用与保证金 | 项目费用报销单 | `sc.expense.claim` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=33 search=0` | `/a/773?menu_id=569` | PASS |
 | 人事行政 |  | 社保人员登记 | `sc.hr.payroll.document` | `RCW` | `tree:Y/form:Y/search:Y` | `list=16 form=78 search=0` | `/a/644?menu_id=353` | PASS |
 | 人事行政 |  | 社保登记 | `sc.hr.payroll.document` | `RCW` | `tree:Y/form:Y/search:Y` | `list=15 form=78 search=0` | `/a/645?menu_id=354` | PASS |
 | 人事行政 |  | 补助 | `sc.hr.payroll.document` | `RCW` | `tree:Y/form:Y/search:Y` | `list=13 form=78 search=0` | `/a/646?menu_id=356` | PASS |

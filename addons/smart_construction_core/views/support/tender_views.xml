@@ -508,6 +508,7 @@
         <field name="res_model">tender.bid</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_tender_bid_search"/>
+        <field name="domain">[]</field>
         <field name="context">{'default_state': 'prepare'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
     </record>
@@ -516,6 +517,7 @@
         <field name="res_model">tender.doc.purchase</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_tender_doc_purchase_search"/>
+        <field name="domain">[]</field>
         <field name="context">{'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
     </record>

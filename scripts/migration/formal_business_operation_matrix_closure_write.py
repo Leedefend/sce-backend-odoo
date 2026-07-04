@@ -198,6 +198,10 @@ def _write_action(action, vals: dict) -> dict:
     return {"before": before, "after": after}
 
 
+def _reset_action_views(action) -> None:
+    action.write({"view_id": False, "view_ids": [(5, 0, 0)]})
+
+
 def run() -> dict:
     ensure_allowed_db()
     result = {"database": env.cr.dbname, "changes": {}}  # noqa: F821
@@ -222,6 +226,149 @@ def run() -> dict:
         "context": "{'search_default_active_rows': 1, 'default_business_category_code': 'material.plan', 'current_business_category_code': 'material.plan'}",
     })
     material_plan_action.write({"view_ids": [(5, 0, 0)]})
+
+    tender_registration_action = env.ref("smart_construction_core.action_sc_tender_registration")  # noqa: F821
+    result["changes"]["tender_registration_action"] = _write_action(tender_registration_action, {
+        "name": "投标报名管理",
+        "res_model": "tender.bid",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_tender_bid_search").id,  # noqa: F821
+        "domain": "[]",
+        "context": "{'default_state': 'prepare'}",
+    })
+    _reset_action_views(tender_registration_action)
+
+    tender_fee_action = env.ref("smart_construction_core.action_sc_tender_registration_fee")  # noqa: F821
+    result["changes"]["tender_registration_fee_action"] = _write_action(tender_fee_action, {
+        "name": "投标报名费申请",
+        "res_model": "tender.doc.purchase",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_tender_doc_purchase_search").id,  # noqa: F821
+        "domain": "[]",
+        "context": "{'search_default_group_project': 1}",
+    })
+    _reset_action_views(tender_fee_action)
+
+    settlement_income_action = env.ref("smart_construction_core.action_sc_settlement_order_income")  # noqa: F821
+    result["changes"]["settlement_income_action"] = _write_action(settlement_income_action, {
+        "name": "收入合同结算",
+        "res_model": "sc.settlement.order",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_sc_settlement_order_search").id,  # noqa: F821
+        "domain": "[('business_category_id.code', '=', 'settlement.income')]",
+        "context": "{'create': True, 'edit': True, 'default_settlement_type': 'in', 'default_business_category_code': 'settlement.income', 'search_default_group_project': 1}",
+    })
+    _reset_action_views(settlement_income_action)
+
+    settlement_expense_action = env.ref("smart_construction_core.action_sc_settlement_order_expense")  # noqa: F821
+    result["changes"]["settlement_expense_action"] = _write_action(settlement_expense_action, {
+        "name": "支出合同结算",
+        "res_model": "sc.settlement.order",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_sc_settlement_order_search").id,  # noqa: F821
+        "domain": "[('business_category_id.code', '=', 'settlement.expense')]",
+        "context": "{'create': True, 'edit': True, 'default_settlement_type': 'out', 'default_business_category_code': 'settlement.expense', 'search_default_group_project': 1}",
+    })
+    _reset_action_views(settlement_expense_action)
+
+    material_quote_action = env.ref("smart_construction_core.action_sc_material_quote_user_confirmed")  # noqa: F821
+    result["changes"]["material_quote_action"] = _write_action(material_quote_action, {
+        "name": "报价单",
+        "res_model": "sc.material.rfq",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "domain": "[]",
+        "context": "{'search_default_group_project': 1}",
+    })
+    _reset_action_views(material_quote_action)
+
+    subcontract_request_acceptance_action = env.ref("smart_construction_core.action_sc_subcontract_request_user_confirmed")  # noqa: F821
+    result["changes"]["subcontract_request_acceptance_action"] = _write_action(subcontract_request_acceptance_action, {
+        "name": "分包方单",
+        "res_model": "sc.subcontract.request",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "domain": "[]",
+        "context": "{'search_default_group_project': 1}",
+    })
+    _reset_action_views(subcontract_request_acceptance_action)
+
+    partner_payment_action = env.ref("smart_construction_core.action_sc_payment_execution_partner_payment")  # noqa: F821
+    result["changes"]["partner_payment_action"] = _write_action(partner_payment_action, {
+        "name": "往来单位付款",
+        "res_model": "sc.payment.execution",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_sc_payment_execution_search").id,  # noqa: F821
+        "domain": "[('source_kind', '=', 'actual_outflow'), ('business_category_id.code', '=', 'finance.payment.execution.partner')]",
+        "context": "{'default_source_kind': 'actual_outflow', 'default_payment_family': '往来单位付款', 'default_business_category_code': 'finance.payment.execution.partner', 'search_default_group_project': 1}",
+    })
+    _reset_action_views(partner_payment_action)
+
+    payment_apply_action = env.ref("smart_construction_core.action_payment_request_user_payment_apply")  # noqa: F821
+    result["changes"]["payment_apply_action"] = _write_action(payment_apply_action, {
+        "name": "支付申请",
+        "res_model": "payment.request",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_payment_request_search").id,  # noqa: F821
+        "domain": "[('business_category_id.code', '=', 'finance.payment.apply.pay')]",
+        "context": "{'default_type': 'pay', 'default_business_category_code': 'finance.payment.apply.pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}",
+    })
+    _reset_action_views(payment_apply_action)
+
+    receipt_progress_action = env.ref("smart_construction_core.action_sc_receipt_income_engineering_progress")  # noqa: F821
+    result["changes"]["receipt_progress_action"] = _write_action(receipt_progress_action, {
+        "name": "工程进度款收入登记",
+        "res_model": "sc.receipt.income",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_sc_receipt_income_search").id,  # noqa: F821
+        "domain": "[('business_category_id.code', '=', 'finance.receipt.income.progress')]",
+        "context": "{'create': True, 'edit': True, 'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'default_business_category_code': 'finance.receipt.income.progress', 'search_default_group_project': 1}",
+    })
+    _reset_action_views(receipt_progress_action)
+
+    payment_receive_action = env.ref("smart_construction_core.action_payment_request_receive")  # noqa: F821
+    result["changes"]["payment_receive_action"] = _write_action(payment_receive_action, {
+        "name": "收款申请",
+        "res_model": "payment.request",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_payment_request_search").id,  # noqa: F821
+        "domain": "[('business_category_id.code', '=', 'finance.payment.apply.receive')]",
+        "context": "{'default_type': 'receive', 'default_business_category_code': 'finance.payment.apply.receive', 'search_default_type_receive': 1, 'search_default_group_by_receipt_type': 1, 'search_default_group_by_project_id': 1}",
+    })
+    _reset_action_views(payment_receive_action)
+
+    invoice_output_action = env.ref("smart_construction_core.action_sc_invoice_registration_user")  # noqa: F821
+    result["changes"]["invoice_output_action"] = _write_action(invoice_output_action, {
+        "name": "销项开票登记",
+        "res_model": "sc.invoice.registration",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_sc_invoice_registration_search").id,  # noqa: F821
+        "domain": "[('business_category_id.code', '=', 'invoice.output.registration')]",
+        "context": "{'create': True, 'edit': True, 'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票登记', 'default_business_category_code': 'invoice.output.registration', 'search_default_group_project': 1}",
+    })
+    _reset_action_views(invoice_output_action)
+
+    salary_menu = env.ref("smart_construction_core.menu_sc_salary_registration_scbs55_formal", raise_if_not_found=False)  # noqa: F821
+    salary_action = salary_menu.action if salary_menu and salary_menu.action and salary_menu.action._name == "ir.actions.act_window" else env.ref("smart_construction_core.action_sc_salary_registration")  # noqa: F821
+    result["changes"]["salary_registration_action"] = _write_action(salary_action, {
+        "name": "项目管理人员工资登记",
+        "res_model": "sc.hr.payroll.document",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_sc_hr_payroll_document_search").id,  # noqa: F821
+        "domain": "[('fact_type', '=', 'salary_registration')]",
+        "context": "{'default_fact_type': 'salary_registration', 'search_default_salary_registration': 1}",
+    })
+    _reset_action_views(salary_action)
 
     labor_usage_ticket_action = env.ref("smart_construction_core.action_sc_labor_usage_ticket")  # noqa: F821
     result["changes"]["labor_usage_ticket_action"] = _write_action(labor_usage_ticket_action, {
