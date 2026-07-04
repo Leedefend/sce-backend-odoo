@@ -9,6 +9,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 CONTROL_README = ROOT / "docs" / "ops" / "releases" / "v2.0.0" / "README.md"
 RELEASE_NOTES = ROOT / "docs" / "ops" / "release_notes_v2.0.0.md"
+VERSIONING = ROOT / "docs" / "ops" / "versioning.md"
 
 README_TOKENS = (
     "# v2.0.0 Release Control",
@@ -37,6 +38,20 @@ NOTES_TOKENS = (
     "RC tags are immutable once published.",
 )
 
+VERSIONING_TOKENS = (
+    "# Tag & Release Naming Convention v1.0",
+    "Never reuse a tag name.",
+    "## 8) v2.0.0 Formal Release Line",
+    "`v1.0.0` tag name already exists remotely and must not be reused",
+    "gate baseline: `gate-release-v2.0`",
+    "release candidates: `v2.0.0-rc1`, `v2.0.0-rc2` only when blocker fixes require a new candidate",
+    "formal release: `v2.0.0`",
+    "make verify.release.v2_0_0.preflight",
+    "make verify.release.v2_0_0.product_hardening",
+    "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard",
+    "Production deployment is not implied by creating `v2.0.0`",
+)
+
 FORBIDDEN_TOKENS = (
     "Product delivery baseline: 9 modules",
     "reuse `v1.0.0`",
@@ -63,6 +78,7 @@ def main() -> int:
     errors: list[str] = []
     _contains_all(CONTROL_README, README_TOKENS, errors)
     _contains_all(RELEASE_NOTES, NOTES_TOKENS, errors)
+    _contains_all(VERSIONING, VERSIONING_TOKENS, errors)
     if errors:
         print("[release_v2_0_0_control_docs_guard] FAIL")
         for error in errors:

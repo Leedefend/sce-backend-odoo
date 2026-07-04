@@ -94,8 +94,9 @@ Promotion order:
 2. Run `make verify.release.v2_0_0.preflight` on the reviewed release commit.
 3. Create `gate-release-v2.0` only after gate evidence passes.
 4. Run `make verify.release.v2_0_0.product_hardening` and close any blocker.
-5. Create `v2.0.0-rc1` only after RC evidence passes.
-6. Create `v2.0.0` only after prod-sim acceptance and release checklist signoff.
+5. Run `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard` after prod-sim acceptance evidence is recorded.
+6. Create `v2.0.0-rc1` only after RC evidence passes.
+7. Create `v2.0.0` only after prod-sim acceptance and release checklist signoff.
 
 Production deployment is not implied by creating `v2.0.0`; deployment remains a
 separate supervised operation under `docs/ops/production_deployment_runbook_v1.md`.
