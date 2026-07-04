@@ -85,7 +85,7 @@ EXPECTED_ACTION_CONTRACTS = {
     "action_sc_equipment_usage_shift_user_confirmed": {
         "name": "机械台班记录",
         "res_model": "sc.equipment.usage",
-        "view_name": "sc.equipment.usage.shift.user.confirmed.tree",
+        "view_name": "sc.equipment.usage.shift.formal.tree",
         "field_names": [
             "state",
             "project_id",
@@ -137,7 +137,7 @@ EXPECTED_ACTION_CONTRACTS = {
     "action_sc_material_quote_user_confirmed": {
         "name": "报价单",
         "res_model": "sc.material.rfq",
-        "view_name": "sc.material.rfq.quote.user.confirmed.tree",
+        "view_name": "sc.material.rfq.quote.formal.tree",
         "field_names": [
             "quote_status_display",
             "quote_document_no",
@@ -163,7 +163,7 @@ EXPECTED_ACTION_CONTRACTS = {
     "action_payment_request_user_payment_apply": {
         "name": "支付申请",
         "res_model": "payment.request",
-        "view_name": "payment.request.user.confirmed.payment.apply.tree",
+        "view_name": "payment.request.formal.payment.apply.tree",
         "field_names": [
             "document_status_display",
             "name",
@@ -215,7 +215,7 @@ EXPECTED_ACTION_CONTRACTS = {
     "action_sc_payment_execution_partner_payment": {
         "name": "往来单位付款",
         "res_model": "sc.payment.execution",
-        "view_name": "sc.payment.execution.partner.user.confirmed.tree",
+        "view_name": "sc.payment.execution.partner.formal.tree",
         "field_names": [
             "partner_payment_status_display",
             "partner_payment_date_display",
@@ -257,7 +257,7 @@ EXPECTED_ACTION_CONTRACTS = {
     "action_sc_receipt_income_engineering_progress": {
         "name": "工程进度款收入登记",
         "res_model": "sc.receipt.income",
-        "view_name": "sc.receipt.income.engineering.progress.user.confirmed.tree",
+        "view_name": "sc.receipt.income.engineering.progress.formal.tree",
         "field_names": [
             "state",
             "project_id",
@@ -304,7 +304,7 @@ EXPECTED_ACTION_CONTRACTS = {
     "action_sc_invoice_registration_user": {
         "name": "销项开票登记",
         "res_model": "sc.invoice.registration",
-        "view_name": "sc.invoice.registration.general.input.tax.user.confirmed.tree",
+        "view_name": "sc.invoice.registration.output.registration.formal.tree",
         "field_names": [
             "document_status_display",
             "document_no",

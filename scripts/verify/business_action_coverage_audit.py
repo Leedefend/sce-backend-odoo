@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 import json
 import sys
 import traceback
@@ -209,6 +210,21 @@ def _payment_request(project, partner, contract, amount, request_type, settlemen
     return request
 
 
+def _attach_proof(record, label):
+    attachment = env["ir.attachment"].sudo().create(
+        {
+            "name": "%s.txt" % label,
+            "datas": base64.b64encode(("proof:%s" % label).encode("utf-8")).decode("ascii"),
+            "res_model": record._name,
+            "res_id": record.id,
+            "mimetype": "text/plain",
+        }
+    )
+    if "attachment_ids" in record._fields:
+        record.sudo().write({"attachment_ids": [(4, attachment.id)]})
+    return attachment
+
+
 def _run_payment_execution(failures):
     project = _project("BAC Payment Execution Project", funding=True)
     partner = _partner("BAC Payment Execution Partner")
@@ -300,6 +316,7 @@ def _run_expense_claim(failures):
             "payer_account": "BAC-CLAIM-PAYER-001",
         }
     )
+    _attach_proof(claim, "business-action-coverage-expense-claim")
     _expect_exception("expense_claim.done_before_submit", claim.action_done, failures)
     claim.action_submit()
     if claim.state == "submit":

@@ -23,7 +23,7 @@ BOUNDARY_CASES = [
         "name": "付款还保证金",
         "model": "tender.guarantee",
         "owner": "core",
-        "action_xmlid": "smart_construction_core.action_sc_payment_deposit_return",
+        "action_xmlid": "smart_construction_core.action_tender_guarantee_formal_payment_deposit_return",
         "expected_view_xmlid": "smart_construction_core.view_tender_guarantee_formal_payment_deposit_return_tree",
         "fields": [
             "deposit_status_display",
@@ -51,7 +51,7 @@ BOUNDARY_CASES = [
         "model": "sc.material.rfq",
         "owner": "core",
         "action_xmlid": "smart_construction_core.action_sc_material_quote_user_confirmed",
-        "expected_view_xmlid": "smart_construction_core.view_sc_material_rfq_quote_user_confirmed_tree",
+        "expected_view_xmlid": "smart_construction_core.view_sc_material_rfq_quote_formal_tree",
         "fields": [
             "quote_status_display",
             "quote_document_no",
@@ -79,7 +79,7 @@ BOUNDARY_CASES = [
         "model": "sc.payment.execution",
         "owner": "core",
         "action_xmlid": "smart_construction_core.action_sc_payment_execution_partner_payment",
-        "expected_view_xmlid": "smart_construction_core.view_sc_payment_execution_partner_user_confirmed_tree",
+        "expected_view_xmlid": "smart_construction_core.view_sc_payment_execution_partner_formal_tree",
         "fields": [
             "partner_payment_status_display",
             "partner_payment_date_display",

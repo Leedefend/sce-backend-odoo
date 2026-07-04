@@ -283,7 +283,7 @@ def _run_expense_claims(failures):
         ("expense", "公司财务支出", "pay"),
         ("deposit_pay", "付款还保证金", "pay"),
         ("deposit_refund", "付款保证金退回", "receive"),
-        ("deduction_refund", "扣款实缴退回", "receive"),
+        ("deduction_refund", "扣款实缴退回", "pay"),
     ]
     interfund_claim_specs = [
         ("project_company_repay", "还款登记"),
@@ -294,6 +294,8 @@ def _run_expense_claims(failures):
 
     for index, (claim_type, expense_type, payment_type) in enumerate(claim_specs, start=1):
         amount = 70.0 + index
+        if claim_type == "deposit_refund":
+            amount = 60.0
         contract = _contract(project, partner, "in" if payment_type == "pay" else "out")
         settlement = _settlement(
             project,

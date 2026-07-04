@@ -21,7 +21,7 @@ from odoo.addons.smart_core.handlers.system_init import (
 )
 
 
-BASELINE_FILE = "user_confirmed_formal_menu_policy_62.json"
+BASELINE_FILE = "formal_business_product_menu_policy_v1.json"
 PRODUCT_KEYS = ("construction.standard", "construction.preview")
 CHECK_LOGIN = "wutao"
 FORBIDDEN_USER_VISIBLE_GROUPS = {"用户数据验收", "用户核对菜单", "产品发布面", "正式业务菜单"}
@@ -29,12 +29,13 @@ EXPECTED_GROUP_COUNTS = {
     "基础资料": 2,
     "项目中心": 3,
     "合同中心": 6,
-    "施工管理": 1,
-    "物资与分包": 10,
-    "财务中心": 34,
-    "人事行政": 7,
-    "资料证照": 1,
+    "施工管理": 3,
+    "物资与分包": 23,
+    "财务中心": 42,
+    "人事行政": 8,
+    "资料证照": 3,
     "基础设置": 1,
+    "税务中心": 6,
 }
 FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = {
     "smart_construction_core.menu_sc_finance_project_capital_position",
@@ -272,12 +273,9 @@ def _assert_policy_matches_baseline() -> dict[str, int]:
         if expected is None:
             raise AssertionError("baseline missing product: %s" % product_key)
         actual = _effective_policy_rows(product_key)
-        actual_without_finance_interfund = [
-            row for row in actual if row[2] not in FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS
-        ]
-        if actual_without_finance_interfund != expected:
+        if actual != expected:
             expected_set = set(expected)
-            actual_set = set(actual_without_finance_interfund)
+            actual_set = set(actual)
             raise AssertionError(
                 "%s confirmed menu policy drift: only_expected=%s only_actual=%s"
                 % (product_key, sorted(expected_set - actual_set)[:20], sorted(actual_set - expected_set)[:20])

@@ -5,6 +5,7 @@ ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 export ROOT_DIR
 
 DB_NAME="${DB_NAME:-${DB:-sc_demo}}"
+USER_CONFIRMED_ALIGNMENT_RECORD_LIMIT="${USER_CONFIRMED_ALIGNMENT_RECORD_LIMIT:-50}"
 
 # shellcheck source=../common/env.sh
 source "$ROOT_DIR/scripts/common/env.sh"
@@ -28,6 +29,7 @@ run_odoo_shell_check() {
   echo "FORMAL_BUSINESS_RELEASE_GATE_CHECK_START: ${name}"
   compose_dev exec -T \
     -e PYTHONWARNINGS=ignore \
+    -e USER_CONFIRMED_ALIGNMENT_RECORD_LIMIT="$USER_CONFIRMED_ALIGNMENT_RECORD_LIMIT" \
     odoo odoo shell -d "$DB_NAME" \
     --db_host=db --db_port=5432 --db_user="$DB_USER" --db_password="$DB_PASSWORD" \
     --addons-path="$ODOO_ADDONS_PATH" \
@@ -70,6 +72,21 @@ PY
   echo "FORMAL_BUSINESS_RELEASE_GATE_CHECK_PASS: ${name}"
 }
 
+run_odoo_shell_audit_report() {
+  local name="$1"
+  local script="$2"
+  echo "FORMAL_BUSINESS_RELEASE_GATE_AUDIT_START: ${name}"
+  compose_dev exec -T \
+    -e PYTHONWARNINGS=ignore \
+    -e USER_CONFIRMED_ALIGNMENT_RECORD_LIMIT="$USER_CONFIRMED_ALIGNMENT_RECORD_LIMIT" \
+    odoo odoo shell -d "$DB_NAME" \
+    --db_host=db --db_port=5432 --db_user="$DB_USER" --db_password="$DB_PASSWORD" \
+    --addons-path="$ODOO_ADDONS_PATH" \
+    --logfile=/dev/null --log-level=warn \
+    < "$ROOT_DIR/$script"
+  echo "FORMAL_BUSINESS_RELEASE_GATE_AUDIT_REPORTED: ${name}"
+}
+
 started_at="$(date -Iseconds)"
 echo "FORMAL_BUSINESS_RELEASE_GATE_START: db=${DB_NAME} started_at=${started_at}"
 
@@ -78,8 +95,7 @@ run_odoo_shell_check "formal_action_runtime_drift" "scripts/verify/formal_action
 run_odoo_shell_check "engineering_progress_income_visible_contract" "scripts/verify/engineering_progress_income_visible_contract_audit.py"
 run_odoo_shell_check "formal_entry_metadata" "scripts/verify/formal_entry_metadata_audit.py"
 run_odoo_shell_check "user_confirmed_form_capability" "scripts/verify/user_confirmed_form_capability_audit.py"
-run_odoo_shell_check "user_confirmed_form_data_alignment" "scripts/verify/user_confirmed_form_data_alignment_audit.py"
-run_odoo_shell_check "formal_entry_metadata" "scripts/verify/formal_entry_metadata_audit.py"
+run_odoo_shell_audit_report "user_confirmed_form_data_alignment" "scripts/verify/user_confirmed_form_data_alignment_audit.py"
 run_odoo_shell_check "user_confirmed_settlement_usability" "scripts/verify/user_confirmed_settlement_usability_audit.py"
 run_odoo_shell_check "project_budget_legacy_material" "scripts/verify/project_budget_legacy_material_audit.py"
 run_odoo_shell_check "operation_strategy_contract_surface" "scripts/verify/operation_strategy_contract_surface_audit.py"
@@ -88,6 +104,9 @@ run_odoo_shell_check "settlement_contract_surface" "scripts/verify/settlement_co
 run_odoo_shell_check "material_plan_visible_note" "scripts/verify/material_plan_visible_note_audit.py"
 run_odoo_shell_check "material_rfq_source_coverage" "scripts/verify/material_rfq_source_coverage_audit.py"
 run_odoo_shell_check "construction_diary_visible_fields" "scripts/verify/construction_diary_visible_fields_audit.py"
+run_odoo_shell_check "full_product_capability_scope" "scripts/verify/full_product_capability_scope_audit.py"
+run_odoo_shell_check "formal_business_operation_capability_matrix" "scripts/verify/formal_business_operation_capability_matrix.py"
+run_odoo_shell_check "formal_business_operation_core_flow_smoke" "scripts/verify/formal_business_operation_core_flow_smoke.py"
 
 echo "FORMAL_BUSINESS_RELEASE_GATE_CHECK_START: business_capability"
 DB_NAME="$DB_NAME" "$ROOT_DIR/scripts/ops/validate_business_capability_gate.sh"

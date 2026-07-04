@@ -13,7 +13,7 @@ from odoo.tools.safe_eval import safe_eval
 
 OUTPUT_JSON_NAME = "engineering_progress_income_visible_contract_audit_v1.json"
 ACTION_XMLID = "smart_construction_core.action_sc_receipt_income_engineering_progress"
-VIEW_XMLID = "smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree"
+VIEW_XMLID = "smart_construction_core.view_sc_receipt_income_engineering_progress_formal_tree"
 ACTION_NAME = "工程进度款收入登记"
 MODEL_NAME = "sc.receipt.income"
 EXPECTED_DOMAIN = [

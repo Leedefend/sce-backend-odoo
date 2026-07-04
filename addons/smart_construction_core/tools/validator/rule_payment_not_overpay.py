@@ -22,6 +22,7 @@ class PaymentNotOverpayRule(BaseRule):
             ("state", "in", ("draft", "submit", "approve", "approved")),
         ]
         domain += self._scope_domain("payment.request")
+        domain += self._settlement_scope_domain()
 
         issues = []
         checked = 0
@@ -107,3 +108,16 @@ class PaymentNotOverpayRule(BaseRule):
             "checked": checked,
             "issues": issues,
         }
+
+    def _settlement_scope_domain(self):
+        scope = self.scope or {}
+        if scope.get("res_model") != "sc.settlement.order":
+            return []
+        settlement_ids = scope.get("res_ids") or []
+        if not settlement_ids:
+            return []
+        return [
+            "|",
+            ("settlement_id", "in", settlement_ids),
+            ("outflow_line_ids.settlement_id", "in", settlement_ids),
+        ]

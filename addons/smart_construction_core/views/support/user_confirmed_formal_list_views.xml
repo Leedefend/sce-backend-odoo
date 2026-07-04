@@ -25,8 +25,8 @@
         </field>
     </record>
 
-    <record id="view_sc_material_rfq_quote_user_confirmed_tree" model="ir.ui.view">
-        <field name="name">sc.material.rfq.quote.user.confirmed.tree</field>
+    <record id="view_sc_material_rfq_quote_formal_tree" model="ir.ui.view">
+        <field name="name">sc.material.rfq.quote.formal.tree</field>
         <field name="model">sc.material.rfq</field>
         <field name="arch" type="xml">
             <tree string="报价单" create="false" edit="false" delete="false">
@@ -154,8 +154,8 @@
         </field>
     </record>
 
-    <record id="view_sc_equipment_usage_shift_user_confirmed_tree" model="ir.ui.view">
-        <field name="name">sc.equipment.usage.shift.user.confirmed.tree</field>
+    <record id="view_sc_equipment_usage_shift_formal_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.usage.shift.formal.tree</field>
         <field name="model">sc.equipment.usage</field>
         <field name="arch" type="xml">
             <tree string="机械台班记录" create="false" edit="false" delete="false" default_order="document_date desc, source_created_at asc, name asc">
@@ -271,8 +271,8 @@
         </field>
     </record>
 
-    <record id="view_payment_request_user_confirmed_payment_apply_tree" model="ir.ui.view">
-        <field name="name">payment.request.user.confirmed.payment.apply.tree</field>
+    <record id="view_payment_request_formal_payment_apply_tree" model="ir.ui.view">
+        <field name="name">payment.request.formal.payment.apply.tree</field>
         <field name="model">payment.request</field>
         <field name="arch" type="xml">
             <tree string="支付申请" create="false" edit="false" delete="false" default_order="created_time desc, name desc">
@@ -300,8 +300,8 @@
         </field>
     </record>
 
-    <record id="view_sc_payment_execution_partner_user_confirmed_tree" model="ir.ui.view">
-        <field name="name">sc.payment.execution.partner.user.confirmed.tree</field>
+    <record id="view_sc_payment_execution_partner_formal_tree" model="ir.ui.view">
+        <field name="name">sc.payment.execution.partner.formal.tree</field>
         <field name="model">sc.payment.execution</field>
         <field name="arch" type="xml">
             <tree string="往来单位付款" create="false" edit="false" delete="false" default_order="date_payment desc, id desc">
@@ -418,8 +418,8 @@
         </field>
     </record>
 
-    <record id="view_sc_receipt_income_engineering_progress_user_confirmed_tree" model="ir.ui.view">
-        <field name="name">sc.receipt.income.engineering.progress.user.confirmed.tree</field>
+    <record id="view_sc_receipt_income_engineering_progress_formal_tree" model="ir.ui.view">
+        <field name="name">sc.receipt.income.engineering.progress.formal.tree</field>
         <field name="model">sc.receipt.income</field>
         <field name="arch" type="xml">
             <tree string="工程进度款收入登记" create="false" edit="false" delete="false" default_order="date_receipt desc, name desc, id desc">
@@ -469,8 +469,8 @@
         </field>
     </record>
 
-    <record id="view_sc_invoice_registration_general_input_tax_user_confirmed_tree" model="ir.ui.view">
-        <field name="name">sc.invoice.registration.general.input.tax.user.confirmed.tree</field>
+    <record id="view_sc_invoice_registration_output_registration_formal_tree" model="ir.ui.view">
+        <field name="name">sc.invoice.registration.output.registration.formal.tree</field>
         <field name="model">sc.invoice.registration</field>
         <field name="arch" type="xml">
             <tree string="总包进项上报" create="false" edit="false" delete="false" default_order="created_time desc, id desc">
@@ -527,8 +527,11 @@
         <field name="name">报价单</field>
         <field name="res_model">sc.material.rfq</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_material_rfq_quote_formal_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_material_rfq_quote_formal_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_material_rfq_form')})
+        ]"/>
         <field name="domain">[]</field>
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
@@ -547,8 +550,11 @@
         <field name="name">机械台班记录</field>
         <field name="res_model">sc.equipment.usage</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_equipment_usage_shift_formal_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_equipment_usage_shift_formal_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_equipment_usage_form')})
+        ]"/>
         <field name="domain">[]</field>
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
@@ -566,13 +572,19 @@
         <field name="view_ids" eval="[(5, 0, 0)]"/>
     </record>
     <record id="action_payment_request_user_payment_apply" model="ir.actions.act_window">
-        <field name="view_id" eval="False"/>
-        <field name="views" eval="[(False, 'tree'), (ref('smart_construction_core.view_payment_request_form'), 'form')]"/>
-        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_payment_request_form')})]"/>
+        <field name="view_id" ref="smart_construction_core.view_payment_request_formal_payment_apply_tree"/>
+        <field name="views" eval="[(ref('smart_construction_core.view_payment_request_formal_payment_apply_tree'), 'tree'), (ref('smart_construction_core.view_payment_request_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_payment_request_formal_payment_apply_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_payment_request_form')})
+        ]"/>
     </record>
     <record id="action_sc_payment_execution_partner_payment" model="ir.actions.act_window">
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_payment_execution_partner_formal_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_payment_execution_partner_formal_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_payment_execution_form')})
+        ]"/>
     </record>
     <record id="action_sc_legacy_fuel_card_fact" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_fact_user_confirmed_tree"/>
@@ -653,8 +665,11 @@
     </record>
     <record id="action_sc_receipt_income_engineering_progress" model="ir.actions.act_window">
         <field name="name">工程进度款收入登记</field>
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_receipt_income_form')})]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_receipt_income_engineering_progress_formal_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_receipt_income_engineering_progress_formal_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_receipt_income_form')})
+        ]"/>
         <field name="domain">[('business_category_id.code', '=', 'finance.receipt.income.progress')]</field>
         <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'default_business_category_code': 'finance.receipt.income.progress', 'search_default_group_project': 1}</field>
     </record>
@@ -670,8 +685,11 @@
     </record>
     <record id="action_sc_invoice_registration_user" model="ir.actions.act_window">
         <field name="name">销项开票登记</field>
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_form')})]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_invoice_registration_output_registration_formal_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_output_registration_formal_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_form')})
+        ]"/>
         <field name="domain">[('business_category_id.code', '=', 'invoice.output.registration')]</field>
         <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票登记', 'default_business_category_code': 'invoice.output.registration', 'search_default_group_project': 1}</field>
     </record>
