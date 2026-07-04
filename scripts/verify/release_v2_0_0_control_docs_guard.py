@@ -91,6 +91,7 @@ RELEASE_INDEX_EN_TOKENS = (
     "Verify: `make verify.release.v2_0_0.preflight`",
     "Governance Verify: `make verify.release.v2_0_0.governance.guard`",
     "Formal Evidence Verify: `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
+    "Evidence Boundary: recorded sample artifacts are not release signoff evidence",
     "GitHub Release: required after formal tag",
 )
 
@@ -105,6 +106,7 @@ RELEASE_INDEX_ZH_TOKENS = (
     "Verify：`make verify.release.v2_0_0.preflight`",
     "Governance Verify：`make verify.release.v2_0_0.governance.guard`",
     "Formal Evidence Verify：`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
+    "Evidence Boundary：历史样本证据不可作为发布签发证据",
     "GitHub Release：正式 tag 后必须发布",
 )
 
