@@ -95,6 +95,22 @@ REQUIRED_TABLE_EVIDENCE = {
     ),
 }
 
+REQUIRED_LOCAL_STATUS_ITEMS = (
+    "Command: `make verify.release.v2_0_0.product_hardening`",
+    "Status: blocked in the current local `sc_demo` dev verification environment",
+    "Current blocker evidence:",
+    "Evidence shape guard:",
+    "Current blocker facts on `sc_demo`:",
+    "Latest passing sub-gate in this batch:",
+    "Closed sub-gates: `verify.bundle.installation.ready` and",
+    "Release hardening also includes",
+    "Artifacts:",
+    "Evidence shape guards:",
+    "Schema-only guard runs may use recorded artifact directories to verify evidence",
+    "Note: before creating `gate-release-v2.0` or `v2.0.0-rc1`, rerun required",
+    "Note: before creating final `v2.0.0`, rerun",
+)
+
 
 def _table_evidence_for_section(text: str, heading: str) -> tuple[str, ...] | None:
     lines = text.splitlines()
@@ -123,6 +139,22 @@ def _table_evidence_for_section(text: str, heading: str) -> tuple[str, ...] | No
     return tuple(evidence)
 
 
+def _top_level_bullets_after_heading(text: str, heading: str) -> tuple[str, ...] | None:
+    lines = text.splitlines()
+    try:
+        start = lines.index(heading)
+    except ValueError:
+        return None
+
+    items: list[str] = []
+    for line in lines[start + 1 :]:
+        if line.startswith("## "):
+            break
+        if line.startswith("- "):
+            items.append(line[2:].strip())
+    return tuple(items)
+
+
 def _contains_required_table_evidence(text: str, errors: list[str]) -> None:
     for heading, expected_evidence in REQUIRED_TABLE_EVIDENCE.items():
         actual_evidence = _table_evidence_for_section(text, heading)
@@ -134,6 +166,18 @@ def _contains_required_table_evidence(text: str, errors: list[str]) -> None:
                 "manifest evidence table mismatch: "
                 f"{heading} expected={expected_evidence!r} actual={actual_evidence!r}"
             )
+
+
+def _contains_required_local_status_items(text: str, errors: list[str]) -> None:
+    actual_items = _top_level_bullets_after_heading(text, "## Current Local Verification Status")
+    if actual_items is None:
+        errors.append("manifest missing section: ## Current Local Verification Status")
+        return
+    if actual_items != REQUIRED_LOCAL_STATUS_ITEMS:
+        errors.append(
+            "manifest local verification status items mismatch: "
+            f"expected={REQUIRED_LOCAL_STATUS_ITEMS!r} actual={actual_items!r}"
+        )
 
 
 def main() -> int:
@@ -151,6 +195,7 @@ def main() -> int:
         if text.count("| Evidence | Command | Required Result | Artifact |") != 4:
             errors.append("manifest must contain four evidence tables")
         _contains_required_table_evidence(text, errors)
+        _contains_required_local_status_items(text, errors)
 
     if errors:
         print("[release_v2_0_0_evidence_manifest_guard] FAIL")
