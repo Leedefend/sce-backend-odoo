@@ -4098,6 +4098,11 @@ verify.release.current_status.wording_closeout.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/release_current_status_wording_closeout_guard.py
 	@python3 scripts/verify/release_current_status_wording_closeout_guard.py
 
+.PHONY: verify.product.delivery.scoreboard.final_closeout.guard
+verify.product.delivery.scoreboard.final_closeout.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/product_delivery_scoreboard_final_closeout_guard.py
+	@python3 scripts/verify/product_delivery_scoreboard_final_closeout_guard.py
+
 .PHONY: verify.product.menu.release.ready
 verify.product.menu.release.ready: guard.prod.forbid \
 	verify.product.menu.catalog \
