@@ -118,7 +118,7 @@ VERIFY_README_TOKENS = (
     "`make verify.release.v2_0_0.evidence_manifest.guard`",
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
-    "release indexes, and verification catalog",
+    "release indexes, verification catalog, and Makefile target dependencies",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
