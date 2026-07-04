@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_invoice_surcharge_replay_adapter",
+  "expected_rows": 27053,
+  "output_rows": 4540,
+  "input_rows": 22513,
+  "output_surcharge_amount": 20595859.4964,
+  "input_surcharge_amount": 13328329.2112,
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_invoice_surcharge_replay_payload_v1.csv"
+}

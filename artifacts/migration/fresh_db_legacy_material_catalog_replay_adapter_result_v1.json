@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_material_catalog_replay_adapter",
+  "category_rows": 130624,
+  "detail_rows": 2279734,
+  "category_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_material_category_replay_payload_v1.csv",
+  "detail_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_material_detail_replay_payload_v1.csv",
+  "decision": "legacy_material_catalog_payload_ready"
+}

@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_purchase_contract_replay_adapter",
+  "total_rows": 49,
+  "active_rows": 46,
+  "project_count": 2,
+  "partner_text_count": 27,
+  "amount_sum": "12334556.9200",
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_purchase_contract_replay_payload_v1.csv",
+  "decision": "legacy_purchase_contract_payload_ready"
+}

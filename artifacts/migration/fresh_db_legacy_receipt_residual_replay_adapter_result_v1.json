@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_receipt_residual_replay_adapter",
+  "total_rows": 7412,
+  "receipt_rows": 7412,
+  "active_rows": 7363,
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_receipt_residual_replay_payload_v1.csv",
+  "decision": "legacy_receipt_residual_payload_ready"
+}

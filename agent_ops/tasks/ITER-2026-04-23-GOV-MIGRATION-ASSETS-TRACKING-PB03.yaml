@@ -1,7 +1,7 @@
 task_id: ITER-2026-04-23-GOV-MIGRATION-ASSETS-TRACKING-PB03
 title: Track migration rebuild assets required by server business-data reconstruction
 type: governance-optimization
-status: active
+status: review
 priority: high
 mode: implement
 
@@ -57,6 +57,13 @@ context:
   baseline_sha: 099bcea
   explicit_user_authorization: true
   asset_path: artifacts/migration
+  implementation_note: >
+    Existing local assets include three files above GitHub's ordinary 100MB
+    object limit. A Git LFS push was attempted and rejected because the
+    repository exceeded its LFS budget, so those three files are tracked as
+    byte-preserving parts with a materialization script that restores the
+    original paths and verifies SHA-256. All other artifacts/migration files
+    are tracked as ordinary byte-preserving Git objects.
 
 architecture:
   layer_target: Governance Layer
@@ -90,11 +97,25 @@ stop_conditions:
   - migration_asset_path_missing
 
 deliverables:
-  - `.gitattributes` byte-preservation rule for `artifacts/migration/**`
-  - `.gitignore` exception for `artifacts/migration/**`
+  - "`.gitattributes` byte-preservation rule for `artifacts/migration/**`"
+  - "`.gitignore` exception for `artifacts/migration/**`"
   - tracked migration asset directory documentation
   - migration asset files staged for PR
   - iteration log entry
+
+validation_result:
+  status: partial-pass
+  passed:
+    - artifacts/migration/fresh_db_replay_manifest_v1.json exists
+    - artifacts/migration is no longer excluded by the parent artifacts ignore rule
+    - non-migration artifacts remain ignored
+    - three files above 100MB are staged as tracked parts with SHA-256 materialization
+    - staged ordinary Git objects are under 100MB
+    - no forbidden paths are staged
+    - scoped git diff --check for rules, README, task file, and iteration log
+  blocked:
+    - command: test -s artifacts/migration/legacy_db_full_rebuild_blueprint_v1.json
+      reason: the expected blueprint file is absent from the current workspace
 
 rollback:
   - git restore .gitignore artifacts/migration/README.md docs/ops/iterations/delivery_context_switch_log_v1.md agent_ops/tasks/ITER-2026-04-23-GOV-MIGRATION-ASSETS-TRACKING-PB03.yaml

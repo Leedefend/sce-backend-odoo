@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_self_funding_replay_adapter",
+  "expected_rows": 3728,
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_self_funding_replay_payload_v1.csv"
+}
