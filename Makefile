@@ -873,7 +873,7 @@ verify.finance_interfund.position.bundle_summary: guard.prod.forbid check-compos
 verify.finance_interfund.position.all: verify.finance_interfund.projection.static_guard verify.interfund_user_data.full_coverage.audit verify.interfund_borrow.classification_gap.audit verify.finance_business_fact.scope.audit verify.finance_business_fact.projection.audit verify.finance_business_project.summary.audit verify.interfund_movement.fact.audit verify.interfund_movement_project.summary.audit verify.interfund_treasury_ledger.backfill_readiness.audit verify.company_contractor.responsibility_fact.audit verify.company_contractor.responsibility_summary.audit verify.company_contractor.responsibility_http.smoke verify.finance_project_capital.position.audit verify.finance_project_counterparty.position.audit verify.finance_counterparty.position_summary.audit verify.finance_counterparty.identity_quality.audit verify.finance_position.drilldown_usability.audit verify.finance_interfund.position.menu_runtime.audit verify.finance_interfund.position.bundle_summary
 	@echo "FINANCE_INTERFUND_POSITION_AUDIT_ALL_PASS db=$(DB_NAME)"
 
-.PHONY: verify.business_capability.productization_p1 verify.formal_business.release_gate
+.PHONY: verify.business_capability.productization_p1 verify.formal_business.release_gate formal_entry_metadata.non_business_creator.write
 verify.formal_business.release_gate: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/validate_formal_business_release_gate.sh
 
@@ -882,6 +882,9 @@ verify.business_capability.productization_p1: guard.prod.forbid check-compose-pr
 
 formal_entry_metadata.surface.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) FORMAL_ENTRY_METADATA_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/ops/formal_entry_metadata_surface_write.py
+
+formal_entry_metadata.non_business_creator.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) FORMAL_ENTRY_METADATA_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/ops/formal_entry_metadata_non_business_creator_write.py
 
 company_finance_expense.payment_execution.backfill.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/company_finance_expense_payment_execution_backfill_write.py
