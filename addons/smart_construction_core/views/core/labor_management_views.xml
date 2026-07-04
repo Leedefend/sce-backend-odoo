@@ -18,16 +18,16 @@
         <field name="name">方单</field>
         <field name="res_model">sc.labor.usage</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:方单')]</field>
-        <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <record id="action_sc_labor_usage_casual" model="ir.actions.act_window">
         <field name="name">零星用工</field>
         <field name="res_model">sc.labor.usage</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:零星用工')]</field>
-        <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
     <record id="action_sc_labor_request" model="ir.actions.act_window">

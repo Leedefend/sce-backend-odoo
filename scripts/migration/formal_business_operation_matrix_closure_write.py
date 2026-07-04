@@ -211,6 +211,51 @@ def run() -> dict:
     )
     result["changes"]["material_inbound_form_contract_id"] = material_form.id if material_form else 0
 
+    material_plan_action = env.ref("smart_construction_core.action_project_material_plan")  # noqa: F821
+    result["changes"]["material_plan_action"] = _write_action(material_plan_action, {
+        "name": "物资计划",
+        "res_model": "project.material.plan",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "search_view_id": env.ref("smart_construction_core.view_project_material_plan_search").id,  # noqa: F821
+        "domain": "[('business_category_id.code', '=', 'material.plan')]",
+        "context": "{'search_default_active_rows': 1, 'default_business_category_code': 'material.plan', 'current_business_category_code': 'material.plan'}",
+    })
+    material_plan_action.write({"view_ids": [(5, 0, 0)]})
+
+    labor_usage_ticket_action = env.ref("smart_construction_core.action_sc_labor_usage_ticket")  # noqa: F821
+    result["changes"]["labor_usage_ticket_action"] = _write_action(labor_usage_ticket_action, {
+        "name": "方单",
+        "res_model": "sc.labor.usage",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "domain": "[]",
+        "context": "{'search_default_group_project': 1}",
+    })
+    labor_usage_ticket_action.write({"view_ids": [(5, 0, 0)]})
+
+    labor_usage_casual_action = env.ref("smart_construction_core.action_sc_labor_usage_casual")  # noqa: F821
+    result["changes"]["labor_usage_casual_action"] = _write_action(labor_usage_casual_action, {
+        "name": "零星用工",
+        "res_model": "sc.labor.usage",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "domain": "[]",
+        "context": "{'search_default_group_project': 1}",
+    })
+    labor_usage_casual_action.write({"view_ids": [(5, 0, 0)]})
+
+    equipment_usage_shift_action = env.ref("smart_construction_core.action_sc_equipment_usage_shift_user_confirmed")  # noqa: F821
+    result["changes"]["equipment_usage_shift_action"] = _write_action(equipment_usage_shift_action, {
+        "name": "机械台班记录",
+        "res_model": "sc.equipment.usage",
+        "view_mode": "tree,form",
+        "view_id": False,
+        "domain": "[]",
+        "context": "{'search_default_group_project': 1}",
+    })
+    equipment_usage_shift_action.write({"view_ids": [(5, 0, 0)]})
+
     payment_action = env.ref("smart_construction_core.action_sc_payment_deposit_return")  # noqa: F821
     result["changes"]["payment_deposit_return_action"] = _write_action(payment_action, {
         "name": "付款还保证金",
