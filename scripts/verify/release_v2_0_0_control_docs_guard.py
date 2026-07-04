@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[2]
 CONTROL_README = ROOT / "docs" / "ops" / "releases" / "v2.0.0" / "README.md"
 RELEASE_NOTES = ROOT / "docs" / "ops" / "release_notes_v2.0.0.md"
 VERSIONING = ROOT / "docs" / "ops" / "versioning.md"
+RELEASE_INDEX_EN = ROOT / "docs" / "ops" / "releases" / "README.md"
+RELEASE_INDEX_ZH = ROOT / "docs" / "ops" / "releases" / "README.zh.md"
 
 README_TOKENS = (
     "# v2.0.0 Release Control",
@@ -52,6 +54,32 @@ VERSIONING_TOKENS = (
     "Production deployment is not implied by creating `v2.0.0`",
 )
 
+RELEASE_INDEX_EN_TOKENS = (
+    "# Releases Index (Authoritative)",
+    "## Planned Formal Release",
+    "- v2.0.0 (planned tag: `v2.0.0`)",
+    "Notes: `docs/ops/release_notes_v2.0.0.md`",
+    "Checklist: `docs/ops/release_checklist_v2.0.0.md`",
+    "Evidence: `docs/ops/releases/v2.0.0/evidence_manifest.md`",
+    "Verify: `make verify.release.v2_0_0.preflight`",
+    "Governance Verify: `make verify.release.v2_0_0.governance.guard`",
+    "Formal Evidence Verify: `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
+    "GitHub Release: required after formal tag",
+)
+
+RELEASE_INDEX_ZH_TOKENS = (
+    "# 版本发布索引",
+    "## 计划正式发布",
+    "- v2.0.0（计划 tag：`v2.0.0`）",
+    "Release Notes：`docs/ops/release_notes_v2.0.0.md`",
+    "Release Checklist：`docs/ops/release_checklist_v2.0.0.md`",
+    "Evidence：`docs/ops/releases/v2.0.0/evidence_manifest.md`",
+    "Verify：`make verify.release.v2_0_0.preflight`",
+    "Governance Verify：`make verify.release.v2_0_0.governance.guard`",
+    "Formal Evidence Verify：`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
+    "GitHub Release：正式 tag 后必须发布",
+)
+
 FORBIDDEN_TOKENS = (
     "Product delivery baseline: 9 modules",
     "reuse `v1.0.0`",
@@ -79,6 +107,8 @@ def main() -> int:
     _contains_all(CONTROL_README, README_TOKENS, errors)
     _contains_all(RELEASE_NOTES, NOTES_TOKENS, errors)
     _contains_all(VERSIONING, VERSIONING_TOKENS, errors)
+    _contains_all(RELEASE_INDEX_EN, RELEASE_INDEX_EN_TOKENS, errors)
+    _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
     if errors:
         print("[release_v2_0_0_control_docs_guard] FAIL")
         for error in errors:

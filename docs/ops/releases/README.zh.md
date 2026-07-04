@@ -11,6 +11,18 @@ status: active
   - Release Notes：`docs/ops/release_notes_v0.3.0-stable.md`
   - Release Checklist：`docs/ops/release_checklist_v0.3.0-stable.md`
 
+## 计划正式发布
+- v2.0.0（计划 tag：`v2.0.0`）
+  - 类型：release
+  - 状态：planned
+  - Release Notes：`docs/ops/release_notes_v2.0.0.md`
+  - Release Checklist：`docs/ops/release_checklist_v2.0.0.md`
+  - Evidence：`docs/ops/releases/v2.0.0/evidence_manifest.md`
+  - Verify：`make verify.release.v2_0_0.preflight`
+  - Governance Verify：`make verify.release.v2_0_0.governance.guard`
+  - Formal Evidence Verify：`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
+  - GitHub Release：正式 tag 后必须发布
+
 ## 模板
 - Release Notes 模板：`docs/ops/releases/templates/release_notes_TEMPLATE.md`
 - Release Checklist 模板：`docs/ops/releases/templates/release_checklist_TEMPLATE.md`
