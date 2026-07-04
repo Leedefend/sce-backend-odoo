@@ -2212,8 +2212,17 @@ demo.full: guard.prod.forbid check-compose-project check-compose-env
 seed.run: check-compose-project check-compose-env
 	@$(RUN_ENV) STEPS=$(STEPS) bash scripts/seed/run.sh
 
+.PHONY: verify.non_demo_data_contamination
 verify.non_demo_data_contamination: check-compose-project check-compose-env
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/odoo_shell_exec.sh < scripts/verify/non_demo_data_contamination_guard.py
+	@mkdir -p artifacts/backend
+	@status=0; \
+	$(RUN_ENV) \
+		NON_DEMO_DATA_CONTAMINATION_GUARD_JSON=/tmp/non_demo_data_contamination_guard.json \
+		NON_DEMO_DATA_CONTAMINATION_GUARD_MD=/tmp/non_demo_data_contamination_guard.md \
+		DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/non_demo_data_contamination_guard.py || status=$$?; \
+	$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/non_demo_data_contamination_guard.json artifacts/backend/non_demo_data_contamination_guard.json >/dev/null 2>&1 || true; \
+	$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/non_demo_data_contamination_guard.md artifacts/backend/non_demo_data_contamination_guard.md >/dev/null 2>&1 || true; \
+	exit $$status
 
 audit.project.actions: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) OUT=$(OUT) bash scripts/ops/audit_project_actions.sh
