@@ -23,6 +23,7 @@ REQUIRED_TOKENS = (
     "make verify.release.v2_0_0.preflight",
     "make verify.release.v2_0_0.product_hardening",
     "make release.dev.acceptance.publish",
+    "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard",
     "artifacts/backend/dev_acceptance_release_probe.json",
     "gate-release-v2.0",
     "v2.0.0-rc1",
