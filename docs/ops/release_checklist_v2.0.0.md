@@ -47,6 +47,10 @@ catalog complete before release.
 The readiness chain also includes `make verify.product.menu.release.ready`, so
 formal product menu changes, system configuration entries, and runtime user
 menu configuration boundaries must pass the menu release gate before release.
+The readiness chain also includes
+`make verify.frontend.widget_richness.post_ga.guard`, so x2many inline editing,
+backend subviews, kanban/view-type semantics, and v2 chatter/attachments
+projection remain part of formal hardening.
 
 The platform performance sub-gate must measure the Web boot path with
 `scene_ready_mode=registry`; full scene hydration remains a deep-link/runtime
