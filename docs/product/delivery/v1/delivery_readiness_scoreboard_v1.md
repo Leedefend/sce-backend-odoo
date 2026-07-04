@@ -2,11 +2,12 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-06-30T09:07:43Z
-- branch: `topic/ledger-reconciliation-trend`
-- commit_ref: `098d897f8`
+- generated_at_utc: 2026-07-04T17:19:06Z
+- branch: `main`
+- commit_ref: `bcf4e581d`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
+- final_closeout_date: `2026-07-05`
 
 ## System-Bound Evidence Summary
 
@@ -47,7 +48,7 @@
 | 项目执行与任务协同 | `projects.dashboard`, `projects.execution` | PM | 项目、任务、周报样例 | Strict scene gate (`PASS`), project task action smoke (`PASS`), project journey trace archive (`PASS`) | 任务动作与 PM 旅程 trace 已脚本化；后续补长期趋势 |
 | 采购与物资协同 | `material.center`, `material.procurement`, `material.inbound`, `labor.request`, `equipment.request`, `subcontract.request` | 采购经理, PM | BOQ、供应商主数据、物资目录 | Strict scene gate (`PASS`), material action replay smoke (`PASS`), material cross-document progress audit (`PASS`) | 跨单据状态推进已脚本化；后续补采购申请到验收链路细化 |
 | 现场执行与质量安全 | `construction.plan`, `construction.plan_report`, `construction.diary`, `quality.center`, `safety.center` | PM, 领导/老板 | 项目、现场执行角色、质量安全基础字典 | Strict scene gate (`PASS`), quality safety closure smoke (`PASS`) | 质量/安全闭环已脚本化；后续补现场日报联动证据 |
-| 付款申请与审批 | `finance.payment_requests`, `finance.center` | 财务, PM | 付款申请、审批角色 | Strict scene gate (`PASS`), payment approval chain smoke (`PASS`) | field consumer audit deprecated refs remain non-strict follow-up |
+| 付款申请与审批 | `finance.payment_requests`, `finance.center` | 财务, PM | 付款申请、审批角色 | Strict scene gate (`PASS`), payment approval chain smoke (`PASS`), field consumer audit (`PASS`, `unexpected_deprecated_refs=0`) | finance -> executive handoff 已关闭；后续仅做覆盖率扩展 |
 | 资金与结算台账 | `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders` | 财务 | 账户、结算基础数据 | Strict scene gate (`PASS`), ledger snapshot smoke (`PASS`), ledger reconciliation trend (`PASS`) | 对账差异趋势已脚本化；后续补异常 drill-down 样本 |
 | 成本预算与利润分析 | `cost.project_budget`, `cost.project_cost_ledger`, `cost.profit_compare` | PM, 财务 | 预算、成本流水、BOQ | Strict scene gate (`PASS`), cost search pagination smoke (`PASS`) | 搜索/分页已脚本化；后续补成本偏差趋势证据 |
 | 经营指标与领导看板 | `portal.dashboard`, `finance.operating_metrics` | 领导/老板 | 指标快照数据 | Strict scene gate (`PASS`), executive readonly smoke (`PASS`) | 只读验收已脚本化；后续补长周期趋势证据 |
@@ -65,9 +66,11 @@
 
 ## Release Blocking Gaps (Current)
 
-1. Frontend/action closure/module capability/journey evidence are all script-bound and green in current mainline run.
-2. Remaining blocking posture is strict live-fetch dependency in network-restricted runners; use strict on live-enabled runners, restricted for local restricted verification.
-3. CI profile posture: strict=PASS (2026-06-30T07:05:38Z), restricted=PASS (2026-06-30T07:07:16Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs.
+1. No release-blocking gaps remain in the current product delivery scoreboard.
+2. Frontend/action closure/module capability/journey evidence are script-bound and green in current mainline evidence.
+3. 9-module delivery acceptance is fixed by `make verify.release.delivery_9_module.final_closeout.guard`.
+4. Current release wording is fixed by `make verify.release.current_status.wording_closeout.guard`.
+5. Payment approval field consumer audit is green: `verify.portal.payment_request_approval_field_consumer_audit` with `unexpected_deprecated_refs=0`.
 
 ## Repro Command Set (Default)
 
@@ -77,4 +80,7 @@ make verify.scene.no_action_scene.guard
 make verify.scene.delivery.readiness.role_company_matrix
 make verify.delivery.journey.role_matrix.guard
 make verify.product.delivery.mainline
+make verify.release.delivery_9_module.final_closeout.guard
+make verify.release.current_status.wording_closeout.guard
+make verify.product.delivery.scoreboard.final_closeout.guard
 ```
