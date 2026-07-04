@@ -184,6 +184,12 @@
 - `make verify.platform.release_policy.runtime.schema.guard`
   - Verifies the platform release-policy runtime probe JSON/MD shape.
   - Enforces product coverage, policy/catalog counts, user/no-native/subset/admin delivery summaries, and failure consistency.
+- `make verify.bundle.installation.ready.schema.guard`
+  - Verifies the bundle installation readiness JSON/MD report shape.
+  - Enforces construction/owner bundle coverage, positive scene/capability counts, reversible disabled payload shape, and error/warning count consistency.
+- `make verify.platform.performance.smoke.schema.guard`
+  - Verifies the platform performance smoke JSON/MD report shape.
+  - Enforces expected intent coverage, row/summary iteration consistency, threshold field shape, and error/warning count consistency.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.

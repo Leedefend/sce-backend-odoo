@@ -34,8 +34,10 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 | Evidence | Command | Required Result | Artifact |
 |---|---|---|---|
 | Product release readiness | `make verify.release.v2_0_0.product_hardening` | PASS | `artifacts/backend/bundle_installation_report.json` and related product gate artifacts |
+| Bundle installation schema | `make verify.bundle.installation.ready.schema.guard` | PASS | `artifacts/backend/bundle_installation_report.json` |
 | View richness hardening | included in `make verify.release.v2_0_0.product_hardening` | PASS | `docs/product/view_richness_post_ga_report_v1.md` |
 | Platform performance smoke | included in `make verify.release.v2_0_0.product_hardening` | PASS | `artifacts/backend/platform_performance_smoke.json` |
+| Platform performance schema | `make verify.platform.performance.smoke.schema.guard` | PASS | `artifacts/backend/platform_performance_smoke.json` |
 
 ## Required Before Formal `v2.0.0`
 
@@ -79,5 +81,8 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 - Artifacts:
   - `artifacts/backend/bundle_installation_report.json`
   - `artifacts/backend/platform_performance_smoke.json`
+- Evidence shape guards:
+  - `make verify.bundle.installation.ready.schema.guard`
+  - `make verify.platform.performance.smoke.schema.guard`
 - Note: before creating `gate-release-v2.0` or `v2.0.0-rc1`, rerun required
   gates on a clean reviewed release database and attach the fresh artifacts.
