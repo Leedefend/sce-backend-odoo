@@ -4020,6 +4020,11 @@ verify.prod.sim.isolation.quick: guard.prod.forbid
 		ENV=test ENV_FILE=.env.prod.sim COMPOSE_PROJECT_NAME=sc-backend-odoo-prod-sim PROJECT=sc-backend-odoo-prod-sim DB_NAME=sc_prod_sim
 	@echo "[verify.prod.sim.isolation.quick] PASS"
 
+.PHONY: verify.prod.sim.acceptance.evidence.schema.guard
+verify.prod.sim.acceptance.evidence.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/prod_sim_acceptance_evidence_schema_guard.py
+	@python3 scripts/verify/prod_sim_acceptance_evidence_schema_guard.py
+
 
 .PHONY: verify.product.delivery.gap
 verify.product.delivery.gap: guard.prod.forbid
