@@ -1,7 +1,7 @@
 task_id: ITER-2026-04-22-GOV-LARGE-FILE-HISTORY-CLEANUP-PA83
 title: Remove oversized migration asset from branch history
 type: governance-optimization
-status: active
+status: review
 priority: high
 mode: scan
 
@@ -81,6 +81,15 @@ stop_conditions:
 
 deliverables:
   - cleaned branch history without the oversized file
+
+validation_result:
+  status: superseded-pass
+  passed:
+    - large-file cleanup task commit is already contained in origin/main
+    - origin/main contains commit 30cf7f50a for the large-file cleanup task line
+    - current main publish path no longer requires rewriting codex/next-round history
+  notes:
+    - This cleanup only closes the stale task state; it does not rewrite history.
 
 rollback:
   - git reset --hard ORIG_HEAD
