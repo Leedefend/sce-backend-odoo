@@ -4063,6 +4063,11 @@ verify.release.phase1.navigation_convergence.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/release_phase1_navigation_convergence_guard.py
 	@python3 scripts/verify/release_phase1_navigation_convergence_guard.py
 
+.PHONY: verify.release.phase2.core_scenarios_closure.guard
+verify.release.phase2.core_scenarios_closure.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/release_phase2_core_scenarios_closure_guard.py
+	@python3 scripts/verify/release_phase2_core_scenarios_closure_guard.py
+
 .PHONY: verify.product.menu.release.ready
 verify.product.menu.release.ready: guard.prod.forbid \
 	verify.product.menu.catalog \
