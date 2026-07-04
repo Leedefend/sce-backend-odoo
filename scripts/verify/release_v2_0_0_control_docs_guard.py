@@ -137,6 +137,29 @@ README_RELEASE_DOCUMENTS = (
     "Evidence manifest: `docs/ops/releases/v2.0.0/evidence_manifest.md`",
 )
 
+README_PROMOTION_ORDER = (
+    "Finish release governance on a feature branch.",
+    "Merge reviewed release governance and code changes to `main`.",
+    "Run release preflight on `main`.",
+    "Create `gate-release-v2.0` after gate evidence passes.",
+    "Close product hardening gate.",
+    "Run `make verify.release.v2_0_0.governance.guard`.",
+    "Run prod-sim acceptance.",
+    "Run `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`.",
+    "Create `v2.0.0-rc1` after RC evidence passes.",
+    "Create `v2.0.0` after formal release signoff.",
+)
+
+VERSIONING_PROMOTION_ORDER = (
+    "Merge reviewed release-prep work to `main`.",
+    "Run `make verify.release.v2_0_0.preflight` on the reviewed release commit.",
+    "Create `gate-release-v2.0` only after gate evidence passes.",
+    "Run `make verify.release.v2_0_0.product_hardening` and close any blocker.",
+    "Run `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard` after prod-sim acceptance evidence is recorded.",
+    "Create `v2.0.0-rc1` only after RC evidence passes.",
+    "Create `v2.0.0` only after prod-sim acceptance and release checklist signoff.",
+)
+
 MAKEFILE_TARGET_PREREQS = (
     (
         "verify.release.v2_0_0.preflight",
@@ -233,6 +256,27 @@ def _list_items_after_heading(text: str, heading: str) -> tuple[str, ...] | None
     return tuple(items)
 
 
+def _ordered_items_after_marker(text: str, marker: str) -> tuple[str, ...] | None:
+    lines = text.splitlines()
+    try:
+        start = lines.index(marker)
+    except ValueError:
+        return None
+    items: list[str] = []
+    for line in lines[start + 1 :]:
+        if line.startswith("## "):
+            break
+        stripped = line.strip()
+        if not stripped:
+            continue
+        prefix, sep, value = stripped.partition(". ")
+        if sep and prefix.isdigit():
+            items.append(value.strip())
+        elif items:
+            break
+    return tuple(items)
+
+
 def _contains_readme_release_documents(errors: list[str]) -> None:
     if not CONTROL_README.is_file():
         errors.append(f"missing release-control README: {CONTROL_README.relative_to(ROOT).as_posix()}")
@@ -246,6 +290,22 @@ def _contains_readme_release_documents(errors: list[str]) -> None:
         errors.append(
             "release-control README documents mismatch: "
             f"expected={README_RELEASE_DOCUMENTS!r} actual={actual_documents!r}"
+        )
+
+
+def _contains_promotion_order(path: Path, marker: str, expected_order: tuple[str, ...], errors: list[str]) -> None:
+    if not path.is_file():
+        errors.append(f"missing promotion-order doc: {path.relative_to(ROOT).as_posix()}")
+        return
+    text = path.read_text(encoding="utf-8")
+    actual_order = _ordered_items_after_marker(text, marker)
+    if actual_order is None:
+        errors.append(f"{path.relative_to(ROOT).as_posix()} missing promotion marker: {marker}")
+        return
+    if actual_order != expected_order:
+        errors.append(
+            f"{path.relative_to(ROOT).as_posix()} promotion order mismatch: "
+            f"expected={expected_order!r} actual={actual_order!r}"
         )
 
 
@@ -275,6 +335,8 @@ def main() -> int:
     _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
     _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
     _contains_readme_release_documents(errors)
+    _contains_promotion_order(CONTROL_README, "## Promotion Order", README_PROMOTION_ORDER, errors)
+    _contains_promotion_order(VERSIONING, "Promotion order:", VERSIONING_PROMOTION_ORDER, errors)
     _contains_makefile_targets(errors)
     if errors:
         print("[release_v2_0_0_control_docs_guard] FAIL")
