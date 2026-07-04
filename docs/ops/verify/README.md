@@ -195,6 +195,7 @@
   - Enforces mode/status metadata, backup/frontend/login block status consistency, and key frontend/login check field types.
 - `make verify.release.v2_0_0.checklist.guard`
   - Verifies the v2.0.0 release checklist keeps required preflight, product hardening, dev acceptance, prod-sim, controlled-doc review, production safety, post-release, and stop-condition sections in the expected order.
+  - Enforces RC and formal-release command blocks exactly.
   - Enforces required release tag names, versioning/release-index review, and prod/prod-sim evidence separation language.
 - `make verify.release.v2_0_0.evidence_manifest.guard`
   - Verifies the v2.0.0 evidence manifest keeps required gate sections, evidence table rows/order, schema guard rows, controlled-doc artifact coverage, evidence rules, and explicit prod-sim evidence directory validation.
