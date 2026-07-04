@@ -1836,6 +1836,29 @@ def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
     data["views"] = views
 
 
+def _trim_contract_field_maps(data: dict, selected_fields: list[str]) -> None:
+    selected = [_safe_text(name) for name in selected_fields if _safe_text(name)]
+    if not selected:
+        return
+    allowed = set(selected)
+    fields_map = _as_dict(data.get("fields"))
+    if fields_map:
+        data["fields"] = {name: fields_map[name] for name in selected if name in fields_map}
+    field_policies = _as_dict(data.get("field_policies"))
+    if field_policies:
+        data["field_policies"] = {name: field_policies[name] for name in selected if name in field_policies}
+    field_semantics = _as_dict(data.get("field_semantics"))
+    if field_semantics:
+        data["field_semantics"] = {name: field_semantics[name] for name in selected if name in field_semantics}
+    validation_rules = data.get("validation_rules")
+    if isinstance(validation_rules, list):
+        data["validation_rules"] = [
+            row
+            for row in validation_rules
+            if not isinstance(row, dict) or not _safe_text(row.get("field")) or _safe_text(row.get("field")) in allowed
+        ]
+
+
 def _govern_project_form_search(data: dict) -> None:
     search = _as_dict(data.get("search"))
     filters = search.get("filters")
@@ -2019,10 +2042,7 @@ def _build_project_lifecycle_summary(data: dict) -> None:
 
 def _govern_project_form_contract_for_user(data: dict) -> None:
     selected = _pick_project_form_fields(data)
-    fields_map = _as_dict(data.get("fields"))
-    # Keep full field map for native form-structure fidelity. Restricting fields to
-    # selected subset can prune page containers indirectly in user surface.
-    data["fields"] = fields_map
+    _trim_contract_field_maps(data, selected)
     data["visible_fields"] = selected
     views = _as_dict(data.get("views"))
     form = _as_dict(views.get("form"))

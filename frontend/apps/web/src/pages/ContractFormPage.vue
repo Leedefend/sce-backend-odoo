@@ -3823,21 +3823,10 @@ const runtimeCapabilities = computed(() => {
   });
   return out;
 });
-const runtimeUserGroups = computed(() => {
-  const out = new Set<string>();
-  const user = (session.user || {}) as Record<string, unknown>;
-  const groups = Array.isArray(user.groups_xmlids) ? user.groups_xmlids : [];
-  groups.forEach((group) => {
-    const key = String(group || '').trim();
-    if (key) out.add(key);
-  });
-  return out;
-});
 const policyContext = computed(() => ({
   profile: renderProfile.value,
   formData: formData as Record<string, unknown>,
   capabilities: runtimeCapabilities.value,
-  userGroups: runtimeUserGroups.value,
   roleCode: runtimeRoleCode.value,
 }));
 

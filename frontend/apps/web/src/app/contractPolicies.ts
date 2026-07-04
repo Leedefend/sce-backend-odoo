@@ -45,7 +45,6 @@ type PolicyContext = {
   profile: RenderProfile;
   formData: Record<string, unknown>;
   capabilities: Set<string>;
-  userGroups: Set<string>;
   roleCode: string;
   submittedFields?: Set<string>;
 };
@@ -182,13 +181,6 @@ export function evaluateActionPolicy(
   if (requiredCapabilities.length) {
     const missingCaps = requiredCapabilities.filter((key) => !ctx.capabilities.has(key));
     if (missingCaps.length) enabled = false;
-  }
-  const requiredGroups = Array.isArray(enabledWhen.required_groups)
-    ? enabledWhen.required_groups.map((x) => String(x || '').trim()).filter(Boolean)
-    : [];
-  if (requiredGroups.length) {
-    const matched = requiredGroups.some((group) => ctx.userGroups.has(group));
-    if (!matched) enabled = false;
   }
   const requiredRoles = Array.isArray(enabledWhen.required_roles)
     ? enabledWhen.required_roles.map((x) => String(x || '').trim().toLowerCase()).filter(Boolean)

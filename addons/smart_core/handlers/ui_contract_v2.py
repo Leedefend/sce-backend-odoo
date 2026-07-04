@@ -400,13 +400,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "locked_columns": [],
             "must_request_columns": list(locked_profile.get("fact_columns") or columns),
         }
-        layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
-        layout_contract["listProfile"] = self._v2_policy_projection(
-            locked_profile,
-            runtime_carrier="ui.contract.v2.layoutContract.listProfile",
-            source_key="list_profile.business_config_contract_authoritative",
-        )
-        contract["layoutContract"] = layout_contract
+        self._project_v2_source_policies(contract, {"list_profile": locked_profile})
 
     def _merge_user_list_preference_columns(self, source_contract: dict[str, Any], columns: list[str]) -> list[str]:
         action_id = self._source_action_id(source_contract)
