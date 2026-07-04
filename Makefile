@@ -4287,6 +4287,7 @@ verify.product.delivery.mainline: guard.prod.forbid
 	  --action-closure $$ACTION_STATUS \
 	  --module-capability $$MODULE9_STATUS \
 	  --governance $$GOVERNANCE_STATUS; \
+	python3 scripts/verify/delivery_mainline_run_summary_schema_guard.py; \
 		$(MAKE) --no-print-directory refresh.delivery.readiness.scoreboard >/dev/null; \
 		python3 -c "import json, pathlib; p=pathlib.Path('artifacts/backend/delivery_readiness_ci_summary.json'); d=json.loads(p.read_text(encoding='utf-8')) if p.is_file() else {}; o=d.get('overall') if isinstance(d.get('overall'), dict) else {}; print(f\"[verify.product.delivery.mainline] overall_ok={o.get('ok')} policy={o.get('policy')}\")"; \
 	if [ "$$FRONTEND_STATUS" = "PASS" ] && [ "$$SCENE_STATUS" = "PASS" ] && [ "$$ACTION_STATUS" = "PASS" ] && [ "$$MODULE9_STATUS" = "PASS" ] && [ "$$CONTRACT_CLOSURE_STATUS" = "PASS" ] && [ "$$GOVERNANCE_STATUS" = "PASS" ]; then \
@@ -4295,6 +4296,11 @@ verify.product.delivery.mainline: guard.prod.forbid
 	  echo "[FAIL] verify.product.delivery.mainline"; \
 	  exit 1; \
 	fi
+
+.PHONY: verify.product.delivery.mainline.summary.schema.guard
+verify.product.delivery.mainline.summary.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/delivery_mainline_run_summary_schema_guard.py
+	@python3 scripts/verify/delivery_mainline_run_summary_schema_guard.py
 
 .PHONY: export.product.delivery.package
 export.product.delivery.package: guard.prod.forbid

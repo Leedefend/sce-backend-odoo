@@ -150,6 +150,9 @@
   - Emits run summary artifacts:
     - `artifacts/backend/delivery_mainline_run_summary.json`
     - `artifacts/backend/delivery_mainline_run_summary.md`
+- `make verify.product.delivery.mainline.summary.schema.guard`
+  - Verifies delivery mainline JSON/MD summary shape.
+  - Enforces branch/commit/profile metadata, required step statuses, and `ok` consistency with all required steps.
 - `make verify.product.delivery.action_closure.smoke`
   - Verifies action/search/workflow/validation closure signals for delivery high-frequency scenes.
   - Current focus scenes:
