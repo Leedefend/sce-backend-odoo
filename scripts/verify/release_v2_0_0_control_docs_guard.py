@@ -374,6 +374,11 @@ FORBIDDEN_TOKENS = (
     "reuse `v1.0.0`",
     "git tag -f",
     "git push --force",
+    "git reset --hard",
+    "ENV=prod make",
+    "TODO",
+    "TBD",
+    "FIXME",
     "Production deployment is part of this release-note batch.",
 )
 
