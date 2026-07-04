@@ -1,0 +1,68 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "contract_sc_v1",
+  "db_writes": 0,
+  "generated_at": "2026-04-15T07:45:00+00:00",
+  "odoo_shell": false,
+  "screen_profile": {
+    "blocked_rows": 202,
+    "blocker_counts": {
+      "deleted_flag": 65,
+      "direction_defer": 124,
+      "partner_anchor_ambiguous": 2,
+      "partner_anchor_missing": 128,
+      "project_anchor_missing": 88
+    },
+    "direction_counts": {
+      "defer": 124,
+      "in": 16,
+      "out": 1554
+    },
+    "loadable_partner_anchor_sources": {
+      "canonical_nonempty_vat": 143,
+      "contract_counterparty_supplement_ambiguous": 393,
+      "contract_counterparty_supplement_missing": 46,
+      "exact": 713,
+      "normalized": 4,
+      "receipt_single_counterparty": 193
+    },
+    "partner_match_counts": {
+      "ambiguous": 2,
+      "canonical_nonempty_vat": 153,
+      "contract_counterparty_supplement_ambiguous": 409,
+      "contract_counterparty_supplement_missing": 47,
+      "exact": 749,
+      "missing": 128,
+      "normalized": 5,
+      "receipt_single_counterparty": 201
+    },
+    "ready_anchor_rows": 1492,
+    "receipt_direction_recovered_rows": 12,
+    "receipt_evidence_recovered_rows": 193
+  },
+  "source": "tmp/raw/contract/contract.csv",
+  "target_model": "construction.contract",
+  "tax_policy": {
+    "source_contract_tax_rows": 0,
+    "target_default": "construction.contract.create_by_type",
+    "xml_tax_id": "omitted"
+  },
+  "validation_gates": {
+    "generate_time": [
+      "legacy_contract_id_unique",
+      "project_external_id_resolves",
+      "partner_external_id_resolves",
+      "contract_counterparty_supplement_resolves",
+      "receipt_contract_reference_direction_resolves",
+      "receipt_single_counterparty_anchor_resolves",
+      "deleted_rows_excluded",
+      "direction_resolved",
+      "tax_id_omitted_target_default"
+    ],
+    "postload": [
+      "xml_external_id_resolves",
+      "project_id_ref_resolves",
+      "partner_id_ref_resolves"
+    ]
+  }
+}

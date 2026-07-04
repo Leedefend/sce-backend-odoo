@@ -1,0 +1,2255 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+  <data noupdate="1">
+    <record id="legacy_receipt_counterparty_sc_00d57ad17db74a5c95fa1be158f21376" model="res.partner">
+      <field name="name">黄建军</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">00d57ad17db74a5c95fa1be158f21376</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">黄建军</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_00fa1405c3d1412882683a2f743b690c" model="res.partner">
+      <field name="name">李佳琳</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">00fa1405c3d1412882683a2f743b690c</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李佳琳</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_0181bee8f0354d699367839433dba8db" model="res.partner">
+      <field name="name">刘曜</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">0181bee8f0354d699367839433dba8db</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘曜</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_01bb4c95df7c45f0b01ad49061a19d06" model="res.partner">
+      <field name="name">蔡顺芳</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">01bb4c95df7c45f0b01ad49061a19d06</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">蔡顺芳</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_020bfb6529404a99a6aa6000d6a0c4d7" model="res.partner">
+      <field name="name">陈建峰</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">020bfb6529404a99a6aa6000d6a0c4d7</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">陈建峰</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_0257e79286754dd69fb9b8cc1373877e" model="res.partner">
+      <field name="name">赖方莉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">0257e79286754dd69fb9b8cc1373877e</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">赖方莉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_037913d9970e4e7e83eec244a1de6812" model="res.partner">
+      <field name="name">向东</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">037913d9970e4e7e83eec244a1de6812</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">向东</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_051866337dfe4fd2a37d18b902500802" model="res.partner">
+      <field name="name">袁天强</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">051866337dfe4fd2a37d18b902500802</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">袁天强</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_05968805601547efbc75821c3088ab8c" model="res.partner">
+      <field name="name">孙阳明</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">05968805601547efbc75821c3088ab8c</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">孙阳明</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_05d5a91c476542f39f93a576cb5e7847" model="res.partner">
+      <field name="name">王松立</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">05d5a91c476542f39f93a576cb5e7847</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王松立</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_0705c8584b2d49ce9ceef76892927559" model="res.partner">
+      <field name="name">石萧</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">0705c8584b2d49ce9ceef76892927559</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">石萧</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_0a8ce3a8_b32d_4f09_bfd8_6588421f46f5" model="res.partner">
+      <field name="name">肖华</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">0a8ce3a8-b32d-4f09-bfd8-6588421f46f5</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">肖华</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_0ad2af7cd776488bba8e96f001d2c262" model="res.partner">
+      <field name="name">邓卓文</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">0ad2af7cd776488bba8e96f001d2c262</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">邓卓文</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_0b138cd84809411181d37a2abca7101f" model="res.partner">
+      <field name="name">曹辉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">0b138cd84809411181d37a2abca7101f</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">曹辉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_0b4c2f23f604455aae4ebeb3d648d8db" model="res.partner">
+      <field name="name">彭建</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">0b4c2f23f604455aae4ebeb3d648d8db</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">彭建</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_0bc09873ff23416f8a2a0b798adc9c61" model="res.partner">
+      <field name="name">次旦</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">0bc09873ff23416f8a2a0b798adc9c61</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">次旦</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_0d7d167e3ca14ec5adc4a7039e9985d3" model="res.partner">
+      <field name="name">黄陈军</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">0d7d167e3ca14ec5adc4a7039e9985d3</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">黄陈军</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10000001" model="res.partner">
+      <field name="name">段奕俊</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10000001</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">段奕俊</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10000011" model="res.partner">
+      <field name="name">胡俊</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10000011</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">胡俊</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10000015" model="res.partner">
+      <field name="name">文楠</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10000015</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">文楠</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10000021" model="res.partner">
+      <field name="name">杨永田</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10000021</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">杨永田</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10000029" model="res.partner">
+      <field name="name">陈天友</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10000029</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">陈天友</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10000040" model="res.partner">
+      <field name="name">范晓龙</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10000040</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">范晓龙</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10000044" model="res.partner">
+      <field name="name">蒋毅</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10000044</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">蒋毅</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10000053" model="res.partner">
+      <field name="name">叶凌越</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10000053</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">叶凌越</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10000054" model="res.partner">
+      <field name="name">李俭峰</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10000054</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李俭峰</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10000056" model="res.partner">
+      <field name="name">肖辉玖</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10000056</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">肖辉玖</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1094" model="res.partner">
+      <field name="name">中国移动四川分公司乐山片区2018-2020年渠道零星维修项目（标包5）</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">1094</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">中国移动四川分公司乐山片区2018-2020年渠道零星维修项目（标包5）</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_10c135a2f6ad4ebc88ebf4cff1b3080a" model="res.partner">
+      <field name="name">向序忠</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">10c135a2f6ad4ebc88ebf4cff1b3080a</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">向序忠</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1145995645af49d79cd3f6956afaa1fd" model="res.partner">
+      <field name="name">李际春</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1145995645af49d79cd3f6956afaa1fd</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李际春</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_115b059d2589412d8e27dd5460779c15" model="res.partner">
+      <field name="name">蔡招武</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">115b059d2589412d8e27dd5460779c15</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">蔡招武</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_119ca912743a4d5face179e7b7be8a2e" model="res.partner">
+      <field name="name">余枫</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">119ca912743a4d5face179e7b7be8a2e</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">余枫</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_11f4f949fdc74530b000ef5b28f6babf" model="res.partner">
+      <field name="name">汪桂君</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">11f4f949fdc74530b000ef5b28f6babf</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">汪桂君</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1232112bc4a4489c8113bb0f99ea9ffe" model="res.partner">
+      <field name="name">林羽能</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1232112bc4a4489c8113bb0f99ea9ffe</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">林羽能</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_12a2cd506c38464f8b99335ac3f7a5c9" model="res.partner">
+      <field name="name">唐文</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">12a2cd506c38464f8b99335ac3f7a5c9</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">唐文</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_12afb515819b45d897050678bb2a163c" model="res.partner">
+      <field name="name">梁应龙</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">12afb515819b45d897050678bb2a163c</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">梁应龙</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_14fa0bb174084324b65fb82161b629fd" model="res.partner">
+      <field name="name">穆春宏</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">14fa0bb174084324b65fb82161b629fd</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">穆春宏</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1616117be2094007b388c53168c8dfd5" model="res.partner">
+      <field name="name">简平凡</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1616117be2094007b388c53168c8dfd5</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">简平凡</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_16da25228a6748068437f02f95bfd460" model="res.partner">
+      <field name="name">税务局</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">16da25228a6748068437f02f95bfd460</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">税务局</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_17ccae4e12a149f2bc629c513d68cdca" model="res.partner">
+      <field name="name">蒋家敏</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">17ccae4e12a149f2bc629c513d68cdca</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">蒋家敏</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1826ad6c3d934f69959ead9f03a595da" model="res.partner">
+      <field name="name">唐利川</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1826ad6c3d934f69959ead9f03a595da</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">唐利川</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_18a366a20abc45e99e95daf293512f03" model="res.partner">
+      <field name="name">文泽香</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">18a366a20abc45e99e95daf293512f03</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">文泽香</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1a84ab87ec3d4279b349d055f6df7f74" model="res.partner">
+      <field name="name">陈辉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1a84ab87ec3d4279b349d055f6df7f74</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">陈辉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1a89a63cce8444729e5870aa58b60a7b" model="res.partner">
+      <field name="name">刘亚妮</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1a89a63cce8444729e5870aa58b60a7b</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘亚妮</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1c64c031885e42328542122077bb9cd5" model="res.partner">
+      <field name="name">邹谨文</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1c64c031885e42328542122077bb9cd5</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">邹谨文</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1d095be0b6db4147862f7ab1fc213e4a" model="res.partner">
+      <field name="name">唐祖贵</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1d095be0b6db4147862f7ab1fc213e4a</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">唐祖贵</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1d76378c_fa53_4e39_8b5f_eedb009f6466" model="res.partner">
+      <field name="name">敬远</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1d76378c-fa53-4e39-8b5f-eedb009f6466</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">敬远</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1d9c955875a34c20abcde7793ac73b21" model="res.partner">
+      <field name="name">郑书友</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1d9c955875a34c20abcde7793ac73b21</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">郑书友</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1e238da73c08429893d1a3c3596a3c36" model="res.partner">
+      <field name="name">陈小敏</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1e238da73c08429893d1a3c3596a3c36</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">陈小敏</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1f1c8eafbc844d83936ba7ffbd1369d3" model="res.partner">
+      <field name="name">曾萍</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1f1c8eafbc844d83936ba7ffbd1369d3</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">曾萍</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_1fd2c60e7e73463094734b54edb9aa9a" model="res.partner">
+      <field name="name">李俭锋</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">1fd2c60e7e73463094734b54edb9aa9a</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李俭锋</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_215490984f664e08b8b086e85210a570" model="res.partner">
+      <field name="name">左乾劲</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">215490984f664e08b8b086e85210a570</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">左乾劲</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_2522fe74d9554105b4f46020e04f6549" model="res.partner">
+      <field name="name">薛排成</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">2522fe74d9554105b4f46020e04f6549</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">薛排成</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_26f75cc5c35d4ce39328e98f48d9d78b" model="res.partner">
+      <field name="name">黄林</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">26f75cc5c35d4ce39328e98f48d9d78b</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">黄林</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_27aeb4b32f60426486363164a25564ac" model="res.partner">
+      <field name="name">杜正川</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">27aeb4b32f60426486363164a25564ac</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">杜正川</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_27b29404f535489e87924bef9931a96e" model="res.partner">
+      <field name="name">彭名杰</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">27b29404f535489e87924bef9931a96e</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">彭名杰</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_294ba1cf5ea048b5a9eb336123f28411" model="res.partner">
+      <field name="name">雒平平</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">294ba1cf5ea048b5a9eb336123f28411</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">雒平平</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_29e28b9b03d544e5a43d155757f49f37" model="res.partner">
+      <field name="name">王顺强</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">29e28b9b03d544e5a43d155757f49f37</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王顺强</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_2a86f924bb1e4d638700b24245ffbe43" model="res.partner">
+      <field name="name">胡进宝</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">2a86f924bb1e4d638700b24245ffbe43</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">胡进宝</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_2bc53a6a10cd42a29465a95c36aeb1bb" model="res.partner">
+      <field name="name">张彩先</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">2bc53a6a10cd42a29465a95c36aeb1bb</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张彩先</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_2c2fb4275771496b912cdcff76302e52" model="res.partner">
+      <field name="name">谢占军</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">2c2fb4275771496b912cdcff76302e52</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">谢占军</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_2cbbebf29fc14a1eb86e7ff591028c7f" model="res.partner">
+      <field name="name">史天泉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">2cbbebf29fc14a1eb86e7ff591028c7f</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">史天泉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_2cd9f92e2b2e411a90f3787906533da8" model="res.partner">
+      <field name="name">罗霖</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">2cd9f92e2b2e411a90f3787906533da8</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">罗霖</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_2cf8d98b1e5f4d988d521a11bbe68c14" model="res.partner">
+      <field name="name">王本月</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">2cf8d98b1e5f4d988d521a11bbe68c14</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王本月</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_2d44ec08a90447399e766ddd6ea23596" model="res.partner">
+      <field name="name">李书寒</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">2d44ec08a90447399e766ddd6ea23596</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李书寒</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_2eda0b836a904c2480f288c3e94511e6" model="res.partner">
+      <field name="name">乔雪梅</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">2eda0b836a904c2480f288c3e94511e6</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">乔雪梅</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_2f01f91490324949a058c5b98e3971f5" model="res.partner">
+      <field name="name">田仲蓉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">2f01f91490324949a058c5b98e3971f5</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">田仲蓉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_303f0bcadbc049e3bd2cd4cb0f1101cf" model="res.partner">
+      <field name="name">涂小琴</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">303f0bcadbc049e3bd2cd4cb0f1101cf</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">涂小琴</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_323f6cc3173d4b23b6c0d17fad2900e6" model="res.partner">
+      <field name="name">陈辉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">323f6cc3173d4b23b6c0d17fad2900e6</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">陈辉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_3242d83b27414a9a96ae509f02c0c5af" model="res.partner">
+      <field name="name">吴代强</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">3242d83b27414a9a96ae509f02c0c5af</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">吴代强</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_330cd7e7b2ba4858bf858a140d0a5280" model="res.partner">
+      <field name="name">何铭</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">330cd7e7b2ba4858bf858a140d0a5280</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">何铭</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_334e8540470a496a9e394540d337a53b" model="res.partner">
+      <field name="name">刘红波</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">334e8540470a496a9e394540d337a53b</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘红波</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_3380a82de6174dcaa1833c41f38f1951" model="res.partner">
+      <field name="name">刘建华</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">3380a82de6174dcaa1833c41f38f1951</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘建华</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_3448d584e66349dcb1c6ff888fd00804" model="res.partner">
+      <field name="name">赵大凯</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">3448d584e66349dcb1c6ff888fd00804</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">赵大凯</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_35d045307b174f85b6706f1a0d51e8c5" model="res.partner">
+      <field name="name">税务局</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">35d045307b174f85b6706f1a0d51e8c5</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">税务局</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_35eb10f3e498431b911cf91447d2ab40" model="res.partner">
+      <field name="name">巫应亮</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">35eb10f3e498431b911cf91447d2ab40</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">巫应亮</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_3666460f89764d839e24c3f0cec56cac" model="res.partner">
+      <field name="name">谭涛</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">3666460f89764d839e24c3f0cec56cac</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">谭涛</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_37c1c27a6d234ec98d8517e61c2516c7" model="res.partner">
+      <field name="name">倪德珍</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">37c1c27a6d234ec98d8517e61c2516c7</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">倪德珍</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_396e91a9cdb74a2a9d754ed1e7037b20" model="res.partner">
+      <field name="name">蒲冬梅</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">396e91a9cdb74a2a9d754ed1e7037b20</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">蒲冬梅</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_3a79b5566a6a478ab2ee60aa5cbe04fc" model="res.partner">
+      <field name="name">曾泽琼</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">3a79b5566a6a478ab2ee60aa5cbe04fc</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">曾泽琼</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_3c1ef768110d44cc8095c41b3f70469e" model="res.partner">
+      <field name="name">杨永田</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">3c1ef768110d44cc8095c41b3f70469e</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">杨永田</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_3cb2b3472a5944618dd7915695eb15e9" model="res.partner">
+      <field name="name">向远贵</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">3cb2b3472a5944618dd7915695eb15e9</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">向远贵</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_3dd8b3d0dbc148c3a651690c80608a9b" model="res.partner">
+      <field name="name">刘林</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">3dd8b3d0dbc148c3a651690c80608a9b</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘林</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_3ef80384_226c_451b_9565_3b292999c796" model="res.partner">
+      <field name="name">李俭峰</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">3ef80384-226c-451b-9565-3b292999c796</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李俭峰</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_40b5b2cd5a3d4f9faa433004e0fee4d8" model="res.partner">
+      <field name="name">常磊</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">40b5b2cd5a3d4f9faa433004e0fee4d8</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">常磊</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_41d8d48fd7734daaba59c17a62fd3975" model="res.partner">
+      <field name="name">张仁香</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">41d8d48fd7734daaba59c17a62fd3975</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张仁香</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_42870a12e80d4c259523ce3dc1e1eb57" model="res.partner">
+      <field name="name">朱占中</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">42870a12e80d4c259523ce3dc1e1eb57</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">朱占中</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_42d9cd41cd4f477db7ee9df94aece331" model="res.partner">
+      <field name="name">刘焘</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">42d9cd41cd4f477db7ee9df94aece331</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘焘</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_45548610a3a743a2b77e96b865cda6e6" model="res.partner">
+      <field name="name">王建刚</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">45548610a3a743a2b77e96b865cda6e6</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王建刚</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_4587bd6cef6c4d288de23a1d63e009db" model="res.partner">
+      <field name="name">黄超</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">4587bd6cef6c4d288de23a1d63e009db</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">黄超</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_47621ac5966f4db59e2ceb3f1e5eb5dd" model="res.partner">
+      <field name="name">王乃丁</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">47621ac5966f4db59e2ceb3f1e5eb5dd</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王乃丁</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_4769ce6a00d64289a33a56c329be24b1" model="res.partner">
+      <field name="name">范小庆</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">4769ce6a00d64289a33a56c329be24b1</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">范小庆</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_49d7382a65f34e54996326c4d33727a3" model="res.partner">
+      <field name="name">赖德金</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">49d7382a65f34e54996326c4d33727a3</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">赖德金</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_4a8210d7de364247ab9ad90a5a2fa7ee" model="res.partner">
+      <field name="name">何华勇</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">4a8210d7de364247ab9ad90a5a2fa7ee</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">何华勇</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_4af2f21b3a78425aadd1f44fa68cb190" model="res.partner">
+      <field name="name">黄成</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">4af2f21b3a78425aadd1f44fa68cb190</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">黄成</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_4d7540aa27e345b68d0fec88322dfbc1" model="res.partner">
+      <field name="name">刘善志</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">4d7540aa27e345b68d0fec88322dfbc1</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘善志</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_4f3e10b416df4ae5b3804e6e5626f0b7" model="res.partner">
+      <field name="name">张顺雄</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">4f3e10b416df4ae5b3804e6e5626f0b7</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张顺雄</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_517502667aae49b78088c7cab5452d2b" model="res.partner">
+      <field name="name">李航</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">517502667aae49b78088c7cab5452d2b</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李航</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_52651ab80c6e488cb3de96fa70d7ff17" model="res.partner">
+      <field name="name">李小林</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">52651ab80c6e488cb3de96fa70d7ff17</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李小林</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_559fe95d94274f698d9341f16d68b432" model="res.partner">
+      <field name="name">刘凤琴</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">559fe95d94274f698d9341f16d68b432</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘凤琴</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_57166c9e29434dbeacc1e6eba4d07f9e" model="res.partner">
+      <field name="name">李连</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">57166c9e29434dbeacc1e6eba4d07f9e</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李连</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_58dfb49c7f2a4f93bae74b5135182bfb" model="res.partner">
+      <field name="name">瞿刚</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">58dfb49c7f2a4f93bae74b5135182bfb</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">瞿刚</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_59a779f193a746319af56f780edf700c" model="res.partner">
+      <field name="name">文勇</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">59a779f193a746319af56f780edf700c</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">文勇</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_59b33d2dcc744c53b3833b896573f1c2" model="res.partner">
+      <field name="name">崔修敏</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">59b33d2dcc744c53b3833b896573f1c2</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">崔修敏</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_59f51827a8b6430591b60e87c53e3139" model="res.partner">
+      <field name="name">练世银</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">59f51827a8b6430591b60e87c53e3139</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">练世银</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_5a4fe3c3fc464dcb902729beb17880c4" model="res.partner">
+      <field name="name">何高春</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">5a4fe3c3fc464dcb902729beb17880c4</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">何高春</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_5bcb6c84efaf4b588f203ecf6ea5116d" model="res.partner">
+      <field name="name">王国成</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">5bcb6c84efaf4b588f203ecf6ea5116d</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王国成</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_5bf5ece6d829499695c1ea6ac036882d" model="res.partner">
+      <field name="name">肖凯</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">5bf5ece6d829499695c1ea6ac036882d</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">肖凯</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_5c8675bc19a441488430a7ab68e4e8de" model="res.partner">
+      <field name="name">张华光</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">5c8675bc19a441488430a7ab68e4e8de</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张华光</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_5d77ff0b2c1b4e3aad1b0cac797ebc00" model="res.partner">
+      <field name="name">郭伦军</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">5d77ff0b2c1b4e3aad1b0cac797ebc00</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">郭伦军</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_5d972361_dee8_4177_b087_2e601595693e" model="res.partner">
+      <field name="name">廖小莉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">5d972361-dee8-4177-b087-2e601595693e</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">廖小莉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_62a44bb5dbcc47c5b969e38a15e74f2a" model="res.partner">
+      <field name="name">刘娟</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">62a44bb5dbcc47c5b969e38a15e74f2a</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘娟</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6538fce628b04bfe98c263af0d16cfa6" model="res.partner">
+      <field name="name">王凤梅</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6538fce628b04bfe98c263af0d16cfa6</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王凤梅</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_67532492e1114795b30f4300d90212d9" model="res.partner">
+      <field name="name">欧陶剑</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">67532492e1114795b30f4300d90212d9</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">欧陶剑</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_67766c28967749ee95239489de774b47" model="res.partner">
+      <field name="name">徐迁</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">67766c28967749ee95239489de774b47</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">徐迁</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6793b856dc894298a2189a4630bc23af" model="res.partner">
+      <field name="name">马宇</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6793b856dc894298a2189a4630bc23af</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">马宇</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_69bde58e225f4daa9ba08bba27a47e53" model="res.partner">
+      <field name="name">张文翠</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">69bde58e225f4daa9ba08bba27a47e53</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张文翠</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6a0b061d7f6b4e89944bc64d44a58301" model="res.partner">
+      <field name="name">彭洪飞</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6a0b061d7f6b4e89944bc64d44a58301</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">彭洪飞</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6a6158179e8946f785a90403a93603fc" model="res.partner">
+      <field name="name">曾翔</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6a6158179e8946f785a90403a93603fc</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">曾翔</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6aae3599d9d84410be661a02bc0695e1" model="res.partner">
+      <field name="name">周光平</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6aae3599d9d84410be661a02bc0695e1</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">周光平</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6ab3de8d040245c58b5d28f81904147a" model="res.partner">
+      <field name="name">江秋红</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6ab3de8d040245c58b5d28f81904147a</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">江秋红</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6bad1ea905a44b788ff7f67b4d02b2ce" model="res.partner">
+      <field name="name">叶波</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6bad1ea905a44b788ff7f67b4d02b2ce</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">叶波</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6c8621a9632d493ea15b87ebadc8623f" model="res.partner">
+      <field name="name">曾轶</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6c8621a9632d493ea15b87ebadc8623f</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">曾轶</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6d7da73aaed44ea58aa659b49dfb74dd" model="res.partner">
+      <field name="name">廖伯明</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6d7da73aaed44ea58aa659b49dfb74dd</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">廖伯明</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6d93b59f_9696_4e91_a8ec_13fd2ff471ac" model="res.partner">
+      <field name="name">李俭峰</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6d93b59f-9696-4e91-a8ec-13fd2ff471ac</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李俭峰</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6f63ad91992b447390639ef6cecbbcc3" model="res.partner">
+      <field name="name">范晓庆</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6f63ad91992b447390639ef6cecbbcc3</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">范晓庆</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6fa72f60406a4eb2a6fa16f00e925970" model="res.partner">
+      <field name="name">周彩霞</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6fa72f60406a4eb2a6fa16f00e925970</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">周彩霞</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_6fd11d7061084a02aaf3e8bbee91993a" model="res.partner">
+      <field name="name">马代芳</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">6fd11d7061084a02aaf3e8bbee91993a</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">马代芳</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_707650c783da42f587aebcbb68db089c" model="res.partner">
+      <field name="name">何东</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">707650c783da42f587aebcbb68db089c</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">何东</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_719c711f2c714c7f88f09cf2f89654f8" model="res.partner">
+      <field name="name">彭波</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">719c711f2c714c7f88f09cf2f89654f8</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">彭波</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_71a87d1ea7784214bcbd987e8d9f64e3" model="res.partner">
+      <field name="name">谢勤林</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">71a87d1ea7784214bcbd987e8d9f64e3</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">谢勤林</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_71d042ce975e459fb1340563b3bd3186" model="res.partner">
+      <field name="name">李竹</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">71d042ce975e459fb1340563b3bd3186</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李竹</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_748409738ecb4a48aab32475bc9c52e0" model="res.partner">
+      <field name="name">王权立</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">748409738ecb4a48aab32475bc9c52e0</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王权立</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_78a68cae67f84c408106c63537c682c5" model="res.partner">
+      <field name="name">张宇</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">78a68cae67f84c408106c63537c682c5</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张宇</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_78daf22fcc224d8697af81d702def815" model="res.partner">
+      <field name="name">叶凌越</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">78daf22fcc224d8697af81d702def815</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">叶凌越</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_7de4605a6d954c32930317796e6674c3" model="res.partner">
+      <field name="name">黄家富</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">7de4605a6d954c32930317796e6674c3</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">黄家富</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_7e865c1479cc4f9a8aeb279f41fad500" model="res.partner">
+      <field name="name">舒增德</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">7e865c1479cc4f9a8aeb279f41fad500</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">舒增德</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_841954bd3675430797f02a3a98494ec4" model="res.partner">
+      <field name="name">谭越波</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">841954bd3675430797f02a3a98494ec4</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">谭越波</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_85e246bb95de4a2e902841ade8c175eb" model="res.partner">
+      <field name="name">王马兰</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">85e246bb95de4a2e902841ade8c175eb</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王马兰</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_86bb4a88b56f439abe26365be25ea3d2" model="res.partner">
+      <field name="name">张洪</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">86bb4a88b56f439abe26365be25ea3d2</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张洪</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_88df4b5c_705d_4800_b30c_1a22dcbccd7b" model="res.partner">
+      <field name="name">洪莲.</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">88df4b5c-705d-4800-b30c-1a22dcbccd7b</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">洪莲.</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_8a223e322387488dba515bc64fa6a4ac" model="res.partner">
+      <field name="name">何艾璇</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">8a223e322387488dba515bc64fa6a4ac</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">何艾璇</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_8aed6edd5694485b83ace3cd0ff4b03f" model="res.partner">
+      <field name="name">肖辉玖</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">8aed6edd5694485b83ace3cd0ff4b03f</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">肖辉玖</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_8c1d70d64df74818b33088d11b809ff9" model="res.partner">
+      <field name="name">胡春</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">8c1d70d64df74818b33088d11b809ff9</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">胡春</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_8cc90a0da25d413ab7e23f6bb8cc22ff" model="res.partner">
+      <field name="name">赵芋翰</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">8cc90a0da25d413ab7e23f6bb8cc22ff</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">赵芋翰</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_8ec9f3e7246c43caab22033db0a6bdb2" model="res.partner">
+      <field name="name">奉先云</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">8ec9f3e7246c43caab22033db0a6bdb2</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">奉先云</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_8fc423aafef3411b9d2bab9bade81962" model="res.partner">
+      <field name="name">尚思林</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">8fc423aafef3411b9d2bab9bade81962</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">尚思林</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_901923ac57ea476a8e5ea750446b1bbd" model="res.partner">
+      <field name="name">王椒</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">901923ac57ea476a8e5ea750446b1bbd</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王椒</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_90cc6e28d913443d800b8db16f583f0b" model="res.partner">
+      <field name="name">社保局</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">90cc6e28d913443d800b8db16f583f0b</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">社保局</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_915b1aba74124486916ae0bec1de8c46" model="res.partner">
+      <field name="name">杨玉陆</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">915b1aba74124486916ae0bec1de8c46</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">杨玉陆</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_9207521c704f4deb8920dc92f7d44486" model="res.partner">
+      <field name="name">冯冷雪</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">9207521c704f4deb8920dc92f7d44486</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">冯冷雪</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_948fafd911d84a35bdc23ea651de07ff" model="res.partner">
+      <field name="name">李超</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">948fafd911d84a35bdc23ea651de07ff</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李超</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_94f89096d042441da29f043b7d737106" model="res.partner">
+      <field name="name">隆川</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">94f89096d042441da29f043b7d737106</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">隆川</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_9668468456654b049ae47cf0ccd96e63" model="res.partner">
+      <field name="name">顾雨</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">9668468456654b049ae47cf0ccd96e63</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">顾雨</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_9adad1a43f0c4316a71a39a6e8d4106c" model="res.partner">
+      <field name="name">胡小蓉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">9adad1a43f0c4316a71a39a6e8d4106c</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">胡小蓉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_9cc5510551a540628b0a662073d10265" model="res.partner">
+      <field name="name">曾顺茂</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">9cc5510551a540628b0a662073d10265</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">曾顺茂</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_9ef21a6d_0cff_4753_883b_21e50ce56500" model="res.partner">
+      <field name="name">李琼</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">9ef21a6d-0cff-4753-883b-21e50ce56500</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李琼</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_9f6681c4d0804994a5e8a12b1f401fea" model="res.partner">
+      <field name="name">许成</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">9f6681c4d0804994a5e8a12b1f401fea</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">许成</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_9f6b28bf2d914d119ec9cc483ce8c7ab" model="res.partner">
+      <field name="name">刘阳</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">9f6b28bf2d914d119ec9cc483ce8c7ab</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘阳</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a06d76ad3ab84841927d69bf41ceddd1" model="res.partner">
+      <field name="name">刘洋宏</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a06d76ad3ab84841927d69bf41ceddd1</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘洋宏</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a07c16ec475a40178b0e5eaf4ba5ad4d" model="res.partner">
+      <field name="name">葛雪琳</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a07c16ec475a40178b0e5eaf4ba5ad4d</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">葛雪琳</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a0de0e5d327b4e6b95e823dfddd82497" model="res.partner">
+      <field name="name">唐代明</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a0de0e5d327b4e6b95e823dfddd82497</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">唐代明</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a0f8abe7ccd043758aa82d29b0929860" model="res.partner">
+      <field name="name">徐荣爱</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a0f8abe7ccd043758aa82d29b0929860</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">徐荣爱</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a128e737ee8d43808d661b339d678aa7" model="res.partner">
+      <field name="name">徐怀君</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a128e737ee8d43808d661b339d678aa7</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">徐怀君</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a14e371da1bd4064a23f17b6fa57dbec" model="res.partner">
+      <field name="name">刘文</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a14e371da1bd4064a23f17b6fa57dbec</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘文</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a442920a858842c9bed7ece2d61dd073" model="res.partner">
+      <field name="name">严德木</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a442920a858842c9bed7ece2d61dd073</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">严德木</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a4a2481ed2834ff0a96e8817f3beaae1" model="res.partner">
+      <field name="name">徐凡</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a4a2481ed2834ff0a96e8817f3beaae1</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">徐凡</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a5fa6ad2cc8441aba4e530e84c4e4db6" model="res.partner">
+      <field name="name">刘罗华</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a5fa6ad2cc8441aba4e530e84c4e4db6</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘罗华</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a81886f7e59a474fa0293163fa9f1188" model="res.partner">
+      <field name="name">王伟明</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a81886f7e59a474fa0293163fa9f1188</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王伟明</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_a8a8606f3a214b3288e8163b047fecd0" model="res.partner">
+      <field name="name">金明秀</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">a8a8606f3a214b3288e8163b047fecd0</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">金明秀</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_ac5d77863a5f4f74bb989bb9dbfc0d4e" model="res.partner">
+      <field name="name">肖华</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">ac5d77863a5f4f74bb989bb9dbfc0d4e</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">肖华</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_acfe9978e5774d19b5c682bd8af87924" model="res.partner">
+      <field name="name">刘汉光</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">acfe9978e5774d19b5c682bd8af87924</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘汉光</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_ae3c01e41bb940a488f3c7220b44aba8" model="res.partner">
+      <field name="name">张前洪</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">ae3c01e41bb940a488f3c7220b44aba8</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张前洪</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_aed06b306ad14f6b917c12fd4e5c013b" model="res.partner">
+      <field name="name">陈茂</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">aed06b306ad14f6b917c12fd4e5c013b</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">陈茂</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_af4f1162c1704632a24b71e29e67c41c" model="res.partner">
+      <field name="name">胡婷</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">af4f1162c1704632a24b71e29e67c41c</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">胡婷</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_afa6eda7c8f9466e963d153e600a1a84" model="res.partner">
+      <field name="name">廖小明</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">afa6eda7c8f9466e963d153e600a1a84</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">廖小明</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_b183688eef0d4ccb871a1978459628fc" model="res.partner">
+      <field name="name">李静</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">b183688eef0d4ccb871a1978459628fc</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李静</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_b27be97d14574fe885bc31a09b448d44" model="res.partner">
+      <field name="name">赵莉蓉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">b27be97d14574fe885bc31a09b448d44</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">赵莉蓉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_b5ed5f24e7d141109167ac2a059e46b2" model="res.partner">
+      <field name="name">严俊</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">b5ed5f24e7d141109167ac2a059e46b2</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">严俊</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_b76193e1ce2d478da1db5bc36cc928cf" model="res.partner">
+      <field name="name">李娟</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">b76193e1ce2d478da1db5bc36cc928cf</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李娟</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_b7b5cd32731c4204b5355a2c15eaeecb" model="res.partner">
+      <field name="name">陈小刚</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">b7b5cd32731c4204b5355a2c15eaeecb</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">陈小刚</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_b8f2e30680124e9d9ef982431a58c253" model="res.partner">
+      <field name="name">王映莲</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">b8f2e30680124e9d9ef982431a58c253</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王映莲</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_ba12d3f09a3047d8ae0f7e0e08e9d13b" model="res.partner">
+      <field name="name">火旭洋</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">ba12d3f09a3047d8ae0f7e0e08e9d13b</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">火旭洋</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_ba20c9f1bf184e0ca657f09032ed9e80" model="res.partner">
+      <field name="name">简平凡</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">ba20c9f1bf184e0ca657f09032ed9e80</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">简平凡</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_bbe92e13809e40a3968ff2641d5461dd" model="res.partner">
+      <field name="name">洪莲</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">bbe92e13809e40a3968ff2641d5461dd</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">洪莲</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_bbf188e86c9a407195e2465a3c22ac77" model="res.partner">
+      <field name="name">廖睿</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">bbf188e86c9a407195e2465a3c22ac77</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">廖睿</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_bd0a1f552a9e433bb76e332eab6dc899" model="res.partner">
+      <field name="name">李俭锋</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">bd0a1f552a9e433bb76e332eab6dc899</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李俭锋</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_beb43df763fe4715aba42ca93ce5f8b1" model="res.partner">
+      <field name="name">陈晓亮</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">beb43df763fe4715aba42ca93ce5f8b1</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">陈晓亮</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_bf12d630900d464eb03dfb6d3b2e9abd" model="res.partner">
+      <field name="name">简乃华</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">bf12d630900d464eb03dfb6d3b2e9abd</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">简乃华</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c0e77154db354971a34ed28e0328a1be" model="res.partner">
+      <field name="name">罗金山</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c0e77154db354971a34ed28e0328a1be</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">罗金山</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c1079b48b7e0447887261ac9610b6098" model="res.partner">
+      <field name="name">田勇</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c1079b48b7e0447887261ac9610b6098</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">田勇</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c1699f3b3a5443edba8e18943f361067" model="res.partner">
+      <field name="name">徐彦林</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c1699f3b3a5443edba8e18943f361067</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">徐彦林</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c2272d954d304e9dbbcbcf2627d12db0" model="res.partner">
+      <field name="name">谢书燕</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c2272d954d304e9dbbcbcf2627d12db0</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">谢书燕</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c26c1d4a61bc4e3aa8107bf8870cbb03" model="res.partner">
+      <field name="name">彭静</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c26c1d4a61bc4e3aa8107bf8870cbb03</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">彭静</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c3b891d149e148ed867c3a405e3e1402" model="res.partner">
+      <field name="name">李志强</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c3b891d149e148ed867c3a405e3e1402</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李志强</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c5e41757310a476eb4c77e99cb150375" model="res.partner">
+      <field name="name">曾维强</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c5e41757310a476eb4c77e99cb150375</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">曾维强</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c6830583a27f4f87b6bc87f2eeeecf66" model="res.partner">
+      <field name="name">龚昌明</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c6830583a27f4f87b6bc87f2eeeecf66</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">龚昌明</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c68cc5fa063f4173ad1b85025b6eb90e" model="res.partner">
+      <field name="name">谢莎莎</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c68cc5fa063f4173ad1b85025b6eb90e</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">谢莎莎</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c7835e14da36401089e5ea43a79697aa" model="res.partner">
+      <field name="name">王强</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c7835e14da36401089e5ea43a79697aa</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王强</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c82982a8fec9455e869dccbe59acd647" model="res.partner">
+      <field name="name">刘伟</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c82982a8fec9455e869dccbe59acd647</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘伟</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_c976eb9de6f549f09309f68b41eb3e2d" model="res.partner">
+      <field name="name">文珍</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">c976eb9de6f549f09309f68b41eb3e2d</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">文珍</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_ca6a653462ba4bd5b3f1d6dcba211aa4" model="res.partner">
+      <field name="name">赵岚</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">ca6a653462ba4bd5b3f1d6dcba211aa4</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">赵岚</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_cb30db02fde8448987864e3a54ee346f" model="res.partner">
+      <field name="name">付理顺</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">cb30db02fde8448987864e3a54ee346f</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">付理顺</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_cbe83b2ee39f4946b42a6a904c5673d1" model="res.partner">
+      <field name="name">杜秀佳</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">cbe83b2ee39f4946b42a6a904c5673d1</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">杜秀佳</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_cdc4fb50_d626_4393_8700_c6ea372d2d1d" model="res.partner">
+      <field name="name">毛代坤</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">cdc4fb50-d626-4393-8700-c6ea372d2d1d</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">毛代坤</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_cf10088012aa4b01bfadc9d927d339fb" model="res.partner">
+      <field name="name">方洁</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">cf10088012aa4b01bfadc9d927d339fb</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">方洁</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_cf46443e1edf43e69597afc81add193f" model="res.partner">
+      <field name="name">周超</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">cf46443e1edf43e69597afc81add193f</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">周超</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_d15860e3bf9b4a6f9074d9714e6125ac" model="res.partner">
+      <field name="name">唐颖刚</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">d15860e3bf9b4a6f9074d9714e6125ac</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">唐颖刚</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_d1601cc730cb4496a89d6c7f46709b20" model="res.partner">
+      <field name="name">李发</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">d1601cc730cb4496a89d6c7f46709b20</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李发</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_d33adb06c73c48ce8d4c4e074a47a442" model="res.partner">
+      <field name="name">翁灵辉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">d33adb06c73c48ce8d4c4e074a47a442</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">翁灵辉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_d449f268b7ba4a79b9da020735a6227c" model="res.partner">
+      <field name="name">李德学</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">d449f268b7ba4a79b9da020735a6227c</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李德学</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_d4731ed6c6274881bce69bfec8b3a8f9" model="res.partner">
+      <field name="name">何小凤</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">d4731ed6c6274881bce69bfec8b3a8f9</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">何小凤</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_d5661bd21f7f4713b3e89ff81ba33edb" model="res.partner">
+      <field name="name">蒋军</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">d5661bd21f7f4713b3e89ff81ba33edb</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">蒋军</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_d5bf1a4652d54429b30fd0a29587dacc" model="res.partner">
+      <field name="name">邱文武</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">d5bf1a4652d54429b30fd0a29587dacc</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">邱文武</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_d621ae3e9f6b48acbc81a5a11c3e9549" model="res.partner">
+      <field name="name">牟家银</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">d621ae3e9f6b48acbc81a5a11c3e9549</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">牟家银</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_d90e9f5ec4c643718246073fa32f7ea6" model="res.partner">
+      <field name="name">周锐</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">d90e9f5ec4c643718246073fa32f7ea6</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">周锐</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_db8bb1df0959426fb36abc3c22a6129d" model="res.partner">
+      <field name="name">车俊达</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">db8bb1df0959426fb36abc3c22a6129d</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">车俊达</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_de6c8adc68314601b5b75d1fd28593ba" model="res.partner">
+      <field name="name">刘娟</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">de6c8adc68314601b5b75d1fd28593ba</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">刘娟</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_dec6b68843754e5da6849e77c78ca2c0" model="res.partner">
+      <field name="name">钟标珍</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">dec6b68843754e5da6849e77c78ca2c0</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">钟标珍</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_df4c980ad74549009332c4b93655fe2a" model="res.partner">
+      <field name="name">倪德珍</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">df4c980ad74549009332c4b93655fe2a</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">倪德珍</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_e2ca157ca65647e78f325dfc8e6e0222" model="res.partner">
+      <field name="name">王东</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">e2ca157ca65647e78f325dfc8e6e0222</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王东</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_e320f19b183447aa93e0fecc41f3a4d8" model="res.partner">
+      <field name="name">谭明旭</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">e320f19b183447aa93e0fecc41f3a4d8</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">谭明旭</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_e3f64ffc40794e3988ad980d4724c178" model="res.partner">
+      <field name="name">王斌</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">e3f64ffc40794e3988ad980d4724c178</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王斌</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_e5985d5f2a95430f9d0412d385872d44" model="res.partner">
+      <field name="name">孟铃涵</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">e5985d5f2a95430f9d0412d385872d44</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">孟铃涵</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_e5ab34753cb9488aa252d112f925a28d" model="res.partner">
+      <field name="name">高攀</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">e5ab34753cb9488aa252d112f925a28d</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">高攀</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_e7d55aac272b43d3a9bf74facdc2ebc0" model="res.partner">
+      <field name="name">陈文波</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">e7d55aac272b43d3a9bf74facdc2ebc0</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">陈文波</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_e9322c07d21a46128320806edf117b6e" model="res.partner">
+      <field name="name">李国富</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">e9322c07d21a46128320806edf117b6e</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李国富</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_e9ce6807ac5346b4bd1c9c6249c8aad7" model="res.partner">
+      <field name="name">程凡忠</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">e9ce6807ac5346b4bd1c9c6249c8aad7</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">程凡忠</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_ebd579cb513849f280ac7a1ceba3ced7" model="res.partner">
+      <field name="name">李嘉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">ebd579cb513849f280ac7a1ceba3ced7</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李嘉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_ec32ee44275c4260bc2aec516e91d045" model="res.partner">
+      <field name="name">华立飞</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">ec32ee44275c4260bc2aec516e91d045</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">华立飞</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_ee1b6ebcec714332a3be3371720b00ca" model="res.partner">
+      <field name="name">李福碧</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">ee1b6ebcec714332a3be3371720b00ca</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李福碧</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_eebcbed20ef94a60bd7a9b63563a0b6e" model="res.partner">
+      <field name="name">谢燕红</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">eebcbed20ef94a60bd7a9b63563a0b6e</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">谢燕红</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_ef0f6999ee5245759ef88a9a84221715" model="res.partner">
+      <field name="name">梁钢</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">ef0f6999ee5245759ef88a9a84221715</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">梁钢</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_ef841768f98340ec9d51e4fb0536fb6b" model="res.partner">
+      <field name="name">孙杰</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">ef841768f98340ec9d51e4fb0536fb6b</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">孙杰</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f08f504dcb8b4fbbb2fede84c125a518" model="res.partner">
+      <field name="name">钟斌</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f08f504dcb8b4fbbb2fede84c125a518</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">钟斌</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f1b58af0e3634d12bf518293f96e66eb" model="res.partner">
+      <field name="name">苏叶红</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f1b58af0e3634d12bf518293f96e66eb</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">苏叶红</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f2840220008d4673932738ae75e5caa6" model="res.partner">
+      <field name="name">张双喜</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f2840220008d4673932738ae75e5caa6</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张双喜</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f2f04bd3831747f3931dbf0677050423" model="res.partner">
+      <field name="name">杨峻一</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f2f04bd3831747f3931dbf0677050423</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">杨峻一</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f2f59a8b579148fd952f66bb17f786fa" model="res.partner">
+      <field name="name">段奕俊</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f2f59a8b579148fd952f66bb17f786fa</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">段奕俊</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f30a2ee2d64e4d07b6503493d5aa0a1c" model="res.partner">
+      <field name="name">李雪琴</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f30a2ee2d64e4d07b6503493d5aa0a1c</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李雪琴</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f311350e_f229_4a92_bae8_ace8e2a66873" model="res.partner">
+      <field name="name">朱小军</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f311350e-f229-4a92-bae8-ace8e2a66873</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">朱小军</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f54044bf97944b3bac575a7cd41636a5" model="res.partner">
+      <field name="name">陈大龙</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f54044bf97944b3bac575a7cd41636a5</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">陈大龙</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f717b029e66f431e914e83785e123447" model="res.partner">
+      <field name="name">张兵权</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f717b029e66f431e914e83785e123447</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张兵权</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f74e10da828c4835813578e5576454ae" model="res.partner">
+      <field name="name">向诗春</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f74e10da828c4835813578e5576454ae</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">向诗春</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f854df54_8de4_450c_b28d_1c3cf25be1d8" model="res.partner">
+      <field name="name">张百成</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f854df54-8de4-450c-b28d-1c3cf25be1d8</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张百成</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f8c7023f26a043eb97dc3ee399e9b8fb" model="res.partner">
+      <field name="name">苟新蓉</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f8c7023f26a043eb97dc3ee399e9b8fb</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">苟新蓉</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_f93ecad5a8854ffcba5f9a344d3e9965" model="res.partner">
+      <field name="name">邓丁超</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">f93ecad5a8854ffcba5f9a344d3e9965</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">邓丁超</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_fa3c231e5b35446f95b46ddfcc9a1f51" model="res.partner">
+      <field name="name">王华勇</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">fa3c231e5b35446f95b46ddfcc9a1f51</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">王华勇</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_fbd02cb109e140bb98327cb4a8f1b388" model="res.partner">
+      <field name="name">李永武</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">fbd02cb109e140bb98327cb4a8f1b388</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">李永武</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+    <record id="legacy_receipt_counterparty_sc_fec385a263c54c6e8531cab0d92d6de1" model="res.partner">
+      <field name="name">张龙根</field>
+      <field name="company_type">person</field>
+      <field name="is_company">0</field>
+      <field name="legacy_partner_id">fec385a263c54c6e8531cab0d92d6de1</field>
+      <field name="legacy_partner_source">receipt_counterparty</field>
+      <field name="legacy_partner_name">张龙根</field>
+      <field name="legacy_source_evidence">tmp/raw/receipt/receipt.csv:WLDWID/WLDWMC</field>
+    </record>
+  </data>
+</odoo>

@@ -1,0 +1,33 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "user_sc_v1",
+  "baseline_package": true,
+  "failure_policy": {
+    "duplicate_external_id": "block_package",
+    "duplicate_generated_login": "block_package",
+    "group_assignment_requested": "block_package",
+    "missing_legacy_user_id": "block_package",
+    "missing_login": "block_package",
+    "missing_name": "block_package"
+  },
+  "validation_gates": {
+    "generate_time": [
+      "legacy_base_user_exists",
+      "legacy_user_id_unique",
+      "generated_login_unique",
+      "external_id_unique",
+      "no_group_assignment",
+      "no_role_profile_assignment",
+      "no_permission_fabrication"
+    ],
+    "postload": [
+      "external_id_resolves",
+      "project_member_user_refs_resolve"
+    ],
+    "preload": [
+      "asset_files_exist",
+      "asset_hashes_match",
+      "target_model_available"
+    ]
+  }
+}

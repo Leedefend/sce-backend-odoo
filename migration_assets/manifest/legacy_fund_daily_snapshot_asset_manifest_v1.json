@@ -1,0 +1,58 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "legacy_fund_daily_snapshot_sc_v1",
+  "assets": [
+    {
+      "path": "30_relation/legacy_fund_daily_snapshot/legacy_fund_daily_snapshot_v1.xml",
+      "sha256": "734fdf5020fb6c6dfe8a495fd699a8a80789a42f901a6dd1f035ab2ae0a91c43",
+      "type": "xml"
+    },
+    {
+      "path": "manifest/legacy_fund_daily_snapshot_external_id_manifest_v1.json",
+      "sha256": "4275b618445534bf89942228d4e7e70b251369c8e409d0f9eeaef486abe0566e",
+      "type": "external_id_manifest"
+    },
+    {
+      "path": "manifest/legacy_fund_daily_snapshot_validation_manifest_v1.json",
+      "sha256": "b8f0e8304a36aba01169c48ff8c1c50b63921432adef14067c6f7825cabe51d2",
+      "type": "validation_manifest"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "blocked_reason_counts": {
+      "amount_not_positive_or_missing": 4,
+      "deleted": 26,
+      "missing_balance_amounts": 2,
+      "missing_counterparty_name": 24,
+      "missing_document_date": 1,
+      "project_not_assetized": 18
+    },
+    "blocked_records": 59,
+    "loadable_records": 496,
+    "loan_or_borrowing_records": 318,
+    "raw_rows": 873,
+    "source_table_counts": {
+      "D_SCBSJS_ZJGL_ZJSZ_ZJRBB": 511,
+      "ZJGL_ZCDFSZ_FXJK_JK": 169,
+      "ZJGL_ZJSZ_DKGL_DKDJ": 193
+    }
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "project_sc_v1"
+  ],
+  "generated_at": "2026-04-15T22:05:00+08:00",
+  "lane": {
+    "lane_id": "legacy_fund_daily_snapshot",
+    "layer": "30_relation",
+    "load_phase": 30
+  },
+  "odoo_shell": false,
+  "target": {
+    "model": "sc.legacy.fund.daily.snapshot.fact",
+    "source_tables": [
+      "D_SCBSJS_ZJGL_ZJSZ_ZJRBB"
+    ]
+  }
+}

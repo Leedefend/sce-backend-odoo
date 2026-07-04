@@ -1,0 +1,85 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "user_sc_v1",
+  "assets": [
+    {
+      "asset_id": "user_master_xml_v1",
+      "format": "xml",
+      "path": "10_master/user/user_master_v1.xml",
+      "record_count": 101,
+      "required": true,
+      "sha256": "ab7aa4a54e71843601d759cf0dd8fe5302d1048ff1b77653dd0cf89fb6993518"
+    },
+    {
+      "asset_id": "user_external_id_manifest_v1",
+      "format": "json",
+      "path": "manifest/user_external_id_manifest_v1.json",
+      "record_count": 101,
+      "required": true,
+      "sha256": "5910d5217d264fe8f4656b3943d6e08fad86f9ac2fdca81f03c02c9785ec2222"
+    },
+    {
+      "asset_id": "user_validation_manifest_v1",
+      "format": "json",
+      "path": "manifest/user_validation_manifest_v1.json",
+      "record_count": 1,
+      "required": true,
+      "sha256": "6b9cf09081e97c216b75d87d0a9e7875f7ce00c0c17db7d280b4e518d77911be"
+    }
+  ],
+  "authority_policy": {
+    "department": "deferred",
+    "groups_id": "not_assigned",
+    "post": "deferred",
+    "sc_role_profile": "not_assigned"
+  },
+  "baseline_package": true,
+  "counts": {
+    "deferred_records": 0,
+    "discarded_records": 0,
+    "inactive_records": 34,
+    "loadable_records": 101,
+    "raw_rows": 101
+  },
+  "db_writes": 0,
+  "dependencies": [],
+  "generated_at": "2026-04-15T07:01:26.132754+00:00",
+  "idempotency": {
+    "conflict_policy": "block_package",
+    "duplicate_policy": "update_existing_same_external_id",
+    "mode": "odoo_xml_external_id"
+  },
+  "lane": {
+    "business_priority": "dependency_master_data",
+    "lane_id": "user",
+    "layer": "10_master",
+    "risk_class": "authority_anchor"
+  },
+  "load_order": [
+    "user_master_xml_v1",
+    "user_external_id_manifest_v1",
+    "user_validation_manifest_v1"
+  ],
+  "odoo_shell": false,
+  "source_snapshot": {
+    "extract_batch_id": "user_xml_baseline_v1",
+    "source_system": "sc",
+    "source_tables": [
+      "BASE_SYSTEM_USER"
+    ]
+  },
+  "target": {
+    "identity_field": "external_id",
+    "load_strategy": "odoo_xml_external_id",
+    "model": "res.users"
+  },
+  "validation_gates": [
+    "legacy_base_user_exists",
+    "legacy_user_id_unique",
+    "generated_login_unique",
+    "external_id_unique",
+    "no_group_assignment",
+    "no_role_profile_assignment",
+    "no_permission_fabrication"
+  ]
+}

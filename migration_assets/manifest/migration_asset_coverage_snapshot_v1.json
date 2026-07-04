@@ -1,0 +1,350 @@
+{
+  "catalog_path": "migration_assets/manifest/migration_asset_catalog_v1.json",
+  "db_writes": 0,
+  "decision": "coverage_snapshot_frozen_no_db_replay_continue_business_fact_assetization",
+  "generated_at": "2026-04-15T14:40:00+00:00",
+  "next_lanes": [
+    {
+      "current_blocked_records": 202,
+      "lane": "contract_blocker_recovery",
+      "priority": 1,
+      "reason": "合同头阻断仍控制后续收款、付款、结算事实的可锚定范围。",
+      "safe_next_action": "screen remaining deleted/direction/project blockers without weakening project-anchor rule"
+    },
+    {
+      "current_blocked_records": 2057,
+      "lane": "receipt_blocker_recovery",
+      "priority": 2,
+      "reason": "Owner 已确认剩余收款阻断为无效业务数据，收款恢复队列关闭。",
+      "safe_next_action": "closed_as_invalid_business_data_no_further_recovery"
+    },
+    {
+      "current_blocked_records": 51,
+      "lane": "contract_amount_gap",
+      "priority": 3,
+      "reason": "新模型合同头不要求金额；缺金额合同保留头信息，不伪造 summary line。",
+      "safe_next_action": "closed_keep_contract_headers_without_fabricated_summary_lines"
+    },
+    {
+      "current_blocked_records": 1362,
+      "lane": "outflow_request_assetization",
+      "priority": 4,
+      "reason": "支出申请核心事实已资产化；结算、台账、会计和流程状态仍排除。",
+      "safe_next_action": "closed_core_outflow_request_assets_continue_to_next_business_fact_lane"
+    },
+    {
+      "current_blocked_records": 1166,
+      "lane": "actual_outflow_assetization",
+      "priority": 5,
+      "reason": "实际支出事实以草稿承载资产化；不宣称已付款状态，不生成台账、结算或会计事实。",
+      "safe_next_action": "closed_draft_actual_outflow_assets_continue_to_supplier_contract_lane"
+    },
+    {
+      "current_blocked_records": 234,
+      "lane": "supplier_contract_assetization",
+      "priority": 6,
+      "reason": "供应商合同头事实已按 type=in 资产化；金额和合同行进入后续独立 lane。",
+      "safe_next_action": "continue_to_supplier_contract_amount_or_line_lane"
+    },
+    {
+      "current_blocked_records": 470,
+      "lane": "supplier_contract_line_assetization",
+      "priority": 7,
+      "reason": "供应商合同金额已按摘要合同行资产化；不宣称旧库数量/单价明细语义。",
+      "safe_next_action": "continue_to_receipt_invoice_or_outflow_line_lane"
+    },
+    {
+      "current_blocked_records": 1496,
+      "lane": "outflow_request_line_assetization",
+      "priority": 8,
+      "reason": "付款申请明细已按 payment.request.line 资产化；父申请锚点必须存在，台账/结算/会计语义仍排除。",
+      "safe_next_action": "closed_line_fact_assets_no_db_replay_in_this_stage"
+    },
+    {
+      "current_blocked_records": 37,
+      "lane": "receipt_invoice_line_assetization",
+      "priority": 9,
+      "reason": "收款发票明细已按 sc.receipt.invoice.line 资产化；附件二进制进入后续独立 lane。",
+      "safe_next_action": "continue_to_receipt_invoice_line_usability_or_attachment_index_lane"
+    },
+    {
+      "current_blocked_records": 0,
+      "lane": "receipt_invoice_attachment_assetization",
+      "priority": 10,
+      "reason": "收款发票附件已按 URL 型 ir.attachment 资产化；二进制文件本体仍由外部文件仓治理。",
+      "safe_next_action": "continue_to_next_legacy_business_fact_lane_or_binary_file_custody_plan"
+    },
+    {
+      "current_blocked_records": 0,
+      "lane": "legacy_attachment_backfill_assetization",
+      "priority": 11,
+      "reason": "前置业务事实附件已按 URL 型 ir.attachment 回填资产化；二进制文件本体仍由外部文件仓治理。",
+      "safe_next_action": "continue_to_binary_file_custody_plan_or_next_business_fact_lane"
+    }
+  ],
+  "odoo_shell": false,
+  "package_count": 17,
+  "packages": [
+    {
+      "asset_package_id": "project_sc_v1",
+      "blocked_records": 0,
+      "dependencies": [],
+      "layer": "10_master",
+      "load_phase": 10,
+      "loadable_records": 755,
+      "raw_rows": 755,
+      "risk_class": "normal",
+      "target_model": "project.project",
+      "verification_command": "python3 scripts/migration/project_asset_verify.py --asset-root migration_assets --lane project --check"
+    },
+    {
+      "asset_package_id": "partner_sc_v1",
+      "blocked_records": 1323,
+      "dependencies": [],
+      "layer": "10_master",
+      "load_phase": 10,
+      "loadable_records": 6541,
+      "raw_rows": 10905,
+      "risk_class": "normal",
+      "target_model": "res.partner",
+      "verification_command": "python3 scripts/migration/partner_asset_verify.py --asset-root migration_assets --lane partner --check"
+    },
+    {
+      "asset_package_id": "contract_counterparty_partner_sc_v1",
+      "blocked_records": 0,
+      "dependencies": [
+        "partner_sc_v1"
+      ],
+      "layer": "10_master",
+      "load_phase": 10,
+      "loadable_records": 88,
+      "raw_rows": 88,
+      "risk_class": "supplemental_master_data",
+      "target_model": "res.partner",
+      "verification_command": "python3 scripts/migration/contract_counterparty_partner_asset_verify.py --asset-root migration_assets --lane contract_counterparty_partner --check"
+    },
+    {
+      "asset_package_id": "receipt_counterparty_partner_sc_v1",
+      "blocked_records": 0,
+      "dependencies": [
+        "partner_sc_v1"
+      ],
+      "layer": "10_master",
+      "load_phase": 10,
+      "loadable_records": 250,
+      "raw_rows": 250,
+      "risk_class": "supplemental_master_data",
+      "target_model": "res.partner",
+      "verification_command": "python3 scripts/migration/receipt_counterparty_partner_asset_verify.py --asset-root migration_assets --lane receipt_counterparty_partner --check"
+    },
+    {
+      "asset_package_id": "user_sc_v1",
+      "blocked_records": 0,
+      "dependencies": [],
+      "layer": "10_master",
+      "load_phase": 10,
+      "loadable_records": 101,
+      "raw_rows": 101,
+      "risk_class": "authority_anchor",
+      "target_model": "res.users",
+      "verification_command": "python3 scripts/migration/user_asset_verify.py --asset-root migration_assets --lane user --check"
+    },
+    {
+      "asset_package_id": "project_member_sc_v1",
+      "blocked_records": 0,
+      "dependencies": [
+        "project_sc_v1",
+        "user_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "loadable_records": 21390,
+      "raw_rows": 21390,
+      "risk_class": "neutral_relation",
+      "target_model": "sc.project.member.staging",
+      "verification_command": "python3 scripts/migration/project_member_asset_verify.py --asset-root migration_assets --lane project_member --check"
+    },
+    {
+      "asset_package_id": "contract_sc_v1",
+      "blocked_records": 202,
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1",
+        "contract_counterparty_partner_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "loadable_records": 1492,
+      "raw_rows": 1694,
+      "risk_class": "anchored_subset",
+      "target_model": "construction.contract",
+      "verification_command": "python3 scripts/migration/contract_header_asset_verify.py --asset-root migration_assets --lane contract --check"
+    },
+    {
+      "asset_package_id": "contract_line_sc_v1",
+      "blocked_records": 51,
+      "dependencies": [
+        "contract_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "loadable_records": 1441,
+      "raw_rows": 1694,
+      "risk_class": "summary_fact",
+      "target_model": "construction.contract.line",
+      "verification_command": "python3 scripts/migration/contract_line_summary_asset_verify.py --asset-root migration_assets --lane contract_line --check"
+    },
+    {
+      "asset_package_id": "receipt_sc_v1",
+      "blocked_records": 2057,
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1",
+        "receipt_counterparty_partner_sc_v1",
+        "contract_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "loadable_records": 5355,
+      "raw_rows": 7412,
+      "risk_class": "authorized_receipt_core",
+      "target_model": "payment.request",
+      "verification_command": "python3 scripts/migration/receipt_core_asset_verify.py --asset-root migration_assets --lane receipt --check"
+    },
+    {
+      "asset_package_id": "outflow_request_sc_v1",
+      "blocked_records": 1362,
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1",
+        "contract_counterparty_partner_sc_v1",
+        "receipt_counterparty_partner_sc_v1",
+        "contract_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "loadable_records": 12284,
+      "raw_rows": 13646,
+      "risk_class": "authorized_outflow_request_core",
+      "target_model": "payment.request",
+      "verification_command": "python3 scripts/migration/legacy_outflow_request_asset_verify.py --asset-root migration_assets --lane outflow --check"
+    },
+    {
+      "asset_package_id": "actual_outflow_sc_v1",
+      "blocked_records": 1166,
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1",
+        "contract_counterparty_partner_sc_v1",
+        "receipt_counterparty_partner_sc_v1",
+        "outflow_request_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "loadable_records": 12463,
+      "raw_rows": 13629,
+      "risk_class": "draft_actual_outflow_core",
+      "target_model": "payment.request",
+      "verification_command": "python3 scripts/migration/legacy_actual_outflow_asset_verify.py --asset-root migration_assets --lane actual_outflow --check"
+    },
+    {
+      "asset_package_id": "supplier_contract_sc_v1",
+      "blocked_records": 234,
+      "dependencies": [
+        "project_sc_v1",
+        "partner_sc_v1",
+        "contract_counterparty_partner_sc_v1",
+        "receipt_counterparty_partner_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "loadable_records": 5301,
+      "raw_rows": 5535,
+      "risk_class": "supplier_contract_header",
+      "target_model": "construction.contract",
+      "verification_command": "python3 scripts/migration/legacy_supplier_contract_asset_verify.py --asset-root migration_assets --lane supplier_contract --check"
+    },
+    {
+      "asset_package_id": "supplier_contract_line_sc_v1",
+      "blocked_records": 470,
+      "dependencies": [
+        "supplier_contract_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "loadable_records": 5065,
+      "raw_rows": 5535,
+      "risk_class": "summary_amount_line",
+      "target_model": "construction.contract.line",
+      "verification_command": "python3 scripts/migration/legacy_supplier_contract_line_asset_verify.py --asset-root migration_assets --lane supplier_contract_line --check"
+    },
+    {
+      "asset_package_id": "outflow_request_line_sc_v1",
+      "blocked_records": 1496,
+      "dependencies": [
+        "outflow_request_sc_v1",
+        "supplier_contract_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "loadable_records": 15917,
+      "raw_rows": 17413,
+      "risk_class": "line_fact",
+      "target_model": "payment.request.line",
+      "verification_command": "python3 scripts/migration/legacy_outflow_request_line_asset_verify.py --asset-root migration_assets --lane outflow_request_line --check"
+    },
+    {
+      "asset_package_id": "receipt_invoice_line_sc_v1",
+      "blocked_records": 37,
+      "dependencies": [
+        "receipt_sc_v1"
+      ],
+      "layer": "20_business",
+      "load_phase": 20,
+      "loadable_records": 4454,
+      "raw_rows": 4491,
+      "risk_class": "auxiliary_invoice_line_fact",
+      "target_model": "sc.receipt.invoice.line",
+      "verification_command": "python3 scripts/migration/legacy_receipt_invoice_asset_verify.py --asset-root migration_assets --lane receipt_invoice_line --check"
+    },
+    {
+      "asset_package_id": "receipt_invoice_attachment_sc_v1",
+      "blocked_records": 0,
+      "dependencies": [
+        "receipt_invoice_line_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "loadable_records": 1079,
+      "raw_rows": 126967,
+      "risk_class": "attachment_url_relation",
+      "target_model": "ir.attachment",
+      "verification_command": "python3 scripts/migration/legacy_receipt_invoice_attachment_asset_verify.py --asset-root migration_assets --lane receipt_invoice_attachment --check"
+    },
+    {
+      "asset_package_id": "legacy_attachment_backfill_sc_v1",
+      "blocked_records": 0,
+      "dependencies": [
+        "project_sc_v1",
+        "project_member_sc_v1",
+        "actual_outflow_sc_v1",
+        "supplier_contract_sc_v1",
+        "supplier_contract_line_sc_v1",
+        "outflow_request_line_sc_v1"
+      ],
+      "layer": "30_relation",
+      "load_phase": 30,
+      "loadable_records": 18458,
+      "raw_rows": 126967,
+      "risk_class": "attachment_url_relation",
+      "target_model": "ir.attachment",
+      "verification_command": "python3 scripts/migration/legacy_attachment_backfill_asset_verify.py --asset-root migration_assets --lane legacy_attachment_backfill --check"
+    }
+  ],
+  "status": "PASS",
+  "totals": {
+    "blocked_records": 8398,
+    "loadable_records": 112434,
+    "raw_rows": 358472
+  }
+}

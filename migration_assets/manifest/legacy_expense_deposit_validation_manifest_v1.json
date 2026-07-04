@@ -1,0 +1,417 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "legacy_expense_deposit_sc_v1",
+  "business_boundary": {
+    "account_move": "excluded",
+    "approval_runtime": "excluded",
+    "legacy_expense_deposit_fact": "included",
+    "payment_ledger": "excluded",
+    "settlement_state": "excluded"
+  },
+  "counts": {
+    "blocked_reason_counts": {
+      "amount_not_positive_or_missing": 2504,
+      "deleted": 381,
+      "missing_project_id": 3,
+      "project_not_assetized": 343
+    },
+    "blocked_records": 3163,
+    "blocked_samples": [
+      {
+        "legacy_id": "02da2238dcf647aa9dd449f8861d024e",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "04884758036f4dd79c5ee3fe971fae28",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "079deb3c8c6a470d9d01bae45d82f734",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "0cc01d66c64f4e209127c2c93457b3eb",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "0e56e83862514d1b8f8f27cb831b3035",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "100c328776714f78b745e2346a7421ec",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "13f799d4b7954218a9cecf4be5ffe902",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "1405b2a5f3d44fcbb0d25c9b7f129fa5",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "1643de70aa8c4bc7b481de803186da0f",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "17e1884152b344379a2247dde48b9496",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "19db74a553734447a59902d62d2127d9",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "1ab91bfc208d4bcfbb35bb1b2a4a0b6c",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "1c2caad5d6c64d439b4fdb795b528bcd",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "24ec4f64e3ee4a49abe8c133e914166f",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "2ad639705f5446cea9d5b2ae186af898",
+        "reasons": [
+          "amount_not_positive_or_missing"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "30381e3dece641a980f8e420295f3cb9",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "360f02449bcc4a2c9dfdd93b7ca714f9",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "36cd238acd1a466bb74b95d0e01c30cb",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "3ac19fc26c634a2c84e29c1020c026f1",
+        "reasons": [
+          "deleted",
+          "amount_not_positive_or_missing"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "3cd3c79ceb5e4af5b7431adf847aef0a",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "409cbe222cb842ef8a8e64a4c52aeca6",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "41f7fc456d364268993623942f53be05",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "469f7df53e2e4e2ea7e339bdddab3ed5",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "4fb5630d581842bc8866ccd3a8c94bbb",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "52c7e80b082a4b4aa5b047d293da3fb7",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "54be573b91fb4697ad4dd778166edca8",
+        "reasons": [
+          "amount_not_positive_or_missing"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "57d8de9a82d248ab9a88f9815da5b892",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "59bd36a18b7b4dd8b5d0bf89b006523c",
+        "reasons": [
+          "deleted",
+          "amount_not_positive_or_missing"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "5a99b8100c624745ab38b449a932e375",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "5fa8775e8ead462f85e93472c3b7763c",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "60f4ef6464bd4ed1b3375567288891f6",
+        "reasons": [
+          "amount_not_positive_or_missing"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "6b03011fb6cb4d1e95d4d2dc85f440f4",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "6f2c338be90c4e13bd560125d979f509",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "726bba1c41c04ee69501d46b2d1a03eb",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "7ad96e04dc434bf1b7efb50284b9020d",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "7c3d6820465445b8ac91c640aca7d52c",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "7c99271db25245d4bc7c0e05f9650eaf",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "7df19d463258461eac8582350c79f99a",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "89557ddf9cc84ceaa93229827ae8bec1",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "93baa0facd8044bc8a4cfcd1be8bd25d",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "980de0da610f477a972aa8693625f5b9",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "9976e5ed69554ac39bcf27f94aed2127",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "a3b844fad0cc4931887c95a0b11222c3",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "a516d77078f546ceb100a8f52352f260",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "a91a9acfeadf4252a8e1807b06bc1efa",
+        "reasons": [
+          "amount_not_positive_or_missing"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "ac5ee70faa054ddba5de18e0d55f2579",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "ad187cececad429a8ea8281a81ea44ed",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "b3ffc699aebc42958bb74921063564fb",
+        "reasons": [
+          "amount_not_positive_or_missing"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "b761309b6f554f70a6b56ddfe840141a",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      },
+      {
+        "legacy_id": "b969ff4121a44abd85336c026120545f",
+        "reasons": [
+          "deleted"
+        ],
+        "source_table": "C_CWSFK_GSCWZC"
+      }
+    ],
+    "direction_counts": {
+      "inflow": 1531,
+      "inflow_or_refund": 2677,
+      "outflow": 6959
+    },
+    "family_counts": {
+      "company_financial_outflow": 2656,
+      "expense_reimbursement": 1432,
+      "pay_guarantee_deposit": 2871,
+      "pay_guarantee_deposit_refund": 1872,
+      "received_guarantee_deposit_refund": 805,
+      "received_guarantee_deposit_register": 1531
+    },
+    "loadable_records": 11167,
+    "partner_counts": {
+      "partner_missing": 4991,
+      "partner_ref": 1240,
+      "partner_text_only": 4936
+    },
+    "raw_rows": 14330,
+    "source_table_counts": {
+      "CWGL_FYBX": 1866,
+      "C_CWSFK_GSCWZC": 2726,
+      "C_JFHKLR_TH_ZCDF": 834,
+      "T_KK_SJTHB": 1206,
+      "ZJGL_BZJGL_Branch_SBZJDJ": 1707,
+      "ZJGL_BZJGL_Branch_SBZJTH": 921,
+      "ZJGL_BZJGL_Pay_FBZJ": 3111,
+      "ZJGL_BZJGL_Pay_FBZJTH": 1959
+    }
+  },
+  "validation_gates": {
+    "generate_time": [
+      "legacy_source_key_unique",
+      "project_external_id_required_and_resolves",
+      "partner_external_id_optional_when_assetized",
+      "source_amount_positive",
+      "no_account_move_records_generated",
+      "no_settlement_records_generated",
+      "no_payment_ledger_records_generated",
+      "no_runtime_approval_records_generated",
+      "no_database_integer_ids_required"
+    ]
+  }
+}

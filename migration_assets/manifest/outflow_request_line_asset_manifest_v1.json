@@ -1,0 +1,80 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "outflow_request_line_sc_v1",
+  "assets": [
+    {
+      "asset_id": "outflow_request_line_xml_v1",
+      "format": "xml",
+      "path": "20_business/outflow_request_line/outflow_request_line_v1.xml",
+      "record_count": 15917,
+      "required": true,
+      "sha256": "d011caf08e02b289181640364a98699998b977baa9b119a968420f723e8b5401"
+    },
+    {
+      "asset_id": "outflow_request_line_external_id_manifest_v1",
+      "format": "json",
+      "path": "manifest/outflow_request_line_external_id_manifest_v1.json",
+      "record_count": 15917,
+      "required": true,
+      "sha256": "1a9b3c4b9a94273ecefaf21876396756de8e91793aa133cd581f3624ce2ecb9f"
+    },
+    {
+      "asset_id": "outflow_request_line_validation_manifest_v1",
+      "format": "json",
+      "path": "manifest/outflow_request_line_validation_manifest_v1.json",
+      "record_count": 1,
+      "required": true,
+      "sha256": "bcc542a0d067768a272f061e4c40deb063bfcee143f35538910ff16bf744d1a5"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "blocked_records": 1496,
+    "loadable_records": 15917,
+    "raw_rows": 17413
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "outflow_request_sc_v1",
+    "supplier_contract_sc_v1"
+  ],
+  "generated_at": "2026-04-15T14:30:00+00:00",
+  "idempotency": {
+    "conflict_policy": "block_package",
+    "duplicate_policy": "update_existing_same_external_id",
+    "mode": "odoo_xml_external_id"
+  },
+  "lane": {
+    "business_priority": "outflow_request_line_fact",
+    "lane_id": "outflow_request_line",
+    "layer": "20_business",
+    "risk_class": "line_fact"
+  },
+  "load_order": [
+    "outflow_request_line_xml_v1",
+    "outflow_request_line_external_id_manifest_v1",
+    "outflow_request_line_validation_manifest_v1"
+  ],
+  "odoo_shell": false,
+  "source_snapshot": {
+    "extract_batch_id": "outflow_request_line_xml_baseline_v1",
+    "source_system": "sc",
+    "source_tables": [
+      "C_ZFSQGL_CB"
+    ]
+  },
+  "target": {
+    "identity_field": "legacy_outflow_line_id",
+    "load_strategy": "odoo_xml_external_id",
+    "model": "payment.request.line"
+  },
+  "validation_gates": [
+    "source_outflow_request_line_query_passed",
+    "legacy_outflow_line_id_non_empty",
+    "outflow_request_anchor_resolves",
+    "amount_positive",
+    "supplier_contract_anchor_resolves_when_emitted",
+    "line_fact_not_ledger",
+    "line_fact_not_settlement"
+  ]
+}

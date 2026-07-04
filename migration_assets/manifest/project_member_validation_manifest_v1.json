@@ -1,0 +1,31 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "project_member_sc_v1",
+  "db_writes": 0,
+  "generated_at": "2026-04-15T07:20:00+00:00",
+  "odoo_shell": false,
+  "relationship_profile": {
+    "distinct_project_user_relation_keys": 21376,
+    "duplicate_project_user_relation_keys": 3,
+    "duplicate_relation_strategy": "preserve_as_neutral_evidence",
+    "rows_in_duplicate_project_user_relations": 17
+  },
+  "source": "tmp/raw/project_member/project_member.csv",
+  "target_model": "sc.project.member.staging",
+  "validation_gates": {
+    "generate_time": [
+      "required_source_headers_present",
+      "legacy_member_id_unique",
+      "project_external_id_resolves",
+      "user_external_id_resolves",
+      "role_fact_status_missing",
+      "duplicate_project_user_relations_preserved",
+      "no_responsibility_or_authority_claim"
+    ],
+    "postload": [
+      "xml_external_id_resolves",
+      "project_id_ref_resolves",
+      "user_id_ref_resolves"
+    ]
+  }
+}

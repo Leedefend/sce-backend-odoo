@@ -1,0 +1,1952 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "contract_counterparty_partner_sc_v1",
+  "external_id_rule": {
+    "legacy_key_policy": "stable_normalized_contract_counterparty_name",
+    "pattern": "legacy_contract_counterparty_sc_<sha1_16_normalized_name>",
+    "source": "sc"
+  },
+  "lane_id": "contract_counterparty_partner",
+  "records": [
+    {
+      "external_id": "legacy_contract_counterparty_sc_430659d9a1b74cb2",
+      "legacy_identity_key": "contract_counterparty:sc:430659d9a1b74cb292b004e517fb2f6250f9dd3c",
+      "legacy_partner_id": "contract_counterparty:430659d9a1b74cb2",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "上海二十冶建设有限公司",
+      "normalized_counterparty_name": "上海二十冶建设",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "2a49b8624fd145f2aa90177d3c2f4c9c"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_430659d9a1b74cb2"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_87f060da51089fa4",
+      "legacy_identity_key": "contract_counterparty:sc:87f060da51089fa4e7fb610fb1c884a71a71e20c",
+      "legacy_partner_id": "contract_counterparty:87f060da51089fa4",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国人寿财产保险股份有限公司德阳市中心支公司",
+      "normalized_counterparty_name": "中国人寿财产保险股份有限公司德阳市中心支",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "11a5e554ba804dc79c60aa7179dae3ab"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_87f060da51089fa4"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_cf44c7d3a96bcdac",
+      "legacy_identity_key": "contract_counterparty:sc:cf44c7d3a96bcdac3e07ce404919750c90789fa7",
+      "legacy_partner_id": "contract_counterparty:cf44c7d3a96bcdac",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国工程物理研究院科技信息中心",
+      "normalized_counterparty_name": "中国工程物理研究院科技信息中心",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "7000efbd33a5401cb50b376c321babe6"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_cf44c7d3a96bcdac"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_89387ae77d9080ad",
+      "legacy_identity_key": "contract_counterparty:sc:89387ae77d9080ada4608d0204d6099b3b7f7229",
+      "legacy_partner_id": "contract_counterparty:89387ae77d9080ad",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国建筑一局（集团）有限公司",
+      "normalized_counterparty_name": "中国建筑一局",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "fa7627a9ecf5459eb8c9f65cb41e9782"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_89387ae77d9080ad"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_21a0918fbfe46052",
+      "legacy_identity_key": "contract_counterparty:sc:21a0918fbfe460527ce0379b939061f42ca4c0a4",
+      "legacy_partner_id": "contract_counterparty:21a0918fbfe46052",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国建筑第七工程局有限公司",
+      "normalized_counterparty_name": "中国建筑第七工程局",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "a3e2b251b6de46c6a3d04ebd80f63cbb"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_21a0918fbfe46052"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_d2d062a1299226d6",
+      "legacy_identity_key": "contract_counterparty:sc:d2d062a1299226d675d6c2c9bdac41fb773f79ef",
+      "legacy_partner_id": "contract_counterparty:d2d062a1299226d6",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国建筑第八工程局有限公司",
+      "normalized_counterparty_name": "中国建筑第八工程局",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "19b3382cc9aa4ea682c4faef2fa60631"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_d2d062a1299226d6"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_167441c9e759f855",
+      "legacy_identity_key": "contract_counterparty:sc:167441c9e759f8553b9e44d64a78cae9f23c69d1",
+      "legacy_partner_id": "contract_counterparty:167441c9e759f855",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国建筑第四工程局有限公司",
+      "normalized_counterparty_name": "中国建筑第四工程局",
+      "source_contract_count": 8,
+      "source_contract_ids": [
+        "3c0659411d374bfcb2313cef17bb6a52",
+        "54d3a0628269470ca75e58295a5e1694",
+        "616bf77c6ab346ea88383c05d490fc9f",
+        "7de4f64ea5e341f79ef1a8ed1aee35f7",
+        "b47455cbccc8409783ce87bd12852e39",
+        "c3518e96e8914ac19a76448f4a73f7bc",
+        "d28efa3e18ed4dfaa5ecaa4f7f68ab94",
+        "f3c0077b815746378c254ae1fb9002cc"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_167441c9e759f855"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_3c09eb0146a60553",
+      "legacy_identity_key": "contract_counterparty:sc:3c09eb0146a605530d68e0edc28f0ce2d3f02170",
+      "legacy_partner_id": "contract_counterparty:3c09eb0146a60553",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国核工业中原建设有限公司",
+      "normalized_counterparty_name": "中国核工业中原建设",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "102f1039d9bf4d7e8cb2946dbf2aab72"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_3c09eb0146a60553"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_3fd9d4fb7685d055",
+      "legacy_identity_key": "contract_counterparty:sc:3fd9d4fb7685d05583f67fb3ae6f765522f7d6dc",
+      "legacy_partner_id": "contract_counterparty:3fd9d4fb7685d055",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国石油天然气第七建设有限公司",
+      "normalized_counterparty_name": "中国石油天然气第七建设",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "4072c73b39744718a8786199e3d53cf8"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_3fd9d4fb7685d055"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_a80c619a60e22e37",
+      "legacy_identity_key": "contract_counterparty:sc:a80c619a60e22e37f857653696542662bc8133a2",
+      "legacy_partner_id": "contract_counterparty:a80c619a60e22e37",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国移动通信集团四川有限公司",
+      "normalized_counterparty_name": "中国移动通信集团四川",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "36b4b9472702459e80a3cac11f08b27d"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_a80c619a60e22e37"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_9fea8096853f9b43",
+      "legacy_identity_key": "contract_counterparty:sc:9fea8096853f9b4360e97f42bab88bfa96af3f9a",
+      "legacy_partner_id": "contract_counterparty:9fea8096853f9b43",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国移动通信集团四川有限公司泸州分公司",
+      "normalized_counterparty_name": "中国移动通信集团四川有限公司泸州分",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "32d04f89e8fe427786b4130a8fd1845b"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_9fea8096853f9b43"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_bf9ca90165ddf370",
+      "legacy_identity_key": "contract_counterparty:sc:bf9ca90165ddf3707f8a861ef7cdeba7eefa8529",
+      "legacy_partner_id": "contract_counterparty:bf9ca90165ddf370",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国第二重型机械集团万航模锻有限责任公司",
+      "normalized_counterparty_name": "中国第二重型机械集团万航模锻",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "e7ce73a6870e40ada7a742cb5eace22f"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_bf9ca90165ddf370"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_e73b3cdad8d89dbc",
+      "legacy_identity_key": "contract_counterparty:sc:e73b3cdad8d89dbc15c19f5d9219899c697f6c6f",
+      "legacy_partner_id": "contract_counterparty:e73b3cdad8d89dbc",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国第二重型机械集团德阳我哪行模锻有限责任公司",
+      "normalized_counterparty_name": "中国第二重型机械集团德阳我哪行模锻",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "c9b6b7bb43a94f86a8f10aa4ca462ab3"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_e73b3cdad8d89dbc"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_dff38fae42917ccb",
+      "legacy_identity_key": "contract_counterparty:sc:dff38fae42917ccb34c70876685aac1add423acd",
+      "legacy_partner_id": "contract_counterparty:dff38fae42917ccb",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国联合网络通信有限公司成都市分公司",
+      "normalized_counterparty_name": "中国联合网络通信有限公司成都市分",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "ba2fdd10735247b48343fdd9d4ad8372"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_dff38fae42917ccb"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_38ce4887481f5e50",
+      "legacy_identity_key": "contract_counterparty:sc:38ce4887481f5e50f0f6db0cfd2b0014e191531e",
+      "legacy_partner_id": "contract_counterparty:38ce4887481f5e50",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中国铁建大桥工程局集团有限公司 旌阳区城市地下综合管廊建设项目经理部",
+      "normalized_counterparty_name": "中国铁建大桥工程局集团有限公司旌阳区城市地下综合管廊建设项目经理部",
+      "source_contract_count": 3,
+      "source_contract_ids": [
+        "4e136b9145834c2db85823b3c7289c10",
+        "9885971f9cd74f4eaf9103b78769f15a",
+        "c91a4892e02a411fa63b5fa96f0d90b0"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_38ce4887481f5e50"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_7b6300f99b56aa95",
+      "legacy_identity_key": "contract_counterparty:sc:7b6300f99b56aa95c3999bf760515328c3f1fc61",
+      "legacy_partner_id": "contract_counterparty:7b6300f99b56aa95",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中岗第二重型机械集团德阳万航模锻有限责任公司",
+      "normalized_counterparty_name": "中岗第二重型机械集团德阳万航模锻",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "f0c0e51b9e4948baa362f8d1e6cda418"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_7b6300f99b56aa95"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_343a51835a707df4",
+      "legacy_identity_key": "contract_counterparty:sc:343a51835a707df4c2d71d38f45d63488b95bf56",
+      "legacy_partner_id": "contract_counterparty:343a51835a707df4",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中建二局第二建筑工程有限公司",
+      "normalized_counterparty_name": "中建二局第二建筑工程",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "f717dae206c94c6784a6ed757e3f4294"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_343a51835a707df4"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_70f2690a1140cec3",
+      "legacy_identity_key": "contract_counterparty:sc:70f2690a1140cec355d759ce4f80bdf1bf4b5971",
+      "legacy_partner_id": "contract_counterparty:70f2690a1140cec3",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中建四局建设发展有限公司",
+      "normalized_counterparty_name": "中建四局建设发展",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "c5e92f7a613b4efc9b69ce607c59280f"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_70f2690a1140cec3"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_6f85e48e496f112d",
+      "legacy_identity_key": "contract_counterparty:sc:6f85e48e496f112d0b5f0d6dc9a6182491def35a",
+      "legacy_partner_id": "contract_counterparty:6f85e48e496f112d",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中建四局第一建设有限公司",
+      "normalized_counterparty_name": "中建四局第一建设",
+      "source_contract_count": 5,
+      "source_contract_ids": [
+        "0289e318abff46c084516bd75bb441d3",
+        "1d8fd512ed104b27ae1565d0a1dbba31",
+        "7d06b67ca2a64b31ae285459b63a7510",
+        "b36a1be8338f41dfb8b18b1e5f28b8d4",
+        "c10118c174b34565addc3d9d3113f11e"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_6f85e48e496f112d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_e1767fb8d58eff21",
+      "legacy_identity_key": "contract_counterparty:sc:e1767fb8d58eff215caedc46bb7d95ce65588a0c",
+      "legacy_partner_id": "contract_counterparty:e1767fb8d58eff21",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中江凯兴建设投资有限公司",
+      "normalized_counterparty_name": "中江凯兴建设投资",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "76ad9bb0b4a3463096039990d622c8d2"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_e1767fb8d58eff21"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_77e681b152504233",
+      "legacy_identity_key": "contract_counterparty:sc:77e681b152504233a767a13353eb6b5da98ed714",
+      "legacy_partner_id": "contract_counterparty:77e681b152504233",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中江县辑庆镇尖寨村股份经济合作联合社",
+      "normalized_counterparty_name": "中江县辑庆镇尖寨村股份经济合作联合社",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "c3da6561efef403eac08796b30c7328b"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_77e681b152504233"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_27b4778e677b0b0b",
+      "legacy_identity_key": "contract_counterparty:sc:27b4778e677b0b0b985dc4de09695a69f2d8f56e",
+      "legacy_partner_id": "contract_counterparty:27b4778e677b0b0b",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中石化西南石油工程有限公司油田工程服务分公司",
+      "normalized_counterparty_name": "中石化西南石油工程有限公司油田工程服务分",
+      "source_contract_count": 8,
+      "source_contract_ids": [
+        "0537b6b19f3e47d9aa22b69a8c536953",
+        "23284b7dd1304bb3ae1edcc3caf6bcf8",
+        "501f9de03b7d49aba77aede72ee0c8d5",
+        "731f627b63674ab28aefd3cde96cb2ac",
+        "a94aae903d6d4626b7c89301a3eb032c",
+        "cc977aaa8d0c4a7599ac18b728ff0039",
+        "e2e9e6d082f048d9aff0632929160a34",
+        "f94715fb36c445b4bd8d148c0bb6743f"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_27b4778e677b0b0b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_336c1acaddb51d21",
+      "legacy_identity_key": "contract_counterparty:sc:336c1acaddb51d21fc573ffd7da262458835d4dd",
+      "legacy_partner_id": "contract_counterparty:336c1acaddb51d21",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中铁十九局集团有限公司",
+      "normalized_counterparty_name": "中铁十九局",
+      "source_contract_count": 4,
+      "source_contract_ids": [
+        "2ad9b46065ce410c861a1f7f491a5c82",
+        "50d97642aad94f0d8e2d9b5f2fa40d33",
+        "c9eac9e440d84fb8b651f320c288271a",
+        "ced8cf1857914ea1b450729f9e12ac4c"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_336c1acaddb51d21"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_a2fa6ea9e973f58f",
+      "legacy_identity_key": "contract_counterparty:sc:a2fa6ea9e973f58f9734acae32e1847909d982b5",
+      "legacy_partner_id": "contract_counterparty:a2fa6ea9e973f58f",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中铁十八局集团有限公司",
+      "normalized_counterparty_name": "中铁十八局",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "e1ec8cb36ebf4aee84782581bbf4b95a"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_a2fa6ea9e973f58f"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_a59fd3187a4cd8f1",
+      "legacy_identity_key": "contract_counterparty:sc:a59fd3187a4cd8f10702660a44c739bc7bcfa479",
+      "legacy_partner_id": "contract_counterparty:a59fd3187a4cd8f1",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "中铁十八局集团有限公司巴中恩阳临港产业园项目经理部",
+      "normalized_counterparty_name": "中铁十八局集团有限公司巴中恩阳临港产业园项目经理部",
+      "source_contract_count": 5,
+      "source_contract_ids": [
+        "1ea6155546b446c887bbb3be8191074d",
+        "568107fb1225494d8828bb5c98becf04",
+        "5ee2346223c941dc87b009851965c618",
+        "9322771910d245b9a5ee058fcd38e452",
+        "a014d73af732436f95996c16ba8a618f"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_a59fd3187a4cd8f1"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_852308063e82c68f",
+      "legacy_identity_key": "contract_counterparty:sc:852308063e82c68f08b0df9cedd530cd0829ab21",
+      "legacy_partner_id": "contract_counterparty:852308063e82c68f",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "二重德阳储能科技有限公司",
+      "normalized_counterparty_name": "二重德阳储能科技",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "30cbfec3bfb2491aa0c3d78b07102ddd"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_852308063e82c68f"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_1d12391f59e8dac8",
+      "legacy_identity_key": "contract_counterparty:sc:1d12391f59e8dac888b0d145dc0b964aa107e825",
+      "legacy_partner_id": "contract_counterparty:1d12391f59e8dac8",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "二重（德阳）重型装备有限公司",
+      "normalized_counterparty_name": "二重德阳重型装备",
+      "source_contract_count": 75,
+      "source_contract_ids": [
+        "0117d28e86ac4bd983543c8163ace8ac",
+        "0c83b7ad892e4302b14325d470afa4ac",
+        "0e385232244242a884e2678a2b65a420",
+        "0f3098086cbf40b7812b0d503eec3fd0",
+        "10badaad28e64d448cba0dd81fbf3ead",
+        "115d8cdf55aa4639b49c40a749bcd0c6",
+        "129a3b98abf947b2ab3e91c4ee86d0e9",
+        "13f36356ac184e50b14e95f060b256fd",
+        "1fdc7050a7ad44b9b577cf43a4147b34",
+        "22525ffb01bc411dba1b110920cacf64",
+        "23c7fba29e544cfebb4436ce81029817",
+        "27554ffd3aae4813879950e194f3dc2c",
+        "2a23f451a8b64abeae8c4598947843bd",
+        "2d9f7e004a8349d5b8851692a838c8b7",
+        "3439b64a6b52448cb481b0f93660a2ff",
+        "397db966e5a047beb3310e7f744d327b",
+        "3c6ce2c423194b32937ccb91646d9f21",
+        "42c5c153bd544fedbab7936f516eaf44",
+        "4731c87c200e44f0b73c09aa438dcaf9",
+        "4b019aa6b2b54579968e2530cf653062",
+        "4cdc2f64f67c44c0bf3a9dd8e0d1b1a3",
+        "4e7ead75b9af456c84c41e3eb4cd25c6",
+        "52f40d2d41b7432595b3d283fe3f73e3",
+        "53316129ecb048a6a0b090e777d768ff",
+        "5b98e1b414d54fdca2d0b991b168c7e6",
+        "5cbc4fd741314d9c84a0c0d05b4f8d9d",
+        "6363da9796194e97ad1a2c9ac7679708",
+        "6534df2860f9481cbc31cf117d5c1f36",
+        "6a62351d9b55422cadbf71b90da97b47",
+        "702b26711c4649978b2434c9a6d98934",
+        "705f309033ef4579b8025f579d401d15",
+        "72a397c198e64be3bd89830d0dee401c",
+        "75300bb2ee7940aebf3c22ba370c5c7e",
+        "7d2568cc66c54b1ca8c8c4368ad963d6",
+        "7ff5cf77d687435aa54e5395827dbcfb",
+        "83fe151775fb410c8ea1db434ff2e716",
+        "8586d5e9194d4de88c8bb6ea047065be",
+        "8874e245ff494dab8f43f25bef130433",
+        "8b18033b5ac34806ae9e72dc9fb6c30b",
+        "8e57d716b6b8453eb3d9200fd75c259c",
+        "8e6c630d11a14329a81a98d3177d4335",
+        "92c137458f134e3caf085d0e4eee5ce0",
+        "95ddf6c7988a44e9954562a6fa1c3cb2",
+        "976fb38200de4db0b515cc9dafef286b",
+        "9a626c21b51846b7a8c687fe0c8928df",
+        "9b25d93f03ed4ab297638c50354db68e",
+        "9d286fdd46eb4a37b881f0afca2744c3",
+        "a2957d704ac94348b571b3f75c0ac8ff",
+        "a343ac7bc6fa4148b441bfc958ca1dc7",
+        "aa46f437f18e42e886218fa309b46eaf",
+        "ae7b41f30ef74a08afa6180ad800b1c0",
+        "b30b0f0fee9d4377be5fa701a3140e39",
+        "b78c0b6ad09c430eb04ec9038a505aee",
+        "b989765560824f51859f546ae1476e56",
+        "bbda6c820c824e739825362b5e7f557b",
+        "becf90f9f75d4c1aa9ca6ff4400f14af",
+        "c01d6aed57b64f21939ac3d88fcfe3c0",
+        "c1d2a91ea8054638ba61511ab846d84d",
+        "cc80b83b43274fc3898eac4698906cae",
+        "cf68d69682674e979100e7f9459b798b",
+        "d4e5799d7bf44b248f8226cc05fd0438",
+        "d527f8936741461bb9b3e18b35197714",
+        "d52f26076a89423cb5e393b746c17c77",
+        "d694644c3dae457183697b9f3f9b22bc",
+        "d872852d292845969a02f7879a696da2",
+        "d905c994f5234d9bba635831548a2d88",
+        "d9548f1deffe4783996b54face25fd74",
+        "e4900918f8544dc38860b9f89a60713e",
+        "e4cf6e0c2c9a4dbebf0a9a92351de5ed",
+        "e640e977c0b945c7bde642feb12e4de0",
+        "e6d3d11f2e1044a0ac76aba3ef58d88f",
+        "ed3b331f1dec45b9a2493005f9cdae93",
+        "f5b77943a1b045e09909f8e9945b1ba6",
+        "f96b2883716f4eb09d549515323721aa",
+        "fa4d4453a2b54a8695a571de7209d891"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_1d12391f59e8dac8"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_a118974acf07c396",
+      "legacy_identity_key": "contract_counterparty:sc:a118974acf07c3969a7146124b34fd0c35889705",
+      "legacy_partner_id": "contract_counterparty:a118974acf07c396",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "伟宸建设集团有限公司",
+      "normalized_counterparty_name": "伟宸建设",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "4d68ad3881054ded9a29a8aa02f415ab"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_a118974acf07c396"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_c79a4e9756d34ded",
+      "legacy_identity_key": "contract_counterparty:sc:c79a4e9756d34ded4d0b682c7c4da97ae8df3525",
+      "legacy_partner_id": "contract_counterparty:c79a4e9756d34ded",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "保利长大工程有限公司",
+      "normalized_counterparty_name": "保利长大工程",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "66fdee18c0f842d7a9cbf692a41694da"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_c79a4e9756d34ded"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_ebafa0d3a9b41485",
+      "legacy_identity_key": "contract_counterparty:sc:ebafa0d3a9b414854ed1b268169802f88105d2fe",
+      "legacy_partner_id": "contract_counterparty:ebafa0d3a9b41485",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "六盘水金地嘉仁物业服务有限公司荣昌分公司",
+      "normalized_counterparty_name": "六盘水金地嘉仁物业服务有限公司荣昌分",
+      "source_contract_count": 2,
+      "source_contract_ids": [
+        "9ace7a7dc4c54786a932ecbf09d184a7",
+        "ea8d3b37657142c5aba044ec59d1ae54"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_ebafa0d3a9b41485"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_78fd0cafe048c22e",
+      "legacy_identity_key": "contract_counterparty:sc:78fd0cafe048c22e26587212d9dd267570802776",
+      "legacy_partner_id": "contract_counterparty:78fd0cafe048c22e",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川天顺科技服务有限公司",
+      "normalized_counterparty_name": "四川天顺科技服务",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "dc63e55b621b4eac866ac1ba2ace16cc"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_78fd0cafe048c22e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_707cb840567d9f85",
+      "legacy_identity_key": "contract_counterparty:sc:707cb840567d9f853ba399fd93edbbef2d436bb9",
+      "legacy_partner_id": "contract_counterparty:707cb840567d9f85",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川定弘邦路桥工程有限公司",
+      "normalized_counterparty_name": "四川定弘邦路桥工程",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "fc940cc86d104e75a8f20542f30a5fd4"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_707cb840567d9f85"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_eb7166843dfe9232",
+      "legacy_identity_key": "contract_counterparty:sc:eb7166843dfe9232efccf67dacd913265f5a3504",
+      "legacy_partner_id": "contract_counterparty:eb7166843dfe9232",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川山水美地农业投资有限公司",
+      "normalized_counterparty_name": "四川山水美地农业投资",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "4640f2b1d1e74cf38fc631bf56914a82"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_eb7166843dfe9232"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_61ee719c30cbca41",
+      "legacy_identity_key": "contract_counterparty:sc:61ee719c30cbca41c542d02d604d2030fca5ae7b",
+      "legacy_partner_id": "contract_counterparty:61ee719c30cbca41",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川建筑职业技术学院",
+      "normalized_counterparty_name": "四川建筑职业技术学院",
+      "source_contract_count": 8,
+      "source_contract_ids": [
+        "28ff4c5d340d4d2da801163ea4d66863",
+        "395c42ce59a040b9b90b0c8fa7f4203c",
+        "4dc5858802b248cda342bbd801973c1c",
+        "9fb396528ca6429db487f95b5b54180c",
+        "c36b8ef6562148dd844452e6001e3176",
+        "e3cfa9ecac2142048ec89076a4298138",
+        "f173fd159f0244fca221bb80590f4b67",
+        "f752d599499d47e7810ca95762a807b6"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_61ee719c30cbca41"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_cf44693f3e2939a2",
+      "legacy_identity_key": "contract_counterparty:sc:cf44693f3e2939a20727a8f7c4e5ce34ea0f07c6",
+      "legacy_partner_id": "contract_counterparty:cf44693f3e2939a2",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川建设发展股份有限公司",
+      "normalized_counterparty_name": "四川建设发展",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "84bfa995d83e4a3e9c08fb2d1a950e08"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_cf44693f3e2939a2"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_647e3b39ac9e3ae1",
+      "legacy_identity_key": "contract_counterparty:sc:647e3b39ac9e3ae130b73f9a5b358858a7b5c242",
+      "legacy_partner_id": "contract_counterparty:647e3b39ac9e3ae1",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川昌意兴建筑劳务有限公司",
+      "normalized_counterparty_name": "四川昌意兴建筑劳务",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "85a9b632c0834db9a8f43883b06d9d7c"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_647e3b39ac9e3ae1"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_3aef2ad376c624bb",
+      "legacy_identity_key": "contract_counterparty:sc:3aef2ad376c624bb659e8bc96cae2f7ecd9912e0",
+      "legacy_partner_id": "contract_counterparty:3aef2ad376c624bb",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川汉南供水有限公司",
+      "normalized_counterparty_name": "四川汉南供水",
+      "source_contract_count": 2,
+      "source_contract_ids": [
+        "45e89b664f24417180ffc65b6f55a454",
+        "d93fbca00f854c7286213403a4f1afae"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_3aef2ad376c624bb"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_bf899a53605bde6a",
+      "legacy_identity_key": "contract_counterparty:sc:bf899a53605bde6ac9315d0b7459d1f30f122ea9",
+      "legacy_partner_id": "contract_counterparty:bf899a53605bde6a",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川省东方兴发建设集团有限公司",
+      "normalized_counterparty_name": "四川省东方兴发建设",
+      "source_contract_count": 2,
+      "source_contract_ids": [
+        "0247f983c826484f9945751504b13739",
+        "19b2d001a90a4155a3ae286833d3460c"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_bf899a53605bde6a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_fd29cb64f77b1b50",
+      "legacy_identity_key": "contract_counterparty:sc:fd29cb64f77b1b502d2c26b98e98bfcc2bf9dc62",
+      "legacy_partner_id": "contract_counterparty:fd29cb64f77b1b50",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川省第四建筑有限公司",
+      "normalized_counterparty_name": "四川省第四建筑",
+      "source_contract_count": 2,
+      "source_contract_ids": [
+        "a8ce311810354d6cb1fec7123c5ccbda",
+        "ba3bde4fdfca45708aee0126e52cf404"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_fd29cb64f77b1b50"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_2187ea5bbee434b0",
+      "legacy_identity_key": "contract_counterparty:sc:2187ea5bbee434b0db1c8aa44f86a7afdcfb8a3a",
+      "legacy_partner_id": "contract_counterparty:2187ea5bbee434b0",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川省绵阳外国语学校",
+      "normalized_counterparty_name": "四川省绵阳外国语学校",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "11800130bb4746618aefd2e656ddaae9"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_2187ea5bbee434b0"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_02bc41b960717458",
+      "legacy_identity_key": "contract_counterparty:sc:02bc41b960717458a949ae9e2e75dfc5409bbb4b",
+      "legacy_partner_id": "contract_counterparty:02bc41b960717458",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川纹江致远建筑开发工程有限公司",
+      "normalized_counterparty_name": "四川纹江致远建筑开发工程",
+      "source_contract_count": 8,
+      "source_contract_ids": [
+        "29dcd123d33b42bbbd1ad008fc3686de",
+        "6ecd026c8d4c4d209ffb148415250177",
+        "9cc950d13afc4ca7b5dba2461133f647",
+        "a9b5296518454a89bbed8de0f413da5b",
+        "ae2bcfe2f1824e219e3ac01a66d6ce05",
+        "b36c45ed90f34a809dac9f823715da43",
+        "c24f6f35fd7b4c689bf63881d4b1ea87",
+        "e48fe192100a49a1b767b5fde563978c"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_02bc41b960717458"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_d41610756a7cb04d",
+      "legacy_identity_key": "contract_counterparty:sc:d41610756a7cb04db5f942c4ba7c4e594ff2c138",
+      "legacy_partner_id": "contract_counterparty:d41610756a7cb04d",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "四川自贡汇东发展股份有限公司",
+      "normalized_counterparty_name": "四川自贡汇东发展",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "d8b36d08bb1c42a2a369d31cb840b3c1"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_d41610756a7cb04d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_36c135b029d434d6",
+      "legacy_identity_key": "contract_counterparty:sc:36c135b029d434d69b0ad2325161c42f40f67e3d",
+      "legacy_partner_id": "contract_counterparty:36c135b029d434d6",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "国网新疆电力有限公司喀什供电公司",
+      "normalized_counterparty_name": "国网新疆电力有限公司喀什供电",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "79587edeb731472c897cdd7a64e9fb97"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_36c135b029d434d6"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_af2a6c0f51042e4b",
+      "legacy_identity_key": "contract_counterparty:sc:af2a6c0f51042e4bbc284aabb178fffe33c06f62",
+      "legacy_partner_id": "contract_counterparty:af2a6c0f51042e4b",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "国营川西机器厂",
+      "normalized_counterparty_name": "国营川西机器厂",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "38497f0c58b6414db340c37217896df6"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_af2a6c0f51042e4b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_d9004052aec6c53f",
+      "legacy_identity_key": "contract_counterparty:sc:d9004052aec6c53ff3bcc85549fafa6d0d6a6dd0",
+      "legacy_partner_id": "contract_counterparty:d9004052aec6c53f",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "垫江县小厦建筑有限公司",
+      "normalized_counterparty_name": "垫江县小厦建筑",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "3d3e5b7d82eb4f78b1bc5691925a7684"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_d9004052aec6c53f"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_f8407065d92d07d3",
+      "legacy_identity_key": "contract_counterparty:sc:f8407065d92d07d374ad8081fab3f6ddcec76549",
+      "legacy_partner_id": "contract_counterparty:f8407065d92d07d3",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "塔什库尔干县塔什库尔干乡人民政府",
+      "normalized_counterparty_name": "塔什库尔干县塔什库尔干乡人民政府",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "8a9b843b3d8d440483bec3091f5e92fd"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_f8407065d92d07d3"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_35000d925ecc3a59",
+      "legacy_identity_key": "contract_counterparty:sc:35000d925ecc3a59d1e24bea81bd5bc33604546e",
+      "legacy_partner_id": "contract_counterparty:35000d925ecc3a59",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "山东创杰智慧装备科技有限公司",
+      "normalized_counterparty_name": "山东创杰智慧装备科技",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "af2919759cfc47c3aa4aee9646e6f58b"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_35000d925ecc3a59"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_9ccecab619f83f95",
+      "legacy_identity_key": "contract_counterparty:sc:9ccecab619f83f95299a0c11c39e91d5ec7f0b89",
+      "legacy_partner_id": "contract_counterparty:9ccecab619f83f95",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "广汉市金轮镇人民政府",
+      "normalized_counterparty_name": "广汉市金轮镇人民政府",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "f692597db427423cbc7e034f8e4065e6"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_9ccecab619f83f95"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_b3e284227c6a9a20",
+      "legacy_identity_key": "contract_counterparty:sc:b3e284227c6a9a20cc76fb3791e533bf3e1eaa9f",
+      "legacy_partner_id": "contract_counterparty:b3e284227c6a9a20",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳二重新业建筑工程有限责任公司",
+      "normalized_counterparty_name": "德阳二重新业建筑工程",
+      "source_contract_count": 7,
+      "source_contract_ids": [
+        "1e6b79ad2d6a41c387bd156a4248d620",
+        "43a4444ae1da4e07aca9030858b9be83",
+        "46d753373afe4f5ab911b22588aee78f",
+        "49f72a3263a540afa76c024325d17be9",
+        "b8a322ef498d47ecb4dea65c15828015",
+        "d05e44c5dfed47a0b352515e3f110d8c",
+        "ef9603107b644e559e9b479ba921f691"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_b3e284227c6a9a20"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_de9148bc9059d36a",
+      "legacy_identity_key": "contract_counterparty:sc:de9148bc9059d36a0fc9ba51e9b01bceda9baf11",
+      "legacy_partner_id": "contract_counterparty:de9148bc9059d36a",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳发展控股集团有限公司",
+      "normalized_counterparty_name": "德阳发展控股",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "fcd7a8600f9940408829007979b469f9"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_de9148bc9059d36a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_58713443b28ea608",
+      "legacy_identity_key": "contract_counterparty:sc:58713443b28ea6083dbeea9a956f766c8fdb046a",
+      "legacy_partner_id": "contract_counterparty:58713443b28ea608",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳启明酒店管理有限公司",
+      "normalized_counterparty_name": "德阳启明酒店管理",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "7fc30830ec08436394656ae262571350"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_58713443b28ea608"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_3c5002663cc40849",
+      "legacy_identity_key": "contract_counterparty:sc:3c5002663cc408496055e0d773deffa7bd57e05d",
+      "legacy_partner_id": "contract_counterparty:3c5002663cc40849",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳国信建设工程有限公司",
+      "normalized_counterparty_name": "德阳国信建设工程",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "562bc83ca224492dbb964274533b45ff"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_3c5002663cc40849"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_9b1e8ca921dfbbee",
+      "legacy_identity_key": "contract_counterparty:sc:9b1e8ca921dfbbeeaae17d9355e3ef3ae953d9f1",
+      "legacy_partner_id": "contract_counterparty:9b1e8ca921dfbbee",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳大参林投资有限公司",
+      "normalized_counterparty_name": "德阳大参林投资",
+      "source_contract_count": 3,
+      "source_contract_ids": [
+        "90387f36c1324ec8b06c1298271b76d5",
+        "ae313fc92cff492fa04d6a027dca0036",
+        "c51a6febcbee426fa3f903a4440421c3"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_9b1e8ca921dfbbee"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_09619d9870deea95",
+      "legacy_identity_key": "contract_counterparty:sc:09619d9870deea95748686a3593b55ce76cce201",
+      "legacy_partner_id": "contract_counterparty:09619d9870deea95",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳市人民医院",
+      "normalized_counterparty_name": "德阳市人民医院",
+      "source_contract_count": 2,
+      "source_contract_ids": [
+        "29be9feadf7a457d943a5fd296c8a847",
+        "84aa140eba8e4e9a9efd3be0adec540e"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_09619d9870deea95"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_1909f2c926e5c88b",
+      "legacy_identity_key": "contract_counterparty:sc:1909f2c926e5c88be7e3bbb4dd3d482882a9e472",
+      "legacy_partner_id": "contract_counterparty:1909f2c926e5c88b",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳市住房保障和房地产事务中心",
+      "normalized_counterparty_name": "德阳市住房保障和房地产事务中心",
+      "source_contract_count": 3,
+      "source_contract_ids": [
+        "1a30464313074d229cb09375f526fea4",
+        "25ddf3fc95274a18aa09bc8e1bb9d9c1",
+        "87687674180644e5b13256423c9cde93"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_1909f2c926e5c88b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_1b5584cfe7d6bf4d",
+      "legacy_identity_key": "contract_counterparty:sc:1b5584cfe7d6bf4dc42ba0c80d602830f59dc873",
+      "legacy_partner_id": "contract_counterparty:1b5584cfe7d6bf4d",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳市供水安装工程队",
+      "normalized_counterparty_name": "德阳市供水安装工程队",
+      "source_contract_count": 206,
+      "source_contract_ids": [
+        "00e8525ca2f9434d9603c63248969913",
+        "02860be649fc4256844cdff1a03302f1",
+        "02b96888686a492cb45f9b64064d648f",
+        "04069e0c6f7440dd951197b5d206ed4a",
+        "058a36bee2b54ec38260a9ae2794e4f6",
+        "067d7dfbdbe14ef9bef1a3b9bed3f874",
+        "074ced9cda844c49994807ad95d99ab4",
+        "07d892ba9d5846878f4bc508e5fb3d05",
+        "086c56ca06274d91ba9be8704dd13bd1",
+        "09fa2aecb7a24fe796c83451e8a14910",
+        "0aa222806832441e8d39f9523c9988a6",
+        "0ac66e46207842738592390105828cf3",
+        "0cb3a32f73c94a41a229a2f69aa2f74a",
+        "0d4cf942f00a47429c46d037dd4f8318",
+        "1000d73866114752965c699546626a25",
+        "10723b1231264953ae2a7fdddb02bad3",
+        "10830b1a8d13480e88ec434293297357",
+        "10f31fe39a4d42e882f729c3017269bc",
+        "1177d9aedf9f477f9b93dfbcb0b38190",
+        "11dc5f1040a34c64b58307c4156fb6cd",
+        "1232e79fb15340af96326f7194b10026",
+        "12fcaee7d833479b92f1bc20c75bc78b",
+        "15a1f7b0daec406ab28a7d32552cd328",
+        "16552ded543b48bfa63488ee13879742",
+        "168b8ac143fc42b8b31d8fa38e0c94ee",
+        "170070e716ce49eba32600a2eb4ab39d",
+        "17801c7abb4d4a6fa706a4bb50de3e83",
+        "17a358167be74a7cb96518ef0160a2f1",
+        "186d99b12ade42569ef1118e7b3146d9",
+        "19e3641e5ddc4fa68888d360ff43ff74",
+        "1a38b755c9184b13b764e71b5fca19ff",
+        "1ccfb4ec9977482ea357d42832014904",
+        "1d593a3a16464eccaa1e21db3c46902b",
+        "1dd37f04982a43d081f0ff6ad5899fb4",
+        "1ecbd4639218485c9f2fbf09046a595d",
+        "1f3d236601bf4723914897078631c3f1",
+        "2357dd49865a463da5b12e064b04a525",
+        "23f858c3413942feb615c792d73d5eca",
+        "25f32b4bd2704a0fb9136ec5380f4b97",
+        "28f8fcafc37043489a6b2b5912f9afb2",
+        "2bf7c10d1f284272b836bb8285ac60b9",
+        "2de39cfc0b8543bf9bf48bea8c39f96f",
+        "2e12c4e4d14649d0a39bc8e5f4fd75e9",
+        "30da5359c8094f508c7353b13bc48cde",
+        "31fc9185612c4eb5918f97f836e8f062",
+        "3590dd8af27640689dd3b7b3d5052752",
+        "375b582ab1624f82be51bff3b06ef366",
+        "3762c62a1ad340dba5ecafcb593468b2",
+        "376d4ddb71a5483796dc6b5bc4023da4",
+        "392388e4cb6742e694d2906b1b4c71fb",
+        "3a28d8b9c816424b965255afb111c616",
+        "3df53a3ee26e4ffc8ac7475c969c4fa4",
+        "3ee00f6f3e364d028eed24e5fbfe65c1",
+        "401160b6a01b456ab6256e0efa7329de",
+        "4064848b42f94a5eaec1f0b24ef49ed0",
+        "40f148c92b0a4cd8aa069a6f464f1b7c",
+        "4140baa6ba6347b4b60d5a995cc972ad",
+        "42e786fbdead4cbaa6e809f58eed5c38",
+        "4330a39eef4641329d704fad8f8a018e",
+        "435fa909b3484a83a41c1307be740e5a",
+        "43dce049656a4f9cbcaafc6fc1c2b090",
+        "45b58264ae904bcf9dac8704f9f3b6b6",
+        "4681f2b0526b49fe92d5b312326c6c3e",
+        "494bbf64a1554bac97cb4ff65c759171",
+        "4c2c9b0c55344bedb2c216ed32950a8e",
+        "4cbe315cd45d4594bb982b3599317069",
+        "4ed02f0d07c64f2d859097031ca7b172",
+        "4f0e4e5c501a40f78fc13d715c1999ae",
+        "4ffa98e91b5f4bfda11ee5d8faa08d96",
+        "5026c6f08b954f04b8aca6abb0ade00c",
+        "5526062299464fb7a9e4d84c1557dd66",
+        "557354a1a54d40b7bf078c17f1f763eb",
+        "5613a212d8a74f42b0bdf74a2fe22ceb",
+        "5797a82002dd4ef68e203e4f72daffaa",
+        "58d748c331b14273a7301176782f8d40",
+        "599cf81671984f809c773d7fb8e35ee3",
+        "5c677b13d4d04a4ba3684cea91b22161",
+        "61af1f277ce24736b94ee03c68958b1a",
+        "631a2aa1a02d4b4ab0fb2e1ed779896a",
+        "639cb6800d7e41c0839340f43c4baf64",
+        "63e383439e9c4a2e8ad9e103ab327f9e",
+        "66b83d6cadb74c95ac154edec0f791fa",
+        "66b885e2635c46569cffbfc94d51bb4f",
+        "67ce22db8f0a4148b7585f4359365530",
+        "67d3d0771e7d47fa90a0fc6269b98b00",
+        "6bb62ceaf2044182b2bb3c1e7e583596",
+        "6bf63101db85485ebcd54646b20b9eb4",
+        "6c380459929e482b8f4bbb378fb8f7d6",
+        "6c887a691a4145758423f9fb0d9bcc6d",
+        "6cd6c2faa9c546f98d7516b799dfac97",
+        "6dd660d01b324e848a7fbb062ef66e74",
+        "6e0e93ff93594078b5b3251ed73b683b",
+        "6e4be9f43e80405bb0f923103591c6a0",
+        "6edd8ae40b924e7cbe7b4762d99eec9a",
+        "71299d814c554a4d990e6650b27e843f",
+        "73028f6190f644e1b9b220fccf98b65f",
+        "745fbc63eac04168bff8196d5d43c99c",
+        "7608a349e8a04658b5d2ee143630916c",
+        "7721329724314952b0fc9d817063dd8c",
+        "78d00190992442e28c20e90b28026d8b",
+        "7b0b9ba8864b418eaba20baaf0c4d846",
+        "7dfa2c55803b4cf78a98fc45255dfd71",
+        "7e97b5f5d2544b19a13f641d18eee75f",
+        "7ed7bb32d90941f087da12ede0e91556",
+        "7f2b8e8ad7b7426f9b16b3b10f94c87d",
+        "7f9c6ed9ae5e4aff93f88eb2eea2c8ac",
+        "80ce734171c147dbabdd329d75b66dc8",
+        "835dc35eb3674c5bb9b7fc3c07301e16",
+        "837e7dd96fbe483db7d739093102a565",
+        "855bd17cb88245829771d3e8803a0312",
+        "86146cb296ad4a8bafbb823ef5aab9a3",
+        "86931e1b3606482798471c3ff90fde0e",
+        "86c6aefef40e4a9cb3e36e3a391790fa",
+        "86e013f6888a4a348454ed465e9c495b",
+        "877385bcac1841cfbb9c0980816a2d9d",
+        "8898a8a0846a48a1a0db2504d50a7dd3",
+        "8ab2003d3bd343979005935da43863da",
+        "8cc96aebd63545348549aeb9f79efe61",
+        "8d14e63945514c3fa5bdf8c005d762d3",
+        "8d80d8aa021c455ead18fbdf6bc082d9",
+        "936370bfb0b5461ea130fc6bd24e3e7d",
+        "94d45daa44b742fdbfa94ee178781aa9",
+        "96939e9a40174e8585c311f3fe8c2840",
+        "992125c2b82b4c34b549e1bff0e4ce6d",
+        "9b274af5f01245b9a627d9199b0c40a4",
+        "9ec6f1faf46f4791a18e626bb68595ca",
+        "9f8f87219c304e31be2a146f6f5737b7",
+        "a11ccd4e7c4647f38d5c51e3fe9a1934",
+        "a15ffbb7a7ca4ff78b7ebbcfcd337b08",
+        "a1b387d05e324800a4a13b00fbea9650",
+        "a2e1cc5c7f7c4f3f9fd9f5ab14fa7b6d",
+        "a3ef48e8d7184dbfa431af40643fa47b",
+        "a5ba24e149c54fe3a511702ed278f4e7",
+        "a684c4df253c4b65b72be5e69f1a68f6",
+        "a92d986d66f1418b8aa4f386f67b5b46",
+        "ab69f5980de94e559f1be9b1c3b689c6",
+        "ad26001f9dc74b9492468c02543a9eb3",
+        "ad3a7789c7a44febac870c4cc9f645c4",
+        "ae7ed89506564fdeb2a1d9e56840b4c9",
+        "aef75007f23149ef9d312ae60aedd130",
+        "b39b667ec6be49b0a6de3b772833c472",
+        "b3aed05a8a804795a6aa2e77e37aa451",
+        "b4e45b10cf62470181308225bec4c67d",
+        "b6289e0eeb014e809f0eb11da4ad33cb",
+        "b665a0083788441aae7341c6f6e2fcc1",
+        "b83abaea8bda4a05b054f236ea6cc745",
+        "ba364251056d43378a9f4881dcd29fef",
+        "ba74391b3a3a46dfaf4dc58846c1a4ac",
+        "bce461e14abe4a92b853dea8663cca7d",
+        "be4143d8617d4fd88b8a55d2ab47f589",
+        "bec01b49609d4647b1eb71fc869d30af",
+        "c071f565c8c44de0a1983128d62924f5",
+        "c12393aba6834f3893768861844657dc",
+        "c18752c0e6bb4847bd12737dd83e8f12",
+        "c31b9c64656740f5b098b77280edc4f1",
+        "c3af413a58c54010bf6b4347cfc737ca",
+        "c467d0d8bdcf47ccacd04a424caeb931",
+        "c4b7cd47f97947f0967359ec67541bba",
+        "c4bb68853b084abda2344eef96ba0fd9",
+        "c4bb8c883ed2489a8cea63a9c301ef61",
+        "c5402164a82049d5ba48a53903015168",
+        "c5815ce8931c4c68919fa351f8a6da83",
+        "c5b1ecc9b03547e6b422ca75e8b631c8",
+        "c5bbaed67bda4b04a405c9b651887a10",
+        "c71f1c2fcde34078a89dbd2799cbca47",
+        "c7f56b830ca346ceb526e02bb3096df1",
+        "cb611b92e640463cafa289f7cbfa63d0",
+        "ce9db25af59b440c9134a133ad8342c8",
+        "d07775dc6cac480ca7f718dc61702e31",
+        "d19c7668fbf64525bf8e98a52003b934",
+        "d215870cd2dd4cc0a01cb2ab9d56ef60",
+        "d224e00d9288431a96b9508ad167e4b4",
+        "d2fddce00dd1451fb11593cf1164fde9",
+        "d39fa2a801704b9694ff9914da73533f",
+        "d4265969723245f19bf525d642a21a2c",
+        "d4ebab95173a4cf7b95489157204b097",
+        "d61dbbfe6b3c4389aafbd1c99e11de1b",
+        "d6203f567fcd4989a706a20dddb3cd9b",
+        "d7244d4619b34497b5139729fe1ee1e9",
+        "d7b384c8b8f5476b84120645d924d8d6",
+        "d9c1ea2702954be1b1b94ff838231190",
+        "dc47785e45c046dda9e3980cd5d84f8e",
+        "dcc21f91d43a47e9b925c2695b58d5f6",
+        "dd036fce5a8540ea8a67949bc726f71d",
+        "dd92849c15904418af8f4890401ff5d4",
+        "e0a9b40b0fdc42c0bedebd6c27239c67",
+        "e1c8417f6c404c81844b30026766a5f7",
+        "e3d52da3d5dd42ae8fc9214b6e5013a6",
+        "e5af85188251477c92ab6b49d4436d89",
+        "e6b86b78d41b4e9b95f665b780023409",
+        "e9a1cda7f1d94c90a39a01695649c39d",
+        "eaba7223e21243bcaa256642c3277abe",
+        "eb14f40dd0244a57aea78fb2f803b466",
+        "ed446bc73a04490e9aa70cd13fa95f47",
+        "ef6b3bb8432e40b58567c784eec92d08",
+        "f084efcdb62d4c618c29bcfc58f973c2",
+        "f252f9656c6d47ffa5ed9420a7f54d29",
+        "f3e05c6a42c54664b0bf0a5ff5b6caea",
+        "f6ad117e52ae4fe68b2580b6f8d202eb",
+        "f703acec2e6c49d487380bc6201b8ecb",
+        "f75936ab0d734e35b8a4970d785e02e0",
+        "f9dce6b68f9d43c98ef39ed4e5f3b06a",
+        "fa99e536c922465aa8405c57694ae0aa",
+        "fb99b35f8854481eb6a1c307610ad0e8",
+        "ffeffa68a4e845e4a886e1055c68390f",
+        "fffe3fc0c47c46988908ca8a21bd762c"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_1b5584cfe7d6bf4d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_549de8f850928794",
+      "legacy_identity_key": "contract_counterparty:sc:549de8f8509287944737c8d4959c8cb584f1f5d3",
+      "legacy_partner_id": "contract_counterparty:549de8f850928794",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳市勘察测绘设计院",
+      "normalized_counterparty_name": "德阳市勘察测绘设计院",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "187e78a4a64b4c85a7c5537fdd6a7bac"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_549de8f850928794"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_31c4a103d241a777",
+      "legacy_identity_key": "contract_counterparty:sc:31c4a103d241a777cf841787527559f04b246fa4",
+      "legacy_partner_id": "contract_counterparty:31c4a103d241a777",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳市旌创建设工程有限公司",
+      "normalized_counterparty_name": "德阳市旌创建设工程",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "2e55aeecc979448bbcdce16cdb882909"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_31c4a103d241a777"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_4b8fec8204fdc6ee",
+      "legacy_identity_key": "contract_counterparty:sc:4b8fec8204fdc6ee4d9ead526d41b70bd5ec3c94",
+      "legacy_partner_id": "contract_counterparty:4b8fec8204fdc6ee",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳市经济技术开发区城市管理局",
+      "normalized_counterparty_name": "德阳市经济技术开发区城市管理局",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "b04edb1dbc8f4857be425f13be59b0f1"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_4b8fec8204fdc6ee"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_3455e938cd13ac9c",
+      "legacy_identity_key": "contract_counterparty:sc:3455e938cd13ac9c2dfe478284b01b643027e94c",
+      "legacy_partner_id": "contract_counterparty:3455e938cd13ac9c",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳市罗江区综合行政执法局",
+      "normalized_counterparty_name": "德阳市罗江区综合行政执法局",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "11cbd00c6ac341709a75bbec5af76b9e"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_3455e938cd13ac9c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_cf16c3be0768fc03",
+      "legacy_identity_key": "contract_counterparty:sc:cf16c3be0768fc03ec1eb11d4d311807618d22c7",
+      "legacy_partner_id": "contract_counterparty:cf16c3be0768fc03",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳市自来水公司",
+      "normalized_counterparty_name": "德阳市自来水",
+      "source_contract_count": 3,
+      "source_contract_ids": [
+        "260f6b67f81e4841b2428cf130120e53",
+        "2749e96daeb1434889cd67c408469b34",
+        "5f94a890ea974d5abf1a75fca4e5b047"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_cf16c3be0768fc03"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_5bfb710cce559c0b",
+      "legacy_identity_key": "contract_counterparty:sc:5bfb710cce559c0bc3acac7d89ff8532c1221cda",
+      "legacy_partner_id": "contract_counterparty:5bfb710cce559c0b",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳新铁医院有限责任公司",
+      "normalized_counterparty_name": "德阳新铁医院",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "5058ad7ff7184777a915577363216174"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_5bfb710cce559c0b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_5ca9338c60f26979",
+      "legacy_identity_key": "contract_counterparty:sc:5ca9338c60f26979ada4a164962c163e3414f0bc",
+      "legacy_partner_id": "contract_counterparty:5ca9338c60f26979",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳旌信物业服务股份有限公司",
+      "normalized_counterparty_name": "德阳旌信物业服务",
+      "source_contract_count": 3,
+      "source_contract_ids": [
+        "21d3cc4c8ea14bab9d4d9f2e8b9eba78",
+        "673ac67c7327407aaec9d8172a203ffb",
+        "94e1484a53bb44bdbb5bf8631d2045e1"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_5ca9338c60f26979"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_a568d0a534d30b29",
+      "legacy_identity_key": "contract_counterparty:sc:a568d0a534d30b29a7ad3fc3acb566492c6b01ad",
+      "legacy_partner_id": "contract_counterparty:a568d0a534d30b29",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳经开建设工程有限公司",
+      "normalized_counterparty_name": "德阳经开建设工程",
+      "source_contract_count": 4,
+      "source_contract_ids": [
+        "591e43762e324f3d970269980e5f65c9",
+        "7ac60cc47d2d42c5a8549824b97ab2bf",
+        "aa415f20f7eb49ce8c041e0a7ef6aa79",
+        "ebbf73126d634e26827e4bd08d76b065"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_a568d0a534d30b29"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_5ce772a23a4ec0de",
+      "legacy_identity_key": "contract_counterparty:sc:5ce772a23a4ec0de78b42be67fa7a298d2f221dc",
+      "legacy_partner_id": "contract_counterparty:5ce772a23a4ec0de",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "德阳经济技术开发区第四幼儿园",
+      "normalized_counterparty_name": "德阳经济技术开发区第四幼儿园",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "6b6c98b3d2f8464fbe316b087a0646fe"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_5ce772a23a4ec0de"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_d1b397bbf30b42da",
+      "legacy_identity_key": "contract_counterparty:sc:d1b397bbf30b42da5d6f21c715c671de37bbe3c8",
+      "legacy_partner_id": "contract_counterparty:d1b397bbf30b42da",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "拉萨市柳梧新区管理委员会",
+      "normalized_counterparty_name": "拉萨市柳梧新区管理委员会",
+      "source_contract_count": 4,
+      "source_contract_ids": [
+        "14948214afce40309e3be6c7bc8215b8",
+        "1c762eae5f49416caefb1fcc95c7436d",
+        "8f6fee5ecc6f404a81d5a94a90582ee8",
+        "ac3e20ef6c2f43b4b39796d04026118d"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_d1b397bbf30b42da"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_c473783734fa1d1c",
+      "legacy_identity_key": "contract_counterparty:sc:c473783734fa1d1c95e344ed61279f6d389625e8",
+      "legacy_partner_id": "contract_counterparty:c473783734fa1d1c",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "新疆维吾尔自治区岳普湖县自然资源局",
+      "normalized_counterparty_name": "新疆维吾尔自治区岳普湖县自然资源局",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "424361fe38ef4de2ae7c74a10e91801b"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_c473783734fa1d1c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_7c5c3354c418fcee",
+      "legacy_identity_key": "contract_counterparty:sc:7c5c3354c418fceee17755e840ed08fc6f2b4d24",
+      "legacy_partner_id": "contract_counterparty:7c5c3354c418fcee",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "旌阳区德新镇五星村股份经济合作联合社",
+      "normalized_counterparty_name": "旌阳区德新镇五星村股份经济合作联合社",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "53452eeb61c849bf9b27930041819293"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_7c5c3354c418fcee"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_2050585783892519",
+      "legacy_identity_key": "contract_counterparty:sc:20505857838925197db2c49db22bdfd2ff951533",
+      "legacy_partner_id": "contract_counterparty:2050585783892519",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "深圳友唱技术有限公司",
+      "normalized_counterparty_name": "深圳友唱技术",
+      "source_contract_count": 2,
+      "source_contract_ids": [
+        "34322d7f3dc245d8b74e091c51a12fdf",
+        "d97f722e40614de79d23b6f299bc8e49"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_2050585783892519"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_32eab3084394887a",
+      "legacy_identity_key": "contract_counterparty:sc:32eab3084394887a40bc8bc7f9fd3cd2393e235d",
+      "legacy_partner_id": "contract_counterparty:32eab3084394887a",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "深圳市捷顺科技实业股份有限公司",
+      "normalized_counterparty_name": "深圳市捷顺科技实业",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "5e344fafb1e943d9beb9d832be6799ed"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_32eab3084394887a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_76540debad386685",
+      "legacy_identity_key": "contract_counterparty:sc:76540debad386685eb3b78ad381171e78827d81e",
+      "legacy_partner_id": "contract_counterparty:76540debad386685",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "绵竹市金申建筑有限公司",
+      "normalized_counterparty_name": "绵竹市金申建筑",
+      "source_contract_count": 3,
+      "source_contract_ids": [
+        "9ebb815a6fc54ecd9fb028016afc5894",
+        "db479191ce814d79bb2b85ef1a6721e8",
+        "df852e7c9d7f426196cc5a5e31635c9b"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_76540debad386685"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_4f79ac355549f37e",
+      "legacy_identity_key": "contract_counterparty:sc:4f79ac355549f37e49022ead08892c3900203c91",
+      "legacy_partner_id": "contract_counterparty:4f79ac355549f37e",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "绵阳市安州区桑枣镇小学",
+      "normalized_counterparty_name": "绵阳市安州区桑枣镇小学",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "36ae4d26b8494b2592ea400fa201beec"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_4f79ac355549f37e"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_1715a3b3926ea240",
+      "legacy_identity_key": "contract_counterparty:sc:1715a3b3926ea240f65f184008b2c2e05fdd5510",
+      "legacy_partner_id": "contract_counterparty:1715a3b3926ea240",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "绵阳市安州区雎水镇沸水小学",
+      "normalized_counterparty_name": "绵阳市安州区雎水镇沸水小学",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "e63f3f634e2f45d187f48e734092a461"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_1715a3b3926ea240"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_a89105ba84c2d877",
+      "legacy_identity_key": "contract_counterparty:sc:a89105ba84c2d877acf7875d1f1dcf80e314bbf9",
+      "legacy_partner_id": "contract_counterparty:a89105ba84c2d877",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "绵阳市安州区雎水镇皇帽村村民委员会",
+      "normalized_counterparty_name": "绵阳市安州区雎水镇皇帽村村民委员会",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "10a7ebce8f614491aadc01452f93a9b4"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_a89105ba84c2d877"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_fa3a483d1ceb3e84",
+      "legacy_identity_key": "contract_counterparty:sc:fa3a483d1ceb3e84b1161995cd9257ff8d5dfd02",
+      "legacy_partner_id": "contract_counterparty:fa3a483d1ceb3e84",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "绵阳市安州区高级职业中学",
+      "normalized_counterparty_name": "绵阳市安州区高级职业中学",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "c5a512b37c764f558d6fb39dd01fe627"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_fa3a483d1ceb3e84"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_64256a85327503ce",
+      "legacy_identity_key": "contract_counterparty:sc:64256a85327503ce8672310bfd0d3d8f73d5a974",
+      "legacy_partner_id": "contract_counterparty:64256a85327503ce",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "绵阳皓华光电科技有限公司",
+      "normalized_counterparty_name": "绵阳皓华光电科技",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "40502b6c91be452095d331270da853b8"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_64256a85327503ce"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_7d53f86914a8a746",
+      "legacy_identity_key": "contract_counterparty:sc:7d53f86914a8a746c8e476a59399c9e1d54e61fc",
+      "legacy_partner_id": "contract_counterparty:7d53f86914a8a746",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "航天凯天环保科技股份有限公司",
+      "normalized_counterparty_name": "航天凯天环保科技",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "74aa9b0db1dd4aecaf72db7d4a0a7606"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_7d53f86914a8a746"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_9f3b659e72e19e13",
+      "legacy_identity_key": "contract_counterparty:sc:9f3b659e72e19e13a3e2f388256afe7ddfdba5f1",
+      "legacy_partner_id": "contract_counterparty:9f3b659e72e19e13",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "西藏华泰龙矿业开发有限公司",
+      "normalized_counterparty_name": "西藏华泰龙矿业开发",
+      "source_contract_count": 2,
+      "source_contract_ids": [
+        "1055d0fbef9f4dd585e266ca7ce7c3f4",
+        "a9863d6b40944c9cb65eb52c5922cf33"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_9f3b659e72e19e13"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_6e3a4274a053ab21",
+      "legacy_identity_key": "contract_counterparty:sc:6e3a4274a053ab210df86ab66f0a7e6590953eba",
+      "legacy_partner_id": "contract_counterparty:6e3a4274a053ab21",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "重庆两江新区物业管理有限公司",
+      "normalized_counterparty_name": "重庆两江新区物业管理",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "5830659256074a2bbcec37670ab99632"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_6e3a4274a053ab21"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_469d482e65044505",
+      "legacy_identity_key": "contract_counterparty:sc:469d482e65044505af62b9c0f1fbde8b8bcebfbe",
+      "legacy_partner_id": "contract_counterparty:469d482e65044505",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "重庆巴驿公共交通战场管理有限公司",
+      "normalized_counterparty_name": "重庆巴驿公共交通战场管理",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "112b0910df974102b579d4c3364271f2"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_469d482e65044505"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_0ea7147eee725e72",
+      "legacy_identity_key": "contract_counterparty:sc:0ea7147eee725e72b779589121aa6c4daa481b38",
+      "legacy_partner_id": "contract_counterparty:0ea7147eee725e72",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "重庆市合川区人民政府合阳城街道办事处",
+      "normalized_counterparty_name": "重庆市合川区人民政府合阳城街道办事处",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "30ea518c2a09455cb40f4559c675dbe7"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_0ea7147eee725e72"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_e2059ce351c8ad2d",
+      "legacy_identity_key": "contract_counterparty:sc:e2059ce351c8ad2df9f6e116ff224f1d04b06eed",
+      "legacy_partner_id": "contract_counterparty:e2059ce351c8ad2d",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "重庆市城投路桥管理有限公司",
+      "normalized_counterparty_name": "重庆市城投路桥管理",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "6a90fe28040943c2918c356dc54e0a06"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_e2059ce351c8ad2d"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_e4acfc317a63ef7c",
+      "legacy_identity_key": "contract_counterparty:sc:e4acfc317a63ef7c004a4a1a7cf1ee4f256ddda7",
+      "legacy_partner_id": "contract_counterparty:e4acfc317a63ef7c",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "重庆市永川区水利站",
+      "normalized_counterparty_name": "重庆市永川区水利站",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "f16705adb88745a18e0be88b2b6cc70a"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_e4acfc317a63ef7c"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_1ddbd694ee99081b",
+      "legacy_identity_key": "contract_counterparty:sc:1ddbd694ee99081ba885d11aa92ee24296a07141",
+      "legacy_partner_id": "contract_counterparty:1ddbd694ee99081b",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "重庆市渝北区双龙水库管理所",
+      "normalized_counterparty_name": "重庆市渝北区双龙水库管理所",
+      "source_contract_count": 3,
+      "source_contract_ids": [
+        "7ee2078458a34e9485cb5fc45bf9771b",
+        "923182b1c1cc47518eab51e81f33685a",
+        "a389168735db4ea5a83a5e3b06112c6b"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_1ddbd694ee99081b"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_900a452f0dc2d29a",
+      "legacy_identity_key": "contract_counterparty:sc:900a452f0dc2d29ae0e88bcb04de488a588b4c2c",
+      "legacy_partner_id": "contract_counterparty:900a452f0dc2d29a",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "重庆未至科技有限公司",
+      "normalized_counterparty_name": "重庆未至科技",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "3836f50c190c4c438eabaacbdb60b80b"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_900a452f0dc2d29a"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_c5ea063fbeed1ef8",
+      "legacy_identity_key": "contract_counterparty:sc:c5ea063fbeed1ef8247f079cbfa387b621d26b68",
+      "legacy_partner_id": "contract_counterparty:c5ea063fbeed1ef8",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "重庆机场集团有限公司航空物流园发展分公司",
+      "normalized_counterparty_name": "重庆机场集团有限公司航空物流园发展分",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "e2e72d15a47c4bc28a55655c319cd4c0"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_c5ea063fbeed1ef8"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_0cc8b31a3d0cc5ef",
+      "legacy_identity_key": "contract_counterparty:sc:0cc8b31a3d0cc5eff8935e5a514b0205a5bd24dd",
+      "legacy_partner_id": "contract_counterparty:0cc8b31a3d0cc5ef",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "雅安蜀天开发建设有限责任公司",
+      "normalized_counterparty_name": "雅安蜀天开发建设",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "002cc1eac1a54e889f7c28531ab6553f"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_0cc8b31a3d0cc5ef"
+      },
+      "target_model": "res.partner"
+    },
+    {
+      "external_id": "legacy_contract_counterparty_sc_228961479ad68bf6",
+      "legacy_identity_key": "contract_counterparty:sc:228961479ad68bf607d173ae45a73e94c9f381e6",
+      "legacy_partner_id": "contract_counterparty:228961479ad68bf6",
+      "legacy_partner_source": "contract_counterparty",
+      "name": "青海省玉树公路路政执法支队",
+      "normalized_counterparty_name": "青海省玉树公路路政执法支队",
+      "source_contract_count": 1,
+      "source_contract_ids": [
+        "e46ddf028a9147c3b7991a3068532331"
+      ],
+      "status": "loadable",
+      "target_lookup": {
+        "field": "xml_id",
+        "value": "legacy_contract_counterparty_sc_228961479ad68bf6"
+      },
+      "target_model": "res.partner"
+    }
+  ],
+  "summary": {
+    "candidate_contract_rows": 439,
+    "discarded_contract_rows": 1255,
+    "loadable": 88
+  }
+}
