@@ -1,7 +1,7 @@
 task_id: ITER-2026-04-22-GOV-RESIDUAL-SMART-CORE-ENTRY-TARGET-PA86
 title: Split smart_core entry-target residual slice from codex-next-round
 type: governance-optimization
-status: active
+status: review
 priority: high
 mode: implement
 
@@ -92,6 +92,15 @@ stop_conditions:
 deliverables:
   - bounded smart_core residual child branch
   - commit for platform entry-target slice
+
+validation_result:
+  status: superseded-pass
+  passed:
+    - corresponding split PR 587 is merged
+    - merged PR title is "[split] smart core entry target residual slice"
+    - no new residual extraction is required from the historical 56b7eba line
+  notes:
+    - This cleanup only closes the stale task state; it does not replay the old residual branch.
 
 rollback:
   - git restore --staged .

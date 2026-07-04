@@ -1,5 +1,6 @@
 task_id: ITER-2026-04-22-GOV-RESIDUAL-CONSTRUCTION-CORE-SEMANTIC-CARRIERS-PA89
 title: Split residual construction core semantic carriers slice from 56b7eba
+status: review
 objective: >
   Isolate the domain-layer construction semantic carrier slice from commit
   56b7eba into a bounded child batch for mainline review.
@@ -45,6 +46,14 @@ change_rules:
 acceptance:
   verification_commands:
     - python3 -m py_compile addons/smart_construction_core/core_extension.py addons/smart_construction_core/handlers/my_work_summary.py addons/smart_construction_core/services/capability_registry.py addons/smart_construction_core/services/contract_governance_overrides.py addons/smart_construction_core/services/cost_tracking_service.py addons/smart_construction_core/services/project_context_contract.py addons/smart_construction_core/services/project_dashboard_service.py addons/smart_construction_core/services/project_entry_context_service.py addons/smart_construction_core/services/project_state_explain_service.py
+validation_result:
+  status: superseded-pass
+  passed:
+    - corresponding split PR 590 is merged
+    - merged PR title is "[split] construction semantic carriers residual slice"
+    - no new residual extraction is required from the historical 56b7eba line
+  notes:
+    - This cleanup only adds explicit task status metadata.
 reporting:
   iteration_report_required: true
   include:

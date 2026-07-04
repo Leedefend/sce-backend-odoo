@@ -1,5 +1,6 @@
 task_id: ITER-2026-04-22-GOV-RESIDUAL-SMART-CORE-DELIVERY-ORCHESTRATION-TAIL-PA90
 title: Split residual smart_core delivery orchestration tail from 56b7eba
+status: review
 objective: >
   Isolate the remaining smart_core delivery/operator/orchestration tail from
   commit 56b7eba into a bounded child batch for mainline review.
@@ -40,6 +41,14 @@ change_rules:
 acceptance:
   verification_commands:
     - python3 -m py_compile addons/smart_core/delivery/product_policy_service.py addons/smart_core/delivery/release_operator_read_model_service.py addons/smart_core/delivery/release_operator_surface_service.py addons/smart_core/delivery/scene_service.py addons/smart_core/handlers/execute_button.py addons/smart_core/orchestration/cost_tracking_contract_orchestrator.py addons/smart_core/orchestration/project_dashboard_scene_orchestrator.py addons/smart_core/orchestration/project_plan_bootstrap_scene_orchestrator.py
+validation_result:
+  status: superseded-pass
+  passed:
+    - corresponding split PR 591 is merged
+    - merged PR title is "[split] smart core delivery orchestration tail"
+    - no new residual extraction is required from the historical 56b7eba line
+  notes:
+    - This cleanup only adds explicit task status metadata.
 reporting:
   iteration_report_required: true
   include:

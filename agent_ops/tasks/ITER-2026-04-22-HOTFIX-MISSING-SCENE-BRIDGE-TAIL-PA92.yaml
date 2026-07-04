@@ -1,5 +1,6 @@
 task_id: ITER-2026-04-22-HOTFIX-MISSING-SCENE-BRIDGE-TAIL-PA92
 title: Recover omitted scene bridge tail files after residual split merge
+status: review
 objective: >
   Restore three omitted low-risk bridge/helper files from commit 56b7eba so the
   merged mainline runtime and direct-python test entrypoints become internally
@@ -38,6 +39,13 @@ acceptance:
     - python3 -m py_compile addons/smart_construction_scene/services/project_management_entry_target.py addons/smart_core/core/scene_contract_parser_semantic_bridge.py addons/smart_core/core/scene_contract_semantic_orchestration_bridge.py addons/smart_core/core/released_scene_semantic_surface_bridge.py addons/smart_enterprise_base/core_extension.py
     - python3 addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py
     - python3 addons/smart_core/tests/test_scene_contract_builder_semantics.py
+validation_result:
+  status: superseded-pass
+  passed:
+    - scene bridge helper restore commit 8dd19141e exists in history
+    - no new bridge restore is required in current main
+  notes:
+    - This cleanup only adds explicit task status metadata.
 reporting:
   iteration_report_required: true
   include:

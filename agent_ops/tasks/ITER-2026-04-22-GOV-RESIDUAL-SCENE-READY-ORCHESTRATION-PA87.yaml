@@ -1,5 +1,6 @@
 task_id: ITER-2026-04-22-GOV-RESIDUAL-SCENE-READY-ORCHESTRATION-PA87
 title: Split residual smart_core scene-ready orchestration slice from 56b7eba
+status: review
 objective: >
   Isolate the platform-layer smart_core scene-ready orchestration residual slice
   from commit 56b7eba into a bounded child batch for mainline review.
@@ -48,6 +49,14 @@ change_rules:
 acceptance:
   verification_commands:
     - python3 -m py_compile addons/smart_core/core/page_contracts_builder.py addons/smart_core/core/scene_contract_builder.py addons/smart_core/core/scene_merge_resolver.py addons/smart_core/core/scene_ready_semantic_orchestration_bridge.py addons/smart_core/handlers/system_init.py addons/smart_core/handlers/ui_contract.py addons/smart_core/utils/contract_governance.py
+validation_result:
+  status: superseded-pass
+  passed:
+    - corresponding split PR 588 is merged
+    - merged PR title is "[split] smart core scene-ready orchestration residual slice"
+    - no new residual extraction is required from the historical 56b7eba line
+  notes:
+    - This cleanup only adds explicit task status metadata.
 reporting:
   iteration_report_required: true
   include:
