@@ -1505,6 +1505,14 @@ def smart_core_register(registry):
     """Legacy loader shim for smart_core.core.extension_loader."""
     if not isinstance(registry, dict):
         return
+    try:
+        from odoo.addons.smart_construction_core.handlers.project_dashboard import (
+            ProjectDashboardHandler,
+        )
+
+        registry["project.dashboard"] = ProjectDashboardHandler
+    except Exception as exc:
+        _logger.warning("[smart_core_register] skip project.dashboard explicit registration: %s", exc)
     for item in get_intent_handler_contributions():
         if not isinstance(item, dict):
             continue

@@ -36,8 +36,7 @@ Validate that the workbench has moved from a "capability summary page" to an "ac
 
 ## F. Regression chain
 
-- [ ] `make verify.frontend.build`
-- [ ] `make verify.frontend.typecheck.strict`
-- [ ] `make verify.project.dashboard.contract`
+- [x] `make verify.frontend.build`
+- [x] `make verify.frontend.typecheck.strict`
+- [x] `make verify.project.dashboard.contract`
 - [ ] `make verify.phase_next.evidence.bundle`
-

@@ -44,6 +44,15 @@ class ProjectDashboardService:
         ("risks", "风险提醒", "deferred"),
         ("next_actions", "下一步动作", "deferred"),
     )
+    ZONE_BLOCKS = (
+        ("header", "项目头部信息", "hero", "stack", "block.project.header"),
+        ("metrics", "关键指标", "primary", "grid", "block.project.metrics"),
+        ("progress", "项目进度", "primary", "stack", "block.project.progress"),
+        ("contract", "合同执行", "secondary", "stack", "block.project.contract"),
+        ("cost", "成本控制", "secondary", "stack", "block.project.cost"),
+        ("finance", "资金情况", "secondary", "stack", "block.project.finance"),
+        ("risk", "风险提醒", "supporting", "stack", "block.project.risk"),
+    )
     RUNTIME_BLOCK_MAP = {
         "progress": "block.project.progress",
         "risks": "block.project.risk",
@@ -96,6 +105,41 @@ class ProjectDashboardService:
         summary_rows = self.build_summary_rows(project)
         flow_map = self.build_flow_map(project)
         completion = self.build_completion(project)
+        zones = {
+            "header": {
+                "project": project_data,
+                "state_explain": state_explain,
+                "resolution": diagnostics,
+            },
+            "metrics": {
+                "items": metrics_explain,
+            },
+            "progress": {
+                "summary_rows": summary_rows,
+                "flow_map": flow_map,
+                "completion": completion,
+                "block": self.build_block("progress", project=project, context=request_context),
+            },
+            "contract": {
+                "summary_rows": [
+                    row for row in summary_rows if str(row.get("key") or "") in {"stage_label", "milestone_label"}
+                ],
+            },
+            "cost": {
+                "summary_rows": [row for row in summary_rows if str(row.get("key") or "") == "cost_total"],
+            },
+            "finance": {
+                "summary_rows": [
+                    row
+                    for row in summary_rows
+                    if str(row.get("key") or "") in {"payment_total", "payment_executed_total"}
+                ],
+                "next_actions": self.build_block("next_actions", project=project, context=request_context),
+            },
+            "risk": {
+                "block": self.build_block("risks", project=project, context=request_context),
+            },
+        }
 
         return {
             "scene": {
@@ -106,11 +150,7 @@ class ProjectDashboardService:
                 "key": "project.management.dashboard",
                 "route": "/s/project.management",
             },
-            "route_context": {
-                "primary_protocol": "/s/project.management?project_id=<id>",
-                "query_key": "project_id",
-                "project_id": int(project_data.get("id") or 0),
-            },
+            "route_context": self._route_context(project),
             "project": project_data,
             "source_authority": self.source_authority_contract(),
             "summary_rows": summary_rows,
@@ -118,41 +158,18 @@ class ProjectDashboardService:
             "metrics_explain": metrics_explain,
             "flow_map": flow_map,
             "completion": completion,
-            "zones": {
-                "header": {
-                    "project": project_data,
-                    "state_explain": state_explain,
-                    "resolution": diagnostics,
-                },
-                "metrics": {
-                    "items": metrics_explain,
-                },
-                "progress": {
-                    "summary_rows": summary_rows,
-                    "flow_map": flow_map,
-                    "completion": completion,
-                    "block": self.build_block("progress", project=project, context=request_context),
-                },
-                "contract": {
-                    "summary_rows": [
-                        row for row in summary_rows if str(row.get("key") or "") in {"stage_label", "milestone_label"}
-                    ],
-                },
-                "cost": {
-                    "summary_rows": [row for row in summary_rows if str(row.get("key") or "") == "cost_total"],
-                },
-                "finance": {
-                    "summary_rows": [
-                        row
-                        for row in summary_rows
-                        if str(row.get("key") or "") in {"payment_total", "payment_executed_total"}
-                    ],
-                    "next_actions": self.build_block("next_actions", project=project, context=request_context),
-                },
-                "risk": {
-                    "block": self.build_block("risks", project=project, context=request_context),
-                },
-            },
+            "zones": zones,
+        }
+
+    def _route_context(self, project):
+        project_id = int(getattr(project, "id", 0) or 0)
+        return {
+            "primary_protocol": "/s/project.management?project_id=<id>",
+            "query_key": "project_id",
+            "scene_route": "/s/project.management",
+            "project_route_template": "/s/project.management?project_id={project_id}",
+            "project_route": "/s/project.management?project_id=%s" % project_id,
+            "project_id": project_id,
         }
 
     def build_block(self, block_key, project=None, context=None):
