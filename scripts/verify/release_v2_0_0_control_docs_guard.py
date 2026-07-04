@@ -56,6 +56,8 @@ NOTES_TOKENS = (
     "ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo",
     "Release governance docs: release-control README, release notes, versioning,",
     "release indexes, evidence manifest, checklist, and verify catalog.",
+    "Recorded sample artifact directories may validate evidence schema shape",
+    "are not release signoff evidence.",
     "Production deployment is not part of this release-note batch.",
     "RC tags are immutable once published.",
 )

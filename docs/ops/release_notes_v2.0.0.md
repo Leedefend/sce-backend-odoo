@@ -67,5 +67,7 @@ follow `docs/ops/production_deployment_runbook_v1.md` and
   final tag.
 - Strict live checks may require a live-enabled runner; local restricted evidence
   is not a substitute for production deployment acceptance.
+- Recorded sample artifact directories may validate evidence schema shape, but
+  are not release signoff evidence.
 - RC tags are immutable once published. Any blocker fix requires a new commit and
   a new RC tag.
