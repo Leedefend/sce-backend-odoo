@@ -12,7 +12,7 @@ track to `v2.0.0`.
 
 ## Scope
 
-- Product delivery baseline: 9 modules and 22 scoped scenes.
+- Product delivery baseline: 10 modules and 22 scoped scenes.
 - Startup contract: `login -> system.init -> ui.contract`.
 - Role authority: `role_surface.role_code`.
 - Route authority: backend-provided `default_route`.
