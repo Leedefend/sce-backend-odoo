@@ -4460,6 +4460,11 @@ verify.release.v2_0_0.preflight: guard.prod.forbid \
 verify.release.v2_0_0.product_hardening: guard.prod.forbid verify.product.release.ready
 	@echo "[OK] verify.release.v2_0_0.product_hardening done"
 
+.PHONY: verify.release.v2_0_0.checklist.guard
+verify.release.v2_0_0.checklist.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/release_v2_0_0_checklist_guard.py
+	@python3 scripts/verify/release_v2_0_0_checklist_guard.py
+
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
 

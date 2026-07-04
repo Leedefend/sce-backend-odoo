@@ -47,6 +47,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 | Dev acceptance schema | `make verify.dev.acceptance.release.schema.guard` | PASS | `artifacts/backend/dev_acceptance_release_probe.json` |
 | Prod-sim acceptance | governed prod-sim Makefile flow | PASS | prod-sim acceptance artifact path to be recorded |
 | Release checklist signoff | manual review | PASS | `docs/ops/release_checklist_v2.0.0.md` |
+| Release checklist guard | `make verify.release.v2_0_0.checklist.guard` | PASS | `docs/ops/release_checklist_v2.0.0.md` |
 
 ## Evidence Rules
 

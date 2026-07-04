@@ -193,6 +193,9 @@
 - `make verify.dev.acceptance.release.schema.guard`
   - Verifies the dev acceptance release probe JSON shape.
   - Enforces mode/status metadata, backup/frontend/login block status consistency, and key frontend/login check field types.
+- `make verify.release.v2_0_0.checklist.guard`
+  - Verifies the v2.0.0 release checklist keeps required preflight, product hardening, dev acceptance, prod-sim, production safety, post-release, and stop-condition sections.
+  - Enforces required release tag names and prod/prod-sim evidence separation language.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
