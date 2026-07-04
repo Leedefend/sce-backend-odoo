@@ -12,6 +12,7 @@ RELEASE_NOTES = ROOT / "docs" / "ops" / "release_notes_v2.0.0.md"
 VERSIONING = ROOT / "docs" / "ops" / "versioning.md"
 RELEASE_INDEX_EN = ROOT / "docs" / "ops" / "releases" / "README.md"
 RELEASE_INDEX_ZH = ROOT / "docs" / "ops" / "releases" / "README.zh.md"
+VERIFY_README = ROOT / "docs" / "ops" / "verify" / "README.md"
 
 README_TOKENS = (
     "# v2.0.0 Release Control",
@@ -19,10 +20,11 @@ README_TOKENS = (
     "- Planned gate tag: `gate-release-v2.0`",
     "- Planned RC tag: `v2.0.0-rc1`",
     "- Planned final tag: `v2.0.0`",
-    "- Module: versioning, release index, release checklist, release notes, release evidence manifest",
+    "- Module: versioning, release index, release checklist, release notes, release evidence manifest, verify catalog",
     "- Versioning: `docs/ops/versioning.md`",
     "- Release index: `docs/ops/releases/README.md`",
     "- Release index (zh): `docs/ops/releases/README.zh.md`",
+    "- Verify catalog: `docs/ops/verify/README.md`",
     "make verify.release.v2_0_0.preflight",
     "make verify.release.v2_0_0.product_hardening",
     "make verify.release.v2_0_0.governance.guard",
@@ -36,6 +38,7 @@ README_TOKENS = (
     "restore `docs/ops/versioning.md` edits",
     "restore `docs/ops/releases/README.md` edits",
     "restore `docs/ops/releases/README.zh.md` edits",
+    "restore `docs/ops/verify/README.md` edits",
     "Runtime rollback is outside this governance batch",
 )
 
@@ -95,6 +98,17 @@ RELEASE_INDEX_ZH_TOKENS = (
     "GitHub Release：正式 tag 后必须发布",
 )
 
+VERIFY_README_TOKENS = (
+    "`make verify.release.v2_0_0.checklist.guard`",
+    "controlled-doc review",
+    "versioning/release-index review",
+    "`make verify.release.v2_0_0.evidence_manifest.guard`",
+    "controlled-doc artifact coverage",
+    "`make verify.release.v2_0_0.control_docs.guard`",
+    "release indexes, and verification catalog",
+    "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
+)
+
 FORBIDDEN_TOKENS = (
     "Product delivery baseline: 9 modules",
     "reuse `v1.0.0`",
@@ -124,6 +138,7 @@ def main() -> int:
     _contains_all(VERSIONING, VERSIONING_TOKENS, errors)
     _contains_all(RELEASE_INDEX_EN, RELEASE_INDEX_EN_TOKENS, errors)
     _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
+    _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
     if errors:
         print("[release_v2_0_0_control_docs_guard] FAIL")
         for error in errors:

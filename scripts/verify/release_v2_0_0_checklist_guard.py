@@ -29,6 +29,7 @@ REQUIRED_TOKENS = (
     "Versioning reviewed: `docs/ops/versioning.md`.",
     "Release indexes reviewed: `docs/ops/releases/README.md` and",
     "`docs/ops/releases/README.zh.md`.",
+    "Verify catalog reviewed: `docs/ops/verify/README.md`.",
     "make release.dev.acceptance.publish",
     "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard",
     "artifacts/backend/dev_acceptance_release_probe.json",

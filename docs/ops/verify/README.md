@@ -194,12 +194,12 @@
   - Verifies the dev acceptance release probe JSON shape.
   - Enforces mode/status metadata, backup/frontend/login block status consistency, and key frontend/login check field types.
 - `make verify.release.v2_0_0.checklist.guard`
-  - Verifies the v2.0.0 release checklist keeps required preflight, product hardening, dev acceptance, prod-sim, production safety, post-release, and stop-condition sections.
-  - Enforces required release tag names and prod/prod-sim evidence separation language.
+  - Verifies the v2.0.0 release checklist keeps required preflight, product hardening, dev acceptance, prod-sim, controlled-doc review, production safety, post-release, and stop-condition sections.
+  - Enforces required release tag names, versioning/release-index review, and prod/prod-sim evidence separation language.
 - `make verify.release.v2_0_0.evidence_manifest.guard`
-  - Verifies the v2.0.0 evidence manifest keeps required gate sections, evidence tables, schema guard rows, evidence rules, and explicit prod-sim evidence directory validation.
+  - Verifies the v2.0.0 evidence manifest keeps required gate sections, evidence tables, schema guard rows, controlled-doc artifact coverage, evidence rules, and explicit prod-sim evidence directory validation.
 - `make verify.release.v2_0_0.control_docs.guard`
-  - Verifies the v2.0.0 release-control README, release notes, and versioning guide keep planned tag names, release boundaries, required gates, immutable RC guidance, and the current 10-module product delivery baseline.
+  - Verifies the v2.0.0 release-control README, release notes, versioning guide, release indexes, and verification catalog keep planned tag names, release boundaries, required gates, immutable RC guidance, and the current 10-module product delivery baseline.
 - `make verify.release.v2_0_0.governance.guard`
   - Runs the v2.0.0 release-control docs, evidence manifest, and checklist guards as one governance closure target.
 - `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
