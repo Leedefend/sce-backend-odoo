@@ -124,7 +124,7 @@ VERIFY_README_TOKENS = (
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target dependencies",
-    "Enforces release document list, release-control boundary and gate command blocks, rollback list, release-index planned entries, release-notes tag plan and minimum verification commands, and promotion order shape",
+    "Enforces release document list, release-control boundary and gate command blocks, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -210,10 +210,36 @@ NOTES_MINIMUM_VERIFICATION_COMMANDS = (
     "make verify.backend.contract.closure.mainline",
 )
 
+NOTES_ENV_ACCEPTANCE_COMMANDS = (
+    "ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo \\",
+    "ACCEPTANCE_BACKUP_DIR=<uploaded_backup_dir> \\",
+    "ACCEPTANCE_BASE_URL=http://127.0.0.1:18081 \\",
+    "make release.dev.acceptance.publish",
+)
+
+NOTES_SCOPE_ITEMS = (
+    "Product delivery baseline: 10 modules and 22 scoped scenes.",
+    "Startup contract: `login -> system.init -> ui.contract`.",
+    "Role authority: `role_surface.role_code`.",
+    "Route authority: backend-provided `default_route`.",
+    "Frontend acceptance: served static bundle must match the target DB and app env.",
+    "Dev acceptance path: uploaded backup validation, static rebuild, API lock, and",
+    "Release gate: one-command preflight through `make verify.release.v2_0_0.preflight`.",
+    "Release governance docs: release-control README, release notes, versioning,",
+)
+
 NOTES_TAG_PLAN_ITEMS = (
     "Gate baseline: `gate-release-v2.0`",
     "Release candidates: `v2.0.0-rc1`, then `v2.0.0-rc2` only if blocker fixes are required.",
     "Formal release: `v2.0.0`",
+)
+
+NOTES_KNOWN_LIMITS_ITEMS = (
+    "`v2.0.0` release governance does not authorize production data replacement.",
+    "`make verify.release.v2_0_0.product_hardening` is a formal-release hardening",
+    "Strict live checks may require a live-enabled runner; local restricted evidence",
+    "Recorded sample artifact directories may validate evidence schema shape, but",
+    "RC tags are immutable once published. Any blocker fix requires a new commit and",
 )
 
 RELEASE_INDEX_EN_PLANNED_ITEMS = (
@@ -481,6 +507,38 @@ def _contains_notes_minimum_verification(errors: list[str]) -> None:
         )
 
 
+def _contains_notes_env_acceptance(errors: list[str]) -> None:
+    if not RELEASE_NOTES.is_file():
+        errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
+        return
+    text = RELEASE_NOTES.read_text(encoding="utf-8")
+    actual_commands = _command_block_after_marker(text, "Environment-specific acceptance:")
+    if actual_commands is None:
+        errors.append("release notes missing environment-specific acceptance command block")
+        return
+    if actual_commands != NOTES_ENV_ACCEPTANCE_COMMANDS:
+        errors.append(
+            "release notes environment-specific acceptance mismatch: "
+            f"expected={NOTES_ENV_ACCEPTANCE_COMMANDS!r} actual={actual_commands!r}"
+        )
+
+
+def _contains_notes_scope_items(errors: list[str]) -> None:
+    if not RELEASE_NOTES.is_file():
+        errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
+        return
+    text = RELEASE_NOTES.read_text(encoding="utf-8")
+    actual_items = _list_items_after_heading(text, "## Scope")
+    if actual_items is None:
+        errors.append("release notes missing section: ## Scope")
+        return
+    if actual_items != NOTES_SCOPE_ITEMS:
+        errors.append(
+            "release notes scope items mismatch: "
+            f"expected={NOTES_SCOPE_ITEMS!r} actual={actual_items!r}"
+        )
+
+
 def _contains_notes_tag_plan(errors: list[str]) -> None:
     if not RELEASE_NOTES.is_file():
         errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
@@ -494,6 +552,22 @@ def _contains_notes_tag_plan(errors: list[str]) -> None:
         errors.append(
             "release notes tag plan mismatch: "
             f"expected={NOTES_TAG_PLAN_ITEMS!r} actual={actual_items!r}"
+        )
+
+
+def _contains_notes_known_limits(errors: list[str]) -> None:
+    if not RELEASE_NOTES.is_file():
+        errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
+        return
+    text = RELEASE_NOTES.read_text(encoding="utf-8")
+    actual_items = _list_items_after_heading(text, "## Known Limits")
+    if actual_items is None:
+        errors.append("release notes missing section: ## Known Limits")
+        return
+    if actual_items != NOTES_KNOWN_LIMITS_ITEMS:
+        errors.append(
+            "release notes known limits mismatch: "
+            f"expected={NOTES_KNOWN_LIMITS_ITEMS!r} actual={actual_items!r}"
         )
 
 
@@ -564,7 +638,10 @@ def main() -> int:
     _contains_readme_gate_commands(errors)
     _contains_readme_rollback_items(errors)
     _contains_notes_minimum_verification(errors)
+    _contains_notes_env_acceptance(errors)
+    _contains_notes_scope_items(errors)
     _contains_notes_tag_plan(errors)
+    _contains_notes_known_limits(errors)
     _contains_release_index_planned_items(
         RELEASE_INDEX_EN,
         "## Planned Formal Release",
