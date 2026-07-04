@@ -3,6 +3,7 @@ import inspect
 import re
 
 from odoo.exceptions import UserError
+from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
 from odoo.addons.smart_core.handlers.ui_contract import UiContractHandler
 from odoo.tests import TransactionCase
 from odoo.tests.common import tagged
@@ -2374,12 +2375,141 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             )
 
             self.assertEqual(deduction_menu.get("label"), "扣款登记")
-            self.assertIn("非现金业务管理", deduction_menu.get("visible_menu_path"))
+            self.assertIn("扣款与非现金", deduction_menu.get("visible_menu_path"))
             self.assertEqual(deduction_menu.get("product_domain"), "finance_noncash")
             self.assertEqual(deduction_menu.get("default_business_category_code"), "finance.deduction.bill")
             self.assertEqual(deduction_menu.get("route"), "/a/%s?menu_id=%s" % (deduction_menu.get("action_id"), deduction_menu.get("menu_id")))
-            self.assertIn("费用/保证金现金办理", paid_menu.get("visible_menu_path"))
+            self.assertIn("费用与保证金", paid_menu.get("visible_menu_path"))
             self.assertEqual(paid_menu.get("product_domain"), "finance_cash")
+            payment_request_menu = next(
+                menu
+                for menu in menus
+                if (
+                    menu.get("menu_xmlid")
+                    or menu.get("page_key")
+                    or menu.get("menu_key")
+                ) == "smart_construction_core.menu_sc_user_payment_apply_acceptance"
+            )
+            self.assertEqual(payment_request_menu.get("integration_target"), "payment.request 收付款申请")
+
+    def test_tax_product_entries_are_released_in_tax_center(self):
+        self.env["sc.product.policy"].sync_construction_menu_product_policies()
+        tax_menu_xmlids = {
+            "smart_construction_core.menu_sc_invoice_input",
+            "smart_construction_core.menu_sc_invoice_application_user",
+            "smart_construction_core.menu_sc_invoice_registration_user",
+            "smart_construction_core.menu_sc_invoice_prepaid_tax_user",
+            "smart_construction_core.menu_sc_tax_deduction_registration_user",
+            "smart_construction_core.menu_sc_tax_certificate_registration_user",
+        }
+        for product_key in ("construction.standard", "construction.preview"):
+            policy = self.env["sc.product.policy"].search([("product_key", "=", product_key)], limit=1)
+            tax_group = next(
+                group
+                for group in (policy.menu_groups or [])
+                if isinstance(group, dict) and group.get("group_label") == "税务中心"
+            )
+            tax_menus = {
+                menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"): menu
+                for menu in tax_group.get("menus") or []
+                if isinstance(menu, dict)
+            }
+
+            self.assertTrue(tax_menu_xmlids.issubset(set(tax_menus)))
+            for menu_xmlid in tax_menu_xmlids:
+                self.assertEqual(tax_menus[menu_xmlid].get("product_domain"), "tax")
+                self.assertIn("智慧施工管理平台 / 税务中心 /", tax_menus[menu_xmlid].get("visible_menu_path"))
+                if tax_menus[menu_xmlid].get("fact_model") == "sc.invoice.registration":
+                    self.assertEqual(tax_menus[menu_xmlid].get("integration_target"), "sc.invoice.registration 发票税务")
+            certificate_menu = tax_menus["smart_construction_core.menu_sc_tax_certificate_registration_user"]
+            self.assertEqual(certificate_menu.get("route"), "/a/%s" % certificate_menu.get("action_id"))
+            self.assertFalse(certificate_menu.get("menu_id"))
+
+    def test_tax_certificate_runtime_entry_does_not_rehydrate_hidden_menu_id(self):
+        self.env["sc.product.policy"].sync_construction_menu_product_policies()
+        payload = DeliveryEngine(self.env).build(
+            data={"role_surface": {"role_code": "business_config_admin"}, "scenes": [], "capabilities": []},
+            product_key="construction.standard",
+            edition_key="standard",
+            base_product_key="construction",
+            native_nav=[],
+        )
+
+        certificate_node = None
+
+        def walk(nodes):
+            nonlocal certificate_node
+            for node in nodes or []:
+                if node.get("label") == "外经证登记":
+                    certificate_node = node
+                    return
+                walk(node.get("children") or [])
+
+        walk(payload.get("nav") or [])
+        self.assertTrue(certificate_node)
+        certificate_meta = certificate_node.get("meta") or {}
+        certificate_entry = certificate_meta.get("entry_target") or {}
+        self.assertEqual(certificate_node.get("route"), "/a/762")
+        self.assertEqual(certificate_meta.get("route"), "/a/762")
+        self.assertFalse(certificate_meta.get("menu_id"))
+        self.assertNotIn("menu_id", (certificate_entry.get("compatibility_refs") or {}))
+
+    def test_product_menu_business_domains_are_released_as_formal_capabilities(self):
+        self.env["sc.product.policy"].sync_construction_menu_product_policies()
+        expected_paths = {
+            "smart_construction_core.menu_sc_construction_contract": "智慧施工管理平台 / 合同中心 / 合同管理 / 施工合同",
+            "smart_construction_core.menu_sc_income_contract_settlement": "智慧施工管理平台 / 合同中心 / 结算管理 / 收入合同结算",
+            "smart_construction_core.menu_sc_expense_contract_settlement": "智慧施工管理平台 / 合同中心 / 结算管理 / 支出合同结算",
+            "smart_construction_core.menu_sc_subcontract_request_acceptance": "智慧施工管理平台 / 物资与分包 / 分包管理 / 分包方单",
+            "smart_construction_core.menu_sc_labor_usage_acceptance": "智慧施工管理平台 / 物资与分包 / 劳务管理 / 方单",
+            "smart_construction_core.menu_sc_material_outbound": "智慧施工管理平台 / 物资与分包 / 材料管理 / 出库单",
+            "smart_construction_core.menu_sc_user_income": "智慧施工管理平台 / 财务中心 / 收款管理 / 收入",
+            "smart_construction_core.menu_sc_user_payment_apply_acceptance": "智慧施工管理平台 / 财务中心 / 付款管理 / 支付申请",
+            "smart_construction_core.menu_sc_contractor_project_borrow": "智慧施工管理平台 / 财务中心 / 借还款 / 承包人借项目款",
+            "smart_construction_core.menu_sc_fund_account_between_user": "智慧施工管理平台 / 财务中心 / 账户资金 / 账户间资金往来",
+            "smart_construction_core.menu_sc_legacy_fuel_card_fact_acceptance": "智慧施工管理平台 / 财务中心 / 油卡管理 / 油卡登记",
+            "smart_construction_core.menu_sc_self_funding_advance_refund": "智慧施工管理平台 / 财务中心 / 自筹资金 / 自筹退回",
+        }
+        expected_targets = {
+            "smart_construction_core.menu_sc_construction_contract": "construction.contract 施工合同",
+            "smart_construction_core.menu_sc_income_contract_settlement": "sc.settlement.order 合同结算",
+            "smart_construction_core.menu_sc_labor_usage_acceptance": "sc.labor.usage 劳务用工",
+            "smart_construction_core.menu_sc_material_outbound": "sc.material.outbound 材料出库",
+            "smart_construction_core.menu_sc_contractor_project_borrow": "sc.financing.loan 借款登记",
+            "smart_construction_core.menu_sc_project_repay_company": "sc.expense.claim 还款登记",
+            "smart_construction_core.menu_sc_self_funding_advance_refund": "sc.self.funding.registration 自筹退回",
+        }
+        forbidden_fragments = {
+            "合同办理",
+            "结算办理",
+            "劳务办理",
+            "出库办理",
+            "入库办理",
+            "借款办理",
+            "还款办理",
+            "自筹垫付办理",
+            "自筹退回办理",
+        }
+
+        for product_key in ("construction.standard", "construction.preview"):
+            policy = self.env["sc.product.policy"].search([("product_key", "=", product_key)], limit=1)
+            menus = {
+                menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"): menu
+                for group in (policy.menu_groups or [])
+                if isinstance(group, dict)
+                for menu in (group.get("menus") or [])
+                if isinstance(menu, dict)
+            }
+            for menu_xmlid, visible_path in expected_paths.items():
+                self.assertEqual(menus[menu_xmlid].get("visible_menu_path"), visible_path)
+            for menu_xmlid, target in expected_targets.items():
+                self.assertEqual(menus[menu_xmlid].get("integration_target"), target)
+            for menu in menus.values():
+                text = "%s %s" % (menu.get("visible_menu_path") or "", menu.get("integration_target") or "")
+                for fragment in forbidden_fragments:
+                    self.assertNotIn(fragment, text)
+            self.assertIn("smart_construction_core.menu_sc_salary_registration_scbs55_formal", menus)
+            self.assertNotIn("smart_construction_core.menu_sc_salary_registration", menus)
 
     def test_self_funding_refund_product_entry_uses_formal_self_funding_refund(self):
         self.env["sc.product.policy"].sync_construction_menu_product_policies()
@@ -2403,12 +2533,12 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             )
 
             self.assertEqual(refund_menu.get("action_id"), self.env.ref("smart_construction_core.action_sc_self_funding_registration_refund").id)
-            self.assertEqual(refund_menu.get("label"), "自筹退回办理")
-            self.assertEqual(refund_menu.get("product_domain"), "finance")
-            self.assertEqual(refund_menu.get("visible_menu_path"), "智慧施工管理平台 / 财务中心 / 自筹退回办理")
+            self.assertEqual(refund_menu.get("label"), "自筹退回")
+            self.assertEqual(refund_menu.get("product_domain"), "finance_self_funding")
+            self.assertEqual(refund_menu.get("visible_menu_path"), "智慧施工管理平台 / 财务中心 / 自筹资金 / 自筹退回")
             self.assertEqual(refund_menu.get("default_business_category_code"), "finance.self_funding.refund")
             self.assertEqual(refund_menu.get("allowed_business_category_codes"), ["finance.self_funding.refund"])
-            self.assertEqual(refund_menu.get("integration_target"), "sc.self.funding.registration 自筹退回办理")
+            self.assertEqual(refund_menu.get("integration_target"), "sc.self.funding.registration 自筹退回")
             self.assertEqual(refund_menu.get("integration_model"), "sc.self.funding.registration")
             self.assertEqual(refund_menu.get("integration_action_xmlid"), "smart_construction_core.action_sc_self_funding_registration_refund")
             self.assertNotEqual(refund_menu.get("integration_model"), "sc.expense.claim")

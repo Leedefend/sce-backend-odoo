@@ -151,7 +151,7 @@ def _apply_project_ledger_form_surface_governance(data: dict, contract_mode: str
     fields_map = _as_dict(data.get("fields"))
     _set_field_label(fields_map, "partner_id", "业主单位")
     _set_field_label(fields_map, "owner_id", "业主单位")
-    _set_field_label(fields_map, "manager_id", "项目负责人")
+    _set_field_label(fields_map, "manager_id", "项目经理")
     _set_field_label(fields_map, "responsibility_ids", "项目责任分工")
     _set_field_label(fields_map, "collaborator_ids", "项目协作成员")
     _hide_field(data, fields_map, "user_id")

@@ -126,6 +126,7 @@ function expectedVisiblePolicies(audit, panel) {
     rows.push({
       menuId,
       expectedLabel: normalize(policy.custom_label || policy.menu_label || menu.name),
+      labelExplicit: Boolean(normalize(policy.custom_label)),
       expectedParentId,
       targetParentId: Number(policy.target_parent_menu_id || 0),
       configuredParentId,
@@ -152,14 +153,17 @@ function analyzeAlignment({ audit, panel, navigation }) {
   const missing = expected
     .filter((row) => !actualById.has(row.menuId))
     .map((row) => ({ menu_id: row.menuId, label: row.expectedLabel, policy_id: row.policyId, configured_path: row.menuCompleteName }));
+  const isProtectedRuntimeConfigEntry = (row) => (
+    normalize(row.label) === "菜单配置" && normalize(row.path).endsWith("系统设置 / 菜单配置")
+  );
   const unexpected = actual
-    .filter((row) => !expectedIds.has(row.menuId))
+    .filter((row) => !expectedIds.has(row.menuId) && !isProtectedRuntimeConfigEntry(row))
     .map((row) => ({ menu_id: row.menuId, label: row.label, path: row.path }))
     .slice(0, 50);
   const labelMismatches = expected
     .filter((row) => {
       const actualRow = actualById.get(row.menuId);
-      return actualRow && row.expectedLabel && actualRow.label !== row.expectedLabel;
+      return actualRow && row.labelExplicit && row.expectedLabel && actualRow.label !== row.expectedLabel;
     })
     .map((row) => ({
       menu_id: row.menuId,
@@ -171,8 +175,8 @@ function analyzeAlignment({ audit, panel, navigation }) {
     .filter((row) => {
       const actualRow = actualById.get(row.menuId);
       if (!actualRow) return false;
+      if (!row.targetParentId) return false;
       if (!row.expectedParentId) return false;
-      if (!row.targetParentId && !expectedIds.has(row.expectedParentId)) return false;
       return Number(actualRow.parentMenuId || 0) !== Number(row.expectedParentId);
     })
     .map((row) => ({

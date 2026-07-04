@@ -249,8 +249,15 @@ class MenuService:
                 index["routes"].add(route)
         return index
 
-    def _policy_menu_user_authorized(self, menu: dict, native_index: dict[str, set], *, is_admin: bool = False) -> bool:
-        if is_admin:
+    def _policy_menu_user_authorized(
+        self,
+        menu: dict,
+        native_index: dict[str, set],
+        *,
+        is_admin: bool = False,
+        is_business_config_admin: bool = False,
+    ) -> bool:
+        if is_admin or is_business_config_admin:
             return True
         menu_xmlid = str(menu.get("menu_xmlid") or "").strip()
         if menu_xmlid and menu_xmlid in native_index.get("xmlids", set()):
@@ -684,6 +691,10 @@ class MenuService:
                 "children": [],
                 "meta": group_meta,
             }
+            for field in ("action_id", "action_xmlid", "model", "view_modes", "entry_target", "route"):
+                value = group_meta.get(field)
+                if value not in (None, "", []):
+                    node[field] = value
             if sequence > 0:
                 node["sequence"] = sequence
                 group_meta["sequence"] = sequence
@@ -704,6 +715,10 @@ class MenuService:
         bucketed = {}
         passthrough = []
         for node in next_nodes:
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            if meta.get("explicit_menu_path_group"):
+                passthrough.append(node)
+                continue
             bucket = self._business_intent_bucket(node)
             if not bucket:
                 passthrough.append(node)
@@ -847,14 +862,19 @@ class MenuService:
     def build_nav(self, *, policy: dict, role_surface: dict | None = None, native_nav: list[dict] | None = None) -> list[dict]:
         role_code = str((role_surface or {}).get("role_code") or "").strip().lower()
         is_admin = bool((role_surface or {}).get("is_platform_admin"))
-        is_business_config_admin = bool((role_surface or {}).get("is_business_config_admin"))
+        is_business_config_admin = bool((role_surface or {}).get("is_business_config_admin")) or self._is_business_config_role(role_code)
         policy_has_menu_surface = self._policy_has_menu_surface(policy)
         customer_acceptance_focus = self._policy_is_customer_acceptance_focus(policy)
         native_index = self._native_authorized_menu_index(native_nav or [])
         authorized_policy_rows = [
             menu
             for menu in self._flatten_policy_menus(policy)
-            if self._policy_menu_user_authorized(menu, native_index, is_admin=is_admin)
+            if self._policy_menu_user_authorized(
+                menu,
+                native_index,
+                is_admin=is_admin,
+                is_business_config_admin=is_business_config_admin,
+            )
         ]
         policy_authorized_ids = set()
         policy_authorized_scenes = set()
@@ -896,18 +916,42 @@ class MenuService:
         dedupe_routes = set()
         dedupe_xmlids = set()
 
+        if policy_has_menu_surface:
+            for group in policy.get("menu_groups") or []:
+                if not isinstance(group, dict):
+                    continue
+                group_label = str(group.get("group_label") or group.get("label") or group.get("title") or "").strip()
+                if not group_label:
+                    continue
+                group_key = str(group.get("group_key") or group.get("key") or "").strip()
+                if not group_key:
+                    safe_label = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]+", "_", group_label).strip("_")
+                    group_key = f"construction.{safe_label or 'product_group'}"
+                if group_key in groups_by_key:
+                    continue
+                groups_by_key[group_key] = {
+                    "group_key": group_key,
+                    "group_label": group_label,
+                    "native_preview": False,
+                    "menus": [],
+                }
+                group_order.append(group_key)
+
         for group in grouped_native:
             if not isinstance(group, dict):
                 continue
             group_key = str(group.get("group_key") or "").strip() or "system.ungrouped"
             group_label = str(group.get("group_label") or "").strip() or "系统菜单"
-            groups_by_key[group_key] = {
-                "group_key": group_key,
-                "group_label": group_label,
-                "native_preview": bool(group.get("native_preview")),
-                "menus": [],
-            }
-            group_order.append(group_key)
+            if group_key not in groups_by_key:
+                groups_by_key[group_key] = {
+                    "group_key": group_key,
+                    "group_label": group_label,
+                    "native_preview": bool(group.get("native_preview")),
+                    "menus": [],
+                }
+                group_order.append(group_key)
+            elif group.get("native_preview"):
+                groups_by_key[group_key]["native_preview"] = True
             for menu in group.get("menus") or []:
                 if not isinstance(menu, dict):
                     continue
@@ -984,7 +1028,7 @@ class MenuService:
                 dedupe_routes.add(route)
             if menu_xmlid:
                 dedupe_xmlids.add(menu_xmlid)
-            target_group_key = scene_group_map.get(scene_key) or policy_group_key or group_order[0]
+            target_group_key = policy_group_key or scene_group_map.get(scene_key) or group_order[0]
             if target_group_key not in groups_by_key:
                 groups_by_key[target_group_key] = {
                     "group_key": target_group_key,

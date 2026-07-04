@@ -37,23 +37,24 @@ async function openFormDesigner(page) {
   await page.waitForSelector(".config-card", { timeout: 30000 });
   await page.getByRole("button", { name: "配置表单字段" }).first().click();
   await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
-  let field = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
+  let field = page.locator(`[data-field-name="${FIELD_NAME}"]`).first();
   if (!(await field.count())) {
-    field = page.locator(".field--selectable[data-field-name]").first();
-    await field.waitFor({ timeout: 30000 });
+    field = page.locator("[data-field-name]").first();
+    await field.waitFor({ state: "attached", timeout: 30000 });
     FIELD_NAME = String(await field.getAttribute("data-field-name") || "").trim();
     FIELD_LABEL = await selectedFieldLabel(page) || FIELD_LABEL;
   } else {
-    await field.waitFor({ timeout: 30000 });
+    await field.waitFor({ state: "attached", timeout: 30000 });
   }
 }
 
 async function selectField(page) {
-  const field = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
-  await field.waitFor({ timeout: 30000 });
-  await field.scrollIntoViewIfNeeded();
+  const field = page.locator(`[data-field-name="${FIELD_NAME}"]`).first();
+  await field.waitFor({ state: "attached", timeout: 30000 });
+  await field.scrollIntoViewIfNeeded().catch(() => {});
   await field.evaluate((el) => {
-    el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+    const target = el.closest(".field--selectable") || el;
+    target.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
   });
   await page.locator(".contract-field-selection-card").waitFor({ timeout: 5000 }).catch(async () => {
     await field.click({ force: true });
@@ -62,14 +63,14 @@ async function selectField(page) {
 }
 
 async function selectedFieldGroup(page) {
-  return page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first().evaluate((el) => {
+  return page.locator(`[data-field-name="${FIELD_NAME}"]`).first().evaluate((el) => {
     const section = el.closest('[data-component="FormSection"]');
     return section?.querySelector(".template-form-section-title")?.textContent?.trim() || "";
   });
 }
 
 async function selectedFieldLabel(page) {
-  return page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first().evaluate((el) => {
+  return page.locator(`[data-field-name="${FIELD_NAME}"]`).first().evaluate((el) => {
     const editor = el.querySelector(".field-label-editor");
     if (editor) return editor.value?.trim() || "";
     return el.querySelector(".label")?.textContent?.trim() || el.textContent?.trim() || "";
@@ -113,9 +114,9 @@ async function renameFieldInDesigner(page, targetLabel, stage) {
   }, targetLabel);
   await responsePromise;
   await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
-  await page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first().waitFor({ timeout: 30000 });
+  await page.locator(`[data-field-name="${FIELD_NAME}"]`).first().waitFor({ state: "attached", timeout: 30000 });
   await page.waitForFunction(({ fieldName, label }) => {
-    const fieldNode = document.querySelector(`.field--selectable[data-field-name="${fieldName}"]`);
+    const fieldNode = document.querySelector(`[data-field-name="${fieldName}"]`);
     const editor = fieldNode?.querySelector(".field-label-editor");
     return editor && editor.value?.trim() === label;
   }, { fieldName: FIELD_NAME, label: targetLabel }, { timeout: 30000 });

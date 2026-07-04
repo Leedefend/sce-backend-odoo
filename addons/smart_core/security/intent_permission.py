@@ -121,6 +121,10 @@ def _to_int(value):
         return 0
 
 
+def _is_synthetic_navigation_menu_id(menu_id):
+    return _to_int(menu_id) >= 600_000_000
+
+
 def _action_model_for_type(action_type):
     action_type = str(action_type or "").strip()
     if action_type.startswith("ir.actions."):
@@ -316,11 +320,15 @@ def check_intent_permission(ctx):
             normalized_menu_id = _to_int(menu_id)
             if normalized_menu_id <= 0:
                 raise MissingError(f"菜单 {menu_id} 不存在")
-            menu = env["ir.ui.menu"].browse(normalized_menu_id)
-            if not menu.exists():
-                raise MissingError(f"菜单 {menu_id} 不存在")
-            if not _menu_visible_for_user(menu, env.user):
-                raise AccessError(f"用户无权访问菜单 {menu.name}")
+            skip_menu_acl = _is_synthetic_navigation_menu_id(normalized_menu_id) and (
+                _to_int(action_id) > 0 or bool(model)
+            )
+            if not skip_menu_acl:
+                menu = env["ir.ui.menu"].browse(normalized_menu_id)
+                if not menu.exists():
+                    raise MissingError(f"菜单 {menu_id} 不存在")
+                if not _menu_visible_for_user(menu, env.user):
+                    raise AccessError(f"用户无权访问菜单 {menu.name}")
 
         # ✅ 校验动作权限（如果传入 action_id）
         if action_id:

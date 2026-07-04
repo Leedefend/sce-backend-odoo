@@ -1993,6 +1993,7 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
             env=env,
             params={"model": "res.partner", "action_id": 11, "view_id": 22, "role_key": "sales"},
         )
+        handler._action_tree_view_labels = lambda **kwargs: {"name": "Odoo名称", "email": "Odoo邮箱"}
 
         result = handler.handle()
 

@@ -48,12 +48,422 @@ FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = (
     "smart_construction_core.menu_sc_company_contractor_responsibility_summary",
     "smart_construction_core.menu_sc_company_contractor_responsibility_fact",
 )
+TAX_CENTER_PRODUCT_MENU_XMLIDS = {
+    "smart_construction_core.menu_sc_invoice_input",
+    "smart_construction_core.menu_sc_invoice_application_user",
+    "smart_construction_core.menu_sc_invoice_registration_user",
+    "smart_construction_core.menu_sc_invoice_prepaid_tax_user",
+    "smart_construction_core.menu_sc_tax_deduction_registration_user",
+    "smart_construction_core.menu_sc_tax_certificate_registration_user",
+}
+PRODUCT_MENU_BUSINESS_DOMAIN_OVERRIDES = {
+    "smart_construction_core.menu_sc_general_contract": {
+        "path_domain": "合同管理",
+        "integration_target": "sc.general.contract 一般合同",
+        "product_domain": "contract",
+        "product_domain_label": "合同管理",
+    },
+    "smart_construction_core.menu_sc_income_contract_settlement": {
+        "path_domain": "结算管理",
+        "integration_target": "sc.settlement.order 合同结算",
+        "product_domain": "contract_settlement",
+        "product_domain_label": "结算管理",
+    },
+    "smart_construction_core.menu_sc_expense_contract_settlement": {
+        "path_domain": "结算管理",
+        "integration_target": "sc.settlement.order 合同结算",
+        "product_domain": "contract_settlement",
+        "product_domain_label": "结算管理",
+    },
+    "smart_construction_core.menu_sc_subcontract_request_acceptance": {
+        "path_domain": "分包管理",
+        "integration_target": "sc.subcontract.request 分包管理",
+        "product_domain": "subcontract",
+        "product_domain_label": "分包管理",
+    },
+    "smart_construction_core.menu_sc_labor_usage_acceptance": {
+        "path_domain": "劳务管理",
+        "integration_target": "sc.labor.usage 劳务用工",
+        "product_domain": "labor",
+        "product_domain_label": "劳务管理",
+    },
+    "smart_construction_core.menu_sc_labor_casual_acceptance": {
+        "path_domain": "劳务管理",
+        "integration_target": "sc.labor.usage 劳务用工",
+        "product_domain": "labor",
+        "product_domain_label": "劳务管理",
+    },
+    "smart_construction_core.menu_sc_equipment_shift_acceptance": {
+        "path_domain": "机械管理",
+        "integration_target": "sc.equipment.usage 机械台班",
+        "product_domain": "equipment",
+        "product_domain_label": "机械管理",
+    },
+    "smart_construction_core.menu_sc_material_quote_acceptance": {
+        "path_domain": "询价报价",
+        "integration_target": "sc.material.rfq 询价报价",
+        "product_domain": "material",
+        "product_domain_label": "询价报价",
+    },
+    "smart_construction_core.menu_sc_material_inbound": {
+        "path_domain": "材料管理",
+        "integration_target": "sc.material.inbound 材料入库",
+        "product_domain": "material",
+        "product_domain_label": "材料管理",
+    },
+    "smart_construction_core.menu_sc_material_outbound": {
+        "path_domain": "材料管理",
+        "integration_target": "sc.material.outbound 材料出库",
+        "product_domain": "material",
+        "product_domain_label": "材料管理",
+    },
+    "smart_construction_core.menu_sc_user_income": {
+        "path_domain": "收款管理",
+        "integration_target": "sc.receipt.income 收款登记",
+        "product_domain": "finance_receipt",
+        "product_domain_label": "收款管理",
+    },
+    "smart_construction_core.menu_sc_engineering_progress_income": {
+        "path_domain": "收款管理",
+        "integration_target": "sc.receipt.income 收款登记",
+        "product_domain": "finance_receipt",
+        "product_domain_label": "收款管理",
+    },
+    "smart_construction_core.menu_sc_arrival_confirmation": {
+        "path_domain": "收款管理",
+        "product_domain": "finance_receipt",
+        "product_domain_label": "收款管理",
+    },
+    "smart_construction_core.menu_sc_user_payment_apply_acceptance": {
+        "path_domain": "付款管理",
+        "integration_target": "payment.request 收付款申请",
+        "product_domain": "finance_payment",
+        "product_domain_label": "付款管理",
+    },
+    "smart_construction_core.menu_sc_company_finance_expense": {
+        "path_domain": "付款管理",
+        "integration_target": "sc.payment.execution 付款执行",
+        "product_domain": "finance_payment",
+        "product_domain_label": "付款管理",
+    },
+    "smart_construction_core.menu_sc_partner_payment": {
+        "path_domain": "付款管理",
+        "integration_target": "sc.payment.execution 付款执行",
+        "product_domain": "finance_payment",
+        "product_domain_label": "付款管理",
+    },
+    "smart_construction_core.menu_sc_contractor_project_borrow": {
+        "path_domain": "借还款",
+        "integration_target": "sc.financing.loan 借款登记",
+        "product_domain": "finance_loan",
+        "product_domain_label": "借还款",
+    },
+    "smart_construction_core.menu_sc_project_borrow_company": {
+        "path_domain": "借还款",
+        "integration_target": "sc.financing.loan 借款登记",
+        "product_domain": "finance_loan",
+        "product_domain_label": "借还款",
+    },
+    "smart_construction_core.menu_sc_contractor_project_repay": {
+        "path_domain": "借还款",
+        "integration_target": "sc.expense.claim 还款登记",
+        "product_domain": "finance_loan",
+        "product_domain_label": "借还款",
+    },
+    "smart_construction_core.menu_sc_project_repay_company": {
+        "path_domain": "借还款",
+        "integration_target": "sc.expense.claim 还款登记",
+        "product_domain": "finance_loan",
+        "product_domain_label": "借还款",
+    },
+    "smart_construction_core.menu_sc_fund_daily_user_report": {
+        "path_domain": "账户资金",
+        "product_domain": "finance_account",
+        "product_domain_label": "账户资金",
+    },
+    "smart_construction_core.menu_sc_fund_account_between_user": {
+        "path_domain": "账户资金",
+        "integration_target": "sc.fund.account.operation 账户资金操作",
+        "product_domain": "finance_account",
+        "product_domain_label": "账户资金",
+    },
+    "smart_construction_core.menu_sc_legacy_fuel_card_fact_acceptance": {
+        "path_domain": "油卡管理",
+        "product_domain": "finance_fuel_card",
+        "product_domain_label": "油卡管理",
+    },
+    "smart_construction_core.menu_sc_legacy_fuel_card_recharge_fact_acceptance": {
+        "path_domain": "油卡管理",
+        "product_domain": "finance_fuel_card",
+        "product_domain_label": "油卡管理",
+    },
+    "smart_construction_core.menu_sc_self_funding_advance_income": {
+        "path_domain": "自筹资金",
+        "integration_target": "sc.self.funding.registration 自筹垫付",
+        "product_domain": "finance_self_funding",
+        "product_domain_label": "自筹资金",
+    },
+    "smart_construction_core.menu_sc_self_funding_advance_refund": {
+        "label": "自筹退回",
+        "path_domain": "自筹资金",
+        "integration_target": "sc.self.funding.registration 自筹退回",
+        "product_domain": "finance_self_funding",
+        "product_domain_label": "自筹资金",
+    },
+}
+NATIVE_MODELED_PRODUCT_CAPABILITY_MENUS = {
+    "smart_construction_core.menu_sc_income_contract_variation": {
+        "group_label": "合同中心",
+        "domain": "变更签证",
+        "target": "sc.settlement.adjustment 合同签证",
+        "product_domain": "contract_variation",
+        "product_domain_label": "变更签证",
+    },
+    "smart_construction_core.menu_sc_expense_contract_variation": {
+        "group_label": "合同中心",
+        "domain": "变更签证",
+        "target": "sc.settlement.adjustment 合同签证",
+        "product_domain": "contract_variation",
+        "product_domain_label": "变更签证",
+    },
+    "smart_construction_core.menu_sc_plan": {
+        "group_label": "施工管理",
+        "domain": "计划进度",
+        "target": "sc.plan 计划管理",
+        "product_domain": "construction_schedule",
+        "product_domain_label": "计划进度",
+    },
+    "smart_construction_core.menu_sc_plan_report": {
+        "group_label": "施工管理",
+        "domain": "计划进度",
+        "target": "sc.plan.report 计划汇报",
+        "product_domain": "construction_schedule",
+        "product_domain_label": "计划进度",
+    },
+    "smart_construction_core.menu_sc_purchase_order": {
+        "group_label": "物资与分包",
+        "domain": "材料管理",
+        "target": "purchase.order 采购订单",
+        "product_domain": "material",
+        "product_domain_label": "材料管理",
+    },
+    "smart_construction_core.menu_sc_labor_plan": {
+        "group_label": "物资与分包",
+        "domain": "劳务管理",
+        "target": "sc.labor.plan 劳务计划",
+        "product_domain": "labor",
+        "product_domain_label": "劳务管理",
+    },
+    "smart_construction_core.menu_sc_labor_request": {
+        "group_label": "物资与分包",
+        "domain": "劳务管理",
+        "target": "sc.labor.request 劳务申请",
+        "product_domain": "labor",
+        "product_domain_label": "劳务管理",
+    },
+    "smart_construction_core.menu_sc_attendance_checkin": {
+        "group_label": "物资与分包",
+        "domain": "劳务管理",
+        "target": "sc.attendance.checkin 考勤记录",
+        "product_domain": "labor",
+        "product_domain_label": "劳务管理",
+    },
+    "smart_construction_core.menu_sc_labor_settlement": {
+        "group_label": "物资与分包",
+        "domain": "劳务管理",
+        "target": "sc.labor.settlement 劳务结算",
+        "product_domain": "labor",
+        "product_domain_label": "劳务管理",
+    },
+    "smart_construction_core.menu_sc_equipment_plan": {
+        "group_label": "物资与分包",
+        "domain": "机械管理",
+        "target": "sc.equipment.plan 设备计划",
+        "product_domain": "equipment",
+        "product_domain_label": "机械管理",
+    },
+    "smart_construction_core.menu_sc_equipment_request": {
+        "group_label": "物资与分包",
+        "domain": "机械管理",
+        "target": "sc.equipment.request 设备申请",
+        "product_domain": "equipment",
+        "product_domain_label": "机械管理",
+    },
+    "smart_construction_core.menu_sc_equipment_usage": {
+        "group_label": "物资与分包",
+        "domain": "机械管理",
+        "target": "sc.equipment.usage 设备使用登记",
+        "product_domain": "equipment",
+        "product_domain_label": "机械管理",
+    },
+    "smart_construction_core.menu_sc_equipment_settlement": {
+        "group_label": "物资与分包",
+        "domain": "机械管理",
+        "target": "sc.equipment.settlement 设备结算",
+        "product_domain": "equipment",
+        "product_domain_label": "机械管理",
+    },
+    "smart_construction_core.menu_sc_subcontract_plan": {
+        "group_label": "物资与分包",
+        "domain": "分包管理",
+        "target": "sc.subcontract.plan 分包计划",
+        "product_domain": "subcontract",
+        "product_domain_label": "分包管理",
+    },
+    "smart_construction_core.menu_sc_subcontract_request": {
+        "group_label": "物资与分包",
+        "domain": "分包管理",
+        "target": "sc.subcontract.request 分包申请",
+        "product_domain": "subcontract",
+        "product_domain_label": "分包管理",
+    },
+    "smart_construction_core.menu_sc_subcontract_register": {
+        "group_label": "物资与分包",
+        "domain": "分包管理",
+        "target": "sc.subcontract.register 分包登记",
+        "product_domain": "subcontract",
+        "product_domain_label": "分包管理",
+    },
+    "smart_construction_core.menu_sc_subcontract_settlement": {
+        "group_label": "物资与分包",
+        "domain": "分包管理",
+        "target": "sc.subcontract.settlement 分包结算",
+        "product_domain": "subcontract",
+        "product_domain_label": "分包管理",
+    },
+    "smart_construction_core.menu_payment_request_receive": {
+        "group_label": "财务中心",
+        "domain": "收款管理",
+        "target": "payment.request 收款申请",
+        "product_domain": "finance_receipt",
+        "product_domain_label": "收款管理",
+    },
+    "smart_construction_core.menu_sc_receipt_income": {
+        "group_label": "财务中心",
+        "domain": "收款管理",
+        "target": "sc.receipt.income 收款登记",
+        "product_domain": "finance_receipt",
+        "product_domain_label": "收款管理",
+    },
+    "smart_construction_core.menu_sc_payment_execution": {
+        "group_label": "财务中心",
+        "domain": "付款管理",
+        "target": "sc.payment.execution 实付登记",
+        "product_domain": "finance_payment",
+        "product_domain_label": "付款管理",
+    },
+    "smart_construction_core.menu_sc_settlement_order": {
+        "group_label": "财务中心",
+        "domain": "结算管理",
+        "target": "sc.settlement.order 结算单",
+        "product_domain": "finance_settlement",
+        "product_domain_label": "结算管理",
+    },
+    "smart_construction_core.menu_sc_settlement_adjustment": {
+        "group_label": "财务中心",
+        "domain": "结算管理",
+        "target": "sc.settlement.adjustment 结算调整",
+        "product_domain": "finance_settlement",
+        "product_domain_label": "结算管理",
+    },
+    "smart_construction_core.menu_sc_borrowing_request": {
+        "group_label": "财务中心",
+        "domain": "借还款",
+        "target": "sc.financing.loan 借款申请",
+        "product_domain": "finance_loan",
+        "product_domain_label": "借还款",
+    },
+    "smart_construction_core.menu_sc_repayment_registration": {
+        "group_label": "财务中心",
+        "domain": "借还款",
+        "target": "sc.expense.claim 还款登记",
+        "product_domain": "finance_loan",
+        "product_domain_label": "借还款",
+    },
+    "smart_construction_core.menu_sc_treasury_reconciliation": {
+        "group_label": "财务中心",
+        "domain": "账户资金",
+        "target": "sc.treasury.reconciliation 资金对账",
+        "product_domain": "finance_account",
+        "product_domain_label": "账户资金",
+    },
+    "smart_construction_core.menu_sc_expense_claim": {
+        "group_label": "财务中心",
+        "domain": "费用与保证金",
+        "target": "sc.expense.claim 费用报销单",
+        "product_domain": "finance_cash",
+        "product_domain_label": "费用与保证金",
+    },
+    "smart_construction_core.menu_sc_bid_deposit_pay": {
+        "group_label": "财务中心",
+        "domain": "费用与保证金",
+        "target": "sc.expense.claim 投标保证金支付",
+        "product_domain": "finance_cash",
+        "product_domain_label": "费用与保证金",
+    },
+    "smart_construction_core.menu_sc_bid_deposit_return": {
+        "group_label": "财务中心",
+        "domain": "费用与保证金",
+        "target": "sc.expense.claim 投标保证金退回",
+        "product_domain": "finance_cash",
+        "product_domain_label": "费用与保证金",
+    },
+    "smart_construction_core.menu_sc_contract_deposit_register": {
+        "group_label": "财务中心",
+        "domain": "费用与保证金",
+        "target": "sc.expense.claim 合同保证金支付",
+        "product_domain": "finance_cash",
+        "product_domain_label": "费用与保证金",
+    },
+    "smart_construction_core.menu_sc_contract_deposit_return": {
+        "group_label": "财务中心",
+        "domain": "费用与保证金",
+        "target": "sc.expense.claim 合同保证金退回",
+        "product_domain": "finance_cash",
+        "product_domain_label": "费用与保证金",
+    },
+    "smart_construction_core.menu_sc_payment_deposit_refund": {
+        "group_label": "财务中心",
+        "domain": "费用与保证金",
+        "target": "sc.expense.claim 付款保证金退回",
+        "product_domain": "finance_cash",
+        "product_domain_label": "费用与保证金",
+    },
+    "smart_construction_core.menu_sc_seal_use_request": {
+        "group_label": "人事行政",
+        "domain": "行政审批",
+        "target": "sc.office.admin.document 印章使用审批",
+        "product_domain": "hr_admin",
+        "product_domain_label": "行政审批",
+    },
+    "smart_construction_core.menu_sc_bonus": {
+        "group_label": "人事行政",
+        "domain": "薪资福利",
+        "target": "sc.hr.payroll.document 奖金",
+        "product_domain": "hr_admin",
+        "product_domain_label": "薪资福利",
+    },
+    "smart_construction_core.menu_sc_certificate_registration": {
+        "group_label": "资料证照",
+        "domain": "证照管理",
+        "target": "sc.document.admin.document 证照登记",
+        "product_domain": "document",
+        "product_domain_label": "证照管理",
+    },
+    "smart_construction_core.menu_sc_document_borrow": {
+        "group_label": "资料证照",
+        "domain": "资料借阅",
+        "target": "sc.document.admin.document 借阅申请",
+        "product_domain": "document",
+        "product_domain_label": "资料借阅",
+    },
+}
 FINANCE_CASH_NONCASH_PRODUCT_MENU_OVERRIDES = {
     "smart_construction_core.menu_sc_deduction_bill": {
         "label": "扣款登记",
-        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 非现金业务管理 / 扣款登记",
+        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 扣款与非现金 / 扣款登记",
         "product_domain": "finance_noncash",
-        "product_domain_label": "非现金业务管理",
+        "product_domain_label": "扣款与非现金",
         "entry_intent": "handling",
         "entry_intent_label": "办理",
         "fact_model": "sc.expense.claim",
@@ -68,19 +478,19 @@ FINANCE_CASH_NONCASH_PRODUCT_MENU_OVERRIDES = {
         "business_entry_contract_version": "business_entry_disposition.v1",
     },
     "smart_construction_core.menu_sc_reimbursement_request": {
-        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 报销申请",
+        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用与保证金 / 报销申请",
         "product_domain": "finance_cash",
-        "product_domain_label": "费用/保证金现金办理",
+        "product_domain_label": "费用与保证金",
     },
     "smart_construction_core.menu_sc_project_expense_claim": {
-        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 项目费用报销单",
+        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用与保证金 / 项目费用报销单",
         "product_domain": "finance_cash",
-        "product_domain_label": "费用/保证金现金办理",
+        "product_domain_label": "费用与保证金",
     },
     "smart_construction_core.menu_sc_deduction_paid": {
-        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 扣款实缴登记",
+        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用与保证金 / 扣款实缴登记",
         "product_domain": "finance_cash",
-        "product_domain_label": "费用/保证金现金办理",
+        "product_domain_label": "费用与保证金",
         "disposition_policy": "keep_list_form",
         "integration_target": "sc.expense.claim 扣款实缴登记",
         "allowed_business_category_codes": ["finance.deduction.paid"],
@@ -88,9 +498,9 @@ FINANCE_CASH_NONCASH_PRODUCT_MENU_OVERRIDES = {
         "productization_source": "finance_cash_noncash_menu_split",
     },
     "smart_construction_core.menu_sc_deduction_paid_refund": {
-        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / 扣款实缴退回",
+        "visible_menu_path": "智慧施工管理平台 / 财务中心 / 费用与保证金 / 扣款实缴退回",
         "product_domain": "finance_cash",
-        "product_domain_label": "费用/保证金现金办理",
+        "product_domain_label": "费用与保证金",
         "disposition_policy": "keep_list_form",
         "integration_target": "sc.expense.claim 扣款实缴退回",
         "allowed_business_category_codes": ["finance.deduction.refund"],
@@ -111,6 +521,9 @@ FINANCE_DEDUCTION_CATEGORY_CODES = {
     "finance.deduction.bill",
     "finance.deduction.paid",
     "finance.deduction.refund",
+}
+FINANCE_DEPRECATED_CASH_CATEGORY_CODES = {
+    "finance.deposit.self_funding.return",
 }
 USER_ACCEPTANCE_MENU_KEY_TOKENS = (
     "_acceptance",
@@ -154,6 +567,7 @@ USER_CONFIRMED_FORMAL_DEPRECATED_MENU_XMLIDS = {
     "smart_construction_core.menu_sc_self_funding_deposit_refund",
     "smart_construction_core.menu_scbs55_user_acceptance_180_自筹保证金",
     "smart_construction_core.menu_scbs55_user_acceptance_190_自筹保证金退回",
+    "smart_construction_core.menu_sc_salary_registration",
 }
 MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL = {
     "construction.contract": "smart_construction_core.action_construction_contract_handling",
@@ -530,15 +944,20 @@ class ScProductPolicy(models.Model):
         view_modes = []
         if action and _text(getattr(action, "view_mode", "")):
             view_modes = [_text(item) for item in action.view_mode.split(",") if _text(item)]
+        menu_is_active = bool(getattr(menu_record, "active", False))
+        runtime_menu_id = int(menu_record.id) if menu_is_active else 0
+        runtime_route = ""
+        if action_id:
+            runtime_route = "/a/%s?menu_id=%s" % (action_id, runtime_menu_id) if runtime_menu_id else "/a/%s" % action_id
         row.update(
             {
-                "menu_id": int(menu_record.id),
+                "menu_id": runtime_menu_id,
                 "menu_xmlid": menu_xmlid,
                 "menu_key": menu_xmlid,
                 "page_key": menu_xmlid,
                 "action_id": action_id or int(row.get("action_id") or 0),
                 "res_model": res_model,
-                "route": "/a/%s?menu_id=%s" % (action_id, menu_record.id) if action_id else _text(row.get("route")),
+                "route": runtime_route or _text(row.get("route")),
                 "view_modes": view_modes or row.get("view_modes") or [],
                 "enabled": True,
                 "release_state": "released",
@@ -668,7 +1087,7 @@ class ScProductPolicy(models.Model):
             "product_key": "财务中心",
             "capability_key": "construction.menu.%s" % menu_xmlid.replace(".", "_"),
             "target_scene_key": "",
-            "visible_menu_path": "智慧施工管理平台 / 财务中心 / 资金往来分析 / %s" % _text(menu_record.name),
+            "visible_menu_path": "智慧施工管理平台 / 财务中心 / 资金分析 / %s" % _text(menu_record.name),
             "control_granularity": "finance_interfund_analysis_page",
             "enabled": True,
             "release_state": "released",
@@ -689,7 +1108,7 @@ class ScProductPolicy(models.Model):
             "entry_intent_label": "分析",
             "fact_model": res_model,
             "disposition_policy": "keep_analysis",
-            "integration_target": "资金往来分析",
+            "integration_target": "资金分析",
             "default_business_category_code": "",
             "required_relationships": ["project_id", "partner_id", "fund_account_id"],
             "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -730,6 +1149,247 @@ class ScProductPolicy(models.Model):
         return out
 
     @api.model
+    def _ensure_product_menu_group(self, menu_groups, group_label):
+        for group in menu_groups:
+            if _text(group.get("group_label") or group.get("label")) == group_label:
+                return group
+        group = {
+            "group_key": "construction.%s" % group_label,
+            "group_label": group_label,
+            "category": "user_visible_menu",
+            "menus": [],
+        }
+        menu_groups.append(group)
+        return group
+
+    @api.model
+    def _hydrate_native_modeled_product_capability_menu(self, menu_xmlid, spec):
+        menu_record = self.env.ref(menu_xmlid, raise_if_not_found=False)
+        if not menu_record or not menu_record.action:
+            return None
+        row = self._hydrate_user_confirmed_formal_menu(
+            {
+                "menu_key": menu_xmlid,
+                "menu_xmlid": menu_xmlid,
+                "page_key": menu_xmlid,
+                "label": _text(spec.get("label")) or _text(menu_record.name),
+                "page_label": _text(spec.get("label")) or _text(menu_record.name),
+                "product_key": _text(spec.get("group_label")),
+                "capability_key": "construction.menu.%s" % menu_xmlid.replace(".", "_"),
+                "target_scene_key": "",
+                "control_granularity": "user_visible_menu_page",
+                "control_object": "正式产品办理能力入口",
+                "source_kind": "native_modeled_product_capability",
+                "res_model": _text(getattr(menu_record.action, "res_model", "")),
+            }
+        )
+        label = _text(spec.get("label")) or _text(row.get("label") or row.get("page_label"))
+        group_label = _text(spec.get("group_label"))
+        domain = _text(spec.get("domain"))
+        path_parts = ["智慧施工管理平台", group_label]
+        if domain:
+            path_parts.append(domain)
+        path_parts.append(label)
+        allowed_codes = spec.get("allowed_business_category_codes")
+        default_code = _text(spec.get("default_business_category_code"))
+        row.update(
+            {
+                "label": label,
+                "page_label": label,
+                "product_key": group_label,
+                "visible_menu_path": " / ".join(path_parts),
+                "product_domain": _text(spec.get("product_domain")),
+                "product_domain_label": _text(spec.get("product_domain_label")) or domain,
+                "entry_intent": "handling",
+                "entry_intent_label": "办理",
+                "fact_model": _text(getattr(menu_record.action, "res_model", "")),
+                "disposition_policy": "keep_list_form",
+                "integration_target": _text(spec.get("target")) or "%s %s" % (_text(getattr(menu_record.action, "res_model", "")), label),
+                "default_business_category_code": default_code,
+                "allowed_business_category_codes": allowed_codes if isinstance(allowed_codes, list) else ([default_code] if default_code else []),
+                "required_relationships": spec.get("required_relationships") if isinstance(spec.get("required_relationships"), list) else [],
+                "entry_target_policy": "keep_list_form",
+                "locked_data_policy": "read_only_source_facts_no_rewrite",
+                "productization_source": "native_modeled_product_capability_scope",
+                "policy_note": "native_modeled_capability_added_to_formal_product_scope",
+                "business_entry_contract_version": "business_entry_disposition.v1",
+            }
+        )
+        return row
+
+    @api.model
+    def _append_native_modeled_product_capability_menus(self, menu_groups):
+        out = [dict(group) for group in (menu_groups or []) if isinstance(group, dict)]
+        existing = {
+            _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"))
+            for group in out
+            if isinstance(group, dict)
+            for menu in (group.get("menus") or [])
+            if isinstance(menu, dict)
+        }
+        for menu_xmlid, spec in NATIVE_MODELED_PRODUCT_CAPABILITY_MENUS.items():
+            if menu_xmlid in existing:
+                continue
+            group_label = _text(spec.get("group_label"))
+            if not group_label:
+                continue
+            row = self._hydrate_native_modeled_product_capability_menu(menu_xmlid, spec)
+            if not row:
+                continue
+            group = self._ensure_product_menu_group(out, group_label)
+            group.setdefault("menus", []).append(row)
+            existing.add(menu_xmlid)
+        return out
+
+    @api.model
+    def _is_tax_center_menu(self, menu):
+        if not isinstance(menu, dict):
+            return False
+        menu_xmlid = _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"))
+        if menu_xmlid in TAX_CENTER_PRODUCT_MENU_XMLIDS:
+            return True
+        text = " ".join(
+            _text(value)
+            for value in (
+                menu.get("label"),
+                menu.get("page_label"),
+                menu.get("visible_menu_path"),
+                menu.get("product_domain"),
+                menu.get("product_domain_label"),
+                menu.get("default_business_category_code"),
+                menu.get("integration_target"),
+            )
+            if _text(value)
+        )
+        return any(token in text for token in ("发票", "开票", "税款", "税额", "抵扣", "外经证", "税务"))
+
+    @api.model
+    def _move_tax_product_menus_to_tax_center(self, menu_groups):
+        out = []
+        tax_menus = []
+        for group in menu_groups or []:
+            if not isinstance(group, dict):
+                continue
+            group_label = _text(group.get("group_label") or group.get("label"))
+            next_group = dict(group)
+            menus = []
+            for menu in group.get("menus") or []:
+                if not isinstance(menu, dict):
+                    continue
+                next_menu = dict(menu)
+                if group_label != "税务中心" and self._is_tax_center_menu(next_menu):
+                    label = _text(next_menu.get("label") or next_menu.get("page_label"))
+                    if _text(next_menu.get("integration_model") or next_menu.get("fact_model") or next_menu.get("res_model")) == "sc.invoice.registration":
+                        next_menu["integration_target"] = "sc.invoice.registration 发票税务"
+                    elif _text(next_menu.get("integration_model") or next_menu.get("fact_model") or next_menu.get("res_model")) == "sc.tax.deduction.registration":
+                        next_menu["integration_target"] = "sc.tax.deduction.registration 抵扣登记"
+                    next_menu.update(
+                        {
+                            "product_key": "税务中心",
+                            "product_domain": "tax",
+                            "product_domain_label": "发票税务",
+                            "visible_menu_path": "智慧施工管理平台 / 税务中心 / %s" % (label or "税务业务"),
+                            "policy_note": "tax_product_menu_split_from_finance_center",
+                        }
+                    )
+                    tax_menus.append(next_menu)
+                    continue
+                menus.append(next_menu)
+            next_group["menus"] = menus
+            if menus or group_label != "财务中心":
+                out.append(next_group)
+
+        tax_group = None
+        for group in out:
+            if _text(group.get("group_label") or group.get("label")) == "税务中心":
+                tax_group = group
+                break
+        if tax_group is None and tax_menus:
+            tax_group = {
+                "group_key": "construction.税务中心",
+                "group_label": "税务中心",
+                "category": "user_visible_menu",
+                "menus": [],
+            }
+            out.append(tax_group)
+        if tax_group is not None:
+            existing = {
+                _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"))
+                for menu in tax_group.get("menus") or []
+                if isinstance(menu, dict)
+            }
+            merged = [dict(menu) for menu in (tax_group.get("menus") or []) if isinstance(menu, dict)]
+            for menu in tax_menus:
+                key = _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"))
+                if key and key in existing:
+                    continue
+                merged.append(menu)
+                if key:
+                    existing.add(key)
+            tax_group["menus"] = merged
+        return out
+
+    @api.model
+    def _normalize_product_menu_business_domains(self, menu_groups):
+        out = []
+        for group in menu_groups or []:
+            if not isinstance(group, dict):
+                continue
+            group_label = _text(group.get("group_label") or group.get("label"))
+            next_group = dict(group)
+            menus = []
+            for menu in group.get("menus") or []:
+                if not isinstance(menu, dict):
+                    continue
+                next_menu = dict(menu)
+                menu_xmlid = _text(next_menu.get("menu_xmlid") or next_menu.get("page_key") or next_menu.get("menu_key"))
+                label = _text(next_menu.get("label") or next_menu.get("page_label"))
+
+                if group_label == "合同中心" and label == "合同办理":
+                    label = "施工合同"
+                    next_menu.update(
+                        {
+                            "label": label,
+                            "page_label": label,
+                            "visible_menu_path": "智慧施工管理平台 / 合同中心 / 合同管理 / 施工合同",
+                            "integration_target": "construction.contract 施工合同",
+                            "product_domain": "contract",
+                            "product_domain_label": "合同管理",
+                            "policy_note": "product_menu_business_domain_normalized",
+                        }
+                    )
+                    self._annotate_merge_by_category_integration_target(next_menu)
+
+                override = PRODUCT_MENU_BUSINESS_DOMAIN_OVERRIDES.get(menu_xmlid)
+                if override:
+                    override_label = _text(override.get("label"))
+                    if override_label:
+                        next_menu["label"] = override_label
+                        next_menu["page_label"] = override_label
+                        label = override_label
+                    path_domain = _text(override.get("path_domain"))
+                    if path_domain and group_label:
+                        next_menu["visible_menu_path"] = "智慧施工管理平台 / %s / %s / %s" % (
+                            group_label,
+                            path_domain,
+                            _text(next_menu.get("label") or next_menu.get("page_label")) or path_domain,
+                        )
+                    for field in ("integration_target", "product_domain", "product_domain_label"):
+                        if _text(override.get(field)):
+                            next_menu[field] = _text(override.get(field))
+                    next_menu["policy_note"] = "product_menu_business_domain_normalized"
+                    if menu_xmlid != SELF_FUNDING_REFUND_MENU_XMLID:
+                        self._annotate_merge_by_category_integration_target(next_menu)
+
+                if group_label == "合同中心" and _text(next_menu.get("integration_target")) == "sc.settlement.order 结算办理":
+                    next_menu["integration_target"] = "sc.settlement.order 合同结算"
+                    self._annotate_merge_by_category_integration_target(next_menu)
+                menus.append(next_menu)
+            next_group["menus"] = menus
+            out.append(next_group)
+        return out
+
+    @api.model
     def _apply_finance_cash_noncash_product_menu_overrides(self, menu_groups):
         out = []
         for group in menu_groups or []:
@@ -753,6 +1413,8 @@ class ScProductPolicy(models.Model):
                     if label:
                         next_menu["page_label"] = label
                     next_menu["policy_note"] = "finance_cash_noncash_menu_split_released"
+                if _text(next_menu.get("integration_target")) == "payment.request 收付款申请办理":
+                    next_menu["integration_target"] = "payment.request 收付款申请"
                 default_code = _text(next_menu.get("default_business_category_code"))
                 allowed_codes = next_menu.get("allowed_business_category_codes")
                 if isinstance(allowed_codes, list):
@@ -762,7 +1424,9 @@ class ScProductPolicy(models.Model):
                         next_menu["allowed_business_category_codes"] = [
                             _text(code)
                             for code in allowed_codes
-                            if _text(code) and _text(code) not in FINANCE_DEDUCTION_CATEGORY_CODES
+                            if _text(code)
+                            and _text(code) not in FINANCE_DEDUCTION_CATEGORY_CODES
+                            and _text(code) not in FINANCE_DEPRECATED_CASH_CATEGORY_CODES
                         ]
                 next_allowed_codes = next_menu.get("allowed_business_category_codes")
                 cash_codes = [
@@ -778,9 +1442,9 @@ class ScProductPolicy(models.Model):
                 ):
                     label = _text(next_menu.get("label") or next_menu.get("page_label"))
                     if label:
-                        next_menu["visible_menu_path"] = "智慧施工管理平台 / 财务中心 / 费用/保证金现金办理 / %s" % label
+                        next_menu["visible_menu_path"] = "智慧施工管理平台 / 财务中心 / 费用与保证金 / %s" % label
                     next_menu["product_domain"] = "finance_cash"
-                    next_menu["product_domain_label"] = "费用/保证金现金办理"
+                    next_menu["product_domain_label"] = "费用与保证金"
                     next_menu["integration_target"] = FINANCE_CASH_EXPENSE_DEPOSIT_TARGET
                     next_menu["productization_source"] = "finance_cash_noncash_menu_split"
                     next_menu["policy_note"] = "finance_cash_expense_deposit_entry_retargeted"
@@ -836,7 +1500,10 @@ class ScProductPolicy(models.Model):
             baseline_menu_groups = item.get("menu_groups") if isinstance(item.get("menu_groups"), list) else []
             menu_groups = self._formal_user_confirmed_menu_groups(baseline_menu_groups, matrix_index=matrix_index)
             menu_groups = self._append_finance_interfund_analysis_product_menus(menu_groups)
+            menu_groups = self._append_native_modeled_product_capability_menus(menu_groups)
             menu_groups = self._apply_finance_cash_noncash_product_menu_overrides(menu_groups)
+            menu_groups = self._move_tax_product_menus_to_tax_center(menu_groups)
+            menu_groups = self._normalize_product_menu_business_domains(menu_groups)
             capabilities = self._capabilities_from_user_confirmed_menu_groups(menu_groups)
             values = {
                 "active": bool(item.get("active", True)),

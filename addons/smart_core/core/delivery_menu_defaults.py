@@ -101,7 +101,7 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
     delivery_bucket = str(menu.get("delivery_bucket") or "").strip()
     if delivery_bucket:
         meta["delivery_bucket"] = delivery_bucket
-    for key in (
+    for meta_key in (
         "product_domain",
         "product_domain_label",
         "entry_intent",
@@ -123,9 +123,9 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         "integration_model",
         "project_scope_policy",
     ):
-        value = menu.get(key)
+        value = menu.get(meta_key)
         if value not in (None, "", []):
-            meta[key] = value
+            meta[meta_key] = value
     entry_target = normalize_entry_target(
         entry_target=menu.get("entry_target"),
         scene_key=scene_key,
@@ -148,6 +148,16 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         "children": [],
         "meta": meta,
     }
+    for field, value in (
+        ("route", route),
+        ("scene_key", scene_key),
+        ("action_id", action_id),
+        ("model", model),
+        ("view_modes", view_modes if isinstance(view_modes, list) else []),
+        ("entry_target", entry_target),
+    ):
+        if value not in (None, "", []):
+            node[field] = value
     try:
         sequence = int(menu.get("sequence") or 0)
     except Exception:

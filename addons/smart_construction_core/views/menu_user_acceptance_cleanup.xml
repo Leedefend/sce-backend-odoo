@@ -14,19 +14,19 @@
             <field name="active">1</field>
         </record>
         <record id="menu_sc_invoice_tax_user_group" model="ir.ui.menu">
-            <field name="name">开票与税务办理</field>
+            <field name="name">发票税务</field>
             <field name="sequence">20</field>
             <field name="parent_id" ref="smart_construction_core.menu_sc_tax_center"/>
             <field name="active">1</field>
         </record>
         <record id="menu_sc_expense_reimbursement_group" model="ir.ui.menu">
-            <field name="name">费用/保证金现金办理</field>
+            <field name="name">费用与保证金</field>
             <field name="sequence">30</field>
             <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
             <field name="active">1</field>
         </record>
         <record id="menu_sc_noncash_business_group" model="ir.ui.menu">
-            <field name="name">非现金业务管理</field>
+            <field name="name">扣款与非现金</field>
             <field name="sequence">35</field>
             <field name="parent_id" ref="smart_construction_core.menu_sc_finance_center"/>
             <field name="active">1</field>
@@ -68,7 +68,7 @@
             <field name="sequence">60</field>
         </record>
 
-        <!-- 开票与税务办理：正式办理入口归并，发票总台账留在发票台账组。 -->
+        <!-- 发票税务：正式办理入口归并，发票总台账留在发票台账组。 -->
         <record id="menu_sc_invoice_application_user" model="ir.ui.menu">
             <field name="parent_id" ref="smart_construction_core.menu_sc_invoice_tax_user_group"/>
             <field name="sequence">10</field>
@@ -90,7 +90,7 @@
             <field name="sequence">60</field>
         </record>
 
-        <!-- 费用/保证金现金办理：只保留会形成现金流的报销、实缴、退回和保证金办理。 -->
+        <!-- 费用与保证金：只保留会形成现金流的报销、实缴、退回和保证金办理。 -->
         <record id="menu_sc_reimbursement_request" model="ir.ui.menu">
             <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
             <field name="sequence">10</field>

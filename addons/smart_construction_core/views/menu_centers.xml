@@ -15,7 +15,7 @@
               sequence="25"
               groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
     <menuitem id="menu_sc_material_center"
-              name="物资管理"
+              name="物资与分包"
               parent="menu_sc_root"
               sequence="30"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>

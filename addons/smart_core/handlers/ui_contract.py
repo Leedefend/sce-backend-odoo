@@ -732,9 +732,9 @@ def _align_direct_acceptance_dynamic_column_labels(data):
     preference_policy = dict(preference_policy)
     preference_policy.update(
         {
-            "allow_visibility": False,
-            "allow_order": False,
-            "locked_columns": locked_columns,
+            "allow_visibility": True,
+            "allow_order": True,
+            "locked_columns": [],
             "must_request_columns": locked_columns,
         }
     )

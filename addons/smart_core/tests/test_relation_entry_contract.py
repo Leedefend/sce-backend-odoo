@@ -61,6 +61,16 @@ class TestRelationEntryContract(unittest.TestCase):
         self.assertTrue(entry.get("can_read"))
         self.assertEqual(entry.get("reason_code"), "NO_CREATE_ENTRY")
 
+    def test_self_relation_search_dialog_uses_minimal_contract(self):
+        dialog = self.assembler._build_relation_search_dialog_contract(
+            "construction.contract",
+            model_name="construction.contract",
+        )
+
+        self.assertEqual(dialog.get("source"), "self_relation_minimal_view")
+        self.assertEqual(dialog.get("read_fields"), ["id", "display_name", "name"])
+        self.assertEqual(dialog.get("columns"), [])
+
     def test_build_relation_entry_dictionary_domain_hint_from_model_field(self):
         class _Field:
             domain = [("type", "=", "project_type")]

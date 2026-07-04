@@ -162,6 +162,52 @@ BUSINESS_FORM_STRUCTURE_INTERNAL_SUFFIXES = (
     "_rate",
 )
 SCBS55_SOURCE_DOCUMENT = "/home/odoo/workspace/partner_import_source/5.6优化（老系统菜单，字段列表展示）1.docx"
+LEGACY_VISIBLE_BUSINESS_COLUMN_LABELS_BY_MODEL = {
+    "project.material.plan": {
+        "legacy_visible_01": "单据状态",
+        "legacy_visible_02": "单据编号",
+        "legacy_visible_03": "单据日期",
+        "legacy_visible_04": "到货时间",
+        "legacy_visible_05": "采购材料名称",
+        "legacy_visible_06": "规格型号",
+        "legacy_visible_07": "单位",
+        "legacy_visible_08": "数量",
+        "legacy_visible_09": "材料别名(设计/清单)",
+        "legacy_visible_10": "备注",
+        "legacy_visible_11": "附件",
+        "legacy_visible_12": "项目名称",
+        "legacy_visible_13": "录入人",
+        "legacy_visible_14": "录入时间",
+        "source_created_by": "录入人",
+        "source_created_at": "录入时间",
+    },
+    "sc.material.inbound": {
+        "legacy_visible_01": "单据状态",
+        "legacy_visible_02": "入库单号",
+        "legacy_visible_03": "单据日期",
+        "legacy_visible_04": "供应商名称",
+        "legacy_visible_05": "材料名称",
+        "legacy_visible_06": "规格型号",
+        "legacy_visible_07": "数量",
+        "legacy_visible_08": "单价",
+        "legacy_visible_09": "税率",
+        "legacy_visible_10": "含税金额",
+        "legacy_visible_11": "入库总数量",
+        "legacy_visible_12": "付款状态",
+        "legacy_visible_13": "已付款金额",
+        "legacy_visible_14": "未付款金额",
+        "legacy_visible_15": "结算状态",
+        "legacy_visible_16": "已结算金额",
+        "legacy_visible_17": "项目名称",
+        "legacy_visible_18": "备注",
+        "legacy_visible_19": "附件",
+        "legacy_visible_20": "录入人",
+        "legacy_visible_21": "录入时间",
+        "legacy_visible_22": "采购人",
+        "source_created_by": "录入人",
+        "source_created_at": "录入时间",
+    },
+}
 
 
 class UiContractV2Handler(BaseIntentHandler):
@@ -238,6 +284,37 @@ class UiContractV2Handler(BaseIntentHandler):
             "source_key": source_key,
         }
 
+    def _legacy_visible_business_label(
+        self,
+        model_name: str,
+        field_name: str,
+        current_label: str = "",
+    ) -> str:
+        field_name = str(field_name or "").strip()
+        label_map = LEGACY_VISIBLE_BUSINESS_COLUMN_LABELS_BY_MODEL.get(str(model_name or "").strip(), {})
+        business_label = label_map.get(field_name)
+        if not business_label:
+            return str(current_label or "").strip()
+        label = str(current_label or "").strip()
+        if not label or label.startswith("历史验收可见字段"):
+            return business_label
+        return label
+
+    def _apply_legacy_visible_business_labels(
+        self,
+        source_contract: dict[str, Any],
+        columns: list[str],
+        labels: dict[str, str] | None = None,
+    ) -> dict[str, str]:
+        labels = dict(labels or {})
+        model_name = self._source_model_name(source_contract)
+        for name in columns:
+            normalized = str(name or "").strip()
+            label = self._legacy_visible_business_label(model_name, normalized, labels.get(normalized, ""))
+            if label:
+                labels[normalized] = label
+        return labels
+
     def _v2_policy_projection(self, value: dict[str, Any], *, runtime_carrier: str, source_key: str) -> dict[str, Any]:
         projection = deepcopy(value or {})
         projection["sourceAuthority"] = self._v2_policy_projection_source_authority(
@@ -298,7 +375,14 @@ class UiContractV2Handler(BaseIntentHandler):
             columns = list(fact_columns)
         if not columns:
             return
+        columns = self._merge_user_list_preference_columns(source_contract, columns)
         locked_profile = deepcopy(profile)
+        profile_labels = locked_profile.get("column_labels") if isinstance(locked_profile.get("column_labels"), dict) else {}
+        locked_profile["column_labels"] = self._apply_legacy_visible_business_labels(
+            source_contract,
+            columns,
+            profile_labels,
+        )
         locked_profile["columns"] = columns
         locked_profile["fact_columns"] = list(fact_columns or columns)
         locked_profile["hidden_columns"] = [
@@ -310,10 +394,10 @@ class UiContractV2Handler(BaseIntentHandler):
         locked_profile["preference_policy"] = {
             **pref,
             "scope": "business_config_contract",
-            "allow_visibility": False,
-            "allow_order": False,
+            "allow_visibility": True,
+            "allow_order": True,
             "allow_width": bool(pref.get("allow_width", True)),
-            "locked_columns": list(columns),
+            "locked_columns": [],
             "must_request_columns": list(locked_profile.get("fact_columns") or columns),
         }
         layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
@@ -323,6 +407,41 @@ class UiContractV2Handler(BaseIntentHandler):
             source_key="list_profile.business_config_contract_authoritative",
         )
         contract["layoutContract"] = layout_contract
+
+    def _merge_user_list_preference_columns(self, source_contract: dict[str, Any], columns: list[str]) -> list[str]:
+        action_id = self._source_action_id(source_contract)
+        if action_id <= 0 or "sc.user.view.preference" not in self.env:
+            return columns
+        model_name = self._source_model_name(source_contract)
+        model_fields = set(getattr(self.env[model_name], "_fields", {}) or {}) if model_name in self.env else set()
+        try:
+            rec = self.env["sc.user.view.preference"].sudo().search(
+                [
+                    ("user_id", "=", self.env.user.id),
+                    ("preference_key", "=", "list_columns"),
+                    ("view_type", "in", ["list", "tree"]),
+                    ("action_id", "=", action_id),
+                ],
+                order="id desc",
+                limit=1,
+            )
+        except Exception:
+            _logger.debug("ui.contract.v2 user list preference lookup skipped", exc_info=True)
+            return columns
+        value = rec.value_json if rec and isinstance(getattr(rec, "value_json", None), dict) else {}
+        preferred = []
+        for key in ("visible_columns", "column_order"):
+            rows = value.get(key) if isinstance(value.get(key), list) else []
+            for raw in rows:
+                name = str(raw or "").strip()
+                if not name or name in preferred:
+                    continue
+                if model_fields and name not in model_fields:
+                    continue
+                preferred.append(name)
+        if not preferred:
+            return columns
+        return [*preferred, *[name for name in columns if name not in preferred]]
 
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         params = self._params(payload)
@@ -1252,12 +1371,14 @@ class UiContractV2Handler(BaseIntentHandler):
             ordered.extend([name for name in columns if name not in set(ordered)])
             columns = ordered
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
+        labels = self._apply_legacy_visible_business_labels(source_contract, columns, labels)
         field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
 
         def widget_for(name: str) -> dict[str, Any]:
             field = field_map.get(name) if isinstance(field_map.get(name), dict) else {}
             field_type = str(field.get("type") or field.get("ttype") or "char").strip() or "char"
             label = str(labels.get(name) or field.get("string") or field.get("label") or name).strip()
+            label = self._legacy_visible_business_label(model_name, name, label)
             return {
                 "widgetId": f"field.{name}",
                 "widgetType": "table",
@@ -2068,6 +2189,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 return "录入时间"
             if field_name.startswith("p1_visible_") and label.startswith("P1可见"):
                 label = label[len("P1可见"):].strip()
+            label = self._legacy_visible_business_label(model, field_name, label)
             return label or field_name
 
         def is_technical(name: str) -> bool:
@@ -3121,6 +3243,7 @@ class UiContractV2Handler(BaseIntentHandler):
         if not columns:
             return
 
+        columns = self._merge_user_list_preference_columns(source_contract, columns)
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
         view_column_labels = {}
         for row in [*raw_columns, *tree_schema_rows]:
@@ -3135,6 +3258,7 @@ class UiContractV2Handler(BaseIntentHandler):
             if label:
                 view_column_labels[name] = label
         labels = {**{name: label_for(name) for name in columns}, **labels, **view_column_labels, **direct_orchestration_labels, **override_labels}
+        labels = self._apply_legacy_visible_business_labels(source_contract, columns, labels)
         deduped_columns: list[str] = []
         preserve_duplicate_labels = bool(direct_orchestration_columns) or (
             bool(columns) and all(str(name or "").startswith("legacy_visible_") for name in columns)
@@ -3190,14 +3314,10 @@ class UiContractV2Handler(BaseIntentHandler):
             "preference_policy": {
                 **(profile.get("preference_policy") if isinstance(profile.get("preference_policy"), dict) else {}),
                 "scope": "ui_only",
-                "allow_visibility": False if legacy_override else True,
-                "allow_order": False if legacy_override else True,
-                "allow_width": False if legacy_override else True,
-                "locked_columns": columns if legacy_override else (
-                    (profile.get("preference_policy") or {}).get("locked_columns", [])
-                    if isinstance(profile.get("preference_policy"), dict)
-                    else []
-                ),
+                "allow_visibility": True,
+                "allow_order": True,
+                "allow_width": True,
+                "locked_columns": [],
                 "must_request_columns": columns,
             },
         })
@@ -3222,7 +3342,7 @@ class UiContractV2Handler(BaseIntentHandler):
                     **schema_by_name.get(name, {}),
                     "name": name,
                     "label": labels.get(name) or label_for(name),
-                    "string": schema_by_name.get(name, {}).get("string") or label_for(name),
+                    "string": labels.get(name) or label_for(name),
                     "type": schema_by_name.get(name, {}).get("type") or type_for(name) or "char",
                     "widget": schema_by_name.get(name, {}).get("widget") or type_for(name) or "char",
                 }
@@ -3249,6 +3369,27 @@ class UiContractV2Handler(BaseIntentHandler):
             if action_id > 0:
                 return action_id
         return 0
+
+    def _source_model_name(self, source_contract: dict[str, Any]) -> str:
+        for raw in (
+            source_contract.get("model"),
+            source_contract.get("res_model"),
+            (source_contract.get("head") or {}).get("model") if isinstance(source_contract.get("head"), dict) else None,
+            (source_contract.get("head") or {}).get("res_model") if isinstance(source_contract.get("head"), dict) else None,
+            (source_contract.get("source_meta") or {}).get("model") if isinstance(source_contract.get("source_meta"), dict) else None,
+            (source_contract.get("source_meta") or {}).get("res_model") if isinstance(source_contract.get("source_meta"), dict) else None,
+        ):
+            model_name = str(raw or "").strip()
+            if model_name:
+                return model_name
+        action_id = self._source_action_id(source_contract)
+        if action_id > 0 and "ir.actions.act_window" in self.env:
+            try:
+                action = self.env["ir.actions.act_window"].sudo().browse(action_id).exists()
+                return str(getattr(action, "res_model", "") or "").strip()
+            except Exception:
+                _logger.debug("ui.contract.v2 source model lookup skipped", exc_info=True)
+        return ""
 
     def _action_scoped_visible_list_columns(self, source_contract: dict[str, Any]) -> dict[str, Any] | None:
         action_id = self._source_action_id(source_contract)
@@ -3931,6 +4072,11 @@ class UiContractV2Handler(BaseIntentHandler):
                 ui_params["op"] = "model"
         op = str(ui_params.get("op") or ui_params.get("subject") or "").strip().lower()
         view_type = str(ui_params.get("view_type") or ui_params.get("viewType") or "").strip().lower()
+        if view_type == "list":
+            ui_params["view_type"] = "tree"
+            if "viewType" in ui_params:
+                ui_params["viewType"] = "tree"
+            view_type = "tree"
         record_id = ui_params.get("record_id") or ui_params.get("recordId") or ui_params.get("res_id") or ui_params.get("resId")
         if op == "model" and view_type in {"form", ""} and record_id and "with_data" not in ui_params:
             ui_params["with_data"] = True

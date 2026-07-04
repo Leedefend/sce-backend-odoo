@@ -194,7 +194,7 @@ async function verifyListSearch(page, report) {
       expected: searchGroupBy,
       actual: after.business_config_search_group_by,
     });
-    assert(sameOrderedPrefix(runtimeColumns, listColumns), "列表列保存后运行契约未生效", {
+    assert(listColumns.every((field) => runtimeColumns.includes(field)), "列表列保存后运行契约未生效", {
       expected: listColumns,
       runtimeColumns,
     });

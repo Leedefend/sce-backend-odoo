@@ -648,7 +648,7 @@ _CAPABILITY_GROUP_DEFAULTS = {
     "contract_management": {"label": "合同管理", "icon": "file-text"},
     "cost_management": {"label": "成本管理", "icon": "calculator"},
     "finance_management": {"label": "财务管理", "icon": "wallet"},
-    "material_management": {"label": "物资管理", "icon": "boxes"},
+    "material_management": {"label": "材料管理", "icon": "boxes"},
     "governance": {"label": "治理配置", "icon": "shield"},
     "analytics": {"label": "经营分析", "icon": "chart"},
     "others": {"label": "其他能力", "icon": "grid"},
@@ -2332,9 +2332,9 @@ def _govern_standard_list_for_user(
             "mode": "strict",
             "reason": "native_tree_columns_are_the_user_visible_business_surface",
         }
-        list_profile["preference_policy"]["allow_visibility"] = False
-        list_profile["preference_policy"]["allow_order"] = False
-        list_profile["preference_policy"]["locked_columns"] = selected
+        list_profile["preference_policy"]["allow_visibility"] = True
+        list_profile["preference_policy"]["allow_order"] = True
+        list_profile["preference_policy"]["locked_columns"] = []
     data["list_profile"] = list_profile
     views = _as_dict(data.get("views"))
     tree_view = _as_dict(views.get("tree") or views.get("list"))

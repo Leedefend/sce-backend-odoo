@@ -11,7 +11,7 @@
               parent="smart_construction_core.menu_sc_project_center"
               sequence="20"/>
     <menuitem id="menu_sc_material_management_group"
-              name="物资管理"
+              name="材料管理"
               parent="smart_construction_core.menu_sc_material_center"
               sequence="10"/>
     <menuitem id="menu_sc_labor_management_group"

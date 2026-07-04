@@ -28,7 +28,7 @@
         <record id="sc_cap_group_material_management" model="sc.capability.group">
             <field name="sequence">50</field>
             <field name="key">material_management</field>
-            <field name="label">物资管理</field>
+            <field name="label">材料管理</field>
             <field name="icon">boxes</field>
         </record>
         <record id="sc_cap_group_governance" model="sc.capability.group">

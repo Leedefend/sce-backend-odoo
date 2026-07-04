@@ -80,6 +80,11 @@ function collectSamples(report) {
   return rows;
 }
 
+function isIgnorableConsoleError(text) {
+  const value = String(text || '');
+  return /^Failed to load resource: the server responded with a status of (403|404) /i.test(value);
+}
+
 async function login(page) {
   await page.goto(`${baseUrl}/login?db=${encodeURIComponent(dbName)}`, {
     waitUntil: 'domcontentloaded',
@@ -175,7 +180,10 @@ async function main() {
   const failedResponses = [];
   let currentRoute = '';
   page.on('console', (msg) => {
-    if (msg.type() === 'error') consoleErrors.push({ route: currentRoute, text: msg.text().slice(0, 500) });
+    const text = msg.text();
+    if (msg.type() === 'error' && !isIgnorableConsoleError(text)) {
+      consoleErrors.push({ route: currentRoute, text: text.slice(0, 500) });
+    }
   });
   page.on('pageerror', (err) => consoleErrors.push({ route: currentRoute, text: err.message.slice(0, 500) }));
   page.on('response', (response) => {

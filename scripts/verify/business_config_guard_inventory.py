@@ -106,11 +106,13 @@ FULL_ACCEPTANCE_TARGETS = {
     "verify.business_config.low_code_menu_navigation_alignment",
     "verify.business_config.low_code_global_stability",
     "verify.user_menu.reachability.guard",
+    "verify.full_product_capability_scope",
 }
 
 FULL_ACCEPTANCE_TARGETS_WITHOUT_CAPABILITY_OWNER = {
     "verify.frontend.build",
     "verify.user_menu.reachability.guard",
+    "verify.full_product_capability_scope",
 }
 
 TARGET_SCRIPT_REQUIREMENTS = {
@@ -155,6 +157,9 @@ TARGET_SCRIPT_REQUIREMENTS = {
     ),
     "verify.business_config.low_code_global_stability": (
         "scripts/low_code_global_stability_acceptance.mjs|frontend/apps/web/scripts/low_code_global_stability_acceptance.mjs",
+    ),
+    "verify.full_product_capability_scope": (
+        "scripts/verify/full_product_capability_scope_audit.py",
     ),
 }
 

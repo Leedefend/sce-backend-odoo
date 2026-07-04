@@ -8,6 +8,7 @@ Run inside Odoo shell:
 import json
 import os
 
+from odoo import api
 from odoo.exceptions import UserError
 
 from odoo.addons.smart_core.handlers.form_field_configuration import (
@@ -86,6 +87,7 @@ def _config_surface_profile(env_obj, *, model, action_id, view_id, role_key):
 
 
 def _handling_surface_profile(env_obj, *, model, action_id):
+    env_obj = api.Environment(env_obj.cr, env_obj.uid, dict(env_obj.context or {}))
     payload = {
         "action_id": action_id,
         "model": model,
@@ -157,12 +159,12 @@ def _audit(env_obj):
             })
             continue
         try:
-            config_columns, config_labels = _config_surface_profile(env_obj, **item)
             surface_columns, surface_labels = _handling_surface_profile(
                 env_obj,
                 model=item["model"],
                 action_id=item["action_id"],
             )
+            config_columns, config_labels = _config_surface_profile(env_obj, **item)
             label_mismatches = [
                 {
                     "field": name,

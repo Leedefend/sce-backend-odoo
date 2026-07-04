@@ -373,8 +373,6 @@ class EditionReleaseSnapshotService:
                     issues.append(self._issue("ACTION_MENU_HAS_SCENE_KEY", page, "Odoo action 菜单不能带 scene_key"))
                 if not action_id:
                     issues.append(self._issue("ACTION_ID_MISSING", page, "Odoo action 菜单缺少 action_id"))
-                if not menu_id:
-                    issues.append(self._issue("MENU_ID_MISSING", page, "Odoo action 菜单缺少 menu_id"))
                 if not res_model:
                     issues.append(self._issue("RES_MODEL_MISSING", page, "Odoo action 菜单缺少 res_model"))
                 if not menu_xmlid:

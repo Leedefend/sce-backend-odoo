@@ -271,7 +271,7 @@ class TestUserViewPreferenceBoundaries(unittest.TestCase):
             },
         )
 
-    def test_set_rejects_formal_list_structure_preference(self):
+    def test_formal_list_allows_user_display_preference(self):
         module = _load_handler()
         Preference = _PreferenceModel()
         env = _Env({"sc.user.view.preference": Preference, "app.contract.service": _ContractService()})
@@ -296,8 +296,8 @@ class TestUserViewPreferenceBoundaries(unittest.TestCase):
         self.assertEqual(
             Preference.created_vals["value_json"],
             {
-                "visible_columns": [],
-                "hidden_columns": [],
+                "visible_columns": ["name"],
+                "hidden_columns": ["business_nature", "manager_id"],
                 "column_order": [],
                 "column_widths": {},
             },

@@ -2135,11 +2135,13 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
                 configured_label = str(list_column_labels.get(name) or "").strip()
                 if configured_label == name:
                     configured_label = ""
-                if model == "project.project" and int(action_id or 0) == 557 and name == "manager_id":
-                    return "项目负责人"
+                if model == "project.project" and name == "manager_id":
+                    return "项目经理"
+                cleaned_configured_label = _clean_lowcode_user_label(name, configured_label) if configured_label else ""
                 return (
-                    action_view_column_labels.get(name)
-                    or _clean_lowcode_user_label(name, configured_label or model_field_labels.get(name) or name)
+                    cleaned_configured_label
+                    or action_view_column_labels.get(name)
+                    or _clean_lowcode_user_label(name, model_field_labels.get(name) or name)
                 )
             list_column_labels = {
                 name: resolve_list_label(name)

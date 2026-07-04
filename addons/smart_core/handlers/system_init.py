@@ -797,6 +797,50 @@ def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[
     return next_nav, stats
 
 
+def _nav_node_label(node: dict) -> str:
+    if not isinstance(node, dict):
+        return ""
+    return _text(node.get("label") or node.get("name") or node.get("title"))
+
+
+def _nav_root_children(nav: list[dict]) -> list[dict]:
+    if not isinstance(nav, list) or not nav:
+        return []
+    if len(nav) == 1 and isinstance(nav[0], dict):
+        children = nav[0].get("children")
+        if isinstance(children, list):
+            return [child for child in children if isinstance(child, dict)]
+    return [node for node in nav if isinstance(node, dict)]
+
+
+def _release_product_center_signature(nav: list[dict]) -> list[str]:
+    return [_nav_node_label(node) for node in _nav_root_children(nav) if _nav_node_label(node)]
+
+
+def _apply_constrained_user_menu_config_to_released_nav(env, nav: list[dict]) -> tuple[list[dict], dict]:
+    overlaid_nav, overlay_meta = _apply_user_menu_config_to_delivery_nav(env, nav)
+    if not isinstance(overlay_meta, dict):
+        overlay_meta = {}
+    overlay_meta.setdefault("release_product_nav_constrained", True)
+
+    before_signature = _release_product_center_signature(nav)
+    after_signature = _release_product_center_signature(overlaid_nav)
+    if before_signature != after_signature:
+        blocked_meta = dict(overlay_meta)
+        blocked_meta.update({
+            "applied": False,
+            "blocked": True,
+            "reason": "blocked_product_center_signature_change",
+            "release_product_nav_constrained": True,
+            "before_center_signature": before_signature,
+            "after_center_signature": after_signature,
+        })
+        return nav, blocked_meta
+
+    overlay_meta["release_product_center_signature_preserved"] = True
+    return overlaid_nav, overlay_meta
+
+
 def _user_data_acceptance_nav_only_enabled(env) -> bool:
     try:
         raw = env["ir.config_parameter"].sudo().get_param(NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM, "")
@@ -1880,13 +1924,15 @@ class SystemInitHandler(BaseIntentHandler):
                 delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
                 release_gate,
             )
-            gated_nav, user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(env, gated_nav)
+            gated_nav, user_menu_config_meta = _apply_constrained_user_menu_config_to_released_nav(env, gated_nav)
+            gated_nav, post_overlay_gate_meta = _filter_nav_by_release_gate(gated_nav, release_gate)
             delivery_payload["nav"] = gated_nav
             meta = delivery_payload.get("meta")
             if not isinstance(meta, dict):
                 meta = {}
                 delivery_payload["meta"] = meta
             meta["platform_release_gate"] = gate_meta
+            meta["platform_release_gate_after_user_menu_config"] = post_overlay_gate_meta
             meta["user_menu_config"] = user_menu_config_meta
         else:
             delivery_nav, user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(

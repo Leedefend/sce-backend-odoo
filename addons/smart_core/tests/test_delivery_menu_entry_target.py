@@ -162,6 +162,24 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
             },
         )
 
+    def test_policy_meta_fields_do_not_overwrite_node_key(self):
+        node = delivery_menu_defaults.build_delivery_menu_child(
+            {
+                "menu_key": "system.policy.smart_construction_core_menu_sc_tax_certificate_registration_user",
+                "label": "外经证登记",
+                "action_id": 762,
+                "model": "sc.legacy.payment.residual.fact",
+                "route": "/a/762",
+                "project_scope_policy": "current_project",
+            }
+        )
+
+        self.assertEqual(
+            node.get("key"),
+            "system.policy.smart_construction_core_menu_sc_tax_certificate_registration_user",
+        )
+        self.assertNotEqual(node.get("key"), "project_scope_policy")
+
     def test_policy_menu_convergence_uses_each_policy_group_label(self):
         nav = menu_service.MenuService().build_nav(
             policy={
@@ -256,6 +274,34 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
 
         groups = (nav[0].get("children") or []) if nav else []
         self.assertEqual([group.get("label") for group in groups], ["基础设置"])
+        self.assertEqual(groups[0]["children"][0]["label"], "客户")
+
+    def test_business_config_role_builds_policy_menu_without_native_fact_for_release_snapshot(self):
+        nav = menu_service.MenuService().build_nav(
+            policy={
+                "menu_groups": [
+                    {
+                        "group_key": "construction.master_data",
+                        "group_label": "基础资料",
+                        "menus": [
+                            {
+                                "menu_key": "customer",
+                                "label": "客户",
+                                "menu_id": 598,
+                                "route": "/a/786?menu_id=598",
+                                "action_id": 786,
+                                "res_model": "res.partner",
+                            }
+                        ],
+                    }
+                ]
+            },
+            role_surface={"role_code": "business_config_admin"},
+            native_nav=[],
+        )
+
+        groups = (nav[0].get("children") or []) if nav else []
+        self.assertEqual([group.get("label") for group in groups], ["基础资料"])
         self.assertEqual(groups[0]["children"][0]["label"], "客户")
 
     def test_policy_menu_surface_is_filtered_by_native_authorized_menu_fact(self):
@@ -604,6 +650,77 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         ]
         self.assertIn("费用/保证金申请", labels)
         self.assertIn("保证金退回", labels)
+        expense_node = next(
+            child
+            for group in (nav[0].get("children") or [])
+            for child in (group.get("children") or [])
+            if child.get("label") == "费用/保证金申请"
+        )
+        self.assertEqual(expense_node.get("route"), "/a/626")
+        self.assertEqual(expense_node.get("action_id"), 626)
+        self.assertEqual(expense_node.get("model"), "sc.expense.claim")
+        self.assertEqual((expense_node.get("entry_target") or {}).get("type"), "compatibility")
+        self.assertEqual(
+            ((expense_node.get("entry_target") or {}).get("compatibility_refs") or {}).get("model"),
+            "sc.expense.claim",
+        )
+
+    def test_explicit_menu_path_group_stays_directory_not_handling_entry(self):
+        common = {
+            "res_model": "sc.receipt.income",
+            "integration_model": "sc.receipt.income",
+            "integration_action_id": 778,
+            "integration_action_xmlid": "smart_construction_core.action_sc_receipt_income",
+            "integration_view_modes": ["tree", "form"],
+            "integration_entry_target": {
+                "type": "compatibility",
+                "route": "/a/778",
+                "compatibility_refs": {"action_id": 778, "model": "sc.receipt.income"},
+            },
+            "entry_intent": "handling",
+            "entry_intent_label": "办理",
+            "disposition_policy": "merge_by_category",
+            "integration_target": "sc.receipt.income 收款登记",
+            "release_state": "released",
+            "enabled": True,
+        }
+        nav = menu_service.MenuService().build_nav(
+            policy={
+                "menu_groups": [
+                    {
+                        "group_key": "construction.finance",
+                        "group_label": "财务中心",
+                        "menus": [
+                            {
+                                **common,
+                                "menu_key": "receipt",
+                                "label": "收入",
+                                "menu_id": 539,
+                                "route": "/a/778?menu_id=539",
+                                "action_id": 778,
+                                "menu_xmlid": "smart_construction_core.menu_sc_user_income",
+                                "visible_menu_path": "智慧施工管理平台 / 财务中心 / 收款管理 / 收入",
+                                "default_business_category_code": "finance.receipt.income.project",
+                                "allowed_business_category_codes": ["finance.receipt.income.project"],
+                            }
+                        ],
+                    }
+                ]
+            },
+            role_surface={"role_code": "business_config_admin"},
+            native_nav=[],
+        )
+
+        finance = next(group for group in (nav[0].get("children") or []) if group.get("label") == "财务中心")
+        receipt_group = next(child for child in finance.get("children") or [] if child.get("label") == "收款管理")
+        receipt_meta = receipt_group.get("meta") or {}
+        self.assertTrue(receipt_meta.get("explicit_menu_path_group"))
+        self.assertNotIn("entry_intent", receipt_meta)
+        self.assertNotIn("entry_target", receipt_meta)
+        self.assertNotIn("business_entry_group", receipt_meta)
+        leaf = receipt_group["children"][0]
+        self.assertEqual(leaf.get("label"), "收款登记")
+        self.assertEqual((leaf.get("meta") or {}).get("entry_intent"), "handling")
 
 
 if __name__ == "__main__":

@@ -2586,7 +2586,7 @@ class PageAssembler:
                 "can_create": can_create,
                 "reason_code": reason_code,
                 "inline_create": inline_create,
-                "search_dialog": self._build_relation_search_dialog_contract(relation),
+                "search_dialog": self._build_relation_search_dialog_contract(relation, model_name=model_name),
                 "ui_labels": {
                     "search_more": _("搜索更多..."),
                     "quick_create": _("快速新建..."),
@@ -2617,8 +2617,9 @@ class PageAssembler:
         )
         return entry
 
-    def _build_relation_search_dialog_contract(self, relation):
+    def _build_relation_search_dialog_contract(self, relation, model_name=""):
         relation = str(relation or "").strip()
+        model_name = str(model_name or "").strip()
         if relation == "sc.business.category":
             return {
                 "columns": [
@@ -2644,7 +2645,7 @@ class PageAssembler:
         search = {"filters": [], "group_by": [], "facets": {"enabled": True}}
         governance = {}
         source_trace = {}
-        if not relation:
+        if not relation or (model_name and relation == model_name):
             return {
                 "columns": columns,
                 "read_fields": read_fields,
@@ -2653,7 +2654,7 @@ class PageAssembler:
                 "search": search,
                 "governance": governance,
                 "source_trace": source_trace,
-                "source": "relation_target_native_view",
+                "source": "self_relation_minimal_view" if relation else "relation_target_native_view",
             }
         try:
             view_config_model = self.env["app.view.config"].with_context(contract_projection_readonly=True)

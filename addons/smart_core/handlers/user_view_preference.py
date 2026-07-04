@@ -202,7 +202,7 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
         except Exception:
             return {}
 
-    def _apply_list_preference_policy(self, payload, *, list_profile, action_id=0):
+    def _apply_list_preference_policy(self, payload, *, list_profile, action_id=0, model_name=""):
         value = payload if isinstance(payload, dict) else {}
         profile = list_profile if isinstance(list_profile, dict) else {}
         columns = self._sanitize_list(profile.get("columns"), max_size=200)
@@ -216,8 +216,6 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
         must_request = set(self._sanitize_list(policy.get("must_request_columns"), max_size=200))
         formal_locked = int(action_id or 0) in USER_CONFIRMED_FORMAL_LIST_ACTION_IDS
         if formal_locked:
-            allow_visibility = False
-            locked.update(columns or fact_columns)
             must_request.update(columns or fact_columns)
         # Scope boundary:
         # - fact_columns / must_request_columns: data request contract only
@@ -229,10 +227,15 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
         order = self._sanitize_list(value.get("column_order"))
         widths = self._sanitize_widths(value.get("column_widths"), names=(column_set or None))
 
+        model_fields = set()
+        model_name = str(model_name or "").strip()
+        if model_name and model_name in self.env:
+            model_fields = set(getattr(self.env[model_name], "_fields", {}) or {})
         if column_set:
-            visible = [name for name in visible if name in column_set]
-            hidden = [name for name in hidden if name in column_set]
-            order = [name for name in order if name in column_set]
+            allowed = column_set | model_fields
+            visible = [name for name in visible if name in allowed]
+            hidden = [name for name in hidden if name in allowed]
+            order = [name for name in order if name in allowed]
             widths = {name: width for name, width in widths.items() if name in column_set}
 
         if allow_visibility:
@@ -263,16 +266,13 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
             action_id = int(action_id or 0)
         except Exception:
             action_id = 0
-        formal_locked = action_id in USER_CONFIRMED_FORMAL_LIST_ACTION_IDS
         locked_columns = self._sanitize_list(policy.get("locked_columns"), max_size=200)
-        if formal_locked:
-            locked_columns = self._sanitize_list(profile.get("columns"), max_size=200) or locked_columns
         return {
             "columns": self._sanitize_list(profile.get("columns"), max_size=200),
             "fact_columns": self._sanitize_list(profile.get("fact_columns"), max_size=200),
             "preference_policy": {
                 "scope": str(policy.get("scope") or "ui_only"),
-                "allow_visibility": False if formal_locked else policy.get("allow_visibility") is not False,
+                "allow_visibility": policy.get("allow_visibility") is not False,
                 "allow_order": policy.get("allow_order") is not False,
                 "allow_width": policy.get("allow_width") is not False,
                 "locked_columns": locked_columns,
@@ -320,7 +320,7 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
             )
         value = self._sanitize_preference(preference_key, record.value_json if record else {})
         if preference_key == "list_columns":
-            value = self._apply_list_preference_policy(value, list_profile=list_profile, action_id=action_id)
+            value = self._apply_list_preference_policy(value, list_profile=list_profile, action_id=action_id, model_name=model_name)
         return {
             "ok": True,
             "data": {
@@ -371,7 +371,7 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
                 model_name=model_name,
                 view_type=view_type,
             )
-            value = self._apply_list_preference_policy(value, list_profile=list_profile, action_id=action_id)
+            value = self._apply_list_preference_policy(value, list_profile=list_profile, action_id=action_id, model_name=model_name)
         Preference = self.env["sc.user.view.preference"]
         record = Preference.search([
             ("user_id", "=", self.env.uid),

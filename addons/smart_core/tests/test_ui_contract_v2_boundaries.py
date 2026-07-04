@@ -747,7 +747,10 @@ class TestUiContractV2Boundaries(unittest.TestCase):
 
         profile = contract["layoutContract"]["listProfile"]
         self.assertEqual(profile["columns"], ["name", "source_created_by"])
-        self.assertEqual(profile["preference_policy"]["locked_columns"], ["name", "source_created_by"])
+        self.assertEqual(profile["preference_policy"]["locked_columns"], [])
+        self.assertTrue(profile["preference_policy"]["allow_visibility"])
+        self.assertTrue(profile["preference_policy"]["allow_order"])
+        self.assertEqual(profile["preference_policy"]["must_request_columns"], ["name", "source_created_by"])
         self.assertEqual(profile["sourceAuthority"]["source_key"], "list_profile.business_config_contract_authoritative")
 
     def test_business_list_config_projection_repairs_columns_from_fact_columns(self):
@@ -776,7 +779,141 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             profile["columns"],
             ["legacy_visible_01", "legacy_visible_02", "source_created_by", "source_created_at"],
         )
-        self.assertEqual(profile["preference_policy"]["locked_columns"], profile["columns"])
+        self.assertEqual(profile["preference_policy"]["locked_columns"], [])
+        self.assertEqual(profile["preference_policy"]["must_request_columns"], profile["columns"])
+
+    def test_material_plan_business_config_projection_labels_legacy_visible_columns(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        source_contract = {
+            "model": "project.material.plan",
+            "list_profile": {
+                "columns": ["legacy_visible_01", "legacy_visible_05", "source_created_by"],
+                "column_labels": {
+                    "legacy_visible_01": "历史验收可见字段01",
+                    "legacy_visible_05": "历史验收可见字段05",
+                    "source_created_by": "来源录入人",
+                },
+                "column_policy": {
+                    "mode": "strict",
+                    "reason": "business_list_config_contract_authoritative",
+                },
+            },
+        }
+        contract = {"layoutContract": {"listProfile": {}}}
+
+        handler._enforce_business_list_config_projection(contract, source_contract)
+
+        labels = contract["layoutContract"]["listProfile"]["column_labels"]
+        self.assertEqual(labels["legacy_visible_01"], "单据状态")
+        self.assertEqual(labels["legacy_visible_05"], "采购材料名称")
+        self.assertEqual(labels["source_created_by"], "来源录入人")
+
+    def test_material_plan_legacy_visible_widget_layout_uses_business_labels(self):
+        handler = self.module.UiContractV2Handler(env={})
+        contract = {
+            "layoutContract": {
+                "containerTree": [
+                    {
+                        "type": "table",
+                        "widgetList": [],
+                        "children": [],
+                    }
+                ]
+            }
+        }
+        source = {
+            "model": "project.material.plan",
+            "list_profile": {
+                "columns": ["legacy_visible_01", "legacy_visible_05"],
+                "column_labels": {
+                    "legacy_visible_01": "历史验收可见字段01",
+                    "legacy_visible_05": "历史验收可见字段05",
+                },
+            },
+            "fields": {
+                "legacy_visible_01": {"type": "char", "string": "历史验收可见字段01"},
+                "legacy_visible_05": {"type": "char", "string": "历史验收可见字段05"},
+            },
+        }
+
+        handler._apply_legacy_visible_list_layout(contract, source)
+
+        widgets = contract["layoutContract"]["containerTree"][0]["widgetList"]
+        self.assertEqual([item["label"] for item in widgets], ["单据状态", "采购材料名称"])
+
+    def test_material_inbound_business_config_projection_labels_legacy_visible_columns(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        source_contract = {
+            "model": "sc.material.inbound",
+            "list_profile": {
+                "columns": ["legacy_visible_01", "legacy_visible_02", "legacy_visible_05", "source_created_by"],
+                "column_labels": {
+                    "legacy_visible_01": "历史验收可见字段01",
+                    "legacy_visible_02": "历史验收可见字段02",
+                    "legacy_visible_05": "历史验收可见字段05",
+                    "source_created_by": "来源录入人",
+                },
+                "column_policy": {
+                    "mode": "strict",
+                    "reason": "business_list_config_contract_authoritative",
+                },
+            },
+        }
+        contract = {"layoutContract": {"listProfile": {}}}
+
+        handler._enforce_business_list_config_projection(contract, source_contract)
+
+        labels = contract["layoutContract"]["listProfile"]["column_labels"]
+        self.assertEqual(labels["legacy_visible_01"], "单据状态")
+        self.assertEqual(labels["legacy_visible_02"], "入库单号")
+        self.assertEqual(labels["legacy_visible_05"], "材料名称")
+        self.assertEqual(labels["source_created_by"], "来源录入人")
+
+    def test_material_inbound_legacy_visible_widget_layout_uses_business_labels(self):
+        handler = self.module.UiContractV2Handler(env={})
+        contract = {
+            "layoutContract": {
+                "containerTree": [
+                    {
+                        "type": "table",
+                        "widgetList": [],
+                        "children": [],
+                    }
+                ]
+            }
+        }
+        source = {
+            "model": "sc.material.inbound",
+            "list_profile": {
+                "columns": ["legacy_visible_02", "legacy_visible_05"],
+                "column_labels": {
+                    "legacy_visible_02": "历史验收可见字段02",
+                    "legacy_visible_05": "历史验收可见字段05",
+                },
+            },
+            "fields": {
+                "legacy_visible_02": {"type": "char", "string": "历史验收可见字段02"},
+                "legacy_visible_05": {"type": "char", "string": "历史验收可见字段05"},
+            },
+        }
+
+        handler._apply_legacy_visible_list_layout(contract, source)
+
+        widgets = contract["layoutContract"]["containerTree"][0]["widgetList"]
+        self.assertEqual([item["label"] for item in widgets], ["入库单号", "材料名称"])
+
+    def test_ui_contract_params_normalizes_list_view_to_tree_source(self):
+        handler = self.module.UiContractV2Handler(env=object())
+
+        params = handler._ui_contract_params({
+            "op": "model",
+            "model": "sc.material.inbound",
+            "view_type": "list",
+            "viewType": "list",
+        })
+
+        self.assertEqual(params["view_type"], "tree")
+        self.assertEqual(params["viewType"], "tree")
 
     def test_form_structure_contract_uses_generic_slots_not_contract_template(self):
         handler = self.module.UiContractV2Handler(env=object())

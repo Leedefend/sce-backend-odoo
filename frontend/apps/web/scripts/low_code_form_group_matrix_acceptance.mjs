@@ -317,3 +317,4 @@ async function main() {
 }
 
 await main();
+process.exit(process.exitCode || 0);

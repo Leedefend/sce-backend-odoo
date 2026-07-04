@@ -1319,7 +1319,7 @@
 
     <!-- 物资与分包 -->
     <menuitem id="menu_sc_material_management_group"
-              name="物资管理"
+              name="材料管理"
               parent="smart_construction_core.menu_sc_material_center"
               sequence="10"/>
     <menuitem id="menu_sc_material_catalog"
@@ -1365,7 +1365,7 @@
     <menuitem id="menu_sc_material_inbound"
               name="入库单"
               parent="smart_construction_core.menu_sc_material_management_group"
-              action="smart_construction_core.action_sc_material_inbound"
+              action="smart_construction_core.action_sc_material_inbound_handling"
               sequence="60"
               groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_sc_material_outbound"

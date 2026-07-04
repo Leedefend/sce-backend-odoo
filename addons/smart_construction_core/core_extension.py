@@ -57,7 +57,7 @@ def _sc_prune_and_label_project_nodes(value):
     for field_name, label in {
         "partner_id": "业主单位",
         "owner_id": "业主单位",
-        "manager_id": "项目负责人",
+        "manager_id": "项目经理",
         "responsibility_ids": "项目责任分工",
         "collaborator_ids": "项目协作成员",
     }.items():

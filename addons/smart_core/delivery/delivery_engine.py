@@ -134,6 +134,8 @@ class DeliveryEngine:
         menu_xmlid = _text(meta.get("menu_xmlid") or node.get("menu_xmlid"))
         action_xmlid = _text(meta.get("action_xmlid") or node.get("action_xmlid"))
         menu = self._resolve_xmlid_record(menu_xmlid, expected_model="ir.ui.menu") if menu_xmlid else None
+        if menu and not bool(getattr(menu, "active", False)):
+            menu = None
         action = self._resolve_xmlid_record(action_xmlid, expected_prefix="ir.actions.") if action_xmlid else None
         if menu and not action:
             try:
@@ -141,7 +143,7 @@ class DeliveryEngine:
             except Exception:
                 action = None
 
-        menu_id = _to_int(getattr(menu, "id", 0)) or _to_int(node.get("menu_id") or meta.get("menu_id"))
+        menu_id = _to_int(getattr(menu, "id", 0)) or _to_int(meta.get("menu_id"))
         action_id = _to_int(getattr(action, "id", 0)) or _to_int(meta.get("action_id"))
         model = _text(getattr(action, "res_model", "")) if action and _text(getattr(action, "_name", "")) == "ir.actions.act_window" else _text(meta.get("model"))
         view_mode_raw = _text(getattr(action, "view_mode", "")) if action and _text(getattr(action, "_name", "")) == "ir.actions.act_window" else ""

@@ -1922,7 +1922,7 @@ class ScMaterialOutbound(models.Model):
         )
         if not inbound:
             raise ValidationError(_("当前调拨出库单尚未生成调入入库单。"))
-        action = self.env.ref("smart_construction_core.action_sc_material_inbound").sudo().read()[0]
+        action = self.env.ref("smart_construction_core.action_sc_material_inbound_handling").sudo().read()[0]
         action.update(
             {
                 "views": [(self.env.ref("smart_construction_core.view_sc_material_inbound_form").id, "form")],

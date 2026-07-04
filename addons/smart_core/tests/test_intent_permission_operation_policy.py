@@ -457,6 +457,14 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
 
         self.assertEqual(self.env.menu_model.browsed_ids, [41])
 
+    def test_synthetic_navigation_menu_id_uses_action_permission_without_menu_lookup(self):
+        ctx = _Ctx({"intent": "ui.contract.v2", "params": {"menu_id": 877186421, "action_id": 31}})
+
+        self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.env.menu_model.browsed_ids, [])
+        self.assertEqual(self.env.generic_action_model.browsed_ids, [31])
+
     def test_menu_permission_denies_group_mismatch(self):
         self.env.user.groups_id = {1}
         ctx = _Ctx({"intent": "ui.contract", "params": {"menu_id": 42}})
