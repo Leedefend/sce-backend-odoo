@@ -190,6 +190,9 @@
 - `make verify.platform.performance.smoke.schema.guard`
   - Verifies the platform performance smoke JSON/MD report shape.
   - Enforces expected intent coverage, row/summary iteration consistency, threshold field shape, and error/warning count consistency.
+- `make verify.dev.acceptance.release.schema.guard`
+  - Verifies the dev acceptance release probe JSON shape.
+  - Enforces mode/status metadata, backup/frontend/login block status consistency, and key frontend/login check field types.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
