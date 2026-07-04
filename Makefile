@@ -3952,6 +3952,12 @@ verify.phasex.operating.summary: guard.prod.forbid
 
 verify.bundle.installation.ready: guard.prod.forbid
 	@python3 scripts/verify/bundle_installation_ready.py
+	@python3 scripts/verify/product_hardening_schema_guard.py --report bundle
+
+.PHONY: verify.bundle.installation.ready.schema.guard
+verify.bundle.installation.ready.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/product_hardening_schema_guard.py
+	@python3 scripts/verify/product_hardening_schema_guard.py --report bundle
 
 verify.product.tier.ready: guard.prod.forbid
 	@python3 scripts/verify/product_tier_ready.py
@@ -4464,6 +4470,12 @@ verify.contract.compat: guard.prod.forbid
 
 verify.platform.performance.smoke: guard.prod.forbid
 	@python3 scripts/verify/platform_performance_smoke.py
+	@python3 scripts/verify/product_hardening_schema_guard.py --report performance
+
+.PHONY: verify.platform.performance.smoke.schema.guard
+verify.platform.performance.smoke.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/product_hardening_schema_guard.py
+	@python3 scripts/verify/product_hardening_schema_guard.py --report performance
 
 verify.platform.maturity.ready: guard.prod.forbid \
 	verify.platform.distribution.ready \
