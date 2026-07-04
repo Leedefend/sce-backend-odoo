@@ -888,6 +888,314 @@
     "include_meta": true
   },
   {
+    "case": "business_evidence_trace_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "business.evidence.trace",
+    "intent_params": {}
+  },
+  {
+    "case": "chatter_activity_schedule_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "chatter.activity.schedule",
+    "intent_params": {}
+  },
+  {
+    "case": "chatter_activity_update_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "chatter.activity.update",
+    "intent_params": {}
+  },
+  {
+    "case": "collaboration_users_search_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "collaboration.users.search",
+    "intent_params": {}
+  },
+  {
+    "case": "cost_tracking_block_fetch_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "cost.tracking.block.fetch",
+    "intent_params": {}
+  },
+  {
+    "case": "cost_tracking_record_create_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "cost.tracking.record.create",
+    "intent_params": {}
+  },
+  {
+    "case": "dashboard_company_enter_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "dashboard.company.enter",
+    "intent_params": {}
+  },
+  {
+    "case": "global_message_conversations_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "global.message.conversations",
+    "intent_params": {}
+  },
+  {
+    "case": "global_message_inbox_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "global.message.inbox",
+    "intent_params": {}
+  },
+  {
+    "case": "global_message_read_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "global.message.read",
+    "intent_params": {}
+  },
+  {
+    "case": "global_message_send_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "global.message.send",
+    "intent_params": {}
+  },
+  {
+    "case": "payment_block_fetch_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "payment.block.fetch",
+    "intent_params": {}
+  },
+  {
+    "case": "payment_enter_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "payment.enter",
+    "intent_params": {}
+  },
+  {
+    "case": "payment_record_create_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "payment.record.create",
+    "intent_params": {}
+  },
+  {
+    "case": "project_connection_transition_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.connection.transition",
+    "intent_params": {}
+  },
+  {
+    "case": "project_context_search_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.context.search",
+    "intent_params": {}
+  },
+  {
+    "case": "project_dashboard_block_fetch_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.dashboard.block.fetch",
+    "intent_params": {}
+  },
+  {
+    "case": "project_dashboard_open_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.dashboard.open",
+    "intent_params": {}
+  },
+  {
+    "case": "project_entry_context_options_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.entry.context.options",
+    "intent_params": {}
+  },
+  {
+    "case": "project_entry_context_resolve_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.entry.context.resolve",
+    "intent_params": {}
+  },
+  {
+    "case": "project_execution_advance_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.execution.advance",
+    "intent_params": {}
+  },
+  {
+    "case": "project_execution_block_fetch_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.execution.block.fetch",
+    "intent_params": {}
+  },
+  {
+    "case": "project_execution_enter_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.execution.enter",
+    "intent_params": {}
+  },
+  {
+    "case": "project_initiation_enter_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.initiation.enter",
+    "intent_params": {}
+  },
+  {
+    "case": "project_plan_bootstrap_block_fetch_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.plan_bootstrap.block.fetch",
+    "intent_params": {}
+  },
+  {
+    "case": "project_plan_bootstrap_enter_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "project.plan_bootstrap.enter",
+    "intent_params": {}
+  },
+  {
+    "case": "release_operator_approve_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "release.operator.approve",
+    "intent_params": {}
+  },
+  {
+    "case": "release_operator_freeze_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "release.operator.freeze",
+    "intent_params": {}
+  },
+  {
+    "case": "release_operator_promote_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "release.operator.promote",
+    "intent_params": {}
+  },
+  {
+    "case": "release_operator_rollback_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "release.operator.rollback",
+    "intent_params": {}
+  },
+  {
+    "case": "release_operator_runtime_probe_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "release.operator.runtime_probe",
+    "intent_params": {}
+  },
+  {
+    "case": "release_operator_set_page_enabled_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "release.operator.set_page_enabled",
+    "intent_params": {}
+  },
+  {
+    "case": "release_operator_surface_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "release.operator.surface",
+    "intent_params": {}
+  },
+  {
+    "case": "release_operator_sync_policy_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "release.operator.sync_policy",
+    "intent_params": {}
+  },
+  {
+    "case": "release_operator_update_page_policy_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "release.operator.update_page_policy",
+    "intent_params": {}
+  },
+  {
+    "case": "release_operator_update_policy_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "release.operator.update_policy",
+    "intent_params": {}
+  },
+  {
+    "case": "search_favorite_set_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "search.favorite.set",
+    "intent_params": {}
+  },
+  {
+    "case": "settlement_block_fetch_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "settlement.block.fetch",
+    "intent_params": {}
+  },
+  {
+    "case": "settlement_enter_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "settlement.enter",
+    "intent_params": {}
+  },
+  {
+    "case": "terminal_shell_v2_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "terminal.shell.v2",
+    "intent_params": {}
+  },
+  {
+    "case": "ui_contract_v2_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "ui.contract.v2",
+    "intent_params": {}
+  },
+  {
+    "case": "user_view_preference_get_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "user.view.preference.get",
+    "intent_params": {}
+  },
+  {
+    "case": "user_view_preference_set_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "user.view.preference.set",
+    "intent_params": {}
+  },
+  {
+    "case": "workspace_home_enter_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "workspace.home.enter",
+    "intent_params": {}
+  },
+  {
     "case": "auth_logout_intent_admin",
     "user": "admin",
     "op": "intent.invoke",

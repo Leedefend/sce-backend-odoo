@@ -1,0 +1,85 @@
+task_id: ITER-2026-04-23-GOV-CONTRACT-CATALOG-INFERRED-INTENT-CLEANUP-PB05
+title: Replace inferred contract catalog intent examples with explicit cases
+type: governance_task
+status: review
+priority: high
+mode: implement
+
+goal: >
+  Remove the remaining `verify.contract.catalog` blocker by adding explicit
+  `intent.invoke` catalog cases for handler-discovered intents that currently
+  fall back to generated `__inferred__` examples.
+
+user_visible_outcome:
+  - "verify.contract.catalog no longer fails on inferred intent examples."
+  - "Every exported intent catalog entry has an explicit case-backed example."
+
+scope:
+  allowed_paths:
+    - agent_ops/tasks/ITER-2026-04-23-GOV-CONTRACT-CATALOG-INFERRED-INTENT-CLEANUP-PB05.yaml
+    - docs/contract/cases.yml
+    - docs/contract/exports/intent_catalog.json
+    - docs/contract/exports/scene_catalog.json
+    - docs/contract/snapshots/*_intent_admin.json
+    - docs/ops/iterations/delivery_context_switch_log_v1.md
+  forbidden_paths:
+    - addons/**
+    - frontend/**
+    - migrations/**
+    - security/**
+
+limits:
+  max_files: 49
+  forbid_repo_wide_scan: true
+  use_new_session: true
+  carry_long_context: false
+
+change_rules:
+  - add explicit catalog cases only
+  - add catalog placeholder snapshots only for cases that do not have runtime snapshots yet
+  - do not change handler ownership or runtime code
+  - do not weaken inferred intent guard
+  - keep generated catalog exports aligned with cases
+
+architecture:
+  layer_target: Governance Layer
+  module: contract catalog inferred intent cleanup
+  module_owner: docs contract catalog
+  kernel_or_scenario: kernel
+  reason: >
+    The contract catalog exporter intentionally marks handler-discovered intents
+    without explicit cases as `__inferred__`, and the guard now rejects those
+    placeholders. A bounded catalog-governance batch is required to make the
+    examples explicit rather than inferred.
+
+acceptance:
+  commands:
+    - git diff --check -- agent_ops/tasks/ITER-2026-04-23-GOV-CONTRACT-CATALOG-INFERRED-INTENT-CLEANUP-PB05.yaml docs/contract/cases.yml docs/contract/exports/intent_catalog.json docs/contract/exports/scene_catalog.json docs/ops/iterations/delivery_context_switch_log_v1.md
+    - make verify.contract.catalog
+
+risk:
+  level: low
+  manual_approval_required: false
+
+stop_conditions:
+  - forbidden_path_touched
+  - verify_failed
+  - runtime_code_change_required
+
+deliverables:
+  - explicit intent catalog cases for formerly inferred examples
+  - refreshed generated contract catalog exports
+  - delivery log checkpoint
+
+validation_result:
+  status: pass
+  passed:
+    - explicit intent.invoke cases added for all formerly inferred catalog entries
+    - catalog placeholder snapshots added for cases without runtime snapshots
+    - make verify.contract.catalog passed
+    - yaml/json parse checks passed for task, cases, and catalog exports
+    - scoped git diff --check passed
+    - no forbidden runtime, addon, frontend, migration, or security paths changed
+
+rollback:
+  - git restore agent_ops/tasks/ITER-2026-04-23-GOV-CONTRACT-CATALOG-INFERRED-INTENT-CLEANUP-PB05.yaml docs/contract/cases.yml docs/contract/exports/intent_catalog.json docs/contract/exports/scene_catalog.json docs/ops/iterations/delivery_context_switch_log_v1.md

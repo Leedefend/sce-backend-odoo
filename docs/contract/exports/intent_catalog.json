@@ -21,7 +21,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 15,
+      "test_refs": 58,
       "request_schema_hint": [
         "fields",
         "fields[]",
@@ -256,17 +256,22 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": true,
-      "test_refs": 3,
+      "test_refs": 7,
       "request_schema_hint": [
         "action",
         "assignee_id",
+        "company_id",
         "context",
+        "current_project_id",
         "export_failed_csv",
         "idempotency_key",
         "ids",
         "ids[]",
         "if_match_map",
         "model",
+        "operationStrategy",
+        "operation_strategy",
+        "project_id",
         "request_id",
         "vals",
         "values"
@@ -402,15 +407,20 @@
       ],
       "stability": "stable",
       "has_idempotency_window": true,
-      "test_refs": 0,
+      "test_refs": 4,
       "request_schema_hint": [
+        "company_id",
         "context",
+        "current_project_id",
         "dry_run",
         "idempotency_key",
         "ids",
         "ifMatch",
         "if_match",
         "model",
+        "operationStrategy",
+        "operation_strategy",
+        "project_id",
         "request_id",
         "res_model",
         "vals",
@@ -477,14 +487,19 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": true,
-      "test_refs": 0,
+      "test_refs": 3,
       "request_schema_hint": [
+        "company_id",
         "context",
+        "current_project_id",
         "dry_run",
         "idempotency_key",
         "ids",
         "ids[]",
         "model",
+        "operationStrategy",
+        "operation_strategy",
+        "project_id",
         "record_ids",
         "request_id",
         "res_model"
@@ -548,8 +563,21 @@
         "changed[]",
         "changed_fields",
         "changed_fields[]",
+        "company_id",
         "context",
+        "contractVersion",
+        "contract_version",
+        "current_project_id",
+        "includeV2Patch",
+        "include_v2_patch",
         "model",
+        "operationStrategy",
+        "operation_strategy",
+        "patchContractVersion",
+        "patch_contract_version",
+        "project_id",
+        "requestId",
+        "request_id",
         "values",
         "values.name"
       ],
@@ -777,33 +805,29 @@
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "business_evidence_trace_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/business_evidence_trace_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "capability.describe",
@@ -935,47 +959,72 @@
         "summary",
         "user_id"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "activity_type_xmlid",
-            "date_deadline",
-            "model",
-            "note",
-            "record_id",
-            "res_id",
-            "summary",
-            "user_id"
+          "case": "chatter_activity_schedule_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/chatter_activity_schedule_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "activity_type_xmlid",
-          "date_deadline",
-          "model",
-          "note",
-          "record_id",
-          "res_id",
-          "summary",
-          "user_id"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
+    },
+    {
+      "intent": "chatter.activity.update",
+      "owner": {
+        "module": "addons/smart_core/handlers/chatter_activity_update.py",
+        "class": "ChatterActivityUpdateHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "action",
+        "activity_id",
+        "id",
+        "model",
+        "note",
+        "record_id",
+        "res_id"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "chatter_activity_update_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/chatter_activity_update_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
     },
     {
       "intent": "chatter.post",
@@ -989,8 +1038,12 @@
       "test_refs": 1,
       "request_schema_hint": [
         "body",
+        "mention_partner_ids",
+        "mention_user_ids",
+        "mentioned_user_ids",
         "mode",
         "model",
+        "partner_ids",
         "record_id",
         "res_id",
         "subject"
@@ -1104,6 +1157,45 @@
       "inferred_example": null
     },
     {
+      "intent": "collaboration.users.search",
+      "owner": {
+        "module": "addons/smart_core/handlers/collaboration_users.py",
+        "class": "CollaborationUsersSearchHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "limit",
+        "q",
+        "query"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "collaboration_users_search_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/collaboration_users_search_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
       "intent": "cost.tracking.block.fetch",
       "owner": {
         "module": "addons/smart_construction_core/handlers/cost_tracking_block_fetch.py",
@@ -1117,35 +1209,29 @@
         "block_key",
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "block_key",
-            "params"
+          "case": "cost_tracking_block_fetch_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/cost_tracking_block_fetch_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "block_key",
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "cost.tracking.enter",
@@ -1524,33 +1610,29 @@
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "cost_tracking_record_create_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/cost_tracking_record_create_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "dashboard.company.enter",
@@ -1563,29 +1645,29 @@
       "has_idempotency_window": false,
       "test_refs": 1,
       "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "dashboard_company_enter_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/dashboard_company_enter_intent_admin.json",
           "request_keys": [],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "execute_button",
@@ -1596,7 +1678,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 2,
+      "test_refs": 7,
       "request_schema_hint": [
         "button",
         "button.name",
@@ -1678,7 +1760,8 @@
         "name",
         "record_id",
         "res_id",
-        "res_model"
+        "res_model",
+        "url"
       ],
       "response_data_schema_hint": [
         "datas",
@@ -1762,6 +1845,159 @@
       "inferred_example": null
     },
     {
+      "intent": "global.message.conversations",
+      "owner": {
+        "module": "addons/smart_core/handlers/global_messages.py",
+        "class": "GlobalMessageConversationsHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "limit"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "global_message_conversations_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/global_message_conversations_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "global.message.inbox",
+      "owner": {
+        "module": "addons/smart_core/handlers/global_messages.py",
+        "class": "GlobalMessageInboxHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "conversation_key",
+        "limit",
+        "since_id"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "global_message_inbox_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/global_message_inbox_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "global.message.read",
+      "owner": {
+        "module": "addons/smart_core/handlers/global_messages.py",
+        "class": "GlobalMessageReadHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "conversation_key",
+        "message_ids"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "global_message_read_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/global_message_read_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "global.message.send",
+      "owner": {
+        "module": "addons/smart_core/handlers/global_messages.py",
+        "class": "GlobalMessageSendHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "body",
+        "recipient_user_ids",
+        "user_ids"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "global_message_send_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/global_message_send_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
       "intent": "load_contract",
       "owner": {
         "module": "addons/smart_core/handlers/load_contract.py",
@@ -1770,7 +2006,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 8,
+      "test_refs": 12,
       "request_schema_hint": [
         "action_id",
         "include",
@@ -1821,7 +2057,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 2,
+      "test_refs": 6,
       "request_schema_hint": [
         "model"
       ],
@@ -2524,7 +2760,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 9,
+      "test_refs": 18,
       "request_schema_hint": [
         "action_id",
         "company_id",
@@ -2590,11 +2826,9 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 154,
+      "test_refs": 214,
       "request_schema_hint": [
         "company_id",
-        "database",
-        "db",
         "login",
         "password"
       ],
@@ -12182,35 +12416,29 @@
         "block_key",
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "block_key",
-            "params"
+          "case": "payment_block_fetch_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/payment_block_fetch_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "block_key",
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "payment.enter",
@@ -12225,33 +12453,29 @@
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "payment_enter_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/payment_enter_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "payment.record.create",
@@ -12266,33 +12490,29 @@
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "payment_record_create_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/payment_record_create_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "payment.request.approve",
@@ -12801,7 +13021,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 1,
+      "test_refs": 24,
       "request_schema_hint": [
         "_debug",
         "capability",
@@ -12861,33 +13081,29 @@
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "project_connection_transition_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_connection_transition_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.context.search",
@@ -12904,37 +13120,29 @@
         "query",
         "search"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "limit",
-            "query",
-            "search"
+          "case": "project_context_search_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_context_search_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "limit",
-          "query",
-          "search"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.dashboard",
@@ -12945,7 +13153,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 10,
+      "test_refs": 20,
       "request_schema_hint": [
         "project_id"
       ],
@@ -13527,35 +13735,29 @@
         "block_key",
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "block_key",
-            "params"
+          "case": "project_dashboard_block_fetch_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_dashboard_block_fetch_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "block_key",
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.dashboard.enter",
@@ -13566,7 +13768,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 3,
+      "test_refs": 13,
       "request_schema_hint": [
         "params",
         "project_id"
@@ -14018,33 +14220,29 @@
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "project_dashboard_open_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_dashboard_open_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.entry.context.options",
@@ -14059,33 +14257,29 @@
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "project_entry_context_options_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_entry_context_options_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.entry.context.resolve",
@@ -14100,33 +14294,29 @@
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "project_entry_context_resolve_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_entry_context_resolve_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.execution.advance",
@@ -14139,29 +14329,29 @@
       "has_idempotency_window": false,
       "test_refs": 0,
       "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "project_execution_advance_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_execution_advance_intent_admin.json",
           "request_keys": [],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.execution.block.fetch",
@@ -14177,35 +14367,29 @@
         "block_key",
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "block_key",
-            "params"
+          "case": "project_execution_block_fetch_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_execution_block_fetch_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "block_key",
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.execution.enter",
@@ -14220,33 +14404,29 @@
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "project_execution_enter_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_execution_enter_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.initiation.enter",
@@ -14263,37 +14443,29 @@
         "name",
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "menu_id",
-            "name",
-            "params"
+          "case": "project_initiation_enter_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_initiation_enter_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "menu_id",
-          "name",
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.plan_bootstrap.block.fetch",
@@ -14309,35 +14481,29 @@
         "block_key",
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "block_key",
-            "params"
+          "case": "project_plan_bootstrap_block_fetch_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_plan_bootstrap_block_fetch_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "block_key",
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "project.plan_bootstrap.enter",
@@ -14352,33 +14518,427 @@
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "project_plan_bootstrap_enter_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/project_plan_bootstrap_enter_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
+    },
+    {
+      "intent": "release.operator.approve",
+      "owner": {
+        "module": "addons/smart_core/handlers/release_operator.py",
+        "class": "ReleaseOperatorApproveHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "action_id",
+        "note"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "release_operator_approve_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/release_operator_approve_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "release.operator.freeze",
+      "owner": {
+        "module": "addons/smart_core/handlers/release_operator.py",
+        "class": "ReleaseOperatorFreezeHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 1,
+      "request_schema_hint": [
+        "note",
+        "product_key",
+        "role_code",
+        "version"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "release_operator_freeze_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/release_operator_freeze_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "release.operator.promote",
+      "owner": {
+        "module": "addons/smart_core/handlers/release_operator.py",
+        "class": "ReleaseOperatorPromoteHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "note",
+        "product_key",
+        "snapshot_id"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "release_operator_promote_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/release_operator_promote_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "release.operator.rollback",
+      "owner": {
+        "module": "addons/smart_core/handlers/release_operator.py",
+        "class": "ReleaseOperatorRollbackHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "note",
+        "product_key",
+        "replace_active",
+        "target_snapshot_id"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "release_operator_rollback_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/release_operator_rollback_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "release.operator.runtime_probe",
+      "owner": {
+        "module": "addons/smart_core/handlers/release_operator.py",
+        "class": "ReleaseOperatorRuntimeProbeHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 1,
+      "request_schema_hint": [
+        "login",
+        "product_key"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "release_operator_runtime_probe_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/release_operator_runtime_probe_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "release.operator.set_page_enabled",
+      "owner": {
+        "module": "addons/smart_core/handlers/release_operator.py",
+        "class": "ReleaseOperatorSetPageEnabledHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 1,
+      "request_schema_hint": [
+        "enabled",
+        "menu_key",
+        "page_key",
+        "product_key",
+        "scene_key"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "release_operator_set_page_enabled_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/release_operator_set_page_enabled_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "release.operator.surface",
+      "owner": {
+        "module": "addons/smart_core/handlers/release_operator.py",
+        "class": "ReleaseOperatorSurfaceHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 1,
+      "request_schema_hint": [
+        "action_limit",
+        "product_key"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "release_operator_surface_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/release_operator_surface_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "release.operator.sync_policy",
+      "owner": {
+        "module": "addons/smart_core/handlers/release_operator.py",
+        "class": "ReleaseOperatorSyncPolicyHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 1,
+      "request_schema_hint": [
+        "preserve_access_level",
+        "preserve_state",
+        "product_key"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "release_operator_sync_policy_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/release_operator_sync_policy_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "release.operator.update_page_policy",
+      "owner": {
+        "module": "addons/smart_core/handlers/release_operator.py",
+        "class": "ReleaseOperatorUpdatePagePolicyHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 1,
+      "request_schema_hint": [
+        "access_level",
+        "enabled",
+        "menu_key",
+        "page_key",
+        "policy_note",
+        "product_key",
+        "release_state",
+        "scene_key"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "release_operator_update_page_policy_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/release_operator_update_page_policy_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
+      "intent": "release.operator.update_policy",
+      "owner": {
+        "module": "addons/smart_core/handlers/release_operator.py",
+        "class": "ReleaseOperatorUpdatePolicyHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 1,
+      "request_schema_hint": [
+        "access_level",
+        "active",
+        "allowed_role_codes",
+        "product_key",
+        "state"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "release_operator_update_policy_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/release_operator_update_policy_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
     },
     {
       "intent": "risk.action.execute",
@@ -14746,8 +15306,7 @@
         "package.upgrade.breaking",
         "package.upgrade.supported_from",
         "package.upgrade.supported_from[]",
-        "package.upgrade.type",
-        "package_json"
+        "package.upgrade.type"
       ],
       "response_data_schema_hint": [
         "checksum",
@@ -15026,7 +15585,6 @@
         "package.upgrade.supported_from",
         "package.upgrade.supported_from[]",
         "package.upgrade.type",
-        "package_json",
         "reason",
         "strategy"
       ],
@@ -15200,55 +15758,31 @@
         "context",
         "domain",
         "is_default",
-        "is_shared",
-        "model",
-        "name",
-        "order",
         "sort"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "action_id",
-            "context",
-            "domain",
-            "is_default",
-            "is_shared",
-            "model",
-            "name",
-            "order",
-            "sort"
+          "case": "search_favorite_set_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/search_favorite_set_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "action_id",
-          "context",
-          "domain",
-          "is_default",
-          "is_shared",
-          "model",
-          "name",
-          "order",
-          "sort"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "session.bootstrap",
@@ -15259,7 +15793,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 2,
+      "test_refs": 4,
       "request_schema_hint": [
         "login",
         "secret"
@@ -15308,40 +15842,34 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 1,
+      "test_refs": 2,
       "request_schema_hint": [
         "block_key",
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "block_key",
-            "params"
+          "case": "settlement_block_fetch_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/settlement_block_fetch_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "block_key",
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "settlement.enter",
@@ -15352,37 +15880,33 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 1,
+      "test_refs": 2,
       "request_schema_hint": [
         "params"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "params"
+          "case": "settlement_enter_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/settlement_enter_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "params"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "system.init",
@@ -15396,7 +15920,7 @@
       ],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 10,
+      "test_refs": 11,
       "request_schema_hint": [
         "home_action_id",
         "root_xmlid",
@@ -15497,6 +16021,46 @@
       "inferred_example": null
     },
     {
+      "intent": "terminal.shell.v2",
+      "owner": {
+        "module": "addons/smart_core/handlers/terminal_shell_v2.py",
+        "class": "TerminalShellV2Handler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "app",
+        "appId",
+        "app_id",
+        "scene"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "terminal_shell_v2_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/terminal_shell_v2_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
       "intent": "ui.contract",
       "owner": {
         "module": "addons/smart_core/handlers/ui_contract.py",
@@ -15505,7 +16069,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 7,
+      "test_refs": 49,
       "request_schema_hint": [
         "op",
         "source_mode"
@@ -15531,9 +16095,78 @@
       "inferred_example": null
     },
     {
+      "intent": "ui.contract.v2",
+      "owner": {
+        "module": "addons/smart_core/handlers/ui_contract_v2.py",
+        "class": "UiContractV2Handler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 12,
+      "request_schema_hint": [
+        "actionId",
+        "action_id",
+        "context",
+        "contextRaw",
+        "context_raw",
+        "domainRaw",
+        "domain_raw",
+        "id",
+        "menuId",
+        "menu_id",
+        "model",
+        "modelCode",
+        "model_code",
+        "op",
+        "profile",
+        "recordId",
+        "record_id",
+        "renderProfile",
+        "render_profile",
+        "requestId",
+        "request_id",
+        "resId",
+        "res_id",
+        "sceneKey",
+        "scene_key",
+        "sourceType",
+        "source_type",
+        "subject",
+        "viewId",
+        "viewType",
+        "view_id",
+        "view_type",
+        "with_data"
+      ],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "ui_contract_v2_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/ui_contract_v2_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
+        }
+      ],
+      "inferred_example": null
+    },
+    {
       "intent": "usage.export.csv",
       "owner": {
-        "module": "addons/smart_construction_core/handlers/usage_export_csv.py",
+        "module": "addons/smart_core/handlers/usage_export_csv.py",
         "class": "UsageExportCsvHandler"
       },
       "aliases": [],
@@ -15574,7 +16207,7 @@
     {
       "intent": "usage.report",
       "owner": {
-        "module": "addons/smart_construction_core/handlers/usage_report.py",
+        "module": "addons/smart_core/handlers/usage_report.py",
         "class": "UsageReportHandler"
       },
       "aliases": [],
@@ -15685,7 +16318,7 @@
     {
       "intent": "usage.track",
       "owner": {
-        "module": "addons/smart_construction_core/handlers/usage_track.py",
+        "module": "addons/smart_core/handlers/usage_track.py",
         "class": "UsageTrackHandler"
       },
       "aliases": [],
@@ -15732,49 +16365,34 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "action_id",
-        "model",
-        "model_name",
-        "preference_key",
-        "view_type"
+        "preference_key"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "action_id",
-            "model",
-            "model_name",
-            "preference_key",
-            "view_type"
+          "case": "user_view_preference_get_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/user_view_preference_get_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "action_id",
-          "model",
-          "model_name",
-          "preference_key",
-          "view_type"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "user.view.preference.set",
@@ -15785,52 +16403,35 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "action_id",
-        "model",
-        "model_name",
         "preference",
-        "preference_key",
-        "view_type"
+        "preference_key"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [
-            "action_id",
-            "model",
-            "model_name",
-            "preference",
-            "preference_key",
-            "view_type"
+          "case": "user_view_preference_set_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/user_view_preference_set_intent_admin.json",
+          "request_keys": [],
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
           ],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "action_id",
-          "model",
-          "model_name",
-          "preference",
-          "preference_key",
-          "view_type"
-        ],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "workspace.home.enter",
@@ -15843,29 +16444,29 @@
       "has_idempotency_window": false,
       "test_refs": 1,
       "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "catalog_case",
+        "catalog_case.coverage",
+        "catalog_case.intent",
+        "catalog_case.runtime_snapshot"
+      ],
       "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "workspace_home_enter_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/workspace_home_enter_intent_admin.json",
           "request_keys": [],
-          "response_data_keys": [],
-          "response_error_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "catalog_case",
+            "catalog_case.coverage",
+            "catalog_case.intent",
+            "catalog_case.runtime_snapshot"
+          ],
+          "response_error_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "response_error_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     }
   ]
 }

@@ -1,0 +1,25 @@
+{
+  "action": null,
+  "case": "release_operator_set_page_enabled_intent_admin",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "catalog_case": {
+      "coverage": "explicit_catalog_case",
+      "intent": "release.operator.set_page_enabled",
+      "runtime_snapshot": false
+    }
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}
