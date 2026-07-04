@@ -162,12 +162,16 @@
   - Emits reports:
     - `artifacts/backend/product_delivery_action_closure_report.json`
     - `docs/ops/audit/product_delivery_action_closure_report.md`
+- `make verify.product.delivery.action_closure.schema.guard`
+  - Verifies product delivery action closure JSON/MD report shape and summary counts.
 - `make verify.product.delivery.module_capability.smoke`
   - Verifies in-scope 10 delivery modules are declared in the module capability source and classifies runtime scene readiness separately.
   - Backward-compatible alias: `make verify.product.delivery.module9.smoke`.
   - Emits reports:
     - `artifacts/backend/product_delivery_module9_smoke_report.json`
     - `docs/ops/audit/product_delivery_module9_smoke_report.md`
+- `make verify.product.delivery.module_capability.schema.guard`
+  - Verifies product delivery module capability JSON/MD report shape and runtime count consistency.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.

@@ -4141,6 +4141,12 @@ verify.product.delivery.governance_truth.schema.guard: guard.prod.forbid
 .PHONY: verify.product.delivery.action_closure.smoke
 verify.product.delivery.action_closure.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_action_closure_smoke.py
+	@python3 scripts/verify/product_delivery_smoke_schema_guard.py --report action
+
+.PHONY: verify.product.delivery.action_closure.schema.guard
+verify.product.delivery.action_closure.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/product_delivery_smoke_schema_guard.py
+	@python3 scripts/verify/product_delivery_smoke_schema_guard.py --report action
 
 .PHONY: verify.delivery.payment_approval.chain_summary
 verify.delivery.payment_approval.chain_summary: guard.prod.forbid
@@ -4198,6 +4204,12 @@ verify.delivery.default_scene.semantic_monitor: guard.prod.forbid check-compose-
 .PHONY: verify.product.delivery.module_capability.smoke verify.product.delivery.module9.smoke
 verify.product.delivery.module_capability.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_module9_smoke.py
+	@python3 scripts/verify/product_delivery_smoke_schema_guard.py --report module
+
+.PHONY: verify.product.delivery.module_capability.schema.guard
+verify.product.delivery.module_capability.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/product_delivery_smoke_schema_guard.py
+	@python3 scripts/verify/product_delivery_smoke_schema_guard.py --report module
 
 verify.product.delivery.module9.smoke: verify.product.delivery.module_capability.smoke
 
