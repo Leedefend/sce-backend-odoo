@@ -203,6 +203,34 @@ REQUIRED_SECTION_LISTS = (
     ),
 )
 
+REQUIRED_TEXT_SNIPPETS = (
+    (
+        "This target expands to `make verify.product.release.ready` and must be green\n"
+        "before the final tag."
+    ),
+    (
+        "The readiness chain includes `make verify.docs.product_boundary`, so new addon\n"
+        "modules and product-boundary edits must keep the formal product boundary\n"
+        "catalog complete before release."
+    ),
+    (
+        "The readiness chain also includes `make verify.product.menu.release.ready`, so\n"
+        "formal product menu changes, system configuration entries, and runtime user\n"
+        "menu configuration boundaries must pass the menu release gate before release."
+    ),
+    (
+        "The readiness chain also includes\n"
+        "`make verify.frontend.widget_richness.post_ga.guard`, so x2many inline editing,\n"
+        "backend subviews, kanban/view-type semantics, and v2 chatter/attachments\n"
+        "projection remain part of formal hardening."
+    ),
+    (
+        "The platform performance sub-gate must measure the Web boot path with\n"
+        "`scene_ready_mode=registry`; full scene hydration remains a deep-link/runtime\n"
+        "path and is not the baseline startup payload."
+    ),
+)
+
 
 def _heading_order(text: str) -> tuple[str, ...]:
     return tuple(line.strip() for line in text.splitlines() if line.startswith("## "))
@@ -274,6 +302,12 @@ def _contains_required_section_lists(text: str, errors: list[str]) -> None:
             )
 
 
+def _contains_required_text_snippets(text: str, errors: list[str]) -> None:
+    for snippet in REQUIRED_TEXT_SNIPPETS:
+        if snippet not in text:
+            errors.append(f"checklist missing required text snippet: {snippet}")
+
+
 def main() -> int:
     errors: list[str] = []
     if not CHECKLIST.is_file():
@@ -289,6 +323,7 @@ def main() -> int:
         _contains_required_section_order(text, errors)
         _contains_required_command_blocks(text, errors)
         _contains_required_section_lists(text, errors)
+        _contains_required_text_snippets(text, errors)
 
     if errors:
         print("[release_v2_0_0_checklist_guard] FAIL")
