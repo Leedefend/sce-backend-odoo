@@ -91,5 +91,11 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 - Evidence shape guards:
   - `make verify.bundle.installation.ready.schema.guard`
   - `make verify.platform.performance.smoke.schema.guard`
+- Schema-only guard runs may use recorded artifact directories to verify evidence
+  shape, but recorded sample artifacts are not release signoff evidence.
 - Note: before creating `gate-release-v2.0` or `v2.0.0-rc1`, rerun required
   gates on a clean reviewed release database and attach the fresh artifacts.
+- Note: before creating final `v2.0.0`, rerun
+  `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
+  against the recorded prod-sim acceptance run directory for that release
+  candidate.
