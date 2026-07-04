@@ -122,6 +122,7 @@ VERIFY_README_TOKENS = (
     "evidence table row content/order",
     "current local verification status structure",
     "controlled-doc artifact coverage",
+    "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target dependencies and guard recipes",
     "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, versioning formal release line, and promotion order shape",

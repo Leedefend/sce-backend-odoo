@@ -111,6 +111,13 @@ REQUIRED_LOCAL_STATUS_ITEMS = (
     "Note: before creating final `v2.0.0`, rerun",
 )
 
+REQUIRED_EVIDENCE_RULES = (
+    "Evidence from `sc_prod_sim` must not be presented as `sc_prod` evidence.",
+    "Production deployment evidence is recorded separately after supervised",
+    "Snapshot changes must include the command that produced them.",
+    "Failed evidence is not overwritten without preserving the failure reason in an",
+)
+
 
 def _table_rows_for_section(text: str, heading: str) -> tuple[tuple[str, str, str, str], ...] | None:
     lines = text.splitlines()
@@ -182,6 +189,18 @@ def _contains_required_local_status_items(text: str, errors: list[str]) -> None:
         )
 
 
+def _contains_required_evidence_rules(text: str, errors: list[str]) -> None:
+    actual_items = _top_level_bullets_after_heading(text, "## Evidence Rules")
+    if actual_items is None:
+        errors.append("manifest missing section: ## Evidence Rules")
+        return
+    if actual_items != REQUIRED_EVIDENCE_RULES:
+        errors.append(
+            "manifest evidence rules mismatch: "
+            f"expected={REQUIRED_EVIDENCE_RULES!r} actual={actual_items!r}"
+        )
+
+
 def main() -> int:
     errors: list[str] = []
     if not MANIFEST.is_file():
@@ -197,6 +216,7 @@ def main() -> int:
         if text.count("| Evidence | Command | Required Result | Artifact |") != 4:
             errors.append("manifest must contain four evidence tables")
         _contains_required_table_rows(text, errors)
+        _contains_required_evidence_rules(text, errors)
         _contains_required_local_status_items(text, errors)
 
     if errors:
