@@ -1,5 +1,6 @@
 task_id: ITER-2026-04-22-GOV-RESIDUAL-CONSTRUCTION-SCENE-ASSET-ENTRY-TAIL-PA91
 title: Split residual construction scene asset and entry tail from 56b7eba
+status: review
 objective: >
   Isolate the remaining construction scene asset registration and entry-handler
   tail from commit 56b7eba into a bounded child batch for mainline review.
@@ -41,6 +42,14 @@ change_rules:
 acceptance:
   verification_commands:
     - python3 -m py_compile addons/smart_construction_core/handlers/cost_tracking_enter.py addons/smart_construction_core/handlers/project_dashboard_enter.py
+validation_result:
+  status: superseded-pass
+  passed:
+    - corresponding split PR 592 is merged
+    - merged PR title is "[split] construction scene asset entry tail"
+    - no new residual extraction is required from the historical 56b7eba line
+  notes:
+    - This cleanup only adds explicit task status metadata.
 reporting:
   iteration_report_required: true
   include:

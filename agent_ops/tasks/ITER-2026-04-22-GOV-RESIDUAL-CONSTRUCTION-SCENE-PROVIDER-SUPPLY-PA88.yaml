@@ -1,5 +1,6 @@
 task_id: ITER-2026-04-22-GOV-RESIDUAL-CONSTRUCTION-SCENE-PROVIDER-SUPPLY-PA88
 title: Split residual construction scene provider supply slice from 56b7eba
+status: review
 objective: >
   Isolate the scene-layer provider/profile/registry runtime supply slice from
   commit 56b7eba into a bounded child batch for mainline review.
@@ -59,6 +60,14 @@ change_rules:
 acceptance:
   verification_commands:
     - python3 -m py_compile addons/smart_construction_scene/bootstrap/register_scene_providers.py addons/smart_construction_scene/core_extension.py addons/smart_construction_scene/scene_registry.py addons/smart_construction_scene/services/capability_scene_targets.py addons/smart_construction_scene/services/my_work_scene_targets.py addons/smart_construction_scene/services/workflow_rollout_handoff.py
+validation_result:
+  status: superseded-pass
+  passed:
+    - corresponding split PR 589 is merged
+    - merged PR title is "[split] construction scene provider supply residual slice"
+    - no new residual extraction is required from the historical 56b7eba line
+  notes:
+    - This cleanup only adds explicit task status metadata.
 reporting:
   iteration_report_required: true
   include:
