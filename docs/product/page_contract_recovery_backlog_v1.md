@@ -24,6 +24,21 @@
 | `risk.center` | 待开始 | 无 | 无 | 工作台信息层、风险等级中文化、关键状态可读性 | 强化风险可见性与异常提示 |
 | `cost.project_boq` | 待开始 | 无 | 无 | 列表头部一致性、金额/状态语义 | 与 task/risk 做列表收敛 |
 
+## 2026-07-04 契约覆盖口径校准
+
+`project.management`、`projects.ledger`、`projects.list`、`task.center`、
+`risk.center`、`cost.project_boq` 是场景路由回收项，不是
+`page_contracts_builder.py` 中独立的 page key。当前这些入口由通用
+`scene` / `action` / `record` 页面契约与 scene-ready 运行时契约承接。
+
+表格中继续保留“待开始”，仅表示还没有做页面级产品设计回收和专属语义下沉；
+不应解读为缺少通用页面契约覆盖。
+
+最新 guard 证据：
+
+- `make verify.page_contract.sections_schema.guard verify.page_contract.data_source_semantics.guard verify.page_contract.text_key_coverage.guard` PASS。
+- `make verify.frontend.page_contract.sections_coverage.guard verify.frontend.page_contract.key_consistency.guard verify.frontend.page_contract.section_tag_coverage.guard` PASS。
+
 ## 优先下沉字段类型
 
 - 页面标题与副标题（`texts`）。

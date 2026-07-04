@@ -24,6 +24,23 @@
 | `risk.center` | Not started | N/A | N/A | workspace top layer, risk-level localization, key status readability | Emphasize risk visibility and anomaly cues |
 | `cost.project_boq` | Not started | N/A | N/A | list header convergence, amount/status semantics | Converge with task/risk list patterns |
 
+## 2026-07-04 Contract Coverage Calibration
+
+The `project.management`, `projects.ledger`, `projects.list`, `task.center`,
+`risk.center`, and `cost.project_boq` rows are scene-route recovery items, not
+standalone `page_contracts_builder.py` page keys. They are currently carried by
+the generic `scene` / `action` / `record` page contracts and scene-ready runtime
+contracts.
+
+The rows remain `Not started` only for page-specific product design recovery and
+dedicated semantic downshift. They should not be interpreted as missing generic
+page-contract coverage.
+
+Latest guard evidence:
+
+- `make verify.page_contract.sections_schema.guard verify.page_contract.data_source_semantics.guard verify.page_contract.text_key_coverage.guard` PASS.
+- `make verify.frontend.page_contract.sections_coverage.guard verify.frontend.page_contract.key_consistency.guard verify.frontend.page_contract.section_tag_coverage.guard` PASS.
+
 ## Priority Semantic Types to Recover
 
 - Page title/subtitle (`texts`).
