@@ -8,6 +8,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 | Evidence | Command | Required Result | Artifact |
 |---|---|---|---|
 | System capability baseline | `make verify.system.capability_baseline.report` | PASS | `artifacts/backend/system_capability_baseline_report.json` |
+| System capability baseline schema | `make verify.system.capability_baseline.report.schema.guard` | PASS | `artifacts/backend/system_capability_baseline_report.json` |
 | Backend contract closure | `make verify.backend.contract.closure.mainline` | PASS | `artifacts/backend/backend_contract_closure_mainline_summary.json` |
 | Restricted product mainline | `make verify.restricted` | PASS | `artifacts/backend/delivery_mainline_run_summary.json` |
 | Restricted product mainline schema | `make verify.product.delivery.mainline.summary.schema.guard` | PASS | `artifacts/backend/delivery_mainline_run_summary.json` |
