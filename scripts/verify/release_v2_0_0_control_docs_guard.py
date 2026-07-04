@@ -124,7 +124,7 @@ VERIFY_README_TOKENS = (
     "controlled-doc artifact coverage",
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
-    "release indexes, verification catalog, and Makefile target dependencies and guard recipes",
+    "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
     "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, versioning formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
@@ -295,6 +295,16 @@ RELEASE_INDEX_ZH_PLANNED_ITEMS = (
     "GitHub Release：正式 tag 后必须发布",
 )
 
+MAKEFILE_PHONY_TARGETS = (
+    "verify.release.v2_0_0.preflight",
+    "verify.release.v2_0_0.product_hardening",
+    "verify.release.v2_0_0.checklist.guard",
+    "verify.release.v2_0_0.evidence_manifest.guard",
+    "verify.release.v2_0_0.control_docs.guard",
+    "verify.release.v2_0_0.governance.guard",
+    "verify.release.v2_0_0.formal_evidence.schema.guard",
+)
+
 MAKEFILE_TARGET_PREREQS = (
     (
         "verify.release.v2_0_0.preflight",
@@ -398,6 +408,14 @@ def _makefile_prereqs(text: str, target: str) -> tuple[str, ...] | None:
         prereq_text = " ".join(chunk for chunk in chunks if chunk)
         return tuple(prereq_text.split())
     return None
+
+
+def _makefile_phony_targets(text: str) -> tuple[str, ...]:
+    targets: list[str] = []
+    for line in text.splitlines():
+        if line.startswith(".PHONY:"):
+            targets.extend(line[len(".PHONY:") :].strip().split())
+    return tuple(targets)
 
 
 def _makefile_recipe(text: str, target: str) -> tuple[str, ...] | None:
@@ -711,6 +729,10 @@ def _contains_makefile_targets(errors: list[str]) -> None:
         errors.append(f"missing Makefile: {MAKEFILE.relative_to(ROOT).as_posix()}")
         return
     text = MAKEFILE.read_text(encoding="utf-8")
+    phony_targets = _makefile_phony_targets(text)
+    for target in MAKEFILE_PHONY_TARGETS:
+        if target not in phony_targets:
+            errors.append(f"Makefile missing .PHONY target: {target}")
     for target, expected_prereqs in MAKEFILE_TARGET_PREREQS:
         actual_prereqs = _makefile_prereqs(text, target)
         if actual_prereqs is None:
