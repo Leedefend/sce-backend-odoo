@@ -124,10 +124,26 @@ VERIFY_README_TOKENS = (
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target dependencies",
-    "Enforces release document list, release-control boundary and gate command blocks, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, versioning formal release line, and promotion order shape",
+    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, versioning formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
+)
+
+README_STATUS_ITEMS = (
+    "Version: `v2.0.0`",
+    "Status: planned",
+    "Release type: formal release",
+    "Planned gate tag: `gate-release-v2.0`",
+    "Planned RC tag: `v2.0.0-rc1`",
+    "Planned final tag: `v2.0.0`",
+    "Governance date: 2026-05-12",
+)
+
+README_LAYER_TARGET_ITEMS = (
+    "Layer Target: Ops / Release Governance",
+    "Module: versioning, release index, release checklist, release notes, release evidence manifest, verify catalog",
+    "Reason: establish the active formal release line before RC and production",
 )
 
 README_RELEASE_DOCUMENTS = (
@@ -443,6 +459,26 @@ def _contains_readme_release_documents(errors: list[str]) -> None:
         )
 
 
+def _contains_readme_section_list(
+    heading: str,
+    expected_items: tuple[str, ...],
+    errors: list[str],
+) -> None:
+    if not CONTROL_README.is_file():
+        errors.append(f"missing release-control README: {CONTROL_README.relative_to(ROOT).as_posix()}")
+        return
+    text = CONTROL_README.read_text(encoding="utf-8")
+    actual_items = _list_items_after_heading(text, heading)
+    if actual_items is None:
+        errors.append(f"release-control README missing section: {heading}")
+        return
+    if actual_items != expected_items:
+        errors.append(
+            "release-control README section items mismatch: "
+            f"{heading} expected={expected_items!r} actual={actual_items!r}"
+        )
+
+
 def _contains_readme_boundaries(errors: list[str]) -> None:
     if not CONTROL_README.is_file():
         errors.append(f"missing release-control README: {CONTROL_README.relative_to(ROOT).as_posix()}")
@@ -655,6 +691,8 @@ def main() -> int:
     _contains_all(RELEASE_INDEX_EN, RELEASE_INDEX_EN_TOKENS, errors)
     _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
     _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
+    _contains_readme_section_list("## Status", README_STATUS_ITEMS, errors)
+    _contains_readme_section_list("## Layer Target / Module / Reason", README_LAYER_TARGET_ITEMS, errors)
     _contains_readme_release_documents(errors)
     _contains_readme_boundaries(errors)
     _contains_readme_gate_commands(errors)
