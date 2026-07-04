@@ -122,7 +122,7 @@ VERIFY_README_TOKENS = (
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target dependencies",
-    "Enforces release document list, release-notes tag plan and minimum verification commands, and promotion order shape",
+    "Enforces release document list, release-index planned entries, release-notes tag plan and minimum verification commands, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -175,6 +175,36 @@ NOTES_TAG_PLAN_ITEMS = (
     "Gate baseline: `gate-release-v2.0`",
     "Release candidates: `v2.0.0-rc1`, then `v2.0.0-rc2` only if blocker fixes are required.",
     "Formal release: `v2.0.0`",
+)
+
+RELEASE_INDEX_EN_PLANNED_ITEMS = (
+    "v2.0.0 (planned tag: `v2.0.0`)",
+    "Type: release",
+    "Status: planned",
+    "Notes: `docs/ops/release_notes_v2.0.0.md`",
+    "Checklist: `docs/ops/release_checklist_v2.0.0.md`",
+    "Evidence: `docs/ops/releases/v2.0.0/evidence_manifest.md`",
+    "Verify Catalog: `docs/ops/verify/README.md`",
+    "Verify: `make verify.release.v2_0_0.preflight`",
+    "Governance Verify: `make verify.release.v2_0_0.governance.guard`",
+    "Formal Evidence Verify: `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
+    "Evidence Boundary: recorded sample artifacts are not release signoff evidence",
+    "GitHub Release: required after formal tag",
+)
+
+RELEASE_INDEX_ZH_PLANNED_ITEMS = (
+    "v2.0.0（计划 tag：`v2.0.0`）",
+    "类型：release",
+    "状态：planned",
+    "Release Notes：`docs/ops/release_notes_v2.0.0.md`",
+    "Release Checklist：`docs/ops/release_checklist_v2.0.0.md`",
+    "Evidence：`docs/ops/releases/v2.0.0/evidence_manifest.md`",
+    "Verify Catalog：`docs/ops/verify/README.md`",
+    "Verify：`make verify.release.v2_0_0.preflight`",
+    "Governance Verify：`make verify.release.v2_0_0.governance.guard`",
+    "Formal Evidence Verify：`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
+    "Evidence Boundary：历史样本证据不可作为发布签发证据",
+    "GitHub Release：正式 tag 后必须发布",
 )
 
 MAKEFILE_TARGET_PREREQS = (
@@ -273,6 +303,22 @@ def _list_items_after_heading(text: str, heading: str) -> tuple[str, ...] | None
     return tuple(items)
 
 
+def _all_bullet_items_after_heading(text: str, heading: str) -> tuple[str, ...] | None:
+    lines = text.splitlines()
+    try:
+        start = lines.index(heading)
+    except ValueError:
+        return None
+    items: list[str] = []
+    for line in lines[start + 1 :]:
+        if line.startswith("## "):
+            break
+        stripped = line.strip()
+        if stripped.startswith("- "):
+            items.append(stripped[2:].strip())
+    return tuple(items)
+
+
 def _ordered_items_after_marker(text: str, marker: str) -> tuple[str, ...] | None:
     lines = text.splitlines()
     try:
@@ -358,6 +404,27 @@ def _contains_notes_tag_plan(errors: list[str]) -> None:
         )
 
 
+def _contains_release_index_planned_items(
+    path: Path,
+    heading: str,
+    expected_items: tuple[str, ...],
+    errors: list[str],
+) -> None:
+    if not path.is_file():
+        errors.append(f"missing release index: {path.relative_to(ROOT).as_posix()}")
+        return
+    text = path.read_text(encoding="utf-8")
+    actual_items = _all_bullet_items_after_heading(text, heading)
+    if actual_items is None:
+        errors.append(f"{path.relative_to(ROOT).as_posix()} missing section: {heading}")
+        return
+    if actual_items != expected_items:
+        errors.append(
+            f"{path.relative_to(ROOT).as_posix()} planned release items mismatch: "
+            f"expected={expected_items!r} actual={actual_items!r}"
+        )
+
+
 def _contains_promotion_order(path: Path, marker: str, expected_order: tuple[str, ...], errors: list[str]) -> None:
     if not path.is_file():
         errors.append(f"missing promotion-order doc: {path.relative_to(ROOT).as_posix()}")
@@ -402,6 +469,18 @@ def main() -> int:
     _contains_readme_release_documents(errors)
     _contains_notes_minimum_verification(errors)
     _contains_notes_tag_plan(errors)
+    _contains_release_index_planned_items(
+        RELEASE_INDEX_EN,
+        "## Planned Formal Release",
+        RELEASE_INDEX_EN_PLANNED_ITEMS,
+        errors,
+    )
+    _contains_release_index_planned_items(
+        RELEASE_INDEX_ZH,
+        "## 计划正式发布",
+        RELEASE_INDEX_ZH_PLANNED_ITEMS,
+        errors,
+    )
     _contains_promotion_order(CONTROL_README, "## Promotion Order", README_PROMOTION_ORDER, errors)
     _contains_promotion_order(VERSIONING, "Promotion order:", VERSIONING_PROMOTION_ORDER, errors)
     _contains_makefile_targets(errors)
