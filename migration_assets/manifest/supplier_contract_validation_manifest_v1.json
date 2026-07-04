@@ -1,0 +1,46 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "supplier_contract_sc_v1",
+  "business_boundary": {
+    "carrier": "type_in_supplier_expense",
+    "header_amount_write": "excluded",
+    "line_write": "excluded",
+    "state_replay": "excluded",
+    "tax_write": "excluded",
+    "type_key_rename": "excluded"
+  },
+  "db_writes": 0,
+  "generated_at": "2026-04-15T12:00:00+00:00",
+  "odoo_shell": false,
+  "screen_profile": {
+    "blocked_rows": 234,
+    "blocker_counts": {
+      "discard_deleted": 93,
+      "partner_not_in_asset": 132,
+      "project_not_in_asset": 22
+    },
+    "ready_rows": 5301
+  },
+  "source_table": "T_GYSHT_INFO",
+  "target_model": "construction.contract",
+  "target_type": "in",
+  "validation_gates": {
+    "generate_time": [
+      "legacy_supplier_contract_id_unique",
+      "contract_identity_present",
+      "subject_present",
+      "project_external_id_resolves",
+      "partner_external_id_resolves",
+      "type_in_supplier_expense",
+      "type_key_not_renamed",
+      "amount_header_not_written",
+      "tax_not_written",
+      "state_not_written",
+      "line_not_written"
+    ],
+    "postload": [
+      "xml_external_id_resolves",
+      "draft_defaults_apply"
+    ]
+  }
+}

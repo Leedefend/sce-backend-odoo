@@ -1,0 +1,42 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "receipt_counterparty_partner_sc_v1",
+  "baseline_package": true,
+  "business_boundary": {
+    "personal_counterparty_policy": "allowed_for_receipt_partner_id",
+    "target_model_capacity": "payment.request.partner_id is res.partner and does not require company"
+  },
+  "db_writes": 0,
+  "generated_at": "2026-04-15T08:22:33.103406+00:00",
+  "odoo_shell": false,
+  "screen_profile": {
+    "blocked_source_rows": 5468,
+    "ready_partner_records": 250,
+    "route_counts": {
+      "discard_deleted": 49,
+      "missing_partner_ref": 16,
+      "partner_already_in_asset": 3572,
+      "project_not_in_asset": 1975,
+      "supplement_candidate": 1944,
+      "unsafe_partner_name": 16,
+      "zero_or_negative_amount": 1908
+    }
+  },
+  "source": "tmp/raw/receipt/receipt.csv",
+  "target_model": "res.partner",
+  "validation_gates": {
+    "generate_time": [
+      "positive_amount_required",
+      "deleted_rows_excluded",
+      "project_anchor_resolves",
+      "legacy_counterparty_id_required",
+      "legacy_counterparty_name_safe",
+      "personal_partner_supported",
+      "external_id_unique",
+      "no_db_writes"
+    ],
+    "postload": [
+      "xml_external_id_resolves"
+    ]
+  }
+}

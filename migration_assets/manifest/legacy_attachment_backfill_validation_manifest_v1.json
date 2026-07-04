@@ -1,0 +1,31 @@
+{
+  "asset_package_id": "legacy_attachment_backfill_sc_v1",
+  "business_boundary": {
+    "binary_file_custody": "excluded",
+    "business_relation": "included",
+    "ir_attachment_record": "included",
+    "url_strategy": "legacy-file-url"
+  },
+  "db_writes": 0,
+  "generated_at": "2026-04-15T16:20:00+00:00",
+  "lane_counts": {
+    "actual_outflow": 5443,
+    "outflow_request_line": 4689,
+    "project": 464,
+    "project_member": 7860,
+    "supplier_contract": 1,
+    "supplier_contract_line": 1
+  },
+  "manifest_version": "1.0",
+  "matched_target_records": 18456,
+  "odoo_shell": false,
+  "validation_gates": {
+    "generate_time": [
+      "lane_file_external_id_unique",
+      "target_external_id_resolves_by_lane",
+      "attachment_type_url_only",
+      "binary_datas_field_not_emitted",
+      "deleted_files_excluded"
+    ]
+  }
+}

@@ -1,0 +1,797 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+  <data noupdate="1">
+    <record id="legacy_contract_counterparty_sc_430659d9a1b74cb2" model="res.partner">
+      <field name="name">上海二十冶建设有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:430659d9a1b74cb2</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">上海二十冶建设有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_87f060da51089fa4" model="res.partner">
+      <field name="name">中国人寿财产保险股份有限公司德阳市中心支公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:87f060da51089fa4</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国人寿财产保险股份有限公司德阳市中心支公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_cf44c7d3a96bcdac" model="res.partner">
+      <field name="name">中国工程物理研究院科技信息中心</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:cf44c7d3a96bcdac</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国工程物理研究院科技信息中心</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_89387ae77d9080ad" model="res.partner">
+      <field name="name">中国建筑一局（集团）有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:89387ae77d9080ad</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国建筑一局（集团）有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_21a0918fbfe46052" model="res.partner">
+      <field name="name">中国建筑第七工程局有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:21a0918fbfe46052</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国建筑第七工程局有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_d2d062a1299226d6" model="res.partner">
+      <field name="name">中国建筑第八工程局有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:d2d062a1299226d6</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国建筑第八工程局有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_167441c9e759f855" model="res.partner">
+      <field name="name">中国建筑第四工程局有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:167441c9e759f855</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国建筑第四工程局有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_3c09eb0146a60553" model="res.partner">
+      <field name="name">中国核工业中原建设有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:3c09eb0146a60553</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国核工业中原建设有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_3fd9d4fb7685d055" model="res.partner">
+      <field name="name">中国石油天然气第七建设有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:3fd9d4fb7685d055</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国石油天然气第七建设有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_a80c619a60e22e37" model="res.partner">
+      <field name="name">中国移动通信集团四川有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:a80c619a60e22e37</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国移动通信集团四川有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_9fea8096853f9b43" model="res.partner">
+      <field name="name">中国移动通信集团四川有限公司泸州分公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:9fea8096853f9b43</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国移动通信集团四川有限公司泸州分公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_bf9ca90165ddf370" model="res.partner">
+      <field name="name">中国第二重型机械集团万航模锻有限责任公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:bf9ca90165ddf370</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国第二重型机械集团万航模锻有限责任公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_e73b3cdad8d89dbc" model="res.partner">
+      <field name="name">中国第二重型机械集团德阳我哪行模锻有限责任公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:e73b3cdad8d89dbc</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国第二重型机械集团德阳我哪行模锻有限责任公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_dff38fae42917ccb" model="res.partner">
+      <field name="name">中国联合网络通信有限公司成都市分公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:dff38fae42917ccb</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国联合网络通信有限公司成都市分公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_38ce4887481f5e50" model="res.partner">
+      <field name="name">中国铁建大桥工程局集团有限公司 旌阳区城市地下综合管廊建设项目经理部</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:38ce4887481f5e50</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中国铁建大桥工程局集团有限公司 旌阳区城市地下综合管廊建设项目经理部</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_7b6300f99b56aa95" model="res.partner">
+      <field name="name">中岗第二重型机械集团德阳万航模锻有限责任公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:7b6300f99b56aa95</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中岗第二重型机械集团德阳万航模锻有限责任公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_343a51835a707df4" model="res.partner">
+      <field name="name">中建二局第二建筑工程有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:343a51835a707df4</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中建二局第二建筑工程有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_70f2690a1140cec3" model="res.partner">
+      <field name="name">中建四局建设发展有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:70f2690a1140cec3</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中建四局建设发展有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_6f85e48e496f112d" model="res.partner">
+      <field name="name">中建四局第一建设有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:6f85e48e496f112d</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中建四局第一建设有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_e1767fb8d58eff21" model="res.partner">
+      <field name="name">中江凯兴建设投资有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:e1767fb8d58eff21</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中江凯兴建设投资有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_77e681b152504233" model="res.partner">
+      <field name="name">中江县辑庆镇尖寨村股份经济合作联合社</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:77e681b152504233</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中江县辑庆镇尖寨村股份经济合作联合社</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_27b4778e677b0b0b" model="res.partner">
+      <field name="name">中石化西南石油工程有限公司油田工程服务分公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:27b4778e677b0b0b</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中石化西南石油工程有限公司油田工程服务分公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_336c1acaddb51d21" model="res.partner">
+      <field name="name">中铁十九局集团有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:336c1acaddb51d21</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中铁十九局集团有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_a2fa6ea9e973f58f" model="res.partner">
+      <field name="name">中铁十八局集团有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:a2fa6ea9e973f58f</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中铁十八局集团有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_a59fd3187a4cd8f1" model="res.partner">
+      <field name="name">中铁十八局集团有限公司巴中恩阳临港产业园项目经理部</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:a59fd3187a4cd8f1</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">中铁十八局集团有限公司巴中恩阳临港产业园项目经理部</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_852308063e82c68f" model="res.partner">
+      <field name="name">二重德阳储能科技有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:852308063e82c68f</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">二重德阳储能科技有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_1d12391f59e8dac8" model="res.partner">
+      <field name="name">二重（德阳）重型装备有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:1d12391f59e8dac8</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">二重（德阳）重型装备有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_a118974acf07c396" model="res.partner">
+      <field name="name">伟宸建设集团有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:a118974acf07c396</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">伟宸建设集团有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_c79a4e9756d34ded" model="res.partner">
+      <field name="name">保利长大工程有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:c79a4e9756d34ded</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">保利长大工程有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_ebafa0d3a9b41485" model="res.partner">
+      <field name="name">六盘水金地嘉仁物业服务有限公司荣昌分公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:ebafa0d3a9b41485</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">六盘水金地嘉仁物业服务有限公司荣昌分公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_78fd0cafe048c22e" model="res.partner">
+      <field name="name">四川天顺科技服务有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:78fd0cafe048c22e</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川天顺科技服务有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_707cb840567d9f85" model="res.partner">
+      <field name="name">四川定弘邦路桥工程有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:707cb840567d9f85</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川定弘邦路桥工程有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_eb7166843dfe9232" model="res.partner">
+      <field name="name">四川山水美地农业投资有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:eb7166843dfe9232</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川山水美地农业投资有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_61ee719c30cbca41" model="res.partner">
+      <field name="name">四川建筑职业技术学院</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:61ee719c30cbca41</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川建筑职业技术学院</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_cf44693f3e2939a2" model="res.partner">
+      <field name="name">四川建设发展股份有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:cf44693f3e2939a2</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川建设发展股份有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_647e3b39ac9e3ae1" model="res.partner">
+      <field name="name">四川昌意兴建筑劳务有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:647e3b39ac9e3ae1</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川昌意兴建筑劳务有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_3aef2ad376c624bb" model="res.partner">
+      <field name="name">四川汉南供水有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:3aef2ad376c624bb</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川汉南供水有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_bf899a53605bde6a" model="res.partner">
+      <field name="name">四川省东方兴发建设集团有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:bf899a53605bde6a</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川省东方兴发建设集团有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_fd29cb64f77b1b50" model="res.partner">
+      <field name="name">四川省第四建筑有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:fd29cb64f77b1b50</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川省第四建筑有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_2187ea5bbee434b0" model="res.partner">
+      <field name="name">四川省绵阳外国语学校</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:2187ea5bbee434b0</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川省绵阳外国语学校</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_02bc41b960717458" model="res.partner">
+      <field name="name">四川纹江致远建筑开发工程有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:02bc41b960717458</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川纹江致远建筑开发工程有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_d41610756a7cb04d" model="res.partner">
+      <field name="name">四川自贡汇东发展股份有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:d41610756a7cb04d</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">四川自贡汇东发展股份有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_36c135b029d434d6" model="res.partner">
+      <field name="name">国网新疆电力有限公司喀什供电公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:36c135b029d434d6</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">国网新疆电力有限公司喀什供电公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_af2a6c0f51042e4b" model="res.partner">
+      <field name="name">国营川西机器厂</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:af2a6c0f51042e4b</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">国营川西机器厂</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_d9004052aec6c53f" model="res.partner">
+      <field name="name">垫江县小厦建筑有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:d9004052aec6c53f</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">垫江县小厦建筑有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_f8407065d92d07d3" model="res.partner">
+      <field name="name">塔什库尔干县塔什库尔干乡人民政府</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:f8407065d92d07d3</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">塔什库尔干县塔什库尔干乡人民政府</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_35000d925ecc3a59" model="res.partner">
+      <field name="name">山东创杰智慧装备科技有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:35000d925ecc3a59</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">山东创杰智慧装备科技有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_9ccecab619f83f95" model="res.partner">
+      <field name="name">广汉市金轮镇人民政府</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:9ccecab619f83f95</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">广汉市金轮镇人民政府</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_b3e284227c6a9a20" model="res.partner">
+      <field name="name">德阳二重新业建筑工程有限责任公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:b3e284227c6a9a20</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳二重新业建筑工程有限责任公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_de9148bc9059d36a" model="res.partner">
+      <field name="name">德阳发展控股集团有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:de9148bc9059d36a</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳发展控股集团有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_58713443b28ea608" model="res.partner">
+      <field name="name">德阳启明酒店管理有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:58713443b28ea608</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳启明酒店管理有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_3c5002663cc40849" model="res.partner">
+      <field name="name">德阳国信建设工程有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:3c5002663cc40849</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳国信建设工程有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_9b1e8ca921dfbbee" model="res.partner">
+      <field name="name">德阳大参林投资有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:9b1e8ca921dfbbee</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳大参林投资有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_09619d9870deea95" model="res.partner">
+      <field name="name">德阳市人民医院</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:09619d9870deea95</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳市人民医院</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_1909f2c926e5c88b" model="res.partner">
+      <field name="name">德阳市住房保障和房地产事务中心</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:1909f2c926e5c88b</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳市住房保障和房地产事务中心</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_1b5584cfe7d6bf4d" model="res.partner">
+      <field name="name">德阳市供水安装工程队</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:1b5584cfe7d6bf4d</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳市供水安装工程队</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_549de8f850928794" model="res.partner">
+      <field name="name">德阳市勘察测绘设计院</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:549de8f850928794</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳市勘察测绘设计院</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_31c4a103d241a777" model="res.partner">
+      <field name="name">德阳市旌创建设工程有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:31c4a103d241a777</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳市旌创建设工程有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_4b8fec8204fdc6ee" model="res.partner">
+      <field name="name">德阳市经济技术开发区城市管理局</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:4b8fec8204fdc6ee</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳市经济技术开发区城市管理局</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_3455e938cd13ac9c" model="res.partner">
+      <field name="name">德阳市罗江区综合行政执法局</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:3455e938cd13ac9c</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳市罗江区综合行政执法局</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_cf16c3be0768fc03" model="res.partner">
+      <field name="name">德阳市自来水公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:cf16c3be0768fc03</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳市自来水公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_5bfb710cce559c0b" model="res.partner">
+      <field name="name">德阳新铁医院有限责任公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:5bfb710cce559c0b</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳新铁医院有限责任公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_5ca9338c60f26979" model="res.partner">
+      <field name="name">德阳旌信物业服务股份有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:5ca9338c60f26979</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳旌信物业服务股份有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_a568d0a534d30b29" model="res.partner">
+      <field name="name">德阳经开建设工程有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:a568d0a534d30b29</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳经开建设工程有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_5ce772a23a4ec0de" model="res.partner">
+      <field name="name">德阳经济技术开发区第四幼儿园</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:5ce772a23a4ec0de</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">德阳经济技术开发区第四幼儿园</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_d1b397bbf30b42da" model="res.partner">
+      <field name="name">拉萨市柳梧新区管理委员会</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:d1b397bbf30b42da</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">拉萨市柳梧新区管理委员会</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_c473783734fa1d1c" model="res.partner">
+      <field name="name">新疆维吾尔自治区岳普湖县自然资源局</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:c473783734fa1d1c</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">新疆维吾尔自治区岳普湖县自然资源局</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_7c5c3354c418fcee" model="res.partner">
+      <field name="name">旌阳区德新镇五星村股份经济合作联合社</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:7c5c3354c418fcee</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">旌阳区德新镇五星村股份经济合作联合社</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_2050585783892519" model="res.partner">
+      <field name="name">深圳友唱技术有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:2050585783892519</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">深圳友唱技术有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_32eab3084394887a" model="res.partner">
+      <field name="name">深圳市捷顺科技实业股份有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:32eab3084394887a</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">深圳市捷顺科技实业股份有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_76540debad386685" model="res.partner">
+      <field name="name">绵竹市金申建筑有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:76540debad386685</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">绵竹市金申建筑有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_4f79ac355549f37e" model="res.partner">
+      <field name="name">绵阳市安州区桑枣镇小学</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:4f79ac355549f37e</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">绵阳市安州区桑枣镇小学</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_1715a3b3926ea240" model="res.partner">
+      <field name="name">绵阳市安州区雎水镇沸水小学</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:1715a3b3926ea240</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">绵阳市安州区雎水镇沸水小学</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_a89105ba84c2d877" model="res.partner">
+      <field name="name">绵阳市安州区雎水镇皇帽村村民委员会</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:a89105ba84c2d877</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">绵阳市安州区雎水镇皇帽村村民委员会</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_fa3a483d1ceb3e84" model="res.partner">
+      <field name="name">绵阳市安州区高级职业中学</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:fa3a483d1ceb3e84</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">绵阳市安州区高级职业中学</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_64256a85327503ce" model="res.partner">
+      <field name="name">绵阳皓华光电科技有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:64256a85327503ce</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">绵阳皓华光电科技有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_7d53f86914a8a746" model="res.partner">
+      <field name="name">航天凯天环保科技股份有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:7d53f86914a8a746</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">航天凯天环保科技股份有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_9f3b659e72e19e13" model="res.partner">
+      <field name="name">西藏华泰龙矿业开发有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:9f3b659e72e19e13</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">西藏华泰龙矿业开发有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_6e3a4274a053ab21" model="res.partner">
+      <field name="name">重庆两江新区物业管理有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:6e3a4274a053ab21</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">重庆两江新区物业管理有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_469d482e65044505" model="res.partner">
+      <field name="name">重庆巴驿公共交通战场管理有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:469d482e65044505</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">重庆巴驿公共交通战场管理有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_0ea7147eee725e72" model="res.partner">
+      <field name="name">重庆市合川区人民政府合阳城街道办事处</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:0ea7147eee725e72</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">重庆市合川区人民政府合阳城街道办事处</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_e2059ce351c8ad2d" model="res.partner">
+      <field name="name">重庆市城投路桥管理有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:e2059ce351c8ad2d</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">重庆市城投路桥管理有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_e4acfc317a63ef7c" model="res.partner">
+      <field name="name">重庆市永川区水利站</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:e4acfc317a63ef7c</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">重庆市永川区水利站</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_1ddbd694ee99081b" model="res.partner">
+      <field name="name">重庆市渝北区双龙水库管理所</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:1ddbd694ee99081b</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">重庆市渝北区双龙水库管理所</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_900a452f0dc2d29a" model="res.partner">
+      <field name="name">重庆未至科技有限公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:900a452f0dc2d29a</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">重庆未至科技有限公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_c5ea063fbeed1ef8" model="res.partner">
+      <field name="name">重庆机场集团有限公司航空物流园发展分公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:c5ea063fbeed1ef8</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">重庆机场集团有限公司航空物流园发展分公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_0cc8b31a3d0cc5ef" model="res.partner">
+      <field name="name">雅安蜀天开发建设有限责任公司</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:0cc8b31a3d0cc5ef</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">雅安蜀天开发建设有限责任公司</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+    <record id="legacy_contract_counterparty_sc_228961479ad68bf6" model="res.partner">
+      <field name="name">青海省玉树公路路政执法支队</field>
+      <field name="company_type">company</field>
+      <field name="is_company">1</field>
+      <field name="legacy_partner_id">contract_counterparty:228961479ad68bf6</field>
+      <field name="legacy_partner_source">contract_counterparty</field>
+      <field name="legacy_partner_name">青海省玉树公路路政执法支队</field>
+      <field name="legacy_source_evidence">tmp/raw/contract/contract.csv:T_ProjectContract_Out.FBF/CBF</field>
+    </record>
+  </data>
+</odoo>

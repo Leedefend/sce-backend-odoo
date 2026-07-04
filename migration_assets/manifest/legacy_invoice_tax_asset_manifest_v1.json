@@ -1,0 +1,76 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "legacy_invoice_tax_sc_v1",
+  "assets": [
+    {
+      "path": "30_relation/legacy_invoice_tax/legacy_invoice_tax_v1.xml",
+      "sha256": "b96acadaeaa1c1f85fda4ea8e30e41771af541fafa0744627c840e0416183e6f",
+      "type": "xml"
+    },
+    {
+      "path": "manifest/legacy_invoice_tax_external_id_manifest_v1.json",
+      "sha256": "414f327a44775ef4d42bd2a486ddfa8eda5dcd4bd095330e3b301fcc91d83315",
+      "type": "external_id_manifest"
+    },
+    {
+      "path": "manifest/legacy_invoice_tax_validation_manifest_v1.json",
+      "sha256": "e413497f5d8b1c9f54bd9a2b43083ccc4cfd4f57ad6bd90291f3b8ef1e26e56d",
+      "type": "validation_manifest"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "blocked_reason_counts": {
+      "amount_and_tax_not_positive_or_missing": 2612,
+      "deleted": 623,
+      "missing_counterparty_evidence": 14734,
+      "missing_project_id": 9,
+      "project_not_assetized": 132
+    },
+    "blocked_records": 15403,
+    "direction_counts": {
+      "input_invoice": 1913,
+      "output_invoice": 3103,
+      "prepaid_tax": 904
+    },
+    "family_counts": {
+      "input_invoice_handover": 1913,
+      "invoice_issue_request": 222,
+      "output_invoice_register": 2881,
+      "prepaid_tax_register": 904
+    },
+    "loadable_records": 5920,
+    "partner_counts": {
+      "partner_name_text": 5698,
+      "partner_tax_no_text": 222
+    },
+    "raw_rows": 21323,
+    "source_table_counts": {
+      "C_JXXP_KJFPSQ": 260,
+      "C_JXXP_XXKPDJ": 3157,
+      "C_JXXP_YJSKDJ": 1290,
+      "C_JXXP_ZYFPJJD": 16616
+    }
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "project_sc_v1",
+    "partner_sc_v1"
+  ],
+  "generated_at": "2026-04-15T18:10:00+00:00",
+  "lane": {
+    "lane_id": "legacy_invoice_tax",
+    "layer": "30_relation",
+    "load_phase": 30
+  },
+  "odoo_shell": false,
+  "target": {
+    "model": "sc.legacy.invoice.tax.fact",
+    "source_tables": [
+      "C_JXXP_KJFPSQ",
+      "C_JXXP_XXKPDJ",
+      "C_JXXP_YJSKDJ",
+      "C_JXXP_ZYFPJJD"
+    ]
+  }
+}

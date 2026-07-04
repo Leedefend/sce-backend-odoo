@@ -1,0 +1,85 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "project_sc_v1",
+  "assets": [
+    {
+      "asset_id": "project_master_xml_v1",
+      "format": "xml",
+      "path": "10_master/project/project_master_v1.xml",
+      "record_count": 755,
+      "required": true,
+      "sha256": "1ec12a858e8e9455e90a1e2ec4762d946273d96fd88dabb2e60abcc34a8e7261"
+    },
+    {
+      "asset_id": "project_external_id_manifest_v1",
+      "format": "json",
+      "path": "manifest/project_external_id_manifest_v1.json",
+      "record_count": 755,
+      "required": true,
+      "sha256": "873681f0b8ab86bac3aa637ce73bafeffdf4c6c90d33c2527ddf2c8194986889"
+    },
+    {
+      "asset_id": "project_validation_manifest_v1",
+      "format": "json",
+      "path": "manifest/project_validation_manifest_v1.json",
+      "record_count": 1,
+      "required": true,
+      "sha256": "91bde338c633c484f3f88f754f3bfaab3e6296bfa62647ceeb17e9892d7f5748"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "deferred_records": 10788,
+    "discarded_records": 0,
+    "high_risk_excluded_records": 0,
+    "loadable_records": 755,
+    "normalized_rows": 755,
+    "raw_rows": 755
+  },
+  "db_writes": 0,
+  "dependencies": [],
+  "generated_at": "2026-04-15T06:21:34.438998+00:00",
+  "idempotency": {
+    "conflict_policy": "block_package",
+    "duplicate_policy": "update_existing_same_external_id",
+    "mode": "odoo_xml_external_id"
+  },
+  "lane": {
+    "business_priority": "core_business_body",
+    "lane_id": "project",
+    "layer": "10_master",
+    "risk_class": "normal"
+  },
+  "load_order": [
+    "project_master_xml_v1",
+    "project_external_id_manifest_v1",
+    "project_validation_manifest_v1"
+  ],
+  "odoo_shell": false,
+  "source_snapshot": {
+    "extract_batch_id": "project_xml_baseline_v1",
+    "source_system": "sc",
+    "source_tables": [
+      "project"
+    ]
+  },
+  "target": {
+    "identity_field": "legacy_project_id",
+    "load_strategy": "odoo_xml_external_id",
+    "model": "project.project"
+  },
+  "validation_gates": [
+    "source_project_file_exists",
+    "required_source_headers_present",
+    "legacy_project_id_non_empty",
+    "legacy_project_id_unique",
+    "project_name_present",
+    "external_id_unique",
+    "legacy_identity_key_unique",
+    "deferred_fields_written",
+    "discard_summary_written",
+    "no_lifecycle_fabrication",
+    "no_partner_dependency_fabrication",
+    "no_high_risk_lane_leakage"
+  ]
+}

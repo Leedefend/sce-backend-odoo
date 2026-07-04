@@ -1,0 +1,80 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "receipt_counterparty_partner_sc_v1",
+  "assets": [
+    {
+      "asset_id": "receipt_counterparty_partner_master_xml_v1",
+      "format": "xml",
+      "path": "10_master/receipt_counterparty_partner/receipt_counterparty_partner_master_v1.xml",
+      "record_count": 250,
+      "required": true,
+      "sha256": "30fd3d93ac387bd60dc32ad87c828f50bd60053a28f4c765b275ee45c0b501b8"
+    },
+    {
+      "asset_id": "receipt_counterparty_partner_external_id_manifest_v1",
+      "format": "json",
+      "path": "manifest/receipt_counterparty_partner_external_id_manifest_v1.json",
+      "record_count": 250,
+      "required": true,
+      "sha256": "4e1a8ba46ad1d6eb8201df2b8f3023a07fac1dfabc627fdce4670a3945885352"
+    },
+    {
+      "asset_id": "receipt_counterparty_partner_validation_manifest_v1",
+      "format": "json",
+      "path": "manifest/receipt_counterparty_partner_validation_manifest_v1.json",
+      "record_count": 1,
+      "required": true,
+      "sha256": "13f15f6eee9223563208c356eae3f0f19047d67808f1b973769f3eea53f06f87"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "candidate_receipt_rows": 1944,
+    "discarded_records": 0,
+    "loadable_records": 250,
+    "raw_rows": 250
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "partner_sc_v1"
+  ],
+  "generated_at": "2026-04-15T08:22:33.140453+00:00",
+  "idempotency": {
+    "conflict_policy": "block_package",
+    "duplicate_policy": "update_existing_same_external_id",
+    "mode": "odoo_xml_external_id"
+  },
+  "lane": {
+    "business_priority": "receipt_counterparty_anchor_master",
+    "lane_id": "receipt_counterparty_partner",
+    "layer": "10_master",
+    "risk_class": "supplemental_master_data"
+  },
+  "load_order": [
+    "receipt_counterparty_partner_master_xml_v1",
+    "receipt_counterparty_partner_external_id_manifest_v1",
+    "receipt_counterparty_partner_validation_manifest_v1"
+  ],
+  "odoo_shell": false,
+  "source_snapshot": {
+    "extract_batch_id": "receipt_counterparty_partner_xml_baseline_v1",
+    "source_system": "sc",
+    "source_tables": [
+      "T_ProjectIncome"
+    ]
+  },
+  "target": {
+    "identity_field": "legacy_partner_id",
+    "load_strategy": "odoo_xml_external_id",
+    "model": "res.partner"
+  },
+  "validation_gates": [
+    "positive_amount_required",
+    "deleted_rows_excluded",
+    "project_anchor_resolves",
+    "legacy_counterparty_id_required",
+    "legacy_counterparty_name_safe",
+    "personal_partner_supported",
+    "no_db_writes"
+  ]
+}

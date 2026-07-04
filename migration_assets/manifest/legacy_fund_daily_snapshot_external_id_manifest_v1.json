@@ -1,0 +1,3499 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "legacy_fund_daily_snapshot_sc_v1",
+  "external_id_rule": "legacy_fund_daily_snapshot_sc_<source_table>_<legacy_id>",
+  "lane_id": "legacy_fund_daily_snapshot",
+  "records": [
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_025f5de581114619975fd74b4d525ed4",
+      "legacy_record_id": "025f5de581114619975fd74b4d525ed4",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0398505eea6546e596a6cc7e030b1cde",
+      "legacy_record_id": "0398505eea6546e596a6cc7e030b1cde",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_03d557167f004103abd47d37ee7abbd7",
+      "legacy_record_id": "03d557167f004103abd47d37ee7abbd7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_047c8d05099a4714b1c59fef5e663c57",
+      "legacy_record_id": "047c8d05099a4714b1c59fef5e663c57",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0529ca759dd44f56b60b3fc2152894ea",
+      "legacy_record_id": "0529ca759dd44f56b60b3fc2152894ea",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_053d0f45f2f14883ac2622977bf88ad9",
+      "legacy_record_id": "053d0f45f2f14883ac2622977bf88ad9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_05c35021353044c680302856dea4909d",
+      "legacy_record_id": "05c35021353044c680302856dea4909d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0703a2d35f9f4953aa94feac12dabce7",
+      "legacy_record_id": "0703a2d35f9f4953aa94feac12dabce7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0751265bcfc645b1bdfba306a281c600",
+      "legacy_record_id": "0751265bcfc645b1bdfba306a281c600",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_08a1dea5aa6349939c7a113c61d2704e",
+      "legacy_record_id": "08a1dea5aa6349939c7a113c61d2704e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_08be3d24e1274ecb817a16a55f60a145",
+      "legacy_record_id": "08be3d24e1274ecb817a16a55f60a145",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0a1f4c2a416d402fa96cb359be051078",
+      "legacy_record_id": "0a1f4c2a416d402fa96cb359be051078",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0a7206f747764ccfbe113ba9e16f914e",
+      "legacy_record_id": "0a7206f747764ccfbe113ba9e16f914e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0ab7a8a7145545dabc4ef012f52f4017",
+      "legacy_record_id": "0ab7a8a7145545dabc4ef012f52f4017",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0b31351d10734b69b837f2d1b4a70e9b",
+      "legacy_record_id": "0b31351d10734b69b837f2d1b4a70e9b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0bdfc5e63c2b4f5b85ab0e68b019d42c",
+      "legacy_record_id": "0bdfc5e63c2b4f5b85ab0e68b019d42c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0d368c078bfc481c981e2135c75263be",
+      "legacy_record_id": "0d368c078bfc481c981e2135c75263be",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0d38d0d4b71d4789ad9f303d73959867",
+      "legacy_record_id": "0d38d0d4b71d4789ad9f303d73959867",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0db3424231c341d8abe1e8914a9507dc",
+      "legacy_record_id": "0db3424231c341d8abe1e8914a9507dc",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0dfec75a3d7442f88f3855130a0e82bc",
+      "legacy_record_id": "0dfec75a3d7442f88f3855130a0e82bc",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0eaf3c837e5d4a9e964c66bbc616c768",
+      "legacy_record_id": "0eaf3c837e5d4a9e964c66bbc616c768",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0ef73d58868a48cd8b1db96d018a2d3a",
+      "legacy_record_id": "0ef73d58868a48cd8b1db96d018a2d3a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0efb7680ced14f94a2c8971c724359b7",
+      "legacy_record_id": "0efb7680ced14f94a2c8971c724359b7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_0f0ac6f13f3e48e1aa970d7221275258",
+      "legacy_record_id": "0f0ac6f13f3e48e1aa970d7221275258",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_10519e30173c4015b83992dc24e20499",
+      "legacy_record_id": "10519e30173c4015b83992dc24e20499",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_10596790cea34cbdb3e921a84deae30b",
+      "legacy_record_id": "10596790cea34cbdb3e921a84deae30b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_107e442419c64db3a60d1556584d71c1",
+      "legacy_record_id": "107e442419c64db3a60d1556584d71c1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_12e10759cdd94c9985c19eee1ef86ded",
+      "legacy_record_id": "12e10759cdd94c9985c19eee1ef86ded",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_12ed0f525dbe4afbbb735c52d66195f0",
+      "legacy_record_id": "12ed0f525dbe4afbbb735c52d66195f0",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_135ea3482eff415d8448b09cc7c054b1",
+      "legacy_record_id": "135ea3482eff415d8448b09cc7c054b1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_151964fa1cd3489cb47e32665143d994",
+      "legacy_record_id": "151964fa1cd3489cb47e32665143d994",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1577040183bd4bb6afb42ee49e59013b",
+      "legacy_record_id": "1577040183bd4bb6afb42ee49e59013b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_174bc7ba580f4b0889226f7ab1deae29",
+      "legacy_record_id": "174bc7ba580f4b0889226f7ab1deae29",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_174e2b179a8549abaa9af27388c5755f",
+      "legacy_record_id": "174e2b179a8549abaa9af27388c5755f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_176f39f6e13b41d38cdeeddf566d34c3",
+      "legacy_record_id": "176f39f6e13b41d38cdeeddf566d34c3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_17d2cccfe790491487dbc462d0a8199c",
+      "legacy_record_id": "17d2cccfe790491487dbc462d0a8199c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_183b1656be1d49dc8eb76436b2bb3aa3",
+      "legacy_record_id": "183b1656be1d49dc8eb76436b2bb3aa3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_18cf36ede66740c2b07ad38738ab5e9a",
+      "legacy_record_id": "18cf36ede66740c2b07ad38738ab5e9a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1913080fea5a4897b59686455bb3fe5a",
+      "legacy_record_id": "1913080fea5a4897b59686455bb3fe5a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_191cc343e0284a6499f2ff7c9a1f9c65",
+      "legacy_record_id": "191cc343e0284a6499f2ff7c9a1f9c65",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1a87400f5a7e48cd909d9fcae8532eee",
+      "legacy_record_id": "1a87400f5a7e48cd909d9fcae8532eee",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1ac9fbd8782f41f7b555417944f967a2",
+      "legacy_record_id": "1ac9fbd8782f41f7b555417944f967a2",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1b318bf8b2a046eba1420b2a5f545315",
+      "legacy_record_id": "1b318bf8b2a046eba1420b2a5f545315",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1b83689db54e40f4ae24206579e85637",
+      "legacy_record_id": "1b83689db54e40f4ae24206579e85637",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1bd51100d39b4d26bc135ec1a7ccf24b",
+      "legacy_record_id": "1bd51100d39b4d26bc135ec1a7ccf24b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1c08c813e334467ab95169939b75c40f",
+      "legacy_record_id": "1c08c813e334467ab95169939b75c40f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1cd618d5a7c049e09ee54417d81f8f0c",
+      "legacy_record_id": "1cd618d5a7c049e09ee54417d81f8f0c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1d2b54c0ea344e25a4c9d66063ae8b0f",
+      "legacy_record_id": "1d2b54c0ea344e25a4c9d66063ae8b0f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1d42d83ba820438384c13bc24b4aab07",
+      "legacy_record_id": "1d42d83ba820438384c13bc24b4aab07",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1e0137c8af4c4442ac869b7cd2c00979",
+      "legacy_record_id": "1e0137c8af4c4442ac869b7cd2c00979",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1e3ea86ba7694281b3b7e6b7a1bc2b23",
+      "legacy_record_id": "1e3ea86ba7694281b3b7e6b7a1bc2b23",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1e5cc791ed9547bba8588c203bb1de42",
+      "legacy_record_id": "1e5cc791ed9547bba8588c203bb1de42",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1f34d1b8538d42ad9b3e30e2bfc2d1d0",
+      "legacy_record_id": "1f34d1b8538d42ad9b3e30e2bfc2d1d0",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1f3e672707b34b30bea1a2420aae56b3",
+      "legacy_record_id": "1f3e672707b34b30bea1a2420aae56b3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1f56627e29334704a0b2af906845504f",
+      "legacy_record_id": "1f56627e29334704a0b2af906845504f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1f875402a00f4b36abb20d954843255d",
+      "legacy_record_id": "1f875402a00f4b36abb20d954843255d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_1fd549c024de440e979e2d3b1e922afd",
+      "legacy_record_id": "1fd549c024de440e979e2d3b1e922afd",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_200be8ec28f84470a082c0094d05a730",
+      "legacy_record_id": "200be8ec28f84470a082c0094d05a730",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2034460967ef4e639706b4de6265e18f",
+      "legacy_record_id": "2034460967ef4e639706b4de6265e18f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2044dd0492e946aa9f8dd15d9ea6fc65",
+      "legacy_record_id": "2044dd0492e946aa9f8dd15d9ea6fc65",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_20714ab4ac444c77bcbe4b62f0901fa2",
+      "legacy_record_id": "20714ab4ac444c77bcbe4b62f0901fa2",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2101dced603d48769552b923bd4fd3ee",
+      "legacy_record_id": "2101dced603d48769552b923bd4fd3ee",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_210c2cf0860146c089ef7346ee7182f6",
+      "legacy_record_id": "210c2cf0860146c089ef7346ee7182f6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_21296717cbd74422b26907d09dba6050",
+      "legacy_record_id": "21296717cbd74422b26907d09dba6050",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_21793ac10cae47508b0c4450854c9975",
+      "legacy_record_id": "21793ac10cae47508b0c4450854c9975",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_21c5664e13ab4118abecacf5fb8bf75a",
+      "legacy_record_id": "21c5664e13ab4118abecacf5fb8bf75a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_22a0074ebbe041709d7899804c2588c2",
+      "legacy_record_id": "22a0074ebbe041709d7899804c2588c2",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_22ab2e270b024f0da8a76b938015e673",
+      "legacy_record_id": "22ab2e270b024f0da8a76b938015e673",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2342169c2f154cde9057b54250e19c80",
+      "legacy_record_id": "2342169c2f154cde9057b54250e19c80",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2349aac2248a42dd88b5d70d5a32d1a5",
+      "legacy_record_id": "2349aac2248a42dd88b5d70d5a32d1a5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_245a3bdcb33e4a6898f04d435c2389eb",
+      "legacy_record_id": "245a3bdcb33e4a6898f04d435c2389eb",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_245cada6c4324018b44e9de97d696388",
+      "legacy_record_id": "245cada6c4324018b44e9de97d696388",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_24e91dbbff794adfb85bc7c6ce881fba",
+      "legacy_record_id": "24e91dbbff794adfb85bc7c6ce881fba",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_24feb63654ce472489c078ca5793697a",
+      "legacy_record_id": "24feb63654ce472489c078ca5793697a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_25db499e836a464fa063b84610faa807",
+      "legacy_record_id": "25db499e836a464fa063b84610faa807",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_26a0c4e9316f47a78af19c143fcc7c11",
+      "legacy_record_id": "26a0c4e9316f47a78af19c143fcc7c11",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2735b87a2eb24ad7bb2c2e61363d3432",
+      "legacy_record_id": "2735b87a2eb24ad7bb2c2e61363d3432",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_27618aee249549e19eccbb0389c2ccad",
+      "legacy_record_id": "27618aee249549e19eccbb0389c2ccad",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_276b7fc2baa74da08d5844b74ad58f9c",
+      "legacy_record_id": "276b7fc2baa74da08d5844b74ad58f9c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_278c56a257174c60a31895317f7ce5e6",
+      "legacy_record_id": "278c56a257174c60a31895317f7ce5e6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_28f2942ecc154aec9b617642332eb415",
+      "legacy_record_id": "28f2942ecc154aec9b617642332eb415",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2a0080bbf95346b595b587738d997e63",
+      "legacy_record_id": "2a0080bbf95346b595b587738d997e63",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2a0d764961824e098850ee6d5230f552",
+      "legacy_record_id": "2a0d764961824e098850ee6d5230f552",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2a1d1761dca54bb5817fe14425ef22cf",
+      "legacy_record_id": "2a1d1761dca54bb5817fe14425ef22cf",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2adc2f3a91874a1aa23061c79155d60b",
+      "legacy_record_id": "2adc2f3a91874a1aa23061c79155d60b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2b994cffb9c84d18bf252027d23369d1",
+      "legacy_record_id": "2b994cffb9c84d18bf252027d23369d1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2c712e249f2345fe9d6837ee447c0dd9",
+      "legacy_record_id": "2c712e249f2345fe9d6837ee447c0dd9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2c796efcbc72466b841145348261a512",
+      "legacy_record_id": "2c796efcbc72466b841145348261a512",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2ce212b39715431bb2277f29ef8af292",
+      "legacy_record_id": "2ce212b39715431bb2277f29ef8af292",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2d1403b21066462e809f3c2b1019d81a",
+      "legacy_record_id": "2d1403b21066462e809f3c2b1019d81a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2dfb7dd2101c488383596a139ac0a75b",
+      "legacy_record_id": "2dfb7dd2101c488383596a139ac0a75b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2eacc141a5b145c9a9afd3e7f93124b5",
+      "legacy_record_id": "2eacc141a5b145c9a9afd3e7f93124b5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2efd3db037924863920686886f8d8cdf",
+      "legacy_record_id": "2efd3db037924863920686886f8d8cdf",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2f06b16df2014f76a20e6d1e0d79f1c6",
+      "legacy_record_id": "2f06b16df2014f76a20e6d1e0d79f1c6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_2f63bd25f70e46849456e1b147c3fbaa",
+      "legacy_record_id": "2f63bd25f70e46849456e1b147c3fbaa",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_30540f32e564464abfdf6d08dbc8b279",
+      "legacy_record_id": "30540f32e564464abfdf6d08dbc8b279",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3113599ab1f34906a02b8dfacc540a3f",
+      "legacy_record_id": "3113599ab1f34906a02b8dfacc540a3f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_313d8830458341368a4837d373b26ee5",
+      "legacy_record_id": "313d8830458341368a4837d373b26ee5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_320cab2f9e7a4208a5e8f8d6bc2ea317",
+      "legacy_record_id": "320cab2f9e7a4208a5e8f8d6bc2ea317",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_324ebe00b8554790bb1052ad75ee1449",
+      "legacy_record_id": "324ebe00b8554790bb1052ad75ee1449",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_33061dded68b4df793eb2217ae757ddd",
+      "legacy_record_id": "33061dded68b4df793eb2217ae757ddd",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3321be2985ad4aecb305bf45b306ea0e",
+      "legacy_record_id": "3321be2985ad4aecb305bf45b306ea0e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3343ed8ac1b04917af309a5ed4a271e3",
+      "legacy_record_id": "3343ed8ac1b04917af309a5ed4a271e3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3370ad753d8a4ddb9345c337ee0dcda5",
+      "legacy_record_id": "3370ad753d8a4ddb9345c337ee0dcda5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_346ebb8db1a247bba31b68482860e838",
+      "legacy_record_id": "346ebb8db1a247bba31b68482860e838",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_34a6c6170a594488bf33139091e35a78",
+      "legacy_record_id": "34a6c6170a594488bf33139091e35a78",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3547093895ca41a5aa8ce3415d002221",
+      "legacy_record_id": "3547093895ca41a5aa8ce3415d002221",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_355de4df323545079edfa41e1bedacaf",
+      "legacy_record_id": "355de4df323545079edfa41e1bedacaf",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_35d8ee1a1d1f49b9bf46195992d65aa6",
+      "legacy_record_id": "35d8ee1a1d1f49b9bf46195992d65aa6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3615d300f22440d69e55bdad1c1d01d7",
+      "legacy_record_id": "3615d300f22440d69e55bdad1c1d01d7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3734e730c2424b19bc66ee88e735a237",
+      "legacy_record_id": "3734e730c2424b19bc66ee88e735a237",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_37ca06dc39d3469dac65df16d1a66d51",
+      "legacy_record_id": "37ca06dc39d3469dac65df16d1a66d51",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3806de4faa474481bc0123c89501e8ec",
+      "legacy_record_id": "3806de4faa474481bc0123c89501e8ec",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_39ebfc8d51104b5995ae3280061aa877",
+      "legacy_record_id": "39ebfc8d51104b5995ae3280061aa877",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3aebfeb2ac4c4cfaaf967a264fc56cc3",
+      "legacy_record_id": "3aebfeb2ac4c4cfaaf967a264fc56cc3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3b511b749bf44b4385e1c15d1b1dbfd9",
+      "legacy_record_id": "3b511b749bf44b4385e1c15d1b1dbfd9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3d233df8c2f044d0aacafb732672ceee",
+      "legacy_record_id": "3d233df8c2f044d0aacafb732672ceee",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3d5835a9f6d1409591236c9937c5d7f9",
+      "legacy_record_id": "3d5835a9f6d1409591236c9937c5d7f9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3de1e9d008cd4b52b7667d2aef94f9d8",
+      "legacy_record_id": "3de1e9d008cd4b52b7667d2aef94f9d8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3e1142f059f84ce49d018fdd64ca01bb",
+      "legacy_record_id": "3e1142f059f84ce49d018fdd64ca01bb",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3ec9ecd8337542c394a4cd6311bf5632",
+      "legacy_record_id": "3ec9ecd8337542c394a4cd6311bf5632",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3eee33a5d8934b6096ed713c73d1484b",
+      "legacy_record_id": "3eee33a5d8934b6096ed713c73d1484b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_3fe0d26c73564c5eb61dd148da231d8b",
+      "legacy_record_id": "3fe0d26c73564c5eb61dd148da231d8b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_41f9b38e5d334994b08977d2bd8f86d9",
+      "legacy_record_id": "41f9b38e5d334994b08977d2bd8f86d9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_42172dbe440347bd8f18ebb6f2a28d99",
+      "legacy_record_id": "42172dbe440347bd8f18ebb6f2a28d99",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_42df1d919c994ec5b11bb1b62fd3d849",
+      "legacy_record_id": "42df1d919c994ec5b11bb1b62fd3d849",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_43f4280f5999409cbb5ffa1371790050",
+      "legacy_record_id": "43f4280f5999409cbb5ffa1371790050",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_44d36edf554b4d8e8a00a328c34cfa3e",
+      "legacy_record_id": "44d36edf554b4d8e8a00a328c34cfa3e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_44e06d9775d24d76bab0bdce174fef88",
+      "legacy_record_id": "44e06d9775d24d76bab0bdce174fef88",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4531263fe6b84e9cac69865835a28ba6",
+      "legacy_record_id": "4531263fe6b84e9cac69865835a28ba6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_45ca676d050c45069de15a4f1509d6b6",
+      "legacy_record_id": "45ca676d050c45069de15a4f1509d6b6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4640b6661fa74ba3b8b4758659761359",
+      "legacy_record_id": "4640b6661fa74ba3b8b4758659761359",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_46c63c45ea6c43b6a34efff8c1e99e73",
+      "legacy_record_id": "46c63c45ea6c43b6a34efff8c1e99e73",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_46ddcbf66f5c4316b3e2b64181ea9bc7",
+      "legacy_record_id": "46ddcbf66f5c4316b3e2b64181ea9bc7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_47410cf39b874c69965b4f6b8ccede2a",
+      "legacy_record_id": "47410cf39b874c69965b4f6b8ccede2a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_47cdb110a1204fa8bf962f40c7c3e357",
+      "legacy_record_id": "47cdb110a1204fa8bf962f40c7c3e357",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_47ce7dbdd87546959af7fbe06f145368",
+      "legacy_record_id": "47ce7dbdd87546959af7fbe06f145368",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_47e85c1a0cbc48a1a34ea469485fecb3",
+      "legacy_record_id": "47e85c1a0cbc48a1a34ea469485fecb3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4977706c620b4fd898cd4b9292a292d1",
+      "legacy_record_id": "4977706c620b4fd898cd4b9292a292d1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4a217b6daa634df2931379610d2b46af",
+      "legacy_record_id": "4a217b6daa634df2931379610d2b46af",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4ae8a071198c4dde8f416371c461e74f",
+      "legacy_record_id": "4ae8a071198c4dde8f416371c461e74f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4bb387656e6741bc89985da341ae1110",
+      "legacy_record_id": "4bb387656e6741bc89985da341ae1110",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4c1e42da6b44462784a1f407a2c3c385",
+      "legacy_record_id": "4c1e42da6b44462784a1f407a2c3c385",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4c3fbc978e69491dbad44dcae6aa7ba9",
+      "legacy_record_id": "4c3fbc978e69491dbad44dcae6aa7ba9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4d4214d0917b41eab9c9cf8608ebf942",
+      "legacy_record_id": "4d4214d0917b41eab9c9cf8608ebf942",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4e1f81b1039447ae9d009319fc35c488",
+      "legacy_record_id": "4e1f81b1039447ae9d009319fc35c488",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4e6dde5e97e84026b1d14a22ca7c98ac",
+      "legacy_record_id": "4e6dde5e97e84026b1d14a22ca7c98ac",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4ee316ab600e46a0a5d29989145dc385",
+      "legacy_record_id": "4ee316ab600e46a0a5d29989145dc385",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4f03126761524d71b25b27f8a0a9977e",
+      "legacy_record_id": "4f03126761524d71b25b27f8a0a9977e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_4f6052a885814d248ea20ce6f674228e",
+      "legacy_record_id": "4f6052a885814d248ea20ce6f674228e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5046c30e735c45f587ea34b64fa35baa",
+      "legacy_record_id": "5046c30e735c45f587ea34b64fa35baa",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5131683deb0943a2803d5b156e38f2ac",
+      "legacy_record_id": "5131683deb0943a2803d5b156e38f2ac",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5253a823689a40aba63954391bdaaf1f",
+      "legacy_record_id": "5253a823689a40aba63954391bdaaf1f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_527e248f5c8f4e178f09be9c3fcd45e6",
+      "legacy_record_id": "527e248f5c8f4e178f09be9c3fcd45e6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_52eec1f0e6fe45ef90c79d417a4d2fc5",
+      "legacy_record_id": "52eec1f0e6fe45ef90c79d417a4d2fc5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_53e1097a691242ff9b72dccf7bb73060",
+      "legacy_record_id": "53e1097a691242ff9b72dccf7bb73060",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_542876b8dbae49029672f5ebeca38283",
+      "legacy_record_id": "542876b8dbae49029672f5ebeca38283",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5442fef4a3bf48acb1da1cfb2c776a5d",
+      "legacy_record_id": "5442fef4a3bf48acb1da1cfb2c776a5d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5452fecc227848ab99317223266d2b59",
+      "legacy_record_id": "5452fecc227848ab99317223266d2b59",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_545f8bbcefdd4a549dc94b2c2b696f37",
+      "legacy_record_id": "545f8bbcefdd4a549dc94b2c2b696f37",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5532107ebdf9441ea5c5c9f71d3227ac",
+      "legacy_record_id": "5532107ebdf9441ea5c5c9f71d3227ac",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5562f917d622454a976088a014ffc157",
+      "legacy_record_id": "5562f917d622454a976088a014ffc157",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_556a23a6360944eeb4f8f61901ebfac5",
+      "legacy_record_id": "556a23a6360944eeb4f8f61901ebfac5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_566e59124b034fe4ae7ac455a8c308a8",
+      "legacy_record_id": "566e59124b034fe4ae7ac455a8c308a8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_572326e2688044f896831be79653fac5",
+      "legacy_record_id": "572326e2688044f896831be79653fac5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_573833f57c474f6ca9d092baafbdfb7f",
+      "legacy_record_id": "573833f57c474f6ca9d092baafbdfb7f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_599e51e1e153435398bb684f62ee8595",
+      "legacy_record_id": "599e51e1e153435398bb684f62ee8595",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_59c99c8084c241aaa24d485671188585",
+      "legacy_record_id": "59c99c8084c241aaa24d485671188585",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5a7a8f2699ed40d5a30b244000efd2a4",
+      "legacy_record_id": "5a7a8f2699ed40d5a30b244000efd2a4",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5b19310dfc7e450b857cf86b4a084a56",
+      "legacy_record_id": "5b19310dfc7e450b857cf86b4a084a56",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5b9dfb0cdfff4d4d9934022329e9cd43",
+      "legacy_record_id": "5b9dfb0cdfff4d4d9934022329e9cd43",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5ba1f4d2f2784711afe130cfaa4ded3e",
+      "legacy_record_id": "5ba1f4d2f2784711afe130cfaa4ded3e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5cf0172d7f7a444f8d5006a19f276d62",
+      "legacy_record_id": "5cf0172d7f7a444f8d5006a19f276d62",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5d443cb07f374a829b223e06f8dedbf6",
+      "legacy_record_id": "5d443cb07f374a829b223e06f8dedbf6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5d8088fd479549a99d9c861bd7d0b4d2",
+      "legacy_record_id": "5d8088fd479549a99d9c861bd7d0b4d2",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5da5a6d29f094e8f8acaa4eea0395aba",
+      "legacy_record_id": "5da5a6d29f094e8f8acaa4eea0395aba",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5dc4ce4af3464e32b8c398fbc687e220",
+      "legacy_record_id": "5dc4ce4af3464e32b8c398fbc687e220",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5dd15d5e48b341339d225be785a9e4d2",
+      "legacy_record_id": "5dd15d5e48b341339d225be785a9e4d2",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5e59662c2e894e188fbf177548e0dff8",
+      "legacy_record_id": "5e59662c2e894e188fbf177548e0dff8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5e90e40123474381a3000ad043b0bfb8",
+      "legacy_record_id": "5e90e40123474381a3000ad043b0bfb8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5f326c929014484d817c64a43c9cecca",
+      "legacy_record_id": "5f326c929014484d817c64a43c9cecca",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5f33c7318545405f8a98e6667dc1fa14",
+      "legacy_record_id": "5f33c7318545405f8a98e6667dc1fa14",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5faff140909a4a03a4ec5a239ffa2f8c",
+      "legacy_record_id": "5faff140909a4a03a4ec5a239ffa2f8c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_5ff957798b6548e78f9ab8428993c186",
+      "legacy_record_id": "5ff957798b6548e78f9ab8428993c186",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_607c70b67e0c447d9ce8c39e7e4fd977",
+      "legacy_record_id": "607c70b67e0c447d9ce8c39e7e4fd977",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_60da0f158a234477906b358c5933cef5",
+      "legacy_record_id": "60da0f158a234477906b358c5933cef5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_60ea7502431d4048be14e8b90a239b1c",
+      "legacy_record_id": "60ea7502431d4048be14e8b90a239b1c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_61f5ab62ec764989ae22e728c21770d6",
+      "legacy_record_id": "61f5ab62ec764989ae22e728c21770d6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_622e6f4153bd4ab3993d473576899666",
+      "legacy_record_id": "622e6f4153bd4ab3993d473576899666",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_626b650c83c946779fa07d9016deb013",
+      "legacy_record_id": "626b650c83c946779fa07d9016deb013",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_628d624f30ba4d6e8b8b2264d6bb3675",
+      "legacy_record_id": "628d624f30ba4d6e8b8b2264d6bb3675",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_63796f1b859d4b2bb75430026b474ceb",
+      "legacy_record_id": "63796f1b859d4b2bb75430026b474ceb",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_6446b53602a94d5e85ce7e3f858d2447",
+      "legacy_record_id": "6446b53602a94d5e85ce7e3f858d2447",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_6457a42f4ace4dd28b29845067bf04c8",
+      "legacy_record_id": "6457a42f4ace4dd28b29845067bf04c8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_66355c2ea5824f3fbec54a4870c24b4b",
+      "legacy_record_id": "66355c2ea5824f3fbec54a4870c24b4b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_6690776f804b4bcaac85107bc6930daf",
+      "legacy_record_id": "6690776f804b4bcaac85107bc6930daf",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_6693fdf4eed14dbf86300adc91104040",
+      "legacy_record_id": "6693fdf4eed14dbf86300adc91104040",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_671a57c8044c4db1aeedcb3bcebd71e5",
+      "legacy_record_id": "671a57c8044c4db1aeedcb3bcebd71e5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_67500672f0d54fea9c40549c197735b3",
+      "legacy_record_id": "67500672f0d54fea9c40549c197735b3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_67cc54d73c79462ab5773c89277fe0fc",
+      "legacy_record_id": "67cc54d73c79462ab5773c89277fe0fc",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_68bab976f9a14043bc5b4d70116d362c",
+      "legacy_record_id": "68bab976f9a14043bc5b4d70116d362c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_68c113f2e7cd48b98d6b27cdc01f5565",
+      "legacy_record_id": "68c113f2e7cd48b98d6b27cdc01f5565",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_692ff9a1980a4230bd2e0f6f14da1cc7",
+      "legacy_record_id": "692ff9a1980a4230bd2e0f6f14da1cc7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_6999edea0df745a39fc77186515af053",
+      "legacy_record_id": "6999edea0df745a39fc77186515af053",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_6b8fb2fbd5214fd3aefd80198cb3e5a1",
+      "legacy_record_id": "6b8fb2fbd5214fd3aefd80198cb3e5a1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_6c35842f6ceb45269a535fb3d543525c",
+      "legacy_record_id": "6c35842f6ceb45269a535fb3d543525c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_6d03550aa537462f915d1f15c3375199",
+      "legacy_record_id": "6d03550aa537462f915d1f15c3375199",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_6f093c4dff644620b858a4d9c5fd3f52",
+      "legacy_record_id": "6f093c4dff644620b858a4d9c5fd3f52",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_6fe6ef7e97564500b2a2a7808aee1d42",
+      "legacy_record_id": "6fe6ef7e97564500b2a2a7808aee1d42",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_70c14f71b38a45e9823f0fd2a7d756f9",
+      "legacy_record_id": "70c14f71b38a45e9823f0fd2a7d756f9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_70d2f7f9c8e144e6a7317dabd525c1bb",
+      "legacy_record_id": "70d2f7f9c8e144e6a7317dabd525c1bb",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_710393e9376144e0ac61870cffb8c38e",
+      "legacy_record_id": "710393e9376144e0ac61870cffb8c38e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_71128985b5f34ebe936da88d3f8dc0e9",
+      "legacy_record_id": "71128985b5f34ebe936da88d3f8dc0e9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_71387b5d32cd40c08a91d9081a067d17",
+      "legacy_record_id": "71387b5d32cd40c08a91d9081a067d17",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7205f7b6cd724c8683c730096d1634b5",
+      "legacy_record_id": "7205f7b6cd724c8683c730096d1634b5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_720b42fe1ec642c28b4aa4056048c275",
+      "legacy_record_id": "720b42fe1ec642c28b4aa4056048c275",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_72bf2b6ca3b64c06ba678aff2d5ab729",
+      "legacy_record_id": "72bf2b6ca3b64c06ba678aff2d5ab729",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_737c77c93eed4f5280cbb457640f4ae7",
+      "legacy_record_id": "737c77c93eed4f5280cbb457640f4ae7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_73fb2d901116468783446d3063957c7d",
+      "legacy_record_id": "73fb2d901116468783446d3063957c7d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7474dd0a21794b4ca6d04a62f905374d",
+      "legacy_record_id": "7474dd0a21794b4ca6d04a62f905374d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7569c667f4834a8183f8efb05d7d523b",
+      "legacy_record_id": "7569c667f4834a8183f8efb05d7d523b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_757ad0e93bf34799bb7638a9d7c62fad",
+      "legacy_record_id": "757ad0e93bf34799bb7638a9d7c62fad",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_75c8eb2900c741d29587857ed8947f33",
+      "legacy_record_id": "75c8eb2900c741d29587857ed8947f33",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_75e6e7d5c004481198e5e252074ba356",
+      "legacy_record_id": "75e6e7d5c004481198e5e252074ba356",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_76564b9e780f4a9ea2bca4a0c6bb7496",
+      "legacy_record_id": "76564b9e780f4a9ea2bca4a0c6bb7496",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_766d2b83cce24f0a97e628f8d7646d21",
+      "legacy_record_id": "766d2b83cce24f0a97e628f8d7646d21",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_76ae8798748f4440a997ee701ad81303",
+      "legacy_record_id": "76ae8798748f4440a997ee701ad81303",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_76e6785a8b294d688fb1c756b47feec6",
+      "legacy_record_id": "76e6785a8b294d688fb1c756b47feec6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7743165a8dd64451ad3ff7786581250e",
+      "legacy_record_id": "7743165a8dd64451ad3ff7786581250e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_77a1a1affc5448beae540cc62221e343",
+      "legacy_record_id": "77a1a1affc5448beae540cc62221e343",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_78c939833ac44c9f94545fde50bc4278",
+      "legacy_record_id": "78c939833ac44c9f94545fde50bc4278",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_79b2d2730417402da839ff4167cd158b",
+      "legacy_record_id": "79b2d2730417402da839ff4167cd158b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_79bc8e1568464844b8d32d889c3beb30",
+      "legacy_record_id": "79bc8e1568464844b8d32d889c3beb30",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_79cca5da19c3431fb9a2458c93bb2b44",
+      "legacy_record_id": "79cca5da19c3431fb9a2458c93bb2b44",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7a0c3e135e6d4ebe9030d66de4bc15e8",
+      "legacy_record_id": "7a0c3e135e6d4ebe9030d66de4bc15e8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7a1a470858214e09800f7790b2f5e7f9",
+      "legacy_record_id": "7a1a470858214e09800f7790b2f5e7f9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7ab70483ef5a40f781297d4167880beb",
+      "legacy_record_id": "7ab70483ef5a40f781297d4167880beb",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7ac0c94182d4493582726661abd37db9",
+      "legacy_record_id": "7ac0c94182d4493582726661abd37db9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7ad6efd8cfb54fc5a5c6b2c0d17327a9",
+      "legacy_record_id": "7ad6efd8cfb54fc5a5c6b2c0d17327a9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7b33038d97434c4fbe5e1e0f0773b644",
+      "legacy_record_id": "7b33038d97434c4fbe5e1e0f0773b644",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7b4a8179eab04cdeb19f7dbe97a3411e",
+      "legacy_record_id": "7b4a8179eab04cdeb19f7dbe97a3411e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7ba03b0dc4f548c3a7c92d95747e2d21",
+      "legacy_record_id": "7ba03b0dc4f548c3a7c92d95747e2d21",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7bdecd13439a4c6a92777bbcf83b2b47",
+      "legacy_record_id": "7bdecd13439a4c6a92777bbcf83b2b47",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7c0a819133914e8d81be224564dbab7d",
+      "legacy_record_id": "7c0a819133914e8d81be224564dbab7d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7c2b8d9a69bd43e0866261ef660c2d21",
+      "legacy_record_id": "7c2b8d9a69bd43e0866261ef660c2d21",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7c68952f42184a38a5c52e2f0167b5b7",
+      "legacy_record_id": "7c68952f42184a38a5c52e2f0167b5b7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7d48c3411e4f47d4b2fd9d82409cd040",
+      "legacy_record_id": "7d48c3411e4f47d4b2fd9d82409cd040",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7dd2261c818d44759011aaa69fcbce57",
+      "legacy_record_id": "7dd2261c818d44759011aaa69fcbce57",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7ee758937ca345aa8aa7c458cc1f33cb",
+      "legacy_record_id": "7ee758937ca345aa8aa7c458cc1f33cb",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7f09f7ab2c0647d0aafe0a6386f0ece2",
+      "legacy_record_id": "7f09f7ab2c0647d0aafe0a6386f0ece2",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_7f40d9238e3247388b29c86481840219",
+      "legacy_record_id": "7f40d9238e3247388b29c86481840219",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_806b5453cdbc4405923a629506da4a64",
+      "legacy_record_id": "806b5453cdbc4405923a629506da4a64",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_810f8ac6a3dd4fcab9c6d2a56656d668",
+      "legacy_record_id": "810f8ac6a3dd4fcab9c6d2a56656d668",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8149d60e45c8480ab55495038cf85339",
+      "legacy_record_id": "8149d60e45c8480ab55495038cf85339",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_826ea01daaf540af88ddc7ab47b0c229",
+      "legacy_record_id": "826ea01daaf540af88ddc7ab47b0c229",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_826f1ad3f66d484085951543f11cba24",
+      "legacy_record_id": "826f1ad3f66d484085951543f11cba24",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_85346f925f8649b893ed14f736ba039d",
+      "legacy_record_id": "85346f925f8649b893ed14f736ba039d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_87774c14bacb45b7824229839f45a266",
+      "legacy_record_id": "87774c14bacb45b7824229839f45a266",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_87907c71bf864a44b40c38d918eba22f",
+      "legacy_record_id": "87907c71bf864a44b40c38d918eba22f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_87a4d2331cfa45a59da9f0876241484a",
+      "legacy_record_id": "87a4d2331cfa45a59da9f0876241484a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_87b5f8ed83064d30b4030bd9be0d5906",
+      "legacy_record_id": "87b5f8ed83064d30b4030bd9be0d5906",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8857c3a5658749c6aa5fe51867cf39f3",
+      "legacy_record_id": "8857c3a5658749c6aa5fe51867cf39f3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_88801ee28c8041808b5c2b23602b1920",
+      "legacy_record_id": "88801ee28c8041808b5c2b23602b1920",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_894c21e3a4824a07be6567627c37bd15",
+      "legacy_record_id": "894c21e3a4824a07be6567627c37bd15",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8a2ad49a2caa48908b1a9f6c434efb0a",
+      "legacy_record_id": "8a2ad49a2caa48908b1a9f6c434efb0a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8a7895f78a4841999606b1fde42e8279",
+      "legacy_record_id": "8a7895f78a4841999606b1fde42e8279",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8aef3476777b4e65b1858f9ffbb0563e",
+      "legacy_record_id": "8aef3476777b4e65b1858f9ffbb0563e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8bce45e8bce94c6f8da27a00141207f7",
+      "legacy_record_id": "8bce45e8bce94c6f8da27a00141207f7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8be698aa97e24ba89667851d5c8e826b",
+      "legacy_record_id": "8be698aa97e24ba89667851d5c8e826b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8c421cd6eb42487688244bbbb63d2f3f",
+      "legacy_record_id": "8c421cd6eb42487688244bbbb63d2f3f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8ce61c41e03c4794840bd0d15793e750",
+      "legacy_record_id": "8ce61c41e03c4794840bd0d15793e750",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8cfb557101004f5f8b58689beeec8d50",
+      "legacy_record_id": "8cfb557101004f5f8b58689beeec8d50",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8d6912add12c43f3886c70d9196987e7",
+      "legacy_record_id": "8d6912add12c43f3886c70d9196987e7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8dd114cada6641aba6f0dbc4d17cbde6",
+      "legacy_record_id": "8dd114cada6641aba6f0dbc4d17cbde6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8f235a58b1294dc786bc085e4f1111ed",
+      "legacy_record_id": "8f235a58b1294dc786bc085e4f1111ed",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8f574e0dfb2a4269914f10da88f136a2",
+      "legacy_record_id": "8f574e0dfb2a4269914f10da88f136a2",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_8f888df5e11f47d59b7ccb13ea78e93b",
+      "legacy_record_id": "8f888df5e11f47d59b7ccb13ea78e93b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9016428d510b4337abc8011928ccd077",
+      "legacy_record_id": "9016428d510b4337abc8011928ccd077",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_901c760de5c84b33bd25b202ce73eaa5",
+      "legacy_record_id": "901c760de5c84b33bd25b202ce73eaa5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_916582209fbd449e8c4f77f36c8ad84d",
+      "legacy_record_id": "916582209fbd449e8c4f77f36c8ad84d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9186e5da15e04ff2be6bbcfc724c3f4b",
+      "legacy_record_id": "9186e5da15e04ff2be6bbcfc724c3f4b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_926e8575137749df87197af90af049af",
+      "legacy_record_id": "926e8575137749df87197af90af049af",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_929f405df82840a69cc21077b7f96548",
+      "legacy_record_id": "929f405df82840a69cc21077b7f96548",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9478b9d0adba4c9782313dc536380a5f",
+      "legacy_record_id": "9478b9d0adba4c9782313dc536380a5f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_94872ba6a72943b6a7f47696282b5d77",
+      "legacy_record_id": "94872ba6a72943b6a7f47696282b5d77",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_957c2918cdec40dbb3abcfd7375d25ad",
+      "legacy_record_id": "957c2918cdec40dbb3abcfd7375d25ad",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_95a4ac030a0442ef8f390a9c5ada007f",
+      "legacy_record_id": "95a4ac030a0442ef8f390a9c5ada007f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_95ef7f5cb2424829aa24da7021b42253",
+      "legacy_record_id": "95ef7f5cb2424829aa24da7021b42253",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_96303fd75237419c88d1f01cd5197eaf",
+      "legacy_record_id": "96303fd75237419c88d1f01cd5197eaf",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_964071cbf5a24051b529c17b5a2b8670",
+      "legacy_record_id": "964071cbf5a24051b529c17b5a2b8670",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_964344b28e544243b18b8ffe7f9951d1",
+      "legacy_record_id": "964344b28e544243b18b8ffe7f9951d1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_96f8145e7aca4a598e3520318ed2fe35",
+      "legacy_record_id": "96f8145e7aca4a598e3520318ed2fe35",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_97870db6b0f74b159167eb8ee5478b38",
+      "legacy_record_id": "97870db6b0f74b159167eb8ee5478b38",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_97878b68a4144fdb8fd8731c56c0ca5b",
+      "legacy_record_id": "97878b68a4144fdb8fd8731c56c0ca5b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_97e4c2d8e7d74f33ae0207ddb0ec3039",
+      "legacy_record_id": "97e4c2d8e7d74f33ae0207ddb0ec3039",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9869910d0fc14ca687839936555b22ae",
+      "legacy_record_id": "9869910d0fc14ca687839936555b22ae",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_986a754c5815490dbe1d28e33bc9304c",
+      "legacy_record_id": "986a754c5815490dbe1d28e33bc9304c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_98e1096edab24c0d99e6c51f88fda97d",
+      "legacy_record_id": "98e1096edab24c0d99e6c51f88fda97d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9910ad1a04c34129afeebc54479f34a9",
+      "legacy_record_id": "9910ad1a04c34129afeebc54479f34a9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_998bf70004f34491aac2d367f9310baa",
+      "legacy_record_id": "998bf70004f34491aac2d367f9310baa",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9a4744ad8574459eacc304bb860ba2ba",
+      "legacy_record_id": "9a4744ad8574459eacc304bb860ba2ba",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9a70f83a4a1746e1a991bca869723f1d",
+      "legacy_record_id": "9a70f83a4a1746e1a991bca869723f1d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9aa4a770a7a24813a398e7a98788f976",
+      "legacy_record_id": "9aa4a770a7a24813a398e7a98788f976",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9bcb2ff3a6dd403baf41e4ff41afb4f9",
+      "legacy_record_id": "9bcb2ff3a6dd403baf41e4ff41afb4f9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9be320ee96024980820419e40c8984c3",
+      "legacy_record_id": "9be320ee96024980820419e40c8984c3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9dba43026f854012ac382761f04e0dc4",
+      "legacy_record_id": "9dba43026f854012ac382761f04e0dc4",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9e0c9dc5752a46c5a397db699ab9485a",
+      "legacy_record_id": "9e0c9dc5752a46c5a397db699ab9485a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9ede55a8bc7d4ee0b7c5c667305916f0",
+      "legacy_record_id": "9ede55a8bc7d4ee0b7c5c667305916f0",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_9fcc4c605210426f8e3992ecc729fcc1",
+      "legacy_record_id": "9fcc4c605210426f8e3992ecc729fcc1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a13cedc93452452eb8023c99f650b581",
+      "legacy_record_id": "a13cedc93452452eb8023c99f650b581",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a257660934e4454eae6d86d607ff74fd",
+      "legacy_record_id": "a257660934e4454eae6d86d607ff74fd",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a2ffe505cf78417082dc0691c9128b34",
+      "legacy_record_id": "a2ffe505cf78417082dc0691c9128b34",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a33e024043db4ade91cac4be5758eab0",
+      "legacy_record_id": "a33e024043db4ade91cac4be5758eab0",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a3586d23551d4d6f976339ce29b4ffd5",
+      "legacy_record_id": "a3586d23551d4d6f976339ce29b4ffd5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a4950303ccf34577a7b8a89f4f891826",
+      "legacy_record_id": "a4950303ccf34577a7b8a89f4f891826",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a52455071c784bb896d209049d0b711f",
+      "legacy_record_id": "a52455071c784bb896d209049d0b711f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a5306e960d4745d6a38f645c81a5fe3c",
+      "legacy_record_id": "a5306e960d4745d6a38f645c81a5fe3c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a54c885b54fe43dca51f02e63e01f162",
+      "legacy_record_id": "a54c885b54fe43dca51f02e63e01f162",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a556148b7e434582b3a6b076a72d0639",
+      "legacy_record_id": "a556148b7e434582b3a6b076a72d0639",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a5734e5197004150bebc226c7b020664",
+      "legacy_record_id": "a5734e5197004150bebc226c7b020664",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a718db5797484e2298b0c11df9809025",
+      "legacy_record_id": "a718db5797484e2298b0c11df9809025",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_a97fcab09f8945ec8b2ab98db4b792bb",
+      "legacy_record_id": "a97fcab09f8945ec8b2ab98db4b792bb",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_aaa73aad3daf4f2ea664ee41c3fd7be4",
+      "legacy_record_id": "aaa73aad3daf4f2ea664ee41c3fd7be4",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_aadc3565d1e94be6bfd6116fdce0a977",
+      "legacy_record_id": "aadc3565d1e94be6bfd6116fdce0a977",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ab643869e0f44257a3c6b129b9af1506",
+      "legacy_record_id": "ab643869e0f44257a3c6b129b9af1506",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_abbb2e7099a2439c8bd358a0832d636d",
+      "legacy_record_id": "abbb2e7099a2439c8bd358a0832d636d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_acc1e32e5458482aae1a6a92d6d214cf",
+      "legacy_record_id": "acc1e32e5458482aae1a6a92d6d214cf",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ae6ce35bb04b4b2199a44f2764c3a14d",
+      "legacy_record_id": "ae6ce35bb04b4b2199a44f2764c3a14d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ae71353407a44271ba1769c32db32f88",
+      "legacy_record_id": "ae71353407a44271ba1769c32db32f88",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_aea892cb50874233be089830658596b8",
+      "legacy_record_id": "aea892cb50874233be089830658596b8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_aed10202999b4fe489d41b4dd3908ab5",
+      "legacy_record_id": "aed10202999b4fe489d41b4dd3908ab5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_af1703e4af394b1d9de718c8e1760400",
+      "legacy_record_id": "af1703e4af394b1d9de718c8e1760400",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_af6dab59cf3e4a48ab083edc123956af",
+      "legacy_record_id": "af6dab59cf3e4a48ab083edc123956af",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b02596e5a8e9413b9535ca4e370b4548",
+      "legacy_record_id": "b02596e5a8e9413b9535ca4e370b4548",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b03b9b321ab34242812593a248f925f5",
+      "legacy_record_id": "b03b9b321ab34242812593a248f925f5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b06f6f3b95454a25884f2c84f546a85a",
+      "legacy_record_id": "b06f6f3b95454a25884f2c84f546a85a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b19c06dfd4bc4c72855785f2f6e88cc5",
+      "legacy_record_id": "b19c06dfd4bc4c72855785f2f6e88cc5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b1a63c311f67495ea71a87853a2e7362",
+      "legacy_record_id": "b1a63c311f67495ea71a87853a2e7362",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b3ca9c8c14f64aa192181838ddb9f14e",
+      "legacy_record_id": "b3ca9c8c14f64aa192181838ddb9f14e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b3cfc578f51a40b4b08d9b586fe1c1a2",
+      "legacy_record_id": "b3cfc578f51a40b4b08d9b586fe1c1a2",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b4d6485addf348f9959396a153532acc",
+      "legacy_record_id": "b4d6485addf348f9959396a153532acc",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b5461b66207f4244a5432adc651243b8",
+      "legacy_record_id": "b5461b66207f4244a5432adc651243b8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b54c9393f0c044e59613d48cef0b1f9d",
+      "legacy_record_id": "b54c9393f0c044e59613d48cef0b1f9d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b5a6b63a9b2c41f780019420d52c5dc3",
+      "legacy_record_id": "b5a6b63a9b2c41f780019420d52c5dc3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b857f4f3f1db41a8813cde589f868bd4",
+      "legacy_record_id": "b857f4f3f1db41a8813cde589f868bd4",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b858b01c16574444800eae588fe3de56",
+      "legacy_record_id": "b858b01c16574444800eae588fe3de56",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b89f3f9c5ae04b1ab31295bc36285ecf",
+      "legacy_record_id": "b89f3f9c5ae04b1ab31295bc36285ecf",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b8b0a73a38fe4f1cbe44674f7a1ae138",
+      "legacy_record_id": "b8b0a73a38fe4f1cbe44674f7a1ae138",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b96d5d55f1344c5487db1c3183324d89",
+      "legacy_record_id": "b96d5d55f1344c5487db1c3183324d89",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b9c45906d6bb44298b6d3238f151bb01",
+      "legacy_record_id": "b9c45906d6bb44298b6d3238f151bb01",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_b9edbfc01a2b4d7f880590062091f471",
+      "legacy_record_id": "b9edbfc01a2b4d7f880590062091f471",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_bae7560c4da54d179c8ca12bdc18e7de",
+      "legacy_record_id": "bae7560c4da54d179c8ca12bdc18e7de",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_bb2c667ccf294d79a7da097aa5d78f62",
+      "legacy_record_id": "bb2c667ccf294d79a7da097aa5d78f62",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_bc2ea03103404f32a2428f3a04feeadf",
+      "legacy_record_id": "bc2ea03103404f32a2428f3a04feeadf",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_bc68b5e5581a4f4f86789ca653aec5e9",
+      "legacy_record_id": "bc68b5e5581a4f4f86789ca653aec5e9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_be483e2639394189869a05e6f4d88824",
+      "legacy_record_id": "be483e2639394189869a05e6f4d88824",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_be92f780711045d59ac2eeaa637a266a",
+      "legacy_record_id": "be92f780711045d59ac2eeaa637a266a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_bed6cc454cde4ff69533a11ae3df6cf1",
+      "legacy_record_id": "bed6cc454cde4ff69533a11ae3df6cf1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_bf19a2d10b0348c19fa0a00ce2988a32",
+      "legacy_record_id": "bf19a2d10b0348c19fa0a00ce2988a32",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_bf2f46e70ba04261aac6c9a7466e3b25",
+      "legacy_record_id": "bf2f46e70ba04261aac6c9a7466e3b25",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_bf87c236cc4c414783f0bc65bdd3d2ff",
+      "legacy_record_id": "bf87c236cc4c414783f0bc65bdd3d2ff",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_bfbb6ff448544617a2bb3fd3fdcb6507",
+      "legacy_record_id": "bfbb6ff448544617a2bb3fd3fdcb6507",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c031190e2de04d4489f450b1a00aa8ab",
+      "legacy_record_id": "c031190e2de04d4489f450b1a00aa8ab",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c0b0a0fd160640f09188d59c126ffbee",
+      "legacy_record_id": "c0b0a0fd160640f09188d59c126ffbee",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c0cfb89dd5914ac2921efe80438ba2d8",
+      "legacy_record_id": "c0cfb89dd5914ac2921efe80438ba2d8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c193b18031c842a89ca4252298f57eb3",
+      "legacy_record_id": "c193b18031c842a89ca4252298f57eb3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c2878f57ecc4408e85b143d2d1c96c44",
+      "legacy_record_id": "c2878f57ecc4408e85b143d2d1c96c44",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c294688fd3e9435a976b73f3ad972ebf",
+      "legacy_record_id": "c294688fd3e9435a976b73f3ad972ebf",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c31a60901a944dc98e8d94c5bd804a2a",
+      "legacy_record_id": "c31a60901a944dc98e8d94c5bd804a2a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c3429b93ba3d48958331d337cf4fb543",
+      "legacy_record_id": "c3429b93ba3d48958331d337cf4fb543",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c3634480f451479890fabbd4494e4b02",
+      "legacy_record_id": "c3634480f451479890fabbd4494e4b02",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c39274ca62614793a0500a79755559d0",
+      "legacy_record_id": "c39274ca62614793a0500a79755559d0",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c3abe746aafb464398339ddf89029728",
+      "legacy_record_id": "c3abe746aafb464398339ddf89029728",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c40a4936ca0e497cb8292938e2dc6ea2",
+      "legacy_record_id": "c40a4936ca0e497cb8292938e2dc6ea2",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c46e4dee6257455bb0381602bab20707",
+      "legacy_record_id": "c46e4dee6257455bb0381602bab20707",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c4a4fdcbd6684735b2d7fb183228f76c",
+      "legacy_record_id": "c4a4fdcbd6684735b2d7fb183228f76c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c547d42b4cea4b3bb17696ea23f01571",
+      "legacy_record_id": "c547d42b4cea4b3bb17696ea23f01571",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c570479e8c0a41ca8c708f3a8e47eb25",
+      "legacy_record_id": "c570479e8c0a41ca8c708f3a8e47eb25",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c5dd30123d7f4d69b7afac379e5c0112",
+      "legacy_record_id": "c5dd30123d7f4d69b7afac379e5c0112",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c61a7e2cbff84eb49acc394adbe78886",
+      "legacy_record_id": "c61a7e2cbff84eb49acc394adbe78886",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c63b27be43874c89a9ecbec34575c3a3",
+      "legacy_record_id": "c63b27be43874c89a9ecbec34575c3a3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c65c1ee7b78640fe91544e414d8f6d01",
+      "legacy_record_id": "c65c1ee7b78640fe91544e414d8f6d01",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c6b21dac58054f4593d1a569191e835f",
+      "legacy_record_id": "c6b21dac58054f4593d1a569191e835f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c76411a3aa854f3f8946ccf2c2ebd58a",
+      "legacy_record_id": "c76411a3aa854f3f8946ccf2c2ebd58a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c7ee5316146c4d6d94cea09b3a578638",
+      "legacy_record_id": "c7ee5316146c4d6d94cea09b3a578638",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c8356a48573e45928da6921d7f5159db",
+      "legacy_record_id": "c8356a48573e45928da6921d7f5159db",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c85ff351325c43309f679aab52cb98ab",
+      "legacy_record_id": "c85ff351325c43309f679aab52cb98ab",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c89cdd99f7784e0da3de79fdb57b91d7",
+      "legacy_record_id": "c89cdd99f7784e0da3de79fdb57b91d7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c8b870ecff924454bdb796b1e1bbc468",
+      "legacy_record_id": "c8b870ecff924454bdb796b1e1bbc468",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c8c39a7c22cc4ce4b78f868d95aba80a",
+      "legacy_record_id": "c8c39a7c22cc4ce4b78f868d95aba80a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c8d2200662254a718663c849f9d9a775",
+      "legacy_record_id": "c8d2200662254a718663c849f9d9a775",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c8e1d810ab1448508fd24410908ec1d0",
+      "legacy_record_id": "c8e1d810ab1448508fd24410908ec1d0",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c9373e2fcca843d5824dab72b168743c",
+      "legacy_record_id": "c9373e2fcca843d5824dab72b168743c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c9650cc9a47e4a6380698b43627e2c37",
+      "legacy_record_id": "c9650cc9a47e4a6380698b43627e2c37",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c9aeb31a3f7047cb988df01508502c53",
+      "legacy_record_id": "c9aeb31a3f7047cb988df01508502c53",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c9b08f830d214b77824cab8be800a8f3",
+      "legacy_record_id": "c9b08f830d214b77824cab8be800a8f3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_c9c31111b1f0417484778076586eba3c",
+      "legacy_record_id": "c9c31111b1f0417484778076586eba3c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ca9bed99604a4fd39d533567233a19e4",
+      "legacy_record_id": "ca9bed99604a4fd39d533567233a19e4",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_cad5621546b5449bb1bed4976df3ae37",
+      "legacy_record_id": "cad5621546b5449bb1bed4976df3ae37",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_cb669e1b57f74e2abbd0b0fab333a59c",
+      "legacy_record_id": "cb669e1b57f74e2abbd0b0fab333a59c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_cb9181d685e246c49806e213adf8447f",
+      "legacy_record_id": "cb9181d685e246c49806e213adf8447f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ccc9e8876cb64328a2df55a6c6216ca5",
+      "legacy_record_id": "ccc9e8876cb64328a2df55a6c6216ca5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_cd3c5d7bb42c4ce2bc05d8f1bf6916d8",
+      "legacy_record_id": "cd3c5d7bb42c4ce2bc05d8f1bf6916d8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ce5ff7820b6a490fa05d9c41bae00fe6",
+      "legacy_record_id": "ce5ff7820b6a490fa05d9c41bae00fe6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ce95c94d380e4697b39643f77380609a",
+      "legacy_record_id": "ce95c94d380e4697b39643f77380609a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d003f5bacdd649f49755c1419fb6701a",
+      "legacy_record_id": "d003f5bacdd649f49755c1419fb6701a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d0b84b33841e460d80bc2c08acf3c4f8",
+      "legacy_record_id": "d0b84b33841e460d80bc2c08acf3c4f8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d141088aad0e4ceb982ca7898ae0479e",
+      "legacy_record_id": "d141088aad0e4ceb982ca7898ae0479e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d1eafab0a67e4df88cfbb9ae05d93e65",
+      "legacy_record_id": "d1eafab0a67e4df88cfbb9ae05d93e65",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d1f80e4f2bfd4de889d73362bed5219f",
+      "legacy_record_id": "d1f80e4f2bfd4de889d73362bed5219f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d2bde5a991b6419698808119a02fad1f",
+      "legacy_record_id": "d2bde5a991b6419698808119a02fad1f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d3245ccd154f41548393de720ad7aee7",
+      "legacy_record_id": "d3245ccd154f41548393de720ad7aee7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d33676bdd4e54e6ebfb12a3e69bea31d",
+      "legacy_record_id": "d33676bdd4e54e6ebfb12a3e69bea31d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d3a474774da944a5b89609af61f16e0c",
+      "legacy_record_id": "d3a474774da944a5b89609af61f16e0c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d4a27464cdee40719870aa17cfa4d45d",
+      "legacy_record_id": "d4a27464cdee40719870aa17cfa4d45d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d56c4900db8446f4a6f58746a67aa1bc",
+      "legacy_record_id": "d56c4900db8446f4a6f58746a67aa1bc",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d5e77a8b055c47adbb5656f5300c6c3c",
+      "legacy_record_id": "d5e77a8b055c47adbb5656f5300c6c3c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d65cb364a62e4d0c996c5e6247c325ea",
+      "legacy_record_id": "d65cb364a62e4d0c996c5e6247c325ea",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d6b3000e9acb4bd5bb2243bad1811b61",
+      "legacy_record_id": "d6b3000e9acb4bd5bb2243bad1811b61",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d712645c279441e2953cfcd4a99b3a92",
+      "legacy_record_id": "d712645c279441e2953cfcd4a99b3a92",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d77f821c830e43c08bef398abc8f87a8",
+      "legacy_record_id": "d77f821c830e43c08bef398abc8f87a8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d7dd9a26fe714024a2fd85612c211202",
+      "legacy_record_id": "d7dd9a26fe714024a2fd85612c211202",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_d935f5dff5a24946b9384d819103f976",
+      "legacy_record_id": "d935f5dff5a24946b9384d819103f976",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_db708b28ad4a4e229e767bb771259dc0",
+      "legacy_record_id": "db708b28ad4a4e229e767bb771259dc0",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_dbee73ed28be436aaf36c6ee11035eb9",
+      "legacy_record_id": "dbee73ed28be436aaf36c6ee11035eb9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_dc76b406bb9b4e48a82f1ad20da9a65b",
+      "legacy_record_id": "dc76b406bb9b4e48a82f1ad20da9a65b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_dd3f8b06da374951af75a17b64a4ccef",
+      "legacy_record_id": "dd3f8b06da374951af75a17b64a4ccef",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_dd47b0a33e934e0ab2060812e0962d2b",
+      "legacy_record_id": "dd47b0a33e934e0ab2060812e0962d2b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_dd483df4d8284b8888cd3b9d63cebc7b",
+      "legacy_record_id": "dd483df4d8284b8888cd3b9d63cebc7b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_dd5ace9f1fc64257b4cbbdd1cd8765b1",
+      "legacy_record_id": "dd5ace9f1fc64257b4cbbdd1cd8765b1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ddcec32cbff545668afb516debe320e8",
+      "legacy_record_id": "ddcec32cbff545668afb516debe320e8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ddf33eb2aa2a431baca4196bc3c4b246",
+      "legacy_record_id": "ddf33eb2aa2a431baca4196bc3c4b246",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_df8024040e5b4c3fafb49b8b5c193376",
+      "legacy_record_id": "df8024040e5b4c3fafb49b8b5c193376",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_dfcddefaf9a14189aa799c43170bf87c",
+      "legacy_record_id": "dfcddefaf9a14189aa799c43170bf87c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e07a9c033c1448b1a1c46690277db88f",
+      "legacy_record_id": "e07a9c033c1448b1a1c46690277db88f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e1f10d1272554a6ba212de9b2a320e00",
+      "legacy_record_id": "e1f10d1272554a6ba212de9b2a320e00",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e206d3f0dfaa4445be42635f782a4e20",
+      "legacy_record_id": "e206d3f0dfaa4445be42635f782a4e20",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e2578a1356ea4bdb8de54e03c4933de6",
+      "legacy_record_id": "e2578a1356ea4bdb8de54e03c4933de6",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e328bc01b36a42e29003043c41395846",
+      "legacy_record_id": "e328bc01b36a42e29003043c41395846",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e4d948927d0a486db8000ccc92cd979f",
+      "legacy_record_id": "e4d948927d0a486db8000ccc92cd979f",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e582e94f5a784188a44f8245c4f4bfe9",
+      "legacy_record_id": "e582e94f5a784188a44f8245c4f4bfe9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e61335e628994f278a9e7b9b3fcc6b3a",
+      "legacy_record_id": "e61335e628994f278a9e7b9b3fcc6b3a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e64b281371654305b49c373e24dbf24e",
+      "legacy_record_id": "e64b281371654305b49c373e24dbf24e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e73b6a30eb0544d3a3a22c57308bd917",
+      "legacy_record_id": "e73b6a30eb0544d3a3a22c57308bd917",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e80be81aefd943dcac621ec1ee102d1a",
+      "legacy_record_id": "e80be81aefd943dcac621ec1ee102d1a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e815ef7eeac94a54ae587bb8550c9d07",
+      "legacy_record_id": "e815ef7eeac94a54ae587bb8550c9d07",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e85c121bff524a8faba7a20b6146fa34",
+      "legacy_record_id": "e85c121bff524a8faba7a20b6146fa34",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e8bbd8afb59c44e1a2342356cd456357",
+      "legacy_record_id": "e8bbd8afb59c44e1a2342356cd456357",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e8e614ee570a4f089d27dadaf03acb5c",
+      "legacy_record_id": "e8e614ee570a4f089d27dadaf03acb5c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e99e25f7adec4a13b6ed71213cf89c30",
+      "legacy_record_id": "e99e25f7adec4a13b6ed71213cf89c30",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_e9b52eb3414e4fcba8024af4e71afff3",
+      "legacy_record_id": "e9b52eb3414e4fcba8024af4e71afff3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ea816571f4fa4250a6c92eb808a69d75",
+      "legacy_record_id": "ea816571f4fa4250a6c92eb808a69d75",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_eaa47f588ae84091bb7897a63459a122",
+      "legacy_record_id": "eaa47f588ae84091bb7897a63459a122",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_eab7beb44b814ca7a5ee6af2e6c8ddea",
+      "legacy_record_id": "eab7beb44b814ca7a5ee6af2e6c8ddea",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_eacf212219644dc386aa6a13635c7502",
+      "legacy_record_id": "eacf212219644dc386aa6a13635c7502",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ebda4e11237b4b2faf37c4464582fdd1",
+      "legacy_record_id": "ebda4e11237b4b2faf37c4464582fdd1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ec18f53bf5db4acaa714342c1c210b0e",
+      "legacy_record_id": "ec18f53bf5db4acaa714342c1c210b0e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ec6ffba4d86b4a1e950b9d812d0acc8c",
+      "legacy_record_id": "ec6ffba4d86b4a1e950b9d812d0acc8c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_eca880074bf04b64b456763824b826b1",
+      "legacy_record_id": "eca880074bf04b64b456763824b826b1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ecf203bbe3ef4a02bb7336ae6827b8c5",
+      "legacy_record_id": "ecf203bbe3ef4a02bb7336ae6827b8c5",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_edb79bcba1144fd3a23c6a67f072724e",
+      "legacy_record_id": "edb79bcba1144fd3a23c6a67f072724e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_edfb2f8fc8214e3f9d0241bf61e102a8",
+      "legacy_record_id": "edfb2f8fc8214e3f9d0241bf61e102a8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ee288b79bfea45138f602720d92b1fb8",
+      "legacy_record_id": "ee288b79bfea45138f602720d92b1fb8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ef3b9a29c5114917bbfd595eb494d090",
+      "legacy_record_id": "ef3b9a29c5114917bbfd595eb494d090",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ef41168fcff644c982a78d9c1b45a4d8",
+      "legacy_record_id": "ef41168fcff644c982a78d9c1b45a4d8",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f0b3ba24925640e898aead7d2c6fe4c0",
+      "legacy_record_id": "f0b3ba24925640e898aead7d2c6fe4c0",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f0b7b547941144deab24c8ac3b208850",
+      "legacy_record_id": "f0b7b547941144deab24c8ac3b208850",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f0c1d3cd184e4dffa8bdd2c6497932ef",
+      "legacy_record_id": "f0c1d3cd184e4dffa8bdd2c6497932ef",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f1981c9cf46b4361a51d7bb3db9203d9",
+      "legacy_record_id": "f1981c9cf46b4361a51d7bb3db9203d9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f34e5eec8b32403b8d435a1c3cbe9744",
+      "legacy_record_id": "f34e5eec8b32403b8d435a1c3cbe9744",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f34f0ea9ecc144f09e815a8c1402d42a",
+      "legacy_record_id": "f34f0ea9ecc144f09e815a8c1402d42a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f46ff8d317de49ebb743a0a187eb4afa",
+      "legacy_record_id": "f46ff8d317de49ebb743a0a187eb4afa",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f4e00fd1d12c4a27bf67ae1c5a5e3c8b",
+      "legacy_record_id": "f4e00fd1d12c4a27bf67ae1c5a5e3c8b",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f527544834bb41718485d31034ed7992",
+      "legacy_record_id": "f527544834bb41718485d31034ed7992",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f55044ac636449e280d3036df0d3f230",
+      "legacy_record_id": "f55044ac636449e280d3036df0d3f230",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f564d07d249b4a68a047965a2c0e9837",
+      "legacy_record_id": "f564d07d249b4a68a047965a2c0e9837",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f6892cea796147a0a665f55331acf80e",
+      "legacy_record_id": "f6892cea796147a0a665f55331acf80e",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f6c284d343254e66beaafdaece6fa33a",
+      "legacy_record_id": "f6c284d343254e66beaafdaece6fa33a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f6cf9e5bfbda441eb823c84da3757979",
+      "legacy_record_id": "f6cf9e5bfbda441eb823c84da3757979",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f71a09ecaf874ed58e85189f10246d52",
+      "legacy_record_id": "f71a09ecaf874ed58e85189f10246d52",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f7368780adc44eb48b65ed112f628677",
+      "legacy_record_id": "f7368780adc44eb48b65ed112f628677",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f7ce231662514e8cba95ad8fc05f6ab1",
+      "legacy_record_id": "f7ce231662514e8cba95ad8fc05f6ab1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f8f6c8df11f74c25b9a3abdc9c75491d",
+      "legacy_record_id": "f8f6c8df11f74c25b9a3abdc9c75491d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_f91e56bb8f71419b844ad2e8470ce720",
+      "legacy_record_id": "f91e56bb8f71419b844ad2e8470ce720",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_fa06fa7f33da44d0bf414d9d2854cc20",
+      "legacy_record_id": "fa06fa7f33da44d0bf414d9d2854cc20",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_fa2e982408f947168df935487ee5b6ea",
+      "legacy_record_id": "fa2e982408f947168df935487ee5b6ea",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_fac75cdc57d7435e8e0198f2c54b6ea1",
+      "legacy_record_id": "fac75cdc57d7435e8e0198f2c54b6ea1",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_fb01322d7fd24cea897317147a2d1f0d",
+      "legacy_record_id": "fb01322d7fd24cea897317147a2d1f0d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_fb0ef74571ae47fdb986767b5c5adac3",
+      "legacy_record_id": "fb0ef74571ae47fdb986767b5c5adac3",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_fc5183fc67a248f191196236ecf1bb42",
+      "legacy_record_id": "fc5183fc67a248f191196236ecf1bb42",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_fd72b7c44dcd4ce79c36800a1995a37c",
+      "legacy_record_id": "fd72b7c44dcd4ce79c36800a1995a37c",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_fdde0e29e1a746218f1a375b9f236f7a",
+      "legacy_record_id": "fdde0e29e1a746218f1a375b9f236f7a",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_fdfc20ff0e6a452084c413e04936c3b7",
+      "legacy_record_id": "fdfc20ff0e6a452084c413e04936c3b7",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_fe7b33c6428a4eeeb00dcc7f762581f9",
+      "legacy_record_id": "fe7b33c6428a4eeeb00dcc7f762581f9",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_feeb45415292478e88a4d9d1ddfd9d9d",
+      "legacy_record_id": "feeb45415292478e88a4d9d1ddfd9d9d",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    },
+    {
+      "external_id": "legacy_fund_daily_snapshot_sc_d_scbsjs_zjgl_zjsz_zjrbb_ff3d383d013f454bbffaf12a55083308",
+      "legacy_record_id": "ff3d383d013f454bbffaf12a55083308",
+      "legacy_source_table": "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
+      "project_external_id": "legacy_project_sc_fb0c4133-f011-44a4-a285-59cfd30aec27",
+      "status": "loadable"
+    }
+  ],
+  "summary": {
+    "blocked_reason_counts": {
+      "amount_not_positive_or_missing": 4,
+      "deleted": 26,
+      "missing_balance_amounts": 2,
+      "missing_counterparty_name": 24,
+      "missing_document_date": 1,
+      "project_not_assetized": 18
+    },
+    "blocked_records": 59,
+    "loadable_records": 496,
+    "loan_or_borrowing_records": 318,
+    "raw_rows": 873,
+    "source_table_counts": {
+      "D_SCBSJS_ZJGL_ZJSZ_ZJRBB": 511,
+      "ZJGL_ZCDFSZ_FXJK_JK": 169,
+      "ZJGL_ZJSZ_DKGL_DKDJ": 193
+    }
+  }
+}

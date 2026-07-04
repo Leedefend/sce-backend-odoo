@@ -112,6 +112,15 @@ tmp/*
 # Migration assets are externalized; keep only the local package placeholder.
 migration_assets/*
 !migration_assets/README.md
+!migration_assets/manifest/
+!migration_assets/manifest/**
+!migration_assets/10_master/
+!migration_assets/10_master/**
+!migration_assets/20_business/
+!migration_assets/20_business/**
+!migration_assets/30_relation/
+!migration_assets/30_relation/**
+migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml
 !migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/
 !migration_assets/30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml.parts/**
 .codex_home/

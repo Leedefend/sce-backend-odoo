@@ -1,0 +1,58 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "legacy_invoice_tax_sc_v1",
+  "business_boundary": {
+    "account_move": "excluded",
+    "approval_runtime": "excluded",
+    "legacy_invoice_tax_fact": "included",
+    "payment_state": "excluded",
+    "settlement_state": "excluded",
+    "tax_ledger": "excluded"
+  },
+  "counts": {
+    "blocked_reason_counts": {
+      "amount_and_tax_not_positive_or_missing": 2612,
+      "deleted": 623,
+      "missing_counterparty_evidence": 14734,
+      "missing_project_id": 9,
+      "project_not_assetized": 132
+    },
+    "blocked_records": 15403,
+    "direction_counts": {
+      "input_invoice": 1913,
+      "output_invoice": 3103,
+      "prepaid_tax": 904
+    },
+    "family_counts": {
+      "input_invoice_handover": 1913,
+      "invoice_issue_request": 222,
+      "output_invoice_register": 2881,
+      "prepaid_tax_register": 904
+    },
+    "loadable_records": 5920,
+    "partner_counts": {
+      "partner_name_text": 5698,
+      "partner_tax_no_text": 222
+    },
+    "raw_rows": 21323,
+    "source_table_counts": {
+      "C_JXXP_KJFPSQ": 260,
+      "C_JXXP_XXKPDJ": 3157,
+      "C_JXXP_YJSKDJ": 1290,
+      "C_JXXP_ZYFPJJD": 16616
+    }
+  },
+  "validation_gates": {
+    "generate_time": [
+      "legacy_source_key_unique",
+      "project_external_id_required_and_resolves",
+      "counterparty_evidence_required",
+      "source_amount_or_tax_positive",
+      "no_account_move_records_generated",
+      "no_tax_ledger_records_generated",
+      "no_payment_or_settlement_records_generated",
+      "no_runtime_approval_records_generated",
+      "no_database_integer_ids_required"
+    ]
+  }
+}

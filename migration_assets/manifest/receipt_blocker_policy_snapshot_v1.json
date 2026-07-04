@@ -1,0 +1,30 @@
+{
+  "blocked_records": 4001,
+  "db_writes": 0,
+  "decision": "receipt_blockers_policy_classified_continue_mainline",
+  "generated_at": "2026-04-15T09:05:00+00:00",
+  "odoo_shell": false,
+  "policy_counts": {
+    "defer_project_anchor_missing": 90,
+    "discard_deleted": 49,
+    "discard_non_enterprise_partner_text": 1952,
+    "discard_zero_or_negative_amount": 1908,
+    "review_project_like_partner_text": 2
+  },
+  "receipt_loadable_records": 3411,
+  "review_samples": [
+    {
+      "legacy_partner_id": "1094",
+      "legacy_receipt_id": "e38d12e9842f4e38800c85eaa1af4244",
+      "partner_name": "中国移动四川分公司乐山片区2018-2020年渠道零星维修项目（标包5）",
+      "policy": "review_project_like_partner_text"
+    },
+    {
+      "legacy_partner_id": "a5fa6ad2cc8441aba4e530e84c4e4db6",
+      "legacy_receipt_id": "fe27f2e088ea4ff3bc7a2862fb4314f4",
+      "partner_name": "中铁二十三局四公司德阳市东一环路工程青衣江道路工程项目部",
+      "policy": "review_project_like_partner_text"
+    }
+  ],
+  "status": "PASS"
+}

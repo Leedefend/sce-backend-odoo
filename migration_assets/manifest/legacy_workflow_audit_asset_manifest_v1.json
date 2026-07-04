@@ -1,0 +1,269 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "legacy_workflow_audit_sc_v1",
+  "assets": [
+    {
+      "path": "30_relation/legacy_workflow_audit/legacy_workflow_audit_v1.xml",
+      "sha256": "6e782e3db7f7731a70204e0daf1fe31acf229301ed314cbc3357294c145371fd",
+      "type": "xml"
+    },
+    {
+      "path": "manifest/legacy_workflow_audit_external_id_manifest_v1.json",
+      "sha256": "76b46b0390c8580be63731ca581d619471d34bb9dea3770fa575994d6a510567",
+      "type": "external_id_manifest"
+    },
+    {
+      "path": "manifest/legacy_workflow_audit_validation_manifest_v1.json",
+      "sha256": "25c60f332ef417c20fa36dafba2c71d67e162bb5ab382b7d641d10712fbf0ac3",
+      "type": "validation_manifest"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "action_counts": {
+      "approve": 947,
+      "unknown": 162298
+    },
+    "blocked_reason_counts": {
+      "blocked_target_not_assetized_or_not_loadable": 83543
+    },
+    "blocked_records": 83543,
+    "blocked_samples": [
+      {
+        "legacy_workflow_id": "0000002e7f6d45bf8da19185f7a13f53",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0001d245609448cb8bb21a99eed8477a",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00038fca491144179725c0ba1f8098b2",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0003cfa229de422b865e40ad7bb10d51",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0004faccb80c4770b058297ebf593e66",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00055016ed9545a8b38baca575216a68",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00058ecf4e344cf3b52108ca824406f7",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00064e4392b94df68ed691c0964d8371",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0006ea2db36d42a6b67a5483d05833ea",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0006f0a8329a4186a417510eafebd290",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0006fb0c2bca4a1fa3ad9dac4617acc7",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00083a0f06c84fc3a8d1a6bf40381bab",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0009294484cd426fb2faa5badbe255cc",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "000ac3c3d7374037ad804356b78453f7",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "000b360f0bfa4f3c8464deb94671ac76",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "000c20b479cb4129a47ca64aa90e0772",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "000e90ae210f451794fd9728753db038",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "000eae3c509b42ff8fc4c0bc8b4f9a98",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00108fb310ff491ba4321dd7eee1bc03",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0010fc1a3ff449859d6b365240c9b454",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00110a6f74df4ad88ef9703f34687d01",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001139bc16a14bb389190112019d6d1a",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00120edb989a4757815832cd25e5dba5",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00123e90358d4e3e9727a569e841a523",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001357066b2645c38fed832861efca83",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0014c1ecec434e9781745bf0cbd93b43",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00156f4171a842eab6a661520c014ad7",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001611aa65be4999ad2401112d831fbb",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0016cb9b2f884d8fa42dfc8453e940ec",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00170d81f8364da1b7d42372f6903605",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00188de541b54e68ab2eec74b6bd7c71",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001899d973c8400e81ef4953581e83ea",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0018dd83203b46eab7658c6de6bad634",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00190c0f445c4ddfb778742e0f4ed37b",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001a35bc2476469c865a116fcd1e610a",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001a5bc717f14be9958a2be87000e4a4",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001a9e830d4e49e9ae05b9b86257f6ed",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001b4d8636244614b366bebfab18afc4",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001cd2eb222d49528402669cbf16a911",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001cd37156b74db7a9c746494cd80f5c",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001d0a1dc36149d4b18af5ec1f490c14",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001d868a30a04de09d0720680e52fe4d",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001eed6df70040de8a5e3b5c74122ac3",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "001f7d29c28544e68e1b6b25ccfdbfd0",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00200aed87a84e5bbb4d19031125f3bf",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00229b4fae6843fca9b5cda9e925df17",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0023c0ce26e041d39b8a9f892f0bcd1e",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "0023c29ba0654182b6327c8d17c7397c",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "00248ba19f3f480db346ec5382b19739",
+        "reason": "target_not_assetized_or_not_loadable"
+      },
+      {
+        "legacy_workflow_id": "002490607b304da9abff0f310dfc12ed",
+        "reason": "target_not_assetized_or_not_loadable"
+      }
+    ],
+    "lane_counts": {
+      "actual_outflow": 6088,
+      "contract": 6084,
+      "outflow_request": 45693,
+      "receipt": 8556,
+      "supplier_contract": 13281
+    },
+    "loadable_records": 79702,
+    "matched_target_records": 29932,
+    "raw_rows": 163245
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "contract_sc_v1",
+    "receipt_sc_v1",
+    "outflow_request_sc_v1",
+    "actual_outflow_sc_v1",
+    "supplier_contract_sc_v1"
+  ],
+  "generated_at": "2026-04-15T16:10:00+00:00",
+  "lane": {
+    "lane_id": "legacy_workflow_audit",
+    "layer": "30_relation",
+    "load_phase": 30
+  },
+  "odoo_shell": false,
+  "source_counts": {
+    "blocked_rows": 83543,
+    "loadable_rows": 79702,
+    "raw_rows": 163245,
+    "source_table": "S_Execute_Approval"
+  },
+  "target": {
+    "model": "sc.legacy.workflow.audit",
+    "source_table": "S_Execute_Approval"
+  }
+}

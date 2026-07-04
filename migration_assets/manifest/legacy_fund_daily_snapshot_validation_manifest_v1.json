@@ -1,0 +1,42 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "legacy_fund_daily_snapshot_sc_v1",
+  "business_boundary": {
+    "approval_runtime": "excluded",
+    "borrowing_request": "excluded",
+    "legacy_fund_daily_snapshot_fact": "included",
+    "loan_registration": "excluded",
+    "runtime_financial_execution": "excluded"
+  },
+  "counts": {
+    "blocked_reason_counts": {
+      "amount_not_positive_or_missing": 4,
+      "deleted": 26,
+      "missing_balance_amounts": 2,
+      "missing_counterparty_name": 24,
+      "missing_document_date": 1,
+      "project_not_assetized": 18
+    },
+    "blocked_records": 59,
+    "loadable_records": 496,
+    "loan_or_borrowing_records": 318,
+    "raw_rows": 873,
+    "source_table_counts": {
+      "D_SCBSJS_ZJGL_ZJSZ_ZJRBB": 511,
+      "ZJGL_ZCDFSZ_FXJK_JK": 169,
+      "ZJGL_ZJSZ_DKGL_DKDJ": 193
+    }
+  },
+  "validation_gates": {
+    "generate_time": [
+      "legacy_source_key_unique",
+      "project_external_id_required_and_resolves",
+      "snapshot_date_required",
+      "snapshot_amount_present",
+      "loan_and_borrowing_records_excluded",
+      "blocked_rows_excluded",
+      "no_runtime_financial_execution_generated",
+      "no_runtime_approval_records_generated"
+    ]
+  }
+}

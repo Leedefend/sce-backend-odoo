@@ -1,0 +1,250 @@
+{
+  "asset_package_id": "receipt_invoice_line_sc_v1",
+  "blocked": [
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "ed821695e0254727910c2405b7cadab9",
+      "legacy_receipt_invoice_line_id": "052314e5f74b496f85e27feb4112bb71",
+      "line_no": "105"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "bdeeceaba5f9471dbc3373523e3600a1",
+      "legacy_receipt_invoice_line_id": "05cfb740ea9d4e63a04f687a92ebb03a",
+      "line_no": "122"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "ccb35aa76ac5446eb557a05854890122",
+      "legacy_receipt_invoice_line_id": "0f5afc6f4827419fb04cd40b0e4c50ed",
+      "line_no": "298"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "10ce192df6124206921b4d7d7c62fa6d",
+      "legacy_receipt_invoice_line_id": "24875b8eabcd4f4c99a8cc930137038f",
+      "line_no": "662"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "ed821695e0254727910c2405b7cadab9",
+      "legacy_receipt_invoice_line_id": "2a7fc4bb4ad5441bbfe0bb11863a8125",
+      "line_no": "777"
+    },
+    {
+      "errors": "amount_not_positive",
+      "legacy_receipt_id": "85327dc37f8049f88fc20e0f2f685c12",
+      "legacy_receipt_invoice_line_id": "2b1fe8a9209d4596a89c9d091e3298ef",
+      "line_no": "789"
+    },
+    {
+      "errors": "receipt_anchor_missing,amount_not_positive",
+      "legacy_receipt_id": "1f45873de72d4e8782221fb74056759f",
+      "legacy_receipt_invoice_line_id": "3c1720ae084f482782759b66dd4acd9a",
+      "line_no": "1071"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "cc7a79a2014247b3ab40133138140e33",
+      "legacy_receipt_invoice_line_id": "3c819fafd39e423581e07cc69cdc7d3f",
+      "line_no": "1076"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "43423f221a4247648eef434ac6154e91",
+      "legacy_receipt_invoice_line_id": "4971148142084d1b9531eccf483b2bf5",
+      "line_no": "1311"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "de6178f615bd46a196c2916a0d485048",
+      "legacy_receipt_invoice_line_id": "4f9c64df17b04ad38984fca42fec4712",
+      "line_no": "1432"
+    },
+    {
+      "errors": "amount_not_positive",
+      "legacy_receipt_id": "b2e6daa57d4d42c7b9081514443ffde5",
+      "legacy_receipt_invoice_line_id": "55888830288a4825a65ba2a84a47d98c",
+      "line_no": "1539"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "809409cd9eb14b30b271e1c88379c204",
+      "legacy_receipt_invoice_line_id": "58c7402df1b2419b93f3170758527833",
+      "line_no": "1601"
+    },
+    {
+      "errors": "amount_not_positive",
+      "legacy_receipt_id": "f3a25ac514a84b74b9997eacefac3d80",
+      "legacy_receipt_invoice_line_id": "5f7bec1e8de84a5c914bf4c17c8a1b94",
+      "line_no": "1718"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "3b3c17a5f4ff43b28b3ecf2931a1d0e8",
+      "legacy_receipt_invoice_line_id": "638e96ad04e74556b88fd9e7cd812e87",
+      "line_no": "1793"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "809409cd9eb14b30b271e1c88379c204",
+      "legacy_receipt_invoice_line_id": "660c658be9ca436799cf2b8c627bf0c3",
+      "line_no": "1839"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "273a998b76fe4b85b48002a080d2ea87",
+      "legacy_receipt_invoice_line_id": "6e5cfdbabb2a4175b2f7526cdf0320b2",
+      "line_no": "1979"
+    },
+    {
+      "errors": "amount_not_positive",
+      "legacy_receipt_id": "238e95f5c43d475f82b4837b158b77cb",
+      "legacy_receipt_invoice_line_id": "75da518e65944033b1338656076848f8",
+      "line_no": "2101"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "851c294f03e14e64a9d411d0a715c98c",
+      "legacy_receipt_invoice_line_id": "8199ebb575364132bd9bbeaf2be49224",
+      "line_no": "2301"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "083329305ee84ea7b3b7b893569a59a7",
+      "legacy_receipt_invoice_line_id": "9271fb01554942e8b0ba6c2de13bf56b",
+      "line_no": "2577"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "ed821695e0254727910c2405b7cadab9",
+      "legacy_receipt_invoice_line_id": "a4c5604ce77a4c06ae09eb6b9bf3261e",
+      "line_no": "2902"
+    },
+    {
+      "errors": "amount_not_positive",
+      "legacy_receipt_id": "12d4eb56775544cc952409e944efd981",
+      "legacy_receipt_invoice_line_id": "a54d19ef0cd94f5289e6ba23db46ac62",
+      "line_no": "2914"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "425c8c879f1e46e197a1614c076cb6b5",
+      "legacy_receipt_invoice_line_id": "aa80b950ebdb49c18fb63db7e3dae063",
+      "line_no": "3017"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "809409cd9eb14b30b271e1c88379c204",
+      "legacy_receipt_invoice_line_id": "b423916a280f4642b010e9b8a347654b",
+      "line_no": "3188"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "2f0e43523e424a1396601d94c464b439",
+      "legacy_receipt_invoice_line_id": "b865c0a0a6c7460e80754a3fad3344e3",
+      "line_no": "3261"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "ec7653e328e343ba875f244fa796ac03",
+      "legacy_receipt_invoice_line_id": "c1afac485a1c464f999991b5cef5a935",
+      "line_no": "3415"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "0a54ec3cd19045f183d5e2c0769bdfce",
+      "legacy_receipt_invoice_line_id": "c95c4c93ffd64872a756391a2c57ebf5",
+      "line_no": "3534"
+    },
+    {
+      "errors": "amount_not_positive",
+      "legacy_receipt_id": "b2e6daa57d4d42c7b9081514443ffde5",
+      "legacy_receipt_invoice_line_id": "cb5d08ca892148c892d959bc6dbe1d83",
+      "line_no": "3585"
+    },
+    {
+      "errors": "amount_not_positive",
+      "legacy_receipt_id": "b2e6daa57d4d42c7b9081514443ffde5",
+      "legacy_receipt_invoice_line_id": "cb78003e8f07421180515101fad05340",
+      "line_no": "3588"
+    },
+    {
+      "errors": "amount_not_positive",
+      "legacy_receipt_id": "85327dc37f8049f88fc20e0f2f685c12",
+      "legacy_receipt_invoice_line_id": "df17e9e64b464f39ae519616a764929f",
+      "line_no": "3909"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "fc5a176aebab4bd9975695151c199930",
+      "legacy_receipt_invoice_line_id": "e4440cb3b5ca4e3c8f8180f8f7126e17",
+      "line_no": "3988"
+    },
+    {
+      "errors": "amount_not_positive",
+      "legacy_receipt_id": "2b2204e9ca1241938c1e4756b4859590",
+      "legacy_receipt_invoice_line_id": "e91143f109fa455fa7c681e77cec5cfd",
+      "line_no": "4076"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "e333c2d2be5c4eef92003825801a34e4",
+      "legacy_receipt_invoice_line_id": "eb4f0f3ef60046dab05542ccf573a582",
+      "line_no": "4123"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "05569b659ebe453e8ca871eb9fde4b88",
+      "legacy_receipt_invoice_line_id": "f1cef59b5dec4c3798bb0a4008f1523e",
+      "line_no": "4246"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "ec7653e328e343ba875f244fa796ac03",
+      "legacy_receipt_invoice_line_id": "f25a7be4c3ba4154a8826c1e755d2d80",
+      "line_no": "4256"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "92f80d6c3de345a6a0f5b458adb11c6f",
+      "legacy_receipt_invoice_line_id": "f70f0ff0ecfc48568903ae8bad37157e",
+      "line_no": "4327"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "ed821695e0254727910c2405b7cadab9",
+      "legacy_receipt_invoice_line_id": "f8aa8d3ce1dc482e953891bda95255d3",
+      "line_no": "4362"
+    },
+    {
+      "errors": "receipt_anchor_missing",
+      "legacy_receipt_id": "809409cd9eb14b30b271e1c88379c204",
+      "legacy_receipt_invoice_line_id": "fd2cc613cd5740de94bd3e87c3228f0b",
+      "line_no": "4438"
+    }
+  ],
+  "business_boundary": {
+    "accounting": "excluded",
+    "attachment_binary": "excluded_later_lane",
+    "parent_receipt_anchor": "required",
+    "posted_invoice": "excluded",
+    "receipt_invoice_line_fact": "included",
+    "settlement": "excluded"
+  },
+  "db_writes": 0,
+  "generated_at": "2026-04-15T15:20:00+00:00",
+  "manifest_version": "1.0",
+  "odoo_shell": false,
+  "validation_gates": {
+    "generate_time": [
+      "legacy_receipt_invoice_line_id_unique",
+      "receipt_external_id_resolves",
+      "invoice_amount_positive",
+      "source_table_preserved",
+      "account_move_not_written",
+      "settlement_not_written",
+      "attachment_binary_not_imported"
+    ]
+  }
+}

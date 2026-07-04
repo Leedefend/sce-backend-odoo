@@ -1,0 +1,81 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "project_member_sc_v1",
+  "assets": [
+    {
+      "asset_id": "project_member_neutral_xml_v1",
+      "format": "xml",
+      "path": "30_relation/project_member/project_member_neutral_v1.xml",
+      "record_count": 21390,
+      "required": true,
+      "sha256": "9ea5d771a50c253eadbc4280a54c8eff33281a99d6c4cbfc70b0b6b45adde04f"
+    },
+    {
+      "asset_id": "project_member_external_id_manifest_v1",
+      "format": "json",
+      "path": "manifest/project_member_external_id_manifest_v1.json",
+      "record_count": 21390,
+      "required": true,
+      "sha256": "0fbc83d30850e721460fe18b1c3a80a8217ff538d3167c0612e1a90d7a314fb0"
+    },
+    {
+      "asset_id": "project_member_validation_manifest_v1",
+      "format": "json",
+      "path": "manifest/project_member_validation_manifest_v1.json",
+      "record_count": 1,
+      "required": true,
+      "sha256": "91bfb475587b8f45d94e5dcdc62b1ace0e6e980230f60ff692bec0cfa0054556"
+    }
+  ],
+  "baseline_package": true,
+  "counts": {
+    "discarded_records": 0,
+    "loadable_records": 21390,
+    "raw_rows": 21390
+  },
+  "db_writes": 0,
+  "dependencies": [
+    "project_sc_v1",
+    "user_sc_v1"
+  ],
+  "generated_at": "2026-04-15T07:20:00+00:00",
+  "idempotency": {
+    "conflict_policy": "block_package",
+    "duplicate_policy": "update_existing_same_external_id",
+    "mode": "odoo_xml_external_id"
+  },
+  "lane": {
+    "business_priority": "relation_business_fact",
+    "lane_id": "project_member",
+    "layer": "30_relation",
+    "risk_class": "neutral_relation"
+  },
+  "load_order": [
+    "project_member_neutral_xml_v1",
+    "project_member_external_id_manifest_v1",
+    "project_member_validation_manifest_v1"
+  ],
+  "odoo_shell": false,
+  "source_snapshot": {
+    "extract_batch_id": "project_member_xml_baseline_v1",
+    "source_system": "sc",
+    "source_tables": [
+      "BASE_SYSTEM_PROJECT_USER"
+    ]
+  },
+  "target": {
+    "identity_field": "legacy_member_id",
+    "load_strategy": "odoo_xml_external_id",
+    "model": "sc.project.member.staging"
+  },
+  "validation_gates": [
+    "source_member_file_exists",
+    "required_source_headers_present",
+    "legacy_member_id_non_empty",
+    "legacy_member_id_unique",
+    "project_anchor_resolves",
+    "user_anchor_resolves",
+    "role_fact_status_missing",
+    "no_responsibility_or_authority_claim"
+  ]
+}

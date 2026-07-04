@@ -1,0 +1,43 @@
+{
+  "asset_manifest_version": "1.0",
+  "asset_package_id": "supplier_contract_line_sc_v1",
+  "business_boundary": {
+    "header_amount_write": "excluded",
+    "legacy_quantity_unit_price_detail": "not_claimed",
+    "price_contract": "source_total_amount",
+    "qty_contract": "constant_1",
+    "summary_amount_line": "included"
+  },
+  "db_writes": 0,
+  "generated_at": "2026-04-15T12:45:00+00:00",
+  "odoo_shell": false,
+  "screen_profile": {
+    "amount_source_counts": {
+      "ZJE": 5065
+    },
+    "blocked_rows": 470,
+    "blocker_counts": {
+      "amount_not_positive": 243,
+      "discard_deleted": 93,
+      "supplier_contract_anchor_missing": 234
+    },
+    "ready_rows": 5065
+  },
+  "source_table": "T_GYSHT_INFO",
+  "target_model": "construction.contract.line",
+  "validation_gates": {
+    "generate_time": [
+      "legacy_supplier_contract_id_unique",
+      "supplier_contract_external_id_resolves",
+      "amount_positive",
+      "summary_amount_line",
+      "qty_contract_one",
+      "price_contract_source_amount",
+      "header_amount_not_written"
+    ],
+    "postload": [
+      "xml_external_id_resolves",
+      "header_totals_compute_from_lines"
+    ]
+  }
+}
