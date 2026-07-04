@@ -347,6 +347,18 @@ MAKEFILE_TARGET_PREREQS = (
 
 MAKEFILE_TARGET_RECIPES = (
     (
+        "verify.release.v2_0_0.preflight",
+        (
+            '@echo "[OK] verify.release.v2_0_0.preflight done"',
+        ),
+    ),
+    (
+        "verify.release.v2_0_0.product_hardening",
+        (
+            '@echo "[OK] verify.release.v2_0_0.product_hardening done"',
+        ),
+    ),
+    (
         "verify.release.v2_0_0.checklist.guard",
         (
             "@python3 -m py_compile scripts/verify/release_v2_0_0_checklist_guard.py",
@@ -365,6 +377,18 @@ MAKEFILE_TARGET_RECIPES = (
         (
             "@python3 -m py_compile scripts/verify/release_v2_0_0_control_docs_guard.py",
             "@python3 scripts/verify/release_v2_0_0_control_docs_guard.py",
+        ),
+    ),
+    (
+        "verify.release.v2_0_0.governance.guard",
+        (
+            '@echo "[OK] verify.release.v2_0_0.governance.guard done"',
+        ),
+    ),
+    (
+        "verify.release.v2_0_0.formal_evidence.schema.guard",
+        (
+            '@echo "[OK] verify.release.v2_0_0.formal_evidence.schema.guard done"',
         ),
     ),
 )
@@ -429,8 +453,13 @@ def _makefile_recipe(text: str, target: str) -> tuple[str, ...] | None:
     for index, line in enumerate(lines):
         if not line.startswith(prefix):
             continue
+        cursor = index
+        while lines[cursor].rstrip().endswith("\\"):
+            cursor += 1
+            if cursor >= len(lines):
+                return ()
         recipe: list[str] = []
-        for recipe_line in lines[index + 1 :]:
+        for recipe_line in lines[cursor + 1 :]:
             if not recipe_line.startswith("\t"):
                 break
             recipe.append(recipe_line.strip())
