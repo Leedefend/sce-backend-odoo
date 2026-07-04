@@ -77,6 +77,9 @@ Release governance rollback is file-level:
 - remove `docs/ops/release_notes_v2.0.0.md`
 - remove `docs/ops/release_checklist_v2.0.0.md`
 - remove `verify.release.v2_0_0.preflight` from `Makefile`
+- remove `verify.release.v2_0_0.product_hardening` from `Makefile`
+- remove `verify.release.v2_0_0.governance.guard` from `Makefile`
+- remove `verify.release.v2_0_0.formal_evidence.schema.guard` from `Makefile`
 - restore release index and versioning edits
 
 Runtime rollback is outside this governance batch and must follow the production
