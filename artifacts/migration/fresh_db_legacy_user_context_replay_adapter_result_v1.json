@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_user_context_replay_adapter",
+  "department_rows": 828,
+  "profile_rows": 101,
+  "role_rows": 330,
+  "department_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_department_replay_payload_v1.csv",
+  "profile_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_user_profile_replay_payload_v1.csv",
+  "role_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_user_role_replay_payload_v1.csv"
+}

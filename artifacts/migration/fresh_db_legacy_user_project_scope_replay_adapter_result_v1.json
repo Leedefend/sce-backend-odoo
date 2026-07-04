@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "mode": "fresh_db_legacy_user_project_scope_replay_adapter",
+  "current_rows": 20000,
+  "history_rows": 70871,
+  "total_rows": 90871,
+  "payload_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/fresh_db_legacy_user_project_scope_replay_payload_v1.csv",
+  "decision": "legacy_user_project_scope_payload_ready"
+}
