@@ -84,6 +84,55 @@ REQUIRED_COMMAND_BLOCKS = (
     ),
 )
 
+REQUIRED_SECTION_LISTS = (
+    (
+        "## Preconditions",
+        (
+            "Working tree is clean at release cut time.",
+            "Release commit is merged to `main`.",
+            "`main` is fast-forwarded and reviewed.",
+            "Release notes reviewed: `docs/ops/release_notes_v2.0.0.md`.",
+            "Evidence manifest reviewed: `docs/ops/releases/v2.0.0/evidence_manifest.md`.",
+            "Versioning reviewed: `docs/ops/versioning.md`.",
+            "Release indexes reviewed: `docs/ops/releases/README.md` and",
+            "Verify catalog reviewed: `docs/ops/verify/README.md`.",
+            "No production command is executed from a dirty worktree.",
+        ),
+    ),
+    (
+        "## Version And Tag Checks",
+        (
+            "Gate tag planned: `gate-release-v2.0`.",
+            "RC tag planned: `v2.0.0-rc1`.",
+            "Formal tag planned: `v2.0.0`.",
+            "Tags are created only after the corresponding gate evidence is attached.",
+            "A tag name must never be reused.",
+            "GitHub Release is required for `gate-release-v2.0` and `v2.0.0`.",
+        ),
+    ),
+    (
+        "## Production Safety",
+        (
+            "Follow `docs/ops/production_deployment_runbook_v1.md`.",
+            "Follow `docs/ops/prod_command_policy.md`.",
+            "`ENV=prod` and `.env.prod` are not allowed in Codex autonomous development.",
+            "Production database is `sc_prod`.",
+            "Production destructive reset is forbidden.",
+            "Any production module upgrade requires `PROD_DANGER=1` and an allowed Makefile target.",
+        ),
+    ),
+    (
+        "## Stop Conditions",
+        (
+            "Any required gate fails.",
+            "Snapshot drift is not explained.",
+            "Public intent rename or semantic drift is detected.",
+            "Prod and prod-sim evidence are mixed.",
+            "The release commit is not clean or not on `main`.",
+        ),
+    ),
+)
+
 
 def _heading_order(text: str) -> tuple[str, ...]:
     return tuple(line.strip() for line in text.splitlines() if line.startswith("## "))
@@ -95,7 +144,22 @@ def _contains_required_section_order(text: str, errors: list[str]) -> None:
         errors.append(
             "checklist section order mismatch: "
             f"expected={REQUIRED_SECTION_ORDER!r} actual={actual_order!r}"
-        )
+            )
+
+
+def _top_level_bullets_after_heading(text: str, heading: str) -> tuple[str, ...] | None:
+    lines = text.splitlines()
+    try:
+        start = lines.index(heading)
+    except ValueError:
+        return None
+    items: list[str] = []
+    for line in lines[start + 1 :]:
+        if line.startswith("## "):
+            break
+        if line.startswith("- "):
+            items.append(line[2:].strip())
+    return tuple(items)
 
 
 def _command_block_after(text: str, marker: str) -> tuple[str, ...] | None:
@@ -127,6 +191,19 @@ def _contains_required_command_blocks(text: str, errors: list[str]) -> None:
             )
 
 
+def _contains_required_section_lists(text: str, errors: list[str]) -> None:
+    for heading, expected_items in REQUIRED_SECTION_LISTS:
+        actual_items = _top_level_bullets_after_heading(text, heading)
+        if actual_items is None:
+            errors.append(f"checklist missing section list: {heading}")
+            continue
+        if actual_items != expected_items:
+            errors.append(
+                "checklist section list mismatch: "
+                f"{heading} expected={expected_items!r} actual={actual_items!r}"
+            )
+
+
 def main() -> int:
     errors: list[str] = []
     if not CHECKLIST.is_file():
@@ -141,6 +218,7 @@ def main() -> int:
                 errors.append(f"checklist contains forbidden token: {token}")
         _contains_required_section_order(text, errors)
         _contains_required_command_blocks(text, errors)
+        _contains_required_section_lists(text, errors)
 
     if errors:
         print("[release_v2_0_0_checklist_guard] FAIL")
