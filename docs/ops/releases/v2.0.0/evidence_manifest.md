@@ -51,6 +51,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 | Release checklist guard | `make verify.release.v2_0_0.checklist.guard` | PASS | `docs/ops/release_checklist_v2.0.0.md` |
 | Evidence manifest guard | `make verify.release.v2_0_0.evidence_manifest.guard` | PASS | `docs/ops/releases/v2.0.0/evidence_manifest.md` |
 | Release control docs guard | `make verify.release.v2_0_0.control_docs.guard` | PASS | `docs/ops/releases/v2.0.0/README.md` and `docs/ops/release_notes_v2.0.0.md` |
+| Release governance guard | `make verify.release.v2_0_0.governance.guard` | PASS | release-control docs, evidence manifest, and checklist guard terminal output |
 
 ## Evidence Rules
 

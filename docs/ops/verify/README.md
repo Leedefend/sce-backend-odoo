@@ -200,6 +200,8 @@
   - Verifies the v2.0.0 evidence manifest keeps required gate sections, evidence tables, schema guard rows, evidence rules, and explicit prod-sim evidence directory validation.
 - `make verify.release.v2_0_0.control_docs.guard`
   - Verifies the v2.0.0 release-control README and release notes keep planned tag names, release boundaries, required gates, immutable RC guidance, and the current 10-module product delivery baseline.
+- `make verify.release.v2_0_0.governance.guard`
+  - Runs the v2.0.0 release-control docs, evidence manifest, and checklist guards as one governance closure target.
 - `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard`
   - Verifies explicit prod-sim acceptance evidence under the recorded run directory.
   - Requires strict SCBS release acceptance JSON/MD and no-legacy replay acceptance JSON to target `sc_prod_sim`; no default run directory is inferred.

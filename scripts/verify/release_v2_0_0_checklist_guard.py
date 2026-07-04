@@ -22,6 +22,7 @@ REQUIRED_TOKENS = (
     "## Stop Conditions",
     "make verify.release.v2_0_0.preflight",
     "make verify.release.v2_0_0.product_hardening",
+    "make verify.release.v2_0_0.governance.guard",
     "make verify.release.v2_0_0.control_docs.guard",
     "make verify.release.v2_0_0.evidence_manifest.guard",
     "make release.dev.acceptance.publish",
