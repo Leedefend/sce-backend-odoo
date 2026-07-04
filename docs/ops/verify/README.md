@@ -204,6 +204,7 @@
   - Runs the v2.0.0 release-control docs, evidence manifest, and checklist guards as one governance closure target.
 - `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
   - Runs the v2.0.0 governance, product hardening schema, dev acceptance schema, and prod-sim acceptance evidence schema guards as the formal evidence shape closure target.
+  - Recorded sample artifact directories may validate schema shape only; final release signoff requires the recorded prod-sim acceptance run directory for that release candidate.
 - `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard`
   - Verifies explicit prod-sim acceptance evidence under the recorded run directory.
   - Requires strict SCBS release acceptance JSON/MD and no-legacy replay acceptance JSON to target `sc_prod_sim`; no default run directory is inferred.
