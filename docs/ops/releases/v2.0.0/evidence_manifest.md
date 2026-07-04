@@ -52,6 +52,12 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 - Status: blocked in the current local `sc_demo` dev verification environment
   because `smart_construction_demo` is installed and
   `verify.product.no_demo_data` correctly fails release hardening on demo data.
+- Current blocker evidence:
+  `artifacts/backend/non_demo_data_contamination_guard.json` and
+  `artifacts/backend/non_demo_data_contamination_guard.md`.
+- Current blocker facts on `sc_demo`:
+  `smart_construction_demo installed`, `res.partner active demo-name count=3`,
+  and `smart_construction_demo xmlid count=112`.
 - Latest passing sub-gate in this batch:
   `make verify.frontend.widget_richness.post_ga.guard`.
 - Closed sub-gates: `verify.bundle.installation.ready` and
