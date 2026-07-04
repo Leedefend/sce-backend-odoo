@@ -43,7 +43,7 @@
 - `make verify.portal.recordview_hud_smoke.container`：`PASS`
 - `make verify.portal.view_render_mode_smoke.container`：`PASS`
 
-## 3. 当前阻塞项
+## 3. 非阻塞观察项
 - 当前仅剩 `vue/attributes-order` warning（6 条），不阻塞 lint 通过。
 
 
