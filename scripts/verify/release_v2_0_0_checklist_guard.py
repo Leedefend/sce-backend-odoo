@@ -49,6 +49,9 @@ FORBIDDEN_TOKENS = (
     "git push --force",
     "git reset --hard",
     "ENV=prod make",
+    "TODO",
+    "TBD",
+    "FIXME",
 )
 
 REQUIRED_SECTION_ORDER = (

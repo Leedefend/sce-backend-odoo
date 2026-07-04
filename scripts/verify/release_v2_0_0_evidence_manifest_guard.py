@@ -51,6 +51,13 @@ FORBIDDEN_TOKENS = (
     "artifacts/migration/prod_sim_fresh_replay_20260506T000602",
     "artifacts/migration/prod_sim_fresh_replay_20260505T230223",
     "sc_prod evidence",
+    "git tag -f",
+    "git push --force",
+    "git reset --hard",
+    "ENV=prod make",
+    "TODO",
+    "TBD",
+    "FIXME",
 )
 
 REQUIRED_TABLE_ROWS = {
