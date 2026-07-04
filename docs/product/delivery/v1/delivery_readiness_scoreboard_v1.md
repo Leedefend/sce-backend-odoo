@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-07-04T18:15:29Z
-- branch: `feature/product-delivery-governance-truth-closeout`
-- commit_ref: `ced5a77f2`
+- generated_at_utc: 2026-07-04T20:33:15Z
+- branch: `feature/product-governance-truth-schema-guard`
+- commit_ref: `1bcc6cc42`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 - final_closeout_date: `2026-07-05`
