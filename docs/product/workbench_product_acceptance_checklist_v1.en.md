@@ -39,4 +39,4 @@ Validate that the workbench has moved from a "capability summary page" to an "ac
 - [x] `make verify.frontend.build`
 - [x] `make verify.frontend.typecheck.strict`
 - [x] `make verify.project.dashboard.contract`
-- [ ] `make verify.phase_next.evidence.bundle`
+- [x] `make verify.phase_next.evidence.bundle`
