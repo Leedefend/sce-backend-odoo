@@ -125,7 +125,7 @@ VERIFY_README_TOKENS = (
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
-    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, versioning formal release line, and promotion order shape",
+    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -249,6 +249,28 @@ NOTES_SCOPE_ITEMS = (
     "Dev acceptance path: uploaded backup validation, static rebuild, API lock, and",
     "Release gate: one-command preflight through `make verify.release.v2_0_0.preflight`.",
     "Release governance docs: release-control README, release notes, versioning,",
+)
+
+NOTES_TEXT_SNIPPETS = (
+    (
+        "`v2.0.0` is the active formal release line for the construction management\n"
+        "system. It promotes the current product-delivery posture from iterative\n"
+        "acceptance into a governed release candidate flow."
+    ),
+    (
+        "The earlier `v1.0.0` tag name already exists in the remote repository and must\n"
+        "not be reused. This line therefore intentionally advances the formal release\n"
+        "track to `v2.0.0`."
+    ),
+    (
+        "Tags must be created only after the release checklist is complete and `main`\n"
+        "matches the reviewed release commit."
+    ),
+    (
+        "Production deployment is not part of this release-note batch. Production must\n"
+        "follow `docs/ops/production_deployment_runbook_v1.md` and\n"
+        "`docs/ops/prod_command_policy.md`."
+    ),
 )
 
 NOTES_TAG_PLAN_ITEMS = (
@@ -673,6 +695,16 @@ def _contains_notes_scope_items(errors: list[str]) -> None:
         )
 
 
+def _contains_notes_text_snippets(errors: list[str]) -> None:
+    if not RELEASE_NOTES.is_file():
+        errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
+        return
+    text = RELEASE_NOTES.read_text(encoding="utf-8")
+    for snippet in NOTES_TEXT_SNIPPETS:
+        if snippet not in text:
+            errors.append(f"release notes missing required text snippet: {snippet}")
+
+
 def _contains_notes_tag_plan(errors: list[str]) -> None:
     if not RELEASE_NOTES.is_file():
         errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
@@ -806,6 +838,7 @@ def main() -> int:
     _contains_notes_minimum_verification(errors)
     _contains_notes_env_acceptance(errors)
     _contains_notes_scope_items(errors)
+    _contains_notes_text_snippets(errors)
     _contains_notes_tag_plan(errors)
     _contains_notes_known_limits(errors)
     _contains_release_index_planned_items(
