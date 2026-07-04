@@ -123,7 +123,7 @@ VERIFY_README_TOKENS = (
     "current local verification status structure",
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
-    "release indexes, verification catalog, and Makefile target dependencies",
+    "release indexes, verification catalog, and Makefile target dependencies and guard recipes",
     "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes scope, tag plan, known limits, acceptance command blocks, versioning formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
@@ -334,6 +334,30 @@ MAKEFILE_TARGET_PREREQS = (
     ),
 )
 
+MAKEFILE_TARGET_RECIPES = (
+    (
+        "verify.release.v2_0_0.checklist.guard",
+        (
+            "@python3 -m py_compile scripts/verify/release_v2_0_0_checklist_guard.py",
+            "@python3 scripts/verify/release_v2_0_0_checklist_guard.py",
+        ),
+    ),
+    (
+        "verify.release.v2_0_0.evidence_manifest.guard",
+        (
+            "@python3 -m py_compile scripts/verify/release_v2_0_0_evidence_manifest_guard.py",
+            "@python3 scripts/verify/release_v2_0_0_evidence_manifest_guard.py",
+        ),
+    ),
+    (
+        "verify.release.v2_0_0.control_docs.guard",
+        (
+            "@python3 -m py_compile scripts/verify/release_v2_0_0_control_docs_guard.py",
+            "@python3 scripts/verify/release_v2_0_0_control_docs_guard.py",
+        ),
+    ),
+)
+
 FORBIDDEN_TOKENS = (
     "Product delivery baseline: 9 modules",
     "reuse `v1.0.0`",
@@ -372,6 +396,21 @@ def _makefile_prereqs(text: str, target: str) -> tuple[str, ...] | None:
             chunks.append(lines[cursor].strip())
         prereq_text = " ".join(chunk for chunk in chunks if chunk)
         return tuple(prereq_text.split())
+    return None
+
+
+def _makefile_recipe(text: str, target: str) -> tuple[str, ...] | None:
+    prefix = f"{target}:"
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if not line.startswith(prefix):
+            continue
+        recipe: list[str] = []
+        for recipe_line in lines[index + 1 :]:
+            if not recipe_line.startswith("\t"):
+                break
+            recipe.append(recipe_line.strip())
+        return tuple(recipe)
     return None
 
 
@@ -680,6 +719,16 @@ def _contains_makefile_targets(errors: list[str]) -> None:
             errors.append(
                 "Makefile target prereqs mismatch: "
                 f"{target} expected={expected_prereqs!r} actual={actual_prereqs!r}"
+            )
+    for target, expected_recipe in MAKEFILE_TARGET_RECIPES:
+        actual_recipe = _makefile_recipe(text, target)
+        if actual_recipe is None:
+            errors.append(f"Makefile missing target: {target}")
+            continue
+        if actual_recipe != expected_recipe:
+            errors.append(
+                "Makefile target recipe mismatch: "
+                f"{target} expected={expected_recipe!r} actual={actual_recipe!r}"
             )
 
 
