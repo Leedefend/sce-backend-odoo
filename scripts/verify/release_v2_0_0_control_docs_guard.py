@@ -114,6 +114,7 @@ RELEASE_INDEX_ZH_TOKENS = (
 VERIFY_README_TOKENS = (
     "`make verify.release.v2_0_0.checklist.guard`",
     "controlled-doc review",
+    "sections in the expected order",
     "versioning/release-index review",
     "`make verify.release.v2_0_0.evidence_manifest.guard`",
     "evidence table rows/order",
