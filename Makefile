@@ -2949,6 +2949,10 @@ verify.workspace_home.orchestration_schema.guard: guard.prod.forbid
 verify.workspace_home.provider_split.guard: guard.prod.forbid
 	@python3 scripts/verify/workspace_home_provider_split_guard.py
 
+.PHONY: verify.workbench.product_acceptance.guard
+verify.workbench.product_acceptance.guard: guard.prod.forbid
+	@python3 scripts/verify/workbench_product_acceptance_guard.py
+
 .PHONY: verify.frontend.contract_text_hardcode.guard
 verify.frontend.contract_text_hardcode.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_contract_text_hardcode_guard.py

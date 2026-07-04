@@ -1015,9 +1015,9 @@ def _workspace_v1_zone_order(role_code: str) -> List[str]:
                 pass
 
     default_order = {
-        "pm": ["today_focus", "analysis", "quick_entries"],
-        "finance": ["analysis", "today_focus", "quick_entries"],
-        "owner": ["quick_entries", "analysis", "today_focus"],
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["today_focus", "quick_entries", "analysis", "hero"],
+        "owner": ["today_focus", "analysis", "hero", "quick_entries"],
     }
     return list(default_order.get(_to_text(role_code).lower(), default_order["owner"]))
 
@@ -2685,8 +2685,14 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
     risk_red = max(risk_red, urgent_risk_count)
     risk_now = max(risk_now, len(risk_actions))
     risk_max = max(risk_now, risk_d7, risk_d30, 1)
-    business_metrics: List[Dict[str, Any]] = []
-    platform_metrics: List[Dict[str, Any]] = []
+    business_metrics, platform_metrics = _build_metric_sets(
+        ready_count,
+        locked_count,
+        preview_count,
+        scene_count,
+        len(today_actions),
+        len(risk_actions),
+    )
     extraction_stats = _build_extraction_stats(data=data, today_actions=today_actions, risk_actions=risk_actions)
     visibility_diagnosis = _build_business_visibility_diagnosis(data, role_code)
     has_business_signal = bool(

@@ -253,7 +253,7 @@
         />
         <button v-if="searchText.trim()" class="search-clear-btn" @click="clearSearchText">{{ pageText('search_clear', '清空搜索') }}</button>
       </div>
-      <p class="result-summary">{{ resultSummaryText }}</p>
+      <p class="diagnostic-summary">{{ diagnosticsSummaryText }}</p>
       <label class="ready-only">
         <input v-model="readyOnly" type="checkbox" />
         {{ pageText('ready_only_label', '仅显示可进入功能') }}
@@ -314,9 +314,9 @@
           {{ lockReasonLabel(item.reasonCode) }} {{ item.count }}
         </button>
       </div>
-      <div v-if="activeFilterChips.length" class="active-filters">
+      <div v-if="activeDiagnosticChips.length" class="active-filters">
         <button
-          v-for="chip in activeFilterChips"
+          v-for="chip in activeDiagnosticChips"
           :key="chip.key"
           class="filter-chip"
           @click="clearFilterChip(chip.key)"
@@ -1519,15 +1519,15 @@ const capabilityStateCounts = computed(() => {
   }
   return counts;
 });
-const resultSummaryText = computed(() => {
+const diagnosticsSummaryText = computed(() => {
   const parts = [
-    `${pageText('result_summary_prefix', '当前显示 ')}${filteredEntries.value.length}${pageText('result_summary_middle', ' / ')}${entries.value.length}${pageText('result_summary_suffix', ' 项功能')}`,
+    `${pageText('diagnostic_summary_prefix', '当前显示 ')}${filteredEntries.value.length}${pageText('diagnostic_summary_middle', ' / ')}${entries.value.length}${pageText('diagnostic_summary_suffix', ' 项功能')}`,
   ];
-  if (stateFilter.value !== 'ALL') parts.push(`${pageText('result_summary_state_prefix', '状态：')}${stateLabel(stateFilter.value)}`);
+  if (stateFilter.value !== 'ALL') parts.push(`${pageText('diagnostic_summary_state_prefix', '状态：')}${stateLabel(stateFilter.value)}`);
   if (!isDeliveryMode.value && capabilityStateFilter.value !== 'ALL') {
-    parts.push(`${pageText('result_summary_capability_state_prefix', '功能语义：')}${capabilityStateLabel(capabilityStateFilter.value)}`);
+    parts.push(`${pageText('diagnostic_summary_capability_state_prefix', '功能语义：')}${capabilityStateLabel(capabilityStateFilter.value)}`);
   }
-  if (lockReasonFilter.value !== 'ALL') parts.push(`${pageText('result_summary_reason_prefix', '原因：')}${lockReasonLabel(lockReasonFilter.value)}`);
+  if (lockReasonFilter.value !== 'ALL') parts.push(`${pageText('diagnostic_summary_reason_prefix', '原因：')}${lockReasonLabel(lockReasonFilter.value)}`);
   return parts.join(' · ');
 });
 const readyOnlyNoResult = computed(
@@ -1541,7 +1541,7 @@ const emptyStateReason = computed(() => {
   if (searchText.value.trim()) return 'search_filtered';
   return 'filter_filtered';
 });
-const activeFilterChips = computed<FilterChip[]>(() => {
+const activeDiagnosticChips = computed<FilterChip[]>(() => {
   const chips: FilterChip[] = [];
   const keyword = searchText.value.trim();
   if (keyword) chips.push({ key: 'search', label: `${pageText('chip_search_prefix', '搜索：')}${keyword}` });
@@ -1685,8 +1685,8 @@ const homeSectionDatasetPayloads = computed<Record<string, unknown>>(() => {
     group_overview: capabilityEntries,
     advice: systemAdvice.value,
     filters: {
-      result_summary: resultSummaryText.value,
-      active_filters: activeFilterChips.value,
+      diagnostic_summary: diagnosticsSummaryText.value,
+      diagnostic_filter_chips: activeDiagnosticChips.value,
     },
   };
 });
@@ -3229,7 +3229,7 @@ function highlightParts(raw: string) {
   white-space: nowrap;
 }
 
-.result-summary {
+.diagnostic-summary {
   margin: -2px 0 0;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
