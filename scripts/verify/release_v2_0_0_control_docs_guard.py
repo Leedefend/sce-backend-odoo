@@ -75,6 +75,8 @@ VERSIONING_TOKENS = (
     "make verify.release.v2_0_0.preflight",
     "make verify.release.v2_0_0.product_hardening",
     "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard",
+    "Recorded sample artifact directories may validate schema shape only",
+    "release signoff requires the recorded prod-sim acceptance run directory",
     "Production deployment is not implied by creating `v2.0.0`",
 )
 
