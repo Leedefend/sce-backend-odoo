@@ -18,6 +18,7 @@ status: active
   - Release Notes：`docs/ops/release_notes_v2.0.0.md`
   - Release Checklist：`docs/ops/release_checklist_v2.0.0.md`
   - Evidence：`docs/ops/releases/v2.0.0/evidence_manifest.md`
+  - Verify Catalog：`docs/ops/verify/README.md`
   - Verify：`make verify.release.v2_0_0.preflight`
   - Governance Verify：`make verify.release.v2_0_0.governance.guard`
   - Formal Evidence Verify：`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
