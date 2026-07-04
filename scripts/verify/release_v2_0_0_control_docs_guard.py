@@ -122,7 +122,7 @@ VERIFY_README_TOKENS = (
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target dependencies",
-    "Enforces release document list, release-index planned entries, release-notes tag plan and minimum verification commands, and promotion order shape",
+    "Enforces release document list, rollback list, release-index planned entries, release-notes tag plan and minimum verification commands, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -136,6 +136,20 @@ README_RELEASE_DOCUMENTS = (
     "Release notes: `docs/ops/release_notes_v2.0.0.md`",
     "Release checklist: `docs/ops/release_checklist_v2.0.0.md`",
     "Evidence manifest: `docs/ops/releases/v2.0.0/evidence_manifest.md`",
+)
+
+README_ROLLBACK_ITEMS = (
+    "remove `docs/ops/releases/v2.0.0/`",
+    "remove `docs/ops/release_notes_v2.0.0.md`",
+    "remove `docs/ops/release_checklist_v2.0.0.md`",
+    "remove `verify.release.v2_0_0.preflight` from `Makefile`",
+    "remove `verify.release.v2_0_0.product_hardening` from `Makefile`",
+    "remove `verify.release.v2_0_0.governance.guard` from `Makefile`",
+    "remove `verify.release.v2_0_0.formal_evidence.schema.guard` from `Makefile`",
+    "restore `docs/ops/versioning.md` edits",
+    "restore `docs/ops/releases/README.md` edits",
+    "restore `docs/ops/releases/README.zh.md` edits",
+    "restore `docs/ops/verify/README.md` edits",
 )
 
 README_PROMOTION_ORDER = (
@@ -372,6 +386,22 @@ def _contains_readme_release_documents(errors: list[str]) -> None:
         )
 
 
+def _contains_readme_rollback_items(errors: list[str]) -> None:
+    if not CONTROL_README.is_file():
+        errors.append(f"missing release-control README: {CONTROL_README.relative_to(ROOT).as_posix()}")
+        return
+    text = CONTROL_README.read_text(encoding="utf-8")
+    actual_items = _list_items_after_heading(text, "## Rollback")
+    if actual_items is None:
+        errors.append("release-control README missing section: ## Rollback")
+        return
+    if actual_items != README_ROLLBACK_ITEMS:
+        errors.append(
+            "release-control README rollback items mismatch: "
+            f"expected={README_ROLLBACK_ITEMS!r} actual={actual_items!r}"
+        )
+
+
 def _contains_notes_minimum_verification(errors: list[str]) -> None:
     if not RELEASE_NOTES.is_file():
         errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
@@ -467,6 +497,7 @@ def main() -> int:
     _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
     _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
     _contains_readme_release_documents(errors)
+    _contains_readme_rollback_items(errors)
     _contains_notes_minimum_verification(errors)
     _contains_notes_tag_plan(errors)
     _contains_release_index_planned_items(
