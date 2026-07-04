@@ -116,6 +116,7 @@ VERIFY_README_TOKENS = (
     "controlled-doc review",
     "versioning/release-index review",
     "`make verify.release.v2_0_0.evidence_manifest.guard`",
+    "evidence table rows/order",
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target dependencies",

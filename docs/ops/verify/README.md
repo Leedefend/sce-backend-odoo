@@ -197,7 +197,7 @@
   - Verifies the v2.0.0 release checklist keeps required preflight, product hardening, dev acceptance, prod-sim, controlled-doc review, production safety, post-release, and stop-condition sections.
   - Enforces required release tag names, versioning/release-index review, and prod/prod-sim evidence separation language.
 - `make verify.release.v2_0_0.evidence_manifest.guard`
-  - Verifies the v2.0.0 evidence manifest keeps required gate sections, evidence tables, schema guard rows, controlled-doc artifact coverage, evidence rules, and explicit prod-sim evidence directory validation.
+  - Verifies the v2.0.0 evidence manifest keeps required gate sections, evidence table rows/order, schema guard rows, controlled-doc artifact coverage, evidence rules, and explicit prod-sim evidence directory validation.
 - `make verify.release.v2_0_0.control_docs.guard`
   - Verifies the v2.0.0 release-control README, release notes, versioning guide, release indexes, verification catalog, and Makefile target dependencies keep planned tag names, release boundaries, required gates, immutable RC guidance, and the current 10-module product delivery baseline.
 - `make verify.release.v2_0_0.governance.guard`
