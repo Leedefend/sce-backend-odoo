@@ -82,6 +82,15 @@ REQUIRED_COMMAND_BLOCKS = (
             "make verify.release.v2_0_0.evidence_manifest.guard",
         ),
     ),
+    (
+        "For `sc_demo` acceptance:",
+        (
+            "ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo \\",
+            "ACCEPTANCE_BACKUP_DIR=<uploaded_backup_dir> \\",
+            "ACCEPTANCE_BASE_URL=http://127.0.0.1:18081 \\",
+            "make release.dev.acceptance.publish",
+        ),
+    ),
 )
 
 REQUIRED_SECTION_LISTS = (
