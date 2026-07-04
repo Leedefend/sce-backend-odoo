@@ -4470,6 +4470,11 @@ verify.release.v2_0_0.checklist.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/release_v2_0_0_checklist_guard.py
 	@python3 scripts/verify/release_v2_0_0_checklist_guard.py
 
+.PHONY: verify.release.v2_0_0.evidence_manifest.guard
+verify.release.v2_0_0.evidence_manifest.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/release_v2_0_0_evidence_manifest_guard.py
+	@python3 scripts/verify/release_v2_0_0_evidence_manifest_guard.py
+
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
 

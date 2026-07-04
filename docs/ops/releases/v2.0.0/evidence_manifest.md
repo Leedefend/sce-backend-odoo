@@ -49,6 +49,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 | Prod-sim acceptance schema | `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard` | PASS | `scbs_release_acceptance_strict_result_v1.json`, `scbs_release_acceptance_strict_v1.md`, and `scbs_no_legacy_replay_acceptance_result_v1.json` under the recorded run dir |
 | Release checklist signoff | manual review | PASS | `docs/ops/release_checklist_v2.0.0.md` |
 | Release checklist guard | `make verify.release.v2_0_0.checklist.guard` | PASS | `docs/ops/release_checklist_v2.0.0.md` |
+| Evidence manifest guard | `make verify.release.v2_0_0.evidence_manifest.guard` | PASS | `docs/ops/releases/v2.0.0/evidence_manifest.md` |
 
 ## Evidence Rules
 
