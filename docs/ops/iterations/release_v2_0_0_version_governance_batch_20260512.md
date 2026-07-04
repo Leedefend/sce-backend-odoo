@@ -22,6 +22,10 @@ Current validation shape:
 - `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
 - `git diff --check`
 
+Recorded sample artifact directories may validate schema shape only; final
+release signoff requires the recorded prod-sim acceptance run directory for that
+release candidate.
+
 No tag creation, production deployment, production database operation, or
 prod-sim destructive runtime operation is implied by this follow-up closure.
 
