@@ -122,7 +122,7 @@ VERIFY_README_TOKENS = (
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target dependencies",
-    "Enforces release document list, release-notes minimum verification commands, and promotion order shape",
+    "Enforces release document list, release-notes tag plan and minimum verification commands, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -169,6 +169,12 @@ NOTES_MINIMUM_VERIFICATION_COMMANDS = (
     "make verify.system.capability_baseline.report",
     "make verify.restricted",
     "make verify.backend.contract.closure.mainline",
+)
+
+NOTES_TAG_PLAN_ITEMS = (
+    "Gate baseline: `gate-release-v2.0`",
+    "Release candidates: `v2.0.0-rc1`, then `v2.0.0-rc2` only if blocker fixes are required.",
+    "Formal release: `v2.0.0`",
 )
 
 MAKEFILE_TARGET_PREREQS = (
@@ -336,6 +342,22 @@ def _contains_notes_minimum_verification(errors: list[str]) -> None:
         )
 
 
+def _contains_notes_tag_plan(errors: list[str]) -> None:
+    if not RELEASE_NOTES.is_file():
+        errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
+        return
+    text = RELEASE_NOTES.read_text(encoding="utf-8")
+    actual_items = _list_items_after_heading(text, "## Tag Plan")
+    if actual_items is None:
+        errors.append("release notes missing section: ## Tag Plan")
+        return
+    if actual_items != NOTES_TAG_PLAN_ITEMS:
+        errors.append(
+            "release notes tag plan mismatch: "
+            f"expected={NOTES_TAG_PLAN_ITEMS!r} actual={actual_items!r}"
+        )
+
+
 def _contains_promotion_order(path: Path, marker: str, expected_order: tuple[str, ...], errors: list[str]) -> None:
     if not path.is_file():
         errors.append(f"missing promotion-order doc: {path.relative_to(ROOT).as_posix()}")
@@ -379,6 +401,7 @@ def main() -> int:
     _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
     _contains_readme_release_documents(errors)
     _contains_notes_minimum_verification(errors)
+    _contains_notes_tag_plan(errors)
     _contains_promotion_order(CONTROL_README, "## Promotion Order", README_PROMOTION_ORDER, errors)
     _contains_promotion_order(VERSIONING, "Promotion order:", VERSIONING_PROMOTION_ORDER, errors)
     _contains_makefile_targets(errors)
