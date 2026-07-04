@@ -122,7 +122,7 @@ VERIFY_README_TOKENS = (
     "controlled-doc artifact coverage",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target dependencies",
-    "Enforces release document list and promotion order shape",
+    "Enforces release document list, release-notes minimum verification commands, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -159,6 +159,16 @@ VERSIONING_PROMOTION_ORDER = (
     "Run `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard` after prod-sim acceptance evidence is recorded.",
     "Create `v2.0.0-rc1` only after RC evidence passes.",
     "Create `v2.0.0` only after prod-sim acceptance and release checklist signoff.",
+)
+
+NOTES_MINIMUM_VERIFICATION_COMMANDS = (
+    "make verify.release.v2_0_0.preflight",
+    "make verify.release.v2_0_0.product_hardening",
+    "make verify.release.v2_0_0.governance.guard",
+    "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard",
+    "make verify.system.capability_baseline.report",
+    "make verify.restricted",
+    "make verify.backend.contract.closure.mainline",
 )
 
 MAKEFILE_TARGET_PREREQS = (
@@ -278,6 +288,22 @@ def _ordered_items_after_marker(text: str, marker: str) -> tuple[str, ...] | Non
     return tuple(items)
 
 
+def _command_block_after_marker(text: str, marker: str) -> tuple[str, ...] | None:
+    marker_index = text.find(marker)
+    if marker_index < 0:
+        return None
+    after_marker = text[marker_index + len(marker) :]
+    fence_start = after_marker.find("```bash")
+    if fence_start < 0:
+        return None
+    after_fence = after_marker[fence_start + len("```bash") :]
+    fence_end = after_fence.find("```")
+    if fence_end < 0:
+        return None
+    block = after_fence[:fence_end]
+    return tuple(line.strip() for line in block.splitlines() if line.strip())
+
+
 def _contains_readme_release_documents(errors: list[str]) -> None:
     if not CONTROL_README.is_file():
         errors.append(f"missing release-control README: {CONTROL_README.relative_to(ROOT).as_posix()}")
@@ -291,6 +317,22 @@ def _contains_readme_release_documents(errors: list[str]) -> None:
         errors.append(
             "release-control README documents mismatch: "
             f"expected={README_RELEASE_DOCUMENTS!r} actual={actual_documents!r}"
+        )
+
+
+def _contains_notes_minimum_verification(errors: list[str]) -> None:
+    if not RELEASE_NOTES.is_file():
+        errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
+        return
+    text = RELEASE_NOTES.read_text(encoding="utf-8")
+    actual_commands = _command_block_after_marker(text, "Minimum pre-release verification:")
+    if actual_commands is None:
+        errors.append("release notes missing minimum pre-release verification command block")
+        return
+    if actual_commands != NOTES_MINIMUM_VERIFICATION_COMMANDS:
+        errors.append(
+            "release notes minimum verification mismatch: "
+            f"expected={NOTES_MINIMUM_VERIFICATION_COMMANDS!r} actual={actual_commands!r}"
         )
 
 
@@ -336,6 +378,7 @@ def main() -> int:
     _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
     _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
     _contains_readme_release_documents(errors)
+    _contains_notes_minimum_verification(errors)
     _contains_promotion_order(CONTROL_README, "## Promotion Order", README_PROMOTION_ORDER, errors)
     _contains_promotion_order(VERSIONING, "Promotion order:", VERSIONING_PROMOTION_ORDER, errors)
     _contains_makefile_targets(errors)
