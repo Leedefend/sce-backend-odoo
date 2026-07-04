@@ -55,6 +55,8 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 - Current blocker evidence:
   `artifacts/backend/non_demo_data_contamination_guard.json` and
   `artifacts/backend/non_demo_data_contamination_guard.md`.
+- Evidence shape guard:
+  `make verify.product.no_demo_data.schema.guard`.
 - Current blocker facts on `sc_demo`:
   `smart_construction_demo installed`, `res.partner active demo-name count=3`,
   and `smart_construction_demo xmlid count=112`.

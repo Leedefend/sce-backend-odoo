@@ -2222,6 +2222,8 @@ verify.non_demo_data_contamination: check-compose-project check-compose-env
 		DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/non_demo_data_contamination_guard.py || status=$$?; \
 	$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/non_demo_data_contamination_guard.json artifacts/backend/non_demo_data_contamination_guard.json >/dev/null 2>&1 || true; \
 	$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/non_demo_data_contamination_guard.md artifacts/backend/non_demo_data_contamination_guard.md >/dev/null 2>&1 || true; \
+	schema_status=0; python3 scripts/verify/non_demo_data_contamination_guard_schema_guard.py || schema_status=$$?; \
+	if [ "$$status" -eq 0 ]; then status=$$schema_status; fi; \
 	exit $$status
 
 audit.project.actions: guard.prod.danger check-compose-project check-compose-env
@@ -4330,7 +4332,14 @@ verify.product.no_demo_data: guard.prod.forbid check-compose-project check-compo
 		DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/non_demo_data_contamination_guard.py || status=$$?; \
 	$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/non_demo_data_contamination_guard.json artifacts/backend/non_demo_data_contamination_guard.json >/dev/null 2>&1 || true; \
 	$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/non_demo_data_contamination_guard.md artifacts/backend/non_demo_data_contamination_guard.md >/dev/null 2>&1 || true; \
+	schema_status=0; python3 scripts/verify/non_demo_data_contamination_guard_schema_guard.py || schema_status=$$?; \
+	if [ "$$status" -eq 0 ]; then status=$$schema_status; fi; \
 	exit $$status
+
+.PHONY: verify.product.no_demo_data.schema.guard
+verify.product.no_demo_data.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/non_demo_data_contamination_guard_schema_guard.py
+	@python3 scripts/verify/non_demo_data_contamination_guard_schema_guard.py
 
 verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready verify.runtime_contract.test_placeholder.guard verify.lowcode_config.boundary.guard verify.lowcode_config.runtime_boundary.guard verify.product.no_demo_data
 	@echo "[OK] verify.product.surface.clean done"

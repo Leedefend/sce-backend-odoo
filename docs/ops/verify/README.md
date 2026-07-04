@@ -64,6 +64,7 @@
   - Copies runtime evidence back from the Odoo container for SKIP/PASS/FAIL:
     - `artifacts/backend/non_demo_data_contamination_guard.json`
     - `artifacts/backend/non_demo_data_contamination_guard.md`
+  - Runs `make verify.product.no_demo_data.schema.guard` after copying evidence.
 - `make verify.product.no_demo_data`
   - Formal release hardening sub-gate used by `verify.product.surface.clean`.
   - Forces no-demo mode even on development databases; demo databases may skip only when the command is not run with `PRODUCT_REQUIRE_NO_DEMO_DATA=1`.
@@ -71,6 +72,9 @@
   - Copies runtime evidence back from the Odoo container even when the guard fails:
     - `artifacts/backend/non_demo_data_contamination_guard.json`
     - `artifacts/backend/non_demo_data_contamination_guard.md`
+- `make verify.product.no_demo_data.schema.guard`
+  - Verifies the no-demo contamination JSON/MD report shape.
+  - Enforces `ok/status/db_name/mode/require_no_demo_data/errors/demo_db_auto_skip/rules` fields in JSON and required Markdown summary tokens.
 - `make verify.user_module.data_baseline.runtime_audit`
   - Runtime acceptance after installing/upgrading `smart_construction_custom` on a target database.
   - Replays the legacy user data baseline twice and verifies user count, XMLID count, and duplicate-login safety remain stable.
