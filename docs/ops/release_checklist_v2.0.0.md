@@ -7,6 +7,9 @@
 - `main` is fast-forwarded and reviewed.
 - Release notes reviewed: `docs/ops/release_notes_v2.0.0.md`.
 - Evidence manifest reviewed: `docs/ops/releases/v2.0.0/evidence_manifest.md`.
+- Versioning reviewed: `docs/ops/versioning.md`.
+- Release indexes reviewed: `docs/ops/releases/README.md` and
+  `docs/ops/releases/README.zh.md`.
 - No production command is executed from a dirty worktree.
 
 ## Version And Tag Checks
