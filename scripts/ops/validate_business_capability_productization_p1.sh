@@ -122,7 +122,10 @@ run_odoo_shell_check "locked_fact_formal_model_continuity_guard" \
 run_odoo_shell_check "finance_interfund_handling_entry_audit" \
   scripts/verify/finance_interfund_handling_entry_audit.py
 run_static_check "p1_daily_business_form_usability_audit" \
-  python3 scripts/verify/p1_daily_business_form_usability_audit.py
+  env \
+    P1_DAILY_BUSINESS_FORM_USABILITY_AUDIT_JSON=/tmp/sce-product-artifacts/p1_daily_business_form_usability_audit.json \
+    P1_DAILY_BUSINESS_FORM_USABILITY_AUDIT_MD=/tmp/sce-product-artifacts/p1_daily_business_form_usability_audit.md \
+    python3 scripts/verify/p1_daily_business_form_usability_audit.py
 run_odoo_shell_json_artifact_check "p1_locked_fact_mapping_candidate_probe" \
   scripts/verify/p1_locked_fact_mapping_candidate_probe.py \
   "artifacts/p1_locked_fact_mapping_candidate_probe.${DB_NAME}.json" \

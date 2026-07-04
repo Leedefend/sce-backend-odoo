@@ -647,7 +647,10 @@ verify.formal_business_operation_capability_matrix: guard.prod.forbid check-comp
 	@python3 -m py_compile scripts/verify/formal_business_operation_capability_matrix.py
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/formal_business_operation_capability_matrix.py
 	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/formal_business_operation_capability_matrix_v1.json artifacts/product/formal_business_operation_capability_matrix_v1.json >/dev/null
-	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/formal_business_operation_capability_matrix_v1.md docs/product/formal_business_operation_capability_matrix_v1.md >/dev/null
+	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/formal_business_operation_capability_matrix_v1.md artifacts/product/formal_business_operation_capability_matrix_v1.md >/dev/null
+	@if [[ "$(UPDATE_PRODUCT_DOCS)" == "1" ]]; then \
+	  $(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/sce-product-artifacts/formal_business_operation_capability_matrix_v1.md docs/product/formal_business_operation_capability_matrix_v1.md >/dev/null; \
+	fi
 
 verify.formal_business_operation_core_flow_smoke: guard.prod.forbid check-compose-project check-compose-env
 	@mkdir -p artifacts/product docs/product

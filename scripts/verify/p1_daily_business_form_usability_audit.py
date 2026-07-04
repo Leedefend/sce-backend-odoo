@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -11,8 +12,14 @@ from python_http_smoke_utils import get_base_url
 
 
 ROOT = Path(__file__).resolve().parents[2]
-REPORT_JSON = ROOT / "artifacts" / "backend" / "p1_daily_business_form_usability_audit.json"
-REPORT_MD = ROOT / "docs" / "ops" / "audit" / "p1_daily_business_form_usability_audit.md"
+REPORT_JSON = Path(os.getenv(
+    "P1_DAILY_BUSINESS_FORM_USABILITY_AUDIT_JSON",
+    str(ROOT / "artifacts" / "backend" / "p1_daily_business_form_usability_audit.json"),
+))
+REPORT_MD = Path(os.getenv(
+    "P1_DAILY_BUSINESS_FORM_USABILITY_AUDIT_MD",
+    str(ROOT / "docs" / "ops" / "audit" / "p1_daily_business_form_usability_audit.md"),
+))
 
 
 SECTION_SIGNAL_ALIASES: dict[str, list[str]] = {
