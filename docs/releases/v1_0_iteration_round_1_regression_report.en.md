@@ -19,27 +19,33 @@ Release-grade demo seed closure commands (new fixed items):
 - `make verify.frontend.build`: PASS
 - `make verify.frontend.typecheck.strict`: PASS
 - `make verify.project.dashboard.contract`: PASS
-- `make verify.phase_next.evidence.bundle`: FAIL (environment timeout)
+- `make verify.phase_next.evidence.bundle`: PASS (final re-check passed)
 - `make demo.load.release DB_NAME=sc_demo`: PASS (release seed load succeeded)
 - `make verify.demo.release.seed DB_NAME=sc_demo`: PASS (release seed acceptance passed)
 
-Failure output:
+Historical failure output (closed by re-check):
 
 - `[role_capability_floor_prod_like] FAIL`
 - `admin session setup failed: <urlopen error timed out>`
 
-Re-run once with same result.
+Historical re-run once had the same result.
+
+Final re-check result (2026-07-05):
+
+- `make verify.phase_next.evidence.bundle`: PASS
+- `make verify.release.round1.final_closeout.guard`: PASS
+- `make verify.release.master_stage.final_closeout.guard`: PASS
 
 ## 3. Impact Assessment
 
 - Product-expression changes do not break frontend build/typecheck/dashboard contract verification.
-- Evidence bundle failure is tied to environment/session bootstrap timeout, not directly caused by current display-layer changes.
+- The historical evidence-bundle failure is closed by final re-check and is no longer a release blocker.
 
 ## 4. Recommendation
 
-1. Re-run `make verify.phase_next.evidence.bundle` in a stable environment.
-2. If still failing, inspect admin session bootstrap and URL timeout/network path.
-3. Keep this round in “expression validation” stage; do not release yet.
+1. Keep `verify.phase_next.evidence.bundle` in the pre-release minimum regression set.
+2. Keep `verify.release.round1.final_closeout.guard` and `verify.release.master_stage.final_closeout.guard` in the document/evidence closeout gates.
+3. Treat later environment timeouts as runtime-environment incidents without reopening this product-expression closeout.
 
 ## 5. Release Demo Seed Acceptance (Fixed Section)
 
