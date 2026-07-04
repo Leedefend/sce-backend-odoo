@@ -187,6 +187,9 @@
   - Writes reports:
     - `artifacts/backend/product_delivery_governance_truth_guard_report.json`
     - `docs/ops/audit/product_delivery_governance_truth_guard_report.md`
+- `make verify.product.delivery.governance_truth.schema.guard`
+  - Verifies the governance truth JSON/MD report shape after the guard writes evidence.
+  - Enforces summary, snapshot, errors, and warnings fields and required Markdown report sections.
 - `make verify.scene.governance_payload.guard`
   - Verifies `system.init/app.init` includes `scene_governance_v1` wiring and required payload keys/gates.
   - Includes asset queue observability shape (`asset_queue.queue_size/added_count/popped_count/remaining_count`).

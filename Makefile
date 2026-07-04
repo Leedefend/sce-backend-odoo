@@ -4128,7 +4128,15 @@ verify.product.delivery.freshness: guard.prod.forbid
 
 .PHONY: verify.product.delivery.governance_truth
 verify.product.delivery.governance_truth: guard.prod.forbid
-	@python3 scripts/verify/product_delivery_governance_truth_guard.py
+	@status=0; python3 scripts/verify/product_delivery_governance_truth_guard.py || status=$$?; \
+	schema_status=0; python3 scripts/verify/product_delivery_governance_truth_schema_guard.py || schema_status=$$?; \
+	if [ "$$status" -eq 0 ]; then status=$$schema_status; fi; \
+	exit $$status
+
+.PHONY: verify.product.delivery.governance_truth.schema.guard
+verify.product.delivery.governance_truth.schema.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/product_delivery_governance_truth_schema_guard.py
+	@python3 scripts/verify/product_delivery_governance_truth_schema_guard.py
 
 .PHONY: verify.product.delivery.action_closure.smoke
 verify.product.delivery.action_closure.smoke: guard.prod.forbid
