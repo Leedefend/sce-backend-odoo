@@ -4296,6 +4296,7 @@ verify.product.release.ready: guard.prod.forbid \
 	verify.product.bundle.isolation \
 	verify.product.tier.enforcement \
 	verify.product.delivery.productization.readiness.strict \
+	verify.frontend.widget_richness.post_ga.guard \
 	verify.ui.product.stability \
 	verify.delivery.reproducible \
 	verify.product.sla.baseline

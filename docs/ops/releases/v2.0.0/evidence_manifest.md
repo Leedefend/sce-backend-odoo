@@ -26,6 +26,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 | Evidence | Command | Required Result | Artifact |
 |---|---|---|---|
 | Product release readiness | `make verify.release.v2_0_0.product_hardening` | PASS | `artifacts/backend/bundle_installation_report.json` and related product gate artifacts |
+| View richness hardening | included in `make verify.release.v2_0_0.product_hardening` | PASS | `docs/product/view_richness_post_ga_report_v1.md` |
 | Platform performance smoke | included in `make verify.release.v2_0_0.product_hardening` | PASS | `artifacts/backend/platform_performance_smoke.json` |
 
 ## Required Before Formal `v2.0.0`
@@ -45,14 +46,22 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 - Failed evidence is not overwritten without preserving the failure reason in an
   iteration record.
 
-## Current Blocker Status
+## Current Local Verification Status
 
 - Command: `make verify.release.v2_0_0.product_hardening`
-- Status: PASS in the local `sc_demo` dev verification environment.
+- Status: blocked in the current local `sc_demo` dev verification environment
+  because `smart_construction_demo` is installed and
+  `verify.product.no_demo_data` correctly fails release hardening on demo data.
+- Latest passing sub-gate in this batch:
+  `make verify.frontend.widget_richness.post_ga.guard`.
 - Closed sub-gates: `verify.bundle.installation.ready` and
-  `verify.platform.performance.smoke`.
+  `verify.platform.performance.smoke` passed in the prior local hardening run
+  before the demo-data repair step changed `sc_demo`.
+- Release hardening also includes
+  `verify.frontend.widget_richness.post_ga.guard` for x2many, subviews,
+  kanban/view-type semantics, and v2 chatter/attachments projection.
 - Artifacts:
   - `artifacts/backend/bundle_installation_report.json`
   - `artifacts/backend/platform_performance_smoke.json`
 - Note: before creating `gate-release-v2.0` or `v2.0.0-rc1`, rerun required
-  gates on the reviewed release commit and attach the fresh artifacts.
+  gates on a clean reviewed release database and attach the fresh artifacts.
