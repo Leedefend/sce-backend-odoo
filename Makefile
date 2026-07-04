@@ -4313,7 +4313,15 @@ verify.lowcode_config.runtime_boundary.guard: guard.prod.forbid check-compose-pr
 
 .PHONY: verify.product.no_demo_data
 verify.product.no_demo_data: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) PRODUCT_REQUIRE_NO_DEMO_DATA=1 DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/non_demo_data_contamination_guard.py
+	@mkdir -p artifacts/backend
+	@status=0; \
+	$(RUN_ENV) PRODUCT_REQUIRE_NO_DEMO_DATA=1 \
+		NON_DEMO_DATA_CONTAMINATION_GUARD_JSON=/tmp/non_demo_data_contamination_guard.json \
+		NON_DEMO_DATA_CONTAMINATION_GUARD_MD=/tmp/non_demo_data_contamination_guard.md \
+		DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/non_demo_data_contamination_guard.py || status=$$?; \
+	$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/non_demo_data_contamination_guard.json artifacts/backend/non_demo_data_contamination_guard.json >/dev/null 2>&1 || true; \
+	$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/non_demo_data_contamination_guard.md artifacts/backend/non_demo_data_contamination_guard.md >/dev/null 2>&1 || true; \
+	exit $$status
 
 verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready verify.runtime_contract.test_placeholder.guard verify.lowcode_config.boundary.guard verify.lowcode_config.runtime_boundary.guard verify.product.no_demo_data
 	@echo "[OK] verify.product.surface.clean done"
