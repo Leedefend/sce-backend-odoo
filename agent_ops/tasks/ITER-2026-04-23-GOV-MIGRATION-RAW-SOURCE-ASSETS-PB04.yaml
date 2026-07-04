@@ -1,7 +1,7 @@
 task_id: ITER-2026-04-23-GOV-MIGRATION-RAW-SOURCE-ASSETS-PB04
 title: Track raw migration source CSVs and recover workflow-audit asset chain
 type: governance-optimization
-status: active
+status: review
 priority: high
 mode: implement
 
@@ -74,6 +74,8 @@ context:
   baseline_sha: 4ceddfc
   explicit_user_authorization: true
   replay_manifest: artifacts/migration/fresh_db_replay_manifest_v1.json
+  pull_request: 878
+  implementation_commit: 13d14c95c
 
 architecture:
   layer_target: Governance Layer
@@ -122,6 +124,21 @@ deliverables:
   - recovered workflow-audit generator/verifier/manifest chain
   - tracked workflow-audit XML parts with verifier-side materialization for the original manifest SHA
   - iteration log entry
+
+validation_result:
+  status: partial-pass
+  passed:
+    - raw source CSV presence checks
+    - python3 py_compile for workflow-audit generator/verifier and migration asset bus/catalog verifier
+    - legacy_workflow_audit_asset_verify DB-free check
+    - workflow-audit XML materialization from tracked parts with byte-for-byte comparison
+    - migration_asset_catalog_verify DB-free check
+    - migration_asset_bus verify-only check for 23 packages
+    - git diff --check
+    - staged single-file size audit under 100MB
+  blocked:
+    - command: python3 scripts/migration/legacy_workflow_audit_asset_generator.py --asset-root migration_assets --check
+      reason: local legacy-sqlserver container is absent
 
 rollback:
   - git restore .gitignore .gitattributes docs/ops/iterations/delivery_context_switch_log_v1.md
