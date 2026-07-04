@@ -1,6 +1,6 @@
 {
   "source": "docs.contract.exports.intent_catalog",
-  "canonical_count": 80,
+  "canonical_count": 98,
   "alias_count": 3,
   "rows": [
     {
@@ -84,6 +84,11 @@
       "canonical": "chatter.activity.schedule"
     },
     {
+      "name": "chatter.activity.update",
+      "status": "canonical",
+      "canonical": "chatter.activity.update"
+    },
+    {
       "name": "chatter.post",
       "status": "canonical",
       "canonical": "chatter.post"
@@ -92,6 +97,11 @@
       "name": "chatter.timeline",
       "status": "canonical",
       "canonical": "chatter.timeline"
+    },
+    {
+      "name": "collaboration.users.search",
+      "status": "canonical",
+      "canonical": "collaboration.users.search"
     },
     {
       "name": "cost.tracking.block.fetch",
@@ -127,6 +137,26 @@
       "name": "file.upload",
       "status": "canonical",
       "canonical": "file.upload"
+    },
+    {
+      "name": "global.message.conversations",
+      "status": "canonical",
+      "canonical": "global.message.conversations"
+    },
+    {
+      "name": "global.message.inbox",
+      "status": "canonical",
+      "canonical": "global.message.inbox"
+    },
+    {
+      "name": "global.message.read",
+      "status": "canonical",
+      "canonical": "global.message.read"
+    },
+    {
+      "name": "global.message.send",
+      "status": "canonical",
+      "canonical": "global.message.send"
     },
     {
       "name": "load_contract",
@@ -294,6 +324,56 @@
       "canonical": "project.plan_bootstrap.enter"
     },
     {
+      "name": "release.operator.approve",
+      "status": "canonical",
+      "canonical": "release.operator.approve"
+    },
+    {
+      "name": "release.operator.freeze",
+      "status": "canonical",
+      "canonical": "release.operator.freeze"
+    },
+    {
+      "name": "release.operator.promote",
+      "status": "canonical",
+      "canonical": "release.operator.promote"
+    },
+    {
+      "name": "release.operator.rollback",
+      "status": "canonical",
+      "canonical": "release.operator.rollback"
+    },
+    {
+      "name": "release.operator.runtime_probe",
+      "status": "canonical",
+      "canonical": "release.operator.runtime_probe"
+    },
+    {
+      "name": "release.operator.set_page_enabled",
+      "status": "canonical",
+      "canonical": "release.operator.set_page_enabled"
+    },
+    {
+      "name": "release.operator.surface",
+      "status": "canonical",
+      "canonical": "release.operator.surface"
+    },
+    {
+      "name": "release.operator.sync_policy",
+      "status": "canonical",
+      "canonical": "release.operator.sync_policy"
+    },
+    {
+      "name": "release.operator.update_page_policy",
+      "status": "canonical",
+      "canonical": "release.operator.update_page_policy"
+    },
+    {
+      "name": "release.operator.update_policy",
+      "status": "canonical",
+      "canonical": "release.operator.update_policy"
+    },
+    {
       "name": "risk.action.execute",
       "status": "canonical",
       "canonical": "risk.action.execute"
@@ -384,9 +464,19 @@
       "canonical": "telemetry.track"
     },
     {
+      "name": "terminal.shell.v2",
+      "status": "canonical",
+      "canonical": "terminal.shell.v2"
+    },
+    {
       "name": "ui.contract",
       "status": "canonical",
       "canonical": "ui.contract"
+    },
+    {
+      "name": "ui.contract.v2",
+      "status": "canonical",
+      "canonical": "ui.contract.v2"
     },
     {
       "name": "usage.export.csv",
