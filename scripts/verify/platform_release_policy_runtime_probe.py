@@ -24,6 +24,11 @@ from odoo.addons.smart_core.delivery.product_policy_service import ProductPolicy
 PRODUCT_KEYS = ("construction.standard", "construction.preview")
 REPORT_JSON = Path("/tmp/platform_release_policy_runtime_probe.json")
 REPORT_MD = Path("/tmp/platform_release_policy_runtime_probe.md")
+RUNTIME_USER_ROLE_SURFACE = {
+    "role_code": "runtime_user",
+    "is_platform_admin": False,
+    "is_business_config_admin": False,
+}
 
 
 def _env():
@@ -258,19 +263,19 @@ def main():
             user_env,
             product_key=product_key,
             native_nav=native_nav,
-            role_surface={"role_code": "runtime_user"},
+            role_surface=RUNTIME_USER_ROLE_SURFACE,
         )
         no_native_delivery = _delivery_summary(
             user_env,
             product_key=product_key,
             native_nav=[],
-            role_surface={"role_code": "runtime_user"},
+            role_surface=RUNTIME_USER_ROLE_SURFACE,
         )
         subset_delivery = _delivery_summary(
             user_env,
             product_key=product_key,
             native_nav=native_subset,
-            role_surface={"role_code": "runtime_user"},
+            role_surface=RUNTIME_USER_ROLE_SURFACE,
         )
         admin_delivery = _delivery_summary(
             user_env,
