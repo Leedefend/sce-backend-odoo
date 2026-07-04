@@ -175,16 +175,18 @@ def _settlement(project, partner, contract, amount):
         }
     )
     settlement.action_submit()
-    env.flush_all()
-    env.cr.execute(
-        "UPDATE sc_settlement_order SET validation_status=%s WHERE id=%s",
-        ("validated", settlement.id),
-    )
     settlement.invalidate_recordset()
-    if settlement.validation_status != "validated":
-        settlement.write({"validation_status": "validated"})
+    if settlement.state == "submit":
+        env.flush_all()
+        env.cr.execute(
+            "UPDATE sc_settlement_order SET validation_status=%s WHERE id=%s",
+            ("validated", settlement.id),
+        )
         settlement.invalidate_recordset()
-    settlement.action_on_tier_approved()
+        if settlement.validation_status != "validated":
+            settlement.write({"validation_status": "validated"})
+            settlement.invalidate_recordset()
+        settlement.action_on_tier_approved()
     settlement.invalidate_recordset()
     return settlement
 
