@@ -1,7 +1,7 @@
 task_id: ITER-2026-04-22-GOV-PUSH-PR-TO-MAIN-PA82
 title: Push codex branch and open PR to main
 type: governance-optimization
-status: active
+status: review
 priority: high
 mode: scan
 
@@ -83,6 +83,15 @@ stop_conditions:
 deliverables:
   - pushed branch on origin
   - pull request to main
+
+validation_result:
+  status: superseded-pass
+  passed:
+    - the historical codex branch publish flow has already completed through later merged PRs
+    - origin/main now contains the downstream task closeouts and catalog/migration PR merges
+    - no new publish operation is required for the stale codex/next-round PA82 task
+  notes:
+    - This cleanup only closes the stale task state; it does not create another PR for codex/next-round.
 
 rollback:
   - rm -f artifacts/pr_body.md

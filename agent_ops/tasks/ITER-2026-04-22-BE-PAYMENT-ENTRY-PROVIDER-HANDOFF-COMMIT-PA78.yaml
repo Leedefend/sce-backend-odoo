@@ -1,7 +1,7 @@
 task_id: ITER-2026-04-22-BE-PAYMENT-ENTRY-PROVIDER-HANDOFF-COMMIT-PA78
 title: Commit payment-entry provider handoff residuals
 type: governance-optimization
-status: active
+status: review
 priority: high
 mode: scan
 
@@ -87,6 +87,15 @@ stop_conditions:
 
 deliverables:
   - bounded payment-entry provider handoff commit
+
+validation_result:
+  status: superseded-pass
+  passed:
+    - payment-entry provider handoff commit is already contained in origin/main
+    - origin/main contains commit 455b858bd for the payment-entry handoff closure line
+    - no new provider or payment runtime changes are required in this closeout
+  notes:
+    - This cleanup only closes the stale task state; it does not replay the old codex/next-round commit batch.
 
 rollback:
   - git restore --staged addons/smart_construction_scene/providers/payment_entry_workbench_provider.py docs/architecture/scene-governance/assets/generated/payment_entry_closure_current_v1.csv scripts/verify/scene_governance_payment_entry_branch_closure_export.py
