@@ -37,6 +37,8 @@ Minimum pre-release verification:
 ```bash
 make verify.release.v2_0_0.preflight
 make verify.release.v2_0_0.product_hardening
+make verify.release.v2_0_0.governance.guard
+PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard
 make verify.system.capability_baseline.report
 make verify.restricted
 make verify.backend.contract.closure.mainline
