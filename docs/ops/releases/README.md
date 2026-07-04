@@ -27,6 +27,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - Verify: `make verify.release.v2_0_0.preflight`
   - Governance Verify: `make verify.release.v2_0_0.governance.guard`
   - Formal Evidence Verify: `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
+  - Evidence Boundary: recorded sample artifacts are not release signoff evidence
   - GitHub Release: required after formal tag
 
 ## Release List (Newest First)
