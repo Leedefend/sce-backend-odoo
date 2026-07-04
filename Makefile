@@ -4487,6 +4487,15 @@ verify.release.v2_0_0.governance.guard: guard.prod.forbid \
 	verify.release.v2_0_0.checklist.guard
 	@echo "[OK] verify.release.v2_0_0.governance.guard done"
 
+.PHONY: verify.release.v2_0_0.formal_evidence.schema.guard
+verify.release.v2_0_0.formal_evidence.schema.guard: guard.prod.forbid \
+	verify.release.v2_0_0.governance.guard \
+	verify.bundle.installation.ready.schema.guard \
+	verify.platform.performance.smoke.schema.guard \
+	verify.dev.acceptance.release.schema.guard \
+	verify.prod.sim.acceptance.evidence.schema.guard
+	@echo "[OK] verify.release.v2_0_0.formal_evidence.schema.guard done"
+
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
 

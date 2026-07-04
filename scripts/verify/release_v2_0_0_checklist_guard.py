@@ -23,6 +23,7 @@ REQUIRED_TOKENS = (
     "make verify.release.v2_0_0.preflight",
     "make verify.release.v2_0_0.product_hardening",
     "make verify.release.v2_0_0.governance.guard",
+    "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard",
     "make verify.release.v2_0_0.control_docs.guard",
     "make verify.release.v2_0_0.evidence_manifest.guard",
     "make release.dev.acceptance.publish",
