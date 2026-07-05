@@ -115,12 +115,12 @@ REQUIRED_TABLE_ROWS = {
 
 REQUIRED_LOCAL_STATUS_ITEMS = (
     "Command: `make verify.release.v2_0_0.product_hardening`",
-    "Status: blocked in the current local `sc_demo` dev verification environment",
-    "Current blocker evidence:",
-    "Evidence shape guard:",
-    "Current blocker facts on `sc_demo`:",
+    "Status: PASS in the current local `sc_demo` dev verification environment",
+    "Demo-data release gate:",
+    "Demo-data closure facts on `sc_demo`:",
+    "Previous blocker preserved:",
     "Latest passing sub-gate in this batch:",
-    "Closed sub-gates: `verify.bundle.installation.ready` and",
+    "Closed hardening target:",
     "Release hardening also includes",
     "Artifacts:",
     "Evidence shape guards:",
@@ -135,11 +135,13 @@ REQUIRED_LOCAL_STATUS_NESTED_ITEMS = (
         (
             "`artifacts/backend/bundle_installation_report.json`",
             "`artifacts/backend/platform_performance_smoke.json`",
+            "`artifacts/backend/non_demo_data_contamination_guard.json`",
         ),
     ),
     (
         "Evidence shape guards:",
         (
+            "`make verify.product.no_demo_data.schema.guard`",
             "`make verify.bundle.installation.ready.schema.guard`",
             "`make verify.platform.performance.smoke.schema.guard`",
         ),

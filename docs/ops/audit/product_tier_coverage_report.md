@@ -1,14 +1,14 @@
 # Product Tier Coverage Report
 
-- capability_total: 22
+- capability_total: 58
 - error_count: 0
 - warning_count: 3
 
 | tier | visible | hidden | coverage_ratio | expected_visible_by_policy |
 |---|---:|---:|---:|---:|
-| community | 14 | 8 | 0.6364 | 14 |
-| pro | 14 | 8 | 0.6364 | 14 |
-| enterprise | 22 | 0 | 1.0000 | 22 |
+| community | 14 | 44 | 0.2414 | 14 |
+| pro | 14 | 44 | 0.2414 | 14 |
+| enterprise | 22 | 36 | 0.3793 | 22 |
 
 ## Errors
 
@@ -16,6 +16,6 @@
 
 ## Warnings
 
-- runtime tier probe skipped for community: failed to set sc.license.level=community
-- runtime tier probe skipped for pro: failed to set sc.license.level=pro
-- runtime tier probe skipped for enterprise: failed to set sc.license.level=enterprise
+- runtime tier coverage mismatch for community: runtime=46, static_policy=14
+- runtime tier coverage mismatch for pro: runtime=58, static_policy=14
+- runtime tier coverage mismatch for enterprise: runtime=58, static_policy=22
