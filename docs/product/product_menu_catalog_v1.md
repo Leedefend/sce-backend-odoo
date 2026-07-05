@@ -5,7 +5,7 @@
 ## 运行时来源
 
 - database: `sc_demo`
-- generated_at: `2026-07-05T02:28:20.790678+00:00`
+- generated_at: `2026-07-05T02:44:57.873144+00:00`
 - roots: `smart_construction_core.menu_sc_root, smart_core.menu_smart_core_platform_root`
 - visible_login_probe: `admin, wutao, demo_business_full, demo_role_finance, demo_role_executive`
 
