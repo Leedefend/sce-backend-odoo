@@ -126,6 +126,7 @@ VERIFY_README_TOKENS = (
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
     "v2.0.0 Makefile release targets appear in expected phony order",
+    "v2.0.0 Makefile release target definitions appear in expected order",
     "release guard entries appear in expected order",
     "Enforces release-control section order, status, scope, boundary and gate command blocks, release document list, rollback list, release-index section order and planned entries, release-notes section order, intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning section order, tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
@@ -542,6 +543,17 @@ def _makefile_phony_targets(text: str) -> tuple[str, ...]:
     for line in text.splitlines():
         if line.startswith(".PHONY:"):
             targets.extend(line[len(".PHONY:") :].strip().split())
+    return tuple(targets)
+
+
+def _makefile_targets(text: str) -> tuple[str, ...]:
+    targets: list[str] = []
+    for line in text.splitlines():
+        if line.startswith("\t") or not line or line.startswith("."):
+            continue
+        target, sep, _rest = line.partition(":")
+        if sep and target:
+            targets.append(target)
     return tuple(targets)
 
 
@@ -1012,6 +1024,15 @@ def _contains_makefile_targets(errors: list[str]) -> None:
         errors.append(
             "Makefile v2 release .PHONY target order mismatch: "
             f"expected={MAKEFILE_PHONY_TARGETS!r} actual={actual_v2_phony_targets!r}"
+        )
+    makefile_targets = _makefile_targets(text)
+    actual_v2_targets = tuple(
+        target for target in makefile_targets if target.startswith("verify.release.v2_0_0.")
+    )
+    if actual_v2_targets != MAKEFILE_PHONY_TARGETS:
+        errors.append(
+            "Makefile v2 release target definition order mismatch: "
+            f"expected={MAKEFILE_PHONY_TARGETS!r} actual={actual_v2_targets!r}"
         )
     for target, expected_prereqs in MAKEFILE_TARGET_PREREQS:
         actual_prereqs = _makefile_prereqs(text, target)
