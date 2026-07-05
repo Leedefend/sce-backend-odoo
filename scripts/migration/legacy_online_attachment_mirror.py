@@ -37,6 +37,7 @@ MAX_FILES = int(os.getenv("LEGACY_ONLINE_MIRROR_MAX_FILES", "0") or "0")
 EXAMPLE_LIMIT = int(os.getenv("LEGACY_ONLINE_MIRROR_EXAMPLE_LIMIT", "30") or "30")
 COMMIT_EVERY_FILES = int(os.getenv("LEGACY_ONLINE_MIRROR_COMMIT_EVERY_FILES", "20") or "0")
 SKIP_LOCAL_OK = os.getenv("LEGACY_ONLINE_MIRROR_SKIP_LOCAL_OK", "0").strip().lower() in {"1", "true", "yes", "on"}
+REQUIRE_VISIBLE_LABEL = os.getenv("LEGACY_ONLINE_MIRROR_REQUIRE_VISIBLE_LABEL", "1").strip().lower() in {"1", "true", "yes", "on"}
 DOWNLOAD_TIMEOUT = int(os.getenv("LEGACY_ONLINE_MIRROR_DOWNLOAD_TIMEOUT", "120") or "120")
 APPLY = os.getenv("LEGACY_ONLINE_MIRROR_APPLY", "1").strip().lower() in {"1", "true", "yes", "on"}
 MIRROR_ROOT = Path(os.getenv("LEGACY_ONLINE_MIRROR_ROOT", "/mnt/artifacts/legacy-online-mirror"))
@@ -53,7 +54,7 @@ def clean(value):
 
 def raw_payload(record):
     try:
-        payload = json.loads(record.raw_payload or "{}")
+        payload = json.loads(getattr(record, "raw_payload", "") or "{}")
     except (TypeError, ValueError, json.JSONDecodeError):
         return {}
     return payload if isinstance(payload, dict) else {}
@@ -88,10 +89,22 @@ def attachment_ref(record):
 
 
 def online_base_url(record):
-    source_system = clean(getattr(record, "source_system", ""))
-    if source_system.startswith("online_old_scbsly"):
+    source_label = online_source_label(record)
+    if source_label == "online_old_scbsly":
         return "https://www.builderp.cn/SCBSLY_V2"
     return "https://www.builderp.cn/SCBS"
+
+
+def online_source_label(record):
+    source_system = clean(getattr(record, "source_system", ""))
+    source_table = clean(getattr(record, "source_table", ""))
+    legacy_source_table = clean(getattr(record, "legacy_source_table", ""))
+    for value in (source_system, source_table, legacy_source_table):
+        if value.startswith("online_old_scbsly"):
+            return "online_old_scbsly"
+        if value.startswith("online_old_scbs"):
+            return "online_old_scbs"
+    return "online_old_scbs"
 
 
 def fetch_all_online_files(bill_id, base_url):
@@ -232,7 +245,7 @@ def main():
             counts["records_skipped_after_stop"] += total_records - record_index
             break
         counts["records_checked"] += 1
-        if not visible_attachment_text(record):
+        if REQUIRE_VISIBLE_LABEL and not visible_attachment_text(record):
             counts["records_without_visible_attachment"] += 1
             continue
         ref = attachment_ref(record)
@@ -249,7 +262,7 @@ def main():
         if MAX_UNIQUE_REFS and len(seen_refs) >= MAX_UNIQUE_REFS:
             counts["records_skipped_by_max_unique_refs"] += 1
             continue
-        source_system = clean(getattr(record, "source_system", "")) or "online_old"
+        source_system = online_source_label(record)
         base_url = online_base_url(record)
         try:
             files = fetch_all_online_files(ref, base_url)
@@ -326,6 +339,7 @@ def main():
         "model": MODEL,
         "labels": sorted(LABELS),
         "mirror_root": str(MIRROR_ROOT),
+        "require_visible_label": REQUIRE_VISIBLE_LABEL,
         "counts": dict(counts),
         "unique_refs": len(seen_refs),
         "examples": examples,
