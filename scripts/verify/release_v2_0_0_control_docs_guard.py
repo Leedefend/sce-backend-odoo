@@ -120,7 +120,7 @@ VERIFY_README_TOKENS = (
     "versioning/release-index review",
     "`make verify.release.v2_0_0.evidence_manifest.guard`",
     "evidence table row content/order",
-    "current local verification status structure",
+    "current local verification status and nested artifact/shape-guard structure",
     "controlled-doc artifact coverage",
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",

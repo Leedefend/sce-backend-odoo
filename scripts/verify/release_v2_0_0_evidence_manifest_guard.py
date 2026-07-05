@@ -118,6 +118,23 @@ REQUIRED_LOCAL_STATUS_ITEMS = (
     "Note: before creating final `v2.0.0`, rerun",
 )
 
+REQUIRED_LOCAL_STATUS_NESTED_ITEMS = (
+    (
+        "Artifacts:",
+        (
+            "`artifacts/backend/bundle_installation_report.json`",
+            "`artifacts/backend/platform_performance_smoke.json`",
+        ),
+    ),
+    (
+        "Evidence shape guards:",
+        (
+            "`make verify.bundle.installation.ready.schema.guard`",
+            "`make verify.platform.performance.smoke.schema.guard`",
+        ),
+    ),
+)
+
 REQUIRED_EVIDENCE_RULES = (
     "Evidence from `sc_prod_sim` must not be presented as `sc_prod` evidence.",
     "Production deployment evidence is recorded separately after supervised",
@@ -171,6 +188,37 @@ def _top_level_bullets_after_heading(text: str, heading: str) -> tuple[str, ...]
     return tuple(items)
 
 
+def _nested_bullets_after_top_level_item(
+    text: str,
+    heading: str,
+    item: str,
+) -> tuple[str, ...] | None:
+    lines = text.splitlines()
+    try:
+        start = lines.index(heading)
+    except ValueError:
+        return None
+
+    target = f"- {item}"
+    in_target = False
+    nested_items: list[str] = []
+    for line in lines[start + 1 :]:
+        if line.startswith("## "):
+            break
+        if in_target:
+            if line.startswith("- "):
+                break
+            stripped = line.strip()
+            if stripped.startswith("- "):
+                nested_items.append(stripped[2:].strip())
+        elif line == target:
+            in_target = True
+
+    if not in_target:
+        return None
+    return tuple(nested_items)
+
+
 def _contains_required_table_rows(text: str, errors: list[str]) -> None:
     for heading, expected_rows in REQUIRED_TABLE_ROWS.items():
         actual_rows = _table_rows_for_section(text, heading)
@@ -194,6 +242,20 @@ def _contains_required_local_status_items(text: str, errors: list[str]) -> None:
             "manifest local verification status items mismatch: "
             f"expected={REQUIRED_LOCAL_STATUS_ITEMS!r} actual={actual_items!r}"
         )
+
+
+def _contains_required_local_status_nested_items(text: str, errors: list[str]) -> None:
+    heading = "## Current Local Verification Status"
+    for item, expected_items in REQUIRED_LOCAL_STATUS_NESTED_ITEMS:
+        actual_items = _nested_bullets_after_top_level_item(text, heading, item)
+        if actual_items is None:
+            errors.append(f"manifest missing local verification status item: {item}")
+            continue
+        if actual_items != expected_items:
+            errors.append(
+                "manifest local verification status nested items mismatch: "
+                f"{item} expected={expected_items!r} actual={actual_items!r}"
+            )
 
 
 def _contains_required_evidence_rules(text: str, errors: list[str]) -> None:
@@ -225,6 +287,7 @@ def main() -> int:
         _contains_required_table_rows(text, errors)
         _contains_required_evidence_rules(text, errors)
         _contains_required_local_status_items(text, errors)
+        _contains_required_local_status_nested_items(text, errors)
 
     if errors:
         print("[release_v2_0_0_evidence_manifest_guard] FAIL")
