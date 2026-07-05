@@ -125,6 +125,7 @@ VERIFY_README_TOKENS = (
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
+    "v2.0.0 Makefile release targets appear in expected phony order",
     "release guard entries appear in expected order",
     "Enforces release-control section order, status, scope, boundary and gate command blocks, release document list, rollback list, release-index section order and planned entries, release-notes section order, intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning section order, tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
@@ -1004,6 +1005,14 @@ def _contains_makefile_targets(errors: list[str]) -> None:
     for target in MAKEFILE_PHONY_TARGETS:
         if target not in phony_targets:
             errors.append(f"Makefile missing .PHONY target: {target}")
+    actual_v2_phony_targets = tuple(
+        target for target in phony_targets if target.startswith("verify.release.v2_0_0.")
+    )
+    if actual_v2_phony_targets != MAKEFILE_PHONY_TARGETS:
+        errors.append(
+            "Makefile v2 release .PHONY target order mismatch: "
+            f"expected={MAKEFILE_PHONY_TARGETS!r} actual={actual_v2_phony_targets!r}"
+        )
     for target, expected_prereqs in MAKEFILE_TARGET_PREREQS:
         actual_prereqs = _makefile_prereqs(text, target)
         if actual_prereqs is None:
