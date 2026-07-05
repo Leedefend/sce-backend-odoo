@@ -31,11 +31,17 @@
 - `make verify.business_form.productization.audit`
   - Audits formal business form productization risk from the published business
     operation matrix and runtime form-structure evidence.
+  - Uses `docs/product/formal_business_form_productization_standard_v1.md`
+    as the product and architecture standard.
   - Highlights high-density P1 form candidates for the next productized form
     sample batch.
   - Emits:
     - `artifacts/backend/business_form_productization_audit.json`
     - `artifacts/backend/business_form_productization_audit.md`
+- `make verify.business_form.productization.standard.guard`
+  - Verifies the form productization standard keeps product-layer
+    responsibilities, field classification, entry semantics, density rules,
+    state/action rules, attachment rules, and audit wiring intact.
 
 ## Architecture Guard Aliases
 - `make verify.restricted`

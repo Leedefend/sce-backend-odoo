@@ -17,6 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MATRIX_PATH = ROOT / "docs/product/formal_business_operation_capability_matrix_v1.md"
+STANDARD_PATH = ROOT / "docs/product/formal_business_form_productization_standard_v1.md"
 STRUCTURE_CSV = ROOT / "docs/audit/native/form_structure_standardization_runtime/form_structure_standardization_audit.csv"
 OUT_JSON = ROOT / "artifacts/backend/business_form_productization_audit.json"
 OUT_MD = ROOT / "artifacts/backend/business_form_productization_audit.md"
@@ -167,6 +168,7 @@ def main() -> int:
 
     payload = {
         "scope": "business_form_productization_audit",
+        "standard_path": str(STANDARD_PATH.relative_to(ROOT)),
         "matrix_path": str(MATRIX_PATH.relative_to(ROOT)),
         "runtime_structure_csv": str(STRUCTURE_CSV.relative_to(ROOT)),
         "thresholds": {
@@ -201,6 +203,7 @@ def main() -> int:
     md = [
         "# Business Form Productization Audit",
         "",
+        f"- standard: `{STANDARD_PATH.relative_to(ROOT)}`",
         f"- formal_business_entries: `{len(audited)}`",
         f"- risk_entry_count: `{len(risk_rows)}`",
         f"- p1_entry_count: `{len(p1_rows)}`",
