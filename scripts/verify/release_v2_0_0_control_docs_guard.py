@@ -129,6 +129,7 @@ VERIFY_README_TOKENS = (
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
     "Cross-checks product release readiness Makefile dependencies against the release checklist hardening expansion.",
+    "Cross-checks release notes minimum verification subgates against the v2.0.0 preflight Makefile dependencies.",
     "supporting gates match the v2.0.0 preflight dependency set",
     "including platform release policy runtime",
     "v2.0.0 Makefile release targets appear in expected phony order",
@@ -1131,6 +1132,34 @@ def _contains_product_readiness_checklist_alignment(errors: list[str]) -> None:
         )
 
 
+def _contains_notes_preflight_dependency_alignment(errors: list[str]) -> None:
+    if not MAKEFILE.is_file():
+        errors.append(f"missing Makefile: {MAKEFILE.relative_to(ROOT).as_posix()}")
+        return
+    if not RELEASE_NOTES.is_file():
+        errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
+        return
+    makefile_text = MAKEFILE.read_text(encoding="utf-8")
+    notes_text = RELEASE_NOTES.read_text(encoding="utf-8")
+    prereqs = _makefile_prereqs(makefile_text, "verify.release.v2_0_0.preflight")
+    if prereqs is None:
+        errors.append("Makefile missing target: verify.release.v2_0_0.preflight")
+        return
+    actual_commands = _command_block_after_marker(notes_text, "Minimum pre-release verification:")
+    if actual_commands is None:
+        errors.append("release notes missing minimum pre-release verification command block")
+        return
+    expected_subgates = tuple(prereq for prereq in prereqs if prereq != "guard.prod.forbid")
+    expected_commands = tuple(f"make {target}" for target in expected_subgates)
+    actual_commands_subset = tuple(command for command in actual_commands if command in expected_commands)
+    actual_subgates = tuple(command.removeprefix("make ") for command in actual_commands_subset)
+    if actual_subgates != expected_subgates:
+        errors.append(
+            "release notes preflight dependency expansion mismatch: "
+            f"expected={expected_subgates!r} actual={actual_subgates!r}"
+        )
+
+
 def main() -> int:
     errors: list[str] = []
     _contains_all(CONTROL_README, README_TOKENS, errors)
@@ -1177,6 +1206,7 @@ def main() -> int:
     _contains_promotion_order(VERSIONING, "Promotion order:", VERSIONING_PROMOTION_ORDER, errors)
     _contains_makefile_targets(errors)
     _contains_product_readiness_checklist_alignment(errors)
+    _contains_notes_preflight_dependency_alignment(errors)
     if errors:
         print("[release_v2_0_0_control_docs_guard] FAIL")
         for error in errors:
