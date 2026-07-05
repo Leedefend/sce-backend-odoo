@@ -129,6 +129,7 @@ REQUIRED_SECTION_LISTS = (
         "The preflight target expands to:",
         (
             "`make verify.system.capability_baseline.report`",
+            "`make verify.platform.release_policy.runtime`",
             "`make verify.backend.contract.closure.mainline`",
             "`make verify.restricted`",
         ),
