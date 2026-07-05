@@ -2,7 +2,7 @@
 
 - mode_count: 3
 - error_count: 0
-- warning_count: 0
+- warning_count: 1
 
 ## Errors
 
@@ -10,4 +10,4 @@
 
 ## Warnings
 
-- none
+- bundle_owner differs from default shape (allowed if additive)

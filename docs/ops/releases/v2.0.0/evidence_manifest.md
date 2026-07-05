@@ -67,29 +67,33 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 ## Current Local Verification Status
 
 - Command: `make verify.release.v2_0_0.product_hardening`
-- Status: blocked in the current local `sc_demo` dev verification environment
-  because `smart_construction_demo` is installed and
-  `verify.product.no_demo_data` correctly fails release hardening on demo data.
-- Current blocker evidence:
-  `artifacts/backend/non_demo_data_contamination_guard.json` and
-  `artifacts/backend/non_demo_data_contamination_guard.md`.
-- Evidence shape guard:
-  `make verify.product.no_demo_data.schema.guard`.
-- Current blocker facts on `sc_demo`:
-  `smart_construction_demo installed`, `res.partner active demo-name count=3`,
-  and `smart_construction_demo xmlid count=112`.
+- Status: PASS in the current local `sc_demo` dev verification environment
+  after uninstalling `smart_construction_demo` and clearing the remaining
+  `smart_construction_demo` XMLID rows that Odoo could not remove because
+  audit-log foreign keys still reference retained users.
+- Demo-data release gate:
+  `DB_NAME=sc_demo make verify.product.no_demo_data` PASS.
+- Demo-data closure facts on `sc_demo`:
+  `smart_construction_demo` module state is `uninstalled`,
+  `smart_construction_demo` XMLID count is `0`, and
+  `verify.product.no_demo_data` reports PASS.
+- Previous blocker preserved:
+  before local cleanup, `verify.product.no_demo_data` failed because
+  `smart_construction_demo` was installed, `res.partner` had 3 active
+  demo-name records, and `smart_construction_demo` XMLID count was 112.
 - Latest passing sub-gate in this batch:
-  `make verify.frontend.widget_richness.post_ga.guard`.
-- Closed sub-gates: `verify.bundle.installation.ready` and
-  `verify.platform.performance.smoke` passed in the prior local hardening run
-  before the demo-data repair step changed `sc_demo`.
+  `make verify.product.sla.baseline`.
+- Closed hardening target:
+  `make verify.release.v2_0_0.product_hardening` PASS.
 - Release hardening also includes
   `verify.frontend.widget_richness.post_ga.guard` for x2many, subviews,
   kanban/view-type semantics, and v2 chatter/attachments projection.
 - Artifacts:
   - `artifacts/backend/bundle_installation_report.json`
   - `artifacts/backend/platform_performance_smoke.json`
+  - `artifacts/backend/non_demo_data_contamination_guard.json`
 - Evidence shape guards:
+  - `make verify.product.no_demo_data.schema.guard`
   - `make verify.bundle.installation.ready.schema.guard`
   - `make verify.platform.performance.smoke.schema.guard`
 - Schema-only guard runs may use recorded artifact directories to verify evidence

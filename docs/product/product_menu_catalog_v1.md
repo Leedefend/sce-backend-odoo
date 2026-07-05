@@ -5,7 +5,7 @@
 ## 运行时来源
 
 - database: `sc_demo`
-- generated_at: `2026-07-01T14:41:28.144689+00:00`
+- generated_at: `2026-07-05T02:28:20.790678+00:00`
 - roots: `smart_construction_core.menu_sc_root, smart_core.menu_smart_core_platform_root`
 - visible_login_probe: `admin, wutao, demo_business_full, demo_role_finance, demo_role_executive`
 
@@ -45,44 +45,44 @@
 
 | 入口 | XMLID | 可见性探针用户 |
 | --- | --- | --- |
-| 智慧施工管理平台 / 人事行政 | `smart_construction_core.menu_sc_hr_admin_center` | wutao, demo_business_full, demo_role_finance |
-| 智慧施工管理平台 / 合同中心 | `smart_construction_core.menu_sc_contract_center` | wutao, demo_business_full, demo_role_finance, demo_role_executive |
-| 智慧施工管理平台 / 基础资料 | `smart_construction_core.menu_sc_master_data_center` | wutao, demo_business_full |
-| 智慧施工管理平台 / 成本中心 | `smart_construction_core.menu_sc_cost_center` | wutao, demo_business_full |
-| 智慧施工管理平台 / 施工管理 | `smart_construction_core.menu_sc_construction_management_center` | wutao, demo_business_full, demo_role_executive |
+| 智慧施工管理平台 / 人事行政 | `smart_construction_core.menu_sc_hr_admin_center` | admin, wutao, demo_business_full, demo_role_finance |
+| 智慧施工管理平台 / 合同中心 | `smart_construction_core.menu_sc_contract_center` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive |
+| 智慧施工管理平台 / 基础资料 | `smart_construction_core.menu_sc_master_data_center` | admin, wutao, demo_business_full |
+| 智慧施工管理平台 / 成本中心 | `smart_construction_core.menu_sc_cost_center` | admin, wutao, demo_business_full |
+| 智慧施工管理平台 / 施工管理 | `smart_construction_core.menu_sc_construction_management_center` | admin, wutao, demo_business_full, demo_role_executive |
 | 智慧施工管理平台 / 智慧大屏 | `smart_construction_core.menu_sc_projection_root` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive |
-| 智慧施工管理平台 / 物资与分包 | `smart_construction_core.menu_sc_material_center` | wutao, demo_business_full |
-| 智慧施工管理平台 / 税务中心 | `smart_construction_core.menu_sc_tax_center` | wutao, demo_business_full, demo_role_finance, demo_role_executive |
-| 智慧施工管理平台 / 统计分析 | `smart_construction_core.menu_sc_data_center` | wutao, demo_business_full, demo_role_finance, demo_role_executive |
+| 智慧施工管理平台 / 物资与分包 | `smart_construction_core.menu_sc_material_center` | admin, wutao, demo_business_full |
+| 智慧施工管理平台 / 税务中心 | `smart_construction_core.menu_sc_tax_center` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive |
+| 智慧施工管理平台 / 统计分析 | `smart_construction_core.menu_sc_data_center` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive |
 | 智慧施工管理平台 / 财务中心 | `smart_construction_core.menu_sc_finance_center` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive |
-| 智慧施工管理平台 / 资料证照 | `smart_construction_core.menu_sc_document_admin_center` | wutao, demo_business_full, demo_role_finance |
-| 智慧施工管理平台 / 项目中心 | `smart_construction_core.menu_sc_project_center` | wutao, demo_business_full, demo_role_executive |
+| 智慧施工管理平台 / 资料证照 | `smart_construction_core.menu_sc_document_admin_center` | admin, wutao, demo_business_full, demo_role_finance |
+| 智慧施工管理平台 / 项目中心 | `smart_construction_core.menu_sc_project_center` | admin, wutao, demo_business_full, demo_role_executive |
 | 智慧施工管理平台 / 首页 | `smart_construction_core.menu_sc_workspace_center` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive |
 
 ## 顶层菜单
 
 | Menu | Layer | Visible Probe Logins | XMLID |
 | --- | --- | --- | --- |
-| 平台内核 | `dev_governance` |  | `smart_core.menu_smart_core_platform_root` |
-| 平台内核 / 产品发布 | `dev_governance` |  | `smart_core.menu_smart_core_release_root` |
-| 平台内核 / 公司访问 | `dev_governance` |  | `smart_core.menu_smart_core_company_access_root` |
+| 平台内核 | `dev_governance` | admin | `smart_core.menu_smart_core_platform_root` |
+| 平台内核 / 产品发布 | `dev_governance` | admin | `smart_core.menu_smart_core_release_root` |
+| 平台内核 / 公司访问 | `dev_governance` | admin | `smart_core.menu_smart_core_company_access_root` |
 | 智慧施工管理平台 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_root` |
-| 智慧施工管理平台 / 业务配置 | `system_config` | wutao | `smart_construction_core.menu_sc_business_config_center` |
-| 智慧施工管理平台 / 人事行政 | `formal_product` | wutao, demo_business_full, demo_role_finance | `smart_construction_core.menu_sc_hr_admin_center` |
-| 智慧施工管理平台 / 合同中心 | `formal_product` | wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_contract_center` |
-| 智慧施工管理平台 / 基础资料 | `formal_product` | wutao, demo_business_full | `smart_construction_core.menu_sc_master_data_center` |
-| 智慧施工管理平台 / 成本中心 | `formal_product` | wutao, demo_business_full | `smart_construction_core.menu_sc_cost_center` |
-| 智慧施工管理平台 / 施工管理 | `formal_product` | wutao, demo_business_full, demo_role_executive | `smart_construction_core.menu_sc_construction_management_center` |
+| 智慧施工管理平台 / 业务配置 | `system_config` | admin, wutao | `smart_construction_core.menu_sc_business_config_center` |
+| 智慧施工管理平台 / 人事行政 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance | `smart_construction_core.menu_sc_hr_admin_center` |
+| 智慧施工管理平台 / 合同中心 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_contract_center` |
+| 智慧施工管理平台 / 基础资料 | `formal_product` | admin, wutao, demo_business_full | `smart_construction_core.menu_sc_master_data_center` |
+| 智慧施工管理平台 / 成本中心 | `formal_product` | admin, wutao, demo_business_full | `smart_construction_core.menu_sc_cost_center` |
+| 智慧施工管理平台 / 施工管理 | `formal_product` | admin, wutao, demo_business_full, demo_role_executive | `smart_construction_core.menu_sc_construction_management_center` |
 | 智慧施工管理平台 / 智慧大屏 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_projection_root` |
-| 智慧施工管理平台 / 物资与分包 | `formal_product` | wutao, demo_business_full | `smart_construction_core.menu_sc_material_center` |
+| 智慧施工管理平台 / 物资与分包 | `formal_product` | admin, wutao, demo_business_full | `smart_construction_core.menu_sc_material_center` |
 | 智慧施工管理平台 / 用户核对菜单 | `history_acceptance` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_scbs55_user_acceptance_root` |
 | 智慧施工管理平台 / 用户验收 | `history_acceptance` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_user_acceptance_root` |
-| 智慧施工管理平台 / 税务中心 | `formal_product` | wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_tax_center` |
-| 智慧施工管理平台 / 系统配置 | `system_config` |  | `smart_construction_core.menu_sc_config_center` |
-| 智慧施工管理平台 / 统计分析 | `formal_product` | wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_data_center` |
+| 智慧施工管理平台 / 税务中心 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_tax_center` |
+| 智慧施工管理平台 / 系统配置 | `system_config` | admin | `smart_construction_core.menu_sc_config_center` |
+| 智慧施工管理平台 / 统计分析 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_data_center` |
 | 智慧施工管理平台 / 财务中心 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_finance_center` |
-| 智慧施工管理平台 / 资料证照 | `formal_product` | wutao, demo_business_full, demo_role_finance | `smart_construction_core.menu_sc_document_admin_center` |
-| 智慧施工管理平台 / 项目中心 | `formal_product` | wutao, demo_business_full, demo_role_executive | `smart_construction_core.menu_sc_project_center` |
+| 智慧施工管理平台 / 资料证照 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance | `smart_construction_core.menu_sc_document_admin_center` |
+| 智慧施工管理平台 / 项目中心 | `formal_product` | admin, wutao, demo_business_full, demo_role_executive | `smart_construction_core.menu_sc_project_center` |
 | 智慧施工管理平台 / 首页 | `formal_product` | admin, wutao, demo_business_full, demo_role_finance, demo_role_executive | `smart_construction_core.menu_sc_workspace_center` |
 
 ## 产品菜单树
@@ -131,7 +131,7 @@
     - 社保登记 [`formal_product`] -> `sc.hr.payroll.document`
     - 补助 [`formal_product`] -> `sc.hr.payroll.document`
     - 请假/休假审批单 [`formal_product`] -> `sc.office.admin.document`
-    - 项目管理人员工资登记 [`formal_product`] -> `sc.hr.payroll.document`
+    - 项目管理人员工资登记 [`formal_product` inactive] -> `sc.hr.payroll.document`
   - 合同中心 [`formal_product`] -> `construction.contract`
     - 合同办理 [`formal_product`] -> `construction.contract`
     - 合同办理 [`formal_product` inactive] -> `construction.contract`
@@ -216,7 +216,7 @@
       - 设备申请 [`formal_product`] -> `sc.equipment.request`
       - 设备结算 [`formal_product`] -> `sc.equipment.settlement`
       - 设备计划 [`formal_product`] -> `sc.equipment.plan`
-    - 物资管理 [`formal_product`]
+    - 材料管理 [`formal_product`]
       - 入库单 [`formal_product`] -> `sc.material.inbound`
       - 出库单 [`formal_product`] -> `sc.material.outbound`
       - 报价单 [`formal_product`] -> `sc.material.rfq`
@@ -354,7 +354,8 @@
       - 项目管理类单据 [`history_acceptance`]
         - 施工日志（新） [`history_acceptance`] -> `sc.legacy.direct.acceptance.fact`
   - 税务中心 [`formal_product`]
-    - 开票与税务办理 [`formal_product`]
+    - 发票税务 [`formal_product`]
+      - 外经证登记 [`history_acceptance`] -> `sc.legacy.payment.residual.fact`
       - 抵扣登记 [`formal_product`] -> `sc.tax.deduction.registration`
       - 进项税额上报 [`formal_product`] -> `sc.invoice.registration`
       - 销项开票申请 [`formal_product`] -> `sc.invoice.registration`
@@ -415,7 +416,6 @@
       - 历史资金日报明细 [`history_acceptance` inactive] -> `sc.legacy.fund.daily.line`
       - 历史采购/一般合同事实 [`history_acceptance` inactive] -> `sc.legacy.purchase.contract.fact`
       - 历史采购/一般合同事实 [`history_acceptance` inactive] -> `sc.legacy.purchase.contract.fact`
-      - 外经证登记 [`history_acceptance` inactive] -> `sc.legacy.payment.residual.fact`
       - 工程进度收款 [`history_acceptance` inactive] -> `sc.legacy.engineering.progress.receipt`
       - 工程进度收款 [`history_acceptance` inactive] -> `sc.legacy.engineering.progress.receipt`
       - 工程进度收款（直营） [`history_acceptance` inactive] -> `sc.legacy.engineering.progress.receipt`
@@ -491,8 +491,8 @@
       - 付款申请残余事实 [`formal_product` inactive] -> `sc.payment.execution`
     - 保证金管理 [`formal_product` inactive]
       - 付款保证金退回 [`formal_product`] -> `sc.expense.claim`
-      - 付款还保证金 [`formal_product`] -> `tender.guarantee`
-      - 付款还保证金退回 [`formal_product`] -> `tender.guarantee`
+      - 付款还保证金 [`formal_product`] -> `sc.expense.claim`
+      - 付款还保证金退回 [`formal_product`] -> `sc.expense.claim`
       - 保证金收取 [`formal_product`] -> `sc.expense.claim`
       - 自筹保证金 [`formal_product` inactive] -> `tender.guarantee`
       - 自筹保证金退回 [`formal_product` inactive] -> `tender.guarantee`
@@ -506,6 +506,8 @@
       - 销项调整记录 [`formal_product`] -> `sc.output.invoice.ledger`
     - 待我审批（付款申请） [`formal_product` inactive] -> `tier.review`
     - 扣款 [`formal_product` inactive]
+    - 扣款与非现金 [`formal_product`]
+      - 扣款登记 [`formal_product`] -> `sc.expense.claim`
     - 收付款办理 [`formal_product`]
       - 公司财务支出 [`formal_product`] -> `sc.payment.execution`
       - 实付登记 [`formal_product`] -> `sc.payment.execution`
@@ -520,7 +522,7 @@
         - 结算调整 [`formal_product`] -> `sc.settlement.adjustment`
     - 收支 [`formal_product` inactive]
     - 收款 [`formal_product` inactive]
-    - 费用/保证金现金办理 [`formal_product`] -> `sc.expense.claim`
+    - 费用与保证金 [`formal_product`] -> `sc.expense.claim`
       - 借款单 [`formal_product`] -> `sc.financing.loan`
       - 公司扣款 [`formal_product`] -> `sc.expense.claim`
       - 公司支出 [`formal_product`] -> `sc.payment.execution`
@@ -536,7 +538,7 @@
       - 费用报销单 [`formal_product`] -> `sc.expense.claim`
       - 还款单 [`formal_product`] -> `sc.expense.claim`
       - 项目费用报销单 [`formal_product`] -> `sc.expense.claim`
-    - 资金往来分析 [`formal_product`]
+    - 资金分析 [`formal_product`]
       - 借款还款与调拨明细 [`formal_product`] -> `sc.interfund.movement.fact`
       - 公司-承包人资金责任余额 [`formal_product`] -> `sc.company.contractor.responsibility.summary`
       - 公司-承包人资金责任明细 [`formal_product`] -> `sc.company.contractor.responsibility.fact`
@@ -569,8 +571,6 @@
       - 资金计划汇总 [`formal_product`] -> `project.funding.baseline`
       - 资金计划申报 [`formal_product`] -> `project.funding.baseline`
     - 资金账户 [`formal_product` inactive]
-    - 非现金业务管理 [`formal_product`]
-      - 扣款登记 [`formal_product`] -> `sc.expense.claim`
     - 项目资金 [`formal_product` inactive]
   - 资料证照 [`formal_product`]
     - 借阅申请 [`formal_product`] -> `sc.document.admin.document`
