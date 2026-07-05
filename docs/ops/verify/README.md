@@ -28,6 +28,14 @@
   - One-shot daily acceptance for scene productization runtime quality.
   - Runs strict gate (`verify.scene.r3.runtime.strict`) and prints dashboard `Summary + Gate Result`.
   - Fast check before `gate.full`, and can be used as daily team smoke command.
+- `make verify.business_form.productization.audit`
+  - Audits formal business form productization risk from the published business
+    operation matrix and runtime form-structure evidence.
+  - Highlights high-density P1 form candidates for the next productized form
+    sample batch.
+  - Emits:
+    - `artifacts/backend/business_form_productization_audit.json`
+    - `artifacts/backend/business_form_productization_audit.md`
 
 ## Architecture Guard Aliases
 - `make verify.restricted`
