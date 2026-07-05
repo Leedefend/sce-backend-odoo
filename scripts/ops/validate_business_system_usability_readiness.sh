@@ -7,6 +7,7 @@ export ROOT_DIR
 DB_NAME="${DB_NAME:-${DB:-sc_demo}}"
 ARTIFACT_DIR="${BUSINESS_SYSTEM_READINESS_ARTIFACT_DIR:-$ROOT_DIR/artifacts/backend}"
 INCLUDE_P1="${BUSINESS_SYSTEM_READINESS_INCLUDE_P1:-1}"
+PROD_READONLY="${BUSINESS_SYSTEM_READINESS_PROD_READONLY:-0}"
 MIGRATION_ARTIFACT_ROOT="${MIGRATION_ARTIFACT_ROOT:-/tmp/history_continuity/$DB_NAME/adhoc}"
 export MIGRATION_ARTIFACT_ROOT
 
@@ -15,7 +16,22 @@ source "$ROOT_DIR/scripts/common/env.sh"
 # shellcheck source=../common/guard_prod.sh
 source "$ROOT_DIR/scripts/common/guard_prod.sh"
 
-guard_prod_forbid
+truthy() {
+  [[ "${1:-}" =~ ^(1|true|True|yes|YES)$ ]]
+}
+
+if truthy "$PROD_READONLY"; then
+  if [[ "${PROD_READONLY_VERIFY:-}" != "1" ]]; then
+    echo "❌ prod readonly guard: set PROD_READONLY_VERIFY=1 to run this read-only production verifier" >&2
+    exit 2
+  fi
+  if truthy "$INCLUDE_P1"; then
+    echo "❌ prod readonly readiness cannot include P1; set BUSINESS_SYSTEM_READINESS_INCLUDE_P1=0" >&2
+    exit 2
+  fi
+else
+  guard_prod_forbid
+fi
 
 : "${DB_NAME:?DB_NAME is required}"
 
@@ -47,7 +63,25 @@ run_check() {
   echo "BUSINESS_SYSTEM_READINESS_CHECK_PASS: ${name}"
 }
 
-echo "BUSINESS_SYSTEM_READINESS_START: db=${DB_NAME} started_at=${STARTED_AT} include_p1=${INCLUDE_P1}"
+run_history_business_usable_probe() {
+  if truthy "$PROD_READONLY"; then
+    DB_NAME="$DB_NAME" MIGRATION_ARTIFACT_ROOT="$MIGRATION_ARTIFACT_ROOT" \
+      bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_business_usable_probe.py
+    return
+  fi
+  make history.business.usable.probe DB_NAME="$DB_NAME"
+}
+
+run_formal_business_backfill_audit() {
+  if truthy "$PROD_READONLY"; then
+    DB_NAME="$DB_NAME" MIGRATION_ARTIFACT_ROOT="$MIGRATION_ARTIFACT_ROOT" \
+      bash scripts/ops/odoo_shell_exec.sh < scripts/verify/formal_business_backfill_audit_probe.py
+    return
+  fi
+  make verify.formal_business_backfill.audit DB_NAME="$DB_NAME"
+}
+
+echo "BUSINESS_SYSTEM_READINESS_START: db=${DB_NAME} started_at=${STARTED_AT} include_p1=${INCLUDE_P1} prod_readonly=${PROD_READONLY}"
 
 run_check "python_compile_readiness_inputs" \
   python3 -m py_compile \
@@ -63,14 +97,14 @@ else
 fi
 
 run_check "history_business_usable_probe" \
-  make history.business.usable.probe DB_NAME="$DB_NAME"
+  run_history_business_usable_probe
 
 run_check "formal_business_backfill_audit" \
-  make verify.formal_business_backfill.audit DB_NAME="$DB_NAME"
+  run_formal_business_backfill_audit
 
 FINISHED_AT="$(date -Iseconds)"
 
-python3 - "$RUN_LOG" "$SUMMARY_JSON" "$SUMMARY_MD" "$DB_NAME" "$STARTED_AT" "$FINISHED_AT" "$P1_STATUS" "$CHECK_FAILURES" <<'PY'
+python3 - "$RUN_LOG" "$SUMMARY_JSON" "$SUMMARY_MD" "$DB_NAME" "$STARTED_AT" "$FINISHED_AT" "$P1_STATUS" "$CHECK_FAILURES" "$PROD_READONLY" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -82,6 +116,7 @@ db_name = sys.argv[4]
 started_at = sys.argv[5]
 finished_at = sys.argv[6]
 p1_status = sys.argv[7]
+prod_readonly = sys.argv[9]
 
 text = log_path.read_text(encoding="utf-8", errors="replace")
 
@@ -109,6 +144,7 @@ decision = "ready_for_business_system_use" if ok else "not_ready_for_business_sy
 payload = {
     "scope": "business_system_usability_readiness",
     "database": db_name,
+    "prod_readonly": prod_readonly in {"1", "true", "True", "yes", "YES"},
     "started_at": started_at,
     "finished_at": finished_at,
     "status": "PASS" if ok else "FAIL",
@@ -126,6 +162,7 @@ lines = [
     "# Business System Usability Readiness",
     "",
     f"- database: `{db_name}`",
+    f"- prod_readonly: `{payload['prod_readonly']}`",
     f"- status: `{payload['status']}`",
     f"- decision: `{decision}`",
     f"- started_at: `{started_at}`",

@@ -12,6 +12,9 @@ Makefile guards and script-level guards.
 
 - `make up/down/logs/ps`
 - `make diag.project`
+- `make verify.business_system.usability_readiness.prod` (requires `PROD_READONLY_VERIFY=1`)
+- `make verify.legacy_attachment.mirror.completeness.audit.prod` (requires `PROD_READONLY_VERIFY=1`)
+- `make verify.legacy_online_attachment.mirror.job.audit.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make verify.baseline` (requires PROD_DANGER=1)
 - `make verify.p0` (requires PROD_DANGER=1)
 - `make verify.p0.flow` (requires PROD_DANGER=1)
@@ -59,6 +62,13 @@ Fresh production history initialization:
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
   RUN_ID=prod_history_init_YYYYMMDDTHHMMSS \
   make history.production.fresh_init
+```
+
+Read-only production business readiness verification:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
+  make verify.business_system.usability_readiness.prod
 ```
 
 Resume a production history initialization from a replay step:

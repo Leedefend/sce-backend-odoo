@@ -310,6 +310,15 @@ ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \
 9. 业务 smoke：验证新业务动作不被历史缺口全局阻断。
 10. 证据归档：归档 replay 输出、日志、probe 结果和验收记录。
 
+生产部署后的业务可用性验收必须使用只读入口：
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
+  make verify.business_system.usability_readiness.prod
+```
+
+该入口只运行历史业务可用性 probe 与 formal backfill audit，不执行 P1 聚合或任何写入型修复。
+
 ### 6.4 断点续跑
 
 如果重建中断，禁止重新发明服务器脚本。保留同一个 `RUN_ID`，用失败 step 续跑：
