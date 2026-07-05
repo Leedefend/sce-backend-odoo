@@ -12,6 +12,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 | Platform release policy runtime | `make verify.platform.release_policy.runtime` | PASS | `artifacts/backend/platform_release_policy_runtime_probe.json` |
 | Platform release policy runtime schema | `make verify.platform.release_policy.runtime.schema.guard` | PASS | `artifacts/backend/platform_release_policy_runtime_probe.json` |
 | Backend contract closure | `make verify.backend.contract.closure.mainline` | PASS | `artifacts/backend/backend_contract_closure_mainline_summary.json` |
+| Backend contract closure summary schema | `make verify.backend.contract.closure.mainline.summary.schema.guard` | PASS | `artifacts/backend/backend_contract_closure_mainline_summary.json` |
 | Backend contract closure snapshot schema | `make verify.backend.contract.closure.snapshot.schema.guard` | PASS | `artifacts/backend/backend_contract_closure_snapshot.json` |
 | Restricted product mainline | `make verify.restricted` | PASS | `artifacts/backend/delivery_mainline_run_summary.json` |
 | Restricted product mainline schema | `make verify.product.delivery.mainline.summary.schema.guard` | PASS | `artifacts/backend/delivery_mainline_run_summary.json` |
