@@ -125,6 +125,7 @@ VERIFY_README_TOKENS = (
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
+    "product release readiness target dependencies",
     "supporting gates match the v2.0.0 preflight dependency set",
     "including platform release policy runtime",
     "v2.0.0 Makefile release targets appear in expected phony order",
@@ -424,6 +425,24 @@ MAKEFILE_TARGET_PREREQS = (
         (
             "guard.prod.forbid",
             "verify.product.release.ready",
+        ),
+    ),
+    (
+        "verify.product.release.ready",
+        (
+            "guard.prod.forbid",
+            "verify.docs.product_boundary",
+            "verify.user_module.product_boundary",
+            "verify.product.surface.clean",
+            "verify.product.menu.release.ready",
+            "verify.product.complexity.bound",
+            "verify.product.bundle.isolation",
+            "verify.product.tier.enforcement",
+            "verify.product.delivery.productization.readiness.strict",
+            "verify.frontend.widget_richness.post_ga.guard",
+            "verify.ui.product.stability",
+            "verify.delivery.reproducible",
+            "verify.product.sla.baseline",
         ),
     ),
     (
