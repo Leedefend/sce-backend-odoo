@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MAKEFILE = ROOT / "Makefile"
 CONTROL_README = ROOT / "docs" / "ops" / "releases" / "v2.0.0" / "README.md"
 RELEASE_NOTES = ROOT / "docs" / "ops" / "release_notes_v2.0.0.md"
+CHECKLIST = ROOT / "docs" / "ops" / "release_checklist_v2.0.0.md"
 VERSIONING = ROOT / "docs" / "ops" / "versioning.md"
 RELEASE_INDEX_EN = ROOT / "docs" / "ops" / "releases" / "README.md"
 RELEASE_INDEX_ZH = ROOT / "docs" / "ops" / "releases" / "README.zh.md"
@@ -127,7 +128,7 @@ VERIFY_README_TOKENS = (
     "backend contract closure mainline summary artifact shape",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
-    "product release readiness target dependencies",
+    "Cross-checks product release readiness Makefile dependencies against the release checklist hardening expansion.",
     "supporting gates match the v2.0.0 preflight dependency set",
     "including platform release policy runtime",
     "v2.0.0 Makefile release targets appear in expected phony order",
@@ -640,6 +641,24 @@ def _all_top_level_bullet_items(text: str) -> tuple[str, ...]:
     return tuple(line[2:].strip() for line in text.splitlines() if line.startswith("- "))
 
 
+def _bullet_items_after_marker(text: str, marker: str) -> tuple[str, ...] | None:
+    lines = text.splitlines()
+    try:
+        start = lines.index(marker)
+    except ValueError:
+        return None
+    items: list[str] = []
+    for line in lines[start + 1 :]:
+        if line.startswith("## "):
+            break
+        stripped = line.strip()
+        if stripped.startswith("- "):
+            items.append(stripped[2:].strip().strip("`"))
+        elif items:
+            break
+    return tuple(items)
+
+
 def _heading_order(text: str) -> tuple[str, ...]:
     return tuple(line.strip() for line in text.splitlines() if line.startswith("## "))
 
@@ -1084,6 +1103,34 @@ def _contains_makefile_targets(errors: list[str]) -> None:
             )
 
 
+def _contains_product_readiness_checklist_alignment(errors: list[str]) -> None:
+    if not MAKEFILE.is_file():
+        errors.append(f"missing Makefile: {MAKEFILE.relative_to(ROOT).as_posix()}")
+        return
+    if not CHECKLIST.is_file():
+        errors.append(f"missing checklist: {CHECKLIST.relative_to(ROOT).as_posix()}")
+        return
+    makefile_text = MAKEFILE.read_text(encoding="utf-8")
+    checklist_text = CHECKLIST.read_text(encoding="utf-8")
+    prereqs = _makefile_prereqs(makefile_text, "verify.product.release.ready")
+    if prereqs is None:
+        errors.append("Makefile missing target: verify.product.release.ready")
+        return
+    expected_items = tuple(prereq for prereq in prereqs if prereq != "guard.prod.forbid")
+    actual_items = _bullet_items_after_marker(
+        checklist_text,
+        "The product readiness target expands to:",
+    )
+    if actual_items is None:
+        errors.append("checklist missing product readiness expansion marker")
+        return
+    if actual_items != expected_items:
+        errors.append(
+            "checklist product readiness expansion mismatch: "
+            f"expected={expected_items!r} actual={actual_items!r}"
+        )
+
+
 def main() -> int:
     errors: list[str] = []
     _contains_all(CONTROL_README, README_TOKENS, errors)
@@ -1129,6 +1176,7 @@ def main() -> int:
     _contains_promotion_order(CONTROL_README, "## Promotion Order", README_PROMOTION_ORDER, errors)
     _contains_promotion_order(VERSIONING, "Promotion order:", VERSIONING_PROMOTION_ORDER, errors)
     _contains_makefile_targets(errors)
+    _contains_product_readiness_checklist_alignment(errors)
     if errors:
         print("[release_v2_0_0_control_docs_guard] FAIL")
         for error in errors:

@@ -204,7 +204,7 @@
   - Verifies the v2.0.0 evidence manifest keeps required gate section order, evidence table row content/order, current local verification status and nested artifact/shape-guard structure, schema guard rows, controlled-doc artifact coverage, evidence rules structure, and explicit prod-sim evidence directory validation.
 - `make verify.release.v2_0_0.control_docs.guard`
   - Verifies the v2.0.0 release-control README, release notes, versioning guide, release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes keep planned tag names, release boundaries, required gates, immutable RC guidance, and the current 10-module product delivery baseline.
-  - Verifies product release readiness target dependencies stay aligned with the release checklist hardening expansion.
+  - Cross-checks product release readiness Makefile dependencies against the release checklist hardening expansion.
   - Verifies the release-control README supporting gates match the v2.0.0 preflight dependency set, including platform release policy runtime.
   - Verifies the v2.0.0 Makefile release targets appear in expected phony order.
   - Verifies the v2.0.0 Makefile release target definitions appear in expected order.
