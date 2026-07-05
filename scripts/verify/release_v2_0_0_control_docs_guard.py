@@ -125,7 +125,7 @@ VERIFY_README_TOKENS = (
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
-    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes section order, intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning section order, tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
+    "Enforces release-control section order, status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes section order, intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning section order, tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -139,6 +139,16 @@ README_STATUS_ITEMS = (
     "Planned RC tag: `v2.0.0-rc1`",
     "Planned final tag: `v2.0.0`",
     "Governance date: 2026-05-12",
+)
+
+README_SECTION_ORDER = (
+    "## Status",
+    "## Layer Target / Module / Reason",
+    "## Release Boundaries",
+    "## Required Gates",
+    "## Release Documents",
+    "## Promotion Order",
+    "## Rollback",
 )
 
 README_LAYER_TARGET_ITEMS = (
@@ -617,6 +627,19 @@ def _contains_readme_release_documents(errors: list[str]) -> None:
         )
 
 
+def _contains_readme_section_order(errors: list[str]) -> None:
+    if not CONTROL_README.is_file():
+        errors.append(f"missing release-control README: {CONTROL_README.relative_to(ROOT).as_posix()}")
+        return
+    text = CONTROL_README.read_text(encoding="utf-8")
+    actual_order = _heading_order(text)
+    if actual_order != README_SECTION_ORDER:
+        errors.append(
+            "release-control README section order mismatch: "
+            f"expected={README_SECTION_ORDER!r} actual={actual_order!r}"
+        )
+
+
 def _contains_readme_section_list(
     heading: str,
     expected_items: tuple[str, ...],
@@ -947,6 +970,7 @@ def main() -> int:
     _contains_all(RELEASE_INDEX_EN, RELEASE_INDEX_EN_TOKENS, errors)
     _contains_all(RELEASE_INDEX_ZH, RELEASE_INDEX_ZH_TOKENS, errors)
     _contains_all(VERIFY_README, VERIFY_README_TOKENS, errors)
+    _contains_readme_section_order(errors)
     _contains_readme_section_list("## Status", README_STATUS_ITEMS, errors)
     _contains_readme_section_list("## Layer Target / Module / Reason", README_LAYER_TARGET_ITEMS, errors)
     _contains_readme_release_documents(errors)
