@@ -65,6 +65,21 @@ The platform performance sub-gate must measure the Web boot path with
 `scene_ready_mode=registry`; full scene hydration remains a deep-link/runtime
 path and is not the baseline startup payload.
 
+The product readiness target expands to:
+
+  - `verify.docs.product_boundary`
+  - `verify.user_module.product_boundary`
+  - `verify.product.surface.clean`
+  - `verify.product.menu.release.ready`
+  - `verify.product.complexity.bound`
+  - `verify.product.bundle.isolation`
+  - `verify.product.tier.enforcement`
+  - `verify.product.delivery.productization.readiness.strict`
+  - `verify.frontend.widget_richness.post_ga.guard`
+  - `verify.ui.product.stability`
+  - `verify.delivery.reproducible`
+  - `verify.product.sla.baseline`
+
 ## Contract And Startup Gate
 
 - `login -> system.init -> ui.contract` must remain unchanged.

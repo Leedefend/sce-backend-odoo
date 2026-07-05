@@ -155,6 +155,23 @@ REQUIRED_SECTION_LISTS = (
         ),
     ),
     (
+        "The product readiness target expands to:",
+        (
+            "`verify.docs.product_boundary`",
+            "`verify.user_module.product_boundary`",
+            "`verify.product.surface.clean`",
+            "`verify.product.menu.release.ready`",
+            "`verify.product.complexity.bound`",
+            "`verify.product.bundle.isolation`",
+            "`verify.product.tier.enforcement`",
+            "`verify.product.delivery.productization.readiness.strict`",
+            "`verify.frontend.widget_richness.post_ga.guard`",
+            "`verify.ui.product.stability`",
+            "`verify.delivery.reproducible`",
+            "`verify.product.sla.baseline`",
+        ),
+    ),
+    (
         "Required evidence:",
         (
             "`artifacts/backend/dev_acceptance_release_probe.json`",
@@ -255,12 +272,19 @@ def _top_level_bullets_after_heading(text: str, heading: str) -> tuple[str, ...]
         start = lines.index(heading)
     except ValueError:
         return None
+    is_section = heading.startswith("## ")
     items: list[str] = []
     for line in lines[start + 1 :]:
         if line.startswith("## "):
             break
-        if line.startswith("- "):
+        if is_section and line.startswith("- "):
             items.append(line[2:].strip())
+        elif not is_section:
+            stripped = line.strip()
+            if stripped.startswith("- "):
+                items.append(stripped[2:].strip())
+            elif items:
+                break
     return tuple(items)
 
 
