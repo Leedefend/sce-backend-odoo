@@ -298,6 +298,8 @@ def _summary_payload(payload, output, md_output):
         "strict": payload["strict"],
         "limit": payload["limit"],
         "source_contains": payload["source_contains"],
+        "missing_files": payload["missing_files"],
+        "missing_legacy_url_files": payload["missing_legacy_url_files"],
         "file_index_rows": int(file_counts.get("file_index_rows") or 0),
         "local_file_ok": int(file_counts.get("local_file_ok") or 0),
         "missing_local_file": int(file_counts.get("missing_local_file") or 0),
@@ -318,10 +320,17 @@ def main():
     file_index_audit = _audit_file_index()
     legacy_url_audit = _audit_legacy_url_attachments()
     file_counts = file_index_audit["counts"]
+    url_counts = legacy_url_audit["counts"]
     missing_files = int(file_counts.get("missing_local_file") or 0) + int(file_counts.get("zero_size_local_file") or 0)
+    missing_legacy_urls = int(url_counts.get("legacy_url_missing_local_file") or 0) + int(
+        url_counts.get("legacy_url_zero_size_local_file") or 0
+    )
     errors = []
-    if STRICT and missing_files > ALLOW_MISSING_FILES:
-        errors.append("missing local files exceed allowance: %s > %s" % (missing_files, ALLOW_MISSING_FILES))
+    if STRICT and missing_files + missing_legacy_urls > ALLOW_MISSING_FILES:
+        errors.append(
+            "missing local files exceed allowance: %s > %s"
+            % (missing_files + missing_legacy_urls, ALLOW_MISSING_FILES)
+        )
 
     payload = {
         "scope": "legacy_attachment_mirror_completeness_audit",
@@ -334,6 +343,8 @@ def main():
         "legacy_file_roots": [str(item) for item in _legacy_file_roots()],
         "file_index": file_index_audit,
         "legacy_url_attachments": legacy_url_audit,
+        "missing_files": missing_files,
+        "missing_legacy_url_files": missing_legacy_urls,
         "errors": errors,
     }
     output = _safe_output_path()

@@ -63,18 +63,38 @@ make verify.legacy_online_attachment.mirror.job.audit \
   ATTACHMENT_JOB_AUDIT_INDEX_LIMIT=5000
 ```
 
-生产验收应显式传入 job 根目录和严格模式：
+生产验收使用专用只读 `.prod` 目标，必须显式设置 `PROD_READONLY_VERIFY=1`。该目标默认：
+
+- 严格模式：`LEGACY_ATTACHMENT_JOB_AUDIT_STRICT=1`
+- 全量索引：`LEGACY_ATTACHMENT_JOB_AUDIT_INDEX_LIMIT=0`
+- job 失败零容忍：`LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES=0`
+- 缺本地文件零容忍：`LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES=0`
+
+执行示例：
 
 ```bash
-make verify.legacy_online_attachment.mirror.job.audit \
+PROD_READONLY_VERIFY=1 \
+make verify.legacy_online_attachment.mirror.job.audit.prod \
+  ENV=prod \
   DB_NAME=sc_demo \
   ATTACHMENT_JOB_AUDIT_JOB_ROOT=/data/odoo/legacy_attachments/online_mirror/_jobs/prod_online_attachment_mirror_YYYYMMDDTHHMMSS+0800 \
-  ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS=online_old \
-  ATTACHMENT_JOB_AUDIT_INDEX_LIMIT=0 \
-  ATTACHMENT_JOB_AUDIT_STRICT=1 \
-  ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES=0 \
-  ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES=0
+  ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS=online_old
 ```
+
+生产完整性复核也使用只读 `.prod` 目标：
+
+```bash
+PROD_READONLY_VERIFY=1 \
+make verify.legacy_attachment.mirror.completeness.audit.prod \
+  ENV=prod \
+  DB_NAME=sc_demo \
+  ATTACHMENT_AUDIT_SOURCE_CONTAINS=online_old
+```
+
+完整性 `.prod` 目标会同时检查：
+
+- `sc.legacy.file.index` 索引记录是否能解析到本地非零字节文件。
+- 正式 `ir.attachment` 中仍指向 legacy URL 的附件是否已有本地文件承接。
 
 输出：
 
