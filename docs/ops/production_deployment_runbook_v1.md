@@ -11,6 +11,7 @@
 
 本文不替代以下专项文档：
 
+- 生产发布链路规范：`docs/ops/production_release_flow_standard_v1.md`
 - 生产命令策略：`docs/ops/prod_command_policy.md`
 - Codex 生产协助策略：`docs/ops/codex_production_assist_policy.md`
 - 数据库命名策略：`docs/ops/db_strategy.md`

@@ -564,7 +564,7 @@ prod.sim.data.replay: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) ENV=test ENV_FILE=.env.prod.sim COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml" DB_NAME=$(DB_NAME) HISTORY_CONTINUITY_MODE=replay HISTORY_CONTINUITY_INCLUDE_FORMAL_PROJECTIONS=0 HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS="$(or $(HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS),1)" RUN_ID="$(RUN_ID)" HISTORY_CONTINUITY_START_AT="$(HISTORY_CONTINUITY_START_AT)" HISTORY_CONTINUITY_STOP_AFTER="$(HISTORY_CONTINUITY_STOP_AFTER)" MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/migration/history_continuity_oneclick.sh
 
 prod.sim.business.usable.init: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) ENV=test ENV_FILE=.env.prod.sim COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml" DB_NAME=$(DB_NAME) FORMAL_PROJECTION_ARTIFACT_ROOT="$(FORMAL_PROJECTION_ARTIFACT_ROOT)" MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" bash scripts/migration/history_business_usable_init.sh
+	@$(RUN_ENV) ENV=test ENV_FILE=.env.prod.sim COMPOSE_FILES="-f $(COMPOSE_FILE_BASE) -f docker-compose.prod-sim.yml" DB_NAME=$(DB_NAME) FORMAL_PROJECTION_ARTIFACT_ROOT="$(FORMAL_PROJECTION_ARTIFACT_ROOT)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" bash scripts/migration/history_business_usable_init.sh
 
 prod.sim.replay.then.usable.init: guard.prod.forbid check-compose-project check-compose-env
 	@$(MAKE) prod.sim.data.replay
@@ -4024,6 +4024,16 @@ verify.prod.sim.isolation.quick: guard.prod.forbid
 verify.prod.sim.acceptance.evidence.schema.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/prod_sim_acceptance_evidence_schema_guard.py
 	@python3 scripts/verify/prod_sim_acceptance_evidence_schema_guard.py
+
+.PHONY: verify.production_deployment.record.guard
+verify.production_deployment.record.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/production_deployment_record_guard.py
+	@python3 scripts/verify/production_deployment_record_guard.py
+
+.PHONY: verify.production_release.flow.guard
+verify.production_release.flow.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/production_release_flow_guard.py
+	@python3 scripts/verify/production_release_flow_guard.py
 
 
 .PHONY: verify.product.delivery.gap

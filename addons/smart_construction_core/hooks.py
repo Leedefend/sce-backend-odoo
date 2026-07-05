@@ -6,6 +6,10 @@ from odoo.addons.smart_core.utils.backend_contract_boundaries import ensure_lowc
 
 
 COMMON_TAX_PERCENTAGES = (1, 3, 6, 9, 13)
+REQUIRED_CORE_TAXES = (
+    ("销项VAT 9%", 9.0, "sale"),
+    ("进项VAT 13%", 13.0, "purchase"),
+)
 
 
 def _format_tax_name(amount):
@@ -142,7 +146,8 @@ def ensure_core_taxes(env_or_cr, registry=None):
     if not tax_group:
         tax_group = env["account.tax.group"].sudo().create(tax_group_vals)
 
-    tax_defs = [(_format_tax_name(amount), amount, "none") for amount in COMMON_TAX_PERCENTAGES]
+    tax_defs = [(_format_tax_name(amount), float(amount), "none") for amount in COMMON_TAX_PERCENTAGES]
+    tax_defs.extend(REQUIRED_CORE_TAXES)
     for name, amount, tax_use in tax_defs:
         tax = _find_or_create_tax(
             env,

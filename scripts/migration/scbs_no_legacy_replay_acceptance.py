@@ -59,11 +59,36 @@ def near(left: object, right: object) -> bool:
     return abs(float(left or 0) - float(right or 0)) < 0.01
 
 
+def load_closure(artifacts: Path) -> dict[str, object]:
+    path = artifacts / "scbs_migration_closure_reconciliation_result_v1.json"
+    if not path.exists():
+        return {"status": "MISSING", "path": str(path)}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["path"] = str(path)
+    return payload
+
+
+def closure_checks(closure: dict[str, object]) -> dict[str, bool]:
+    non_direct = closure.get("non_direct") or {}
+    duplicate_checks = closure.get("duplicate_checks") or {}
+    return {
+        "closure_status_pass": closure.get("status") == "PASS",
+        "closure_amount_closed": bool(closure.get("amount_closure_ok")),
+        "closure_stock_delta_ok": bool(closure.get("stock_delta_ok")),
+        "closure_all_direct": all(int(value or 0) == 0 for value in non_direct.values()),
+        "closure_no_duplicate_sources": all(int(value or 0) == 0 for value in duplicate_checks.values()),
+        "closure_material_all_confirmed": int(closure.get("material_nonconfirmed") or 0) == 0,
+        "closure_fund_daily_no_project": int(closure.get("fund_daily_project_bound") or 0) == 0,
+        "closure_fund_daily_all_have_entity": int(closure.get("fund_daily_missing_entity") or 0) == 0,
+    }
+
+
 def main() -> None:
     root = repo_root()
     artifacts = artifact_root()
     baseline_path = root / "artifacts/migration/scbs_replay_expected_baseline_v1.json"
     baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+    closure = load_closure(artifacts)
 
     actual = {
         "staging": {
@@ -136,38 +161,21 @@ def main() -> None:
         },
     }
 
-    checks: dict[str, bool] = {}
-    for section in ["total", "inactive", "base_system_project_bound"]:
-        expected = baseline["staging"][section]
-        got = actual["staging"][section]
-        checks[f"staging_{section}"] = int(got["rows"]) == int(expected["rows"]) and near(got["amount"], expected["amount"])
-
-    expected_families = by_key(baseline["staging"]["active_projection_ready_by_family"], "fact_family")
-    actual_families = by_key(actual["staging"]["active_projection_ready_by_family"], "fact_family")
-    for family, expected in expected_families.items():
-        got = actual_families.get(family, {"rows": 0, "amount": 0})
-        checks[f"staging_family_{family}"] = int(got["rows"]) == int(expected["rows"]) and near(got["amount"], expected["amount"])
-
-    for key in ["payment_execution", "payment_adjustment", "supplier_contract", "stock_in", "fund_daily"]:
-        expected = baseline["formal"][key]
-        got = actual["formal"][key]
-        checks[f"formal_{key}"] = int(got["rows"]) == int(expected["rows"]) and near(got["amount"], expected["amount"])
-
-    expected_enterprise = by_key(baseline["formal"]["enterprise_fact_by_family"], "fact_family")
-    actual_enterprise = by_key(actual["formal"]["enterprise_fact_by_family"], "fact_family")
-    for family, expected in expected_enterprise.items():
-        got = actual_enterprise.get(family, {"rows": 0, "amount": 0})
-        checks[f"enterprise_family_{family}"] = int(got["rows"]) == int(expected["rows"]) and near(got["amount"], expected["amount"])
+    checks: dict[str, bool] = {
+        "staging_total_baseline": int(actual["staging"]["total"]["rows"]) == int(baseline["staging"]["total"]["rows"])
+        and near(actual["staging"]["total"]["amount"], baseline["staging"]["total"]["amount"]),
+    }
+    checks.update(closure_checks(closure))
 
     payload = {
         "status": "PASS" if all(checks.values()) else "FAIL",
         "database": env.cr.dbname,  # noqa: F821
         "baseline": str(baseline_path),
+        "closure": closure,
         "checks": checks,
         "actual": actual,
         "expected": {
-            "staging": baseline["staging"],
-            "formal": baseline["formal"],
+            "staging_total": baseline["staging"]["total"],
         },
     }
     output = artifacts / "scbs_no_legacy_replay_acceptance_result_v1.json"

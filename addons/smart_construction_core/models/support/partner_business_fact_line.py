@@ -92,8 +92,8 @@ class ScPartnerBusinessFactLine(models.Model):
                         'payment.request', p.id, p.partner_id,
                         CASE WHEN p.type = 'receive' THEN 'customer' ELSE 'supplier' END,
                         CASE WHEN p.type = 'receive' THEN '收款申请' ELSE '付款申请' END,
-                        p.project_id, p.legacy_visible_project_name,
-                        COALESCE(NULLIF(p.legacy_visible_document_no, ''), p.name),
+                        p.project_id, NULL::varchar,
+                        p.name,
                         p.date_request, COALESCE(p.amount, 0.0), p.currency_id,
                         COALESCE(NULLIF(p.legacy_document_state, ''), p.state),
                         p.creator_name, p.created_time, p.note

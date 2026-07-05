@@ -164,9 +164,5 @@
     <record id="menu_sc_legacy_fund_daily_line" model="ir.ui.menu">
       <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
-    <record id="menu_sc_legacy_finance_auxiliary_fact" model="ir.ui.menu">
-      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
-    </record>
-
   </data>
 </odoo>

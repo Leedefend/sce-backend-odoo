@@ -438,35 +438,25 @@ if partner_ids:
 else:
     partner_id = exec_kw(admin_uid, ADMIN_PWD, "res.partner", "create", [{"name": "Role Smoke Partner"}])
 
-step("read role: contract draft create follows business initiator baseline")
-read_contract_id = exec_kw(
-    uid_read,
-    READ_PWD,
-    "construction.contract",
-    "create",
-    [{
-        "subject": "Role Smoke Contract (read draft)",
-        "type": "in",
-        "project_id": project_user_id,
-        "partner_id": partner_id,
-    }],
-)
+step("read role: contract create should fail")
 failed = False
 try:
-    exec_kw(uid_read, READ_PWD, "construction.contract", "action_confirm", [[read_contract_id]])
-except Exception:
-    failed = True
-if not failed:
-    read_state = exec_kw(
+    exec_kw(
         uid_read,
         READ_PWD,
         "construction.contract",
-        "read",
-        [[read_contract_id]],
-        {"fields": ["state"]},
-    )[0]["state"]
-    if read_state != "draft":
-        raise RuntimeError("read role can progress contract unexpectedly")
+        "create",
+        [{
+            "subject": "Role Smoke Contract (read draft)",
+            "type": "in",
+            "project_id": project_user_id,
+            "partner_id": partner_id,
+        }],
+    )
+except Exception:
+    failed = True
+if not failed:
+    raise RuntimeError("read role can create contract unexpectedly")
 
 step("user role: create contract + line")
 contract_id = exec_kw(

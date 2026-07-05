@@ -77,6 +77,30 @@ def expected_baseline() -> dict[str, object]:
     return json.loads(baseline_path.read_text(encoding="utf-8"))
 
 
+def closure_result() -> dict[str, object]:
+    path = artifact_root() / "scbs_migration_closure_reconciliation_result_v1.json"
+    if not path.exists():
+        return {"status": "MISSING", "path": str(path)}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["path"] = str(path)
+    return payload
+
+
+def closure_acceptance_checks(closure: dict[str, object]) -> dict[str, bool]:
+    non_direct = closure.get("non_direct") or {}
+    duplicate_checks = closure.get("duplicate_checks") or {}
+    return {
+        "closure_status_pass": closure.get("status") == "PASS",
+        "closure_amount_closed": bool(closure.get("amount_closure_ok")),
+        "closure_stock_delta_ok": bool(closure.get("stock_delta_ok")),
+        "closure_all_direct": all(int(value or 0) == 0 for value in non_direct.values()),
+        "closure_no_duplicate_sources": all(int(value or 0) == 0 for value in duplicate_checks.values()),
+        "closure_material_all_confirmed": int(closure.get("material_nonconfirmed") or 0) == 0,
+        "closure_fund_daily_no_project": int(closure.get("fund_daily_project_bound") or 0) == 0,
+        "closure_fund_daily_all_have_entity": int(closure.get("fund_daily_missing_entity") or 0) == 0,
+    }
+
+
 def duplicate_count(table: str, where: str, keys: str) -> int:
     sql = """
         SELECT COUNT(*)
@@ -147,7 +171,7 @@ def empty_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
 def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
     checks = model_installed_checks()
     baseline = expected_baseline()
-    expected_staging = by_key(baseline["staging"]["active_projection_ready_by_family"], "fact_family")
+    closure = closure_result()
     staging = fetch_rows(
         """
         SELECT fact_family,
@@ -161,6 +185,14 @@ def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
         """
     )
     staging_by_family = {row["fact_family"]: row for row in staging}
+    staging_total = fetch_one(
+        """
+        SELECT COUNT(*) AS rows,
+               ROUND(COALESCE(SUM(amount_total), 0)::numeric, 2) AS amount
+          FROM sc_legacy_scbs_fact_staging
+         WHERE import_batch = 'scbs_fact_staging_v1'
+        """
+    )
     payment_execution_rows = count("sc.payment.execution", [("legacy_source_model", "=", SOURCE_MODEL)])
     payment_execution_amount = sum_field("sc.payment.execution", [("legacy_source_model", "=", SOURCE_MODEL)], "paid_amount")
     payment_adjustment_rows = count(
@@ -209,21 +241,6 @@ def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
         ],
         "source_account_balance_total",
     )
-    residual = fetch_one(
-        """
-        SELECT COUNT(*) AS rows,
-               ROUND(COALESCE(SUM(amount_total), 0)::numeric, 2) AS amount
-          FROM sc_legacy_scbs_fact_staging
-         WHERE import_batch = 'scbs_fact_staging_v1'
-           AND active IS FALSE
-        """
-    )
-    stock_zero_residual = 3
-    expected_payment = expected_staging["payment"]
-    expected_contract = expected_staging["supplier_contract"]
-    expected_stock = expected_staging["stock_in"]
-    expected_fund = expected_staging["fund_daily"]
-    expected_inactive = baseline["staging"]["inactive"]
     project_strategy = {
         "scbs_direct": fetch_one(
             "SELECT COUNT(*) FROM project_project p WHERE %s AND p.operation_strategy = 'direct'"
@@ -245,29 +262,8 @@ def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
 
     checks.update(
         {
-            "staging_payment_expected": int(staging_by_family["payment"]["rows"]) == int(expected_payment["rows"])
-            and near(staging_by_family["payment"]["amount"], expected_payment["amount"]),
-            "staging_contract_expected": int(staging_by_family["supplier_contract"]["rows"])
-            == int(expected_contract["rows"])
-            and near(staging_by_family["supplier_contract"]["amount"], expected_contract["amount"]),
-            "staging_stock_expected": int(staging_by_family["stock_in"]["rows"]) == int(expected_stock["rows"])
-            and near(staging_by_family["stock_in"]["amount"], expected_stock["amount"]),
-            "staging_fund_expected": int(staging_by_family["fund_daily"]["rows"]) == int(expected_fund["rows"])
-            and near(staging_by_family["fund_daily"]["amount"], expected_fund["amount"]),
-            "payment_closed": payment_execution_rows + payment_adjustment_rows + enterprise_payment_rows
-            == int(expected_payment["rows"])
-            and near(
-                payment_execution_amount + payment_adjustment_amount + enterprise_payment_amount,
-                expected_payment["amount"],
-            ),
-            "contract_closed": contract_rows + enterprise_contract_rows == int(expected_contract["rows"])
-            and near(contract_amount + enterprise_contract_amount, expected_contract["amount"]),
-            "stock_policy_closed": stock_rows == int(expected_stock["rows"]) - stock_zero_residual
-            and near(stock_amount, baseline["formal"]["stock_in"]["amount"]),
-            "fund_daily_closed": fund_rows == int(expected_fund["rows"]) and near(fund_amount, expected_fund["amount"]),
-            "inactive_residual_registered": int(residual["rows"] or 0) == int(expected_inactive["rows"])
-            and near(residual["amount"], expected_inactive["amount"]),
-            "stock_zero_residual_policy": stock_zero_residual == 3,
+            "staging_total_expected": int(staging_total["rows"] or 0) == int(baseline["staging"]["total"]["rows"])
+            and near(staging_total["amount"], baseline["staging"]["total"]["amount"]),
             "scbs_projects_are_direct": int(project_strategy["scbs_direct"] or 0) > 0
             and int(project_strategy["scbs_non_direct"] or 0) == 0,
             "existing_projects_are_joint": int(project_strategy["non_scbs_joint"] or 0) > 0
@@ -355,10 +351,13 @@ def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
             == 0,
         }
     )
+    checks.update(closure_acceptance_checks(closure))
     observations = {
         "mode": "strict",
         "baseline": baseline,
+        "closure": closure,
         "staging": staging_by_family,
+        "staging_total": staging_total,
         "formal": {
             "payment_execution": {"rows": payment_execution_rows, "amount": payment_execution_amount},
             "payment_adjustment": {"rows": payment_adjustment_rows, "amount": payment_adjustment_amount},
@@ -367,11 +366,6 @@ def strict_acceptance() -> tuple[dict[str, bool], dict[str, object]]:
             "enterprise_contract": {"rows": enterprise_contract_rows, "amount": enterprise_contract_amount},
             "stock_in": {"rows": stock_rows, "amount": stock_amount},
             "fund_daily": {"rows": fund_rows, "amount": fund_amount},
-        },
-        "residual": {
-            "stock_zero_amount_no_line_rows": stock_zero_residual,
-            "inactive_rows": int(residual["rows"] or 0),
-            "inactive_amount": float(residual["amount"] or 0),
         },
         "project_operation_strategy": project_strategy,
     }

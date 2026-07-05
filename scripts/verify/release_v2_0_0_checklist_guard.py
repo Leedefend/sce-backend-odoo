@@ -41,6 +41,10 @@ REQUIRED_TOKENS = (
     "sc_prod_sim",
     "sc_prod",
     "Production destructive reset is forbidden.",
+    "docs/ops/production_release_flow_standard_v1.md",
+    "docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md",
+    "make verify.production_deployment.record.guard",
+    "make verify.production_release.flow.guard",
     "Prod and prod-sim evidence are mixed.",
 )
 
@@ -195,6 +199,7 @@ REQUIRED_SECTION_LISTS = (
     (
         "## Production Safety",
         (
+            "Follow `docs/ops/production_release_flow_standard_v1.md`.",
             "Follow `docs/ops/production_deployment_runbook_v1.md`.",
             "Follow `docs/ops/prod_command_policy.md`.",
             "`ENV=prod` and `.env.prod` are not allowed in Codex autonomous development.",
@@ -210,6 +215,8 @@ REQUIRED_SECTION_LISTS = (
             "Publish GitHub Release for `v2.0.0`.",
             "Attach or link evidence from `docs/ops/releases/v2.0.0/evidence_manifest.md`.",
             "Record deployment acceptance separately if production deployment follows.",
+            "If production deployment follows, create a concrete deployment record from `docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md` and run `make verify.production_deployment.record.guard`.",
+            "If production deployment follows, run `make verify.production_release.flow.guard` to verify the production release-flow control plane remains wired.",
         ),
     ),
     (

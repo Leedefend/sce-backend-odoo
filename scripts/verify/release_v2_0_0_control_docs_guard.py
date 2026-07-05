@@ -88,6 +88,7 @@ RELEASE_INDEX_EN_TOKENS = (
     "- v2.0.0 (planned tag: `v2.0.0`)",
     "Notes: `docs/ops/release_notes_v2.0.0.md`",
     "Checklist: `docs/ops/release_checklist_v2.0.0.md`",
+    "Production deployment record template (zh): `docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md`",
     "Evidence: `docs/ops/releases/v2.0.0/evidence_manifest.md`",
     "Verify Catalog: `docs/ops/verify/README.md`",
     "Verify: `make verify.release.v2_0_0.preflight`",
@@ -104,6 +105,7 @@ RELEASE_INDEX_ZH_TOKENS = (
     "Release Notes：`docs/ops/release_notes_v2.0.0.md`",
     "Release Checklist：`docs/ops/release_checklist_v2.0.0.md`",
     "Evidence：`docs/ops/releases/v2.0.0/evidence_manifest.md`",
+    "生产部署记录模板（zh）：`docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md`",
     "Verify Catalog：`docs/ops/verify/README.md`",
     "Verify：`make verify.release.v2_0_0.preflight`",
     "Governance Verify：`make verify.release.v2_0_0.governance.guard`",
@@ -140,6 +142,13 @@ VERIFY_README_TOKENS = (
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
+    "`make verify.production_deployment.record.guard`",
+    "Verifies concrete production deployment records",
+    "post-deployment validation PASS rows",
+    "explicit non-full-alignment wording",
+    "`make verify.production_release.flow.guard`",
+    "Verifies the production release-flow control plane is wired together",
+    "closure criteria in order",
 )
 
 README_STATUS_ITEMS = (

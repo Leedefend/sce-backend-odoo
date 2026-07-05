@@ -95,6 +95,7 @@ make
 artifacts/*
 !artifacts/migration/
 !artifacts/migration/**
+artifacts/migration/prod_sim_fresh_replay_*/
 artifacts/migration/fresh_db_legacy_material_detail_replay_payload_v1.csv
 !artifacts/migration/fresh_db_legacy_material_detail_replay_payload_v1.csv.parts/
 !artifacts/migration/fresh_db_legacy_material_detail_replay_payload_v1.csv.parts/**

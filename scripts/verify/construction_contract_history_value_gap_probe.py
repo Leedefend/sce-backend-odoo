@@ -25,12 +25,28 @@ def repo_root() -> Path:
 
 
 REPO_ROOT = repo_root()
-RAW_CSV = Path(
-    os.getenv(
-        "CONSTRUCTION_CONTRACT_RAW_CSV",
-        str(REPO_ROOT / "artifacts/migration/source_extracts/T_ProjectContract_Out_contract.csv"),
-    )
-)
+RAW_CSV_NAME = "T_ProjectContract_Out_contract.csv"
+
+
+def raw_csv_path() -> Path:
+    configured = os.getenv("CONSTRUCTION_CONTRACT_RAW_CSV")
+    if configured:
+        return Path(configured)
+    candidates = [
+        Path("/mnt/artifacts/migration/source_extracts") / RAW_CSV_NAME,
+        REPO_ROOT / "artifacts/migration/source_extracts" / RAW_CSV_NAME,
+        Path.cwd() / "artifacts/migration/source_extracts" / RAW_CSV_NAME,
+    ]
+    artifact_root = os.getenv("MIGRATION_ARTIFACT_ROOT")
+    if artifact_root:
+        candidates.append(Path(artifact_root).parent / "source_extracts" / RAW_CSV_NAME)
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+RAW_CSV = raw_csv_path()
 ARTIFACT_ROOT = Path(
     os.getenv(
         "MIGRATION_ARTIFACT_ROOT",

@@ -191,6 +191,7 @@ business_config_group = env.ref(  # noqa: F821
 occupied_logins = set(all_users.mapped("login")) - set(real_users.mapped("login"))
 assigned_logins: set[str] = set()
 updated = []
+business_config_admin_updates = []
 blocked = []
 
 for user in real_users.sorted("id"):
@@ -256,6 +257,41 @@ for user in real_users.sorted("id"):
         }
     )
 
+for admin_login in sorted(BUSINESS_CONFIG_ADMIN_LOGINS):
+    admin_user = Users.search([("login", "=", admin_login)], limit=1)
+    if not admin_user:
+        blocked.append({"login": admin_login, "reason": "missing_business_config_admin_login"})
+        continue
+    if not admin_user.active:
+        blocked.append({"login": admin_login, "id": admin_user.id, "reason": "inactive_business_config_admin_login"})
+        continue
+    group_commands = []
+    group_applied = {
+        "internal_group_applied": False,
+        "business_initiator_group_applied": False,
+        "business_config_group_applied": False,
+    }
+    if internal_group and internal_group not in admin_user.groups_id:
+        group_commands.append((4, internal_group.id))
+        group_applied["internal_group_applied"] = True
+    if business_initiator_group and business_initiator_group not in admin_user.groups_id:
+        group_commands.append((4, business_initiator_group.id))
+        group_applied["business_initiator_group_applied"] = True
+    if business_config_group and business_config_group not in admin_user.groups_id:
+        group_commands.append((4, business_config_group.id))
+        group_applied["business_config_group_applied"] = True
+    if group_commands:
+        admin_user.write({"groups_id": group_commands})
+    business_config_admin_updates.append(
+        {
+            "id": admin_user.id,
+            "login": admin_user.login,
+            "name": admin_user.name,
+            "group_write_count": len(group_commands),
+            **group_applied,
+        }
+    )
+
 if blocked:
     env.cr.rollback()  # noqa: F821
     payload = {
@@ -279,9 +315,10 @@ else:
         "updated_count": len(updated),
         "suffix_count": sum(1 for row in updated if row["suffix_used"]),
         "business_config_admin_logins": sorted(BUSINESS_CONFIG_ADMIN_LOGINS),
-        "business_config_admin_count": sum(1 for row in updated if row["business_config_admin_target"]),
+        "business_config_admin_count": len(business_config_admin_updates),
+        "business_config_admin_updates": business_config_admin_updates,
         "updated": updated,
-        "db_writes": len(updated),
+        "db_writes": len(updated) + sum(1 for row in business_config_admin_updates if row["group_write_count"]),
     }
 
 output = artifact_root() / "history_real_user_normalize_write_result_v1.json"

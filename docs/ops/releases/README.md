@@ -123,6 +123,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 ## Templates
 - Notes template: `docs/ops/releases/templates/release_notes_TEMPLATE.md`
 - Checklist template: `docs/ops/releases/templates/release_checklist_TEMPLATE.md`
+- Production deployment record template (zh): `docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md`
 
 ## Current Review Baseline
 - Menu scene coverage evidence:
