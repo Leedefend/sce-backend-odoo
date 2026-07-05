@@ -60,6 +60,15 @@ FORBIDDEN_TOKENS = (
     "FIXME",
 )
 
+REQUIRED_SECTION_ORDER = (
+    "## Required Before `gate-release-v2.0`",
+    "## Required Before `v2.0.0-rc1`",
+    "## Required Product Hardening Before Formal `v2.0.0`",
+    "## Required Before Formal `v2.0.0`",
+    "## Evidence Rules",
+    "## Current Local Verification Status",
+)
+
 REQUIRED_TABLE_ROWS = {
     "## Required Before `gate-release-v2.0`": (
         ("System capability baseline", "`make verify.system.capability_baseline.report`", "PASS", "`artifacts/backend/system_capability_baseline_report.json`"),
@@ -188,6 +197,10 @@ def _top_level_bullets_after_heading(text: str, heading: str) -> tuple[str, ...]
     return tuple(items)
 
 
+def _heading_order(text: str) -> tuple[str, ...]:
+    return tuple(line.strip() for line in text.splitlines() if line.startswith("## "))
+
+
 def _nested_bullets_after_top_level_item(
     text: str,
     heading: str,
@@ -230,6 +243,15 @@ def _contains_required_table_rows(text: str, errors: list[str]) -> None:
                 "manifest evidence table rows mismatch: "
                 f"{heading} expected={expected_rows!r} actual={actual_rows!r}"
             )
+
+
+def _contains_required_section_order(text: str, errors: list[str]) -> None:
+    actual_order = _heading_order(text)
+    if actual_order != REQUIRED_SECTION_ORDER:
+        errors.append(
+            "manifest section order mismatch: "
+            f"expected={REQUIRED_SECTION_ORDER!r} actual={actual_order!r}"
+        )
 
 
 def _contains_required_local_status_items(text: str, errors: list[str]) -> None:
@@ -284,6 +306,7 @@ def main() -> int:
                 errors.append(f"manifest contains forbidden token: {token}")
         if text.count("| Evidence | Command | Required Result | Artifact |") != 4:
             errors.append("manifest must contain four evidence tables")
+        _contains_required_section_order(text, errors)
         _contains_required_table_rows(text, errors)
         _contains_required_evidence_rules(text, errors)
         _contains_required_local_status_items(text, errors)
