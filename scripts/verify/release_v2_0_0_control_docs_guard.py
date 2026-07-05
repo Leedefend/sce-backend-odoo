@@ -125,6 +125,7 @@ VERIFY_README_TOKENS = (
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
+    "release guard entries appear in expected order",
     "Enforces release-control section order, status, scope, boundary and gate command blocks, release document list, rollback list, release-index section order and planned entries, release-notes section order, intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning section order, tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
@@ -382,6 +383,15 @@ RELEASE_INDEX_ZH_SECTION_ORDER = (
     "## 当前评审基线",
 )
 
+VERIFY_README_RELEASE_GUARD_ITEMS = (
+    "`make verify.release.v2_0_0.checklist.guard`",
+    "`make verify.release.v2_0_0.evidence_manifest.guard`",
+    "`make verify.release.v2_0_0.control_docs.guard`",
+    "`make verify.release.v2_0_0.governance.guard`",
+    "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
+    "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard`",
+)
+
 MAKEFILE_PHONY_TARGETS = (
     "verify.release.v2_0_0.preflight",
     "verify.release.v2_0_0.product_hardening",
@@ -583,6 +593,10 @@ def _all_bullet_items_after_heading(text: str, heading: str) -> tuple[str, ...] 
         if stripped.startswith("- "):
             items.append(stripped[2:].strip())
     return tuple(items)
+
+
+def _all_top_level_bullet_items(text: str) -> tuple[str, ...]:
+    return tuple(line[2:].strip() for line in text.splitlines() if line.startswith("- "))
 
 
 def _heading_order(text: str) -> tuple[str, ...]:
@@ -870,6 +884,24 @@ def _contains_release_index_section_order(
         )
 
 
+def _contains_verify_readme_release_guard_items(errors: list[str]) -> None:
+    if not VERIFY_README.is_file():
+        errors.append(f"missing verify catalog: {VERIFY_README.relative_to(ROOT).as_posix()}")
+        return
+    text = VERIFY_README.read_text(encoding="utf-8")
+    actual_items = tuple(
+        item
+        for item in _all_top_level_bullet_items(text)
+        if "verify.release.v2_0_0." in item
+        or "verify.prod.sim.acceptance.evidence.schema.guard" in item
+    )
+    if actual_items != VERIFY_README_RELEASE_GUARD_ITEMS:
+        errors.append(
+            "verify catalog release guard items mismatch: "
+            f"expected={VERIFY_README_RELEASE_GUARD_ITEMS!r} actual={actual_items!r}"
+        )
+
+
 def _contains_versioning_formal_release_items(errors: list[str]) -> None:
     if not VERSIONING.is_file():
         errors.append(f"missing versioning doc: {VERSIONING.relative_to(ROOT).as_posix()}")
@@ -1030,6 +1062,7 @@ def main() -> int:
         RELEASE_INDEX_ZH_PLANNED_ITEMS,
         errors,
     )
+    _contains_verify_readme_release_guard_items(errors)
     _contains_versioning_section_order(errors)
     _contains_versioning_tag_type_items(errors)
     _contains_versioning_no_history_rewrite_items(errors)
