@@ -123,6 +123,8 @@ VERIFY_README_TOKENS = (
     "current local verification status and nested artifact/shape-guard structure",
     "controlled-doc artifact coverage",
     "evidence rules structure",
+    "`make verify.backend.contract.closure.mainline.summary.schema.guard`",
+    "backend contract closure mainline summary artifact shape",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
     "product release readiness target dependencies",
