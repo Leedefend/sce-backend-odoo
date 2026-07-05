@@ -501,6 +501,17 @@ class TestMenuConfigurationAudit(unittest.TestCase):
     def setUp(self):
         self.module = _load_handler()
 
+    def test_menu_config_protected_node_exclusions_are_extension_registered(self):
+        module = _load_policy_model()
+
+        self.assertEqual(module.protected_node_excluded_fingerprint_tokens(), ())
+
+        module.register_protected_node_excluded_fingerprint_token("legacy acceptance")
+        module.register_protected_node_excluded_fingerprint_token("legacy acceptance")
+        module.register_protected_node_excluded_fingerprint_token("")
+
+        self.assertEqual(module.protected_node_excluded_fingerprint_tokens(), ("legacy acceptance",))
+
     def test_menu_config_audit_reports_applicable_policy_counts(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
         finance_group = _Group(101, "财务")

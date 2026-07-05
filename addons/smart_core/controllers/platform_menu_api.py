@@ -31,12 +31,8 @@ SOURCE_AUTHORITIES = (
     "res.groups",
     MENU_CONFIG_POLICY_MODEL,
     "extension_business_config_role_resolver",
-    "legacy_construction_business_config_group",
 )
 NO_BUSINESS_FACT_AUTHORITY = True
-LEGACY_BUSINESS_CONFIG_ADMIN_GROUP_XMLIDS = (
-    "smart_construction_core.group_sc_cap_business_config_admin",
-)
 
 
 def source_authority_contract() -> dict:
@@ -45,7 +41,6 @@ def source_authority_contract() -> dict:
         "authorities": list(SOURCE_AUTHORITIES),
         "projection_only": True,
         "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-        "legacy_business_config_admin_groups": list(LEGACY_BUSINESS_CONFIG_ADMIN_GROUP_XMLIDS),
     }
 
 
@@ -233,7 +228,7 @@ def _configured_business_config_admin_group_xmlids(env) -> list[str]:
     except Exception:
         raw = ""
     groups = [item.strip() for item in str(raw or "").split(",") if item.strip()]
-    return groups or list(LEGACY_BUSINESS_CONFIG_ADMIN_GROUP_XMLIDS)
+    return groups or ["smart_core.group_smart_core_business_config_admin"]
 
 
 def _is_business_config_user(env) -> bool:
@@ -292,7 +287,7 @@ class PlatformMenuAPI(http.Controller):
                 scene_map=_resolve_navigation_scene_map(env),
                 policy={},
             )
-            nav_fact_filtered, _, convergence = MenuDeliveryConvergenceService().apply(
+            nav_fact_filtered, _, convergence = MenuDeliveryConvergenceService(env).apply(
                 nav_fact,
                 nav_explained,
                 is_admin=_is_admin_user(env),
@@ -352,7 +347,7 @@ class PlatformMenuAPI(http.Controller):
                 scene_map=scene_map,
                 policy=policy,
             )
-            nav_fact_filtered, nav_explained_filtered, convergence = MenuDeliveryConvergenceService().apply(
+            nav_fact_filtered, nav_explained_filtered, convergence = MenuDeliveryConvergenceService(env).apply(
                 nav_fact,
                 nav_explained,
                 is_admin=_is_admin_user(env),

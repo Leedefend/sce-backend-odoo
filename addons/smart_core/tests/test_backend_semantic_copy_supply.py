@@ -69,6 +69,15 @@ CORE_EXTENSION = _load_module(
 )
 
 
+def _use_construction_catalog_source(service):
+    service._catalog_source_config = lambda source_env: {
+        "module": "smart_construction_core",
+        "xmlid_prefix": "smart_construction_core.",
+        "root_label": "智慧施工管理平台",
+    }
+    return service
+
+
 class _FakeAction:
     def __init__(self, action_id: int, res_model: str = "", *, model_name: str = "", model_id=None):
         self.id = action_id
@@ -206,7 +215,7 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
         source = service.default_policy_source_authority_contract()
         policy = service.get_policy(product_key="platform.preview")
 
-        self.assertEqual(source.get("kind"), "legacy_default_product_policy_provider")
+        self.assertEqual(source.get("kind"), "platform_default_product_policy_provider")
         self.assertTrue(source.get("no_business_fact_authority"))
         self.assertEqual(policy.get("product_key"), "platform.preview")
         self.assertEqual(policy.get("base_product_key"), "platform")
@@ -245,7 +254,9 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
         )
         menu_model = _FakeMenuModel([root, project_center, project_group, project_ledger])
         model_data_model = _FakeModelDataModel([root.id, project_center.id, project_group.id, project_ledger.id])
-        service = PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
+        service = _use_construction_catalog_source(
+            PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
+        )
 
         pages = service._extract_user_menu_pages(_FakeSourceEnv(menu_model, model_data_model))
 
@@ -279,7 +290,9 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
         )
         menu_model = _FakeMenuModel([root, project_center, project_group, execution_structure])
         model_data_model = _FakeModelDataModel([root.id, project_center.id, project_group.id, execution_structure.id])
-        service = PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
+        service = _use_construction_catalog_source(
+            PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
+        )
 
         pages = service._extract_user_menu_pages(_FakeSourceEnv(menu_model, model_data_model))
 
@@ -313,7 +326,9 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
         )
         menu_model = _FakeMenuModel([root, contract_center, income_ledger, native_root, native_budget])
         model_data_model = _FakeModelDataModel([1, 2, 3, 10, 11])
-        service = PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
+        service = _use_construction_catalog_source(
+            PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
+        )
 
         pages = service._extract_user_menu_pages(_FakeSourceEnv(menu_model, model_data_model))
 
@@ -322,7 +337,7 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
     def test_policy_payload_dedupes_same_label_and_model_within_group(self):
         service = PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
 
-        payload = service._build_construction_policy_payload_from_menu_pages(
+        payload = service._build_catalog_policy_payload_from_menu_pages(
             identity={
                 "product_key": "construction.standard",
                 "base_product_key": "construction",

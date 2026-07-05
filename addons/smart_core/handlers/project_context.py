@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Project context selector intents."""
+"""Record context selector intents.
+
+The intent name remains project.context.search for client compatibility.
+"""
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.intent_execution_result import IntentExecutionResult
-from ..core.project_context import build_project_context_contract, source_authority_contract
+try:
+    from ..core.project_context import build_record_context_contract
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import build_project_context_contract as build_record_context_contract
+from ..core.project_context import source_authority_contract
 from ..core.request_params import parse_positive_int
 
 
@@ -29,7 +36,7 @@ class ProjectContextSearchHandler(BaseIntentHandler):
         if limit_error:
             return self._err(400, "limit 无效")
         limit = limit or 20
-        data = build_project_context_contract(self.env, params, search=search, limit=limit)
+        data = build_record_context_contract(self.env, params, search=search, limit=limit)
         return IntentExecutionResult(
             ok=True,
             status="success",

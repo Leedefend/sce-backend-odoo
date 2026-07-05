@@ -7,16 +7,21 @@ from odoo import fields as odoo_fields
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
-from ..core.project_context import (
-    project_scope_denied_response,
-)
+try:
+    from ..core.project_context import record_scope_denied_response
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import project_scope_denied_response as record_scope_denied_response
 try:
     from ..core.project_context import record_in_business_scope
 except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
-    from ..core.project_context import record_in_project_scope, selected_project_id_from_context
+    from ..core.project_context import record_in_project_scope
+    try:
+        from ..core.project_context import selected_record_context_id_from_context
+    except ImportError:  # pragma: no cover - compatibility for older lightweight boundary tests
+        from ..core.project_context import selected_project_id_from_context as selected_record_context_id_from_context
 
     def record_in_business_scope(env_model, record_id, params=None, context=None):
-        return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
+        return record_in_project_scope(env_model, record_id, selected_record_context_id_from_context(params, context))
 from ..core.request_params import parse_bool, parse_positive_int
 from ..core.unified_page_contract_v2_assembler import assemble_unified_page_patch_v2
 from ..core.unified_page_contract_lite_preview import with_lite_preview_if_requested
@@ -432,7 +437,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
         if record_id > 0:
             in_scope, scope_meta = record_in_business_scope(env_model, record_id, params, context)
             if not in_scope:
-                return project_scope_denied_response(scope_meta)
+                return record_scope_denied_response(scope_meta)
 
         try:
             env_model.check_access_rights("read")

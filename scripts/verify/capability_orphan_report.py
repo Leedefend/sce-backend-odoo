@@ -106,7 +106,7 @@ def _login(intent_url: str, db_name: str, login: str, password: str) -> str:
                 return token
     secret = str(os.getenv("SC_BOOTSTRAP_SECRET") or os.getenv("BOOTSTRAP_SECRET") or "").strip()
     if secret:
-        bootstrap_login = str(os.getenv("SC_BOOTSTRAP_LOGIN") or os.getenv("BOOTSTRAP_LOGIN") or "svc_project_ro").strip()
+        bootstrap_login = str(os.getenv("SC_BOOTSTRAP_LOGIN") or os.getenv("BOOTSTRAP_LOGIN") or "svc_readonly").strip()
         status, body = http_post_json(
             intent_url,
             {"intent": "session.bootstrap", "params": {"secret": secret, "login": bootstrap_login, "db": db_name}},

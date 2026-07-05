@@ -17,7 +17,7 @@ class _Env(dict):
     user = types.SimpleNamespace(id=9)
 
 
-def _load_handler():
+def _load_handler(handler_name="chatter_activity_schedule"):
     root = Path(__file__).resolve().parents[1]
     odoo_mod = types.ModuleType("odoo")
     fields_mod = types.SimpleNamespace(Date=types.SimpleNamespace(context_today=lambda user: "2026-05-07"))
@@ -40,8 +40,11 @@ def _load_handler():
     base_mod = types.ModuleType("odoo.addons.smart_core.core.base_handler")
     base_mod.BaseIntentHandler = _BaseIntentHandler
     project_mod = types.ModuleType("odoo.addons.smart_core.core.project_context")
+    project_mod.record_scope_denied_response = lambda meta, message="": {"ok": False, "meta": meta, "message": message}
     project_mod.project_scope_denied_response = lambda meta: {"ok": False, "meta": meta}
+    project_mod.record_in_business_scope = lambda model, record_id, params=None, context=None: (True, {"applied": False})
     project_mod.record_in_project_scope = lambda model, record_id, project_id: (True, {"applied": False})
+    project_mod.selected_record_context_id_from_context = lambda params, context: None
     project_mod.selected_project_id_from_context = lambda params, context: None
 
     sys.modules.update(
@@ -65,9 +68,9 @@ def _load_handler():
     sys.modules[reason_name] = reason_module
     reason_spec.loader.exec_module(reason_module)
 
-    module_name = "odoo.addons.smart_core.handlers.chatter_activity_schedule"
+    module_name = f"odoo.addons.smart_core.handlers.{handler_name}"
     sys.modules.pop(module_name, None)
-    spec = importlib.util.spec_from_file_location(module_name, root / "handlers" / "chatter_activity_schedule.py")
+    spec = importlib.util.spec_from_file_location(module_name, root / "handlers" / f"{handler_name}.py")
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
@@ -116,6 +119,20 @@ class TestChatterActivityBoundaries(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertEqual(result["error"]["message"], "user_id 无效")
+
+    def test_update_invalid_activity_id_returns_user_error(self):
+        module = _load_handler("chatter_activity_update")
+        handler = module.ChatterActivityUpdateHandler(
+            env=_Env({"x.model": object()}),
+            params={"model": "x.model", "res_id": 3, "activity_id": "bad", "action": "done"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertEqual(result["error"]["message"], "activity_id 无效")
 
 
 if __name__ == "__main__":

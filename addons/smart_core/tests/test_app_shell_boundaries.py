@@ -64,6 +64,37 @@ def _load_handler():
             "trim_kwargs": kwargs,
         },
     )
+    utils_mod = _install_module("odoo.addons.smart_core.utils")
+    utils_mod.__path__ = [str(root / "utils")]
+
+    def _extension_hook(env, hook_name, *args, **kwargs):
+        if hook_name == "smart_core_app_shell_contract":
+            return {
+                "taxonomy": {
+                    "projects": {
+                        "label": "项目管理",
+                        "category": "business",
+                        "sequence": 20,
+                        "primary_scene": "projects.list",
+                    },
+                    "contracts": {
+                        "label": "合同管理",
+                        "category": "business",
+                        "sequence": 30,
+                        "primary_scene": "contracts.workspace",
+                    },
+                },
+                "aliases": {
+                    "project": "projects",
+                    "contract": "contracts",
+                },
+            }
+        return None
+
+    _install_module(
+        "odoo.addons.smart_core.utils.extension_hooks",
+        call_extension_hook_first=_extension_hook,
+    )
 
     request_params_name = "odoo.addons.smart_core.core.request_params"
     sys.modules.pop(request_params_name, None)
@@ -243,7 +274,7 @@ class TestAppShellBoundaries(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         self.assertEqual(result["data"]["subject"], "ui.contract")
-        self.assertEqual(result["data"]["route"], "/admin/release-operator?product_key=construction.standard")
+        self.assertEqual(result["data"]["route"], "/admin/release-operator?product_key=platform.standard")
         self.assertEqual(result["data"]["intent"], "release.operator.surface")
 
     def test_nav_platform_admin_app_returns_management_action(self):
@@ -255,7 +286,7 @@ class TestAppShellBoundaries(unittest.TestCase):
         child = result["data"]["sections"][0]["children"][0]
         self.assertEqual(child["meta"]["kind"], "admin")
         self.assertEqual(child["meta"]["open"]["subject"], "ui.contract")
-        self.assertEqual(child["meta"]["open"]["route"], "/admin/release-operator?product_key=construction.standard")
+        self.assertEqual(child["meta"]["open"]["route"], "/admin/release-operator?product_key=platform.standard")
 
 
 if __name__ == "__main__":

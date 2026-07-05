@@ -27,33 +27,27 @@ NO_BUSINESS_FACT_AUTHORITY = True
 LEGACY_PRODUCT_TITLE_SOURCE_KIND = "legacy_release_product_title_projection"
 
 _PRODUCT_TITLE_BY_KEY = {
-    "fr1": "FR-1 项目立项",
-    "fr2": "FR-2 项目推进",
-    "fr3": "FR-3 成本记录",
-    "fr4": "FR-4 付款记录",
-    "fr5": "FR-5 结算结果",
     "my_work": "我的工作",
 }
-_LEGACY_PRODUCT_TITLE_KEYS = {"fr1", "fr2", "fr3", "fr4", "fr5"}
+_LEGACY_PRODUCT_TITLE_KEYS: set[str] = set()
 
-_ROUTE_ONLY_ACTIONS = {
-    "projects.intake": {
-        "primary_actions": [
-            {
-                "key": "quick_project_create",
-                "label": "快速创建（推荐）",
-                "target": {"type": "route", "route": "/s/projects.intake?intake_mode=quick", "scene_key": "projects.intake"},
-            }
-        ],
-        "secondary_actions": [
-            {
-                "key": "standard_project_intake",
-                "label": "标准立项",
-                "target": {"type": "route", "route": "/s/projects.intake", "scene_key": "projects.intake"},
-            }
-        ],
-    },
-}
+_ROUTE_ONLY_ACTIONS: dict[str, dict[str, Any]] = {}
+
+
+def register_legacy_product_title(product_key: str, title: str) -> None:
+    key = _text(product_key)
+    label = _text(title)
+    if not key or not label:
+        return
+    _PRODUCT_TITLE_BY_KEY[key] = label
+    _LEGACY_PRODUCT_TITLE_KEYS.add(key)
+
+
+def register_route_only_actions(scene_key: str, actions: dict[str, Any]) -> None:
+    key = _text(scene_key)
+    if not key or not isinstance(actions, dict):
+        return
+    _ROUTE_ONLY_ACTIONS[key] = deepcopy(actions)
 
 
 def _text(value: Any) -> str:
@@ -298,8 +292,8 @@ def build_release_surface_scene_contract_from_delivery_entry(entry: dict[str, An
     )
     route_actions = _ROUTE_ONLY_ACTIONS.get(scene_key, {})
     requires_project_context = bool(row.get("requires_project_context", False))
-    message = "当前发布入口已冻结到产品面" if not requires_project_context else "当前发布入口需要项目上下文后继续"
-    layout = "entry_cards" if scene_key == "projects.intake" else "entry_shell"
+    message = "当前发布入口已冻结到产品面" if not requires_project_context else "当前发布入口需要业务上下文后继续"
+    layout = _text(route_actions.get("layout")) or "entry_shell"
     contract = build_release_surface_scene_contract(
         scene_key=scene_key,
         title=label,

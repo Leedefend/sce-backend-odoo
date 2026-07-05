@@ -43,15 +43,16 @@ SOURCE_AUTHORITIES = (
     "scene_delivery_policy_file",
     "extension_hook:smart_core_surface_policy_default_name",
     "extension_hook:smart_core_surface_nav_allowlist",
+    "extension_hook:smart_core_surface_aliases",
     "builtin_workspace_surface_policy",
 )
 NO_BUSINESS_FACT_AUTHORITY = True
 LEGACY_SURFACE_ALIAS_SOURCE_KIND = "legacy_scene_surface_alias_projection"
 
 SURFACE_POLICY_WORKSPACE_DEFAULT_V1 = "workspace_default_v1"
-SURFACE_POLICY_CONSTRUCTION_PM_V1 = SURFACE_POLICY_WORKSPACE_DEFAULT_V1
+SURFACE_POLICY_WORKSPACE_PM_V1 = SURFACE_POLICY_WORKSPACE_DEFAULT_V1
 LEGACY_SURFACE_ALIASES = {
-    "construction_pm_v1": SURFACE_POLICY_WORKSPACE_DEFAULT_V1,
+    "workspace_pm_v1": SURFACE_POLICY_WORKSPACE_DEFAULT_V1,
 }
 BUILTIN_SURFACE_NAV_ALLOWLIST = {
     SURFACE_POLICY_WORKSPACE_DEFAULT_V1: {
@@ -78,7 +79,6 @@ def source_authority_contract() -> dict[str, Any]:
         kind=SOURCE_KIND,
         authorities=SOURCE_AUTHORITIES,
         no_business_fact_authority=NO_BUSINESS_FACT_AUTHORITY,
-        legacy_surface_aliases=dict(LEGACY_SURFACE_ALIASES),
         legacy_surface_alias_source=LEGACY_SURFACE_ALIAS_SOURCE_KIND,
     )
 
@@ -86,20 +86,32 @@ def source_authority_contract() -> dict[str, Any]:
 def legacy_surface_alias_source_authority_contract() -> dict[str, Any]:
     return build_source_authority_contract(
         kind=LEGACY_SURFACE_ALIAS_SOURCE_KIND,
-        authorities=("legacy_surface_aliases",),
+        authorities=("builtin_surface_aliases", "extension_hook:smart_core_surface_aliases"),
         rebuildable=None,
         no_business_fact_authority=True,
         legacy_compatibility=True,
     )
 
 
+def _surface_aliases(env=None) -> dict[str, str]:
+    aliases = dict(LEGACY_SURFACE_ALIASES)
+    payload = call_extension_hook_first(env, "smart_core_surface_aliases", env)
+    if isinstance(payload, dict):
+        for source, target in payload.items():
+            source_key = str(source or "").strip().lower()
+            target_key = str(target or "").strip().lower()
+            if source_key and target_key:
+                aliases[source_key] = target_key
+    return aliases
+
+
 def _builtin_surface_nav_allowlist(env=None) -> dict:
     payload = call_extension_hook_first(env, "smart_core_surface_nav_allowlist", env)
     if isinstance(payload, dict):
         return {
-            _normalize_surface(surface): list(codes) if isinstance(codes, (list, tuple, set)) else []
+            _normalize_surface(surface, env=env): list(codes) if isinstance(codes, (list, tuple, set)) else []
             for surface, codes in payload.items()
-            if _normalize_surface(surface)
+            if _normalize_surface(surface, env=env)
         }
     return BUILTIN_SURFACE_NAV_ALLOWLIST
 
@@ -108,9 +120,9 @@ def _builtin_surface_deep_link_allowlist(env=None) -> dict:
     payload = call_extension_hook_first(env, "smart_core_surface_deep_link_allowlist", env)
     if isinstance(payload, dict):
         return {
-            _normalize_surface(surface): list(codes) if isinstance(codes, (list, tuple, set)) else []
+            _normalize_surface(surface, env=env): list(codes) if isinstance(codes, (list, tuple, set)) else []
             for surface, codes in payload.items()
-            if _normalize_surface(surface)
+            if _normalize_surface(surface, env=env)
         }
     return BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST
 
@@ -118,7 +130,7 @@ def _builtin_surface_deep_link_allowlist(env=None) -> dict:
 def _surface_policy_default_name(env=None) -> str:
     payload = call_extension_hook_first(env, "smart_core_surface_policy_default_name", env)
     value = str(payload or "").strip()
-    return value or SURFACE_POLICY_CONSTRUCTION_PM_V1
+    return value or SURFACE_POLICY_WORKSPACE_PM_V1
 
 
 def _surface_policy_default_file(env=None) -> str:
@@ -139,16 +151,17 @@ def _to_bool(value: Any, default: bool = False) -> bool:
     return default
 
 
-def _normalize_surface(value: Any) -> str:
+def _normalize_surface(value: Any, env=None) -> str:
     text = str(value or "").strip().lower()
     normalized = text or "default"
-    return LEGACY_SURFACE_ALIASES.get(normalized, normalized)
+    return _surface_aliases(env).get(normalized, normalized)
 
 
-def _legacy_surface_alias_meta(value: Any) -> dict[str, Any]:
+def _legacy_surface_alias_meta(value: Any, env=None) -> dict[str, Any]:
     text = str(value or "").strip().lower()
-    normalized = _normalize_surface(text)
-    if not text or text == normalized or text not in LEGACY_SURFACE_ALIASES:
+    aliases = _surface_aliases(env)
+    normalized = aliases.get(text, text or "default")
+    if not text or text == normalized or text not in aliases:
         return {}
     return {
         "requested_surface": text,
@@ -189,13 +202,13 @@ def _has_resolvable_target(scene: dict) -> bool:
     return False
 
 
-def _normalize_surfaces(raw: Any) -> list[str]:
+def _normalize_surfaces(raw: Any, env=None) -> list[str]:
     if not isinstance(raw, list):
         return []
     out = []
     seen = set()
     for item in raw:
-        key = _normalize_surface(item)
+        key = _normalize_surface(item, env=env)
         if not key or key in seen:
             continue
         seen.add(key)
@@ -249,7 +262,7 @@ def _load_surface_policy_from_file(env=None) -> dict[str, dict[str, set[str]]]:
     surfaces = payload.get("surfaces") if isinstance(payload.get("surfaces"), dict) else {}
     out = {}
     for surface_key, policy in surfaces.items():
-        key = _normalize_surface(surface_key)
+        key = _normalize_surface(surface_key, env=env)
         if not key or not isinstance(policy, dict):
             continue
         nav_raw = policy.get("nav_allowlist")
@@ -267,12 +280,12 @@ def _load_surface_policy_from_file(env=None) -> dict[str, dict[str, set[str]]]:
 def _resolve_default_surface_from_file(env=None) -> str:
     payload = _load_surface_policy_payload_from_file(env)
     raw = payload.get("default_surface") if isinstance(payload, dict) else ""
-    value = _normalize_surface(raw)
+    value = _normalize_surface(raw, env=env)
     return value if value and value != "default" else ""
 
 
 def _select_surface_policy(surface: str, env=None) -> dict:
-    key = _normalize_surface(surface)
+    key = _normalize_surface(surface, env=env)
     file_policy_map = _load_surface_policy_from_file(env)
     file_policy = file_policy_map.get(key) if isinstance(file_policy_map, dict) else None
     if isinstance(file_policy, dict):
@@ -355,10 +368,10 @@ def resolve_delivery_policy_runtime(env, params: dict | None) -> dict:
         surface = file_default or (_surface_policy_default_name(env) if bool(enabled) else "default")
 
     runtime_env = str(os.environ.get("ENV") or "dev").strip().lower() or "dev"
-    alias_meta = _legacy_surface_alias_meta(surface)
+    alias_meta = _legacy_surface_alias_meta(surface, env=env)
     return {
         "enabled": bool(enabled),
-        "surface": _normalize_surface(surface),
+        "surface": _normalize_surface(surface, env=env),
         "requested_surface": str(surface or "").strip().lower(),
         "legacy_surface_alias": alias_meta,
         "runtime_env": runtime_env,
@@ -380,8 +393,8 @@ def filter_delivery_scenes(
     deep_link_scenes = []
     excluded = []
     reason_counts = {}
-    normalized_surface = _normalize_surface(surface)
-    alias_meta = _legacy_surface_alias_meta(surface)
+    normalized_surface = _normalize_surface(surface, env=env)
+    alias_meta = _legacy_surface_alias_meta(surface, env=env)
     surface_policy = _select_surface_policy(normalized_surface, env=env)
 
     def _exclude(scene_code: str, reason_code: str):
@@ -465,7 +478,7 @@ def filter_delivery_scenes(
                 _append_deep_link(scene)
             continue
 
-        surfaces = _normalize_surfaces(scene.get("surfaces"))
+        surfaces = _normalize_surfaces(scene.get("surfaces"), env=env)
         if surfaces and normalized_surface not in surfaces:
             _exclude(code, REASON_SCENE_SURFACE_MISMATCH)
             continue

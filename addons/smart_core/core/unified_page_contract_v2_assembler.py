@@ -12,62 +12,9 @@ CONTRACT_VERSION = "2.1.0"
 SOURCE_KIND = "unified_page_contract_v2_assembler_projection"
 SOURCE_AUTHORITIES = ("ui_contract", "page_orchestration", "scene_contract", "unified_page_contract_v2_schema")
 NO_BUSINESS_FACT_AUTHORITY = True
-BUSINESS_FORM_DEFAULT_TAB_MODELS = frozenset({
-    "payment.ledger",
-    "payment.request",
-    "payment.request.line",
-    "project.budget.cost.alloc",
-    "project.cost.code",
-    "project.cost.ledger",
-    "project.funding.baseline",
-    "project.milestone",
-    "project.profit.compare",
-    "project.progress.entry",
-    "project.project.stage",
-    "project.tags",
-    "project.task",
-    "project.task.type",
-    "sc.account.income.expense.summary",
-    "sc.approval.scope",
-    "sc.check.standard",
-    "sc.check.standard.item",
-    "sc.company.operation.summary",
-    "sc.comprehensive.cost.summary",
-    "sc.construction.diary",
-    "sc.dashboard.cockpit.fact",
-    "sc.dictionary",
-    "sc.expense.claim",
-    "sc.expense.reimbursement.summary",
-    "sc.financing.loan",
-    "sc.fund.daily.summary",
-    "sc.history.todo",
-    "sc.invoice.category.summary",
-    "sc.invoice.registration",
-    "sc.material.catalog",
-    "sc.material.price",
-    "sc.material.stock.summary",
-    "sc.operating.metrics.project",
-    "sc.payment.execution",
-    "sc.plan.report",
-    "sc.project.stage.requirement.item",
-    "sc.project.structure",
-    "sc.receipt.income",
-    "sc.receipt.invoice.line",
-    "sc.risk.item",
-    "sc.risk.library",
-    "sc.safety.patrol.task",
-    "sc.salary.summary",
-    "sc.settlement.adjustment",
-    "sc.tax.deduction.registration",
-    "sc.treasury.ledger",
-    "sc.treasury.reconciliation",
-    "sc.workflow.node",
-    "tender.doc.purchase",
-    "tender.guarantee",
-    "tender.opening",
-})
 TRACE_FIELD_TOKENS = ("legacy", "source", "origin", "external", "import", "migration", "trace", "old_")
 NOTE_FIELD_TOKENS = ("note", "remark", "description", "memo", "comment", "说明", "备注")
+_KANBAN_ROW_ACTION_REGISTRY: dict[tuple[str, str], dict[str, Any]] = {}
 
 
 def source_authority_contract() -> dict[str, Any]:
@@ -93,6 +40,13 @@ def _list(value: Any) -> list[Any]:
 def _text(value: Any, default: str = "") -> str:
     text = str(value or "").strip()
     return text or default
+
+
+def register_kanban_row_action(model_name: str, action: dict[str, Any], *, view_type: str = "kanban") -> None:
+    model = _text(model_name)
+    view = _text(view_type, "kanban")
+    if model and isinstance(action, dict):
+        _KANBAN_ROW_ACTION_REGISTRY[(model, view)] = deepcopy(action)
 
 
 def _formal_container_type(value: Any, default: str = "section") -> str:
@@ -751,7 +705,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         }
     _append_ui_contract_actions(contract, ui, source_widget_id="page.root", main_data=contract["dataContract"]["mainData"])
     _append_ui_contract_row_actions(contract, ui)
-    _append_project_kanban_row_action(contract, model=model, view_type=view_type)
+    _append_registered_kanban_row_action(contract, model=model, view_type=view_type)
     return contract
 
 
@@ -2457,8 +2411,9 @@ def _append_ui_contract_row_actions(contract: dict[str, Any], ui: dict[str, Any]
     _append_actions(contract, normalized, source_widget_id="page.row")
 
 
-def _append_project_kanban_row_action(contract: dict[str, Any], *, model: str, view_type: str) -> None:
-    if model != "project.project" or view_type != "kanban":
+def _append_registered_kanban_row_action(contract: dict[str, Any], *, model: str, view_type: str) -> None:
+    action = _KANBAN_ROW_ACTION_REGISTRY.get((_text(model), _text(view_type)))
+    if not action:
         return
     rows = _list(_dict(contract.get("actionContract")).get("actionRuleList"))
     for row in rows:
@@ -2468,21 +2423,7 @@ def _append_project_kanban_row_action(contract: dict[str, Any], *, model: str, v
             return
     _append_actions(
         contract,
-        [{
-            "key": "open_project_dashboard",
-            "name": "open_project_dashboard",
-            "label": "进入项目驾驶舱",
-            "intent": "open_scene",
-            "target": {
-                "route": "/s/project.management",
-                "scene_key": "project.management",
-                "entry_intent": "project.dashboard.enter",
-                "project_id": "${id}",
-            },
-            "trigger": "row_click",
-            "level": "row",
-            "target_scope": "row",
-        }],
+        [deepcopy(action)],
         source_widget_id="page.row",
     )
 

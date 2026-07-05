@@ -12,6 +12,22 @@ from odoo.addons.smart_core.core.delivery_menu_defaults import (
 from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import MenuDeliveryConvergenceService
 from odoo.addons.smart_core.delivery.native_config_menu_projection import native_config_delivery_groups
 from odoo.addons.smart_core.utils.backend_contract_boundaries import MENU_CONFIG_POLICY_MODEL
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+
+_PREVIEW_GROUP_ANCHOR_SKIPPED_LABELS = {"系统菜单", "业务菜单"}
+_CUSTOMER_ACCEPTANCE_GROUP_LABELS: set[str] = set()
+
+
+def register_preview_group_anchor_skipped_label(label: str) -> None:
+    text = str(label or "").strip()
+    if text:
+        _PREVIEW_GROUP_ANCHOR_SKIPPED_LABELS.add(text)
+
+
+def register_customer_acceptance_group_label(label: str) -> None:
+    text = str(label or "").strip()
+    if text:
+        _CUSTOMER_ACCEPTANCE_GROUP_LABELS.add(text)
 
 
 class MenuService:
@@ -29,12 +45,6 @@ class MenuService:
     )
     BUSINESS_GROUP_DISPLAY_ORDER = {
         "基础资料": 5,
-        "项目中心": 10,
-        "投标管理类单据": 20,
-        "合同中心": 30,
-        "施工管理": 40,
-        "物资与分包": 50,
-        "财务中心": 60,
         "人事行政": 70,
         "资料证照": 80,
         "基础设置": 990,
@@ -44,6 +54,23 @@ class MenuService:
 
     def __init__(self, env=None):
         self.env = env
+        self._business_group_display_order = self._resolve_business_group_display_order()
+
+    def _resolve_business_group_display_order(self) -> dict:
+        order = dict(self.BUSINESS_GROUP_DISPLAY_ORDER)
+        if self.env is None:
+            return order
+        hook_payload = call_extension_hook_first(self.env, "smart_core_business_nav_group_display_order", self.env)
+        if isinstance(hook_payload, dict):
+            for label, sequence in hook_payload.items():
+                label = str(label or "").strip()
+                if not label:
+                    continue
+                try:
+                    order[label] = int(sequence)
+                except Exception:
+                    continue
+        return order
 
     @classmethod
     def source_authority_contract(cls) -> dict:
@@ -75,7 +102,11 @@ class MenuService:
         label = str(row.get("label") or "").strip()
         if not label:
             return None
-        service = MenuDeliveryConvergenceService()
+        if row.get("native_preview"):
+            row["delivery_bucket"] = "native_preview"
+            row["source_authority"] = self.source_authority_contract()
+            return row
+        service = MenuDeliveryConvergenceService(self.env)
         category = service._classify_leaf(
             label,
             [group_label, label],
@@ -84,7 +115,7 @@ class MenuService:
         )
         if category.startswith("hidden_"):
             return None
-        renamed = service.RENAME_LABELS.get(label)
+        renamed = service.rename_labels.get(label)
         if renamed:
             row["label"] = renamed
         row["delivery_bucket"] = category
@@ -116,7 +147,7 @@ class MenuService:
             yield parent_chain, node
 
     def _resolve_preview_group_anchor(self, ancestors: list[dict]) -> tuple[str, str]:
-        skipped_labels = {"智慧施工管理平台", "系统菜单", "业务菜单", "产品发布面", "用户核对菜单"}
+        skipped_labels = _PREVIEW_GROUP_ANCHOR_SKIPPED_LABELS
         for ancestor in ancestors or []:
             if not isinstance(ancestor, dict):
                 continue
@@ -192,7 +223,7 @@ class MenuService:
             index, node = item
             label = str(node.get("label") or node.get("title") or "").strip()
             if top_level:
-                group_rank = self.BUSINESS_GROUP_DISPLAY_ORDER.get(label, 500)
+                group_rank = self._business_group_display_order.get(label, 500)
                 return (group_rank, self._node_sequence(node) or 9999, index)
             return (self._node_sequence(node) or 9999, index)
 
@@ -213,7 +244,7 @@ class MenuService:
                 continue
             group_key = str(group.get("group_key") or "").strip()
             category = str(group.get("category") or "").strip()
-            if group_key.startswith("construction.acceptance.") or category.startswith("customer_acceptance_"):
+            if group_key.startswith("catalog.acceptance.") or category.startswith("customer_acceptance_"):
                 return True
         return False
 
@@ -300,6 +331,7 @@ class MenuService:
             "integration_view_modes",
             "integration_entry_target",
             "integration_model",
+            "record_scope_policy",
             "project_scope_policy",
         )
         for group in policy.get("menu_groups") or []:
@@ -522,24 +554,37 @@ class MenuService:
             "entry_target": entry_target if isinstance(entry_target, dict) else {},
         }
 
-    def _merged_project_scope_policy(self, items: list[dict]) -> str:
+    def _merged_record_scope_policy(self, items: list[dict]) -> str:
         policies = {
-            str((item.get("meta") or {}).get("project_scope_policy") or "").strip().lower()
+            str(
+                (item.get("meta") or {}).get("record_scope_policy")
+                or (item.get("meta") or {}).get("project_scope_policy")
+                or ""
+            ).strip().lower()
             for item in items or []
             if isinstance(item, dict) and isinstance(item.get("meta"), dict)
         }
         policies.discard("")
+        if "current_project" in policies:
+            policies.discard("current_project")
+            policies.add("current_record")
         if not policies:
             return ""
-        if policies == {"current_project"}:
-            return "current_project"
-        if "current_project" in policies:
-            return "current_project"
+        if policies == {"current_record"}:
+            return "current_record"
+        if "current_record" in policies:
+            return "current_record"
         if "global" in policies:
             return "global"
         if "exempt" in policies:
             return "exempt"
         return ""
+
+    def _merged_project_scope_policy(self, items: list[dict]) -> str:
+        policy = self._merged_record_scope_policy(items)
+        if policy == "current_record":
+            return "current_project"
+        return policy
 
     def _business_category_codes(self, items: list[dict]) -> list[str]:
         codes = []
@@ -653,6 +698,7 @@ class MenuService:
                 if self._node_sequence(item) > 0
             ]
             sequence = min(sequence_candidates) if sequence_candidates else 0
+            record_scope_policy = self._merged_record_scope_policy(items)
             group_meta = {
                 "business_entry_group": True,
                 "merge_by_category_group": len(items) > 1,
@@ -669,7 +715,8 @@ class MenuService:
                 "disposition_policy": meta.get("disposition_policy"),
                 "business_entry_contract_version": meta.get("business_entry_contract_version"),
                 "entry_target_policy": "merge_to_list_form_by_business_category",
-                "project_scope_policy": self._merged_project_scope_policy(items),
+                "record_scope_policy": record_scope_policy,
+                "project_scope_policy": "current_project" if record_scope_policy == "current_record" else record_scope_policy,
                 "source": "delivery_engine_v1",
                 "source_authority": self.source_authority_contract(),
             }
@@ -831,7 +878,7 @@ class MenuService:
     ) -> list[dict]:
         groups = self._native_preview_menus(native_nav=native_nav, policy=policy)
         out = []
-        service = MenuDeliveryConvergenceService()
+        service = MenuDeliveryConvergenceService(self.env)
         for group in groups:
             if not isinstance(group, dict):
                 continue
@@ -926,7 +973,7 @@ class MenuService:
                 group_key = str(group.get("group_key") or group.get("key") or "").strip()
                 if not group_key:
                     safe_label = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]+", "_", group_label).strip("_")
-                    group_key = f"construction.{safe_label or 'product_group'}"
+                    group_key = f"catalog.{safe_label or 'product_group'}"
                 if group_key in groups_by_key:
                     continue
                 groups_by_key[group_key] = {
@@ -1003,13 +1050,16 @@ class MenuService:
             }
             group_order.append(fallback_key)
 
-        convergence_service = MenuDeliveryConvergenceService()
+        convergence_service = MenuDeliveryConvergenceService(self.env)
         for menu in authorized_policy_rows:
             converged_menu = dict(menu)
             policy_group_key = str(menu.get("policy_group_key") or "").strip()
             policy_group_label = str(menu.get("policy_group_label") or "").strip()
-            preserve_policy_label = policy_group_key.startswith("construction.scbs55.") or policy_group_label == "用户验收"
-            renamed = None if preserve_policy_label else convergence_service.RENAME_LABELS.get(str(converged_menu.get("label") or "").strip())
+            preserve_policy_label = (
+                policy_group_key.startswith("catalog.acceptance.")
+                or policy_group_label in _CUSTOMER_ACCEPTANCE_GROUP_LABELS
+            )
+            renamed = None if preserve_policy_label else convergence_service.rename_labels.get(str(converged_menu.get("label") or "").strip())
             if renamed:
                 converged_menu["label"] = renamed
             converged_menu["delivery_bucket"] = "released_product_policy"
@@ -1046,8 +1096,8 @@ class MenuService:
                 continue
             current_key = label_to_group_key.get(group_label)
             if not current_key or (
-                not str(current_key).startswith("construction.")
-                and str(group_key).startswith("construction.")
+                not str(current_key).startswith("catalog.")
+                and str(group_key).startswith("catalog.")
             ):
                 label_to_group_key[group_label] = group_key
 
@@ -1078,7 +1128,7 @@ class MenuService:
             row = groups_by_key.get(group_key) or {}
             group_label = str(row.get("group_label") or "系统菜单")
             menus = row.get("menus") if isinstance(row.get("menus"), list) else []
-            if group_label in {"用户核对菜单", "用户验收"}:
+            if group_label in _CUSTOMER_ACCEPTANCE_GROUP_LABELS:
                 children = []
                 for menu in menus:
                     child = build_delivery_menu_child(menu)

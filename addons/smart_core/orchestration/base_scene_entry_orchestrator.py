@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+
 
 class BaseSceneEntryOrchestrator:
     """Platform-side helper for minimal scene entry/runtime block carriers."""
@@ -21,10 +23,59 @@ class BaseSceneEntryOrchestrator:
     block_alias_map = {}
     entry_summary_keys = ()
     entry_blocks = ()
+    first_action_block_keys = ()
+    title_template = ""
+    title_record_name_fallback = ""
 
     def __init__(self, env, service):
         self.env = env
         self._service = service
+        self._apply_scene_entry_spec()
+
+    def _apply_scene_entry_spec(self):
+        specs = call_extension_hook_first(self.env, "smart_core_scene_entry_orchestrator_specs", self.env)
+        specs = specs if isinstance(specs, dict) else {}
+        spec = specs.get(type(self).__name__)
+        if not isinstance(spec, dict):
+            spec = specs.get(str(getattr(self, "scene_key", "") or ""))
+        if not isinstance(spec, dict):
+            return
+        scalar_fields = (
+            "scene_key",
+            "scene_label",
+            "state_fallback_text",
+            "title_empty",
+            "suggested_action_key",
+            "suggested_action_reason_code",
+            "block_fetch_intent",
+            "title_template",
+            "title_record_name_fallback",
+        )
+        for field in scalar_fields:
+            if field in spec:
+                setattr(self, field, str(spec.get(field) or "").strip())
+        if isinstance(spec.get("block_alias_map"), dict):
+            self.block_alias_map = dict(spec.get("block_alias_map") or {})
+        if isinstance(spec.get("entry_summary_keys"), (list, tuple)):
+            self.entry_summary_keys = tuple(str(item or "").strip() for item in spec["entry_summary_keys"] if str(item or "").strip())
+        if isinstance(spec.get("entry_blocks"), (list, tuple)):
+            blocks = []
+            for item in spec["entry_blocks"]:
+                if isinstance(item, dict):
+                    key = str(item.get("key") or "").strip()
+                    title = str(item.get("title") or "").strip()
+                    state = str(item.get("state") or "deferred").strip() or "deferred"
+                elif isinstance(item, (list, tuple)) and len(item) >= 2:
+                    key = str(item[0] or "").strip()
+                    title = str(item[1] or "").strip()
+                    state = str(item[2] if len(item) > 2 else "deferred").strip() or "deferred"
+                else:
+                    continue
+                if key:
+                    blocks.append((key, title, state))
+            self.entry_blocks = tuple(blocks)
+        if isinstance(spec.get("first_action_block_keys"), (list, tuple)):
+            self.first_action_block_keys = tuple(str(item or "").strip() for item in spec["first_action_block_keys"] if str(item or "").strip())
 
     def source_authority_contract(self):
         provider = getattr(self._service, "source_authority_contract", None)
@@ -154,6 +205,10 @@ class BaseSceneEntryOrchestrator:
 
     def resolve_first_action(self, runtime_fetch_hints):
         blocks = runtime_fetch_hints.get("blocks") if isinstance(runtime_fetch_hints.get("blocks"), dict) else {}
+        for key in self.first_action_block_keys:
+            action = blocks.get(key)
+            if isinstance(action, dict) and action:
+                return action
         for key, _title, _state in self.entry_blocks:
             action = blocks.get(key)
             if isinstance(action, dict) and action:
@@ -161,6 +216,13 @@ class BaseSceneEntryOrchestrator:
         return {}
 
     def resolve_title(self, project_payload):
+        template = str(self.title_template or "").strip()
+        if template:
+            name = str(project_payload.get("name") or self.title_record_name_fallback or "").strip()
+            try:
+                return template.format(name=name, **project_payload)
+            except Exception:
+                return template.replace("{name}", name)
         return self.title_empty
 
     def _build_lifecycle_hints(self, project_id, first_action, stage):

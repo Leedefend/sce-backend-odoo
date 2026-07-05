@@ -17,9 +17,12 @@ MD_OUT = ART_DIR / "system_init_snapshot_equivalence.md"
 VOLATILE_KEYS = {
     "elapsed_ms",
     "latency_ms",
+    "subtimings_ms",
     "trace_id",
     "etag",
     "timings",
+    "timings_ms",
+    "total_ms",
 }
 
 

@@ -16,217 +16,29 @@ from odoo.addons.smart_core.core.source_authority import build_source_authority_
 try:
     from .product_identity import LEGACY_DEFAULT_BASE_PRODUCT_KEY
 except Exception:
-    LEGACY_DEFAULT_BASE_PRODUCT_KEY = "construction"
+    LEGACY_DEFAULT_BASE_PRODUCT_KEY = "platform"
 try:
     from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 except Exception:
     call_extension_hook_first = None
 
-LEGACY_DEFAULT_POLICY_SOURCE_KIND = "legacy_default_product_policy_provider"
-LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND = "legacy_default_product_policy_node_projection"
+DEFAULT_POLICY_SOURCE_KIND = "platform_default_product_policy_provider"
+DEFAULT_POLICY_NODE_SOURCE_KIND = "platform_default_product_policy_node_projection"
 
 
 DEFAULT_PRODUCT_POLICY = {
-    "product_key": "construction.standard",
-    "base_product_key": "construction",
+    "product_key": "platform.standard",
+    "base_product_key": "platform",
     "edition_key": "standard",
     "state": "stable",
     "access_level": "public",
     "allowed_role_codes": [],
-    "label": "Construction Standard",
+    "label": "Platform Standard",
     "version": "v1",
-    "scene_version_bindings": {
-        "projects.intake": {"version": "v1", "channel": "stable"},
-        "project.management": {"version": "v1", "channel": "stable"},
-        "cost": {"version": "v1", "channel": "stable"},
-        "payment": {"version": "v1", "channel": "stable"},
-        "settlement": {"version": "v1", "channel": "stable"},
-        "my_work.workspace": {"version": "v1", "channel": "stable"},
-    },
-    "menu_groups": [
-        {
-            "group_key": "released_products",
-            "group_label": "已发布产品",
-            "menus": [
-                {
-                    "menu_key": "release.fr1.project_intake",
-                    "label": "FR-1 项目立项",
-                    "route": "/s/projects.intake",
-                    "scene_key": "projects.intake",
-                    "product_key": "fr1",
-                    "capability_key": "delivery.fr1.project_intake",
-                },
-                {
-                    "menu_key": "release.fr2.project_flow",
-                    "label": "FR-2 项目推进",
-                    "route": "/release/fr2",
-                    "scene_key": "project.management",
-                    "product_key": "fr2",
-                    "capability_key": "delivery.fr2.project_flow",
-                },
-                {
-                    "menu_key": "release.fr3.cost_tracking",
-                    "label": "FR-3 成本记录",
-                    "route": "/release/fr3",
-                    "scene_key": "cost",
-                    "product_key": "fr3",
-                    "capability_key": "delivery.fr3.cost_tracking",
-                },
-                {
-                    "menu_key": "release.fr4.payment_tracking",
-                    "label": "FR-4 付款记录",
-                    "route": "/release/fr4",
-                    "scene_key": "payment",
-                    "product_key": "fr4",
-                    "capability_key": "delivery.fr4.payment_tracking",
-                },
-                {
-                    "menu_key": "release.fr5.settlement_summary",
-                    "label": "FR-5 结算结果",
-                    "route": "/release/fr5",
-                    "scene_key": "settlement",
-                    "product_key": "fr5",
-                    "capability_key": "delivery.fr5.settlement_summary",
-                },
-            ],
-        },
-        {
-            "group_key": "released_utilities",
-            "group_label": "工作辅助",
-            "menus": [
-                {
-                    "menu_key": "release.my_work",
-                    "label": "我的工作",
-                    "route": "/my-work",
-                    "scene_key": "my_work.workspace",
-                    "product_key": "my_work",
-                    "capability_key": "delivery.my_work.workspace",
-                },
-            ],
-        },
-    ],
-    "scenes": [
-        {
-            "scene_key": "projects.intake",
-            "label": "项目立项",
-            "route": "/s/projects.intake",
-            "product_key": "fr1",
-            "capability_key": "delivery.fr1.project_intake",
-            "description": "提供项目立项入口与基础资料创建。",
-            "scope": "项目创建 -> 立项资料 -> 项目入口。",
-        },
-        {
-            "scene_key": "project.management",
-            "label": "项目推进",
-            "route": "/s/project.management",
-            "product_key": "fr2",
-            "capability_key": "delivery.fr2.project_flow",
-            "requires_project_context": True,
-            "description": "进入项目驾驶舱、计划与执行主线。",
-            "scope": "项目驾驶舱 -> 计划准备 -> 执行推进。",
-        },
-        {
-            "scene_key": "cost",
-            "label": "成本记录",
-            "route": "/s/cost",
-            "product_key": "fr3",
-            "capability_key": "delivery.fr3.cost_tracking",
-            "requires_project_context": True,
-            "description": "查看与记录项目成本事实。",
-            "scope": "项目执行 -> 成本记录 -> 成本汇总。",
-        },
-        {
-            "scene_key": "payment",
-            "label": "付款记录",
-            "route": "/s/payment",
-            "product_key": "fr4",
-            "capability_key": "delivery.fr4.payment_tracking",
-            "requires_project_context": True,
-            "description": "查看与记录项目付款事实。",
-            "scope": "项目执行 -> 成本 -> 付款记录 -> 付款汇总。",
-        },
-        {
-            "scene_key": "settlement",
-            "label": "结算结果",
-            "route": "/s/settlement",
-            "product_key": "fr5",
-            "capability_key": "delivery.fr5.settlement_summary",
-            "requires_project_context": True,
-            "description": "查看项目级成本与付款汇总后的结算结果。",
-            "scope": "项目执行 -> 成本 -> 付款 -> 结算结果。",
-        },
-        {
-            "scene_key": "my_work.workspace",
-            "label": "我的工作",
-            "route": "/my-work",
-            "product_key": "my_work",
-            "capability_key": "delivery.my_work.workspace",
-            "description": "聚合当前用户的待办、风险与动作入口。",
-            "scope": "角色首页 -> 我的工作 -> 风险 -> 场景入口。",
-        },
-    ],
-    "capabilities": [
-        {
-            "capability_key": "delivery.fr1.project_intake",
-            "label": "FR-1 项目立项",
-            "group_key": "delivery",
-            "group_label": "产品交付",
-            "target_scene_key": "projects.intake",
-            "product_key": "fr1",
-            "delivery_level": "exclusive",
-            "entry_kind": "exclusive",
-        },
-        {
-            "capability_key": "delivery.fr2.project_flow",
-            "label": "FR-2 项目推进",
-            "group_key": "delivery",
-            "group_label": "产品交付",
-            "target_scene_key": "project.management",
-            "product_key": "fr2",
-            "delivery_level": "exclusive",
-            "entry_kind": "exclusive",
-        },
-        {
-            "capability_key": "delivery.fr3.cost_tracking",
-            "label": "FR-3 成本记录",
-            "group_key": "delivery",
-            "group_label": "产品交付",
-            "target_scene_key": "cost",
-            "product_key": "fr3",
-            "delivery_level": "exclusive",
-            "entry_kind": "exclusive",
-        },
-        {
-            "capability_key": "delivery.fr4.payment_tracking",
-            "label": "FR-4 付款记录",
-            "group_key": "delivery",
-            "group_label": "产品交付",
-            "target_scene_key": "payment",
-            "product_key": "fr4",
-            "delivery_level": "exclusive",
-            "entry_kind": "exclusive",
-        },
-        {
-            "capability_key": "delivery.fr5.settlement_summary",
-            "label": "FR-5 结算结果",
-            "group_key": "delivery",
-            "group_label": "产品交付",
-            "target_scene_key": "settlement",
-            "product_key": "fr5",
-            "delivery_level": "exclusive",
-            "entry_kind": "exclusive",
-        },
-        {
-            "capability_key": "delivery.my_work.workspace",
-            "label": "我的工作",
-            "group_key": "delivery",
-            "group_label": "产品交付",
-            "target_scene_key": "my_work.workspace",
-            "product_key": "my_work",
-            "delivery_level": "shared",
-            "entry_kind": "exclusive",
-        },
-    ],
+    "scene_version_bindings": {},
+    "menu_groups": [],
+    "scenes": [],
+    "capabilities": [],
 }
 
 
@@ -258,20 +70,20 @@ def _minimal_default_product_policy(*, base_product_key: str, edition_key: str) 
     }
 
 
-def legacy_default_policy_node_source_authority_contract() -> dict:
+def default_policy_node_source_authority_contract() -> dict:
     return build_source_authority_contract(
-        kind=LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND,
+        kind=DEFAULT_POLICY_NODE_SOURCE_KIND,
         authorities=("DEFAULT_PRODUCT_POLICY.menu_groups", "DEFAULT_PRODUCT_POLICY.scenes", "DEFAULT_PRODUCT_POLICY.capabilities"),
         rebuildable=None,
         no_business_fact_authority=True,
-        legacy_compatibility=True,
+        platform_default=True,
     )
 
 
 def _mark_legacy_default_policy_nodes(payload: dict) -> dict:
     if not isinstance(payload, dict):
         return payload
-    source = legacy_default_policy_node_source_authority_contract()
+    source = default_policy_node_source_authority_contract()
     for group in payload.get("menu_groups") or []:
         if not isinstance(group, dict):
             continue
@@ -295,7 +107,7 @@ class ProductPolicyService:
         "default_product_policy_provider",
     )
     NO_BUSINESS_FACT_AUTHORITY = True
-    DEFAULT_POLICY_SOURCE_KIND = LEGACY_DEFAULT_POLICY_SOURCE_KIND
+    DEFAULT_POLICY_SOURCE_KIND = DEFAULT_POLICY_SOURCE_KIND
     RELEASEABLE_STATES = {"preview", "stable"}
 
     def __init__(self, env):
@@ -317,8 +129,8 @@ class ProductPolicyService:
             authorities=("DEFAULT_PRODUCT_POLICY", "extension_hook:smart_core_build_default_product_policy"),
             rebuildable=None,
             no_business_fact_authority=True,
-            legacy_default=True,
-            legacy_policy_node_source=LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND,
+            platform_default=True,
+            default_policy_node_source=DEFAULT_POLICY_NODE_SOURCE_KIND,
         )
 
     @classmethod
@@ -399,7 +211,7 @@ class ProductPolicyService:
         payload["edition_key"] = str(edition_key or "").strip() or payload.get("edition_key")
         return payload
 
-    def _construction_catalog_policy(self, *, product_key: str) -> dict | None:
+    def _catalog_backed_policy(self, *, product_key: str) -> dict | None:
         if not self._model_registered("ir.ui.menu"):
             return None
         try:
@@ -407,7 +219,7 @@ class ProductPolicyService:
                 ProductPolicyCatalogSyncService,
             )
 
-            payload = ProductPolicyCatalogSyncService(self.env).build_construction_policy_payload(
+            payload = ProductPolicyCatalogSyncService(self.env).build_catalog_policy_payload(
                 product_key=product_key,
             )
         except Exception:
@@ -424,13 +236,32 @@ class ProductPolicyService:
             and (payload.get("menu_groups") or payload.get("scenes") or payload.get("capabilities"))
         )
 
-    def _construction_policy_needs_catalog_refresh(self, payload: dict) -> bool:
+    def _policy_needs_catalog_refresh(self, payload: dict) -> bool:
         if not isinstance(payload, dict):
             return True
         # Native action/menu release policies can be complete without scene entries:
         # scenes are only required for scene-first products, while user-visible
         # menu publishing is driven by menu_groups plus capabilities.
         return not (payload.get("menu_groups") and payload.get("capabilities"))
+
+    def _is_catalog_backed_product(self, *, base_product_key: str) -> bool:
+        try:
+            from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import (
+                ProductPolicyCatalogSyncService,
+            )
+
+            key, base_key, edition_key = self.resolve_policy_identity(
+                base_product_key=base_product_key,
+            )
+            return ProductPolicyCatalogSyncService(self.env)._is_catalog_backed_product(
+                identity={
+                    "product_key": key,
+                    "base_product_key": base_key,
+                    "edition_key": edition_key,
+                }
+            )
+        except Exception:
+            return False
 
     def _stable_policy_domain(self, *, base_product_key: str):
         return [
@@ -612,8 +443,8 @@ class ProductPolicyService:
         if rec:
             payload = rec.to_runtime_dict()
             if isinstance(payload, dict) and payload.get("product_key"):
-                if resolved_base_product_key == "construction" and self._construction_policy_needs_catalog_refresh(payload):
-                    catalog_payload = self._construction_catalog_policy(product_key=key)
+                if self._is_catalog_backed_product(base_product_key=resolved_base_product_key) and self._policy_needs_catalog_refresh(payload):
+                    catalog_payload = self._catalog_backed_policy(product_key=key)
                     if catalog_payload:
                         payload = catalog_payload
                 if (
@@ -652,8 +483,8 @@ class ProductPolicyService:
                 )
         platform_payload = self._load_platform_policy(product_key=key)
         if platform_payload:
-            if resolved_base_product_key == "construction" and self._construction_policy_needs_catalog_refresh(platform_payload):
-                catalog_payload = self._construction_catalog_policy(product_key=key)
+            if self._is_catalog_backed_product(base_product_key=resolved_base_product_key) and self._policy_needs_catalog_refresh(platform_payload):
+                catalog_payload = self._catalog_backed_policy(product_key=key)
                 if catalog_payload:
                     platform_payload = catalog_payload
             if (
@@ -696,8 +527,8 @@ class ProductPolicyService:
             edition_key=resolved_edition_key,
         )
         catalog_fallback_applied = False
-        if resolved_base_product_key == "construction":
-            catalog_payload = self._construction_catalog_policy(product_key=key)
+        if self._is_catalog_backed_product(base_product_key=resolved_base_product_key):
+            catalog_payload = self._catalog_backed_policy(product_key=key)
             if catalog_payload:
                 fallback = catalog_payload
                 catalog_fallback_applied = True

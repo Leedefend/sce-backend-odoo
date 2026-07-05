@@ -21,9 +21,8 @@ def _list(value: Any) -> list[Any]:
 
 class ReleaseApprovalPolicyService:
     SOURCE_KIND = "release_approval_policy_projection"
-    SOURCE_AUTHORITIES = ("release_action_policy", "res.groups", "extension_role_resolver", "legacy_construction_role_groups")
+    SOURCE_AUTHORITIES = ("release_action_policy", "res.groups", "extension_role_resolver")
     NO_BUSINESS_FACT_AUTHORITY = True
-    LEGACY_ROLE_SOURCE_KIND = "legacy_construction_role_group_resolver"
 
     def __init__(self, env):
         self.env = env
@@ -36,17 +35,6 @@ class ReleaseApprovalPolicyService:
             rebuildable=None,
             no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
             runtime_carrier="release_operator_policy",
-            legacy_role_resolver=cls.LEGACY_ROLE_SOURCE_KIND,
-        )
-
-    @classmethod
-    def legacy_role_source_authority_contract(cls) -> dict[str, Any]:
-        return build_source_authority_contract(
-            kind=cls.LEGACY_ROLE_SOURCE_KIND,
-            authorities=("smart_construction_core.groups", "smart_core.security.platform_admin"),
-            rebuildable=None,
-            no_business_fact_authority=True,
-            legacy_compatibility=True,
         )
 
     def now(self):
@@ -64,7 +52,6 @@ class ReleaseApprovalPolicyService:
                 "actor_role_codes": [],
                 "role_source": "none",
                 "source_authority": self.source_authority_contract(),
-                "legacy_role_source_authority": {},
             }
         hook_roles = call_extension_hook_first(
             self.env,
@@ -79,38 +66,15 @@ class ReleaseApprovalPolicyService:
                     "actor_role_codes": normalized_hook_roles,
                     "role_source": "extension_hook",
                     "source_authority": self.source_authority_contract(),
-                    "legacy_role_source_authority": {},
                 }
         roles: set[str] = set()
-        legacy_used = False
-        group_xmlids = set(user.groups_id.get_external_id().values())
-        prefix = "smart_construction_core.group_sc_role_"
-        for xmlid in group_xmlids:
-            text = _text(xmlid)
-            if text.startswith(prefix):
-                roles.add(text[len(prefix):])
-                legacy_used = True
-        try:
-            if user.has_group("smart_construction_core.group_sc_cap_project_read") or user.has_group(
-                "smart_construction_core.group_sc_cap_project_manager"
-            ):
-                roles.add("pm")
-                legacy_used = True
-            if user.has_group("smart_construction_core.group_sc_super_admin") or user.has_group(
-                "smart_construction_core.group_sc_business_full"
-            ):
-                roles.add("executive")
-                legacy_used = True
-        except Exception:
-            pass
         if int(user.id or 0) == int(SUPERUSER_ID) or user_is_platform_admin(user):
             roles.add("admin")
             roles.add("executive")
         return {
             "actor_role_codes": sorted(roles),
-            "role_source": "legacy_construction_groups" if legacy_used else "platform_admin_groups",
+            "role_source": "platform_admin_groups",
             "source_authority": self.source_authority_contract(),
-            "legacy_role_source_authority": self.legacy_role_source_authority_contract() if legacy_used else {},
         }
 
     def resolve_actor_role_codes(self, user) -> list[str]:

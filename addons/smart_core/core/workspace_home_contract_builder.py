@@ -116,14 +116,10 @@ def _workspace_scene_aliases() -> Dict[str, str]:
     return {
         "default": "workspace.home",
         "dashboard": "workspace.home",
-        "project_list": "workspace.list",
-        "project_management": "workspace.management",
         "execution": "workspace.execution",
         "operation_overview": "workspace.overview",
         "risk_center": "workspace.risk",
         "task_center": "workspace.tasks",
-        "cost_center": "workspace.cost",
-        "finance_center": "workspace.finance",
     }
 
 
@@ -734,9 +730,13 @@ def _metric_level(value: int, amber: int, red: int) -> str:
     return "green"
 
 
-def _is_urgent_capability(title: str, key: str) -> bool:
+def _is_urgent_capability(title: str, key: str, keyword_overrides: Dict[str, Any] | None = None) -> bool:
     merged = f"{_to_text(title)} {_to_text(key)}".lower()
-    keywords = ("risk", "approval", "payment", "settlement", "风险", "审批", "付款", "结算")
+    keywords = _provider_token_set(
+        "build_urgent_capability_tokens",
+        ("risk", "approval", "exception", "overdue", "风险", "审批", "异常", "逾期"),
+        keyword_overrides=keyword_overrides,
+    )
     return any(keyword in merged for keyword in keywords)
 
 
@@ -751,7 +751,10 @@ def _as_record_list(payload: Any) -> List[Dict[str, Any]]:
     return []
 
 
-def _extract_business_collections(data: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
+def _extract_business_collections(
+    data: Dict[str, Any],
+    keyword_overrides: Dict[str, Any] | None = None,
+) -> Dict[str, List[Dict[str, Any]]]:
     ignored_top_keys = {
         "capabilities",
         "scenes",
@@ -778,15 +781,21 @@ def _extract_business_collections(data: Dict[str, Any]) -> Dict[str, List[Dict[s
     collections: Dict[str, List[Dict[str, Any]]] = {}
 
     ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
-    extension_collection_keys = (
-        "today_actions",
-        "tasks",
-        "task_items",
-        "payment_requests",
-        "risk_actions",
-        "risk",
-        "project_actions",
-        "project_tasks",
+    extension_collection_keys = list(
+        keyword_overrides.get("extension_collection_keys")
+        if isinstance(keyword_overrides, dict) and isinstance(keyword_overrides.get("extension_collection_keys"), list)
+        else []
+    )
+    if not extension_collection_keys:
+        extension_collection_keys = [
+            "today_actions",
+            "tasks",
+            "task_items",
+            "risk_actions",
+            "risk",
+        ]
+    extension_collection_keys = tuple(
+        _to_text(key) for key in extension_collection_keys if _to_text(key)
     )
     for module_facts in ext_facts.values():
         if not isinstance(module_facts, dict):
@@ -866,9 +875,6 @@ def _is_risk_semantic_action(
         "blocked",
         "critical",
         "urgent",
-        "payment",
-        "cost",
-        "contract",
         "delay",
         "风险",
         "预警",
@@ -877,9 +883,6 @@ def _is_risk_semantic_action(
         "阻塞",
         "严重",
         "紧急",
-        "付款",
-        "成本",
-        "合同",
         "延期",
     ), keyword_overrides=keyword_overrides)
     return any(token in merged for token in risk_tokens)
@@ -910,12 +913,6 @@ def _route_scene_by_source(source_key: str, keyword_overrides: Dict[str, Any] | 
         return _workspace_scene("risk_center")
     if "task" in text or "任务" in text:
         return _workspace_scene("task_center")
-    if "cost" in text or "boq" in text or "成本" in text:
-        return _workspace_scene("cost_center")
-    if "payment" in text or "finance" in text or "付款" in text or "财务" in text:
-        return _workspace_scene("default")
-    if "project" in text or "项目" in text:
-        return _workspace_scene("project_list")
     return _workspace_scene("default")
 
 
@@ -1184,7 +1181,11 @@ def _to_business_action(
         ("urgent", "high", "critical", "overdue", "严重", "紧急", "逾期", "高"),
         keyword_overrides=keyword_overrides,
     )
-    is_urgent = any(word in status_text for word in urgent_keywords) or _is_urgent_capability(title, source_key)
+    is_urgent = any(word in status_text for word in urgent_keywords) or _is_urgent_capability(
+        title,
+        source_key,
+        keyword_overrides=keyword_overrides,
+    )
     urgency_score = _urgency_score(
         row=row,
         title=title,
@@ -1373,25 +1374,29 @@ def _build_scene_group_rows(scenes: Iterable[Dict[str, Any]], capabilities: Iter
     return rows
 
 
-def _scene_label_from_business_action(scene_key: str, title: str) -> str:
+def _scene_label_from_business_action(scene_key: str, title: str, keyword_overrides: Dict[str, Any] | None = None) -> str:
     key = _to_text(scene_key)
-    if key == "finance.payment_requests":
-        return "付款申请"
-    if key in {"project.management", "projects.dashboard"}:
-        return "项目管理"
-    if key in {"risk.center", "workspace.risk"}:
-        return "风险中心"
+    overrides = keyword_overrides if isinstance(keyword_overrides, dict) else {}
+    scene_labels = overrides.get("business_action_scene_labels") if isinstance(overrides.get("business_action_scene_labels"), dict) else {}
+    if key and key in scene_labels:
+        return _to_text(scene_labels.get(key)) or key
     text = _to_text(title)
-    if "付款" in text:
-        return "付款申请"
-    if "项目" in text:
-        return "项目管理"
-    if "风险" in text:
-        return "风险中心"
+    token_rules = overrides.get("business_action_title_token_labels")
+    if isinstance(token_rules, list):
+        for rule in token_rules:
+            if not isinstance(rule, dict):
+                continue
+            token = _to_text(rule.get("token"))
+            label = _to_text(rule.get("label"))
+            if token and label and token in text:
+                return label
     return key or "业务入口"
 
 
-def _build_business_scene_group_rows(actions: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _build_business_scene_group_rows(
+    actions: Iterable[Dict[str, Any]],
+    keyword_overrides: Dict[str, Any] | None = None,
+) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     seen: set = set()
     for index, action in enumerate(actions):
@@ -1411,11 +1416,11 @@ def _build_business_scene_group_rows(actions: Iterable[Dict[str, Any]]) -> List[
             {
                 "id": _to_text(action.get("entry_id")) or f"business-{scene_key}-{index + 1}",
                 "key": entry_key,
-                "title": _scene_label_from_business_action(scene_key, title),
+                "title": _scene_label_from_business_action(scene_key, title, keyword_overrides=keyword_overrides),
                 "action_label": _to_text(action.get("action_label")) or _today_action_default_label(),
                 "subtitle": title or _to_text(action.get("description")),
                 "scene_key": scene_key,
-                "scene_label": _scene_label_from_business_action(scene_key, title),
+                "scene_label": _scene_label_from_business_action(scene_key, title, keyword_overrides=keyword_overrides),
                 "sequence": 100 + index,
                 "status": "ga",
                 "state": "READY",
@@ -1542,18 +1547,21 @@ def _build_business_today_actions(
     role_code: str = "",
     keyword_overrides: Dict[str, Any] | None = None,
 ) -> List[Dict[str, Any]]:
-    collections = _extract_business_collections(data)
+    collections = _extract_business_collections(data, keyword_overrides=keyword_overrides)
     candidates: List[Dict[str, Any]] = []
-    preferred_sources = [
-        "today_actions",
-        "tasks",
-        "project_actions",
-        "task_items",
-        "payment_requests",
-        "risk_actions",
-        "risk",
-        "project_tasks",
-    ]
+    preferred_sources = list(
+        keyword_overrides.get("preferred_business_sources")
+        if isinstance(keyword_overrides, dict) and isinstance(keyword_overrides.get("preferred_business_sources"), list)
+        else []
+    )
+    if not preferred_sources:
+        preferred_sources = [
+            "today_actions",
+            "tasks",
+            "task_items",
+            "risk_actions",
+            "risk",
+        ]
     ordered_sources: List[str] = []
     for key in preferred_sources:
         if key in collections:
@@ -2315,8 +2323,8 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
     )
     v1_copy = _workspace_v1_copy(
         {
-            "zone.hero.title": "欢迎使用智慧施工管理平台",
-            "zone.hero.description": "在这里查看项目、合同、成本、财务和待办事项，按你的角色处理日常业务。",
+            "zone.hero.title": "欢迎使用业务工作台",
+            "zone.hero.description": "在这里查看业务入口、状态摘要、待办事项和风险提醒，按你的角色处理日常工作。",
             "zone.today_focus.title": "今天先做什么",
             "zone.today_focus.description": "按角色优先级聚合当前需要处理的业务动作。",
             "zone.analysis.title": "我需要关注什么",
@@ -2333,7 +2341,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
             "block.entry_grid_scene.title": "菜单入口",
             "action.open_landing.label": "打开默认入口",
             "action.open_my_work.label": "查看全部",
-            "action.open_risk_dashboard.label": "进入风险驾驶舱",
+            "action.open_risk_dashboard.label": "进入风险概览",
             "action.open_scene.label": "进入场景",
             "page.title": "角色首页",
             "page.subtitle": "查看业务状态并处理当前角色下的日常工作",
@@ -2356,8 +2364,8 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
         zones = [
         {
             "key": "hero",
-            "title": v1_copy.get("zone.hero.title") or "欢迎使用智慧施工管理平台",
-            "description": v1_copy.get("zone.hero.description") or "在这里查看项目、合同、成本、财务和待办事项，按你的角色处理日常业务。",
+            "title": v1_copy.get("zone.hero.title") or "欢迎使用业务工作台",
+            "description": v1_copy.get("zone.hero.description") or "在这里查看业务入口、状态摘要、待办事项和风险提醒，按你的角色处理日常工作。",
             "zone_type": "hero",
             "display_mode": "stack",
             "priority": 40,
@@ -2422,7 +2430,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                     "refreshable": True,
                     "collapsible": False,
                     "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [{"key": "open_risk_dashboard", "label": v1_copy.get("action.open_risk_dashboard.label") or "进入风险驾驶舱", "intent": "ui.contract"}],
+                    "actions": [{"key": "open_risk_dashboard", "label": v1_copy.get("action.open_risk_dashboard.label") or "进入风险概览", "intent": "ui.contract"}],
                     "payload": {"group_by": "alert_level", "show_counts": True, "max_items": 3},
                 },
                 {
@@ -2446,7 +2454,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
         },
         {
             "key": "analysis",
-            "title": v1_copy.get("zone.analysis.title") or "项目总体状态",
+            "title": v1_copy.get("zone.analysis.title") or "总体状态",
             "description": v1_copy.get("zone.analysis.description") or "关键指标、执行进展与风险动态。",
             "zone_type": "secondary",
             "display_mode": "grid",
@@ -2810,7 +2818,10 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
     ops_meta = _workspace_ops_meta(has_business_signal=has_business_signal)
     scene_group_rows = _build_scene_group_rows(scenes, normalized_caps)
     if not scene_group_rows:
-        scene_group_rows = _build_business_scene_group_rows(list(today_actions) + list(risk_actions))
+        scene_group_rows = _build_business_scene_group_rows(
+            list(today_actions) + list(risk_actions),
+            keyword_overrides=keyword_overrides,
+        )
     capability_group_rows = _build_capability_group_rows(capability_groups, normalized_caps)
     return {
         "scene": scene_contract_core.get("scene") or {},

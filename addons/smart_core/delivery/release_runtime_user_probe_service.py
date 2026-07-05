@@ -66,7 +66,7 @@ class ReleaseRuntimeUserProbeService:
             return _text(default)
 
     def _source_db_name(self) -> str:
-        return self._config_param("smart_core.release_operator.construction_source_db", "") or "sc_demo"
+        return self._config_param("smart_core.release_operator.catalog_source_db", "") or "sc_demo"
 
     def _platform_db_name(self) -> str:
         return self._config_param("smart_core.platform_release_db", "") or "sc_platform_core"

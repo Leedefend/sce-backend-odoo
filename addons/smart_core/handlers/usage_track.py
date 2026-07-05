@@ -6,6 +6,7 @@ import logging
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 
 _logger = logging.getLogger(__name__)
@@ -42,12 +43,10 @@ class UsageTrackHandler(BaseIntentHandler):
     def _role_codes_for_user(self, user):
         if not user:
             return []
+        hook_roles = call_extension_hook_first(self.env, "smart_core_resolve_usage_actor_role_codes", self.env, user)
+        if isinstance(hook_roles, (list, tuple, set)):
+            return sorted({str(item or "").strip() for item in hook_roles if str(item or "").strip()})
         role_codes = set()
-        group_xmlids = user.groups_id.get_external_id().values()
-        prefix = "smart_construction_core.group_sc_role_"
-        for xmlid in group_xmlids:
-            if isinstance(xmlid, str) and xmlid.startswith(prefix):
-                role_codes.add(xmlid[len(prefix):])
         if user_is_platform_admin(user):
             role_codes.add("admin")
         return sorted(role_codes)

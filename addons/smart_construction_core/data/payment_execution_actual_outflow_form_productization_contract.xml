@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_payment_execution_actual_outflow_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">payment_execution_actual_outflow_productized_form_v1</field>
+            <field name="model">sc.payment.execution</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_payment_execution_actual_outflow"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '实付登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['name', 'state', 'business_category_id', 'project_id', 'partner_id', 'payment_request_id', 'contract_id', 'payment_request_partner_relation']},
+                                {'title': '付款结果', 'sequence': 20, 'columns': 2, 'fields': ['date_payment', 'paid_amount', 'planned_amount', 'invoice_amount', 'payment_method', 'document_no', 'handler_name', 'note']},
+                                {'title': '收付款账户', 'sequence': 30, 'columns': 2, 'fields': ['receipt_account_name', 'receipt_bank_name', 'receipt_account_no', 'payment_account_name', 'payment_bank_name', 'payment_account_no', 'bank_account']},
+                                {'title': '责任与凭证', 'sequence': 40, 'columns': 2, 'fields': ['company_contractor_responsibility_state', 'company_contractor_arrival_unprocessed_amount', 'company_contractor_arrival_over_processed_amount', 'company_contractor_self_funding_balance', 'company_contractor_responsibility_notice', 'kingdee_document_no', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['source_kind', 'payment_family', 'push_result', 'legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state']}
+                            ],
+                            'fields': [
+                                {'name': 'name', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'state', 'sequence': 20, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'business_category_id', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'partner_id', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'payment_request_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'contract_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'payment_request_partner_relation', 'sequence': 80, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'date_payment', 'sequence': 90, 'group_title': '付款结果'},
+                                {'name': 'paid_amount', 'sequence': 100, 'group_title': '付款结果'},
+                                {'name': 'planned_amount', 'sequence': 110, 'group_title': '付款结果'},
+                                {'name': 'invoice_amount', 'sequence': 120, 'group_title': '付款结果'},
+                                {'name': 'payment_method', 'sequence': 130, 'group_title': '付款结果'},
+                                {'name': 'document_no', 'sequence': 140, 'group_title': '付款结果'},
+                                {'name': 'handler_name', 'sequence': 150, 'group_title': '付款结果'},
+                                {'name': 'note', 'sequence': 160, 'group_title': '付款结果'},
+                                {'name': 'receipt_account_name', 'sequence': 170, 'group_title': '收付款账户'},
+                                {'name': 'receipt_bank_name', 'sequence': 180, 'group_title': '收付款账户'},
+                                {'name': 'receipt_account_no', 'sequence': 190, 'group_title': '收付款账户'},
+                                {'name': 'payment_account_name', 'sequence': 200, 'group_title': '收付款账户'},
+                                {'name': 'payment_bank_name', 'sequence': 210, 'group_title': '收付款账户'},
+                                {'name': 'payment_account_no', 'sequence': 220, 'group_title': '收付款账户'},
+                                {'name': 'bank_account', 'sequence': 230, 'group_title': '收付款账户'},
+                                {'name': 'company_contractor_responsibility_state', 'sequence': 240, 'group_title': '责任与凭证', 'readonly': True},
+                                {'name': 'company_contractor_arrival_unprocessed_amount', 'sequence': 250, 'group_title': '责任与凭证', 'readonly': True},
+                                {'name': 'company_contractor_arrival_over_processed_amount', 'sequence': 260, 'group_title': '责任与凭证', 'readonly': True},
+                                {'name': 'company_contractor_self_funding_balance', 'sequence': 270, 'group_title': '责任与凭证', 'readonly': True},
+                                {'name': 'company_contractor_responsibility_notice', 'sequence': 280, 'group_title': '责任与凭证', 'readonly': True},
+                                {'name': 'kingdee_document_no', 'sequence': 290, 'group_title': '责任与凭证', 'readonly': True},
+                                {'name': 'attachment_ids', 'sequence': 300, 'group_title': '责任与凭证'},
+                                {'name': 'source_kind', 'sequence': 310, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'payment_family', 'sequence': 320, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'push_result', 'sequence': 330, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 340, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 350, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 360, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 370, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

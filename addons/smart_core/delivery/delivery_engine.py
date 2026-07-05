@@ -45,9 +45,7 @@ class DeliveryEngine:
         if "is_platform_admin" not in resolved:
             resolved["is_platform_admin"] = self._has_group("smart_core.group_smart_core_admin")
         if "is_business_config_admin" not in resolved:
-            resolved["is_business_config_admin"] = self._has_group(
-                "smart_construction_core.group_sc_cap_business_config_admin"
-            ) or self._has_group("smart_construction_core.group_sc_role_business_admin")
+            resolved["is_business_config_admin"] = self._has_group("smart_core.group_smart_core_business_config_admin")
         return resolved
 
     @classmethod

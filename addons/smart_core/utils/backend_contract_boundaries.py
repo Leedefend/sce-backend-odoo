@@ -25,7 +25,7 @@ MENU_CONFIG_RUNTIME_SOURCE_CONTRACT = "ui.business.config.contract.menu_orchestr
 MENU_CONFIG_NAV_ENABLED_PARAM = "smart_core.nav.user_menu_config.enabled"
 MENU_CONFIG_CONFIG_ONLY_PARAM = "smart_core.nav.user_menu_config.config_only.enabled"
 NAV_USER_DATA_ACCEPTANCE_ONLY_PARAM = "smart_core.nav.user_data_acceptance_only"
-APPROVAL_POLICY_SOURCE_TENANT_LOWCODING = "smart_construction_core.lowcode.approval_policy"
+APPROVAL_POLICY_SOURCE_TENANT_LOWCODING = "smart_core.lowcode.approval_policy"
 APPROVAL_POLICY_RUNTIME_SOURCE = "sc.approval.policy"
 
 LOWCODE_SOURCE_STATUS_DEVELOPER_DRAFT = "developer_draft"
@@ -36,12 +36,7 @@ LOWCODE_SOURCE_STATUSES = {
     LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
     LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE,
 }
-
-LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS = frozenset({
-    "smart_construction_core.menu_sc_business_config_center",
-    "smart_construction_core.menu_sc_business_config_workbench",
-    "smart_construction_core.menu_ui_menu_config_policy_business_config",
-})
+LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS = frozenset()
 
 BUSINESS_CONFIG_MODES = {
     "form_field": "form_field_configuration",
@@ -162,8 +157,6 @@ def view_orchestration_source_status(payload: Any) -> str:
         VIEW_ORCHESTRATION_SOURCE_ANALYSIS_EDITOR,
     }:
         return LOWCODE_SOURCE_STATUS_TENANT_RUNTIME
-    if source.startswith("smart_construction_custom."):
-        return LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
     return LOWCODE_SOURCE_STATUS_PRODUCT_RELEASE
 
 
@@ -193,7 +186,12 @@ def classify_view_orchestration_contract(name: Any, payload: Any = None) -> dict
         or lower_name.endswith(".custom_user_flat")
         or ":custom_user_default" in lower_name
     )
-    custom_user_source = lower_source.startswith("smart_construction_custom.") and "preference" in lower_source
+    custom_user_source = (
+        lower_source.endswith(".user_menu_preference")
+        or lower_source.endswith(".user_view_preference")
+        or lower_source.endswith(".user_form_preference")
+        or lower_source.endswith(".partner_form_preference")
+    )
     if legacy_user_flat or custom_user_source:
         return {
             "layer": LAYER_USER_PREFERENCE,

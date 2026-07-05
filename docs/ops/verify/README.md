@@ -42,6 +42,24 @@
   - Verifies the form productization standard keeps product-layer
     responsibilities, field classification, entry semantics, density rules,
     state/action rules, attachment rules, and audit wiring intact.
+- `make verify.view.orchestration_product_boundary_guard`
+  - Verifies P1 product-release form contracts keep the backend orchestration
+    boundary intact.
+  - Product-release contracts may declare fields, sections, and
+    `composition_mode=entry_semantic_surface`, but must not replace the native
+    parser and orchestrator with a full hand-written form layout tree.
+- `make verify.app_config_engine.boundary_guard`
+  - Verifies `addons/smart_core/app_config_engine` remains runtime contract
+    plumbing for `/api/contract/get`, not a product-form authority layer.
+  - Keeps the HTTP controller thin, enforces no-business-fact authority markers,
+    checks native parse/view-orchestration ownership wording, and prevents
+    industry-module references from silently expanding in the platform engine.
+- `make verify.smart_core.boundary_guard`
+  - Verifies `addons/smart_core` remains the platform kernel, not an industry
+    business fact module.
+  - Checks the Smart Core boundary document, required top-level directories,
+    manifest dependencies, app-config-engine local boundary, and zero industry
+    defaults in production platform code.
 
 ## Architecture Guard Aliases
 - `make verify.restricted`

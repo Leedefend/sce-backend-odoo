@@ -89,7 +89,7 @@ function nodeLabel(node: NavNode) {
   const raw = String(node.title || node.name || node.label || 'Unnamed');
   return raw
     .replace(/\s*\(\d+\)\s*$/g, '')
-    .replace(/^project\s*manager$/i, '项目经理')
+    .replace(/^project\s*manager$/i, '负责人')
     .replace(/^purchase\s*manager$/i, '采购经理')
     .replace(/^finance$/i, '财务主管')
     .replace(/^executive$/i, '管理层')

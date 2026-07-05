@@ -15,10 +15,14 @@ from ..core.base_handler import BaseIntentHandler
 try:
     from ..core.project_context import apply_business_scope_domain
 except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
-    from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+    from ..core.project_context import apply_project_scope_domain
+    try:
+        from ..core.project_context import selected_record_context_id_from_context
+    except ImportError:  # pragma: no cover - compatibility for older lightweight boundary tests
+        from ..core.project_context import selected_project_id_from_context as selected_record_context_id_from_context
 
     def apply_business_scope_domain(env_model, domain, params=None, context=None):
-        return apply_project_scope_domain(env_model, domain, selected_project_id_from_context(params, context))
+        return apply_project_scope_domain(env_model, domain, selected_record_context_id_from_context(params, context))
 from ..core.request_params import parse_bool, parse_non_negative_int, parse_positive_int
 from .reason_codes import (
     REASON_CONFLICT,
@@ -61,7 +65,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
     def _err(self, code: int, message: str):
         return {"ok": False, "error": {"code": code, "message": message}, "code": code}
 
-    def _project_scope_denied(self, message: str, scope_meta: Dict[str, Any]):
+    def _record_scope_denied(self, message: str, scope_meta: Dict[str, Any]):
         return {
             "ok": False,
             "error": {
@@ -73,6 +77,9 @@ class ApiDataBatchHandler(BaseIntentHandler):
             },
             "code": 403,
         }
+
+    def _project_scope_denied(self, message: str, scope_meta: Dict[str, Any]):
+        return self._record_scope_denied(message, scope_meta)
 
     def _source_authority_contract(self, model: str, action: str) -> Dict[str, Any]:
         return {
@@ -361,7 +368,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
         if project_scope_meta.get("applied"):
             allowed_count = env_model.search_count(scoped_domain)
             if int(allowed_count or 0) != len(set(ids)):
-                return self._project_scope_denied("当前项目上下文不允许批量修改其他项目的数据", project_scope_meta)
+                return self._record_scope_denied("当前记录上下文不允许批量修改其他记录的数据", project_scope_meta)
         trace_id = ""
         if isinstance(self.context, dict):
             trace_id = str(self.context.get("trace_id") or "")

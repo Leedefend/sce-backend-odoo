@@ -50,18 +50,33 @@ class TestPageContractsBuilderBoundaries(unittest.TestCase):
         self.assertEqual(source.get("kind"), "page_contract_projection")
         self.assertTrue(source.get("projection_only"))
         self.assertTrue(source.get("no_business_fact_authority"))
-        self.assertEqual(source.get("legacy_page_copy_source"), "legacy_industry_page_copy_projection")
+        self.assertEqual(source.get("page_text_override_source"), "page_text_override_projection")
 
-    def test_builtin_industry_copy_is_marked_as_legacy_projection(self):
+    def test_page_text_override_boundary_is_declared(self):
         payload = target.build_page_contracts({})
         diagnostics = payload.get("diagnostics") or {}
 
         self.assertEqual((payload.get("source_authority") or {}).get("kind"), "page_contract_projection")
         self.assertEqual(
-            ((diagnostics.get("legacy_page_copy_source_authority") or {}).get("kind")),
-            "legacy_industry_page_copy_projection",
+            ((diagnostics.get("page_text_override_source_authority") or {}).get("kind")),
+            "page_text_override_projection",
         )
-        self.assertTrue(((diagnostics.get("legacy_page_copy_source_authority") or {}).get("no_business_fact_authority")))
+        self.assertTrue(((diagnostics.get("page_text_override_source_authority") or {}).get("no_business_fact_authority")))
+
+    def test_page_text_overrides_are_applied_from_profile_overrides(self):
+        payload = target.build_page_contracts(
+            {
+                "page_profile_overrides": {
+                    "page_texts": {
+                        "login": {
+                            "brand_name": "行业产品平台",
+                        }
+                    }
+                }
+            }
+        )
+
+        self.assertEqual(payload["pages"]["login"]["texts"]["brand_name"], "行业产品平台")
 
 
 if __name__ == "__main__":

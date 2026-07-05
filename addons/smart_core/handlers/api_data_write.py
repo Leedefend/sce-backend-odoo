@@ -8,20 +8,24 @@ from typing import Any, Dict, List
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
-from ..core.project_context import (
-    project_scope_denied_response,
-    selected_project_id_from_context,
-)
+try:
+    from ..core.project_context import record_scope_denied_response
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import project_scope_denied_response as record_scope_denied_response
+try:
+    from ..core.project_context import selected_record_context_id_from_context
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import selected_project_id_from_context as selected_record_context_id_from_context
 try:
     from ..core.project_context import apply_business_scope_domain, record_in_business_scope
 except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
     from ..core.project_context import apply_project_scope_domain, record_in_project_scope
 
     def apply_business_scope_domain(env_model, domain, params=None, context=None):
-        return apply_project_scope_domain(env_model, domain, selected_project_id_from_context(params, context))
+        return apply_project_scope_domain(env_model, domain, selected_record_context_id_from_context(params, context))
 
     def record_in_business_scope(env_model, record_id, params=None, context=None):
-        return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
+        return record_in_project_scope(env_model, record_id, selected_record_context_id_from_context(params, context))
 from ..core.request_params import parse_bool, parse_positive_int
 from ..utils.idempotency import (
     apply_idempotency_identity,
@@ -304,10 +308,10 @@ class ApiDataWriteHandler(BaseIntentHandler):
 
     def _current_project_id(self, params: Dict[str, Any]) -> int:
         context = self._get_context(params)
-        return selected_project_id_from_context(params, context)
+        return selected_record_context_id_from_context(params, context)
 
     def _scope_denied(self, scope_meta: Dict[str, Any]):
-        return project_scope_denied_response(scope_meta)
+        return record_scope_denied_response(scope_meta)
 
     def _filter_vals(self, vals: Dict[str, Any]) -> Dict[str, Any]:
         return {k: v for k, v in vals.items() if k in self.ALLOWED_FIELDS}

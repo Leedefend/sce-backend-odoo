@@ -9,6 +9,10 @@ from typing import Any
 from odoo import SUPERUSER_ID, api, fields
 from odoo.modules.registry import Registry
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+try:
+    from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+except Exception:  # pragma: no cover - standalone boundary tests install minimal modules.
+    call_extension_hook_first = None
 
 from .delivery_engine import DeliveryEngine
 from .edition_release_snapshot_promotion_service import EditionReleaseSnapshotPromotionService
@@ -24,6 +28,7 @@ SOURCE_AUTHORITIES = (
 )
 NO_BUSINESS_FACT_AUTHORITY = True
 LEGACY_DEFAULT_ROLE_SOURCE_KIND = "legacy_release_snapshot_default_role_projection"
+PLATFORM_DEFAULT_RELEASE_ROLE_CODE = "owner"
 
 
 def _text(value: Any) -> str:
@@ -90,11 +95,19 @@ class EditionReleaseSnapshotService:
     def legacy_default_role_source_authority_contract(cls) -> dict[str, Any]:
         return build_source_authority_contract(
             kind=LEGACY_DEFAULT_ROLE_SOURCE_KIND,
-            authorities=("fallback_role_code:pm",),
+            authorities=("platform_default_role_code", "extension_hook:smart_core_default_release_snapshot_role_code"),
             rebuildable=None,
             no_business_fact_authority=True,
             legacy_compatibility=True,
         )
+
+    def _default_release_role_code(self) -> str:
+        if callable(call_extension_hook_first):
+            payload = call_extension_hook_first(self.env, "smart_core_default_release_snapshot_role_code", self.env)
+            value = _text(payload)
+            if value:
+                return value
+        return PLATFORM_DEFAULT_RELEASE_ROLE_CODE
 
     def _freeze_role_code(self, policy: dict[str, Any], explicit_role_code: str = "") -> str:
         if _text(explicit_role_code):
@@ -104,7 +117,7 @@ class EditionReleaseSnapshotService:
             value = _text(item)
             if value:
                 return value
-        return "pm"
+        return self._default_release_role_code()
 
     def _default_requested_role_code(
         self,
@@ -122,7 +135,7 @@ class EditionReleaseSnapshotService:
                 value = _text(item)
                 if value:
                     return value
-        return "pm"
+        return self._default_release_role_code()
 
     def _default_requested_role_context(
         self,
@@ -138,7 +151,7 @@ class EditionReleaseSnapshotService:
             "role_code": role_code,
             "source": "explicit" if _text(explicit_role_code) else "product_policy_or_legacy_default",
             "legacy_default_role_source_authority": (
-                self.legacy_default_role_source_authority_contract() if not _text(explicit_role_code) and role_code == "pm" else {}
+                self.legacy_default_role_source_authority_contract() if not _text(explicit_role_code) else {}
             ),
         }
 
@@ -398,7 +411,7 @@ class EditionReleaseSnapshotService:
     def _source_db_name(self) -> str:
         try:
             configured = self.env["ir.config_parameter"].sudo().get_param(
-                "smart_core.release_operator.construction_source_db",
+                "smart_core.release_operator.catalog_source_db",
                 "",
             )
         except Exception:

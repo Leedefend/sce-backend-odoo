@@ -8,6 +8,7 @@ from .source_authority import build_source_authority_contract
 SOURCE_KIND = "scene_ready_semantic_orchestration_bridge"
 SOURCE_AUTHORITIES = ("scene_ready_contract", "delivery_handoff", "parser_semantic_surface")
 NO_BUSINESS_FACT_AUTHORITY = True
+_ADVISORY_HANDOFF_FAMILIES: set[str] = set()
 
 
 def source_authority_contract() -> Dict[str, Any]:
@@ -31,9 +32,15 @@ def _as_list(value: Any) -> List[Any]:
     return list(value) if isinstance(value, list) else []
 
 
+def register_advisory_handoff_family(family: str) -> None:
+    token = _text(family)
+    if token:
+        _ADVISORY_HANDOFF_FAMILIES.add(token)
+
+
 def _handoff_consume_mode(family: str) -> str:
     token = _text(family)
-    if token in {"payment_approval", "payment_entry"}:
+    if token in _ADVISORY_HANDOFF_FAMILIES:
         return "advisory"
     return "direct"
 

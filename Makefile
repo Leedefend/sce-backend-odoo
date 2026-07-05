@@ -956,7 +956,19 @@ verify.user_role_approval_matrix.guard: check-compose-project check-compose-env
 verify.user_permission_view_contract_boundary.guard: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_permission_view_contract_boundary_guard.py
 
-.PHONY: verify.form_structure.contract.guard verify.form_structure.contract_runtime.audit verify.form_structure.contract verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.view.orchestration_user_surface.browser verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.user_form.preference.boundary_guard verify.user_form.preference.runtime_audit verify.user_menu.preference.runtime_audit verify.user_menu.reachability.guard verify.industry_form.required_marker_audit verify.industry_list.delete_action_audit verify.application_form.required_marker_audit verify.business_form.productization.standard.guard verify.business_form.productization.audit verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit verify.action_default_group.contract_audit
+.PHONY: verify.form_structure.contract.guard verify.form_structure.contract_runtime.audit verify.form_structure.contract verify.form_view.native_structure.boundary_guard verify.smart_core.boundary_guard verify.view.orchestration_boundary_guard verify.view.orchestration_product_boundary_guard verify.app_config_engine.boundary_guard verify.view.orchestration_user_surface.browser verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.user_form.preference.boundary_guard verify.user_form.preference.runtime_audit verify.user_menu.preference.runtime_audit verify.user_menu.reachability.guard verify.industry_form.required_marker_audit verify.industry_list.delete_action_audit verify.application_form.required_marker_audit verify.business_form.productization.standard.guard verify.business_form.productization.audit verify.payment_execution.form_productization.runtime_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit verify.action_default_group.contract_audit
+verify.smart_core.boundary_guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/smart_core_boundary_guard.py
+	@python3 scripts/verify/smart_core_boundary_guard.py
+
+verify.view.orchestration_product_boundary_guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/view_orchestration_product_boundary_guard.py
+	@python3 scripts/verify/view_orchestration_product_boundary_guard.py
+
+verify.app_config_engine.boundary_guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/app_config_engine_boundary_guard.py
+	@python3 scripts/verify/app_config_engine_boundary_guard.py
+
 verify.form_view.scope.boundary_guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/form_view_scope_boundary_guard.py
 	@python3 scripts/verify/form_view_scope_boundary_guard.py
@@ -993,9 +1005,13 @@ verify.business_form.productization.standard.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/business_form_productization_standard_guard.py
 	@python3 scripts/verify/business_form_productization_standard_guard.py
 
-verify.business_form.productization.audit: guard.prod.forbid verify.business_form.productization.standard.guard
+verify.business_form.productization.audit: guard.prod.forbid verify.business_form.productization.standard.guard verify.smart_core.boundary_guard verify.view.orchestration_product_boundary_guard verify.app_config_engine.boundary_guard
 	@python3 -m py_compile scripts/verify/business_form_productization_audit.py
 	@python3 scripts/verify/business_form_productization_audit.py
+
+verify.payment_execution.form_productization.runtime_guard: guard.prod.forbid check-compose-project check-compose-env
+	@python3 -m py_compile scripts/verify/payment_execution_form_productization_runtime_guard.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/payment_execution_form_productization_runtime_guard.py
 
 verify.form_view.scope.runtime_chain_guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/form_view_scope_runtime_chain_guard.py

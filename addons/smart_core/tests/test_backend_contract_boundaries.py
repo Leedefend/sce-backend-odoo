@@ -96,7 +96,7 @@ class BackendContractBoundaryTests(unittest.TestCase):
 
     def test_approval_lowcode_source_constant_is_explicit(self):
         self.assertEqual(APPROVAL_POLICY_RUNTIME_SOURCE, "sc.approval.policy")
-        self.assertEqual(APPROVAL_POLICY_SOURCE_TENANT_LOWCODING, "smart_construction_core.lowcode.approval_policy")
+        self.assertEqual(APPROVAL_POLICY_SOURCE_TENANT_LOWCODING, "smart_core.lowcode.approval_policy")
 
     def test_user_preference_source_wins_over_view_orchestration_name(self):
         boundary = classify_view_orchestration_contract(

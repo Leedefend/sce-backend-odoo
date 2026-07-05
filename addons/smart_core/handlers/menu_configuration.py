@@ -16,6 +16,7 @@ from ..utils.backend_contract_boundaries import (
     MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
     ensure_menu_orchestration_source_status,
 )
+from ..utils.extension_hooks import call_extension_hook_first
 
 
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
@@ -214,27 +215,25 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         menu = _xmlid_record(self.env, root_menu_xmlid)
         if menu and getattr(menu, "_name", "") == "ir.ui.menu":
             return int(menu.id or 0)
-        if root_menu_xmlid == "smart_construction_core.menu_sc_root":
-            fallback = self.env["ir.ui.menu"].sudo().search([("name", "=", "智慧施工管理平台")], limit=1)
-            return int(fallback.id or 0) if fallback else 0
         return 0
 
     def _default_business_root_menu_id(self) -> int:
-        if hasattr(self.env, "ref"):
-            menu = _xmlid_record(self.env, "smart_construction_core.menu_sc_root")
+        hook_xmlid = call_extension_hook_first(self.env, "smart_core_business_root_menu_xmlid", self.env)
+        hook_xmlid = _to_text(hook_xmlid)
+        if hook_xmlid and hasattr(self.env, "ref"):
+            menu = _xmlid_record(self.env, hook_xmlid)
             if menu and getattr(menu, "_name", "ir.ui.menu") == "ir.ui.menu":
                 return int(menu.id or 0)
-        if "ir.ui.menu" not in self.env:
-            return 0
         try:
-            fallback = self.env["ir.ui.menu"].sudo().with_context(active_test=False).search([
-                ("name", "=", "智慧施工管理平台"),
-            ], limit=1)
+            root_menu_xmlid = str(
+                self.env["ir.config_parameter"].sudo().get_param("smart_core.business_root_menu_xmlid", "") or ""
+            ).strip()
         except Exception:
-            _logger.debug("MENU_CONFIG_DEFAULT_ROOT_LOOKUP_FAILED", exc_info=True)
-            return 0
-        if fallback and _to_text(getattr(fallback, "name", "")) == "智慧施工管理平台":
-            return int(getattr(fallback, "id", 0) or 0)
+            root_menu_xmlid = ""
+        if root_menu_xmlid and hasattr(self.env, "ref"):
+            menu = _xmlid_record(self.env, root_menu_xmlid)
+            if menu and getattr(menu, "_name", "ir.ui.menu") == "ir.ui.menu":
+                return int(menu.id or 0)
         return 0
 
     def _scope_root_menu_id(self, params: dict | None = None) -> int:
@@ -283,7 +282,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             return
         menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False).browse(menu_id).exists()
         if not menu or not self._menu_under_root(menu, root_menu_id):
-            raise ValidationError("%s超出菜单配置范围，只能配置“智慧施工管理平台”下的业务办理菜单。" % field_label)
+            raise ValidationError("%s超出菜单配置范围，只能配置当前业务根菜单下的业务办理菜单。" % field_label)
 
     def _scope_contract_json(self, company_id: int, contract_json: dict) -> dict:
         root_menu_id = self._scope_root_menu_id({})
@@ -837,7 +836,7 @@ class MenuConfigurationCreateHandler(MenuConfigurationSaveHandler):
 
         try:
             if root_menu_id and not parent_menu_id:
-                raise ValidationError("请选择“智慧施工管理平台”下的上级菜单。")
+                raise ValidationError("请选择当前业务根菜单下的上级菜单。")
             self._ensure_menu_config_scope(parent_menu_id, root_menu_id, field_label="上级菜单")
             if source_menu_id:
                 self._ensure_menu_config_scope(source_menu_id, root_menu_id, field_label="复制来源菜单")
@@ -1104,8 +1103,8 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
             "target_parent_label": _to_text(policy.get("target_parent_menu_complete_name")),
             "role_group_ids": [_to_int(item) for item in (policy.get("role_group_ids") or []) if _to_int(item)],
             "role_group_names": [],
-            "scope_summary": "合同运行时策略",
-            "effect_summary": "隐藏菜单" if not visible else "合同配置显示",
+            "scope_summary": "运行时菜单策略",
+            "effect_summary": "隐藏菜单" if not visible else "菜单配置显示",
             "preview_summary": "",
             "applicable": True,
             "runtime_source": MENU_CONFIG_RUNTIME_SOURCE_CONTRACT,

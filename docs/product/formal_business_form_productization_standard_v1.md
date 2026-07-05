@@ -25,6 +25,22 @@ to P1.  When it reflects one customer or tenant preference, it belongs to P2
 or P3.  When it exists only to prove, replay, or debug history, it belongs to
 P4 and must not appear in ordinary forms.
 
+## Backend Orchestration Boundary
+
+Productized forms must keep three backend responsibilities separate:
+
+| Responsibility | Owner | Output | Boundary |
+| --- | --- | --- | --- |
+| Native Odoo parsing | P0 platform | faithful model/view/action structure, field metadata, native buttons, native groups | must not guess construction business meaning |
+| Runtime view orchestration | P0/P1 backend orchestration | task-oriented sections, field classification, density reduction, source-trace placement | must derive structure from native parse plus declared entry semantics |
+| Business configuration overlay | P1/P2/P3 configuration | entry labels, primary field set, field order, hidden fields, role/customer variation | must not replace the platform parser with full hand-written UI trees |
+
+For P1 product-release contracts, the preferred form contract shape is
+`fields + sections + composition_mode=entry_semantic_surface`.  The backend
+orchestrator owns the generated layout.  A P1 product-release contract must
+not carry a full `view_orchestration.views.form.layout` tree unless a separate
+architecture exception is documented and guarded.
+
 ## Core Design Logic
 
 1. A form is a business workflow surface, not a field container.
@@ -188,6 +204,7 @@ This standard is enforced progressively.  Current machine-readable entry point:
 
 ```bash
 make verify.business_form.productization.audit
+make verify.view.orchestration_product_boundary_guard
 ```
 
 The current audit checks:
@@ -199,6 +216,8 @@ The current audit checks:
 - weak section labels
 - source-trace exposure risk
 - status and summary-action cues
+- product-release contracts do not bypass backend orchestration with full
+  hand-written form layout trees
 
 The audit writes:
 

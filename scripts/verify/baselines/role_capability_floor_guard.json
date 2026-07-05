@@ -4,10 +4,10 @@
     "admin": {
       "min_capabilities": 1
     },
-    "demo_finance": {
+    "sc_fx_finance": {
       "min_capabilities": 2
     },
-    "demo_pm": {
+    "sc_fx_pm": {
       "min_capabilities": 5
     },
     "demo_role_executive": {

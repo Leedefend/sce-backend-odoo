@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import importlib
-
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 
-SOURCE_KIND = "construction_industry_orchestration_adapter"
+SOURCE_KIND = "industry_orchestration_adapter"
 SOURCE_AUTHORITIES = (
-    "smart_construction_core.core_extension",
     "smart_core.extension_hooks",
     "odoo.orm",
 )
@@ -37,13 +34,6 @@ def _resolve_service_with_fallback(env, hook_name: str, fallback_builder_name: s
     result = call_extension_hook_first(env, hook_name, env)
     if result is not None:
         return result
-    try:
-        module = importlib.import_module("odoo.addons.smart_construction_core.core_extension")
-        fallback_builder = getattr(module, fallback_builder_name, None)
-        if callable(fallback_builder):
-            result = fallback_builder(env)
-    except Exception:
-        result = None
     return _require_service(hook_name, result)
 
 
@@ -105,7 +95,7 @@ class _FallbackCostTrackingService:
             "key": str(block_key or ""),
             "state": "degraded",
             "reason_code": str(reason_code or "UNKNOWN"),
-            "message": "成本场景扩展服务未安装，已返回降级契约。",
+            "message": "行业场景扩展服务未安装，已返回降级契约。",
         }
 
     def build_summary_rows(self, project):
@@ -141,13 +131,6 @@ def build_cost_tracking_service(env):
     result = call_extension_hook_first(env, hook_name, env)
     if result is not None:
         return result
-    try:
-        module = importlib.import_module("odoo.addons.smart_construction_core.core_extension")
-        fallback_builder = getattr(module, hook_name, None)
-        if callable(fallback_builder):
-            result = fallback_builder(env)
-    except Exception:
-        result = None
     return result if result is not None else _FallbackCostTrackingService(env)
 
 

@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+try:
+    from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+except Exception:  # pragma: no cover - keeps standalone imports usable outside Odoo.
+    call_extension_hook_first = None
+
 
 class MenuDeliveryConvergenceService:
     SOURCE_KIND = "menu_delivery_convergence_projection"
-    SOURCE_AUTHORITIES = ("odoo_menu_projection", "legacy_construction_menu_token_policy")
+    SOURCE_AUTHORITIES = ("odoo_menu_projection", "menu_delivery_token_policy")
     NO_BUSINESS_FACT_AUTHORITY = True
-    LEGACY_TOKEN_POLICY_SOURCE_KIND = "legacy_construction_menu_token_policy"
+    TOKEN_POLICY_SOURCE_KIND = "menu_delivery_token_policy"
 
     DEMO_TOKENS = (
         "演示",
@@ -18,7 +23,6 @@ class MenuDeliveryConvergenceService:
         "窗口动作",
         "菜单项",
         "iap",
-        "项目管理（后台）",
     )
     BUSINESS_CONFIG_TOKENS = (
         "业务配置",
@@ -30,11 +34,7 @@ class MenuDeliveryConvergenceService:
         "字段配置",
         "数据字典",
         "基础设置",
-        "定额库",
         "业务字典",
-        "成本科目",
-        "阶段资料要求",
-        "项目阶段资料要求",
     )
     SYSTEM_CONFIG_TOKENS = (
         "系统配置",
@@ -66,219 +66,63 @@ class MenuDeliveryConvergenceService:
         "能力矩阵",
     )
     USER_ALLOWED_PATH_TOKENS = (
-        "智能施工 2.0",
-        "项目管理",
-        "合同管理",
-        "合同中心",
-        "项目合同",
-        "收入合同",
-        "支出合同",
-        "一般合同",
-        "施工管理",
-        "计划管理",
-        "计划汇报",
-        "成本管理",
-        "成本报表",
-        "智慧大屏",
-        "大屏",
-        "驾驶舱",
-        "财税报表",
-        "物资与分包",
-        "物资管理",
-        "材料管理",
-        "材料",
-        "采购",
-        "采购订单",
-        "劳务",
-        "机械",
-        "设备",
-        "专业分包",
-        "分包",
-        "考勤",
-        "看板中心",
-        "财务账款",
-        "结算中心",
-        "执行结构",
-        "项目立项",
-        "项目台账",
-        "项目驾驶舱",
-        "投标",
-        "报名",
-        "开标",
-        "中标",
-        "保证金",
-        "自筹",
-        "付款还",
-        "资金借还",
-        "借款",
-        "还款",
-        "费用中心",
-        "费用",
-        "报销",
-        "收支",
-        "统计表",
-        "经营情况表",
-        "收入",
-        "公司财务支出",
-        "项目资金",
-        "承包人",
-        "项目款",
-        "公司款",
-        "发票税务",
-        "发票",
-        "开票",
-        "税务",
-        "付款",
-        "实付",
-        "付款登记",
-        "支付",
-        "往来单位付款",
-        "扣款",
-        "实缴",
-        "资金账户",
-        "账户间资金往来",
-        "收款",
-        "到款",
-        "资金日报",
         "我的工作",
-        "工程资料",
-        "客户",
-        "供应商",
-        "人事行政",
-        "请假",
-        "休假",
-        "印章",
-        "资料证照",
-        "证照",
-        "借阅",
-        "业务配置",
-        "基础设置",
-        "组织架构",
-        "历史用户",
-        "历史用户权限",
-        "用户信息",
-        "用户信息与权限",
-        "历史角色",
-        "项目授权范围",
-        "系统配置",
-        "用户验收",
-        "直营项目系统菜单",
         "首页",
         "我的待办",
         "我的审批",
     )
-    ADMIN_ALLOWED_PATH_TOKENS = (
-        "智能施工 2.0",
+    ADMIN_ALLOWED_PATH_TOKENS = USER_ALLOWED_PATH_TOKENS + (
         "我的工作",
-        "项目管理",
-        "执行与生产",
-        "成本与资金",
-        "合同管理",
-        "合同中心",
-        "项目合同",
-        "收入合同",
-        "支出合同",
-        "一般合同",
-        "施工管理",
-        "计划管理",
-        "计划汇报",
-        "成本管理",
-        "成本报表",
-        "智慧大屏",
-        "大屏",
-        "驾驶舱",
-        "财税报表",
-        "物资与分包",
-        "物资管理",
-        "材料管理",
-        "材料",
-        "采购",
-        "采购订单",
-        "劳务",
-        "机械",
-        "设备",
-        "专业分包",
-        "分包",
-        "考勤",
-        "看板中心",
-        "财务账款",
-        "结算中心",
-        "执行结构",
-        "项目立项",
-        "项目台账",
-        "项目驾驶舱",
-        "投标",
-        "报名",
-        "开标",
-        "中标",
-        "保证金",
-        "自筹",
-        "付款还",
-        "资金借还",
-        "借款",
-        "还款",
-        "费用中心",
-        "费用",
-        "报销",
-        "收支",
-        "统计表",
-        "经营情况表",
-        "收入",
-        "公司财务支出",
-        "项目资金",
-        "承包人",
-        "项目款",
-        "公司款",
-        "发票税务",
-        "发票",
-        "开票",
-        "税务",
-        "付款",
-        "实付",
-        "付款登记",
-        "支付",
-        "往来单位付款",
-        "扣款",
-        "实缴",
-        "资金账户",
-        "账户间资金往来",
-        "收款",
-        "到款",
-        "资金日报",
-        "工程资料",
-        "人事行政",
-        "请假",
-        "休假",
-        "印章",
-        "资料证照",
-        "证照",
-        "借阅",
-        "基础设置",
-        "组织架构",
-        "历史用户",
-        "历史用户权限",
-        "用户信息",
-        "用户信息与权限",
-        "历史角色",
-        "项目授权范围",
         "系统管理",
-        "用户验收",
-        "直营项目系统菜单",
-        "首页",
-        "我的待办",
-        "我的审批",
     )
-    HIDE_EXACT_LABELS = {
-        "快速创建项目",
-        "项目列表（演示）",
-        "项目驾驶舱（演示）",
-    }
-    RENAME_LABELS = {
-        "项目台账（试点）": "项目台账",
-        "开票申请": "销项开票申请",
-        "开票登记": "销项发票登记",
-        "进项上报": "进项税额上报",
-    }
+    HIDE_EXACT_LABELS = set()
+    RENAME_LABELS = {}
+
+    def __init__(self, env=None, token_policy: dict | None = None):
+        self.env = env
+        self._token_policy = self._resolve_token_policy(token_policy)
+        self.demo_tokens = self._policy_tokens("demo_tokens", self.DEMO_TOKENS)
+        self.always_hidden_technical_tokens = self._policy_tokens(
+            "always_hidden_technical_tokens",
+            self.ALWAYS_HIDDEN_TECHNICAL_TOKENS,
+        )
+        self.business_config_tokens = self._policy_tokens("business_config_tokens", self.BUSINESS_CONFIG_TOKENS)
+        self.system_config_tokens = self._policy_tokens("system_config_tokens", self.SYSTEM_CONFIG_TOKENS)
+        self.non_formal_entry_tokens = self._policy_tokens("non_formal_entry_tokens", self.NON_FORMAL_ENTRY_TOKENS)
+        self.user_allowed_path_tokens = self._policy_tokens("user_allowed_path_tokens", self.USER_ALLOWED_PATH_TOKENS)
+        self.admin_allowed_path_tokens = self._policy_tokens("admin_allowed_path_tokens", self.ADMIN_ALLOWED_PATH_TOKENS)
+        self.hide_exact_labels = set(self._policy_tokens("hide_exact_labels", self.HIDE_EXACT_LABELS))
+        self.rename_labels = self._policy_mapping("rename_labels", self.RENAME_LABELS)
+
+    def _resolve_token_policy(self, override: dict | None = None) -> dict:
+        if isinstance(override, dict):
+            return dict(override)
+        if self.env is None or not callable(call_extension_hook_first):
+            return {}
+        payload = call_extension_hook_first(self.env, "smart_core_menu_delivery_token_policy", self.env)
+        return dict(payload) if isinstance(payload, dict) else {}
+
+    def _policy_tokens(self, key: str, defaults) -> tuple:
+        values = [item for item in defaults if str(item or "").strip()]
+        extra = self._token_policy.get(key)
+        if isinstance(extra, (list, tuple, set)):
+            values.extend(item for item in extra if str(item or "").strip())
+        seen = set()
+        out = []
+        for item in values:
+            text = str(item or "").strip()
+            if not text or text in seen:
+                continue
+            seen.add(text)
+            out.append(text)
+        return tuple(out)
+
+    def _policy_mapping(self, key: str, defaults) -> dict:
+        out = dict(defaults or {})
+        extra = self._token_policy.get(key)
+        if isinstance(extra, dict):
+            out.update({str(k or "").strip(): str(v or "").strip() for k, v in extra.items() if str(k or "").strip() and str(v or "").strip()})
+        return out
 
     @classmethod
     def source_authority_contract(cls) -> dict:
@@ -287,22 +131,23 @@ class MenuDeliveryConvergenceService:
             "authorities": list(cls.SOURCE_AUTHORITIES),
             "projection_only": True,
             "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
-            "legacy_token_policy": cls.LEGACY_TOKEN_POLICY_SOURCE_KIND,
+            "token_policy": cls.TOKEN_POLICY_SOURCE_KIND,
         }
 
     @classmethod
-    def legacy_token_policy_source_authority_contract(cls) -> dict:
+    def token_policy_source_authority_contract(cls) -> dict:
         return {
-            "kind": cls.LEGACY_TOKEN_POLICY_SOURCE_KIND,
+            "kind": cls.TOKEN_POLICY_SOURCE_KIND,
             "authorities": [
                 "USER_ALLOWED_PATH_TOKENS",
                 "ADMIN_ALLOWED_PATH_TOKENS",
                 "BUSINESS_CONFIG_TOKENS",
                 "SYSTEM_CONFIG_TOKENS",
+                "extension_hook:smart_core_menu_delivery_token_policy",
             ],
             "projection_only": True,
             "no_business_fact_authority": True,
-            "legacy_compatibility": True,
+            "extension_policy": True,
         }
 
     def apply(
@@ -316,7 +161,7 @@ class MenuDeliveryConvergenceService:
         report = {
             "profile": "delivery_admin" if is_admin else "delivery_user",
             "source_authority": self.source_authority_contract(),
-            "legacy_token_policy_source_authority": self.legacy_token_policy_source_authority_contract(),
+            "token_policy_source_authority": self.token_policy_source_authority_contract(),
             "is_business_config_admin": bool(is_business_config_admin),
             "hidden": [],
             "kept": [],
@@ -432,7 +277,7 @@ class MenuDeliveryConvergenceService:
 
     def _apply_rename(self, node: dict, *, report: dict) -> None:
         label = str(node.get("name") or "").strip()
-        target = self.RENAME_LABELS.get(label)
+        target = self.rename_labels.get(label)
         if not target:
             return
         node["name"] = target
@@ -449,21 +294,21 @@ class MenuDeliveryConvergenceService:
         normalized_label = str(label or "").strip().lower()
         full_path = "/".join(str(part or "").strip() for part in path if str(part or "").strip())
         normalized_path = full_path.lower()
-        allow_tokens = self.ADMIN_ALLOWED_PATH_TOKENS if is_admin else self.USER_ALLOWED_PATH_TOKENS
+        allow_tokens = self.admin_allowed_path_tokens if is_admin else self.user_allowed_path_tokens
 
-        if label in self.HIDE_EXACT_LABELS:
+        if label in self.hide_exact_labels:
             return "hidden_demo"
-        if self._contains_any(normalized_label, normalized_path, self.NON_FORMAL_ENTRY_TOKENS):
+        if self._contains_any(normalized_label, normalized_path, self.non_formal_entry_tokens):
             return "hidden_governance"
-        if self._contains_any(normalized_label, normalized_path, self.DEMO_TOKENS):
+        if self._contains_any(normalized_label, normalized_path, self.demo_tokens):
             return "hidden_demo"
-        if self._contains_any(normalized_label, normalized_path, self.ALWAYS_HIDDEN_TECHNICAL_TOKENS):
+        if self._contains_any(normalized_label, normalized_path, self.always_hidden_technical_tokens):
             return "hidden_technical"
-        if self._contains_any(normalized_label, normalized_path, self.BUSINESS_CONFIG_TOKENS):
+        if self._contains_any(normalized_label, normalized_path, self.business_config_tokens):
             if is_admin or is_business_config_admin:
                 return "delivery_business_config"
             return "hidden_business_config"
-        if self._contains_any(normalized_label, normalized_path, self.SYSTEM_CONFIG_TOKENS):
+        if self._contains_any(normalized_label, normalized_path, self.system_config_tokens):
             if is_admin:
                 return "delivery_system_config"
             return "hidden_governance"
@@ -500,8 +345,8 @@ class MenuDeliveryConvergenceService:
             if isinstance(menu_id, int) and menu_id in visible_menu_ids:
                 copied = dict(node)
                 copied["delivery_bucket"] = profile
-                if str(copied.get("name") or "").strip() in self.RENAME_LABELS:
-                    copied["name"] = self.RENAME_LABELS[str(copied.get("name") or "").strip()]
+                if str(copied.get("name") or "").strip() in self.rename_labels:
+                    copied["name"] = self.rename_labels[str(copied.get("name") or "").strip()]
                 filtered_flat.append(copied)
         return {
             "tree": filtered_tree,
@@ -527,8 +372,8 @@ class MenuDeliveryConvergenceService:
         if not keep:
             return None
 
-        if str(copied.get("name") or "").strip() in self.RENAME_LABELS:
-            copied["name"] = self.RENAME_LABELS[str(copied.get("name") or "").strip()]
+        if str(copied.get("name") or "").strip() in self.rename_labels:
+            copied["name"] = self.rename_labels[str(copied.get("name") or "").strip()]
         copied["children"] = filtered_children
         copied["delivery_bucket"] = profile
         copied["has_children"] = bool(filtered_children)

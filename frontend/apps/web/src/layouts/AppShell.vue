@@ -576,7 +576,7 @@ function normalizeDeliveryText(input: string) {
   if (!source) return '';
   return source
     .replace(/\s*\(\d+\)\s*$/g, '')
-    .replace(/^project\s*manager$/i, '项目经理')
+    .replace(/^project\s*manager$/i, '负责人')
     .replace(/^purchase\s*manager$/i, '采购经理')
     .replace(/^finance$/i, '财务主管')
     .replace(/^executive$/i, '管理层')
@@ -588,7 +588,7 @@ function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
   const normalizedLabel = normalizeDeliveryText(roleLabelRaw);
   if (/[^\u0020-\u007e]/.test(normalizedLabel) && normalizedLabel) return normalizedLabel;
   const code = String(roleCodeRaw || '').trim().toLowerCase();
-  if (/pm|project/.test(code)) return '项目经理';
+  if (/pm|project/.test(code)) return '负责人';
   if (/finance/.test(code)) return '财务主管';
   if (/purchase|material/.test(code)) return '采购经理';
   if (/executive|boss|leader/.test(code)) return '管理层';

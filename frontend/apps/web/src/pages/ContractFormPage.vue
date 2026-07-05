@@ -2525,7 +2525,7 @@ const hasCurrentFormFieldDraftChanges = computed(() => (
 ));
 
 const formConfigOperatorName = computed(() => {
-  const user = session.user || {};
+  const user = (session.user || {}) as Record<string, unknown>;
   return String(user.name || user.login || user.email || user.id || '当前用户').trim();
 });
 
@@ -2534,7 +2534,8 @@ const formConfigOperationLogStorageKey = computed(() => {
   const action = Number(actionId.value || route.query.action_id || 0) || 0;
   const view = String(routeQueryText('view_id') || routeQueryText('viewId') || '0').trim() || '0';
   const page = String(routeQueryText('page_label') || routeQueryText('pageLabel') || route.fullPath || '').trim();
-  const userId = String(session.user?.id || session.user?.login || formConfigOperatorName.value || '').trim() || 'anonymous';
+  const user = (session.user || {}) as Record<string, unknown>;
+  const userId = String(user.id || user.login || formConfigOperatorName.value || '').trim() || 'anonymous';
   const db = String(route.query.db || '').trim() || 'default';
   return `sc_form_config_operation_log:${db}:${modelName}:action:${action}:view:${view}:page:${page}:user:${userId}`;
 });

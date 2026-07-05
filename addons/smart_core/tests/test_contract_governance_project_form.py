@@ -6,7 +6,232 @@ from pathlib import Path
 from ..utils.contract_governance import (
     apply_contract_governance,
     apply_project_form_domain_override,
+    register_capability_group_profile,
     register_contract_domain_override,
+    register_legacy_delete_only_model,
+    register_legacy_field_presentation,
+    register_legacy_kanban_row_action,
+    register_legacy_project_form_governance_model,
+    register_legacy_project_form_profile,
+    register_legacy_project_kanban_governance_model,
+    register_legacy_project_kanban_profile,
+    register_legacy_project_task_form_profile,
+    register_legacy_project_task_form_governance_model,
+    register_legacy_record_context_clear_model,
+    register_legacy_standard_list_profile,
+    register_scene_semantic_profile,
+)
+
+for _capability_group_key, _capability_group_profile in (
+    (
+        "project_management",
+        {"label": "项目管理", "icon": "briefcase", "key_prefixes": ["project.", "scene.project", "wbs.", "progress.", "tender."]},
+    ),
+    (
+        "contract_management",
+        {"label": "合同管理", "icon": "file-text", "key_prefixes": ["contract.", "settlement."]},
+    ),
+    (
+        "cost_management",
+        {"label": "成本管理", "icon": "calculator", "key_prefixes": ["cost.", "budget.", "boq."]},
+    ),
+    (
+        "finance_management",
+        {"label": "财务管理", "icon": "wallet", "key_prefixes": ["finance.", "payment.", "treasury."]},
+    ),
+    (
+        "material_management",
+        {"label": "资源管理", "icon": "boxes", "key_prefixes": ["material.", "purchase.", "stock."]},
+    ),
+):
+    register_capability_group_profile(_capability_group_key, _capability_group_profile)
+for _scene_semantic_profile in (
+    {"purpose": "项目推进", "code_prefixes": ["projects."], "code_contains": ["project"]},
+    {"purpose": "资金与审批", "code_prefixes": ["finance."], "code_contains": ["payment"]},
+    {"purpose": "合同履约", "code_prefixes": ["contracts."], "code_contains": ["contract"]},
+):
+    register_scene_semantic_profile(_scene_semantic_profile)
+
+register_legacy_record_context_clear_model("project.project")
+register_legacy_delete_only_model("project.task")
+register_legacy_project_form_governance_model("project.project")
+register_legacy_project_form_profile(
+    "project.project",
+    {
+        "primary_fields": [
+            "name",
+            "project_type_id",
+            "project_category_id",
+            "lifecycle_state",
+            "stage_id",
+            "manager_id",
+            "user_id",
+            "owner_id",
+            "company_id",
+            "start_date",
+            "end_date",
+            "contract_no",
+            "budget_total",
+            "location",
+        ],
+        "create_hidden_fields": [
+            "project_code",
+            "code",
+            "company_id",
+            "analytic_account_id",
+            "lifecycle_state",
+            "stage_id",
+            "last_update_status",
+            "privacy_visibility",
+            "rating_status",
+            "rating_status_period",
+        ],
+        "action_priorities": ["提交", "进入下一阶段", "创建项目", "保存", "查看任务"],
+        "action_noise_markers": ["设置阶段", "评分", "cron", "ir_cron", "演示", "showcase"],
+        "search_noise_markers": ["活动", "评分", "status_period"],
+        "action_group_labels": {
+            "basic": "基础操作",
+            "workflow": "流程推进",
+            "drilldown": "业务查看",
+            "other": "更多操作",
+        },
+        "max_fields": 25,
+    },
+)
+register_legacy_project_kanban_governance_model("project.project")
+register_legacy_project_kanban_profile(
+    "project.project",
+    {
+        "title_field": "name",
+        "primary_fields": ["name", "project_code", "manager_id"],
+        "secondary_fields": ["stage_id", "lifecycle_state", "end_date", "budget_total"],
+        "status_fields": ["lifecycle_state", "stage_id"],
+        "max_meta": 4,
+    },
+)
+register_legacy_project_task_form_governance_model("project.task")
+register_legacy_kanban_row_action(
+    "project.project",
+    {
+        "key": "open_project_dashboard",
+        "name": "open_project_dashboard",
+        "label": "进入项目驾驶舱",
+        "intent": "open_scene",
+        "level": "row",
+        "trigger": "row_click",
+        "display_mode": "row_click",
+        "selection": "single",
+        "target": {
+            "route": "/s/project.management",
+            "scene_key": "project.management",
+            "entry_intent": "project.dashboard.enter",
+            "project_id": "${id}",
+        },
+    },
+)
+register_legacy_project_task_form_profile(
+    "project.task",
+    {
+        "fields": [
+            "name",
+            "project_id",
+            "stage_id",
+            "sc_state",
+            "user_ids",
+            "date_deadline",
+            "priority",
+            "description",
+        ],
+        "field_labels": {
+            "name": "任务名称",
+            "project_id": "所属项目",
+            "stage_id": "当前阶段",
+            "sc_state": "执行状态",
+            "user_ids": "执行人",
+            "date_deadline": "截止日期",
+            "priority": "优先级",
+            "description": "执行说明",
+        },
+        "core_group_label": "任务基础信息",
+        "description_group_label": "任务说明",
+        "description_fields": ["description"],
+    },
+)
+register_legacy_field_presentation(
+    "project.project",
+    "is_favorite",
+    {
+        "label": "我的收藏",
+        "widget": "boolean_favorite",
+        "cell_role": "favorite",
+        "mutation": {
+            "type": "field_toggle",
+            "operation": "record_write",
+            "field": "is_favorite",
+            "value_type": "boolean",
+        },
+    },
+)
+register_legacy_standard_list_profile(
+    {
+        "profile_key": "project.project.list",
+        "model_name": "project.project",
+        "columns_order": [
+            "name",
+            "project_code",
+            "owner_id",
+            "sc_partner_display_name",
+            "operation_strategy",
+            "lifecycle_state",
+            "user_id",
+            "contract_amount",
+            "dashboard_progress_rate",
+            "write_date",
+        ],
+        "column_labels": {
+            "name": "名称",
+            "project_code": "项目编号",
+            "owner_id": "业主单位",
+            "sc_partner_display_name": "关联单位",
+            "operation_strategy": "经营方式",
+            "lifecycle_state": "项目状态",
+            "user_id": "项目负责人",
+            "contract_amount": "合同总额",
+            "dashboard_progress_rate": "进度(%)",
+            "write_date": "更新时间",
+        },
+        "row_primary": "name",
+        "row_secondary": "",
+        "status_field": "lifecycle_state",
+        "strict_columns": True,
+    }
+)
+register_legacy_standard_list_profile(
+    {
+        "profile_key": "project.task.list",
+        "model_name": "project.task",
+        "columns_order": [
+            "name",
+            "project_id",
+            "user_ids",
+            "stage_id",
+            "sc_state",
+            "date_deadline",
+            "priority",
+        ],
+        "column_labels": {
+            "name": "任务名称",
+            "project_id": "所属项目",
+            "user_ids": "执行人",
+            "stage_id": "当前阶段",
+            "sc_state": "执行状态",
+            "date_deadline": "截止日期",
+            "priority": "优先级",
+        },
+        "row_primary": "name",
+        "row_secondary": "project_id",
+        "status_field": "sc_state",
+    }
 )
 
 

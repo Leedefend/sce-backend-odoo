@@ -689,26 +689,40 @@ class PageAssembler:
     def _normalize_model_specific_form_contract(self, data: dict, *, model_name: str = "") -> None:
         if not isinstance(data, dict):
             return
-        if str(model_name or "").strip() != "sc.general.contract":
-            return
+        model = str(model_name or "").strip()
         fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
-        if "tax_id" not in fields_map or "tax_rate" not in fields_map:
+        payload = call_extension_hook_first(
+            self.env,
+            "smart_core_model_specific_form_contract_policy",
+            self.env,
+            {"model": model, "fields": fields_map, "data": data},
+        )
+        if not isinstance(payload, dict):
+            return
+        remove_fields = [
+            str(item or "").strip()
+            for item in (payload.get("remove_fields") if isinstance(payload.get("remove_fields"), list) else [])
+            if str(item or "").strip()
+        ]
+        if not remove_fields:
             return
         views = data.get("views") if isinstance(data.get("views"), dict) else {}
         form = views.get("form") if isinstance(views.get("form"), dict) else {}
-        form["layout"] = self._remove_layout_field(form.get("layout"), "tax_rate")
+        for field_name in remove_fields:
+            form["layout"] = self._remove_layout_field(form.get("layout"), field_name)
         views["form"] = form
         data["views"] = views
-        data["field_groups"] = self._remove_field_from_groups(data.get("field_groups"), "tax_rate")
+        for field_name in remove_fields:
+            data["field_groups"] = self._remove_field_from_groups(data.get("field_groups"), field_name)
         policy = data.get("business_form_policy") if isinstance(data.get("business_form_policy"), dict) else {}
         if policy:
             policy["layout_fields"] = [
-                item for item in (policy.get("layout_fields") or []) if str(item or "").strip() != "tax_rate"
+                item for item in (policy.get("layout_fields") or []) if str(item or "").strip() not in remove_fields
             ]
             policy["fields"] = [
                 item
                 for item in (policy.get("fields") or [])
-                if not isinstance(item, dict) or str(item.get("name") or item.get("field") or "").strip() != "tax_rate"
+                if not isinstance(item, dict) or str(item.get("name") or item.get("field") or "").strip() not in remove_fields
             ]
             data["business_form_policy"] = policy
 
@@ -1346,7 +1360,27 @@ class PageAssembler:
         except Exception:
             raw = ""
         groups = [item.strip() for item in str(raw or "").split(",") if item.strip()]
-        return groups or ["smart_construction_core.group_sc_cap_business_config_admin"]
+        return groups or ["smart_core.group_smart_core_business_config_admin"]
+
+    def _business_config_form_settings_refs(self):
+        refs = call_extension_hook_first(
+            self.env,
+            "smart_core_business_config_form_settings_refs",
+            self.env,
+        )
+        if isinstance(refs, dict):
+            action_xmlid = str(refs.get("action_xmlid") or "").strip()
+            menu_xmlid = str(refs.get("menu_xmlid") or "").strip()
+            if action_xmlid and menu_xmlid:
+                return action_xmlid, menu_xmlid
+        try:
+            Config = self.env["ir.config_parameter"].sudo()
+            action_xmlid = str(Config.get_param("smart_core.business_config.form_settings_action_xmlid", "") or "").strip()
+            menu_xmlid = str(Config.get_param("smart_core.business_config.form_settings_menu_xmlid", "") or "").strip()
+        except Exception:
+            action_xmlid = ""
+            menu_xmlid = ""
+        return action_xmlid, menu_xmlid
 
     def _is_business_config_admin(self):
         for group_xmlid in self._business_config_admin_group_xmlids():
@@ -1386,8 +1420,11 @@ class PageAssembler:
         model_rec = self.su_env["ir.model"].search([("model", "=", model)], limit=1)
         if not model_rec or model_rec.transient:
             return
-        settings_action = self._ref_or_empty("smart_construction_core.action_ui_form_field_policy_business_config")
-        settings_menu = self._ref_or_empty("smart_construction_core.menu_ui_form_field_policy_business_config")
+        settings_action_xmlid, settings_menu_xmlid = self._business_config_form_settings_refs()
+        if not settings_action_xmlid or not settings_menu_xmlid:
+            return
+        settings_action = self._ref_or_empty(settings_action_xmlid)
+        settings_menu = self._ref_or_empty(settings_menu_xmlid)
         if not settings_action or not settings_action.exists() or not settings_menu or not settings_menu.exists():
             return
         current_view_id = int(view_id or 0)
@@ -1676,8 +1713,9 @@ class PageAssembler:
             })
         return {
             "available": True,
+            "config_source": "ui.business.config.contract",
             "source_model": BUSINESS_CONFIG_AUTHORITIES["contract"],
-            "owner_layer": BUSINESS_CONFIG_OWNER_LAYER,
+            "owner_layer": "business_view_orchestration",
             "items": items,
         }
 
@@ -2369,159 +2407,37 @@ class PageAssembler:
             if model_name:
                 relation_domain.append(["target_model", "=", model_name])
             switch_context["default_clear_fields"] = sorted(default_clear_fields)
-        if (
-            relation == "account.tax"
-            and str(field_name or "").strip() == "tax_id"
-            and str(model_name or "").strip() in {"construction.contract", "sc.general.contract"}
-        ):
-            is_contract_tax_field = True
-            display_field = "name"
-            relation_order = "amount asc, id asc"
-            has_page = False
-            can_open = False
-            can_create = True
-            try:
-                company = self.env.company
-                helper = self.env["construction.contract"].sudo().with_company(company)
-                group = helper._sc_contract_tax_group(company)
-                country = company.account_fiscal_country_id or company.partner_id.country_id or self.env.ref(
-                    "base.cn",
-                    raise_if_not_found=False,
-                )
-                default_vals = {
-                    "type_tax_use": "none",
-                    "amount_type": "percent",
-                    "price_include": False,
-                    "company_id": company.id,
-                    "tax_group_id": group.id,
-                }
-                if country:
-                    default_vals["country_id"] = country.id
-            except Exception:
-                default_vals = {
-                    "type_tax_use": "none",
-                    "amount_type": "percent",
-                    "price_include": False,
-                }
-            ui_labels_extra = {
-                "quick_create": _("新增税率..."),
-                "create_and_edit": _("新增税率..."),
-                "missing_name": _("请输入税率百分比，例如：3%、9%、13%"),
-                "quick_create_prompt": _("请输入税率百分比，例如：3%、9%、13%"),
-                "quick_create_failed": _("新增税率失败，请输入 0 到 100 之间的百分比"),
-                "inline_create": _("新增税率“%s”"),
-                "inline_create_failed": _("创建税率失败，请检查百分比格式"),
-            }
-            relation_domain.extend(
-                [
-                    ["type_tax_use", "=", "none"],
-                    ["amount_type", "=", "percent"],
-                    ["price_include", "=", False],
-                ]
-            )
-        if (
-            relation == "construction.contract"
-            and str(model_name or "").strip() == "construction.contract"
-            and str(field_name or "").strip() == "original_contract_id"
-        ):
-            has_page = False
-            can_open = False
-            can_create = False
-            display_field = "display_name"
-            relation_order = "id desc"
-            context = contract_context if isinstance(contract_context, dict) else {}
-            category_code = str(
-                context.get("current_business_category_code")
-                or context.get("default_business_category_code")
-                or ""
-            ).strip()
-            contract_type = str(context.get("default_type") or context.get("type") or "").strip()
-            if category_code == "contract.income.supplement":
-                relation_domain.append(["type", "=", "out"])
-            elif category_code == "contract.expense.supplement":
-                relation_domain.append(["type", "=", "in"])
-            elif contract_type in {"out", "in"}:
-                relation_domain.append(["type", "=", contract_type])
-            ui_labels_extra = {
-                "search_more": _("搜索原合同..."),
-                "dialog_title": _("原合同：搜索更多"),
-                "search_placeholder": _("输入原合同名称、编号、项目或往来单位搜索"),
-                "create_and_edit": _(""),
-                "quick_create": _(""),
-            }
-        if (
-            relation == "res.partner"
-            and str(model_name or "").strip() == "sc.self.funding.registration"
-            and str(field_name or "").strip() == "partner_id"
-        ):
-            context = contract_context if isinstance(contract_context, dict) else {}
-            category_code = str(
-                context.get("current_business_category_code")
-                or context.get("default_business_category_code")
-                or ""
-            ).strip()
-            if category_code == "finance.self_funding.refund":
-                contractor_ids = []
-                try:
-                    summaries = self.env["sc.company.contractor.responsibility.summary"].sudo().search(
-                        [
-                            ("partner_id", "!=", False),
-                            ("self_funding_balance", ">", 0.01),
-                        ]
-                    )
-                    partners = summaries.mapped("partner_id").filtered(
-                        lambda partner: partner.supplier_rank > 0 or partner.customer_rank > 0
-                    )
-                    contractor_ids = sorted(set(partners.ids))
-                except Exception:
-                    contractor_ids = []
-                relation_domain.append(["id", "in", contractor_ids or [0]])
-                display_field = "display_name"
-                relation_order = "name asc, id asc"
-                can_create = False
-                has_page = False
-                ui_labels_extra = {
-                    "search_more": _("搜索承包人..."),
-                    "dialog_title": _("承包人：搜索更多"),
-                    "search_placeholder": _("输入承包人名称搜索"),
-                    "create_and_edit": _(""),
-                    "quick_create": _(""),
-                }
-        if (
-            relation == "res.partner"
-            and str(model_name or "").strip() == "sc.expense.claim"
-            and str(field_name or "").strip() == "partner_id"
-        ):
-            context = contract_context if isinstance(contract_context, dict) else {}
-            category_code = str(
-                context.get("current_business_category_code")
-                or context.get("default_business_category_code")
-                or ""
-            ).strip()
-            if category_code == "finance.deduction.bill":
-                partner_ids = []
-                try:
-                    summaries = self.env["sc.company.contractor.responsibility.summary"].sudo().search(
-                        [("partner_id", "!=", False)]
-                    )
-                    partners = summaries.mapped("partner_id").filtered(
-                        lambda partner: partner.supplier_rank > 0 or partner.customer_rank > 0
-                    )
-                    partner_ids = sorted(set(partners.ids))
-                except Exception:
-                    partner_ids = []
-                relation_domain.append(["id", "in", partner_ids or [0]])
-                display_field = "display_name"
-                relation_order = "name asc, id asc"
-                can_create = False
-                has_page = False
-                ui_labels_extra = {
-                    "search_more": _("搜索责任方..."),
-                    "dialog_title": _("责任方：搜索更多"),
-                    "search_placeholder": _("输入责任方名称搜索"),
-                    "create_and_edit": _(""),
-                    "quick_create": _(""),
-                }
+        relation_policy = call_extension_hook_first(
+            self.env,
+            "smart_core_relation_entry_policy",
+            self.env,
+            {
+                "model": model_name,
+                "field_name": field_name,
+                "relation": relation,
+                "descriptor": descriptor if isinstance(descriptor, dict) else {},
+                "context": contract_context if isinstance(contract_context, dict) else {},
+            },
+        )
+        if isinstance(relation_policy, dict):
+            if "has_page" in relation_policy:
+                has_page = bool(relation_policy.get("has_page"))
+            if "can_open" in relation_policy:
+                can_open = bool(relation_policy.get("can_open"))
+            if "can_create" in relation_policy:
+                can_create = bool(relation_policy.get("can_create"))
+            if relation_policy.get("quick_create"):
+                is_contract_tax_field = True
+            if isinstance(relation_policy.get("default_vals"), dict):
+                default_vals.update(relation_policy.get("default_vals") or {})
+            if isinstance(relation_policy.get("domain"), list):
+                relation_domain.extend(relation_policy.get("domain") or [])
+            if str(relation_policy.get("display_field") or "").strip():
+                display_field = str(relation_policy.get("display_field") or "").strip()
+            if str(relation_policy.get("order") or "").strip():
+                relation_order = str(relation_policy.get("order") or "").strip()
+            if isinstance(relation_policy.get("ui_labels"), dict):
+                ui_labels_extra.update(relation_policy.get("ui_labels") or {})
         if options_override:
             action_id = options_override.get("action_id") or self._resolve_relation_entry_ref_id(options_override.get("action_xmlid"))
             menu_id = options_override.get("menu_id") or self._resolve_relation_entry_ref_id(options_override.get("menu_xmlid"))

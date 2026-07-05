@@ -8,6 +8,7 @@ from odoo import SUPERUSER_ID
 from odoo.modules.registry import Registry
 
 from odoo.addons.smart_core.core.navigation_entry_target import resolve_scene_key
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 from .product_identity import resolve_product_identity
 from .product_policy_service import ProductPolicyService
@@ -79,10 +80,10 @@ class ProductPolicyCatalogSyncService:
     def __init__(self, env):
         self.env = env
 
-    def _construction_source_db(self) -> str:
+    def _catalog_source_db(self) -> str:
         try:
             configured = self.env["ir.config_parameter"].sudo().get_param(
-                "smart_core.release_operator.construction_source_db",
+                "smart_core.release_operator.catalog_source_db",
                 "",
             )
         except Exception:
@@ -90,11 +91,27 @@ class ProductPolicyCatalogSyncService:
         current_db = _text(getattr(getattr(self.env, "cr", None), "dbname", ""))
         return _text(configured) or current_db
 
+    def _catalog_source_config(self, source_env) -> dict[str, str]:
+        hook_payload = call_extension_hook_first(self.env, "smart_core_product_policy_catalog_source", self.env, source_env)
+        payload = hook_payload if isinstance(hook_payload, dict) else {}
+        module = _text(payload.get("module"))
+        xmlid_prefix = _text(payload.get("xmlid_prefix"))
+        root_label = _text(payload.get("root_label"))
+        return {
+            "module": module,
+            "xmlid_prefix": xmlid_prefix,
+            "root_label": root_label,
+        }
+
     def _candidate_user_menus(self, source_env):
+        config = self._catalog_source_config(source_env)
+        module = _text(config.get("module"))
+        if not module:
+            return source_env["ir.ui.menu"].sudo().search([], order="sequence,id")
         try:
             rows = source_env["ir.model.data"].sudo().search(
                 [
-                    ("module", "=", "smart_construction_core"),
+                    ("module", "=", module),
                     ("model", "=", "ir.ui.menu"),
                 ]
             )
@@ -111,8 +128,11 @@ class ProductPolicyCatalogSyncService:
         # ir.ui.menu.search() applies menu visibility rules, and action is a
         # reference field whose domains may miss menus that still expose a
         # valid Python action.  The product policy is a platform catalog of the
-        # real industry menu surface, so resolve Smart Construction menu XMLIDs
+        # real extension-owned menu surface, so resolve configured menu XMLIDs
         # through ir.model.data and browse the records directly.
+        config = self._catalog_source_config(source_env)
+        xmlid_prefix = _text(config.get("xmlid_prefix"))
+        root_label = _text(config.get("root_label"))
         menus = self._candidate_user_menus(source_env)
         rows: list[dict[str, Any]] = []
         seen: set[str] = set()
@@ -120,7 +140,7 @@ class ProductPolicyCatalogSyncService:
             if hasattr(menu, "active") and not bool(getattr(menu, "active")):
                 continue
             xmlid = _menu_xmlid(menu)
-            if not xmlid.startswith("smart_construction_core."):
+            if xmlid_prefix and not xmlid.startswith(xmlid_prefix):
                 continue
             action = menu.action
             action_id = _action_id(action)
@@ -129,8 +149,8 @@ class ProductPolicyCatalogSyncService:
             path = _menu_path(menu)
             if not path:
                 continue
-            root_label = path[0] if path else "施工管理"
-            if root_label != "智慧施工管理平台":
+            current_root_label = path[0] if path else ""
+            if root_label and current_root_label != root_label:
                 continue
             children = getattr(menu, "child_id", None)
             if children and any(bool(getattr(child, "active", True)) for child in children):
@@ -154,7 +174,7 @@ class ProductPolicyCatalogSyncService:
             rows.append(
                 {
                     "app_id": _slug(group_label),
-                    "group_key": f"construction.{_slug(group_label)}",
+                    "group_key": f"catalog.{_slug(group_label)}",
                     "group_label": group_label,
                     "root_label": root_label,
                     "menu_id": menu_id,
@@ -182,7 +202,7 @@ class ProductPolicyCatalogSyncService:
         return rows
 
     def _load_source_user_menu_pages(self) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-        source_db = self._construction_source_db()
+        source_db = self._catalog_source_db()
         current_db = _text(getattr(getattr(self.env, "cr", None), "dbname", ""))
         if source_db == current_db:
             return self._extract_user_menu_pages(self.env), {"source_db": current_db, "source": "current_db_ir_ui_menu"}
@@ -201,16 +221,16 @@ class ProductPolicyCatalogSyncService:
                 "error": str(exc),
             }
 
-    def build_construction_policy_payload(self, *, product_key: str) -> dict[str, Any]:
+    def build_catalog_policy_payload(self, *, product_key: str) -> dict[str, Any]:
         identity = resolve_product_identity(product_key=product_key)
         menu_pages, menu_source = self._load_source_user_menu_pages()
         if menu_pages:
-            return self._build_construction_policy_payload_from_menu_pages(
+            return self._build_catalog_policy_payload_from_menu_pages(
                 identity=identity,
                 menu_pages=menu_pages,
                 menu_source=menu_source,
             )
-        label = "施工管理预览版" if identity["edition_key"] == "preview" else "施工管理标准版"
+        label = self._catalog_product_label(identity=identity)
         return {
             "product_key": identity["product_key"],
             "base_product_key": identity["base_product_key"],
@@ -234,7 +254,19 @@ class ProductPolicyCatalogSyncService:
             },
         }
 
-    def _build_construction_policy_payload_from_menu_pages(
+    def _catalog_product_label(self, *, identity: dict[str, str]) -> str:
+        hook_payload = call_extension_hook_first(
+            self.env,
+            "smart_core_product_policy_catalog_label",
+            self.env,
+            identity,
+        )
+        value = _text(hook_payload)
+        if value:
+            return value
+        return identity["product_key"]
+
+    def _build_catalog_policy_payload_from_menu_pages(
         self,
         *,
         identity: dict[str, str],
@@ -247,12 +279,12 @@ class ProductPolicyCatalogSyncService:
         scene_bindings: dict[str, dict[str, str]] = {}
         emitted_page_signatures: set[tuple[str, str, str]] = set()
         for index, page in enumerate(menu_pages, start=1):
-            group_key = _text(page.get("group_key")) or "construction.menu"
+            group_key = _text(page.get("group_key")) or "catalog.menu"
             group = groups_by_key.setdefault(
                 group_key,
                 {
                     "group_key": group_key,
-                    "group_label": _text(page.get("group_label")) or "施工管理",
+                    "group_label": _text(page.get("group_label")) or "业务目录",
                     "category": "user_visible_menu",
                     "menus": [],
                 },
@@ -265,7 +297,7 @@ class ProductPolicyCatalogSyncService:
                 continue
             if res_model:
                 emitted_page_signatures.add(page_signature)
-            capability_key = f"construction.menu.{_slug(page_key)}"
+            capability_key = f"catalog.menu.{_slug(page_key)}"
             target_scene_key = _text(page.get("target_scene_key"))
             menu = {
                 "menu_key": _text(page.get("menu_key")) or page_key,
@@ -315,7 +347,7 @@ class ProductPolicyCatalogSyncService:
                     "capability_key": capability_key,
                     "label": label,
                     "group_key": group_key,
-                    "group_label": _text(page.get("group_label")) or "施工管理",
+                    "group_label": _text(page.get("group_label")) or "业务目录",
                     "target_scene_key": target_scene_key,
                     "target_page_key": page_key,
                     "product_key": _text(page.get("app_id")),
@@ -333,7 +365,7 @@ class ProductPolicyCatalogSyncService:
                 }
             )
         menu_groups = [groups_by_key[key] for key in groups_by_key]
-        label = "施工管理预览版" if identity["edition_key"] == "preview" else "施工管理标准版"
+        label = self._catalog_product_label(identity=identity)
         return {
             "product_key": identity["product_key"],
             "base_product_key": identity["base_product_key"],
@@ -365,9 +397,19 @@ class ProductPolicyCatalogSyncService:
 
     def build_policy_payload(self, *, product_key: str) -> dict[str, Any]:
         identity = resolve_product_identity(product_key=product_key)
-        if identity["base_product_key"] == "construction":
-            return self.build_construction_policy_payload(product_key=identity["product_key"])
+        if self._is_catalog_backed_product(identity=identity):
+            return self.build_catalog_policy_payload(product_key=identity["product_key"])
         return ProductPolicyService(self.env).get_policy(product_key=identity["product_key"])
+
+    def _is_catalog_backed_product(self, *, identity: dict[str, str]) -> bool:
+        hook_payload = call_extension_hook_first(
+            self.env,
+            "smart_core_product_policy_catalog_base_keys",
+            self.env,
+        )
+        values = hook_payload if isinstance(hook_payload, (list, tuple, set)) else []
+        base_keys = {_text(item) for item in values if _text(item)}
+        return _text(identity.get("base_product_key")) in base_keys
 
     def sync_policy(self, *, product_key: str, preserve_state: bool = True, preserve_access_level: bool = True):
         identity = resolve_product_identity(product_key=product_key)

@@ -9,6 +9,7 @@ SOURCE_KIND = "release_navigation_projection"
 SOURCE_AUTHORITIES = ("delivery_engine_v1", "legacy_release_navigation_fallback")
 NO_BUSINESS_FACT_AUTHORITY = True
 LEGACY_FALLBACK_SOURCE_KIND = "legacy_release_navigation_fallback"
+_LEGACY_RELEASE_NAVIGATION_LEAVES: list[dict] = []
 
 
 def source_authority_contract() -> dict:
@@ -68,6 +69,56 @@ def _leaf(
     }
 
 
+def register_legacy_release_navigation_leaf(
+    *,
+    key: str,
+    label: str,
+    route: str,
+    scene_key: str | None = None,
+    product_key: str | None = None,
+    visible_roles: tuple[str, ...] | list[str] | None = None,
+) -> None:
+    leaf_key = str(key or "").strip()
+    leaf_label = str(label or "").strip()
+    leaf_route = str(route or "").strip()
+    if not leaf_key or not leaf_label or not leaf_route:
+        return
+    roles = tuple(str(role or "").strip().lower() for role in (visible_roles or ()) if str(role or "").strip())
+    row = {
+        "key": leaf_key,
+        "label": leaf_label,
+        "route": leaf_route,
+        "scene_key": str(scene_key or "").strip(),
+        "product_key": str(product_key or "").strip(),
+        "visible_roles": roles,
+    }
+    for index, item in enumerate(_LEGACY_RELEASE_NAVIGATION_LEAVES):
+        if item.get("key") == leaf_key:
+            _LEGACY_RELEASE_NAVIGATION_LEAVES[index] = row
+            return
+    _LEGACY_RELEASE_NAVIGATION_LEAVES.append(row)
+
+
+def _registered_product_children(role_code: str) -> list[dict]:
+    role = str(role_code or "").strip().lower()
+    rows: list[dict] = []
+    for item in _LEGACY_RELEASE_NAVIGATION_LEAVES:
+        roles = item.get("visible_roles") or ()
+        if roles and role not in roles:
+            continue
+        rows.append(
+            _leaf(
+                key=item.get("key") or "",
+                label=item.get("label") or "",
+                route=item.get("route") or "",
+                scene_key=item.get("scene_key") or None,
+                product_key=item.get("product_key") or None,
+                legacy_fallback=True,
+            )
+        )
+    return rows
+
+
 def build_release_navigation_contract(data: dict) -> dict:
     payload = data if isinstance(data, dict) else {}
     delivery_payload = payload.get("delivery_engine_v1") if isinstance(payload.get("delivery_engine_v1"), dict) else {}
@@ -88,44 +139,7 @@ def build_release_navigation_contract(data: dict) -> dict:
     role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
     role_code = str(role_surface.get("role_code") or "").strip().lower()
 
-    product_children = [
-        _leaf(
-            key="release.fr1.project_intake",
-            label="FR-1 项目立项",
-            route="/s/projects.intake",
-            scene_key="projects.intake",
-            product_key="fr1",
-            legacy_fallback=True,
-        ),
-        _leaf(
-            key="release.fr2.project_flow",
-            label="FR-2 项目推进",
-            route="/release/fr2",
-            product_key="fr2",
-            legacy_fallback=True,
-        ),
-        _leaf(
-            key="release.fr3.cost_tracking",
-            label="FR-3 成本记录",
-            route="/release/fr3",
-            product_key="fr3",
-            legacy_fallback=True,
-        ),
-        _leaf(
-            key="release.fr4.payment_tracking",
-            label="FR-4 付款记录",
-            route="/release/fr4",
-            product_key="fr4",
-            legacy_fallback=True,
-        ),
-        _leaf(
-            key="release.fr5.settlement_summary",
-            label="FR-5 结算结果",
-            route="/release/fr5",
-            product_key="fr5",
-            legacy_fallback=True,
-        ),
-    ]
+    product_children = _registered_product_children(role_code)
 
     utility_children = [
         _leaf(
@@ -137,9 +151,6 @@ def build_release_navigation_contract(data: dict) -> dict:
             legacy_fallback=True,
         ),
     ]
-
-    if role_code not in {"pm", "owner", "executive"}:
-        product_children = product_children[:1]
 
     nav = [
         {
@@ -179,7 +190,7 @@ def build_release_navigation_contract(data: dict) -> dict:
         "role_code": role_code,
         "nav": nav,
         "meta": {
-            "product_keys": ["fr1", "fr2", "fr3", "fr4", "fr5"],
+            "product_keys": [str((leaf.get("meta") or {}).get("product_key") or "") for leaf in product_children if (leaf.get("meta") or {}).get("product_key")],
             "group_count": 2,
             "leaf_count": len(product_children) + len(utility_children),
             "source": "legacy_release_navigation_v1",

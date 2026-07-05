@@ -170,7 +170,7 @@ from odoo.addons.smart_core.models.ui_base_contract_asset_event_trigger import I
 from odoo.addons.smart_core.models.user_view_preference import ScUserViewPreference
 from odoo.addons.smart_core.delivery.product_policy_service import (
     ProductPolicyService,
-    legacy_default_policy_node_source_authority_contract,
+    default_policy_node_source_authority_contract,
 )
 from odoo.addons.smart_core.delivery import product_identity
 from odoo.addons.smart_core.governance.scene_drift_engine import SceneDriftEngine
@@ -331,18 +331,18 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertTrue(product_policy_source.get("no_business_fact_authority"))
         self.assertIn("sc.product.policy", product_policy_source.get("authorities") or [])
         default_policy_source = ProductPolicyService.default_policy_source_authority_contract()
-        self.assertEqual(default_policy_source.get("kind"), "legacy_default_product_policy_provider")
+        self.assertEqual(default_policy_source.get("kind"), "platform_default_product_policy_provider")
         self.assertTrue(default_policy_source.get("no_business_fact_authority"))
-        self.assertEqual(default_policy_source.get("legacy_policy_node_source"), "legacy_default_product_policy_node_projection")
-        node_source = legacy_default_policy_node_source_authority_contract()
-        self.assertEqual(node_source.get("kind"), "legacy_default_product_policy_node_projection")
-        self.assertTrue(node_source.get("legacy_compatibility"))
+        self.assertEqual(default_policy_source.get("default_policy_node_source"), "platform_default_product_policy_node_projection")
+        node_source = default_policy_node_source_authority_contract()
+        self.assertEqual(node_source.get("kind"), "platform_default_product_policy_node_projection")
+        self.assertTrue(node_source.get("platform_default"))
         self.assertEqual(product_identity_source.get("kind"), "delivery_product_identity_resolver")
         self.assertTrue(product_identity_source.get("no_business_fact_authority"))
-        self.assertEqual(product_identity_source.get("legacy_default_base_source"), "legacy_default_base_product_projection")
+        self.assertEqual(product_identity_source.get("default_base_source"), "platform_default_base_product_projection")
         default_base_source = product_identity.legacy_default_base_source_authority_contract()
-        self.assertEqual(default_base_source.get("kind"), "legacy_default_base_product_projection")
-        self.assertTrue(default_base_source.get("legacy_compatibility"))
+        self.assertEqual(default_base_source.get("kind"), "platform_default_base_product_projection")
+        self.assertTrue(default_base_source.get("platform_default"))
         scene_contract_source = scene_contract_builder.source_authority_contract()
         legacy_title_source = scene_contract_builder.legacy_product_title_source_authority_contract()
         self.assertEqual(scene_contract_source.get("kind"), "release_surface_scene_contract_projection")
@@ -350,11 +350,11 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertEqual(legacy_title_source.get("kind"), "legacy_release_product_title_projection")
         self.assertTrue(legacy_title_source.get("legacy_compatibility"))
         page_contract_source = page_contracts_builder.source_authority_contract()
-        page_copy_source = page_contracts_builder.legacy_page_copy_source_authority_contract()
+        page_copy_source = page_contracts_builder.page_text_override_source_authority_contract()
         self.assertEqual(page_contract_source.get("kind"), "page_contract_projection")
         self.assertTrue(page_contract_source.get("no_business_fact_authority"))
-        self.assertEqual(page_copy_source.get("kind"), "legacy_industry_page_copy_projection")
-        self.assertTrue(page_copy_source.get("legacy_compatibility"))
+        self.assertEqual(page_copy_source.get("kind"), "page_text_override_projection")
+        self.assertTrue(page_copy_source.get("extension_policy"))
         startup_source = SystemInitPayloadBuilder.source_authority_contract()
         self.assertEqual(startup_source.get("kind"), "system_init_startup_payload_projection")
         self.assertTrue(startup_source.get("no_business_fact_authority"))
@@ -411,15 +411,15 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
     def test_release_product_identity_resolver_is_not_construction_locked(self):
         identity = product_identity.resolve_product_identity(product_key="platform.preview")
         defaults = product_identity.default_operator_product_keys(base_product_key=identity.get("base_product_key"))
-        legacy_identity = product_identity.resolve_product_identity()
+        default_identity = product_identity.resolve_product_identity()
 
         self.assertEqual(identity.get("product_key"), "platform.preview")
         self.assertEqual(identity.get("base_product_key"), "platform")
         self.assertEqual(identity.get("edition_key"), "preview")
         self.assertEqual(defaults, ("platform.standard", "platform.preview"))
         self.assertEqual(
-            ((legacy_identity.get("legacy_default_base_source_authority") or {}).get("kind")),
-            "legacy_default_base_product_projection",
+            ((default_identity.get("default_base_source_authority") or {}).get("kind")),
+            "platform_default_base_product_projection",
         )
 
     def test_release_operator_default_base_product_can_be_configured(self):
@@ -488,10 +488,7 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
                 self.assertTrue(source.get("projection_only"))
                 self.assertTrue(source.get("no_business_fact_authority"))
         approval_source = ReleaseApprovalPolicyService.source_authority_contract()
-        legacy_role_source = ReleaseApprovalPolicyService.legacy_role_source_authority_contract()
-        self.assertEqual(approval_source.get("legacy_role_resolver"), "legacy_construction_role_group_resolver")
-        self.assertEqual(legacy_role_source.get("kind"), "legacy_construction_role_group_resolver")
-        self.assertTrue(legacy_role_source.get("legacy_compatibility"))
+        self.assertIn("extension_role_resolver", approval_source.get("authorities") or [])
         nav_source = release_navigation_contract_builder.source_authority_contract()
         self.assertEqual(nav_source.get("kind"), "release_navigation_projection")
         self.assertTrue(nav_source.get("no_business_fact_authority"))
@@ -528,7 +525,6 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         source = reason_codes.source_authority_contract()
         legacy_source = reason_codes.legacy_business_reason_source_authority_contract()
         handler_source = handler_reason_codes.source_authority_contract()
-        payment_meta = reason_codes.failure_meta_for_reason(reason_codes.REASON_PAYMENT_NOT_FULLY_PAID)
 
         self.assertEqual(source.get("kind"), "reason_code_metadata_registry")
         self.assertTrue(source.get("no_business_fact_authority"))
@@ -537,7 +533,7 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertTrue(handler_source.get("metadata_proxy_only"))
         self.assertEqual(legacy_source.get("kind"), "legacy_business_reason_metadata_provider")
         self.assertTrue(legacy_source.get("legacy_compatibility"))
-        self.assertEqual((payment_meta.get("source_authority") or {}).get("kind"), "legacy_business_reason_metadata_provider")
+        self.assertEqual(reason_codes.legacy_business_reason_meta_mapping(), {})
 
     def test_contract_governance_declares_legacy_industry_profiles(self):
         source = contract_governance.source_authority_contract()
@@ -601,11 +597,11 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
     def test_industry_orchestration_adapter_does_not_claim_business_fact_authority(self):
         source = industry_orchestration_service_adapter.source_authority_contract()
 
-        self.assertEqual(source.get("kind"), "construction_industry_orchestration_adapter")
+        self.assertEqual(source.get("kind"), "industry_orchestration_adapter")
         self.assertTrue(source.get("projection_only"))
         self.assertTrue(source.get("no_business_fact_authority"))
         self.assertEqual(source.get("adapter_layer"), "industry_orchestration_adapter")
-        self.assertIn("smart_construction_core.core_extension", source.get("authorities") or [])
+        self.assertIn("smart_core.extension_hooks", source.get("authorities") or [])
         fallback_source = industry_orchestration_service_adapter._FallbackCostTrackingService.source_authority_contract()
         self.assertEqual(fallback_source.get("kind"), "cost_tracking_missing_extension_degraded_projection")
         self.assertTrue(fallback_source.get("no_business_fact_authority"))

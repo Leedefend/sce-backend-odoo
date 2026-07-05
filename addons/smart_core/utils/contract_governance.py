@@ -8,8 +8,19 @@ SOURCE_AUTHORITIES = ("native_contract", "governance_rules", "legacy_industry_go
 NO_BUSINESS_FACT_AUTHORITY = True
 LEGACY_INDUSTRY_GOVERNANCE_SOURCE_KIND = "legacy_industry_governance_profile"
 LEGACY_USER_SURFACE_MODEL_POLICY_SOURCE_KIND = "legacy_user_surface_model_policy"
-LEGACY_RECORD_CONTEXT_CLEAR_MODELS = {"project.project"}
-LEGACY_DELETE_ONLY_MODELS = {"project.task", "res.company", "hr.department", "res.users"}
+LEGACY_RECORD_CONTEXT_CLEAR_MODELS: set[str] = set()
+LEGACY_DELETE_ONLY_MODELS = {"res.company", "hr.department", "res.users"}
+_LEGACY_STANDARD_LIST_PROFILE_REGISTRY: list[dict[str, Any]] = []
+_LEGACY_FIELD_PRESENTATION_REGISTRY: dict[tuple[str, str], dict[str, Any]] = {}
+_LEGACY_PROJECT_FORM_GOVERNANCE_MODELS: set[str] = set()
+_LEGACY_PROJECT_FORM_PROFILE_REGISTRY: dict[str, dict[str, Any]] = {}
+_LEGACY_PROJECT_TASK_FORM_GOVERNANCE_MODELS: set[str] = set()
+_LEGACY_PROJECT_KANBAN_GOVERNANCE_MODELS: set[str] = set()
+_LEGACY_PROJECT_TASK_FORM_PROFILE_REGISTRY: dict[str, dict[str, Any]] = {}
+_LEGACY_PROJECT_KANBAN_PROFILE_REGISTRY: dict[str, dict[str, Any]] = {}
+_LEGACY_KANBAN_ROW_ACTION_REGISTRY: dict[str, list[dict[str, Any]]] = {}
+_CAPABILITY_GROUP_PROFILE_REGISTRY: dict[str, dict[str, Any]] = {}
+_SCENE_SEMANTIC_PROFILE_REGISTRY: list[dict[str, Any]] = []
 
 CONTRACT_MODES = {"user", "hud"}
 CONTRACT_SURFACES = {"user", "native", "hud"}
@@ -111,22 +122,6 @@ _USER_SCENE_ACCESS_KEYS = (
     "suggested_action",
 )
 
-_PROJECT_FORM_PRIMARY_FIELDS = [
-    "name",
-    "project_type_id",
-    "project_category_id",
-    "lifecycle_state",
-    "stage_id",
-    "manager_id",
-    "user_id",
-    "owner_id",
-    "company_id",
-    "start_date",
-    "end_date",
-    "contract_no",
-    "budget_total",
-    "location",
-]
 _PROJECT_FORM_PAGE_PRESERVE_FIELDS = {
     "access_instruction_message",
     "alias_id",
@@ -153,29 +148,9 @@ _TECHNICAL_RELATION_FIELD_PREFIXES = (
     "rejected",
     "validated",
 )
-_PROJECT_FORM_CREATE_HIDDEN_FIELDS = {
-    "project_code",
-    "code",
-    "company_id",
-    "analytic_account_id",
-    "lifecycle_state",
-    "stage_id",
-    "last_update_status",
-    "privacy_visibility",
-    "rating_status",
-    "rating_status_period",
-}
 _PROJECT_FORM_FIELD_MAX = 25
 _PROJECT_FORM_HEADER_ACTION_MAX = 3
 _PROJECT_FORM_SMART_ACTION_MAX = 4
-_PROJECT_FORM_ACTION_DEMOTE_KEYWORDS = {
-    "设置阶段",
-    "评分",
-    "cron",
-    "ir_cron",
-    "演示",
-    "showcase",
-}
 _ENTERPRISE_COMPANY_FORM_FIELDS = [
     "name",
     "sc_short_name",
@@ -236,269 +211,22 @@ _ENTERPRISE_USER_FIELD_LABELS = {
     "sc_role_landing_label": "默认首页",
     "sc_user_role_group_ids": "业务角色组",
 }
-_PROJECT_FORM_ACTION_PRIORITIES = (
-    "提交",
-    "进入下一阶段",
-    "创建项目",
-    "保存",
-    "查看任务",
-)
 _PROJECT_FORM_ACTION_GROUP_LIMIT = 5
-_PROJECT_FORM_ACTION_GROUP_LABELS = {
-    "basic": "基础操作",
-    "workflow": "流程推进",
-    "drilldown": "业务查看",
-    "other": "更多操作",
+_PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS = {
+    "basic": "Primary",
+    "workflow": "Workflow",
+    "drilldown": "Open",
+    "other": "More",
 }
-_TIER_REVIEW_LIST_NAV_ACTION_PREFIXES = (
-    "smart_construction_core.action_sc_tier_review_my_",
-)
-_PROJECT_KANBAN_PRIMARY_FIELDS = [
-    "name",
-    "project_code",
-    "manager_id",
-]
-_PROJECT_KANBAN_SECONDARY_FIELDS = [
-    "stage_id",
-    "lifecycle_state",
-    "end_date",
-    "budget_total",
-]
-_PROJECT_KANBAN_STATUS_FIELDS = [
-    "lifecycle_state",
-    "stage_id",
-]
-_PROJECT_TASK_FORM_FIELDS = [
-    "name",
-    "project_id",
-    "stage_id",
-    "sc_state",
-    "user_ids",
-    "date_deadline",
-    "priority",
-    "description",
-]
-_PROJECT_TASK_FIELD_LABELS = {
-    "name": "任务名称",
-    "project_id": "所属项目",
-    "stage_id": "当前阶段",
-    "sc_state": "执行状态",
-    "user_ids": "执行人",
-    "date_deadline": "截止日期",
-    "priority": "优先级",
-    "description": "执行说明",
-}
-_PROJECT_LIST_COLUMNS = [
-    "name",
-    "project_code",
-    "owner_id",
-    "sc_partner_display_name",
-    "operation_strategy",
-    "lifecycle_state",
-    "user_id",
-    "contract_amount",
-    "dashboard_progress_rate",
-    "write_date",
-]
-_PROJECT_LIST_COLUMN_LABELS = {
-    "name": "名称",
-    "project_code": "项目编号",
-    "owner_id": "业主单位",
-    "sc_partner_display_name": "关联单位",
-    "operation_strategy": "经营方式",
-    "lifecycle_state": "项目状态",
-    "user_id": "项目负责人",
-    "contract_amount": "合同总额",
-    "dashboard_progress_rate": "进度(%)",
-    "write_date": "更新时间",
-}
+_TIER_REVIEW_LIST_NAV_ACTION_PREFIXES = ()
 _BUSINESS_FIELD_LABEL_OVERRIDES = {
     "display_name": "名称",
-    "is_favorite": "我的收藏",
-}
-_PROJECT_TASK_LIST_COLUMNS = [
-    "name",
-    "project_id",
-    "user_ids",
-    "stage_id",
-    "sc_state",
-    "date_deadline",
-    "priority",
-]
-_PROJECT_TASK_LIST_COLUMN_LABELS = {
-    "name": "任务名称",
-    "project_id": "所属项目",
-    "user_ids": "执行人",
-    "stage_id": "当前阶段",
-    "sc_state": "执行状态",
-    "date_deadline": "截止日期",
-    "priority": "优先级",
-}
-_PAYMENT_REQUEST_LIST_COLUMNS = [
-    "p1_visible_06fa8c6f628f",
-    "p1_visible_8fa8662ad38f",
-    "p1_visible_3e7255522b33",
-    "p1_visible_2c346345746e",
-    "p1_visible_ccfa1326c88f",
-    "p1_visible_c00fc55a25b8",
-    "p1_visible_9469a2ad32f8",
-    "p1_visible_ae1abe750af6",
-    "p1_visible_63c5facb9f66",
-    "p1_visible_e0361480e3a5",
-    "p1_visible_1874b0ce5103",
-    "p1_visible_3759fcfc297a",
-    "p1_visible_6cf6e39bece9",
-    "p1_visible_a103d7cee046",
-    "p1_visible_48a64eb40c71",
-    "p1_visible_901384917949",
-    "p1_visible_71e47f617269",
-    "p1_visible_dfc25d77dc39",
-]
-_PAYMENT_REQUEST_LIST_COLUMN_LABELS = {
-    "p1_visible_06fa8c6f628f": "单据状态",
-    "p1_visible_8fa8662ad38f": "单据编号",
-    "p1_visible_3e7255522b33": "项目名称",
-    "p1_visible_2c346345746e": "申请日期",
-    "p1_visible_ccfa1326c88f": "收款单位",
-    "p1_visible_c00fc55a25b8": "申请付款金额",
-    "p1_visible_9469a2ad32f8": "实际付款金额",
-    "p1_visible_ae1abe750af6": "可用余额",
-    "p1_visible_63c5facb9f66": "成本分类名称",
-    "p1_visible_e0361480e3a5": "备注",
-    "p1_visible_1874b0ce5103": "是否关联单据",
-    "p1_visible_3759fcfc297a": "付款账号",
-    "p1_visible_6cf6e39bece9": "金额大写",
-    "p1_visible_a103d7cee046": "户名",
-    "p1_visible_48a64eb40c71": "开户行",
-    "p1_visible_901384917949": "账号",
-    "p1_visible_71e47f617269": "填写人",
-    "p1_visible_dfc25d77dc39": "录入时间",
-}
-_TAX_DEDUCTION_REGISTRATION_LIST_COLUMNS = [
-    "p1_visible_06fa8c6f628f",
-    "p1_visible_8fa8662ad38f",
-    "p1_visible_3540b47897be",
-    "p1_visible_3e7255522b33",
-    "p1_visible_be5462bd6a62",
-    "p1_visible_ada9a85eab00",
-    "p1_visible_8acf4918f1f1",
-    "p1_visible_ee19dd75350c",
-    "p1_visible_eaa05c7105f7",
-    "p1_visible_e0361480e3a5",
-    "p1_visible_ee6a4d9e2956",
-    "p1_visible_1e62803e196c",
-]
-_TAX_DEDUCTION_REGISTRATION_LIST_COLUMN_LABELS = {
-    "p1_visible_06fa8c6f628f": "单据状态",
-    "p1_visible_8fa8662ad38f": "单据编号",
-    "p1_visible_3540b47897be": "是否转出",
-    "p1_visible_3e7255522b33": "项目名称",
-    "p1_visible_be5462bd6a62": "开票单位",
-    "p1_visible_ada9a85eab00": "发票号",
-    "p1_visible_8acf4918f1f1": "抵扣税额",
-    "p1_visible_ee19dd75350c": "抵扣总额",
-    "p1_visible_eaa05c7105f7": "抵扣附加税",
-    "p1_visible_e0361480e3a5": "备注",
-    "p1_visible_ee6a4d9e2956": "录入人",
-    "p1_visible_1e62803e196c": "单据日期",
-}
-_FOREIGN_TAX_CERTIFICATE_REGISTRATION_LIST_COLUMNS = [
-    "document_state_label",
-    "document_no",
-    "project_name",
-    "taxpayer_name",
-    "taxpayer_identifier",
-    "handler_phone",
-    "regional_tax_contact",
-    "regional_tax_contact_phone",
-    "operation_address",
-    "payment_method",
-    "contract_name",
-    "planned_amount",
-    "contract_start_date",
-    "contract_end_date",
-    "partner_name",
-    "counterparty_tax_identifier",
-    "tax_report_management_no",
-    "attachment_links",
-    "creator_name",
-    "created_time",
-]
-_FOREIGN_TAX_CERTIFICATE_REGISTRATION_LIST_COLUMN_LABELS = {
-    "document_state_label": "单据状态",
-    "document_no": "单据编号",
-    "project_name": "项目名称",
-    "taxpayer_name": "纳税人名称",
-    "taxpayer_identifier": "纳税人识别号",
-    "handler_phone": "经办人联系电话",
-    "regional_tax_contact": "区域所属税所联系人",
-    "regional_tax_contact_phone": "区域所属税所联系人手机",
-    "operation_address": "跨区域经营地址",
-    "payment_method": "经营方式",
-    "contract_name": "合同名称",
-    "planned_amount": "合同金额",
-    "contract_start_date": "合同开始日期",
-    "contract_end_date": "合同结束日期",
-    "partner_name": "合同相对方名称",
-    "counterparty_tax_identifier": "合同相对方纳税人识别号",
-    "tax_report_management_no": "跨区域涉税事项报验管理编号",
-    "attachment_links": "附件",
-    "creator_name": "录入人",
-    "created_time": "录入时间",
-}
-_ARRIVAL_CONFIRMATION_LIST_COLUMNS = [
-    "document_state",
-    "document_no",
-    "receipt_time",
-    "project_name",
-    "period_no",
-    "actual_fund_amount",
-    "deducted_amount_total",
-    "paid_amount_total",
-    "construction_unit_name",
-    "contract_amount",
-    "current_project_stage",
-    "accumulated_invoice_amount",
-    "previous_retained_balance",
-    "attachment_links",
-    "creator_name",
-    "created_time",
-]
-_ARRIVAL_CONFIRMATION_LIST_COLUMN_LABELS = {
-    "document_state": "单据状态",
-    "document_no": "单据编号",
-    "receipt_time": "时间",
-    "project_name": "项目名称",
-    "period_no": "期数",
-    "actual_fund_amount": "本期收款",
-    "deducted_amount_total": "本期代扣代缴合计",
-    "paid_amount_total": "本期拨付金额合计",
-    "construction_unit_name": "施工单位",
-    "contract_amount": "合同金额",
-    "current_project_stage": "目前形象进度",
-    "accumulated_invoice_amount": "累计开票金额",
-    "previous_retained_balance": "上期留存余额",
-    "attachment_links": "附件",
-    "creator_name": "录入人",
-    "created_time": "录入时间",
-}
-_MATERIAL_PLAN_LIST_COLUMNS = [
-    "name",
-    "project_id",
-    "date_plan",
-    "state",
-]
-_MATERIAL_PLAN_LIST_COLUMN_LABELS = {
-    "name": "单号",
-    "project_id": "项目",
-    "date_plan": "需用日期",
-    "state": "状态",
 }
 _USER_SURFACE_ACTION_GROUP_LABELS = {
-    "basic": "基础操作",
-    "workflow": "流程推进",
-    "drilldown": "业务查看",
-    "other": "更多操作",
+    "basic": "Primary",
+    "workflow": "Workflow",
+    "drilldown": "Open",
+    "other": "More",
 }
 _USER_SURFACE_NOISE_MARKERS = (
     "demo",
@@ -581,6 +309,288 @@ def _mark_legacy_user_surface_model_policy(data: dict, policy_key: str) -> None:
     diagnostics["legacy_user_surface_model_policies"] = policies
     diagnostics["legacy_user_surface_model_policy_source_authority"] = legacy_user_surface_model_policy_source_authority_contract()
     data["governance_diagnostics"] = diagnostics
+
+
+def register_legacy_standard_list_profile(profile: dict[str, Any]) -> None:
+    if not isinstance(profile, dict):
+        return
+    model_name = _safe_text(profile.get("model_name"))
+    if not model_name:
+        return
+    normalized = {
+        "model_name": model_name,
+        "columns_order": [
+            _safe_text(name)
+            for name in (profile.get("columns_order") if isinstance(profile.get("columns_order"), list) else [])
+            if _safe_text(name)
+        ],
+        "column_labels": {
+            _safe_text(key): _safe_text(value)
+            for key, value in (profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}).items()
+            if _safe_text(key)
+        },
+        "row_primary": _safe_text(profile.get("row_primary")),
+        "row_secondary": _safe_text(profile.get("row_secondary")),
+        "status_field": _safe_text(profile.get("status_field")),
+        "strict_columns": bool(profile.get("strict_columns")),
+        "profile_key": _safe_text(profile.get("profile_key")),
+        "signature_any": [
+            _safe_text(item)
+            for item in (profile.get("signature_any") if isinstance(profile.get("signature_any"), list) else [])
+            if _safe_text(item)
+        ],
+    }
+    if not normalized["columns_order"]:
+        return
+    dedupe_key = normalized["profile_key"] or normalized["model_name"]
+    for index, existing in enumerate(_LEGACY_STANDARD_LIST_PROFILE_REGISTRY):
+        existing_key = _safe_text(existing.get("profile_key")) or _safe_text(existing.get("model_name"))
+        if existing_key == dedupe_key:
+            _LEGACY_STANDARD_LIST_PROFILE_REGISTRY[index] = normalized
+            return
+    _LEGACY_STANDARD_LIST_PROFILE_REGISTRY.append(normalized)
+
+
+def register_legacy_record_context_clear_model(model_name: str) -> None:
+    model = _safe_text(model_name)
+    if model:
+        LEGACY_RECORD_CONTEXT_CLEAR_MODELS.add(model)
+
+
+def register_legacy_delete_only_model(model_name: str) -> None:
+    model = _safe_text(model_name)
+    if model:
+        LEGACY_DELETE_ONLY_MODELS.add(model)
+
+
+def register_legacy_project_form_governance_model(model_name: str) -> None:
+    model = _safe_text(model_name)
+    if model:
+        _LEGACY_PROJECT_FORM_GOVERNANCE_MODELS.add(model)
+
+
+def register_legacy_project_form_profile(model_name: str, profile: dict[str, Any]) -> None:
+    model = _safe_text(model_name)
+    if not model or not isinstance(profile, dict):
+        return
+    primary_fields = [_safe_text(name) for name in (profile.get("primary_fields") or []) if _safe_text(name)]
+    create_hidden_fields = [
+        _safe_text(name)
+        for name in (profile.get("create_hidden_fields") or [])
+        if _safe_text(name)
+    ]
+    action_priorities = [
+        _safe_text(name)
+        for name in (profile.get("action_priorities") or [])
+        if _safe_text(name)
+    ]
+    action_noise_markers = [
+        _safe_lower(name)
+        for name in (profile.get("action_noise_markers") or [])
+        if _safe_text(name)
+    ]
+    search_noise_markers = [
+        _safe_lower(name)
+        for name in (profile.get("search_noise_markers") or [])
+        if _safe_text(name)
+    ]
+    action_group_labels = {
+        _safe_text(key): _safe_text(value)
+        for key, value in _as_dict(profile.get("action_group_labels")).items()
+        if _safe_text(key) and _safe_text(value)
+    }
+    _LEGACY_PROJECT_FORM_PROFILE_REGISTRY[model] = {
+        "primary_fields": primary_fields,
+        "create_hidden_fields": create_hidden_fields,
+        "action_priorities": action_priorities,
+        "action_noise_markers": action_noise_markers,
+        "search_noise_markers": search_noise_markers,
+        "action_group_labels": action_group_labels,
+        "max_fields": int(profile.get("max_fields") or _PROJECT_FORM_FIELD_MAX),
+    }
+
+
+def register_legacy_project_task_form_governance_model(model_name: str) -> None:
+    model = _safe_text(model_name)
+    if model:
+        _LEGACY_PROJECT_TASK_FORM_GOVERNANCE_MODELS.add(model)
+
+
+def register_legacy_project_task_form_profile(model_name: str, profile: dict[str, Any]) -> None:
+    model = _safe_text(model_name)
+    if not model or not isinstance(profile, dict):
+        return
+    fields = [_safe_text(name) for name in (profile.get("fields") or []) if _safe_text(name)]
+    if not fields:
+        return
+    labels = {
+        _safe_text(key): _safe_text(value)
+        for key, value in _as_dict(profile.get("field_labels")).items()
+        if _safe_text(key) and _safe_text(value)
+    }
+    description_fields = [
+        _safe_text(name)
+        for name in (profile.get("description_fields") or [])
+        if _safe_text(name)
+    ]
+    _LEGACY_PROJECT_TASK_FORM_PROFILE_REGISTRY[model] = {
+        "fields": fields,
+        "field_labels": labels,
+        "core_group_label": _safe_text(profile.get("core_group_label")) or "基础信息",
+        "description_group_label": _safe_text(profile.get("description_group_label")) or "说明",
+        "description_fields": description_fields,
+    }
+
+
+def register_legacy_project_kanban_governance_model(model_name: str) -> None:
+    model = _safe_text(model_name)
+    if model:
+        _LEGACY_PROJECT_KANBAN_GOVERNANCE_MODELS.add(model)
+
+
+def register_legacy_project_kanban_profile(model_name: str, profile: dict[str, Any]) -> None:
+    model = _safe_text(model_name)
+    if not model or not isinstance(profile, dict):
+        return
+
+    def _field_list(key: str) -> list[str]:
+        return [_safe_text(name) for name in (profile.get(key) or []) if _safe_text(name)]
+
+    _LEGACY_PROJECT_KANBAN_PROFILE_REGISTRY[model] = {
+        "primary_fields": _field_list("primary_fields"),
+        "secondary_fields": _field_list("secondary_fields"),
+        "status_fields": _field_list("status_fields"),
+        "title_field": _safe_text(profile.get("title_field")),
+        "max_meta": int(profile.get("max_meta") or 4),
+    }
+
+
+def register_legacy_kanban_row_action(model_name: str, action: dict[str, Any]) -> None:
+    model = _safe_text(model_name)
+    if not model or not isinstance(action, dict):
+        return
+    key = _safe_text(action.get("key") or action.get("name"))
+    if not key:
+        return
+    row = _deep_clone_json_like(action)
+    row["key"] = key
+    row.setdefault("name", key)
+    _LEGACY_KANBAN_ROW_ACTION_REGISTRY.setdefault(model, [])
+    existing = _LEGACY_KANBAN_ROW_ACTION_REGISTRY[model]
+    existing[:] = [item for item in existing if _safe_text(item.get("key") or item.get("name")) != key]
+    existing.append(row)
+
+
+def register_legacy_field_presentation(model_name: str, field_name: str, profile: dict[str, Any]) -> None:
+    model = _safe_text(model_name)
+    field = _safe_text(field_name)
+    if not model or not field or not isinstance(profile, dict):
+        return
+    normalized = {
+        "label": _safe_text(profile.get("label")),
+        "widget": _safe_text(profile.get("widget")),
+        "cell_role": _safe_text(profile.get("cell_role")),
+        "mutation": _deep_clone_json_like(profile.get("mutation")) if isinstance(profile.get("mutation"), dict) else {},
+    }
+    _LEGACY_FIELD_PRESENTATION_REGISTRY[(model, field)] = normalized
+
+
+def register_capability_group_profile(group_key: str, profile: dict[str, Any]) -> None:
+    key = _safe_text(group_key)
+    if not key or not isinstance(profile, dict):
+        return
+    _CAPABILITY_GROUP_PROFILE_REGISTRY[key] = {
+        "label": _safe_text(profile.get("label"), key),
+        "icon": _safe_text(profile.get("icon")),
+        "key_prefixes": tuple(
+            _safe_lower(item)
+            for item in (profile.get("key_prefixes") if isinstance(profile.get("key_prefixes"), list) else [])
+            if _safe_text(item)
+        ),
+    }
+
+
+def register_scene_semantic_profile(profile: dict[str, Any]) -> None:
+    if not isinstance(profile, dict):
+        return
+    purpose = _safe_text(profile.get("purpose"))
+    if not purpose:
+        return
+    normalized = {
+        "purpose": purpose,
+        "code_prefixes": tuple(
+            _safe_lower(item)
+            for item in (profile.get("code_prefixes") if isinstance(profile.get("code_prefixes"), list) else [])
+            if _safe_text(item)
+        ),
+        "code_contains": tuple(
+            _safe_lower(item)
+            for item in (profile.get("code_contains") if isinstance(profile.get("code_contains"), list) else [])
+            if _safe_text(item)
+        ),
+    }
+    if not normalized["code_prefixes"] and not normalized["code_contains"]:
+        return
+    _SCENE_SEMANTIC_PROFILE_REGISTRY.append(normalized)
+
+
+def _legacy_field_presentation(model_name: str, field_name: str) -> dict[str, Any]:
+    return dict(_LEGACY_FIELD_PRESENTATION_REGISTRY.get((_safe_text(model_name), _safe_text(field_name))) or {})
+
+
+def _legacy_standard_list_profile_signature(data: dict) -> str:
+    head = _as_dict(data.get("head"))
+    context = _as_dict(data.get("context"))
+    views = _as_dict(data.get("views"))
+    tree_view = _as_dict(views.get("tree") or views.get("list"))
+    raw_parts = [
+        head.get("name"),
+        data.get("name"),
+        data.get("title"),
+        data.get("domain"),
+        data.get("domain_raw"),
+        head.get("domain"),
+        head.get("domain_raw"),
+        context.get("default_payment_family"),
+        context.get("default_source_table"),
+        tree_view.get("name"),
+        tree_view.get("domain"),
+        tree_view.get("domain_raw"),
+    ]
+    return " ".join(_safe_text(part) for part in raw_parts)
+
+
+def _legacy_standard_list_profile_matches(data: dict, profile: dict[str, Any]) -> bool:
+    model_name = _safe_text(profile.get("model_name"))
+    if not model_name or not _is_model_tree_contract(data, model_name):
+        return False
+    signature_any = profile.get("signature_any") if isinstance(profile.get("signature_any"), list) else []
+    if not signature_any:
+        return True
+    signature = _legacy_standard_list_profile_signature(data)
+    return any(token and token in signature for token in signature_any)
+
+
+def _apply_registered_legacy_standard_list_profiles(data: dict) -> None:
+    for profile in list(_LEGACY_STANDARD_LIST_PROFILE_REGISTRY):
+        model_name = _safe_text(profile.get("model_name"))
+        if not model_name or not _legacy_standard_list_profile_matches(data, profile):
+            continue
+        profile_key = _safe_text(profile.get("profile_key"))
+        if profile_key:
+            _mark_legacy_industry_governance_profile(data, profile_key)
+        _govern_standard_list_for_user(
+            data,
+            model_name=model_name,
+            columns_order=profile.get("columns_order") if isinstance(profile.get("columns_order"), list) else [],
+            column_labels=profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {},
+            row_primary=_safe_text(profile.get("row_primary")),
+            row_secondary=_safe_text(profile.get("row_secondary")),
+            status_field=_safe_text(profile.get("status_field")),
+            strict_columns=bool(profile.get("strict_columns")),
+        )
+
+
 _FORM_CORE_FIELD_MAX = 8
 _FORM_ACTION_PRIMARY_KEYWORDS = (
     "提交",
@@ -644,14 +654,9 @@ _FORM_SCENE_PROFILE_DEFAULT = "generic.form"
 _FORM_SCENE_PROFILE_PROJECT = "project.form"
 
 _CAPABILITY_GROUP_DEFAULTS = {
-    "project_management": {"label": "项目管理", "icon": "briefcase"},
-    "contract_management": {"label": "合同管理", "icon": "file-text"},
-    "cost_management": {"label": "成本管理", "icon": "calculator"},
-    "finance_management": {"label": "财务管理", "icon": "wallet"},
-    "material_management": {"label": "材料管理", "icon": "boxes"},
-    "governance": {"label": "治理配置", "icon": "shield"},
-    "analytics": {"label": "经营分析", "icon": "chart"},
-    "others": {"label": "其他能力", "icon": "grid"},
+    "governance": {"label": "Governance", "icon": "shield"},
+    "analytics": {"label": "Analytics", "icon": "chart"},
+    "others": {"label": "Other", "icon": "grid"},
 }
 
 _CONTRACT_KEY_CANONICAL_MAP = {
@@ -793,16 +798,10 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
         key = _safe_text(capability_key).lower()
         if not key:
             return "others"
-        if key.startswith(("project.", "scene.project", "wbs.", "progress.", "tender.")):
-            return "project_management"
-        if key.startswith(("contract.", "settlement.")):
-            return "contract_management"
-        if key.startswith(("cost.", "budget.", "boq.")):
-            return "cost_management"
-        if key.startswith(("finance.", "payment.", "treasury.")):
-            return "finance_management"
-        if key.startswith(("material.", "purchase.", "stock.")):
-            return "material_management"
+        for group_key, profile in _CAPABILITY_GROUP_PROFILE_REGISTRY.items():
+            prefixes = profile.get("key_prefixes") if isinstance(profile, dict) else ()
+            if prefixes and key.startswith(tuple(prefixes)):
+                return group_key
         if key.startswith(("usage.", "report.", "dashboard.", "analytics.")):
             return "analytics"
         if key.startswith(("scene.", "portal.", "config.", "permission.", "subscription.", "pack.")):
@@ -931,7 +930,11 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
         item["ui_label"] = _safe_text(item.get("ui_label"), item.get("name") or item.get("key") or "未命名能力")
         item["status"] = _normalize_capability_status(item.get("status"))
         item["group_key"] = _safe_text(item.get("group_key"), _infer_capability_group_key(item.get("key")))
-        group_meta = _CAPABILITY_GROUP_DEFAULTS.get(item["group_key"], _CAPABILITY_GROUP_DEFAULTS["others"])
+        group_meta = (
+            _CAPABILITY_GROUP_PROFILE_REGISTRY.get(item["group_key"])
+            or _CAPABILITY_GROUP_DEFAULTS.get(item["group_key"])
+            or _CAPABILITY_GROUP_DEFAULTS["others"]
+        )
         item["group_label"] = _safe_text(item.get("group_label"), group_meta.get("label") or item["group_key"])
         item["group_icon"] = _safe_text(item.get("group_icon"), group_meta.get("icon") or "")
         try:
@@ -1290,13 +1293,15 @@ def _normalize_scene_list_profile(item: dict) -> dict:
 
 def _derive_scene_meta(item: dict) -> dict:
     code = _safe_text(item.get("code") or item.get("key")).lower()
-    purpose = "业务工作"
-    if code.startswith("projects.") or "project" in code:
-        purpose = "项目推进"
-    elif code.startswith("finance.") or "payment" in code:
-        purpose = "资金与审批"
-    elif code.startswith("contracts.") or "contract" in code:
-        purpose = "合同履约"
+    purpose = "Business work"
+    for profile in _SCENE_SEMANTIC_PROFILE_REGISTRY:
+        prefixes = profile.get("code_prefixes") if isinstance(profile, dict) else ()
+        contains = profile.get("code_contains") if isinstance(profile, dict) else ()
+        if (prefixes and code.startswith(tuple(prefixes))) or (
+            contains and any(marker in code for marker in contains)
+        ):
+            purpose = _safe_text(profile.get("purpose"), purpose)
+            break
 
     access = item.get("access") if isinstance(item.get("access"), dict) else {}
     required_caps = access.get("required_capabilities") if isinstance(access.get("required_capabilities"), list) else []
@@ -1344,13 +1349,51 @@ def _is_project_form_contract(data: dict) -> bool:
     if not view_type and has_form_view:
         view_type = "form"
     primary_model = _governance_primary_model(data)
-    if primary_model != "project.project":
+    if primary_model not in _LEGACY_PROJECT_FORM_GOVERNANCE_MODELS:
         return False
     if not primary_model or model != primary_model:
         return False
     if has_form_view:
         return "form" in view_type if view_type else True
     return view_type == "form"
+
+
+def _legacy_project_form_profile(data: dict) -> dict[str, Any]:
+    profile = _LEGACY_PROJECT_FORM_PROFILE_REGISTRY.get(_governance_primary_model(data)) or {}
+    max_fields = int(profile.get("max_fields") or _PROJECT_FORM_FIELD_MAX)
+    return {
+        "primary_fields": [
+            _safe_text(name)
+            for name in (profile.get("primary_fields") or [])
+            if _safe_text(name)
+        ],
+        "create_hidden_fields": [
+            _safe_text(name)
+            for name in (profile.get("create_hidden_fields") or [])
+            if _safe_text(name)
+        ],
+        "action_priorities": [
+            _safe_text(name)
+            for name in (profile.get("action_priorities") or [])
+            if _safe_text(name)
+        ],
+        "action_noise_markers": [
+            _safe_lower(name)
+            for name in (profile.get("action_noise_markers") or [])
+            if _safe_text(name)
+        ],
+        "search_noise_markers": [
+            _safe_lower(name)
+            for name in (profile.get("search_noise_markers") or [])
+            if _safe_text(name)
+        ],
+        "action_group_labels": {
+            _safe_text(key): _safe_text(value)
+            for key, value in _as_dict(profile.get("action_group_labels")).items()
+            if _safe_text(key) and _safe_text(value)
+        },
+        "max_fields": max_fields if max_fields > 0 else _PROJECT_FORM_FIELD_MAX,
+    }
 
 
 def _is_enterprise_company_form_contract(data: dict) -> bool:
@@ -1412,7 +1455,12 @@ def _is_project_kanban_contract(data: dict) -> bool:
     if not view_type and isinstance(views.get("kanban"), dict):
         view_type = "kanban"
     primary_model = _governance_primary_model(data)
-    return bool(primary_model and model == primary_model and ("kanban" in view_type or isinstance(views.get("kanban"), dict)))
+    return bool(
+        primary_model
+        and primary_model in _LEGACY_PROJECT_KANBAN_GOVERNANCE_MODELS
+        and model == primary_model
+        and ("kanban" in view_type or isinstance(views.get("kanban"), dict))
+    )
 
 
 def _is_project_task_form_contract(data: dict) -> bool:
@@ -1430,7 +1478,12 @@ def _is_project_task_form_contract(data: dict) -> bool:
     if not view_type and isinstance(views.get("form"), dict):
         view_type = "form"
     primary_model = _governance_primary_model(data)
-    return bool(primary_model == "project.task" and model == "project.task" and "form" in view_type)
+    return bool(
+        primary_model
+        and primary_model in _LEGACY_PROJECT_TASK_FORM_GOVERNANCE_MODELS
+        and model == primary_model
+        and "form" in view_type
+    )
 
 
 def _is_model_tree_contract(data: dict, model_name: str) -> bool:
@@ -1454,31 +1507,6 @@ def _is_model_tree_contract(data: dict, model_name: str) -> bool:
         and model == model_name
         and ("tree" in view_type or "list" in view_type or has_tree_surface)
     )
-
-
-def _is_foreign_tax_certificate_registration_tree_contract(data: dict) -> bool:
-    if not _is_model_tree_contract(data, "sc.legacy.payment.residual.fact"):
-        return False
-    head = _as_dict(data.get("head"))
-    context = _as_dict(data.get("context"))
-    views = _as_dict(data.get("views"))
-    tree_view = _as_dict(views.get("tree") or views.get("list"))
-    raw_parts = [
-        head.get("name"),
-        data.get("name"),
-        data.get("title"),
-        data.get("domain"),
-        data.get("domain_raw"),
-        head.get("domain"),
-        head.get("domain_raw"),
-        context.get("default_payment_family"),
-        context.get("default_source_table"),
-        tree_view.get("name"),
-        tree_view.get("domain"),
-        tree_view.get("domain_raw"),
-    ]
-    signature = " ".join(_safe_text(part) for part in raw_parts)
-    return "tax_certificate_registration" in signature or "外经证登记" in signature
 
 
 def _is_form_contract(data: dict) -> bool:
@@ -1526,6 +1554,9 @@ def _pick_project_form_fields(data: dict) -> list[str]:
     fields_map = _as_dict(data.get("fields"))
     if not fields_map:
         return []
+    profile = _legacy_project_form_profile(data)
+    primary_fields = profile.get("primary_fields") or []
+    max_fields = int(profile.get("max_fields") or _PROJECT_FORM_FIELD_MAX)
     ordered_fields = _iter_field_order(data)
 
     def _collect_page_fields(nodes: list, current_page: str = "", out: list[str] | None = None) -> list[str]:
@@ -1554,19 +1585,19 @@ def _pick_project_form_fields(data: dict) -> list[str]:
     page_fields = _collect_page_fields(layout if isinstance(layout, list) else [])
 
     selected: list[str] = []
-    for name in _PROJECT_FORM_PRIMARY_FIELDS:
+    for name in primary_fields:
         descriptor = _as_dict(fields_map.get(name))
         if descriptor and not _is_technical_field(name, descriptor) and name not in selected:
             selected.append(name)
 
     for name in page_fields:
-        if len(selected) >= _PROJECT_FORM_FIELD_MAX:
+        if len(selected) >= max_fields:
             break
         if name not in selected:
             selected.append(name)
 
     for name in ordered_fields:
-        if len(selected) >= _PROJECT_FORM_FIELD_MAX:
+        if len(selected) >= max_fields:
             break
         descriptor = _as_dict(fields_map.get(name))
         if not descriptor or _is_technical_field(name, descriptor):
@@ -1575,7 +1606,7 @@ def _pick_project_form_fields(data: dict) -> list[str]:
             selected.append(name)
 
     for name, descriptor_raw in fields_map.items():
-        if len(selected) >= _PROJECT_FORM_FIELD_MAX:
+        if len(selected) >= max_fields:
             break
         descriptor = _as_dict(descriptor_raw)
         if _is_technical_field(name, descriptor):
@@ -1587,13 +1618,15 @@ def _pick_project_form_fields(data: dict) -> list[str]:
 
     if "name" in fields_map and "name" not in selected:
         selected.insert(0, "name")
-    return selected[:_PROJECT_FORM_FIELD_MAX]
+    return selected[:max_fields]
 
 
 def _govern_project_kanban_contract_for_user(data: dict) -> None:
     fields_map = _as_dict(data.get("fields"))
     if not fields_map:
         return
+    primary_model = _governance_primary_model(data)
+    registered_profile = _LEGACY_PROJECT_KANBAN_PROFILE_REGISTRY.get(primary_model) or {}
 
     available = [name for name in fields_map.keys() if not _is_technical_field(name, _as_dict(fields_map.get(name)))]
     primary: list[str] = []
@@ -1604,11 +1637,11 @@ def _govern_project_kanban_contract_for_user(data: dict) -> None:
         if name in available and name not in target:
             target.append(name)
 
-    for name in _PROJECT_KANBAN_PRIMARY_FIELDS:
+    for name in registered_profile.get("primary_fields") or []:
         _pick(primary, name)
-    for name in _PROJECT_KANBAN_SECONDARY_FIELDS:
+    for name in registered_profile.get("secondary_fields") or []:
         _pick(secondary, name)
-    for name in _PROJECT_KANBAN_STATUS_FIELDS:
+    for name in registered_profile.get("status_fields") or []:
         _pick(status, name)
 
     if not primary:
@@ -1637,12 +1670,13 @@ def _govern_project_kanban_contract_for_user(data: dict) -> None:
     selected = [name for name in primary + secondary if name]
     selected = selected[:8]
     data["visible_fields"] = selected
+    configured_title_field = _safe_text(registered_profile.get("title_field"))
     default_profile = {
-        "title_field": primary[0] if primary else "name",
+        "title_field": configured_title_field if configured_title_field in fields_map else (primary[0] if primary else "name"),
         "primary_fields": primary[:3],
         "secondary_fields": secondary[:4],
         "status_fields": status[:2],
-        "max_meta": 4,
+        "max_meta": int(registered_profile.get("max_meta") or 4),
     }
 
     views = _as_dict(data.get("views"))
@@ -1718,23 +1752,17 @@ def _govern_project_kanban_contract_for_user(data: dict) -> None:
     data["kanban_profile"] = profile
     kanban["kanban_profile"] = dict(profile)
     row_actions = kanban.get("row_actions") if isinstance(kanban.get("row_actions"), list) else []
-    if not any(_safe_text(row.get("key")) == "open_project_dashboard" for row in row_actions if isinstance(row, dict)):
-        row_actions.append({
-            "key": "open_project_dashboard",
-            "name": "open_project_dashboard",
-            "label": "进入项目驾驶舱",
-            "intent": "open_scene",
-            "level": "row",
-            "trigger": "row_click",
-            "display_mode": "row_click",
-            "selection": "single",
-            "target": {
-                "route": "/s/project.management",
-                "scene_key": "project.management",
-                "entry_intent": "project.dashboard.enter",
-                "project_id": "${id}",
-            },
-        })
+    existing_keys = {
+        _safe_text(row.get("key") or row.get("name"))
+        for row in row_actions
+        if isinstance(row, dict)
+    }
+    for action in _LEGACY_KANBAN_ROW_ACTION_REGISTRY.get(primary_model, []):
+        action_key = _safe_text(action.get("key") or action.get("name"))
+        if not action_key or action_key in existing_keys:
+            continue
+        row_actions.append(_deep_clone_json_like(action))
+        existing_keys.add(action_key)
     kanban["row_actions"] = row_actions
     views["kanban"] = kanban
     data["views"] = views
@@ -1820,7 +1848,8 @@ def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
     existing_field_names: list[str] = []
     _collect_layout_field_names(filtered_layout, existing_field_names)
     if not existing_field_names:
-        for name in _PROJECT_FORM_PRIMARY_FIELDS:
+        primary_fields = _legacy_project_form_profile(data).get("primary_fields") or []
+        for name in primary_fields:
             if name in selected_fields:
                 filtered_layout.append({"type": "field", "name": name})
         _collect_layout_field_names(filtered_layout, existing_field_names)
@@ -1864,6 +1893,7 @@ def _govern_project_form_search(data: dict) -> None:
     filters = search.get("filters")
     if not isinstance(filters, list):
         return
+    noise_markers = _legacy_project_form_profile(data).get("search_noise_markers") or []
     cleaned = []
     seen: set[str] = set()
     for row in filters:
@@ -1875,7 +1905,7 @@ def _govern_project_form_search(data: dict) -> None:
             continue
         if not label:
             continue
-        if any(marker in _safe_lower(label) for marker in ("活动", "评分", "status_period")):
+        if any(marker in _safe_lower(label) for marker in noise_markers):
             continue
         cleaned.append(row)
         seen.add(key)
@@ -1885,22 +1915,24 @@ def _govern_project_form_search(data: dict) -> None:
     data["search"] = search
 
 
-def _action_priority(action: dict) -> int:
+def _action_priority(action: dict, data: dict | None = None) -> int:
     label = _safe_text(action.get("label"))
-    for idx, key in enumerate(_PROJECT_FORM_ACTION_PRIORITIES):
+    priorities = _legacy_project_form_profile(data or {}).get("action_priorities") or []
+    for idx, key in enumerate(priorities):
         if key and key in label:
             return idx
-    return len(_PROJECT_FORM_ACTION_PRIORITIES) + 1
+    return len(priorities) + 1
 
 
-def _is_noisy_project_action(action: dict) -> bool:
+def _is_noisy_project_action(action: dict, data: dict | None = None) -> bool:
     key = _safe_lower(action.get("key"))
     label = _safe_lower(action.get("label"))
     if not label and not key:
         return True
     if label.isdigit():
         return True
-    for marker in _PROJECT_FORM_ACTION_DEMOTE_KEYWORDS:
+    markers = _legacy_project_form_profile(data or {}).get("action_noise_markers") or []
+    for marker in markers:
         if marker in key or marker in label:
             return True
     return False
@@ -1919,7 +1951,7 @@ def _classify_project_action_group(action: dict) -> str:
     return "other"
 
 
-def _build_project_action_groups(rows: list[dict]) -> list[dict]:
+def _build_project_action_groups(rows: list[dict], data: dict | None = None) -> list[dict]:
     grouped: dict[str, list[dict]] = {"basic": [], "workflow": [], "drilldown": [], "other": []}
     for row in rows:
         if not isinstance(row, dict):
@@ -1928,6 +1960,8 @@ def _build_project_action_groups(rows: list[dict]) -> list[dict]:
         grouped.setdefault(group_key, []).append(row)
 
     result: list[dict] = []
+    group_labels = dict(_PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS)
+    group_labels.update(_legacy_project_form_profile(data or {}).get("action_group_labels") or {})
     for key in ("basic", "workflow", "drilldown", "other"):
         actions = grouped.get(key) or []
         if not actions:
@@ -1936,7 +1970,7 @@ def _build_project_action_groups(rows: list[dict]) -> list[dict]:
         overflow = actions[_PROJECT_FORM_ACTION_GROUP_LIMIT:]
         result.append({
             "key": key,
-            "label": _PROJECT_FORM_ACTION_GROUP_LABELS.get(key, key),
+            "label": group_labels.get(key, key),
             "actions": primary,
             "overflow_actions": overflow,
             "overflow_count": len(overflow),
@@ -1970,7 +2004,7 @@ def _govern_project_form_actions(data: dict) -> None:
     for row in rows:
         if not isinstance(row, dict):
             continue
-        if _is_noisy_project_action(row):
+        if _is_noisy_project_action(row, data):
             continue
         level = _safe_lower(row.get("level"))
         if level == "header":
@@ -1978,8 +2012,8 @@ def _govern_project_form_actions(data: dict) -> None:
         elif level in {"smart", "row"}:
             smart_rows.append(row)
 
-    header_rows = sorted(header_rows, key=lambda item: (_action_priority(item), _safe_text(item.get("label"))))
-    smart_rows = sorted(smart_rows, key=lambda item: (_action_priority(item), _safe_text(item.get("label"))))
+    header_rows = sorted(header_rows, key=lambda item: (_action_priority(item, data), _safe_text(item.get("label"))))
+    smart_rows = sorted(smart_rows, key=lambda item: (_action_priority(item, data), _safe_text(item.get("label"))))
     curated = header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX] + smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX]
     data["buttons"] = curated
     _emit_scene_action_semantics(
@@ -1987,7 +2021,7 @@ def _govern_project_form_actions(data: dict) -> None:
         header_rows=header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX],
         record_rows=smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX],
     )
-    data["action_groups"] = _build_project_action_groups(curated)
+    data["action_groups"] = _build_project_action_groups(curated, data)
 
 
 def _build_project_lifecycle_summary(data: dict) -> None:
@@ -2042,6 +2076,7 @@ def _build_project_lifecycle_summary(data: dict) -> None:
 
 def _govern_project_form_contract_for_user(data: dict) -> None:
     selected = _pick_project_form_fields(data)
+    profile = _legacy_project_form_profile(data)
     _trim_contract_field_maps(data, selected)
     data["visible_fields"] = selected
     views = _as_dict(data.get("views"))
@@ -2052,7 +2087,7 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
     data["form_profile"] = {
         "core_fields": selected[:8],
         "advanced_fields": selected[8:],
-        "max_fields": _PROJECT_FORM_FIELD_MAX,
+        "max_fields": int(profile.get("max_fields") or _PROJECT_FORM_FIELD_MAX),
     }
     # Keep parser-native notebook/page tree intact for project form alignment.
     # Do not prune form layout by selected fields in user mode.
@@ -2077,26 +2112,35 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
 def _govern_project_task_form_for_user(data: dict) -> None:
     if not _is_project_task_form_contract(data):
         return
+    primary_model = _governance_primary_model(data)
+    profile = _LEGACY_PROJECT_TASK_FORM_PROFILE_REGISTRY.get(primary_model) or {}
+    if not profile:
+        return
     fields_map = _as_dict(data.get("fields"))
-    selected = [name for name in _PROJECT_TASK_FORM_FIELDS if name in fields_map]
+    configured_fields = [_safe_text(name) for name in (profile.get("fields") or []) if _safe_text(name)]
+    selected = [name for name in configured_fields if name in fields_map]
     if not selected:
         return
+    label_map = _as_dict(profile.get("field_labels"))
+    description_fields = set(profile.get("description_fields") or [])
+    core_group_label = _safe_text(profile.get("core_group_label")) or "基础信息"
+    description_group_label = _safe_text(profile.get("description_group_label")) or "说明"
 
     data["visible_fields"] = selected
     data["field_groups"] = [
         {
             "name": "core",
-            "label": "任务基础信息",
+            "label": core_group_label,
             "priority": 1,
             "collapsible": False,
-            "fields": [name for name in selected if name != "description"],
+            "fields": [name for name in selected if name not in description_fields],
         },
         {
             "name": "advanced",
-            "label": "任务说明",
+            "label": description_group_label,
             "priority": 2,
             "collapsible": True,
-            "fields": [name for name in selected if name == "description"],
+            "fields": [name for name in selected if name in description_fields],
         },
     ]
 
@@ -2110,21 +2154,21 @@ def _govern_project_task_form_for_user(data: dict) -> None:
                 {
                     "type": "group",
                     "name": "project_task_core_group",
-                    "string": "任务基础信息",
+                    "string": core_group_label,
                     "children": [
-                        _make_labeled_field_node(name, fields_map, _PROJECT_TASK_FIELD_LABELS)
+                        _make_labeled_field_node(name, fields_map, label_map)
                         for name in selected
-                        if name != "description"
+                        if name not in description_fields
                     ],
                 },
                 {
                     "type": "group",
                     "name": "project_task_description_group",
-                    "string": "任务说明",
+                    "string": description_group_label,
                     "children": [
-                        _make_labeled_field_node(name, fields_map, _PROJECT_TASK_FIELD_LABELS)
+                        _make_labeled_field_node(name, fields_map, label_map)
                         for name in selected
-                        if name == "description"
+                        if name in description_fields
                     ],
                 },
             ],
@@ -2210,15 +2254,17 @@ def _govern_standard_list_for_user(
         schema["string"] = schema["label"]
         schema["type"] = schema.get("type") or field.get("type") or "char"
         schema["widget"] = schema.get("widget") or field.get("type") or "char"
-        if model_name == "project.project" and name == "is_favorite":
-            schema["widget"] = "boolean_favorite"
-            schema["cell_role"] = "favorite"
-            schema["mutation"] = {
-                "type": "field_toggle",
-                "operation": "record_write",
-                "field": name,
-                "value_type": "boolean",
-            }
+        presentation = _legacy_field_presentation(model_name, name)
+        if presentation:
+            if presentation.get("label"):
+                schema["label"] = presentation["label"]
+                schema["string"] = presentation["label"]
+            if presentation.get("widget"):
+                schema["widget"] = presentation["widget"]
+            if presentation.get("cell_role"):
+                schema["cell_role"] = presentation["cell_role"]
+            if isinstance(presentation.get("mutation"), dict) and presentation["mutation"]:
+                schema["mutation"] = _deep_clone_json_like(presentation["mutation"])
         if name == status_field:
             schema["cell_role"] = "status"
             schema["tone_by_value"] = {
@@ -2854,11 +2900,14 @@ def _ensure_scene_contract_v1_envelope(data: dict) -> None:
     data["scene_contract_v1"] = scene_contract
 
 
-def _business_field_label(field_name: str, current_label: Any = "") -> str:
+def _business_field_label(field_name: str, current_label: Any = "", model_name: str = "") -> str:
     name = _safe_text(field_name)
     label = _safe_text(current_label)
     if not name:
         return label
+    presentation = _legacy_field_presentation(model_name, name)
+    if presentation.get("label"):
+        return presentation["label"]
     override = _BUSINESS_FIELD_LABEL_OVERRIDES.get(name)
     if override:
         return override
@@ -2866,9 +2915,12 @@ def _business_field_label(field_name: str, current_label: Any = "") -> str:
 
 
 def _normalize_business_field_labels(data: dict) -> None:
+    head = _as_dict(data.get("head"))
+    model_name = _safe_text(head.get("model") or data.get("model"))
+
     def _normalize_column(row: dict) -> None:
         name = _safe_text(row.get("name") or row.get("field"))
-        label = _business_field_label(name, row.get("label") or row.get("string"))
+        label = _business_field_label(name, row.get("label") or row.get("string"), model_name)
         if not name or not label:
             return
         row["label"] = label
@@ -2878,7 +2930,7 @@ def _normalize_business_field_labels(data: dict) -> None:
     fields_map = _as_dict(data.get("fields"))
     for field_name, raw_descriptor in list(fields_map.items()):
         descriptor = _as_dict(raw_descriptor)
-        label = _business_field_label(field_name, descriptor.get("string"))
+        label = _business_field_label(field_name, descriptor.get("string"), model_name)
         if label:
             descriptor["string"] = label
         fields_map[field_name] = descriptor
@@ -2901,7 +2953,7 @@ def _normalize_business_field_labels(data: dict) -> None:
     list_profile = _as_dict(data.get("list_profile"))
     column_labels = _as_dict(list_profile.get("column_labels"))
     for field_name in list(column_labels.keys()):
-        label = _business_field_label(field_name, column_labels.get(field_name))
+        label = _business_field_label(field_name, column_labels.get(field_name), model_name)
         if label:
             column_labels[field_name] = label
     if column_labels:
@@ -3038,7 +3090,7 @@ def _resolve_render_profile(data: dict) -> str:
                 has_record = True
                 break
         except Exception:
-            # 非数字主键在当前项目契约中不作为“已有记录”判定依据
+            # Non-numeric ids are not treated as persisted records in this projection.
             continue
     return _RENDER_PROFILE_EDIT if has_record else _RENDER_PROFILE_CREATE
 
@@ -3106,6 +3158,9 @@ def _derive_form_core_fields(data: dict) -> list[str]:
     ordered = _iter_field_order(data)
     core: list[str] = []
     is_project_form = _is_project_form_contract(data)
+    project_form_profile = _legacy_project_form_profile(data)
+    project_form_primary_fields = project_form_profile.get("primary_fields") or []
+    project_form_create_hidden_fields = set(project_form_profile.get("create_hidden_fields") or [])
 
     def _push(name: str) -> None:
         if not name or name in core:
@@ -3115,13 +3170,13 @@ def _derive_form_core_fields(data: dict) -> list[str]:
             return
         if _is_technical_field(name, descriptor):
             return
-        if is_project_form and name in _PROJECT_FORM_CREATE_HIDDEN_FIELDS:
+        if is_project_form and name in project_form_create_hidden_fields:
             return
         core.append(name)
 
     # For project create forms, prioritize stable business fields first.
     if is_project_form:
-        for name in _PROJECT_FORM_PRIMARY_FIELDS:
+        for name in project_form_primary_fields:
             _push(name)
             if len(core) >= _FORM_CORE_FIELD_MAX:
                 break
@@ -3132,7 +3187,7 @@ def _derive_form_core_fields(data: dict) -> list[str]:
             continue
         required = _to_bool(descriptor.get("required"), fallback=False)
         readonly = _to_bool(descriptor.get("readonly"), fallback=False)
-        if is_project_form and name in _PROJECT_FORM_CREATE_HIDDEN_FIELDS:
+        if is_project_form and name in project_form_create_hidden_fields:
             continue
         if required and not readonly:
             _push(name)
@@ -3449,6 +3504,7 @@ def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
     policies: dict[str, dict[str, Any]] = {}
     contract_required_fields = set(_resolve_contract_required_fields(data, fields_map))
     is_project_form = _is_project_form_contract(data)
+    project_form_create_hidden_fields = set(_legacy_project_form_profile(data).get("create_hidden_fields") or [])
     for name, descriptor_raw in fields_map.items():
         descriptor = _as_dict(descriptor_raw)
         if not descriptor:
@@ -3458,7 +3514,7 @@ def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
         visible_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
         if name in advanced_group:
             visible_profiles = [_RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
-            if is_project_form and name not in _PROJECT_FORM_CREATE_HIDDEN_FIELDS:
+            if is_project_form and name not in project_form_create_hidden_fields:
                 visible_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
         required_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT] if required and not readonly else []
         readonly_profiles = [_RENDER_PROFILE_READONLY]
@@ -3473,7 +3529,7 @@ def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
             "group": "core" if name in core_group else ("advanced" if name in advanced_group else "secondary"),
         }
         # Project create page should not expose system-derived/status fields to end users.
-        if is_project_form and name in _PROJECT_FORM_CREATE_HIDDEN_FIELDS:
+        if is_project_form and name in project_form_create_hidden_fields:
             policies[name]["visible_profiles"] = [_RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
             policies[name]["required_profiles"] = []
             policies[name]["readonly_profiles"] = [
@@ -4503,77 +4559,7 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
     if contract_mode == "user" and _is_project_task_form_contract(data):
         _govern_project_task_form_for_user(data)
     if contract_mode == "user":
-        if _is_model_tree_contract(data, "payment.request"):
-            _mark_legacy_industry_governance_profile(data, "payment.request.list")
-        if _is_model_tree_contract(data, "project.material.plan"):
-            _mark_legacy_industry_governance_profile(data, "project.material.plan.list")
-        _govern_standard_list_for_user(
-            data,
-            model_name="project.project",
-            columns_order=_PROJECT_LIST_COLUMNS,
-            column_labels=_PROJECT_LIST_COLUMN_LABELS,
-            row_primary="name",
-            row_secondary="",
-            status_field="lifecycle_state",
-            strict_columns=True,
-        )
-        _govern_standard_list_for_user(
-            data,
-            model_name="project.task",
-            columns_order=_PROJECT_TASK_LIST_COLUMNS,
-            column_labels=_PROJECT_TASK_LIST_COLUMN_LABELS,
-            row_primary="name",
-            row_secondary="project_id",
-            status_field="sc_state",
-        )
-        _govern_standard_list_for_user(
-            data,
-            model_name="payment.request",
-            columns_order=_PAYMENT_REQUEST_LIST_COLUMNS,
-            column_labels=_PAYMENT_REQUEST_LIST_COLUMN_LABELS,
-            row_primary="name",
-            row_secondary="project_id",
-            status_field="state",
-        )
-        _govern_standard_list_for_user(
-            data,
-            model_name="sc.tax.deduction.registration",
-            columns_order=_TAX_DEDUCTION_REGISTRATION_LIST_COLUMNS,
-            column_labels=_TAX_DEDUCTION_REGISTRATION_LIST_COLUMN_LABELS,
-            row_primary="document_no",
-            row_secondary="project_id",
-            status_field="state",
-        )
-        if _is_foreign_tax_certificate_registration_tree_contract(data):
-            _govern_standard_list_for_user(
-                data,
-                model_name="sc.legacy.payment.residual.fact",
-                columns_order=_FOREIGN_TAX_CERTIFICATE_REGISTRATION_LIST_COLUMNS,
-                column_labels=_FOREIGN_TAX_CERTIFICATE_REGISTRATION_LIST_COLUMN_LABELS,
-                row_primary="document_no",
-                row_secondary="",
-                status_field="document_state_label",
-                strict_columns=True,
-            )
-        _govern_standard_list_for_user(
-            data,
-            model_name="sc.legacy.fund.confirmation.document",
-            columns_order=_ARRIVAL_CONFIRMATION_LIST_COLUMNS,
-            column_labels=_ARRIVAL_CONFIRMATION_LIST_COLUMN_LABELS,
-            row_primary="document_no",
-            row_secondary="",
-            status_field="document_state",
-            strict_columns=True,
-        )
-        _govern_standard_list_for_user(
-            data,
-            model_name="project.material.plan",
-            columns_order=_MATERIAL_PLAN_LIST_COLUMNS,
-            column_labels=_MATERIAL_PLAN_LIST_COLUMN_LABELS,
-            row_primary="name",
-            row_secondary="project_id",
-            status_field="state",
-        )
+        _apply_registered_legacy_standard_list_profiles(data)
         _govern_tier_review_list_for_user(data)
     if contract_mode == "user" and _is_enterprise_company_form_contract(data):
         _govern_enterprise_company_form_for_user(data)

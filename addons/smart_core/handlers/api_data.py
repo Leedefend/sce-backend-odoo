@@ -24,14 +24,17 @@ from odoo.http import request
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.api_data_execution_policy import client_requested_sudo, resolve_api_data_sudo
-from ..core.project_context import selected_project_id_from_context
+try:
+    from ..core.project_context import selected_record_context_id_from_context
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import selected_project_id_from_context as selected_record_context_id_from_context
 try:
     from ..core.project_context import apply_business_scope_domain
 except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
     from ..core.project_context import apply_project_scope_domain
 
     def apply_business_scope_domain(env_model, domain, params=None, context=None):
-        return apply_project_scope_domain(env_model, domain, selected_project_id_from_context(params, context))
+        return apply_project_scope_domain(env_model, domain, selected_record_context_id_from_context(params, context))
 from ..core.request_params import parse_non_negative_int, parse_positive_int
 from ..utils.extension_hooks import call_extension_hook_first
 from ..utils.reason_codes import (
@@ -985,12 +988,18 @@ class ApiDataHandler(BaseIntentHandler):
         return rows[start:end], None, True
 
     def _current_project_id(self, p: Dict[str, Any], ctx: Dict[str, Any]) -> int:
-        return selected_project_id_from_context(p, ctx)
+        return selected_record_context_id_from_context(p, ctx)
 
-    def _apply_project_scope(self, env_model, domain: List[Any], p: Dict[str, Any], ctx: Dict[str, Any]):
+    def _current_record_context_id(self, p: Dict[str, Any], ctx: Dict[str, Any]) -> int:
+        return self._current_project_id(p, ctx)
+
+    def _apply_record_scope(self, env_model, domain: List[Any], p: Dict[str, Any], ctx: Dict[str, Any]):
         return apply_business_scope_domain(env_model, domain, p, ctx)
 
-    def _project_scope_denied(self, message: str, scope_meta: Dict[str, Any]):
+    def _apply_project_scope(self, env_model, domain: List[Any], p: Dict[str, Any], ctx: Dict[str, Any]):
+        return self._apply_record_scope(env_model, domain, p, ctx)
+
+    def _record_scope_denied(self, message: str, scope_meta: Dict[str, Any]):
         return {
             "ok": False,
             "error": {
@@ -1004,6 +1013,9 @@ class ApiDataHandler(BaseIntentHandler):
             "code": 403,
         }
 
+    def _project_scope_denied(self, message: str, scope_meta: Dict[str, Any]):
+        return self._record_scope_denied(message, scope_meta)
+
     def _normalize_ids(self, ids: List[Any]) -> List[int]:
         out: List[int] = []
         for value in ids or []:
@@ -1015,17 +1027,20 @@ class ApiDataHandler(BaseIntentHandler):
                 out.append(parsed)
         return out
 
-    def _ensure_records_in_project_scope(self, env_model, ids: List[Any], p: Dict[str, Any], ctx: Dict[str, Any]):
+    def _ensure_records_in_record_scope(self, env_model, ids: List[Any], p: Dict[str, Any], ctx: Dict[str, Any]):
         normalized_ids = self._normalize_ids(ids)
         if not normalized_ids:
             return None
-        scoped_domain, scope_meta = self._apply_project_scope(env_model, [("id", "in", normalized_ids)], p, ctx)
+        scoped_domain, scope_meta = self._apply_record_scope(env_model, [("id", "in", normalized_ids)], p, ctx)
         if not scope_meta.get("applied"):
             return None
         allowed_count = env_model.search_count(scoped_domain)
         if int(allowed_count or 0) == len(set(normalized_ids)):
             return None
-        return self._project_scope_denied("当前项目上下文不允许访问或修改其他项目的数据", scope_meta)
+        return self._record_scope_denied("当前记录上下文不允许访问或修改其他记录的数据", scope_meta)
+
+    def _ensure_records_in_project_scope(self, env_model, ids: List[Any], p: Dict[str, Any], ctx: Dict[str, Any]):
+        return self._ensure_records_in_record_scope(env_model, ids, p, ctx)
 
     def _search_view_field_names(self, env_model) -> List[str]:
         model_name = str(getattr(env_model, "_name", "") or "").strip()
@@ -1622,7 +1637,7 @@ class ApiDataHandler(BaseIntentHandler):
         # 先按 groups 过滤一遍，避免 AccessError
         fields_safe = self._filter_readable_fields(env_model, fields or ["id", "name"])
         domain, search_term = self._apply_search_term_domain(env_model, domain, p, fields_safe)
-        domain, project_scope_meta = self._apply_project_scope(env_model, domain, p, ctx)
+        domain, project_scope_meta = self._apply_record_scope(env_model, domain, p, ctx)
 
         try:
             rows, order_error, python_order_applied = self._search_read_with_order(
@@ -1807,7 +1822,7 @@ class ApiDataHandler(BaseIntentHandler):
             env_model = env_model.sudo()
 
         fields_safe = self._filter_readable_fields(env_model, fields)
-        scoped_error = self._ensure_records_in_project_scope(env_model, ids, p, ctx)
+        scoped_error = self._ensure_records_in_record_scope(env_model, ids, p, ctx)
         if scoped_error:
             return scoped_error
         recs = env_model.browse(ids).exists()
@@ -1818,7 +1833,7 @@ class ApiDataHandler(BaseIntentHandler):
             rows = recs.read(["id", "name", "display_name"] if "display_name" in env_model._fields else ["id", "name"])
 
         data = {"records": rows}
-        _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
+        _, project_scope_meta = self._apply_record_scope(env_model, [], p, ctx)
         meta = {
             "op": "read",
             "model": model,
@@ -1846,7 +1861,7 @@ class ApiDataHandler(BaseIntentHandler):
             _logger.warning("default_get() AccessError on %s, fallback. err=%s", model, ae)
             defaults = {}
         data = {"record": defaults}
-        _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
+        _, project_scope_meta = self._apply_record_scope(env_model, [], p, ctx)
         meta = {
             "op": "default_get",
             "model": model,
@@ -1866,7 +1881,7 @@ class ApiDataHandler(BaseIntentHandler):
             env_model = env_model.sudo()
         fields_safe = self._filter_readable_fields(env_model, ["id", "name"])
         domain, search_term = self._apply_search_term_domain(env_model, domain, p, fields_safe)
-        domain, project_scope_meta = self._apply_project_scope(env_model, domain, p, ctx)
+        domain, project_scope_meta = self._apply_record_scope(env_model, domain, p, ctx)
 
         total = env_model.search_count(domain or [])
         data = {"total": int(total or 0)}
@@ -1921,9 +1936,9 @@ class ApiDataHandler(BaseIntentHandler):
             if not safe_vals:
                 return self._err(400, "vals 中无可写字段")
         project_id = self._current_project_id(p, ctx)
-        _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
+        _, project_scope_meta = self._apply_record_scope(env_model, [], p, ctx)
         if project_scope_meta.get("project_operation_strategy_mismatch"):
-            return self._project_scope_denied("当前项目与经营方式不一致，禁止创建业务数据", project_scope_meta)
+            return self._record_scope_denied("当前记录上下文与经营方式不一致，禁止创建业务数据", project_scope_meta)
         scope_company_id = int(project_scope_meta.get("company_id") or 0)
         if scope_company_id and "company_id" in env_model._fields:
             incoming_company_id = safe_vals.get("company_id")
@@ -1935,7 +1950,7 @@ class ApiDataHandler(BaseIntentHandler):
                 except Exception:
                     incoming_company_id = 0
                 if incoming_company_id != scope_company_id:
-                    return self._project_scope_denied("当前公司上下文不允许创建到其他公司", project_scope_meta)
+                    return self._record_scope_denied("当前公司上下文不允许创建到其他公司", project_scope_meta)
         scope_operation_strategy = str(project_scope_meta.get("operation_strategy") or "").strip()
         operation_field = env_model._fields.get("operation_strategy")
         if (
@@ -1947,7 +1962,7 @@ class ApiDataHandler(BaseIntentHandler):
             if not incoming_operation_strategy:
                 safe_vals["operation_strategy"] = scope_operation_strategy
             elif incoming_operation_strategy != scope_operation_strategy:
-                return self._project_scope_denied("当前经营方式上下文不允许创建到其他经营方式", project_scope_meta)
+                return self._record_scope_denied("当前经营方式上下文不允许创建到其他经营方式", project_scope_meta)
         if project_scope_meta.get("project_id") and "project_id" in env_model._fields:
             incoming_project_id = safe_vals.get("project_id")
             if incoming_project_id in (None, False, ""):
@@ -1958,7 +1973,7 @@ class ApiDataHandler(BaseIntentHandler):
                 except Exception:
                     incoming_project_id = 0
                 if incoming_project_id != int(project_id or 0):
-                    return self._project_scope_denied("当前项目上下文不允许创建到其他项目", project_scope_meta)
+                    return self._record_scope_denied("当前记录上下文不允许创建到其他记录", project_scope_meta)
 
         try:
             rec = env_model.create(safe_vals)
@@ -2011,18 +2026,18 @@ class ApiDataHandler(BaseIntentHandler):
         env_model = self.env[model].with_context(ctx)
         if sudo:
             env_model = env_model.sudo()
-        scoped_error = self._ensure_records_in_project_scope(env_model, ids, p, ctx)
+        scoped_error = self._ensure_records_in_record_scope(env_model, ids, p, ctx)
         if scoped_error:
             return scoped_error
         project_id = self._current_project_id(p, ctx)
-        _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
+        _, project_scope_meta = self._apply_record_scope(env_model, [], p, ctx)
         if project_scope_meta.get("project_id") and "project_id" in env_model._fields and "project_id" in vals:
             try:
                 incoming_project_id = int(vals.get("project_id") or 0)
             except Exception:
                 incoming_project_id = 0
             if incoming_project_id and incoming_project_id != int(project_id or 0):
-                return self._project_scope_denied("当前项目上下文不允许移动到其他项目", project_scope_meta)
+                return self._record_scope_denied("当前记录上下文不允许移动到其他记录", project_scope_meta)
 
         recs = env_model.browse(ids).exists()
         if not recs:
@@ -2115,14 +2130,14 @@ class ApiDataHandler(BaseIntentHandler):
         fields_safe = self._filter_readable_fields(env_model, fields)
 
         if ids:
-            scoped_error = self._ensure_records_in_project_scope(env_model, ids, p, ctx)
+            scoped_error = self._ensure_records_in_record_scope(env_model, ids, p, ctx)
             if scoped_error:
                 return scoped_error
-            _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
+            _, project_scope_meta = self._apply_record_scope(env_model, [], p, ctx)
             recs = env_model.browse(ids).exists()
         else:
             domain, _search_term = self._apply_search_term_domain(env_model, domain, p, fields_safe)
-            domain, project_scope_meta = self._apply_project_scope(env_model, domain, p, ctx)
+            domain, project_scope_meta = self._apply_record_scope(env_model, domain, p, ctx)
             recs = env_model.search(domain or [], order=order or None, limit=limit)
         if not recs:
             data = {

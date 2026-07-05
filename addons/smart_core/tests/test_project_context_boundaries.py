@@ -68,7 +68,7 @@ def _load_handler():
     return module
 
 
-def _load_project_context_core():
+def _load_project_context_core(record_context_hook=None):
     root = Path(__file__).resolve().parents[1]
     _install_module("odoo")
     _install_module("odoo.exceptions", AccessError=type("AccessError", (Exception,), {}))
@@ -79,7 +79,7 @@ def _load_project_context_core():
     utils_mod.__path__ = [str(root / "utils")]
     _install_module(
         "odoo.addons.smart_core.utils.extension_hooks",
-        call_extension_hook_first=lambda *args, **kwargs: None,
+        call_extension_hook_first=record_context_hook or (lambda *args, **kwargs: None),
     )
 
     module_name = "odoo.addons.smart_core.core.project_context"
@@ -89,6 +89,12 @@ def _load_project_context_core():
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _register_construction_project_scope(core):
+    core.register_legacy_project_scope_model("project.project")
+    core.register_operation_strategy("direct")
+    core.register_operation_strategy("joint")
 
 
 class TestProjectContextBoundaries(unittest.TestCase):
@@ -154,6 +160,7 @@ class TestProjectContextBoundaries(unittest.TestCase):
 
     def test_business_scope_domain_applies_company_project_and_operation_strategy(self):
         core = _load_project_context_core()
+        _register_construction_project_scope(core)
 
         class Field:
             def __init__(self, comodel_name=""):
@@ -181,7 +188,9 @@ class TestProjectContextBoundaries(unittest.TestCase):
         self.assertEqual(
             domain,
             [
+                "|",
                 ("company_id", "=", 3),
+                ("project_id.company_id", "=", 3),
                 ("project_id", "=", 9),
                 "|",
                 "&",
@@ -200,6 +209,7 @@ class TestProjectContextBoundaries(unittest.TestCase):
 
     def test_business_scope_operation_strategy_prefers_project_field(self):
         core = _load_project_context_core()
+        _register_construction_project_scope(core)
 
         class Field:
             def __init__(self, comodel_name=""):
@@ -227,6 +237,7 @@ class TestProjectContextBoundaries(unittest.TestCase):
 
     def test_business_scope_domain_uses_project_fields_when_direct_fields_missing(self):
         core = _load_project_context_core()
+        _register_construction_project_scope(core)
 
         class Field:
             def __init__(self, comodel_name=""):
@@ -258,6 +269,8 @@ class TestProjectContextBoundaries(unittest.TestCase):
 
     def test_partner_master_data_is_not_filtered_by_business_scope(self):
         core = _load_project_context_core()
+        _register_construction_project_scope(core)
+        core.register_business_scope_exempt_model("res.partner")
 
         class Field:
             def __init__(self, comodel_name=""):
@@ -284,6 +297,141 @@ class TestProjectContextBoundaries(unittest.TestCase):
         self.assertEqual(domain, [("customer_rank", ">", 0)])
         self.assertFalse(meta["applied"])
         self.assertEqual(meta["model"], "res.partner")
+
+    def test_project_scope_model_is_not_active_until_registered(self):
+        core = _load_project_context_core()
+
+        class Field:
+            def __init__(self, comodel_name=""):
+                self.comodel_name = comodel_name
+
+        class Model:
+            _name = "payment.request"
+            _fields = {
+                "project_id": Field("project.project"),
+            }
+
+        self.assertEqual(core._registered_legacy_project_scope_models(), ())
+        self.assertEqual(core.project_scope_domain(Model, 9), [])
+
+        core.register_legacy_project_scope_model("project.project")
+
+        self.assertEqual(core._registered_legacy_project_scope_models(), ("project.project",))
+        self.assertEqual(core.project_scope_domain(Model, 9), [("project_id", "=", 9)])
+
+    def test_operation_strategy_is_not_active_until_registered(self):
+        core = _load_project_context_core()
+        core.register_legacy_project_scope_model("project.project")
+
+        class Field:
+            def __init__(self, comodel_name=""):
+                self.comodel_name = comodel_name
+
+        class Model:
+            _name = "payment.request"
+            _fields = {
+                "project_id": Field("project.project"),
+                "operation_strategy": Field(),
+            }
+
+        self.assertEqual(core.business_scope_domain(Model, {"operation_strategy": "joint"}), [])
+
+        core.register_operation_strategy("joint")
+
+        self.assertEqual(
+            core.business_scope_domain(Model, {"operation_strategy": "joint"}),
+            [
+                "|",
+                "&",
+                ("project_id", "!=", False),
+                ("project_id.operation_strategy", "=", "joint"),
+                "&",
+                ("project_id", "=", False),
+                ("operation_strategy", "=", "joint"),
+            ],
+        )
+
+    def test_business_scope_exempt_model_is_not_active_until_registered(self):
+        core = _load_project_context_core()
+        _register_construction_project_scope(core)
+
+        class Field:
+            def __init__(self, comodel_name=""):
+                self.comodel_name = comodel_name
+
+        class Model:
+            _name = "res.partner"
+            _fields = {
+                "project_ids": Field("project.project"),
+                "company_id": Field("res.company"),
+            }
+
+        self.assertTrue(core.business_scope_domain(Model, {"company_id": 3, "operation_strategy": "direct"}))
+
+        core.register_business_scope_exempt_model("res.partner")
+
+        self.assertEqual(core.business_scope_domain(Model, {"company_id": 3, "operation_strategy": "direct"}), [])
+
+    def test_legacy_direct_acceptance_scope_model_is_not_active_until_registered(self):
+        core = _load_project_context_core()
+        _register_construction_project_scope(core)
+
+        class Field:
+            def __init__(self, comodel_name=""):
+                self.comodel_name = comodel_name
+
+        class Model:
+            _name = "sc.legacy.direct.acceptance.fact"
+            _fields = {
+                "project_id": Field("project.project"),
+            }
+
+        self.assertEqual(
+            core.business_scope_domain(Model, {"company_id": 3, "operation_strategy": "direct"}),
+            [
+                ("project_id.company_id", "=", 3),
+                ("project_id.operation_strategy", "=", "direct"),
+            ],
+        )
+
+        core.register_legacy_direct_acceptance_scope_model("sc.legacy.direct.acceptance.fact", direct_strategy="direct")
+
+        self.assertEqual(
+            core.business_scope_domain(Model, {"company_id": 3, "operation_strategy": "direct"}),
+            ["|", ("project_id", "=", False), ("project_id.operation_strategy", "=", "direct")],
+        )
+
+    def test_record_context_core_default_config_is_empty_legacy_project_is_fallback(self):
+        core = _load_project_context_core()
+
+        source = core.source_authority_contract()
+
+        self.assertEqual(core.DEFAULT_RECORD_CONTEXT_CONFIG, {})
+        self.assertEqual(source.get("default_record_context_model"), "")
+        self.assertEqual(source.get("legacy_default_model"), "project.project")
+        self.assertEqual(source.get("registered_legacy_scope_models"), [])
+        self.assertEqual(source.get("registered_operation_strategies"), [])
+        self.assertEqual(source.get("business_scope_exempt_models"), [])
+
+    def test_record_context_config_can_be_supplied_by_extension_hook(self):
+        def hook(env, name, *args):
+            if name == "smart_core_resolve_record_context_config":
+                return {
+                    "model": "project.project",
+                    "label": "当前项目",
+                    "placeholder": "搜索项目名称",
+                    "selected_id_param": "selected_id",
+                }
+            return None
+
+        core = _load_project_context_core(record_context_hook=hook)
+
+        config = core._resolve_record_context_config(object(), {})
+
+        self.assertEqual(config["model"], "project.project")
+        self.assertEqual(config["source"], "extension_hook")
+        self.assertEqual(config["label"], "当前项目")
+        self.assertEqual(config["placeholder"], "搜索项目名称")
 
 
 if __name__ == "__main__":

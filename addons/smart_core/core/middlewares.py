@@ -98,7 +98,7 @@ class RequestThrottlingMiddleware(BaseMiddleware):
         super().__init__(name)
         self.max_requests = max_requests
         self.time_window = time_window
-        self.request_counts = {}  # 简单的内存存储，实际项目中应使用Redis等
+        self.request_counts = {}  # 简单的内存存储，生产部署中应使用 Redis 等
     
     def process_request(self, intent_name: str, context: Any) -> bool:
         # 获取用户ID
@@ -115,7 +115,7 @@ class RequestThrottlingMiddleware(BaseMiddleware):
         # 检查是否超过限制
         if self.request_counts[window_key] > self.max_requests:
             _logger.warning(f"用户 {uid} 超过请求限制: {self.request_counts[window_key]} > {self.max_requests}")
-            # 在实际项目中，这里应该抛出一个限流异常
+            # 在生产部署中，这里应该抛出一个限流异常
             # raise ThrottlingException("请求过于频繁，请稍后再试")
             return False  # 中断处理
         
@@ -139,7 +139,7 @@ class CachingMiddleware(BaseMiddleware):
     def __init__(self, name: str = None, cache_ttl: int = 300):
         super().__init__(name)
         self.cache_ttl = cache_ttl
-        self.cache = {}  # 简单的内存缓存，实际项目中应使用Redis等
+        self.cache = {}  # 简单的内存缓存，生产部署中应使用 Redis 等
     
     def process_request(self, intent_name: str, context: Any) -> bool:
         # 生成缓存键

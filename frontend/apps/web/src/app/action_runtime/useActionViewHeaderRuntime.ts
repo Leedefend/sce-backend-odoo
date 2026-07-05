@@ -54,7 +54,7 @@ export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOp
           return true;
         }
         if (key === 'open_risk_dashboard') {
-          openFocusAction('/s/projects.dashboard');
+          openFocusAction({ to: '/my-work', query: { section: 'todo', search: '风险' } });
           return true;
         }
         if (key === 'refresh_page' || key === 'refresh') {
