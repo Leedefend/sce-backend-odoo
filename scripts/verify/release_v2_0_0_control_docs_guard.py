@@ -125,7 +125,7 @@ VERIFY_README_TOKENS = (
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
-    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes section order, intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
+    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes section order, intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning section order, tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -213,6 +213,17 @@ NOTES_SECTION_ORDER = (
     "## Tag Plan",
     "## Verification",
     "## Known Limits",
+)
+
+VERSIONING_SECTION_ORDER = (
+    "## 1) Tag Types",
+    "## 2) Naming Formats (Regex)",
+    "## 3) When to Tag",
+    "## 4) GitHub Release Requirements",
+    "## 5) Version Progression Rules",
+    "## 6) No History Rewrite",
+    "## 7) Tag Pre-Check List (Process)",
+    "## 8) v2.0.0 Formal Release Line",
 )
 
 VERSIONING_FORMAL_RELEASE_ITEMS = (
@@ -820,6 +831,19 @@ def _contains_versioning_formal_release_items(errors: list[str]) -> None:
         )
 
 
+def _contains_versioning_section_order(errors: list[str]) -> None:
+    if not VERSIONING.is_file():
+        errors.append(f"missing versioning doc: {VERSIONING.relative_to(ROOT).as_posix()}")
+        return
+    text = VERSIONING.read_text(encoding="utf-8")
+    actual_order = _heading_order(text)
+    if actual_order != VERSIONING_SECTION_ORDER:
+        errors.append(
+            "versioning section order mismatch: "
+            f"expected={VERSIONING_SECTION_ORDER!r} actual={actual_order!r}"
+        )
+
+
 def _contains_versioning_tag_type_items(errors: list[str]) -> None:
     if not VERSIONING.is_file():
         errors.append(f"missing versioning doc: {VERSIONING.relative_to(ROOT).as_posix()}")
@@ -948,6 +972,7 @@ def main() -> int:
         RELEASE_INDEX_ZH_PLANNED_ITEMS,
         errors,
     )
+    _contains_versioning_section_order(errors)
     _contains_versioning_tag_type_items(errors)
     _contains_versioning_no_history_rewrite_items(errors)
     _contains_versioning_tag_precheck_items(errors)
