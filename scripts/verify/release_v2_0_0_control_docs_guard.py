@@ -125,7 +125,7 @@ VERIFY_README_TOKENS = (
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
-    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
+    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes section order, intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -205,6 +205,14 @@ README_PROMOTION_ORDER = (
     "Run `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`.",
     "Create `v2.0.0-rc1` after RC evidence passes.",
     "Create `v2.0.0` after formal release signoff.",
+)
+
+NOTES_SECTION_ORDER = (
+    "## Release Intent",
+    "## Scope",
+    "## Tag Plan",
+    "## Verification",
+    "## Known Limits",
 )
 
 VERSIONING_FORMAL_RELEASE_ITEMS = (
@@ -541,6 +549,10 @@ def _all_bullet_items_after_heading(text: str, heading: str) -> tuple[str, ...] 
     return tuple(items)
 
 
+def _heading_order(text: str) -> tuple[str, ...]:
+    return tuple(line.strip() for line in text.splitlines() if line.startswith("## "))
+
+
 def _ordered_items_after_marker(text: str, marker: str) -> tuple[str, ...] | None:
     lines = text.splitlines()
     try:
@@ -681,6 +693,19 @@ def _contains_notes_minimum_verification(errors: list[str]) -> None:
         errors.append(
             "release notes minimum verification mismatch: "
             f"expected={NOTES_MINIMUM_VERIFICATION_COMMANDS!r} actual={actual_commands!r}"
+        )
+
+
+def _contains_notes_section_order(errors: list[str]) -> None:
+    if not RELEASE_NOTES.is_file():
+        errors.append(f"missing release notes: {RELEASE_NOTES.relative_to(ROOT).as_posix()}")
+        return
+    text = RELEASE_NOTES.read_text(encoding="utf-8")
+    actual_order = _heading_order(text)
+    if actual_order != NOTES_SECTION_ORDER:
+        errors.append(
+            "release notes section order mismatch: "
+            f"expected={NOTES_SECTION_ORDER!r} actual={actual_order!r}"
         )
 
 
@@ -904,6 +929,7 @@ def main() -> int:
     _contains_readme_boundaries(errors)
     _contains_readme_gate_commands(errors)
     _contains_readme_rollback_items(errors)
+    _contains_notes_section_order(errors)
     _contains_notes_minimum_verification(errors)
     _contains_notes_env_acceptance(errors)
     _contains_notes_scope_items(errors)
