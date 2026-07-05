@@ -194,7 +194,7 @@
   - Verifies the dev acceptance release probe JSON shape.
   - Enforces mode/status metadata, backup/frontend/login block status consistency, and key frontend/login check field types.
 - `make verify.release.v2_0_0.checklist.guard`
-  - Verifies the v2.0.0 release checklist keeps required preflight, product hardening, dev acceptance, prod-sim, controlled-doc review, production safety, post-release, and stop-condition sections in the expected order, with key safety, evidence, preflight expansion lists, and hardening expansion prose locked by section.
+  - Verifies the v2.0.0 release checklist keeps required preflight, product hardening, dev acceptance, prod-sim, controlled-doc review, production safety, post-release, and stop-condition sections in the expected order, with key safety, evidence, preflight expansion lists, product readiness dependency lists, and hardening expansion prose locked by section.
   - Enforces RC, formal-release, and dev-acceptance command blocks exactly.
   - Enforces required release tag names, versioning/release-index review, and prod/prod-sim evidence separation language.
 - `make verify.release.v2_0_0.evidence_manifest.guard`
