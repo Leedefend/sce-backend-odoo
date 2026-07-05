@@ -125,7 +125,7 @@ VERIFY_README_TOKENS = (
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
-    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning formal release line, and promotion order shape",
+    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning tag pre-check list, formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -211,6 +211,14 @@ VERSIONING_FORMAL_RELEASE_ITEMS = (
     "gate baseline: `gate-release-v2.0`",
     "release candidates: `v2.0.0-rc1`, `v2.0.0-rc2` only when blocker fixes require a new candidate",
     "formal release: `v2.0.0`",
+)
+
+VERSIONING_TAG_PRECHECK_ITEMS = (
+    "Type: phase / gate / release / infra / exp",
+    "Anchored on main",
+    "Requires GitHub Release? (gate/release required)",
+    "Validation commands PASS",
+    "Release index updated (docs/ops/releases/README.md)",
 )
 
 VERSIONING_PROMOTION_ORDER = (
@@ -774,6 +782,22 @@ def _contains_versioning_formal_release_items(errors: list[str]) -> None:
         )
 
 
+def _contains_versioning_tag_precheck_items(errors: list[str]) -> None:
+    if not VERSIONING.is_file():
+        errors.append(f"missing versioning doc: {VERSIONING.relative_to(ROOT).as_posix()}")
+        return
+    text = VERSIONING.read_text(encoding="utf-8")
+    actual_items = _list_items_after_heading(text, "## 7) Tag Pre-Check List (Process)")
+    if actual_items is None:
+        errors.append("versioning doc missing section: ## 7) Tag Pre-Check List (Process)")
+        return
+    if actual_items != VERSIONING_TAG_PRECHECK_ITEMS:
+        errors.append(
+            "versioning tag pre-check items mismatch: "
+            f"expected={VERSIONING_TAG_PRECHECK_ITEMS!r} actual={actual_items!r}"
+        )
+
+
 def _contains_promotion_order(path: Path, marker: str, expected_order: tuple[str, ...], errors: list[str]) -> None:
     if not path.is_file():
         errors.append(f"missing promotion-order doc: {path.relative_to(ROOT).as_posix()}")
@@ -853,6 +877,7 @@ def main() -> int:
         RELEASE_INDEX_ZH_PLANNED_ITEMS,
         errors,
     )
+    _contains_versioning_tag_precheck_items(errors)
     _contains_versioning_formal_release_items(errors)
     _contains_promotion_order(CONTROL_README, "## Promotion Order", README_PROMOTION_ORDER, errors)
     _contains_promotion_order(VERSIONING, "Promotion order:", VERSIONING_PROMOTION_ORDER, errors)
