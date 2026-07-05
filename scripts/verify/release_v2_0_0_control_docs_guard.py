@@ -125,7 +125,7 @@ VERIFY_README_TOKENS = (
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
-    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning tag pre-check list, formal release line, and promotion order shape",
+    "Enforces release-control status, scope, boundary and gate command blocks, release document list, rollback list, release-index planned entries, release-notes intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
@@ -211,6 +211,19 @@ VERSIONING_FORMAL_RELEASE_ITEMS = (
     "gate baseline: `gate-release-v2.0`",
     "release candidates: `v2.0.0-rc1`, `v2.0.0-rc2` only when blocker fixes require a new candidate",
     "formal release: `v2.0.0`",
+)
+
+VERSIONING_TAG_TYPE_ITEMS = (
+    "phase: capability milestone for a phase or stage (e.g. P1/P2).",
+    "gate: runtime or policy gate baseline (guard rails).",
+    "release: production/stable release for general delivery.",
+    "infra: infrastructure or environment baseline.",
+    "exp: experiment or temporary spike.",
+)
+
+VERSIONING_NO_HISTORY_REWRITE_ITEMS = (
+    "Historical tags remain untouched.",
+    "This document only constrains new tags from this point forward.",
 )
 
 VERSIONING_TAG_PRECHECK_ITEMS = (
@@ -782,6 +795,38 @@ def _contains_versioning_formal_release_items(errors: list[str]) -> None:
         )
 
 
+def _contains_versioning_tag_type_items(errors: list[str]) -> None:
+    if not VERSIONING.is_file():
+        errors.append(f"missing versioning doc: {VERSIONING.relative_to(ROOT).as_posix()}")
+        return
+    text = VERSIONING.read_text(encoding="utf-8")
+    actual_items = _list_items_after_heading(text, "## 1) Tag Types")
+    if actual_items is None:
+        errors.append("versioning doc missing section: ## 1) Tag Types")
+        return
+    if actual_items != VERSIONING_TAG_TYPE_ITEMS:
+        errors.append(
+            "versioning tag type items mismatch: "
+            f"expected={VERSIONING_TAG_TYPE_ITEMS!r} actual={actual_items!r}"
+        )
+
+
+def _contains_versioning_no_history_rewrite_items(errors: list[str]) -> None:
+    if not VERSIONING.is_file():
+        errors.append(f"missing versioning doc: {VERSIONING.relative_to(ROOT).as_posix()}")
+        return
+    text = VERSIONING.read_text(encoding="utf-8")
+    actual_items = _list_items_after_heading(text, "## 6) No History Rewrite")
+    if actual_items is None:
+        errors.append("versioning doc missing section: ## 6) No History Rewrite")
+        return
+    if actual_items != VERSIONING_NO_HISTORY_REWRITE_ITEMS:
+        errors.append(
+            "versioning no-history-rewrite items mismatch: "
+            f"expected={VERSIONING_NO_HISTORY_REWRITE_ITEMS!r} actual={actual_items!r}"
+        )
+
+
 def _contains_versioning_tag_precheck_items(errors: list[str]) -> None:
     if not VERSIONING.is_file():
         errors.append(f"missing versioning doc: {VERSIONING.relative_to(ROOT).as_posix()}")
@@ -877,6 +922,8 @@ def main() -> int:
         RELEASE_INDEX_ZH_PLANNED_ITEMS,
         errors,
     )
+    _contains_versioning_tag_type_items(errors)
+    _contains_versioning_no_history_rewrite_items(errors)
     _contains_versioning_tag_precheck_items(errors)
     _contains_versioning_formal_release_items(errors)
     _contains_promotion_order(CONTROL_README, "## Promotion Order", README_PROMOTION_ORDER, errors)
