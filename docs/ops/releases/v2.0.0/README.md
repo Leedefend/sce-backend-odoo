@@ -40,6 +40,7 @@ Supporting gates:
 
 ```bash
 make verify.system.capability_baseline.report
+make verify.platform.release_policy.runtime
 make verify.backend.contract.closure.mainline
 make verify.restricted
 ```

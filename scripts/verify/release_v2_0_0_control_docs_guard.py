@@ -125,6 +125,8 @@ VERIFY_README_TOKENS = (
     "evidence rules structure",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
+    "supporting gates match the v2.0.0 preflight dependency set",
+    "including platform release policy runtime",
     "v2.0.0 Makefile release targets appear in expected phony order",
     "v2.0.0 Makefile release target definitions appear in expected order",
     "release guard entries appear in expected order",
@@ -199,6 +201,7 @@ README_REQUIRED_GATES_COMMANDS = (
 
 README_SUPPORTING_GATES_COMMANDS = (
     "make verify.system.capability_baseline.report",
+    "make verify.platform.release_policy.runtime",
     "make verify.backend.contract.closure.mainline",
     "make verify.restricted",
 )
