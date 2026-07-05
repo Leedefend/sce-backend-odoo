@@ -12,6 +12,7 @@ FILES = {
     "flow": ROOT / "docs/ops/production_release_flow_standard_v1.md",
     "ops_readme": ROOT / "docs/ops/README.md",
     "deploy_runbook": ROOT / "docs/ops/production_deployment_runbook_v1.md",
+    "prod_policy": ROOT / "docs/ops/prod_command_policy.md",
     "verify_readme": ROOT / "docs/ops/verify/README.md",
     "release_checklist": ROOT / "docs/ops/release_checklist_v2.0.0.md",
     "release_index_en": ROOT / "docs/ops/releases/README.md",
@@ -30,6 +31,9 @@ FLOW_TOKENS = (
     "生产不得直接用日常开发目录整包覆盖",
     "docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md",
     "make verify.production_deployment.record.guard",
+    "make verify.business_system.usability_readiness.prod",
+    "make verify.legacy_attachment.mirror.completeness.audit.prod",
+    "make verify.legacy_online_attachment.mirror.job.audit.prod",
     "生产与日常开发服务器完全一致",
     "发布结论区分了“发布包对齐”和“全量对齐”",
 )
@@ -48,14 +52,34 @@ TEMPLATE_TOKENS = (
 
 MAKEFILE_TOKENS = (
     ".PHONY: verify.production_deployment.record.guard",
+    ".PHONY: verify.business_capability.productization_p1 verify.business_system.usability_readiness verify.business_system.usability_readiness.prod",
+    "verify.business_system.usability_readiness.prod: guard.prod.readonly check-compose-project check-compose-env",
+    "BUSINESS_SYSTEM_READINESS_PROD_READONLY=1 BUSINESS_SYSTEM_READINESS_INCLUDE_P1=0",
+    "verify.legacy_attachment.mirror.completeness.audit.prod: guard.prod.readonly check-compose-project check-compose-env",
+    "verify.legacy_online_attachment.mirror.job.audit.prod: guard.prod.readonly check-compose-project check-compose-env",
     "python3 -m py_compile scripts/verify/production_deployment_record_guard.py",
     "python3 scripts/verify/production_deployment_record_guard.py",
 )
 
 VERIFY_README_TOKENS = (
     "`make verify.production_deployment.record.guard`",
+    "`make verify.business_system.usability_readiness.prod`",
     "Verifies concrete production deployment records",
     "explicit non-full-alignment wording",
+    "production read-only business readiness gate",
+)
+
+DEPLOY_RUNBOOK_TOKENS = (
+    "make verify.business_system.usability_readiness.prod",
+    "PROD_READONLY_VERIFY=1",
+    "只运行历史业务可用性 probe 与 formal backfill audit",
+)
+
+PROD_POLICY_TOKENS = (
+    "make verify.business_system.usability_readiness.prod",
+    "make verify.legacy_attachment.mirror.completeness.audit.prod",
+    "make verify.legacy_online_attachment.mirror.job.audit.prod",
+    "PROD_READONLY_VERIFY=1",
 )
 
 CHECKLIST_TOKENS = (
@@ -125,6 +149,8 @@ def main() -> int:
     _require_tokens("template", contents["template"], TEMPLATE_TOKENS, errors)
     _require_tokens("makefile", contents["makefile"], MAKEFILE_TOKENS, errors)
     _require_tokens("verify_readme", contents["verify_readme"], VERIFY_README_TOKENS, errors)
+    _require_tokens("deploy_runbook", contents["deploy_runbook"], DEPLOY_RUNBOOK_TOKENS, errors)
+    _require_tokens("prod_policy", contents["prod_policy"], PROD_POLICY_TOKENS, errors)
     _require_tokens("release_checklist", contents["release_checklist"], CHECKLIST_TOKENS, errors)
     _require_tokens("release_index_en", contents["release_index_en"], INDEX_TOKENS, errors)
     _require_tokens("release_index_zh", contents["release_index_zh"], INDEX_TOKENS, errors)

@@ -226,6 +226,8 @@
 - `make verify.production_release.flow.guard`
   - Verifies the production release-flow control plane is wired together across the flow standard, deployment record template, Makefile target, verify catalog, release checklist, release indexes, deployment runbook, and deployment record guard script.
   - Enforces the release-flow document keeps environment responsibilities, alignment definitions, hard rules, package verification, production validation matrix, difference registration, and closure criteria in order.
+  - Enforces the production read-only business readiness gate is wired through Makefile, production command policy, deployment runbook, and release-flow validation matrix: `make verify.business_system.usability_readiness.prod`.
+  - Enforces the production read-only attachment validation targets remain registered for attachment-scope releases.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.
