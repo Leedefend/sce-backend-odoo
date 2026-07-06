@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from intent_smoke_utils import require_ok
@@ -107,7 +107,7 @@ def main() -> int:
                 "added_count": _safe_int(previous.get("added_count"), 0),
                 "updated_at": str(previous.get("updated_at") or ""),
                 "consumed_at": str(previous.get("consumed_at") or ""),
-                "captured_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                "captured_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
                 "live_fetch_skipped": True,
                 "live_fetch_error": fetch_error,
             }
@@ -119,7 +119,7 @@ def main() -> int:
                 "added_count": 0,
                 "updated_at": "",
                 "consumed_at": "",
-                "captured_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                "captured_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
                 "live_fetch_skipped": True,
                 "live_fetch_error": fetch_error,
             }
@@ -129,7 +129,7 @@ def main() -> int:
                 print(" - strict mode enabled: SC_ASSET_QUEUE_TREND_REQUIRE_LIVE=1")
                 return 1
 
-    current["captured_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    current["captured_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
     queue_size = _safe_int(current.get("queue_size"), 0)
     if queue_size > max_queue_size:

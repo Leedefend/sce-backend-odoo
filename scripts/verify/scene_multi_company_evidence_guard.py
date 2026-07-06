@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -136,7 +136,7 @@ def main() -> int:
         )
 
     state_payload = {
-        "captured_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "captured_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
         "current_observed_company_ids": observed_now,
         "historical_observed_company_ids": historical_sorted,
         "mapped_company_ids": mapped_ids,
