@@ -59,6 +59,7 @@
         'data/receipt_income_form_productization_contract.xml',
         'data/invoice_input_form_productization_contract.xml',
         'data/purchase_order_form_productization_contract.xml',
+        'data/expense_claim_form_productization_contract.xml',
         'data/formal_list_contract_sync.xml',
         'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
