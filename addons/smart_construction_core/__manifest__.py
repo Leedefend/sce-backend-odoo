@@ -60,6 +60,7 @@
         'data/invoice_input_form_productization_contract.xml',
         'data/invoice_output_tax_form_productization_contract.xml',
         'data/tax_deduction_certificate_form_productization_contract.xml',
+        'data/payment_request_form_productization_contract.xml',
         'data/purchase_order_form_productization_contract.xml',
         'data/expense_claim_form_productization_contract.xml',
         'data/labor_usage_form_productization_contract.xml',
