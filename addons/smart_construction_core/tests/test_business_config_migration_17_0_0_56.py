@@ -110,6 +110,48 @@ class BusinessConfigMigration170056Tests(unittest.TestCase):
                 bootstrap_handler=BootstrapHandler,
             )
 
+    def test_remediate_ignores_system_config_wizard_bootstrap_failure(self):
+        calls = []
+
+        class ScanHandler:
+            def __init__(self, env=None, payload=None):
+                pass
+
+            def handle(self):
+                calls.append("scan")
+                return {"ok": True, "data": {"summary": {"runtime_missing_count": 1}}}
+
+        class BootstrapHandler:
+            def __init__(self, env=None, payload=None):
+                pass
+
+            def handle(self):
+                calls.append("bootstrap")
+                return {
+                    "ok": False,
+                    "data": {
+                        "candidate_count": 1,
+                        "failed_count": 1,
+                        "results": [
+                            {
+                                "ok": False,
+                                "action_id": 734,
+                                "name": "四川定额导入",
+                                "model": "quota.import.wizard",
+                            }
+                        ],
+                    },
+                }
+
+        self.migration._remediate(
+            _FakeEnv(),
+            params={"limit": 1000},
+            scan_handler=ScanHandler,
+            bootstrap_handler=BootstrapHandler,
+        )
+
+        self.assertEqual(calls, ["scan", "bootstrap"])
+
     def test_representative_logins_include_acceptance_and_role_accounts(self):
         self.assertIn("wutao", self.migration.REPRESENTATIVE_LOGINS)
         self.assertIn("demo_business_full", self.migration.REPRESENTATIVE_LOGINS)

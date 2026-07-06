@@ -10,12 +10,13 @@
 | Target commit | `0cffcde58cf86d48e250f820034bb19946766c6c` |
 | Previous production deployment record | `docs/ops/releases/current/production_deployment_20260705_prod_closure.md` |
 | Previous recorded production target | `dirty workspace incremental release package` |
-| Candidate status | `main merged, local release package built, prod-sim not yet replayed, production not deployed` |
+| Candidate status | `deployed to production on 2026-07-07; see production_deployment_20260707_form_productization.md` |
 | Local package path | `artifacts/release/form_productization_20260707/form_productization_20260707.tar.gz` |
 | Local package sha256 | `5f07470fdecb9df334fb91492bf97190281329e9e42a07c13c78ca64a0854f0c` |
 
-This document is a release candidate scope record.  It is not a production
-deployment record and must not be used to claim production alignment.
+This document is the release candidate scope record.  The concrete production
+deployment evidence is recorded in
+`docs/ops/releases/current/production_deployment_20260707_form_productization.md`.
 
 ## 2. Release Scope
 

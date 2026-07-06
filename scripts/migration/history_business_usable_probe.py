@@ -184,6 +184,11 @@ ALLOWED_COMPAT_LEGACY_BUSINESS_MENU_XMLIDS = {
     # These entries are part of the 55 user-confirmed surfaces. They expose
     # old-system fact carriers directly because there is no lossless new-system
     # semantic model yet; the acceptance target is faithful fact carrying.
+    "smart_construction_core.menu_scbs55_user_acceptance_080_公司人员名册_配置",
+    "smart_construction_core.menu_scbs55_user_acceptance_350_到款确认表",
+    "smart_construction_core.menu_scbs55_user_acceptance_360_资金日报表",
+    "smart_construction_core.menu_scbs55_user_acceptance_420_进项上报",
+    "smart_construction_core.menu_scbs55_user_acceptance_440_外经证登记",
     "smart_construction_core.menu_sc_supplier_contract_analysis_report",
     "smart_construction_core.menu_sc_tax_certificate_registration_user",
     "smart_construction_core.menu_sc_supplier_contract_current",

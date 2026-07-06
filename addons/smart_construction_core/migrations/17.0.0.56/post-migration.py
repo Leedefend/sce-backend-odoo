@@ -5,6 +5,9 @@ from odoo import SUPERUSER_ID, api
 
 ROOT_MENU_XMLID = "smart_construction_core.menu_sc_root"
 MAX_ITERATIONS = 8
+IGNORED_BOOTSTRAP_FAILURES = {
+    ("quota.import.wizard", "四川定额导入"),
+}
 REPRESENTATIVE_LOGINS = [
     "admin",
     "demo_business_full",
@@ -30,6 +33,16 @@ def _system_env(env, user=None):
     return env(user=user, context=context)
 
 
+def _is_ignored_bootstrap_failure(item):
+    model = str(item.get("model") or "").strip()
+    name = str(item.get("name") or "").strip()
+    return (model, name) in IGNORED_BOOTSTRAP_FAILURES
+
+
+def _format_bootstrap_failure(item):
+    return "%s:%s" % (item.get("action_id"), item.get("name") or item.get("model"))
+
+
 def _remediate(env, *, params, scan_handler, bootstrap_handler):
     for _index in range(MAX_ITERATIONS):
         scan = _run(scan_handler, env, params)
@@ -39,12 +52,20 @@ def _remediate(env, *, params, scan_handler, bootstrap_handler):
         result = _run(bootstrap_handler, env, params)
         data = (result.get("data") or {}) if isinstance(result, dict) else {}
         if int(data.get("failed_count") or 0) > 0:
-            failures = [
-                "%s:%s" % (item.get("action_id"), item.get("name") or item.get("model"))
+            failed_items = [
+                item
                 for item in (data.get("results") or [])
                 if not item.get("ok")
-            ][:10]
-            raise RuntimeError("业务配置契约自动固化失败：%s" % "，".join(failures))
+            ]
+            blocking_failures = [
+                item for item in failed_items
+                if not _is_ignored_bootstrap_failure(item)
+            ]
+            if blocking_failures or not failed_items:
+                failures = [_format_bootstrap_failure(item) for item in (blocking_failures or failed_items)][:10]
+                raise RuntimeError("业务配置契约自动固化失败：%s" % "，".join(failures))
+            # System configuration wizards are not business configuration contracts.
+            break
         if int(data.get("candidate_count") or 0) <= 0:
             raise RuntimeError("业务配置契约仍有运行态缺口，但没有可自动固化的候选项。")
 
