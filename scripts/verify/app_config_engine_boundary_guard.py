@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 APP_ENGINE = ROOT / "addons" / "smart_core" / "app_config_engine"
 DOC = APP_ENGINE / "docs" / "app_config_engine.md"
+DOCS_DIR = APP_ENGINE / "docs"
 CONTROLLER = APP_ENGINE / "controllers" / "contract_api.py"
 SERVICE = APP_ENGINE / "services" / "contract_service.py"
 NATIVE_PARSE = APP_ENGINE / "services" / "native_parse_service.py"
@@ -62,6 +63,17 @@ def main() -> int:
         "`make verify.app_config_engine.boundary_guard`",
     ):
         _require(errors, token in doc, f"docs/app_config_engine.md missing boundary token: {token}")
+
+    scratch_docs = sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in DOCS_DIR.glob("test*.json")
+        if path.name.startswith("test")
+    )
+    _require(
+        errors,
+        not scratch_docs,
+        "app_config_engine docs must not contain scratch test JSON files: %s" % ", ".join(scratch_docs),
+    )
 
     _require(errors, "NO_BUSINESS_FACT_AUTHORITY = True" in controller, "controller must declare no business fact authority")
     _require(errors, "ContractService(request_env=request.env)" in controller, "controller must delegate to ContractService")
