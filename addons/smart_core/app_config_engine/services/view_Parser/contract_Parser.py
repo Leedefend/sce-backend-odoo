@@ -9,22 +9,29 @@ from odoo import models, api
 import logging
 
 from .base import _BaseViewParserMixin
-# 由于文件名包含空格和特殊字符，我们需要使用getattr来导入
-import sys
-import os
+from importlib import import_module
 from lxml import etree
 
-# 动态导入包含空格和特殊字符的模块
-parsers_tree_form = __import__('odoo.addons.smart_core.app_config_engine.services.view_Parser.parsers Tree Form', fromlist=['_TreeFormParserMixin'])
-_TreeFormParserMixin = getattr(parsers_tree_form, '_TreeFormParserMixin')
-
-parsers_kanban_pivot_graph = __import__('odoo.addons.smart_core.app_config_engine.services.view_Parser.parsers Kanban Pivot Graph', fromlist=['_KanbanPivotGraphParserMixin'])
-_KanbanPivotGraphParserMixin = getattr(parsers_kanban_pivot_graph, '_KanbanPivotGraphParserMixin')
-
-parsers_calendar_gantt_activity = __import__('odoo.addons.smart_core.app_config_engine.services.view_Parser.parsers_Calendar_Gantt Activity', fromlist=['_CalendarGanttActivitySearchParserMixin'])
-_CalendarGanttActivitySearchParserMixin = getattr(parsers_calendar_gantt_activity, '_CalendarGanttActivitySearchParserMixin')
-
 _logger = logging.getLogger(__name__)
+
+LEGACY_MIXIN_MODULES = {
+    "_TreeFormParserMixin": "odoo.addons.smart_core.app_config_engine.services.view_Parser.parsers Tree Form",
+    "_KanbanPivotGraphParserMixin": "odoo.addons.smart_core.app_config_engine.services.view_Parser.parsers Kanban Pivot Graph",
+    "_CalendarGanttActivitySearchParserMixin": (
+        "odoo.addons.smart_core.app_config_engine.services.view_Parser.parsers_Calendar_Gantt Activity"
+    ),
+}
+
+
+def _load_legacy_mixin(class_name):
+    """Load parser mixins kept under legacy filenames with spaces."""
+    module = import_module(LEGACY_MIXIN_MODULES[class_name])
+    return getattr(module, class_name)
+
+
+_TreeFormParserMixin = _load_legacy_mixin("_TreeFormParserMixin")
+_KanbanPivotGraphParserMixin = _load_legacy_mixin("_KanbanPivotGraphParserMixin")
+_CalendarGanttActivitySearchParserMixin = _load_legacy_mixin("_CalendarGanttActivitySearchParserMixin")
 
 
 class OdooViewParser(_BaseViewParserMixin,
