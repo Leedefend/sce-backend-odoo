@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_office_admin_leave_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">office_admin_leave_productized_form_v1</field>
+            <field name="model">sc.office.admin.document</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_leave_request"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '请假/休假审批单',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'document_no', 'name', 'fact_type', 'business_date', 'requester_id', 'department_id']},
+                                {'title': '请假信息', 'sequence': 20, 'columns': 2, 'fields': ['leave_type', 'start_datetime', 'end_datetime', 'duration_days']},
+                                {'title': '办理与附件', 'sequence': 30, 'columns': 2, 'fields': ['handler_id', 'due_date', 'description', 'result_note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 40, 'columns': 2, 'fields': ['legacy_document_no', 'legacy_document_state', 'legacy_source_table', 'legacy_source_id']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'document_no', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'fact_type', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'business_date', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'requester_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'department_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'leave_type', 'sequence': 80, 'group_title': '请假信息'},
+                                {'name': 'start_datetime', 'sequence': 90, 'group_title': '请假信息'},
+                                {'name': 'end_datetime', 'sequence': 100, 'group_title': '请假信息'},
+                                {'name': 'duration_days', 'sequence': 110, 'group_title': '请假信息', 'readonly': True},
+                                {'name': 'handler_id', 'sequence': 120, 'group_title': '办理与附件'},
+                                {'name': 'due_date', 'sequence': 130, 'group_title': '办理与附件'},
+                                {'name': 'description', 'sequence': 140, 'group_title': '办理与附件'},
+                                {'name': 'result_note', 'sequence': 150, 'group_title': '办理与附件'},
+                                {'name': 'attachment_ids', 'sequence': 160, 'group_title': '办理与附件'},
+                                {'name': 'legacy_document_no', 'sequence': 170, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 180, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 190, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_id', 'sequence': 200, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_office_admin_seal_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">office_admin_seal_productized_form_v1</field>
+            <field name="model">sc.office.admin.document</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_seal_use_request"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '印章使用审批表',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'document_no', 'name', 'fact_type', 'business_date', 'requester_id', 'department_id']},
+                                {'title': '用印事项', 'sequence': 20, 'columns': 2, 'fields': ['seal_type', 'seal_type_name', 'seal_text', 'seal_use_date', 'seal_return_date', 'seal_take_out_flag']},
+                                {'title': '责任签办', 'sequence': 30, 'columns': 2, 'fields': ['seal_department_name', 'seal_applicant_name', 'seal_department_manager_sign', 'seal_handler_sign', 'seal_leader_sign']},
+                                {'title': '合同与公司', 'sequence': 40, 'columns': 2, 'fields': ['seal_copy_count', 'seal_contract_amount', 'seal_contract_no', 'seal_company_name', 'seal_using_company_name']},
+                                {'title': '办理与附件', 'sequence': 50, 'columns': 2, 'fields': ['handler_id', 'due_date', 'description', 'result_note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 60, 'columns': 2, 'fields': ['legacy_document_no', 'legacy_document_state', 'legacy_source_table', 'legacy_source_id']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'document_no', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'fact_type', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'business_date', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'requester_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'department_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'seal_type', 'sequence': 80, 'group_title': '用印事项'},
+                                {'name': 'seal_type_name', 'sequence': 90, 'group_title': '用印事项'},
+                                {'name': 'seal_text', 'sequence': 100, 'group_title': '用印事项'},
+                                {'name': 'seal_use_date', 'sequence': 110, 'group_title': '用印事项'},
+                                {'name': 'seal_return_date', 'sequence': 120, 'group_title': '用印事项'},
+                                {'name': 'seal_take_out_flag', 'sequence': 130, 'group_title': '用印事项'},
+                                {'name': 'seal_department_name', 'sequence': 140, 'group_title': '责任签办'},
+                                {'name': 'seal_applicant_name', 'sequence': 150, 'group_title': '责任签办'},
+                                {'name': 'seal_department_manager_sign', 'sequence': 160, 'group_title': '责任签办'},
+                                {'name': 'seal_handler_sign', 'sequence': 170, 'group_title': '责任签办'},
+                                {'name': 'seal_leader_sign', 'sequence': 180, 'group_title': '责任签办'},
+                                {'name': 'seal_copy_count', 'sequence': 190, 'group_title': '合同与公司'},
+                                {'name': 'seal_contract_amount', 'sequence': 200, 'group_title': '合同与公司'},
+                                {'name': 'seal_contract_no', 'sequence': 210, 'group_title': '合同与公司'},
+                                {'name': 'seal_company_name', 'sequence': 220, 'group_title': '合同与公司'},
+                                {'name': 'seal_using_company_name', 'sequence': 230, 'group_title': '合同与公司'},
+                                {'name': 'handler_id', 'sequence': 240, 'group_title': '办理与附件'},
+                                {'name': 'due_date', 'sequence': 250, 'group_title': '办理与附件'},
+                                {'name': 'description', 'sequence': 260, 'group_title': '办理与附件'},
+                                {'name': 'result_note', 'sequence': 270, 'group_title': '办理与附件'},
+                                {'name': 'attachment_ids', 'sequence': 280, 'group_title': '办理与附件'},
+                                {'name': 'legacy_document_no', 'sequence': 290, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 300, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 310, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_id', 'sequence': 320, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="action_sc_income_contract_variation" model="ir.actions.act_window">
+            <field name="name">收入合同签证</field>
+            <field name="res_model">sc.settlement.adjustment</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="smart_construction_core.view_sc_settlement_adjustment_tree"/>
+            <field name="views" eval="[(ref('smart_construction_core.view_sc_settlement_adjustment_tree'), 'tree'), (ref('smart_construction_core.view_sc_settlement_adjustment_form'), 'form')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_settlement_adjustment_search"/>
+            <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1, 'default_adjustment_type': 'addition', 'settlement_adjustment_entry': 'income_contract_variation'}</field>
+            <field name="groups_id" eval="[
+                (4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                (4, ref('smart_construction_core.group_sc_cap_settlement_read')),
+                (4, ref('smart_construction_core.group_sc_cap_project_read')),
+                (4, ref('smart_construction_core.group_sc_cap_cost_read')),
+                (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                (4, ref('smart_construction_core.group_sc_cap_settlement_user')),
+                (4, ref('smart_construction_core.group_sc_cap_settlement_manager'))
+            ]"/>
+        </record>
+
+        <record id="action_sc_expense_contract_variation" model="ir.actions.act_window">
+            <field name="name">支出合同签证</field>
+            <field name="res_model">sc.settlement.adjustment</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="smart_construction_core.view_sc_settlement_adjustment_tree"/>
+            <field name="views" eval="[(ref('smart_construction_core.view_sc_settlement_adjustment_tree'), 'tree'), (ref('smart_construction_core.view_sc_settlement_adjustment_form'), 'form')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_settlement_adjustment_search"/>
+            <field name="context">{'search_default_active_rows': 1, 'search_default_group_project': 1, 'default_adjustment_type': 'deduction', 'settlement_adjustment_entry': 'expense_contract_variation'}</field>
+            <field name="groups_id" eval="[
+                (4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                (4, ref('smart_construction_core.group_sc_cap_settlement_read')),
+                (4, ref('smart_construction_core.group_sc_cap_project_read')),
+                (4, ref('smart_construction_core.group_sc_cap_cost_read')),
+                (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                (4, ref('smart_construction_core.group_sc_cap_settlement_user')),
+                (4, ref('smart_construction_core.group_sc_cap_settlement_manager'))
+            ]"/>
+        </record>
+
+        <record id="menu_sc_income_contract_variation" model="ir.ui.menu">
+            <field name="action" ref="smart_construction_core.action_sc_income_contract_variation"/>
+        </record>
+
+        <record id="menu_sc_expense_contract_variation" model="ir.ui.menu">
+            <field name="action" ref="smart_construction_core.action_sc_expense_contract_variation"/>
+        </record>
+
+        <record id="business_config_contract_income_contract_variation_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">income_contract_variation_productized_form_v1</field>
+            <field name="model">sc.settlement.adjustment</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_income_contract_variation"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '收入合同签证',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '签证主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'can_review', 'name', 'source_origin', 'adjustment_type', 'date_adjustment']},
+                                {'title': '项目与合同', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'contract_id', 'settlement_id', 'partner_id']},
+                                {'title': '签证事项', 'sequence': 30, 'columns': 2, 'fields': ['item_name', 'account_name', 'amount', 'signed_amount', 'currency_id']},
+                                {'title': '审批与说明', 'sequence': 40, 'columns': 1, 'fields': ['validation_status', 'reject_reason', 'note']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_line_id', 'legacy_document_no', 'legacy_document_state', 'legacy_fund_confirmation_id', 'legacy_source_table', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'can_review', 'sequence': 30, 'readonly': True}, {'name': 'name', 'sequence': 40, 'readonly': True}, {'name': 'source_origin', 'sequence': 50, 'readonly': True}, {'name': 'adjustment_type', 'sequence': 60}, {'name': 'date_adjustment', 'sequence': 70}, {'name': 'project_id', 'sequence': 80}, {'name': 'company_id', 'sequence': 90, 'readonly': True}, {'name': 'contract_id', 'sequence': 100}, {'name': 'settlement_id', 'sequence': 110}, {'name': 'partner_id', 'sequence': 120}, {'name': 'item_name', 'sequence': 130}, {'name': 'account_name', 'sequence': 140}, {'name': 'amount', 'sequence': 150}, {'name': 'signed_amount', 'sequence': 160, 'readonly': True}, {'name': 'currency_id', 'sequence': 170}, {'name': 'reject_reason', 'sequence': 180, 'readonly': True}, {'name': 'note', 'sequence': 190}, {'name': 'legacy_line_id', 'sequence': 200, 'readonly': True}, {'name': 'legacy_document_no', 'sequence': 210, 'readonly': True}, {'name': 'legacy_document_state', 'sequence': 220, 'readonly': True}, {'name': 'legacy_fund_confirmation_id', 'sequence': 230, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 240, 'readonly': True}, {'name': 'source_created_by', 'sequence': 250, 'readonly': True}, {'name': 'source_created_at', 'sequence': 260, 'readonly': True}, {'name': 'active', 'sequence': 270}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_expense_contract_variation_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">expense_contract_variation_productized_form_v1</field>
+            <field name="model">sc.settlement.adjustment</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_expense_contract_variation"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '支出合同签证',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '签证主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'can_review', 'name', 'source_origin', 'adjustment_type', 'date_adjustment']},
+                                {'title': '项目与合同', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'contract_id', 'settlement_id', 'partner_id']},
+                                {'title': '签证事项', 'sequence': 30, 'columns': 2, 'fields': ['item_name', 'account_name', 'amount', 'signed_amount', 'currency_id']},
+                                {'title': '审批与说明', 'sequence': 40, 'columns': 1, 'fields': ['validation_status', 'reject_reason', 'note']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_line_id', 'legacy_document_no', 'legacy_document_state', 'legacy_fund_confirmation_id', 'legacy_source_table', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'can_review', 'sequence': 30, 'readonly': True}, {'name': 'name', 'sequence': 40, 'readonly': True}, {'name': 'source_origin', 'sequence': 50, 'readonly': True}, {'name': 'adjustment_type', 'sequence': 60}, {'name': 'date_adjustment', 'sequence': 70}, {'name': 'project_id', 'sequence': 80}, {'name': 'company_id', 'sequence': 90, 'readonly': True}, {'name': 'contract_id', 'sequence': 100}, {'name': 'settlement_id', 'sequence': 110}, {'name': 'partner_id', 'sequence': 120}, {'name': 'item_name', 'sequence': 130}, {'name': 'account_name', 'sequence': 140}, {'name': 'amount', 'sequence': 150}, {'name': 'signed_amount', 'sequence': 160, 'readonly': True}, {'name': 'currency_id', 'sequence': 170}, {'name': 'reject_reason', 'sequence': 180, 'readonly': True}, {'name': 'note', 'sequence': 190}, {'name': 'legacy_line_id', 'sequence': 200, 'readonly': True}, {'name': 'legacy_document_no', 'sequence': 210, 'readonly': True}, {'name': 'legacy_document_state', 'sequence': 220, 'readonly': True}, {'name': 'legacy_fund_confirmation_id', 'sequence': 230, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 240, 'readonly': True}, {'name': 'source_created_by', 'sequence': 250, 'readonly': True}, {'name': 'source_created_at', 'sequence': 260, 'readonly': True}, {'name': 'active', 'sequence': 270}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_settlement_adjustment_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">settlement_adjustment_productized_form_v1</field>
+            <field name="model">sc.settlement.adjustment</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_settlement_adjustment"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '结算调整',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '调整主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'can_review', 'name', 'source_origin', 'adjustment_type', 'date_adjustment']},
+                                {'title': '项目与结算锚点', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'settlement_id', 'contract_id', 'partner_id']},
+                                {'title': '调整事项', 'sequence': 30, 'columns': 2, 'fields': ['item_name', 'account_name', 'amount', 'signed_amount', 'currency_id']},
+                                {'title': '审批与说明', 'sequence': 40, 'columns': 1, 'fields': ['validation_status', 'reject_reason', 'note']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_line_id', 'legacy_document_no', 'legacy_document_state', 'legacy_fund_confirmation_id', 'legacy_source_table', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'can_review', 'sequence': 30, 'readonly': True}, {'name': 'name', 'sequence': 40, 'readonly': True}, {'name': 'source_origin', 'sequence': 50, 'readonly': True}, {'name': 'adjustment_type', 'sequence': 60}, {'name': 'date_adjustment', 'sequence': 70}, {'name': 'project_id', 'sequence': 80}, {'name': 'company_id', 'sequence': 90, 'readonly': True}, {'name': 'settlement_id', 'sequence': 100}, {'name': 'contract_id', 'sequence': 110}, {'name': 'partner_id', 'sequence': 120}, {'name': 'item_name', 'sequence': 130}, {'name': 'account_name', 'sequence': 140}, {'name': 'amount', 'sequence': 150}, {'name': 'signed_amount', 'sequence': 160, 'readonly': True}, {'name': 'currency_id', 'sequence': 170}, {'name': 'reject_reason', 'sequence': 180, 'readonly': True}, {'name': 'note', 'sequence': 190}, {'name': 'legacy_line_id', 'sequence': 200, 'readonly': True}, {'name': 'legacy_document_no', 'sequence': 210, 'readonly': True}, {'name': 'legacy_document_state', 'sequence': 220, 'readonly': True}, {'name': 'legacy_fund_confirmation_id', 'sequence': 230, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 240, 'readonly': True}, {'name': 'source_created_by', 'sequence': 250, 'readonly': True}, {'name': 'source_created_at', 'sequence': 260, 'readonly': True}, {'name': 'active', 'sequence': 270}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

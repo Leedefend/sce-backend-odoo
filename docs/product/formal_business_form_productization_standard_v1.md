@@ -219,6 +219,27 @@ The current audit checks:
 - product-release contracts do not bypass backend orchestration with full
   hand-written form layout trees
 
+The audit separates risks from acceptance evidence:
+
+- `productized_entry_semantic_surface` means the entry has an action-scoped
+  product-release contract using `fields + sections +
+  composition_mode=entry_semantic_surface`.  This is acceptance evidence, not
+  a residual risk.
+- `source_trace_sectioned` means native source or legacy fields still exist,
+  but the productized contract has moved them into a dedicated source-trace
+  section.  This is acceptance evidence, not a residual risk.
+- `productized_status_context` means a productized entry exposes equivalent
+  state, status, validation, or workflow fields even when the native XML does
+  not use a statusbar widget.  This is acceptance evidence, not a residual
+  risk.
+- `productized_contract_structure_evidence` means the published productized
+  contract declares a sectioned field surface for the entry.  Stale runtime
+  structure CSV coverage should be refreshed separately, but it does not block
+  a verified productized entry.
+- Productized entries should remain in the risk queue only when they still
+  miss both productized-contract evidence and equivalent runtime evidence for
+  the relevant user-facing concern.
+
 The audit writes:
 
 - `artifacts/backend/business_form_productization_audit.json`

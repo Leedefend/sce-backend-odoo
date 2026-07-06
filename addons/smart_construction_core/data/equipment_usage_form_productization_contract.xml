@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_equipment_usage_shift_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">equipment_usage_shift_productized_form_v1</field>
+            <field name="model">sc.equipment.usage</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_equipment_usage_shift_user_confirmed"/>
+            <field name="priority">50</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '机械台班记录',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'document_date', 'usage_date']},
+                                {'title': '项目与租赁单位', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'supplier_id', 'former_supplier_name', 'equipment_usage_former_name_list_display', 'request_id', 'recorder_id']},
+                                {'title': '设备信息', 'sequence': 30, 'columns': 2, 'fields': ['equipment_name', 'equipment_code', 'specification', 'uom_text']},
+                                {'title': '使用情况', 'sequence': 40, 'columns': 2, 'fields': ['usage_location', 'operator_name', 'usage_qty', 'usage_hours', 'work_hours']},
+                                {'title': '金额与计价', 'sequence': 50, 'columns': 2, 'fields': ['price_unit', 'amount', 'currency_id']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'equipment_usage_note_display', 'attachment_ids', 'equipment_usage_attachment_text_display']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'legacy_acceptance_label', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'document_date', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'usage_date', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 50, 'group_title': '项目与租赁单位'},
+                                {'name': 'supplier_id', 'sequence': 60, 'group_title': '项目与租赁单位'},
+                                {'name': 'former_supplier_name', 'sequence': 70, 'group_title': '项目与租赁单位', 'readonly': True},
+                                {'name': 'equipment_usage_former_name_list_display', 'sequence': 80, 'group_title': '项目与租赁单位', 'readonly': True},
+                                {'name': 'request_id', 'sequence': 90, 'group_title': '项目与租赁单位'},
+                                {'name': 'recorder_id', 'sequence': 100, 'group_title': '项目与租赁单位'},
+                                {'name': 'equipment_name', 'sequence': 110, 'group_title': '设备信息'},
+                                {'name': 'equipment_code', 'sequence': 120, 'group_title': '设备信息'},
+                                {'name': 'specification', 'sequence': 130, 'group_title': '设备信息'},
+                                {'name': 'uom_text', 'sequence': 140, 'group_title': '设备信息'},
+                                {'name': 'usage_location', 'sequence': 150, 'group_title': '使用情况'},
+                                {'name': 'operator_name', 'sequence': 160, 'group_title': '使用情况'},
+                                {'name': 'usage_qty', 'sequence': 170, 'group_title': '使用情况'},
+                                {'name': 'usage_hours', 'sequence': 180, 'group_title': '使用情况'},
+                                {'name': 'work_hours', 'sequence': 190, 'group_title': '使用情况'},
+                                {'name': 'price_unit', 'sequence': 200, 'group_title': '金额与计价'},
+                                {'name': 'amount', 'sequence': 210, 'group_title': '金额与计价'},
+                                {'name': 'currency_id', 'sequence': 220, 'group_title': '金额与计价'},
+                                {'name': 'note', 'sequence': 230, 'group_title': '说明与附件'},
+                                {'name': 'equipment_usage_note_display', 'sequence': 240, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'attachment_ids', 'sequence': 250, 'group_title': '说明与附件'},
+                                {'name': 'equipment_usage_attachment_text_display', 'sequence': 260, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_fact_model', 'sequence': 270, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 280, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 290, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_acceptance_label', 'sequence': 300, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 310, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 320, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 330, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_equipment_usage_register_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">equipment_usage_register_productized_form_v1</field>
+            <field name="model">sc.equipment.usage</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_equipment_usage"/>
+            <field name="priority">50</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '设备使用登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'document_date', 'usage_date']},
+                                {'title': '项目与供应单位', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'supplier_id', 'former_supplier_name', 'equipment_usage_former_name_list_display', 'request_id', 'recorder_id']},
+                                {'title': '设备信息', 'sequence': 30, 'columns': 2, 'fields': ['equipment_name', 'equipment_code', 'specification', 'uom_text']},
+                                {'title': '使用情况', 'sequence': 40, 'columns': 2, 'fields': ['usage_location', 'operator_name', 'usage_qty', 'usage_hours', 'work_hours']},
+                                {'title': '金额与计价', 'sequence': 50, 'columns': 2, 'fields': ['price_unit', 'amount', 'currency_id']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'equipment_usage_note_display', 'attachment_ids', 'equipment_usage_attachment_text_display']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'legacy_acceptance_label', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'document_date', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'usage_date', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 50, 'group_title': '项目与供应单位'},
+                                {'name': 'supplier_id', 'sequence': 60, 'group_title': '项目与供应单位'},
+                                {'name': 'former_supplier_name', 'sequence': 70, 'group_title': '项目与供应单位', 'readonly': True},
+                                {'name': 'equipment_usage_former_name_list_display', 'sequence': 80, 'group_title': '项目与供应单位', 'readonly': True},
+                                {'name': 'request_id', 'sequence': 90, 'group_title': '项目与供应单位'},
+                                {'name': 'recorder_id', 'sequence': 100, 'group_title': '项目与供应单位'},
+                                {'name': 'equipment_name', 'sequence': 110, 'group_title': '设备信息'},
+                                {'name': 'equipment_code', 'sequence': 120, 'group_title': '设备信息'},
+                                {'name': 'specification', 'sequence': 130, 'group_title': '设备信息'},
+                                {'name': 'uom_text', 'sequence': 140, 'group_title': '设备信息'},
+                                {'name': 'usage_location', 'sequence': 150, 'group_title': '使用情况'},
+                                {'name': 'operator_name', 'sequence': 160, 'group_title': '使用情况'},
+                                {'name': 'usage_qty', 'sequence': 170, 'group_title': '使用情况'},
+                                {'name': 'usage_hours', 'sequence': 180, 'group_title': '使用情况'},
+                                {'name': 'work_hours', 'sequence': 190, 'group_title': '使用情况'},
+                                {'name': 'price_unit', 'sequence': 200, 'group_title': '金额与计价'},
+                                {'name': 'amount', 'sequence': 210, 'group_title': '金额与计价'},
+                                {'name': 'currency_id', 'sequence': 220, 'group_title': '金额与计价'},
+                                {'name': 'note', 'sequence': 230, 'group_title': '说明与附件'},
+                                {'name': 'equipment_usage_note_display', 'sequence': 240, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'attachment_ids', 'sequence': 250, 'group_title': '说明与附件'},
+                                {'name': 'equipment_usage_attachment_text_display', 'sequence': 260, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_fact_model', 'sequence': 270, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 280, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 290, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_acceptance_label', 'sequence': 300, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 310, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 320, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 330, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

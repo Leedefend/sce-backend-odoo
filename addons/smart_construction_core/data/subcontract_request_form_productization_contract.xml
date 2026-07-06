@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_subcontract_request_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">subcontract_request_productized_form_v1</field>
+            <field name="model">sc.subcontract.request</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_subcontract_request"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '分包申请',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '申请主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'project_id', 'request_date', 'priority', 'applicant_id', 'department_id']},
+                                {'title': '计划与周期', 'sequence': 20, 'columns': 2, 'fields': ['plan_id', 'contract_id', 'need_start_date', 'need_end_date']},
+                                {'title': '分包事项', 'sequence': 30, 'columns': 2, 'fields': ['subcontract_scope', 'suggested_subcontractor_id', 'currency_id', 'estimated_amount']},
+                                {'title': '申请明细与说明', 'sequence': 40, 'columns': 2, 'fields': ['line_ids', 'request_reason', 'note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '申请主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 20, 'group_title': '申请主信息'},
+                                {'name': 'project_id', 'sequence': 30, 'group_title': '申请主信息'},
+                                {'name': 'request_date', 'sequence': 40, 'group_title': '申请主信息'},
+                                {'name': 'priority', 'sequence': 50, 'group_title': '申请主信息'},
+                                {'name': 'applicant_id', 'sequence': 60, 'group_title': '申请主信息'},
+                                {'name': 'department_id', 'sequence': 70, 'group_title': '申请主信息'},
+                                {'name': 'plan_id', 'sequence': 80, 'group_title': '计划与周期'},
+                                {'name': 'contract_id', 'sequence': 90, 'group_title': '计划与周期'},
+                                {'name': 'need_start_date', 'sequence': 100, 'group_title': '计划与周期'},
+                                {'name': 'need_end_date', 'sequence': 110, 'group_title': '计划与周期'},
+                                {'name': 'subcontract_scope', 'sequence': 120, 'group_title': '分包事项'},
+                                {'name': 'suggested_subcontractor_id', 'sequence': 130, 'group_title': '分包事项'},
+                                {'name': 'currency_id', 'sequence': 140, 'group_title': '分包事项'},
+                                {'name': 'estimated_amount', 'sequence': 150, 'group_title': '分包事项'},
+                                {'name': 'line_ids', 'sequence': 160, 'group_title': '申请明细与说明'},
+                                {'name': 'request_reason', 'sequence': 170, 'group_title': '申请明细与说明'},
+                                {'name': 'note', 'sequence': 180, 'group_title': '申请明细与说明'},
+                                {'name': 'attachment_ids', 'sequence': 190, 'group_title': '申请明细与说明'},
+                                {'name': 'legacy_fact_model', 'sequence': 200, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 210, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 220, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_subcontract_request_user_confirmed_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">subcontract_request_user_confirmed_productized_form_v1</field>
+            <field name="model">sc.subcontract.request</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_subcontract_request_user_confirmed"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '分包方单',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '单据主信息', 'sequence': 10, 'columns': 2, 'fields': ['subcontract_request_status_display', 'subcontract_request_document_no', 'subcontract_request_project_name', 'subcontract_request_title']},
+                                {'title': '分包确认信息', 'sequence': 20, 'columns': 2, 'fields': ['subcontract_request_subcontractor', 'subcontract_request_type_display', 'subcontract_request_content', 'subcontract_request_quantity_display', 'subcontract_request_price_unit_display', 'subcontract_request_amount_display', 'subcontract_request_monthly_amount_display']},
+                                {'title': '备注与来源', 'sequence': 30, 'columns': 2, 'fields': ['subcontract_request_note_display', 'subcontract_request_attachment_text', 'subcontract_request_source_created_by', 'subcontract_request_source_created_at']},
+                                {'title': '专业记录关联', 'sequence': 40, 'columns': 2, 'fields': ['state', 'name', 'project_id', 'legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type']}
+                            ],
+                            'fields': [
+                                {'name': 'subcontract_request_status_display', 'sequence': 10, 'group_title': '单据主信息', 'readonly': True},
+                                {'name': 'subcontract_request_document_no', 'sequence': 20, 'group_title': '单据主信息', 'readonly': True},
+                                {'name': 'subcontract_request_project_name', 'sequence': 30, 'group_title': '单据主信息', 'readonly': True},
+                                {'name': 'subcontract_request_title', 'sequence': 40, 'group_title': '单据主信息', 'readonly': True},
+                                {'name': 'subcontract_request_subcontractor', 'sequence': 50, 'group_title': '分包确认信息', 'readonly': True},
+                                {'name': 'subcontract_request_type_display', 'sequence': 60, 'group_title': '分包确认信息', 'readonly': True},
+                                {'name': 'subcontract_request_content', 'sequence': 70, 'group_title': '分包确认信息', 'readonly': True},
+                                {'name': 'subcontract_request_quantity_display', 'sequence': 80, 'group_title': '分包确认信息', 'readonly': True},
+                                {'name': 'subcontract_request_price_unit_display', 'sequence': 90, 'group_title': '分包确认信息', 'readonly': True},
+                                {'name': 'subcontract_request_amount_display', 'sequence': 100, 'group_title': '分包确认信息', 'readonly': True},
+                                {'name': 'subcontract_request_monthly_amount_display', 'sequence': 110, 'group_title': '分包确认信息', 'readonly': True},
+                                {'name': 'subcontract_request_note_display', 'sequence': 120, 'group_title': '备注与来源', 'readonly': True},
+                                {'name': 'subcontract_request_attachment_text', 'sequence': 130, 'group_title': '备注与来源', 'readonly': True},
+                                {'name': 'subcontract_request_source_created_by', 'sequence': 140, 'group_title': '备注与来源', 'readonly': True},
+                                {'name': 'subcontract_request_source_created_at', 'sequence': 150, 'group_title': '备注与来源', 'readonly': True},
+                                {'name': 'state', 'sequence': 160, 'group_title': '专业记录关联', 'readonly': True},
+                                {'name': 'name', 'sequence': 170, 'group_title': '专业记录关联', 'readonly': True},
+                                {'name': 'project_id', 'sequence': 180, 'group_title': '专业记录关联', 'readonly': True},
+                                {'name': 'legacy_fact_model', 'sequence': 190, 'group_title': '专业记录关联', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 200, 'group_title': '专业记录关联', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 210, 'group_title': '专业记录关联', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

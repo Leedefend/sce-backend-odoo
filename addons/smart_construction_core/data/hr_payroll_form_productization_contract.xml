@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_hr_payroll_salary_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">hr_payroll_salary_productized_form_v1</field>
+            <field name="model">sc.hr.payroll.document</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_salary_registration"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '项目管理人员工资登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'document_no', 'name', 'fact_type', 'business_date', 'requester_id', 'department_id']},
+                                {'title': '工资发放', 'sequence': 20, 'columns': 2, 'fields': ['period_year', 'period_month', 'payout_unit', 'people_count', 'salary_base', 'gross_amount', 'deduction_amount', 'net_salary']},
+                                {'title': '人员与办理', 'sequence': 30, 'columns': 2, 'fields': ['employee_user_id', 'employee_name', 'employee_status', 'employee_type', 'handler_id', 'due_date']},
+                                {'title': '说明与附件', 'sequence': 40, 'columns': 2, 'fields': ['description', 'result_note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_document_no', 'legacy_document_state', 'legacy_source_table', 'legacy_source_id']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'document_no', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'fact_type', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'business_date', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'requester_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'department_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'period_year', 'sequence': 80, 'group_title': '工资发放'},
+                                {'name': 'period_month', 'sequence': 90, 'group_title': '工资发放'},
+                                {'name': 'payout_unit', 'sequence': 100, 'group_title': '工资发放'},
+                                {'name': 'people_count', 'sequence': 110, 'group_title': '工资发放'},
+                                {'name': 'salary_base', 'sequence': 120, 'group_title': '工资发放'},
+                                {'name': 'gross_amount', 'sequence': 130, 'group_title': '工资发放'},
+                                {'name': 'deduction_amount', 'sequence': 140, 'group_title': '工资发放'},
+                                {'name': 'net_salary', 'sequence': 150, 'group_title': '工资发放'},
+                                {'name': 'employee_user_id', 'sequence': 160, 'group_title': '人员与办理'},
+                                {'name': 'employee_name', 'sequence': 170, 'group_title': '人员与办理'},
+                                {'name': 'employee_status', 'sequence': 180, 'group_title': '人员与办理'},
+                                {'name': 'employee_type', 'sequence': 190, 'group_title': '人员与办理'},
+                                {'name': 'handler_id', 'sequence': 200, 'group_title': '人员与办理'},
+                                {'name': 'due_date', 'sequence': 210, 'group_title': '人员与办理'},
+                                {'name': 'description', 'sequence': 220, 'group_title': '说明与附件'},
+                                {'name': 'result_note', 'sequence': 230, 'group_title': '说明与附件'},
+                                {'name': 'attachment_ids', 'sequence': 240, 'group_title': '说明与附件'},
+                                {'name': 'legacy_document_no', 'sequence': 250, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 260, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 270, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_id', 'sequence': 280, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_hr_payroll_social_person_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">hr_payroll_social_person_productized_form_v1</field>
+            <field name="model">sc.hr.payroll.document</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_social_person_registration"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '社保人员登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'document_no', 'name', 'fact_type', 'business_date', 'department_id']},
+                                {'title': '人员社保信息', 'sequence': 20, 'columns': 2, 'fields': ['employee_user_id', 'employee_name', 'employee_status', 'employee_type', 'id_number', 'contact_phone', 'period_year', 'period_month', 'payer_unit', 'social_security_base']},
+                                {'title': '办理与附件', 'sequence': 30, 'columns': 2, 'fields': ['handler_id', 'due_date', 'description', 'result_note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 40, 'columns': 2, 'fields': ['legacy_document_no', 'legacy_document_state', 'legacy_source_table', 'legacy_source_id']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'document_no', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'fact_type', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'business_date', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'department_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'employee_user_id', 'sequence': 70, 'group_title': '人员社保信息'},
+                                {'name': 'employee_name', 'sequence': 80, 'group_title': '人员社保信息'},
+                                {'name': 'employee_status', 'sequence': 90, 'group_title': '人员社保信息'},
+                                {'name': 'employee_type', 'sequence': 100, 'group_title': '人员社保信息'},
+                                {'name': 'id_number', 'sequence': 110, 'group_title': '人员社保信息'},
+                                {'name': 'contact_phone', 'sequence': 120, 'group_title': '人员社保信息'},
+                                {'name': 'period_year', 'sequence': 130, 'group_title': '人员社保信息'},
+                                {'name': 'period_month', 'sequence': 140, 'group_title': '人员社保信息'},
+                                {'name': 'payer_unit', 'sequence': 150, 'group_title': '人员社保信息'},
+                                {'name': 'social_security_base', 'sequence': 160, 'group_title': '人员社保信息'},
+                                {'name': 'handler_id', 'sequence': 170, 'group_title': '办理与附件'},
+                                {'name': 'due_date', 'sequence': 180, 'group_title': '办理与附件'},
+                                {'name': 'description', 'sequence': 190, 'group_title': '办理与附件'},
+                                {'name': 'result_note', 'sequence': 200, 'group_title': '办理与附件'},
+                                {'name': 'attachment_ids', 'sequence': 210, 'group_title': '办理与附件'},
+                                {'name': 'legacy_document_no', 'sequence': 220, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 230, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 240, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_id', 'sequence': 250, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_hr_payroll_social_registration_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">hr_payroll_social_registration_productized_form_v1</field>
+            <field name="model">sc.hr.payroll.document</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_social_registration"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '社保登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'document_no', 'name', 'fact_type', 'business_date', 'requester_id', 'department_id']},
+                                {'title': '社保缴纳', 'sequence': 20, 'columns': 2, 'fields': ['period_year', 'period_month', 'payer_unit', 'people_count', 'company_amount', 'individual_amount', 'certificate_fee']},
+                                {'title': '办理与附件', 'sequence': 30, 'columns': 2, 'fields': ['handler_id', 'due_date', 'description', 'result_note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 40, 'columns': 2, 'fields': ['legacy_document_no', 'legacy_document_state', 'legacy_source_table', 'legacy_source_id']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'document_no', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'fact_type', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'business_date', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'requester_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'department_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'period_year', 'sequence': 80, 'group_title': '社保缴纳'},
+                                {'name': 'period_month', 'sequence': 90, 'group_title': '社保缴纳'},
+                                {'name': 'payer_unit', 'sequence': 100, 'group_title': '社保缴纳'},
+                                {'name': 'people_count', 'sequence': 110, 'group_title': '社保缴纳'},
+                                {'name': 'company_amount', 'sequence': 120, 'group_title': '社保缴纳'},
+                                {'name': 'individual_amount', 'sequence': 130, 'group_title': '社保缴纳'},
+                                {'name': 'certificate_fee', 'sequence': 140, 'group_title': '社保缴纳'},
+                                {'name': 'handler_id', 'sequence': 150, 'group_title': '办理与附件'},
+                                {'name': 'due_date', 'sequence': 160, 'group_title': '办理与附件'},
+                                {'name': 'description', 'sequence': 170, 'group_title': '办理与附件'},
+                                {'name': 'result_note', 'sequence': 180, 'group_title': '办理与附件'},
+                                {'name': 'attachment_ids', 'sequence': 190, 'group_title': '办理与附件'},
+                                {'name': 'legacy_document_no', 'sequence': 200, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 210, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 220, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_id', 'sequence': 230, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_hr_payroll_subsidy_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">hr_payroll_subsidy_productized_form_v1</field>
+            <field name="model">sc.hr.payroll.document</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_subsidy"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '补助',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'document_no', 'name', 'fact_type', 'business_date', 'requester_id', 'department_id']},
+                                {'title': '补助信息', 'sequence': 20, 'columns': 2, 'fields': ['employee_user_id', 'employee_name', 'payout_unit', 'people_count', 'item_type', 'amount', 'occurrence_date']},
+                                {'title': '办理与附件', 'sequence': 30, 'columns': 2, 'fields': ['handler_id', 'due_date', 'description', 'result_note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 40, 'columns': 2, 'fields': ['legacy_document_no', 'legacy_document_state', 'legacy_source_table', 'legacy_source_id']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'document_no', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'fact_type', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'business_date', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'requester_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'department_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'employee_user_id', 'sequence': 80, 'group_title': '补助信息'},
+                                {'name': 'employee_name', 'sequence': 90, 'group_title': '补助信息'},
+                                {'name': 'payout_unit', 'sequence': 100, 'group_title': '补助信息'},
+                                {'name': 'people_count', 'sequence': 110, 'group_title': '补助信息'},
+                                {'name': 'item_type', 'sequence': 120, 'group_title': '补助信息'},
+                                {'name': 'amount', 'sequence': 130, 'group_title': '补助信息'},
+                                {'name': 'occurrence_date', 'sequence': 140, 'group_title': '补助信息'},
+                                {'name': 'handler_id', 'sequence': 150, 'group_title': '办理与附件'},
+                                {'name': 'due_date', 'sequence': 160, 'group_title': '办理与附件'},
+                                {'name': 'description', 'sequence': 170, 'group_title': '办理与附件'},
+                                {'name': 'result_note', 'sequence': 180, 'group_title': '办理与附件'},
+                                {'name': 'attachment_ids', 'sequence': 190, 'group_title': '办理与附件'},
+                                {'name': 'legacy_document_no', 'sequence': 200, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 210, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 220, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_id', 'sequence': 230, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_hr_payroll_bonus_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">hr_payroll_bonus_productized_form_v1</field>
+            <field name="model">sc.hr.payroll.document</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_bonus"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '奖金',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'document_no', 'name', 'fact_type', 'business_date', 'requester_id', 'department_id']},
+                                {'title': '奖金信息', 'sequence': 20, 'columns': 2, 'fields': ['employee_user_id', 'employee_name', 'payout_unit', 'people_count', 'item_type', 'amount', 'occurrence_date']},
+                                {'title': '办理与附件', 'sequence': 30, 'columns': 2, 'fields': ['handler_id', 'due_date', 'description', 'result_note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 40, 'columns': 2, 'fields': ['legacy_document_no', 'legacy_document_state', 'legacy_source_table', 'legacy_source_id']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'document_no', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'fact_type', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'business_date', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'requester_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'department_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'employee_user_id', 'sequence': 80, 'group_title': '奖金信息'},
+                                {'name': 'employee_name', 'sequence': 90, 'group_title': '奖金信息'},
+                                {'name': 'payout_unit', 'sequence': 100, 'group_title': '奖金信息'},
+                                {'name': 'people_count', 'sequence': 110, 'group_title': '奖金信息'},
+                                {'name': 'item_type', 'sequence': 120, 'group_title': '奖金信息'},
+                                {'name': 'amount', 'sequence': 130, 'group_title': '奖金信息'},
+                                {'name': 'occurrence_date', 'sequence': 140, 'group_title': '奖金信息'},
+                                {'name': 'handler_id', 'sequence': 150, 'group_title': '办理与附件'},
+                                {'name': 'due_date', 'sequence': 160, 'group_title': '办理与附件'},
+                                {'name': 'description', 'sequence': 170, 'group_title': '办理与附件'},
+                                {'name': 'result_note', 'sequence': 180, 'group_title': '办理与附件'},
+                                {'name': 'attachment_ids', 'sequence': 190, 'group_title': '办理与附件'},
+                                {'name': 'legacy_document_no', 'sequence': 200, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 210, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 220, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_id', 'sequence': 230, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

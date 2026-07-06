@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_labor_plan_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">labor_plan_productized_form_v1</field>
+            <field name="model">sc.labor.plan</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_labor_plan"/>
+            <field name="priority">50</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '劳务计划',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name']},
+                                {'title': '项目与劳务单位', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'owner_id', 'contractor_id']},
+                                {'title': '计划期间', 'sequence': 30, 'columns': 2, 'fields': ['plan_date', 'start_date', 'end_date']},
+                                {'title': '计划明细', 'sequence': 40, 'columns': 2, 'fields': ['line_ids']},
+                                {'title': '说明与附件', 'sequence': 50, 'columns': 2, 'fields': ['note', 'message_attachment_count']},
+                                {'title': '来源追溯', 'sequence': 60, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 30, 'group_title': '项目与劳务单位'},
+                                {'name': 'owner_id', 'sequence': 40, 'group_title': '项目与劳务单位'},
+                                {'name': 'contractor_id', 'sequence': 50, 'group_title': '项目与劳务单位'},
+                                {'name': 'plan_date', 'sequence': 60, 'group_title': '计划期间'},
+                                {'name': 'start_date', 'sequence': 70, 'group_title': '计划期间'},
+                                {'name': 'end_date', 'sequence': 80, 'group_title': '计划期间'},
+                                {'name': 'line_ids', 'sequence': 90, 'group_title': '计划明细'},
+                                {'name': 'note', 'sequence': 100, 'group_title': '说明与附件'},
+                                {'name': 'message_attachment_count', 'sequence': 110, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_fact_model', 'sequence': 120, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 130, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 140, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 150, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 160, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 170, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_equipment_plan_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">equipment_plan_productized_form_v1</field>
+            <field name="model">sc.equipment.plan</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_equipment_plan"/>
+            <field name="priority">50</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '设备计划',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name']},
+                                {'title': '项目与供应单位', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'owner_id', 'supplier_id']},
+                                {'title': '计划期间与地点', 'sequence': 30, 'columns': 2, 'fields': ['plan_date', 'start_date', 'end_date', 'usage_location']},
+                                {'title': '计划明细', 'sequence': 40, 'columns': 2, 'fields': ['line_ids']},
+                                {'title': '说明与附件', 'sequence': 50, 'columns': 2, 'fields': ['note', 'message_attachment_count']},
+                                {'title': '来源追溯', 'sequence': 60, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 30, 'group_title': '项目与供应单位'},
+                                {'name': 'owner_id', 'sequence': 40, 'group_title': '项目与供应单位'},
+                                {'name': 'supplier_id', 'sequence': 50, 'group_title': '项目与供应单位'},
+                                {'name': 'plan_date', 'sequence': 60, 'group_title': '计划期间与地点'},
+                                {'name': 'start_date', 'sequence': 70, 'group_title': '计划期间与地点'},
+                                {'name': 'end_date', 'sequence': 80, 'group_title': '计划期间与地点'},
+                                {'name': 'usage_location', 'sequence': 90, 'group_title': '计划期间与地点'},
+                                {'name': 'line_ids', 'sequence': 100, 'group_title': '计划明细'},
+                                {'name': 'note', 'sequence': 110, 'group_title': '说明与附件'},
+                                {'name': 'message_attachment_count', 'sequence': 120, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_fact_model', 'sequence': 130, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 140, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 150, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 160, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 170, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 180, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_attendance_checkin_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">attendance_checkin_productized_form_v1</field>
+            <field name="model">sc.attendance.checkin</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_attendance_checkin"/>
+            <field name="priority">50</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '考勤记录',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name']},
+                                {'title': '项目与班组', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'labor_team', 'contractor_id', 'recorder_id']},
+                                {'title': '考勤工时', 'sequence': 30, 'columns': 2, 'fields': ['attendance_date', 'attendance_qty', 'work_hours']},
+                                {'title': '作业内容', 'sequence': 40, 'columns': 2, 'fields': ['work_content']},
+                                {'title': '说明与附件', 'sequence': 50, 'columns': 2, 'fields': ['note', 'message_attachment_count']},
+                                {'title': '来源追溯', 'sequence': 60, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 30, 'group_title': '项目与班组'},
+                                {'name': 'labor_team', 'sequence': 40, 'group_title': '项目与班组'},
+                                {'name': 'contractor_id', 'sequence': 50, 'group_title': '项目与班组'},
+                                {'name': 'recorder_id', 'sequence': 60, 'group_title': '项目与班组'},
+                                {'name': 'attendance_date', 'sequence': 70, 'group_title': '考勤工时'},
+                                {'name': 'attendance_qty', 'sequence': 80, 'group_title': '考勤工时'},
+                                {'name': 'work_hours', 'sequence': 90, 'group_title': '考勤工时'},
+                                {'name': 'work_content', 'sequence': 100, 'group_title': '作业内容'},
+                                {'name': 'note', 'sequence': 110, 'group_title': '说明与附件'},
+                                {'name': 'message_attachment_count', 'sequence': 120, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_fact_model', 'sequence': 130, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 140, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 150, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 160, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 170, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 180, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

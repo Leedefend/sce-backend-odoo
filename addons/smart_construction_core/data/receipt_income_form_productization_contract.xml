@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_receipt_income_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">receipt_income_productized_form_v1</field>
+            <field name="model">sc.receipt.income</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_receipt_income"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '收款登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'receipt_flow_label', 'source_origin', 'source_kind', 'business_category_id', 'date_receipt', 'document_no']},
+                                {'title': '项目与合同', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'legacy_project_name', 'company_id', 'legacy_company_name', 'operation_strategy', 'partner_id', 'legacy_partner_name', 'contract_id', 'legacy_contract_no', 'payment_request_id']},
+                                {'title': '收款事项', 'sequence': 30, 'columns': 2, 'fields': ['legacy_receipt_type', 'legacy_receipt_subtype', 'receipt_type', 'income_category', 'payment_method', 'bill_no', 'invoice_ref']},
+                                {'title': '收款账户', 'sequence': 40, 'columns': 2, 'fields': ['receiving_account', 'receiving_account_name', 'receiving_account_no', 'receiving_bank_name', 'treasury_ledger_id']},
+                                {'title': '金额与抵扣', 'sequence': 50, 'columns': 2, 'fields': ['amount', 'deducted_invoice_amount', 'deducted_tax_amount', 'settlement_amount', 'currency_id']},
+                                {'title': '责任余额', 'sequence': 60, 'columns': 2, 'fields': ['company_contractor_responsibility_state', 'company_contractor_arrival_unprocessed_amount', 'company_contractor_arrival_over_processed_amount', 'company_contractor_self_funding_balance', 'company_contractor_responsibility_notice']},
+                                {'title': '说明与附件', 'sequence': 70, 'columns': 2, 'fields': ['note', 'attachment_ids', 'receipt_income_attachment_text_display', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 80, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'legacy_document_state_label', 'legacy_note', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'receipt_flow_label', 'sequence': 40, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'source_origin', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'source_kind', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'business_category_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'date_receipt', 'sequence': 80, 'group_title': '办理主信息'},
+                                {'name': 'document_no', 'sequence': 90, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 100, 'group_title': '项目与合同'},
+                                {'name': 'legacy_project_name', 'sequence': 110, 'group_title': '项目与合同', 'readonly': True},
+                                {'name': 'company_id', 'sequence': 120, 'group_title': '项目与合同', 'readonly': True},
+                                {'name': 'legacy_company_name', 'sequence': 130, 'group_title': '项目与合同', 'readonly': True},
+                                {'name': 'operation_strategy', 'sequence': 140, 'group_title': '项目与合同', 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 150, 'group_title': '项目与合同'},
+                                {'name': 'legacy_partner_name', 'sequence': 160, 'group_title': '项目与合同', 'readonly': True},
+                                {'name': 'contract_id', 'sequence': 170, 'group_title': '项目与合同'},
+                                {'name': 'legacy_contract_no', 'sequence': 180, 'group_title': '项目与合同', 'readonly': True},
+                                {'name': 'payment_request_id', 'sequence': 190, 'group_title': '项目与合同'},
+                                {'name': 'legacy_receipt_type', 'sequence': 200, 'group_title': '收款事项'},
+                                {'name': 'legacy_receipt_subtype', 'sequence': 210, 'group_title': '收款事项'},
+                                {'name': 'receipt_type', 'sequence': 220, 'group_title': '收款事项'},
+                                {'name': 'income_category', 'sequence': 230, 'group_title': '收款事项'},
+                                {'name': 'payment_method', 'sequence': 240, 'group_title': '收款事项'},
+                                {'name': 'bill_no', 'sequence': 250, 'group_title': '收款事项'},
+                                {'name': 'invoice_ref', 'sequence': 260, 'group_title': '收款事项'},
+                                {'name': 'receiving_account', 'sequence': 270, 'group_title': '收款账户'},
+                                {'name': 'receiving_account_name', 'sequence': 280, 'group_title': '收款账户'},
+                                {'name': 'receiving_account_no', 'sequence': 290, 'group_title': '收款账户'},
+                                {'name': 'receiving_bank_name', 'sequence': 300, 'group_title': '收款账户'},
+                                {'name': 'treasury_ledger_id', 'sequence': 310, 'group_title': '收款账户', 'readonly': True},
+                                {'name': 'amount', 'sequence': 320, 'group_title': '金额与抵扣'},
+                                {'name': 'deducted_invoice_amount', 'sequence': 330, 'group_title': '金额与抵扣'},
+                                {'name': 'deducted_tax_amount', 'sequence': 340, 'group_title': '金额与抵扣'},
+                                {'name': 'settlement_amount', 'sequence': 350, 'group_title': '金额与抵扣'},
+                                {'name': 'currency_id', 'sequence': 360, 'group_title': '金额与抵扣'},
+                                {'name': 'company_contractor_responsibility_state', 'sequence': 370, 'group_title': '责任余额', 'readonly': True},
+                                {'name': 'company_contractor_arrival_unprocessed_amount', 'sequence': 380, 'group_title': '责任余额', 'readonly': True},
+                                {'name': 'company_contractor_arrival_over_processed_amount', 'sequence': 390, 'group_title': '责任余额', 'readonly': True},
+                                {'name': 'company_contractor_self_funding_balance', 'sequence': 400, 'group_title': '责任余额', 'readonly': True},
+                                {'name': 'company_contractor_responsibility_notice', 'sequence': 410, 'group_title': '责任余额', 'readonly': True},
+                                {'name': 'note', 'sequence': 420, 'group_title': '说明与附件'},
+                                {'name': 'attachment_ids', 'sequence': 430, 'group_title': '说明与附件'},
+                                {'name': 'receipt_income_attachment_text_display', 'sequence': 440, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'reject_reason', 'sequence': 450, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 460, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 470, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 480, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 490, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state_label', 'sequence': 500, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_note', 'sequence': 510, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 520, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'created_time', 'sequence': 530, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 540, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_receipt_income_project_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">receipt_income_project_productized_form_v1</field>
+            <field name="model">sc.receipt.income</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_receipt_income_user_income"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '收入',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'receipt_flow_label', 'source_origin', 'source_kind', 'business_category_id', 'date_receipt', 'document_no']},
+                                {'title': '项目与合同', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'legacy_project_name', 'company_id', 'legacy_company_name', 'operation_strategy', 'partner_id', 'legacy_partner_name', 'contract_id', 'legacy_contract_no', 'payment_request_id']},
+                                {'title': '收款事项', 'sequence': 30, 'columns': 2, 'fields': ['legacy_receipt_type', 'legacy_receipt_subtype', 'receipt_type', 'income_category', 'payment_method', 'bill_no', 'invoice_ref']},
+                                {'title': '收款账户', 'sequence': 40, 'columns': 2, 'fields': ['receiving_account', 'receiving_account_name', 'receiving_account_no', 'receiving_bank_name', 'treasury_ledger_id']},
+                                {'title': '金额与抵扣', 'sequence': 50, 'columns': 2, 'fields': ['amount', 'deducted_invoice_amount', 'deducted_tax_amount', 'settlement_amount', 'currency_id']},
+                                {'title': '责任余额', 'sequence': 60, 'columns': 2, 'fields': ['company_contractor_responsibility_state', 'company_contractor_arrival_unprocessed_amount', 'company_contractor_arrival_over_processed_amount', 'company_contractor_self_funding_balance', 'company_contractor_responsibility_notice']},
+                                {'title': '说明与附件', 'sequence': 70, 'columns': 2, 'fields': ['note', 'attachment_ids', 'receipt_income_attachment_text_display', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 80, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'legacy_document_state_label', 'legacy_note', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'readonly': True},
+                                {'name': 'name', 'sequence': 30},
+                                {'name': 'receipt_flow_label', 'sequence': 40, 'readonly': True},
+                                {'name': 'source_origin', 'sequence': 50},
+                                {'name': 'source_kind', 'sequence': 60},
+                                {'name': 'business_category_id', 'sequence': 70},
+                                {'name': 'date_receipt', 'sequence': 80},
+                                {'name': 'document_no', 'sequence': 90},
+                                {'name': 'project_id', 'sequence': 100},
+                                {'name': 'legacy_project_name', 'sequence': 110, 'readonly': True},
+                                {'name': 'company_id', 'sequence': 120, 'readonly': True},
+                                {'name': 'legacy_company_name', 'sequence': 130, 'readonly': True},
+                                {'name': 'operation_strategy', 'sequence': 140, 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 150},
+                                {'name': 'legacy_partner_name', 'sequence': 160, 'readonly': True},
+                                {'name': 'contract_id', 'sequence': 170},
+                                {'name': 'legacy_contract_no', 'sequence': 180, 'readonly': True},
+                                {'name': 'payment_request_id', 'sequence': 190},
+                                {'name': 'legacy_receipt_type', 'sequence': 200},
+                                {'name': 'legacy_receipt_subtype', 'sequence': 210},
+                                {'name': 'receipt_type', 'sequence': 220},
+                                {'name': 'income_category', 'sequence': 230},
+                                {'name': 'payment_method', 'sequence': 240},
+                                {'name': 'bill_no', 'sequence': 250},
+                                {'name': 'invoice_ref', 'sequence': 260},
+                                {'name': 'receiving_account', 'sequence': 270},
+                                {'name': 'receiving_account_name', 'sequence': 280},
+                                {'name': 'receiving_account_no', 'sequence': 290},
+                                {'name': 'receiving_bank_name', 'sequence': 300},
+                                {'name': 'treasury_ledger_id', 'sequence': 310, 'readonly': True},
+                                {'name': 'amount', 'sequence': 320},
+                                {'name': 'deducted_invoice_amount', 'sequence': 330},
+                                {'name': 'deducted_tax_amount', 'sequence': 340},
+                                {'name': 'settlement_amount', 'sequence': 350},
+                                {'name': 'currency_id', 'sequence': 360},
+                                {'name': 'company_contractor_responsibility_state', 'sequence': 370, 'readonly': True},
+                                {'name': 'company_contractor_arrival_unprocessed_amount', 'sequence': 380, 'readonly': True},
+                                {'name': 'company_contractor_arrival_over_processed_amount', 'sequence': 390, 'readonly': True},
+                                {'name': 'company_contractor_self_funding_balance', 'sequence': 400, 'readonly': True},
+                                {'name': 'company_contractor_responsibility_notice', 'sequence': 410, 'readonly': True},
+                                {'name': 'note', 'sequence': 420},
+                                {'name': 'attachment_ids', 'sequence': 430},
+                                {'name': 'receipt_income_attachment_text_display', 'sequence': 440, 'readonly': True},
+                                {'name': 'reject_reason', 'sequence': 450, 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 460, 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 470, 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 480, 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 490, 'readonly': True},
+                                {'name': 'legacy_document_state_label', 'sequence': 500, 'readonly': True},
+                                {'name': 'legacy_note', 'sequence': 510, 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 520, 'readonly': True},
+                                {'name': 'created_time', 'sequence': 530, 'readonly': True},
+                                {'name': 'active', 'sequence': 540}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_receipt_income_engineering_progress_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">receipt_income_engineering_progress_productized_form_v1</field>
+            <field name="model">sc.receipt.income</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_receipt_income_engineering_progress"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '工程进度款收入登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'receipt_flow_label', 'source_origin', 'source_kind', 'business_category_id', 'date_receipt', 'document_no']},
+                                {'title': '项目与合同', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'legacy_project_name', 'company_id', 'legacy_company_name', 'operation_strategy', 'partner_id', 'legacy_partner_name', 'contract_id', 'legacy_contract_no', 'payment_request_id']},
+                                {'title': '收款事项', 'sequence': 30, 'columns': 2, 'fields': ['legacy_receipt_type', 'legacy_receipt_subtype', 'receipt_type', 'income_category', 'payment_method', 'bill_no', 'invoice_ref']},
+                                {'title': '收款账户', 'sequence': 40, 'columns': 2, 'fields': ['receiving_account', 'receiving_account_name', 'receiving_account_no', 'receiving_bank_name', 'treasury_ledger_id']},
+                                {'title': '金额与抵扣', 'sequence': 50, 'columns': 2, 'fields': ['amount', 'deducted_invoice_amount', 'deducted_tax_amount', 'settlement_amount', 'currency_id']},
+                                {'title': '责任余额', 'sequence': 60, 'columns': 2, 'fields': ['company_contractor_responsibility_state', 'company_contractor_arrival_unprocessed_amount', 'company_contractor_arrival_over_processed_amount', 'company_contractor_self_funding_balance', 'company_contractor_responsibility_notice']},
+                                {'title': '说明与附件', 'sequence': 70, 'columns': 2, 'fields': ['note', 'attachment_ids', 'receipt_income_attachment_text_display', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 80, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'legacy_document_state_label', 'legacy_note', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'readonly': True},
+                                {'name': 'name', 'sequence': 30},
+                                {'name': 'receipt_flow_label', 'sequence': 40, 'readonly': True},
+                                {'name': 'source_origin', 'sequence': 50},
+                                {'name': 'source_kind', 'sequence': 60},
+                                {'name': 'business_category_id', 'sequence': 70},
+                                {'name': 'date_receipt', 'sequence': 80},
+                                {'name': 'document_no', 'sequence': 90},
+                                {'name': 'project_id', 'sequence': 100},
+                                {'name': 'legacy_project_name', 'sequence': 110, 'readonly': True},
+                                {'name': 'company_id', 'sequence': 120, 'readonly': True},
+                                {'name': 'legacy_company_name', 'sequence': 130, 'readonly': True},
+                                {'name': 'operation_strategy', 'sequence': 140, 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 150},
+                                {'name': 'legacy_partner_name', 'sequence': 160, 'readonly': True},
+                                {'name': 'contract_id', 'sequence': 170},
+                                {'name': 'legacy_contract_no', 'sequence': 180, 'readonly': True},
+                                {'name': 'payment_request_id', 'sequence': 190},
+                                {'name': 'legacy_receipt_type', 'sequence': 200},
+                                {'name': 'legacy_receipt_subtype', 'sequence': 210},
+                                {'name': 'receipt_type', 'sequence': 220},
+                                {'name': 'income_category', 'sequence': 230},
+                                {'name': 'payment_method', 'sequence': 240},
+                                {'name': 'bill_no', 'sequence': 250},
+                                {'name': 'invoice_ref', 'sequence': 260},
+                                {'name': 'receiving_account', 'sequence': 270},
+                                {'name': 'receiving_account_name', 'sequence': 280},
+                                {'name': 'receiving_account_no', 'sequence': 290},
+                                {'name': 'receiving_bank_name', 'sequence': 300},
+                                {'name': 'treasury_ledger_id', 'sequence': 310, 'readonly': True},
+                                {'name': 'amount', 'sequence': 320},
+                                {'name': 'deducted_invoice_amount', 'sequence': 330},
+                                {'name': 'deducted_tax_amount', 'sequence': 340},
+                                {'name': 'settlement_amount', 'sequence': 350},
+                                {'name': 'currency_id', 'sequence': 360},
+                                {'name': 'company_contractor_responsibility_state', 'sequence': 370, 'readonly': True},
+                                {'name': 'company_contractor_arrival_unprocessed_amount', 'sequence': 380, 'readonly': True},
+                                {'name': 'company_contractor_arrival_over_processed_amount', 'sequence': 390, 'readonly': True},
+                                {'name': 'company_contractor_self_funding_balance', 'sequence': 400, 'readonly': True},
+                                {'name': 'company_contractor_responsibility_notice', 'sequence': 410, 'readonly': True},
+                                {'name': 'note', 'sequence': 420},
+                                {'name': 'attachment_ids', 'sequence': 430},
+                                {'name': 'receipt_income_attachment_text_display', 'sequence': 440, 'readonly': True},
+                                {'name': 'reject_reason', 'sequence': 450, 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 460, 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 470, 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 480, 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 490, 'readonly': True},
+                                {'name': 'legacy_document_state_label', 'sequence': 500, 'readonly': True},
+                                {'name': 'legacy_note', 'sequence': 510, 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 520, 'readonly': True},
+                                {'name': 'created_time', 'sequence': 530, 'readonly': True},
+                                {'name': 'active', 'sequence': 540}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

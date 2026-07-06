@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="business_config_contract_construction_plan_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">construction_plan_productized_form_v1</field>
+            <field name="model">sc.plan</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_plan"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '计划管理',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '计划主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'plan_type', 'project_id', 'phase_name', 'company_id']},
+                                {'title': '责任与编制', 'sequence': 20, 'columns': 2, 'fields': ['owner_id', 'department_id', 'template_name', 'creation_method', 'version_stage', 'report_cycle']},
+                                {'title': '进度目标', 'sequence': 30, 'columns': 2, 'fields': ['planned_start', 'planned_finish', 'actual_start', 'actual_finish', 'progress_rate', 'attainment_state']},
+                                {'title': '计划节点与汇报', 'sequence': 40, 'columns': 1, 'fields': ['line_ids', 'report_ids']},
+                                {'title': '版本与附件', 'sequence': 50, 'columns': 1, 'fields': ['version_ids', 'attachment_ids', 'note']},
+                                {'title': '来源追溯', 'sequence': 60, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'name', 'sequence': 20}, {'name': 'plan_type', 'sequence': 30}, {'name': 'project_id', 'sequence': 40}, {'name': 'phase_name', 'sequence': 50}, {'name': 'company_id', 'sequence': 60}, {'name': 'owner_id', 'sequence': 70}, {'name': 'department_id', 'sequence': 80}, {'name': 'template_name', 'sequence': 90}, {'name': 'creation_method', 'sequence': 100}, {'name': 'version_stage', 'sequence': 110}, {'name': 'report_cycle', 'sequence': 120}, {'name': 'planned_start', 'sequence': 130}, {'name': 'planned_finish', 'sequence': 140}, {'name': 'actual_start', 'sequence': 150}, {'name': 'actual_finish', 'sequence': 160}, {'name': 'progress_rate', 'sequence': 170, 'readonly': True}, {'name': 'attainment_state', 'sequence': 180, 'readonly': True}, {'name': 'line_ids', 'sequence': 190}, {'name': 'report_ids', 'sequence': 200}, {'name': 'version_ids', 'sequence': 210}, {'name': 'attachment_ids', 'sequence': 220}, {'name': 'note', 'sequence': 230}, {'name': 'legacy_fact_model', 'sequence': 240, 'readonly': True}, {'name': 'legacy_fact_id', 'sequence': 250, 'readonly': True}, {'name': 'legacy_fact_type', 'sequence': 260, 'readonly': True}, {'name': 'source_created_by', 'sequence': 270, 'readonly': True}, {'name': 'source_created_at', 'sequence': 280, 'readonly': True}, {'name': 'active', 'sequence': 290}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_construction_diary_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">construction_diary_productized_form_v1</field>
+            <field name="model">sc.construction.diary</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_construction_diary"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '施工日志',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '日志主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'source_origin', 'name', 'project_id', 'date_diary', 'title', 'diary_type', 'category']},
+                                {'title': '期间与经办', 'sequence': 20, 'columns': 2, 'fields': ['report_period_start', 'report_period_end', 'document_no', 'handler_name', 'construction_unit', 'project_manager']},
+                                {'title': '现场情况', 'sequence': 30, 'columns': 2, 'fields': ['weather', 'manpower_count', 'attendance_equipment', 'quality_name']},
+                                {'title': '日志内容', 'sequence': 40, 'columns': 1, 'fields': ['description', 'material_inspection_note', 'design_change_note', 'test_block_note', 'safety_note', 'hidden_acceptance_note', 'next_plan', 'header_description']},
+                                {'title': '备注与附件', 'sequence': 50, 'columns': 1, 'fields': ['note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 60, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_header_id', 'legacy_document_state', 'legacy_quality_id', 'legacy_business_id', 'legacy_related_business_id', 'legacy_related_quality_type', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'source_origin', 'sequence': 20, 'readonly': True}, {'name': 'name', 'sequence': 30, 'readonly': True}, {'name': 'project_id', 'sequence': 40}, {'name': 'date_diary', 'sequence': 50}, {'name': 'title', 'sequence': 60}, {'name': 'diary_type', 'sequence': 70}, {'name': 'category', 'sequence': 80}, {'name': 'report_period_start', 'sequence': 90}, {'name': 'report_period_end', 'sequence': 100}, {'name': 'document_no', 'sequence': 110}, {'name': 'handler_name', 'sequence': 120}, {'name': 'construction_unit', 'sequence': 130}, {'name': 'project_manager', 'sequence': 140}, {'name': 'weather', 'sequence': 150}, {'name': 'manpower_count', 'sequence': 160}, {'name': 'attendance_equipment', 'sequence': 170}, {'name': 'quality_name', 'sequence': 180}, {'name': 'description', 'sequence': 190}, {'name': 'material_inspection_note', 'sequence': 200}, {'name': 'design_change_note', 'sequence': 210}, {'name': 'test_block_note', 'sequence': 220}, {'name': 'safety_note', 'sequence': 230}, {'name': 'hidden_acceptance_note', 'sequence': 240}, {'name': 'next_plan', 'sequence': 250}, {'name': 'header_description', 'sequence': 260}, {'name': 'note', 'sequence': 270}, {'name': 'attachment_ids', 'sequence': 280}, {'name': 'legacy_source_model', 'sequence': 290, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 300, 'readonly': True}, {'name': 'legacy_record_id', 'sequence': 310, 'readonly': True}, {'name': 'legacy_header_id', 'sequence': 320, 'readonly': True}, {'name': 'legacy_document_state', 'sequence': 330, 'readonly': True}, {'name': 'legacy_quality_id', 'sequence': 340, 'readonly': True}, {'name': 'legacy_business_id', 'sequence': 350, 'readonly': True}, {'name': 'legacy_related_business_id', 'sequence': 360, 'readonly': True}, {'name': 'legacy_related_quality_type', 'sequence': 370, 'readonly': True}, {'name': 'source_created_by', 'sequence': 380, 'readonly': True}, {'name': 'source_created_at', 'sequence': 390, 'readonly': True}, {'name': 'active', 'sequence': 400}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_construction_plan_report_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">construction_plan_report_productized_form_v1</field>
+            <field name="model">sc.plan.report</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_plan_report"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '计划汇报',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '汇报主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'plan_id', 'line_id', 'report_type', 'source_channel']},
+                                {'title': '汇报办理', 'sequence': 20, 'columns': 2, 'fields': ['report_date', 'reporter_id', 'progress_rate', 'approver_id', 'approved_date']},
+                                {'title': '完成与风险', 'sequence': 30, 'columns': 1, 'fields': ['summary', 'risk_note', 'reject_reason']},
+                                {'title': '成果附件', 'sequence': 40, 'columns': 1, 'fields': ['attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'name', 'sequence': 20}, {'name': 'plan_id', 'sequence': 30}, {'name': 'line_id', 'sequence': 40}, {'name': 'report_type', 'sequence': 50}, {'name': 'source_channel', 'sequence': 60}, {'name': 'report_date', 'sequence': 70}, {'name': 'reporter_id', 'sequence': 80}, {'name': 'progress_rate', 'sequence': 90}, {'name': 'approver_id', 'sequence': 100}, {'name': 'approved_date', 'sequence': 110}, {'name': 'summary', 'sequence': 120}, {'name': 'risk_note', 'sequence': 130}, {'name': 'reject_reason', 'sequence': 140}, {'name': 'attachment_ids', 'sequence': 150}, {'name': 'legacy_fact_model', 'sequence': 160, 'readonly': True}, {'name': 'legacy_fact_id', 'sequence': 170, 'readonly': True}, {'name': 'legacy_fact_type', 'sequence': 180, 'readonly': True}, {'name': 'source_created_by', 'sequence': 190, 'readonly': True}, {'name': 'source_created_at', 'sequence': 200, 'readonly': True}, {'name': 'active', 'sequence': 210}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

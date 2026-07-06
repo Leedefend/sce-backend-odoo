@@ -73,5 +73,151 @@
                 }
             }"/>
         </record>
+
+        <record id="business_config_contract_payment_execution_company_finance_expense_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">payment_execution_company_finance_expense_productized_form_v1</field>
+            <field name="model">sc.payment.execution</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_payment_execution_company_finance_expense"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '公司财务支出',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['name', 'state', 'business_category_id', 'project_id', 'partner_id', 'payment_request_id', 'contract_id', 'payment_request_partner_relation']},
+                                {'title': '付款结果', 'sequence': 20, 'columns': 2, 'fields': ['date_payment', 'paid_amount', 'planned_amount', 'invoice_amount', 'payment_method', 'document_no', 'handler_name', 'note']},
+                                {'title': '收付款账户', 'sequence': 30, 'columns': 2, 'fields': ['receipt_account_name', 'receipt_bank_name', 'receipt_account_no', 'payment_account_name', 'payment_bank_name', 'payment_account_no', 'bank_account']},
+                                {'title': '责任与凭证', 'sequence': 40, 'columns': 2, 'fields': ['company_contractor_responsibility_state', 'company_contractor_arrival_unprocessed_amount', 'company_contractor_arrival_over_processed_amount', 'company_contractor_self_funding_balance', 'company_contractor_responsibility_notice', 'kingdee_document_no', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['source_kind', 'payment_family', 'push_result', 'legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state']}
+                            ],
+                            'fields': [
+                                {'name': 'name', 'sequence': 10, 'readonly': True},
+                                {'name': 'state', 'sequence': 20, 'readonly': True},
+                                {'name': 'business_category_id', 'sequence': 30},
+                                {'name': 'project_id', 'sequence': 40},
+                                {'name': 'partner_id', 'sequence': 50},
+                                {'name': 'payment_request_id', 'sequence': 60},
+                                {'name': 'contract_id', 'sequence': 70},
+                                {'name': 'payment_request_partner_relation', 'sequence': 80, 'readonly': True},
+                                {'name': 'date_payment', 'sequence': 90},
+                                {'name': 'paid_amount', 'sequence': 100},
+                                {'name': 'planned_amount', 'sequence': 110},
+                                {'name': 'invoice_amount', 'sequence': 120},
+                                {'name': 'payment_method', 'sequence': 130},
+                                {'name': 'document_no', 'sequence': 140},
+                                {'name': 'handler_name', 'sequence': 150},
+                                {'name': 'note', 'sequence': 160},
+                                {'name': 'receipt_account_name', 'sequence': 170},
+                                {'name': 'receipt_bank_name', 'sequence': 180},
+                                {'name': 'receipt_account_no', 'sequence': 190},
+                                {'name': 'payment_account_name', 'sequence': 200},
+                                {'name': 'payment_bank_name', 'sequence': 210},
+                                {'name': 'payment_account_no', 'sequence': 220},
+                                {'name': 'bank_account', 'sequence': 230},
+                                {'name': 'company_contractor_responsibility_state', 'sequence': 240, 'readonly': True},
+                                {'name': 'company_contractor_arrival_unprocessed_amount', 'sequence': 250, 'readonly': True},
+                                {'name': 'company_contractor_arrival_over_processed_amount', 'sequence': 260, 'readonly': True},
+                                {'name': 'company_contractor_self_funding_balance', 'sequence': 270, 'readonly': True},
+                                {'name': 'company_contractor_responsibility_notice', 'sequence': 280, 'readonly': True},
+                                {'name': 'kingdee_document_no', 'sequence': 290, 'readonly': True},
+                                {'name': 'attachment_ids', 'sequence': 300},
+                                {'name': 'source_kind', 'sequence': 310, 'readonly': True},
+                                {'name': 'payment_family', 'sequence': 320, 'readonly': True},
+                                {'name': 'push_result', 'sequence': 330, 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 340, 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 350, 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 360, 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 370, 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_payment_execution_partner_payment_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">payment_execution_partner_payment_productized_form_v1</field>
+            <field name="model">sc.payment.execution</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_payment_execution_partner_payment"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '往来单位付款',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['name', 'state', 'business_category_id', 'project_id', 'partner_id', 'payment_request_id', 'contract_id', 'payment_request_partner_relation']},
+                                {'title': '付款结果', 'sequence': 20, 'columns': 2, 'fields': ['date_payment', 'paid_amount', 'planned_amount', 'invoice_amount', 'payment_method', 'document_no', 'handler_name', 'note']},
+                                {'title': '收付款账户', 'sequence': 30, 'columns': 2, 'fields': ['receipt_account_name', 'receipt_bank_name', 'receipt_account_no', 'payment_account_name', 'payment_bank_name', 'payment_account_no', 'bank_account']},
+                                {'title': '责任与凭证', 'sequence': 40, 'columns': 2, 'fields': ['company_contractor_responsibility_state', 'company_contractor_arrival_unprocessed_amount', 'company_contractor_arrival_over_processed_amount', 'company_contractor_self_funding_balance', 'company_contractor_responsibility_notice', 'kingdee_document_no', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['source_kind', 'payment_family', 'push_result', 'legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state']}
+                            ],
+                            'fields': [
+                                {'name': 'name', 'sequence': 10, 'readonly': True},
+                                {'name': 'state', 'sequence': 20, 'readonly': True},
+                                {'name': 'business_category_id', 'sequence': 30},
+                                {'name': 'project_id', 'sequence': 40},
+                                {'name': 'partner_id', 'sequence': 50},
+                                {'name': 'payment_request_id', 'sequence': 60},
+                                {'name': 'contract_id', 'sequence': 70},
+                                {'name': 'payment_request_partner_relation', 'sequence': 80, 'readonly': True},
+                                {'name': 'date_payment', 'sequence': 90},
+                                {'name': 'paid_amount', 'sequence': 100},
+                                {'name': 'planned_amount', 'sequence': 110},
+                                {'name': 'invoice_amount', 'sequence': 120},
+                                {'name': 'payment_method', 'sequence': 130},
+                                {'name': 'document_no', 'sequence': 140},
+                                {'name': 'handler_name', 'sequence': 150},
+                                {'name': 'note', 'sequence': 160},
+                                {'name': 'receipt_account_name', 'sequence': 170},
+                                {'name': 'receipt_bank_name', 'sequence': 180},
+                                {'name': 'receipt_account_no', 'sequence': 190},
+                                {'name': 'payment_account_name', 'sequence': 200},
+                                {'name': 'payment_bank_name', 'sequence': 210},
+                                {'name': 'payment_account_no', 'sequence': 220},
+                                {'name': 'bank_account', 'sequence': 230},
+                                {'name': 'company_contractor_responsibility_state', 'sequence': 240, 'readonly': True},
+                                {'name': 'company_contractor_arrival_unprocessed_amount', 'sequence': 250, 'readonly': True},
+                                {'name': 'company_contractor_arrival_over_processed_amount', 'sequence': 260, 'readonly': True},
+                                {'name': 'company_contractor_self_funding_balance', 'sequence': 270, 'readonly': True},
+                                {'name': 'company_contractor_responsibility_notice', 'sequence': 280, 'readonly': True},
+                                {'name': 'kingdee_document_no', 'sequence': 290, 'readonly': True},
+                                {'name': 'attachment_ids', 'sequence': 300},
+                                {'name': 'source_kind', 'sequence': 310, 'readonly': True},
+                                {'name': 'payment_family', 'sequence': 320, 'readonly': True},
+                                {'name': 'push_result', 'sequence': 330, 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 340, 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 350, 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 360, 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 370, 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
     </data>
 </odoo>

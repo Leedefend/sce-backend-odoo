@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_financing_loan_borrowing_request_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">financing_loan_borrowing_request_productized_form_v1</field>
+            <field name="model">sc.financing.loan</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_financing_loan_borrowing_request"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '借款申请',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'loan_flow_label', 'source_origin', 'business_category_id', 'loan_type', 'direction', 'document_no']},
+                                {'title': '项目与往来方', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'operation_strategy', 'partner_id', 'counterparty_name', 'payer_unit', 'receiver_unit', 'company_name']},
+                                {'title': '借款金额与期限', 'sequence': 30, 'columns': 2, 'fields': ['document_date', 'due_date', 'amount', 'currency_id', 'purpose', 'rate_label', 'extra_ref', 'extra_label']},
+                                {'title': '申请与批复', 'sequence': 40, 'columns': 2, 'fields': ['financing_loan_request_department', 'financing_loan_request_time', 'financing_loan_budget_included', 'financing_loan_request_amount', 'financing_loan_actual_loan_amount', 'financing_loan_approved_amount', 'financing_loan_fund_usage_plan', 'financing_loan_expected_return_time', 'financing_loan_loan_type_display']},
+                                {'title': '账户信息', 'sequence': 50, 'columns': 2, 'fields': ['financing_loan_bank_name', 'financing_loan_borrow_account', 'receipt_account', 'counterparty_account', 'loan_account', 'loan_bank_name', 'repayment_account']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'attachment_ids', 'financing_loan_note_display', 'financing_loan_attachment_text_display', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'legacy_counterparty_name', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'loan_flow_label', 'sequence': 40, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'source_origin', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'business_category_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'loan_type', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'direction', 'sequence': 80, 'group_title': '办理主信息'},
+                                {'name': 'document_no', 'sequence': 90, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 100, 'group_title': '项目与往来方'},
+                                {'name': 'company_id', 'sequence': 110, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'operation_strategy', 'sequence': 120, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 130, 'group_title': '项目与往来方'},
+                                {'name': 'counterparty_name', 'sequence': 140, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'payer_unit', 'sequence': 150, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'receiver_unit', 'sequence': 160, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'company_name', 'sequence': 170, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'document_date', 'sequence': 180, 'group_title': '借款金额与期限'},
+                                {'name': 'due_date', 'sequence': 190, 'group_title': '借款金额与期限'},
+                                {'name': 'amount', 'sequence': 200, 'group_title': '借款金额与期限'},
+                                {'name': 'currency_id', 'sequence': 210, 'group_title': '借款金额与期限'},
+                                {'name': 'purpose', 'sequence': 220, 'group_title': '借款金额与期限'},
+                                {'name': 'rate_label', 'sequence': 230, 'group_title': '借款金额与期限'},
+                                {'name': 'extra_ref', 'sequence': 240, 'group_title': '借款金额与期限'},
+                                {'name': 'extra_label', 'sequence': 250, 'group_title': '借款金额与期限'},
+                                {'name': 'financing_loan_request_department', 'sequence': 260, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_request_time', 'sequence': 270, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_budget_included', 'sequence': 280, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_request_amount', 'sequence': 290, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_actual_loan_amount', 'sequence': 300, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_approved_amount', 'sequence': 310, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_fund_usage_plan', 'sequence': 320, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_expected_return_time', 'sequence': 330, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_loan_type_display', 'sequence': 340, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_bank_name', 'sequence': 350, 'group_title': '账户信息'},
+                                {'name': 'financing_loan_borrow_account', 'sequence': 360, 'group_title': '账户信息'},
+                                {'name': 'receipt_account', 'sequence': 370, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'counterparty_account', 'sequence': 380, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'loan_account', 'sequence': 390, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'loan_bank_name', 'sequence': 400, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'repayment_account', 'sequence': 410, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'note', 'sequence': 420, 'group_title': '说明与附件'},
+                                {'name': 'attachment_ids', 'sequence': 430, 'group_title': '说明与附件'},
+                                {'name': 'financing_loan_note_display', 'sequence': 440, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'financing_loan_attachment_text_display', 'sequence': 450, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'reject_reason', 'sequence': 460, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 470, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 480, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 490, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 500, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_counterparty_name', 'sequence': 510, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 520, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'created_time', 'sequence': 530, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 540, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_financing_loan_contractor_project_borrow_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">financing_loan_contractor_project_borrow_productized_form_v1</field>
+            <field name="model">sc.financing.loan</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_financing_loan_contractor_project_borrow"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '承包人借项目款',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'loan_flow_label', 'source_origin', 'business_category_id', 'loan_type', 'direction', 'document_no']},
+                                {'title': '项目与往来方', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'operation_strategy', 'partner_id', 'counterparty_name', 'payer_unit', 'receiver_unit', 'company_name']},
+                                {'title': '借款金额与期限', 'sequence': 30, 'columns': 2, 'fields': ['document_date', 'due_date', 'amount', 'currency_id', 'purpose', 'rate_label', 'extra_ref', 'extra_label']},
+                                {'title': '申请与批复', 'sequence': 40, 'columns': 2, 'fields': ['financing_loan_request_department', 'financing_loan_request_time', 'financing_loan_budget_included', 'financing_loan_request_amount', 'financing_loan_actual_loan_amount', 'financing_loan_approved_amount', 'financing_loan_fund_usage_plan', 'financing_loan_expected_return_time', 'financing_loan_loan_type_display']},
+                                {'title': '账户信息', 'sequence': 50, 'columns': 2, 'fields': ['financing_loan_bank_name', 'financing_loan_borrow_account', 'receipt_account', 'counterparty_account', 'loan_account', 'loan_bank_name', 'repayment_account']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'attachment_ids', 'financing_loan_note_display', 'financing_loan_attachment_text_display', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'legacy_counterparty_name', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'loan_flow_label', 'sequence': 40, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'source_origin', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'business_category_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'loan_type', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'direction', 'sequence': 80, 'group_title': '办理主信息'},
+                                {'name': 'document_no', 'sequence': 90, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 100, 'group_title': '项目与往来方'},
+                                {'name': 'company_id', 'sequence': 110, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'operation_strategy', 'sequence': 120, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 130, 'group_title': '项目与往来方'},
+                                {'name': 'counterparty_name', 'sequence': 140, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'payer_unit', 'sequence': 150, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'receiver_unit', 'sequence': 160, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'company_name', 'sequence': 170, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'document_date', 'sequence': 180, 'group_title': '借款金额与期限'},
+                                {'name': 'due_date', 'sequence': 190, 'group_title': '借款金额与期限'},
+                                {'name': 'amount', 'sequence': 200, 'group_title': '借款金额与期限'},
+                                {'name': 'currency_id', 'sequence': 210, 'group_title': '借款金额与期限'},
+                                {'name': 'purpose', 'sequence': 220, 'group_title': '借款金额与期限'},
+                                {'name': 'rate_label', 'sequence': 230, 'group_title': '借款金额与期限'},
+                                {'name': 'extra_ref', 'sequence': 240, 'group_title': '借款金额与期限'},
+                                {'name': 'extra_label', 'sequence': 250, 'group_title': '借款金额与期限'},
+                                {'name': 'financing_loan_request_department', 'sequence': 260, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_request_time', 'sequence': 270, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_budget_included', 'sequence': 280, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_request_amount', 'sequence': 290, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_actual_loan_amount', 'sequence': 300, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_approved_amount', 'sequence': 310, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_fund_usage_plan', 'sequence': 320, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_expected_return_time', 'sequence': 330, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_loan_type_display', 'sequence': 340, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_bank_name', 'sequence': 350, 'group_title': '账户信息'},
+                                {'name': 'financing_loan_borrow_account', 'sequence': 360, 'group_title': '账户信息'},
+                                {'name': 'receipt_account', 'sequence': 370, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'counterparty_account', 'sequence': 380, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'loan_account', 'sequence': 390, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'loan_bank_name', 'sequence': 400, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'repayment_account', 'sequence': 410, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'note', 'sequence': 420, 'group_title': '说明与附件'},
+                                {'name': 'attachment_ids', 'sequence': 430, 'group_title': '说明与附件'},
+                                {'name': 'financing_loan_note_display', 'sequence': 440, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'financing_loan_attachment_text_display', 'sequence': 450, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'reject_reason', 'sequence': 460, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 470, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 480, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 490, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 500, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_counterparty_name', 'sequence': 510, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 520, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'created_time', 'sequence': 530, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 540, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_financing_loan_project_borrow_company_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">financing_loan_project_borrow_company_productized_form_v1</field>
+            <field name="model">sc.financing.loan</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_financing_loan_project_borrow_company"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '项目借公司款登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'loan_flow_label', 'source_origin', 'business_category_id', 'loan_type', 'direction', 'document_no']},
+                                {'title': '项目与往来方', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'operation_strategy', 'partner_id', 'counterparty_name', 'payer_unit', 'receiver_unit', 'company_name']},
+                                {'title': '借款金额与期限', 'sequence': 30, 'columns': 2, 'fields': ['document_date', 'due_date', 'amount', 'currency_id', 'purpose', 'rate_label', 'extra_ref', 'extra_label']},
+                                {'title': '申请与批复', 'sequence': 40, 'columns': 2, 'fields': ['financing_loan_request_department', 'financing_loan_request_time', 'financing_loan_budget_included', 'financing_loan_request_amount', 'financing_loan_actual_loan_amount', 'financing_loan_approved_amount', 'financing_loan_fund_usage_plan', 'financing_loan_expected_return_time', 'financing_loan_loan_type_display']},
+                                {'title': '账户信息', 'sequence': 50, 'columns': 2, 'fields': ['financing_loan_bank_name', 'financing_loan_borrow_account', 'receipt_account', 'counterparty_account', 'loan_account', 'loan_bank_name', 'repayment_account']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'attachment_ids', 'financing_loan_note_display', 'financing_loan_attachment_text_display', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'legacy_counterparty_name', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'loan_flow_label', 'sequence': 40, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'source_origin', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'business_category_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'loan_type', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'direction', 'sequence': 80, 'group_title': '办理主信息'},
+                                {'name': 'document_no', 'sequence': 90, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 100, 'group_title': '项目与往来方'},
+                                {'name': 'company_id', 'sequence': 110, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'operation_strategy', 'sequence': 120, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 130, 'group_title': '项目与往来方'},
+                                {'name': 'counterparty_name', 'sequence': 140, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'payer_unit', 'sequence': 150, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'receiver_unit', 'sequence': 160, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'company_name', 'sequence': 170, 'group_title': '项目与往来方', 'readonly': True},
+                                {'name': 'document_date', 'sequence': 180, 'group_title': '借款金额与期限'},
+                                {'name': 'due_date', 'sequence': 190, 'group_title': '借款金额与期限'},
+                                {'name': 'amount', 'sequence': 200, 'group_title': '借款金额与期限'},
+                                {'name': 'currency_id', 'sequence': 210, 'group_title': '借款金额与期限'},
+                                {'name': 'purpose', 'sequence': 220, 'group_title': '借款金额与期限'},
+                                {'name': 'rate_label', 'sequence': 230, 'group_title': '借款金额与期限'},
+                                {'name': 'extra_ref', 'sequence': 240, 'group_title': '借款金额与期限'},
+                                {'name': 'extra_label', 'sequence': 250, 'group_title': '借款金额与期限'},
+                                {'name': 'financing_loan_request_department', 'sequence': 260, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_request_time', 'sequence': 270, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_budget_included', 'sequence': 280, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_request_amount', 'sequence': 290, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_actual_loan_amount', 'sequence': 300, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_approved_amount', 'sequence': 310, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_fund_usage_plan', 'sequence': 320, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_expected_return_time', 'sequence': 330, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_loan_type_display', 'sequence': 340, 'group_title': '申请与批复'},
+                                {'name': 'financing_loan_bank_name', 'sequence': 350, 'group_title': '账户信息'},
+                                {'name': 'financing_loan_borrow_account', 'sequence': 360, 'group_title': '账户信息'},
+                                {'name': 'receipt_account', 'sequence': 370, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'counterparty_account', 'sequence': 380, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'loan_account', 'sequence': 390, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'loan_bank_name', 'sequence': 400, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'repayment_account', 'sequence': 410, 'group_title': '账户信息', 'readonly': True},
+                                {'name': 'note', 'sequence': 420, 'group_title': '说明与附件'},
+                                {'name': 'attachment_ids', 'sequence': 430, 'group_title': '说明与附件'},
+                                {'name': 'financing_loan_note_display', 'sequence': 440, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'financing_loan_attachment_text_display', 'sequence': 450, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'reject_reason', 'sequence': 460, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 470, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 480, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 490, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 500, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_counterparty_name', 'sequence': 510, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 520, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'created_time', 'sequence': 530, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 540, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

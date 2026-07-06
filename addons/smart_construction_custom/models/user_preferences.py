@@ -342,6 +342,10 @@ PRODUCT_RUNTIME_INACTIVE_MENU_XMLIDS = (
     "smart_construction_core.menu_sc_company_user_roster_formal",
 )
 
+PRODUCTIZED_FORM_RUNTIME_INACTIVE_CONTRACT_NAMES = (
+    "view_orchestration:project.material.plan:form:action:525:view:0",
+)
+
 
 class ScUserPreferenceInitialization(models.TransientModel):
     _name = "sc.user.preference.initialization"
@@ -437,6 +441,12 @@ class ScUserPreferenceInitialization(models.TransientModel):
             if not menu.active:
                 continue
             menu.write({"active": False})
+            deactivated += 1
+        Contract = self.env["ui.business.config.contract"].sudo().with_context(active_test=False)
+        for contract in Contract.search([("name", "in", PRODUCTIZED_FORM_RUNTIME_INACTIVE_CONTRACT_NAMES)]):
+            if not contract.active:
+                continue
+            contract.write({"active": False})
             deactivated += 1
         self.env["ir.config_parameter"].sudo().set_param(
             "sc.custom.product_menu_runtime_cleanup_count",

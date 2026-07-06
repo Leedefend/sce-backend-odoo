@@ -107,7 +107,7 @@ class BackendContractBoundaryTests(unittest.TestCase):
         self.assertEqual(boundary["kind"], "user_preference_projection")
         self.assertTrue(boundary["compatibility"])
 
-    def test_contract_classification_keeps_user_preferences_below_lowcode(self):
+    def test_contract_classification_keeps_user_preferences_below_product_and_lowcode(self):
         rows = [
             _contract(1, "project_project_form_structure_generated_v1", priority=77),
             _contract(2, "project_project_form_structure_v1", priority=90),
@@ -128,14 +128,50 @@ class BackendContractBoundaryTests(unittest.TestCase):
         ]
 
         ordered = sorted(rows, key=view_orchestration_apply_order_key)
-        self.assertEqual([row.id for row in ordered], [1, 2, 3, 4])
+        self.assertEqual([row.id for row in ordered], [1, 3, 2, 4])
         self.assertEqual(
             [classify_view_orchestration_contract(row.name, row.contract_json)["kind"] for row in ordered],
             [
                 "generated_industry_baseline",
-                "industry_standard_configuration",
                 "user_preference_projection",
+                "industry_standard_configuration",
                 "tenant_lowcode_configuration",
+            ],
+        )
+
+    def test_runtime_view_snapshot_does_not_override_productized_entry_surface(self):
+        rows = [
+            _contract(
+                1,
+                "view_orchestration:purchase.order:form:action:581:view:0",
+                "runtime_backend_form_view_contract",
+                action_id=581,
+                priority=100,
+            ),
+            _contract(
+                2,
+                "view_orchestration:purchase.order:form:action:581:view:0:custom_user_flat",
+                "smart_construction_custom.user_form_preference",
+                action_id=581,
+                priority=600,
+            ),
+            _contract(
+                3,
+                "purchase_order_productized_form_v1",
+                "smart_construction_core.product_release",
+                action_id=581,
+                priority=50,
+            ),
+        ]
+
+        ordered = sorted(rows, key=view_orchestration_apply_order_key)
+        self.assertEqual([row.id for row in ordered], [1, 2, 3])
+        self.assertEqual(
+            [classify_view_orchestration_contract(row.name, row.contract_json)["kind"] for row in ordered],
+            [
+                "generated_industry_baseline",
+                "user_preference_projection",
+                "industry_standard_configuration",
             ],
         )
 

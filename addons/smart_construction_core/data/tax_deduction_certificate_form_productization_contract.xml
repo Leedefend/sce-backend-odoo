@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_tax_deduction_registration_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">tax_deduction_registration_productized_form_v1</field>
+            <field name="model">sc.tax.deduction.registration</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_tax_deduction_registration_user"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '抵扣登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'deduction_flow_label', 'business_category_id', 'source_origin']},
+                                {'title': '项目与扣款单位', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'partner_id', 'partner_name', 'deduction_unit_name']},
+                                {'title': '单据与发票', 'sequence': 30, 'columns': 2, 'fields': ['document_no', 'document_date', 'invoice_no', 'invoice_code', 'invoice_date', 'tax_rate_text']},
+                                {'title': '金额税额', 'sequence': 40, 'columns': 2, 'fields': ['invoice_amount_untaxed', 'invoice_tax_amount', 'invoice_amount_total', 'withholding_amount', 'deduction_amount', 'deduction_tax_amount', 'deduction_surcharge_amount', 'currency_id']},
+                                {'title': '抵扣办理', 'sequence': 50, 'columns': 2, 'fields': ['deduction_confirm_date', 'deduction_reason']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'attachment_ids', 'deduction_bill_attachment_text', 'message_attachment_count']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'creator_name', 'created_time', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'readonly': True},
+                                {'name': 'name', 'sequence': 20},
+                                {'name': 'deduction_flow_label', 'sequence': 30, 'readonly': True},
+                                {'name': 'business_category_id', 'sequence': 40},
+                                {'name': 'source_origin', 'sequence': 50},
+                                {'name': 'project_id', 'sequence': 60},
+                                {'name': 'company_id', 'sequence': 70, 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 80},
+                                {'name': 'partner_name', 'sequence': 90, 'readonly': True},
+                                {'name': 'deduction_unit_name', 'sequence': 100},
+                                {'name': 'document_no', 'sequence': 110},
+                                {'name': 'document_date', 'sequence': 120},
+                                {'name': 'invoice_no', 'sequence': 130},
+                                {'name': 'invoice_code', 'sequence': 140},
+                                {'name': 'invoice_date', 'sequence': 150},
+                                {'name': 'tax_rate_text', 'sequence': 160, 'readonly': True},
+                                {'name': 'invoice_amount_untaxed', 'sequence': 170},
+                                {'name': 'invoice_tax_amount', 'sequence': 180},
+                                {'name': 'invoice_amount_total', 'sequence': 190},
+                                {'name': 'withholding_amount', 'sequence': 200},
+                                {'name': 'deduction_amount', 'sequence': 210},
+                                {'name': 'deduction_tax_amount', 'sequence': 220},
+                                {'name': 'deduction_surcharge_amount', 'sequence': 230},
+                                {'name': 'currency_id', 'sequence': 240},
+                                {'name': 'deduction_confirm_date', 'sequence': 250},
+                                {'name': 'deduction_reason', 'sequence': 260},
+                                {'name': 'note', 'sequence': 270},
+                                {'name': 'attachment_ids', 'sequence': 280},
+                                {'name': 'deduction_bill_attachment_text', 'sequence': 290, 'readonly': True},
+                                {'name': 'message_attachment_count', 'sequence': 300, 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 310, 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 320, 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 330, 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 340, 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 350, 'readonly': True},
+                                {'name': 'created_time', 'sequence': 360, 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 370, 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 380, 'readonly': True},
+                                {'name': 'active', 'sequence': 390}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_tax_certificate_registration_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">tax_certificate_registration_productized_form_v1</field>
+            <field name="model">sc.legacy.payment.residual.fact</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_tax_certificate_registration_user"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '外经证登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['document_state_label', 'document_state', 'document_no', 'document_date']},
+                                {'title': '项目与相对方', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'project_name', 'partner_id', 'partner_name']},
+                                {'title': '合同信息', 'sequence': 30, 'columns': 2, 'fields': ['contract_no', 'contract_name', 'contract_start_date', 'contract_end_date']},
+                                {'title': '金额执行', 'sequence': 40, 'columns': 2, 'fields': ['planned_amount', 'invoice_amount', 'paid_amount']},
+                                {'title': '涉税证明', 'sequence': 50, 'columns': 2, 'fields': ['taxpayer_name', 'taxpayer_identifier', 'counterparty_tax_identifier', 'tax_report_management_no', 'regional_tax_contact', 'regional_tax_contact_phone']},
+                                {'title': '经办与附件', 'sequence': 60, 'columns': 2, 'fields': ['handler_name', 'handler_phone', 'note', 'attachment_ids', 'attachment_links']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['source_table', 'legacy_record_id', 'request_legacy_id', 'legacy_pid', 'project_legacy_id', 'partner_legacy_id', 'contract_legacy_id', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'document_state_label', 'sequence': 10, 'readonly': True},
+                                {'name': 'document_state', 'sequence': 20, 'readonly': True},
+                                {'name': 'document_no', 'sequence': 30},
+                                {'name': 'document_date', 'sequence': 40},
+                                {'name': 'project_id', 'sequence': 50},
+                                {'name': 'project_name', 'sequence': 60, 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 70},
+                                {'name': 'partner_name', 'sequence': 80},
+                                {'name': 'contract_no', 'sequence': 90},
+                                {'name': 'contract_name', 'sequence': 100},
+                                {'name': 'contract_start_date', 'sequence': 110},
+                                {'name': 'contract_end_date', 'sequence': 120},
+                                {'name': 'planned_amount', 'sequence': 130},
+                                {'name': 'invoice_amount', 'sequence': 140},
+                                {'name': 'paid_amount', 'sequence': 150},
+                                {'name': 'taxpayer_name', 'sequence': 160},
+                                {'name': 'taxpayer_identifier', 'sequence': 170},
+                                {'name': 'counterparty_tax_identifier', 'sequence': 180},
+                                {'name': 'tax_report_management_no', 'sequence': 190},
+                                {'name': 'regional_tax_contact', 'sequence': 200},
+                                {'name': 'regional_tax_contact_phone', 'sequence': 210},
+                                {'name': 'handler_name', 'sequence': 220},
+                                {'name': 'handler_phone', 'sequence': 230},
+                                {'name': 'note', 'sequence': 240},
+                                {'name': 'attachment_ids', 'sequence': 250},
+                                {'name': 'attachment_links', 'sequence': 260, 'readonly': True},
+                                {'name': 'source_table', 'sequence': 270, 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 280, 'readonly': True},
+                                {'name': 'request_legacy_id', 'sequence': 290, 'readonly': True},
+                                {'name': 'legacy_pid', 'sequence': 300, 'readonly': True},
+                                {'name': 'project_legacy_id', 'sequence': 310, 'readonly': True},
+                                {'name': 'partner_legacy_id', 'sequence': 320, 'readonly': True},
+                                {'name': 'contract_legacy_id', 'sequence': 330, 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 340, 'readonly': True},
+                                {'name': 'created_time', 'sequence': 350, 'readonly': True},
+                                {'name': 'active', 'sequence': 360}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

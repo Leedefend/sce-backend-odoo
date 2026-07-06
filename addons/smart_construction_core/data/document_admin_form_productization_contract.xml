@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_document_admin_archive_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">document_admin_archive_productized_form_v1</field>
+            <field name="model">sc.document.admin.document</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_company_document_archive"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '公司资料存档',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'document_no', 'name', 'fact_type', 'business_date', 'project_id', 'requester_id', 'department_id']},
+                                {'title': '资料存档', 'sequence': 20, 'columns': 2, 'fields': ['document_title', 'holder_name']},
+                                {'title': '办理与附件', 'sequence': 30, 'columns': 2, 'fields': ['handler_id', 'due_date', 'description', 'result_note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 40, 'columns': 2, 'fields': ['legacy_document_no', 'legacy_document_state', 'legacy_source_table', 'legacy_source_id']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'document_no', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'fact_type', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'business_date', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'requester_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'department_id', 'sequence': 80, 'group_title': '办理主信息'},
+                                {'name': 'document_title', 'sequence': 90, 'group_title': '资料存档'},
+                                {'name': 'holder_name', 'sequence': 100, 'group_title': '资料存档'},
+                                {'name': 'handler_id', 'sequence': 110, 'group_title': '办理与附件'},
+                                {'name': 'due_date', 'sequence': 120, 'group_title': '办理与附件'},
+                                {'name': 'description', 'sequence': 130, 'group_title': '办理与附件'},
+                                {'name': 'result_note', 'sequence': 140, 'group_title': '办理与附件'},
+                                {'name': 'attachment_ids', 'sequence': 150, 'group_title': '办理与附件'},
+                                {'name': 'legacy_document_no', 'sequence': 160, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 170, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 180, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_id', 'sequence': 190, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_document_admin_certificate_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">document_admin_certificate_productized_form_v1</field>
+            <field name="model">sc.document.admin.document</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_certificate_registration"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '证照登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'document_no', 'name', 'fact_type', 'business_date', 'project_id', 'requester_id', 'department_id']},
+                                {'title': '证照信息', 'sequence': 20, 'columns': 2, 'fields': ['certificate_name', 'certificate_no', 'holder_name', 'issue_authority', 'issue_date', 'valid_until']},
+                                {'title': '办理与附件', 'sequence': 30, 'columns': 2, 'fields': ['handler_id', 'due_date', 'description', 'result_note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 40, 'columns': 2, 'fields': ['legacy_document_no', 'legacy_document_state', 'legacy_source_table', 'legacy_source_id']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'document_no', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'fact_type', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'business_date', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'requester_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'department_id', 'sequence': 80, 'group_title': '办理主信息'},
+                                {'name': 'certificate_name', 'sequence': 90, 'group_title': '证照信息'},
+                                {'name': 'certificate_no', 'sequence': 100, 'group_title': '证照信息'},
+                                {'name': 'holder_name', 'sequence': 110, 'group_title': '证照信息'},
+                                {'name': 'issue_authority', 'sequence': 120, 'group_title': '证照信息'},
+                                {'name': 'issue_date', 'sequence': 130, 'group_title': '证照信息'},
+                                {'name': 'valid_until', 'sequence': 140, 'group_title': '证照信息'},
+                                {'name': 'handler_id', 'sequence': 150, 'group_title': '办理与附件'},
+                                {'name': 'due_date', 'sequence': 160, 'group_title': '办理与附件'},
+                                {'name': 'description', 'sequence': 170, 'group_title': '办理与附件'},
+                                {'name': 'result_note', 'sequence': 180, 'group_title': '办理与附件'},
+                                {'name': 'attachment_ids', 'sequence': 190, 'group_title': '办理与附件'},
+                                {'name': 'legacy_document_no', 'sequence': 200, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 210, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 220, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_id', 'sequence': 230, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_document_admin_borrow_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">document_admin_borrow_productized_form_v1</field>
+            <field name="model">sc.document.admin.document</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_document_borrow"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '借阅申请',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'document_no', 'name', 'fact_type', 'business_date', 'requester_id', 'department_id']},
+                                {'title': '借阅对象', 'sequence': 20, 'columns': 2, 'fields': ['document_title', 'borrow_user_id', 'borrower_name', 'borrow_project_name', 'borrow_department_name', 'borrower_contact', 'borrow_form']},
+                                {'title': '借阅与归还', 'sequence': 30, 'columns': 2, 'fields': ['borrow_date', 'application_date', 'responsible_person', 'expected_return_date', 'return_request_date', 'return_apply_time', 'returned_flag', 'return_confirm_time', 'actual_return_date']},
+                                {'title': '变更与审定', 'sequence': 40, 'columns': 2, 'fields': ['modifier_name', 'modified_at', 'modify_note', 'reviewer_name', 'review_time', 'review_opinion']},
+                                {'title': '办理与附件', 'sequence': 50, 'columns': 2, 'fields': ['handler_id', 'due_date', 'description', 'result_note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 60, 'columns': 2, 'fields': ['legacy_document_no', 'legacy_document_state', 'legacy_source_table', 'legacy_source_id']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'document_no', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'fact_type', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'business_date', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'requester_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'department_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'document_title', 'sequence': 80, 'group_title': '借阅对象'},
+                                {'name': 'borrow_user_id', 'sequence': 90, 'group_title': '借阅对象'},
+                                {'name': 'borrower_name', 'sequence': 100, 'group_title': '借阅对象'},
+                                {'name': 'borrow_project_name', 'sequence': 110, 'group_title': '借阅对象'},
+                                {'name': 'borrow_department_name', 'sequence': 120, 'group_title': '借阅对象'},
+                                {'name': 'borrower_contact', 'sequence': 130, 'group_title': '借阅对象'},
+                                {'name': 'borrow_form', 'sequence': 140, 'group_title': '借阅对象'},
+                                {'name': 'borrow_date', 'sequence': 150, 'group_title': '借阅与归还'},
+                                {'name': 'application_date', 'sequence': 160, 'group_title': '借阅与归还'},
+                                {'name': 'responsible_person', 'sequence': 170, 'group_title': '借阅与归还'},
+                                {'name': 'expected_return_date', 'sequence': 180, 'group_title': '借阅与归还'},
+                                {'name': 'return_request_date', 'sequence': 190, 'group_title': '借阅与归还'},
+                                {'name': 'return_apply_time', 'sequence': 200, 'group_title': '借阅与归还'},
+                                {'name': 'returned_flag', 'sequence': 210, 'group_title': '借阅与归还'},
+                                {'name': 'return_confirm_time', 'sequence': 220, 'group_title': '借阅与归还'},
+                                {'name': 'actual_return_date', 'sequence': 230, 'group_title': '借阅与归还'},
+                                {'name': 'modifier_name', 'sequence': 240, 'group_title': '变更与审定'},
+                                {'name': 'modified_at', 'sequence': 250, 'group_title': '变更与审定'},
+                                {'name': 'modify_note', 'sequence': 260, 'group_title': '变更与审定'},
+                                {'name': 'reviewer_name', 'sequence': 270, 'group_title': '变更与审定'},
+                                {'name': 'review_time', 'sequence': 280, 'group_title': '变更与审定'},
+                                {'name': 'review_opinion', 'sequence': 290, 'group_title': '变更与审定'},
+                                {'name': 'handler_id', 'sequence': 300, 'group_title': '办理与附件'},
+                                {'name': 'due_date', 'sequence': 310, 'group_title': '办理与附件'},
+                                {'name': 'description', 'sequence': 320, 'group_title': '办理与附件'},
+                                {'name': 'result_note', 'sequence': 330, 'group_title': '办理与附件'},
+                                {'name': 'attachment_ids', 'sequence': 340, 'group_title': '办理与附件'},
+                                {'name': 'legacy_document_no', 'sequence': 350, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 360, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 370, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_id', 'sequence': 380, 'group_title': '来源追溯', 'readonly': True}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

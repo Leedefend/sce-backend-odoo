@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_invoice_input_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">invoice_input_productized_form_v1</field>
+            <field name="model">sc.invoice.registration</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_invoice_input"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '进项发票',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'invoice_flow_label', 'source_origin', 'source_kind', 'business_category_id', 'direction']},
+                                {'title': '项目与结算依据', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'operation_strategy', 'partner_id', 'legacy_partner_name', 'contract_id', 'settlement_id', 'contract_amount']},
+                                {'title': '发票基础信息', 'sequence': 30, 'columns': 2, 'fields': ['document_no', 'document_date', 'application_date', 'invoice_date', 'recognition_date', 'invoice_state', 'invoice_no', 'invoice_code', 'invoice_type']},
+                                {'title': '进项税务信息', 'sequence': 40, 'columns': 2, 'fields': ['tax_rate', 'tax_type', 'invoice_content', 'cost_category_name', 'recipient_unit_name', 'caliber', 'invoice_company_type', 'invoice_issue_company', 'actual_invoice_issue_company', 'invoice_provider_name']},
+                                {'title': '金额与税额', 'sequence': 50, 'columns': 2, 'fields': ['invoice_count', 'amount_no_tax', 'tax_amount', 'amount_total', 'actual_invoice_amount', 'surcharge_amount', 'related_receipt_amount', 'currency_id']},
+                                {'title': '办理与核算', 'sequence': 60, 'columns': 2, 'fields': ['handler_name', 'invoice_holder', 'accounting_state', 'voucher_no', 'push_result', 'kingdee_document_no']},
+                                {'title': '说明与附件', 'sequence': 70, 'columns': 2, 'fields': ['note', 'note_display', 'attachment_ids', 'invoice_attachment_text', 'reject_reason']},
+                                {'title': '红冲关联', 'sequence': 80, 'columns': 2, 'fields': ['red_flush_adjustment_id', 'red_flush_origin_source_model', 'red_flush_origin_source_record_id', 'red_flush_origin_invoice_no']},
+                                {'title': '来源追溯', 'sequence': 90, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'legacy_partner_id', 'creator_name', 'created_time', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'invoice_flow_label', 'sequence': 40, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'source_origin', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'source_kind', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'business_category_id', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'direction', 'sequence': 80, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 90, 'group_title': '项目与结算依据'},
+                                {'name': 'company_id', 'sequence': 100, 'group_title': '项目与结算依据', 'readonly': True},
+                                {'name': 'operation_strategy', 'sequence': 110, 'group_title': '项目与结算依据', 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 120, 'group_title': '项目与结算依据'},
+                                {'name': 'legacy_partner_name', 'sequence': 130, 'group_title': '项目与结算依据', 'readonly': True},
+                                {'name': 'contract_id', 'sequence': 140, 'group_title': '项目与结算依据'},
+                                {'name': 'settlement_id', 'sequence': 150, 'group_title': '项目与结算依据'},
+                                {'name': 'contract_amount', 'sequence': 160, 'group_title': '项目与结算依据'},
+                                {'name': 'document_no', 'sequence': 170, 'group_title': '发票基础信息'},
+                                {'name': 'document_date', 'sequence': 180, 'group_title': '发票基础信息'},
+                                {'name': 'application_date', 'sequence': 190, 'group_title': '发票基础信息'},
+                                {'name': 'invoice_date', 'sequence': 200, 'group_title': '发票基础信息'},
+                                {'name': 'recognition_date', 'sequence': 210, 'group_title': '发票基础信息'},
+                                {'name': 'invoice_state', 'sequence': 220, 'group_title': '发票基础信息'},
+                                {'name': 'invoice_no', 'sequence': 230, 'group_title': '发票基础信息'},
+                                {'name': 'invoice_code', 'sequence': 240, 'group_title': '发票基础信息'},
+                                {'name': 'invoice_type', 'sequence': 250, 'group_title': '发票基础信息'},
+                                {'name': 'tax_rate', 'sequence': 260, 'group_title': '进项税务信息'},
+                                {'name': 'tax_type', 'sequence': 270, 'group_title': '进项税务信息'},
+                                {'name': 'invoice_content', 'sequence': 280, 'group_title': '进项税务信息'},
+                                {'name': 'cost_category_name', 'sequence': 290, 'group_title': '进项税务信息'},
+                                {'name': 'recipient_unit_name', 'sequence': 300, 'group_title': '进项税务信息'},
+                                {'name': 'caliber', 'sequence': 310, 'group_title': '进项税务信息'},
+                                {'name': 'invoice_company_type', 'sequence': 320, 'group_title': '进项税务信息'},
+                                {'name': 'invoice_issue_company', 'sequence': 330, 'group_title': '进项税务信息'},
+                                {'name': 'actual_invoice_issue_company', 'sequence': 340, 'group_title': '进项税务信息'},
+                                {'name': 'invoice_provider_name', 'sequence': 350, 'group_title': '进项税务信息'},
+                                {'name': 'invoice_count', 'sequence': 360, 'group_title': '金额与税额'},
+                                {'name': 'amount_no_tax', 'sequence': 370, 'group_title': '金额与税额'},
+                                {'name': 'tax_amount', 'sequence': 380, 'group_title': '金额与税额'},
+                                {'name': 'amount_total', 'sequence': 390, 'group_title': '金额与税额'},
+                                {'name': 'actual_invoice_amount', 'sequence': 400, 'group_title': '金额与税额'},
+                                {'name': 'surcharge_amount', 'sequence': 410, 'group_title': '金额与税额'},
+                                {'name': 'related_receipt_amount', 'sequence': 420, 'group_title': '金额与税额'},
+                                {'name': 'currency_id', 'sequence': 430, 'group_title': '金额与税额'},
+                                {'name': 'handler_name', 'sequence': 440, 'group_title': '办理与核算'},
+                                {'name': 'invoice_holder', 'sequence': 450, 'group_title': '办理与核算'},
+                                {'name': 'accounting_state', 'sequence': 460, 'group_title': '办理与核算'},
+                                {'name': 'voucher_no', 'sequence': 470, 'group_title': '办理与核算'},
+                                {'name': 'push_result', 'sequence': 480, 'group_title': '办理与核算'},
+                                {'name': 'kingdee_document_no', 'sequence': 490, 'group_title': '办理与核算'},
+                                {'name': 'note', 'sequence': 500, 'group_title': '说明与附件'},
+                                {'name': 'note_display', 'sequence': 510, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'attachment_ids', 'sequence': 520, 'group_title': '说明与附件'},
+                                {'name': 'invoice_attachment_text', 'sequence': 530, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'reject_reason', 'sequence': 540, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'red_flush_adjustment_id', 'sequence': 550, 'group_title': '红冲关联', 'readonly': True},
+                                {'name': 'red_flush_origin_source_model', 'sequence': 560, 'group_title': '红冲关联', 'readonly': True},
+                                {'name': 'red_flush_origin_source_record_id', 'sequence': 570, 'group_title': '红冲关联', 'readonly': True},
+                                {'name': 'red_flush_origin_invoice_no', 'sequence': 580, 'group_title': '红冲关联', 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 590, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 600, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 610, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 620, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_partner_id', 'sequence': 630, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 640, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'created_time', 'sequence': 650, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 660, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 670, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 680, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>
