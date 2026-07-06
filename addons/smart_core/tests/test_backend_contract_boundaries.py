@@ -107,7 +107,7 @@ class BackendContractBoundaryTests(unittest.TestCase):
         self.assertEqual(boundary["kind"], "user_preference_projection")
         self.assertTrue(boundary["compatibility"])
 
-    def test_contract_classification_keeps_user_preferences_below_lowcode(self):
+    def test_contract_classification_keeps_user_preferences_below_product_and_lowcode(self):
         rows = [
             _contract(1, "project_project_form_structure_generated_v1", priority=77),
             _contract(2, "project_project_form_structure_v1", priority=90),
@@ -128,13 +128,13 @@ class BackendContractBoundaryTests(unittest.TestCase):
         ]
 
         ordered = sorted(rows, key=view_orchestration_apply_order_key)
-        self.assertEqual([row.id for row in ordered], [1, 2, 3, 4])
+        self.assertEqual([row.id for row in ordered], [1, 3, 2, 4])
         self.assertEqual(
             [classify_view_orchestration_contract(row.name, row.contract_json)["kind"] for row in ordered],
             [
                 "generated_industry_baseline",
-                "industry_standard_configuration",
                 "user_preference_projection",
+                "industry_standard_configuration",
                 "tenant_lowcode_configuration",
             ],
         )

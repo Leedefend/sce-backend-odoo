@@ -229,7 +229,7 @@ class ApprovalPolicyConfigurationHandlerTests(unittest.TestCase):
         self.assertTrue(authority["projection_only"])
         self.assertEqual(authority["lowcode_boundary"], "approval_policy")
         self.assertEqual(authority["policy_source"], "sc.approval.policy")
-        self.assertEqual(authority["lowcode_source"], "smart_construction_core.lowcode.approval_policy")
+        self.assertEqual(authority["lowcode_source"], self.module.APPROVAL_POLICY_SOURCE_TENANT_LOWCODING)
 
     def test_set_creates_policy_and_normalizes_disabled_mode(self):
         model = _PolicyModel([])

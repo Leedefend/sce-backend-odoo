@@ -9,10 +9,12 @@ surface forms that are usable but still feel like dense data screens.
 from __future__ import annotations
 
 import csv
+import ast
 import json
 import re
 from collections import Counter, defaultdict
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -21,9 +23,13 @@ STANDARD_PATH = ROOT / "docs/product/formal_business_form_productization_standar
 STRUCTURE_CSV = ROOT / "docs/audit/native/form_structure_standardization_runtime/form_structure_standardization_audit.csv"
 OUT_JSON = ROOT / "artifacts/backend/business_form_productization_audit.json"
 OUT_MD = ROOT / "artifacts/backend/business_form_productization_audit.md"
+PRODUCT_CONTRACT_GLOBS = (
+    "addons/smart_construction_core/data/*form_productization_contract*.xml",
+)
 
 HIGH_DENSITY_THRESHOLD = 70
 MEDIUM_DENSITY_THRESHOLD = 50
+ENTRY_SURFACE_MODES = {"entry_semantic_surface", "semantic_entry_surface"}
 
 
 def _strip_code(value: str) -> str:
@@ -31,6 +37,10 @@ def _strip_code(value: str) -> str:
     if value.startswith("`") and value.endswith("`"):
         return value[1:-1]
     return value
+
+
+def _norm_text(value: object) -> str:
+    return re.sub(r"\s+", "", str(value or "").strip())
 
 
 def _parse_matrix_rows() -> list[dict]:
@@ -78,11 +88,66 @@ def _runtime_structure_by_model() -> dict[str, dict]:
     return by_model
 
 
-def _risk_for_entry(entry: dict, structure: dict | None) -> tuple[str, list[str], list[str]]:
+def _productized_contracts_by_entry() -> dict[tuple[str, str], dict]:
+    by_entry = {}
+    paths = []
+    for pattern in PRODUCT_CONTRACT_GLOBS:
+        paths.extend(ROOT.glob(pattern))
+    for path in sorted(set(paths)):
+        try:
+            root = ET.parse(path).getroot()
+        except ET.ParseError:
+            continue
+        for record in root.findall(".//record"):
+            if record.attrib.get("model") != "ui.business.config.contract":
+                continue
+            fields = {field.attrib.get("name"): field for field in record.findall("field")}
+            model = (fields.get("model").text or "").strip() if fields.get("model") is not None else ""
+            contract_field = fields.get("contract_json")
+            if not model or contract_field is None:
+                continue
+            raw_payload = contract_field.attrib.get("eval") or contract_field.text or ""
+            try:
+                payload = ast.literal_eval(raw_payload)
+            except (SyntaxError, ValueError):
+                continue
+            orchestration = payload.get("view_orchestration") if isinstance(payload, dict) else {}
+            if not isinstance(orchestration, dict):
+                continue
+            context = orchestration.get("context") if isinstance(orchestration.get("context"), dict) else {}
+            source = str(context.get("source") or "")
+            source_status = str(context.get("source_status") or "")
+            if "product_release" not in source and source_status != "product_release":
+                continue
+            views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+            form = views.get("form") if isinstance(views.get("form"), dict) else {}
+            mode = str(form.get("composition_mode") or form.get("compositionMode") or "").strip()
+            title = str(form.get("title") or "").strip()
+            sections = form.get("sections") if isinstance(form.get("sections"), list) else []
+            rows = form.get("fields") if isinstance(form.get("fields"), list) else []
+            if not title or mode not in ENTRY_SURFACE_MODES or not sections or not rows or isinstance(form.get("layout"), list):
+                continue
+            action_field = fields.get("action_id")
+            by_entry[(model, _norm_text(title))] = {
+                "path": str(path.relative_to(ROOT)),
+                "record_id": record.attrib.get("id") or "",
+                "action_ref": action_field.attrib.get("ref") if action_field is not None else "",
+                "title": title,
+                "field_count": len(rows),
+                "section_count": len(sections),
+            }
+    return by_entry
+
+
+def _risk_for_entry(entry: dict, structure: dict | None, productized_contract: dict | None) -> tuple[str, list[str], list[str]]:
     issues = []
     suggestions = []
     form_count = entry["form_field_count"]
-    if form_count >= HIGH_DENSITY_THRESHOLD:
+    is_productized = bool(productized_contract)
+    if is_productized:
+        issues.append("productized_entry_semantic_surface")
+        suggestions.append("保持 action 级产品化契约与原生模型解析边界分离")
+    elif form_count >= HIGH_DENSITY_THRESHOLD:
         issues.append("high_density_form")
         suggestions.append("拆成主信息、业务明细、附件与备注、来源追溯等稳定页签")
     elif form_count >= MEDIUM_DENSITY_THRESHOLD:
@@ -98,22 +163,25 @@ def _risk_for_entry(entry: dict, structure: dict | None) -> tuple[str, list[str]
         button_box_count = int(structure.get("button_box_count") or 0)
         source_trace_count = int(structure.get("source_trace_field_count") or 0)
         classification = structure.get("classification") or ""
-        if notebook_count == 0 or page_count == 0:
+        if not is_productized and (notebook_count == 0 or page_count == 0):
             issues.append("missing_business_tabs")
             suggestions.append("补齐按业务任务组织的页签，不让长表单单屏堆叠")
-        if labelled_group_count == 0 or (page_count and labelled_page_count == 0):
+        if not is_productized and (labelled_group_count == 0 or (page_count and labelled_page_count == 0)):
             issues.append("weak_section_labels")
             suggestions.append("补 group/page 标题，让字段分组可扫描")
-        if source_trace_count > 0:
+        if source_trace_count > 0 and is_productized:
+            issues.append("source_trace_sectioned")
+            suggestions.append("来源追溯字段已由产品化契约放入独立追溯区")
+        elif source_trace_count > 0:
             issues.append("source_trace_visible_risk")
             suggestions.append("确认来源/迁移字段只在内部审计区展示")
         if statusbar_count == 0 and entry["crud"] == "RCW":
             issues.append("missing_status_context")
             suggestions.append("对办理型单据确认状态栏或等价状态提示")
-        if button_box_count == 0 and form_count >= MEDIUM_DENSITY_THRESHOLD:
+        if not is_productized and button_box_count == 0 and form_count >= MEDIUM_DENSITY_THRESHOLD:
             issues.append("missing_summary_actions")
             suggestions.append("高密度表单补关联统计或摘要动作入口")
-        if classification in {"contract_auto_with_default_tabs", "needs_semantic_annotation", "needs_xml_structure"}:
+        if not is_productized and classification in {"contract_auto_with_default_tabs", "needs_semantic_annotation", "needs_xml_structure"}:
             issues.append(classification)
     else:
         issues.append("missing_runtime_structure_evidence")
@@ -141,16 +209,19 @@ def _markdown_table(rows: list[dict], columns: list[str]) -> str:
 def main() -> int:
     matrix_rows = _parse_matrix_rows()
     structures = _runtime_structure_by_model()
+    productized_contracts = _productized_contracts_by_entry()
     audited = []
     for entry in matrix_rows:
         structure = structures.get(entry["model"])
-        severity, issues, suggestions = _risk_for_entry(entry, structure)
+        productized_contract = productized_contracts.get((entry["model"], _norm_text(entry["entry"])))
+        severity, issues, suggestions = _risk_for_entry(entry, structure, productized_contract)
         audited.append(
             {
                 **entry,
                 "severity": severity,
                 "issues": issues,
                 "suggestions": suggestions,
+                "productized_contract": productized_contract or {},
                 "runtime_classification": (structure or {}).get("classification", "MISSING"),
                 "runtime_structural_score": int((structure or {}).get("structural_score") or 0),
                 "runtime_source_trace_field_count": int((structure or {}).get("source_trace_field_count") or 0),
@@ -179,6 +250,7 @@ def main() -> int:
             "formal_business_entries": len(audited),
             "risk_entry_count": len(risk_rows),
             "p1_entry_count": len(p1_rows),
+            "productized_entry_count": sum(1 for row in audited if row.get("productized_contract")),
             "by_severity": dict(sorted(by_severity.items())),
             "by_center": {center: dict(counts) for center, counts in sorted(by_center.items())},
         },
@@ -196,6 +268,7 @@ def main() -> int:
             "entry": row["entry"],
             "model": row["model"],
             "form_fields": row["form_field_count"],
+            "productized": "Y" if row.get("productized_contract") else "",
             "issues": ",".join(row["issues"]),
         }
         for row in risk_rows[:40]
@@ -207,18 +280,20 @@ def main() -> int:
         f"- formal_business_entries: `{len(audited)}`",
         f"- risk_entry_count: `{len(risk_rows)}`",
         f"- p1_entry_count: `{len(p1_rows)}`",
+        f"- productized_entry_count: `{sum(1 for row in audited if row.get('productized_contract'))}`",
         f"- high_density_threshold: `{HIGH_DENSITY_THRESHOLD}`",
         f"- medium_density_threshold: `{MEDIUM_DENSITY_THRESHOLD}`",
         "",
         "## P1/P2 Queue",
         "",
-        _markdown_table(table_rows, ["severity", "center", "entry", "model", "form_fields", "issues"]),
+        _markdown_table(table_rows, ["severity", "center", "entry", "model", "form_fields", "productized", "issues"]),
         "",
         "## Interpretation",
         "",
         "- `P1`: high-density or structurally weak forms that should seed the first productization batch.",
         "- `P2`: moderate density or missing product cues that should enter follow-up batches.",
         "- `P3`: low-density forms with trace or secondary cues; keep visible in the backlog but do not block the first batch.",
+        "- `productized_entry_semantic_surface`: entry has an action-scoped product-release contract using `fields + sections + composition_mode=entry_semantic_surface`; native parser output remains the structural source and the backend orchestrator owns layout generation.",
         "",
     ]
     OUT_MD.write_text("\n".join(md), encoding="utf-8")
