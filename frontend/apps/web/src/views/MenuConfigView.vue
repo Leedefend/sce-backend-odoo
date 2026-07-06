@@ -687,6 +687,11 @@ import { BUSINESS_CONFIG_ROUTE_FLAGS, MENU_CONFIG_RUNTIME_SOURCES } from '../app
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 
+type MenuConfigNavNode = NavNode & {
+  action_id?: number | string;
+  model?: string;
+};
+
 type DraftPolicy = {
   policy_id: number;
   menu_id: number;
@@ -1986,7 +1991,7 @@ function normalizedMenuLabel(value: string) {
   return String(value || '').trim().toLowerCase();
 }
 
-function canMatchNavigationGroupByLabel(node: NavNode) {
+function canMatchNavigationGroupByLabel(node: MenuConfigNavNode) {
   const meta = node.meta || {};
   const hasChildren = Array.isArray(node.children) && node.children.length > 0;
   const hasAction = Boolean(node.action_id || meta.action_id || node.model || meta.model || node.action || meta.action);

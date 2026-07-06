@@ -19,7 +19,7 @@ class ScLoginRoute(models.Model):
         required=True,
         index=True,
     )
-    product_key = fields.Char(default="construction")
+    product_key = fields.Char(default="platform")
     label = fields.Char()
     note = fields.Text()
 

@@ -42,6 +42,15 @@ def _load_json(path: Path) -> dict:
     return payload if isinstance(payload, dict) else {}
 
 
+def _read_text(path: Path) -> str:
+    if not path.is_file():
+        return ""
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception:
+        return ""
+
+
 def _safe_int(value, default: int = 0) -> int:
     try:
         return int(value)
@@ -105,6 +114,14 @@ def main() -> int:
     scene_contract_semantic_v2 = _load_json(backend_dir / "scene_contract_semantic_v2_guard.json") or _load_json(
         local_artifacts / "backend" / "scene_contract_semantic_v2_guard.json"
     )
+    smart_core_boundary_guard = ROOT / "scripts" / "verify" / "smart_core_boundary_guard.py"
+    smart_core_boundary_doc = ROOT / "docs" / "architecture" / "smart_core_boundary_v1.md"
+    app_config_engine_boundary_guard = ROOT / "scripts" / "verify" / "app_config_engine_boundary_guard.py"
+    app_config_engine_boundary_doc = ROOT / "addons" / "smart_core" / "app_config_engine" / "docs" / "app_config_engine.md"
+    smart_core_boundary_guard_text = _read_text(smart_core_boundary_guard)
+    smart_core_boundary_doc_text = _read_text(smart_core_boundary_doc)
+    app_config_engine_boundary_guard_text = _read_text(app_config_engine_boundary_guard)
+    app_config_engine_boundary_doc_text = _read_text(app_config_engine_boundary_doc)
 
     checks: list[dict] = []
 
@@ -149,6 +166,32 @@ def main() -> int:
             "ok": bool(coverage.get("ok") is True),
             "coverage_ratio": _parse_ratio(coverage.get("coverage_ratio")),
             "source": "artifacts/contract_governance_coverage.json",
+        }
+    )
+    checks.append(
+        {
+            "name": "smart_core_boundary_contract",
+            "ok": bool(
+                smart_core_boundary_guard.is_file()
+                and smart_core_boundary_doc.is_file()
+                and "Record Context Boundary" in smart_core_boundary_doc_text
+                and "No Industry Defaults" in smart_core_boundary_doc_text
+                and "app_config_engine boundary guard missing" in smart_core_boundary_guard_text
+            ),
+            "source": "scripts/verify/smart_core_boundary_guard.py",
+        }
+    )
+    checks.append(
+        {
+            "name": "app_config_engine_boundary_contract",
+            "ok": bool(
+                app_config_engine_boundary_guard.is_file()
+                and app_config_engine_boundary_doc.is_file()
+                and "Runtime Contract Plumbing" in app_config_engine_boundary_doc_text
+                and "No Business Fact Authority" in app_config_engine_boundary_doc_text
+                and "sudo().parse_odoo_view" in app_config_engine_boundary_guard_text
+            ),
+            "source": "scripts/verify/app_config_engine_boundary_guard.py",
         }
     )
     checks.append(

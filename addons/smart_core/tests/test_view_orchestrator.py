@@ -239,6 +239,42 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual([row.get("name") for row in group.get("children")], ["name", "email"])
         self.assertNotIn("business_config_orchestration_fields", str(result["layout"]))
 
+    def test_form_view_can_compose_entry_semantic_surface_without_layout_overlay(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "composition_mode": "entry_semantic_surface",
+                        "sections": [
+                            {"title": "Primary", "sequence": 10, "columns": 2, "fields": ["name"]},
+                            {"title": "Contact", "sequence": 20, "columns": 2, "fields": ["email"]},
+                        ],
+                        "fields": [
+                            {"name": "email", "label": "Email Alias", "sequence": 20, "group_title": "Contact"},
+                            {"name": "name", "label": "Partner Name", "sequence": 10, "group_title": "Primary"},
+                        ],
+                    }
+                }
+            }
+        }
+        source_layout = [
+            {
+                "type": "sheet",
+                "children": [
+                    {"type": "group", "name": "native_group", "children": [{"type": "field", "name": "company_id"}]}
+                ],
+            }
+        ]
+
+        result, _calls = self._compose(payload, {"layout": source_layout}, "form")
+
+        self.assertEqual([group.get("string") for group in result["layout"]], ["Primary", "Contact"])
+        self.assertEqual(result["layout"][0].get("columns"), 2)
+        self.assertEqual([field.get("name") for field in result["layout"][0]["children"]], ["name"])
+        self.assertEqual(result["layout"][0]["children"][0].get("label"), "Partner Name")
+        self.assertEqual([field.get("name") for field in result["layout"][1]["children"]], ["email"])
+        self.assertNotIn("native_group", str(result["layout"]))
+
     def test_pivot_view_uses_business_config_measures_dimensions_and_defaults(self):
         payload = {
             "view_orchestration": {

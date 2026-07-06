@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -255,7 +255,7 @@ def main() -> int:
 
     snapshot["matched_required_scene_keys"] = matched_required_scene_keys
     snapshot["matched_required_scene_count"] = matched_required_scene_count
-    snapshot["captured_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    snapshot["captured_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     state_path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
 
     if errors:

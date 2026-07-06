@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import urllib.error
 import urllib.request
@@ -437,7 +437,7 @@ def create_payment_request(token: str) -> dict | None:
 
 
 def main() -> int:
-    ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out_dir = Path(ARTIFACTS_DIR) / "codex" / "payment-request-approval-smoke" / ts
     summary = {
         "db": DB_NAME,

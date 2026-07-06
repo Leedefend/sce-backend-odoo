@@ -44,6 +44,11 @@ menu_service = _load_module(
 
 
 class TestDeliveryMenuEntryTarget(unittest.TestCase):
+    def _register_acceptance_menu_labels(self):
+        for label in ("用户核对菜单", "用户验收"):
+            menu_service.register_customer_acceptance_group_label(label)
+            menu_service.register_preview_group_anchor_skipped_label(label)
+
     def _native_leaf(self, **overrides):
         row = {
             "label": overrides.get("label", "项目台账"),
@@ -109,6 +114,8 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         self.assertEqual(node["meta"]["entry_target"], entry_target)
 
     def test_project_ledger_query_menu_uses_current_project_scope(self):
+        delivery_menu_defaults.register_current_project_scope_model("project.project")
+
         node = delivery_menu_defaults.build_delivery_menu_child(
             {
                 "menu_key": "system.menu_379",
@@ -121,6 +128,7 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         )
 
         self.assertEqual(node["meta"]["project_scope_policy"], "current_project")
+        self.assertEqual(node["meta"]["record_scope_policy"], "current_record")
 
     def test_non_project_query_menu_stays_global_scope(self):
         node = delivery_menu_defaults.build_delivery_menu_child(
@@ -135,6 +143,7 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         )
 
         self.assertEqual(node["meta"]["project_scope_policy"], "global")
+        self.assertEqual(node["meta"]["record_scope_policy"], "global")
 
     def test_native_action_menu_child_exposes_compatibility_entry_target(self):
         node = delivery_menu_defaults.build_delivery_menu_child(
@@ -179,6 +188,7 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
             "system.policy.smart_construction_core_menu_sc_tax_certificate_registration_user",
         )
         self.assertNotEqual(node.get("key"), "project_scope_policy")
+        self.assertEqual(node["meta"]["record_scope_policy"], "current_record")
 
     def test_policy_menu_convergence_uses_each_policy_group_label(self):
         nav = menu_service.MenuService().build_nav(
@@ -436,6 +446,8 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         self.assertEqual(child["meta"]["entry_target"]["scene_key"], "finance.workspace")
 
     def test_user_acceptance_container_is_not_used_as_native_preview_group(self):
+        self._register_acceptance_menu_labels()
+
         groups = menu_service.MenuService()._native_preview_menus(
             native_nav=[
                 {
@@ -516,6 +528,8 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         self.assertEqual(meta["native_preview_leaf_count"], 1)
 
     def test_user_acceptance_policy_menu_keeps_legacy_subgroups(self):
+        self._register_acceptance_menu_labels()
+
         nav = menu_service.MenuService().build_nav(
             policy={
                 "menu_groups": [
@@ -659,6 +673,8 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         self.assertEqual(expense_node.get("route"), "/a/626")
         self.assertEqual(expense_node.get("action_id"), 626)
         self.assertEqual(expense_node.get("model"), "sc.expense.claim")
+        self.assertEqual((expense_node.get("meta") or {}).get("record_scope_policy"), "current_record")
+        self.assertEqual((expense_node.get("meta") or {}).get("project_scope_policy"), "current_project")
         self.assertEqual((expense_node.get("entry_target") or {}).get("type"), "compatibility")
         self.assertEqual(
             ((expense_node.get("entry_target") or {}).get("compatibility_refs") or {}).get("model"),

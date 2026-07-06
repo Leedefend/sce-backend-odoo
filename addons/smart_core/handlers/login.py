@@ -182,7 +182,7 @@ def _resolve_login_route(env, *, login: str, explicit_db: str = "", routing_db: 
             "mode": "unified",
             "target_db": default_tenant_db,
             "entry_kind": "tenant",
-            "product_key": _config_param(env, "sc.login.default_product_key", "construction"),
+            "product_key": _config_param(env, "sc.login.default_product_key", "platform"),
             "source": "ir.config_parameter",
             "db_authority": "platform_default_tenant_db",
         }

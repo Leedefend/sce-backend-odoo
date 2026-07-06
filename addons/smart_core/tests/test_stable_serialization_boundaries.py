@@ -127,7 +127,7 @@ def _load_nav_dispatcher():
     platform_admin = _install_module("odoo.addons.smart_core.security.platform_admin")
     platform_admin.user_is_platform_admin = lambda env, user=None: False
     action_resolver = _install_module("odoo.addons.smart_core.app_config_engine.services.resolvers.action_resolver")
-    action_resolver.ActionResolver = type("ActionResolver", (), {})
+    action_resolver.ActionResolver = type("ActionResolver", (), {"__init__": lambda self, *args, **kwargs: None})
     return _load_module(
         "odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher",
         SMART_CORE / "app_config_engine/services/dispatchers/nav_dispatcher.py",
@@ -171,6 +171,33 @@ class StableSerializationBoundaryTests(unittest.TestCase):
         )
 
         self.assertRegex(value, r"^[0-9a-f]{32}$")
+
+    def test_nav_front_contract_preserves_record_scope_policy_with_project_alias(self):
+        module = _load_nav_dispatcher()
+        dispatcher = module.NavDispatcher(None, None)
+
+        nodes = dispatcher._to_front_contract(
+            [
+                {
+                    "menu_id": 1,
+                    "label": "Explicit",
+                    "record_scope_policy": "global",
+                    "project_scope_policy": "current_project",
+                },
+                {
+                    "menu_id": 2,
+                    "label": "Legacy",
+                    "project_scope_policy": "current_project",
+                },
+            ]
+        )
+
+        explicit_meta = nodes[0]["meta"]
+        legacy_meta = nodes[1]["meta"]
+        self.assertEqual(explicit_meta["record_scope_policy"], "global")
+        self.assertEqual(explicit_meta["project_scope_policy"], "current_project")
+        self.assertEqual(legacy_meta["record_scope_policy"], "current_record")
+        self.assertEqual(legacy_meta["project_scope_policy"], "current_project")
 
 
 if __name__ == "__main__":

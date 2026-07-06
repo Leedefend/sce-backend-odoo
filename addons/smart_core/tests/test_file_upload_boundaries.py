@@ -36,8 +36,11 @@ def _load_handler():
     utils_mod.__path__ = [str(root / "utils")]
     _install_module("odoo.addons.smart_core.core.base_handler", BaseIntentHandler=_BaseIntentHandler)
     project_mod = _install_module("odoo.addons.smart_core.core.project_context")
+    project_mod.record_scope_denied_response = lambda meta, message="": {"ok": False, "meta": meta, "message": message}
     project_mod.project_scope_denied_response = lambda meta: {"ok": False, "meta": meta}
+    project_mod.record_in_business_scope = lambda model, record_id, params=None, context=None: (True, {"applied": False})
     project_mod.record_in_project_scope = lambda model, record_id, project_id: (True, {"applied": False})
+    project_mod.selected_record_context_id_from_context = lambda params, context: None
     project_mod.selected_project_id_from_context = lambda params, context: None
     _install_module("odoo.addons.smart_core.utils.extension_hooks", call_extension_hook_first=lambda *args, **kwargs: None)
 

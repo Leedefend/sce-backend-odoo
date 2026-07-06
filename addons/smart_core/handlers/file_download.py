@@ -18,16 +18,21 @@ from urllib.parse import quote, urljoin
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
-from ..core.project_context import (
-    project_scope_denied_response,
-)
+try:
+    from ..core.project_context import record_scope_denied_response
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import project_scope_denied_response as record_scope_denied_response
 try:
     from ..core.project_context import record_in_business_scope
 except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
-    from ..core.project_context import record_in_project_scope, selected_project_id_from_context
+    from ..core.project_context import record_in_project_scope
+    try:
+        from ..core.project_context import selected_record_context_id_from_context
+    except ImportError:  # pragma: no cover - compatibility for older lightweight boundary tests
+        from ..core.project_context import selected_project_id_from_context as selected_record_context_id_from_context
 
     def record_in_business_scope(env_model, record_id, params=None, context=None):
-        return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
+        return record_in_project_scope(env_model, record_id, selected_record_context_id_from_context(params, context))
 from ..core.request_params import parse_positive_int
 from ..utils.extension_hooks import call_extension_hook_first
 
@@ -195,14 +200,19 @@ class FileDownloadHandler(BaseIntentHandler):
                 return self._err(404, "附件不存在")
             auth_model = attachment.res_model
             auth_res_id = attachment.res_id
-            if "payment.request" in self.env:
-                parent_request = self.env["payment.request"].sudo().search(
-                    [("attachment_ids", "in", attachment.id)],
-                    limit=1,
-                )
-                if parent_request:
-                    auth_model = "payment.request"
-                    auth_res_id = parent_request.id
+            auth_override = call_extension_hook_first(
+                self.env,
+                "smart_core_file_download_auth_subject",
+                self.env,
+                attachment,
+                {"model": auth_model, "res_id": auth_res_id},
+            )
+            if isinstance(auth_override, dict):
+                override_model = str(auth_override.get("model") or "").strip()
+                override_res_id = auth_override.get("res_id")
+                if override_model and override_res_id:
+                    auth_model = override_model
+                    auth_res_id = override_res_id
             if auth_model not in self._allowed_models():
                 return self._err(403, "附件不可访问")
             if auth_model not in self.env:
@@ -218,7 +228,7 @@ class FileDownloadHandler(BaseIntentHandler):
                 self.context if isinstance(self.context, dict) else {},
             )
             if not in_scope:
-                return project_scope_denied_response(scope_meta)
+                return record_scope_denied_response(scope_meta)
             record.check_access_rule("read")
         except AccessError as ae:
             _logger.warning("file.download AccessError on %s: %s", attachment_id, ae)

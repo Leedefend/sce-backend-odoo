@@ -104,7 +104,7 @@
 
 | 文件 | 层级 | 边界 | 预期 source |
 | --- | --- | --- | --- |
-| `addons/smart_construction_core/handlers/approval_policy_configuration.py` | L2/L4 | 行业审批策略低代码配置：`approval_policy_runtime_configuration` | `smart_construction_core.lowcode.approval_policy` |
+| `addons/smart_construction_core/handlers/approval_policy_configuration.py` | L2/L4 | 行业审批策略低代码配置：`approval_policy_runtime_configuration` | `smart_core.lowcode.approval_policy` |
 
 ## 当前允许直接写低代码运行时策略的入口
 

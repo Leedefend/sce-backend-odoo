@@ -69,6 +69,12 @@ class _Env(dict):
     pass
 
 
+class _FakeOdooFieldType:
+    @staticmethod
+    def to_string(value):
+        return str(value)
+
+
 def _install_module(name, **attrs):
     module = types.ModuleType(name)
     for key, value in attrs.items():
@@ -80,7 +86,8 @@ def _install_module(name, **attrs):
 def _load_handler():
     root = Path(__file__).resolve().parents[1]
     exc_mod = _install_module("odoo.exceptions", AccessError=type("AccessError", (Exception,), {}))
-    _install_module("odoo", exceptions=exc_mod)
+    fields_mod = types.SimpleNamespace(Date=_FakeOdooFieldType, Datetime=_FakeOdooFieldType)
+    _install_module("odoo", exceptions=exc_mod, fields=fields_mod)
 
     addons_mod = _install_module("odoo.addons")
     smart_core_mod = _install_module("odoo.addons.smart_core")
@@ -95,8 +102,11 @@ def _load_handler():
     _install_module("odoo.addons.smart_core.core.base_handler", BaseIntentHandler=_BaseIntentHandler)
     _install_module(
         "odoo.addons.smart_core.core.project_context",
+        record_scope_denied_response=lambda meta, message="": {"ok": False, "meta": meta, "message": message},
         project_scope_denied_response=lambda meta: {"ok": False, "meta": meta},
+        record_in_business_scope=lambda model, record_id, params=None, context=None: (True, {"applied": False}),
         record_in_project_scope=lambda model, record_id, project_id: (True, {"applied": False}),
+        selected_record_context_id_from_context=lambda params, context: None,
         selected_project_id_from_context=lambda params, context: None,
     )
     _install_module(

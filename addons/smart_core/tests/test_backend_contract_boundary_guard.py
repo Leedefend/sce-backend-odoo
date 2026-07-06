@@ -105,7 +105,7 @@ class BackendContractBoundaryGuardTests(unittest.TestCase):
                     "approval_policy_runtime_configuration",
                 )
             ]["expected_source"],
-            "smart_construction_core.lowcode.approval_policy",
+            "smart_core.lowcode.approval_policy",
         )
         self.assertEqual(
             allowed_by_boundary[

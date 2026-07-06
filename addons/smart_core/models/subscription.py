@@ -6,11 +6,12 @@ import time
 import zlib
 
 from odoo import api, fields, models
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 
 _logger = logging.getLogger(__name__)
 
-LEGACY_CONSTRUCTION_PLATFORM_ACCESS_XMLIDS = (
+LEGACY_EXTERNAL_PLATFORM_ACCESS_XMLIDS = (
     "access_sc_subscription_plan_read",
     "access_sc_subscription_plan_admin",
     "access_sc_subscription_read",
@@ -22,7 +23,7 @@ LEGACY_CONSTRUCTION_PLATFORM_ACCESS_XMLIDS = (
     "access_sc_ops_job_read",
     "access_sc_ops_job_admin",
 )
-LEGACY_CONSTRUCTION_PLATFORM_UI_XMLIDS = {
+LEGACY_EXTERNAL_PLATFORM_UI_XMLIDS = {
     "ir.ui.menu": (
         "menu_sc_ops_job",
         "menu_sc_usage_counter",
@@ -102,10 +103,14 @@ class ScSubscriptionPlan(models.Model):
     @api.model
     def ensure_platform_access_ownership(self):
         ModelData = self.env["ir.model.data"].sudo()
+        legacy_module = call_extension_hook_first(self.env, "smart_core_platform_legacy_ownership_module", self.env)
+        legacy_module = str(legacy_module or "").strip()
+        if not legacy_module:
+            return True
         imds = ModelData.search(
             [
-                ("module", "=", "smart_construction_core"),
-                ("name", "in", list(LEGACY_CONSTRUCTION_PLATFORM_ACCESS_XMLIDS)),
+                ("module", "=", legacy_module),
+                ("name", "in", list(LEGACY_EXTERNAL_PLATFORM_ACCESS_XMLIDS)),
                 ("model", "=", "ir.model.access"),
             ]
         )
@@ -116,10 +121,10 @@ class ScSubscriptionPlan(models.Model):
             access_recs.unlink()
 
         for model_name in ("ir.ui.menu", "ir.actions.act_window", "ir.ui.view"):
-            legacy_xmlids = LEGACY_CONSTRUCTION_PLATFORM_UI_XMLIDS[model_name]
+            legacy_xmlids = LEGACY_EXTERNAL_PLATFORM_UI_XMLIDS[model_name]
             ui_imds = ModelData.search(
                 [
-                    ("module", "=", "smart_construction_core"),
+                    ("module", "=", legacy_module),
                     ("name", "in", list(legacy_xmlids)),
                     ("model", "=", model_name),
                 ]

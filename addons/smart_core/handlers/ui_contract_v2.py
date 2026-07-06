@@ -166,46 +166,12 @@ LEGACY_VISIBLE_BUSINESS_COLUMN_LABELS_BY_MODEL = {
     "project.material.plan": {
         "legacy_visible_01": "单据状态",
         "legacy_visible_02": "单据编号",
-        "legacy_visible_03": "单据日期",
-        "legacy_visible_04": "到货时间",
         "legacy_visible_05": "采购材料名称",
-        "legacy_visible_06": "规格型号",
-        "legacy_visible_07": "单位",
-        "legacy_visible_08": "数量",
-        "legacy_visible_09": "材料别名(设计/清单)",
-        "legacy_visible_10": "备注",
-        "legacy_visible_11": "附件",
-        "legacy_visible_12": "项目名称",
-        "legacy_visible_13": "录入人",
-        "legacy_visible_14": "录入时间",
-        "source_created_by": "录入人",
-        "source_created_at": "录入时间",
     },
     "sc.material.inbound": {
         "legacy_visible_01": "单据状态",
         "legacy_visible_02": "入库单号",
-        "legacy_visible_03": "单据日期",
-        "legacy_visible_04": "供应商名称",
         "legacy_visible_05": "材料名称",
-        "legacy_visible_06": "规格型号",
-        "legacy_visible_07": "数量",
-        "legacy_visible_08": "单价",
-        "legacy_visible_09": "税率",
-        "legacy_visible_10": "含税金额",
-        "legacy_visible_11": "入库总数量",
-        "legacy_visible_12": "付款状态",
-        "legacy_visible_13": "已付款金额",
-        "legacy_visible_14": "未付款金额",
-        "legacy_visible_15": "结算状态",
-        "legacy_visible_16": "已结算金额",
-        "legacy_visible_17": "项目名称",
-        "legacy_visible_18": "备注",
-        "legacy_visible_19": "附件",
-        "legacy_visible_20": "录入人",
-        "legacy_visible_21": "录入时间",
-        "legacy_visible_22": "采购人",
-        "source_created_by": "录入人",
-        "source_created_at": "录入时间",
     },
 }
 
@@ -291,7 +257,15 @@ class UiContractV2Handler(BaseIntentHandler):
         current_label: str = "",
     ) -> str:
         field_name = str(field_name or "").strip()
-        label_map = LEGACY_VISIBLE_BUSINESS_COLUMN_LABELS_BY_MODEL.get(str(model_name or "").strip(), {})
+        model_key = str(model_name or "").strip()
+        label_maps = call_extension_hook_first(
+            self.env,
+            "smart_core_legacy_visible_business_column_labels",
+            self.env,
+        )
+        if not isinstance(label_maps, dict):
+            label_maps = LEGACY_VISIBLE_BUSINESS_COLUMN_LABELS_BY_MODEL
+        label_map = label_maps.get(model_key, {}) if isinstance(label_maps.get(model_key), dict) else {}
         business_label = label_map.get(field_name)
         if not business_label:
             return str(current_label or "").strip()
@@ -314,6 +288,80 @@ class UiContractV2Handler(BaseIntentHandler):
             if label:
                 labels[normalized] = label
         return labels
+
+    def _form_field_aliases(self, model: str, source_contract: dict[str, Any] | None = None) -> dict[str, str]:
+        payload = call_extension_hook_first(
+            self.env,
+            "smart_core_form_field_aliases",
+            self.env,
+            {
+                "model": str(model or "").strip(),
+                "source_contract": source_contract if isinstance(source_contract, dict) else {},
+            },
+        )
+        if not isinstance(payload, dict):
+            return {}
+        return {
+            str(key or "").strip(): str(value or "").strip()
+            for key, value in payload.items()
+            if str(key or "").strip() and str(value or "").strip()
+        }
+
+    def _resolve_form_field_alias(self, name: str, aliases: dict[str, str]) -> str:
+        normalized = str(name or "").strip()
+        return aliases.get(normalized, normalized)
+
+    def _apply_extension_projected_contract_normalizers(
+        self,
+        source_contract: dict[str, Any],
+        *,
+        view_type: str,
+        client_type: str,
+        delivery_profile: str,
+    ) -> dict[str, Any]:
+        payload = call_extension_hook_first(
+            self.env,
+            "smart_core_normalize_projected_contract_data",
+            self.env,
+            source_contract,
+            {
+                "view_type": view_type,
+                "subject": "ui.contract.v2",
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "client_type": client_type,
+                    "delivery_profile": delivery_profile,
+                },
+            },
+        )
+        return dict(payload) if isinstance(payload, dict) else source_contract
+
+    def _apply_extension_unified_page_contract_normalizers(
+        self,
+        contract_v2: dict[str, Any],
+        *,
+        source_contract: dict[str, Any],
+        view_type: str,
+        client_type: str,
+        delivery_profile: str,
+    ) -> dict[str, Any]:
+        payload = call_extension_hook_first(
+            self.env,
+            "smart_core_normalize_unified_page_contract_v2",
+            self.env,
+            contract_v2,
+            {
+                "source_contract": source_contract,
+                "view_type": view_type,
+                "subject": "ui.contract.v2",
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "client_type": client_type,
+                    "delivery_profile": delivery_profile,
+                },
+            },
+        )
+        return dict(payload) if isinstance(payload, dict) else contract_v2
 
     def _v2_policy_projection(self, value: dict[str, Any], *, runtime_carrier: str, source_key: str) -> dict[str, Any]:
         projection = deepcopy(value or {})
@@ -401,6 +449,10 @@ class UiContractV2Handler(BaseIntentHandler):
             "must_request_columns": list(locked_profile.get("fact_columns") or columns),
         }
         self._project_v2_source_policies(contract, {"list_profile": locked_profile})
+        profile_projection = ((contract.get("layoutContract") or {}).get("listProfile") or {})
+        source_authority = profile_projection.get("sourceAuthority") if isinstance(profile_projection, dict) else {}
+        if isinstance(source_authority, dict):
+            source_authority["source_key"] = "list_profile.business_config_contract_authoritative"
 
     def _merge_user_list_preference_columns(self, source_contract: dict[str, Any], columns: list[str]) -> list[str]:
         action_id = self._source_action_id(source_contract)
@@ -591,7 +643,12 @@ class UiContractV2Handler(BaseIntentHandler):
         )
         if isinstance(hook_payload, dict):
             source_contract = dict(hook_payload)
-        self._normalize_general_contract_tax_contract(source_contract)
+        source_contract = self._apply_extension_projected_contract_normalizers(
+            source_contract,
+            view_type=str(view_type or "").strip().lower(),
+            client_type=client_type,
+            delivery_profile=delivery_profile,
+        )
         contract_v2 = assemble_unified_page_contract_v2(
             source_contract,
             source_type="ui.contract",
@@ -622,9 +679,13 @@ class UiContractV2Handler(BaseIntentHandler):
         if isinstance(hook_payload, dict):
             contract_v2 = dict(hook_payload)
         self._project_v2_source_policies(contract_v2, source_contract)
-        self._normalize_general_contract_tax_contract(contract_v2, source_contract=source_contract)
-        self._normalize_general_contract_company_form(contract_v2, source_contract=source_contract)
-        self._normalize_construction_diary_form(contract_v2, source_contract=source_contract)
+        contract_v2 = self._apply_extension_unified_page_contract_normalizers(
+            contract_v2,
+            source_contract=source_contract,
+            view_type=str(view_type or "").strip().lower(),
+            client_type=client_type,
+            delivery_profile=delivery_profile,
+        )
         self._apply_business_config_form_groups_to_v2(contract_v2, source_contract=source_contract)
         self._enforce_business_list_config_projection(contract_v2, source_contract)
         contract_v2 = trim_unified_page_contract_v2(
@@ -650,168 +711,6 @@ class UiContractV2Handler(BaseIntentHandler):
                 "source_authority": self.source_authority_contract(),
             },
         )
-
-    def _normalize_general_contract_tax_contract(self, contract: dict[str, Any], source_contract: dict[str, Any] | None = None) -> None:
-        if not isinstance(contract, dict):
-            return
-        model = str(
-            contract.get("model")
-            or (source_contract or {}).get("model")
-            or ((contract.get("head") or {}).get("model") if isinstance(contract.get("head"), dict) else "")
-            or ""
-        ).strip()
-        field_map = contract.get("fields") if isinstance(contract.get("fields"), dict) else {}
-        source_fields = (source_contract or {}).get("fields") if isinstance((source_contract or {}).get("fields"), dict) else {}
-        if model != "sc.general.contract" or ("tax_id" not in field_map and "tax_id" not in source_fields):
-            return
-
-        def is_tax_rate_node(value: Any) -> bool:
-            if not isinstance(value, dict):
-                return False
-            name = str(value.get("name") or value.get("field") or value.get("fieldCode") or "").strip()
-            widget_id = str(value.get("widgetId") or value.get("id") or "").strip()
-            return name == "tax_rate" or widget_id == "field.tax_rate"
-
-        def is_tax_id_node(value: Any) -> bool:
-            if not isinstance(value, dict):
-                return False
-            name = str(value.get("name") or value.get("field") or value.get("fieldCode") or "").strip()
-            widget_id = str(value.get("widgetId") or value.get("id") or "").strip()
-            return name == "tax_id" or widget_id == "field.tax_id"
-
-        tax_field = field_map.get("tax_id") if isinstance(field_map.get("tax_id"), dict) else {}
-        if not tax_field and isinstance(source_fields.get("tax_id"), dict):
-            tax_field = source_fields.get("tax_id") or {}
-
-        def tax_id_field_node(source_node: dict[str, Any]) -> dict[str, Any]:
-            role = source_node.get("formStructureRole") if isinstance(source_node.get("formStructureRole"), dict) else {
-                "role": "amount",
-                "slot": "amount_progress",
-                "group": "amounts",
-            }
-            descriptor = dict(tax_field or {})
-            descriptor.update(
-                {
-                    "name": "tax_id",
-                    "label": "税率",
-                    "string": "税率",
-                    "type": "many2one",
-                    "widget": "many2one",
-                }
-            )
-            return {
-                "type": "field",
-                "name": "tax_id",
-                "formStructureRole": role,
-                "string": "税率",
-                "label": "税率",
-                "fieldInfo": descriptor,
-                "widget": "many2one",
-                "componentKey": "sc.input.many2one",
-                "componentConfig": {
-                    "readonly": False,
-                    "required": False,
-                    "fieldType": "many2one",
-                },
-                "widgetId": "field.tax_id",
-                "field_info": descriptor,
-                "children": [],
-                "widgetList": [],
-            }
-
-        def is_form_field_node(value: dict[str, Any]) -> bool:
-            return (
-                str(value.get("type") or "").strip() == "field"
-                or isinstance(value.get("fieldInfo"), dict)
-                or isinstance(value.get("field_info"), dict)
-            )
-
-        def clean(value: Any):
-            if isinstance(value, list):
-                return [item for item in (clean(item) for item in value) if item is not None]
-            if isinstance(value, dict):
-                if is_tax_rate_node(value):
-                    if is_form_field_node(value):
-                        return tax_id_field_node(value)
-                    return None
-                copied = {}
-                for key, item in value.items():
-                    if key == "tax_rate":
-                        continue
-                    copied[key] = clean(item)
-                return copied
-            return value
-
-        cleaned = clean(contract)
-        if isinstance(cleaned, dict):
-            self._replace_v2_contract_content(contract, cleaned)
-
-        status_contract = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
-        widget_status = status_contract.get("widgetStatus") if isinstance(status_contract.get("widgetStatus"), list) else []
-        tax_status_rows = [
-            row for row in widget_status
-            if isinstance(row, dict) and str(row.get("widgetId") or "").strip() == "field.tax_id"
-        ]
-        if not tax_status_rows:
-            tax_status_rows = [{
-                "widgetId": "field.tax_id",
-                "visible": True,
-                "readonly": False,
-                "required": False,
-                "disabled": False,
-                "auth": "edit",
-            }]
-            widget_status.extend(tax_status_rows)
-        for row in tax_status_rows:
-            row["visible"] = True
-            row["readonly"] = False
-            row["disabled"] = False
-            row["auth"] = "edit"
-        if widget_status:
-            self._set_v2_widget_status(contract, [
-                row for row in widget_status
-                if not (isinstance(row, dict) and str(row.get("widgetId") or "").strip() == "field.tax_rate")
-            ])
-
-        def has_tax_id_layout_node(value: Any) -> bool:
-            if is_tax_id_node(value) and (
-                str((value or {}).get("type") or "").strip() == "field"
-                or isinstance((value or {}).get("fieldInfo"), dict)
-                or isinstance((value or {}).get("field_info"), dict)
-            ):
-                return True
-            if isinstance(value, list):
-                return any(has_tax_id_layout_node(item) for item in value)
-            if isinstance(value, dict):
-                return any(has_tax_id_layout_node(item) for item in value.values())
-            return False
-
-        if has_tax_id_layout_node(contract):
-            return
-
-        layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
-        container_tree = layout_contract.get("containerTree") if isinstance(layout_contract.get("containerTree"), list) else []
-        if not container_tree:
-            return
-        target_field_names = {"contract_amount", "amount_total", "amount_untaxed", "settlement_amount"}
-
-        def append_after_amount_node(rows: list[Any]) -> bool:
-            for index, row in enumerate(rows):
-                if not isinstance(row, dict):
-                    continue
-                name = str(row.get("name") or row.get("field") or row.get("fieldCode") or "").strip()
-                widget_id = str(row.get("widgetId") or "").strip()
-                if name in target_field_names or widget_id in {f"field.{name}" for name in target_field_names}:
-                    rows.insert(index + 1, tax_id_field_node(row))
-                    return True
-                for key in ("children", "pages", "tabs", "nodes", "items", "widgetList"):
-                    children = row.get(key)
-                    if isinstance(children, list) and append_after_amount_node(children):
-                        return True
-            return False
-
-        if append_after_amount_node(container_tree):
-            self._set_v2_container_tree(contract, container_tree)
 
     def _apply_business_config_form_groups_to_v2(
         self,
@@ -937,165 +836,6 @@ class UiContractV2Handler(BaseIntentHandler):
 
         self._set_v2_container_tree(contract, container_tree)
 
-    def _normalize_general_contract_company_form(self, contract: dict[str, Any], source_contract: dict[str, Any] | None = None) -> None:
-        if not isinstance(contract, dict):
-            return
-        model = str(
-            contract.get("model")
-            or (source_contract or {}).get("model")
-            or ((contract.get("pageInfo") or {}).get("model") if isinstance(contract.get("pageInfo"), dict) else "")
-            or ((contract.get("head") or {}).get("model") if isinstance(contract.get("head"), dict) else "")
-            or ""
-        ).strip()
-        view_type = str(
-            contract.get("viewType")
-            or ((contract.get("pageInfo") or {}).get("viewType") if isinstance(contract.get("pageInfo"), dict) else "")
-            or (source_contract or {}).get("view_type")
-            or ""
-        ).strip().lower()
-        if model != "sc.general.contract" or view_type != "form":
-            return
-        groups: list[tuple[str, list[str]]] = [
-            ("合同基本信息", ["contract_name", "contract_no", "contract_type", "contract_direction", "project_id"]),
-            ("合同方", ["partner_id", "partner_name_text", "credit_code", "contact_name", "contact_phone", "engineering_address", "bank_name", "bank_account"]),
-            ("金额与条款", ["amount_total", "tax_id", "amount_untaxed", "currency_id", "payment_terms", "special_condition"]),
-            ("签署与履约", ["contract_date", "expected_sign_date", "completion_date", "signing_place", "pricing_mode", "union_mode", "subcontract_mode"]),
-            ("办理信息", ["applicant_name", "applicant_department", "handler_id", "purchase_engineer", "note"]),
-        ]
-        ordered_fields = [name for _title, names in groups for name in names]
-        visible = set(ordered_fields)
-        governance = self._form_layout_governance(source_contract)
-        hidden_field_names = {
-            str(item or "").strip()
-            for item in (governance.get("hidden_field_names") or [])
-            if str(item or "").strip()
-        }
-        if hidden_field_names:
-            visible.difference_update(hidden_field_names)
-        labels = {
-            "project_id": "关联项目",
-            "partner_name_text": "合同方",
-            "amount_total": "合同金额",
-            "expected_sign_date": "预计签订日期",
-            "signing_place": "签订地点",
-            "subcontract_mode": "分包类型",
-        }
-        required = {"contract_name", "amount_total"}
-        readonly = {"contract_no"}
-        field_map = (source_contract or {}).get("fields") if isinstance((source_contract or {}).get("fields"), dict) else {}
-
-        def field_name(node: Any) -> str:
-            if not isinstance(node, dict):
-                return ""
-            return str(node.get("name") or node.get("field") or node.get("fieldCode") or "").strip()
-
-        existing: dict[str, dict[str, Any]] = {}
-
-        def collect(nodes: Any) -> None:
-            if isinstance(nodes, list):
-                for item in nodes:
-                    collect(item)
-                return
-            if not isinstance(nodes, dict):
-                return
-            if str(nodes.get("type") or "").strip() == "field":
-                name = field_name(nodes)
-                if name and name not in existing:
-                    existing[name] = deepcopy(nodes)
-            for key in ("children", "widgetList", "pages", "tabs", "nodes", "items", "containerTree"):
-                collect(nodes.get(key))
-
-        layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
-        collect(layout_contract.get("containerTree"))
-
-        def descriptor(name: str) -> dict[str, Any]:
-            raw = field_map.get(name) if isinstance(field_map.get(name), dict) else {}
-            label = labels.get(name) or raw.get("string") or raw.get("label") or name
-            return {
-                "name": name,
-                "label": label,
-                "string": label,
-                "type": raw.get("type") or raw.get("ttype") or "char",
-                "required": name in required or bool(raw.get("required")),
-                "readonly": name in readonly or bool(raw.get("readonly")),
-                "domain": raw.get("domain") if isinstance(raw.get("domain"), list) else [],
-                "context": raw.get("context") if isinstance(raw.get("context"), dict) else {},
-                **({"relation": raw.get("relation")} if raw.get("relation") else {}),
-                **({"selection": raw.get("selection")} if isinstance(raw.get("selection"), list) else {}),
-            }
-
-        def normalize_node(name: str) -> dict[str, Any]:
-            node = deepcopy(existing.get(name) or {"type": "field", "name": name, "children": [], "widgetList": []})
-            info = descriptor(name)
-            label = str(info.get("label") or name)
-            node.update({"type": "field", "name": name, "string": label, "label": label, "widgetId": f"field.{name}"})
-            node["fieldInfo"] = {**(node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}), **info}
-            node["field_info"] = {**(node.get("field_info") if isinstance(node.get("field_info"), dict) else {}), **info}
-            config = node.get("componentConfig") if isinstance(node.get("componentConfig"), dict) else {}
-            config.update({"fieldType": info.get("type"), "required": name in required, "readonly": bool(info.get("readonly"))})
-            if info.get("selection"):
-                config["selection"] = info.get("selection")
-            if info.get("relation"):
-                config["relation"] = info.get("relation")
-            node["componentConfig"] = config
-            return node
-
-        container_tree: list[dict[str, Any]] = [{
-            "type": "header",
-            "name": "status",
-            "children": [normalize_node("state")] if "state" in existing else [],
-            "widgetList": [],
-        }]
-        for index, (title, names) in enumerate(groups, start=1):
-            children = [normalize_node(name) for name in names if name in visible and (name in field_map or name in existing)]
-            if not children:
-                continue
-            group_node = {
-                "type": "group",
-                "name": "general_contract_%s" % index,
-                "string": title,
-                "label": title,
-                "children": children,
-                "widgetList": [],
-            }
-            self._apply_form_layout_governance_to_group(group_node, title, source_contract=source_contract)
-            container_tree.append(group_node)
-
-        self._set_v2_container_tree(contract, container_tree)
-
-        widget_status = []
-        for name in ["state"] + ordered_fields:
-            if name == "state" or name in visible:
-                widget_status.append({
-                    "widgetId": f"field.{name}",
-                    "visible": True,
-                    "readonly": name in readonly,
-                    "required": name in required,
-                    "disabled": name in readonly,
-                    "auth": "readonly" if name in readonly else "edit",
-                })
-        self._set_v2_widget_status(contract, widget_status)
-
-        self._set_v2_governance_patch(contract, "general_contract_company_form", {
-            "applied": True,
-            "model": model,
-            "visible_fields": ordered_fields,
-            "hidden_reason": "company_general_contract_handling_projection",
-        })
-
-        def replace_amount_label(value: Any) -> Any:
-            if isinstance(value, str):
-                return "合同金额" if value == "最终合同价" else value
-            if isinstance(value, list):
-                return [replace_amount_label(item) for item in value]
-            if isinstance(value, dict):
-                return {key: replace_amount_label(item) for key, item in value.items()}
-            return value
-
-        replaced = replace_amount_label(contract)
-        if isinstance(replaced, dict):
-            self._replace_v2_contract_content(contract, replaced)
-
     def _form_layout_governance(self, source_contract: dict[str, Any] | None) -> dict[str, Any]:
         if not isinstance(source_contract, dict):
             return {}
@@ -1161,150 +901,6 @@ class UiContractV2Handler(BaseIntentHandler):
         attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
         attrs["col"] = str(columns)
         node["attributes"] = attrs
-
-    def _normalize_construction_diary_form(self, contract: dict[str, Any], source_contract: dict[str, Any] | None = None) -> None:
-        if not isinstance(contract, dict):
-            return
-        model = str(
-            contract.get("model")
-            or (source_contract or {}).get("model")
-            or ((contract.get("pageInfo") or {}).get("model") if isinstance(contract.get("pageInfo"), dict) else "")
-            or ((contract.get("head") or {}).get("model") if isinstance(contract.get("head"), dict) else "")
-            or ""
-        ).strip()
-        view_type = str(
-            contract.get("viewType")
-            or ((contract.get("pageInfo") or {}).get("viewType") if isinstance(contract.get("pageInfo"), dict) else "")
-            or (source_contract or {}).get("view_type")
-            or ""
-        ).strip().lower()
-        if model != "sc.construction.diary" or view_type != "form":
-            return
-
-        groups: list[tuple[str, list[str]]] = [
-            ("项目与日志", ["project_id", "date_diary", "diary_type", "title"]),
-            ("现场情况", ["weather", "construction_unit", "project_manager", "manpower_count", "attendance_equipment"]),
-            ("施工内容", ["description", "material_inspection_note", "hidden_acceptance_note", "next_plan"]),
-            ("质量安全", ["quality_name", "safety_note", "test_block_note", "design_change_note"]),
-            ("办理信息", ["handler_name", "note"]),
-        ]
-        ordered_fields = [name for _title, names in groups for name in names]
-        visible = set(ordered_fields)
-        labels = {
-            "date_diary": "日志日期",
-            "diary_type": "日志类型",
-            "title": "日志标题",
-            "description": "今日施工内容",
-            "material_inspection_note": "材料进场/送检",
-            "hidden_acceptance_note": "隐蔽工程验收",
-            "next_plan": "下步计划",
-            "quality_name": "质量事项",
-            "safety_note": "安全情况",
-            "test_block_note": "试块制作",
-            "design_change_note": "设计变更/技术核定",
-            "handler_name": "经办人",
-        }
-        required = {"project_id", "date_diary", "diary_type"}
-        readonly = {"name", "document_no", "source_origin", "state"}
-        field_map = (source_contract or {}).get("fields") if isinstance((source_contract or {}).get("fields"), dict) else {}
-
-        def field_name(node: Any) -> str:
-            if not isinstance(node, dict):
-                return ""
-            return str(node.get("name") or node.get("field") or node.get("fieldCode") or "").strip()
-
-        existing: dict[str, dict[str, Any]] = {}
-
-        def collect(nodes: Any) -> None:
-            if isinstance(nodes, list):
-                for item in nodes:
-                    collect(item)
-                return
-            if not isinstance(nodes, dict):
-                return
-            if str(nodes.get("type") or "").strip() == "field":
-                name = field_name(nodes)
-                if name and name not in existing:
-                    existing[name] = deepcopy(nodes)
-            for key in ("children", "widgetList", "pages", "tabs", "nodes", "items", "containerTree"):
-                collect(nodes.get(key))
-
-        layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
-        collect(layout_contract.get("containerTree"))
-
-        def descriptor(name: str) -> dict[str, Any]:
-            raw = field_map.get(name) if isinstance(field_map.get(name), dict) else {}
-            label = labels.get(name) or raw.get("string") or raw.get("label") or name
-            return {
-                "name": name,
-                "label": label,
-                "string": label,
-                "type": raw.get("type") or raw.get("ttype") or "char",
-                "required": name in required,
-                "readonly": name in readonly or bool(raw.get("readonly")),
-                "domain": raw.get("domain") if isinstance(raw.get("domain"), list) else [],
-                "context": raw.get("context") if isinstance(raw.get("context"), dict) else {},
-                **({"relation": raw.get("relation")} if raw.get("relation") else {}),
-                **({"selection": raw.get("selection")} if isinstance(raw.get("selection"), list) else {}),
-            }
-
-        def normalize_node(name: str) -> dict[str, Any]:
-            node = deepcopy(existing.get(name) or {"type": "field", "name": name, "children": [], "widgetList": []})
-            info = descriptor(name)
-            label = str(info.get("label") or name)
-            node.update({"type": "field", "name": name, "string": label, "label": label, "widgetId": f"field.{name}"})
-            node["fieldInfo"] = {**(node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}), **info}
-            node["field_info"] = {**(node.get("field_info") if isinstance(node.get("field_info"), dict) else {}), **info}
-            config = node.get("componentConfig") if isinstance(node.get("componentConfig"), dict) else {}
-            config.update({"fieldType": info.get("type"), "required": name in required, "readonly": bool(info.get("readonly"))})
-            if info.get("selection"):
-                config["selection"] = info.get("selection")
-            if info.get("relation"):
-                config["relation"] = info.get("relation")
-            node["componentConfig"] = config
-            return node
-
-        container_tree: list[dict[str, Any]] = [{
-            "type": "header",
-            "name": "status",
-            "children": [normalize_node("state")] if "state" in field_map or "state" in existing else [],
-            "widgetList": [],
-        }]
-        for index, (title, names) in enumerate(groups, start=1):
-            children = [normalize_node(name) for name in names if name in visible and (name in field_map or name in existing)]
-            if not children:
-                continue
-            group_node = {
-                "type": "group",
-                "name": "construction_diary_%s" % index,
-                "string": title,
-                "label": title,
-                "children": children,
-                "widgetList": [],
-            }
-            self._apply_form_layout_governance_to_group(group_node, title, source_contract=source_contract)
-            container_tree.append(group_node)
-        self._set_v2_container_tree(contract, container_tree)
-
-        widget_status = []
-        for name in ["state"] + ordered_fields:
-            if name == "state" or name in visible:
-                widget_status.append({
-                    "widgetId": f"field.{name}",
-                    "visible": True,
-                    "readonly": name in readonly,
-                    "required": name in required,
-                    "disabled": name in readonly,
-                    "auth": "readonly" if name in readonly else "edit",
-                })
-        self._set_v2_widget_status(contract, widget_status)
-
-        self._set_v2_governance_patch(contract, "construction_diary_form", {
-            "applied": True,
-            "model": model,
-            "visible_fields": ordered_fields,
-            "hidden_reason": "construction_diary_handling_projection",
-        })
 
     def _apply_legacy_visible_list_layout(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
         profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
@@ -1816,16 +1412,19 @@ class UiContractV2Handler(BaseIntentHandler):
                     source_contract["head"] = head
             if business_policy_fields:
                 business_policy = source_contract.get("business_form_policy") if isinstance(source_contract.get("business_form_policy"), dict) else {}
-                if model == "sc.general.contract" and isinstance(business_policy_fields, list):
+                field_aliases = self._form_field_aliases(model, source_contract)
+                if field_aliases and isinstance(business_policy_fields, list):
                     business_policy_fields = [
-                        {**item, "name": "tax_id"} if isinstance(item, dict) and str(item.get("name") or item.get("field") or "").strip() == "tax_rate"
+                        {**item, "name": self._resolve_form_field_alias(item.get("name") or item.get("field"), field_aliases)}
+                        if isinstance(item, dict) and str(item.get("name") or item.get("field") or "").strip() in field_aliases
                         else item
                         for item in business_policy_fields
                     ]
                 business_policy["fields"] = business_policy_fields
                 source_contract["business_form_policy"] = business_policy
             if business_policy_groups:
-                if model == "sc.general.contract" and isinstance(source_contract.get("fields"), dict) and "tax_id" in source_contract["fields"]:
+                field_aliases = self._form_field_aliases(model, source_contract)
+                if field_aliases and isinstance(source_contract.get("fields"), dict):
                     normalized_groups = []
                     for group in business_policy_groups:
                         if not isinstance(group, dict):
@@ -1834,7 +1433,7 @@ class UiContractV2Handler(BaseIntentHandler):
                         copied = dict(group)
                         fields = []
                         for raw_name in group.get("fields") if isinstance(group.get("fields"), list) else []:
-                            name = "tax_id" if str(raw_name or "").strip() == "tax_rate" else str(raw_name or "").strip()
+                            name = self._resolve_form_field_alias(str(raw_name or "").strip(), field_aliases)
                             if name and name not in fields:
                                 fields.append(name)
                         copied["fields"] = fields
@@ -1842,56 +1441,52 @@ class UiContractV2Handler(BaseIntentHandler):
                     business_policy_groups = normalized_groups
                 source_contract["field_groups"] = business_policy_groups
                 self._ensure_business_policy_layout_fields_visible(source_contract, business_policy_groups)
-            self._inject_contract_original_contract_relation_policy(source_contract, model=model)
+            self._inject_relation_entry_policies(source_contract, model=model)
             self._inject_business_category_form_structure(source_contract, model=model)
             self._sync_contract_original_contract_relation_to_v2_nodes(source_contract)
         except Exception:
             _logger.debug("ui.contract.v2 business category form policy injection skipped", exc_info=True)
 
-    def _inject_contract_original_contract_relation_policy(self, source_contract: dict[str, Any], *, model: str) -> None:
-        if str(model or "").strip() != "construction.contract":
-            return
+    def _inject_relation_entry_policies(self, source_contract: dict[str, Any], *, model: str) -> None:
         fields = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
-        descriptor = fields.get("original_contract_id") if isinstance(fields.get("original_contract_id"), dict) else None
-        if not descriptor:
-            return
         context = source_contract.get("context") if isinstance(source_contract.get("context"), dict) else {}
         record = source_contract.get("record") if isinstance(source_contract.get("record"), dict) else {}
-        category_code = str(
-            context.get("current_business_category_code")
-            or context.get("default_business_category_code")
-            or ""
-        ).strip()
-        contract_type = str(context.get("default_type") or record.get("type") or "").strip()
-        domain = []
-        if category_code == "contract.income.supplement":
-            domain = [["type", "=", "out"]]
-        elif category_code == "contract.expense.supplement":
-            domain = [["type", "=", "in"]]
-        elif contract_type in {"out", "in"}:
-            domain = [["type", "=", contract_type]]
-        if not domain:
-            return
-        relation_entry = descriptor.get("relation_entry") if isinstance(descriptor.get("relation_entry"), dict) else {}
-        relation_entry = dict(relation_entry)
-        relation_entry.update({
-            "domain": domain,
-            "create_mode": "disabled",
-            "can_create": False,
-            "can_open": False,
-            "order": "id desc",
-            "display_field": "display_name",
-        })
-        ui_labels = relation_entry.get("ui_labels") if isinstance(relation_entry.get("ui_labels"), dict) else {}
-        ui_labels = dict(ui_labels)
-        ui_labels.update({
-            "search_more": _("搜索原合同..."),
-            "dialog_title": _("原合同：搜索更多"),
-            "search_placeholder": _("输入原合同名称、编号、项目或往来单位搜索"),
-        })
-        relation_entry["ui_labels"] = ui_labels
-        descriptor["relation_entry"] = relation_entry
-        fields["original_contract_id"] = descriptor
+        for field_name, descriptor in list(fields.items()):
+            if not isinstance(descriptor, dict):
+                continue
+            policy = call_extension_hook_first(
+                self.env,
+                "smart_core_relation_entry_policy",
+                self.env,
+                {
+                    "model": model,
+                    "field_name": field_name,
+                    "relation": str(descriptor.get("relation") or "").strip(),
+                    "descriptor": descriptor,
+                    "context": context,
+                    "record": record,
+                },
+            )
+            if not isinstance(policy, dict):
+                continue
+            relation_entry = descriptor.get("relation_entry") if isinstance(descriptor.get("relation_entry"), dict) else {}
+            relation_entry = dict(relation_entry)
+            if isinstance(policy.get("domain"), list):
+                relation_entry["domain"] = list(policy.get("domain") or [])
+            if "can_create" in policy:
+                relation_entry["can_create"] = bool(policy.get("can_create"))
+            if "can_open" in policy:
+                relation_entry["can_open"] = bool(policy.get("can_open"))
+            if str(policy.get("create_mode") or "").strip():
+                relation_entry["create_mode"] = str(policy.get("create_mode") or "").strip()
+            if str(policy.get("order") or "").strip():
+                relation_entry["order"] = str(policy.get("order") or "").strip()
+            if str(policy.get("display_field") or "").strip():
+                relation_entry["display_field"] = str(policy.get("display_field") or "").strip()
+            if isinstance(policy.get("ui_labels"), dict):
+                ui_labels = relation_entry.get("ui_labels") if isinstance(relation_entry.get("ui_labels"), dict) else {}
+                relation_entry["ui_labels"] = {**ui_labels, **(policy.get("ui_labels") or {})}
+            descriptor["relation_entry"] = relation_entry
         source_contract["fields"] = fields
 
     def _sync_contract_original_contract_relation_to_v2_nodes(self, source_contract: dict[str, Any]) -> None:
@@ -1979,7 +1574,8 @@ class UiContractV2Handler(BaseIntentHandler):
         field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
         if not policy or not groups or not field_map:
             return
-        if model == "sc.general.contract" and "tax_id" in field_map:
+        field_aliases = self._form_field_aliases(model, source_contract)
+        if field_aliases:
             normalized_groups = []
             for group in groups:
                 if not isinstance(group, dict):
@@ -1988,7 +1584,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 copied = dict(group)
                 fields = []
                 for raw_name in group.get("fields") if isinstance(group.get("fields"), list) else []:
-                    name = "tax_id" if str(raw_name or "").strip() == "tax_rate" else str(raw_name or "").strip()
+                    name = self._resolve_form_field_alias(str(raw_name or "").strip(), field_aliases)
                     if name and name not in fields:
                         fields.append(name)
                 copied["fields"] = fields
@@ -2355,16 +1951,18 @@ class UiContractV2Handler(BaseIntentHandler):
         common_fields = unique(priority_fields + source_common_fields)
         if note_field and note_field not in common_fields:
             common_fields.append(note_field)
-        if model == "sc.general.contract" and has_field("tax_id"):
-            common_fields = unique(["tax_id" if name == "tax_rate" else name for name in common_fields])
+        field_aliases = self._form_field_aliases(model, source_contract)
+        if field_aliases:
+            common_fields = unique([self._resolve_form_field_alias(name, field_aliases) for name in common_fields])
 
         amount_fields = [
             name
             for name in common_fields
             if field_type(name) in {"float", "integer", "monetary"} or "amount" in name
         ]
-        if model == "sc.general.contract" and has_field("tax_id"):
-            amount_fields = unique(["tax_id" if name == "tax_rate" else name for name in amount_fields] + ["tax_id"])
+        alias_targets = [target for target in field_aliases.values() if has_field(target)]
+        if alias_targets:
+            amount_fields = unique([self._resolve_form_field_alias(name, field_aliases) for name in amount_fields] + alias_targets)
         date_fields = [
             name
             for name in common_fields
@@ -3285,8 +2883,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 (
                     name
                     for name in columns
-                    if str(labels.get(name) or label_for(name) or name).strip()
-                    in {"状态", "单据状态", "开票状态", "付款状态", "结算状态", "支付申请状态", "账户状态"}
+                    if any(token in str(name or "").lower() for token in ("state", "status"))
                 ),
                 "",
             )

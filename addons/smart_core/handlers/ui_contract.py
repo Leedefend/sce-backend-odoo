@@ -35,7 +35,6 @@ _VIEW_MAP = {  # Odoo -> 前端别名
     "calendar":"calendar","gantt":"gantt","search":"search","activity":"activity","dashboard":"dashboard",
 }
 _VIEW_INV = {v:k for k,v in _VIEW_MAP.items()}  # 前端别名 -> Odoo
-LEGACY_DIRECT_ACCEPTANCE_MODEL = "sc.legacy.direct.acceptance.fact"
 
 FRONTEND_BLOCKED_NATIVE_OPS = {"nav", "model", "view", "action_open", "menu"}
 INTERNAL_NATIVE_SOURCE_MODES = {
@@ -205,7 +204,7 @@ class UiContractHandler(BaseIntentHandler):
             contract_surface=contract_surface,
             source_mode=source_mode,
         )
-        data = _align_direct_acceptance_dynamic_column_labels(data)
+        data = _align_dynamic_column_labels(data)
         meta = _normalize_meta(meta)
         etag = self._make_etag(
             meta=meta,
@@ -658,7 +657,7 @@ def _safe_eval_or(val, default):
         return default
 
 
-def _align_direct_acceptance_dynamic_column_labels(data):
+def _align_dynamic_column_labels(data):
     if not isinstance(data, dict):
         return data
     head = data.get("head") if isinstance(data.get("head"), dict) else {}

@@ -109,9 +109,13 @@ def _load_handler():
     _install_module("odoo.addons.smart_core.core.base_handler", BaseIntentHandler=_BaseIntentHandler)
     _install_module(
         "odoo.addons.smart_core.core.project_context",
+        apply_business_scope_domain=lambda env_model, domain, params=None, context=None: (domain, {"applied": False}),
         apply_project_scope_domain=lambda env_model, domain, project_id: (domain, {"applied": False}),
+        record_scope_denied_response=lambda meta, message="": {"ok": False, "meta": meta, "message": message},
         project_scope_denied_response=lambda meta: {"ok": False, "meta": meta},
+        record_in_business_scope=lambda env_model, record_id, params=None, context=None: (True, {"applied": False}),
         record_in_project_scope=lambda env_model, record_id, project_id: (True, {"applied": False}),
+        selected_record_context_id_from_context=lambda params, context: None,
         selected_project_id_from_context=lambda params, context: None,
     )
     _install_module(
@@ -183,7 +187,7 @@ class TestApiDataWriteIdBoundaries(unittest.TestCase):
         self.assertEqual(_Record.write_calls, [{"name": "A"}])
 
     def test_write_rejects_invalid_project_id(self):
-        self.module.selected_project_id_from_context = lambda params, context: 3
+        self.module.selected_record_context_id_from_context = lambda params, context: 3
         self.module.ApiDataWriteHandler.ALLOWED_MODELS = {"res.partner": {"name", "project_id"}}
         handler = self.module.ApiDataWriteHandler(
             env={"res.partner": _Model()},
@@ -198,10 +202,10 @@ class TestApiDataWriteIdBoundaries(unittest.TestCase):
         self.assertEqual(result["error"]["message"], "project_id 无效")
 
     def test_create_rejects_invalid_project_id(self):
-        self.module.selected_project_id_from_context = lambda params, context: 3
-        self.module.apply_project_scope_domain = lambda env_model, domain, project_id: (
+        self.module.selected_record_context_id_from_context = lambda params, context: 3
+        self.module.apply_business_scope_domain = lambda env_model, domain, params=None, context=None: (
             domain,
-            {"applied": True, "project_id": project_id},
+            {"applied": True, "project_id": 3},
         )
         self.module.ApiDataWriteHandler.ALLOWED_MODELS = {"res.partner": {"name", "project_id"}}
         handler = self.module.ApiDataWriteHandler(

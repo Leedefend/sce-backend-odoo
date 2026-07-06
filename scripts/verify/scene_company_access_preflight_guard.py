@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -137,7 +137,7 @@ def main() -> int:
             "min_reachable_count_block": min_reachable_block,
             "min_reachable_count_target": min_reachable_target,
             "strict_mode": strict_mode,
-            "captured_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            "captured_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
         },
         "profiles": rows,
         "sources": {"baseline": BASELINE_PATH.relative_to(ROOT).as_posix()},

@@ -5,10 +5,10 @@ from typing import Any
 
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.utils.backend_contract_boundaries import MENU_CONFIG_POLICY_MODEL
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
-CONFIG_ROOT_XMLID = "smart_construction_core.menu_sc_business_config_center"
 CONFIG_APP_ID = "config"
-CONFIG_GROUP_KEY = "construction.基础设置"
+CONFIG_GROUP_KEY = "platform.config"
 CONFIG_GROUP_LABEL = "基础设置"
 
 SOURCE_KIND = "native_business_config_menu_projection"
@@ -48,8 +48,17 @@ def _xmlid(record: Any) -> str:
 
 
 def native_config_root(env):
+    hook_xmlid = call_extension_hook_first(env, "smart_core_native_config_root_menu_xmlid", env)
+    xmlid = _text(hook_xmlid)
+    if not xmlid:
+        try:
+            xmlid = _text(env["ir.config_parameter"].sudo().get_param("smart_core.native_config_root_menu_xmlid", ""))
+        except Exception:
+            xmlid = ""
+    if not xmlid:
+        return None
     try:
-        return env.ref(CONFIG_ROOT_XMLID, raise_if_not_found=False)
+        return env.ref(xmlid, raise_if_not_found=False)
     except Exception:
         return None
 

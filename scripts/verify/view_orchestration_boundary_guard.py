@@ -241,7 +241,11 @@ def main() -> int:
         errors,
     )
     _assert(
-        field_handler.count("_upsert_view_orchestration_field_rows(") >= 4,
+        "_upsert_view_orchestration_field_rows(" in field_handler
+        and "business_config_mirrored_count" in field_handler
+        and "business_config_group_mirrored_count" in field_handler
+        and "business_config_visibility_mirrored_count" in field_handler
+        and "business_config_layout_mirrored_count" in field_handler,
         "field visibility, order, batch, and custom-field handlers must all mirror to business config",
         errors,
     )

@@ -41,9 +41,39 @@ target = _load_module(
     "odoo.addons.smart_core.core.scene_contract_builder",
     CORE_DIR / "scene_contract_builder.py",
 )
+release_navigation_target = _load_module(
+    "odoo.addons.smart_core.core.release_navigation_contract_builder",
+    CORE_DIR / "release_navigation_contract_builder.py",
+)
 
 
 class TestSceneContractBuilderSemantics(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        target.register_legacy_product_title("fr1", "FR-1 项目立项")
+        target.register_legacy_product_title("fr4", "FR-4 支付记录")
+        target.register_route_only_actions(
+            "projects.intake",
+            {
+                "layout": "entry_cards",
+                "primary_actions": [
+                    {
+                        "key": "quick_project_create",
+                        "label": "快速创建（推荐）",
+                        "target": {"type": "route", "route": "/s/projects.intake?intake_mode=quick", "scene_key": "projects.intake"},
+                    }
+                ],
+                "secondary_actions": [
+                    {
+                        "key": "standard_project_intake",
+                        "label": "标准立项",
+                        "target": {"type": "route", "route": "/s/projects.intake", "scene_key": "projects.intake"},
+                    }
+                ],
+            },
+        )
+
     def test_delivery_entry_projects_intake_actions_publish_scene_ready_routes(self):
         payload = target.build_release_surface_scene_contract_from_delivery_entry(
             {
@@ -134,6 +164,35 @@ class TestSceneContractBuilderSemantics(unittest.TestCase):
         self.assertEqual((((payload.get("page") or {}).get("surface") or {}).get("view_type")), "tree")
         self.assertEqual(((payload.get("page") or {}).get("layout")), "list")
         self.assertIn("parser_semantic_surface", payload.get("governance") or {})
+
+    def test_release_navigation_legacy_leaves_are_extension_registered(self):
+        empty_payload = release_navigation_target.build_release_navigation_contract({"role_surface": {"role_code": "operator"}})
+        empty_root = (empty_payload.get("nav") or [{}])[0]
+        empty_groups = empty_root.get("children") or []
+
+        release_navigation_target.register_legacy_release_navigation_leaf(
+            key="release.fr1.project_intake",
+            label="FR-1 项目立项",
+            route="/s/projects.intake",
+            scene_key="projects.intake",
+            product_key="fr1",
+        )
+        release_navigation_target.register_legacy_release_navigation_leaf(
+            key="release.fr1.project_intake",
+            label="FR-1 项目立项",
+            route="/s/projects.intake",
+            scene_key="projects.intake",
+            product_key="fr1",
+        )
+        payload = release_navigation_target.build_release_navigation_contract({"role_surface": {"role_code": "operator"}})
+        root = (payload.get("nav") or [{}])[0]
+        groups = root.get("children") or []
+        leaves = (groups[0].get("children") if groups else []) or []
+
+        self.assertEqual((empty_groups[0].get("children") if empty_groups else []) or [], [])
+        self.assertEqual(len(leaves), 1)
+        self.assertEqual(leaves[0].get("label"), "FR-1 项目立项")
+        self.assertEqual(((leaves[0].get("meta") or {}).get("source_authority") or {}).get("kind"), "legacy_release_navigation_fallback")
 
 
 if __name__ == "__main__":

@@ -6,8 +6,405 @@ from typing import Any, Dict, List
 from odoo import fields
 from odoo.exceptions import AccessError
 from odoo.addons.smart_core.utils.backend_contract_boundaries import APPROVAL_POLICY_INTENTS
+from odoo.addons.smart_core.core.delivery_menu_defaults import register_current_project_scope_model
+from odoo.addons.smart_core.core.project_context import (
+    register_business_scope_exempt_model,
+    register_legacy_direct_acceptance_scope_model,
+    register_legacy_project_scope_model,
+    register_operation_strategy,
+)
+from odoo.addons.smart_core.app_config_engine.services.contract_service import (
+    register_tautology_permission_guard_group_xmlid,
+)
+from odoo.addons.smart_core.core.release_navigation_contract_builder import register_legacy_release_navigation_leaf
+from odoo.addons.smart_core.core.scene_ready_semantic_orchestration_bridge import register_advisory_handoff_family
+from odoo.addons.smart_core.delivery.menu_service import (
+    register_customer_acceptance_group_label,
+    register_preview_group_anchor_skipped_label,
+)
+from odoo.addons.smart_core.model.ui_menu_config_policy import register_protected_node_excluded_fingerprint_token
+from odoo.addons.smart_core.core.scene_contract_builder import (
+    register_legacy_product_title,
+    register_route_only_actions,
+)
+from odoo.addons.smart_core.core.unified_page_contract_v2_assembler import register_kanban_row_action
+from odoo.addons.smart_core.handlers.form_field_configuration import register_form_field_label_override
+from odoo.addons.smart_core.utils.contract_governance import (
+    register_capability_group_profile,
+    register_legacy_delete_only_model,
+    register_legacy_field_presentation,
+    register_legacy_kanban_row_action,
+    register_legacy_project_form_governance_model,
+    register_legacy_project_form_profile,
+    register_legacy_project_kanban_governance_model,
+    register_legacy_project_kanban_profile,
+    register_legacy_project_task_form_profile,
+    register_legacy_project_task_form_governance_model,
+    register_legacy_record_context_clear_model,
+    register_legacy_standard_list_profile,
+    register_scene_semantic_profile,
+)
+from odoo.addons.smart_core.utils.reason_codes import (
+    REASON_PAYMENT_ATTACHMENTS_REQUIRED,
+    REASON_PAYMENT_FUNDING_BASELINE_INVALID,
+    REASON_PAYMENT_FUNDING_CAP_EXCEEDED,
+    REASON_PAYMENT_FUNDING_NOT_READY,
+    REASON_PAYMENT_NOT_FULLY_PAID,
+    REASON_PAYMENT_SETTLEMENT_NOT_READY,
+    register_legacy_business_reason_meta,
+)
 
 _logger = logging.getLogger(__name__)
+
+register_current_project_scope_model("project.project")
+register_legacy_project_scope_model("project.project")
+register_operation_strategy("direct")
+register_operation_strategy("joint")
+register_legacy_direct_acceptance_scope_model("sc.legacy.direct.acceptance.fact", direct_strategy="direct")
+for _business_scope_exempt_model in (
+    "sc.document.admin.document",
+    "sc.hr.payroll.document",
+    "sc.legacy.user.profile",
+    "res.partner",
+):
+    register_business_scope_exempt_model(_business_scope_exempt_model)
+register_form_field_label_override("project.project", "manager_id", "项目经理")
+for _reason_code, _reason_meta in (
+    (
+        REASON_PAYMENT_ATTACHMENTS_REQUIRED,
+        {
+            "retryable": False,
+            "error_category": "validation",
+            "suggested_action": "upload_attachment",
+        },
+    ),
+    (
+        REASON_PAYMENT_SETTLEMENT_NOT_READY,
+        {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "complete_settlement_approval",
+        },
+    ),
+    (
+        REASON_PAYMENT_FUNDING_NOT_READY,
+        {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "setup_project_funding",
+        },
+    ),
+    (
+        REASON_PAYMENT_FUNDING_BASELINE_INVALID,
+        {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "fix_project_funding_baseline",
+        },
+    ),
+    (
+        REASON_PAYMENT_FUNDING_CAP_EXCEEDED,
+        {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "adjust_payment_amount_or_funding",
+        },
+    ),
+    (
+        REASON_PAYMENT_NOT_FULLY_PAID,
+        {
+            "retryable": False,
+            "error_category": "business_state",
+            "suggested_action": "complete_payment_execution",
+        },
+    ),
+):
+    register_legacy_business_reason_meta(_reason_code, _reason_meta)
+for _capability_group_key, _capability_group_profile in (
+    (
+        "project_management",
+        {"label": "项目管理", "icon": "briefcase", "key_prefixes": ["project.", "scene.project", "wbs.", "progress.", "tender."]},
+    ),
+    (
+        "contract_management",
+        {"label": "合同管理", "icon": "file-text", "key_prefixes": ["contract.", "settlement."]},
+    ),
+    (
+        "cost_management",
+        {"label": "成本管理", "icon": "calculator", "key_prefixes": ["cost.", "budget.", "boq."]},
+    ),
+    (
+        "finance_management",
+        {"label": "财务管理", "icon": "wallet", "key_prefixes": ["finance.", "payment.", "treasury."]},
+    ),
+    (
+        "material_management",
+        {"label": "资源管理", "icon": "boxes", "key_prefixes": ["material.", "purchase.", "stock."]},
+    ),
+):
+    register_capability_group_profile(_capability_group_key, _capability_group_profile)
+for _scene_semantic_profile in (
+    {"purpose": "项目推进", "code_prefixes": ["projects."], "code_contains": ["project"]},
+    {"purpose": "资金与审批", "code_prefixes": ["finance."], "code_contains": ["payment"]},
+    {"purpose": "合同履约", "code_prefixes": ["contracts."], "code_contains": ["contract"]},
+):
+    register_scene_semantic_profile(_scene_semantic_profile)
+_PROJECT_DASHBOARD_ROW_ACTION = {
+    "key": "open_project_dashboard",
+    "name": "open_project_dashboard",
+    "label": "进入项目驾驶舱",
+    "intent": "open_scene",
+    "target": {
+        "route": "/s/project.management",
+        "scene_key": "project.management",
+        "entry_intent": "project.dashboard.enter",
+        "project_id": "${id}",
+    },
+    "trigger": "row_click",
+    "level": "row",
+    "target_scope": "row",
+}
+register_kanban_row_action(
+    "project.project",
+    _PROJECT_DASHBOARD_ROW_ACTION,
+)
+register_legacy_kanban_row_action("project.project", _PROJECT_DASHBOARD_ROW_ACTION)
+register_legacy_record_context_clear_model("project.project")
+register_legacy_delete_only_model("project.task")
+register_legacy_project_form_governance_model("project.project")
+register_legacy_project_form_profile(
+    "project.project",
+    {
+        "primary_fields": [
+            "name",
+            "project_type_id",
+            "project_category_id",
+            "lifecycle_state",
+            "stage_id",
+            "manager_id",
+            "user_id",
+            "owner_id",
+            "company_id",
+            "start_date",
+            "end_date",
+            "contract_no",
+            "budget_total",
+            "location",
+        ],
+        "create_hidden_fields": [
+            "project_code",
+            "code",
+            "company_id",
+            "analytic_account_id",
+            "lifecycle_state",
+            "stage_id",
+            "last_update_status",
+            "privacy_visibility",
+            "rating_status",
+            "rating_status_period",
+        ],
+        "action_priorities": ["提交", "进入下一阶段", "创建项目", "保存", "查看任务"],
+        "action_noise_markers": ["设置阶段", "评分", "cron", "ir_cron", "演示", "showcase"],
+        "search_noise_markers": ["活动", "评分", "status_period"],
+        "action_group_labels": {
+            "basic": "基础操作",
+            "workflow": "流程推进",
+            "drilldown": "业务查看",
+            "other": "更多操作",
+        },
+        "max_fields": 25,
+    },
+)
+register_legacy_project_kanban_governance_model("project.project")
+register_legacy_project_kanban_profile(
+    "project.project",
+    {
+        "title_field": "name",
+        "primary_fields": ["name", "project_code", "manager_id"],
+        "secondary_fields": ["stage_id", "lifecycle_state", "end_date", "budget_total"],
+        "status_fields": ["lifecycle_state", "stage_id"],
+        "max_meta": 4,
+    },
+)
+register_legacy_project_task_form_governance_model("project.task")
+for _product_key, _product_title in (
+    ("fr1", "FR-1 项目立项"),
+    ("fr2", "FR-2 项目推进"),
+    ("fr3", "FR-3 成本记录"),
+    ("fr4", "FR-4 支付记录"),
+    ("fr5", "FR-5 结算结果"),
+):
+    register_legacy_product_title(_product_key, _product_title)
+register_route_only_actions(
+    "projects.intake",
+    {
+        "layout": "entry_cards",
+        "primary_actions": [
+            {
+                "key": "quick_project_create",
+                "label": "快速创建（推荐）",
+                "target": {"type": "route", "route": "/s/projects.intake?intake_mode=quick", "scene_key": "projects.intake"},
+            }
+        ],
+        "secondary_actions": [
+            {
+                "key": "standard_project_intake",
+                "label": "标准立项",
+                "target": {"type": "route", "route": "/s/projects.intake", "scene_key": "projects.intake"},
+            }
+        ],
+    },
+)
+for _release_leaf in (
+    {
+        "key": "release.fr1.project_intake",
+        "label": "FR-1 项目立项",
+        "route": "/s/projects.intake",
+        "scene_key": "projects.intake",
+        "product_key": "fr1",
+    },
+    {
+        "key": "release.fr2.project_flow",
+        "label": "FR-2 项目推进",
+        "route": "/release/fr2",
+        "product_key": "fr2",
+        "visible_roles": ("pm", "owner", "executive"),
+    },
+    {
+        "key": "release.fr3.cost_tracking",
+        "label": "FR-3 成本记录",
+        "route": "/release/fr3",
+        "product_key": "fr3",
+        "visible_roles": ("pm", "owner", "executive"),
+    },
+    {
+        "key": "release.fr4.payment_tracking",
+        "label": "FR-4 支付记录",
+        "route": "/release/fr4",
+        "product_key": "fr4",
+        "visible_roles": ("pm", "owner", "executive"),
+    },
+    {
+        "key": "release.fr5.settlement_summary",
+        "label": "FR-5 结算结果",
+        "route": "/release/fr5",
+        "product_key": "fr5",
+        "visible_roles": ("pm", "owner", "executive"),
+    },
+):
+    register_legacy_release_navigation_leaf(**_release_leaf)
+for _advisory_handoff_family in ("payment_approval", "payment_entry"):
+    register_advisory_handoff_family(_advisory_handoff_family)
+for _config_menu_exclusion_token in ("用户验收", "用户数据验收", "用户核对菜单"):
+    register_protected_node_excluded_fingerprint_token(_config_menu_exclusion_token)
+for _acceptance_menu_group_label in ("用户核对菜单", "用户验收"):
+    register_customer_acceptance_group_label(_acceptance_menu_group_label)
+    register_preview_group_anchor_skipped_label(_acceptance_menu_group_label)
+register_tautology_permission_guard_group_xmlid("project.group_project_manager")
+register_legacy_project_task_form_profile(
+    "project.task",
+    {
+        "fields": [
+            "name",
+            "project_id",
+            "stage_id",
+            "sc_state",
+            "user_ids",
+            "date_deadline",
+            "priority",
+            "description",
+        ],
+        "field_labels": {
+            "name": "任务名称",
+            "project_id": "所属项目",
+            "stage_id": "当前阶段",
+            "sc_state": "执行状态",
+            "user_ids": "执行人",
+            "date_deadline": "截止日期",
+            "priority": "优先级",
+            "description": "执行说明",
+        },
+        "core_group_label": "任务基础信息",
+        "description_group_label": "任务说明",
+        "description_fields": ["description"],
+    },
+)
+register_legacy_field_presentation(
+    "project.project",
+    "is_favorite",
+    {
+        "label": "我的收藏",
+        "widget": "boolean_favorite",
+        "cell_role": "favorite",
+        "mutation": {
+            "type": "field_toggle",
+            "operation": "record_write",
+            "field": "is_favorite",
+            "value_type": "boolean",
+        },
+    },
+)
+register_legacy_standard_list_profile(
+    {
+        "profile_key": "project.project.list",
+        "model_name": "project.project",
+        "columns_order": [
+            "name",
+            "project_code",
+            "owner_id",
+            "sc_partner_display_name",
+            "operation_strategy",
+            "lifecycle_state",
+            "user_id",
+            "contract_amount",
+            "dashboard_progress_rate",
+            "write_date",
+        ],
+        "column_labels": {
+            "name": "名称",
+            "project_code": "项目编号",
+            "owner_id": "业主单位",
+            "sc_partner_display_name": "关联单位",
+            "operation_strategy": "经营方式",
+            "lifecycle_state": "项目状态",
+            "user_id": "项目负责人",
+            "contract_amount": "合同总额",
+            "dashboard_progress_rate": "进度(%)",
+            "write_date": "更新时间",
+        },
+        "row_primary": "name",
+        "row_secondary": "",
+        "status_field": "lifecycle_state",
+        "strict_columns": True,
+    }
+)
+register_legacy_standard_list_profile(
+    {
+        "profile_key": "project.task.list",
+        "model_name": "project.task",
+        "columns_order": [
+            "name",
+            "project_id",
+            "user_ids",
+            "stage_id",
+            "sc_state",
+            "date_deadline",
+            "priority",
+        ],
+        "column_labels": {
+            "name": "任务名称",
+            "project_id": "所属项目",
+            "user_ids": "执行人",
+            "stage_id": "当前阶段",
+            "sc_state": "执行状态",
+            "date_deadline": "截止日期",
+            "priority": "优先级",
+        },
+        "row_primary": "name",
+        "row_secondary": "project_id",
+        "status_field": "sc_state",
+    }
+)
 
 
 def _sc_text(value) -> str:
@@ -188,6 +585,7 @@ def smart_core_finalize_unified_page_contract_v2(env, contract, context):
     render_profile = _sc_text(source.get("render_profile") or head.get("render_profile") or (((context or {}).get("meta") or {}).get("params") or {}).get("render_profile")).lower()
     out = deepcopy(contract)
     _sc_inject_workflow_contract(env, out, source, model=model, view_type=view_type)
+    _sc_normalize_construction_diary_form(out, source, model=model, view_type=view_type)
     if model != "project.project" or view_type != "form":
         return out if out != contract else None
     layout = out.get("layoutContract") if isinstance(out.get("layoutContract"), dict) else {}
@@ -203,6 +601,478 @@ def smart_core_finalize_unified_page_contract_v2(env, contract, context):
         out["statusContract"] = status
     _sc_append_project_responsibility_group(out, include_collaborators=render_profile != "create")
     return out
+
+
+def smart_core_normalize_projected_contract_data(env, data, context):
+    del env, context
+    if not isinstance(data, dict):
+        return None
+    out = deepcopy(data)
+    _sc_general_contract_tax_contract(out)
+    return out if out != data else None
+
+
+def smart_core_normalize_unified_page_contract_v2(env, contract, context):
+    del env
+    if not isinstance(contract, dict):
+        return None
+    source = (context or {}).get("source_contract") if isinstance(context, dict) else {}
+    source = source if isinstance(source, dict) else {}
+    out = deepcopy(contract)
+    _sc_general_contract_tax_contract(out, source_contract=source)
+    _sc_normalize_general_contract_company_form(out, source_contract=source)
+    return out if out != contract else None
+
+
+def _sc_field_name(node: Any) -> str:
+    if not isinstance(node, dict):
+        return ""
+    return _sc_text(node.get("name") or node.get("field") or node.get("fieldCode"))
+
+
+def _sc_collect_field_nodes(nodes: Any, existing: dict[str, dict[str, Any]]) -> None:
+    if isinstance(nodes, list):
+        for item in nodes:
+            _sc_collect_field_nodes(item, existing)
+        return
+    if not isinstance(nodes, dict):
+        return
+    if _sc_text(nodes.get("type")) == "field":
+        name = _sc_field_name(nodes)
+        if name and name not in existing:
+            existing[name] = deepcopy(nodes)
+    for key in ("children", "widgetList", "pages", "tabs", "nodes", "items", "containerTree"):
+        _sc_collect_field_nodes(nodes.get(key), existing)
+
+
+def _sc_set_v2_container_tree(contract: dict[str, Any], container_tree: list[Any]) -> None:
+    layout = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+    layout["containerTree"] = container_tree
+    contract["layoutContract"] = layout
+    runtime = contract.get("runtimeContract") if isinstance(contract.get("runtimeContract"), dict) else {}
+    runtime["containerTree"] = container_tree
+    contract["runtimeContract"] = runtime
+
+
+def _sc_set_v2_widget_status(contract: dict[str, Any], widget_status: list[dict[str, Any]]) -> None:
+    status = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
+    status["widgetStatus"] = widget_status
+    contract["statusContract"] = status
+    runtime = contract.get("runtimeContract") if isinstance(contract.get("runtimeContract"), dict) else {}
+    runtime["widgetStatus"] = widget_status
+    contract["runtimeContract"] = runtime
+
+
+def _sc_set_v2_governance_patch(contract: dict[str, Any], key: str, patch: dict[str, Any]) -> None:
+    runtime = contract.get("runtimeContract") if isinstance(contract.get("runtimeContract"), dict) else {}
+    patches = runtime.get("governancePatches") if isinstance(runtime.get("governancePatches"), dict) else {}
+    patches[key] = patch
+    runtime["governancePatches"] = patches
+    contract["runtimeContract"] = runtime
+    meta = contract.get("meta") if isinstance(contract.get("meta"), dict) else {}
+    meta_patches = meta.get("governance_patches") if isinstance(meta.get("governance_patches"), dict) else {}
+    meta_patches[key] = patch
+    meta["governance_patches"] = meta_patches
+    contract["meta"] = meta
+
+
+def _sc_normalize_construction_diary_form(contract: dict[str, Any], source_contract: dict[str, Any], *, model: str, view_type: str) -> None:
+    if model != "sc.construction.diary" or view_type != "form":
+        return
+    groups: list[tuple[str, list[str]]] = [
+        ("项目与日志", ["project_id", "date_diary", "diary_type", "title"]),
+        ("现场情况", ["weather", "construction_unit", "project_manager", "manpower_count", "attendance_equipment"]),
+        ("施工内容", ["description", "material_inspection_note", "hidden_acceptance_note", "next_plan"]),
+        ("质量安全", ["quality_name", "safety_note", "test_block_note", "design_change_note"]),
+        ("办理信息", ["handler_name", "note"]),
+    ]
+    ordered_fields = [name for _title, names in groups for name in names]
+    labels = {
+        "date_diary": "日志日期",
+        "diary_type": "日志类型",
+        "title": "日志标题",
+        "description": "今日施工内容",
+        "material_inspection_note": "材料进场/送检",
+        "hidden_acceptance_note": "隐蔽工程验收",
+        "next_plan": "下步计划",
+        "quality_name": "质量事项",
+        "safety_note": "安全情况",
+        "test_block_note": "试块制作",
+        "design_change_note": "设计变更/技术核定",
+        "handler_name": "经办人",
+    }
+    required = {"project_id", "date_diary", "diary_type"}
+    readonly = {"name", "document_no", "source_origin", "state"}
+    field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
+    layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+    existing: dict[str, dict[str, Any]] = {}
+    _sc_collect_field_nodes(layout_contract.get("containerTree"), existing)
+
+    def descriptor(name: str) -> dict[str, Any]:
+        raw = field_map.get(name) if isinstance(field_map.get(name), dict) else {}
+        label = labels.get(name) or raw.get("string") or raw.get("label") or name
+        return {
+            "name": name,
+            "label": label,
+            "string": label,
+            "type": raw.get("type") or raw.get("ttype") or "char",
+            "required": name in required,
+            "readonly": name in readonly or bool(raw.get("readonly")),
+            "domain": raw.get("domain") if isinstance(raw.get("domain"), list) else [],
+            "context": raw.get("context") if isinstance(raw.get("context"), dict) else {},
+            **({"relation": raw.get("relation")} if raw.get("relation") else {}),
+            **({"selection": raw.get("selection")} if isinstance(raw.get("selection"), list) else {}),
+        }
+
+    def normalize_node(name: str) -> dict[str, Any]:
+        node = deepcopy(existing.get(name) or {"type": "field", "name": name, "children": [], "widgetList": []})
+        info = descriptor(name)
+        label = _sc_text(info.get("label")) or name
+        node.update({"type": "field", "name": name, "string": label, "label": label, "widgetId": f"field.{name}"})
+        node["fieldInfo"] = {**(node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}), **info}
+        node["field_info"] = {**(node.get("field_info") if isinstance(node.get("field_info"), dict) else {}), **info}
+        config = node.get("componentConfig") if isinstance(node.get("componentConfig"), dict) else {}
+        config.update({"fieldType": info.get("type"), "required": name in required, "readonly": bool(info.get("readonly"))})
+        if info.get("selection"):
+            config["selection"] = info.get("selection")
+        if info.get("relation"):
+            config["relation"] = info.get("relation")
+        node["componentConfig"] = config
+        return node
+
+    container_tree: list[dict[str, Any]] = [{
+        "type": "header",
+        "name": "status",
+        "children": [normalize_node("state")] if "state" in field_map or "state" in existing else [],
+        "widgetList": [],
+    }]
+    for index, (title, names) in enumerate(groups, start=1):
+        children = [normalize_node(name) for name in names if name in field_map or name in existing]
+        if not children:
+            continue
+        container_tree.append({
+            "type": "group",
+            "name": "construction_diary_%s" % index,
+            "string": title,
+            "label": title,
+            "children": children,
+            "widgetList": [],
+        })
+    _sc_set_v2_container_tree(contract, container_tree)
+    _sc_set_v2_widget_status(
+        contract,
+        [
+            {
+                "widgetId": f"field.{name}",
+                "visible": True,
+                "readonly": name in readonly,
+                "required": name in required,
+                "disabled": name in readonly,
+                "auth": "readonly" if name in readonly else "edit",
+            }
+            for name in ["state"] + ordered_fields
+        ],
+    )
+    _sc_set_v2_governance_patch(contract, "construction_diary_form", {
+        "applied": True,
+        "model": model,
+        "visible_fields": ordered_fields,
+        "hidden_reason": "construction_diary_handling_projection",
+    })
+
+
+def _sc_replace_contract_content(contract: dict[str, Any], replacement: dict[str, Any]) -> None:
+    if not isinstance(contract, dict) or not isinstance(replacement, dict):
+        return
+    contract.clear()
+    contract.update(replacement)
+
+
+def _sc_general_contract_tax_contract(contract: dict[str, Any], source_contract: dict[str, Any] | None = None) -> None:
+    if not isinstance(contract, dict):
+        return
+    model = _sc_text(
+        contract.get("model")
+        or (source_contract or {}).get("model")
+        or ((contract.get("head") or {}).get("model") if isinstance(contract.get("head"), dict) else "")
+    )
+    field_map = contract.get("fields") if isinstance(contract.get("fields"), dict) else {}
+    source_fields = (source_contract or {}).get("fields") if isinstance((source_contract or {}).get("fields"), dict) else {}
+    if model != "sc.general.contract" or ("tax_id" not in field_map and "tax_id" not in source_fields):
+        return
+
+    def is_tax_rate_node(value: Any) -> bool:
+        if not isinstance(value, dict):
+            return False
+        name = _sc_text(value.get("name") or value.get("field") or value.get("fieldCode"))
+        widget_id = _sc_text(value.get("widgetId") or value.get("id"))
+        return name == "tax_rate" or widget_id == "field.tax_rate"
+
+    def is_tax_id_node(value: Any) -> bool:
+        if not isinstance(value, dict):
+            return False
+        name = _sc_text(value.get("name") or value.get("field") or value.get("fieldCode"))
+        widget_id = _sc_text(value.get("widgetId") or value.get("id"))
+        return name == "tax_id" or widget_id == "field.tax_id"
+
+    tax_field = field_map.get("tax_id") if isinstance(field_map.get("tax_id"), dict) else {}
+    if not tax_field and isinstance(source_fields.get("tax_id"), dict):
+        tax_field = source_fields.get("tax_id") or {}
+
+    def tax_id_field_node(source_node: dict[str, Any]) -> dict[str, Any]:
+        role = source_node.get("formStructureRole") if isinstance(source_node.get("formStructureRole"), dict) else {
+            "role": "amount",
+            "slot": "amount_progress",
+            "group": "amounts",
+        }
+        descriptor = dict(tax_field or {})
+        descriptor.update({"name": "tax_id", "label": "税率", "string": "税率", "type": "many2one", "widget": "many2one"})
+        return {
+            "type": "field",
+            "name": "tax_id",
+            "formStructureRole": role,
+            "string": "税率",
+            "label": "税率",
+            "fieldInfo": descriptor,
+            "widget": "many2one",
+            "componentKey": "sc.input.many2one",
+            "componentConfig": {"readonly": False, "required": False, "fieldType": "many2one"},
+            "widgetId": "field.tax_id",
+            "field_info": descriptor,
+            "children": [],
+            "widgetList": [],
+        }
+
+    def is_form_field_node(value: dict[str, Any]) -> bool:
+        return _sc_text(value.get("type")) == "field" or isinstance(value.get("fieldInfo"), dict) or isinstance(value.get("field_info"), dict)
+
+    def clean(value: Any):
+        if isinstance(value, list):
+            return [item for item in (clean(item) for item in value) if item is not None]
+        if isinstance(value, dict):
+            if is_tax_rate_node(value):
+                return tax_id_field_node(value) if is_form_field_node(value) else None
+            copied = {}
+            for key, item in value.items():
+                if key == "tax_rate":
+                    continue
+                copied[key] = clean(item)
+            return copied
+        return value
+
+    cleaned = clean(contract)
+    if isinstance(cleaned, dict):
+        _sc_replace_contract_content(contract, cleaned)
+
+    status_contract = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
+    widget_status = status_contract.get("widgetStatus") if isinstance(status_contract.get("widgetStatus"), list) else []
+    tax_status_rows = [
+        row for row in widget_status
+        if isinstance(row, dict) and _sc_text(row.get("widgetId")) == "field.tax_id"
+    ]
+    if not tax_status_rows:
+        tax_status_rows = [{"widgetId": "field.tax_id", "visible": True, "readonly": False, "required": False, "disabled": False, "auth": "edit"}]
+        widget_status.extend(tax_status_rows)
+    for row in tax_status_rows:
+        row["visible"] = True
+        row["readonly"] = False
+        row["disabled"] = False
+        row["auth"] = "edit"
+    if widget_status:
+        _sc_set_v2_widget_status(contract, [
+            row for row in widget_status
+            if not (isinstance(row, dict) and _sc_text(row.get("widgetId")) == "field.tax_rate")
+        ])
+
+    def has_tax_id_layout_node(value: Any) -> bool:
+        if is_tax_id_node(value) and (_sc_text((value or {}).get("type")) == "field" or isinstance((value or {}).get("fieldInfo"), dict) or isinstance((value or {}).get("field_info"), dict)):
+            return True
+        if isinstance(value, list):
+            return any(has_tax_id_layout_node(item) for item in value)
+        if isinstance(value, dict):
+            return any(has_tax_id_layout_node(item) for item in value.values())
+        return False
+
+    if has_tax_id_layout_node(contract):
+        return
+    layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+    container_tree = layout_contract.get("containerTree") if isinstance(layout_contract.get("containerTree"), list) else []
+    if not container_tree:
+        return
+    target_field_names = {"contract_amount", "amount_total", "amount_untaxed", "settlement_amount"}
+
+    def append_after_amount_node(rows: list[Any]) -> bool:
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                continue
+            name = _sc_text(row.get("name") or row.get("field") or row.get("fieldCode"))
+            widget_id = _sc_text(row.get("widgetId"))
+            if name in target_field_names or widget_id in {f"field.{name}" for name in target_field_names}:
+                rows.insert(index + 1, tax_id_field_node(row))
+                return True
+            for key in ("children", "pages", "tabs", "nodes", "items", "widgetList"):
+                children = row.get(key)
+                if isinstance(children, list) and append_after_amount_node(children):
+                    return True
+        return False
+
+    if append_after_amount_node(container_tree):
+        _sc_set_v2_container_tree(contract, container_tree)
+
+
+def _sc_form_layout_governance(source_contract: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(source_contract, dict):
+        return {}
+    profile = source_contract.get("business_operation_profile")
+    governance = profile.get("form_structure_governance") if isinstance(profile, dict) else {}
+    return governance if isinstance(governance, dict) else {}
+
+
+def _sc_form_layout_columns_from_governance(governance: dict[str, Any] | None, title: str = "") -> int:
+    if not isinstance(governance, dict):
+        return 0
+    group_columns = governance.get("group_columns") if isinstance(governance.get("group_columns"), dict) else {}
+    key = _sc_text(title)
+    try:
+        columns = int(group_columns.get(key) or 0) if key else 0
+    except (TypeError, ValueError):
+        columns = 0
+    if columns <= 0:
+        try:
+            columns = int(governance.get("form_columns") or 0)
+        except (TypeError, ValueError):
+            columns = 0
+    return columns if columns > 0 else 0
+
+
+def _sc_apply_form_layout_governance_to_group(node: dict[str, Any], title: str = "", *, source_contract: dict[str, Any] | None = None) -> None:
+    if not isinstance(node, dict):
+        return
+    resolved_title = _sc_text(title or node.get("string") or node.get("label") or node.get("title") or node.get("name"))
+    columns = _sc_form_layout_columns_from_governance(_sc_form_layout_governance(source_contract), resolved_title)
+    if columns <= 0:
+        return
+    node["cols"] = columns
+    node["columns"] = columns
+    attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
+    attrs["col"] = str(columns)
+    node["attributes"] = attrs
+
+
+def _sc_normalize_general_contract_company_form(contract: dict[str, Any], source_contract: dict[str, Any] | None = None) -> None:
+    if not isinstance(contract, dict):
+        return
+    model = _sc_text(
+        contract.get("model")
+        or (source_contract or {}).get("model")
+        or ((contract.get("pageInfo") or {}).get("model") if isinstance(contract.get("pageInfo"), dict) else "")
+        or ((contract.get("head") or {}).get("model") if isinstance(contract.get("head"), dict) else "")
+    )
+    view_type = _sc_text(
+        contract.get("viewType")
+        or ((contract.get("pageInfo") or {}).get("viewType") if isinstance(contract.get("pageInfo"), dict) else "")
+        or (source_contract or {}).get("view_type")
+    ).lower()
+    if model != "sc.general.contract" or view_type != "form":
+        return
+    groups: list[tuple[str, list[str]]] = [
+        ("合同基本信息", ["contract_name", "contract_no", "contract_type", "contract_direction", "project_id"]),
+        ("合同方", ["partner_id", "partner_name_text", "credit_code", "contact_name", "contact_phone", "engineering_address", "bank_name", "bank_account"]),
+        ("金额与条款", ["amount_total", "tax_id", "amount_untaxed", "currency_id", "payment_terms", "special_condition"]),
+        ("签署与履约", ["contract_date", "expected_sign_date", "completion_date", "signing_place", "pricing_mode", "union_mode", "subcontract_mode"]),
+        ("办理信息", ["applicant_name", "applicant_department", "handler_id", "purchase_engineer", "note"]),
+    ]
+    ordered_fields = [name for _title, names in groups for name in names]
+    visible = set(ordered_fields)
+    governance = _sc_form_layout_governance(source_contract)
+    hidden_field_names = {_sc_text(item) for item in (governance.get("hidden_field_names") or []) if _sc_text(item)}
+    visible.difference_update(hidden_field_names)
+    labels = {
+        "project_id": "关联项目",
+        "partner_name_text": "合同方",
+        "amount_total": "合同金额",
+        "expected_sign_date": "预计签订日期",
+        "signing_place": "签订地点",
+        "subcontract_mode": "分包类型",
+    }
+    required = {"contract_name", "amount_total"}
+    readonly = {"contract_no"}
+    field_map = (source_contract or {}).get("fields") if isinstance((source_contract or {}).get("fields"), dict) else {}
+    existing: dict[str, dict[str, Any]] = {}
+    _sc_collect_field_nodes((contract.get("layoutContract") or {}).get("containerTree") if isinstance(contract.get("layoutContract"), dict) else [], existing)
+
+    def descriptor(name: str) -> dict[str, Any]:
+        raw = field_map.get(name) if isinstance(field_map.get(name), dict) else {}
+        label = labels.get(name) or raw.get("string") or raw.get("label") or name
+        return {
+            "name": name,
+            "label": label,
+            "string": label,
+            "type": raw.get("type") or raw.get("ttype") or "char",
+            "required": name in required or bool(raw.get("required")),
+            "readonly": name in readonly or bool(raw.get("readonly")),
+            "domain": raw.get("domain") if isinstance(raw.get("domain"), list) else [],
+            "context": raw.get("context") if isinstance(raw.get("context"), dict) else {},
+            **({"relation": raw.get("relation")} if raw.get("relation") else {}),
+            **({"selection": raw.get("selection")} if isinstance(raw.get("selection"), list) else {}),
+        }
+
+    def normalize_node(name: str) -> dict[str, Any]:
+        node = deepcopy(existing.get(name) or {"type": "field", "name": name, "children": [], "widgetList": []})
+        info = descriptor(name)
+        label = _sc_text(info.get("label")) or name
+        node.update({"type": "field", "name": name, "string": label, "label": label, "widgetId": f"field.{name}"})
+        node["fieldInfo"] = {**(node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}), **info}
+        node["field_info"] = {**(node.get("field_info") if isinstance(node.get("field_info"), dict) else {}), **info}
+        config = node.get("componentConfig") if isinstance(node.get("componentConfig"), dict) else {}
+        config.update({"fieldType": info.get("type"), "required": name in required, "readonly": bool(info.get("readonly"))})
+        if info.get("selection"):
+            config["selection"] = info.get("selection")
+        if info.get("relation"):
+            config["relation"] = info.get("relation")
+        node["componentConfig"] = config
+        return node
+
+    container_tree: list[dict[str, Any]] = [{"type": "header", "name": "status", "children": [normalize_node("state")] if "state" in existing else [], "widgetList": []}]
+    for index, (title, names) in enumerate(groups, start=1):
+        children = [normalize_node(name) for name in names if name in visible and (name in field_map or name in existing)]
+        if not children:
+            continue
+        group_node = {"type": "group", "name": "general_contract_%s" % index, "string": title, "label": title, "children": children, "widgetList": []}
+        _sc_apply_form_layout_governance_to_group(group_node, title, source_contract=source_contract)
+        container_tree.append(group_node)
+    _sc_set_v2_container_tree(contract, container_tree)
+    _sc_set_v2_widget_status(contract, [
+        {
+            "widgetId": f"field.{name}",
+            "visible": True,
+            "readonly": name in readonly,
+            "required": name in required,
+            "disabled": name in readonly,
+            "auth": "readonly" if name in readonly else "edit",
+        }
+        for name in ["state"] + ordered_fields
+        if name == "state" or name in visible
+    ])
+    _sc_set_v2_governance_patch(contract, "general_contract_company_form", {
+        "applied": True,
+        "model": model,
+        "visible_fields": ordered_fields,
+        "hidden_reason": "company_general_contract_handling_projection",
+    })
+
+    def replace_amount_label(value: Any) -> Any:
+        if isinstance(value, str):
+            return "合同金额" if value == "最终合同价" else value
+        if isinstance(value, list):
+            return [replace_amount_label(item) for item in value]
+        if isinstance(value, dict):
+            return {key: replace_amount_label(item) for key, item in value.items()}
+        return value
+
+    replaced = replace_amount_label(contract)
+    if isinstance(replaced, dict):
+        _sc_replace_contract_content(contract, replaced)
 
 
 def _sc_inject_workflow_contract(env, contract, source, *, model, view_type):
@@ -389,6 +1259,251 @@ FILE_ATTACHMENT_EXCLUDED_MODEL_PREFIXES = (
 )
 FILE_UPLOAD_ALLOWED_MODELS = ["project.project", "project.task", "payment.request"]
 FILE_DOWNLOAD_ALLOWED_MODELS = ["project.project", "project.task", "payment.request"]
+LEGACY_VISIBLE_BUSINESS_COLUMN_LABELS_BY_MODEL = {
+    "project.material.plan": {
+        "legacy_visible_01": "单据状态",
+        "legacy_visible_02": "单据编号",
+        "legacy_visible_03": "单据日期",
+        "legacy_visible_04": "到货时间",
+        "legacy_visible_05": "采购材料名称",
+        "legacy_visible_06": "规格型号",
+        "legacy_visible_07": "单位",
+        "legacy_visible_08": "数量",
+        "legacy_visible_09": "材料别名(设计/清单)",
+        "legacy_visible_10": "备注",
+        "legacy_visible_11": "附件",
+        "legacy_visible_12": "项目名称",
+        "legacy_visible_13": "录入人",
+        "legacy_visible_14": "录入时间",
+        "source_created_by": "录入人",
+        "source_created_at": "录入时间",
+    },
+    "sc.material.inbound": {
+        "legacy_visible_01": "单据状态",
+        "legacy_visible_02": "入库单号",
+        "legacy_visible_03": "单据日期",
+        "legacy_visible_04": "供应商名称",
+        "legacy_visible_05": "材料名称",
+        "legacy_visible_06": "规格型号",
+        "legacy_visible_07": "数量",
+        "legacy_visible_08": "单价",
+        "legacy_visible_09": "税率",
+        "legacy_visible_10": "含税金额",
+        "legacy_visible_11": "入库总数量",
+        "legacy_visible_12": "付款状态",
+        "legacy_visible_13": "已付款金额",
+        "legacy_visible_14": "未付款金额",
+        "legacy_visible_15": "结算状态",
+        "legacy_visible_16": "已结算金额",
+        "legacy_visible_17": "项目名称",
+        "legacy_visible_18": "备注",
+        "legacy_visible_19": "附件",
+        "legacy_visible_20": "录入人",
+        "legacy_visible_21": "录入时间",
+        "legacy_visible_22": "采购人",
+        "source_created_by": "录入人",
+        "source_created_at": "录入时间",
+    },
+}
+
+register_legacy_standard_list_profile({
+    "profile_key": "arrival_confirmation.list",
+    "model_name": "sc.legacy.fund.confirmation.document",
+    "columns_order": [
+        "document_state",
+        "document_no",
+        "receipt_time",
+        "project_name",
+        "period_no",
+        "actual_fund_amount",
+        "deducted_amount_total",
+        "paid_amount_total",
+        "construction_unit_name",
+        "contract_amount",
+        "current_project_stage",
+        "accumulated_invoice_amount",
+        "previous_retained_balance",
+        "attachment_links",
+        "creator_name",
+        "created_time",
+    ],
+    "column_labels": {
+        "document_state": "单据状态",
+        "document_no": "单据编号",
+        "receipt_time": "时间",
+        "project_name": "项目名称",
+        "period_no": "期数",
+        "actual_fund_amount": "本期收款",
+        "deducted_amount_total": "本期代扣代缴合计",
+        "paid_amount_total": "本期拨付金额合计",
+        "construction_unit_name": "施工单位",
+        "contract_amount": "合同金额",
+        "current_project_stage": "目前形象进度",
+        "accumulated_invoice_amount": "累计开票金额",
+        "previous_retained_balance": "上期留存余额",
+        "attachment_links": "附件",
+        "creator_name": "录入人",
+        "created_time": "录入时间",
+    },
+    "row_primary": "document_no",
+    "row_secondary": "",
+    "status_field": "document_state",
+    "strict_columns": True,
+})
+
+register_legacy_standard_list_profile({
+    "profile_key": "payment.request.list",
+    "model_name": "payment.request",
+    "columns_order": [
+        "p1_visible_06fa8c6f628f",
+        "p1_visible_8fa8662ad38f",
+        "p1_visible_3e7255522b33",
+        "p1_visible_2c346345746e",
+        "p1_visible_ccfa1326c88f",
+        "p1_visible_c00fc55a25b8",
+        "p1_visible_9469a2ad32f8",
+        "p1_visible_ae1abe750af6",
+        "p1_visible_63c5facb9f66",
+        "p1_visible_e0361480e3a5",
+        "p1_visible_1874b0ce5103",
+        "p1_visible_3759fcfc297a",
+        "p1_visible_6cf6e39bece9",
+        "p1_visible_a103d7cee046",
+        "p1_visible_48a64eb40c71",
+        "p1_visible_901384917949",
+        "p1_visible_71e47f617269",
+        "p1_visible_dfc25d77dc39",
+    ],
+    "column_labels": {
+        "p1_visible_06fa8c6f628f": "单据状态",
+        "p1_visible_8fa8662ad38f": "单据编号",
+        "p1_visible_3e7255522b33": "项目名称",
+        "p1_visible_2c346345746e": "申请日期",
+        "p1_visible_ccfa1326c88f": "收款单位",
+        "p1_visible_c00fc55a25b8": "申请付款金额",
+        "p1_visible_9469a2ad32f8": "实际付款金额",
+        "p1_visible_ae1abe750af6": "可用余额",
+        "p1_visible_63c5facb9f66": "成本分类名称",
+        "p1_visible_e0361480e3a5": "备注",
+        "p1_visible_1874b0ce5103": "是否关联单据",
+        "p1_visible_3759fcfc297a": "付款账号",
+        "p1_visible_6cf6e39bece9": "金额大写",
+        "p1_visible_a103d7cee046": "户名",
+        "p1_visible_48a64eb40c71": "开户行",
+        "p1_visible_901384917949": "账号",
+        "p1_visible_71e47f617269": "填写人",
+        "p1_visible_dfc25d77dc39": "录入时间",
+    },
+    "row_primary": "name",
+    "row_secondary": "project_id",
+    "status_field": "state",
+})
+
+register_legacy_standard_list_profile({
+    "profile_key": "tax_deduction_registration.list",
+    "model_name": "sc.tax.deduction.registration",
+    "columns_order": [
+        "p1_visible_06fa8c6f628f",
+        "p1_visible_8fa8662ad38f",
+        "p1_visible_3540b47897be",
+        "p1_visible_3e7255522b33",
+        "p1_visible_be5462bd6a62",
+        "p1_visible_ada9a85eab00",
+        "p1_visible_8acf4918f1f1",
+        "p1_visible_ee19dd75350c",
+        "p1_visible_eaa05c7105f7",
+        "p1_visible_e0361480e3a5",
+        "p1_visible_ee6a4d9e2956",
+        "p1_visible_1e62803e196c",
+    ],
+    "column_labels": {
+        "p1_visible_06fa8c6f628f": "单据状态",
+        "p1_visible_8fa8662ad38f": "单据编号",
+        "p1_visible_3540b47897be": "是否转出",
+        "p1_visible_3e7255522b33": "项目名称",
+        "p1_visible_be5462bd6a62": "开票单位",
+        "p1_visible_ada9a85eab00": "发票号",
+        "p1_visible_8acf4918f1f1": "抵扣税额",
+        "p1_visible_ee19dd75350c": "抵扣总额",
+        "p1_visible_eaa05c7105f7": "抵扣附加税",
+        "p1_visible_e0361480e3a5": "备注",
+        "p1_visible_ee6a4d9e2956": "录入人",
+        "p1_visible_1e62803e196c": "单据日期",
+    },
+    "row_primary": "document_no",
+    "row_secondary": "project_id",
+    "status_field": "state",
+})
+
+register_legacy_standard_list_profile({
+    "profile_key": "project.material.plan.list",
+    "model_name": "project.material.plan",
+    "columns_order": ["name", "project_id", "date_plan", "state"],
+    "column_labels": {
+        "name": "单号",
+        "project_id": "项目",
+        "date_plan": "需用日期",
+        "state": "状态",
+    },
+    "row_primary": "name",
+    "row_secondary": "project_id",
+    "status_field": "state",
+})
+
+register_legacy_standard_list_profile({
+    "profile_key": "tax_certificate_registration.list",
+    "model_name": "sc.legacy.payment.residual.fact",
+    "signature_any": ["tax_certificate_registration", "外经证登记"],
+    "columns_order": [
+        "document_state_label",
+        "document_no",
+        "project_name",
+        "taxpayer_name",
+        "taxpayer_identifier",
+        "handler_phone",
+        "regional_tax_contact",
+        "regional_tax_contact_phone",
+        "operation_address",
+        "payment_method",
+        "contract_name",
+        "planned_amount",
+        "contract_start_date",
+        "contract_end_date",
+        "partner_name",
+        "counterparty_tax_identifier",
+        "tax_report_management_no",
+        "attachment_links",
+        "creator_name",
+        "created_time",
+    ],
+    "column_labels": {
+        "document_state_label": "单据状态",
+        "document_no": "单据编号",
+        "project_name": "项目名称",
+        "taxpayer_name": "纳税人名称",
+        "taxpayer_identifier": "纳税人识别号",
+        "handler_phone": "经办人联系电话",
+        "regional_tax_contact": "区域所属税所联系人",
+        "regional_tax_contact_phone": "区域所属税所联系人手机",
+        "operation_address": "跨区域经营地址",
+        "payment_method": "经营方式",
+        "contract_name": "合同名称",
+        "planned_amount": "合同金额",
+        "contract_start_date": "合同开始日期",
+        "contract_end_date": "合同结束日期",
+        "partner_name": "合同相对方名称",
+        "counterparty_tax_identifier": "合同相对方纳税人识别号",
+        "tax_report_management_no": "跨区域涉税事项报验管理编号",
+        "attachment_links": "附件",
+        "creator_name": "录入人",
+        "created_time": "录入时间",
+    },
+    "row_primary": "document_no",
+    "row_secondary": "",
+    "status_field": "document_state_label",
+    "strict_columns": True,
+})
+
 API_DATA_WRITE_ALLOWLIST = {
     "project.project": ["name", "description", "date_start"],
     "project.task": ["name", "description", "date_deadline", "project_id"],
@@ -1002,6 +2117,30 @@ def smart_core_nav_scene_maps(env):
         "menu_scene_map": dict(NAV_MENU_SCENE_MAP),
         "action_xmlid_scene_map": dict(NAV_ACTION_SCENE_MAP),
         "model_view_scene_map": dict(NAV_MODEL_VIEW_SCENE_MAP),
+    }
+
+
+def smart_core_surface_aliases(env):
+    del env
+    return {
+        "construction_pm_v1": "workspace_default_v1",
+    }
+
+
+def smart_core_runtime_business_config_productization_sources(env):
+    del env
+    return [
+        "smart_construction_custom.user_menu_preference",
+    ]
+
+
+def smart_core_resolve_record_context_config(env, params):
+    del env, params
+    return {
+        "model": "project.project",
+        "label": "当前项目",
+        "placeholder": "搜索项目名称",
+        "selected_id_param": "selected_id",
     }
 
 
@@ -1923,6 +3062,12 @@ def get_system_init_fact_contributions(env, user, context=None):
             "risk_actions": risk_rows,
             "project_actions": project_rows,
         }
+        module_facts["workspace_collection_export_keys"] = [
+            "task_items",
+            "payment_requests",
+            "risk_actions",
+            "project_actions",
+        ]
 
         module_facts["workspace_business_source"] = {
             "task_items": len(task_rows),
@@ -1971,6 +3116,213 @@ def smart_core_extend_system_init(data, env, user):
         facts_payload = contribution.get("facts") if isinstance(contribution.get("facts"), dict) else {}
         ext_facts[module_key] = dict(facts_payload)
     data["ext_facts"] = ext_facts
+    workspace_keyword_overrides = ext_facts.get("workspace_keyword_overrides")
+    if not isinstance(workspace_keyword_overrides, dict):
+        workspace_keyword_overrides = {}
+    business_action_scene_labels = dict(
+        workspace_keyword_overrides.get("business_action_scene_labels")
+        if isinstance(workspace_keyword_overrides.get("business_action_scene_labels"), dict)
+        else {}
+    )
+    business_action_scene_labels.update(
+        {
+            "finance.payment_requests": "支付申请",
+            "project.management": "项目管理",
+            "projects.dashboard": "项目管理",
+            "risk.center": "风险中心",
+            "workspace.risk": "风险中心",
+        }
+    )
+    token_labels = list(
+        workspace_keyword_overrides.get("business_action_title_token_labels")
+        if isinstance(workspace_keyword_overrides.get("business_action_title_token_labels"), list)
+        else []
+    )
+    token_labels.extend(
+        [
+            {"token": "支付", "label": "支付申请"},
+            {"token": "项目", "label": "项目管理"},
+            {"token": "风险", "label": "风险中心"},
+        ]
+    )
+    token_sets = dict(
+        workspace_keyword_overrides.get("token_sets")
+        if isinstance(workspace_keyword_overrides.get("token_sets"), dict)
+        else {}
+    )
+    token_sets.update(
+        {
+            "build_urgent_capability_tokens": [
+                "risk",
+                "approval",
+                "payment",
+                "settlement",
+                "风险",
+                "审批",
+                "支付",
+                "结算",
+            ],
+            "build_risk_semantic_tokens": [
+                "risk",
+                "alert",
+                "warning",
+                "exception",
+                "overdue",
+                "blocked",
+                "critical",
+                "urgent",
+                "payment",
+                "cost",
+                "contract",
+                "delay",
+                "风险",
+                "预警",
+                "异常",
+                "逾期",
+                "阻塞",
+                "严重",
+                "紧急",
+                "支付",
+                "成本",
+                "合同",
+                "延期",
+            ],
+        }
+    )
+    source_scene_routes = dict(
+        workspace_keyword_overrides.get("source_scene_routes")
+        if isinstance(workspace_keyword_overrides.get("source_scene_routes"), dict)
+        else {}
+    )
+    source_scene_routes.update(
+        {
+            "cost": "workspace.cost",
+            "boq": "workspace.cost",
+            "成本": "workspace.cost",
+            "payment": "workspace.home",
+            "finance": "workspace.home",
+            "支付": "workspace.home",
+            "财务": "workspace.home",
+            "project": "workspace.list",
+            "项目": "workspace.list",
+        }
+    )
+    workspace_keyword_overrides["business_action_scene_labels"] = business_action_scene_labels
+    workspace_keyword_overrides["business_action_title_token_labels"] = token_labels
+    workspace_keyword_overrides["token_sets"] = token_sets
+    workspace_keyword_overrides["source_scene_routes"] = source_scene_routes
+    workspace_keyword_overrides["extension_collection_keys"] = [
+        "today_actions",
+        "tasks",
+        "project_actions",
+        "task_items",
+        "payment_requests",
+        "risk_actions",
+        "risk",
+        "project_tasks",
+    ]
+    workspace_keyword_overrides["preferred_business_sources"] = [
+        "today_actions",
+        "tasks",
+        "project_actions",
+        "task_items",
+        "payment_requests",
+        "risk_actions",
+        "risk",
+        "project_tasks",
+    ]
+    ext_facts["workspace_keyword_overrides"] = workspace_keyword_overrides
+    page_profile_overrides = ext_facts.get("page_profile_overrides")
+    if not isinstance(page_profile_overrides, dict):
+        page_profile_overrides = {}
+    page_texts = page_profile_overrides.get("page_texts") if isinstance(page_profile_overrides.get("page_texts"), dict) else {}
+    login_texts = dict(page_texts.get("login") if isinstance(page_texts.get("login"), dict) else {})
+    login_texts.update(
+        {
+            "brand_name": "智能施工企业管理平台",
+            "brand_subtitle": "工程项目全生命周期管理系统",
+            "brand_slogan": "让项目透明 · 让合同可控 · 让资金协同 · 让风险可预警",
+            "capability_project": "项目全过程管理",
+            "capability_contract_cost": "合同成本联动",
+            "capability_fund": "资金支付协同",
+            "capability_risk": "风险预警驾驶舱",
+            "value_line_1": "让项目透明",
+            "value_line_2": "让合同可控",
+            "value_line_3": "让资金协同",
+            "value_line_4": "让风险可预警",
+        }
+    )
+    home_texts = dict(page_texts.get("home") if isinstance(page_texts.get("home"), dict) else {})
+    home_texts.update(
+        {
+            "hero_lead": "围绕项目经营、风险与审批，优先处理今天最关键事项。",
+            "todo_label_approval": "审核付款申请",
+            "todo_label_contract": "查看合同异常",
+            "todo_keywords_approval": "付款,支付,approval,审批",
+            "todo_keywords_contract": "合同,contract",
+            "action_enter_approval": "审核付款申请",
+            "action_enter_contract": "查看合同异常",
+            "action_enter_keywords_approval": "payment,付款,支付,approval,审批",
+            "action_enter_keywords_contract": "contract,合同",
+        }
+    )
+    my_work_texts = dict(page_texts.get("my_work") if isinstance(page_texts.get("my_work"), dict) else {})
+    my_work_texts.update(
+        {
+            "action_view_project": "查看项目",
+            "model_label_project_task": "项目任务",
+            "model_label_project_project": "项目主数据",
+        }
+    )
+    action_texts = dict(page_texts.get("action") if isinstance(page_texts.get("action"), dict) else {})
+    action_texts.update(
+        {
+            "intent_title_contract": "合同执行：优先识别付款与变更风险",
+            "intent_summary_contract": "先看执行率与付款状态，再进入异常合同处理。",
+            "intent_action_contract_todo": "处理合同待办",
+            "empty_title_contract": "当前暂无合同记录",
+            "empty_hint_contract": "可前往“我的工作”查看合同待办，或进入风险驾驶舱追踪履约风险。",
+            "primary_action_contract": "处理合同待办",
+            "intent_title_project": "项目视角：先判断是否可控",
+            "intent_action_project_todo": "查看项目待办",
+            "empty_title_project": "当前暂无项目记录",
+            "empty_hint_project": "建议进入“我的工作”处理项目待办，或去风险驾驶舱查看全局状态。",
+            "primary_action_project": "查看项目待办",
+            "empty_reason_wbs": "当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。",
+            "intent_title_cost": "成本执行：先回答是否超支",
+            "intent_summary_cost": "优先关注超支金额与超支项，再下钻到具体偏差来源。",
+            "intent_action_cost_todo": "处理成本待办",
+            "empty_title_cost": "当前暂无成本记录",
+            "empty_hint_cost": "可前往“我的工作”处理成本待办，或进入风险驾驶舱继续巡检。",
+            "primary_action_cost": "处理超支待办",
+            "surface_kind_keywords_contract": "contract,合同",
+            "surface_kind_keywords_cost": "cost,成本",
+            "surface_kind_keywords_project": "project,项目",
+            "columns_contract_bucket_amount": "amount_total,contract_amount,金额,合同额",
+            "columns_contract_bucket_payment": "paid,payment,付款,支付",
+            "columns_contract_bucket_identity": "title,name,合同",
+            "columns_cost_bucket_overrun": "over,overrun,超支,偏差",
+            "columns_cost_bucket_identity": "title,name,项目",
+            "columns_project_bucket_identity": "title,name,项目",
+            "columns_project_bucket_payment": "payment,付款",
+            "columns_project_bucket_cost": "cost,成本",
+        }
+    )
+    record_texts = dict(page_texts.get("record") if isinstance(page_texts.get("record"), dict) else {})
+    record_texts.update(
+        {
+            "summary_status_stage": "项目执行阶段",
+            "next_action_contract": "查看合同",
+            "next_action_cost": "查看成本",
+            "fallback_details_title": "项目详情",
+            "project_pay_prefix": "付款比 ",
+            "project_pay_unset": "付款比未配置",
+        }
+    )
+    page_texts.update({"login": login_texts, "home": home_texts, "my_work": my_work_texts, "action": action_texts, "record": record_texts})
+    page_profile_overrides["page_texts"] = page_texts
+    ext_facts["page_profile_overrides"] = page_profile_overrides
+    data["ext_facts"] = ext_facts
     return data
 
 
@@ -1984,6 +3336,27 @@ def smart_core_file_upload_allowed_models(env):
 
 def smart_core_file_download_allowed_models(env):
     return get_file_download_allowed_model_contributions(env)
+
+
+def smart_core_file_download_auth_subject(env, attachment, current_subject):
+    del current_subject
+    try:
+        if "payment.request" not in env:
+            return None
+        parent_request = env["payment.request"].sudo().search(
+            [("attachment_ids", "in", attachment.id)],
+            limit=1,
+        )
+    except Exception:
+        return None
+    if not parent_request:
+        return None
+    return {"model": "payment.request", "res_id": parent_request.id}
+
+
+def smart_core_legacy_visible_business_column_labels(env):
+    del env
+    return LEGACY_VISIBLE_BUSINESS_COLUMN_LABELS_BY_MODEL
 
 
 def smart_core_api_data_write_allowlist(env):
@@ -2323,3 +3696,635 @@ def smart_core_build_settlement_slice_service(env):
     )
 
     return SettlementSliceService(env)
+
+
+def smart_core_business_config_admin_group_xmlids(env):
+    del env
+    return [
+        "smart_construction_core.group_sc_cap_business_config_admin",
+        "smart_construction_core.group_sc_role_business_admin",
+    ]
+
+
+def smart_core_business_config_form_settings_refs(env):
+    del env
+    return {
+        "action_xmlid": "smart_construction_core.action_ui_form_field_policy_business_config",
+        "menu_xmlid": "smart_construction_core.menu_ui_form_field_policy_business_config",
+    }
+
+
+def smart_core_business_config_approval_policy_refs(env):
+    del env
+    return {
+        "action_xmlid": "smart_construction_core.action_sc_approval_policy",
+        "menu_xmlid": "smart_construction_core.menu_sc_approval_policy",
+    }
+
+
+def smart_core_native_config_root_menu_xmlid(env):
+    del env
+    return "smart_construction_core.menu_sc_business_config_center"
+
+
+def smart_core_business_root_menu_xmlid(env):
+    del env
+    return "smart_construction_core.menu_sc_root"
+
+
+def smart_core_relation_entry_policy(env, payload):
+    payload = payload if isinstance(payload, dict) else {}
+    model = _sc_text(payload.get("model"))
+    field_name = _sc_text(payload.get("field_name"))
+    relation = _sc_text(payload.get("relation"))
+    context = payload.get("context") if isinstance(payload.get("context"), dict) else {}
+    record = payload.get("record") if isinstance(payload.get("record"), dict) else {}
+    if relation == "account.tax" and field_name == "tax_id" and model in {"construction.contract", "sc.general.contract"}:
+        default_vals = {
+            "type_tax_use": "none",
+            "amount_type": "percent",
+            "price_include": False,
+        }
+        try:
+            company = env.company
+            helper = env["construction.contract"].sudo().with_company(company)
+            group = helper._sc_contract_tax_group(company)
+            country = company.account_fiscal_country_id or company.partner_id.country_id or env.ref(
+                "base.cn",
+                raise_if_not_found=False,
+            )
+            default_vals.update({
+                "company_id": company.id,
+                "tax_group_id": group.id,
+            })
+            if country:
+                default_vals["country_id"] = country.id
+        except Exception:
+            pass
+        return {
+            "has_page": False,
+            "can_open": False,
+            "can_create": True,
+            "quick_create": True,
+            "display_field": "name",
+            "order": "amount asc, id asc",
+            "default_vals": default_vals,
+            "domain": [
+                ["type_tax_use", "=", "none"],
+                ["amount_type", "=", "percent"],
+                ["price_include", "=", False],
+            ],
+            "ui_labels": {
+                "quick_create": "新增税率...",
+                "create_and_edit": "新增税率...",
+                "missing_name": "请输入税率百分比，例如：3%、9%、13%",
+                "quick_create_prompt": "请输入税率百分比，例如：3%、9%、13%",
+                "quick_create_failed": "新增税率失败，请输入 0 到 100 之间的百分比",
+                "inline_create": "新增税率“%s”",
+                "inline_create_failed": "创建税率失败，请检查百分比格式",
+            },
+        }
+    if relation == "res.partner" and model == "sc.self.funding.registration" and field_name == "partner_id":
+        category_code = _sc_text(context.get("current_business_category_code") or context.get("default_business_category_code"))
+        if category_code == "finance.self_funding.refund":
+            contractor_ids = []
+            try:
+                summaries = env["sc.company.contractor.responsibility.summary"].sudo().search([
+                    ("partner_id", "!=", False),
+                    ("self_funding_balance", ">", 0.01),
+                ])
+                partners = summaries.mapped("partner_id").filtered(
+                    lambda partner: partner.supplier_rank > 0 or partner.customer_rank > 0
+                )
+                contractor_ids = sorted(set(partners.ids))
+            except Exception:
+                contractor_ids = []
+            return {
+                "has_page": False,
+                "can_create": False,
+                "display_field": "display_name",
+                "order": "name asc, id asc",
+                "domain": [["id", "in", contractor_ids or [0]]],
+                "ui_labels": {
+                    "search_more": "搜索承包人...",
+                    "dialog_title": "承包人：搜索更多",
+                    "search_placeholder": "输入承包人名称搜索",
+                    "create_and_edit": "",
+                    "quick_create": "",
+                },
+            }
+    if relation == "res.partner" and model == "sc.expense.claim" and field_name == "partner_id":
+        category_code = _sc_text(context.get("current_business_category_code") or context.get("default_business_category_code"))
+        if category_code == "finance.deduction.bill":
+            partner_ids = []
+            try:
+                summaries = env["sc.company.contractor.responsibility.summary"].sudo().search([("partner_id", "!=", False)])
+                partners = summaries.mapped("partner_id").filtered(
+                    lambda partner: partner.supplier_rank > 0 or partner.customer_rank > 0
+                )
+                partner_ids = sorted(set(partners.ids))
+            except Exception:
+                partner_ids = []
+            return {
+                "has_page": False,
+                "can_create": False,
+                "display_field": "display_name",
+                "order": "name asc, id asc",
+                "domain": [["id", "in", partner_ids or [0]]],
+                "ui_labels": {
+                    "search_more": "搜索责任方...",
+                    "dialog_title": "责任方：搜索更多",
+                    "search_placeholder": "输入责任方名称搜索",
+                    "create_and_edit": "",
+                    "quick_create": "",
+                },
+            }
+    if relation == "construction.contract" and model == "construction.contract" and field_name == "original_contract_id":
+        category_code = _sc_text(context.get("current_business_category_code") or context.get("default_business_category_code"))
+        contract_type = _sc_text(context.get("default_type") or context.get("type") or record.get("type"))
+        domain = []
+        if category_code == "contract.income.supplement":
+            domain = [["type", "=", "out"]]
+        elif category_code == "contract.expense.supplement":
+            domain = [["type", "=", "in"]]
+        elif contract_type in {"out", "in"}:
+            domain = [["type", "=", contract_type]]
+        if not domain:
+            return None
+        return {
+            "has_page": False,
+            "can_open": False,
+            "can_create": False,
+            "create_mode": "disabled",
+            "display_field": "display_name",
+            "order": "id desc",
+            "domain": domain,
+            "ui_labels": {
+                "search_more": "搜索原合同...",
+                "dialog_title": "原合同：搜索更多",
+                "search_placeholder": "输入原合同名称、编号、项目或往来单位搜索",
+                "create_and_edit": "",
+                "quick_create": "",
+            },
+        }
+    return None
+
+
+def smart_core_model_specific_form_contract_policy(env, payload):
+    del env
+    payload = payload if isinstance(payload, dict) else {}
+    model = _sc_text(payload.get("model"))
+    fields_map = payload.get("fields") if isinstance(payload.get("fields"), dict) else {}
+    if model == "sc.general.contract" and "tax_id" in fields_map and "tax_rate" in fields_map:
+        return {"remove_fields": ["tax_rate"]}
+    return None
+
+
+def smart_core_form_field_aliases(env, payload):
+    del env
+    payload = payload if isinstance(payload, dict) else {}
+    model = _sc_text(payload.get("model"))
+    source = payload.get("source_contract") if isinstance(payload.get("source_contract"), dict) else {}
+    fields_map = source.get("fields") if isinstance(source.get("fields"), dict) else {}
+    if model == "sc.general.contract" and "tax_id" in fields_map:
+        return {"tax_rate": "tax_id"}
+    return None
+
+
+def smart_core_menu_delivery_token_policy(env):
+    del env
+    business_tokens = [
+        "定额库",
+        "成本科目",
+        "阶段资料要求",
+        "项目阶段资料要求",
+    ]
+    user_tokens = [
+        "智能施工 2.0",
+        "项目管理",
+        "合同管理",
+        "合同中心",
+        "项目合同",
+        "收入合同",
+        "支出合同",
+        "一般合同",
+        "施工管理",
+        "计划管理",
+        "计划汇报",
+        "成本管理",
+        "成本报表",
+        "智慧大屏",
+        "大屏",
+        "驾驶舱",
+        "财税报表",
+        "物资与分包",
+        "物资管理",
+        "材料管理",
+        "材料",
+        "采购",
+        "采购订单",
+        "劳务",
+        "机械",
+        "设备",
+        "专业分包",
+        "分包",
+        "考勤",
+        "看板中心",
+        "财务账款",
+        "结算中心",
+        "执行结构",
+        "项目立项",
+        "项目台账",
+        "项目驾驶舱",
+        "投标",
+        "报名",
+        "开标",
+        "中标",
+        "保证金",
+        "自筹",
+        "付款还",
+        "资金借还",
+        "借款",
+        "还款",
+        "费用中心",
+        "费用",
+        "报销",
+        "收支",
+        "统计表",
+        "经营情况表",
+        "收入",
+        "公司财务支出",
+        "项目资金",
+        "承包人",
+        "项目款",
+        "公司款",
+        "发票税务",
+        "发票",
+        "开票",
+        "税务",
+        "付款",
+        "实付",
+        "付款登记",
+        "支付",
+        "往来单位付款",
+        "扣款",
+        "实缴",
+        "资金账户",
+        "账户间资金往来",
+        "收款",
+        "到款",
+        "资金日报",
+        "工程资料",
+        "客户",
+        "供应商",
+        "人事行政",
+        "请假",
+        "休假",
+        "印章",
+        "资料证照",
+        "证照",
+        "借阅",
+        "业务配置",
+        "基础设置",
+        "组织架构",
+        "历史用户",
+        "历史用户权限",
+        "用户信息",
+        "用户信息与权限",
+        "历史角色",
+        "项目授权范围",
+        "系统配置",
+        "用户验收",
+        "直营项目系统菜单",
+    ]
+    admin_tokens = [
+        "执行与生产",
+        "成本与资金",
+    ]
+    return {
+        "always_hidden_technical_tokens": ["项目管理（后台）"],
+        "business_config_tokens": business_tokens,
+        "user_allowed_path_tokens": user_tokens,
+        "admin_allowed_path_tokens": [*user_tokens, *admin_tokens],
+        "hide_exact_labels": [
+            "快速创建项目",
+            "项目列表（演示）",
+            "项目驾驶舱（演示）",
+        ],
+        "rename_labels": {
+            "项目台账（试点）": "项目台账",
+            "开票申请": "销项开票申请",
+            "开票登记": "销项发票登记",
+            "进项上报": "进项税额上报",
+        },
+    }
+
+
+def smart_core_business_nav_group_display_order(env):
+    del env
+    return {
+        "基础资料": 5,
+        "项目中心": 10,
+        "投标管理类单据": 20,
+        "合同中心": 30,
+        "施工管理": 40,
+        "物资与分包": 50,
+        "财务中心": 60,
+        "人事行政": 70,
+        "资料证照": 80,
+        "基础设置": 990,
+        "配置": 990,
+        "系统配置": 990,
+    }
+
+
+def smart_core_product_policy_catalog_source(env, source_env=None):
+    del env, source_env
+    return {
+        "module": "smart_construction_core",
+        "xmlid_prefix": "smart_construction_core.",
+        "root_label": "智慧施工管理平台",
+    }
+
+
+def smart_core_product_policy_catalog_base_keys(env):
+    del env
+    return ["construction"]
+
+
+def smart_core_default_product_policy_specs(env):
+    del env
+    return [
+        ("construction.standard", "施工管理标准版"),
+        ("construction.preview", "施工管理预览版"),
+    ]
+
+
+def smart_core_product_policy_catalog_label(env, identity):
+    del env
+    edition_key = str((identity or {}).get("edition_key") or "").strip()
+    return "施工管理预览版" if edition_key == "preview" else "施工管理标准版"
+
+
+def smart_core_platform_legacy_ownership_module(env):
+    del env
+    return "smart_construction_core"
+
+
+def smart_core_resolve_release_actor_role_codes(env, user):
+    del env
+    if not user:
+        return []
+    roles = set()
+    try:
+        group_xmlids = set(user.groups_id.get_external_id().values())
+    except Exception:
+        group_xmlids = set()
+    prefix = "smart_construction_core.group_sc_role_"
+    for xmlid in group_xmlids:
+        text = str(xmlid or "").strip()
+        if text.startswith(prefix):
+            roles.add(text[len(prefix):])
+    try:
+        if user.has_group("smart_construction_core.group_sc_cap_project_read") or user.has_group(
+            "smart_construction_core.group_sc_cap_project_manager"
+        ):
+            roles.add("pm")
+        if user.has_group("smart_construction_core.group_sc_super_admin") or user.has_group(
+            "smart_construction_core.group_sc_business_full"
+        ):
+            roles.add("executive")
+    except Exception:
+        pass
+    return sorted(roles)
+
+
+def smart_core_resolve_usage_actor_role_codes(env, user):
+    return smart_core_resolve_release_actor_role_codes(env, user)
+
+
+def smart_core_default_release_snapshot_role_code(env):
+    del env
+    return "pm"
+
+
+def smart_core_industry_extension_module_names(env):
+    del env
+    return [
+        "smart_construction_core",
+        "smart_construction_scene",
+        "smart_construction_portal",
+    ]
+
+
+def smart_core_app_shell_contract(env):
+    del env
+    return {
+        "taxonomy": {
+            "dashboard": {"label": "经营驾驶舱", "category": "management", "sequence": 10, "primary_scene": "dashboard.company"},
+            "projects": {"label": "项目管理", "category": "business", "sequence": 20, "primary_scene": "projects.list"},
+            "contracts": {"label": "合同管理", "category": "business", "sequence": 30, "primary_scene": "contracts.workspace"},
+            "cost": {"label": "成本管理", "category": "business", "sequence": 40, "primary_scene": "cost.cost_compare"},
+            "finance": {"label": "资金财务", "category": "business", "sequence": 50, "primary_scene": "finance.payment_requests"},
+            "payments": {"label": "收支办理", "category": "business", "sequence": 60, "primary_scene": "payments.approval"},
+            "operation": {"label": "运营管理", "category": "business", "sequence": 80, "primary_scene": "operation.overview"},
+            "portfolio": {"label": "项目组合", "category": "management", "sequence": 90, "primary_scene": "portfolio.center"},
+            "risk": {"label": "风险管理", "category": "governance", "sequence": 100, "primary_scene": "risk.center"},
+            "quality": {"label": "质量管理", "category": "business", "sequence": 110, "primary_scene": "quality.center"},
+            "safety": {"label": "安全管理", "category": "business", "sequence": 120, "primary_scene": "safety.center"},
+            "resource": {"label": "资源管理", "category": "business", "sequence": 130, "primary_scene": "resource.center"},
+            "task": {"label": "任务协同", "category": "productivity", "sequence": 140, "primary_scene": "task.center"},
+        },
+        "aliases": {
+            "project": "projects",
+            "contract": "contracts",
+            "payment": "payments",
+        },
+    }
+
+
+def smart_core_scene_entry_orchestrator_specs(env):
+    del env
+    common_project_summary = ("project_code", "manager_name", "stage_name")
+    return {
+        "ProjectDashboardSceneOrchestrator": {
+            "scene_key": "project.management",
+            "scene_label": "项目驾驶舱",
+            "state_fallback_text": "后端未提供项目驾驶舱状态摘要",
+            "title_empty": "项目驾驶舱",
+            "title_template": "项目驾驶舱：{name}",
+            "title_record_name_fallback": "项目",
+            "suggested_action_key": "load_dashboard_progress",
+            "suggested_action_reason_code": "PROJECT_DASHBOARD_READY",
+            "block_fetch_intent": "project.dashboard.block.fetch",
+            "block_alias_map": {"risk": "risks"},
+            "first_action_block_keys": ["progress"],
+            "entry_summary_keys": (
+                "project_code",
+                "manager_name",
+                "partner_name",
+                "stage_name",
+                "lifecycle_state",
+                "milestone",
+                "health_state",
+                "progress_percent",
+                "cost_total",
+                "payment_total",
+                "status",
+            ),
+            "entry_blocks": (
+                ("progress", "项目进度", "deferred"),
+                ("risks", "风险提醒", "deferred"),
+                ("next_actions", "下一步动作", "deferred"),
+            ),
+        },
+        "ProjectExecutionSceneOrchestrator": {
+            "scene_key": "project.execution",
+            "scene_label": "项目执行",
+            "state_fallback_text": "后端未提供项目执行状态摘要",
+            "title_empty": "项目执行",
+            "title_template": "项目执行：{name}",
+            "title_record_name_fallback": "项目",
+            "suggested_action_key": "load_execution_next_actions",
+            "suggested_action_reason_code": "PROJECT_EXECUTION_READY",
+            "block_fetch_intent": "project.execution.block.fetch",
+            "first_action_block_keys": ["next_actions", "execution_tasks"],
+            "entry_summary_keys": common_project_summary + ("date_start", "date_end"),
+            "entry_blocks": (
+                ("execution_tasks", "执行任务", "deferred"),
+                ("pilot_precheck", "上线前检查", "deferred"),
+                ("next_actions", "下一步动作", "deferred"),
+            ),
+        },
+        "ProjectPlanBootstrapSceneOrchestrator": {
+            "scene_key": "project.plan_bootstrap",
+            "scene_label": "计划准备",
+            "state_fallback_text": "后端未提供计划准备状态摘要",
+            "title_empty": "计划编排",
+            "title_template": "计划准备：{name}",
+            "title_record_name_fallback": "项目",
+            "suggested_action_key": "load_plan_next_actions",
+            "suggested_action_reason_code": "PROJECT_PLAN_BOOTSTRAP_READY",
+            "block_fetch_intent": "project.plan_bootstrap.block.fetch",
+            "first_action_block_keys": ["next_actions", "plan_summary_detail"],
+            "entry_summary_keys": common_project_summary + ("date_start", "date_end"),
+            "entry_blocks": (
+                ("plan_summary_detail", "计划摘要", "deferred"),
+                ("plan_tasks", "计划任务", "deferred"),
+                ("next_actions", "计划下一步", "deferred"),
+            ),
+        },
+        "PaymentSliceContractOrchestrator": {
+            "scene_key": "payment",
+            "scene_label": "支付记录",
+            "state_fallback_text": "后端未提供支付记录状态摘要",
+            "title_empty": "支付记录",
+            "title_template": "支付记录：{name}",
+            "title_record_name_fallback": "项目",
+            "suggested_action_key": "load_payment_entry",
+            "suggested_action_reason_code": "PAYMENT_SLICE_PREPARED_READY",
+            "block_fetch_intent": "payment.block.fetch",
+            "first_action_block_keys": ["payment_entry", "payment_list"],
+            "entry_summary_keys": common_project_summary + ("payment_record_count", "payment_total_amount"),
+            "entry_blocks": (
+                ("payment_entry", "支付录入", "deferred"),
+                ("payment_list", "支付记录", "deferred"),
+                ("payment_summary", "支付汇总", "deferred"),
+                ("next_actions", "支付下一步", "deferred"),
+            ),
+        },
+        "SettlementSliceContractOrchestrator": {
+            "scene_key": "settlement",
+            "scene_label": "结算结果",
+            "state_fallback_text": "后端未提供结算结果状态摘要",
+            "title_empty": "结算结果",
+            "title_template": "结算结果：{name}",
+            "title_record_name_fallback": "项目",
+            "suggested_action_key": "load_settlement_summary",
+            "suggested_action_reason_code": "SETTLEMENT_SLICE_PREPARED_READY",
+            "block_fetch_intent": "settlement.block.fetch",
+            "entry_summary_keys": common_project_summary + ("total_cost", "total_payment", "delta"),
+            "entry_blocks": (
+                ("settlement_summary", "结算结果", "deferred"),
+                ("next_actions", "结算下一步", "deferred"),
+            ),
+        },
+        "CostTrackingContractOrchestrator": {
+            "scene_key": "cost.tracking",
+            "scene_label": "成本记录",
+            "state_fallback_text": "后端未提供成本记录状态摘要",
+            "title_empty": "成本记录",
+            "title_template": "成本记录：{name}",
+            "title_record_name_fallback": "项目",
+            "suggested_action_key": "load_cost_entry",
+            "suggested_action_reason_code": "COST_SLICE_PREPARED_READY",
+            "block_fetch_intent": "cost.tracking.block.fetch",
+            "first_action_block_keys": ["cost_entry", "cost_list"],
+            "entry_summary_keys": common_project_summary + ("cost_record_count", "cost_total_amount"),
+            "entry_blocks": (
+                ("cost_entry", "成本录入", "deferred"),
+                ("cost_list", "成本记录", "deferred"),
+                ("cost_summary", "成本汇总", "deferred"),
+                ("next_actions", "成本下一步", "deferred"),
+            ),
+        },
+    }
+
+
+def smart_core_user_data_acceptance_nav_contract(env):
+    del env
+    return {
+        "formal_group_child_labels": ["客户", "供应商"],
+        "formal_group_labels": ["基础设置"],
+        "old_acceptance_group_labels": ["用户核对菜单", "旧业务数据核对"],
+        "direct_acceptance_group_labels": ["直营项目数据核对", "直营项目系统菜单"],
+        "joint_acceptance_group_labels": ["联营项目数据核对", "联营项目系统菜单"],
+        "direct_acceptance_child_tokens": ["直营"],
+        "joint_acceptance_child_tokens": ["联营"],
+        "acceptance_root_labels": ["用户验收", "直营项目数据核对"],
+        "acceptance_root_group_label": "用户数据验收",
+        "direct_acceptance_group_label": "直营项目数据核对",
+        "joint_acceptance_group_label": "联营项目数据核对",
+        "source_menu_group_labels_to_hide": ["用户核对菜单"],
+        "acceptance_surface_menu_ids": [727, 729, 735, 770],
+        "acceptance_surface_action_ids": [899],
+        "acceptance_surface_tokens": [
+            "用户验收",
+            "用户数据验收",
+            "用户核对菜单",
+            "menu_scbsly_acceptance_",
+            "menu_scbs55_user_acceptance_",
+            "menu_scbsly_direct_project_acceptance_root",
+            "menu_sc_legacy_engineering_progress_receipt",
+        ],
+        "old_acceptance_menu_xmlids": [
+            "smart_construction_core.menu_scbs55_user_acceptance_445_工程进度收款",
+        ],
+        "joint_acceptance_menu_xmlids": [
+            "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_income",
+            "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_refund",
+            "smart_construction_core.menu_scbsly_joint_acceptance_supplier_contract",
+            "smart_construction_core.menu_scbsly_joint_acceptance_labor_contract",
+            "smart_construction_core.menu_scbsly_joint_acceptance_rental_contract",
+        ],
+        "contract_product_menu_xmlids": [
+            "smart_construction_core.menu_sc_contract_income",
+            "smart_construction_core.menu_sc_project_income_contract",
+            "smart_construction_core.menu_sc_income_contract_execution",
+            "smart_construction_core.menu_sc_contract_event",
+            "smart_construction_core.menu_sc_general_contract",
+            "smart_construction_core.menu_sc_contract_expense",
+            "smart_construction_core.menu_sc_expense_contract_execution",
+        ],
+        "settlement_product_menu_xmlids": [
+            "smart_construction_core.menu_sc_settlement_order",
+            "smart_construction_core.menu_sc_settlement_adjustment",
+            "smart_construction_core.menu_sc_income_contract_settlement",
+            "smart_construction_core.menu_sc_expense_contract_settlement",
+            "smart_construction_core.menu_sc_material_settlement",
+            "smart_construction_core.menu_sc_labor_settlement",
+            "smart_construction_core.menu_sc_equipment_settlement",
+            "smart_construction_core.menu_sc_material_rental_settlement",
+            "smart_construction_core.menu_sc_subcontract_settlement",
+        ],
+    }

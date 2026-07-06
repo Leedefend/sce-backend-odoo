@@ -373,18 +373,18 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   }, {});
   const fallbackListColumns = uniqueFields(v2PrimaryFields.filter((name) => name !== 'id'));
   if (!v2Fields.length && fallbackListColumns.length && (viewType === 'list' || viewType === 'tree')) {
-    const projectListLabels: Record<string, string> = {
+    const fallbackListLabels: Record<string, string> = {
       name: '名称',
-      project_code: '项目编号',
+      project_code: '编号',
       operation_strategy: '经营方式',
       business_nature: '经营性质',
-      lifecycle_state: '项目状态',
-      manager_id: '项目经理',
+      lifecycle_state: '状态',
+      manager_id: '负责人',
       write_date: '更新时间',
     };
     fallbackListColumns.forEach((name) => {
       if (!fieldLabels[name]) {
-        fieldLabels[name] = projectListLabels[name] || name;
+        fieldLabels[name] = fallbackListLabels[name] || name;
       }
     });
   }

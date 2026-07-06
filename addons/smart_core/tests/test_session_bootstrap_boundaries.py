@@ -21,7 +21,7 @@ class _BaseIntentHandler:
 
 class _User:
     id = 7
-    login = "svc_project_ro"
+    login = "svc_readonly"
     name = "Service User"
     token_version = 2
 
@@ -43,7 +43,7 @@ class _Users:
 
     def search(self, domain, limit=1):
         self.last_domain = domain
-        if domain == [("login", "=", "svc_project_ro")]:
+        if domain == [("login", "=", "svc_readonly")]:
             return _User()
         return _EmptyUser()
 
@@ -104,7 +104,7 @@ class TestSessionBootstrapBoundaries(unittest.TestCase):
         handler = self.module.SessionBootstrapHandler(env=env)
 
         with patch.dict(os.environ, {"ENV": "test", "SC_BOOTSTRAP_SECRET": "secret"}, clear=False):
-            result = handler.handle(payload={"params": {"secret": "secret", "login": ["svc_project_ro"]}})
+            result = handler.handle(payload={"params": {"secret": "secret", "login": ["svc_readonly"]}})
 
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], 400)
@@ -116,11 +116,11 @@ class TestSessionBootstrapBoundaries(unittest.TestCase):
         handler = self.module.SessionBootstrapHandler(env=env)
 
         with patch.dict(os.environ, {"ENV": "test", "SC_BOOTSTRAP_SECRET": "secret"}, clear=False):
-            result = handler.handle(payload={"params": {"secret": "secret", "login": "svc_project_ro"}})
+            result = handler.handle(payload={"params": {"secret": "secret", "login": "svc_readonly"}})
 
         self.assertTrue(result["ok"])
         self.assertEqual(result["data"]["token"], "token:7:2")
-        self.assertEqual(env.users.last_domain, [("login", "=", "svc_project_ro")])
+        self.assertEqual(env.users.last_domain, [("login", "=", "svc_readonly")])
 
 
 if __name__ == "__main__":

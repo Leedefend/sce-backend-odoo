@@ -24,6 +24,7 @@ from ..utils.reason_codes import REASON_MISSING_PARAMS, REASON_NOT_FOUND, REASON
 
 BUSINESS_CONFIG_ADMIN_GROUP = "smart_core.group_smart_core_business_config_admin"
 _logger = logging.getLogger(__name__)
+_FORM_FIELD_LABEL_OVERRIDES: dict[tuple[str, str], str] = {}
 BUSINESS_CONFIG_CONTRACT_AUTHORITIES = ("ui.business.config.contract", "ui.business.config.contract.version")
 LOWCODE_BUSINESS_FIELD_TYPES = {
     "boolean",
@@ -129,6 +130,18 @@ def _optional_non_negative_int(params: dict, *keys: str):
 
 def _has_param(params: dict, *keys: str) -> bool:
     return any(key in params for key in keys)
+
+
+def register_form_field_label_override(model_name: str, field_name: str, label: str) -> None:
+    model = str(model_name or "").strip()
+    field = str(field_name or "").strip()
+    clean_label = str(label or "").strip()
+    if model and field and clean_label:
+        _FORM_FIELD_LABEL_OVERRIDES[(model, field)] = clean_label
+
+
+def _form_field_label_override(model_name: str, field_name: str) -> str:
+    return _FORM_FIELD_LABEL_OVERRIDES.get((str(model_name or "").strip(), str(field_name or "").strip()), "")
 
 
 def _is_lowcode_business_field_candidate(field_name: str, field_type: str, label: str = "") -> bool:
@@ -2135,8 +2148,9 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
                 configured_label = str(list_column_labels.get(name) or "").strip()
                 if configured_label == name:
                     configured_label = ""
-                if model == "project.project" and name == "manager_id":
-                    return "项目经理"
+                override_label = _form_field_label_override(model, name)
+                if override_label:
+                    return override_label
                 cleaned_configured_label = _clean_lowcode_user_label(name, configured_label) if configured_label else ""
                 return (
                     cleaned_configured_label

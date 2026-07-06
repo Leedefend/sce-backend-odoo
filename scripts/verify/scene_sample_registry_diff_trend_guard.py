@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -95,7 +95,7 @@ def main() -> int:
         "unexpected_scene_count": _safe_int(summary.get("unexpected_scene_count"), 0),
         "unbound_matched_scene_count": _safe_int(summary.get("unbound_matched_scene_count"), 0),
         "policy": policy,
-        "captured_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "captured_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
     }
 
     previous = _load_json(state_path)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -132,7 +132,7 @@ def main() -> int:
         print(f" - missing or invalid source report: {report_path.relative_to(ROOT).as_posix()}")
         return 1
 
-    timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     sha = _git_short_sha()
     branch = _git_branch()
     summary = _snapshot_summary(report)

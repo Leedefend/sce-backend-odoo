@@ -6,6 +6,7 @@ SOURCE_KIND = "reason_code_metadata_registry"
 SOURCE_AUTHORITIES = ("core_reason_codes", "legacy_business_reason_provider")
 NO_BUSINESS_FACT_AUTHORITY = True
 LEGACY_BUSINESS_REASON_SOURCE_KIND = "legacy_business_reason_metadata_provider"
+_LEGACY_BUSINESS_REASON_META_REGISTRY: dict[str, dict] = {}
 
 REASON_OK = "OK"
 REASON_DONE = "DONE"
@@ -96,45 +97,20 @@ def legacy_business_reason_source_authority_contract():
     }
 
 
+def register_legacy_business_reason_meta(reason_code: str, meta: dict) -> None:
+    code = str(reason_code or "").strip().upper()
+    if not code or not isinstance(meta, dict):
+        return
+    normalized = dict(meta)
+    normalized["retryable"] = bool(normalized.get("retryable"))
+    normalized["error_category"] = str(normalized.get("error_category") or "").strip()
+    normalized["suggested_action"] = str(normalized.get("suggested_action") or "").strip()
+    normalized["source_authority"] = legacy_business_reason_source_authority_contract()
+    _LEGACY_BUSINESS_REASON_META_REGISTRY[code] = normalized
+
+
 def legacy_business_reason_meta_mapping():
-    return {
-        REASON_PAYMENT_ATTACHMENTS_REQUIRED: {
-            "retryable": False,
-            "error_category": "validation",
-            "suggested_action": "upload_attachment",
-            "source_authority": legacy_business_reason_source_authority_contract(),
-        },
-        REASON_PAYMENT_SETTLEMENT_NOT_READY: {
-            "retryable": False,
-            "error_category": "business_state",
-            "suggested_action": "complete_settlement_approval",
-            "source_authority": legacy_business_reason_source_authority_contract(),
-        },
-        REASON_PAYMENT_FUNDING_NOT_READY: {
-            "retryable": False,
-            "error_category": "business_state",
-            "suggested_action": "setup_project_funding",
-            "source_authority": legacy_business_reason_source_authority_contract(),
-        },
-        REASON_PAYMENT_FUNDING_BASELINE_INVALID: {
-            "retryable": False,
-            "error_category": "business_state",
-            "suggested_action": "fix_project_funding_baseline",
-            "source_authority": legacy_business_reason_source_authority_contract(),
-        },
-        REASON_PAYMENT_FUNDING_CAP_EXCEEDED: {
-            "retryable": False,
-            "error_category": "business_state",
-            "suggested_action": "adjust_payment_amount_or_funding",
-            "source_authority": legacy_business_reason_source_authority_contract(),
-        },
-        REASON_PAYMENT_NOT_FULLY_PAID: {
-            "retryable": False,
-            "error_category": "business_state",
-            "suggested_action": "complete_payment_execution",
-            "source_authority": legacy_business_reason_source_authority_contract(),
-        },
-    }
+    return {code: dict(meta) for code, meta in _LEGACY_BUSINESS_REASON_META_REGISTRY.items()}
 
 
 def failure_meta_for_reason(reason_code: str):

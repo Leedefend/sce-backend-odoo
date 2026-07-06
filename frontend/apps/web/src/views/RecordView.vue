@@ -1,6 +1,6 @@
 <template>
   <section class="page">
-    <!-- Page intent: 判断项目是否可控，先看风险与关键指标，再执行下一步动作。 -->
+    <!-- Page intent: surface record status, risks, metrics, and next actions. -->
     <header class="header">
       <div>
         <h2>{{ title }}</h2>
@@ -79,7 +79,7 @@
       </div>
       <section v-if="pageSectionEnabled('project_summary', true) && pageSectionTagIs('project_summary', 'section') && showProjectSummary" class="record-l1" :style="pageSectionStyle('project_summary')">
         <article class="l1-card">
-          <p class="l1-label">{{ pageText('summary_status_stage', '项目状态与阶段') }}</p>
+          <p class="l1-label">{{ pageText('summary_status_stage', '记录状态与阶段') }}</p>
           <p class="l1-value">{{ projectStatusSummary }}</p>
         </article>
         <article class="l1-card">
@@ -87,17 +87,17 @@
           <p class="l1-value">{{ projectRiskSummary }}</p>
         </article>
         <article class="l1-card">
-          <p class="l1-label">{{ pageText('summary_finance', '资金/产值指标') }}</p>
+          <p class="l1-label">{{ pageText('summary_finance', '关键指标摘要') }}</p>
           <p class="l1-value">{{ projectFinanceSummary }}</p>
         </article>
       </section>
       <section v-if="pageSectionEnabled('next_actions', true) && pageSectionTagIs('next_actions', 'section') && showProjectSummary" class="record-next" :style="pageSectionStyle('next_actions')">
         <p class="next-label">{{ pageText('next_actions_title', '下一步动作') }}</p>
         <div class="next-actions">
-          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '项目' })">{{ pageText('next_action_todo', '查看待办') }}</button>
-          <button class="ghost" @click="openProjectAction('/s/projects.dashboard')">{{ pageText('next_action_risk', '查看风险') }}</button>
-          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '合同' })">{{ pageText('next_action_contract', '查看合同') }}</button>
-          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '成本' })">{{ pageText('next_action_cost', '查看成本') }}</button>
+          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '待办' })">{{ pageText('next_action_todo', '查看待办') }}</button>
+          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '风险' })">{{ pageText('next_action_risk', '查看风险') }}</button>
+          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '业务' })">{{ pageText('next_action_contract', '查看业务记录') }}</button>
+          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '执行' })">{{ pageText('next_action_cost', '查看执行分析') }}</button>
         </div>
       </section>
       <div v-if="ribbon" class="ribbon">{{ ribbon.title || pageText('ribbon_fallback', 'Ribbon') }}</div>
@@ -126,7 +126,7 @@
         @update:field="handleFieldUpdate"
       />
       <section v-else-if="pageSectionEnabled('details_fallback', true) && pageSectionTagIs('details_fallback', 'section')" class="fallback-fields" :style="pageSectionStyle('details_fallback')">
-        <h3>{{ pageText('fallback_details_title', '项目详情') }}</h3>
+        <h3>{{ pageText('fallback_details_title', '记录详情') }}</h3>
         <ul>
           <li v-for="field in fields" :key="field.name">
             <span class="fallback-label">{{ field.label }}</span>
@@ -290,11 +290,11 @@ const projectFinanceSummary = computed(() => {
   const output = Number(recordData.value?.output_value || recordData.value?.amount_output || 0);
   const pay = Number(recordData.value?.payment_ratio || recordData.value?.payment_rate || 0);
   const outputText = Number.isFinite(output) && output > 0
-    ? `${pageText('project_output_prefix', '产值 ')}${output}`
-    : pageText('project_output_unset', '产值未配置');
+    ? `${pageText('project_output_prefix', '指标 ')}${output}`
+    : pageText('project_output_unset', '指标未配置');
   const payText = Number.isFinite(pay) && pay > 0
-    ? `${pageText('project_pay_prefix', '付款比 ')}${pay}${pageText('project_pay_suffix', '%')}`
-    : pageText('project_pay_unset', '付款比未配置');
+    ? `${pageText('project_pay_prefix', '完成比 ')}${pay}${pageText('project_pay_suffix', '%')}`
+    : pageText('project_pay_unset', '完成比未配置');
   return `${outputText} · ${payText}`;
 });
 const canEdit = computed(() => contractWriteAllowed.value);
@@ -1069,7 +1069,7 @@ async function executeHeaderAction(actionKey: string) {
         return true;
       }
       if (key === 'open_risk_dashboard') {
-        await router.push({ path: '/s/projects.dashboard', query: resolveCarryQuery() });
+        await router.push({ path: '/my-work', query: resolveCarryQuery({ section: 'todo', search: '风险' }) });
         return true;
       }
       if (key === 'refresh_page' || key === 'refresh') {

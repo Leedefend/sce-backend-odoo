@@ -256,7 +256,7 @@ def main():
         policy = policy_service.get_policy(product_key=product_key, enforce_release=True, enforce_access=True)
         source_kind = _text((policy.get("policy_source_authority") or {}).get("kind"))
         counts = _policy_surface_counts(policy)
-        catalog = catalog_service.build_construction_policy_payload(product_key=product_key)
+        catalog = catalog_service.build_catalog_policy_payload(product_key=product_key)
         catalog_counts = _policy_surface_counts(catalog)
 
         user_delivery = _delivery_summary(

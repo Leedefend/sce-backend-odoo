@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-services/view_parser/parsers_kanban_pivot_graph.py
+services/view_Parser/parsers Kanban Pivot Graph.py
 
 kanban / pivot / graph 解析
 """

@@ -56,10 +56,10 @@ const rows = computed(() => {
   const bars = source.bars && typeof source.bars === 'object' ? source.bars as Record<string, unknown> : {};
   const kpi = source.kpi && typeof source.kpi === 'object' ? source.kpi as Record<string, unknown> : {};
   const rowsLocal = [
-    { key: 'contract', label: '合同履约率', value: clampPercent((bars as Record<string, unknown>).contract), unit: '%', kind: 'rate' },
-    { key: 'output', label: '产值完成率', value: clampPercent((bars as Record<string, unknown>).output), unit: '%', kind: 'rate' },
-    { key: 'cost_rate', label: '成本控制率', value: clampPercent((kpi as Record<string, unknown>).costRate || (kpi as Record<string, unknown>).cost_rate), unit: '%', kind: 'rate' },
-    { key: 'payment_rate', label: '资金支付率', value: clampPercent((kpi as Record<string, unknown>).paymentRate || (kpi as Record<string, unknown>).payment_rate), unit: '%', kind: 'rate' },
+    { key: 'contract', label: '履约率', value: clampPercent((bars as Record<string, unknown>).contract), unit: '%', kind: 'rate' },
+    { key: 'output', label: '指标完成率', value: clampPercent((bars as Record<string, unknown>).output), unit: '%', kind: 'rate' },
+    { key: 'cost_rate', label: '执行控制率', value: clampPercent((kpi as Record<string, unknown>).costRate || (kpi as Record<string, unknown>).cost_rate), unit: '%', kind: 'rate' },
+    { key: 'payment_rate', label: '完成率', value: clampPercent((kpi as Record<string, unknown>).paymentRate || (kpi as Record<string, unknown>).payment_rate), unit: '%', kind: 'rate' },
   ];
   return rowsLocal.filter((row) => row.value > 0);
 });

@@ -10,6 +10,8 @@ from .source_authority import build_source_authority_contract
 SOURCE_KIND = "delivery_menu_default_projection"
 SOURCE_AUTHORITIES = ("delivery_engine_v1", "release_surface_menu_payload")
 NO_BUSINESS_FACT_AUTHORITY = True
+_CURRENT_RECORD_SCOPE_MODELS: set[str] = set()
+_CURRENT_PROJECT_SCOPE_MODELS = _CURRENT_RECORD_SCOPE_MODELS
 
 
 def source_authority_contract() -> dict:
@@ -26,9 +28,21 @@ def synthetic_menu_id(key: str, base: int = 900_000_000, span: int = 50_000_000)
     return int(base + (raw % span))
 
 
-def _project_scope_policy(menu: Dict[str, Any]) -> str:
-    explicit = str(menu.get("project_scope_policy") or "").strip().lower()
-    if explicit in {"current_project", "global", "exempt"}:
+def register_current_record_scope_model(model_name: str) -> None:
+    model = str(model_name or "").strip()
+    if model:
+        _CURRENT_RECORD_SCOPE_MODELS.add(model)
+
+
+def register_current_project_scope_model(model_name: str) -> None:
+    register_current_record_scope_model(model_name)
+
+
+def _record_scope_policy(menu: Dict[str, Any]) -> str:
+    explicit = str(menu.get("record_scope_policy") or menu.get("project_scope_policy") or "").strip().lower()
+    if explicit in {"current_record", "current_project"}:
+        return "current_record"
+    if explicit in {"global", "exempt"}:
         return explicit
     model = str(
         menu.get("model")
@@ -37,17 +51,24 @@ def _project_scope_policy(menu: Dict[str, Any]) -> str:
         or menu.get("fact_model")
         or ""
     ).strip()
-    if model == "project.project":
-        return "current_project"
+    if model in _CURRENT_RECORD_SCOPE_MODELS:
+        return "current_record"
     intent = str(menu.get("entry_intent") or "").strip()
     if intent in {"query", "master_data", "analysis", "config"}:
         return "global"
     if intent in {"handling", "source_fact"}:
-        return "current_project"
+        return "current_record"
     required = menu.get("required_relationships")
     if isinstance(required, list) and any(str(item or "").strip() == "project_id" for item in required):
-        return "current_project"
+        return "current_record"
     return ""
+
+
+def _project_scope_policy(menu: Dict[str, Any]) -> str:
+    policy = _record_scope_policy(menu)
+    if policy == "current_record":
+        return "current_project"
+    return policy
 
 
 def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
@@ -86,9 +107,10 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
     view_modes = menu.get("view_modes")
     if isinstance(view_modes, list) and view_modes:
         meta["view_modes"] = view_modes
-    project_scope_policy = _project_scope_policy(menu)
-    if project_scope_policy:
-        meta["project_scope_policy"] = project_scope_policy
+    record_scope_policy = _record_scope_policy(menu)
+    if record_scope_policy:
+        meta["record_scope_policy"] = record_scope_policy
+        meta["project_scope_policy"] = "current_project" if record_scope_policy == "current_record" else record_scope_policy
     release_state = str(menu.get("release_state") or "").strip()
     if release_state:
         meta["release_state"] = release_state
@@ -121,11 +143,23 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         "integration_view_modes",
         "integration_entry_target",
         "integration_model",
+        "record_scope_policy",
         "project_scope_policy",
     ):
         value = menu.get(meta_key)
         if value not in (None, "", []):
-            meta[meta_key] = value
+            if meta_key == "record_scope_policy":
+                normalized = _record_scope_policy({meta_key: value})
+                if normalized:
+                    meta["record_scope_policy"] = normalized
+                    meta["project_scope_policy"] = "current_project" if normalized == "current_record" else normalized
+            elif meta_key == "project_scope_policy":
+                normalized = _project_scope_policy({meta_key: value})
+                if normalized:
+                    meta["project_scope_policy"] = normalized
+                    meta.setdefault("record_scope_policy", "current_record" if normalized == "current_project" else normalized)
+            else:
+                meta[meta_key] = value
     entry_target = normalize_entry_target(
         entry_target=menu.get("entry_target"),
         scene_key=scene_key,

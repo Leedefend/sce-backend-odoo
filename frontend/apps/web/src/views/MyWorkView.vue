@@ -400,10 +400,10 @@
       >
         <section v-if="!displayItems.length && !showFilterEmptyGuide" class="empty-guide">
           <p class="empty-title">{{ summaryStatus?.message || pageText('empty_title_default', '当前无待处理事项') }}</p>
-          <p class="empty-desc">{{ pageText('empty_desc', '状态良好。你可以返回角色首页查看整体态势，或进入风险驾驶舱继续巡检。') }}</p>
+          <p class="empty-desc">{{ pageText('empty_desc', '状态良好。你可以返回角色首页查看整体态势，或进入重点事项继续巡检。') }}</p>
           <div class="guide-actions">
             <button class="guide-btn primary" @click="goWorkbench">{{ pageText('action_go_workbench', '去角色首页') }}</button>
-            <button class="guide-btn" @click="goRiskCockpit">{{ pageText('action_go_risk_cockpit', '去风险驾驶舱') }}</button>
+            <button class="guide-btn" @click="goRiskCockpit">{{ pageText('action_go_risk_cockpit', '查看重点事项') }}</button>
           </div>
         </section>
         <table>
@@ -1047,7 +1047,7 @@ function goWorkbench() {
 }
 
 function goRiskCockpit() {
-  router.push({ path: '/s/projects.dashboard' }).catch(() => {});
+  router.push({ path: '/my-work', query: { section: 'todo', search: '风险' } }).catch(() => {});
 }
 
 async function handleMyWorkBlockAction(event: PageBlockActionEvent) {

@@ -4,14 +4,12 @@
 from __future__ import annotations
 
 PLATFORM_ADMIN_GROUP = "smart_core.group_smart_core_admin"
-LEGACY_PLATFORM_ADMIN_GROUP = "smart_construction_core.group_sc_cap_config_admin"
 SYSTEM_ADMIN_GROUP = "base.group_system"
 
 
 def platform_admin_group_xmlids(*, include_legacy: bool = False, include_system: bool = False) -> list[str]:
+    del include_legacy
     xmlids = [PLATFORM_ADMIN_GROUP]
-    if include_legacy:
-        xmlids.append(LEGACY_PLATFORM_ADMIN_GROUP)
     if include_system:
         xmlids.append(SYSTEM_ADMIN_GROUP)
     return xmlids

@@ -53,7 +53,10 @@ from odoo.addons.smart_core.core.system_init_scene_runtime_surface_context impor
 from odoo.addons.smart_core.core.system_init_scene_runtime_surface_builder import SystemInitSceneRuntimeSurfaceBuilder
 from odoo.addons.smart_core.core.system_init_dictionary_data_helper import apply_dictionary_startup_data
 from odoo.addons.smart_core.core.intent_execution_result import IntentExecutionResult
-from odoo.addons.smart_core.core.project_context import build_project_context_contract
+try:
+    from odoo.addons.smart_core.core.project_context import build_record_context_contract
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from odoo.addons.smart_core.core.project_context import build_project_context_contract as build_record_context_contract
 from odoo.addons.smart_core.core.page_contracts_builder import build_page_contracts
 from odoo.addons.smart_core.core.workspace_home_contract_builder import build_workspace_home_contract
 from odoo.addons.smart_core.core.runtime_page_contract_builder import mirror_workspace_home_role_context
@@ -95,32 +98,9 @@ _logger = logging.getLogger(__name__)
 CONTRACT_VERSION = "1.0.0"
 API_VERSION = "v1"
 
-_BUSINESS_NAV_GROUP_DISPLAY_ORDER = {
-    "基础资料": 5,
-    "项目中心": 10,
-    "投标管理类单据": 20,
-    "合同中心": 30,
-    "施工管理": 40,
-    "物资与分包": 50,
-    "财务中心": 60,
-    "人事行政": 70,
-    "资料证照": 80,
-    "基础设置": 990,
-    "配置": 990,
-    "系统配置": 990,
-}
+_BUSINESS_NAV_GROUP_DISPLAY_ORDER: dict[str, int] = {}
 
-_BUSINESS_MASTER_DATA_MENU_XMLIDS = {
-    "smart_construction_core.menu_sc_customer_partner",
-    "smart_construction_core.menu_sc_supplier_partner",
-}
-
-_INDUSTRY_EXTENSION_MODULES = (
-    "smart_construction_core",
-    "smart_construction_scene",
-    "smart_construction_portal",
-)
-LEGACY_INDUSTRY_EXTENSION_MODULES = _INDUSTRY_EXTENSION_MODULES
+_BUSINESS_MASTER_DATA_MENU_XMLIDS: set[str] = set()
 
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
 
@@ -165,7 +145,54 @@ def _resolve_industry_extension_modules(env) -> list[str]:
     except Exception:
         raw = ""
     modules = [item.strip() for item in str(raw or "").split(",") if item.strip()]
-    return modules or list(LEGACY_INDUSTRY_EXTENSION_MODULES)
+    return modules
+
+
+def _resolve_user_acceptance_nav_contract(env) -> dict:
+    hook_payload = call_extension_hook_first(env, "smart_core_user_data_acceptance_nav_contract", env)
+    if isinstance(hook_payload, dict):
+        return hook_payload
+    return {}
+
+
+def _string_set(value) -> set[str]:
+    if isinstance(value, (list, tuple, set)):
+        return {_text(item) for item in value if _text(item)}
+    if isinstance(value, str) and value.strip():
+        return {_text(value)}
+    return set()
+
+
+def _int_set(value) -> set[int]:
+    values = value if isinstance(value, (list, tuple, set)) else [value]
+    out = set()
+    for item in values:
+        try:
+            parsed = int(item or 0)
+        except Exception:
+            parsed = 0
+        if parsed > 0:
+            out.add(parsed)
+    return out
+
+
+def _acceptance_surface_matchers(contract: dict | None) -> dict:
+    contract = contract if isinstance(contract, dict) else {}
+    tokens = set()
+    for key in (
+        "acceptance_surface_tokens",
+        "formal_group_child_labels",
+        "old_acceptance_group_labels",
+        "direct_acceptance_group_labels",
+        "joint_acceptance_group_labels",
+        "acceptance_root_labels",
+    ):
+        tokens.update(_string_set(contract.get(key)))
+    return {
+        "tokens": tokens,
+        "menu_ids": _int_set(contract.get("acceptance_surface_menu_ids")),
+        "action_ids": _int_set(contract.get("acceptance_surface_action_ids")),
+    }
 
 
 def _resolve_startup_delivery_identity(env, params: dict | None) -> dict:
@@ -611,7 +638,11 @@ def _node_release_gate_keys(node: dict) -> set[str]:
     return {item for item in values if item}
 
 
-def _node_is_user_acceptance_surface(node: dict) -> bool:
+def _node_is_user_acceptance_surface(node: dict, *, acceptance_matchers: dict | None = None) -> bool:
+    matchers = acceptance_matchers if isinstance(acceptance_matchers, dict) else {}
+    surface_tokens = matchers.get("tokens") if isinstance(matchers.get("tokens"), set) else set()
+    surface_menu_ids = matchers.get("menu_ids") if isinstance(matchers.get("menu_ids"), set) else set()
+    surface_action_ids = matchers.get("action_ids") if isinstance(matchers.get("action_ids"), set) else set()
     meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
     entry_target = meta.get("entry_target") if isinstance(meta.get("entry_target"), dict) else {}
     compatibility_refs = entry_target.get("compatibility_refs") if isinstance(entry_target.get("compatibility_refs"), dict) else {}
@@ -625,7 +656,7 @@ def _node_is_user_acceptance_surface(node: dict) -> bool:
         normalized_action_id = int(action_id or 0)
     except Exception:
         normalized_action_id = 0
-    if normalized_menu_id in {727, 729, 735, 770} or normalized_action_id == 899:
+    if normalized_menu_id in surface_menu_ids or normalized_action_id in surface_action_ids:
         return True
     text = "/".join(
         _text(value)
@@ -644,35 +675,36 @@ def _node_is_user_acceptance_surface(node: dict) -> bool:
         )
         if _text(value)
     )
-    if any(token in text for token in ("用户验收", "用户数据验收", "用户核对菜单")):
-        return True
-    if any(
-        token in text
-        for token in (
-            "menu_scbsly_acceptance_",
-            "menu_scbs55_user_acceptance_",
-            "menu_scbsly_direct_project_acceptance_root",
-            "menu_sc_legacy_engineering_progress_receipt",
-        )
-    ):
+    if surface_tokens and any(token in text for token in surface_tokens):
         return True
     return False
 
 
-def _node_is_runtime_business_config_entry(node: dict) -> bool:
+def _runtime_business_config_productization_sources(env) -> set[str]:
+    payload = call_extension_hook_first(env, "smart_core_runtime_business_config_productization_sources", env)
+    if not isinstance(payload, (list, tuple, set)):
+        return set()
+    return {_text(item) for item in payload if _text(item)}
+
+
+def _node_is_runtime_business_config_entry(
+    node: dict,
+    *,
+    env=None,
+    productization_sources: set[str] | None = None,
+    acceptance_matchers: dict | None = None,
+) -> bool:
     """Keep already-authorized runtime configuration entries available."""
-    if _node_is_user_acceptance_surface(node):
+    if _node_is_user_acceptance_surface(node, acceptance_matchers=acceptance_matchers):
         return False
     meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
     productization_source = _text(meta.get("productization_source"))
-    if productization_source == "smart_construction_custom.user_menu_preference":
+    sources = productization_sources if isinstance(productization_sources, set) else _runtime_business_config_productization_sources(env)
+    if productization_source and productization_source in sources:
         return True
     if _text(node.get("delivery_bucket")) == "delivery_business_config":
         return True
     if _text(meta.get("delivery_bucket")) == "delivery_business_config":
-        return True
-    menu_xmlid = _text(node.get("menu_xmlid") or meta.get("menu_xmlid"))
-    if menu_xmlid.startswith("smart_construction_core.menu_scbsly_joint_acceptance_"):
         return True
     model = _text(node.get("model") or meta.get("model"))
     if model in {MENU_CONFIG_POLICY_MODEL}:
@@ -680,7 +712,7 @@ def _node_is_runtime_business_config_entry(node: dict) -> bool:
     return False
 
 
-def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict], dict]:
+def _filter_nav_by_release_gate(nav: list[dict], gate: dict, *, env=None) -> tuple[list[dict], dict]:
     if not isinstance(nav, list) or not gate.get("applied"):
         return nav if isinstance(nav, list) else [], {"applied": False}
     allowed = gate.get("allowed") if isinstance(gate.get("allowed"), dict) else {}
@@ -694,12 +726,14 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
     kept_leaf_count = 0
     removed_leaf_count = 0
     runtime_business_config_count = 0
+    runtime_business_config_sources = _runtime_business_config_productization_sources(env)
+    acceptance_matchers = _acceptance_surface_matchers(_resolve_user_acceptance_nav_contract(env))
 
     def _filter_node(node: dict):
         nonlocal kept_leaf_count, removed_leaf_count, runtime_business_config_count
         if not isinstance(node, dict):
             return None
-        if _node_is_user_acceptance_surface(node):
+        if _node_is_user_acceptance_surface(node, acceptance_matchers=acceptance_matchers):
             removed_leaf_count += 1
             return None
         children = node.get("children") if isinstance(node.get("children"), list) else []
@@ -714,7 +748,13 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
                 return None
             next_node["children"] = next_children
             return next_node
-        if _node_is_runtime_business_config_entry(node):
+
+        if _node_is_runtime_business_config_entry(
+            node,
+            env=env,
+            productization_sources=runtime_business_config_sources,
+            acceptance_matchers=acceptance_matchers,
+        ):
             kept_leaf_count += 1
             runtime_business_config_count += 1
             return next_node
@@ -853,46 +893,27 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
     if not isinstance(nav, list) or (not force and not _user_data_acceptance_nav_only_enabled(env)):
         return nav if isinstance(nav, list) else [], {"applied": False}
 
-    allowed_formal_labels = {"客户", "供应商"}
-    old_acceptance_group_labels = {"用户核对菜单", "旧业务数据核对"}
-    direct_acceptance_group_labels = {"直营项目数据核对", "直营项目系统菜单"}
-    joint_acceptance_group_labels = {"联营项目数据核对", "联营项目系统菜单"}
-    acceptance_root_labels = {"用户验收", "直营项目数据核对"}
+    acceptance_contract = _resolve_user_acceptance_nav_contract(env)
+    formal_group_labels = _string_set(acceptance_contract.get("formal_group_labels"))
+    allowed_formal_labels = _string_set(acceptance_contract.get("formal_group_child_labels"))
+    old_acceptance_group_labels = _string_set(acceptance_contract.get("old_acceptance_group_labels"))
+    direct_acceptance_group_labels = _string_set(acceptance_contract.get("direct_acceptance_group_labels"))
+    joint_acceptance_group_labels = _string_set(acceptance_contract.get("joint_acceptance_group_labels"))
+    direct_acceptance_child_tokens = _string_set(acceptance_contract.get("direct_acceptance_child_tokens"))
+    joint_acceptance_child_tokens = _string_set(acceptance_contract.get("joint_acceptance_child_tokens"))
+    acceptance_root_labels = _string_set(acceptance_contract.get("acceptance_root_labels"))
+    direct_acceptance_group_label = _text(acceptance_contract.get("direct_acceptance_group_label")) or "数据核对"
+    joint_acceptance_group_label = _text(acceptance_contract.get("joint_acceptance_group_label")) or "数据核对"
+    acceptance_root_group_label = _text(acceptance_contract.get("acceptance_root_group_label")) or "数据验收"
     formal_group = None
     old_acceptance_children = []
     direct_acceptance_children = []
     joint_acceptance_children = []
     acceptance_source_labels = {"old": [], "direct": [], "joint": []}
-    required_old_acceptance_menu_xmlids = [
-        "smart_construction_core.menu_scbs55_user_acceptance_445_工程进度收款",
-    ]
-    required_joint_acceptance_menu_xmlids = [
-        "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_income",
-        "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_refund",
-        "smart_construction_core.menu_scbsly_joint_acceptance_supplier_contract",
-        "smart_construction_core.menu_scbsly_joint_acceptance_labor_contract",
-        "smart_construction_core.menu_scbsly_joint_acceptance_rental_contract",
-    ]
-    required_contract_product_menu_xmlids = [
-        "smart_construction_core.menu_sc_contract_income",
-        "smart_construction_core.menu_sc_project_income_contract",
-        "smart_construction_core.menu_sc_income_contract_execution",
-        "smart_construction_core.menu_sc_contract_event",
-        "smart_construction_core.menu_sc_general_contract",
-        "smart_construction_core.menu_sc_contract_expense",
-        "smart_construction_core.menu_sc_expense_contract_execution",
-    ]
-    required_settlement_product_menu_xmlids = [
-        "smart_construction_core.menu_sc_settlement_order",
-        "smart_construction_core.menu_sc_settlement_adjustment",
-        "smart_construction_core.menu_sc_income_contract_settlement",
-        "smart_construction_core.menu_sc_expense_contract_settlement",
-        "smart_construction_core.menu_sc_material_settlement",
-        "smart_construction_core.menu_sc_labor_settlement",
-        "smart_construction_core.menu_sc_equipment_settlement",
-        "smart_construction_core.menu_sc_material_rental_settlement",
-        "smart_construction_core.menu_sc_subcontract_settlement",
-    ]
+    required_old_acceptance_menu_xmlids = list(acceptance_contract.get("old_acceptance_menu_xmlids") or [])
+    required_joint_acceptance_menu_xmlids = list(acceptance_contract.get("joint_acceptance_menu_xmlids") or [])
+    required_contract_product_menu_xmlids = list(acceptance_contract.get("contract_product_menu_xmlids") or [])
+    required_settlement_product_menu_xmlids = list(acceptance_contract.get("settlement_product_menu_xmlids") or [])
     contract_product_children = []
     settlement_product_children = []
 
@@ -1066,7 +1087,7 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
                 continue
             label = _text(group.get("label") or group.get("title") or group.get("name"))
             children = group.get("children") if isinstance(group.get("children"), list) else []
-            if label == "基础设置":
+            if label in formal_group_labels:
                 kept_children = [
                     child
                     for child in children
@@ -1090,12 +1111,12 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
                         continue
                     child_label = _text(child.get("label") or child.get("title") or child.get("name"))
                     child_children = child.get("children") if isinstance(child.get("children"), list) else []
-                    if child_label in joint_acceptance_group_labels or "联营" in child_label:
+                    if child_label in joint_acceptance_group_labels or any(token in child_label for token in joint_acceptance_child_tokens):
                         acceptance_source_labels["joint"].append(child_label or label)
                         joint_acceptance_children.extend(
                             mark_acceptance_projection(flatten_target_children(child_children), source_bucket="joint")
                         )
-                    elif child_label in direct_acceptance_group_labels or "直营" in child_label:
+                    elif child_label in direct_acceptance_group_labels or any(token in child_label for token in direct_acceptance_child_tokens):
                         acceptance_source_labels["direct"].append(child_label or label)
                         direct_acceptance_children.extend(
                             mark_acceptance_projection(flatten_target_children(child_children), source_bucket="direct")
@@ -1156,7 +1177,7 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
         next_children.append(
             acceptance_project_group(
                 key="group:direct_project_data_acceptance",
-                label="直营项目数据核对",
+                label=direct_acceptance_group_label,
                 children=direct_acceptance_children,
                 source_bucket="direct",
             )
@@ -1165,7 +1186,7 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
         next_children.append(
             acceptance_project_group(
                 key="group:joint_project_data_acceptance",
-                label="联营项目数据核对",
+                label=joint_acceptance_group_label,
                 children=joint_acceptance_children,
                 source_bucket="joint",
             )
@@ -1201,8 +1222,8 @@ def _append_user_data_acceptance_nav_group(nav: list[dict], acceptance_children:
 
     acceptance_group = {
         "key": "group:user_data_acceptance",
-        "label": "用户数据验收",
-        "title": "用户数据验收",
+        "label": acceptance_root_group_label,
+        "title": acceptance_root_group_label,
         "children": acceptance_children,
         "sequence": 910,
         "meta": {
@@ -1281,9 +1302,25 @@ def _unwrap_internal_nav_groups(nav: list[dict], labels: set[str]) -> list[dict]
     return unwrap(nav)
 
 
-def _sort_business_nav_groups(nav: list[dict]) -> list[dict]:
+def _resolve_business_nav_group_display_order(env) -> dict:
+    order = dict(_BUSINESS_NAV_GROUP_DISPLAY_ORDER)
+    hook_payload = call_extension_hook_first(env, "smart_core_business_nav_group_display_order", env)
+    if isinstance(hook_payload, dict):
+        for label, sequence in hook_payload.items():
+            label = _text(label)
+            if not label:
+                continue
+            try:
+                order[label] = int(sequence)
+            except Exception:
+                continue
+    return order
+
+
+def _sort_business_nav_groups(nav: list[dict], display_order: dict | None = None) -> list[dict]:
     if not isinstance(nav, list):
         return []
+    order = display_order if isinstance(display_order, dict) else _BUSINESS_NAV_GROUP_DISPLAY_ORDER
 
     def sequence_value(node: dict) -> int:
         try:
@@ -1294,7 +1331,7 @@ def _sort_business_nav_groups(nav: list[dict]) -> list[dict]:
     def sort_key(node: dict) -> tuple[int, int, str]:
         label = _text(node.get("label") or node.get("title") or node.get("name"))
         return (
-            _BUSINESS_NAV_GROUP_DISPLAY_ORDER.get(label, 900),
+            order.get(label, 900),
             sequence_value(node),
             label,
         )
@@ -1305,7 +1342,7 @@ def _sort_business_nav_groups(nav: list[dict]) -> list[dict]:
             continue
         next_node = dict(node)
         label = _text(next_node.get("label") or next_node.get("title") or next_node.get("name"))
-        group_sequence = _BUSINESS_NAV_GROUP_DISPLAY_ORDER.get(label)
+        group_sequence = order.get(label)
         if group_sequence is not None:
             next_node["sequence"] = group_sequence
             meta = next_node.get("meta")
@@ -1315,7 +1352,7 @@ def _sort_business_nav_groups(nav: list[dict]) -> list[dict]:
             meta["sequence"] = group_sequence
         children = next_node.get("children") if isinstance(next_node.get("children"), list) else []
         if children:
-            next_node["children"] = _sort_business_nav_groups(children)
+            next_node["children"] = _sort_business_nav_groups(children, order)
         sorted_nodes.append(next_node)
     return sorted(sorted_nodes, key=sort_key)
 
@@ -1403,9 +1440,10 @@ def _dedupe_nav_siblings_by_identity(nav: list[dict]) -> list[dict]:
     return dedupe(nav)
 
 
-def _rehome_business_master_data_nav_groups(nav: list[dict]) -> list[dict]:
+def _rehome_business_master_data_nav_groups(nav: list[dict], display_order: dict | None = None) -> list[dict]:
     if not isinstance(nav, list):
         return []
+    order = display_order if isinstance(display_order, dict) else _BUSINESS_NAV_GROUP_DISPLAY_ORDER
 
     extracted: list[dict] = []
     seen = set()
@@ -1444,15 +1482,15 @@ def _rehome_business_master_data_nav_groups(nav: list[dict]) -> list[dict]:
 
     extracted.sort(key=lambda node: (int(node.get("sequence") or 0), int(node.get("menu_id") or 0)))
     master_group = {
-        "key": "group:construction.基础资料",
+        "key": "group:catalog.基础资料",
         "label": "基础资料",
         "title": "基础资料",
         "children": extracted,
-        "sequence": _BUSINESS_NAV_GROUP_DISPLAY_ORDER["基础资料"],
+        "sequence": order["基础资料"],
         "meta": {
-            "group_key": "construction.基础资料",
+            "group_key": "catalog.基础资料",
             "source": "business_master_data_runtime_rehome",
-            "sequence": _BUSINESS_NAV_GROUP_DISPLAY_ORDER["基础资料"],
+            "sequence": order["基础资料"],
         },
     }
 
@@ -1472,7 +1510,7 @@ def _rehome_business_master_data_nav_groups(nav: list[dict]) -> list[dict]:
                 child = dict(child)
                 existing = child.get("children") if isinstance(child.get("children"), list) else []
                 child["children"] = extracted + existing
-                child["sequence"] = _BUSINESS_NAV_GROUP_DISPLAY_ORDER["基础资料"]
+                child["sequence"] = order["基础资料"]
                 merged = True
             next_children.append(child)
         if not merged:
@@ -1923,9 +1961,10 @@ class SystemInitHandler(BaseIntentHandler):
             gated_nav, gate_meta = _filter_nav_by_release_gate(
                 delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
                 release_gate,
+                env=env,
             )
             gated_nav, user_menu_config_meta = _apply_constrained_user_menu_config_to_released_nav(env, gated_nav)
-            gated_nav, post_overlay_gate_meta = _filter_nav_by_release_gate(gated_nav, release_gate)
+            gated_nav, post_overlay_gate_meta = _filter_nav_by_release_gate(gated_nav, release_gate, env=env)
             delivery_payload["nav"] = gated_nav
             meta = delivery_payload.get("meta")
             if not isinstance(meta, dict):
@@ -2014,8 +2053,11 @@ class SystemInitHandler(BaseIntentHandler):
                     "reason": "delivery_engine_product_navigation_authority",
                 }
             else:
-                delivery_nav = _remove_nav_groups_by_label(delivery_nav, {"用户核对菜单"})
-                user_data_acceptance_meta["source_user_check_menu_hidden"] = True
+                source_menu_group_labels_to_hide = _string_set(
+                    _resolve_user_acceptance_nav_contract(env).get("source_menu_group_labels_to_hide")
+                )
+                delivery_nav = _remove_nav_groups_by_label(delivery_nav, source_menu_group_labels_to_hide)
+                user_data_acceptance_meta["source_user_check_menu_hidden"] = bool(source_menu_group_labels_to_hide)
             formal_product_menu_meta = {
                 "applied": False,
                 "reason": "delivery_engine_released_by_product_policy",
@@ -2142,7 +2184,7 @@ class SystemInitHandler(BaseIntentHandler):
         except Exception:
             pass
         data = _normalize_access_suggested_action(data)
-        data["project_context"] = build_project_context_contract(env, params)
+        data["project_context"] = build_record_context_contract(env, params)
         data["contract_mode"] = contract_mode
         if contract_mode == "user":
             data.pop("scene_diagnostics", None)

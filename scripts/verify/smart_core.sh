@@ -8,7 +8,7 @@ EXPECT_DEGRADED="${SMART_CORE_EXPECT_DEGRADED:-auto}"
 
 mkdir -p "$OUTDIR"
 
-case_1="smart_core_project_kanban_lifecycle_pm"
+case_1="smart_core_project_list_pm"
 case_2="smart_core_portal_lifecycle_dashboard_pm"
 tmp_dir="${OUTDIR}/.tmp"
 mkdir -p "$tmp_dir"
@@ -20,7 +20,7 @@ scripts/contract/snapshot_export.sh \
   --op action_open \
   --model project.project \
   --view_type kanban \
-  --action_xmlid smart_construction_core.action_sc_project_kanban_lifecycle \
+  --action_xmlid smart_construction_core.action_sc_project_list \
   --include_meta \
   --config "$CONFIG" \
   --outdir "$OUTDIR"
@@ -32,7 +32,7 @@ scripts/contract/snapshot_export.sh \
   --op action_open \
   --model project.project \
   --view_type kanban \
-  --action_xmlid smart_construction_core.action_sc_project_kanban_lifecycle \
+  --action_xmlid smart_construction_core.action_sc_project_list \
   --include_meta \
   --config "$CONFIG" \
   --outdir "$tmp_dir"
@@ -161,7 +161,7 @@ import sys
 outdir = os.environ.get("OUTDIR", "/tmp/smart_core_verify")
 expect = os.environ.get("EXPECT_DEGRADED", "auto").strip().lower()
 targets = [
-    (os.path.join(outdir, "smart_core_project_kanban_lifecycle_pm.json"), True),
+    (os.path.join(outdir, "smart_core_project_list_pm.json"), True),
     (os.path.join(outdir, "smart_core_portal_lifecycle_dashboard_pm.json"), False),
 ]
 

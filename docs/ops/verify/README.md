@@ -42,6 +42,24 @@
   - Verifies the form productization standard keeps product-layer
     responsibilities, field classification, entry semantics, density rules,
     state/action rules, attachment rules, and audit wiring intact.
+- `make verify.view.orchestration_product_boundary_guard`
+  - Verifies P1 product-release form contracts keep the backend orchestration
+    boundary intact.
+  - Product-release contracts may declare fields, sections, and
+    `composition_mode=entry_semantic_surface`, but must not replace the native
+    parser and orchestrator with a full hand-written form layout tree.
+- `make verify.app_config_engine.boundary_guard`
+  - Verifies `addons/smart_core/app_config_engine` remains runtime contract
+    plumbing for `/api/contract/get`, not a product-form authority layer.
+  - Keeps the HTTP controller thin, enforces no-business-fact authority markers,
+    checks native parse/view-orchestration ownership wording, and prevents
+    industry-module references from silently expanding in the platform engine.
+- `make verify.smart_core.boundary_guard`
+  - Verifies `addons/smart_core` remains the platform kernel, not an industry
+    business fact module.
+  - Checks the Smart Core boundary document, required top-level directories,
+    manifest dependencies, app-config-engine local boundary, and zero industry
+    defaults in production platform code.
 
 ## Architecture Guard Aliases
 - `make verify.restricted`
@@ -488,7 +506,7 @@
 - `make verify.baseline.policy_integrity.guard`
   - Verifies required governance policy baseline JSON files exist and are valid objects.
 - `make verify.backend.architecture.full`
-  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + prod-like role fixtures + assembler semantic smoke + runtime surface dashboard report + snapshot determinism + RuntimeContext stability + governance coverage + HUD trace smokes).
+  - One-command backend governance gate (smart_core/app_config_engine boundary + backend boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + prod-like role fixtures + assembler semantic smoke + runtime surface dashboard report + snapshot determinism + RuntimeContext stability + governance coverage + HUD trace smokes).
   - Optional strict runtime-surface warning gate: `SC_RUNTIME_SURFACE_STRICT=1 make verify.backend.architecture.full`.
   - Optional strict phase-next aggregate gate: `SC_PHASE_NEXT_STRICT=1 make verify.backend.architecture.full`.
   - Always emits consolidated summary artifacts:
@@ -500,6 +518,7 @@
 - `make verify.backend.architecture.full.report`
   - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.
   - Includes business capability baseline check summary (`required_intent_count`, `required_role_count`, `catalog_runtime_ratio`).
+  - Includes platform core boundary contract checks (`smart_core_boundary_contract`, `app_config_engine_boundary_contract`).
   - Output check list is sorted by check name for deterministic diff.
 - `make verify.backend.architecture.full.report.schema.guard`
   - Schema guard for `backend_architecture_full_report.json` and required check-set coverage.

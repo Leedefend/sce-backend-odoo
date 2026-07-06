@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from odoo import api, fields, models
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 
 def _text(value: Any) -> str:
@@ -50,15 +51,26 @@ class ScProductPolicy(models.Model):
 
         service = ProductPolicyService(self.env)
         catalog_sync = ProductPolicyCatalogSyncService(self.env)
-        defaults = [
-            ("construction.standard", "施工管理标准版"),
-            ("construction.preview", "施工管理预览版"),
+        extension_defaults = call_extension_hook_first(
+            self.env,
+            "smart_core_default_product_policy_specs",
+            self.env,
+        )
+        defaults = list(extension_defaults) if isinstance(extension_defaults, (list, tuple)) else []
+        defaults += [
             ("platform.standard", "平台内核标准版"),
             ("platform.preview", "平台内核预览版"),
         ]
         for product_key, label in defaults:
-            if product_key.startswith("construction."):
-                policy = catalog_sync.build_construction_policy_payload(product_key=product_key)
+            identity_base = product_key.split(".", 1)[0] if "." in product_key else product_key
+            if catalog_sync._is_catalog_backed_product(
+                identity={
+                    "product_key": product_key,
+                    "base_product_key": identity_base,
+                    "edition_key": product_key.split(".", 1)[1] if "." in product_key else "standard",
+                }
+            ):
+                policy = catalog_sync.build_catalog_policy_payload(product_key=product_key)
             else:
                 policy = service.get_policy(product_key=product_key)
             values = {
@@ -84,7 +96,7 @@ class ScProductPolicy(models.Model):
                 self.sudo().create(values)
         self.env["ir.config_parameter"].sudo().set_param(
             "smart_core.release_operator.product_base_keys",
-            "construction,platform",
+            ",".join(dict.fromkeys([_text(key).split(".", 1)[0] for key, _label in defaults if _text(key)])),
         )
         return True
 

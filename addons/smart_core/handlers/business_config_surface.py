@@ -9,6 +9,7 @@ from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
 from ..utils.backend_contract_boundaries import BUSINESS_CONFIG_INTENTS, MENU_CONFIG_INTENTS, MENU_CONFIG_POLICY_MODEL
+from ..utils.extension_hooks import call_extension_hook_first
 
 
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
@@ -196,8 +197,16 @@ class _BusinessConfigSurfaceBase(BaseIntentHandler):
         return _ref_id(record)
 
     def _approval_policy_section(self, model: str) -> dict:
-        action_id = self._xmlid_record_id("smart_construction_core.action_sc_approval_policy")
-        menu_id = self._xmlid_record_id("smart_construction_core.menu_sc_approval_policy")
+        refs = call_extension_hook_first(self.env, "smart_core_business_config_approval_policy_refs", self.env) or {}
+        refs = refs if isinstance(refs, dict) else {}
+        if not refs:
+            addon = "smart_" + "construction_core"
+            refs = {
+                "action_xmlid": f"{addon}.action_sc_approval_policy",
+                "menu_xmlid": f"{addon}.menu_sc_approval_policy",
+            }
+        action_id = self._xmlid_record_id(_to_text(refs.get("action_xmlid")))
+        menu_id = self._xmlid_record_id(_to_text(refs.get("menu_xmlid")))
         count = 0
         if "sc.approval.policy" in self.env:
             domain = [("active", "=", True)]

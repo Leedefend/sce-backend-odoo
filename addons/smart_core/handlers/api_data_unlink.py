@@ -8,16 +8,21 @@ from typing import Any, Dict, List
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 from ..core.base_handler import BaseIntentHandler
-from ..core.project_context import (
-    project_scope_denied_response,
-)
+try:
+    from ..core.project_context import record_scope_denied_response
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import project_scope_denied_response as record_scope_denied_response
 try:
     from ..core.project_context import apply_business_scope_domain
 except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
-    from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+    from ..core.project_context import apply_project_scope_domain
+    try:
+        from ..core.project_context import selected_record_context_id_from_context
+    except ImportError:  # pragma: no cover - compatibility for older lightweight boundary tests
+        from ..core.project_context import selected_project_id_from_context as selected_record_context_id_from_context
 
     def apply_business_scope_domain(env_model, domain, params=None, context=None):
-        return apply_project_scope_domain(env_model, domain, selected_project_id_from_context(params, context))
+        return apply_project_scope_domain(env_model, domain, selected_record_context_id_from_context(params, context))
 from ..core.request_params import parse_bool
 from ..utils.idempotency import (
     apply_idempotency_identity,
@@ -274,7 +279,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         if project_scope_meta.get("applied"):
             allowed_count = env_model.search_count(scoped_domain)
             if int(allowed_count or 0) != len(set(ids)):
-                return project_scope_denied_response(project_scope_meta, message="当前项目上下文不允许删除其他项目的数据")
+                return record_scope_denied_response(project_scope_meta, message="当前记录上下文不允许删除其他记录的数据")
         trace_id = ""
         if isinstance(self.context, dict):
             trace_id = self.context.get("trace_id") or ""

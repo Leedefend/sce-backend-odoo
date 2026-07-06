@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -344,7 +344,7 @@ def main() -> int:
             warnings.append("threshold policy is empty; skip ratio checks")
         metrics["evaluated_policy"] = policy
         metrics["evaluated_source"] = source
-        metrics["captured_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        metrics["captured_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
         if source == "live":
             state_path.write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
 

@@ -14,32 +14,5 @@ class ProjectPlanBootstrapSceneOrchestrator(BaseSceneEntryOrchestrator):
     NO_BUSINESS_FACT_AUTHORITY = BaseSceneEntryOrchestrator.NO_BUSINESS_FACT_AUTHORITY
     ADAPTER_LAYER = BaseSceneEntryOrchestrator.ADAPTER_LAYER
 
-    scene_key = "project.plan_bootstrap"
-    scene_label = "计划准备"
-    state_fallback_text = "后端未提供计划准备状态摘要"
-    title_empty = "计划编排"
-    suggested_action_key = "load_plan_next_actions"
-    suggested_action_reason_code = "PROJECT_PLAN_BOOTSTRAP_READY"
-    block_fetch_intent = "project.plan_bootstrap.block.fetch"
-    entry_summary_keys = (
-        "project_code",
-        "manager_name",
-        "stage_name",
-        "date_start",
-        "date_end",
-    )
-    entry_blocks = (
-        ("plan_summary_detail", "计划摘要", "deferred"),
-        ("plan_tasks", "计划任务", "deferred"),
-        ("next_actions", "计划下一步", "deferred"),
-    )
-
     def __init__(self, env):
         super().__init__(env, build_project_plan_bootstrap_service(env))
-
-    def resolve_first_action(self, runtime_fetch_hints):
-        blocks = runtime_fetch_hints.get("blocks") if isinstance(runtime_fetch_hints.get("blocks"), dict) else {}
-        return blocks.get("next_actions") or blocks.get("plan_summary_detail") or {}
-
-    def resolve_title(self, project_payload):
-        return "计划准备：%s" % str(project_payload.get("name") or "项目")

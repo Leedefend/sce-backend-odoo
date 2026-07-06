@@ -6,7 +6,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8069").rstrip("/")
@@ -462,7 +462,7 @@ def pick_or_create_candidate(finance_token: str, out_dir: Path) -> tuple[int, di
 
 
 def main() -> int:
-    ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out_dir = Path(ARTIFACTS_DIR) / "codex" / "payment-request-approval-handoff-smoke" / ts
     summary = {
         "db": DB_NAME,

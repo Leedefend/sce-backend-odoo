@@ -31,25 +31,24 @@ class TestSceneDeliveryPolicy(TransactionCase):
         self.assertEqual(source.get("kind"), "scene_delivery_policy_projection")
         self.assertTrue(source.get("projection_only"))
         self.assertTrue(source.get("no_business_fact_authority"))
-        self.assertEqual((source.get("legacy_surface_aliases") or {}).get("construction_pm_v1"), "workspace_default_v1")
         self.assertEqual(source.get("legacy_surface_alias_source"), "legacy_scene_surface_alias_projection")
         legacy_source = legacy_surface_alias_source_authority_contract()
         self.assertEqual(legacy_source.get("kind"), "legacy_scene_surface_alias_projection")
         self.assertTrue(legacy_source.get("legacy_compatibility"))
 
-    def test_construction_surface_alias_is_reported_in_runtime_and_filter_meta(self):
+    def test_workspace_surface_alias_is_reported_in_runtime_and_filter_meta(self):
         runtime = resolve_delivery_policy_runtime(
             None,
-            {"scene_delivery_policy_enabled": True, "scene_surface": "construction_pm_v1"},
+            {"scene_delivery_policy_enabled": True, "scene_surface": "workspace_pm_v1"},
         )
         alias = runtime.get("legacy_surface_alias") or {}
         self.assertEqual(runtime.get("surface"), "workspace_default_v1")
-        self.assertEqual(alias.get("requested_surface"), "construction_pm_v1")
+        self.assertEqual(alias.get("requested_surface"), "workspace_pm_v1")
         self.assertEqual((alias.get("source_authority") or {}).get("kind"), "legacy_scene_surface_alias_projection")
 
         result = filter_delivery_scenes(
             [],
-            surface="construction_pm_v1",
+            surface="workspace_pm_v1",
             role_surface={},
             enabled=False,
         )
@@ -57,7 +56,7 @@ class TestSceneDeliveryPolicy(TransactionCase):
         self.assertEqual(meta_alias.get("normalized_surface"), "workspace_default_v1")
         self.assertEqual((meta_alias.get("source_authority") or {}).get("kind"), "legacy_scene_surface_alias_projection")
 
-    def test_construction_surface_policy_filters_nav_and_deep_link(self):
+    def test_workspace_surface_policy_filters_nav_and_deep_link(self):
         scenes = [
             {
                 "code": "project.management",
@@ -81,7 +80,7 @@ class TestSceneDeliveryPolicy(TransactionCase):
 
         result = filter_delivery_scenes(
             scenes,
-            surface="construction_pm_v1",
+            surface="workspace_pm_v1",
             role_surface={},
             contract_mode="user",
             runtime_env="dev",

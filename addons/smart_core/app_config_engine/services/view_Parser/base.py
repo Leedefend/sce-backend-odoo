@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-services/view_parser/base.py
+services/view_Parser/base.py
 
 通用工具 & XML 保真解析 & toolbar/modifiers 等
-供 contract_parser.OdooViewParser 通过 MRO 继承使用。
+供 contract_Parser.OdooViewParser 通过 MRO 继承使用。
 
 注意：本文件仅提供普通 Python Mixin，不继承 Odoo 模型。
 """

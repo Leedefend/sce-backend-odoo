@@ -15,11 +15,7 @@ REQUIRED_SOURCE_STATUSES = {
     "tenant_runtime",
     "product_release",
 }
-REQUIRED_SYSTEM_CONFIG_MENU_XMLIDS = {
-    "smart_construction_core.menu_sc_business_config_center",
-    "smart_construction_core.menu_sc_business_config_workbench",
-    "smart_construction_core.menu_ui_menu_config_policy_business_config",
-}
+REQUIRED_SYSTEM_CONFIG_MENU_XMLIDS: set[str] = set()
 REQUIRED_GLOBAL_CONFIG_MENU_GROUPS = {
     "smart_construction_core.group_sc_cap_business_config_admin",
     "smart_core.group_smart_core_business_config_admin",

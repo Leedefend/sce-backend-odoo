@@ -704,6 +704,8 @@ class NavDispatcher:
                 "views": n.get("views"),
                 "domain": n.get("domain"),
                 "context": n.get("context"),
+                "record_scope_policy": n.get("record_scope_policy")
+                or ("current_record" if n.get("project_scope_policy") == "current_project" else n.get("project_scope_policy")),
                 "project_scope_policy": n.get("project_scope_policy"),
                 "groups_xmlids": n.get("groups") or n.get("groups_xmlids"),
             }

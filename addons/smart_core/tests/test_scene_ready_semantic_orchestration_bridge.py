@@ -1,14 +1,31 @@
 # -*- coding: utf-8 -*-
 import importlib.util
+import sys
+import types
 import unittest
 from pathlib import Path
 
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "core" / "scene_ready_semantic_orchestration_bridge.py"
+CORE_DIR = Path(__file__).resolve().parents[1] / "core"
+MODULE_PATH = CORE_DIR / "scene_ready_semantic_orchestration_bridge.py"
 
 
 def _load_module():
-    spec = importlib.util.spec_from_file_location("scene_ready_semantic_orchestration_bridge_under_test", MODULE_PATH)
+    sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+    sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
+    smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
+    smart_core_pkg.__path__ = [str(CORE_DIR.parent)]
+    core_pkg = sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+    core_pkg.__path__ = [str(CORE_DIR)]
+
+    source_authority = types.ModuleType("odoo.addons.smart_core.core.source_authority")
+    source_authority.build_source_authority_contract = lambda **kwargs: dict(kwargs)
+    sys.modules["odoo.addons.smart_core.core.source_authority"] = source_authority
+
+    spec = importlib.util.spec_from_file_location(
+        "odoo.addons.smart_core.core.scene_ready_semantic_orchestration_bridge",
+        MODULE_PATH,
+    )
     module = importlib.util.module_from_spec(spec)
     assert spec and spec.loader
     spec.loader.exec_module(module)
@@ -19,6 +36,12 @@ bridge_module = _load_module()
 
 
 class TestSceneReadySemanticOrchestrationBridge(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        bridge_module.register_advisory_handoff_family("payment_approval")
+        bridge_module.register_advisory_handoff_family("payment_entry")
+
     def test_bridge_overrides_legacy_view_modes_from_parser_semantics(self):
         payload = {
             "view_modes": [{"key": "kanban", "label": "看板", "enabled": True}],

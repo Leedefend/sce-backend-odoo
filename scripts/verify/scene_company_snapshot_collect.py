@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -194,7 +194,7 @@ def main() -> int:
             "success_count": success_count,
             "observed_company_ids": sorted(observed_company_ids),
             "distinct_company_id_count": distinct_count,
-            "captured_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            "captured_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
         },
         "profiles": profile_reports,
         "thresholds": {

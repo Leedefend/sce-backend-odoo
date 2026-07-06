@@ -9,7 +9,7 @@ export const BUSINESS_CONFIG_MODELS = {
   menuConfigPolicy: 'ui.menu.config.policy',
 } as const;
 
-const BUSINESS_CONFIG_RUNTIME_MODELS = new Set(Object.values(BUSINESS_CONFIG_MODELS));
+const BUSINESS_CONFIG_RUNTIME_MODELS = new Set<string>(Object.values(BUSINESS_CONFIG_MODELS));
 
 export const BUSINESS_CONFIG_MODES = {
   formFieldConfiguration: 'form_field_configuration',

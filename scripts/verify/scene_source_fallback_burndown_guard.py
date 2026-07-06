@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -128,7 +128,7 @@ def main() -> int:
             )
 
     state_payload = {
-        "captured_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "captured_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
         "scene_count": scene_count,
         "runtime_fallback_count": runtime_fallback_count,
         "runtime_minimal_count": runtime_minimal_count,

@@ -96,14 +96,20 @@ def main() -> int:
     matrix_evidence_policy_delta = _to_int(matrix_delta.get("contract_evidence_grouped_governance_policy_count"))
 
     brief_delta_types_ok = (
-        isinstance(brief_cov_delta, float)
-        and isinstance(brief_failure_delta, int)
-        and isinstance(brief_consistency_delta, int)
+        not has_previous_brief
+        or (
+            isinstance(brief_cov_delta, float)
+            and isinstance(brief_failure_delta, int)
+            and isinstance(brief_consistency_delta, int)
+        )
     )
     matrix_delta_types_ok = (
-        isinstance(matrix_brief_policy_delta, int)
-        and isinstance(matrix_drift_policy_delta, int)
-        and isinstance(matrix_evidence_policy_delta, int)
+        not has_previous_matrix
+        or (
+            isinstance(matrix_brief_policy_delta, int)
+            and isinstance(matrix_drift_policy_delta, int)
+            and isinstance(matrix_evidence_policy_delta, int)
+        )
     )
 
     if (has_previous_brief or has_previous_matrix) and bool(policy.get("require_delta_typed_when_previous", True)):

@@ -248,6 +248,7 @@
         'views/menu_business_taxonomy.xml',
         'views/menu_scbsly_direct_project_acceptance.xml',
         'views/core/expense_business_fact_taxonomy_views.xml',
+        'data/payment_execution_actual_outflow_form_productization_contract.xml',
         'views/menu_user_acceptance_cleanup.xml',
         'views/menu_contract_product_release.xml',
         'views/support/audit_list_fields_views.xml',

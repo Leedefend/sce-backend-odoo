@@ -42,7 +42,9 @@ def _load_handler():
     _install_module("odoo.addons.smart_core.core.base_handler", BaseIntentHandler=_BaseIntentHandler)
     _install_module(
         "odoo.addons.smart_core.core.project_context",
+        apply_business_scope_domain=lambda env_model, domain, params=None, context=None: (domain, {"applied": False}),
         apply_project_scope_domain=lambda env_model, domain, project_id: (domain, {"applied": False}),
+        selected_record_context_id_from_context=lambda params, context: None,
         selected_project_id_from_context=lambda params, context: None,
     )
     _install_module(

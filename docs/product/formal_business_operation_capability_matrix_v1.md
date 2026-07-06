@@ -47,7 +47,7 @@
 | 物资与分包 | 材料管理 | 采购订单 | `purchase.order` | `RCW` | `tree:Y/form:Y/search:Y` | `list=15 form=70 search=0` | `/a/581?menu_id=404` | PASS |
 | 物资与分包 | 询价报价 | 报价单 | `sc.material.rfq` | `RCW` | `tree:Y/form:Y/search:Y` | `list=21 form=31 search=0` | `/a/966?menu_id=778` | PASS |
 | 财务中心 | 付款管理 | 公司财务支出 | `sc.payment.execution` | `RCW` | `tree:Y/form:Y/search:Y` | `list=8 form=42 search=0` | `/a/779?menu_id=540` | PASS |
-| 财务中心 | 付款管理 | 实付登记 | `sc.payment.execution` | `RCW` | `tree:Y/form:Y/search:Y` | `list=19 form=101 search=0` | `/a/806?menu_id=347` | PASS |
+| 财务中心 | 付款管理 | 实付登记 | `sc.payment.execution` | `RCW` | `tree:Y/form:Y/search:Y` | `list=19 form=49 search=0` | `/a/806?menu_id=347` | PASS |
 | 财务中心 | 付款管理 | 往来单位付款 | `sc.payment.execution` | `RCW` | `tree:Y/form:Y/search:Y` | `list=17 form=42 search=0` | `/a/781?menu_id=551` | PASS |
 | 财务中心 | 付款管理 | 支付申请 | `payment.request` | `RCW` | `tree:Y/form:Y/search:Y` | `list=20 form=37 search=0` | `/a/780?menu_id=786` | PASS |
 | 财务中心 | 借还款 | 借款申请 | `sc.financing.loan` | `RCW` | `tree:Y/form:Y/search:Y` | `list=26 form=26 search=0` | `/a/775?menu_id=542` | PASS |

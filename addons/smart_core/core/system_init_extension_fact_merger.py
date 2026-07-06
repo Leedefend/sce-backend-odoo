@@ -10,6 +10,7 @@ from odoo.addons.smart_core.utils.extension_hooks import iter_extension_modules
 SOURCE_KIND = "system_init_extension_fact_contribution_merger"
 SOURCE_AUTHORITIES = ("extension_hook:get_system_init_fact_contributions", "ext_facts")
 NO_BUSINESS_FACT_AUTHORITY = True
+DEFAULT_WORKSPACE_COLLECTION_EXPORT_KEYS = ("task_items", "risk_actions")
 
 
 def source_authority_contract() -> dict[str, Any]:
@@ -100,7 +101,13 @@ def merge_extension_facts(data: dict[str, Any], *, include_workspace_collections
         if include_workspace_collections:
             workspace_collections = module_facts.get("workspace_collections")
             if isinstance(workspace_collections, dict):
-                for key in ("task_items", "payment_requests", "risk_actions", "project_actions"):
+                export_keys = module_facts.get("workspace_collection_export_keys")
+                if not isinstance(export_keys, (list, tuple, set)):
+                    export_keys = DEFAULT_WORKSPACE_COLLECTION_EXPORT_KEYS
+                for key in export_keys:
+                    key = str(key or "").strip()
+                    if not key:
+                        continue
                     rows = workspace_collections.get(key)
                     if key not in data and isinstance(rows, list):
                         data[key] = rows

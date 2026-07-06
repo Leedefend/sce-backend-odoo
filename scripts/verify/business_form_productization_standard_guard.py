@@ -15,6 +15,11 @@ VERIFY_README = ROOT / "docs/ops/verify/README.md"
 STANDARD_TOKENS = (
     "Formal Business Form Productization Standard v1",
     "Product Layer Responsibilities",
+    "Backend Orchestration Boundary",
+    "Native Odoo parsing",
+    "Runtime view orchestration",
+    "Business configuration overlay",
+    "composition_mode=entry_semantic_surface",
     "P0 platform",
     "P1 industry product",
     "P2 customer product",
@@ -31,6 +36,7 @@ STANDARD_TOKENS = (
     "Role and Complexity",
     "Machine Verification",
     "make verify.business_form.productization.audit",
+    "make verify.view.orchestration_product_boundary_guard",
     "First Batch Rule",
 )
 
@@ -46,6 +52,8 @@ MAKEFILE_TOKENS = (
     "verify.business_form.productization.audit: guard.prod.forbid",
     "python3 -m py_compile scripts/verify/business_form_productization_audit.py",
     "python3 scripts/verify/business_form_productization_audit.py",
+    "verify.view.orchestration_product_boundary_guard: guard.prod.forbid",
+    "python3 scripts/verify/view_orchestration_product_boundary_guard.py",
 )
 
 VERIFY_README_TOKENS = (

@@ -7,16 +7,21 @@ from typing import Any, Dict, List, Optional
 from odoo.exceptions import AccessError, UserError
 
 from ..core.base_handler import BaseIntentHandler
-from ..core.project_context import (
-    project_scope_denied_response,
-)
+try:
+    from ..core.project_context import record_scope_denied_response
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import project_scope_denied_response as record_scope_denied_response
 try:
     from ..core.project_context import record_in_business_scope
 except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
-    from ..core.project_context import record_in_project_scope, selected_project_id_from_context
+    from ..core.project_context import record_in_project_scope
+    try:
+        from ..core.project_context import selected_record_context_id_from_context
+    except ImportError:  # pragma: no cover - compatibility for older lightweight boundary tests
+        from ..core.project_context import selected_project_id_from_context as selected_record_context_id_from_context
 
     def record_in_business_scope(env_model, record_id, params=None, context=None):
-        return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
+        return record_in_project_scope(env_model, record_id, selected_record_context_id_from_context(params, context))
 from ..core.request_params import parse_bool, parse_positive_int
 from ..utils.reason_codes import (
     REASON_MISSING_PARAMS,
@@ -84,7 +89,7 @@ class ChatterTimelineHandler(BaseIntentHandler):
             self.context if isinstance(self.context, dict) else {},
         )
         if not in_scope:
-            return project_scope_denied_response(scope_meta)
+            return record_scope_denied_response(scope_meta)
 
         try:
             self.env[model].check_access_rights("read")

@@ -13,6 +13,18 @@ from odoo.addons.smart_core.utils.backend_contract_boundaries import (
     MENU_CONFIG_RUNTIME_SOURCE_POLICY,
 )
 
+_PROTECTED_NODE_EXCLUDED_FINGERPRINT_TOKENS: set[str] = set()
+
+
+def register_protected_node_excluded_fingerprint_token(token: str) -> None:
+    text = str(token or "").strip()
+    if text:
+        _PROTECTED_NODE_EXCLUDED_FINGERPRINT_TOKENS.add(text)
+
+
+def protected_node_excluded_fingerprint_tokens() -> tuple[str, ...]:
+    return tuple(sorted(_PROTECTED_NODE_EXCLUDED_FINGERPRINT_TOKENS))
+
 
 def _to_int(value) -> int:
     try:
@@ -525,13 +537,11 @@ class UiMenuConfigPolicy(models.Model):
                 )
                 if str(value or "").strip()
             )
-            if any(token in fingerprint for token in ("用户验收", "用户数据验收", "用户核对菜单")):
+            if any(token in fingerprint for token in _PROTECTED_NODE_EXCLUDED_FINGERPRINT_TOKENS):
                 return False
             if str(node.get("delivery_bucket") or meta.get("delivery_bucket") or "").strip() == "delivery_business_config":
                 return True
             if str(node.get("model") or meta.get("model") or "").strip() == MENU_CONFIG_POLICY_MODEL:
-                return True
-            if str(node.get("menu_xmlid") or meta.get("menu_xmlid") or "").strip() == "smart_construction_core.menu_ui_menu_config_policy_business_config":
                 return True
             return False
 
@@ -610,7 +620,13 @@ class UiMenuConfigPolicy(models.Model):
                 if children:
                     next_node["children"] = sort_children(next_children)
                 policy = policy_for_node(next_node)
-                configured_visible = bool(policy and policy_visible(policy))
+                configured_visible = bool(
+                    policy
+                    and (
+                        policy_visible(policy)
+                        or policy_recoverable_in_config_only(_to_int(node_menu_id(next_node)), policy)
+                    )
+                )
                 protected = is_protected_runtime_config_node(next_node)
                 if configured_visible or protected:
                     kept.append(next_node)
@@ -724,6 +740,16 @@ class UiMenuConfigPolicy(models.Model):
             except Exception:
                 return False
 
+        def policy_recoverable_in_config_only(menu_id: int, policy) -> bool:
+            if (
+                not stats.get("config_only")
+                or runtime_source != MENU_CONFIG_RUNTIME_SOURCE_CONTRACT
+                or not policy
+            ):
+                return False
+            menu = policy_menu_record(policy)
+            return bool(menu and menu.exists() and menu_visible_to_user(menu))
+
         def is_configured_structural_group(menu, policy) -> bool:
             if not policy or not policy_visible(policy):
                 return False
@@ -751,9 +777,17 @@ class UiMenuConfigPolicy(models.Model):
                 return None
             seen.add(menu_id)
             protected_config_menu = is_protected_runtime_config_menu_id(menu_id)
+            recoverable_config_menu = policy_recoverable_in_config_only(menu_id, policy)
+            structural_container = bool(policy and is_configured_structural_group(menu, policy))
             if stats.get("config_only") and not policy and not protected_config_menu:
                 return None
-            if policy and not policy_visible(policy) and not protected_config_menu:
+            if (
+                policy
+                and not policy_visible(policy)
+                and not protected_config_menu
+                and not recoverable_config_menu
+                and not structural_container
+            ):
                 return None
             label = policy_custom_label(policy) if policy else ""
             label = label or str(menu.name or "").strip()
@@ -935,7 +969,12 @@ class UiMenuConfigPolicy(models.Model):
             visible_policies = [
                 (int(menu_id), policy)
                 for menu_id, policy in policies_by_menu.items()
-                if (policy_visible(policy) or is_protected_runtime_config_menu_id(menu_id)) and policy_menu_exists(policy)
+                if (
+                    policy_visible(policy)
+                    or is_protected_runtime_config_menu_id(menu_id)
+                    or policy_recoverable_in_config_only(menu_id, policy)
+                )
+                and policy_menu_exists(policy)
             ]
             visible_policies.sort(key=lambda item: (
                 menu_depth(policy_menu_record(item[1])),
@@ -959,7 +998,12 @@ class UiMenuConfigPolicy(models.Model):
             visible_policies = [
                 (int(menu_id), policy)
                 for menu_id, policy in policies_by_menu.items()
-                if (policy_visible(policy) or is_protected_runtime_config_menu_id(menu_id)) and policy_menu_exists(policy)
+                if (
+                    policy_visible(policy)
+                    or is_protected_runtime_config_menu_id(menu_id)
+                    or policy_recoverable_in_config_only(menu_id, policy)
+                )
+                and policy_menu_exists(policy)
             ]
             visible_policies.sort(key=lambda item: (
                 menu_depth(policy_menu_record(item[1])),

@@ -102,7 +102,7 @@ class SessionBootstrapHandler(BaseIntentHandler):
     def _login_param(self, params: dict):
         raw = params.get("login") if isinstance(params, dict) and "login" in params else None
         if raw is None or raw == "":
-            raw = os.getenv("SC_BOOTSTRAP_LOGIN") or "svc_project_ro"
+            raw = os.getenv("SC_BOOTSTRAP_LOGIN") or "svc_readonly"
         if isinstance(raw, bool) or not isinstance(raw, (str, int, float)):
             return "", self.err(400, "login 无效")
         login = str(raw).strip()

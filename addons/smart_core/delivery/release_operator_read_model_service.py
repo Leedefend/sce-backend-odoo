@@ -70,7 +70,7 @@ class ReleaseOperatorReadModelService:
         configured = _text(raw)
         if configured:
             return configured, "config"
-        return LEGACY_DEFAULT_BASE_PRODUCT_KEY, "legacy_default"
+        return LEGACY_DEFAULT_BASE_PRODUCT_KEY, "platform_default"
 
     def _resolve_product_key(self, product_key: str = "") -> str:
         requested = _text(product_key)
@@ -116,15 +116,14 @@ class ReleaseOperatorReadModelService:
         try:
             raw = self.env["ir.config_parameter"].sudo().get_param(
                 "smart_core.release_operator.product_base_keys",
-                "construction,platform",
+                "platform",
             )
         except Exception:
-            raw = "construction,platform"
+            raw = "platform"
         return [_text(item) for item in str(raw or "").split(",") if _text(item)]
 
     def _product_label(self, identity: dict[str, str]) -> str:
         base_label = {
-            "construction": "施工管理",
             "platform": "平台内核",
         }.get(_text(identity.get("base_product_key")), _text(identity.get("base_product_key")).title())
         edition_label = "标准版" if _text(identity.get("edition_key")) == "standard" else "预览版"

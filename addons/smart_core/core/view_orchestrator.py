@@ -297,6 +297,8 @@ class ViewOrchestrator:
             effective = {row["name"]: row for row in rows if row.get("name") in fields_meta}
             if effective:
                 hidden = {name for name, row in effective.items() if row.get("visible") is False}
+                if self._is_entry_semantic_surface(spec):
+                    contract["layout"] = self._entry_semantic_surface_layout(effective, spec, fields_meta)
                 layout = contract.get("layout")
                 if isinstance(layout, list):
                     contract["layout"] = self._apply_node_field_rules(layout, effective, hidden)
@@ -309,6 +311,61 @@ class ViewOrchestrator:
                     contract["field_modifiers"] = field_modifiers
         self._apply_action_slots(contract, spec, default_key="header_buttons")
         return contract
+
+    def _is_entry_semantic_surface(self, spec: dict) -> bool:
+        mode = str(spec.get("composition_mode") or spec.get("compositionMode") or "").strip()
+        return mode in {"entry_semantic_surface", "semantic_entry_surface"}
+
+    def _entry_semantic_surface_layout(self, effective: dict[str, dict[str, Any]], spec: dict, fields_meta: dict) -> list:
+        sections = spec.get("sections") if isinstance(spec.get("sections"), list) else []
+        emitted: set[str] = set()
+        layout: list[dict[str, Any]] = []
+
+        def section_fields(section: dict) -> list[str]:
+            declared = [
+                str(name or "").strip()
+                for name in (section.get("fields") if isinstance(section.get("fields"), list) else [])
+                if str(name or "").strip()
+            ]
+            if declared:
+                return [name for name in declared if name in effective and effective[name].get("visible") is not False]
+            title = str(section.get("title") or section.get("label") or section.get("name") or "").strip()
+            return [
+                name
+                for name, row in sorted(effective.items(), key=lambda item: (item[1].get("sequence") or 100, item[0]))
+                if row.get("visible") is not False and str(row.get("group_title") or "").strip() == title
+            ]
+
+        for section in sorted(
+            [row for row in sections if isinstance(row, dict)],
+            key=lambda row: (int(row.get("sequence") or 100), str(row.get("title") or row.get("label") or row.get("name") or "")),
+        ):
+            title = str(section.get("title") or section.get("label") or section.get("name") or "").strip()
+            names = [name for name in section_fields(section) if name not in emitted]
+            if not title or not names:
+                continue
+            emitted.update(names)
+            layout.append({
+                "type": "group",
+                "string": title,
+                "label": title,
+                **({"columns": section.get("columns")} if section.get("columns") else {}),
+                "children": [self._form_field_node(name, effective[name], fields_meta) for name in names],
+            })
+
+        remaining = [
+            name
+            for name, row in sorted(effective.items(), key=lambda item: (item[1].get("sequence") or 100, item[0]))
+            if row.get("visible") is not False and name not in emitted
+        ]
+        if remaining:
+            layout.append({
+                "type": "group",
+                "string": "业务配置字段",
+                "label": "业务配置字段",
+                "children": [self._form_field_node(name, effective[name], fields_meta) for name in remaining],
+            })
+        return layout
 
     def _apply_list_spec(self, contract: dict, spec: dict) -> dict:
         self._apply_view_options(

@@ -532,7 +532,7 @@ prod-sim 验证结果：
   - `no_business_fact_authority = True`
   - `adapter_layer = industry_orchestration_adapter`
 - 业务切片服务返回的事实来源不再作为 `smart_core` 编排器自身来源对外暴露，而是放入 `delegated_source_authority`。
-- 明确 `industry_orchestration_service_adapter` 是 `construction_industry_orchestration_adapter`，只负责连接 extension hook / construction core service。
+- 明确 `industry_orchestration_service_adapter` 是 `industry_orchestration_adapter`，只负责连接 extension hook / ORM service。
 - 成本切片缺少扩展服务时的降级服务补充 source authority，标记为 degraded projection。
 - 新增边界测试：
   - 所有 scene entry orchestrator 必须是 runtime adapter，不得声明业务事实权威。
@@ -899,7 +899,7 @@ prod-sim 验证结果：
 
 已执行：
 
-- `ReleaseApprovalPolicyService` 增加 `legacy_construction_role_group_resolver` source authority。
+- `ReleaseApprovalPolicyService` 增加 `extension_role_resolver` source authority。
 - 新增 `resolve_actor_role_context()`，在不破坏 `resolve_actor_role_codes()` 返回类型的前提下输出：
   - `actor_role_codes`
   - `role_source`
@@ -1025,8 +1025,8 @@ prod-sim 验证结果：
 已执行：
 
 - `MenuDeliveryConvergenceService` 增加 `menu_delivery_convergence_projection` source authority。
-- 施工菜单词表策略标记为：
-  - `legacy_construction_menu_token_policy`
+- 行业菜单词表策略标记为：
+  - `legacy_industry_menu_token_policy`
 - `apply()` 返回 report 增加：
   - `source_authority`
   - `legacy_token_policy_source_authority`

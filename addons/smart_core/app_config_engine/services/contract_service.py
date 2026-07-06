@@ -44,6 +44,18 @@ from odoo.addons.smart_core.utils.contract_governance import (
 
 _logger = logging.getLogger(__name__)
 
+_TAUTOLOGY_PERMISSION_GUARD_GROUP_XMLIDS: set[str] = set()
+
+
+def register_tautology_permission_guard_group_xmlid(xmlid: str) -> None:
+    token = str(xmlid or "").strip()
+    if token:
+        _TAUTOLOGY_PERMISSION_GUARD_GROUP_XMLIDS.add(token)
+
+
+def tautology_permission_guard_group_xmlids() -> tuple[str, ...]:
+    return tuple(sorted(_TAUTOLOGY_PERMISSION_GUARD_GROUP_XMLIDS))
+
 
 class ContractService:
     SOURCE_KIND = "app_config_contract_service_projection"
@@ -201,7 +213,7 @@ class ContractService:
         # 4) 尝试把 domain_raw 解析为结构化 domain（能解析的才解析）
         self._unify_domains_from_raw(data)
 
-        # 5) 约束“永真”权限子句，仅对项目经理组生效（或删除）
+        # 5) 约束“永真”权限子句，仅对扩展注册的兜底权限组生效（或删除）
         self._sanitize_permissions(data)
 
         # 6) 处理不被契约支持的 groups_xmlids 取非（"!" 前缀）
@@ -386,7 +398,7 @@ class ContractService:
         """
         目的：约束权限规则中“永真域”[(1,'=',1)]，避免误放权
         策略：
-        - 若检测到该子句，则仅对项目经理组生效（groups_xmlids += project.group_project_manager）
+        - 若检测到该子句，则绑定到扩展注册的兜底权限组
         - 同时取消 global 放开（global=False）
         - 不依赖 group id 映射，避免跨库/环境差异
         - 兼容 data 或 {"data": data} 两种包装
@@ -409,9 +421,8 @@ class ContractService:
                     dom = c.get('domain', [])
                     raw = (c.get('domain_raw') or '').strip()
                     if self._domain_is_tautology(dom, raw):
-                        # 绑定到项目经理组
                         xmlids = set(c.get('groups_xmlids') or [])
-                        xmlids.add('project.group_project_manager')
+                        xmlids.update(_TAUTOLOGY_PERMISSION_GUARD_GROUP_XMLIDS)
                         c['groups_xmlids'] = sorted(xmlids)
 
                         # 取消全局放开
@@ -421,7 +432,7 @@ class ContractService:
                         changed = True
 
             if changed:
-                _logger.debug("SANITIZE_PERMS: 永真域已限制到项目经理组并取消 global。")
+                _logger.debug("SANITIZE_PERMS: 永真域已限制到注册权限组并取消 global。")
 
         except Exception:
             _logger.exception("SANITIZE_PERMS: 处理权限时发生异常（已忽略以不中断流程）")
