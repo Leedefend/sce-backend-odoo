@@ -276,6 +276,7 @@
         'views/support/user_confirmed_formal_list_alignment_views.xml',
         'views/support/user_confirmed_formal_list_views.xml',
         'views/support/user_confirmed_formal_form_views.xml',
+        'data/construction_plan_form_productization_contract.xml',
         'data/product_policy_menu_sync.xml',
     ],
     'assets': {
