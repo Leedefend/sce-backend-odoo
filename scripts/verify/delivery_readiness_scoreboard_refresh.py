@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -257,6 +258,7 @@ def _git(cmd: list[str]) -> str:
 
 def _replace_snapshot(lines: list[str]) -> list[str]:
     now = _utc_now()
+    today = datetime.now().date().isoformat()
     branch = _git(["git", "branch", "--show-current"]) or "unknown"
     commit_ref = _git(["git", "rev-parse", "--short", "HEAD"]) or "unknown"
 
@@ -269,6 +271,7 @@ def _replace_snapshot(lines: list[str]) -> list[str]:
     _replace("- generated_at_utc: ", now)
     _replace("- branch: `", f"{branch}`")
     _replace("- commit_ref: `", f"{commit_ref}`")
+    _replace("- final_closeout_date: `", f"{today}`")
     return lines
 
 
@@ -338,17 +341,28 @@ def _upsert_release_gap_profile_posture(lines: list[str], strict_label: str, res
         end = len(lines)
 
     posture_line = (
-        f"3. CI profile posture: strict={strict_label}, restricted={restricted_label}; "
+        f"7. CI profile posture: strict={strict_label}, restricted={restricted_label}; "
         "release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs."
     )
 
     if strict_label.startswith("FAIL"):
         posture_line += " Recovery: `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness`."
 
+    posture_pattern = re.compile(r"^\d+\.\s+CI profile posture:")
+    stale_posture_pattern = re.compile(r"^\d+\.\s+strict=.*restricted=.*release execution should use strict")
+    first_posture_index = -1
+    duplicate_posture_indices: set[int] = set()
     for index in range(start + 1, end):
-        if lines[index].startswith("3. CI profile posture:") or lines[index].startswith("5. CI profile posture:"):
-            lines[index] = posture_line
-            return lines
+        if posture_pattern.match(lines[index]):
+            if first_posture_index < 0:
+                first_posture_index = index
+                lines[index] = posture_line
+            else:
+                duplicate_posture_indices.add(index)
+        elif stale_posture_pattern.match(lines[index]):
+            duplicate_posture_indices.add(index)
+    if first_posture_index >= 0:
+        return [line for index, line in enumerate(lines) if index not in duplicate_posture_indices]
 
     insert_at = end
     if insert_at > start + 1 and lines[insert_at - 1].strip() == "":
