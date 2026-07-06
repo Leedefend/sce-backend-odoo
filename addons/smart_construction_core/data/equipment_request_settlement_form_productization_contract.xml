@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_equipment_request_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">equipment_request_productized_form_v1</field>
+            <field name="model">sc.equipment.request</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_equipment_request"/>
+            <field name="priority">50</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '设备申请',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'equipment_request_document_no_display', 'equipment_request_contract_no_display']},
+                                {'title': '项目与供应单位', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'plan_id', 'supplier_id', 'equipment_request_contract_title_display']},
+                                {'title': '申请与需用信息', 'sequence': 30, 'columns': 2, 'fields': ['requester_id', 'request_date', 'required_date', 'usage_location']},
+                                {'title': '数量与金额边界', 'sequence': 40, 'columns': 2, 'fields': ['quantity_total', 'amount_total', 'invoice_amount', 'paid_amount', 'unpaid_amount', 'uninvoiced_amount', 'tax_rate_text', 'vat_type_text', 'currency_id']},
+                                {'title': '申请明细', 'sequence': 50, 'columns': 2, 'fields': ['line_ids']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'equipment_request_rental_content_display', 'message_attachment_count']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'source_created_by', 'equipment_request_source_created_by_display', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 20, 'group_title': '办理主信息'},
+                                {'name': 'equipment_request_document_no_display', 'sequence': 30, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'equipment_request_contract_no_display', 'sequence': 40, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'project_id', 'sequence': 50, 'group_title': '项目与供应单位'},
+                                {'name': 'plan_id', 'sequence': 60, 'group_title': '项目与供应单位'},
+                                {'name': 'supplier_id', 'sequence': 70, 'group_title': '项目与供应单位'},
+                                {'name': 'equipment_request_contract_title_display', 'sequence': 80, 'group_title': '项目与供应单位', 'readonly': True},
+                                {'name': 'requester_id', 'sequence': 90, 'group_title': '申请与需用信息'},
+                                {'name': 'request_date', 'sequence': 100, 'group_title': '申请与需用信息'},
+                                {'name': 'required_date', 'sequence': 110, 'group_title': '申请与需用信息'},
+                                {'name': 'usage_location', 'sequence': 120, 'group_title': '申请与需用信息'},
+                                {'name': 'quantity_total', 'sequence': 130, 'group_title': '数量与金额边界', 'readonly': True},
+                                {'name': 'amount_total', 'sequence': 140, 'group_title': '数量与金额边界', 'readonly': True},
+                                {'name': 'invoice_amount', 'sequence': 150, 'group_title': '数量与金额边界', 'readonly': True},
+                                {'name': 'paid_amount', 'sequence': 160, 'group_title': '数量与金额边界', 'readonly': True},
+                                {'name': 'unpaid_amount', 'sequence': 170, 'group_title': '数量与金额边界', 'readonly': True},
+                                {'name': 'uninvoiced_amount', 'sequence': 180, 'group_title': '数量与金额边界', 'readonly': True},
+                                {'name': 'tax_rate_text', 'sequence': 190, 'group_title': '数量与金额边界', 'readonly': True},
+                                {'name': 'vat_type_text', 'sequence': 200, 'group_title': '数量与金额边界', 'readonly': True},
+                                {'name': 'currency_id', 'sequence': 210, 'group_title': '数量与金额边界', 'readonly': True},
+                                {'name': 'line_ids', 'sequence': 220, 'group_title': '申请明细'},
+                                {'name': 'note', 'sequence': 230, 'group_title': '说明与附件'},
+                                {'name': 'equipment_request_rental_content_display', 'sequence': 240, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'message_attachment_count', 'sequence': 250, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_fact_model', 'sequence': 260, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 270, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 280, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 290, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'equipment_request_source_created_by_display', 'sequence': 300, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 310, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 320, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_equipment_settlement_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">equipment_settlement_productized_form_v1</field>
+            <field name="model">sc.equipment.settlement</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_equipment_settlement"/>
+            <field name="priority">50</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '设备结算',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'equipment_settlement_document_status_display', 'name']},
+                                {'title': '项目与供应单位', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'supplier_id']},
+                                {'title': '经办与结算内容', 'sequence': 30, 'columns': 2, 'fields': ['settlement_date', 'owner_id', 'settlement_content']},
+                                {'title': '结算金额', 'sequence': 40, 'columns': 2, 'fields': ['amount_untaxed', 'tax_amount', 'amount_total', 'currency_id']},
+                                {'title': '付款与申请边界', 'sequence': 50, 'columns': 2, 'fields': ['equipment_settlement_payment_status_display', 'payment_paid_amount', 'payment_unpaid_amount', 'equipment_settlement_payment_request_status_display', 'payment_requested_amount', 'payment_unrequested_amount']},
+                                {'title': '结算明细', 'sequence': 60, 'columns': 2, 'fields': ['line_ids']},
+                                {'title': '说明与附件', 'sequence': 70, 'columns': 2, 'fields': ['note', 'message_attachment_count']},
+                                {'title': '来源追溯', 'sequence': 80, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'equipment_settlement_source_created_by_display', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'equipment_settlement_document_status_display', 'sequence': 20, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 40, 'group_title': '项目与供应单位'},
+                                {'name': 'supplier_id', 'sequence': 50, 'group_title': '项目与供应单位'},
+                                {'name': 'settlement_date', 'sequence': 60, 'group_title': '经办与结算内容'},
+                                {'name': 'owner_id', 'sequence': 70, 'group_title': '经办与结算内容'},
+                                {'name': 'settlement_content', 'sequence': 80, 'group_title': '经办与结算内容', 'readonly': True},
+                                {'name': 'amount_untaxed', 'sequence': 90, 'group_title': '结算金额', 'readonly': True},
+                                {'name': 'tax_amount', 'sequence': 100, 'group_title': '结算金额', 'readonly': True},
+                                {'name': 'amount_total', 'sequence': 110, 'group_title': '结算金额', 'readonly': True},
+                                {'name': 'currency_id', 'sequence': 120, 'group_title': '结算金额', 'readonly': True},
+                                {'name': 'equipment_settlement_payment_status_display', 'sequence': 130, 'group_title': '付款与申请边界', 'readonly': True},
+                                {'name': 'payment_paid_amount', 'sequence': 140, 'group_title': '付款与申请边界', 'readonly': True},
+                                {'name': 'payment_unpaid_amount', 'sequence': 150, 'group_title': '付款与申请边界', 'readonly': True},
+                                {'name': 'equipment_settlement_payment_request_status_display', 'sequence': 160, 'group_title': '付款与申请边界', 'readonly': True},
+                                {'name': 'payment_requested_amount', 'sequence': 170, 'group_title': '付款与申请边界', 'readonly': True},
+                                {'name': 'payment_unrequested_amount', 'sequence': 180, 'group_title': '付款与申请边界', 'readonly': True},
+                                {'name': 'line_ids', 'sequence': 190, 'group_title': '结算明细'},
+                                {'name': 'note', 'sequence': 200, 'group_title': '说明与附件'},
+                                {'name': 'message_attachment_count', 'sequence': 210, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_fact_model', 'sequence': 220, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 230, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 240, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'equipment_settlement_source_created_by_display', 'sequence': 250, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 260, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'active', 'sequence': 270, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>
