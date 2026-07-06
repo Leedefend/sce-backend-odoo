@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_settlement_order_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">settlement_order_productized_form_v1</field>
+            <field name="model">sc.settlement.order</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_settlement_order"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '结算单',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'settlement_flow_label', 'settlement_type', 'business_category_id', 'document_date', 'date_settlement']},
+                                {'title': '项目与合同', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'operation_strategy', 'contract_id', 'partner_id', 'settlement_unit_id', 'company_id', 'currency_id']},
+                                {'title': '结算分类与周期', 'sequence': 30, 'columns': 2, 'fields': ['title', 'settlement_category_id', 'settlement_category_display', 'settlement_stage_id', 'planned_settlement_date', 'declared_date', 'final_approved_date', 'approved_date', 'settlement_period_start', 'settlement_period_end']},
+                                {'title': '结算金额与明细', 'sequence': 40, 'columns': 2, 'fields': ['settlement_amount', 'amount_total', 'submitted_amount', 'approved_amount', 'deduction_amount', 'adjustment_total', 'amount_after_adjustment', 'line_ids']},
+                                {'title': '收付执行', 'sequence': 50, 'columns': 2, 'fields': ['requested_fund_amount', 'paid_amount', 'remaining_amount', 'amount_paid', 'unpaid_amount', 'amount_payable', 'payment_request_ids', 'payment_request_line_ids']},
+                                {'title': '发票与采购关联', 'sequence': 60, 'columns': 2, 'fields': ['invoice_ref', 'invoice_date', 'invoice_amount', 'purchase_order_ids']},
+                                {'title': '说明与附件', 'sequence': 70, 'columns': 2, 'fields': ['settlement_description', 'note', 'attachment_ids', 'attachment_count']},
+                                {'title': '匹配与调整', 'sequence': 80, 'columns': 2, 'fields': ['compliance_state', 'compliance_message', 'adjustment_ids', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 90, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'legacy_document_state', 'legacy_contract_no', 'legacy_counterparty_name', 'source_created_by', 'source_created_at', 'entry_user_id', 'entry_data']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 30, 'group_title': '办理主信息'},
+                                {'name': 'settlement_flow_label', 'sequence': 40, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'settlement_type', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'business_category_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'document_date', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'date_settlement', 'sequence': 80, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 90, 'group_title': '项目与合同'},
+                                {'name': 'operation_strategy', 'sequence': 100, 'group_title': '项目与合同', 'readonly': True},
+                                {'name': 'contract_id', 'sequence': 110, 'group_title': '项目与合同'},
+                                {'name': 'partner_id', 'sequence': 120, 'group_title': '项目与合同'},
+                                {'name': 'settlement_unit_id', 'sequence': 130, 'group_title': '项目与合同'},
+                                {'name': 'company_id', 'sequence': 140, 'group_title': '项目与合同'},
+                                {'name': 'currency_id', 'sequence': 150, 'group_title': '项目与合同'},
+                                {'name': 'title', 'sequence': 160, 'group_title': '结算分类与周期'},
+                                {'name': 'settlement_category_id', 'sequence': 170, 'group_title': '结算分类与周期'},
+                                {'name': 'settlement_category_display', 'sequence': 180, 'group_title': '结算分类与周期', 'readonly': True},
+                                {'name': 'settlement_stage_id', 'sequence': 190, 'group_title': '结算分类与周期'},
+                                {'name': 'planned_settlement_date', 'sequence': 200, 'group_title': '结算分类与周期'},
+                                {'name': 'declared_date', 'sequence': 210, 'group_title': '结算分类与周期'},
+                                {'name': 'final_approved_date', 'sequence': 220, 'group_title': '结算分类与周期'},
+                                {'name': 'approved_date', 'sequence': 230, 'group_title': '结算分类与周期'},
+                                {'name': 'settlement_period_start', 'sequence': 240, 'group_title': '结算分类与周期', 'readonly': True},
+                                {'name': 'settlement_period_end', 'sequence': 250, 'group_title': '结算分类与周期', 'readonly': True},
+                                {'name': 'settlement_amount', 'sequence': 260, 'group_title': '结算金额与明细'},
+                                {'name': 'amount_total', 'sequence': 270, 'group_title': '结算金额与明细', 'readonly': True},
+                                {'name': 'submitted_amount', 'sequence': 280, 'group_title': '结算金额与明细'},
+                                {'name': 'approved_amount', 'sequence': 290, 'group_title': '结算金额与明细'},
+                                {'name': 'deduction_amount', 'sequence': 300, 'group_title': '结算金额与明细', 'readonly': True},
+                                {'name': 'adjustment_total', 'sequence': 310, 'group_title': '结算金额与明细', 'readonly': True},
+                                {'name': 'amount_after_adjustment', 'sequence': 320, 'group_title': '结算金额与明细', 'readonly': True},
+                                {'name': 'line_ids', 'sequence': 330, 'group_title': '结算金额与明细'},
+                                {'name': 'requested_fund_amount', 'sequence': 340, 'group_title': '收付执行'},
+                                {'name': 'paid_amount', 'sequence': 350, 'group_title': '收付执行', 'readonly': True},
+                                {'name': 'remaining_amount', 'sequence': 360, 'group_title': '收付执行', 'readonly': True},
+                                {'name': 'amount_paid', 'sequence': 370, 'group_title': '收付执行', 'readonly': True},
+                                {'name': 'unpaid_amount', 'sequence': 380, 'group_title': '收付执行', 'readonly': True},
+                                {'name': 'amount_payable', 'sequence': 390, 'group_title': '收付执行', 'readonly': True},
+                                {'name': 'payment_request_ids', 'sequence': 400, 'group_title': '收付执行', 'readonly': True},
+                                {'name': 'payment_request_line_ids', 'sequence': 410, 'group_title': '收付执行', 'readonly': True},
+                                {'name': 'invoice_ref', 'sequence': 420, 'group_title': '发票与采购关联'},
+                                {'name': 'invoice_date', 'sequence': 430, 'group_title': '发票与采购关联'},
+                                {'name': 'invoice_amount', 'sequence': 440, 'group_title': '发票与采购关联'},
+                                {'name': 'purchase_order_ids', 'sequence': 450, 'group_title': '发票与采购关联'},
+                                {'name': 'settlement_description', 'sequence': 460, 'group_title': '说明与附件'},
+                                {'name': 'note', 'sequence': 470, 'group_title': '说明与附件'},
+                                {'name': 'attachment_ids', 'sequence': 480, 'group_title': '说明与附件'},
+                                {'name': 'attachment_count', 'sequence': 490, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'compliance_state', 'sequence': 500, 'group_title': '匹配与调整', 'readonly': True},
+                                {'name': 'compliance_message', 'sequence': 510, 'group_title': '匹配与调整', 'readonly': True},
+                                {'name': 'adjustment_ids', 'sequence': 520, 'group_title': '匹配与调整'},
+                                {'name': 'reject_reason', 'sequence': 530, 'group_title': '匹配与调整', 'readonly': True},
+                                {'name': 'legacy_fact_model', 'sequence': 540, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 550, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 560, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 570, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_contract_no', 'sequence': 580, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_counterparty_name', 'sequence': 590, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 600, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 610, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'entry_user_id', 'sequence': 620, 'group_title': '来源追溯'},
+                                {'name': 'entry_data', 'sequence': 630, 'group_title': '来源追溯'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>
