@@ -65,6 +65,7 @@
         'data/tender_bid_form_productization_contract.xml',
         'data/subcontract_register_settlement_form_productization_contract.xml',
         'data/equipment_request_settlement_form_productization_contract.xml',
+        'data/labor_request_settlement_form_productization_contract.xml',
         'data/formal_list_contract_sync.xml',
         'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
