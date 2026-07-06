@@ -1,5 +1,5 @@
 {
-  "min_check_count": 10,
+  "min_check_count": 12,
   "max_failed_check_count": 0,
   "max_warning_check_count": 0,
   "min_contract_governance_coverage_ratio": 0.95,
@@ -19,6 +19,8 @@
     "contract_assembler_semantic_smoke",
     "runtime_surface_dashboard",
     "contract_governance_coverage",
+    "smart_core_boundary_contract",
+    "app_config_engine_boundary_contract",
     "boundary_import_report",
     "controller_boundary_report",
     "scene_catalog_runtime_alignment",

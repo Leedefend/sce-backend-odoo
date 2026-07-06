@@ -506,7 +506,7 @@
 - `make verify.baseline.policy_integrity.guard`
   - Verifies required governance policy baseline JSON files exist and are valid objects.
 - `make verify.backend.architecture.full`
-  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + prod-like role fixtures + assembler semantic smoke + runtime surface dashboard report + snapshot determinism + RuntimeContext stability + governance coverage + HUD trace smokes).
+  - One-command backend governance gate (smart_core/app_config_engine boundary + backend boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + prod-like role fixtures + assembler semantic smoke + runtime surface dashboard report + snapshot determinism + RuntimeContext stability + governance coverage + HUD trace smokes).
   - Optional strict runtime-surface warning gate: `SC_RUNTIME_SURFACE_STRICT=1 make verify.backend.architecture.full`.
   - Optional strict phase-next aggregate gate: `SC_PHASE_NEXT_STRICT=1 make verify.backend.architecture.full`.
   - Always emits consolidated summary artifacts:
@@ -518,6 +518,7 @@
 - `make verify.backend.architecture.full.report`
   - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.
   - Includes business capability baseline check summary (`required_intent_count`, `required_role_count`, `catalog_runtime_ratio`).
+  - Includes platform core boundary contract checks (`smart_core_boundary_contract`, `app_config_engine_boundary_contract`).
   - Output check list is sorted by check name for deterministic diff.
 - `make verify.backend.architecture.full.report.schema.guard`
   - Schema guard for `backend_architecture_full_report.json` and required check-set coverage.
