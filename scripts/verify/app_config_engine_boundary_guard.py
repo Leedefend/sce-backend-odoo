@@ -94,6 +94,7 @@ def main() -> int:
     _require(errors, "_load_legacy_mixin" in odoo_view_parser, "Odoo view parser must load legacy mixins through an explicit helper")
     _require(errors, "Legacy Filesystem Boundary" in view_parser_doc, "view parser doc must declare the legacy filesystem boundary")
     _require(errors, "services/view_Parser/" in view_parser_doc, "view parser doc must describe the actual filesystem path")
+    _require(errors, "不能在解析入口默认 `sudo()`" in view_parser_doc, "view parser doc must forbid default sudo parsing")
 
     _require(errors, "NO_BUSINESS_FACT_AUTHORITY = True" in page_assembler, "PageAssembler must declare no business fact authority")
     _require(errors, "_inject_view_orchestration_summary" in page_assembler, "PageAssembler must expose view orchestration summary")
@@ -102,12 +103,22 @@ def main() -> int:
     _require(errors, "ViewOrchestrator(self.env).compose" in app_view_config, "app.view.config must delegate orchestration to ViewOrchestrator")
 
     found_refs: set[str] = set()
+    sudo_parse_refs: list[str] = []
     for path in APP_ENGINE.rglob("*.py"):
-        found_refs.update(_industry_refs(_read(path)))
+        text = _read(path)
+        found_refs.update(_industry_refs(text))
+        if "sudo().parse_odoo_view" in text:
+            sudo_parse_refs.append(path.relative_to(ROOT).as_posix())
     _require(
         errors,
         not found_refs,
         "app_config_engine has industry module references: %s" % ", ".join(sorted(found_refs)),
+    )
+    _require(
+        errors,
+        not sudo_parse_refs,
+        "app_config_engine native parser must use request-user environment, not sudo().parse_odoo_view: %s"
+        % ", ".join(sorted(sudo_parse_refs)),
     )
 
     if errors:
