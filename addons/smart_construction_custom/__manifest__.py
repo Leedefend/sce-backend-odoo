@@ -20,6 +20,7 @@
         "data/security_policy_actions.xml",
         "data/user_data_baseline.xml",
         "data/user_preferences.xml",
+        "data/productized_form_runtime_cleanup.xml",
         "data/user_menu_preferences.xml",
         "views/user_data_history_views.xml",
     ],
