@@ -54,7 +54,7 @@
 - 它不能成为行业业务事实的权威来源。
 - 它不能把某个行业模块的产品化表单布局硬编码进平台层。
 
-如果需要表达“实付登记应该显示哪些字段、分成哪些业务区块、某个入口应该使用什么语义表单”，权威来源必须是 `ui.business.config.contract` 的 `view_orchestration` 配置，或明确归属到行业模块的数据文件。
+如果需要表达“某个业务入口应该显示哪些字段、分成哪些业务区块、使用什么语义表单”，权威来源必须是 `ui.business.config.contract` 的 `view_orchestration` 配置，或明确归属到行业模块的数据文件。
 
 ## View Orchestration Boundary
 

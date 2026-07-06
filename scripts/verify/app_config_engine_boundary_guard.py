@@ -43,6 +43,19 @@ def _industry_refs(source: str) -> set[str]:
     return refs
 
 
+def _industry_doc_tokens(source: str) -> set[str]:
+    tokens = {
+        "实付登记",
+        "智慧施工",
+        "施工",
+        "付款",
+        "发票",
+        "材料",
+        "劳务",
+    }
+    return {token for token in tokens if token in source}
+
+
 def main() -> int:
     errors: list[str] = []
     doc = _read(DOC)
@@ -67,6 +80,13 @@ def main() -> int:
         "`make verify.app_config_engine.boundary_guard`",
     ):
         _require(errors, token in doc, f"docs/app_config_engine.md missing boundary token: {token}")
+    doc_industry_tokens = sorted(_industry_doc_tokens(doc))
+    _require(
+        errors,
+        not doc_industry_tokens,
+        "app_config_engine boundary doc must use platform-neutral examples, not industry terms: %s"
+        % ", ".join(doc_industry_tokens),
+    )
 
     scratch_docs = sorted(
         path.relative_to(ROOT).as_posix()
