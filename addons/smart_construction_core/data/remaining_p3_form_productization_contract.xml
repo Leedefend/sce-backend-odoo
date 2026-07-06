@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="business_config_contract_construction_contract_handling_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">construction_contract_handling_productized_form_v1</field>
+            <field name="model">construction.contract</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_construction_contract_handling"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '施工合同',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '合同主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'can_review', 'name', 'business_category_id', 'subject']},
+                                {'title': '项目与往来方', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'partner_id']},
+                                {'title': '金额与日期', 'sequence': 30, 'columns': 2, 'fields': ['paid_amount', 'currency_id', 'date_contract', 'date_start', 'date_end']},
+                                {'title': '说明与附件', 'sequence': 40, 'columns': 1, 'fields': ['note', 'attachment_ids', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_document_no', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'can_review', 'sequence': 30, 'readonly': True}, {'name': 'name', 'sequence': 40}, {'name': 'business_category_id', 'sequence': 50}, {'name': 'subject', 'sequence': 60}, {'name': 'project_id', 'sequence': 70}, {'name': 'company_id', 'sequence': 80, 'readonly': True}, {'name': 'partner_id', 'sequence': 90}, {'name': 'paid_amount', 'sequence': 100, 'readonly': True}, {'name': 'currency_id', 'sequence': 110}, {'name': 'date_contract', 'sequence': 120}, {'name': 'date_start', 'sequence': 130}, {'name': 'date_end', 'sequence': 140}, {'name': 'note', 'sequence': 150}, {'name': 'attachment_ids', 'sequence': 160}, {'name': 'reject_reason', 'sequence': 170, 'readonly': True}, {'name': 'legacy_document_no', 'sequence': 180, 'readonly': True}, {'name': 'source_created_by', 'sequence': 190, 'readonly': True}, {'name': 'source_created_at', 'sequence': 200, 'readonly': True}, {'name': 'active', 'sequence': 210}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_material_outbound_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">material_outbound_productized_form_v1</field>
+            <field name="model">sc.material.outbound</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_material_outbound"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '出库单',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '出库主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'can_review', 'name', 'outbound_type', 'business_category_id', 'outbound_date']},
+                                {'title': '项目与仓库', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'warehouse_id']},
+                                {'title': '出库明细', 'sequence': 30, 'columns': 1, 'fields': ['line_ids', 'currency_id']},
+                                {'title': '说明与附件', 'sequence': 40, 'columns': 1, 'fields': ['note', 'attachment_ids', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'can_review', 'sequence': 30, 'readonly': True}, {'name': 'name', 'sequence': 40}, {'name': 'outbound_type', 'sequence': 50}, {'name': 'business_category_id', 'sequence': 60}, {'name': 'outbound_date', 'sequence': 70}, {'name': 'project_id', 'sequence': 80}, {'name': 'company_id', 'sequence': 90, 'readonly': True}, {'name': 'warehouse_id', 'sequence': 100}, {'name': 'line_ids', 'sequence': 110}, {'name': 'currency_id', 'sequence': 120}, {'name': 'note', 'sequence': 130}, {'name': 'attachment_ids', 'sequence': 140}, {'name': 'reject_reason', 'sequence': 150, 'readonly': True}, {'name': 'legacy_fact_model', 'sequence': 160, 'readonly': True}, {'name': 'legacy_fact_id', 'sequence': 170, 'readonly': True}, {'name': 'legacy_fact_type', 'sequence': 180, 'readonly': True}, {'name': 'source_created_by', 'sequence': 190, 'readonly': True}, {'name': 'source_created_at', 'sequence': 200, 'readonly': True}, {'name': 'active', 'sequence': 210}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_material_quote_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">material_quote_productized_form_v1</field>
+            <field name="model">sc.material.rfq</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_material_quote_user_confirmed"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '报价单',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '报价主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'business_category_id', 'project_id', 'rfq_date']},
+                                {'title': '询价联系人', 'sequence': 20, 'columns': 2, 'fields': ['contact_name', 'contact_phone']},
+                                {'title': '报价明细', 'sequence': 30, 'columns': 1, 'fields': ['line_ids']},
+                                {'title': '说明与附件', 'sequence': 40, 'columns': 1, 'fields': ['note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'name', 'sequence': 20}, {'name': 'business_category_id', 'sequence': 30}, {'name': 'project_id', 'sequence': 40}, {'name': 'rfq_date', 'sequence': 50}, {'name': 'contact_name', 'sequence': 60}, {'name': 'contact_phone', 'sequence': 70}, {'name': 'line_ids', 'sequence': 80}, {'name': 'note', 'sequence': 90}, {'name': 'attachment_ids', 'sequence': 100}, {'name': 'legacy_fact_model', 'sequence': 110, 'readonly': True}, {'name': 'legacy_fact_id', 'sequence': 120, 'readonly': True}, {'name': 'legacy_fact_type', 'sequence': 130, 'readonly': True}, {'name': 'source_created_by', 'sequence': 140, 'readonly': True}, {'name': 'source_created_at', 'sequence': 150, 'readonly': True}, {'name': 'active', 'sequence': 160}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_self_funding_income_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">self_funding_income_productized_form_v1</field>
+            <field name="model">sc.self.funding.registration</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_self_funding_registration_income"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '自筹垫付收入',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'can_review', 'name', 'funding_type', 'business_category_id']},
+                                {'title': '项目与责任主体', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'company_contractor_responsibility_state']},
+                                {'title': '自筹金额', 'sequence': 30, 'columns': 2, 'fields': ['amount', 'currency_id', 'summary']},
+                                {'title': '说明与附件', 'sequence': 40, 'columns': 1, 'fields': ['note', 'attachment_ids', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_source_table', 'legacy_record_id', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'can_review', 'sequence': 30, 'readonly': True}, {'name': 'name', 'sequence': 40}, {'name': 'funding_type', 'sequence': 50}, {'name': 'business_category_id', 'sequence': 60}, {'name': 'project_id', 'sequence': 70}, {'name': 'company_id', 'sequence': 80, 'readonly': True}, {'name': 'company_contractor_responsibility_state', 'sequence': 90, 'readonly': True}, {'name': 'amount', 'sequence': 100}, {'name': 'currency_id', 'sequence': 110}, {'name': 'summary', 'sequence': 120}, {'name': 'note', 'sequence': 130}, {'name': 'attachment_ids', 'sequence': 140}, {'name': 'reject_reason', 'sequence': 150, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 160, 'readonly': True}, {'name': 'legacy_record_id', 'sequence': 170, 'readonly': True}, {'name': 'source_created_by', 'sequence': 180, 'readonly': True}, {'name': 'source_created_at', 'sequence': 190, 'readonly': True}, {'name': 'active', 'sequence': 200}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_self_funding_refund_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">self_funding_refund_productized_form_v1</field>
+            <field name="model">sc.self.funding.registration</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_self_funding_registration_refund"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '自筹退回',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'can_review', 'name', 'funding_type', 'business_category_id']},
+                                {'title': '项目与责任主体', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'company_contractor_responsibility_state']},
+                                {'title': '退回金额', 'sequence': 30, 'columns': 2, 'fields': ['amount', 'currency_id', 'summary']},
+                                {'title': '说明与附件', 'sequence': 40, 'columns': 1, 'fields': ['note', 'attachment_ids', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_source_table', 'legacy_record_id', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'can_review', 'sequence': 30, 'readonly': True}, {'name': 'name', 'sequence': 40}, {'name': 'funding_type', 'sequence': 50}, {'name': 'business_category_id', 'sequence': 60}, {'name': 'project_id', 'sequence': 70}, {'name': 'company_id', 'sequence': 80, 'readonly': True}, {'name': 'company_contractor_responsibility_state', 'sequence': 90, 'readonly': True}, {'name': 'amount', 'sequence': 100}, {'name': 'currency_id', 'sequence': 110}, {'name': 'summary', 'sequence': 120}, {'name': 'note', 'sequence': 130}, {'name': 'attachment_ids', 'sequence': 140}, {'name': 'reject_reason', 'sequence': 150, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 160, 'readonly': True}, {'name': 'legacy_record_id', 'sequence': 170, 'readonly': True}, {'name': 'source_created_by', 'sequence': 180, 'readonly': True}, {'name': 'source_created_at', 'sequence': 190, 'readonly': True}, {'name': 'active', 'sequence': 200}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_material_inbound_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">material_inbound_productized_form_v1</field>
+            <field name="model">sc.material.inbound</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_material_inbound_handling"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '入库单',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '入库主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'business_category_id', 'inbound_date']},
+                                {'title': '项目与供应商', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'supplier_id', 'warehouse_id', 'buyer_name']},
+                                {'title': '入库明细', 'sequence': 30, 'columns': 1, 'fields': ['line_ids', 'total_qty', 'tax_included_amount', 'currency_id']},
+                                {'title': '说明与附件', 'sequence': 40, 'columns': 1, 'fields': ['note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'name', 'sequence': 20}, {'name': 'business_category_id', 'sequence': 30}, {'name': 'inbound_date', 'sequence': 40}, {'name': 'project_id', 'sequence': 50}, {'name': 'supplier_id', 'sequence': 60}, {'name': 'warehouse_id', 'sequence': 70}, {'name': 'buyer_name', 'sequence': 80}, {'name': 'line_ids', 'sequence': 90}, {'name': 'total_qty', 'sequence': 100, 'readonly': True}, {'name': 'tax_included_amount', 'sequence': 110, 'readonly': True}, {'name': 'currency_id', 'sequence': 120}, {'name': 'note', 'sequence': 130}, {'name': 'attachment_ids', 'sequence': 140}, {'name': 'legacy_fact_model', 'sequence': 150, 'readonly': True}, {'name': 'legacy_fact_id', 'sequence': 160, 'readonly': True}, {'name': 'legacy_fact_type', 'sequence': 170, 'readonly': True}, {'name': 'source_created_by', 'sequence': 180, 'readonly': True}, {'name': 'source_created_at', 'sequence': 190, 'readonly': True}, {'name': 'active', 'sequence': 200}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_fund_account_transfer_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">fund_account_transfer_productized_form_v1</field>
+            <field name="model">sc.fund.account.operation</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_fund_account_between_user"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '账户间资金往来',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '往来主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'operation_type', 'operation_reason', 'business_category_id', 'operation_date']},
+                                {'title': '账户与项目', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'source_account_id', 'target_account_id']},
+                                {'title': '金额', 'sequence': 30, 'columns': 2, 'fields': ['amount', 'currency_id']},
+                                {'title': '说明与附件', 'sequence': 40, 'columns': 1, 'fields': ['note', 'attachment_ids']},
+                                {'title': '来源追溯', 'sequence': 50, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'name', 'sequence': 20}, {'name': 'operation_type', 'sequence': 30}, {'name': 'operation_reason', 'sequence': 40}, {'name': 'business_category_id', 'sequence': 50}, {'name': 'operation_date', 'sequence': 60}, {'name': 'project_id', 'sequence': 70}, {'name': 'company_id', 'sequence': 80, 'readonly': True}, {'name': 'source_account_id', 'sequence': 90}, {'name': 'target_account_id', 'sequence': 100}, {'name': 'amount', 'sequence': 110}, {'name': 'currency_id', 'sequence': 120}, {'name': 'note', 'sequence': 130}, {'name': 'attachment_ids', 'sequence': 140}, {'name': 'legacy_source_model', 'sequence': 150, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 160, 'readonly': True}, {'name': 'legacy_record_id', 'sequence': 170, 'readonly': True}, {'name': 'legacy_document_state', 'sequence': 180, 'readonly': True}, {'name': 'active', 'sequence': 190}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

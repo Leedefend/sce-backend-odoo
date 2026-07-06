@@ -279,6 +279,7 @@
         'data/construction_plan_form_productization_contract.xml',
         'data/remaining_p2_form_productization_contract.xml',
         'data/settlement_adjustment_form_productization_contract.xml',
+        'data/remaining_p3_form_productization_contract.xml',
         'data/product_policy_menu_sync.xml',
     ],
     'assets': {
