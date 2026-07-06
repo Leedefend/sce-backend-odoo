@@ -10,7 +10,9 @@
 | Target commit | `0cffcde58cf86d48e250f820034bb19946766c6c` |
 | Previous production deployment record | `docs/ops/releases/current/production_deployment_20260705_prod_closure.md` |
 | Previous recorded production target | `dirty workspace incremental release package` |
-| Candidate status | `main merged, release package not built, prod-sim not yet replayed, production not deployed` |
+| Candidate status | `main merged, local release package built, prod-sim not yet replayed, production not deployed` |
+| Local package path | `artifacts/release/form_productization_20260707/form_productization_20260707.tar.gz` |
+| Local package sha256 | `5f07470fdecb9df334fb91492bf97190281329e9e42a07c13c78ca64a0854f0c` |
 
 This document is a release candidate scope record.  It is not a production
 deployment record and must not be used to claim production alignment.
@@ -37,6 +39,51 @@ smart_construction_custom
 ```
 
 No production write has been performed for this candidate.
+
+## 2.1 Local Package Build Evidence
+
+Local package directory:
+
+```text
+artifacts/release/form_productization_20260707/package
+```
+
+Local package tarball:
+
+```text
+artifacts/release/form_productization_20260707/form_productization_20260707.tar.gz
+```
+
+Tarball sha256:
+
+```text
+5f07470fdecb9df334fb91492bf97190281329e9e42a07c13c78ca64a0854f0c  artifacts/release/form_productization_20260707/form_productization_20260707.tar.gz
+```
+
+Package contents:
+
+```text
+package/changed_files.txt
+package/SHA256SUMS
+package/OPERATOR_COMMANDS.sh
+package/VALIDATION_MATRIX.md
+package/PROD_STATUS_CURRENT.txt
+package/PRODUCTION_HANDOFF_RUNBOOK.md
+package/README.md
+package/files/
+```
+
+Local package verification:
+
+```text
+(cd artifacts/release/form_productization_20260707/package && sha256sum -c SHA256SUMS)
+result=PASS
+checked_files=39
+```
+
+`PROD_STATUS_CURRENT.txt` intentionally states that production status has not
+yet been fetched for this candidate.  It must be replaced or supplemented
+during the production release window with live production evidence.
 
 ## 3. Changed Files
 
@@ -134,8 +181,8 @@ make verify.production_deployment.record.guard PASS
 Before this candidate can be deployed to production, execute the standard
 production release chain:
 
-1. Build an incremental release package from the changed file list.
-2. Include at minimum:
+1. Verify the local incremental release package sha256 and `SHA256SUMS`.
+2. Confirm the package includes at minimum:
    - `changed_files.txt`
    - `SHA256SUMS`
    - `OPERATOR_COMMANDS.sh`
