@@ -195,5 +195,141 @@
                 }
             }"/>
         </record>
+
+        <record id="business_config_contract_expense_claim_bid_deposit_pay_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">expense_claim_bid_deposit_pay_productized_form_v1</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_bid_deposit_pay"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '投标保证金支付',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'claim_flow_label', 'claim_type', 'direction', 'business_category_id', 'source_origin']},
+                                {'title': '项目与保证金', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'operation_strategy', 'company_id', 'company_name_text', 'partner_id', 'guarantee_type', 'guarantee_project_name', 'payment_request_id']},
+                                {'title': '保证金事项', 'sequence': 30, 'columns': 2, 'fields': ['expense_type', 'summary', 'date_claim', 'fill_date', 'handling_kind', 'business_axis']},
+                                {'title': '金额与付款', 'sequence': 40, 'columns': 2, 'fields': ['amount', 'approved_amount', 'paid_amount', 'unpaid_amount', 'currency_id', 'payment_state']},
+                                {'title': '收付款账户', 'sequence': 50, 'columns': 2, 'fields': ['payee', 'receipt_account_name', 'payee_account', 'payee_bank', 'payment_account_name', 'payer_account', 'payer_bank', 'payment_method']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'attachment_ids', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_no', 'legacy_document_state', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'name', 'sequence': 30}, {'name': 'claim_flow_label', 'sequence': 40, 'readonly': True}, {'name': 'claim_type', 'sequence': 50}, {'name': 'direction', 'sequence': 60, 'readonly': True}, {'name': 'business_category_id', 'sequence': 70}, {'name': 'source_origin', 'sequence': 80}, {'name': 'project_id', 'sequence': 90}, {'name': 'operation_strategy', 'sequence': 100, 'readonly': True}, {'name': 'company_id', 'sequence': 110}, {'name': 'company_name_text', 'sequence': 120, 'readonly': True}, {'name': 'partner_id', 'sequence': 130}, {'name': 'guarantee_type', 'sequence': 140}, {'name': 'guarantee_project_name', 'sequence': 150}, {'name': 'payment_request_id', 'sequence': 160}, {'name': 'expense_type', 'sequence': 170}, {'name': 'summary', 'sequence': 180}, {'name': 'date_claim', 'sequence': 190}, {'name': 'fill_date', 'sequence': 200}, {'name': 'handling_kind', 'sequence': 210}, {'name': 'business_axis', 'sequence': 220, 'readonly': True}, {'name': 'amount', 'sequence': 230}, {'name': 'approved_amount', 'sequence': 240}, {'name': 'paid_amount', 'sequence': 250, 'readonly': True}, {'name': 'unpaid_amount', 'sequence': 260, 'readonly': True}, {'name': 'currency_id', 'sequence': 270}, {'name': 'payment_state', 'sequence': 280, 'readonly': True}, {'name': 'payee', 'sequence': 290}, {'name': 'receipt_account_name', 'sequence': 300}, {'name': 'payee_account', 'sequence': 310}, {'name': 'payee_bank', 'sequence': 320}, {'name': 'payment_account_name', 'sequence': 330}, {'name': 'payer_account', 'sequence': 340}, {'name': 'payer_bank', 'sequence': 350}, {'name': 'payment_method', 'sequence': 360}, {'name': 'note', 'sequence': 370}, {'name': 'attachment_ids', 'sequence': 380}, {'name': 'reject_reason', 'sequence': 390, 'readonly': True}, {'name': 'legacy_source_model', 'sequence': 400, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 410, 'readonly': True}, {'name': 'legacy_record_id', 'sequence': 420, 'readonly': True}, {'name': 'legacy_document_no', 'sequence': 430, 'readonly': True}, {'name': 'legacy_document_state', 'sequence': 440, 'readonly': True}, {'name': 'creator_name', 'sequence': 450, 'readonly': True}, {'name': 'created_time', 'sequence': 460, 'readonly': True}, {'name': 'active', 'sequence': 470}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_expense_claim_bid_deposit_return_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">expense_claim_bid_deposit_return_productized_form_v1</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_bid_deposit_return"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '投标保证金退回',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'claim_flow_label', 'claim_type', 'direction', 'business_category_id', 'source_origin']},
+                                {'title': '项目与保证金', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'operation_strategy', 'company_id', 'company_name_text', 'partner_id', 'guarantee_type', 'guarantee_project_name', 'payment_request_id']},
+                                {'title': '保证金事项', 'sequence': 30, 'columns': 2, 'fields': ['expense_type', 'summary', 'date_claim', 'fill_date', 'handling_kind', 'business_axis']},
+                                {'title': '金额与付款', 'sequence': 40, 'columns': 2, 'fields': ['amount', 'approved_amount', 'paid_amount', 'unpaid_amount', 'currency_id', 'payment_state']},
+                                {'title': '收付款账户', 'sequence': 50, 'columns': 2, 'fields': ['payee', 'receipt_account_name', 'payee_account', 'payee_bank', 'payment_account_name', 'payer_account', 'payer_bank', 'payment_method']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'attachment_ids', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_no', 'legacy_document_state', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'name', 'sequence': 30}, {'name': 'claim_flow_label', 'sequence': 40, 'readonly': True}, {'name': 'claim_type', 'sequence': 50}, {'name': 'direction', 'sequence': 60, 'readonly': True}, {'name': 'business_category_id', 'sequence': 70}, {'name': 'source_origin', 'sequence': 80}, {'name': 'project_id', 'sequence': 90}, {'name': 'operation_strategy', 'sequence': 100, 'readonly': True}, {'name': 'company_id', 'sequence': 110}, {'name': 'company_name_text', 'sequence': 120, 'readonly': True}, {'name': 'partner_id', 'sequence': 130}, {'name': 'guarantee_type', 'sequence': 140}, {'name': 'guarantee_project_name', 'sequence': 150}, {'name': 'payment_request_id', 'sequence': 160}, {'name': 'expense_type', 'sequence': 170}, {'name': 'summary', 'sequence': 180}, {'name': 'date_claim', 'sequence': 190}, {'name': 'fill_date', 'sequence': 200}, {'name': 'handling_kind', 'sequence': 210}, {'name': 'business_axis', 'sequence': 220, 'readonly': True}, {'name': 'amount', 'sequence': 230}, {'name': 'approved_amount', 'sequence': 240}, {'name': 'paid_amount', 'sequence': 250, 'readonly': True}, {'name': 'unpaid_amount', 'sequence': 260, 'readonly': True}, {'name': 'currency_id', 'sequence': 270}, {'name': 'payment_state', 'sequence': 280, 'readonly': True}, {'name': 'payee', 'sequence': 290}, {'name': 'receipt_account_name', 'sequence': 300}, {'name': 'payee_account', 'sequence': 310}, {'name': 'payee_bank', 'sequence': 320}, {'name': 'payment_account_name', 'sequence': 330}, {'name': 'payer_account', 'sequence': 340}, {'name': 'payer_bank', 'sequence': 350}, {'name': 'payment_method', 'sequence': 360}, {'name': 'note', 'sequence': 370}, {'name': 'attachment_ids', 'sequence': 380}, {'name': 'reject_reason', 'sequence': 390, 'readonly': True}, {'name': 'legacy_source_model', 'sequence': 400, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 410, 'readonly': True}, {'name': 'legacy_record_id', 'sequence': 420, 'readonly': True}, {'name': 'legacy_document_no', 'sequence': 430, 'readonly': True}, {'name': 'legacy_document_state', 'sequence': 440, 'readonly': True}, {'name': 'creator_name', 'sequence': 450, 'readonly': True}, {'name': 'created_time', 'sequence': 460, 'readonly': True}, {'name': 'active', 'sequence': 470}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_expense_claim_contract_deposit_pay_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">expense_claim_contract_deposit_pay_productized_form_v1</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_contract_deposit_pay"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '合同保证金支付',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'claim_flow_label', 'claim_type', 'direction', 'business_category_id', 'source_origin']},
+                                {'title': '项目与保证金', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'operation_strategy', 'company_id', 'company_name_text', 'partner_id', 'guarantee_type', 'guarantee_project_name', 'payment_request_id']},
+                                {'title': '保证金事项', 'sequence': 30, 'columns': 2, 'fields': ['expense_type', 'summary', 'date_claim', 'fill_date', 'handling_kind', 'business_axis']},
+                                {'title': '金额与付款', 'sequence': 40, 'columns': 2, 'fields': ['amount', 'approved_amount', 'paid_amount', 'unpaid_amount', 'currency_id', 'payment_state']},
+                                {'title': '收付款账户', 'sequence': 50, 'columns': 2, 'fields': ['payee', 'receipt_account_name', 'payee_account', 'payee_bank', 'payment_account_name', 'payer_account', 'payer_bank', 'payment_method']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'attachment_ids', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_no', 'legacy_document_state', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'name', 'sequence': 30}, {'name': 'claim_flow_label', 'sequence': 40, 'readonly': True}, {'name': 'claim_type', 'sequence': 50}, {'name': 'direction', 'sequence': 60, 'readonly': True}, {'name': 'business_category_id', 'sequence': 70}, {'name': 'source_origin', 'sequence': 80}, {'name': 'project_id', 'sequence': 90}, {'name': 'operation_strategy', 'sequence': 100, 'readonly': True}, {'name': 'company_id', 'sequence': 110}, {'name': 'company_name_text', 'sequence': 120, 'readonly': True}, {'name': 'partner_id', 'sequence': 130}, {'name': 'guarantee_type', 'sequence': 140}, {'name': 'guarantee_project_name', 'sequence': 150}, {'name': 'payment_request_id', 'sequence': 160}, {'name': 'expense_type', 'sequence': 170}, {'name': 'summary', 'sequence': 180}, {'name': 'date_claim', 'sequence': 190}, {'name': 'fill_date', 'sequence': 200}, {'name': 'handling_kind', 'sequence': 210}, {'name': 'business_axis', 'sequence': 220, 'readonly': True}, {'name': 'amount', 'sequence': 230}, {'name': 'approved_amount', 'sequence': 240}, {'name': 'paid_amount', 'sequence': 250, 'readonly': True}, {'name': 'unpaid_amount', 'sequence': 260, 'readonly': True}, {'name': 'currency_id', 'sequence': 270}, {'name': 'payment_state', 'sequence': 280, 'readonly': True}, {'name': 'payee', 'sequence': 290}, {'name': 'receipt_account_name', 'sequence': 300}, {'name': 'payee_account', 'sequence': 310}, {'name': 'payee_bank', 'sequence': 320}, {'name': 'payment_account_name', 'sequence': 330}, {'name': 'payer_account', 'sequence': 340}, {'name': 'payer_bank', 'sequence': 350}, {'name': 'payment_method', 'sequence': 360}, {'name': 'note', 'sequence': 370}, {'name': 'attachment_ids', 'sequence': 380}, {'name': 'reject_reason', 'sequence': 390, 'readonly': True}, {'name': 'legacy_source_model', 'sequence': 400, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 410, 'readonly': True}, {'name': 'legacy_record_id', 'sequence': 420, 'readonly': True}, {'name': 'legacy_document_no', 'sequence': 430, 'readonly': True}, {'name': 'legacy_document_state', 'sequence': 440, 'readonly': True}, {'name': 'creator_name', 'sequence': 450, 'readonly': True}, {'name': 'created_time', 'sequence': 460, 'readonly': True}, {'name': 'active', 'sequence': 470}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_expense_claim_contract_deposit_return_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">expense_claim_contract_deposit_return_productized_form_v1</field>
+            <field name="model">sc.expense.claim</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_contract_deposit_return"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'title': '合同保证金退回',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'claim_flow_label', 'claim_type', 'direction', 'business_category_id', 'source_origin']},
+                                {'title': '项目与保证金', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'operation_strategy', 'company_id', 'company_name_text', 'partner_id', 'guarantee_type', 'guarantee_project_name', 'payment_request_id']},
+                                {'title': '保证金事项', 'sequence': 30, 'columns': 2, 'fields': ['expense_type', 'summary', 'date_claim', 'fill_date', 'handling_kind', 'business_axis']},
+                                {'title': '金额与付款', 'sequence': 40, 'columns': 2, 'fields': ['amount', 'approved_amount', 'paid_amount', 'unpaid_amount', 'currency_id', 'payment_state']},
+                                {'title': '收付款账户', 'sequence': 50, 'columns': 2, 'fields': ['payee', 'receipt_account_name', 'payee_account', 'payee_bank', 'payment_account_name', 'payer_account', 'payer_bank', 'payment_method']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'attachment_ids', 'reject_reason']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_no', 'legacy_document_state', 'creator_name', 'created_time', 'active']}
+                            ],
+                            'fields': [{'name': 'state', 'sequence': 10, 'readonly': True}, {'name': 'validation_status', 'sequence': 20, 'readonly': True}, {'name': 'name', 'sequence': 30}, {'name': 'claim_flow_label', 'sequence': 40, 'readonly': True}, {'name': 'claim_type', 'sequence': 50}, {'name': 'direction', 'sequence': 60, 'readonly': True}, {'name': 'business_category_id', 'sequence': 70}, {'name': 'source_origin', 'sequence': 80}, {'name': 'project_id', 'sequence': 90}, {'name': 'operation_strategy', 'sequence': 100, 'readonly': True}, {'name': 'company_id', 'sequence': 110}, {'name': 'company_name_text', 'sequence': 120, 'readonly': True}, {'name': 'partner_id', 'sequence': 130}, {'name': 'guarantee_type', 'sequence': 140}, {'name': 'guarantee_project_name', 'sequence': 150}, {'name': 'payment_request_id', 'sequence': 160}, {'name': 'expense_type', 'sequence': 170}, {'name': 'summary', 'sequence': 180}, {'name': 'date_claim', 'sequence': 190}, {'name': 'fill_date', 'sequence': 200}, {'name': 'handling_kind', 'sequence': 210}, {'name': 'business_axis', 'sequence': 220, 'readonly': True}, {'name': 'amount', 'sequence': 230}, {'name': 'approved_amount', 'sequence': 240}, {'name': 'paid_amount', 'sequence': 250, 'readonly': True}, {'name': 'unpaid_amount', 'sequence': 260, 'readonly': True}, {'name': 'currency_id', 'sequence': 270}, {'name': 'payment_state', 'sequence': 280, 'readonly': True}, {'name': 'payee', 'sequence': 290}, {'name': 'receipt_account_name', 'sequence': 300}, {'name': 'payee_account', 'sequence': 310}, {'name': 'payee_bank', 'sequence': 320}, {'name': 'payment_account_name', 'sequence': 330}, {'name': 'payer_account', 'sequence': 340}, {'name': 'payer_bank', 'sequence': 350}, {'name': 'payment_method', 'sequence': 360}, {'name': 'note', 'sequence': 370}, {'name': 'attachment_ids', 'sequence': 380}, {'name': 'reject_reason', 'sequence': 390, 'readonly': True}, {'name': 'legacy_source_model', 'sequence': 400, 'readonly': True}, {'name': 'legacy_source_table', 'sequence': 410, 'readonly': True}, {'name': 'legacy_record_id', 'sequence': 420, 'readonly': True}, {'name': 'legacy_document_no', 'sequence': 430, 'readonly': True}, {'name': 'legacy_document_state', 'sequence': 440, 'readonly': True}, {'name': 'creator_name', 'sequence': 450, 'readonly': True}, {'name': 'created_time', 'sequence': 460, 'readonly': True}, {'name': 'active', 'sequence': 470}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
     </data>
 </odoo>
