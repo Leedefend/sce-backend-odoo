@@ -3837,7 +3837,7 @@ verify.boundary.guard: guard.prod.forbid verify.scene.contract_path.gate verify.
 
 .PHONY: verify.system_init.runtime_context.stability
 verify.system_init.snapshot_equivalence: guard.prod.forbid
-	@$(RUN_ENV) python3 scripts/verify/system_init_snapshot_equivalence.py
+	@HTTP_SMOKE_TIMEOUT_SECONDS="$${HTTP_SMOKE_TIMEOUT_SECONDS:-180}" $(RUN_ENV) python3 scripts/verify/system_init_snapshot_equivalence.py
 
 verify.system_init.runtime_context.stability: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/system_init_runtime_context_stability.py

@@ -12,6 +12,16 @@ from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
 
 
+def request_timeout_seconds() -> int:
+    raw = str(os.getenv("HTTP_SMOKE_TIMEOUT_SECONDS") or "").strip()
+    if raw:
+        try:
+            return max(1, int(raw))
+        except ValueError:
+            pass
+    return 30
+
+
 def load_env_value_from_file(env_path: str, key: str) -> str | None:
     if not env_path or not os.path.isfile(env_path):
         return None
@@ -80,7 +90,7 @@ def _request_json(
     while True:
         attempt += 1
         try:
-            with urlrequest.urlopen(req, timeout=30) as resp:
+            with urlrequest.urlopen(req, timeout=request_timeout_seconds()) as resp:
                 body = resp.read().decode("utf-8") or "{}"
                 return resp.status, json.loads(body), dict(resp.headers or {})
         except HTTPError as e:
