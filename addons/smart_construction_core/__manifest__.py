@@ -57,6 +57,7 @@
         'data/subcontract_request_form_productization_contract.xml',
         'data/settlement_order_form_productization_contract.xml',
         'data/receipt_income_form_productization_contract.xml',
+        'data/financing_loan_form_productization_contract.xml',
         'data/invoice_input_form_productization_contract.xml',
         'data/invoice_output_tax_form_productization_contract.xml',
         'data/tax_deduction_certificate_form_productization_contract.xml',
