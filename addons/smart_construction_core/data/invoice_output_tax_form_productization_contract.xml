@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_invoice_output_registration_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">invoice_output_registration_productized_form_v1</field>
+            <field name="model">sc.invoice.registration</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_invoice_registration_user"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '销项开票登记',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'invoice_flow_label', 'business_category_id', 'direction']},
+                                {'title': '项目与合同', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'partner_id', 'contract_id', 'settlement_id']},
+                                {'title': '申请与单据', 'sequence': 30, 'columns': 2, 'fields': ['document_no', 'document_date', 'application_date', 'applicant_name', 'expected_receipt_date']},
+                                {'title': '发票信息', 'sequence': 40, 'columns': 2, 'fields': ['invoice_date', 'recognition_date', 'invoice_state', 'invoice_no', 'invoice_code', 'invoice_type', 'invoice_count', 'invoice_content']},
+                                {'title': '金额税额', 'sequence': 50, 'columns': 2, 'fields': ['tax_rate', 'tax_type', 'amount_no_tax', 'tax_amount', 'amount_total', 'actual_invoice_amount', 'surcharge_amount', 'related_receipt_amount', 'currency_id']},
+                                {'title': '开票单位', 'sequence': 60, 'columns': 2, 'fields': ['recipient_unit_name', 'invoice_issue_company', 'actual_invoice_issue_company', 'invoice_provider_name']},
+                                {'title': '办理与核算', 'sequence': 70, 'columns': 2, 'fields': ['handler_name', 'invoice_holder', 'accounting_state', 'voucher_no', 'push_result', 'kingdee_document_no']},
+                                {'title': '说明与附件', 'sequence': 80, 'columns': 2, 'fields': ['note', 'attachment_ids', 'invoice_attachment_text']},
+                                {'title': '来源追溯', 'sequence': 90, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'creator_name', 'created_time', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'readonly': True},
+                                {'name': 'name', 'sequence': 30},
+                                {'name': 'invoice_flow_label', 'sequence': 40, 'readonly': True},
+                                {'name': 'business_category_id', 'sequence': 50},
+                                {'name': 'direction', 'sequence': 60},
+                                {'name': 'project_id', 'sequence': 70},
+                                {'name': 'company_id', 'sequence': 80, 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 90},
+                                {'name': 'contract_id', 'sequence': 100},
+                                {'name': 'settlement_id', 'sequence': 110},
+                                {'name': 'document_no', 'sequence': 120},
+                                {'name': 'document_date', 'sequence': 130},
+                                {'name': 'application_date', 'sequence': 140},
+                                {'name': 'applicant_name', 'sequence': 150},
+                                {'name': 'expected_receipt_date', 'sequence': 160},
+                                {'name': 'invoice_date', 'sequence': 170},
+                                {'name': 'recognition_date', 'sequence': 180},
+                                {'name': 'invoice_state', 'sequence': 190},
+                                {'name': 'invoice_no', 'sequence': 200},
+                                {'name': 'invoice_code', 'sequence': 210},
+                                {'name': 'invoice_type', 'sequence': 220},
+                                {'name': 'invoice_count', 'sequence': 230},
+                                {'name': 'invoice_content', 'sequence': 240},
+                                {'name': 'tax_rate', 'sequence': 250},
+                                {'name': 'tax_type', 'sequence': 260},
+                                {'name': 'amount_no_tax', 'sequence': 270},
+                                {'name': 'tax_amount', 'sequence': 280},
+                                {'name': 'amount_total', 'sequence': 290},
+                                {'name': 'actual_invoice_amount', 'sequence': 300},
+                                {'name': 'surcharge_amount', 'sequence': 310},
+                                {'name': 'related_receipt_amount', 'sequence': 320},
+                                {'name': 'currency_id', 'sequence': 330},
+                                {'name': 'recipient_unit_name', 'sequence': 340},
+                                {'name': 'invoice_issue_company', 'sequence': 350},
+                                {'name': 'actual_invoice_issue_company', 'sequence': 360},
+                                {'name': 'invoice_provider_name', 'sequence': 370},
+                                {'name': 'handler_name', 'sequence': 380},
+                                {'name': 'invoice_holder', 'sequence': 390},
+                                {'name': 'accounting_state', 'sequence': 400},
+                                {'name': 'voucher_no', 'sequence': 410},
+                                {'name': 'push_result', 'sequence': 420},
+                                {'name': 'kingdee_document_no', 'sequence': 430},
+                                {'name': 'note', 'sequence': 440},
+                                {'name': 'attachment_ids', 'sequence': 450},
+                                {'name': 'invoice_attachment_text', 'sequence': 460, 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 470, 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 480, 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 490, 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 500, 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 510, 'readonly': True},
+                                {'name': 'created_time', 'sequence': 520, 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 530, 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 540, 'readonly': True},
+                                {'name': 'active', 'sequence': 550}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_invoice_output_application_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">invoice_output_application_productized_form_v1</field>
+            <field name="model">sc.invoice.registration</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_invoice_application_user"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '销项开票申请',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'invoice_flow_label', 'business_category_id', 'direction']},
+                                {'title': '项目与合同', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'partner_id', 'contract_id', 'settlement_id']},
+                                {'title': '申请与单据', 'sequence': 30, 'columns': 2, 'fields': ['document_no', 'document_date', 'application_date', 'applicant_name', 'expected_receipt_date']},
+                                {'title': '发票信息', 'sequence': 40, 'columns': 2, 'fields': ['invoice_date', 'recognition_date', 'invoice_state', 'invoice_no', 'invoice_code', 'invoice_type', 'invoice_count', 'invoice_content']},
+                                {'title': '金额税额', 'sequence': 50, 'columns': 2, 'fields': ['tax_rate', 'tax_type', 'amount_no_tax', 'tax_amount', 'amount_total', 'actual_invoice_amount', 'surcharge_amount', 'related_receipt_amount', 'currency_id']},
+                                {'title': '开票单位', 'sequence': 60, 'columns': 2, 'fields': ['recipient_unit_name', 'invoice_issue_company', 'actual_invoice_issue_company', 'invoice_provider_name']},
+                                {'title': '办理与核算', 'sequence': 70, 'columns': 2, 'fields': ['handler_name', 'invoice_holder', 'accounting_state', 'voucher_no', 'push_result', 'kingdee_document_no']},
+                                {'title': '说明与附件', 'sequence': 80, 'columns': 2, 'fields': ['note', 'attachment_ids', 'invoice_attachment_text']},
+                                {'title': '来源追溯', 'sequence': 90, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'creator_name', 'created_time', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'readonly': True},
+                                {'name': 'name', 'sequence': 30},
+                                {'name': 'invoice_flow_label', 'sequence': 40, 'readonly': True},
+                                {'name': 'business_category_id', 'sequence': 50},
+                                {'name': 'direction', 'sequence': 60},
+                                {'name': 'project_id', 'sequence': 70},
+                                {'name': 'company_id', 'sequence': 80, 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 90},
+                                {'name': 'contract_id', 'sequence': 100},
+                                {'name': 'settlement_id', 'sequence': 110},
+                                {'name': 'document_no', 'sequence': 120},
+                                {'name': 'document_date', 'sequence': 130},
+                                {'name': 'application_date', 'sequence': 140},
+                                {'name': 'applicant_name', 'sequence': 150},
+                                {'name': 'expected_receipt_date', 'sequence': 160},
+                                {'name': 'invoice_date', 'sequence': 170},
+                                {'name': 'recognition_date', 'sequence': 180},
+                                {'name': 'invoice_state', 'sequence': 190},
+                                {'name': 'invoice_no', 'sequence': 200},
+                                {'name': 'invoice_code', 'sequence': 210},
+                                {'name': 'invoice_type', 'sequence': 220},
+                                {'name': 'invoice_count', 'sequence': 230},
+                                {'name': 'invoice_content', 'sequence': 240},
+                                {'name': 'tax_rate', 'sequence': 250},
+                                {'name': 'tax_type', 'sequence': 260},
+                                {'name': 'amount_no_tax', 'sequence': 270},
+                                {'name': 'tax_amount', 'sequence': 280},
+                                {'name': 'amount_total', 'sequence': 290},
+                                {'name': 'actual_invoice_amount', 'sequence': 300},
+                                {'name': 'surcharge_amount', 'sequence': 310},
+                                {'name': 'related_receipt_amount', 'sequence': 320},
+                                {'name': 'currency_id', 'sequence': 330},
+                                {'name': 'recipient_unit_name', 'sequence': 340},
+                                {'name': 'invoice_issue_company', 'sequence': 350},
+                                {'name': 'actual_invoice_issue_company', 'sequence': 360},
+                                {'name': 'invoice_provider_name', 'sequence': 370},
+                                {'name': 'handler_name', 'sequence': 380},
+                                {'name': 'invoice_holder', 'sequence': 390},
+                                {'name': 'accounting_state', 'sequence': 400},
+                                {'name': 'voucher_no', 'sequence': 410},
+                                {'name': 'push_result', 'sequence': 420},
+                                {'name': 'kingdee_document_no', 'sequence': 430},
+                                {'name': 'note', 'sequence': 440},
+                                {'name': 'attachment_ids', 'sequence': 450},
+                                {'name': 'invoice_attachment_text', 'sequence': 460, 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 470, 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 480, 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 490, 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 500, 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 510, 'readonly': True},
+                                {'name': 'created_time', 'sequence': 520, 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 530, 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 540, 'readonly': True},
+                                {'name': 'active', 'sequence': 550}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_invoice_prepaid_tax_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">invoice_prepaid_tax_productized_form_v1</field>
+            <field name="model">sc.invoice.registration</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_invoice_prepaid_tax_user"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '预缴税款',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'name', 'invoice_flow_label', 'business_category_id', 'direction']},
+                                {'title': '项目与合同', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'company_id', 'partner_id', 'contract_id', 'settlement_id']},
+                                {'title': '申请与单据', 'sequence': 30, 'columns': 2, 'fields': ['document_no', 'document_date', 'application_date', 'applicant_name', 'expected_receipt_date']},
+                                {'title': '发票信息', 'sequence': 40, 'columns': 2, 'fields': ['invoice_date', 'recognition_date', 'invoice_state', 'invoice_no', 'invoice_code', 'invoice_type', 'invoice_count', 'invoice_content']},
+                                {'title': '金额税额', 'sequence': 50, 'columns': 2, 'fields': ['tax_rate', 'tax_type', 'amount_no_tax', 'tax_amount', 'amount_total', 'actual_invoice_amount', 'surcharge_amount', 'related_receipt_amount', 'currency_id']},
+                                {'title': '完税凭证', 'sequence': 60, 'columns': 2, 'fields': ['prepaid_tax_date', 'tax_certificate_no']},
+                                {'title': '开票单位', 'sequence': 70, 'columns': 2, 'fields': ['recipient_unit_name', 'invoice_issue_company', 'actual_invoice_issue_company', 'invoice_provider_name']},
+                                {'title': '办理与核算', 'sequence': 80, 'columns': 2, 'fields': ['handler_name', 'invoice_holder', 'accounting_state', 'voucher_no', 'push_result', 'kingdee_document_no']},
+                                {'title': '说明与附件', 'sequence': 90, 'columns': 2, 'fields': ['note', 'attachment_ids', 'invoice_attachment_text']},
+                                {'title': '来源追溯', 'sequence': 100, 'columns': 2, 'fields': ['legacy_source_model', 'legacy_source_table', 'legacy_record_id', 'legacy_document_state', 'creator_name', 'created_time', 'source_created_by', 'source_created_at', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'readonly': True},
+                                {'name': 'name', 'sequence': 30},
+                                {'name': 'invoice_flow_label', 'sequence': 40, 'readonly': True},
+                                {'name': 'business_category_id', 'sequence': 50},
+                                {'name': 'direction', 'sequence': 60},
+                                {'name': 'project_id', 'sequence': 70},
+                                {'name': 'company_id', 'sequence': 80, 'readonly': True},
+                                {'name': 'partner_id', 'sequence': 90},
+                                {'name': 'contract_id', 'sequence': 100},
+                                {'name': 'settlement_id', 'sequence': 110},
+                                {'name': 'document_no', 'sequence': 120},
+                                {'name': 'document_date', 'sequence': 130},
+                                {'name': 'application_date', 'sequence': 140},
+                                {'name': 'applicant_name', 'sequence': 150},
+                                {'name': 'expected_receipt_date', 'sequence': 160},
+                                {'name': 'invoice_date', 'sequence': 170},
+                                {'name': 'recognition_date', 'sequence': 180},
+                                {'name': 'invoice_state', 'sequence': 190},
+                                {'name': 'invoice_no', 'sequence': 200},
+                                {'name': 'invoice_code', 'sequence': 210},
+                                {'name': 'invoice_type', 'sequence': 220},
+                                {'name': 'invoice_count', 'sequence': 230},
+                                {'name': 'invoice_content', 'sequence': 240},
+                                {'name': 'tax_rate', 'sequence': 250},
+                                {'name': 'tax_type', 'sequence': 260},
+                                {'name': 'amount_no_tax', 'sequence': 270},
+                                {'name': 'tax_amount', 'sequence': 280},
+                                {'name': 'amount_total', 'sequence': 290},
+                                {'name': 'actual_invoice_amount', 'sequence': 300},
+                                {'name': 'surcharge_amount', 'sequence': 310},
+                                {'name': 'related_receipt_amount', 'sequence': 320},
+                                {'name': 'currency_id', 'sequence': 330},
+                                {'name': 'prepaid_tax_date', 'sequence': 340},
+                                {'name': 'tax_certificate_no', 'sequence': 350},
+                                {'name': 'recipient_unit_name', 'sequence': 360},
+                                {'name': 'invoice_issue_company', 'sequence': 370},
+                                {'name': 'actual_invoice_issue_company', 'sequence': 380},
+                                {'name': 'invoice_provider_name', 'sequence': 390},
+                                {'name': 'handler_name', 'sequence': 400},
+                                {'name': 'invoice_holder', 'sequence': 410},
+                                {'name': 'accounting_state', 'sequence': 420},
+                                {'name': 'voucher_no', 'sequence': 430},
+                                {'name': 'push_result', 'sequence': 440},
+                                {'name': 'kingdee_document_no', 'sequence': 450},
+                                {'name': 'note', 'sequence': 460},
+                                {'name': 'attachment_ids', 'sequence': 470},
+                                {'name': 'invoice_attachment_text', 'sequence': 480, 'readonly': True},
+                                {'name': 'legacy_source_model', 'sequence': 490, 'readonly': True},
+                                {'name': 'legacy_source_table', 'sequence': 500, 'readonly': True},
+                                {'name': 'legacy_record_id', 'sequence': 510, 'readonly': True},
+                                {'name': 'legacy_document_state', 'sequence': 520, 'readonly': True},
+                                {'name': 'creator_name', 'sequence': 530, 'readonly': True},
+                                {'name': 'created_time', 'sequence': 540, 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 550, 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 560, 'readonly': True},
+                                {'name': 'active', 'sequence': 570}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>
