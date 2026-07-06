@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_tender_bid_registration_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">tender_bid_registration_productized_form_v1</field>
+            <field name="model">tender.bid</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_tender_registration"/>
+            <field name="priority">50</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '投标报名管理',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'name', 'tender_bid_status_display', 'tender_bid_document_no', 'tender_bid_push_result']},
+                                {'title': '项目与投标对象', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'tender_bid_project_name', 'tender_name', 'operation_strategy', 'tender_round', 'owner_id', 'legacy_owner_name']},
+                                {'title': '报名与时间', 'sequence': 30, 'columns': 2, 'fields': ['applicant_name', 'apply_date', 'created_time', 'deadline', 'open_date', 'tender_bid_registration_time']},
+                                {'title': '报价与保证金', 'sequence': 40, 'columns': 2, 'fields': ['bid_amount', 'amount_total', 'guarantee_total', 'guarantee_outstanding', 'currency_id']},
+                                {'title': '投标过程', 'sequence': 50, 'columns': 2, 'fields': ['line_ids', 'doc_purchase_ids', 'survey_ids', 'review_ids', 'opening_ids', 'guarantee_ids', 'contract_id']},
+                                {'title': '说明与附件', 'sequence': 60, 'columns': 2, 'fields': ['note', 'legacy_note', 'tech_attachment_ids', 'biz_attachment_ids', 'tender_bid_attachment_text_display']},
+                                {'title': '来源追溯', 'sequence': 70, 'columns': 2, 'fields': ['legacy_fact_model', 'legacy_fact_id', 'legacy_fact_type', 'legacy_attachment_ref', 'legacy_visible_document_state', 'legacy_visible_opening_time', 'legacy_visible_project_name', 'legacy_visible_registration_time', 'legacy_visible_creator_name', 'source_created_by', 'source_created_at', 'tender_bid_source_created_by']},
+                                {'title': '平台范围', 'sequence': 80, 'columns': 2, 'fields': ['business_scope_key', 'business_direction', 'carrier_type', 'carrier_model', 'carrier_res_id', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'name', 'sequence': 20, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'tender_bid_status_display', 'sequence': 30, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'tender_bid_document_no', 'sequence': 40, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'tender_bid_push_result', 'sequence': 50, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'project_id', 'sequence': 60, 'group_title': '项目与投标对象'},
+                                {'name': 'tender_bid_project_name', 'sequence': 70, 'group_title': '项目与投标对象', 'readonly': True},
+                                {'name': 'tender_name', 'sequence': 80, 'group_title': '项目与投标对象'},
+                                {'name': 'operation_strategy', 'sequence': 90, 'group_title': '项目与投标对象', 'readonly': True},
+                                {'name': 'tender_round', 'sequence': 100, 'group_title': '项目与投标对象'},
+                                {'name': 'owner_id', 'sequence': 110, 'group_title': '项目与投标对象'},
+                                {'name': 'legacy_owner_name', 'sequence': 120, 'group_title': '项目与投标对象', 'readonly': True},
+                                {'name': 'applicant_name', 'sequence': 130, 'group_title': '报名与时间'},
+                                {'name': 'apply_date', 'sequence': 140, 'group_title': '报名与时间'},
+                                {'name': 'created_time', 'sequence': 150, 'group_title': '报名与时间'},
+                                {'name': 'deadline', 'sequence': 160, 'group_title': '报名与时间'},
+                                {'name': 'open_date', 'sequence': 170, 'group_title': '报名与时间'},
+                                {'name': 'tender_bid_registration_time', 'sequence': 180, 'group_title': '报名与时间', 'readonly': True},
+                                {'name': 'bid_amount', 'sequence': 190, 'group_title': '报价与保证金'},
+                                {'name': 'amount_total', 'sequence': 200, 'group_title': '报价与保证金', 'readonly': True},
+                                {'name': 'guarantee_total', 'sequence': 210, 'group_title': '报价与保证金', 'readonly': True},
+                                {'name': 'guarantee_outstanding', 'sequence': 220, 'group_title': '报价与保证金', 'readonly': True},
+                                {'name': 'currency_id', 'sequence': 230, 'group_title': '报价与保证金', 'readonly': True},
+                                {'name': 'line_ids', 'sequence': 240, 'group_title': '投标过程'},
+                                {'name': 'doc_purchase_ids', 'sequence': 250, 'group_title': '投标过程'},
+                                {'name': 'survey_ids', 'sequence': 260, 'group_title': '投标过程'},
+                                {'name': 'review_ids', 'sequence': 270, 'group_title': '投标过程'},
+                                {'name': 'opening_ids', 'sequence': 280, 'group_title': '投标过程'},
+                                {'name': 'guarantee_ids', 'sequence': 290, 'group_title': '投标过程'},
+                                {'name': 'contract_id', 'sequence': 300, 'group_title': '投标过程', 'readonly': True},
+                                {'name': 'note', 'sequence': 310, 'group_title': '说明与附件'},
+                                {'name': 'legacy_note', 'sequence': 320, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'tech_attachment_ids', 'sequence': 330, 'group_title': '说明与附件'},
+                                {'name': 'biz_attachment_ids', 'sequence': 340, 'group_title': '说明与附件'},
+                                {'name': 'tender_bid_attachment_text_display', 'sequence': 350, 'group_title': '说明与附件', 'readonly': True},
+                                {'name': 'legacy_fact_model', 'sequence': 360, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_id', 'sequence': 370, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_fact_type', 'sequence': 380, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_attachment_ref', 'sequence': 390, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_visible_document_state', 'sequence': 400, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_visible_opening_time', 'sequence': 410, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_visible_project_name', 'sequence': 420, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_visible_registration_time', 'sequence': 430, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'legacy_visible_creator_name', 'sequence': 440, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_by', 'sequence': 450, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'source_created_at', 'sequence': 460, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'tender_bid_source_created_by', 'sequence': 470, 'group_title': '来源追溯', 'readonly': True},
+                                {'name': 'business_scope_key', 'sequence': 480, 'group_title': '平台范围', 'readonly': True},
+                                {'name': 'business_direction', 'sequence': 490, 'group_title': '平台范围', 'readonly': True},
+                                {'name': 'carrier_type', 'sequence': 500, 'group_title': '平台范围', 'readonly': True},
+                                {'name': 'carrier_model', 'sequence': 510, 'group_title': '平台范围', 'readonly': True},
+                                {'name': 'carrier_res_id', 'sequence': 520, 'group_title': '平台范围', 'readonly': True},
+                                {'name': 'active', 'sequence': 530, 'group_title': '平台范围'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>
