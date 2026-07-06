@@ -54,6 +54,7 @@
         'data/hr_payroll_form_productization_contract.xml',
         'data/office_admin_form_productization_contract.xml',
         'data/document_admin_form_productization_contract.xml',
+        'data/subcontract_request_form_productization_contract.xml',
         'data/formal_list_contract_sync.xml',
         'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
