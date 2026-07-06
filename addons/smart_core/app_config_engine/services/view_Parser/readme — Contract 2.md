@@ -1,28 +1,34 @@
-# Contract 2.0 视图解析器（多文件重构版）
+# Contract 2.0 视图解析器
 
 > 目标：**零推理渲染**、**保真解析**、**标准输出**、**稳健降级**
 
-本重构将原有超长单文件拆分为多模块，职责单一、注释清晰、可独立演进；对齐 Odoo 行为并抽象出“契约 2.0”所需的结构化数据。
+本目录是 `app.view.parser` 的 Odoo 原生视图解析入口。它只解析 Odoo 原生结构并输出契约 2.0 所需的结构化数据，不做运行态治理、不定义产品化表单布局、不拥有业务事实。
+
+## Legacy Filesystem Boundary
+
+当前目录名和部分文件名保留历史形态：`view_Parser`、`contract_Parser.py`、`parsers Tree Form.py`、`parsers Kanban Pivot Graph.py`、`parsers_Calendar_Gantt Activity.py`。
+
+这些名称是兼容边界，不是新代码命名规范。入口 `contract_Parser.py` 必须通过 `LEGACY_MIXIN_MODULES` 和 `_load_legacy_mixin()` 集中加载旧 mixin 文件，避免在其他位置散落动态导入字符串。
 
 ## 目录结构
 
 ```
-services/view_parser/
-├── contract_parser.py                  # 对外入口，Odoo 模型 `app.view.parser`
+services/view_Parser/
+├── contract_Parser.py                  # 对外入口，Odoo 模型 `app.view.parser`
 ├── base.py                             # 通用工具 & XML 保真解析 & toolbar/modifiers
-├── parsers_tree_form.py                # tree / form 解析 + 表单布局 + 按钮归一
-├── parsers_kanban_pivot_graph.py       # kanban / pivot / graph 解析
-├── parsers_calendar_gantt_activity.py  # calendar / gantt / activity / search 合并
-└── __init__.py                         # 可选：留空或导出 API
+├── parsers Tree Form.py                # tree / form 解析 + 表单布局 + 按钮归一
+├── parsers Kanban Pivot Graph.py       # kanban / pivot / graph 解析
+├── parsers_Calendar_Gantt Activity.py  # calendar / gantt / activity / search 合并
+└── __init__.py                         # 注册 `app.view.parser`
 ```
 
 ## 安装与接入
 
-1. 将上述文件置于你的自定义模块路径内，例如：`smart_core/app_config_engine/services/view_parser/`。
-2. 确保模块 `__init__.py` 导入 `services.view_parser.contract_parser`（或在已有 `__init__.py` 中 import）。
-3. 现有调用处保持不变：
+现有调用处保持不变：
 
-   * `self.env['app.view.parser'].sudo().parse_odoo_view(model_name, view_type)`
+* `self.env['app.view.parser'].parse_odoo_view(model_name, view_type)`
+
+解析过程必须使用当前请求用户环境，不能在解析入口默认 `sudo()`，否则 Odoo group-based 视图裁剪会和原生客户端不一致。
 
 ## 关键增强点（对齐近期讨论）
 
@@ -64,4 +70,3 @@ services/view_parser/
 * 兼容 `model.get_view` 与 `fields_view_get(toolbar=True)` 两种来源。
 * 支持视图类型：`tree/form/kanban/pivot/graph/calendar/gantt/activity/search`。
 * `view_type` 可传 `"tree,form"` 或列表 `['tree','form']`，返回聚合对象。
-

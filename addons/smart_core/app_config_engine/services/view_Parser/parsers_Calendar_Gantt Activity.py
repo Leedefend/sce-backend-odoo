@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-services/view_parser/parsers_calendar_gantt_activity.py
+services/view_Parser/parsers_Calendar_Gantt Activity.py
 
 calendar / gantt / activity / search 解析与合并
 """

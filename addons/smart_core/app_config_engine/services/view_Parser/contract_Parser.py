@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-services/view_parser/contract_parser.py
+services/view_Parser/contract_Parser.py
 
 Odoo 模型入口：app.view.parser
 将各解析 Mixin 汇总，输出契约 2.0 结构。
