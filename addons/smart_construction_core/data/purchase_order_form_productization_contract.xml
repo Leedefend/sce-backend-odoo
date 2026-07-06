@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_purchase_order_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">purchase_order_productized_form_v1</field>
+            <field name="model">purchase.order</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_purchase_order"/>
+            <field name="priority">50</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {
+                        'source': 'smart_construction_core.product_release',
+                        'source_status': 'product_release'
+                    },
+                    'views': {
+                        'form': {
+                            'title': '采购订单',
+                            'composition_mode': 'entry_semantic_surface',
+                            'columns': 2,
+                            'sections': [
+                                {'title': '办理主信息', 'sequence': 10, 'columns': 2, 'fields': ['state', 'validation_status', 'can_review', 'priority', 'name', 'partner_id', 'partner_ref', 'user_id', 'company_id', 'currency_id']},
+                                {'title': '项目与来源', 'sequence': 20, 'columns': 2, 'fields': ['project_id', 'plan_id', 'source_material_rfq_id', 'source_material_purchase_request_id', 'origin']},
+                                {'title': '采购排期', 'sequence': 30, 'columns': 2, 'fields': ['date_order', 'date_approve', 'date_planned', 'on_time_rate', 'receipt_reminder_email', 'reminder_date_before_receipt', 'effective_date']},
+                                {'title': '订单明细', 'sequence': 40, 'columns': 2, 'fields': ['order_line', 'notes']},
+                                {'title': '金额与税务', 'sequence': 50, 'columns': 2, 'fields': ['amount_untaxed', 'amount_tax', 'amount_total', 'tax_totals', 'tax_calculation_rounding_method', 'fiscal_position_id']},
+                                {'title': '收货与账单', 'sequence': 60, 'columns': 2, 'fields': ['incoming_picking_count', 'receipt_status', 'invoice_count', 'invoice_status', 'payment_term_id', 'picking_type_id', 'picking_ids', 'invoice_ids']},
+                                {'title': '贸易与交付', 'sequence': 70, 'columns': 2, 'fields': ['dest_address_id', 'incoterm_id', 'incoterm_location', 'default_location_dest_id_usage', 'group_id']},
+                                {'title': '审批与协同', 'sequence': 80, 'columns': 2, 'fields': ['reviewer_ids', 'review_ids', 'next_review', 'reject_reason', 'need_validation', 'validated', 'rejected', 'has_comment']},
+                                {'title': '系统追踪', 'sequence': 90, 'columns': 2, 'fields': ['create_uid', 'create_date', 'write_uid', 'write_date', 'active']}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'validation_status', 'sequence': 20, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'can_review', 'sequence': 30, 'group_title': '办理主信息', 'readonly': True},
+                                {'name': 'priority', 'sequence': 40, 'group_title': '办理主信息'},
+                                {'name': 'name', 'sequence': 50, 'group_title': '办理主信息'},
+                                {'name': 'partner_id', 'sequence': 60, 'group_title': '办理主信息'},
+                                {'name': 'partner_ref', 'sequence': 70, 'group_title': '办理主信息'},
+                                {'name': 'user_id', 'sequence': 80, 'group_title': '办理主信息'},
+                                {'name': 'company_id', 'sequence': 90, 'group_title': '办理主信息'},
+                                {'name': 'currency_id', 'sequence': 100, 'group_title': '办理主信息'},
+                                {'name': 'project_id', 'sequence': 110, 'group_title': '项目与来源'},
+                                {'name': 'plan_id', 'sequence': 120, 'group_title': '项目与来源'},
+                                {'name': 'source_material_rfq_id', 'sequence': 130, 'group_title': '项目与来源'},
+                                {'name': 'source_material_purchase_request_id', 'sequence': 140, 'group_title': '项目与来源'},
+                                {'name': 'origin', 'sequence': 150, 'group_title': '项目与来源'},
+                                {'name': 'date_order', 'sequence': 160, 'group_title': '采购排期'},
+                                {'name': 'date_approve', 'sequence': 170, 'group_title': '采购排期', 'readonly': True},
+                                {'name': 'date_planned', 'sequence': 180, 'group_title': '采购排期'},
+                                {'name': 'on_time_rate', 'sequence': 190, 'group_title': '采购排期', 'readonly': True},
+                                {'name': 'receipt_reminder_email', 'sequence': 200, 'group_title': '采购排期'},
+                                {'name': 'reminder_date_before_receipt', 'sequence': 210, 'group_title': '采购排期'},
+                                {'name': 'effective_date', 'sequence': 220, 'group_title': '采购排期', 'readonly': True},
+                                {'name': 'order_line', 'sequence': 230, 'group_title': '订单明细'},
+                                {'name': 'notes', 'sequence': 240, 'group_title': '订单明细'},
+                                {'name': 'amount_untaxed', 'sequence': 250, 'group_title': '金额与税务', 'readonly': True},
+                                {'name': 'amount_tax', 'sequence': 260, 'group_title': '金额与税务', 'readonly': True},
+                                {'name': 'amount_total', 'sequence': 270, 'group_title': '金额与税务', 'readonly': True},
+                                {'name': 'tax_totals', 'sequence': 280, 'group_title': '金额与税务', 'readonly': True},
+                                {'name': 'tax_calculation_rounding_method', 'sequence': 290, 'group_title': '金额与税务', 'readonly': True},
+                                {'name': 'fiscal_position_id', 'sequence': 300, 'group_title': '金额与税务'},
+                                {'name': 'incoming_picking_count', 'sequence': 310, 'group_title': '收货与账单', 'readonly': True},
+                                {'name': 'receipt_status', 'sequence': 320, 'group_title': '收货与账单', 'readonly': True},
+                                {'name': 'invoice_count', 'sequence': 330, 'group_title': '收货与账单', 'readonly': True},
+                                {'name': 'invoice_status', 'sequence': 340, 'group_title': '收货与账单', 'readonly': True},
+                                {'name': 'payment_term_id', 'sequence': 350, 'group_title': '收货与账单'},
+                                {'name': 'picking_type_id', 'sequence': 360, 'group_title': '收货与账单'},
+                                {'name': 'picking_ids', 'sequence': 370, 'group_title': '收货与账单', 'readonly': True},
+                                {'name': 'invoice_ids', 'sequence': 380, 'group_title': '收货与账单', 'readonly': True},
+                                {'name': 'dest_address_id', 'sequence': 390, 'group_title': '贸易与交付'},
+                                {'name': 'incoterm_id', 'sequence': 400, 'group_title': '贸易与交付'},
+                                {'name': 'incoterm_location', 'sequence': 410, 'group_title': '贸易与交付'},
+                                {'name': 'default_location_dest_id_usage', 'sequence': 420, 'group_title': '贸易与交付', 'readonly': True},
+                                {'name': 'group_id', 'sequence': 430, 'group_title': '贸易与交付', 'readonly': True},
+                                {'name': 'reviewer_ids', 'sequence': 440, 'group_title': '审批与协同', 'readonly': True},
+                                {'name': 'review_ids', 'sequence': 450, 'group_title': '审批与协同', 'readonly': True},
+                                {'name': 'next_review', 'sequence': 460, 'group_title': '审批与协同', 'readonly': True},
+                                {'name': 'reject_reason', 'sequence': 470, 'group_title': '审批与协同', 'readonly': True},
+                                {'name': 'need_validation', 'sequence': 480, 'group_title': '审批与协同', 'readonly': True},
+                                {'name': 'validated', 'sequence': 490, 'group_title': '审批与协同', 'readonly': True},
+                                {'name': 'rejected', 'sequence': 500, 'group_title': '审批与协同', 'readonly': True},
+                                {'name': 'has_comment', 'sequence': 510, 'group_title': '审批与协同', 'readonly': True},
+                                {'name': 'create_uid', 'sequence': 520, 'group_title': '系统追踪', 'readonly': True},
+                                {'name': 'create_date', 'sequence': 530, 'group_title': '系统追踪', 'readonly': True},
+                                {'name': 'write_uid', 'sequence': 540, 'group_title': '系统追踪', 'readonly': True},
+                                {'name': 'write_date', 'sequence': 550, 'group_title': '系统追踪', 'readonly': True},
+                                {'name': 'active', 'sequence': 560, 'group_title': '系统追踪'}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>

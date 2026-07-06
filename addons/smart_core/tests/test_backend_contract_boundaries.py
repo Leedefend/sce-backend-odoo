@@ -139,6 +139,42 @@ class BackendContractBoundaryTests(unittest.TestCase):
             ],
         )
 
+    def test_runtime_view_snapshot_does_not_override_productized_entry_surface(self):
+        rows = [
+            _contract(
+                1,
+                "view_orchestration:purchase.order:form:action:581:view:0",
+                "runtime_backend_form_view_contract",
+                action_id=581,
+                priority=100,
+            ),
+            _contract(
+                2,
+                "view_orchestration:purchase.order:form:action:581:view:0:custom_user_flat",
+                "smart_construction_custom.user_form_preference",
+                action_id=581,
+                priority=600,
+            ),
+            _contract(
+                3,
+                "purchase_order_productized_form_v1",
+                "smart_construction_core.product_release",
+                action_id=581,
+                priority=50,
+            ),
+        ]
+
+        ordered = sorted(rows, key=view_orchestration_apply_order_key)
+        self.assertEqual([row.id for row in ordered], [1, 2, 3])
+        self.assertEqual(
+            [classify_view_orchestration_contract(row.name, row.contract_json)["kind"] for row in ordered],
+            [
+                "generated_industry_baseline",
+                "user_preference_projection",
+                "industry_standard_configuration",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

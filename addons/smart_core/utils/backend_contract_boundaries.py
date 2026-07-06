@@ -18,6 +18,7 @@ BUSINESS_CONFIG_RUNTIME_MODELS = {
 VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING = "smart_core.lowcode.business_config"
 VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY = "smart_core.lowcode.form_field_policy"
 VIEW_ORCHESTRATION_SOURCE_ANALYSIS_EDITOR = "business_config_analysis_editor"
+VIEW_ORCHESTRATION_SOURCE_RUNTIME_VIEW_SNAPSHOT = "runtime_backend_form_view_contract"
 MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING = "smart_core.lowcode.menu_config"
 MENU_CONFIG_POLICY_MODEL = "ui.menu.config.policy"
 MENU_CONFIG_RUNTIME_SOURCE_POLICY = "ui.menu.config.policy"
@@ -199,6 +200,14 @@ def classify_view_orchestration_contract(name: Any, payload: Any = None) -> dict
             "source": source,
             "source_status": source_status,
             "compatibility": True,
+        }
+    if lower_source == VIEW_ORCHESTRATION_SOURCE_RUNTIME_VIEW_SNAPSHOT:
+        return {
+            "layer": LAYER_GENERATED_BASELINE,
+            "kind": "generated_industry_baseline",
+            "source": source,
+            "source_status": source_status,
+            "compatibility": False,
         }
     if (
         lower_source
