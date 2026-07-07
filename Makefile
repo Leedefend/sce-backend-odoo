@@ -34,6 +34,9 @@ ATTACHMENT_MISSING_RESIDUAL_INPUT ?= /data/odoo/legacy_attachments/checks/prod_l
 ATTACHMENT_MISSING_RESIDUAL_OUTPUT ?= /data/odoo/legacy_attachments/checks/prod_legacy_attachment_missing_unique_summary.json
 LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL ?= http://127.0.0.1:5179
 LEGACY_ATTACHMENT_BROWSER_SAMPLES ?=
+LEGACY_ATTACHMENT_BROWSER_SAMPLES_FILE ?=
+LEGACY_ATTACHMENT_BROWSER_SAMPLE_MANIFEST_OUTPUT ?= /mnt/artifacts/backend/legacy_attachment_frontend_browser_samples.json
+LEGACY_ATTACHMENT_BROWSER_SAMPLE_PER_MIMETYPE ?= 0
 
 # Snapshot DB knobs from invocation context before .env include so explicit
 # shell/CLI inputs are not overridden by values inside .env.<tier>.
@@ -1298,7 +1301,11 @@ verify.legacy_attachment.missing_residual.summarize:
 
 .PHONY: verify.legacy_attachment.frontend_browser.acceptance.host
 verify.legacy_attachment.frontend_browser.acceptance.host:
-	@FRONTEND_URL="$(LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL)" DB_NAME="$(DB_NAME)" LEGACY_ATTACHMENT_BROWSER_SAMPLES='$(LEGACY_ATTACHMENT_BROWSER_SAMPLES)' node scripts/verify/legacy_attachment_frontend_browser_acceptance.js
+	@FRONTEND_URL="$(LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL)" DB_NAME="$(DB_NAME)" LEGACY_ATTACHMENT_BROWSER_SAMPLES='$(LEGACY_ATTACHMENT_BROWSER_SAMPLES)' LEGACY_ATTACHMENT_BROWSER_SAMPLES_FILE="$(LEGACY_ATTACHMENT_BROWSER_SAMPLES_FILE)" node scripts/verify/legacy_attachment_frontend_browser_acceptance.js
+
+.PHONY: verify.legacy_attachment.frontend_browser.sample_manifest.prod
+verify.legacy_attachment.frontend_browser.sample_manifest.prod: guard.prod.readonly check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) LEGACY_ATTACHMENT_BROWSER_SAMPLE_MANIFEST_OUTPUT="$(LEGACY_ATTACHMENT_BROWSER_SAMPLE_MANIFEST_OUTPUT)" LEGACY_ATTACHMENT_BROWSER_SAMPLE_PER_MIMETYPE="$(LEGACY_ATTACHMENT_BROWSER_SAMPLE_PER_MIMETYPE)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/legacy_attachment_frontend_browser_sample_manifest.py
 
 .PHONY: legacy_attachment.custody_marker.backfill
 legacy_attachment.custody_marker.backfill: guard.prod.forbid check-compose-project check-compose-env

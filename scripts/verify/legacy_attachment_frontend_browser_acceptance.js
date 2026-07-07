@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { createRequire } = require('module');
 
 const requireBase = fs.existsSync(path.join(process.cwd(), 'frontend/apps/web/package.json'))
@@ -17,6 +18,7 @@ const LOGIN = process.env.E2E_LOGIN || 'wutao';
 const PASSWORD = process.env.E2E_PASSWORD || '123456';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const SAMPLE_JSON = process.env.LEGACY_ATTACHMENT_BROWSER_SAMPLES || '';
+const SAMPLE_FILE = process.env.LEGACY_ATTACHMENT_BROWSER_SAMPLES_FILE || '';
 
 const DEFAULT_SAMPLES = [
   {
@@ -51,12 +53,22 @@ function writeJson(name, data) {
 }
 
 function parseSamples() {
+  if (SAMPLE_FILE) {
+    const parsed = JSON.parse(fs.readFileSync(SAMPLE_FILE, 'utf8'));
+    if (Array.isArray(parsed)) return parsed;
+    if (Array.isArray(parsed.samples)) return parsed.samples;
+    throw new Error('LEGACY_ATTACHMENT_BROWSER_SAMPLES_FILE must contain an array or a {samples} object');
+  }
   if (!SAMPLE_JSON) return DEFAULT_SAMPLES;
   const parsed = JSON.parse(SAMPLE_JSON);
   if (!Array.isArray(parsed) || !parsed.length) {
     throw new Error('LEGACY_ATTACHMENT_BROWSER_SAMPLES must be a non-empty JSON array');
   }
   return parsed;
+}
+
+function sha256(buffer) {
+  return crypto.createHash('sha256').update(buffer).digest('hex');
 }
 
 function redactToken(value) {
@@ -250,14 +262,26 @@ async function main() {
         http_status: envelope.status,
         has_datas: Boolean(datas),
         decoded_bytes: buffer.length,
+        decoded_sha256: sha256(buffer),
         legacy_url_prefix: String(payload.legacy_url || payload.url || '').slice(0, 32),
+        expected_source: sample.expected_source || '',
+        expected_local_path: sample.expected_local_path || '',
+        expected_local_size: sample.expected_local_size || 0,
+        expected_local_sha256: sample.expected_local_sha256 || '',
       };
+      const hasExpectedLocal = Boolean(item.expected_local_path && item.expected_local_sha256 && item.expected_local_size);
+      const localMatches = !hasExpectedLocal
+        || (item.decoded_bytes === Number(item.expected_local_size || 0) && item.decoded_sha256 === item.expected_local_sha256);
+      item.production_local_file_verified = hasExpectedLocal && localMatches;
       if (!item.has_datas || item.decoded_bytes <= 0) {
         item.status = 'fail';
         item.error = 'download returned empty datas';
+      } else if (hasExpectedLocal && !localMatches) {
+        item.status = 'fail';
+        item.error = 'downloaded bytes do not match production local file manifest';
       } else if (sample.mode === 'download') {
         item.browser_download = await triggerBrowserDownload(page, sample, payload);
-        item.status = item.browser_download.saved_bytes === item.decoded_bytes ? 'pass' : 'fail';
+        item.status = item.browser_download.saved_bytes === item.decoded_bytes && localMatches ? 'pass' : 'fail';
       } else {
         item.preview = await renderPreview(page, sample, payload);
         await page.screenshot({ path: path.join(outDir, `${sample.label}.png`), fullPage: true });
