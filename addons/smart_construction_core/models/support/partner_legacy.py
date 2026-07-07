@@ -386,6 +386,12 @@ class ResPartner(models.Model):
                 return value.isoformat()
             return clean_text(value)
 
+        def amount_value(value):
+            try:
+                return float(value or 0.0)
+            except (TypeError, ValueError):
+                return 0.0
+
         def should_replace_created_fact(data, created_at):
             current_sort = data.get("created_sort") or ""
             next_sort = source_sort_value(created_at)
@@ -446,10 +452,7 @@ class ResPartner(models.Model):
                 data["count"] += 1
                 data["sources"].add(source_label)
                 if amount_field and amount_bucket:
-                    try:
-                        data[amount_bucket] += float(row.get(amount_field) or 0.0)
-                    except (TypeError, ValueError):
-                        pass
+                    data[amount_bucket] += amount_value(row.get(amount_field))
                 if project_field and project_field in row:
                     project_name = self._sc_partner_text_from_read(row.get(project_field))
                     if project_name:
