@@ -179,7 +179,62 @@ def probe_frontend(base_url: str, db_name: str, app_env: str, forbidden_db: str)
     return result
 
 
-def probe_login(base_url: str, db_name: str, login: str, password: str) -> dict[str, Any]:
+def _node_label(node: dict[str, Any]) -> str:
+    return str(node.get("label") or node.get("title") or node.get("name") or node.get("display_name") or "").strip()
+
+
+def _node_action_id(node: dict[str, Any]) -> Any:
+    meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    target = node.get("target") if isinstance(node.get("target"), dict) else {}
+    action = node.get("action") if isinstance(node.get("action"), dict) else {}
+    return node.get("action_id") or meta.get("action_id") or target.get("action_id") or action.get("id") or action.get("action_id")
+
+
+def _walk_nav(nodes: Any, path: tuple[str, ...] = ()) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    if not isinstance(nodes, list):
+        return rows
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        label = _node_label(node)
+        current = path + ((label,) if label else ())
+        children = node.get("children") if isinstance(node.get("children"), list) else []
+        rows.append(
+            {
+                "path": " / ".join(current),
+                "label": label,
+                "action_id": _node_action_id(node),
+                "child_count": len(children),
+            }
+        )
+        rows.extend(_walk_nav(children, current))
+    return rows
+
+
+def _int_env(value: str) -> int | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
+def _split_labels(value: str) -> list[str]:
+    return [item.strip() for item in str(value or "").split(",") if item.strip()]
+
+
+def probe_login(
+    base_url: str,
+    db_name: str,
+    login: str,
+    password: str,
+    nav_min_actions: int | None = None,
+    nav_max_actions: int | None = None,
+    nav_forbidden_labels: list[str] | None = None,
+) -> dict[str, Any]:
     if not login or not password:
         return {"enabled": False}
     cookie_jar = CookieJar()
@@ -239,6 +294,30 @@ def probe_login(base_url: str, db_name: str, login: str, password: str) -> dict[
         result["checks"]["role_code"] = role.get("role_code") if isinstance(role, dict) else data.get("role_code")
         nav = data.get("nav") or data.get("menus") or []
         result["checks"]["nav_count"] = len(nav) if isinstance(nav, list) else None
+        nav_rows = _walk_nav(nav)
+        forbidden_labels = nav_forbidden_labels or []
+        forbidden_hits = [
+            row["path"]
+            for row in nav_rows
+            if any(token in row["path"] for token in forbidden_labels)
+        ]
+        result["checks"]["nav_node_count"] = len(nav_rows)
+        result["checks"]["nav_action_count"] = sum(1 for row in nav_rows if row.get("action_id"))
+        result["checks"]["nav_leaf_count"] = sum(1 for row in nav_rows if row.get("child_count") == 0)
+        result["checks"]["nav_forbidden_label_hits"] = forbidden_hits[:50]
+        result["checks"]["nav_paths_sample"] = [row["path"] for row in nav_rows[:80]]
+        if not result["checks"]["role_code"]:
+            errors.append("role_code_missing")
+        if result["checks"]["nav_node_count"] <= 0:
+            errors.append("nav_empty")
+        if result["checks"]["nav_action_count"] <= 0:
+            errors.append("nav_action_empty")
+        if nav_min_actions is not None and result["checks"]["nav_action_count"] < nav_min_actions:
+            errors.append("nav_action_count_below_min")
+        if nav_max_actions is not None and result["checks"]["nav_action_count"] > nav_max_actions:
+            errors.append("nav_action_count_above_max")
+        if forbidden_hits:
+            errors.append("nav_forbidden_label_hits")
     if init_status != 200 or not result["checks"]["system_init_ok"]:
         errors.append("system_init_failed")
 
@@ -257,6 +336,9 @@ def main() -> int:
     parser.add_argument("--forbidden-db", default=os.getenv("ACCEPTANCE_FORBIDDEN_DB", "sc_prod_sim"))
     parser.add_argument("--login", default=os.getenv("ACCEPTANCE_LOGIN", ""))
     parser.add_argument("--password", default=os.getenv("ACCEPTANCE_PASSWORD", ""))
+    parser.add_argument("--nav-min-actions", default=os.getenv("ACCEPTANCE_NAV_MIN_ACTIONS", ""))
+    parser.add_argument("--nav-max-actions", default=os.getenv("ACCEPTANCE_NAV_MAX_ACTIONS", ""))
+    parser.add_argument("--nav-forbidden-labels", default=os.getenv("ACCEPTANCE_NAV_FORBIDDEN_LABELS", ""))
     parser.add_argument("--output", default=os.getenv("ACCEPTANCE_PROBE_OUTPUT", str(DEFAULT_ARTIFACT)))
     args = parser.parse_args()
 
@@ -268,7 +350,15 @@ def main() -> int:
         "app_env": args.app_env,
         "backup": probe_backup(backup_dir, args.db_name),
         "frontend": probe_frontend(args.base_url, args.db_name, args.app_env, args.forbidden_db),
-        "login": probe_login(args.base_url, args.db_name, args.login, args.password),
+        "login": probe_login(
+            args.base_url,
+            args.db_name,
+            args.login,
+            args.password,
+            nav_min_actions=_int_env(args.nav_min_actions),
+            nav_max_actions=_int_env(args.nav_max_actions),
+            nav_forbidden_labels=_split_labels(args.nav_forbidden_labels),
+        ),
     }
     statuses = [
         report["backup"].get("status", "PASS"),

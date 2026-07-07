@@ -428,7 +428,7 @@ verify.daily_dev.runtime_repo.clean:
 
 verify.daily_dev.acceptance.env.guard:
 	@python3 -m py_compile scripts/verify/daily_dev_acceptance_env_guard.py
-	@ENV="$(ENV)" ENV_FILE="$(ENV_FILE)" DB_NAME="$(DB_NAME)" ACCEPTANCE_BASE_URL="$(ACCEPTANCE_BASE_URL)" ACCEPTANCE_LOGIN="$(ACCEPTANCE_LOGIN)" ACCEPTANCE_PASSWORD="$(ACCEPTANCE_PASSWORD)" ACCEPTANCE_PROBE_OUTPUT="$(ACCEPTANCE_PROBE_OUTPUT)" FRONTEND_DIST_DIR="$(FRONTEND_DIST_DIR)" VITE_API_BASE_URL="$(VITE_API_BASE_URL)" VITE_API_PROXY_TARGET="$(VITE_API_PROXY_TARGET)" VITE_ODOO_DB="$(VITE_ODOO_DB)" VITE_ODOO_DB_LOCKED="$(VITE_ODOO_DB_LOCKED)" VITE_APP_ENV="$(VITE_APP_ENV)" VITE_BUILD_MODE="$(VITE_BUILD_MODE)" VITE_BUILD_OUT_DIR="$(VITE_BUILD_OUT_DIR)" VITE_DELIVERY_MODE="$(VITE_DELIVERY_MODE)" VITE_FEATURE_FLAGS="$(VITE_FEATURE_FLAGS)" VITE_LITE_CONTRACT_PILOT="$(VITE_LITE_CONTRACT_PILOT)" VITE_LITE_CONTRACT_ROLLOUT="$(VITE_LITE_CONTRACT_ROLLOUT)" VITE_PLATFORM_ADMIN_DB="$(VITE_PLATFORM_ADMIN_DB)" VITE_TENANT="$(VITE_TENANT)" python3 scripts/verify/daily_dev_acceptance_env_guard.py
+	@ENV="$(ENV)" ENV_FILE="$(ENV_FILE)" DB_NAME="$(DB_NAME)" ACCEPTANCE_BASE_URL="$(ACCEPTANCE_BASE_URL)" ACCEPTANCE_LOGIN="$(ACCEPTANCE_LOGIN)" ACCEPTANCE_PASSWORD="$(ACCEPTANCE_PASSWORD)" ACCEPTANCE_NAV_MIN_ACTIONS="$(ACCEPTANCE_NAV_MIN_ACTIONS)" ACCEPTANCE_NAV_MAX_ACTIONS="$(ACCEPTANCE_NAV_MAX_ACTIONS)" ACCEPTANCE_NAV_FORBIDDEN_LABELS="$(ACCEPTANCE_NAV_FORBIDDEN_LABELS)" ACCEPTANCE_PROBE_OUTPUT="$(ACCEPTANCE_PROBE_OUTPUT)" FRONTEND_DIST_DIR="$(FRONTEND_DIST_DIR)" VITE_API_BASE_URL="$(VITE_API_BASE_URL)" VITE_API_PROXY_TARGET="$(VITE_API_PROXY_TARGET)" VITE_ODOO_DB="$(VITE_ODOO_DB)" VITE_ODOO_DB_LOCKED="$(VITE_ODOO_DB_LOCKED)" VITE_APP_ENV="$(VITE_APP_ENV)" VITE_BUILD_MODE="$(VITE_BUILD_MODE)" VITE_BUILD_OUT_DIR="$(VITE_BUILD_OUT_DIR)" VITE_DELIVERY_MODE="$(VITE_DELIVERY_MODE)" VITE_FEATURE_FLAGS="$(VITE_FEATURE_FLAGS)" VITE_LITE_CONTRACT_PILOT="$(VITE_LITE_CONTRACT_PILOT)" VITE_LITE_CONTRACT_ROLLOUT="$(VITE_LITE_CONTRACT_ROLLOUT)" VITE_PLATFORM_ADMIN_DB="$(VITE_PLATFORM_ADMIN_DB)" VITE_TENANT="$(VITE_TENANT)" python3 scripts/verify/daily_dev_acceptance_env_guard.py
 
 gate.compose.config: check-compose-env
 	@echo "[gate.compose.config] checking container_name..."
@@ -571,9 +571,12 @@ ACCEPTANCE_BASE_URL ?= http://127.0.0.1:$(NGINX_PORT)
 ACCEPTANCE_PROBE_OUTPUT ?= artifacts/backend/dev_acceptance_release_probe.json
 ACCEPTANCE_LOGIN ?=
 ACCEPTANCE_PASSWORD ?=
+ACCEPTANCE_NAV_MIN_ACTIONS ?=
+ACCEPTANCE_NAV_MAX_ACTIONS ?=
+ACCEPTANCE_NAV_FORBIDDEN_LABELS ?=
 
 verify.dev.acceptance.release: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) ACCEPTANCE_BACKUP_DIR="$(ACCEPTANCE_BACKUP_DIR)" ACCEPTANCE_BASE_URL="$(ACCEPTANCE_BASE_URL)" ACCEPTANCE_LOGIN="$(ACCEPTANCE_LOGIN)" ACCEPTANCE_PASSWORD="$(ACCEPTANCE_PASSWORD)" ACCEPTANCE_PROBE_OUTPUT="$(ACCEPTANCE_PROBE_OUTPUT)" python3 scripts/ops/dev_acceptance_release_probe.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) ACCEPTANCE_BACKUP_DIR="$(ACCEPTANCE_BACKUP_DIR)" ACCEPTANCE_BASE_URL="$(ACCEPTANCE_BASE_URL)" ACCEPTANCE_LOGIN="$(ACCEPTANCE_LOGIN)" ACCEPTANCE_PASSWORD="$(ACCEPTANCE_PASSWORD)" ACCEPTANCE_NAV_MIN_ACTIONS="$(ACCEPTANCE_NAV_MIN_ACTIONS)" ACCEPTANCE_NAV_MAX_ACTIONS="$(ACCEPTANCE_NAV_MAX_ACTIONS)" ACCEPTANCE_NAV_FORBIDDEN_LABELS="$(ACCEPTANCE_NAV_FORBIDDEN_LABELS)" ACCEPTANCE_PROBE_OUTPUT="$(ACCEPTANCE_PROBE_OUTPUT)" python3 scripts/ops/dev_acceptance_release_probe.py
 	@ACCEPTANCE_PROBE_OUTPUT="$(ACCEPTANCE_PROBE_OUTPUT)" python3 scripts/verify/dev_acceptance_release_probe_schema_guard.py
 
 .PHONY: verify.dev.acceptance.release.schema.guard
@@ -584,6 +587,9 @@ verify.dev.acceptance.release.schema.guard: guard.prod.forbid
 release.dev.acceptance.publish: guard.prod.forbid check-compose-project check-compose-env verify.frontend.build verify.user_confirmed.formal_surface.locked verify.dev.acceptance.release
 	@echo "[release.dev.acceptance.publish] PASS base_url=$(ACCEPTANCE_BASE_URL) db=$(DB_NAME) artifact=$(ACCEPTANCE_PROBE_OUTPUT)"
 
+release.daily_dev.acceptance.publish: ACCEPTANCE_NAV_MIN_ACTIONS := 60
+release.daily_dev.acceptance.publish: ACCEPTANCE_NAV_MAX_ACTIONS := 70
+release.daily_dev.acceptance.publish: ACCEPTANCE_NAV_FORBIDDEN_LABELS := 用户核对菜单,用户数据验收,用户验收,直营项目系统菜单
 release.daily_dev.acceptance.publish: guard.prod.forbid verify.daily_dev.acceptance.env.guard env.matrix.check verify.daily_dev.runtime_repo.clean release.dev.acceptance.publish
 	@echo "[release.daily_dev.acceptance.publish] PASS base_url=$(ACCEPTANCE_BASE_URL) db=$(DB_NAME) head=$$(git rev-parse --short HEAD)"
 

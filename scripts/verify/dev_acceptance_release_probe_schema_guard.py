@@ -123,8 +123,15 @@ def _check_login(value: object, errors: list[str]) -> str:
         errors.append("login.checks.system_init_ok must be bool")
     if checks.get("auth_uid") is not None and not isinstance(checks.get("auth_uid"), int):
         errors.append("login.checks.auth_uid must be int when present")
-    if checks.get("nav_count") is not None and not isinstance(checks.get("nav_count"), int):
-        errors.append("login.checks.nav_count must be int when present")
+    for key in ("nav_count", "nav_node_count", "nav_action_count", "nav_leaf_count"):
+        if checks.get(key) is not None and not isinstance(checks.get(key), int):
+            errors.append(f"login.checks.{key} must be int when present")
+    if checks.get("role_code") is not None and not isinstance(checks.get("role_code"), str):
+        errors.append("login.checks.role_code must be string when present")
+    if checks.get("nav_forbidden_label_hits") is not None and not _string_list(checks.get("nav_forbidden_label_hits")):
+        errors.append("login.checks.nav_forbidden_label_hits must be string list when present")
+    if checks.get("nav_paths_sample") is not None and not _string_list(checks.get("nav_paths_sample")):
+        errors.append("login.checks.nav_paths_sample must be string list when present")
     if login.get("status") == "PASS":
         if checks.get("auth_status") != 200:
             errors.append("login.checks.auth_status must be 200 when login passes")
@@ -132,6 +139,14 @@ def _check_login(value: object, errors: list[str]) -> str:
             errors.append("login.checks.system_init_status must be 200 when login passes")
         if checks.get("system_init_ok") is not True:
             errors.append("login.checks.system_init_ok must be true when login passes")
+        if not checks.get("role_code"):
+            errors.append("login.checks.role_code must be non-empty when login passes")
+        if not isinstance(checks.get("nav_node_count"), int) or checks.get("nav_node_count") <= 0:
+            errors.append("login.checks.nav_node_count must be positive when login passes")
+        if not isinstance(checks.get("nav_action_count"), int) or checks.get("nav_action_count") <= 0:
+            errors.append("login.checks.nav_action_count must be positive when login passes")
+        if checks.get("nav_forbidden_label_hits"):
+            errors.append("login.checks.nav_forbidden_label_hits must be empty when login passes")
     return str(login.get("status") or "FAIL")
 
 

@@ -75,8 +75,11 @@ filestore.
    other than `ENV=dev`, `ENV_FILE=.env.dev`, `DB_NAME=sc_demo`, and
    `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081`; it requires
    `ACCEPTANCE_LOGIN=wutao` and a non-empty `ACCEPTANCE_PASSWORD`, so the
-   publish gate must exercise real login and `system.init`. The evidence
-   artifact must remain `artifacts/backend/dev_acceptance_release_probe.json`,
+   publish gate must exercise real login and `system.init`. The daily product
+   navigation baseline requires `ACCEPTANCE_NAV_MIN_ACTIONS=60`,
+   `ACCEPTANCE_NAV_MAX_ACTIONS=70`, and
+   `ACCEPTANCE_NAV_FORBIDDEN_LABELS=用户核对菜单,用户数据验收,用户验收,直营项目系统菜单`.
+   The evidence artifact must remain `artifacts/backend/dev_acceptance_release_probe.json`,
    the frontend output must remain `./frontend/apps/web/dist-dev`,
    `VITE_PLATFORM_ADMIN_DB` must remain `sc_platform_core`, and Vite build or
    runtime overrides must stay unset.
@@ -92,8 +95,10 @@ filestore.
   bundle, but they must not be the default runtime target.
 - `/api/v1/intent?db=sc_demo` returns `204` for `OPTIONS` and `405` for `GET`.
 - Daily development publication must authenticate as `wutao` and run
-  `system.init`; generic dev acceptance may still omit credentials only when
-  it is not being used as a daily release gate.
+  `system.init`; the resulting navigation must contain product action menus in
+  the locked daily range and must not expose old acceptance menu labels.
+  Generic dev acceptance may still omit credentials only when it is not being
+  used as a daily release gate.
 
 ## Evidence
 

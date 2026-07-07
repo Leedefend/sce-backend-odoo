@@ -12,6 +12,9 @@ EXPECTED = {
     "DB_NAME": "sc_demo",
     "ACCEPTANCE_BASE_URL": "http://127.0.0.1:18081",
     "ACCEPTANCE_LOGIN": "wutao",
+    "ACCEPTANCE_NAV_MIN_ACTIONS": "60",
+    "ACCEPTANCE_NAV_MAX_ACTIONS": "70",
+    "ACCEPTANCE_NAV_FORBIDDEN_LABELS": "用户核对菜单,用户数据验收,用户验收,直营项目系统菜单",
     "ACCEPTANCE_PROBE_OUTPUT": "artifacts/backend/dev_acceptance_release_probe.json",
     "FRONTEND_DIST_DIR": "./frontend/apps/web/dist-dev",
     "VITE_PLATFORM_ADMIN_DB": "sc_platform_core",
@@ -57,6 +60,9 @@ def main() -> int:
         "DB_NAME": os.getenv("DB_NAME", "").strip(),
         "ACCEPTANCE_BASE_URL": os.getenv("ACCEPTANCE_BASE_URL", "").strip().rstrip("/"),
         "ACCEPTANCE_LOGIN": os.getenv("ACCEPTANCE_LOGIN", "").strip(),
+        "ACCEPTANCE_NAV_MIN_ACTIONS": os.getenv("ACCEPTANCE_NAV_MIN_ACTIONS", "").strip(),
+        "ACCEPTANCE_NAV_MAX_ACTIONS": os.getenv("ACCEPTANCE_NAV_MAX_ACTIONS", "").strip(),
+        "ACCEPTANCE_NAV_FORBIDDEN_LABELS": os.getenv("ACCEPTANCE_NAV_FORBIDDEN_LABELS", "").strip(),
         "ACCEPTANCE_PROBE_OUTPUT": os.getenv("ACCEPTANCE_PROBE_OUTPUT", "").strip(),
         "FRONTEND_DIST_DIR": os.getenv("FRONTEND_DIST_DIR", "").strip(),
         "VITE_PLATFORM_ADMIN_DB": os.getenv("VITE_PLATFORM_ADMIN_DB", "").strip(),
@@ -86,6 +92,7 @@ def main() -> int:
         "env=dev env_file=.env.dev db=sc_demo "
         "base_url=http://127.0.0.1:18081 "
         "login=wutao "
+        "nav_actions=60..70 "
         "artifact=artifacts/backend/dev_acceptance_release_probe.json "
         "dist=./frontend/apps/web/dist-dev "
         "platform_admin_db=sc_platform_core"
