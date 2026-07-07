@@ -435,6 +435,11 @@ MAKEFILE_PHONY_TARGETS = (
     "verify.release.v2_0_0.formal_evidence.schema.guard",
 )
 
+MAKEFILE_ALIAS_TARGETS = tuple(
+    target.replace("verify.release.v2_0_0.", "verify.release_v2_0_0.")
+    for target in MAKEFILE_PHONY_TARGETS
+)
+
 MAKEFILE_TARGET_PREREQS = (
     (
         "verify.release.v2_0_0.preflight",
@@ -1105,6 +1110,25 @@ def _contains_makefile_targets(errors: list[str]) -> None:
             "Makefile v2 release target definition order mismatch: "
             f"expected={MAKEFILE_PHONY_TARGETS!r} actual={actual_v2_targets!r}"
         )
+    for target in MAKEFILE_ALIAS_TARGETS:
+        if target not in phony_targets:
+            errors.append(f"Makefile missing release alias .PHONY target: {target}")
+    actual_v2_alias_phony_targets = tuple(
+        target for target in phony_targets if target.startswith("verify.release_v2_0_0.")
+    )
+    if actual_v2_alias_phony_targets != MAKEFILE_ALIAS_TARGETS:
+        errors.append(
+            "Makefile v2 release alias .PHONY target order mismatch: "
+            f"expected={MAKEFILE_ALIAS_TARGETS!r} actual={actual_v2_alias_phony_targets!r}"
+        )
+    actual_v2_alias_targets = tuple(
+        target for target in makefile_targets if target.startswith("verify.release_v2_0_0.")
+    )
+    if actual_v2_alias_targets != MAKEFILE_ALIAS_TARGETS:
+        errors.append(
+            "Makefile v2 release alias target definition order mismatch: "
+            f"expected={MAKEFILE_ALIAS_TARGETS!r} actual={actual_v2_alias_targets!r}"
+        )
     for target, expected_prereqs in MAKEFILE_TARGET_PREREQS:
         actual_prereqs = _makefile_prereqs(text, target)
         if actual_prereqs is None:
@@ -1124,6 +1148,24 @@ def _contains_makefile_targets(errors: list[str]) -> None:
             errors.append(
                 "Makefile target recipe mismatch: "
                 f"{target} expected={expected_recipe!r} actual={actual_recipe!r}"
+            )
+    for alias_target, canonical_target in zip(MAKEFILE_ALIAS_TARGETS, MAKEFILE_PHONY_TARGETS):
+        actual_prereqs = _makefile_prereqs(text, alias_target)
+        if actual_prereqs is None:
+            errors.append(f"Makefile missing release alias target: {alias_target}")
+            continue
+        expected_prereqs = (canonical_target,)
+        if actual_prereqs != expected_prereqs:
+            errors.append(
+                "Makefile release alias prereqs mismatch: "
+                f"{alias_target} expected={expected_prereqs!r} actual={actual_prereqs!r}"
+            )
+        actual_recipe = _makefile_recipe(text, alias_target)
+        expected_recipe = (f'@echo "[alias] use {canonical_target}"',)
+        if actual_recipe != expected_recipe:
+            errors.append(
+                "Makefile release alias recipe mismatch: "
+                f"{alias_target} expected={expected_recipe!r} actual={actual_recipe!r}"
             )
 
 
