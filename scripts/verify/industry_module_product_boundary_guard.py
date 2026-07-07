@@ -432,6 +432,7 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
     forbidden_user_surface_tokens = (
         "样例单号",
         "来源样例",
+        "项目[样例]",
         "技术材料占位",
         "技术产品占位",
         "技术占位",

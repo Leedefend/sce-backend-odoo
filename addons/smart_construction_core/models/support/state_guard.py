@@ -7,7 +7,7 @@ def raise_guard(code, obj, action, reasons=None, hints=None):
     """Raise standardized guard error.
 
     code: short identifier for tests/logs, e.g. P0_STATE_ILLEGAL_TRANSITION
-    obj: object label, e.g. 项目[样例]
+    obj: object label, e.g. 项目[市政道路提升工程]
     action: action label, e.g. 状态变更
     reasons/hints: list of strings
     """
