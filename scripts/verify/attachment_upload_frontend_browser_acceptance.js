@@ -47,11 +47,30 @@ function routeForRecord() {
 
 function attachConsoleCapture(page) {
   page.__consoleErrors = [];
+  page.__httpErrors = [];
   page.on('console', (msg) => {
     if (msg.type() === 'error') page.__consoleErrors.push(msg.text());
   });
   page.on('pageerror', (err) => {
     page.__consoleErrors.push(err.message);
+  });
+  page.on('response', (response) => {
+    if (response.status() >= 400) {
+      let intent = '';
+      try {
+        const body = response.request().postData() || '';
+        const parsed = body ? JSON.parse(body) : {};
+        intent = parsed.intent || '';
+      } catch {
+        intent = '';
+      }
+      page.__httpErrors.push({
+        status: response.status(),
+        url: response.url(),
+        method: response.request().method(),
+        intent,
+      });
+    }
   });
 }
 
@@ -213,6 +232,7 @@ async function main() {
 
     result.ui_download = await downloadViaUi(page, fileName, fixtureBuffer);
     result.console_errors = page.__consoleErrors || [];
+    result.http_errors = page.__httpErrors || [];
     await page.screenshot({ path: path.join(outDir, 'after_upload.png'), fullPage: true });
     await context.close();
 

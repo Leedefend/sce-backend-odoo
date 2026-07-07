@@ -278,6 +278,93 @@ readonly_recheck_remaining_count=0
 - 上传后 intent 读回和 UI 下载读回的字节 sha256 均与原始上传文件一致。
 - 验收附件已提交清理，并经只读复核确认不在生产业务记录上残留测试附件。
 
+## 用户可达办理面上传矩阵
+
+单个业务表单通过仍不足以证明“所有办理面”无遗漏。生产验收必须先生成上传办理面清单，再对用户可达办理面执行矩阵验收。
+
+生产只读清单入口：
+
+```bash
+ENV=prod \
+ENV_FILE=.env.prod \
+DB_NAME=sc_prod \
+PROD_READONLY_VERIFY=1 \
+E2E_LOGIN=<business-login> \
+make verify.attachment_upload.surface_manifest.prod \
+  ATTACHMENT_UPLOAD_SURFACE_MANIFEST_OUTPUT=/mnt/artifacts/backend/attachment_upload_surface_manifest.json
+```
+
+浏览器矩阵入口：
+
+```bash
+FRONTEND_URL=http://127.0.0.1:5179 \
+DB_NAME=sc_prod \
+E2E_LOGIN=<business-login> \
+E2E_PASSWORD=<password> \
+ATTACHMENT_UPLOAD_BROWSER_SAMPLES_FILE=<selected-samples.json> \
+node scripts/verify/attachment_upload_frontend_browser_matrix_acceptance.js
+```
+
+2026-07-07 生产矩阵结果：
+
+```text
+surface_manifest PASS
+allowed_model_count=267
+browser_upload_candidate_count=87
+user_visible_handling_surface_sample_count=23
+
+frontend_upload_matrix result=PARTIAL_PASS
+passed=17/23 in first matrix run
+settlement_order_rerun=PASS
+effective_passed=18/23
+failed_or_blocked=5/23
+cleanup_ok=true
+readonly_recheck_remaining_count=0
+```
+
+已完整通过的用户可达办理面：
+
+```text
+project.project
+construction.contract
+project.tags
+sc.dashboard.cockpit.fact
+sc.document.admin.document
+sc.financing.loan
+sc.fund.account.operation
+sc.hr.payroll.document
+sc.invoice.registration
+sc.legacy.fund.daily.line
+sc.legacy.invoice.tax.fact
+sc.office.admin.document
+sc.settlement.adjustment
+sc.settlement.order
+sc.tax.deduction.registration
+sc.treasury.reconciliation
+tender.bid
+tender.doc.purchase
+```
+
+未闭合办理面分类：
+
+```text
+BUSINESS_STATE_WRITE_POLICY_BLOCKED:
+  sc.expense.claim
+  sc.general.contract
+  sc.payment.execution
+  sc.receipt.income
+
+NO_UPLOAD_CONTROL_ON_PAGE:
+  sc.legacy.payment.residual.fact
+```
+
+矩阵判定：
+
+- 18 个用户可达办理面已证明上传、intent 读回、前端弹窗下载三者 sha256 一致。
+- 4 个历史已确认单据被业务写策略阻断，错误信息均为“只允许补充...”类限制；这不是 filestore/附件读写主链路失败，但说明这些办理面是否允许补附件需要产品规则明确。
+- `sc.legacy.payment.residual.fact` 页面没有实际上传控件，属于表单契约/页面暴露边界缺口；如果该菜单被定义为可办理附件面，需要补契约或从上传办理面清单中排除。
+- 本轮产生的验收附件已全部提交清理，并经只读复核确认无 `production upload acceptance %` 残留。
+
 - `sc.legacy.file.index` 索引记录是否能解析到本地非零字节文件。
 - 正式 `ir.attachment` 中仍指向 legacy URL 的附件是否已有本地文件承接。
 

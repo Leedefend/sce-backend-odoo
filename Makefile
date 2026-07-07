@@ -1307,6 +1307,14 @@ verify.legacy_attachment.frontend_browser.acceptance.host:
 verify.attachment_upload.frontend_browser.acceptance.host:
 	@FRONTEND_URL="$(LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL)" DB_NAME="$(DB_NAME)" E2E_LOGIN="$(E2E_LOGIN)" E2E_PASSWORD="$(E2E_PASSWORD)" MVP_MODEL="$(MVP_MODEL)" RECORD_ID="$(RECORD_ID)" ACTION_ID="$(ACTION_ID)" MENU_ID="$(MENU_ID)" node scripts/verify/attachment_upload_frontend_browser_acceptance.js
 
+.PHONY: verify.attachment_upload.frontend_browser.matrix.host
+verify.attachment_upload.frontend_browser.matrix.host:
+	@FRONTEND_URL="$(LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL)" DB_NAME="$(DB_NAME)" E2E_LOGIN="$(E2E_LOGIN)" E2E_PASSWORD="$(E2E_PASSWORD)" ATTACHMENT_UPLOAD_BROWSER_SAMPLES_FILE="$(ATTACHMENT_UPLOAD_BROWSER_SAMPLES_FILE)" ATTACHMENT_UPLOAD_BROWSER_LIMIT="$(ATTACHMENT_UPLOAD_BROWSER_LIMIT)" node scripts/verify/attachment_upload_frontend_browser_matrix_acceptance.js
+
+.PHONY: verify.attachment_upload.surface_manifest.prod
+verify.attachment_upload.surface_manifest.prod: guard.prod.readonly check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) ATTACHMENT_UPLOAD_SURFACE_LOGIN="$${ATTACHMENT_UPLOAD_SURFACE_LOGIN:-$(E2E_LOGIN)}" ATTACHMENT_UPLOAD_SURFACE_MANIFEST_OUTPUT="$(ATTACHMENT_UPLOAD_SURFACE_MANIFEST_OUTPUT)" ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS="$(ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/attachment_upload_surface_manifest.py
+
 .PHONY: verify.legacy_attachment.frontend_browser.sample_manifest.prod
 verify.legacy_attachment.frontend_browser.sample_manifest.prod: guard.prod.readonly check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) LEGACY_ATTACHMENT_BROWSER_SAMPLE_MANIFEST_OUTPUT="$(LEGACY_ATTACHMENT_BROWSER_SAMPLE_MANIFEST_OUTPUT)" LEGACY_ATTACHMENT_BROWSER_SAMPLE_PER_MIMETYPE="$(LEGACY_ATTACHMENT_BROWSER_SAMPLE_PER_MIMETYPE)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/legacy_attachment_frontend_browser_sample_manifest.py

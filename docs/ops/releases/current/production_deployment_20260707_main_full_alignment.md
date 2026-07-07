@@ -509,3 +509,103 @@ readonly_recheck_remaining_count=0
 上传文件、file.download intent 读回、AttachmentViewer 弹窗下载三者 sha256 完全一致。
 验收附件已提交清理，并经只读复核确认生产业务记录未残留测试附件。
 ```
+
+## 15. 用户可达办理面上传矩阵验收
+
+2026-07-07 20:11-20:20 +0800，继续扩大上传闭环验收面。先通过生产只读
+Odoo shell 生成 `file.upload` 办理面清单，再筛选普通业务用户可达、具备菜单和 action、
+且有真实记录的办理面执行浏览器矩阵。
+
+清单结果：
+
+```text
+artifact=artifacts/attachment_upload_surface_manifest_wutao.json
+allowed_model_count=267
+browser_upload_candidate_count=87
+user_visible_handling_surface_sample_count=23
+```
+
+矩阵执行：
+
+```text
+artifact=artifacts/attachment-upload-frontend-browser-matrix/20260707T121122/summary.json
+sample_count=23
+first_run_passed=17
+first_run_failed=6
+created_attachment_ids=[21807,21808,21809,21810,21811,21813,21814,21816,21817,21818,21819,21820,21823,21824,21825,21826,21827,21828]
+```
+
+`sc.settlement.order/12` 首轮上传、intent 读回、UI 下载 sha256 已一致，但因一次
+`/api/v1/intent` 403 console 误报为失败；增强脚本记录 HTTP 错误后单独复跑：
+
+```text
+artifact=artifacts/attachment-upload-frontend-browser/20260707T121931/summary.json
+model=sc.settlement.order
+record_id=12
+attachment_id=21830
+result=PASS
+fixture_sha256=6b7a929cc1d8ac7aa6541c72d22b30809362eb0551c1ac14142ee1833975faae
+intent_download_sha256=6b7a929cc1d8ac7aa6541c72d22b30809362eb0551c1ac14142ee1833975faae
+ui_download_sha256=6b7a929cc1d8ac7aa6541c72d22b30809362eb0551c1ac14142ee1833975faae
+console_errors=0
+```
+
+最终分类：
+
+```text
+effective_passed=18/23
+business_state_write_policy_blocked=4/23
+no_upload_control_on_page=1/23
+```
+
+已通过办理面：
+
+```text
+project.project
+construction.contract
+project.tags
+sc.dashboard.cockpit.fact
+sc.document.admin.document
+sc.financing.loan
+sc.fund.account.operation
+sc.hr.payroll.document
+sc.invoice.registration
+sc.legacy.fund.daily.line
+sc.legacy.invoice.tax.fact
+sc.office.admin.document
+sc.settlement.adjustment
+sc.settlement.order
+sc.tax.deduction.registration
+sc.treasury.reconciliation
+tender.bid
+tender.doc.purchase
+```
+
+阻断或缺口：
+
+```text
+BUSINESS_STATE_WRITE_POLICY_BLOCKED:
+  sc.expense.claim
+  sc.general.contract
+  sc.payment.execution
+  sc.receipt.income
+
+NO_UPLOAD_CONTROL_ON_PAGE:
+  sc.legacy.payment.residual.fact
+```
+
+清理复核：
+
+```text
+deleted_attachment_ids=[21807,21808,21809,21810,21811,21813,21814,21816,21817,21818,21819,21820,21823,21824,21825,21826,21827,21828,21830]
+readonly_recheck_remaining_count=0
+```
+
+矩阵结论：
+
+```text
+生产附件上传主链路已覆盖 18 个用户可达办理面并通过。
+剩余 4 个办理面是历史已确认单据写策略阻断，需产品规则明确是否允许补附件。
+剩余 1 个办理面没有上传控件，属于表单契约/页面暴露边界缺口。
+本轮不能宣称 23/23 全闭环，但可以明确附件存储和读回主链路稳定；未闭合项已被定位到业务状态策略或页面契约边界。
+```
