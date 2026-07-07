@@ -1152,18 +1152,18 @@
             <field name="active_version_id" ref="sc_scene_version_project_dashboard_v1"/>
         </record>
 
-        <!-- Project dashboard showcase scene -->
+        <!-- Project dashboard template scene -->
         <record id="sc_scene_version_projects_dashboard_showcase_v2" model="sc.scene.version">
             <field name="scene_id" ref="sc_scene_projects_dashboard_showcase"/>
             <field name="version">v2</field>
             <field name="source">system</field>
             <field name="payload_json" eval="{
                 'code': 'projects.dashboard_showcase',
-                'name': '项目驾驶舱（演示）',
+                'name': '项目驾驶舱样板',
                 'version': 'v2',
                 'page': {
                     'key': 'projects.dashboard_showcase.main',
-                    'title': '项目驾驶舱（演示）',
+                    'title': '项目驾驶舱样板',
                     'page_type': 'dashboard',
                     'page_mode': 'dashboard'
                 },
@@ -1171,14 +1171,14 @@
                 'zone_blocks': [
                     {
                         'key': 'showcase_overview',
-                        'title': '演示总览',
+                        'title': '项目总览',
                         'zone_type': 'hero',
                         'display_mode': 'stack',
                         'block_key': 'block.projects.dashboard_showcase.overview'
                     },
                     {
                         'key': 'showcase_metrics',
-                        'title': '演示指标',
+                        'title': '项目指标',
                         'zone_type': 'primary',
                         'display_mode': 'grid',
                         'block_key': 'block.projects.dashboard_showcase.metrics'
@@ -1222,8 +1222,8 @@
                 },
                 'target': {
                     'route': '/s/projects.dashboard_showcase',
-                    'action_xmlid': 'smart_construction_demo.action_project_dashboard_showcase',
-                    'menu_xmlid': 'smart_construction_demo.menu_sc_project_dashboard_showcase'
+                    'action_xmlid': 'smart_construction_core.action_project_dashboard',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_project_dashboard'
                 }
             }"/>
         </record>

@@ -4516,6 +4516,7 @@ verify.product.sla.baseline: guard.prod.forbid verify.platform.performance.smoke
 
 verify.product.release.ready: guard.prod.forbid \
 	verify.docs.product_boundary \
+	verify.industry_module.product_boundary \
 	verify.user_module.product_boundary \
 	verify.product.surface.clean \
 	verify.product.menu.release.ready \
@@ -4824,6 +4825,11 @@ verify.docs.contract_sync: guard.prod.forbid
 verify.docs.product_boundary: guard.prod.forbid
 	@python3 scripts/verify/test_product_boundary_catalog_guard.py
 	@python3 scripts/verify/product_boundary_catalog_guard.py
+
+.PHONY: verify.industry_module.product_boundary
+verify.industry_module.product_boundary: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/industry_module_product_boundary_guard.py
+	@python3 scripts/verify/industry_module_product_boundary_guard.py
 
 .PHONY: verify.user_module.product_boundary
 verify.user_module.product_boundary: guard.prod.forbid

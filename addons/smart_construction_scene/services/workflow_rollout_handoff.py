@@ -19,11 +19,15 @@ def build_direct_runtime_handoff(
     required_provider: str,
     fallback_policy: dict,
     rollout_wave: str = "wave_1",
+    consume_mode: str = "direct",
 ) -> dict:
+    normalized_consume_mode = _text(consume_mode) or "direct"
+    advisory_only = normalized_consume_mode == "advisory"
     return {
         "owner_layer": "scene_orchestration",
         "rollout_wave": rollout_wave,
         "family": family,
+        "consume_mode": normalized_consume_mode,
         "runtime_entry_type": "governed_user_flow",
         "runtime_consumer": "family_runtime_consumer",
         "runtime_mode": "direct",
@@ -35,7 +39,7 @@ def build_direct_runtime_handoff(
         "acceptance": {
             "runtime_ready": True,
             "workflow_ready": True,
-            "advisory_only": True,
+            "advisory_only": advisory_only,
         },
     }
 

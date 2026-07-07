@@ -90,6 +90,11 @@
   - Rejects treating the original 23 migration asset packages as the full user data baseline.
   - Ensures P1 industry modules do not carry P2 real-user data payloads such as `legacy_user_sc_*` or `user_master_v1.xml`.
   - Ensures form preference initializers do not perform hidden data dictionary creation or partner backfill.
+- `make verify.industry_module.product_boundary`
+  - Verifies `smart_construction_*` module manifests reference only existing assets.
+  - Fails if XML/CSV assets are left undeclared without an explicit boundary reason.
+  - Keeps demo, historical acceptance, and real-user payload files out of production manifests.
+  - Ensures the carried real-user master payload remains behind the idempotent user baseline loader.
 - `make verify.non_demo_data_contamination`
   - Default non-demo contamination audit for a selected `DB_NAME`.
   - Demo databases such as `sc_demo` may return `SKIP`; release hardening must use `make verify.product.no_demo_data` instead.

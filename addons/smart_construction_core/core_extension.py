@@ -1209,7 +1209,6 @@ NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_history_todo": "workspace.home",
     "smart_construction_core.menu_sc_operating_metrics_project": "dashboard.company",
     "smart_construction_core.menu_sc_dashboard_cost_cockpit_fact": "cost.control",
-    "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.menu_sc_dictionary": "data.dictionary",
     "smart_construction_core.menu_payment_request": "finance.payment_requests",
 }
@@ -1218,7 +1217,6 @@ NAV_ACTION_SCENE_MAP = {
     "smart_construction_core.action_project_initiation": "projects.intake",
     "smart_construction_core.action_sc_project_list": "projects.list",
     "smart_construction_core.action_project_dashboard": "projects.dashboard",
-    "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.action_project_dictionary": "data.dictionary",
     "smart_construction_core.action_project_cost_code": "config.project_cost_code",
     "smart_construction_core.action_sc_dashboard_cost_cockpit_fact": "cost.control",
@@ -4009,7 +4007,6 @@ def smart_core_menu_delivery_token_policy(env):
         "hide_exact_labels": [
             "快速创建项目",
             "项目列表（演示）",
-            "项目驾驶舱（演示）",
         ],
         "rename_labels": {
             "项目台账（试点）": "项目台账",

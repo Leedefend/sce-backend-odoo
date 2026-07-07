@@ -41,6 +41,7 @@ def build(scene_key: str = "payments.approval", runtime: dict | None = None, con
             required_provider="construction.approval_workbench_provider.v1",
             fallback_policy=fallback_strategy,
             rollout_wave="wave_2_held",
+            consume_mode="advisory",
         ),
         "runtime": {
             "role_code": runtime_payload.get("role_code"),

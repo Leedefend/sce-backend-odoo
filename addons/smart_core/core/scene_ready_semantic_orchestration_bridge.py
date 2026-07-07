@@ -53,9 +53,10 @@ def _build_runtime_handoff_surface(payload: Dict[str, Any]) -> Dict[str, Any]:
     family = _text(handoff.get("family"))
     primary_action = _as_dict(handoff.get("primary_action"))
     acceptance = _as_dict(handoff.get("acceptance"))
+    consume_mode = _text(handoff.get("consume_mode")) or _handoff_consume_mode(family)
     return {
         "family": family,
-        "consume_mode": _handoff_consume_mode(family),
+        "consume_mode": consume_mode,
         "runtime_entry_type": _text(handoff.get("runtime_entry_type")) or "governed_user_flow",
         "runtime_consumer": _text(handoff.get("runtime_consumer")) or "family_runtime_consumer",
         "runtime_mode": _text(handoff.get("runtime_mode")) or "direct",
