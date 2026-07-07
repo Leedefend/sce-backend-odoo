@@ -31,8 +31,8 @@ ALLOWED_UNDECLARED_XML = {
         "data/user_master_v1.xml": "real legacy user payload; loaded only by idempotent baseline loader",
     },
     "smart_construction_seed": {
-        "data/sc_seed_login_env.xml": "demo login flag; seed hook gates demo mode explicitly",
-        "data/sc_seed_partner.xml": "demo partner seed; demo steps must run through the guarded seed registry",
+        "data/sc_seed_login_env.xml": "scenario login flag; seed hook gates scenario mode explicitly",
+        "data/sc_seed_partner.xml": "scenario partner seed; scenario steps must run through the guarded seed registry",
     },
 }
 
@@ -130,6 +130,12 @@ def verify_guard_metadata_product_language() -> list[str]:
             errors.append(
                 "industry module guard metadata must describe excluded assets with product "
                 f"ownership language, not {token!r}"
+            )
+    for reason in ALLOWED_UNDECLARED_XML.get("smart_construction_seed", {}).values():
+        if "demo" in reason.lower():
+            errors.append(
+                "industry module guard metadata must describe seed excluded assets "
+                "as scenario seed ownership, not demo ownership"
             )
     return errors
 
