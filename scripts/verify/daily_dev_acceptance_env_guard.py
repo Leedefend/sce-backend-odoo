@@ -11,6 +11,7 @@ EXPECTED = {
     "ENV_FILE": ".env.dev",
     "DB_NAME": "sc_demo",
     "ACCEPTANCE_BASE_URL": "http://127.0.0.1:18081",
+    "ACCEPTANCE_PROBE_OUTPUT": "artifacts/backend/dev_acceptance_release_probe.json",
 }
 
 
@@ -33,6 +34,7 @@ def main() -> int:
         "ENV_FILE": _norm_env_file(os.getenv("ENV_FILE", "").strip()),
         "DB_NAME": os.getenv("DB_NAME", "").strip(),
         "ACCEPTANCE_BASE_URL": os.getenv("ACCEPTANCE_BASE_URL", "").strip().rstrip("/"),
+        "ACCEPTANCE_PROBE_OUTPUT": os.getenv("ACCEPTANCE_PROBE_OUTPUT", "").strip(),
     }
 
     for key, expected in EXPECTED.items():
@@ -45,7 +47,12 @@ def main() -> int:
             print(f"- {error}")
         return 2
 
-    print("[daily_dev_acceptance_env_guard] PASS env=dev env_file=.env.dev db=sc_demo base_url=http://127.0.0.1:18081")
+    print(
+        "[daily_dev_acceptance_env_guard] PASS "
+        "env=dev env_file=.env.dev db=sc_demo "
+        "base_url=http://127.0.0.1:18081 "
+        "artifact=artifacts/backend/dev_acceptance_release_probe.json"
+    )
     return 0
 
 

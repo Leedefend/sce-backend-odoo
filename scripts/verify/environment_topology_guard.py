@@ -24,7 +24,8 @@ REQUIRED_TOKENS = {
         "Do not deploy from scratch worktrees or archived runtime directories.",
         "make verify.daily_dev.runtime_repo.clean",
         "make release.daily_dev.acceptance.publish",
-        "it also requires `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081`.",
+        "ACCEPTANCE_BASE_URL=http://127.0.0.1:18081",
+        "ACCEPTANCE_PROBE_OUTPUT=artifacts/backend/dev_acceptance_release_probe.json",
         "make verify.production_git.authority.guard",
     ),
     "daily_policy": (
