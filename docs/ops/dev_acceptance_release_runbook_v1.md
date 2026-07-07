@@ -73,9 +73,11 @@ filestore.
    run from the wrong server directory or a dirty runtime repository.
    It also runs `verify.daily_dev.acceptance.env.guard`, which rejects anything
    other than `ENV=dev`, `ENV_FILE=.env.dev`, `DB_NAME=sc_demo`, and
-   `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081`; the evidence artifact must
-   remain `artifacts/backend/dev_acceptance_release_probe.json`, the frontend
-   output must remain `./frontend/apps/web/dist-dev`,
+   `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081`; it requires
+   `ACCEPTANCE_LOGIN=wutao` and a non-empty `ACCEPTANCE_PASSWORD`, so the
+   publish gate must exercise real login and `system.init`. The evidence
+   artifact must remain `artifacts/backend/dev_acceptance_release_probe.json`,
+   the frontend output must remain `./frontend/apps/web/dist-dev`,
    `VITE_PLATFORM_ADMIN_DB` must remain `sc_platform_core`, and Vite build or
    runtime overrides must stay unset.
 
@@ -89,7 +91,9 @@ filestore.
   Historical or guard-list tokens such as `sc_prod_sim` may still exist in the
   bundle, but they must not be the default runtime target.
 - `/api/v1/intent?db=sc_demo` returns `204` for `OPTIONS` and `405` for `GET`.
-- Optional real-user probe can authenticate and run `system.init`.
+- Daily development publication must authenticate as `wutao` and run
+  `system.init`; generic dev acceptance may still omit credentials only when
+  it is not being used as a daily release gate.
 
 ## Evidence
 

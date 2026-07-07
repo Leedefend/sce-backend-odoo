@@ -11,10 +11,15 @@ EXPECTED = {
     "ENV_FILE": ".env.dev",
     "DB_NAME": "sc_demo",
     "ACCEPTANCE_BASE_URL": "http://127.0.0.1:18081",
+    "ACCEPTANCE_LOGIN": "wutao",
     "ACCEPTANCE_PROBE_OUTPUT": "artifacts/backend/dev_acceptance_release_probe.json",
     "FRONTEND_DIST_DIR": "./frontend/apps/web/dist-dev",
     "VITE_PLATFORM_ADMIN_DB": "sc_platform_core",
 }
+
+REQUIRED_NONEMPTY = (
+    "ACCEPTANCE_PASSWORD",
+)
 
 FORBIDDEN_OVERRIDES = (
     "VITE_API_BASE_URL",
@@ -51,6 +56,7 @@ def main() -> int:
         "ENV_FILE": _norm_env_file(os.getenv("ENV_FILE", "").strip()),
         "DB_NAME": os.getenv("DB_NAME", "").strip(),
         "ACCEPTANCE_BASE_URL": os.getenv("ACCEPTANCE_BASE_URL", "").strip().rstrip("/"),
+        "ACCEPTANCE_LOGIN": os.getenv("ACCEPTANCE_LOGIN", "").strip(),
         "ACCEPTANCE_PROBE_OUTPUT": os.getenv("ACCEPTANCE_PROBE_OUTPUT", "").strip(),
         "FRONTEND_DIST_DIR": os.getenv("FRONTEND_DIST_DIR", "").strip(),
         "VITE_PLATFORM_ADMIN_DB": os.getenv("VITE_PLATFORM_ADMIN_DB", "").strip(),
@@ -59,6 +65,10 @@ def main() -> int:
     for key, expected in EXPECTED.items():
         if observed[key] != expected:
             errors.append(f"{key} must be {expected!r}, got {observed[key]!r}")
+
+    for key in REQUIRED_NONEMPTY:
+        if not os.getenv(key, "").strip():
+            errors.append(f"{key} must be set for daily acceptance release")
 
     for key in FORBIDDEN_OVERRIDES:
         value = os.getenv(key, "").strip()
@@ -75,6 +85,7 @@ def main() -> int:
         "[daily_dev_acceptance_env_guard] PASS "
         "env=dev env_file=.env.dev db=sc_demo "
         "base_url=http://127.0.0.1:18081 "
+        "login=wutao "
         "artifact=artifacts/backend/dev_acceptance_release_probe.json "
         "dist=./frontend/apps/web/dist-dev "
         "platform_admin_db=sc_platform_core"
