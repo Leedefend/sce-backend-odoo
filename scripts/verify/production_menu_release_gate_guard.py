@@ -6,8 +6,10 @@ from pathlib import Path
 
 from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
 from odoo.addons.smart_core.handlers.menu_configuration import (
+    BUSINESS_CONFIG_GROUP,
     MenuConfigurationAuditHandler,
     MenuConfigurationLoadHandler,
+    PLATFORM_ADMIN_GROUP,
 )
 from odoo.addons.smart_core.handlers.system_init import (
     _filter_nav_by_release_gate,
@@ -281,8 +283,21 @@ def _assert_menu_config_scope(released_policy_count: int) -> dict:
     root = env.ref("smart_construction_core.menu_sc_root", raise_if_not_found=False)  # noqa: F821
     if not root:
         raise AssertionError("formal business root menu not found: smart_construction_core.menu_sc_root")
+    handler_env = env  # noqa: F821
+    if not (handler_env.user.has_group(BUSINESS_CONFIG_GROUP) or handler_env.user.has_group(PLATFORM_ADMIN_GROUP)):
+        business_group = env.ref(BUSINESS_CONFIG_GROUP, raise_if_not_found=False)  # noqa: F821
+        platform_group = env.ref(PLATFORM_ADMIN_GROUP, raise_if_not_found=False)  # noqa: F821
+        group_ids = [
+            int(group.id)
+            for group in (business_group, platform_group)
+            if group
+        ]
+        user = env["res.users"].sudo().search([("groups_id", "in", group_ids)], order="id", limit=1) if group_ids else None  # noqa: F821
+        if not user:
+            raise AssertionError("menu config guard needs a business config or platform admin user")
+        handler_env = env(user=int(user.id))  # noqa: F821
     params = {"root_menu_id": int(root.id)}
-    panel = MenuConfigurationLoadHandler(env=env, payload={"params": params}).handle({"params": params})  # noqa: F821
+    panel = MenuConfigurationLoadHandler(env=handler_env, payload={"params": params}).handle({"params": params})
     data = panel.get("data") if isinstance(panel, dict) else {}
     menus = data.get("menus") if isinstance(data, dict) and isinstance(data.get("menus"), list) else []
     max_menu_count = released_policy_count + FORMAL_MENU_CONFIG_MAX_EXTRA_MENU_COUNT
@@ -298,7 +313,7 @@ def _assert_menu_config_scope(released_policy_count: int) -> dict:
     if forbidden_menus:
         raise AssertionError(f"menu config exposes forbidden menus: {forbidden_menus[:20]}")
 
-    audit = MenuConfigurationAuditHandler(env=env, payload={"params": params}).handle({"params": params})  # noqa: F821
+    audit = MenuConfigurationAuditHandler(env=handler_env, payload={"params": params}).handle({"params": params})
     audit_data = audit.get("data") if isinstance(audit, dict) else {}
     summary = audit_data.get("summary") if isinstance(audit_data, dict) and isinstance(audit_data.get("summary"), dict) else {}
     policies = audit_data.get("policies") if isinstance(audit_data, dict) and isinstance(audit_data.get("policies"), list) else []
@@ -320,6 +335,7 @@ def _assert_menu_config_scope(released_policy_count: int) -> dict:
         "audit_configured_policy_count": int(summary.get("configured_policy_count") or 0),
         "audit_applicable_policy_count": int(summary.get("applicable_policy_count") or 0),
         "max_menu_count": max_menu_count,
+        "guard_user": _text(handler_env.user.login),
     }
 
 
