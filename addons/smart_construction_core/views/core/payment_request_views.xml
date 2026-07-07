@@ -77,7 +77,7 @@
                                 <field name="state" readonly="1"/>
                                 <field name="name" readonly="1"/>
                                 <field name="type" invisible="1"/>
-                                <field name="receipt_type" invisible="1"/>
+                                <field name="receipt_type" invisible="type != 'receive'"/>
                             </group>
                             <group string="项目与往来单位">
                                 <field name="project_id" options="{'no_create': True}"/>
@@ -324,7 +324,7 @@
                 (0, 0, {'view_mode': 'form', 'view_id': ref('view_payment_request_form')})
             ]"/>
             <field name="search_view_id" ref="view_payment_request_search"/>
-            <field name="domain">[('business_category_id.code', '=', 'finance.payment.apply.receive')]</field>
+            <field name="domain">['&amp;', ('business_category_id.code', '=', 'finance.payment.apply.receive'), ('legacy_source_table', 'not in', ['C_JFHKLR_DELETED', 'C_JFHKLR_ROUTED_OUT'])]</field>
             <field name="context">{'default_type': 'receive', 'default_business_category_code': 'finance.payment.apply.receive', 'search_default_type_receive': 1, 'search_default_group_by_receipt_type': 1, 'search_default_group_by_project_id': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_finance_read'),
