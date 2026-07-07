@@ -282,9 +282,21 @@ missing_by_source:
   T_BILL_FILE=7
 ```
 
+残差去重摘要：
+
+```text
+reference_rows=121
+unique_missing_paths=120
+duplicate_reference_rows=1
+nonzero_unique_paths=16
+zero_size_unique_paths=104
+nonzero_unique_bytes=2947165
+summary=/data/odoo/legacy_attachments/checks/prod_legacy_attachment_missing_unique_summary.json
+```
+
 补充结论：
 
 ```text
 生产在线源附件（online_old_scbs / online_old_scbsly）已经完成本地 custody evidence 和严格 job audit 闭环。
-生产全量旧附件索引仍有 121 条本地文件缺失，应继续作为旧源残差专项处理。
+生产全量旧附件索引仍有 121 条本地文件缺失引用，对应 120 个唯一缺失路径；其中 16 个为非零文件、104 个为旧索引大小为 0 的记录，应继续作为旧源残差专项处理。
 ```

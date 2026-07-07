@@ -30,6 +30,8 @@ ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES ?=
 ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES ?=
 ATTACHMENT_JOB_AUDIT_INDEX_LIMIT ?=
 ATTACHMENT_JOB_AUDIT_PRINT_FULL ?=
+ATTACHMENT_MISSING_RESIDUAL_INPUT ?= /data/odoo/legacy_attachments/checks/prod_legacy_attachment_missing_latest.tsv
+ATTACHMENT_MISSING_RESIDUAL_OUTPUT ?= /data/odoo/legacy_attachments/checks/prod_legacy_attachment_missing_unique_summary.json
 
 # Snapshot DB knobs from invocation context before .env include so explicit
 # shell/CLI inputs are not overridden by values inside .env.<tier>.
@@ -1287,6 +1289,10 @@ verify.legacy_online_attachment.custody.evidence.prod: guard.prod.readonly check
 .PHONY: verify.legacy_online_attachment.mirror.job.audit.prod
 verify.legacy_online_attachment.mirror.job.audit.prod: guard.prod.readonly check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) LEGACY_ATTACHMENT_JOB_ROOT="$${LEGACY_ATTACHMENT_JOB_ROOT:-$(ATTACHMENT_JOB_AUDIT_JOB_ROOT)}" LEGACY_ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS="$${LEGACY_ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS:-$(or $(ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS),online_old)}" LEGACY_ATTACHMENT_JOB_AUDIT_STRICT=1 LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES="$${LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES:-$(or $(ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES),0)}" LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES="$${LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES:-$(or $(ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES),0)}" LEGACY_ATTACHMENT_JOB_AUDIT_INDEX_LIMIT="$${LEGACY_ATTACHMENT_JOB_AUDIT_INDEX_LIMIT:-$(or $(ATTACHMENT_JOB_AUDIT_INDEX_LIMIT),0)}" LEGACY_ATTACHMENT_JOB_AUDIT_PRINT_FULL="$${LEGACY_ATTACHMENT_JOB_AUDIT_PRINT_FULL:-$(ATTACHMENT_JOB_AUDIT_PRINT_FULL)}" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/legacy_online_attachment_mirror_job_audit.py
+
+.PHONY: verify.legacy_attachment.missing_residual.summarize
+verify.legacy_attachment.missing_residual.summarize:
+	@python3 scripts/verify/legacy_attachment_missing_residual_summarize.py --input "$(ATTACHMENT_MISSING_RESIDUAL_INPUT)" --output "$(ATTACHMENT_MISSING_RESIDUAL_OUTPUT)"
 
 .PHONY: legacy_attachment.custody_marker.backfill
 legacy_attachment.custody_marker.backfill: guard.prod.forbid check-compose-project check-compose-env

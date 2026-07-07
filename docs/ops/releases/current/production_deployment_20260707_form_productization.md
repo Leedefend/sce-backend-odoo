@@ -185,6 +185,9 @@ missing_local_file=121
 missing_by_source:
   BASE_SYSTEM_FILE=114
   T_BILL_FILE=7
+unique_missing_paths=120
+nonzero_unique_paths=16
+zero_size_unique_paths=104
 ```
 
 已重新尝试从两个在线源补齐 `BASE_SYSTEM_FILE` 缺失文件，写入根目录改为可写的
@@ -247,13 +250,13 @@ ODOO_JOBS_WRITABLE=1
 ```text
 本次表单产品化生产增量发布已完成，生产服务健康，核心业务验证矩阵通过，具备生产运行条件。
 生产不是开发工作区全量镜像；后续迭代必须从当前 main 和本部署记录出发，经 prod-sim 回放后形成下一发布包。
-附件仍有 121 个本地文件缺失（BASE_SYSTEM_FILE=114，T_BILL_FILE=7），需作为发布后运维专项继续处理。
+附件仍有 121 条本地文件缺失引用（对应 120 个唯一缺失路径，BASE_SYSTEM_FILE=114，T_BILL_FILE=7），需作为发布后运维专项继续处理。
 ```
 
 ## 10. 后续事项
 
 | 事项 | 负责人 | 截止时间 | 状态 |
 | --- | --- | --- | --- |
-| 将 121 个缺失附件（`BASE_SYSTEM_FILE=114`，`T_BILL_FILE=7`）作为运维专项继续补齐 | `TBD` | `TBD` | `open` |
+| 将 121 条缺失引用对应的 120 个唯一缺失路径（`BASE_SYSTEM_FILE=114`，`T_BILL_FILE=7`）作为运维专项继续补齐 | `TBD` | `TBD` | `open` |
 | 下一轮迭代从当前 `main` 和本部署记录出发建立候选发布范围 | `TBD` | `TBD` | `open` |
 | 后续生产发布恢复 prod-sim 优先回放要求 | `TBD` | `TBD` | `open` |

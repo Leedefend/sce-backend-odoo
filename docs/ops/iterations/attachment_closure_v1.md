@@ -99,6 +99,23 @@ make verify.legacy_attachment.mirror.completeness.audit.prod \
 
 完整性 `.prod` 目标会同时检查：
 
+## 残差摘要口径
+
+严格完整性审计失败时，先保留完整缺失 TSV，再生成去重残差摘要：
+
+```bash
+make verify.legacy_attachment.missing_residual.summarize \
+  ATTACHMENT_MISSING_RESIDUAL_INPUT=/data/odoo/legacy_attachments/checks/prod_legacy_attachment_missing_YYYYMMDDTHHMMSS+0800.tsv \
+  ATTACHMENT_MISSING_RESIDUAL_OUTPUT=/data/odoo/legacy_attachments/checks/prod_legacy_attachment_missing_unique_summary.json
+```
+
+残差汇报必须区分：
+
+- `reference_rows`：索引引用行数，可能包含同一文件被多条业务记录引用。
+- `unique_missing_paths`：唯一缺失路径数量，用于实际补文件工作量。
+- `nonzero_unique_paths`：旧索引声明有大小的缺失文件，应优先追补。
+- `zero_size_unique_paths`：旧索引大小为 0 的缺失记录，应单独判定为旧源元数据残差，不得与真实非零文件混为一类。
+
 - `sc.legacy.file.index` 索引记录是否能解析到本地非零字节文件。
 - 正式 `ir.attachment` 中仍指向 legacy URL 的附件是否已有本地文件承接。
 
