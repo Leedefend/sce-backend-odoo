@@ -419,6 +419,7 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
         "showcase_metrics",
         "项目驾驶舱（兼容）",
         "兼容旧入口",
+        "（兼容）",
     )
     guarded_roots = (
         ADDONS / "smart_construction_core" / "models",

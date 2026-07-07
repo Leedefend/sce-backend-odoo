@@ -58,7 +58,7 @@ class ScLegacyPurchaseContractFact(models.Model):
     currency_name = fields.Char(string="币种", index=True)
     prepayment_amount = fields.Float(string="预付款")
     install_debug_payment = fields.Float(string="安装调试款")
-    install_commissioning_payment = fields.Float(string="安装调试款（兼容）", compute="_compute_business_aliases")
+    install_commissioning_payment = fields.Float(string="安装调试款", compute="_compute_business_aliases")
     warranty_deposit = fields.Float(string="质保金")
     payment_terms = fields.Text(string="付款条件")
     partner_legacy_id = fields.Char(string="往来方原编号", index=True)

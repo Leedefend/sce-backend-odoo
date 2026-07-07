@@ -99,7 +99,7 @@ class ScGeneralContract(models.Model):
     prepayment_amount = fields.Monetary(string="预付款", currency_field="currency_id")
     install_debug_payment = fields.Monetary(string="安装调试款", currency_field="currency_id")
     install_commissioning_payment = fields.Monetary(
-        string="安装调试款（兼容）",
+        string="安装调试款",
         currency_field="currency_id",
         compute="_compute_business_aliases",
     )
