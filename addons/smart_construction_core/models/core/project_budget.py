@@ -129,4 +129,4 @@ class ProjectBudgetLine(models.Model):
         readonly=True,
     )
 
-    # compute 逻辑放到 Phase-1 统一处理
+    # compute 逻辑由统一预算计算链路处理
