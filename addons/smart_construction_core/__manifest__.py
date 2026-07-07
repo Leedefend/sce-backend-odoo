@@ -334,9 +334,7 @@
     },
     'pre_init_hook': 'pre_init_hook',
     'post_init_hook': 'post_init_hook',
-    'demo': [
-        # 'data/cost_domain_demo.xml',
-    ],
+    'demo': [],
     'installable': True,
     'application': True,
     'license': 'LGPL-3',

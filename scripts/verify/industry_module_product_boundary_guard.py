@@ -23,7 +23,6 @@ INDUSTRY_MODULES = (
 # Source assets intentionally carried but not loaded by manifests.
 ALLOWED_UNDECLARED_XML = {
     "smart_construction_core": {
-        "data/cost_domain_demo.xml": "demo payload; production core must not load demo records",
         "data/tax.xml": "empty compatibility stub; taxes are created idempotently by hooks.ensure_core_taxes",
         "views/res_users_views.xml": "legacy user-form experiment; enterprise/user module owns user profile surface",
         "views/support/partner_acceptance_product_menu_policy.xml": "historical acceptance policy; not part of formal runtime menu policy",
@@ -39,7 +38,6 @@ ALLOWED_UNDECLARED_XML = {
 
 FORBIDDEN_MANIFEST_XML = {
     "smart_construction_core": {
-        "data/cost_domain_demo.xml",
         "views/res_users_views.xml",
         "views/support/partner_acceptance_product_menu_policy.xml",
     },
