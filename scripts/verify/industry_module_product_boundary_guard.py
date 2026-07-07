@@ -323,6 +323,29 @@ def verify_core_api_controller_exception_observability() -> list[str]:
     return errors
 
 
+def verify_business_slice_project_resolution_observability() -> list[str]:
+    errors: list[str] = []
+    guarded_paths = (
+        ADDONS / "smart_construction_core" / "services" / "cost_tracking_service.py",
+        ADDONS / "smart_construction_core" / "services" / "payment_slice_service.py",
+        ADDONS / "smart_construction_core" / "services" / "project_execution_service.py",
+        ADDONS / "smart_construction_core" / "services" / "settlement_slice_service.py",
+    )
+    for path in guarded_paths:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "def resolve_project_with_diagnostics" not in text:
+            continue
+        method_text = text.split("def resolve_project_with_diagnostics", 1)[1].split("\n    def ", 1)[0]
+        if "except Exception:\n                pass" in method_text or "except Exception:\n            pass" in method_text:
+            errors.append(
+                "smart_construction_core: business slice project resolution fallbacks must log "
+                f"exception degradation at debug level: {path.relative_to(ROOT).as_posix()}"
+            )
+    return errors
+
+
 def verify_core_docs_product_examples() -> list[str]:
     errors: list[str] = []
     docs_dir = ADDONS / "smart_construction_core" / "docs"
@@ -497,6 +520,7 @@ def main() -> int:
     errors.extend(verify_app_entry_exception_observability())
     errors.extend(verify_scene_governance_exception_observability())
     errors.extend(verify_core_api_controller_exception_observability())
+    errors.extend(verify_business_slice_project_resolution_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_core_extension_legacy_label_boundary())

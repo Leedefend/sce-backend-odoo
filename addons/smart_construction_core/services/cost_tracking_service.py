@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
+
 from odoo import fields
 
 from odoo.addons.smart_construction_core.services.project_state_explain_service import lifecycle_state_label
 from odoo.addons.smart_construction_core.services.cost_tracking_entry_service import CostTrackingEntryService
 from odoo.addons.smart_construction_core.services.cost_tracking_builders import BUILDERS
 from odoo.addons.smart_construction_core.services.cost_tracking_native_adapter import CostTrackingNativeAdapter
+
+
+_logger = logging.getLogger(__name__)
 
 
 class CostTrackingService:
@@ -90,27 +95,27 @@ class CostTrackingService:
                 if record:
                     return record, {"resolved_project_id": int(record.id), "reason": "explicit_project_id"}
             except Exception:
-                pass
+                _logger.debug("Unable to resolve explicit cost tracking project.", exc_info=True)
         try:
             if "create_uid" in getattr(Project, "_fields", {}):
                 record = Project.search([("create_uid", "=", int(self.env.user.id))], order="create_date desc,id desc", limit=1)
                 if record:
                     return record, {"resolved_project_id": int(record.id), "reason": "creator_domain"}
         except Exception:
-            pass
+            _logger.debug("Unable to resolve cost tracking project by creator domain.", exc_info=True)
         domain = self._project_domain_for_user()
         try:
             record = Project.search(domain, order="write_date desc,id desc", limit=1)
             if record:
                 return record, {"resolved_project_id": int(record.id), "reason": "user_domain"}
         except Exception:
-            pass
+            _logger.debug("Unable to resolve cost tracking project by user domain.", exc_info=True)
         try:
             record = Project.search([], order="write_date desc,id desc", limit=1)
             if record:
                 return record, {"resolved_project_id": int(record.id), "reason": "global_search"}
         except Exception:
-            pass
+            _logger.debug("Unable to resolve cost tracking project by global fallback.", exc_info=True)
         return None, {"resolved_project_id": 0, "reason": "no project resolved"}
 
     def project_payload(self, project):
