@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from odoo.tests.common import TransactionCase, tagged
 
-from odoo.addons.smart_construction_core.handlers.app_catalog import APP_DELIVERY_SOURCE_AUTHORITY
+from odoo.addons.smart_construction_core.handlers.app_catalog import (
+    APP_DELIVERY_FALLBACK_META,
+    APP_DELIVERY_SOURCE_AUTHORITY,
+)
 from odoo.addons.smart_construction_core.handlers.business_evidence_trace import BusinessEvidenceTraceHandler
 from odoo.addons.smart_construction_core.handlers.capability_describe import CapabilityDescribeHandler
 from odoo.addons.smart_construction_core.handlers.cost_tracking_block_fetch import CostTrackingBlockFetchHandler
@@ -162,6 +165,9 @@ class TestConstructionOdooNativeAlignmentBoundaries(TransactionCase):
     def test_delivery_and_observability_handlers_do_not_claim_business_fact_authority(self):
         self.assertTrue(APP_DELIVERY_SOURCE_AUTHORITY.get("delivery_only"))
         self.assertTrue(APP_DELIVERY_SOURCE_AUTHORITY.get("no_business_fact_authority"))
+        self.assertTrue(APP_DELIVERY_FALLBACK_META.get("fallback"))
+        self.assertEqual(APP_DELIVERY_FALLBACK_META.get("fallback_kind"), "delivery_navigation_fallback")
+        self.assertTrue(APP_DELIVERY_FALLBACK_META.get("no_business_fact_authority"))
         self.assertEqual(CapabilityDescribeHandler.SOURCE_AUTHORITY.get("kind"), "capability_delivery_projection")
         self.assertTrue(CapabilityDescribeHandler.SOURCE_AUTHORITY.get("no_business_fact_authority"))
         self.assertTrue(TelemetryTrackHandler.SOURCE_AUTHORITY.get("observability_only"))
