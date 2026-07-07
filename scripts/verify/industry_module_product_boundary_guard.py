@@ -364,10 +364,19 @@ def verify_handler_historical_wrapper_boundary() -> list[str]:
             "def _suggested_action_for_reason(*, reason_code, state):",
             "return suggested_action_for_capability_reason(reason_code=reason_code, state=state)",
         },
+        ADDONS / "smart_construction_core" / "handlers" / "project_execution_advance.py": {
+            "# Historical semantic guard anchor after response-builder extraction:",
+            '# "result": "blocked"',
+            "# Historical semantic guard wrapper; new code calls ProjectExecutionHintService directly.",
+            "def _build_lifecycle_hints(self, project_id: int, reason_code: str) -> dict:",
+            "return self._hint_service().build_lifecycle_hints(project_id, reason_code)",
+        },
     }
     forbidden_fragments = (
         "Keep this compatibility wrapper",
         "Keep this wrapper for backward compatibility",
+        "Semantic guard compatibility anchor",
+        "Compatibility shim for lifecycle semantic guard",
     )
     errors: list[str] = []
     for path, anchors in anchors_by_path.items():

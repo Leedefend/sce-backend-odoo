@@ -55,7 +55,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
-    # Semantic guard compatibility anchor after response-builder extraction:
+    # Historical semantic guard anchor after response-builder extraction:
     # "result": "blocked"
 
     SOURCE_AUTHORITY = {
@@ -97,7 +97,7 @@ class ProjectExecutionAdvanceHandler(BaseIntentHandler):
         return ProjectExecutionHintService()
 
     def _build_lifecycle_hints(self, project_id: int, reason_code: str) -> dict:
-        # Compatibility shim for lifecycle semantic guard token checks.
+        # Historical semantic guard wrapper; new code calls ProjectExecutionHintService directly.
         return self._hint_service().build_lifecycle_hints(project_id, reason_code)
 
     def _blocked_response(
