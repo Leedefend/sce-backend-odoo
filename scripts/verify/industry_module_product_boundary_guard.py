@@ -199,7 +199,7 @@ def verify_legacy_temporary_account_boundary() -> list[str]:
     for relative, count in sorted(allowed_hits.items()):
         if actual_hits.get(relative) != count:
             errors.append(
-                "smart_construction_core: expected temporary-account compatibility anchor "
+                "smart_construction_core: expected temporary-account historical payload anchor "
                 f"{relative} count={count}"
             )
     return errors
@@ -235,7 +235,7 @@ def verify_portal_execute_demo_boundary() -> list[str]:
         if "action_portal_demo_ping" not in text:
             continue
         if relative not in PORTAL_EXECUTE_LEGACY_ALLOWLIST:
-            errors.append(f"smart_construction_core: legacy portal demo method leaks outside compatibility layer: {relative}")
+            errors.append(f"smart_construction_core: legacy portal demo method leaks outside historical method anchors: {relative}")
     return errors
 
 
@@ -258,12 +258,12 @@ def verify_portal_execute_legacy_method_anchor_boundary() -> list[str]:
         if allowed_hits.get(relative) != count:
             errors.append(
                 "smart_construction_core: action_portal_demo_ping must stay limited "
-                f"to explicit portal execute compatibility anchors: {relative}"
+                f"to explicit portal execute historical method anchors: {relative}"
             )
     for relative, count in sorted(allowed_hits.items()):
         if actual_hits.get(relative) != count:
             errors.append(
-                "smart_construction_core: expected portal execute compatibility anchor "
+                "smart_construction_core: expected portal execute historical method anchor "
                 f"{relative} count={count}"
             )
     return errors
@@ -796,11 +796,11 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
     return errors
 
 
-def verify_material_pending_name_compatibility_boundary() -> list[str]:
+def verify_material_historical_default_name_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "models" / "core" / "material_acceptance.py"
     if not path.is_file():
         return [
-            "smart_construction_core: material pending-name compatibility anchor file missing"
+            "smart_construction_core: material historical default-name anchor file missing"
         ]
     text = path.read_text(encoding="utf-8", errors="ignore")
     required_anchors = {
@@ -811,7 +811,7 @@ def verify_material_pending_name_compatibility_boundary() -> list[str]:
     for anchor in sorted(required_anchors):
         if text.count(anchor) != 1:
             errors.append(
-                "smart_construction_core: material pending-name compatibility anchor "
+                "smart_construction_core: material historical default-name anchor "
                 f"must appear exactly once: {anchor}"
             )
     scrubbed = text
@@ -819,7 +819,7 @@ def verify_material_pending_name_compatibility_boundary() -> list[str]:
         scrubbed = scrubbed.replace(anchor, "")
     if "待完善" in scrubbed:
         errors.append(
-            "smart_construction_core: material pending-name compatibility may only use "
+            "smart_construction_core: material historical default-name anchor may only use "
             "pending wording inside explicit legacy system default constants"
         )
     return errors
@@ -1006,12 +1006,12 @@ def verify_project_execution_readiness_precheck_boundary() -> list[str]:
         ):
             errors.append(
                 "smart_construction_core: project execution readiness precheck is the product "
-                f"contract; pilot_precheck may only appear in explicit compatibility anchors: {relative}"
+                f"contract; pilot_precheck may only appear in explicit historical-readiness anchors: {relative}"
             )
     return errors
 
 
-def verify_budget_compatibility_layer_boundary() -> list[str]:
+def verify_budget_historical_facade_boundary() -> list[str]:
     module_root = ADDONS / "smart_construction_core"
     core_init = module_root / "models" / "core" / "__init__.py"
     compat = module_root / "models" / "support" / "budget_compat.py"
@@ -1019,7 +1019,7 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
     readme = module_root / "README.md"
     errors: list[str] = []
     if not compat.is_file():
-        errors.append("smart_construction_core: budget compatibility layer file missing")
+        errors.append("smart_construction_core: budget historical facade file missing")
         return errors
     core_text = core_init.read_text(encoding="utf-8", errors="ignore") if core_init.is_file() else ""
     compat_text = compat.read_text(encoding="utf-8", errors="ignore")
@@ -1037,18 +1037,18 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
     for label, fragment in required_fragments.items():
         if combined.count(fragment) != 1:
             errors.append(
-                "smart_construction_core: budget compatibility layer anchor "
+                "smart_construction_core: budget historical facade anchor "
                 f"must appear exactly once ({label}): {fragment!r}"
             )
     if "兼容旧 project.budget.line" in core_text:
         errors.append(
-            "smart_construction_core: budget compatibility import must use historical-model "
+            "smart_construction_core: budget historical facade import must use historical-model "
             "boundary wording, not generic old-compatibility wording"
         )
     for fragment in ("兼容层：历史模型 project.budget.line", "项目预算行(兼容层)"):
         if fragment in compat_text:
             errors.append(
-                "smart_construction_core: budget compatibility layer must use "
+                "smart_construction_core: budget historical facade must use "
                 f"historical-model facade wording, not generic compatibility wording {fragment!r}"
             )
     for path_label, text in (
@@ -1063,7 +1063,7 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
                 )
     if 'project.budget.line -> 现用 project.budget.boq.line' in cost_domain_text:
         errors.append(
-            "smart_construction_core: cost_domain must not describe budget compatibility "
+            "smart_construction_core: cost_domain must not describe budget historical facade "
             "mapping details; keep that responsibility in models/support/budget_compat.py"
         )
     return errors
@@ -1459,13 +1459,13 @@ def main() -> int:
     errors.extend(verify_core_model_runtime_exception_observability())
     errors.extend(verify_core_extension_wizard_exception_observability())
     errors.extend(verify_runtime_pending_placeholder_language_boundary())
-    errors.extend(verify_material_pending_name_compatibility_boundary())
+    errors.extend(verify_material_historical_default_name_boundary())
     errors.extend(verify_dashboard_focus_scene_runtime_contract())
     errors.extend(verify_scene_registry_engine_fallback_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_project_execution_readiness_precheck_boundary())
-    errors.extend(verify_budget_compatibility_layer_boundary())
+    errors.extend(verify_budget_historical_facade_boundary())
     errors.extend(verify_work_breakdown_historical_facade_boundary())
     errors.extend(verify_state_machine_historical_alias_boundary())
     errors.extend(verify_sc_workflow_historical_runtime_boundary())
