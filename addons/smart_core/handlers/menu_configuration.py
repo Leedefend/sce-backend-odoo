@@ -544,13 +544,14 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         Menu = self.env["ir.ui.menu"].sudo()
         MenuAll = Menu.with_context(active_test=False)
         requested_menu_ids = self._requested_menu_ids(params)
+        explicit_requested_menu_ids = list(requested_menu_ids)
         root_menu_id = self._scope_root_menu_id(params)
         if root_menu_id and root_menu_id not in requested_menu_ids:
             requested_menu_ids.append(root_menu_id)
         if root_menu_id:
             requested_set = {int(menu_id) for menu_id in requested_menu_ids if int(menu_id or 0)}
             all_menus = MenuAll.search([], order="parent_id, sequence, id")
-            candidate_ids = self._menu_config_candidate_ids(root_menu_id, requested_menu_ids, all_menus)
+            candidate_ids = self._menu_config_candidate_ids(root_menu_id, explicit_requested_menu_ids, all_menus)
             policy_records = self.env[MENU_CONFIG_POLICY_MODEL].sudo().with_context(active_test=False).search([
                 ("company_id", "=", company_id),
                 ("active", "=", True),
