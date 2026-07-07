@@ -32,6 +32,8 @@ ATTACHMENT_JOB_AUDIT_INDEX_LIMIT ?=
 ATTACHMENT_JOB_AUDIT_PRINT_FULL ?=
 ATTACHMENT_MISSING_RESIDUAL_INPUT ?= /data/odoo/legacy_attachments/checks/prod_legacy_attachment_missing_latest.tsv
 ATTACHMENT_MISSING_RESIDUAL_OUTPUT ?= /data/odoo/legacy_attachments/checks/prod_legacy_attachment_missing_unique_summary.json
+LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL ?= http://127.0.0.1:5179
+LEGACY_ATTACHMENT_BROWSER_SAMPLES ?=
 
 # Snapshot DB knobs from invocation context before .env include so explicit
 # shell/CLI inputs are not overridden by values inside .env.<tier>.
@@ -1293,6 +1295,10 @@ verify.legacy_online_attachment.mirror.job.audit.prod: guard.prod.readonly check
 .PHONY: verify.legacy_attachment.missing_residual.summarize
 verify.legacy_attachment.missing_residual.summarize:
 	@python3 scripts/verify/legacy_attachment_missing_residual_summarize.py --input "$(ATTACHMENT_MISSING_RESIDUAL_INPUT)" --output "$(ATTACHMENT_MISSING_RESIDUAL_OUTPUT)"
+
+.PHONY: verify.legacy_attachment.frontend_browser.acceptance.host
+verify.legacy_attachment.frontend_browser.acceptance.host:
+	@FRONTEND_URL="$(LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL)" DB_NAME="$(DB_NAME)" LEGACY_ATTACHMENT_BROWSER_SAMPLES='$(LEGACY_ATTACHMENT_BROWSER_SAMPLES)' node scripts/verify/legacy_attachment_frontend_browser_acceptance.js
 
 .PHONY: legacy_attachment.custody_marker.backfill
 legacy_attachment.custody_marker.backfill: guard.prod.forbid check-compose-project check-compose-env

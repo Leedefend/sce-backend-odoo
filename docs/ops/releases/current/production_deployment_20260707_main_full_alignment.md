@@ -300,3 +300,55 @@ summary=/data/odoo/legacy_attachments/checks/prod_legacy_attachment_missing_uniq
 生产在线源附件（online_old_scbs / online_old_scbsly）已经完成本地 custody evidence 和严格 job audit 闭环。
 生产全量旧附件索引仍有 121 条本地文件缺失引用，对应 120 个唯一缺失路径；其中 16 个为非零文件、104 个为旧索引大小为 0 的记录，应继续作为旧源残差专项处理。
 ```
+
+## 12. 自定义前端附件浏览器验收
+
+2026-07-07 19:26-19:29 +0800，使用本地自定义前端验收实例
+`http://127.0.0.1:5179`，通过 SSH 转发连接生产后端 `sc_prod`，以浏览器登录后的前端
+session 验证生产已有迁移附件可打开或下载。生产后端和生产附件数据真实，验收过程不写生产数据。
+
+样本：
+
+```text
+image: ir.attachment/971  2.jpg
+pdf:   ir.attachment/977  施工合同.pdf
+docx:  ir.attachment/999  董礼兵身份证.docx
+```
+
+结果：
+
+```text
+legacy_attachment_frontend_browser_acceptance PASS
+id mode:
+  image decoded_bytes=108978 natural_width=1080 natural_height=1440
+  pdf decoded_bytes=313781 header=%PDF-
+  docx decoded_bytes=98071 browser_download=PASS zip_header=true
+url mode:
+  image decoded_bytes=108978 natural_width=1080 natural_height=1440
+  pdf decoded_bytes=313781 header=%PDF-
+  docx decoded_bytes=98071 browser_download=PASS zip_header=true
+```
+
+真实业务页面入口补充验证：
+
+```text
+frontend route=/a/625?menu_id=343&db=sc_prod
+model=sc.receipt.invoice.line
+menu=收款发票
+attachment_count_link_rendered=true
+attachment_viewer_opened=true
+viewer_file=施工合同.docx
+browser_download_suggested_filename=施工合同.docx
+browser_download_saved_bytes=3343474
+browser_download_zip_header=true
+console_errors=0
+```
+
+证据目录：
+
+```text
+artifacts/legacy-attachment-frontend-browser/20260707T112642
+artifacts/legacy-attachment-frontend-browser/20260707T112658
+artifacts/legacy-attachment-frontend-browser/ui-entry-20260707T1127
+artifacts/legacy-attachment-frontend-browser/ui-download-20260707T1129
+```

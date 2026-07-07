@@ -116,6 +116,35 @@ make verify.legacy_attachment.missing_residual.summarize \
 - `nonzero_unique_paths`：旧索引声明有大小的缺失文件，应优先追补。
 - `zero_size_unique_paths`：旧索引大小为 0 的缺失记录，应单独判定为旧源元数据残差，不得与真实非零文件混为一类。
 
+## 自定义前端浏览器验收
+
+后端 custody 只说明文件可被服务端定位；生产可用性还必须验证自定义前端能打开或下载。
+验收入口：
+
+```bash
+FRONTEND_URL=http://127.0.0.1:5179 \
+DB_NAME=sc_prod \
+E2E_LOGIN=<login> \
+E2E_PASSWORD=<password> \
+node scripts/verify/legacy_attachment_frontend_browser_acceptance.js
+```
+
+或使用 Make 入口：
+
+```bash
+DB_NAME=sc_prod \
+E2E_LOGIN=<login> \
+E2E_PASSWORD=<password> \
+make verify.legacy_attachment.frontend_browser.acceptance.host \
+  LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL=http://127.0.0.1:5179
+```
+
+该验收使用浏览器登录自定义前端，通过前端 session 调用 `file.download`，并在浏览器内验证：
+
+- 图片附件可生成 blob 预览且图片尺寸有效。
+- PDF 附件可生成预览 blob，文件头为 `%PDF-`。
+- Office 文档类附件可触发浏览器下载，下载文件大小与返回内容一致。
+
 - `sc.legacy.file.index` 索引记录是否能解析到本地非零字节文件。
 - 正式 `ir.attachment` 中仍指向 legacy URL 的附件是否已有本地文件承接。
 
