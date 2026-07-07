@@ -270,6 +270,11 @@
   - Enforces the production read-only attachment custody gate is wired through Makefile, production command policy, deployment runbook, and release-flow validation matrix: `make history.attachment.custody.probe.prod`.
   - Enforces the production attachment custody marker backfill entry remains explicitly guarded by `PROD_DANGER=1`: `make legacy_attachment.custody_marker.backfill.prod`.
   - Enforces the production read-only attachment validation targets remain registered for attachment-scope releases.
+- `make verify.production_git.authority.guard`
+  - Verifies the production Git work tree authority baseline.
+  - Checks the work tree is on `main`, `HEAD` equals `origin/main`, `git status --porcelain` is clean, and the configured remote can read `main`.
+  - In production, run with `PRODUCTION_GIT_AUTHORITY_REQUIRE_ENV_SKIP=1` so `.env.prod` must be explicitly protected by `skip-worktree`.
+  - A `remote_auth_ok=false` failure means the current commit may still be aligned through bundle/release package, but the server is not yet ready for standard autonomous `git fetch origin main` production upgrades.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.
   - Writes reports: `artifacts/backend/scene_product_delivery_readiness_report.json` and `artifacts/backend/scene_product_delivery_readiness_report.md`.

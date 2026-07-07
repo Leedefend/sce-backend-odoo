@@ -61,6 +61,11 @@ where name in (...);
 全量代码树对齐表示 Git 跟踪普通文件在开发工作区和生产服务器逐文件 sha256 一致。
 该状态只允许在明确执行“全量发布”时作为目标；常规生产升级默认是发布包增量对齐。
 
+生产目录已经改造为 Git 工作区后，标准口径升级为：生产 `main`、生产
+`origin/main` 和主线发布 commit 必须一致，生产工作区必须干净；`.env.prod`
+只允许作为环境配置例外保留，并必须显式标记为 `skip-worktree`。该状态通过
+`make verify.production_git.authority.guard` 只读验证。
+
 ### 3.4 数据对齐
 
 数据对齐不是逐行相同，而是生产业务数据满足本次发布的承载规则：
@@ -88,6 +93,8 @@ where name in (...);
 8. 生产升级后必须跑完验证矩阵；只完成模块升级不算发布完成。
 9. 任何生产修复必须回写到本地代码和发布包，避免生产成为唯一真实版本。
 10. 生产目录不是 Git 工作区时，不得临场 `git pull` 或整目录覆盖；必须使用 release package 或已审定的文件清单，并记录备份和 sha256。
+11. 生产目录是 Git 工作区后，主线 `main` 是生产代码权威来源；生产服务器必须具备只读 deploy key，允许直接 `git fetch origin main`。
+12. 若生产服务器临时缺少 GitHub deploy key，只能使用 Git bundle 或 release package 作为过渡，部署记录必须记录 `git_auth` 缺口，不能把该状态视为长期标准。
 
 ## 5. 标准发布流程
 
@@ -266,7 +273,7 @@ make verify.production_deployment.record.guard
 2. dev 继续开发，但所有新变更必须归入下一候选发布范围。
 3. 下一次发布先在 prod-sim 使用生产备份回放，从 `prod baseline` 升级到目标版本。
 4. prod-sim 通过后生成新发布包。
-5. 生产只应用该新发布包，不直接同步 dev 整目录。
+5. 生产 Git 工作区优先 fast-forward 到已批准主线 commit；如果 deploy key 尚未补齐，使用 Git bundle 或 release package 作为过渡。
 6. 发布完成后更新生产状态摘要和差异登记。
 
 ## 8. 收口判定
@@ -283,3 +290,4 @@ make verify.production_deployment.record.guard
 - 最终发布包已包含所有生产修复文件。
 - 发布结论区分了“发布包对齐”和“全量对齐”。
 - `make verify.production_deployment.record.guard` 通过。
+- 对于全量主线对齐发布，`make verify.production_git.authority.guard` 通过；若只因 deploy key 缺失失败，必须登记为后续阻断事项并通过 bundle/release package 保证当前 commit 对齐。

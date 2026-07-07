@@ -21,6 +21,7 @@
 | 只读验证资产升级 | 只新增 docs、scripts/verify、发布记录 | 增量 release package | 只同步验证资产 | 不需要 |
 | 生产热修复 | 生产阻断、经人工批准的最小修复 | hotfix package，后续必须回写 main | 只允许最小文件集 | 按实际影响判定 |
 | 数据重建/补链 | 历史迁移、附件、正式业务数据补链 | 受控 Make target + artifact | 不通过临时脚本修库 | 使用对应生产入口 |
+| 生产 Git 权威对齐 | 生产目录已经是 Git 工作区，需要证明生产代码以主线为权威来源 | Git commit/tag | 必须在 `main`，`HEAD` 与 `origin/main` 一致 | 按变更影响判定 |
 
 判断规则：
 
@@ -28,6 +29,8 @@
 - 只触达 `docs`、`scripts/verify` 且不被运行时代码引用，不需要模块升级。
 - 触达前端源码但生产前端由构建产物承载时，必须同步对应构建产物或明确本次仅用于验收脚本，不得声称前端产品已升级。
 - 生产目录不是 Git 工作区时，不允许 `git pull`；必须使用 release package 或明确文件清单的增量包。
+- 生产 Git 工作区必须具备只读拉取主线的 deploy key；如果临时只能通过 bundle fast-forward，部署记录必须写明原因，并在后续事项中补齐 deploy key。
+- 生产环境配置文件不作为代码权威来源。`.env.prod` 必须保留生产服务器当前配置；若该文件仍被 Git 跟踪，生产必须显式设置 `skip-worktree`，并在部署记录中声明这是环境配置例外。
 
 ## 3. 标准升级链路
 
@@ -126,7 +129,15 @@ curl -sS -I --max-time 8 http://127.0.0.1:8072/ | sed -n '1,12p'
 git status --short
 git fetch origin
 git checkout <approved_commit_or_tag>
+PRODUCTION_GIT_AUTHORITY_REQUIRE_ENV_SKIP=1 \
+  make verify.production_git.authority.guard
 ```
+
+`make verify.production_git.authority.guard` 只读检查生产工作区是否在 `main`、`HEAD`
+是否等于 `origin/main`、工作区是否干净、`.env.prod` 是否作为生产配置例外被
+`skip-worktree` 保护，以及生产服务器是否具备直接从 GitHub 只读拉取主线的能力。
+如果 `git_auth` 失败，不能把生产服务器声明为长期可自治升级状态；只能声明当前
+commit 已对齐，并必须补齐 deploy key。
 
 生产目录不是 Git 工作区时：
 

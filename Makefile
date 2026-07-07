@@ -4118,6 +4118,11 @@ verify.production_release.flow.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/production_release_flow_guard.py
 	@python3 scripts/verify/production_release_flow_guard.py
 
+.PHONY: verify.production_git.authority.guard
+verify.production_git.authority.guard:
+	@python3 -m py_compile scripts/verify/production_git_authority_guard.py
+	@python3 scripts/verify/production_git_authority_guard.py
+
 
 .PHONY: verify.product.delivery.gap
 verify.product.delivery.gap: guard.prod.forbid

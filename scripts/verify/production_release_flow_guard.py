@@ -50,7 +50,10 @@ UPGRADE_STANDARD_TOKENS = (
     "只读验证资产升级",
     "生产热修复",
     "数据重建/补链",
+    "生产 Git 权威对齐",
     "生产目录不是 Git 工作区时，不允许 `git pull`",
+    "生产 Git 工作区必须具备只读拉取主线的 deploy key",
+    "`make verify.production_git.authority.guard`",
     "changed_files.txt",
     "module_upgrade.txt",
     "SHA256SUMS",
@@ -89,6 +92,9 @@ MAKEFILE_TOKENS = (
     "verify.legacy_online_attachment.mirror.job.audit.prod: guard.prod.readonly check-compose-project check-compose-env",
     "python3 -m py_compile scripts/verify/production_deployment_record_guard.py",
     "python3 scripts/verify/production_deployment_record_guard.py",
+    ".PHONY: verify.production_git.authority.guard",
+    "python3 -m py_compile scripts/verify/production_git_authority_guard.py",
+    "python3 scripts/verify/production_git_authority_guard.py",
 )
 
 VERIFY_README_TOKENS = (
@@ -99,6 +105,8 @@ VERIFY_README_TOKENS = (
     "Verifies concrete production deployment records",
     "explicit non-full-alignment wording",
     "production read-only business readiness gate",
+    "`make verify.production_git.authority.guard`",
+    "Verifies the production Git work tree authority baseline",
 )
 
 DEPLOY_RUNBOOK_TOKENS = (
