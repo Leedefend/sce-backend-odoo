@@ -6,6 +6,9 @@ This directory hosts release, verification, and operational governance documenta
 - prod-sim isolation runbook: `docs/ops/runbook_prod_sim_isolation.en.md`
 - Release evidence directory: `docs/ops/releases/`
 - Verification entry (including strict/compat modes): `docs/ops/verify/README.md`
+- Production release flow standard: `docs/ops/production_release_flow_standard_v1.md`
+- Production deployment runbook: `docs/ops/production_deployment_runbook_v1.md`
+- Legacy attachment custody marker runbook: `docs/ops/legacy_attachment_custody_marker_runbook.md`
 - Baseline freeze policy: `docs/ops/baseline_freeze_policy.en.md`
 - Scene observability command tiers:
   - preflight refresh: `make verify.portal.scene_observability_preflight.refresh.container DB_NAME=<name>`
