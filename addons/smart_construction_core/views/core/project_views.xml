@@ -43,7 +43,7 @@
                                 class="oe_stat_button"/>
                     </div>
                     <div class="alert alert-info" role="status" invisible="context.get('intake_mode') != 'quick'">
-                        快速创建模式：仅需填写项目名称与项目经理即可创建项目，其他信息可在项目驾驶舱后续补充。
+                        快速创建模式：仅需填写项目名称与项目经理即可创建项目，其他信息可在项目驾驶舱补充。
                     </div>
                     <group string="项目创建（必填）" col="2">
                         <group>
