@@ -27,7 +27,7 @@
     "verify.frontend.build",
     "verify.frontend.typecheck.strict",
     "verify.dev.acceptance.release",
-    "release.dev.acceptance.publish"
+    "release.daily_dev.acceptance.publish"
   ],
   "baseline_artifacts": [
     "artifacts/backend/delivery_mainline_run_summary.json",
