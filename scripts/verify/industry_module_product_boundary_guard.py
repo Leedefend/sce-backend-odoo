@@ -822,6 +822,12 @@ def verify_core_extension_legacy_label_boundary() -> list[str]:
                 "smart_construction_core: core_extension may only carry demo/pilot wording "
                 f"inside explicit legacy label compatibility literals, found token {token!r}"
             )
+    for token in ("Legacy loader shim", "Legacy hook shim"):
+        if token in text:
+            errors.append(
+                "smart_construction_core: core_extension platform hooks must use "
+                f"compatibility hook wording, not {token!r}"
+            )
     return errors
 
 

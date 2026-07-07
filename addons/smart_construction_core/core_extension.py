@@ -2639,7 +2639,7 @@ def get_intent_handler_contributions():
 
 
 def smart_core_register(registry):
-    """Legacy loader shim for smart_core.core.extension_loader."""
+    """Compatibility loader for smart_core.core.extension_loader."""
     if not isinstance(registry, dict):
         return
     try:
@@ -2914,12 +2914,12 @@ def get_capability_group_contributions(env):
 
 
 def smart_core_list_capabilities_for_user(env, user):
-    """Legacy hook shim consumed by smart_core capability provider."""
+    """Compatibility hook consumed by smart_core capability provider."""
     return get_capability_contributions(env, user)
 
 
 def smart_core_capability_groups(env):
-    """Legacy hook shim consumed by smart_core capability provider."""
+    """Compatibility hook consumed by smart_core capability provider."""
     return get_capability_group_contributions(env)
 
 
@@ -2929,7 +2929,7 @@ def get_create_field_fallback_contributions(env, model_name):
 
 
 def smart_core_create_field_fallbacks(env, model_name):
-    """Legacy hook shim consumed by smart_core api.data handlers."""
+    """Compatibility hook consumed by smart_core api.data handlers."""
     return get_create_field_fallback_contributions(env, model_name)
 
 
@@ -3101,7 +3101,7 @@ def get_system_init_fact_contributions(env, user, context=None):
 
 
 def smart_core_extend_system_init(data, env, user):
-    """Legacy hook shim: write construction facts only under data['ext_facts']."""
+    """Compatibility hook: write construction facts only under data['ext_facts']."""
     if not isinstance(data, dict):
         return data
 
