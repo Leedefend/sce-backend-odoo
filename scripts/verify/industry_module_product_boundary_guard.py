@@ -104,6 +104,10 @@ def verify_manifest_shape() -> list[str]:
         data_set = set(data_files)
         actual = _module_assets(module)
         allowed_undeclared = set(ALLOWED_UNDECLARED_XML.get(module, {}))
+        manifest = _manifest(module)
+
+        if "demo" in manifest:
+            errors.append(f"{module}: production manifest must not declare demo data entries")
 
         for item in data_files:
             if not (base / item).is_file():
