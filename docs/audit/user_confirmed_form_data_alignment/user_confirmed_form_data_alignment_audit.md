@@ -73,5 +73,4 @@
 | 资料证照 | 公司资料存档 | `sc.document.admin.document` | 14997 | ok | - | - |
 | 基础设置 | 菜单配置 | `ui.menu.config.policy` | 770 | ok | - | - |
 
-## 差异样例
-
+## 差异示例

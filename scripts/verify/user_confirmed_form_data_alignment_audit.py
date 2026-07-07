@@ -639,7 +639,7 @@ def _write_markdown(path, rows, summary):
                 readonly=readonly,
             )
         )
-    lines.extend(["", "## 差异样例", ""])
+    lines.extend(["", "## 差异示例", ""])
     for row in rows:
         if not row["mismatch_samples"]:
             continue

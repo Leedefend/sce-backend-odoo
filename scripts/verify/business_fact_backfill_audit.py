@@ -327,7 +327,7 @@ def collect_projection_followup_issues(semantic: dict[str, int]) -> list[dict[st
             "res_partner",
             "LOWER(COALESCE(sc_source_created_by, '')) IN ('odoobot', 'false', 'admin', 'administrator')",
         ),
-        message="客户/供应商录入人出现系统占位值，需追溯历史来源真实用户。",
+        message="客户/供应商录入人出现系统默认值，需追溯历史来源真实用户。",
         sample_sql="""
             SELECT id, name, sc_source_created_by, sc_source_created_at, sc_source_fact_source
               FROM res_partner
