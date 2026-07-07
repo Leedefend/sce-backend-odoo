@@ -62,7 +62,7 @@ class BaseRule(ABC):
     @abstractmethod
     def run(self) -> Dict[str, Any]:
         """Execute rule and return dict with checked/issues."""
-        raise NotImplementedError
+        ...
 
 
 _RULES: List[type] = []
