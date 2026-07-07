@@ -140,6 +140,7 @@ running healthy
 | `smoke.business_full` | `PASS` | 业务全链路通过 |
 | `smoke.role_matrix` | `PASS` | 角色矩阵通过 |
 | `verify.non_demo_data_contamination` | `PASS` | 数据守卫与 schema guard 均通过 |
+| `history.attachment.custody.probe.prod` | `PASS` | 2026-07-07 后续复核：`history_attachment_custody_ready`，gap_count=0，legacy_url_attachments=19541 |
 | 服务健康 | `PASS` | `running healthy` |
 
 Demo 状态：

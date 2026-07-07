@@ -152,6 +152,7 @@ docker health=running healthy
 | `smoke.role_matrix` | `PASS` | 角色读写边界与审批路径通过 |
 | `verify.non_demo_data_contamination` | `PASS` | `PASS db=sc_prod mode=default` |
 | `verify.business_system.usability_readiness.prod` | `PASS` | `ready_for_business_system_use`，history gap=0，formal backfill gap=0 |
+| `history.attachment.custody.probe.prod` | `PASS` | `history_attachment_custody_ready`，gap_count=0，legacy_url_attachments=19541 |
 | 服务健康 | `PASS` | `running healthy` |
 
 Demo 状态：

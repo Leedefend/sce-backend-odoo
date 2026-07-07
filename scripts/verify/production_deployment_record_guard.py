@@ -29,6 +29,7 @@ REQUIRED_VALIDATION_TOKENS = [
     "| `smoke.business_full` | `PASS` |",
     "| `smoke.role_matrix` | `PASS` |",
     "| `verify.non_demo_data_contamination` | `PASS` |",
+    "| `history.attachment.custody.probe.prod` | `PASS` |",
     "| 服务健康 | `PASS` |",
 ]
 REQUIRED_CLOSURE_TOKENS = [
@@ -101,6 +102,9 @@ def _check_record(path: Path) -> list[str]:
         errors.append(f"{rel}: demo XMLID zero evidence missing")
     if "smart_construction_demo|uninstalled|" not in text:
         errors.append(f"{rel}: demo module uninstalled evidence missing")
+
+    if "history_attachment_custody_ready" not in text:
+        errors.append(f"{rel}: attachment custody ready evidence missing")
 
     if "最终发布结论" not in text or "具备生产运行条件" not in text:
         errors.append(f"{rel}: final production-ready conclusion missing")

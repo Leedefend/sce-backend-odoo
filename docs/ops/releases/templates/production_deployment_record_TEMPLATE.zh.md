@@ -153,6 +153,7 @@ SC_LOGIN_ENV_EXPECTED=prod ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANG
 BASE_URL=http://127.0.0.1:8072 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 make smoke.business_full
 BASE_URL=http://127.0.0.1:8072 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 make smoke.role_matrix
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod make verify.non_demo_data_contamination
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make history.attachment.custody.probe.prod
 ```
 
 验证结果：
@@ -164,6 +165,7 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod make verify.non_demo_data_contaminat
 | `smoke.business_full` | `PASS/FAIL` | `<summary>` |
 | `smoke.role_matrix` | `PASS/FAIL` | `<summary>` |
 | `verify.non_demo_data_contamination` | `PASS/FAIL` | `<summary>` |
+| `history.attachment.custody.probe.prod` | `PASS/FAIL` | `<history_attachment_custody_ready / gap summary>` |
 | 服务健康 | `PASS/FAIL` | `<summary>` |
 
 Demo 状态：
