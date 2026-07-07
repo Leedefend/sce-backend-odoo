@@ -20,6 +20,7 @@ from odoo.modules.registry import Registry
 BASELINE_FILE = "formal_business_product_menu_policy_v1.json"
 PRODUCT_KEYS = ("construction.standard", "construction.preview")
 OUTPUT_JSON_NAME = "formal_product_menu_policy_restore_v1.json"
+ACTIVATED_MENU_XMLIDS: list[str] = []
 
 
 def _text(value) -> str:
@@ -92,7 +93,8 @@ def _hydrate_menu_row(menu: dict) -> dict:
     if not menu_record:
         raise RuntimeError("formal product menu xmlid does not resolve: %s" % menu_xmlid)
     if hasattr(menu_record, "active") and not bool(menu_record.active):
-        raise RuntimeError("formal product menu is inactive: %s" % menu_xmlid)
+        menu_record.sudo().write({"active": True})
+        ACTIVATED_MENU_XMLIDS.append(menu_xmlid)
     action = menu_record.action
     if not action:
         raise RuntimeError("formal product menu has no action: %s" % menu_xmlid)
@@ -293,6 +295,7 @@ def main() -> None:
         "policy_results": policy_results,
         "snapshot_results": snapshot_results,
         "group_counts": group_counts,
+        "activated_menu_xmlids": sorted(set(ACTIVATED_MENU_XMLIDS)),
     }
     _write_json(_artifact_root() / OUTPUT_JSON_NAME, result)
     if not ok:
