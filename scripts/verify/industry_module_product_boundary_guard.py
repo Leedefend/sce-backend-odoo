@@ -219,7 +219,16 @@ def verify_handler_product_language_boundary() -> list[str]:
 
 def verify_runtime_comment_product_language_boundary() -> list[str]:
     errors: list[str] = []
-    forbidden_tokens = ("seed/demo", "demo 可提供", "demo xmlid", "demo XMLID")
+    forbidden_tokens = (
+        "seed/demo",
+        "demo 可提供",
+        "demo xmlid",
+        "demo XMLID",
+        "最小可跑",
+        "后续替换",
+        "临时实现",
+        "占位实现",
+    )
     scan_roots = (
         ADDONS / "smart_construction_core" / "models",
         ADDONS / "smart_construction_core" / "services",

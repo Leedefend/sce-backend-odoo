@@ -24,7 +24,7 @@ APP_DELIVERY_SOURCE_AUTHORITY = {
     "no_business_fact_authority": True,
 }
 
-# ====== 最小可跑：内置一个 App 定义（后续替换为 DB/YAML/服务加载） ======
+# Built-in delivery catalog used when runtime package metadata is not provided.
 APP_DEFS: List[Dict[str, Any]] = [
     {
         "id": "project_management",
