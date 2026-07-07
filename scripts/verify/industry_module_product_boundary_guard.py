@@ -1277,15 +1277,15 @@ def verify_project_showcase_legacy_alias_boundary() -> list[str]:
     return errors
 
 
-def verify_core_extension_legacy_label_boundary() -> list[str]:
+def verify_core_extension_historical_label_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "core_extension.py"
     if not path.is_file():
         return []
     text = path.read_text(encoding="utf-8", errors="ignore")
     allowed_literals = {
-        '"演示"': "action noise marker for legacy showcase action filtering",
-        '"项目列表（演示）"': "hidden legacy showcase menu label",
-        '"项目台账（试点）"': "legacy ledger label renamed to product label",
+        '"演示"': "action noise marker for historical showcase action filtering",
+        '"项目列表（演示）"': "hidden historical showcase menu label",
+        '"项目台账（试点）"': "historical ledger label renamed to product label",
     }
     errors: list[str] = []
     for literal, reason in allowed_literals.items():
@@ -1472,7 +1472,7 @@ def main() -> int:
     errors.extend(verify_legacy_purchase_contract_recovery_approval_boundary())
     errors.extend(verify_platform_admin_facade_boundary())
     errors.extend(verify_project_showcase_legacy_alias_boundary())
-    errors.extend(verify_core_extension_legacy_label_boundary())
+    errors.extend(verify_core_extension_historical_label_boundary())
     errors.extend(verify_seed_showcase_product_fields())
     errors.extend(verify_seed_product_language_boundary())
     errors.extend(verify_custom_security_policy_role_login_boundary())
