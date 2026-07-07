@@ -15,6 +15,12 @@ from odoo.addons.smart_core.utils.backend_contract_boundaries import (
 
 _PROTECTED_NODE_EXCLUDED_FINGERPRINT_TOKENS: set[str] = set()
 
+_CONFIG_ONLY_RECOVERY_MENU_XMLIDS = frozenset({
+    "smart_construction_core.menu_sc_business_config_center",
+    "smart_construction_core.menu_sc_business_config_workbench",
+    "smart_construction_core.menu_ui_menu_config_policy_business_config",
+}) | LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS
+
 
 def register_protected_node_excluded_fingerprint_token(token: str) -> None:
     text = str(token or "").strip()
@@ -511,6 +517,41 @@ class UiMenuConfigPolicy(models.Model):
                     return is_protected_runtime_config_menu_id(menu_id)
             return False
 
+        config_only_recovery_menu_xmlids_by_id_cache = None
+
+        def config_only_recovery_menu_xmlids_by_id() -> dict[int, str]:
+            nonlocal config_only_recovery_menu_xmlids_by_id_cache
+            if config_only_recovery_menu_xmlids_by_id_cache is not None:
+                return config_only_recovery_menu_xmlids_by_id_cache
+            config_only_recovery_menu_xmlids_by_id_cache = {}
+            try:
+                ModelData = self.env["ir.model.data"].sudo()
+            except Exception:
+                return config_only_recovery_menu_xmlids_by_id_cache
+            modules = {xmlid.split(".", 1)[0] for xmlid in _CONFIG_ONLY_RECOVERY_MENU_XMLIDS}
+            names = {xmlid.split(".", 1)[1] for xmlid in _CONFIG_ONLY_RECOVERY_MENU_XMLIDS}
+            try:
+                rows = ModelData.search([
+                    ("model", "=", "ir.ui.menu"),
+                    ("module", "in", list(modules)),
+                    ("name", "in", list(names)),
+                ])
+            except Exception:
+                rows = []
+            for row in rows or []:
+                xmlid = "%s.%s" % (str(getattr(row, "module", "") or ""), str(getattr(row, "name", "") or ""))
+                menu_id = _to_int(getattr(row, "res_id", 0))
+                if xmlid in _CONFIG_ONLY_RECOVERY_MENU_XMLIDS and menu_id:
+                    config_only_recovery_menu_xmlids_by_id_cache[menu_id] = xmlid
+            return config_only_recovery_menu_xmlids_by_id_cache
+
+        def is_config_only_recovery_menu_id(menu_id: int) -> bool:
+            menu_id = _to_int(menu_id)
+            if not menu_id or menu_id not in config_only_recovery_menu_xmlids_by_id():
+                return False
+            menu = self.env["ir.ui.menu"].browse(menu_id).exists()
+            return bool(menu and menu_visible_to_user(menu))
+
         def is_protected_runtime_config_node(node: dict) -> bool:
             meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
             menu_id = node_menu_id(node)
@@ -747,8 +788,7 @@ class UiMenuConfigPolicy(models.Model):
                 or not policy
             ):
                 return False
-            menu = policy_menu_record(policy)
-            return bool(menu and menu.exists() and menu_visible_to_user(menu))
+            return is_config_only_recovery_menu_id(menu_id)
 
         def is_configured_structural_group(menu, policy) -> bool:
             if not policy or not policy_visible(policy):
