@@ -209,6 +209,66 @@ def _require_order(label: str, text: str, tokens: tuple[str, ...], errors: list[
         errors.append(f"{label}: token order mismatch: {tokens!r}")
 
 
+def _makefile_prereqs(text: str, target: str) -> tuple[str, ...] | None:
+    prefix = f"{target}:"
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if not line.startswith(prefix):
+            continue
+        chunks = [line[len(prefix) :].strip()]
+        cursor = index
+        while chunks[-1].endswith("\\"):
+            chunks[-1] = chunks[-1][:-1].strip()
+            cursor += 1
+            if cursor >= len(lines):
+                return ()
+            chunks.append(lines[cursor].strip())
+        prereq_text = " ".join(chunk for chunk in chunks if chunk)
+        return tuple(prereq_text.split())
+    return None
+
+
+def _makefile_recipe(text: str, target: str) -> tuple[str, ...] | None:
+    prefix = f"{target}:"
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if not line.startswith(prefix):
+            continue
+        cursor = index
+        while lines[cursor].rstrip().endswith("\\"):
+            cursor += 1
+            if cursor >= len(lines):
+                return ()
+        recipe = []
+        for recipe_line in lines[cursor + 1 :]:
+            if not recipe_line.startswith("\t"):
+                break
+            recipe.append(recipe_line.strip())
+        return tuple(recipe)
+    return None
+
+
+def _require_production_git_authority_target(text: str, errors: list[str]) -> None:
+    target = "verify.production_git.authority.guard"
+    prereqs = _makefile_prereqs(text, target)
+    if prereqs is None:
+        errors.append(f"makefile: missing target: {target}")
+    elif prereqs != ():
+        errors.append(f"makefile: {target} must remain host-only with no prerequisites, got {prereqs!r}")
+
+    expected_recipe = (
+        "@python3 -m py_compile scripts/verify/production_git_authority_guard.py",
+        "@python3 scripts/verify/production_git_authority_guard.py",
+    )
+    recipe = _makefile_recipe(text, target)
+    if recipe is None:
+        errors.append(f"makefile: missing recipe: {target}")
+    elif recipe != expected_recipe:
+        errors.append(
+            f"makefile: {target} recipe mismatch: expected={expected_recipe!r} actual={recipe!r}"
+        )
+
+
 def main() -> int:
     errors: list[str] = []
     contents = {label: _read(path, errors) for label, path in FILES.items()}
@@ -258,6 +318,7 @@ def main() -> int:
     _require_tokens("release_index_en", contents["release_index_en"], INDEX_TOKENS, errors)
     _require_tokens("release_index_zh", contents["release_index_zh"], INDEX_TOKENS, errors)
     _require_tokens("record_guard", contents["record_guard"], RECORD_GUARD_TOKENS, errors)
+    _require_production_git_authority_target(contents["makefile"], errors)
 
     if "production_release_flow_standard_v1.md" not in contents["ops_readme"]:
         errors.append("ops_readme: missing production release flow entry")
