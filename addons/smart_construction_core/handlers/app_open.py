@@ -6,7 +6,13 @@ from odoo import api, SUPERUSER_ID
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 from odoo.addons.smart_core.utils.reason_codes import REASON_PERMISSION_DENIED, failure_meta_for_reason
-from .app_catalog import APP_DEFS, APP_DELIVERY_SOURCE_AUTHORITY, _xmlid_to_id, _current_perms
+from .app_catalog import (
+    APP_DEFS,
+    APP_DELIVERY_FALLBACK_META,
+    APP_DELIVERY_SOURCE_AUTHORITY,
+    _current_perms,
+    _xmlid_to_id,
+)
 
 # 如需直接执行契约，可引入：
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
@@ -62,8 +68,7 @@ def _workspace_fallback_payload(reason: str = "") -> Dict[str, Any]:
         "subject": "ui.contract",
         "scene_key": "workspace.home",
         "route": "/s/workspace.home",
-        "fallback_kind": "delivery_navigation_fallback",
-        "no_business_fact_authority": True,
+        **APP_DELIVERY_FALLBACK_META,
     }
     if reason:
         payload["fallback_reason"] = str(reason)

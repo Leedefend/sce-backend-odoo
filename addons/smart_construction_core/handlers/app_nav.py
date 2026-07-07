@@ -9,7 +9,14 @@ from odoo.addons.smart_core.core.unified_page_contract_v2_client import (
     resolve_delivery_profile,
     trim_navigation_contract_for_client,
 )
-from .app_catalog import APP_DEFS, APP_DELIVERY_SOURCE_AUTHORITY, _feature_visible, _visible_menu_ids, _current_perms
+from .app_catalog import (
+    APP_DEFS,
+    APP_DELIVERY_FALLBACK_META,
+    APP_DELIVERY_SOURCE_AUTHORITY,
+    _current_perms,
+    _feature_visible,
+    _visible_menu_ids,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -75,10 +82,10 @@ class AppNavHandler(BaseIntentHandler):
                         "key": f"section:{app_id}:work",
                         "label": "工作",
                         "children": [],
-                        "meta": {"section": "work", "fallback": True},
+                        "meta": {"section": "work", **APP_DELIVERY_FALLBACK_META},
                     }
                 ],
-                "meta": {"fingerprint": _md5({"app": app_id, "fallback": True})},
+                "meta": {"fingerprint": _md5({"app": app_id, **APP_DELIVERY_FALLBACK_META})},
             }
             data = trim_navigation_contract_for_client(
                 data,

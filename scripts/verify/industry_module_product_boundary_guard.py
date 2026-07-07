@@ -661,12 +661,38 @@ def verify_app_entry_exception_observability() -> list[str]:
                 "smart_construction_core: app catalog/navigation entry fallbacks must log "
                 f"exception degradation at debug level: {path.relative_to(ROOT).as_posix()}"
             )
+    catalog_path = ADDONS / "smart_construction_core" / "handlers" / "app_catalog.py"
+    if catalog_path.is_file():
+        text = catalog_path.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "APP_DELIVERY_FALLBACK_META = {",
+            '"fallback_kind": "delivery_navigation_fallback"',
+            '"no_business_fact_authority": True',
+            "**APP_DELIVERY_FALLBACK_META",
+        ):
+            if fragment not in text:
+                errors.append(
+                    "smart_construction_core: app.catalog workspace fallback must use "
+                    f"shared delivery fallback meta, missing {fragment!r}"
+                )
+    nav_path = ADDONS / "smart_construction_core" / "handlers" / "app_nav.py"
+    if nav_path.is_file():
+        text = nav_path.read_text(encoding="utf-8", errors="ignore")
+        for fragment in (
+            "APP_DELIVERY_FALLBACK_META",
+            "**APP_DELIVERY_FALLBACK_META",
+        ):
+            if fragment not in text:
+                errors.append(
+                    "smart_construction_core: app.nav unknown-app fallback must use "
+                    f"shared delivery fallback meta, missing {fragment!r}"
+                )
     app_open_path = ADDONS / "smart_construction_core" / "handlers" / "app_open.py"
     if app_open_path.is_file():
         text = app_open_path.read_text(encoding="utf-8", errors="ignore")
         required_fragments = {
-            '"fallback_kind": "delivery_navigation_fallback"': "workspace fallback kind",
-            '"no_business_fact_authority": True': "workspace fallback authority boundary",
+            "APP_DELIVERY_FALLBACK_META": "shared delivery fallback meta",
+            "**APP_DELIVERY_FALLBACK_META": "workspace fallback authority boundary",
             "def _permission_denied_response(": "permission envelope helper",
             "REASON_PERMISSION_DENIED": "permission denial reason code",
         }

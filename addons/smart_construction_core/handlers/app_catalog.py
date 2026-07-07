@@ -23,6 +23,11 @@ APP_DELIVERY_SOURCE_AUTHORITY = {
     "delivery_only": True,
     "no_business_fact_authority": True,
 }
+APP_DELIVERY_FALLBACK_META = {
+    "fallback": True,
+    "fallback_kind": "delivery_navigation_fallback",
+    "no_business_fact_authority": True,
+}
 
 # Built-in delivery catalog used when runtime package metadata is not provided.
 APP_DEFS: List[Dict[str, Any]] = [
@@ -268,7 +273,7 @@ class AppCatalogHandler(BaseIntentHandler):
                 "label": "角色首页",
                 "icon": None,
                 "badges": {"todo": 0},
-                "meta": {"app_id": "workspace", "category": "platform", "fallback": True},
+                "meta": {"app_id": "workspace", "category": "platform", **APP_DELIVERY_FALLBACK_META},
             })
 
         if not apps_out:
@@ -277,7 +282,7 @@ class AppCatalogHandler(BaseIntentHandler):
                 "label": "角色首页",
                 "icon": None,
                 "badges": {"todo": 0},
-                "meta": {"app_id": "workspace", "category": "platform", "fallback": True},
+                "meta": {"app_id": "workspace", "category": "platform", **APP_DELIVERY_FALLBACK_META},
             })
 
         fp = _apps_fingerprint(env, su_env, apps_out)
