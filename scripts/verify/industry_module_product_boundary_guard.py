@@ -311,6 +311,7 @@ def verify_historical_verify_script_wording() -> list[str]:
         ROOT / "scripts" / "verify" / "model_view_standardization_plan.py",
         ROOT / "scripts" / "verify" / "product_menu_catalog_runtime_audit.py",
         ROOT / "scripts" / "verify" / "business_fact_backfill_audit.py",
+        ROOT / "scripts" / "verify" / "scbsly_direct_project_acceptance_menu_probe.py",
     )
     errors: list[str] = []
     for path in paths:

@@ -247,10 +247,10 @@ def markdown(payload: dict[str, Any]) -> str:
         "",
         f"Status: `{payload['status']}`",
         f"Source: `{payload['source_system']}`",
-        f"Old User: `{payload['old_user'].get('UserName')}` / `{payload['old_user'].get('PersonName')}`",
+        f"Historical User: `{payload['old_user'].get('UserName')}` / `{payload['old_user'].get('PersonName')}`",
         f"Generated At: `{payload['generated_at']}`",
         "",
-        "| 分类 | 菜单 | 匹配方式 | 旧系统显示 | 路由类型 | ConfigId | DataCount | 状态 |",
+        "| 分类 | 菜单 | 匹配方式 | 历史来源显示 | 路由类型 | ConfigId | DataCount | 状态 |",
         "| --- | --- | --- | --- | --- | --- | ---: | --- |",
     ]
     for row in payload["rows"]:
