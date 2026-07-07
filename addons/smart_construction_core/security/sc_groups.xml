@@ -29,7 +29,7 @@
             <field name="name">Smart Construction User (Deprecated)</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="comment">
-                已废弃历史兼容组：保留历史记录，避免升级报错；不再承载实际权限。
+                已废弃历史组：仅保留 XMLID 与历史记录，避免升级报错；不再承载实际权限。
             </field>
             <field name="implied_ids" eval="[]"/>
         </record>
@@ -44,7 +44,7 @@
             <field name="name">Smart Construction Manager (Deprecated)</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="comment">
-                已废弃历史兼容组：保留历史记录，避免升级报错；不再承载实际权限。
+                已废弃历史组：仅保留 XMLID 与历史记录，避免升级报错；不再承载实际权限。
             </field>
             <field name="implied_ids" eval="[]"/>
         </record>

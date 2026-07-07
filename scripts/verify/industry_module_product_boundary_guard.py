@@ -307,6 +307,37 @@ def verify_capability_registry_role_boundary() -> list[str]:
     return errors
 
 
+def verify_security_group_historical_boundary() -> list[str]:
+    groups_xml = ADDONS / "smart_construction_core" / "security" / "sc_groups.xml"
+    capability_groups_xml = ADDONS / "smart_construction_core" / "security" / "sc_capability_groups.xml"
+    errors: list[str] = []
+    groups_text = groups_xml.read_text(encoding="utf-8", errors="ignore") if groups_xml.is_file() else ""
+    cap_text = capability_groups_xml.read_text(encoding="utf-8", errors="ignore") if capability_groups_xml.is_file() else ""
+    required_fragments = {
+        "已废弃历史组：仅保留 XMLID 与历史记录，避免升级报错；不再承载实际权限。": 2,
+        "行业配置管理员（历史 XMLID 保留）": 1,
+        "不再代表平台管理员，不继承 Smart Core 平台组或 Odoo 系统组": 1,
+    }
+    combined = "\n".join((groups_text, cap_text))
+    for fragment, expected_count in required_fragments.items():
+        if combined.count(fragment) != expected_count:
+            errors.append(
+                "smart_construction_core: security group historical boundary "
+                f"anchor count mismatch for {fragment!r}: expected {expected_count}"
+            )
+    forbidden_fragments = (
+        "已废弃历史兼容组",
+        "历史 XMLID 兼容",
+    )
+    for fragment in forbidden_fragments:
+        if fragment in combined:
+            errors.append(
+                "smart_construction_core: security groups must use historical-retention "
+                f"wording, not generic compatibility wording {fragment!r}"
+            )
+    return errors
+
+
 def verify_handler_product_language_boundary() -> list[str]:
     errors: list[str] = []
     handlers_dir = ADDONS / "smart_construction_core" / "handlers"
@@ -1291,6 +1322,7 @@ def main() -> int:
     errors.extend(verify_static_navigation_product_labels())
     errors.extend(verify_static_style_product_language_boundary())
     errors.extend(verify_capability_registry_role_boundary())
+    errors.extend(verify_security_group_historical_boundary())
     errors.extend(verify_handler_product_language_boundary())
     errors.extend(verify_project_dashboard_open_alias_boundary())
     errors.extend(verify_handler_historical_wrapper_boundary())
