@@ -162,6 +162,7 @@ REQUIRED_SECTION_LISTS = (
         "The product readiness target expands to:",
         (
             "`verify.docs.product_boundary`",
+            "`verify.industry_module.product_boundary`",
             "`verify.user_module.product_boundary`",
             "`verify.product.surface.clean`",
             "`verify.product.menu.release.ready`",
