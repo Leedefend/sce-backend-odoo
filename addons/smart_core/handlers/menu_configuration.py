@@ -263,8 +263,13 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         menu = getattr(policy, "menu_id", None)
         if not menu or not self._menu_under_root(menu, root_menu_id):
             return False
+        formal_scope_ids = self._formal_product_menu_scope_ids(root_menu_id)
+        if formal_scope_ids and _to_int(getattr(menu, "id", 0)) not in formal_scope_ids:
+            return False
         target_parent = getattr(policy, "target_parent_menu_id", None)
         if target_parent and not self._menu_under_root(target_parent, root_menu_id):
+            return False
+        if formal_scope_ids and target_parent and _to_int(getattr(target_parent, "id", 0)) not in formal_scope_ids:
             return False
         return True
 
@@ -283,6 +288,9 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False).browse(menu_id).exists()
         if not menu or not self._menu_under_root(menu, root_menu_id):
             raise ValidationError("%s超出菜单配置范围，只能配置当前业务根菜单下的业务办理菜单。" % field_label)
+        formal_scope_ids = self._formal_product_menu_scope_ids(root_menu_id)
+        if formal_scope_ids and menu_id not in formal_scope_ids:
+            raise ValidationError("%s超出正式产品菜单范围，只能配置当前产品已发布菜单。" % field_label)
 
     def _scope_contract_json(self, company_id: int, contract_json: dict) -> dict:
         root_menu_id = self._scope_root_menu_id({})
@@ -336,6 +344,59 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             scoped_ids.add(menu_id)
             stack.extend(by_parent.get(menu_id, []))
         return sorted(scoped_ids)
+
+    def _current_product_key(self) -> str:
+        identity = call_extension_hook_first(self.env, "smart_core_resolve_startup_delivery_identity", self.env, {})
+        if isinstance(identity, dict):
+            product_key = _to_text(identity.get("product_key"))
+            if product_key:
+                return product_key
+        return "construction.standard"
+
+    def _formal_product_menu_scope_ids(self, root_menu_id: int) -> set[int]:
+        if "sc.product.policy" not in self.env:
+            return set()
+        product_key = self._current_product_key()
+        policy = self.env["sc.product.policy"].sudo().search([
+            ("product_key", "=", product_key),
+            ("active", "=", True),
+        ], limit=1)
+        if not policy:
+            return set()
+        Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
+        scoped_ids: set[int] = set()
+        for group in policy.menu_groups or []:
+            if not isinstance(group, dict):
+                continue
+            for item in group.get("menus") or []:
+                if not isinstance(item, dict):
+                    continue
+                if item.get("enabled") is False or _to_text(item.get("release_state")) not in {"", "released"}:
+                    continue
+                menu_id = _to_int(item.get("menu_id"))
+                if not menu_id:
+                    continue
+                menu = Menu.browse(menu_id).exists()
+                while menu:
+                    current_id = _to_int(getattr(menu, "id", 0))
+                    if not current_id:
+                        break
+                    scoped_ids.add(current_id)
+                    if root_menu_id and current_id == root_menu_id:
+                        break
+                    menu = getattr(menu, "parent_id", None)
+        if root_menu_id:
+            scoped_ids.add(root_menu_id)
+        return scoped_ids
+
+    def _menu_config_candidate_ids(self, root_menu_id: int, requested_menu_ids: list[int], all_menus) -> set[int]:
+        requested_set = {int(menu_id) for menu_id in requested_menu_ids if int(menu_id or 0)}
+        formal_scope_ids = self._formal_product_menu_scope_ids(root_menu_id)
+        if formal_scope_ids:
+            return requested_set & formal_scope_ids if requested_set else set(formal_scope_ids)
+        if requested_set:
+            return set(requested_set)
+        return set(self._menu_subtree_ids(all_menus, root_menu_id))
 
     def _expand_with_parent_ids(self, menus) -> list[int]:
         ids = set(int(menu.id) for menu in menus)
@@ -488,11 +549,8 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             requested_menu_ids.append(root_menu_id)
         if root_menu_id:
             requested_set = {int(menu_id) for menu_id in requested_menu_ids if int(menu_id or 0)}
-            if requested_set:
-                candidate_ids = set(requested_set)
-            else:
-                all_menus = MenuAll.search([], order="parent_id, sequence, id")
-                candidate_ids = set(self._menu_subtree_ids(all_menus, root_menu_id))
+            all_menus = MenuAll.search([], order="parent_id, sequence, id")
+            candidate_ids = self._menu_config_candidate_ids(root_menu_id, requested_menu_ids, all_menus)
             policy_records = self.env[MENU_CONFIG_POLICY_MODEL].sudo().with_context(active_test=False).search([
                 ("company_id", "=", company_id),
                 ("active", "=", True),
@@ -503,7 +561,8 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             for policy in policy_records:
                 menu_id = _to_int(getattr(getattr(policy, "menu_id", None), "id", 0))
                 target_parent_id = _to_int(getattr(getattr(policy, "target_parent_menu_id", None), "id", 0))
-                candidate_ids.add(menu_id)
+                if not requested_set or menu_id in candidate_ids:
+                    candidate_ids.add(menu_id)
                 if target_parent_id:
                     candidate_ids.add(target_parent_id)
             requested_menus = MenuAll.browse(sorted(candidate_ids)).exists()

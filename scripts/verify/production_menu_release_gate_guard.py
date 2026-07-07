@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 
 from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
+from odoo.addons.smart_core.handlers.menu_configuration import (
+    MenuConfigurationAuditHandler,
+    MenuConfigurationLoadHandler,
+)
 from odoo.addons.smart_core.handlers.system_init import (
     _filter_nav_by_release_gate,
     _load_platform_release_gate,
@@ -35,6 +39,7 @@ REQUIRED_FORMAL_MENU_XMLIDS = (
     "smart_construction_core.menu_sc_customer_partner",
     "smart_construction_core.menu_sc_supplier_partner",
 )
+FORMAL_MENU_CONFIG_MAX_EXTRA_MENU_COUNT = 80
 
 
 def _baseline_candidates() -> list[Path]:
@@ -272,6 +277,52 @@ def _assert_runtime_gate(product_key: str, released_policy_count: int) -> dict:
     }
 
 
+def _assert_menu_config_scope(released_policy_count: int) -> dict:
+    root = env.ref("smart_construction_core.menu_sc_root", raise_if_not_found=False)  # noqa: F821
+    if not root:
+        raise AssertionError("formal business root menu not found: smart_construction_core.menu_sc_root")
+    params = {"root_menu_id": int(root.id)}
+    panel = MenuConfigurationLoadHandler(env=env, payload={"params": params}).handle({"params": params})  # noqa: F821
+    data = panel.get("data") if isinstance(panel, dict) else {}
+    menus = data.get("menus") if isinstance(data, dict) and isinstance(data.get("menus"), list) else []
+    max_menu_count = released_policy_count + FORMAL_MENU_CONFIG_MAX_EXTRA_MENU_COUNT
+    if len(menus) > max_menu_count:
+        raise AssertionError(
+            "menu config candidate scope drift: menu_count=%s max=%s" % (len(menus), max_menu_count)
+        )
+    forbidden_menus = [
+        _text(row.get("complete_name") or row.get("name"))
+        for row in menus
+        if any(token in _text(row.get("complete_name") or row.get("name")) for token in FORBIDDEN_POLICY_PATH_TOKENS)
+    ]
+    if forbidden_menus:
+        raise AssertionError(f"menu config exposes forbidden menus: {forbidden_menus[:20]}")
+
+    audit = MenuConfigurationAuditHandler(env=env, payload={"params": params}).handle({"params": params})  # noqa: F821
+    audit_data = audit.get("data") if isinstance(audit, dict) else {}
+    summary = audit_data.get("summary") if isinstance(audit_data, dict) and isinstance(audit_data.get("summary"), dict) else {}
+    policies = audit_data.get("policies") if isinstance(audit_data, dict) and isinstance(audit_data.get("policies"), list) else []
+    if int(summary.get("configured_policy_count") or 0) > max_menu_count:
+        raise AssertionError(
+            "menu config audit scope drift: configured_policy_count=%s max=%s"
+            % (int(summary.get("configured_policy_count") or 0), max_menu_count)
+        )
+    forbidden_policies = [
+        _text(row.get("menu_complete_name") or row.get("menu_label"))
+        for row in policies
+        if any(token in _text(row.get("menu_complete_name") or row.get("menu_label")) for token in FORBIDDEN_POLICY_PATH_TOKENS)
+    ]
+    if forbidden_policies:
+        raise AssertionError(f"menu config audit exposes forbidden policies: {forbidden_policies[:20]}")
+    return {
+        "scope_root_menu_id": int(root.id),
+        "panel_menu_count": len(menus),
+        "audit_configured_policy_count": int(summary.get("configured_policy_count") or 0),
+        "audit_applicable_policy_count": int(summary.get("applicable_policy_count") or 0),
+        "max_menu_count": max_menu_count,
+    }
+
+
 def main():
     identity = _assert_startup_identity()
     platform_release_db = _assert_platform_release_db()
@@ -282,6 +333,9 @@ def main():
         runtime_meta = _assert_runtime_gate(product_key, int(policy_meta["policy_released_menu_count"]))
         runtime_meta.update(policy_meta)
         products.append(runtime_meta)
+    menu_config_scope = _assert_menu_config_scope(
+        int(products[0]["policy_released_menu_count"]) if products else MIN_RELEASED_POLICY_MENU_COUNT
+    )
     print(
         json.dumps(
             {
@@ -290,6 +344,7 @@ def main():
                 "startup_identity": identity,
                 "smart_core.platform_release_db": platform_release_db,
                 "products": products,
+                "menu_config_scope": menu_config_scope,
             },
             ensure_ascii=False,
             sort_keys=True,
