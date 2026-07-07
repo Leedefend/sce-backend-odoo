@@ -428,7 +428,7 @@ verify.daily_dev.runtime_repo.clean:
 
 verify.daily_dev.acceptance.env.guard:
 	@python3 -m py_compile scripts/verify/daily_dev_acceptance_env_guard.py
-	@ENV="$(ENV)" ENV_FILE="$(ENV_FILE)" DB_NAME="$(DB_NAME)" python3 scripts/verify/daily_dev_acceptance_env_guard.py
+	@ENV="$(ENV)" ENV_FILE="$(ENV_FILE)" DB_NAME="$(DB_NAME)" ACCEPTANCE_BASE_URL="$(ACCEPTANCE_BASE_URL)" python3 scripts/verify/daily_dev_acceptance_env_guard.py
 
 gate.compose.config: check-compose-env
 	@echo "[gate.compose.config] checking container_name..."

@@ -10,6 +10,7 @@ EXPECTED = {
     "ENV": "dev",
     "ENV_FILE": ".env.dev",
     "DB_NAME": "sc_demo",
+    "ACCEPTANCE_BASE_URL": "http://127.0.0.1:18081",
 }
 
 
@@ -31,6 +32,7 @@ def main() -> int:
         "ENV": os.getenv("ENV", "").strip(),
         "ENV_FILE": _norm_env_file(os.getenv("ENV_FILE", "").strip()),
         "DB_NAME": os.getenv("DB_NAME", "").strip(),
+        "ACCEPTANCE_BASE_URL": os.getenv("ACCEPTANCE_BASE_URL", "").strip().rstrip("/"),
     }
 
     for key, expected in EXPECTED.items():
@@ -43,7 +45,7 @@ def main() -> int:
             print(f"- {error}")
         return 2
 
-    print("[daily_dev_acceptance_env_guard] PASS env=dev env_file=.env.dev db=sc_demo")
+    print("[daily_dev_acceptance_env_guard] PASS env=dev env_file=.env.dev db=sc_demo base_url=http://127.0.0.1:18081")
     return 0
 
 

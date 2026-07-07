@@ -72,7 +72,8 @@ filestore.
    `verify.daily_dev.runtime_repo.clean`, so the acceptance publication cannot
    run from the wrong server directory or a dirty runtime repository.
    It also runs `verify.daily_dev.acceptance.env.guard`, which rejects anything
-   other than `ENV=dev`, `ENV_FILE=.env.dev`, and `DB_NAME=sc_demo`.
+   other than `ENV=dev`, `ENV_FILE=.env.dev`, `DB_NAME=sc_demo`, and
+   `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081`.
 
 ## Acceptance Criteria
 

@@ -24,7 +24,7 @@ REQUIRED_TOKENS = {
         "Do not deploy from scratch worktrees or archived runtime directories.",
         "make verify.daily_dev.runtime_repo.clean",
         "make release.daily_dev.acceptance.publish",
-        "That target only accepts `ENV=dev`, `ENV_FILE=.env.dev`, and `DB_NAME=sc_demo`;",
+        "it also requires `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081`.",
         "make verify.production_git.authority.guard",
     ),
     "daily_policy": (
