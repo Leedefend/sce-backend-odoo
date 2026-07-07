@@ -2,6 +2,7 @@
 import base64
 import csv
 import io
+import logging
 import re
 
 from odoo import fields, models
@@ -19,6 +20,9 @@ try:
     import xlrd
 except ImportError:
     xlrd = None
+
+
+_logger = logging.getLogger(__name__)
 
 
 class ProjectBoqImportWizard(models.TransientModel):
@@ -1413,11 +1417,11 @@ class HierarchyBuilder:
         self.stack[level] = rec
 
     def refresh_parent_path(self, records):
-        """占位：统一刷新 parent_path；失败时静默，保持现有行为。"""
+        """统一刷新 parent_path；失败时保持导入流程不中断。"""
         try:
             records._parent_store_compute()
         except Exception:
-            pass
+            _logger.debug("Unable to refresh BOQ hierarchy parent path.", exc_info=True)
 
     def heal_hierarchy(self, records):
         """
@@ -1511,10 +1515,9 @@ class BoqParser:
             try:
                 row_vals = [str(sheet.cell(row=r, column=c).value or "").strip() for c in range(1, (sheet.max_column or 0) + 1)]
             except Exception:
-                pass
+                _logger.debug("Unable to scan BOQ merged title row.", exc_info=True)
             for v in row_vals:
                 if v and v not in seen:
                     titles.append(v)
                     seen.add(v)
         return titles
-

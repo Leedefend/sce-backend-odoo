@@ -3758,7 +3758,7 @@ def smart_core_relation_entry_policy(env, payload):
             if country:
                 default_vals["country_id"] = country.id
         except Exception:
-            pass
+            _logger.debug("Unable to resolve contract tax quick-create defaults.", exc_info=True)
         return {
             "has_page": False,
             "can_open": False,
@@ -4092,7 +4092,7 @@ def smart_core_resolve_release_actor_role_codes(env, user):
         ):
             roles.add("executive")
     except Exception:
-        pass
+        _logger.debug("Unable to resolve release actor role codes from groups.", exc_info=True)
     return sorted(roles)
 
 
