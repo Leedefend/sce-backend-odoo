@@ -902,6 +902,28 @@ def verify_custom_security_policy_role_login_boundary() -> list[str]:
                 "smart_construction_custom: legacy demo role login must appear only as "
                 f"compatibility alias: {login!r}"
             )
+    try:
+        module_ast = ast.parse(text, filename=str(path))
+        alias_node = next(
+            node.value
+            for node in module_ast.body
+            if isinstance(node, ast.Assign)
+            for target in node.targets
+            if isinstance(target, ast.Name) and target.id == "LEGACY_ROLE_LOGIN_ALIASES"
+        )
+        alias_map = ast.literal_eval(alias_node)
+    except Exception as exc:
+        errors.append(f"smart_construction_custom: unable to parse legacy role login aliases: {exc}")
+        return errors
+    expected_alias_map = {
+        login: (login.replace("sc_", "demo_", 1),)
+        for login in required_formal_logins
+    }
+    if alias_map != expected_alias_map:
+        errors.append(
+            "smart_construction_custom: legacy role login aliases must exactly match "
+            "the formal role login compatibility map"
+        )
     return errors
 
 
