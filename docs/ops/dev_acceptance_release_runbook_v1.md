@@ -26,9 +26,10 @@ filestore.
 - Dev env file: `.env.dev`
 - Public dev URL: `http://<host>:18081/` unless nginx is deliberately rebound.
 - The daily development server's non-interactive shell startup files must be
-  compatible with `set -u`. In particular, `/etc/bash.bashrc` must not read
-  an unset `PS1`; use `${PS1:-}` in the non-interactive guard so release logs
-  are not polluted by shell startup noise.
+  compatible with `set -u`. In particular, `/etc/bash.bashrc` and the release
+  user's `~/.bashrc` must not read an unset `PS1`; use `${PS1:-}` in the
+  non-interactive guard so release logs are not polluted by shell startup
+  noise.
 
 ## Required Sequence
 
