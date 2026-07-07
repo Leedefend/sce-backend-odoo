@@ -429,6 +429,8 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
         "兼容旧版",
         "兼容旧数据",
         "兼容设置页",
+        "用户验收样例",
+        "兼容历史门户动作入口",
     )
     guarded_roots = (
         ADDONS / "smart_construction_core" / "models",
