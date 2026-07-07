@@ -106,6 +106,7 @@ MAKEFILE_TOKENS = (
     "python3 scripts/verify/production_deployment_record_guard.py",
     "prod.frontend.build: guard.prod.danger check-compose-project check-compose-env",
     ".PHONY: verify.production_git.authority.guard",
+    "verify.production_git.authority.guard:",
     "python3 -m py_compile scripts/verify/production_git_authority_guard.py",
     "python3 scripts/verify/production_git_authority_guard.py",
 )
