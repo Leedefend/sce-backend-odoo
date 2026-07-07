@@ -742,6 +742,42 @@ def verify_runtime_abstract_method_boundary() -> list[str]:
     return errors
 
 
+def verify_runtime_bare_pass_boundary() -> list[str]:
+    errors: list[str] = []
+    guarded_roots = (
+        ADDONS / "smart_construction_core" / "handlers",
+        ADDONS / "smart_construction_core" / "models",
+        ADDONS / "smart_construction_core" / "services",
+        ADDONS / "smart_construction_core" / "tools",
+        ADDONS / "smart_construction_bundle",
+        ADDONS / "smart_owner_core",
+        ADDONS / "smart_owner_bundle",
+    )
+    excluded_parts = {"tests", "migrations", "__pycache__"}
+    for root in guarded_roots:
+        if not root.is_dir():
+            continue
+        for path in root.rglob("*.py"):
+            relative_parts = path.relative_to(root).parts
+            if any(part in excluded_parts for part in relative_parts):
+                continue
+            try:
+                tree = ast.parse(path.read_text(encoding="utf-8", errors="ignore"), filename=str(path))
+            except SyntaxError as exc:
+                errors.append(
+                    "industry modules: python file must parse for bare-pass audit: "
+                    f"{path.relative_to(ROOT).as_posix()} {exc}"
+                )
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Pass):
+                    errors.append(
+                        "industry modules: runtime code must use explicit no-op, "
+                        f"return, or fallback handling instead of bare pass: {path.relative_to(ROOT).as_posix()}:{node.lineno}"
+                    )
+    return errors
+
+
 def verify_scene_governance_exception_observability() -> list[str]:
     errors: list[str] = []
     guarded_paths = (
@@ -1613,6 +1649,7 @@ def main() -> int:
     errors.extend(verify_portal_controller_exception_observability())
     errors.extend(verify_app_entry_exception_observability())
     errors.extend(verify_runtime_abstract_method_boundary())
+    errors.extend(verify_runtime_bare_pass_boundary())
     errors.extend(verify_scene_governance_exception_observability())
     errors.extend(verify_core_api_controller_exception_observability())
     errors.extend(verify_business_slice_project_resolution_observability())
