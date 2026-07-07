@@ -1262,6 +1262,7 @@ def verify_seed_product_language_boundary() -> list[str]:
         ADDONS / "smart_construction_seed" / "__manifest__.py",
         ADDONS / "smart_construction_seed" / "hooks.py",
     )
+    steps_dir = ADDONS / "smart_construction_seed" / "seed" / "steps"
     forbidden_tokens = (
         "placeholder hook",
         "Extend with real seed data later",
@@ -1269,9 +1270,16 @@ def verify_seed_product_language_boundary() -> list[str]:
         "verify/demo",
         "demo-only steps",
         "demo env",
+        "placeholder marker",
+        "Placeholder marker",
+        "placeholder for future",
+        "Placeholder for",
     )
     errors: list[str] = []
-    for path in paths:
+    scan_paths = list(paths)
+    if steps_dir.is_dir():
+        scan_paths.extend(sorted(steps_dir.glob("step_*.py")))
+    for path in scan_paths:
         if not path.is_file():
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")

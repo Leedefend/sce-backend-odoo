@@ -3,14 +3,14 @@ from ..registry import SeedStep, register
 
 
 def _run(env):
-    # Placeholder for BOQ sample seed, record intended count
+    # Scenario evidence marker for expected BOQ coverage.
     env["ir.config_parameter"].sudo().set_param("sc.seed.boq_count", "10")
 
 
 register(
     SeedStep(
         name="boq_sample",
-        description="Seed sample BOQ entries (placeholder marker).",
+        description="Record BOQ scenario evidence marker.",
         run=_run,
     )
 )

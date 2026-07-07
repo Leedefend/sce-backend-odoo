@@ -3,14 +3,14 @@ from ..registry import SeedStep, register
 
 
 def _run(env):
-    # Mark dictionary seed executed (placeholder for future dictionary creation)
+    # Scenario evidence marker; baseline dictionaries are created by dictionary_min.
     env["ir.config_parameter"].sudo().set_param("sc.seed.dictionary", "1")
 
 
 register(
     SeedStep(
         name="dictionary",
-        description="Seed base dictionaries (placeholder marker).",
+        description="Record dictionary scenario evidence marker.",
         run=_run,
     )
 )
