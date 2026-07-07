@@ -44,6 +44,145 @@ REQUIRED_DOC_FILES = [
     ROOT / "docs" / "low_code_config_capability_matrix.md",
 ]
 
+LOWCODE_CAPABILITY_REQUIREMENTS = {
+    "menu_orchestration": {
+        "source_markers": {
+            "addons/smart_core/handlers/menu_configuration.py": (
+                '"lowcode_boundary": "menu_config"',
+                '"contract_source": MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING',
+                "requested_set = {int(menu_id) for menu_id in requested_menu_ids",
+            ),
+            "frontend/apps/web/scripts/low_code_menu_navigation_alignment_acceptance.mjs": (
+                "configuredParentId",
+                "navigation_config_only",
+            ),
+        },
+        "acceptance_targets": (
+            "verify.business_config.low_code_menu_navigation_alignment",
+            "verify.user_menu.reachability.guard",
+        ),
+        "doc_tokens": ("菜单配置", "产品导航 menu_ids", "ui.menu.config.policy"),
+    },
+    "form_field_structure": {
+        "source_markers": {
+            "addons/smart_core/handlers/form_field_configuration.py": (
+                '"lowcode_boundary": "form_config"',
+                "VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY",
+                "legacy_lowcode_draft 已停止作为保存来源",
+                "_append_business_config_scope_domain",
+            ),
+            "addons/smart_core/model/ui_form_field_policy.py": (
+                "SOURCE_KIND = \"ui_form_field_policy_overlay\"",
+                "SOURCE_AUTHORITIES = (\"ui.form.field.policy\", \"ir.model.fields\", \"app.view.config\")",
+                "_effective_policies",
+            ),
+        },
+        "acceptance_targets": (
+            "verify.business_config.low_code_runtime_consistency",
+            "verify.business_config.low_code_group_matrix",
+            "verify.business_config.low_code_layout_runtime",
+        ),
+        "doc_tokens": ("表单配置", "view_orchestration.views.form", "ui.form.field.policy"),
+    },
+    "list_search_configuration": {
+        "source_markers": {
+            "addons/smart_core/handlers/form_field_configuration.py": (
+                "class BusinessConfigListSearchAuditHandler",
+                '"user_preference_boundary": "ui_only"',
+                "class BusinessConfigListSearchSetHandler",
+                "class BusinessConfigListSearchBootstrapHandler",
+            ),
+            "scripts/verify/business_list_config_boundary_audit.py": (
+                "config_authority",
+                "handling_surface",
+                "user_preference_boundary",
+            ),
+            "frontend/apps/web/scripts/low_code_business_config_acceptance.mjs": (
+                "listSearchAuditBoundary",
+                "userPreferenceBoundary",
+                "sc.user.view.preference",
+            ),
+        },
+        "acceptance_targets": (
+            "verify.business_config.list_config_boundary",
+            "verify.business_config.low_code_acceptance",
+        ),
+        "doc_tokens": ("列表与搜索配置", "view_orchestration.views.tree", "sc.user.view.preference"),
+    },
+    "approval_policy_configuration": {
+        "source_markers": {
+            "addons/smart_construction_core/handlers/approval_policy_configuration.py": (
+                '"lowcode_boundary": "approval_policy"',
+                '"policy_source": APPROVAL_POLICY_RUNTIME_SOURCE',
+                "NO_BUSINESS_FACT_AUTHORITY",
+            ),
+            "frontend/apps/web/scripts/low_code_business_config_acceptance.mjs": (
+                "approvalBoundary",
+                "approvalSourceAuthority.lowcode_boundary",
+                "approvalSourceAuthority.policy_source",
+            ),
+        },
+        "acceptance_targets": (
+            "verify.business_config.approval_runtime",
+            "verify.business_config.low_code_acceptance",
+        ),
+        "doc_tokens": ("审批配置", "sc.approval.policy", "sc.approval.step"),
+    },
+    "version_snapshot_rollback": {
+        "source_markers": {
+            "addons/smart_core/handlers/business_config_surface.py": (
+                "class BusinessConfigSnapshotSummaryHandler",
+                "class BusinessConfigSnapshotExportHandler",
+                "class BusinessConfigSnapshotCompareHandler",
+            ),
+            "addons/smart_core/handlers/form_field_configuration.py": (
+                "class BusinessConfigContractPublishHandler",
+                "class BusinessConfigContractRollbackHandler",
+                "ui.business.config.contract.version",
+            ),
+            "scripts/verify/business_config_contract_snapshot.py": (
+                "BUSINESS_CONFIG_SNAPSHOT_PATH",
+                "snapshot",
+            ),
+        },
+        "acceptance_targets": (
+            "verify.business_config.snapshot",
+            "verify.business_config.low_code_acceptance",
+        ),
+        "doc_tokens": ("配置版本管理", "ui.business.config.contract.version", "回滚"),
+    },
+    "capability_boundary_and_coverage": {
+        "source_markers": {
+            "docs/architecture/low_code_business_config_capability_matrix_v1.json": (
+                "menu_orchestration",
+                "form_field_structure",
+                "list_search_configuration",
+                "approval_policy_configuration",
+                "version_snapshot_rollback",
+                "capability_boundary_and_coverage",
+            ),
+            "scripts/verify/business_config_guard_inventory.py": (
+                "EXPECTED_CAPABILITY_AUTHORING_INTENTS",
+                "FULL_ACCEPTANCE_TARGETS",
+                "TARGET_SOURCE_MARKER_REQUIREMENTS",
+            ),
+            "frontend/apps/web/scripts/low_code_business_config_acceptance.mjs": (
+                "auditLowCodeBoundaryParity",
+                "boundaryParity",
+            ),
+        },
+        "acceptance_targets": (
+            "verify.business_config.guard_inventory",
+            "verify.business_config.coverage",
+            "verify.business_config.unit",
+        ),
+        "doc_tokens": ("配置能力边界", "coverage", "低代码全域边界"),
+    },
+}
+
+LOWCODE_BOUNDARY_DOC = ROOT / "docs" / "architecture" / "backend_contract_boundaries.md"
+LOWCODE_CAPABILITY_MATRIX = ROOT / "docs" / "architecture" / "low_code_business_config_capability_matrix_v1.json"
+
 
 def _load_boundaries():
     spec = importlib.util.spec_from_file_location("backend_contract_boundaries", BOUNDARY_MODULE_PATH)
@@ -57,11 +196,114 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _target_deps(makefile_text: str, target: str) -> set[str]:
+    prefix = f"{target}:"
+    for line in makefile_text.splitlines():
+        if line.startswith(prefix):
+            return {item.strip() for item in line[len(prefix):].split() if item.strip()}
+    return set()
+
+
+def _validate_lowcode_capability_matrix(errors: list[dict]) -> list[str]:
+    if not LOWCODE_CAPABILITY_MATRIX.is_file():
+        errors.append({
+            "category": "lowcode_capability_matrix",
+            "message": "low-code capability matrix is missing",
+            "path": LOWCODE_CAPABILITY_MATRIX.relative_to(ROOT).as_posix(),
+        })
+        return []
+    try:
+        payload = json.loads(_read(LOWCODE_CAPABILITY_MATRIX))
+    except json.JSONDecodeError as exc:
+        errors.append({
+            "category": "lowcode_capability_matrix",
+            "message": "low-code capability matrix is invalid JSON",
+            "error": str(exc),
+        })
+        return []
+    capabilities = payload.get("capabilities") if isinstance(payload, dict) else []
+    capability_ids = [
+        str(item.get("id") or "").strip()
+        for item in capabilities
+        if isinstance(item, dict)
+    ]
+    missing = sorted(set(LOWCODE_CAPABILITY_REQUIREMENTS) - set(capability_ids))
+    if missing:
+        errors.append({
+            "category": "lowcode_capability_matrix",
+            "message": "low-code capability matrix must declare every guarded capability",
+            "missing": missing,
+        })
+    return capability_ids
+
+
+def _validate_lowcode_capability_boundaries(errors: list[dict]) -> list[str]:
+    capability_ids = _validate_lowcode_capability_matrix(errors)
+    makefile_text = _read(ROOT / "Makefile")
+    full_acceptance_deps = _target_deps(makefile_text, "verify.business_config.full_acceptance")
+    unit_body = makefile_text
+    doc_text = _read(LOWCODE_BOUNDARY_DOC) if LOWCODE_BOUNDARY_DOC.is_file() else ""
+    if not doc_text:
+        errors.append({
+            "category": "lowcode_boundary_document",
+            "message": "backend low-code boundary document is missing or empty",
+            "path": LOWCODE_BOUNDARY_DOC.relative_to(ROOT).as_posix(),
+        })
+
+    for capability_id, requirement in LOWCODE_CAPABILITY_REQUIREMENTS.items():
+        for target in requirement["acceptance_targets"]:
+            if target not in full_acceptance_deps and target != "verify.business_config.unit":
+                errors.append({
+                    "category": "lowcode_capability_acceptance",
+                    "capability": capability_id,
+                    "message": "capability acceptance target must be included in verify.business_config.full_acceptance",
+                    "target": target,
+                })
+            if target == "verify.business_config.unit" and "scripts/verify/lowcode_config_boundary_guard.py" not in unit_body:
+                errors.append({
+                    "category": "lowcode_capability_acceptance",
+                    "capability": capability_id,
+                    "message": "unit chain must execute lowcode_config_boundary_guard.py",
+                    "target": target,
+                })
+        for rel_path, markers in requirement["source_markers"].items():
+            path = ROOT / rel_path
+            if not path.is_file():
+                errors.append({
+                    "category": "lowcode_capability_marker",
+                    "capability": capability_id,
+                    "path": rel_path,
+                    "message": "required low-code boundary artifact is missing",
+                })
+                continue
+            text = _read(path)
+            for marker in markers:
+                if marker not in text:
+                    errors.append({
+                        "category": "lowcode_capability_marker",
+                        "capability": capability_id,
+                        "path": rel_path,
+                        "message": "required low-code boundary marker is missing",
+                        "marker": marker,
+                    })
+        for token in requirement["doc_tokens"]:
+            if token not in doc_text:
+                errors.append({
+                    "category": "lowcode_boundary_document",
+                    "capability": capability_id,
+                    "path": LOWCODE_BOUNDARY_DOC.relative_to(ROOT).as_posix(),
+                    "message": "backend boundary document must define low-code capability boundary",
+                    "token": token,
+                })
+    return capability_ids
+
+
 def build_report() -> dict:
     errors: list[dict] = []
     boundaries = _load_boundaries()
     source_statuses = set(getattr(boundaries, "LOWCODE_SOURCE_STATUSES", set()))
     system_config_menu_xmlids = set(getattr(boundaries, "LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS", set()))
+    capability_ids = _validate_lowcode_capability_boundaries(errors)
 
     missing_statuses = sorted(REQUIRED_SOURCE_STATUSES - source_statuses)
     if missing_statuses:
@@ -203,6 +445,8 @@ def build_report() -> dict:
         "schema_version": "1.0",
         "source_statuses": sorted(source_statuses),
         "system_config_menu_xmlids": sorted(system_config_menu_xmlids),
+        "capabilities": sorted(capability_ids),
+        "guarded_capability_count": len(LOWCODE_CAPABILITY_REQUIREMENTS),
         "error_count": len(errors),
         "errors": errors,
     }

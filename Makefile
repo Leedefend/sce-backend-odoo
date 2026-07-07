@@ -642,6 +642,7 @@ verify.business_config.guard_inventory: guard.prod.forbid
 
 verify.business_config.unit: guard.prod.forbid
 	@python3 scripts/verify/business_config_user_language_guard.py
+	@python3 scripts/verify/lowcode_config_boundary_guard.py
 	@python3 scripts/verify/backend_contract_boundary_guard.py
 	@python3 addons/smart_core/tests/test_backend_contract_boundaries.py
 	@python3 addons/smart_core/tests/test_backend_contract_boundary_guard.py

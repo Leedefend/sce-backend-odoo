@@ -118,6 +118,7 @@ FULL_ACCEPTANCE_TARGETS_WITHOUT_CAPABILITY_OWNER = {
 TARGET_SCRIPT_REQUIREMENTS = {
     "verify.business_config.unit": (
         "scripts/verify/business_config_user_language_guard.py",
+        "scripts/verify/lowcode_config_boundary_guard.py",
         "scripts/verify/backend_contract_boundary_guard.py",
         "addons/smart_core/tests/test_backend_contract_boundaries.py",
         "addons/smart_core/tests/test_backend_contract_boundary_guard.py",

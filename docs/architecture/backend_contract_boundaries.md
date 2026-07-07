@@ -52,6 +52,27 @@
 - 通用 `api.data.write` / `api.data.create` 写代理不得写运行时配置模型；`ui.business.config.contract`、`ui.form.field.policy`、`ui.menu.config.policy`、`sc.approval.policy`、`sc.approval.step` 等必须走专用配置入口。
 - 前端只消费后端契约和专用配置意图，不承担“判断哪一层覆盖哪一层”的职责。
 
+## 低代码全域边界
+
+低代码产品边界不是单一菜单配置问题，必须把表单、列表/搜索、菜单、审批、版本快照、覆盖扫描作为同一个 L4 运行时配置域验收。`scripts/verify/lowcode_config_boundary_guard.py` 是低代码全域边界总闸，必须在 `verify.business_config.unit` 和正式发布链路中执行。
+
+| 能力 | 事实权威载体 | 允许配置内容 | 禁止回退/越界 | 必须验收 |
+| --- | --- | --- | --- | --- |
+| 菜单配置 | `ui.business.config.contract:menu_orchestration`，兼容镜像 `ui.menu.config.policy` | 产品导航内菜单可见性、排序、父级、用户新增菜单 | 不得从 `ir.ui.menu` root subtree 重新暴露历史验收、迁移核对、系统配置或平台治理菜单；可配置范围以产品导航 menu_ids 为准 | `verify.business_config.low_code_menu_navigation_alignment`、`verify.user_menu.reachability.guard` |
+| 表单配置 | `ui.business.config.contract:view_orchestration.views.form`，兼容镜像 `ui.form.field.policy` | 字段显隐、标签、顺序、分组、布局、新增字段 | 不得保存 `legacy_lowcode_draft`；不得绕过 action/view/role 作用域；不得把运行时配置模型开放到通用表单设计器 | `verify.business_config.low_code_runtime_consistency`、`verify.business_config.low_code_group_matrix`、`verify.business_config.low_code_layout_runtime` |
+| 列表与搜索配置 | `ui.business.config.contract:view_orchestration.views.tree/search` | 列表列、搜索字段、分组、筛选和默认展示方式 | `sc.user.view.preference` 只属于 `ui_only` 个人偏好，不能成为业务配置事实权威；配置端字段和办理面字段必须一致 | `verify.business_config.list_config_boundary`、`verify.business_config.low_code_acceptance` |
+| 审批配置 | `sc.approval.policy`、`sc.approval.step` | 审批启用、模式、步骤、角色和条件 | 不得写入表单/菜单契约；不得绕过 `source_authority.lowcode_boundary = approval_policy` 与 `policy_source = sc.approval.policy` | `verify.business_config.approval_runtime`、`verify.business_config.low_code_acceptance` |
+| 配置版本管理 | `ui.business.config.contract`、`ui.business.config.contract.version` | 发布、版本列表、快照导出、快照对比、回滚 | 不得把前端草稿、浏览器状态或个人偏好当作可回滚版本；回滚只恢复正式契约快照 | `verify.business_config.snapshot`、`verify.business_config.low_code_acceptance` |
+| 配置能力边界 | `low_code_business_config_capability_matrix_v1.json`、coverage gate、boundary guards | 全量可配置范围、覆盖状态、缺口原因和补齐入口 | 不得新增低代码能力而不登记 carrier、authoring intent、runtime consumer、acceptance；不得只靠页面呈现作为边界证明 | `verify.business_config.guard_inventory`、`verify.business_config.coverage`、`verify.business_config.unit` |
+
+低代码全域边界的统一规则：
+
+- 每个写入口必须声明 `source_authority`，且能区分 `lowcode_boundary`、`contract_source` 或 `policy_source`。
+- L4 低代码配置只覆盖运行时看面和运行时策略，不写业务事实。
+- L2 行业默认、L3 用户偏好、L4 租户低代码必须按统一覆盖顺序合并，不能由前端自行判断。
+- 配置端看到的字段、菜单、审批对象，必须能在业务办理面或运行时策略解析器中找到同一事实来源。
+- 新增低代码能力必须同时更新 capability matrix、后端边界文档、`lowcode_config_boundary_guard.py` 和正式验收链路。
+
 ## 迭代动手前检查
 
 每次涉及表单、列表、菜单、审批、用户偏好、契约保存时，必须先回答：
