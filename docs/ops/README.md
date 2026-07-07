@@ -9,6 +9,7 @@
 - 三环境统一运行手册（dev/test/prod）: `docs/ops/environment_tiers_unified_runbook_v1.md`
 - 生产发布链路规范（dev -> prod-sim -> release package -> prod）: `docs/ops/production_release_flow_standard_v1.md`
 - 生产环境正式部署规范（含数据重建流程）: `docs/ops/production_deployment_runbook_v1.md`
+- 历史附件 custody marker 补齐手册: `docs/ops/legacy_attachment_custody_marker_runbook.md`
 - Codex 生产部署协助策略: `docs/ops/codex_production_assist_policy.md`
 - 基线冻结策略: `docs/ops/baseline_freeze_policy.md`
 - 场景观测命令分层:

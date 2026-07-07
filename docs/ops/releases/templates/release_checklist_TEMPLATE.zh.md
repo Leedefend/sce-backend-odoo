@@ -48,6 +48,10 @@
 - `ENV=prod` 禁止：`make db.reset`, `make demo.*`, `make ci.*`, `make gate.*`
 - `ENV=prod` 必须 `PROD_DANGER=1`：`mod.install`, `mod.upgrade`, policy apply
 - 生产 seed 需显式 DB：`SEED_DB_NAME_EXPLICIT=1`
+- 生产附件 custody 只读验证使用：
+  `PROD_READONLY_VERIFY=1 make history.attachment.custody.probe.prod`
+- 生产附件 custody marker 补齐必须使用：
+  `PROD_DANGER=1 make legacy_attachment.custody_marker.backfill.prod`
 
 ## Seed Base（如需执行）
 - 仅允许 `SC_SEED_PROFILE=base`
@@ -55,4 +59,6 @@
 
 ## 发布后
 - 记录 guard JSON 到发布日志
+- 如果发布包含迁移或历史附件，在生产部署记录中记录
+  `history_attachment_custody_ready` 证据
 - 确认 `main` 与 tag 一致

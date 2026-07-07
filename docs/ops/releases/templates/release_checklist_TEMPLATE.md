@@ -48,6 +48,10 @@
 - `ENV=prod` forbids: `make db.reset`, `make demo.*`, `make ci.*`, `make gate.*`
 - `ENV=prod` requires `PROD_DANGER=1` for `mod.install`, `mod.upgrade`, policy apply
 - `seed.run` in prod requires explicit DB name (`SEED_DB_NAME_EXPLICIT=1`)
+- Production read-only attachment custody verification uses:
+  `PROD_READONLY_VERIFY=1 make history.attachment.custody.probe.prod`
+- Production attachment custody marker backfill requires:
+  `PROD_DANGER=1 make legacy_attachment.custody_marker.backfill.prod`
 
 ## Seed Base (if running)
 - `SC_SEED_PROFILE=base` only
@@ -55,4 +59,7 @@
 
 ## Post-Release
 - Record verification output (JSON) in release log
+- If the release includes migrated or legacy attachments, record
+  `history_attachment_custody_ready` evidence in the production deployment
+  record.
 - Confirm branch `main` matches tag
