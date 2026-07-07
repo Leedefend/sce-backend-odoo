@@ -54,7 +54,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         "mentions": ["mail.message"],
         "following": ["mail.followers"],
     }
-    LEGACY_TODO_AUTHORITIES = ["sc.workflow.workitem"]
+    HISTORICAL_TODO_AUTHORITIES = ["sc.workflow.workitem"]
     SECTION_SEMANTICS = {
         "todo": "actionable_work",
         "owned": "responsibility_scope",
@@ -365,7 +365,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return {
             "primary_todo": self.PRIMARY_TODO_AUTHORITY,
             "section_authorities": dict(self.SECTION_AUTHORITIES),
-            "legacy_todo_authorities": list(self.LEGACY_TODO_AUTHORITIES),
+            "historical_todo_authorities": list(self.HISTORICAL_TODO_AUTHORITIES),
             "section_semantics": dict(self.SECTION_SEMANTICS),
         }
 

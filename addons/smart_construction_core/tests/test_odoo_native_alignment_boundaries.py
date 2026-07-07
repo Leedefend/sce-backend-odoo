@@ -63,7 +63,7 @@ class TestConstructionOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertEqual(contract.get("primary_todo"), "mail.activity")
         self.assertIn("mail.activity", (contract.get("section_authorities") or {}).get("todo") or [])
         self.assertEqual((contract.get("section_semantics") or {}).get("mentions"), "collaboration_signal")
-        self.assertIn("sc.workflow.workitem", contract.get("legacy_todo_authorities") or [])
+        self.assertIn("sc.workflow.workitem", contract.get("historical_todo_authorities") or [])
 
     def test_dashboard_services_declare_business_fact_sources(self):
         self.assertEqual(ProjectDashboardService.SOURCE_KIND, "project_dashboard_business_fact_projection")

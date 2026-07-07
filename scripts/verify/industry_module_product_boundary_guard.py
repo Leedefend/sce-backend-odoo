@@ -353,6 +353,34 @@ def verify_handler_product_language_boundary() -> list[str]:
     return errors
 
 
+def verify_my_work_historical_todo_boundary() -> list[str]:
+    handler = ADDONS / "smart_construction_core" / "handlers" / "my_work_summary.py"
+    text = handler.read_text(encoding="utf-8", errors="ignore")
+    required_fragments = {
+        'PRIMARY_TODO_AUTHORITY = "mail.activity"',
+        'HISTORICAL_TODO_AUTHORITIES = ["sc.workflow.workitem"]',
+        '"historical_todo_authorities": list(self.HISTORICAL_TODO_AUTHORITIES)',
+    }
+    forbidden_fragments = {
+        "LEGACY_TODO_AUTHORITIES",
+        '"legacy_todo_authorities"',
+    }
+    errors: list[str] = []
+    for fragment in required_fragments:
+        if text.count(fragment) != 1:
+            errors.append(
+                "smart_construction_core: my work todo source contract must declare "
+                f"historical authority boundary exactly once: {fragment!r}"
+            )
+    for fragment in forbidden_fragments:
+        if fragment in text:
+            errors.append(
+                "smart_construction_core: my work todo source contract must use "
+                f"historical authority naming, not {fragment!r}"
+            )
+    return errors
+
+
 def verify_project_dashboard_open_alias_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "handlers" / "project_dashboard_open.py"
     if not path.is_file():
@@ -1369,6 +1397,7 @@ def main() -> int:
     errors.extend(verify_capability_registry_role_boundary())
     errors.extend(verify_security_group_historical_boundary())
     errors.extend(verify_handler_product_language_boundary())
+    errors.extend(verify_my_work_historical_todo_boundary())
     errors.extend(verify_project_dashboard_open_alias_boundary())
     errors.extend(verify_handler_historical_wrapper_boundary())
     errors.extend(verify_runtime_comment_product_language_boundary())
