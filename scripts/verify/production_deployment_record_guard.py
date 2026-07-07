@@ -117,7 +117,9 @@ def _check_record(path: Path) -> list[str]:
     if not sha_matches:
         errors.append(f"{rel}: missing 64-char sha256")
 
-    if "发布类型 | `incremental package`" not in text and "发布类型 | `full tree`" not in text:
+    is_incremental_package = "发布类型 | `incremental package`" in text
+    is_full_tree_release = "发布类型 | `full tree`" in text
+    if not is_incremental_package and not is_full_tree_release:
         errors.append(f"{rel}: release type must be explicit")
 
     if "/data/backups/" not in text:
@@ -133,6 +135,16 @@ def _check_record(path: Path) -> list[str]:
 
     full_tree_checked = "- [x] 生产与日常开发服务器全量一致。" in text
     full_tree_unchecked = "- [ ] 生产与日常开发服务器全量一致。" in text
+    if is_full_tree_release:
+        required_full_tree_tokens = [
+            "production_git_authority_guard: PASS",
+            "HEAD=origin/main=",
+            "git status --short: clean",
+            "skip-worktree",
+        ]
+        for token in required_full_tree_tokens:
+            if token not in text:
+                errors.append(f"{rel}: full-tree release missing git authority evidence: {token}")
     if full_tree_checked and "全量代码树差异 | `0`" not in text:
         errors.append(f"{rel}: full-tree alignment checked without zero full-tree diff evidence")
     if full_tree_unchecked and "生产与日常开发服务器不是全量一致" not in text:
