@@ -53,7 +53,7 @@ Environment-specific acceptance:
 ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo \
   ACCEPTANCE_BACKUP_DIR=<uploaded_backup_dir> \
   ACCEPTANCE_BASE_URL=http://127.0.0.1:18081 \
-  make release.dev.acceptance.publish
+  make release.daily_dev.acceptance.publish
 ```
 
 Production deployment is not part of this release-note batch. Production must

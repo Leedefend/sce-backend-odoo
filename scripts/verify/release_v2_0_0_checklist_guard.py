@@ -30,7 +30,7 @@ REQUIRED_TOKENS = (
     "Release indexes reviewed: `docs/ops/releases/README.md` and",
     "`docs/ops/releases/README.zh.md`.",
     "Verify catalog reviewed: `docs/ops/verify/README.md`.",
-    "make release.dev.acceptance.publish",
+    "make release.daily_dev.acceptance.publish",
     "PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard",
     "Recorded sample artifact directories may validate schema shape only",
     "not release signoff evidence.",
@@ -98,7 +98,7 @@ REQUIRED_COMMAND_BLOCKS = (
             "ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo \\",
             "ACCEPTANCE_BACKUP_DIR=<uploaded_backup_dir> \\",
             "ACCEPTANCE_BASE_URL=http://127.0.0.1:18081 \\",
-            "make release.dev.acceptance.publish",
+            "make release.daily_dev.acceptance.publish",
         ),
     ),
 )
