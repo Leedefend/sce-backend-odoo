@@ -239,6 +239,36 @@ def verify_portal_execute_demo_boundary() -> list[str]:
     return errors
 
 
+def verify_portal_execute_legacy_method_anchor_boundary() -> list[str]:
+    allowed_hits = {
+        "addons/smart_construction_core/models/support/portal_execute.py": 1,
+        "addons/smart_construction_core/services/portal_execute_button_service.py": 1,
+    }
+    errors: list[str] = []
+    module_root = ADDONS / "smart_construction_core"
+    actual_hits: dict[str, int] = {}
+    for path in module_root.rglob("*.py"):
+        relative = path.relative_to(ROOT).as_posix()
+        if "migrations" in path.parts or "tests" in path.parts:
+            continue
+        count = path.read_text(encoding="utf-8", errors="ignore").count("action_portal_demo_ping")
+        if count:
+            actual_hits[relative] = count
+    for relative, count in sorted(actual_hits.items()):
+        if allowed_hits.get(relative) != count:
+            errors.append(
+                "smart_construction_core: action_portal_demo_ping must stay limited "
+                f"to explicit portal execute compatibility anchors: {relative}"
+            )
+    for relative, count in sorted(allowed_hits.items()):
+        if actual_hits.get(relative) != count:
+            errors.append(
+                "smart_construction_core: expected portal execute compatibility anchor "
+                f"{relative} count={count}"
+            )
+    return errors
+
+
 def verify_static_navigation_product_labels() -> list[str]:
     errors: list[str] = []
     nav_map = ADDONS / "smart_construction_core" / "static/src/config/domain_nav_map.js"
@@ -884,6 +914,7 @@ def main() -> int:
     errors.extend(verify_legacy_temporary_account_boundary())
     errors.extend(verify_python_package_boundaries())
     errors.extend(verify_portal_execute_demo_boundary())
+    errors.extend(verify_portal_execute_legacy_method_anchor_boundary())
     errors.extend(verify_static_navigation_product_labels())
     errors.extend(verify_static_style_product_language_boundary())
     errors.extend(verify_capability_registry_role_boundary())
