@@ -44,6 +44,7 @@ FORBIDDEN_OPEN_ENDED_TOKENS = [
     "| `open` |",
     "| open |",
 ]
+EXPLAINED_FOLLOWUP_STATUS_PREFIXES = ("planned", "retained", "tracked")
 
 
 def _records() -> list[Path]:
@@ -59,6 +60,19 @@ def _relative(path: Path) -> str:
         return path.relative_to(ROOT).as_posix()
     except ValueError:
         return str(path)
+
+
+def _markdown_table_rows(text: str) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|") or not stripped.endswith("|"):
+            continue
+        cells = [cell.strip().strip("`").strip() for cell in stripped.strip("|").split("|")]
+        if cells and all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells):
+            continue
+        rows.append(cells)
+    return rows
 
 
 def _check_record(path: Path) -> list[str]:
@@ -82,6 +96,22 @@ def _check_record(path: Path) -> list[str]:
     for token in FORBIDDEN_OPEN_ENDED_TOKENS:
         if token in text:
             errors.append(f"{rel}: open-ended deployment record token remains: {token}")
+
+    for row in _markdown_table_rows(text):
+        if len(row) < 4:
+            continue
+        owner = row[-3].strip()
+        cadence = row[-2].strip()
+        status = row[-1].strip()
+        status_lower = status.lower()
+        if not any(status_lower.startswith(prefix) for prefix in EXPLAINED_FOLLOWUP_STATUS_PREFIXES):
+            continue
+        if not owner or owner in {"负责人", "-"}:
+            errors.append(f"{rel}: follow-up row missing owner for status: {status}")
+        if not cadence or cadence in {"截止时间", "-"}:
+            errors.append(f"{rel}: follow-up row missing cadence/deadline for status: {status}")
+        if ":" not in status:
+            errors.append(f"{rel}: follow-up status must explain meaning with '<status>: <meaning>': {status}")
 
     sha_matches = re.findall(r"\b[0-9a-f]{64}\b", text)
     if not sha_matches:

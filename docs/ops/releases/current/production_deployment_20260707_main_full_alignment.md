@@ -227,8 +227,8 @@ smart_construction_demo|uninstalled|
 | 事项 | 负责人 | 截止时间 | 状态 |
 | --- | --- | --- | --- |
 | 后续生产发布以 `git fetch && git checkout "$APPROVED_MAIN_COMMIT"` 或 release tag 为标准入口 | `Ops` | `2026-07-08` | `closed: documented in production release and upgrade standards` |
-| 清理旧生产目录 `/opt/sce/production/sce-backend-odoo.pre_main_align_20260707T1712` 前至少保留一个发布观察周期 | `Ops` | `after next successful production release observation window` | `retained` |
-| `.env.prod` 后续从仓库跟踪文件迁出或改为模板化配置，避免配置例外长期存在 | `Ops` | `before next formal production release` | `planned` |
+| 清理旧生产目录 `/opt/sce/production/sce-backend-odoo.pre_main_align_20260707T1712` 前至少保留一个发布观察周期 | `Ops` | `after next successful production release observation window` | `retained: keep rollback directory until next successful production release observation window completes` |
+| `.env.prod` 后续从仓库跟踪文件迁出或改为模板化配置，避免配置例外长期存在 | `Ops` | `before next formal production release` | `planned: move tracked production env content to server-managed secret file or template before next formal production release` |
 
 ## 11. 附件 Custody Evidence 补充部署
 
