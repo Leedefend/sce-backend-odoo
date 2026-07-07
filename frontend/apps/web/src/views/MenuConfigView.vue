@@ -1100,7 +1100,7 @@ function isMissingConfiguredMenu(menu: MenuConfigMenu | null | undefined) {
 }
 
 function isMenuShownInHandling(menu: MenuConfigMenu | null | undefined) {
-  if (!menu || isMissingConfiguredMenu(menu)) return false;
+  if (!menu) return false;
   const draft = drafts[menu.id];
   return Boolean(draft?.policy_id && draft.visible);
 }
