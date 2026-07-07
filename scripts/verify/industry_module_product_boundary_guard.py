@@ -445,6 +445,10 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
         ADDONS / "smart_construction_scene" / "data",
         ADDONS / "smart_construction_scene" / "profiles",
     )
+    allowed_pending_compatibility_lines = {
+        'LEGACY_SYSTEM_DEFAULT_PROJECT_NAME = "系统默认项目（待完善）"',
+        'LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME = "系统默认供应商（待完善）"',
+    }
     for root in guarded_roots:
         if not root.is_dir():
             continue
@@ -455,7 +459,7 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
             scrubbed = "\n".join(
                 line
                 for line in text.splitlines()
-                if not line.strip().startswith("LEGACY_SYSTEM_DEFAULT_")
+                if line.strip() not in allowed_pending_compatibility_lines
             )
             if "待完善" in scrubbed:
                 errors.append(
