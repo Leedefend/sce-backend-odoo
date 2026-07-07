@@ -824,6 +824,44 @@ def verify_project_execution_readiness_precheck_boundary() -> list[str]:
     return errors
 
 
+def verify_budget_compatibility_layer_boundary() -> list[str]:
+    module_root = ADDONS / "smart_construction_core"
+    core_init = module_root / "models" / "core" / "__init__.py"
+    compat = module_root / "models" / "support" / "budget_compat.py"
+    cost_domain = module_root / "models" / "core" / "cost_domain.py"
+    errors: list[str] = []
+    if not compat.is_file():
+        errors.append("smart_construction_core: budget compatibility layer file missing")
+        return errors
+    core_text = core_init.read_text(encoding="utf-8", errors="ignore") if core_init.is_file() else ""
+    compat_text = compat.read_text(encoding="utf-8", errors="ignore")
+    cost_domain_text = cost_domain.read_text(encoding="utf-8", errors="ignore") if cost_domain.is_file() else ""
+    required_fragments = {
+        "core import": "from ..support import budget_compat  # 历史 project.budget.line 模型兼容层，需在主模型前加载",
+        "compat name": '_name = "project.budget.line"',
+        "compat inherit": '_inherit = "project.budget.boq.line"',
+        "compat table": '_table = "project_budget_boq_line"',
+    }
+    combined = "\n".join((core_text, compat_text))
+    for label, fragment in required_fragments.items():
+        if combined.count(fragment) != 1:
+            errors.append(
+                "smart_construction_core: budget compatibility layer anchor "
+                f"must appear exactly once ({label}): {fragment!r}"
+            )
+    if "兼容旧 project.budget.line" in core_text:
+        errors.append(
+            "smart_construction_core: budget compatibility import must use historical-model "
+            "boundary wording, not generic old-compatibility wording"
+        )
+    if 'project.budget.line -> 现用 project.budget.boq.line' in cost_domain_text:
+        errors.append(
+            "smart_construction_core: cost_domain must not describe budget compatibility "
+            "mapping details; keep that responsibility in models/support/budget_compat.py"
+        )
+    return errors
+
+
 def verify_project_showcase_legacy_alias_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "models" / "core" / "project_core.py"
     if not path.is_file():
@@ -1027,6 +1065,7 @@ def main() -> int:
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_project_execution_readiness_precheck_boundary())
+    errors.extend(verify_budget_compatibility_layer_boundary())
     errors.extend(verify_project_showcase_legacy_alias_boundary())
     errors.extend(verify_core_extension_legacy_label_boundary())
     errors.extend(verify_seed_showcase_product_fields())
