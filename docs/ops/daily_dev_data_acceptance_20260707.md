@@ -72,8 +72,26 @@ Sample completeness audit:
 - Legacy URL local file OK: 5,000
 - Legacy URL missing local file: 0
 
+Additional attachment custody remediation:
+
+- Added missing `binary_embedded=false` custody marker to 588,073 legacy URL
+  attachments.
+- Re-ran `history_attachment_custody_probe.py`: PASS,
+  `history_attachment_custody_ready`, `gap_count=0`.
+- Re-ran `make verify.p0`: PASS.
+
+Targeted `BASE_SYSTEM_FILE` mirror attempt:
+
+- Scope: first 5,000 `BASE_SYSTEM_FILE` rows.
+- Already local OK: 4,995.
+- Download failed: 5.
+- Failure mode: old online source returned HTTP 500 for all 5 missing files.
+- The same 5 files were not present on the production server local attachment
+  roots, so they cannot be recovered by syncing from production.
+
 Conclusion: daily development business data is usable after remediation. The
-remaining known gap is attachment custody completeness for `BASE_SYSTEM_FILE`,
-which is the same class of issue as the production attachment backfill track and
-should be handled by the attachment mirror/backfill process rather than by
-business data restructuring.
+remaining known gap is physical file completeness for a small number of
+`BASE_SYSTEM_FILE` entries whose old online source currently returns HTTP 500.
+This is the same class of issue as the production attachment backfill track and
+should be handled by the attachment mirror/backfill process or old-source
+recovery, rather than by business data restructuring.
