@@ -234,6 +234,31 @@ def verify_core_docs_product_examples() -> list[str]:
     return errors
 
 
+def verify_core_runtime_demo_residual_allowlist() -> list[str]:
+    errors: list[str] = []
+    module_root = ADDONS / "smart_construction_core"
+    allowed_paths = {
+        "core_extension.py",
+        "models/core/project_core.py",
+        "models/support/portal_execute.py",
+        "models/support/runtime_user_management.py",
+        "services/portal_execute_button_service.py",
+    }
+    forbidden_tokens = ("demo_", "_demo", "sc_demo", "Demo", "演示", "试点")
+    excluded_parts = {"tests", "migrations", "docs", "tools", "__pycache__"}
+    for path in module_root.rglob("*.py"):
+        relative = path.relative_to(module_root).as_posix()
+        if any(part in excluded_parts for part in path.relative_to(module_root).parts):
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if not any(token in text for token in forbidden_tokens):
+            continue
+        if relative in allowed_paths:
+            continue
+        errors.append(f"smart_construction_core: unexpected demo/pilot token in runtime python: {relative}")
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     errors.extend(verify_manifest_shape())
@@ -245,6 +270,7 @@ def main() -> int:
     errors.extend(verify_capability_registry_role_boundary())
     errors.extend(verify_handler_product_language_boundary())
     errors.extend(verify_core_docs_product_examples())
+    errors.extend(verify_core_runtime_demo_residual_allowlist())
 
     if errors:
         print("[industry_module_product_boundary_guard] FAIL", file=sys.stderr)
