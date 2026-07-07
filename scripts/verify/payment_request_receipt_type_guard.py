@@ -76,7 +76,7 @@ def main() -> int:
         "LEGACY_DELETE_FIELDS" in asset_generator
         and "def is_deleted_row" in asset_generator
         and "old_system_deleted_rows_discarded" in asset_generator,
-        "receipt core asset generation must directly discard old-system deleted rows",
+        "receipt core asset generation must directly discard historical-source deleted rows",
         errors,
     )
     _assert(
@@ -112,14 +112,14 @@ def main() -> int:
         "def raw_deleted_receipt_ids" in receipt_write
         and "discarded_old_system_deleted_rows" in receipt_write
         and "is_deleted_source_row" in receipt_write,
-        "receipt core write must filter stale payload/XML rows deleted in the old system",
+        "receipt core write must filter stale payload/XML rows deleted in the historical source",
         errors,
     )
     _assert(
         "discarded_existing_old_system_deleted_rows" in receipt_write
         and "C_JFHKLR_DELETED" in receipt_write
         and "old_system_deleted" in receipt_write,
-        "receipt core write must quarantine already-written migration rows deleted in the old system",
+        "receipt core write must quarantine already-written migration rows deleted in the historical source",
         errors,
     )
     _assert(

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probe live old-system list counts for frozen SCBS55 user acceptance surfaces."""
+"""Probe live historical-source list counts for frozen SCBS55 user acceptance surfaces."""
 
 from __future__ import annotations
 

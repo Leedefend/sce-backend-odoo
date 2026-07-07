@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Run the live old-system strict parity gate for user acceptance data.
+"""Run the live historical-source strict parity gate for user acceptance data.
 
 This gate defaults to incremental, on-demand online evidence capture. Use
-ONLINE_VISIBLE_SURFACE_MODE=full for final acceptance, where cached old-system
+ONLINE_VISIBLE_SURFACE_MODE=full for final acceptance, where cached historical-source
 evidence is not enough for closure and the full old/new chain is required.
 """
 
@@ -199,14 +199,14 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str], mode: str) 
     steps: list[Step] = [
         Step(
             name="scbs55_online_list_count_probe",
-            scope="SCBS55 live old system",
+            scope="SCBS55 live historical source",
             command=["python3", "scripts/verify/scbs_55_old_system_list_count_probe.py"],
             env=common_env,
             required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
         ),
         Step(
             name="scbs55_online_full_row_dump",
-            scope="SCBS55 live old system",
+            scope="SCBS55 live historical source",
             command=["python3", "scripts/verify/scbs_55_old_system_list_full_row_dump.py"],
             required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
             env=common_env,
@@ -266,21 +266,21 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str], mode: str) 
             ),
             Step(
                 name="scbsly_online_menu_probe",
-                scope="SCBSLY live old system",
+                scope="SCBSLY live historical source",
                 command=["python3", "scripts/verify/scbsly_direct_project_acceptance_menu_probe.py"],
                 required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
                 env=common_env,
             ),
             Step(
                 name="scbsly_online_old_row_dump",
-                scope="SCBSLY live old system",
+                scope="SCBSLY live historical source",
                 command=["python3", "scripts/verify/scbsly_direct_project_old_row_dump.py"],
                 required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
                 env=common_env,
             ),
             Step(
                 name="scbsly_old_identity_lock",
-                scope="SCBSLY live old system",
+                scope="SCBSLY live historical source",
                 command=["python3", "scripts/verify/scbsly_direct_project_old_identity_lock.py"],
                 env=common_env,
             ),

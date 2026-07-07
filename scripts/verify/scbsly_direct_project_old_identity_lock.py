@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lock row identity sets for SCBSLY direct-project old-system dumps."""
+"""Lock row identity sets for SCBSLY direct-project historical-source dumps."""
 
 from __future__ import annotations
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dump SCBSLY direct-project old-system list rows for replay asset locking."""
+"""Dump SCBSLY direct-project historical-source list rows for replay asset locking."""
 
 from __future__ import annotations
 

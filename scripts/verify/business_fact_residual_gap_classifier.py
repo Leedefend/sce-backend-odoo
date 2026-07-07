@@ -2,9 +2,9 @@
 """Classify source-field coverage for migrated business facts.
 
 Run through ``scripts/ops/odoo_shell_exec.sh`` so the global ``env`` is
-available. The classifier is deliberately evidence-only: if old-system creator,
+available. The classifier is deliberately evidence-only: if historical-source creator,
 time, amount, or balance fields are absent, it records source-field coverage
-instead of forcing old data to satisfy new-system customer/supplier rules or
+instead of forcing historical data to satisfy new-system customer/supplier rules or
 falling back to Odoo import metadata.
 """
 
