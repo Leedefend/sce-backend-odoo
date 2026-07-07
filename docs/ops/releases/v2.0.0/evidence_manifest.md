@@ -46,7 +46,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 |---|---|---|---|
 | Dev acceptance publish | `make release.daily_dev.acceptance.publish` with dev env vars, including product navigation path and action-target guards | PASS | `artifacts/backend/dev_acceptance_release_probe.json` |
 | Dev acceptance schema | `make verify.dev.acceptance.release.schema.guard` | PASS | `artifacts/backend/dev_acceptance_release_probe.json` |
-| Prod-sim acceptance | governed prod-sim Makefile flow | PASS | prod-sim acceptance artifact path to be recorded |
+| Prod-sim acceptance | governed prod-sim Makefile flow | PASS | `artifacts/migration/fresh_replay_validity_20260508T1720` |
 | Prod-sim acceptance schema | `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard` | PASS | `scbs_release_acceptance_strict_result_v1.json`, `scbs_release_acceptance_strict_v1.md`, and `scbs_no_legacy_replay_acceptance_result_v1.json` under the recorded run dir |
 | Release checklist signoff | manual review | PASS | `docs/ops/release_checklist_v2.0.0.md` |
 | Release checklist guard | `make verify.release.v2_0_0.checklist.guard` | PASS | `docs/ops/release_checklist_v2.0.0.md` |
@@ -102,6 +102,9 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
   - `make verify.platform.performance.smoke.schema.guard`
 - Schema-only guard runs may use recorded artifact directories to verify evidence
   shape, but recorded sample artifacts are not release signoff evidence.
+- Recorded prod-sim schema evidence path:
+  `artifacts/migration/fresh_replay_validity_20260508T1720`, verified with
+  `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=artifacts/migration/fresh_replay_validity_20260508T1720 make verify.release.v2_0_0.formal_evidence.schema.guard`.
 - Note: before creating `gate-release-v2.0` or `v2.0.0-rc1`, rerun required
   gates on a clean reviewed release database and attach the fresh artifacts.
 - Note: before creating final `v2.0.0`, rerun
