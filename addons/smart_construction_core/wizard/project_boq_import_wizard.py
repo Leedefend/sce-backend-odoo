@@ -763,7 +763,7 @@ class ProjectBoqImportWizard(models.TransientModel):
                 "source_type": self.source_type,
                 "version": self.version,
                 "boq_category": eff_boq_category or "boq",
-                # 默认认为都是清单项，后续在 _create_with_hierarchy 里再根据层级修正
+                # 默认认为都是清单项，由 _create_with_hierarchy 根据层级修正。
                 "line_type": "item",
             }
             if section_type and not vals["section_type"]:
@@ -803,7 +803,7 @@ class ProjectBoqImportWizard(models.TransientModel):
             if spec:
                 vals["spec"] = spec
 
-            # 记录当前分部名称，便于后续 WBS 直接使用（无需再从 remark 里解析）
+            # 记录当前分部名称，便于 WBS 直接使用（无需再从 remark 里解析）。
             if current_division:
                 vals["division_name"] = current_division
             if remark or current_division:
@@ -813,7 +813,7 @@ class ProjectBoqImportWizard(models.TransientModel):
             vals["quantity"] = self._to_float(qty)
             vals["price"] = self._to_float(price)
             # 注意：amount 字段是 compute+store，直接写值会被覆盖；
-            # 这里仍然填入，主要是便于后续调试或可能的自定义逻辑。
+            # 这里仍然填入，便于诊断和自定义逻辑读取。
             vals["amount"] = self._to_float(amount_val)
 
             # 若数量/单价/合价均为0，则视为标题/小计行跳过
