@@ -63,9 +63,9 @@
         </record>
         <record id="approval_scope_temporary_finance" model="sc.approval.scope">
             <field name="sequence">42</field>
-            <field name="name">临时财务</field>
+            <field name="name">受限财务</field>
             <field name="scope_key">temporary_finance</field>
-            <field name="note">用于临时财务查看或受限参与，不作为默认终审。</field>
+            <field name="note">用于财务只读查看或受限参与，不作为默认终审。</field>
         </record>
         <record id="approval_scope_contract_manager" model="sc.approval.scope">
             <field name="sequence">50</field>

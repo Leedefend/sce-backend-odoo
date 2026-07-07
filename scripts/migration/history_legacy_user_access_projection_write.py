@@ -78,7 +78,7 @@ def role_group_xmlids(role_name: str) -> set[str]:
     if any(marker in name for marker in ("总经理", "副总经理", "董事长", "管理层")):
         groups.add("smart_construction_core.group_sc_role_executive")
 
-    if "临时财务" in name:
+    if "临时财务" in name or "受限财务" in name:
         groups.add("smart_construction_core.group_sc_role_temporary_finance")
     elif "财务经理" in name:
         groups.add("smart_construction_core.group_sc_role_finance_manager")

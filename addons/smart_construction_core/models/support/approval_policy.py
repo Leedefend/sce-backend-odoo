@@ -61,7 +61,7 @@ class ScApprovalPolicy(models.Model):
         "purchase_manager": "采购审核人",
         "finance_user": "财务经办人",
         "finance_manager": "财务审核人",
-        "temporary_finance": "临时财务",
+        "temporary_finance": "受限财务",
         "contract_user": "合同经办人",
         "contract_manager": "合同审核人",
         "cost_user": "成本经办人",

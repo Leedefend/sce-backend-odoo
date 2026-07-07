@@ -134,7 +134,7 @@
         </record>
 
         <record id="group_sc_role_temporary_finance" model="res.groups">
-            <field name="name">SC 角色 - 临时财务</field>
+            <field name="name">SC 角色 - 受限财务</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_project_read'),
