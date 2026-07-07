@@ -288,6 +288,35 @@ def verify_core_runtime_demo_residual_allowlist() -> list[str]:
     return errors
 
 
+def verify_core_extension_legacy_label_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_core" / "core_extension.py"
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    allowed_literals = {
+        '"演示"': "action noise marker for legacy showcase action filtering",
+        '"项目列表（演示）"': "hidden legacy showcase menu label",
+        '"项目台账（试点）"': "legacy ledger label renamed to product label",
+    }
+    errors: list[str] = []
+    for literal, reason in allowed_literals.items():
+        if text.count(literal) != 1:
+            errors.append(
+                "smart_construction_core: core_extension legacy label compatibility literal "
+                f"{literal} must appear exactly once ({reason})"
+            )
+    scrubbed = text
+    for literal in allowed_literals:
+        scrubbed = scrubbed.replace(literal, "")
+    for token in ("演示", "试点"):
+        if token in scrubbed:
+            errors.append(
+                "smart_construction_core: core_extension may only carry demo/pilot wording "
+                f"inside explicit legacy label compatibility literals, found token {token!r}"
+            )
+    return errors
+
+
 def verify_seed_showcase_product_fields() -> list[str]:
     errors: list[str] = []
     seed_files = (
@@ -359,6 +388,7 @@ def main() -> int:
     errors.extend(verify_handler_product_language_boundary())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
+    errors.extend(verify_core_extension_legacy_label_boundary())
     errors.extend(verify_seed_showcase_product_fields())
     errors.extend(verify_custom_security_policy_role_login_boundary())
 
