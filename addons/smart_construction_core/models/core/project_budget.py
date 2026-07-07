@@ -110,7 +110,7 @@ class ProjectBudgetLine(models.Model):
         store=True,
         readonly=True,
     )
-    # 兼容旧字段：投标量/价/合价
+    # 历史字段映射：投标量/价/合价
     qty_bidded = fields.Float(string="标后工程量")
     price_bidded = fields.Monetary(
         string="标后单价",

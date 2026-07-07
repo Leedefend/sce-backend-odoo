@@ -147,7 +147,7 @@ class PaymentRequest(models.Model):
     # 兼容部分搜索条件（有时被带入 account.move 的 move_type 过滤）
     move_type = fields.Selection(
         [("pay", "付款"), ("receive", "收款")],
-        string="单据类型(兼容)",
+        string="单据类型",
         compute="_compute_move_type",
         store=False,
     )

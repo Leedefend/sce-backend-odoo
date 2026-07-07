@@ -108,9 +108,9 @@ class ScGeneralContract(models.Model):
         "account.tax",
         string="税率",
         domain=[("type_tax_use", "=", "none"), ("amount_type", "=", "percent"), ("price_include", "=", False)],
-        help="合同办理使用的税率百分比。历史税率数值会保留在兼容字段中。",
+        help="合同办理使用的税率百分比。历史税率数值会同步保留。",
     )
-    tax_rate = fields.Float(string="税率(兼容)", digits=(16, 4))
+    tax_rate = fields.Float(string="税率", digits=(16, 4))
     change_amount_total = fields.Monetary(string="累计变更金额", currency_field="currency_id")
     change_rate = fields.Float(string="变更率(%)", compute="_compute_change_rate", store=True)
     currency_id = fields.Many2one(

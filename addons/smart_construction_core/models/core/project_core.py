@@ -637,18 +637,18 @@ class ProjectProject(models.Model):
         help='用于项目入口候选硬筛选，仅展示数据补齐完成的样板项目。',
     )
     sc_demo_showcase = fields.Boolean(
-        '项目样板池（兼容旧字段）',
+        '项目样板池',
         related='sc_project_showcase',
         readonly=False,
         store=False,
-        help='兼容历史字段名；正式运行时请使用 sc_project_showcase。',
+        help='项目入口优先候选标记。',
     )
     sc_demo_showcase_ready = fields.Boolean(
-        '项目样板可展示（兼容旧字段）',
+        '项目样板可展示',
         related='sc_project_showcase_ready',
         readonly=False,
         store=False,
-        help='兼容历史字段名；正式运行时请使用 sc_project_showcase_ready。',
+        help='项目入口候选展示状态。',
     )
 
     start_date = fields.Date('计划开工日期')

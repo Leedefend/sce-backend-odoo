@@ -50,7 +50,7 @@ class ResUsers(models.Model):
     )
     sc_user_permission_group_ids = fields.Many2many(
         "res.groups",
-        string="用户角色兼容字段",
+        string="用户角色",
         compute="_compute_sc_user_role_group_ids",
         inverse="_inverse_sc_user_permission_group_ids",
         store=False,

@@ -420,6 +420,11 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
         "项目驾驶舱（兼容）",
         "兼容旧入口",
         "（兼容）",
+        "(兼容)",
+        "兼容旧字段",
+        "兼容历史字段",
+        "用户角色兼容字段",
+        "兼容字段中",
     )
     guarded_roots = (
         ADDONS / "smart_construction_core" / "models",
