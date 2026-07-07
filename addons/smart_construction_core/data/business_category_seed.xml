@@ -420,7 +420,7 @@
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "amount"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger"], "terminal_action": "action_done"}]]></field>
         <field name="attachment_policy">recommended</field>
-        <field name="note">建筑行业模板默认分类；现阶段由 action/domain/context 承载，后续绑定正式入口。</field>
+        <field name="note">建筑行业模板默认分类；由 action/domain/context 承载并对接正式入口。</field>
     </record>
 
     <record id="business_category_finance_payment_apply_receive" model="sc.business.category">
