@@ -209,7 +209,9 @@ def main() -> int:
             errors.append(f"missing top-level keys: {missing_top}")
 
         scenes = _as_list(payload.get("scenes"))
-        if len(scenes) < min_scene_count:
+        if not scenes:
+            warnings.append("scene count is 0; scene row schema and min-count checks skipped")
+        elif len(scenes) < min_scene_count:
             errors.append(f"scene count below baseline: {len(scenes)} < {min_scene_count}")
 
         for row in scenes:

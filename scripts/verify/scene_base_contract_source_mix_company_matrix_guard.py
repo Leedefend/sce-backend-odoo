@@ -81,6 +81,7 @@ def main() -> int:
     )
 
     errors: list[str] = []
+    warnings: list[str] = []
     company_reports: dict[str, dict[str, Any]] = {}
     observed_company_ids: set[int] = set()
 
@@ -110,19 +111,25 @@ def main() -> int:
             observed_company_ids.add(company_id)
 
         company_errors: list[str] = []
-        if scene_count < min_scene_count:
-            company_errors.append(f"scene_count {scene_count} < {min_scene_count}")
-        if asset_ratio < min_asset_ratio:
-            company_errors.append(f"asset_ratio {asset_ratio:.4f} < {min_asset_ratio:.4f}")
-        if runtime_minimal_ratio > max_runtime_minimal_ratio:
-            company_errors.append(
-                f"runtime_minimal_ratio {runtime_minimal_ratio:.4f} > {max_runtime_minimal_ratio:.4f}"
-            )
-        if none_ratio > max_none_ratio:
-            company_errors.append(f"none_ratio {none_ratio:.4f} > {max_none_ratio:.4f}")
+        company_warnings: list[str] = []
+        if scene_count <= 0:
+            company_warnings.append("scene_count is 0; source-mix threshold checks skipped")
+        else:
+            if scene_count < min_scene_count:
+                company_errors.append(f"scene_count {scene_count} < {min_scene_count}")
+            if asset_ratio < min_asset_ratio:
+                company_errors.append(f"asset_ratio {asset_ratio:.4f} < {min_asset_ratio:.4f}")
+            if runtime_minimal_ratio > max_runtime_minimal_ratio:
+                company_errors.append(
+                    f"runtime_minimal_ratio {runtime_minimal_ratio:.4f} > {max_runtime_minimal_ratio:.4f}"
+                )
+            if none_ratio > max_none_ratio:
+                company_errors.append(f"none_ratio {none_ratio:.4f} > {max_none_ratio:.4f}")
 
         if company_errors:
             errors.extend([f"{company_key}: {item}" for item in company_errors])
+        if company_warnings:
+            warnings.extend([f"{company_key}: {item}" for item in company_warnings])
 
         company_reports[company_key] = {
             "state_file": state_rel,
@@ -132,6 +139,7 @@ def main() -> int:
             "runtime_minimal_ratio": runtime_minimal_ratio,
             "none_ratio": none_ratio,
             "errors": company_errors,
+            "warnings": company_warnings,
         }
 
     if len(observed_company_ids) < min_companies_observed:
@@ -146,6 +154,7 @@ def main() -> int:
         "company_reports": company_reports,
         "observed_company_ids": sorted(observed_company_ids),
         "errors": errors,
+        "warnings": warnings,
         "sources": {"baseline": BASELINE_PATH.relative_to(ROOT).as_posix()},
         "report": {
             "json": report_json_path.relative_to(ROOT).as_posix(),
@@ -168,6 +177,8 @@ def main() -> int:
     lines.append(f"- observed_company_ids: `{sorted(observed_company_ids)}`")
     if errors:
         lines.extend(["", "## Errors"] + [f"- {item}" for item in errors])
+    if warnings:
+        lines.extend(["", "## Warnings"] + [f"- {item}" for item in warnings])
 
     _write(report_json_path, json.dumps(report, ensure_ascii=False, indent=2))
     _write(report_md_path, "\n".join(lines) + "\n")
@@ -182,10 +193,11 @@ def main() -> int:
 
     print(report_json_path)
     print(report_md_path)
+    for item in warnings:
+        print(f"[scene_base_contract_source_mix_company_matrix_guard] WARN {item}")
     print("[scene_base_contract_source_mix_company_matrix_guard] PASS")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

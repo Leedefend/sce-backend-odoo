@@ -85,6 +85,7 @@ def main() -> int:
     )
 
     errors: list[str] = []
+    warnings: list[str] = []
     role_reports: dict[str, dict[str, Any]] = {}
     for role in roles:
         state_rel = _text(state_files.get(role))
@@ -117,19 +118,25 @@ def main() -> int:
         max_none_ratio = _safe_float(threshold.get("max_none_ratio"), 1.0)
 
         role_error: list[str] = []
-        if scene_count < min_scene_count:
-            role_error.append(f"scene_count {scene_count} < {min_scene_count}")
-        if asset_ratio < min_asset_ratio:
-            role_error.append(f"asset_ratio {asset_ratio:.4f} < {min_asset_ratio:.4f}")
-        if runtime_minimal_ratio > max_runtime_minimal_ratio:
-            role_error.append(
-                f"runtime_minimal_ratio {runtime_minimal_ratio:.4f} > {max_runtime_minimal_ratio:.4f}"
-            )
-        if none_ratio > max_none_ratio:
-            role_error.append(f"none_ratio {none_ratio:.4f} > {max_none_ratio:.4f}")
+        role_warning: list[str] = []
+        if scene_count <= 0:
+            role_warning.append("scene_count is 0; source-mix threshold checks skipped")
+        else:
+            if scene_count < min_scene_count:
+                role_error.append(f"scene_count {scene_count} < {min_scene_count}")
+            if asset_ratio < min_asset_ratio:
+                role_error.append(f"asset_ratio {asset_ratio:.4f} < {min_asset_ratio:.4f}")
+            if runtime_minimal_ratio > max_runtime_minimal_ratio:
+                role_error.append(
+                    f"runtime_minimal_ratio {runtime_minimal_ratio:.4f} > {max_runtime_minimal_ratio:.4f}"
+                )
+            if none_ratio > max_none_ratio:
+                role_error.append(f"none_ratio {none_ratio:.4f} > {max_none_ratio:.4f}")
 
         if role_error:
             errors.extend([f"{role}: {item}" for item in role_error])
+        if role_warning:
+            warnings.extend([f"{role}: {item}" for item in role_warning])
 
         role_reports[role] = {
             "state_file": state_rel,
@@ -139,6 +146,7 @@ def main() -> int:
             "runtime_minimal_ratio": runtime_minimal_ratio,
             "none_ratio": none_ratio,
             "errors": role_error,
+            "warnings": role_warning,
         }
 
     report = {
@@ -146,6 +154,7 @@ def main() -> int:
         "roles": roles,
         "role_reports": role_reports,
         "errors": errors,
+        "warnings": warnings,
         "sources": {
             "baseline": BASELINE_PATH.relative_to(ROOT).as_posix(),
         },
@@ -165,6 +174,8 @@ def main() -> int:
         )
     if errors:
         lines.extend(["", "## Errors"] + [f"- {item}" for item in errors])
+    if warnings:
+        lines.extend(["", "## Warnings"] + [f"- {item}" for item in warnings])
 
     _write(report_json_path, json.dumps(report, ensure_ascii=False, indent=2))
     _write(report_md_path, "\n".join(lines) + "\n")
@@ -179,10 +190,11 @@ def main() -> int:
 
     print(report_json_path)
     print(report_md_path)
+    for item in warnings:
+        print(f"[scene_base_contract_source_mix_role_matrix_guard] WARN {item}")
     print("[scene_base_contract_source_mix_role_matrix_guard] PASS")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

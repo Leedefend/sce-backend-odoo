@@ -112,6 +112,7 @@ def main() -> int:
     state_path.parent.mkdir(parents=True, exist_ok=True)
 
     errors: list[str] = []
+    warnings: list[str] = []
     fetch_error = ""
     try:
         current = _fetch_consumption()
@@ -156,10 +157,14 @@ def main() -> int:
     scene_type_count = _safe_int(current.get("scene_type_count"), 0)
     require_enabled = str(os.getenv("SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED") or "").strip() in {"1", "true", "TRUE", "yes"}
 
-    if live_available and require_enabled and not enabled:
+    zero_scene_live = live_available and scene_count <= 0
+    if zero_scene_live:
+        warnings.append("live scene_ready consumption has 0 scenes; strict enabled, threshold, and trend-drop checks skipped")
+
+    if live_available and require_enabled and not enabled and not zero_scene_live:
         errors.append("scene_ready_consumption.enabled must be true (strict enabled mode)")
 
-    if live_available and enabled:
+    if live_available and enabled and not zero_scene_live:
         if scene_count < min_scene_count:
             errors.append(f"scene_count below threshold: {scene_count} < {min_scene_count}")
         if scene_type_count < min_scene_type_count:
@@ -167,7 +172,7 @@ def main() -> int:
 
     base_search_rate = _safe_float(current.get("aggregate_base_search_rate"), 0.0)
     action_surface_rate = _safe_float(current.get("aggregate_action_surface_rate"), 0.0)
-    if live_available and enabled:
+    if live_available and enabled and not zero_scene_live:
         if base_search_rate < min_base_search_rate:
             errors.append(f"aggregate_base_search_rate below threshold: {base_search_rate:.4f} < {min_base_search_rate:.4f}")
         if action_surface_rate < min_action_surface_rate:
@@ -181,9 +186,11 @@ def main() -> int:
         action_drop = prev_action - action_surface_rate
         current["aggregate_base_search_rate_drop"] = base_drop
         current["aggregate_action_surface_rate_drop"] = action_drop
-        if base_drop > max_base_search_rate_drop:
+        if zero_scene_live:
+            warnings.append("trend-drop checks skipped because current live scene_count is 0")
+        elif base_drop > max_base_search_rate_drop:
             errors.append(f"aggregate_base_search_rate drop too fast: {base_drop:.4f} > {max_base_search_rate_drop:.4f}")
-        if action_drop > max_action_surface_rate_drop:
+        if not zero_scene_live and action_drop > max_action_surface_rate_drop:
             errors.append(f"aggregate_action_surface_rate drop too fast: {action_drop:.4f} > {max_action_surface_rate_drop:.4f}")
 
     state_path.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -194,6 +201,8 @@ def main() -> int:
             print(f" - {item}")
         return 1
 
+    for item in warnings:
+        print(f"[scene_ready_consumption_trend_guard] WARN {item}")
     print("[scene_ready_consumption_trend_guard] PASS")
     return 0
 

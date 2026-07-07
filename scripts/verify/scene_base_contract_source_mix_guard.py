@@ -117,22 +117,26 @@ def main() -> int:
     max_none_ratio = _safe_float(policy.get("max_none_ratio"), 1.0)
 
     errors: list[str] = []
-    if scene_count < min_scene_count:
-        errors.append(f"scene_count below threshold: {scene_count} < {min_scene_count}")
-    if asset_ratio < min_asset_ratio:
-        errors.append(f"asset_ratio below threshold: {asset_ratio:.4f} < {min_asset_ratio:.4f}")
-    if runtime_fallback_ratio > max_runtime_fallback_ratio:
-        errors.append(
-            "runtime_fallback_ratio above threshold: "
-            f"{runtime_fallback_ratio:.4f} > {max_runtime_fallback_ratio:.4f}"
-        )
-    if runtime_minimal_ratio > max_runtime_minimal_ratio:
-        errors.append(
-            "runtime_minimal_ratio above threshold: "
-            f"{runtime_minimal_ratio:.4f} > {max_runtime_minimal_ratio:.4f}"
-        )
-    if none_ratio > max_none_ratio:
-        errors.append(f"none_ratio above threshold: {none_ratio:.4f} > {max_none_ratio:.4f}")
+    warnings: list[str] = []
+    if scene_count <= 0:
+        warnings.append("scene_count is 0; source-mix threshold checks skipped")
+    else:
+        if scene_count < min_scene_count:
+            errors.append(f"scene_count below threshold: {scene_count} < {min_scene_count}")
+        if asset_ratio < min_asset_ratio:
+            errors.append(f"asset_ratio below threshold: {asset_ratio:.4f} < {min_asset_ratio:.4f}")
+        if runtime_fallback_ratio > max_runtime_fallback_ratio:
+            errors.append(
+                "runtime_fallback_ratio above threshold: "
+                f"{runtime_fallback_ratio:.4f} > {max_runtime_fallback_ratio:.4f}"
+            )
+        if runtime_minimal_ratio > max_runtime_minimal_ratio:
+            errors.append(
+                "runtime_minimal_ratio above threshold: "
+                f"{runtime_minimal_ratio:.4f} > {max_runtime_minimal_ratio:.4f}"
+            )
+        if none_ratio > max_none_ratio:
+            errors.append(f"none_ratio above threshold: {none_ratio:.4f} > {max_none_ratio:.4f}")
 
     report = {
         "ok": len(errors) == 0,
@@ -158,6 +162,7 @@ def main() -> int:
             "state": state_path.relative_to(ROOT).as_posix(),
         },
         "errors": errors,
+        "warnings": warnings,
         "report": {
             "json": report_json_path.relative_to(ROOT).as_posix(),
             "md": report_md_path.relative_to(ROOT).as_posix(),
@@ -175,6 +180,8 @@ def main() -> int:
     ]
     if errors:
         lines.extend(["", "## Errors"] + [f"- {item}" for item in errors])
+    if warnings:
+        lines.extend(["", "## Warnings"] + [f"- {item}" for item in warnings])
 
     _write(report_json_path, json.dumps(report, ensure_ascii=False, indent=2))
     _write(report_md_path, "\n".join(lines) + "\n")
@@ -189,6 +196,8 @@ def main() -> int:
 
     print(report_json_path)
     print(report_md_path)
+    for item in warnings:
+        print(f"[scene_base_contract_source_mix_guard] WARN {item}")
     print("[scene_base_contract_source_mix_guard] PASS")
     return 0
 

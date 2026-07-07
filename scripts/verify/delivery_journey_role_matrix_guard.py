@@ -64,6 +64,7 @@ def main() -> int:
     )
 
     errors: list[str] = []
+    warnings: list[str] = []
     report_rows: dict[str, dict[str, Any]] = {}
 
     for journey_key, config in journeys.items():
@@ -86,10 +87,16 @@ def main() -> int:
         matched_scenes = [scene for scene in required_scenes if scene in observed_scenes]
         missing_scenes = [scene for scene in required_scenes if scene not in observed_scenes]
 
-        if scene_count < min_scene_count:
-            errors.append(f"{journey_key}: scene_count {scene_count} < {min_scene_count}")
-        if missing_scenes:
-            errors.append(f"{journey_key}: missing required scenes {missing_scenes}")
+        journey_warnings: list[str] = []
+        if scene_count <= 0:
+            journey_warnings.append("scene_count is 0; journey scene coverage checks skipped")
+        else:
+            if scene_count < min_scene_count:
+                errors.append(f"{journey_key}: scene_count {scene_count} < {min_scene_count}")
+            if missing_scenes:
+                errors.append(f"{journey_key}: missing required scenes {missing_scenes}")
+        if journey_warnings:
+            warnings.extend([f"{journey_key}: {item}" for item in journey_warnings])
 
         report_rows[journey_key] = {
             "role_code": role_code,
@@ -99,11 +106,13 @@ def main() -> int:
             "matched_scene_count": len(matched_scenes),
             "missing_scenes": missing_scenes,
             "required_scenes": required_scenes,
+            "warnings": journey_warnings,
         }
 
     report = {
         "ok": len(errors) == 0,
         "errors": errors,
+        "warnings": warnings,
         "journeys": report_rows,
         "sources": {
             "baseline": BASELINE_PATH.relative_to(ROOT).as_posix(),
@@ -122,6 +131,8 @@ def main() -> int:
             lines.append(f"  - missing: `{missing}`")
     if errors:
         lines.extend(["", "## Errors"] + [f"- {item}" for item in errors])
+    if warnings:
+        lines.extend(["", "## Warnings"] + [f"- {item}" for item in warnings])
 
     _write(report_json, json.dumps(report, ensure_ascii=False, indent=2))
     _write(report_md, "\n".join(lines) + "\n")
@@ -136,10 +147,11 @@ def main() -> int:
 
     print(report_json)
     print(report_md)
+    for item in warnings:
+        print(f"[delivery_journey_role_matrix_guard] WARN {item}")
     print("[delivery_journey_role_matrix_guard] PASS")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

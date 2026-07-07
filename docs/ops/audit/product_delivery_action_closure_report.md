@@ -1,12 +1,12 @@
 # Product Delivery Action Closure Smoke
 
-- target_count: 3
-- pass_count: 3
+- target_count: 0
+- pass_count: 0
 - failed_count: 0
 - error_count: 0
 
 ## Checks
 
-- 付款申请与审批 (finance.payment_requests): PASS issues=-
-- 项目台账 (projects.list): PASS issues=-
-- 预算管理 (cost.project_budget): PASS issues=-
+
+## Warnings
+- scene_ready_contract_v1.scenes is empty; action closure checks skipped

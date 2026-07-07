@@ -1095,10 +1095,6 @@ function menuMatchesSearch(menu: MenuConfigMenu) {
   return menuSearchText(menu).includes(term);
 }
 
-function isMissingConfiguredMenu(menu: MenuConfigMenu | null | undefined) {
-  return Boolean((menu as MenuConfigTreeNode | null | undefined)?.menu_config_missing);
-}
-
 function isMenuShownInHandling(menu: MenuConfigMenu | null | undefined) {
   if (!menu) return false;
   const draft = drafts[menu.id];

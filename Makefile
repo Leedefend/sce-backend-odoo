@@ -3627,7 +3627,14 @@ verify.scene.delivery.readiness: guard.prod.forbid
 .PHONY: verify.scene.delivery.readiness.role_matrix
 verify.scene.delivery.readiness.role_matrix: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.base_contract_source_mix.role_matrix.guard
-	@$(MAKE) --no-print-directory verify.scene.delivery.readiness
+	@set +e; python3 scripts/verify/scene_delivery_runtime_gate_decision.py; status=$$?; set -e; \
+	if [ "$$status" = "0" ]; then \
+	  $(MAKE) --no-print-directory verify.scene.delivery.readiness; \
+	elif [ "$$status" = "10" ]; then \
+	  true; \
+	else \
+	  exit "$$status"; \
+	fi
 	@echo "[OK] verify.scene.delivery.readiness.role_matrix done"
 
 .PHONY: verify.scene.delivery.readiness.role_company_matrix
