@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 import os
 
 from odoo import fields
 
 SCENE_CHANNELS = {"stable", "beta", "dev"}
+
+_logger = logging.getLogger(__name__)
 
 
 class SceneGovernanceService:
@@ -32,7 +35,7 @@ class SceneGovernanceService:
             })
             return
         except Exception:
-            pass
+            _logger.debug("Unable to write scene governance log; falling back to audit log.", exc_info=True)
 
         # fallback keeps governance evidence available even when scene governance models are unavailable
         try:

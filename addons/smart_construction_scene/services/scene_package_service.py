@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import logging
 from datetime import datetime
 
 from odoo import fields
@@ -12,6 +13,8 @@ from odoo.addons.smart_construction_scene import scene_registry
 
 SCENE_CHANNELS = {"stable", "beta", "dev"}
 IMPORT_STRATEGIES = {"skip_existing", "override_existing", "rename_on_conflict"}
+
+_logger = logging.getLogger(__name__)
 
 
 class ScenePackageService:
@@ -127,7 +130,7 @@ class ScenePackageService:
             })
             return
         except Exception:
-            pass
+            _logger.debug("Unable to write scene package governance log; falling back to audit log.", exc_info=True)
 
         try:
             self.env["sc.audit.log"].sudo().write_event(
@@ -242,7 +245,7 @@ class ScenePackageService:
             ])
             versions.extend([str(row.installed_version or "").strip() for row in rows])
         except Exception:
-            pass
+            _logger.debug("Unable to read scene package installation registry; using legacy config.", exc_info=True)
         legacy = self._installed_packages()
         for row in legacy:
             if str((row or {}).get("package_name") or "").strip() != name:
