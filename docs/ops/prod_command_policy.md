@@ -29,6 +29,7 @@ Makefile guards and script-level guards.
 - `make restart` (requires PROD_DANGER=1)
 - `make prod.restart.safe` (requires PROD_DANGER=1)
 - `make prod.restart.full` (requires PROD_DANGER=1)
+- `make prod.frontend.build` (requires PROD_DANGER=1)
 - `make policy.apply.business_full`
 - `make policy.apply.role_matrix`
 - `make audit.project.actions`
@@ -66,6 +67,13 @@ Fresh production history initialization:
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
   RUN_ID=prod_history_init_YYYYMMDDTHHMMSS \
   make history.production.fresh_init
+```
+
+Production frontend static rebuild after frontend changes:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
+  make prod.frontend.build
 ```
 
 Read-only production business readiness verification:

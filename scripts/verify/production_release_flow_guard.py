@@ -13,6 +13,7 @@ FILES = {
     "upgrade_standard": ROOT / "docs/ops/production_upgrade_standard_v1.md",
     "ops_readme": ROOT / "docs/ops/README.md",
     "deploy_runbook": ROOT / "docs/ops/production_deployment_runbook_v1.md",
+    "server_post_upgrade_runbook": ROOT / "docs/ops/server_post_upgrade_business_data_closure_runbook_v1.md",
     "prod_policy": ROOT / "docs/ops/prod_command_policy.md",
     "verify_readme": ROOT / "docs/ops/verify/README.md",
     "release_checklist": ROOT / "docs/ops/release_checklist_v2.0.0.md",
@@ -94,6 +95,7 @@ MAKEFILE_TOKENS = (
     "verify.legacy_online_attachment.mirror.job.audit.prod: guard.prod.readonly check-compose-project check-compose-env",
     "python3 -m py_compile scripts/verify/production_deployment_record_guard.py",
     "python3 scripts/verify/production_deployment_record_guard.py",
+    "prod.frontend.build: guard.prod.danger check-compose-project check-compose-env",
     ".PHONY: verify.production_git.authority.guard",
     "python3 -m py_compile scripts/verify/production_git_authority_guard.py",
     "python3 scripts/verify/production_git_authority_guard.py",
@@ -120,9 +122,15 @@ DEPLOY_RUNBOOK_TOKENS = (
     "只运行历史业务可用性 probe 与 formal backfill audit",
 )
 
+SERVER_POST_UPGRADE_RUNBOOK_TOKENS = (
+    "make prod.frontend.build",
+    "Then verify the real served browser path for the acceptance user.",
+)
+
 PROD_POLICY_TOKENS = (
     "make verify.business_system.usability_readiness.prod",
     "make history.attachment.custody.probe.prod",
+    "make prod.frontend.build",
     "make legacy_attachment.custody_marker.backfill.prod",
     "make verify.legacy_attachment.mirror.completeness.audit.prod",
     "make verify.legacy_online_attachment.custody.evidence.prod",
@@ -212,6 +220,12 @@ def main() -> int:
     _require_tokens("makefile", contents["makefile"], MAKEFILE_TOKENS, errors)
     _require_tokens("verify_readme", contents["verify_readme"], VERIFY_README_TOKENS, errors)
     _require_tokens("deploy_runbook", contents["deploy_runbook"], DEPLOY_RUNBOOK_TOKENS, errors)
+    _require_tokens(
+        "server_post_upgrade_runbook",
+        contents["server_post_upgrade_runbook"],
+        SERVER_POST_UPGRADE_RUNBOOK_TOKENS,
+        errors,
+    )
     _require_tokens("prod_policy", contents["prod_policy"], PROD_POLICY_TOKENS, errors)
     _require_tokens("release_checklist", contents["release_checklist"], CHECKLIST_TOKENS, errors)
     _require_tokens("release_index_en", contents["release_index_en"], INDEX_TOKENS, errors)

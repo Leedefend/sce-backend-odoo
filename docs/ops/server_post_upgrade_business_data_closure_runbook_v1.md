@@ -200,7 +200,7 @@ bundle before user acceptance:
 
 ```bash
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
-  make verify.frontend.build
+  make prod.frontend.build
 ```
 
 Then verify the real served browser path for the acceptance user.  Backend
