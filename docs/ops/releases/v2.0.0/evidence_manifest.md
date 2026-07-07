@@ -44,7 +44,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 
 | Evidence | Command | Required Result | Artifact |
 |---|---|---|---|
-| Dev acceptance publish | `make release.daily_dev.acceptance.publish` with dev env vars | PASS | `artifacts/backend/dev_acceptance_release_probe.json` |
+| Dev acceptance publish | `make release.daily_dev.acceptance.publish` with dev env vars, including product navigation path and action-target guards | PASS | `artifacts/backend/dev_acceptance_release_probe.json` |
 | Dev acceptance schema | `make verify.dev.acceptance.release.schema.guard` | PASS | `artifacts/backend/dev_acceptance_release_probe.json` |
 | Prod-sim acceptance | governed prod-sim Makefile flow | PASS | prod-sim acceptance artifact path to be recorded |
 | Prod-sim acceptance schema | `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.prod.sim.acceptance.evidence.schema.guard` | PASS | `scbs_release_acceptance_strict_result_v1.json`, `scbs_release_acceptance_strict_v1.md`, and `scbs_no_legacy_replay_acceptance_result_v1.json` under the recorded run dir |

@@ -56,6 +56,10 @@ ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo \
   make release.daily_dev.acceptance.publish
 ```
 
+Daily acceptance now treats product navigation as release evidence: menu action
+count range, forbidden legacy labels, required product paths, and locked action
+targets must all pass in `artifacts/backend/dev_acceptance_release_probe.json`.
+
 Production deployment is not part of this release-note batch. Production must
 follow `docs/ops/production_deployment_runbook_v1.md` and
 `docs/ops/prod_command_policy.md`.

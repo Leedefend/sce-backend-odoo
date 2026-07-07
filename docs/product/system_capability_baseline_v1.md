@@ -26,7 +26,7 @@ accepted capability posture and defines how later batches may extend it.
 | Product boundary | Platform, industry, user, low-code, and ops ownership must stay explicit and addon modules must be mapped to a formal product layer. | `make verify.docs.product_boundary`, `docs/product/formal_product_boundary_v1.md` |
 | Frontend consumer | Web frontend consumes backend contract without semantic guessing; served static bundle must match target DB/env for acceptance. | `make verify.frontend.typecheck.strict`, `make verify.frontend.build` |
 | Business delivery | 9 delivery modules and 22 scoped scenes are the current product delivery floor. | `docs/product/delivery/v1/module_scene_capability_map.md` |
-| Ops release | Uploaded backup, frontend static publication, API lock, runtime repository cleanliness, and real-user acceptance are repeatable checks. | `make verify.dev.acceptance.release`, `make release.daily_dev.acceptance.publish` |
+| Ops release | Uploaded backup, frontend static publication, API lock, runtime repository cleanliness, and real-user acceptance are repeatable checks. Daily acceptance also locks product navigation size, forbidden labels, required paths, and required action targets. | `make verify.dev.acceptance.release`, `make release.daily_dev.acceptance.publish` |
 
 ## 4. Frozen Capability Floor
 
@@ -97,3 +97,5 @@ ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo \
 - Served frontend bundle defaults to the wrong acceptance DB.
 - A release probe cannot authenticate and run `system.init` for the named
   real-user acceptance account.
+- Daily acceptance navigation loses a required product path, exposes a forbidden
+  legacy label, or maps a locked path to the wrong action target.
