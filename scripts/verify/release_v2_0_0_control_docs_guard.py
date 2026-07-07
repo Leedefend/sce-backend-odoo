@@ -294,6 +294,7 @@ VERSIONING_PROMOTION_ORDER = (
     "Run `make verify.release.v2_0_0.preflight` on the reviewed release commit.",
     "Create `gate-release-v2.0` only after gate evidence passes.",
     "Run `make verify.release.v2_0_0.product_hardening` and close any blocker.",
+    "Run `make verify.release.v2_0_0.governance.guard`.",
     "Run `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard` after prod-sim acceptance evidence is recorded.",
     "Create `v2.0.0-rc1` only after RC evidence passes.",
     "Create `v2.0.0` only after prod-sim acceptance and release checklist signoff.",
