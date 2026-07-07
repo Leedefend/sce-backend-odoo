@@ -313,7 +313,7 @@ def _apply_scene_defaults(scene, drift=None, source="registry"):
                 )
         route = str(target.get("route") or "").strip()
         if "TARGET_MISSING" in route:
-            # 历史导出可能遗留 workbench 占位路由，强制收敛到稳定语义路由。
+            # 历史导出可能遗留 workbench 过渡路由，强制收敛到稳定语义路由。
             target["route"] = "/s/projects.intake"
             scene["target"] = target
             if source == "db":
