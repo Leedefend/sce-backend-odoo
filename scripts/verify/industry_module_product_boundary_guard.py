@@ -910,6 +910,7 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
     core_init = module_root / "models" / "core" / "__init__.py"
     compat = module_root / "models" / "support" / "budget_compat.py"
     cost_domain = module_root / "models" / "core" / "cost_domain.py"
+    readme = module_root / "README.md"
     errors: list[str] = []
     if not compat.is_file():
         errors.append("smart_construction_core: budget compatibility layer file missing")
@@ -917,6 +918,7 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
     core_text = core_init.read_text(encoding="utf-8", errors="ignore") if core_init.is_file() else ""
     compat_text = compat.read_text(encoding="utf-8", errors="ignore")
     cost_domain_text = cost_domain.read_text(encoding="utf-8", errors="ignore") if cost_domain.is_file() else ""
+    readme_text = readme.read_text(encoding="utf-8", errors="ignore") if readme.is_file() else ""
     required_fragments = {
         "core import": "from ..support import budget_compat  # 历史 project.budget.line 模型兼容层，需在主模型前加载",
         "compat facade wording": "历史模型门面：将 project.budget.line 指向现用 project.budget.boq.line。",
@@ -943,6 +945,16 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
                 "smart_construction_core: budget compatibility layer must use "
                 f"historical-model facade wording, not generic compatibility wording {fragment!r}"
             )
+    for path_label, text in (
+        ("models/core/cost_domain.py", cost_domain_text),
+        ("README.md", readme_text),
+    ):
+        for fragment in ("兼容模型", "兼容层", "ORM 元数据兼容"):
+            if fragment in text:
+                errors.append(
+                    "smart_construction_core: budget historical facade documentation must "
+                    f"avoid generic compatibility wording {fragment!r}: {path_label}"
+                )
     if 'project.budget.line -> 现用 project.budget.boq.line' in cost_domain_text:
         errors.append(
             "smart_construction_core: cost_domain must not describe budget compatibility "

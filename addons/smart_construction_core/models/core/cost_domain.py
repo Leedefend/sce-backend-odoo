@@ -2,8 +2,8 @@
 """
 成本域聚合工具 / 领域服务。
 
-兼容模型 project.budget.line 已移动至 budget_compat.py，
-避免 cost_domain.py 里同时承担“领域服务 + 兼容层”的职责。
+历史模型门面 project.budget.line 已移动至 budget_compat.py，
+避免 cost_domain.py 里同时承担“领域服务 + 历史模型门面”的职责。
 """
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
