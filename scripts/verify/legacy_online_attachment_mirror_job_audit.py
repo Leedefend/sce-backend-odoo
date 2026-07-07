@@ -14,7 +14,7 @@ from pathlib import Path
 from odoo.addons.smart_core.handlers.file_download import _legacy_file_roots
 
 
-JOB_ROOT = Path(os.getenv("LEGACY_ATTACHMENT_JOB_ROOT", "/mnt/artifacts/legacy-online-mirror/_jobs"))
+JOB_ROOT = Path(os.getenv("LEGACY_ATTACHMENT_JOB_ROOT", "/mnt/artifacts/backend/legacy-online-mirror-jobs"))
 OUTPUT_JSON = Path(
     os.getenv(
         "LEGACY_ATTACHMENT_JOB_AUDIT_OUTPUT",

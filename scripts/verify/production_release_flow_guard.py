@@ -36,6 +36,7 @@ FLOW_TOKENS = (
     "make verify.business_system.usability_readiness.prod",
     "make history.attachment.custody.probe.prod",
     "make verify.legacy_attachment.mirror.completeness.audit.prod",
+    "make verify.legacy_online_attachment.custody.evidence.prod",
     "make verify.legacy_online_attachment.mirror.job.audit.prod",
     "make legacy_attachment.custody_marker.backfill.prod",
     "生产与日常开发服务器完全一致",
@@ -89,6 +90,7 @@ MAKEFILE_TOKENS = (
     "history.attachment.custody.probe.prod: guard.prod.readonly check-compose-project check-compose-env",
     "legacy_attachment.custody_marker.backfill.prod: guard.prod.danger check-compose-project check-compose-env",
     "verify.legacy_attachment.mirror.completeness.audit.prod: guard.prod.readonly check-compose-project check-compose-env",
+    "verify.legacy_online_attachment.custody.evidence.prod: guard.prod.readonly check-compose-project check-compose-env",
     "verify.legacy_online_attachment.mirror.job.audit.prod: guard.prod.readonly check-compose-project check-compose-env",
     "python3 -m py_compile scripts/verify/production_deployment_record_guard.py",
     "python3 scripts/verify/production_deployment_record_guard.py",
@@ -123,6 +125,7 @@ PROD_POLICY_TOKENS = (
     "make history.attachment.custody.probe.prod",
     "make legacy_attachment.custody_marker.backfill.prod",
     "make verify.legacy_attachment.mirror.completeness.audit.prod",
+    "make verify.legacy_online_attachment.custody.evidence.prod",
     "make verify.legacy_online_attachment.mirror.job.audit.prod",
     "PROD_READONLY_VERIFY=1",
 )

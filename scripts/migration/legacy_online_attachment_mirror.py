@@ -344,6 +344,7 @@ def main():
         "unique_refs": len(seen_refs),
         "examples": examples,
     }
+    OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_JSON.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 

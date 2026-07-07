@@ -15,6 +15,7 @@ Makefile guards and script-level guards.
 - `make verify.business_system.usability_readiness.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make history.attachment.custody.probe.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make verify.legacy_attachment.mirror.completeness.audit.prod` (requires `PROD_READONLY_VERIFY=1`)
+- `make verify.legacy_online_attachment.custody.evidence.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make verify.legacy_online_attachment.mirror.job.audit.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make verify.production_git.authority.guard` (read-only Git/worktree/auth check)
 - `make verify.baseline` (requires PROD_DANGER=1)

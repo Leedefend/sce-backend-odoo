@@ -23,7 +23,7 @@ ATTACHMENT_AUDIT_STRICT ?=
 ATTACHMENT_AUDIT_ALLOW_MISSING_FILES ?=
 ATTACHMENT_AUDIT_LIMIT ?=
 ATTACHMENT_AUDIT_PRINT_FULL ?=
-ATTACHMENT_JOB_AUDIT_JOB_ROOT ?=
+ATTACHMENT_JOB_AUDIT_JOB_ROOT ?= /mnt/artifacts/backend/legacy-online-mirror-jobs
 ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS ?=
 ATTACHMENT_JOB_AUDIT_STRICT ?=
 ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES ?=
@@ -1275,6 +1275,14 @@ verify.legacy_attachment.mirror.completeness.audit.prod: guard.prod.readonly che
 .PHONY: verify.legacy_online_attachment.mirror.job.audit
 verify.legacy_online_attachment.mirror.job.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) LEGACY_ATTACHMENT_JOB_ROOT="$${LEGACY_ATTACHMENT_JOB_ROOT:-$(ATTACHMENT_JOB_AUDIT_JOB_ROOT)}" LEGACY_ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS="$${LEGACY_ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS:-$(ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS)}" LEGACY_ATTACHMENT_JOB_AUDIT_STRICT="$${LEGACY_ATTACHMENT_JOB_AUDIT_STRICT:-$(ATTACHMENT_JOB_AUDIT_STRICT)}" LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES="$${LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES:-$(ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES)}" LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES="$${LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES:-$(ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES)}" LEGACY_ATTACHMENT_JOB_AUDIT_INDEX_LIMIT="$${LEGACY_ATTACHMENT_JOB_AUDIT_INDEX_LIMIT:-$(ATTACHMENT_JOB_AUDIT_INDEX_LIMIT)}" LEGACY_ATTACHMENT_JOB_AUDIT_PRINT_FULL="$${LEGACY_ATTACHMENT_JOB_AUDIT_PRINT_FULL:-$(ATTACHMENT_JOB_AUDIT_PRINT_FULL)}" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/legacy_online_attachment_mirror_job_audit.py
+
+.PHONY: verify.legacy_online_attachment.custody.evidence
+verify.legacy_online_attachment.custody.evidence: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) LEGACY_ATTACHMENT_CUSTODY_EVIDENCE_JOB_ROOT="$${LEGACY_ATTACHMENT_CUSTODY_EVIDENCE_JOB_ROOT:-$(ATTACHMENT_JOB_AUDIT_JOB_ROOT)}" LEGACY_ATTACHMENT_CUSTODY_EVIDENCE_SOURCE_CONTAINS="$${LEGACY_ATTACHMENT_CUSTODY_EVIDENCE_SOURCE_CONTAINS:-$(or $(ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS),online_old)}" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/legacy_online_attachment_custody_evidence.py
+
+.PHONY: verify.legacy_online_attachment.custody.evidence.prod
+verify.legacy_online_attachment.custody.evidence.prod: guard.prod.readonly check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) LEGACY_ATTACHMENT_CUSTODY_EVIDENCE_JOB_ROOT="$${LEGACY_ATTACHMENT_CUSTODY_EVIDENCE_JOB_ROOT:-$(ATTACHMENT_JOB_AUDIT_JOB_ROOT)}" LEGACY_ATTACHMENT_CUSTODY_EVIDENCE_SOURCE_CONTAINS="$${LEGACY_ATTACHMENT_CUSTODY_EVIDENCE_SOURCE_CONTAINS:-$(or $(ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS),online_old)}" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/legacy_online_attachment_custody_evidence.py
 
 .PHONY: verify.legacy_online_attachment.mirror.job.audit.prod
 verify.legacy_online_attachment.mirror.job.audit.prod: guard.prod.readonly check-compose-project check-compose-env

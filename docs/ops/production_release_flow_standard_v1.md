@@ -209,8 +209,17 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make history.
 
 ```bash
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.legacy_attachment.mirror.completeness.audit.prod
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.legacy_online_attachment.custody.evidence.prod
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.legacy_online_attachment.mirror.job.audit.prod
 ```
+
+`verify.legacy_online_attachment.custody.evidence.prod` 先从 `sc_legacy_file_index` 生成在线源附件
+本地 custody 证据；`verify.legacy_online_attachment.mirror.job.audit.prod` 再读取该证据并执行严格审计。
+job audit 默认读取容器内
+`/mnt/artifacts/backend/legacy-online-mirror-jobs`，该路径对应生产仓库
+`artifacts/backend/legacy-online-mirror-jobs`。`/mnt/legacy-online-mirror` 是只读附件镜像根目录，
+只承载业务附件文件，不承载任务结果证据。只有在验收指定批次任务时才临时覆盖
+`ATTACHMENT_JOB_AUDIT_JOB_ROOT`。
 
 如果附件 custody 探针报告 `legacy_url_attachment_boundary_marker_gap`，必须先保存受影响
 `ir_attachment` 行快照，再通过受控写入入口补齐 marker，并复跑只读探针：

@@ -67,6 +67,7 @@ make verify.legacy_online_attachment.mirror.job.audit \
 
 - 严格模式：`LEGACY_ATTACHMENT_JOB_AUDIT_STRICT=1`
 - 全量索引：`LEGACY_ATTACHMENT_JOB_AUDIT_INDEX_LIMIT=0`
+- job 结果目录：`LEGACY_ATTACHMENT_JOB_ROOT=/mnt/artifacts/backend/legacy-online-mirror-jobs`
 - job 失败零容忍：`LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES=0`
 - 缺本地文件零容忍：`LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES=0`
 
@@ -74,10 +75,15 @@ make verify.legacy_online_attachment.mirror.job.audit \
 
 ```bash
 PROD_READONLY_VERIFY=1 \
+make verify.legacy_online_attachment.custody.evidence.prod \
+  ENV=prod \
+  DB_NAME=sc_demo \
+  ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS=online_old
+
+PROD_READONLY_VERIFY=1 \
 make verify.legacy_online_attachment.mirror.job.audit.prod \
   ENV=prod \
   DB_NAME=sc_demo \
-  ATTACHMENT_JOB_AUDIT_JOB_ROOT=/data/odoo/legacy_attachments/online_mirror/_jobs/prod_online_attachment_mirror_YYYYMMDDTHHMMSS+0800 \
   ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS=online_old
 ```
 
