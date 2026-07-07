@@ -43,6 +43,18 @@ ROLE_SUFFIX_MAP = {
     "super_admin": "executive",
     "executive": "executive",
 }
+CAPABILITY_GROUP_ROLE_MAP = {
+    "smart_construction_core.group_sc_cap_project_user": "pm",
+    "smart_construction_core.group_sc_cap_project_manager": "pm",
+    "smart_construction_core.group_sc_cap_finance_user": "finance",
+    "smart_construction_core.group_sc_cap_finance_manager": "finance",
+    "smart_construction_core.group_sc_cap_contract_user": "finance",
+    "smart_construction_core.group_sc_cap_contract_manager": "finance",
+    "smart_construction_core.group_sc_cap_cost_user": "pm",
+    "smart_construction_core.group_sc_cap_cost_manager": "pm",
+    "smart_construction_core.group_sc_cap_business_config_admin": "executive",
+    "smart_construction_core.group_sc_cap_config_admin": "executive",
+}
 
 
 def _cap(
@@ -174,14 +186,9 @@ def _resolve_role_codes_for_user(user) -> set[str]:
             suffix = text[len(ROLE_GROUP_PREFIX_CORE):]
             roles.add(ROLE_SUFFIX_MAP.get(suffix, suffix))
     try:
-        if user.has_group("smart_construction_core.group_sc_cap_project_read") or user.has_group(
-            "smart_construction_core.group_sc_cap_project_manager"
-        ):
-            roles.add("pm")
-        if user.has_group("smart_construction_core.group_sc_cap_finance_read") or user.has_group(
-            "smart_construction_core.group_sc_cap_finance_manager"
-        ):
-            roles.add("finance")
+        for group_xmlid, role_code in CAPABILITY_GROUP_ROLE_MAP.items():
+            if user.has_group(group_xmlid):
+                roles.add(role_code)
     except Exception:
         pass
     if "finance" in roles:
@@ -192,13 +199,6 @@ def _resolve_role_codes_for_user(user) -> set[str]:
         roles.update({"owner", "pm", "finance"})
     if not roles:
         roles.add("owner")
-    login = str(getattr(user, "login", "") or "").strip().lower()
-    if "demo_pm" in login:
-        roles.add("pm")
-    if "demo_finance" in login:
-        roles.add("finance")
-    if "demo_role_executive" in login:
-        roles.add("executive")
     if "executive" in roles:
         roles.update({"owner", "pm", "finance"})
     return roles

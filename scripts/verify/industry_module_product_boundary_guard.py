@@ -192,6 +192,16 @@ def verify_static_navigation_product_labels() -> list[str]:
     return errors
 
 
+def verify_capability_registry_role_boundary() -> list[str]:
+    errors: list[str] = []
+    registry = ADDONS / "smart_construction_core" / "services/capability_registry.py"
+    text = registry.read_text(encoding="utf-8") if registry.is_file() else ""
+    for token in ("demo_pm", "demo_finance", "demo_role_executive"):
+        if token in text:
+            errors.append(f"smart_construction_core: capability roles must come from groups, not demo login token {token!r}")
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     errors.extend(verify_manifest_shape())
@@ -200,6 +210,7 @@ def main() -> int:
     errors.extend(verify_python_package_boundaries())
     errors.extend(verify_portal_execute_demo_boundary())
     errors.extend(verify_static_navigation_product_labels())
+    errors.extend(verify_capability_registry_role_boundary())
 
     if errors:
         print("[industry_module_product_boundary_guard] FAIL", file=sys.stderr)
