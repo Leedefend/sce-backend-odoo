@@ -261,11 +261,11 @@
             <field name="version">v2</field>
         </record>
 
-        <!-- Project dashboard template scene -->
+        <!-- Project dashboard focus scene -->
         <record id="sc_scene_projects_dashboard_showcase" model="sc.scene">
             <field name="sequence">71</field>
-            <field name="name">项目驾驶舱样板</field>
-            <field name="code">projects.dashboard_showcase</field>
+            <field name="name">项目驾驶舱聚焦</field>
+            <field name="code">projects.dashboard_focus</field>
             <field name="layout">grid</field>
             <field name="state">published</field>
             <field name="version">v2</field>

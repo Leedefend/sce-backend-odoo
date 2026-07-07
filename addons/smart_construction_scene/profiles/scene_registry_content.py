@@ -46,13 +46,13 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
-            "code": "projects.dashboard_showcase",
-            "name": "项目驾驶舱样板",
+            "code": "projects.dashboard_focus",
+            "name": "项目驾驶舱聚焦",
             "tags": ["template"],
             "target": {
                 "menu_xmlid": "smart_construction_core.menu_sc_project_dashboard",
                 "action_xmlid": "smart_construction_core.action_project_dashboard",
-                "route": "/s/projects.dashboard_showcase",
+                "route": "/s/projects.dashboard_focus",
             },
         },
         {

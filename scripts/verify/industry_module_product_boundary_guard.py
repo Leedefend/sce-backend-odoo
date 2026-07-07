@@ -412,6 +412,11 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
         "技术占位",
         "缺少发票信息（占位）",
         "(placeholder)",
+        "projects.dashboard_showcase",
+        "/s/projects.dashboard_showcase",
+        "项目驾驶舱样板",
+        "showcase_overview",
+        "showcase_metrics",
     )
     guarded_roots = (
         ADDONS / "smart_construction_core" / "models",

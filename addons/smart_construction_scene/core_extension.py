@@ -293,7 +293,7 @@ SURFACE_DEEP_LINK_ALLOWLIST = {
         "portal.capability_matrix",
         "portal.dashboard",
         "portal.lifecycle",
-        "projects.dashboard_showcase",
+        "projects.dashboard_focus",
         "projects.execution",
         "quality.center",
         "quality.recheck",

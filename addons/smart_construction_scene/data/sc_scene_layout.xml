@@ -1152,36 +1152,36 @@
             <field name="active_version_id" ref="sc_scene_version_project_dashboard_v1"/>
         </record>
 
-        <!-- Project dashboard template scene -->
+        <!-- Project dashboard focus scene -->
         <record id="sc_scene_version_projects_dashboard_showcase_v2" model="sc.scene.version">
             <field name="scene_id" ref="sc_scene_projects_dashboard_showcase"/>
             <field name="version">v2</field>
             <field name="source">system</field>
             <field name="payload_json" eval="{
-                'code': 'projects.dashboard_showcase',
-                'name': '项目驾驶舱样板',
+                'code': 'projects.dashboard_focus',
+                'name': '项目驾驶舱聚焦',
                 'version': 'v2',
                 'page': {
-                    'key': 'projects.dashboard_showcase.main',
-                    'title': '项目驾驶舱样板',
+                    'key': 'projects.dashboard_focus.main',
+                    'title': '项目驾驶舱聚焦',
                     'page_type': 'dashboard',
                     'page_mode': 'dashboard'
                 },
                 'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
                 'zone_blocks': [
                     {
-                        'key': 'showcase_overview',
+                        'key': 'focus_overview',
                         'title': '项目总览',
                         'zone_type': 'hero',
                         'display_mode': 'stack',
-                        'block_key': 'block.projects.dashboard_showcase.overview'
+                        'block_key': 'block.projects.dashboard_focus.overview'
                     },
                     {
-                        'key': 'showcase_metrics',
+                        'key': 'focus_metrics',
                         'title': '项目指标',
                         'zone_type': 'primary',
                         'display_mode': 'grid',
-                        'block_key': 'block.projects.dashboard_showcase.metrics'
+                        'block_key': 'block.projects.dashboard_focus.metrics'
                     }
                 ],
                 'related_scenes': ['projects.dashboard', 'project.management'],
@@ -1198,21 +1198,21 @@
                 'role_variants': {
                     'pm': {
                         'default_actions': ['open_projects_dashboard'],
-                        'focus_zones': ['showcase_metrics', 'showcase_overview']
+                        'focus_zones': ['focus_metrics', 'focus_overview']
                     },
                     'executive': {
                         'default_actions': ['open_project_management'],
-                        'focus_zones': ['showcase_overview', 'showcase_metrics']
+                        'focus_zones': ['focus_overview', 'focus_metrics']
                     }
                 },
                 'data_sources': {
-                    'showcase_metrics': {
+                    'focus_metrics': {
                         'source_type': 'computed',
-                        'provider': 'projects.dashboard_showcase.metrics'
+                        'provider': 'projects.dashboard_focus.metrics'
                     },
-                    'showcase_overview': {
+                    'focus_overview': {
                         'source_type': 'computed',
-                        'provider': 'projects.dashboard_showcase.overview'
+                        'provider': 'projects.dashboard_focus.overview'
                     }
                 },
                 'product_policy': {
@@ -1221,7 +1221,7 @@
                     'stage': 'wave3'
                 },
                 'target': {
-                    'route': '/s/projects.dashboard_showcase',
+                    'route': '/s/projects.dashboard_focus',
                     'action_xmlid': 'smart_construction_core.action_project_dashboard',
                     'menu_xmlid': 'smart_construction_core.menu_sc_project_dashboard'
                 }

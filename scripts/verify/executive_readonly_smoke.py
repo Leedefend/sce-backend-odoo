@@ -25,7 +25,7 @@ EXECUTIVE_SCENES = [
     "portal.capability_matrix",
 ]
 OPTIONAL_EXECUTIVE_SCENES = [
-    "projects.dashboard_showcase",
+    "projects.dashboard_focus",
 ]
 FINANCE_MODEL = "sc.operating.metrics.project"
 READ_FIELDS = [

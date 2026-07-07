@@ -27,7 +27,7 @@ GROUP_XMLIDS = [
 
 ACTION_XMLIDS = {
     "finance.operating_metrics": "smart_construction_core.action_sc_operating_metrics_project",
-    "projects.dashboard_showcase": "smart_construction_core.action_project_dashboard",
+    "projects.dashboard_focus": "smart_construction_core.action_project_dashboard",
 }
 
 
