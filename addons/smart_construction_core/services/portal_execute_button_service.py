@@ -44,7 +44,7 @@ class PortalExecuteButtonService:
 
     def _resolve_entry(self, model=None, method=None):
         model = model or "project.project"
-        method = method or "action_portal_demo_ping"
+        method = method or "action_portal_ping"
         registry = _registry()
         entry = registry.get(model, {}).get(method)
         if not entry:
@@ -88,10 +88,15 @@ class PortalExecuteButtonService:
 def _registry():
     return {
         "project.project": {
+            "action_portal_ping": {
+                "code": "portal_ping",
+                "label": "执行门户动作",
+                "desc": "触发一次安全的门户动作",
+            },
             "action_portal_demo_ping": {
-                "code": "portal_demo_ping",
-                "label": "执行演示动作",
-                "desc": "触发一次安全的演示动作",
+                "code": "portal_ping_legacy",
+                "label": "执行门户动作",
+                "desc": "兼容旧门户演示动作入口",
             }
         }
     }

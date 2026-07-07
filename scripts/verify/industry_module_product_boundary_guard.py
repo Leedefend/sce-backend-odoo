@@ -67,6 +67,10 @@ REQUIRED_PACKAGE_DIRS = (
     "smart_construction_scene/profiles",
     "smart_construction_scene/providers",
 )
+PORTAL_EXECUTE_LEGACY_ALLOWLIST = {
+    "addons/smart_construction_core/models/support/portal_execute.py",
+    "addons/smart_construction_core/services/portal_execute_button_service.py",
+}
 
 
 def _manifest(module: str) -> dict:
@@ -159,12 +163,35 @@ def verify_python_package_boundaries() -> list[str]:
     return errors
 
 
+def verify_portal_execute_demo_boundary() -> list[str]:
+    errors: list[str] = []
+    service = ADDONS / "smart_construction_core" / "services/portal_execute_button_service.py"
+    snapshot = ROOT / "docs/contract/snapshots/portal_execute_button_pm.json"
+    service_text = service.read_text(encoding="utf-8") if service.is_file() else ""
+    snapshot_text = snapshot.read_text(encoding="utf-8") if snapshot.is_file() else ""
+
+    if 'method = method or "action_portal_demo_ping"' in service_text:
+        errors.append("smart_construction_core: portal execute default method must not use action_portal_demo_ping")
+    if '"portal_demo_ping"' in snapshot_text or '"action_portal_demo_ping"' in snapshot_text:
+        errors.append("docs/contract: portal execute PM snapshot must use product portal ping semantics")
+
+    for path in (ADDONS / "smart_construction_core").rglob("*.py"):
+        relative = path.relative_to(ROOT).as_posix()
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "action_portal_demo_ping" not in text:
+            continue
+        if relative not in PORTAL_EXECUTE_LEGACY_ALLOWLIST:
+            errors.append(f"smart_construction_core: legacy portal demo method leaks outside compatibility layer: {relative}")
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     errors.extend(verify_manifest_shape())
     errors.extend(verify_production_token_boundary())
     errors.extend(verify_custom_user_payload_boundary())
     errors.extend(verify_python_package_boundaries())
+    errors.extend(verify_portal_execute_demo_boundary())
 
     if errors:
         print("[industry_module_product_boundary_guard] FAIL", file=sys.stderr)
