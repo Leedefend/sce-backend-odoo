@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Compatibility shim for platform-admin responsibility checks."""
+"""Historical import facade for canonical smart_core platform-admin checks."""
 
 from __future__ import annotations
 

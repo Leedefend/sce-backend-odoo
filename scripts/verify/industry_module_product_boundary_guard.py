@@ -892,6 +892,48 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
     return errors
 
 
+def verify_platform_admin_facade_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_core" / "services" / "platform_admin.py"
+    if not path.is_file():
+        return ["smart_construction_core: platform admin historical import facade missing"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    exact_once_fragments = {
+        '"""Historical import facade for canonical smart_core platform-admin checks."""',
+        "from odoo.addons.smart_core.security.platform_admin import (",
+    }
+    required_fragments = {
+        "PLATFORM_ADMIN_GROUP",
+        "platform_admin_group_xmlids",
+        "platform_admin_groups",
+        "user_is_platform_admin",
+    }
+    errors: list[str] = []
+    for fragment in sorted(exact_once_fragments):
+        if text.count(fragment) != 1:
+            errors.append(
+                "smart_construction_core: platform_admin facade must delegate to "
+                f"smart_core.security.platform_admin, missing anchor {fragment!r}"
+            )
+    for fragment in sorted(required_fragments):
+        if fragment not in text:
+            errors.append(
+                "smart_construction_core: platform_admin facade must re-export "
+                f"smart_core platform-admin contract fragment {fragment!r}"
+            )
+    forbidden_fragments = (
+        "Compatibility shim",
+        "def user_is_platform_admin",
+        "has_group(",
+    )
+    for fragment in forbidden_fragments:
+        if fragment in text:
+            errors.append(
+                "smart_construction_core: platform_admin facade must not carry local "
+                f"platform-admin logic or shim wording: {fragment!r}"
+            )
+    return errors
+
+
 def verify_project_showcase_legacy_alias_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "models" / "core" / "project_core.py"
     if not path.is_file():
@@ -1097,6 +1139,7 @@ def main() -> int:
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_project_execution_readiness_precheck_boundary())
     errors.extend(verify_budget_compatibility_layer_boundary())
+    errors.extend(verify_platform_admin_facade_boundary())
     errors.extend(verify_project_showcase_legacy_alias_boundary())
     errors.extend(verify_core_extension_legacy_label_boundary())
     errors.extend(verify_seed_showcase_product_fields())
