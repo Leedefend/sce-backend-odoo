@@ -59,7 +59,7 @@ REQUIRED_RUNTIME_IMPORT_FILES = {
         "addons/smart_construction_core/services/project_execution_builders/__init__.py",
         "addons/smart_construction_core/services/project_execution_builders/project_execution_tasks_builder.py",
         "addons/smart_construction_core/services/project_execution_builders/project_execution_next_actions_builder.py",
-        "addons/smart_construction_core/services/project_execution_builders/project_execution_pilot_precheck_builder.py",
+        "addons/smart_construction_core/services/project_execution_builders/project_execution_readiness_precheck_builder.py",
     ],
     "addons/smart_construction_core/services/cost_tracking_service.py": [
         "addons/smart_construction_core/services/cost_tracking_builders/__init__.py",

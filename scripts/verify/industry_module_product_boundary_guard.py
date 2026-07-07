@@ -774,12 +774,8 @@ def verify_project_execution_readiness_precheck_boundary() -> list[str]:
             '"pilot_precheck": "block.project.execution_readiness_precheck"',
             "Compatibility key for older orchestration clients; new callers use readiness_precheck.",
         },
-        "services/project_execution_builders/project_execution_pilot_precheck_builder.py": {
-            "ProjectExecutionPilotPrecheckBuilder = ProjectExecutionReadinessPrecheckBuilder",
-            "Compatibility alias for older imports; the product block is readiness_precheck.",
-        },
         "services/project_execution_builders/__init__.py": {
-            "from .project_execution_pilot_precheck_builder import ProjectExecutionReadinessPrecheckBuilder",
+            "from .project_execution_readiness_precheck_builder import ProjectExecutionReadinessPrecheckBuilder",
         },
         "services/project_execution_builders/project_execution_next_actions_builder.py": {
             '"pilot_precheck_state": readiness_state',
@@ -816,7 +812,11 @@ def verify_project_execution_readiness_precheck_boundary() -> list[str]:
         text = path.read_text(encoding="utf-8", errors="ignore")
         for fragment in allowed_fragments_by_path.get(relative, set()):
             text = text.replace(fragment, "")
-        if "pilot_precheck" in text or "ProjectExecutionPilotPrecheck" in text:
+        if (
+            "pilot_precheck" in text
+            or "ProjectExecutionPilotPrecheck" in text
+            or "project_execution_pilot_precheck_builder" in text
+        ):
             errors.append(
                 "smart_construction_core: project execution readiness precheck is the product "
                 f"contract; pilot_precheck may only appear in explicit compatibility anchors: {relative}"
