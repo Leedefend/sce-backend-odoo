@@ -560,6 +560,35 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
     return errors
 
 
+def verify_material_pending_name_compatibility_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_core" / "models" / "core" / "material_acceptance.py"
+    if not path.is_file():
+        return [
+            "smart_construction_core: material pending-name compatibility anchor file missing"
+        ]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    required_anchors = {
+        'LEGACY_SYSTEM_DEFAULT_PROJECT_NAME = "系统默认项目（待完善）"',
+        'LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME = "系统默认供应商（待完善）"',
+    }
+    errors: list[str] = []
+    for anchor in sorted(required_anchors):
+        if text.count(anchor) != 1:
+            errors.append(
+                "smart_construction_core: material pending-name compatibility anchor "
+                f"must appear exactly once: {anchor}"
+            )
+    scrubbed = text
+    for anchor in required_anchors:
+        scrubbed = scrubbed.replace(anchor, "")
+    if "待完善" in scrubbed:
+        errors.append(
+            "smart_construction_core: material pending-name compatibility may only use "
+            "pending wording inside explicit legacy system default constants"
+        )
+    return errors
+
+
 def verify_dashboard_focus_scene_runtime_contract() -> list[str]:
     errors: list[str] = []
     guarded_paths = (
@@ -820,6 +849,7 @@ def main() -> int:
     errors.extend(verify_core_model_runtime_exception_observability())
     errors.extend(verify_core_extension_wizard_exception_observability())
     errors.extend(verify_runtime_pending_placeholder_language_boundary())
+    errors.extend(verify_material_pending_name_compatibility_boundary())
     errors.extend(verify_dashboard_focus_scene_runtime_contract())
     errors.extend(verify_scene_registry_engine_fallback_observability())
     errors.extend(verify_core_docs_product_examples())
