@@ -38,7 +38,7 @@
                 <field name="file_path"/>
                 <field name="preview_path"/>
               </group>
-              <group string="旧系统锚点">
+              <group string="历史锚点">
                 <field name="legacy_file_key"/>
                 <field name="source_table"/>
                 <field name="legacy_file_id"/>

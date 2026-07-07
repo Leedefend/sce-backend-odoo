@@ -794,7 +794,7 @@
         <field name="inherit_id" ref="view_sc_financing_loan_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="收支账户信息"/>
                     <separator string="其它信息"/>
@@ -814,7 +814,7 @@
         <field name="inherit_id" ref="view_payment_request_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="申请信息"/>
                     <separator string="关联单据"/>
                 </group>
@@ -828,7 +828,7 @@
         <field name="inherit_id" ref="view_sc_tax_deduction_registration_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="扣款信息"/>
                     <separator string="扣款实缴信息"/>
@@ -850,7 +850,7 @@
         <field name="inherit_id" ref="view_sc_payment_execution_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="付款信息"/>
                     <separator string="关联单据"/>
@@ -865,7 +865,7 @@
         <field name="inherit_id" ref="view_sc_fund_account_operation_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="详情"/>
                     <separator string="项目间借贷"/>
@@ -880,7 +880,7 @@
         <field name="inherit_id" ref="view_sc_receipt_income_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="工程款确认"/>
                     <separator string="代扣代缴明细"/>
                     <separator string="施工队明细"/>
@@ -895,7 +895,7 @@
         <field name="inherit_id" ref="view_sc_legacy_fund_daily_snapshot_fact_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="日报时段"/>
                     <separator string="账户余额合计"/>
                     <separator string="资金详情"/>
@@ -911,7 +911,7 @@
         <field name="inherit_id" ref="view_sc_invoice_registration_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="发票标题"/>
                     <separator string="基本信息"/>
                     <separator string="受票方信息"/>
@@ -934,7 +934,7 @@
         <field name="inherit_id" ref="view_sc_material_purchase_request_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="材料信息"/>
                 </group>
@@ -948,7 +948,7 @@
         <field name="inherit_id" ref="view_sc_material_inbound_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="材料信息"/>
                 </group>
@@ -962,7 +962,7 @@
         <field name="inherit_id" ref="view_sc_labor_request_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="施工单位"/>
                     <separator string="合同信息"/>
                     <separator string="工种信息"/>
@@ -977,7 +977,7 @@
         <field name="inherit_id" ref="view_sc_labor_usage_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="工种/表单信息"/>
                 </group>
@@ -991,7 +991,7 @@
         <field name="inherit_id" ref="view_sc_labor_settlement_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="汇总信息"/>
                     <separator string="方单详情"/>
@@ -1006,7 +1006,7 @@
         <field name="inherit_id" ref="view_sc_subcontract_register_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="合同清单"/>
                 </group>
@@ -1020,7 +1020,7 @@
         <field name="inherit_id" ref="view_sc_subcontract_request_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="方单详情"/>
                 </group>
@@ -1034,7 +1034,7 @@
         <field name="inherit_id" ref="view_sc_subcontract_settlement_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="汇总信息"/>
                     <separator string="方单详情"/>
@@ -1049,7 +1049,7 @@
         <field name="inherit_id" ref="view_sc_equipment_request_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="机械设备明细"/>
                 </group>
             </xpath>
@@ -1062,7 +1062,7 @@
         <field name="inherit_id" ref="view_sc_equipment_usage_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="基本信息"/>
                     <separator string="表单信息"/>
                 </group>
@@ -1076,7 +1076,7 @@
         <field name="inherit_id" ref="view_sc_equipment_settlement_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="机械设备租赁清单"/>
                     <separator string="结算费用清单"/>
                 </group>
@@ -1090,7 +1090,7 @@
         <field name="inherit_id" ref="view_sc_material_rental_order_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="租赁材料清单"/>
                 </group>
             </xpath>
@@ -1103,7 +1103,7 @@
         <field name="inherit_id" ref="view_sc_material_rental_settlement_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
-                <group string="P1 旧系统表单分区">
+                <group string="P1 历史表单分区">
                     <separator string="结算材料租赁清单"/>
                     <separator string="结算费用清单"/>
                 </group>

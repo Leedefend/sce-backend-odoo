@@ -14,7 +14,7 @@
         <filter name="verified" string="已验证" domain="[('replay_status', '=', 'verified')]"/>
         <group expand="0" string="分组">
           <filter name="group_domain" string="业务域" context="{'group_by': 'business_domain'}"/>
-          <filter name="group_menu_group" string="老系统菜单分组" context="{'group_by': 'legacy_menu_group'}"/>
+          <filter name="group_menu_group" string="历史系统菜单分组" context="{'group_by': 'legacy_menu_group'}"/>
           <filter name="group_action" string="本轮动作" context="{'group_by': 'current_round_action'}"/>
           <filter name="group_iteration" string="目标迭代" context="{'group_by': 'target_iteration'}"/>
         </group>

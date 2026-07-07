@@ -350,7 +350,7 @@
                 <field name="worker_qty" sum="用工人数合计"/>
                 <field name="work_hours"/>
                 <field name="legacy_settlement_status"/>
-                <field name="legacy_settlement_amount" sum="旧系统结算金额合计"/>
+                <field name="legacy_settlement_amount" sum="历史结算金额合计"/>
                 <field name="currency_id" invisible="1"/>
                 <field name="foreman_name"/>
                 <field name="recorder_id"/>
@@ -431,8 +431,8 @@
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="已提交" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已确认" name="confirmed" domain="[('state', '=', 'confirmed')]"/>
-                <filter string="旧系统已结算" name="legacy_settled" domain="[('legacy_settlement_state', '=', 'settled')]"/>
-                <filter string="旧系统未结算" name="legacy_unsettled" domain="[('legacy_settlement_state', '=', 'unsettled')]"/>
+                <filter string="历史已结算" name="legacy_settled" domain="[('legacy_settlement_state', '=', 'settled')]"/>
+                <filter string="历史未结算" name="legacy_unsettled" domain="[('legacy_settlement_state', '=', 'unsettled')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按日期" name="group_usage_date" context="{'group_by': 'usage_date'}"/>
                 <filter string="按班组" name="group_labor_team" context="{'group_by': 'labor_team'}"/>

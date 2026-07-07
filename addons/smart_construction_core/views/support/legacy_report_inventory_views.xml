@@ -62,7 +62,7 @@
                                 <field name="target_model" readonly="1"/>
                             </group>
                         </group>
-                        <group string="旧系统来源">
+                        <group string="历史来源">
                             <group>
                                 <field name="legacy_function_id" readonly="1"/>
                                 <field name="legacy_config_id" readonly="1"/>

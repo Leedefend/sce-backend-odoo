@@ -30,7 +30,7 @@ class ScLaborSettlementCandidate(models.Model):
     first_usage_date = fields.Date(string="最早用工日期", readonly=True)
     last_usage_date = fields.Date(string="最近用工日期", readonly=True)
     currency_id = fields.Many2one("res.currency", string="币种", readonly=True)
-    legacy_settlement_amount = fields.Monetary(string="旧系统金额", currency_field="currency_id", readonly=True)
+    legacy_settlement_amount = fields.Monetary(string="历史金额", currency_field="currency_id", readonly=True)
     sample_usage_names = fields.Char(string="来源单号", readonly=True)
     review_reason = fields.Char(string="核对原因", readonly=True)
 
@@ -76,7 +76,7 @@ class ScLaborSettlementCandidate(models.Model):
     def action_create_draft_labor_settlement(self):
         self.ensure_one()
         if self.candidate_state != "ready":
-            raise UserError("只有旧系统明确标记未结算的候选可以生成劳务结算草稿。")
+            raise UserError("只有历史明确标记未结算的候选可以生成劳务结算草稿。")
 
         usage_records = self.env["sc.labor.usage"].search(self._source_usage_domain(), order="usage_date, id")
         used_usage_ids = set(
@@ -227,8 +227,8 @@ class ScLaborSettlementCandidate(models.Model):
                     sample.sample_usage_names,
                     CASE
                         WHEN grouped.legacy_settlement_state = 'unsettled'
-                        THEN '旧系统明确标记未结算，可进入劳务结算办理前核对'
-                        ELSE '旧系统结算状态无法标准识别，需先人工复核'
+                        THEN '历史明确标记未结算，可进入劳务结算办理前核对'
+                        ELSE '历史结算状态无法标准识别，需先人工复核'
                     END AS review_reason
                 FROM grouped
                 LEFT JOIN sample

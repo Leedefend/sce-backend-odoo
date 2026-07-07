@@ -38,7 +38,7 @@ class ScProjectOperationSummary(models.Model):
     coverage_note = fields.Char(string="承载说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("项目经营统计表是旧系统经营统计事实汇总结果，请从来源项目或统计事实维护数据。")
+        raise UserError("项目经营统计表是历史经营统计事实汇总结果，请从来源项目或统计事实维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):

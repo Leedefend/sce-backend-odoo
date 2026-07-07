@@ -439,10 +439,10 @@
                         <field name="operation_address" string="跨区域经营地址"/>
                         <field name="tax_report_management_no" string="跨区域涉税事项报验管理编号"/>
                     </group>
-                    <group string="旧系统来源">
+                    <group string="历史来源">
                         <field name="source_table" string="来源表" readonly="1"/>
                         <field name="legacy_record_id" string="记录ID" readonly="1"/>
-                        <field name="legacy_pid" string="旧系统PID"/>
+                        <field name="legacy_pid" string="历史PID"/>
                     </group>
                 </sheet>
             </form>

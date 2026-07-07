@@ -601,7 +601,7 @@
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "receiving_account_name", "receiving_account_no", "amount"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger"], "terminal_action": "action_received", "legacy_source_policy": "preserve_residual_receipt_semantics"}]]></field>
         <field name="attachment_policy">recommended</field>
-        <field name="note">覆盖旧系统残余收款、其他类型收款、材料款、利息等历史收款认知；保留在收款登记入口下选择，不拆出单独菜单。</field>
+        <field name="note">覆盖历史残余收款、其他类型收款、材料款、利息等历史收款认知；保留在收款登记入口下选择，不拆出单独菜单。</field>
     </record>
 
     <record id="business_category_finance_expense_project" model="sc.business.category">
@@ -1640,7 +1640,7 @@
         <field name="required_fields_json"><![CDATA[["project_name", "taxpayer_name", "tax_report_management_no"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.legacy.payment.residual.fact"], "terminal_action": "manual_confirm", "balance_policy": "tax_certificate_reference"}]]></field>
         <field name="attachment_policy">recommended</field>
-        <field name="note">用户确认的税票证明/外经证登记入口；保留旧系统业务认知，通过综合开票与税务办理入口进入。</field>
+        <field name="note">用户确认的税票证明/外经证登记入口；保留历史业务认知，通过综合开票与税务办理入口进入。</field>
     </record>
 
     <record id="business_category_material_plan" model="sc.business.category">

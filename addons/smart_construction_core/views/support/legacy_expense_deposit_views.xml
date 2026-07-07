@@ -185,7 +185,7 @@
             <field name="deducted_count"/>
             <field name="invoice_content"/>
           </group>
-          <group string="旧系统来源">
+          <group string="历史来源">
             <group>
               <field name="legacy_line_id"/>
               <field name="legacy_header_id"/>

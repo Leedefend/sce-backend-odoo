@@ -32,7 +32,7 @@
                 <field name="legacy_fact_type"/>
                 <field name="legacy_settlement_state"/>
                 <field name="usage_count" sum="用工记录数合计"/>
-                <field name="legacy_settlement_amount" sum="旧系统金额合计"/>
+                <field name="legacy_settlement_amount" sum="历史金额合计"/>
                 <field name="currency_id" invisible="1"/>
                 <field name="first_usage_date"/>
                 <field name="last_usage_date"/>

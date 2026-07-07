@@ -66,8 +66,8 @@ class TreasuryLedger(models.Model):
         required=True,
         index=True,
     )
-    legacy_record_id = fields.Char(string="旧系统记录ID", index=True)
-    legacy_source_ref = fields.Char(string="旧系统来源", index=True)
+    legacy_record_id = fields.Char(string="历史记录ID", index=True)
+    legacy_source_ref = fields.Char(string="历史来源", index=True)
 
     _sql_constraints = [
         ("payment_request_unique", "unique(payment_request_id)", "同一付款/收款申请只能生成一条资金流水。"),

@@ -79,7 +79,7 @@
                 <field name="invoice_source"/>
               </group>
             </group>
-            <group string="旧系统来源">
+            <group string="历史来源">
               <field name="legacy_line_id"/>
               <field name="legacy_header_id"/>
               <field name="legacy_pid"/>
@@ -180,7 +180,7 @@
               <field name="current_planned_amount"/>
               <field name="current_actual_amount"/>
             </group>
-            <group string="旧系统来源">
+            <group string="历史来源">
               <field name="legacy_line_id"/>
               <field name="legacy_header_id"/>
               <field name="legacy_pid"/>
@@ -389,7 +389,7 @@
               <field name="construction_deduction_note"/>
               <field name="payable_construction_deduction_note"/>
             </group>
-            <group string="旧系统来源">
+            <group string="历史来源">
               <field name="legacy_line_id"/>
               <field name="legacy_header_id"/>
               <field name="legacy_pid"/>

@@ -106,7 +106,7 @@
             <filter name="group_state" string="状态" context="{'group_by': 'state'}"/>
             <filter name="group_target_lane" string="业务泳道" context="{'group_by': 'target_lane'}"/>
             <filter name="group_target_model" string="目标模型" context="{'group_by': 'target_model'}"/>
-            <filter name="group_actor_name" string="旧系统处理人" context="{'group_by': 'actor_name'}"/>
+            <filter name="group_actor_name" string="历史处理人" context="{'group_by': 'actor_name'}"/>
           </group>
         </search>
       </field>

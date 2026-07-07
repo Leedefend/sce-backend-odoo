@@ -98,14 +98,14 @@
             <xpath expr="//field[@name='legacy_source_model']/ancestor::page[1]" position="before">
                 <page string="历史办理信息" invisible="not legacy_source_table">
                     <group>
-                        <group string="旧系统办理口径">
+                        <group string="历史办理口径">
                             <field name="legacy_visible_document_no" readonly="1"/>
                             <field name="legacy_visible_project_name" readonly="1"/>
                             <field name="legacy_visible_account_name" readonly="1"/>
                             <field name="legacy_visible_counterparty_account_name" readonly="1"/>
                             <field name="legacy_visible_transfer_type" readonly="1"/>
                         </group>
-                        <group string="旧系统办理说明">
+                        <group string="历史办理说明">
                             <field name="legacy_document_state" readonly="1"/>
                             <field name="legacy_visible_reason" readonly="1"/>
                             <field name="legacy_visible_note" readonly="1"/>
@@ -128,7 +128,7 @@
             <xpath expr="//field[@name='legacy_source_model']/ancestor::page[1]" position="before">
                 <page string="历史办理信息" invisible="not legacy_source_table">
                     <group>
-                        <group string="旧系统收款口径">
+                        <group string="历史收款口径">
                             <field name="legacy_project_name" readonly="1"/>
                             <field name="legacy_partner_name" readonly="1"/>
                             <field name="legacy_company_name" readonly="1"/>
@@ -136,7 +136,7 @@
                             <field name="legacy_receipt_type" readonly="1"/>
                             <field name="legacy_receipt_subtype" readonly="1"/>
                         </group>
-                        <group string="旧系统状态与附件">
+                        <group string="历史状态与附件">
                             <field name="legacy_document_state" readonly="1"/>
                             <field name="legacy_document_state_label" readonly="1"/>
                             <field name="legacy_residual_reason" readonly="1"/>
@@ -157,16 +157,16 @@
             <xpath expr="//field[@name='legacy_source_table']/ancestor::page[1]" position="before">
                 <page string="历史办理信息" invisible="not legacy_source_table">
                     <group>
-                        <group string="旧系统单据口径">
+                        <group string="历史单据口径">
                             <field name="legacy_document_state" readonly="1"/>
                         </group>
-                        <group string="旧系统单位与金额">
+                        <group string="历史单位与金额">
                         </group>
                     </group>
                     <group>
-                        <group string="旧系统成本与备注">
+                        <group string="历史成本与备注">
                         </group>
-                        <group string="旧系统账户线索">
+                        <group string="历史账户线索">
                             <field name="legacy_payment_account_name" readonly="1"/>
                             <field name="legacy_payment_account_no" readonly="1"/>
                             <field name="legacy_payee_account_name" readonly="1"/>
@@ -215,7 +215,7 @@
             <xpath expr="//field[@name='legacy_source_model']/ancestor::page[1]" position="before">
                 <page string="历史办理信息" invisible="source_origin != 'legacy'">
                     <group>
-                        <group string="旧系统发票口径">
+                        <group string="历史发票口径">
                             <field name="legacy_document_state" readonly="1"/>
                             <field name="legacy_visible_data_type" readonly="1"/>
                             <field name="legacy_visible_contract_no" readonly="1"/>
@@ -224,7 +224,7 @@
                             <field name="legacy_visible_partner_name" readonly="1"/>
                             <field name="legacy_visible_note" readonly="1"/>
                         </group>
-                        <group string="旧系统开票与金额">
+                        <group string="历史开票与金额">
                             <field name="legacy_visible_current_invoice_amount" readonly="1"/>
                             <field name="legacy_visible_cumulative_invoice_amount" readonly="1"/>
                             <field name="legacy_visible_invoice_count" readonly="1"/>
@@ -234,14 +234,14 @@
                         </group>
                     </group>
                     <group>
-                        <group string="旧系统票据线索">
+                        <group string="历史票据线索">
                             <field name="legacy_visible_invoice_no" readonly="1"/>
                             <field name="legacy_visible_invoice_type" readonly="1"/>
                             <field name="legacy_visible_invoice_issue_company" readonly="1"/>
                             <field name="legacy_visible_kingdee_no" readonly="1"/>
                             <field name="legacy_attachment_ref" readonly="1"/>
                         </group>
-                        <group string="旧系统往来与税号">
+                        <group string="历史往来与税号">
                             <field name="legacy_partner_name" readonly="1"/>
                             <field name="legacy_partner_tax_no" readonly="1"/>
                         </group>
@@ -311,7 +311,7 @@
             <xpath expr="//field[@name='company_contractor_responsibility_notice']/ancestor::page[1]" position="after">
                 <page string="历史办理信息" invisible="not legacy_source_table">
                     <group>
-                        <group string="旧系统单据口径">
+                        <group string="历史单据口径">
                             <field name="legacy_visible_document_no" readonly="1"/>
                             <field name="legacy_document_no" readonly="1"/>
                             <field name="legacy_visible_document_state" readonly="1"/>
@@ -320,7 +320,7 @@
                             <field name="legacy_visible_project_name" readonly="1"/>
                             <field name="legacy_visible_department" readonly="1"/>
                         </group>
-                        <group string="旧系统事项与金额">
+                        <group string="历史事项与金额">
                             <field name="legacy_visible_title" readonly="1"/>
                             <field name="legacy_visible_expense_type" readonly="1"/>
                             <field name="legacy_visible_summary" readonly="1"/>
@@ -340,7 +340,7 @@
             <xpath expr="//field[@name='legacy_source_model']/ancestor::page[1]" position="before">
                 <page string="历史办理信息" invisible="not legacy_source_table">
                     <group>
-                        <group string="旧系统单据口径">
+                        <group string="历史单据口径">
                             <field name="legacy_visible_document_no" readonly="1"/>
                             <field name="legacy_document_no" readonly="1"/>
                             <field name="legacy_visible_document_state" readonly="1"/>
@@ -349,7 +349,7 @@
                             <field name="legacy_visible_project_name" readonly="1"/>
                             <field name="legacy_visible_department" readonly="1"/>
                         </group>
-                        <group string="旧系统事项与金额">
+                        <group string="历史事项与金额">
                             <field name="legacy_visible_title" readonly="1"/>
                             <field name="legacy_visible_expense_type" readonly="1"/>
                             <field name="legacy_visible_summary" readonly="1"/>

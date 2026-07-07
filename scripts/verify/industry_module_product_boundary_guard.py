@@ -400,6 +400,12 @@ def verify_core_model_legacy_product_message_boundary() -> list[str]:
     model_roots = (
         ADDONS / "smart_construction_core" / "models" / "core",
         ADDONS / "smart_construction_core" / "models" / "support",
+        ADDONS / "smart_construction_core" / "models" / "projection",
+    )
+    product_surface_roots = (
+        ADDONS / "smart_construction_core" / "data",
+        ADDONS / "smart_construction_core" / "views",
+        ADDONS / "smart_construction_custom" / "views",
     )
     errors: list[str] = []
     for model_root in model_roots:
@@ -414,6 +420,20 @@ def verify_core_model_legacy_product_message_boundary() -> list[str]:
                 if token in text:
                     errors.append(
                         "smart_construction_core: business model product messages must use "
+                        f"historical source wording, not old-system wording {token!r}: "
+                        f"{path.relative_to(ROOT).as_posix()}"
+                    )
+    for surface_root in product_surface_roots:
+        if not surface_root.is_dir():
+            continue
+        for path in surface_root.rglob("*"):
+            if path.suffix not in {".xml", ".csv"}:
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            for token in ("旧系统", "老系统"):
+                if token in text:
+                    errors.append(
+                        "smart_construction_core: product surface labels must use "
                         f"historical source wording, not old-system wording {token!r}: "
                         f"{path.relative_to(ROOT).as_posix()}"
                     )
