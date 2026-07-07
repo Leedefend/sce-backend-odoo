@@ -33,7 +33,7 @@ def _ensure_company_currency_cny(env):
 
 
 def post_init_hook(env_or_cr, registry=None):
-    """Seed placeholder hook (idempotent). Extend with real seed data later."""
+    """Run the selected baseline seed profile idempotently."""
     env = _as_env(env_or_cr, registry)
     ICP = env["ir.config_parameter"].sudo()
 
@@ -69,10 +69,10 @@ def post_init_hook(env_or_cr, registry=None):
 
     executed = run_steps(env, steps_sel)
 
-    # mark execution evidence for verify/demo
+    # Record execution evidence for seed verification.
     ICP.set_param("sc.seed.enabled", "1")
     ICP.set_param("sc.seed.mode", mode)
     ICP.set_param("sc.seed.last_steps", ",".join(executed))
     ICP.set_param("sc.seed.ran_at", fields.Datetime.now().isoformat())
 
-    _logger.info("Seed hook executed (mode=%s steps=%s). Extend with seed data as needed.", mode, executed)
+    _logger.info("Seed hook executed (mode=%s steps=%s).", mode, executed)

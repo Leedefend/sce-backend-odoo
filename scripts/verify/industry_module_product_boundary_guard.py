@@ -653,6 +653,27 @@ def verify_seed_showcase_product_fields() -> list[str]:
     return errors
 
 
+def verify_seed_hook_product_language_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_seed" / "hooks.py"
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    forbidden_tokens = (
+        "placeholder hook",
+        "Extend with real seed data later",
+        "Extend with seed data as needed",
+        "verify/demo",
+    )
+    errors: list[str] = []
+    for token in forbidden_tokens:
+        if token in text:
+            errors.append(
+                "smart_construction_seed: production seed hook must use baseline seed language, "
+                f"not development wording {token!r}"
+            )
+    return errors
+
+
 def verify_custom_security_policy_role_login_boundary() -> list[str]:
     path = ADDONS / "smart_construction_custom" / "models" / "security_policy.py"
     if not path.is_file():
@@ -718,6 +739,7 @@ def main() -> int:
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_core_extension_legacy_label_boundary())
     errors.extend(verify_seed_showcase_product_fields())
+    errors.extend(verify_seed_hook_product_language_boundary())
     errors.extend(verify_custom_security_policy_role_login_boundary())
 
     if errors:
