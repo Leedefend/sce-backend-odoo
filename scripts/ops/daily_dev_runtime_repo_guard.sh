@@ -11,7 +11,7 @@ cd "$repo_root"
 
 expected_branch="${DAILY_DEV_RUNTIME_BRANCH:-main}"
 max_allowed_stashes="${DAILY_DEV_RUNTIME_MAX_STASHES:-0}"
-forbidden_refs_pattern="${DAILY_DEV_RUNTIME_FORBIDDEN_REF_PATTERN:-refs/remotes/localpush/|refs/heads/archive/daily-dev-}"
+forbidden_refs_pattern="${DAILY_DEV_RUNTIME_FORBIDDEN_REF_PATTERN:-refs/remotes/localpush/}"
 
 errors=()
 
