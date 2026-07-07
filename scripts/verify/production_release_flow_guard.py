@@ -85,6 +85,7 @@ TEMPLATE_TOKENS = (
     "`verify.non_demo_data_contamination`",
     "smart_construction_demo",
     "生产与日常开发服务器不是全量一致",
+    "`planned: <meaning>` / `retained: <meaning>` / `tracked: <meaning>` / `closed: <evidence>`",
 )
 
 MAKEFILE_TOKENS = (
@@ -166,7 +167,11 @@ RECORD_GUARD_TOKENS = (
     "REQUIRED_VALIDATION_TOKENS",
     "REQUIRED_CLOSURE_TOKENS",
     "FORBIDDEN_OPEN_ENDED_TOKENS",
+    "EXPLAINED_FOLLOWUP_STATUS_PREFIXES",
     "smart_construction_demo XMLID count=0",
+    "is_hotfix_package",
+    "full-tree release missing git authority evidence",
+    "full-tree alignment checked without module-version diff PASS evidence",
     "full-tree alignment unchecked but non-full-alignment statement missing",
 )
 

@@ -119,7 +119,8 @@ def _check_record(path: Path) -> list[str]:
 
     is_incremental_package = "发布类型 | `incremental package`" in text
     is_full_tree_release = "发布类型 | `full tree`" in text
-    if not is_incremental_package and not is_full_tree_release:
+    is_hotfix_package = "发布类型 | `hotfix`" in text
+    if not is_incremental_package and not is_full_tree_release and not is_hotfix_package:
         errors.append(f"{rel}: release type must be explicit")
 
     if "/data/backups/" not in text:

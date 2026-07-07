@@ -213,4 +213,4 @@ where name='smart_construction_demo';
 
 | 事项 | 负责人 | 截止时间 | 状态 |
 | --- | --- | --- | --- |
-| `<item>` | `<owner>` | `<date>` | `open/done` |
+| `<item>` | `<owner>` | `<date or cadence>` | `planned: <meaning>` / `retained: <meaning>` / `tracked: <meaning>` / `closed: <evidence>` |
