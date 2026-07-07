@@ -93,6 +93,20 @@ Production parity follow-up:
 - Re-ran production `history_attachment_custody_probe.py`: PASS,
   `history_attachment_custody_ready`, `gap_count=0`.
 
+Process hardening:
+
+- Added reusable marker backfill script:
+  `scripts/migration/legacy_attachment_custody_marker_backfill.py`
+- Added Make targets:
+  - `legacy_attachment.custody_marker.backfill`
+  - `legacy_attachment.custody_marker.backfill.prod`
+  - `history.attachment.custody.probe.prod`
+- Added runbook:
+  `docs/ops/legacy_attachment_custody_marker_runbook.md`
+- Verified the new script with dry-runs against daily development and
+  production after remediation; both reported `candidate_count_before=0` and
+  `updated_count=0`.
+
 Targeted `BASE_SYSTEM_FILE` mirror attempt:
 
 - Scope: first 5,000 `BASE_SYSTEM_FILE` rows.

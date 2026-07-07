@@ -1276,6 +1276,14 @@ verify.legacy_online_attachment.mirror.job.audit: guard.prod.forbid check-compos
 verify.legacy_online_attachment.mirror.job.audit.prod: guard.prod.readonly check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) LEGACY_ATTACHMENT_JOB_ROOT="$${LEGACY_ATTACHMENT_JOB_ROOT:-$(ATTACHMENT_JOB_AUDIT_JOB_ROOT)}" LEGACY_ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS="$${LEGACY_ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS:-$(or $(ATTACHMENT_JOB_AUDIT_SOURCE_CONTAINS),online_old)}" LEGACY_ATTACHMENT_JOB_AUDIT_STRICT=1 LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES="$${LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES:-$(or $(ATTACHMENT_JOB_AUDIT_ALLOW_JOB_FAILURES),0)}" LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES="$${LEGACY_ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES:-$(or $(ATTACHMENT_JOB_AUDIT_ALLOW_MISSING_FILES),0)}" LEGACY_ATTACHMENT_JOB_AUDIT_INDEX_LIMIT="$${LEGACY_ATTACHMENT_JOB_AUDIT_INDEX_LIMIT:-$(or $(ATTACHMENT_JOB_AUDIT_INDEX_LIMIT),0)}" LEGACY_ATTACHMENT_JOB_AUDIT_PRINT_FULL="$${LEGACY_ATTACHMENT_JOB_AUDIT_PRINT_FULL:-$(ATTACHMENT_JOB_AUDIT_PRINT_FULL)}" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/legacy_online_attachment_mirror_job_audit.py
 
+.PHONY: legacy_attachment.custody_marker.backfill
+legacy_attachment.custody_marker.backfill: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) LEGACY_ATTACHMENT_CUSTODY_MARKER_APPLY="$${LEGACY_ATTACHMENT_CUSTODY_MARKER_APPLY:-1}" LEGACY_ATTACHMENT_CUSTODY_MARKER_LIMIT="$${LEGACY_ATTACHMENT_CUSTODY_MARKER_LIMIT:-0}" LEGACY_ATTACHMENT_CUSTODY_MARKER_OUTPUT="$${LEGACY_ATTACHMENT_CUSTODY_MARKER_OUTPUT:-/tmp/legacy_attachment_custody_marker_backfill_result_v1.json}" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/legacy_attachment_custody_marker_backfill.py
+
+.PHONY: legacy_attachment.custody_marker.backfill.prod
+legacy_attachment.custody_marker.backfill.prod: guard.prod.danger check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) LEGACY_ATTACHMENT_CUSTODY_MARKER_APPLY="$${LEGACY_ATTACHMENT_CUSTODY_MARKER_APPLY:-1}" LEGACY_ATTACHMENT_CUSTODY_MARKER_LIMIT="$${LEGACY_ATTACHMENT_CUSTODY_MARKER_LIMIT:-0}" LEGACY_ATTACHMENT_CUSTODY_MARKER_OUTPUT="$${LEGACY_ATTACHMENT_CUSTODY_MARKER_OUTPUT:-/tmp/legacy_attachment_custody_marker_backfill_result_v1.json}" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/legacy_attachment_custody_marker_backfill.py
+
 history.continuity.rehearse: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) HISTORY_CONTINUITY_MODE=rehearse RUN_ID="$(RUN_ID)" HISTORY_CONTINUITY_START_AT="$(HISTORY_CONTINUITY_START_AT)" HISTORY_CONTINUITY_STOP_AFTER="$(HISTORY_CONTINUITY_STOP_AFTER)" MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/migration/history_continuity_oneclick.sh
 
@@ -1363,6 +1371,10 @@ history.construction_diary.runtime.probe: guard.prod.forbid check-compose-projec
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_construction_diary_runtime_probe.py
 
 history.attachment.custody.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_attachment_custody_probe.py
+
+.PHONY: history.attachment.custody.probe.prod
+history.attachment.custody.probe.prod: guard.prod.readonly check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_attachment_custody_probe.py
 
 history.invoice_tax.runtime.probe: guard.prod.forbid check-compose-project check-compose-env
