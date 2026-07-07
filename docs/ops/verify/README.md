@@ -95,6 +95,9 @@
   - Fails if XML/CSV assets are left undeclared without an explicit boundary reason.
   - Keeps demo, historical acceptance, and real-user payload files out of production manifests.
   - Ensures the carried real-user master payload remains behind the idempotent user baseline loader.
+  - Runs `scripts/verify/test_industry_module_product_boundary_guard.py` before the guard to pin core regression cases.
+  - Rejects production manifest `demo` entries, bare runtime `pass`, and bare runtime `NotImplementedError`.
+  - Ensures app delivery fallbacks remain explicitly marked as delivery-navigation fallbacks with no business-fact authority.
 - `make verify.non_demo_data_contamination`
   - Default non-demo contamination audit for a selected `DB_NAME`.
   - Demo databases such as `sc_demo` may return `SKIP`; release hardening must use `make verify.product.no_demo_data` instead.
