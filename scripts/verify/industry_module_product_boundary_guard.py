@@ -892,6 +892,39 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
     return errors
 
 
+def verify_work_breakdown_historical_facade_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_core" / "models" / "support" / "work_breakdown.py"
+    if not path.is_file():
+        return ["smart_construction_core: work breakdown historical model facade missing"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    required_fragments = {
+        "class ProjectWbs(models.Model):",
+        "历史模型门面：将 project.wbs 指向统一的工程结构表。",
+        '_name = "project.wbs"',
+        '_description = "工程结构历史模型门面"',
+        '_inherit = "construction.work.breakdown"',
+        '_table = "construction_work_breakdown"',
+    }
+    errors: list[str] = []
+    for fragment in sorted(required_fragments):
+        if text.count(fragment) != 1:
+            errors.append(
+                "smart_construction_core: project.wbs historical facade anchor "
+                f"must appear exactly once: {fragment!r}"
+            )
+    forbidden_fragments = (
+        "兼容层：将历史的 project.wbs",
+        "工程结构兼容层",
+    )
+    for fragment in forbidden_fragments:
+        if fragment in text:
+            errors.append(
+                "smart_construction_core: project.wbs facade must use historical-model "
+                f"boundary wording, not generic compatibility wording {fragment!r}"
+            )
+    return errors
+
+
 def verify_platform_admin_facade_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "services" / "platform_admin.py"
     if not path.is_file():
@@ -1139,6 +1172,7 @@ def main() -> int:
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_project_execution_readiness_precheck_boundary())
     errors.extend(verify_budget_compatibility_layer_boundary())
+    errors.extend(verify_work_breakdown_historical_facade_boundary())
     errors.extend(verify_platform_admin_facade_boundary())
     errors.extend(verify_project_showcase_legacy_alias_boundary())
     errors.extend(verify_core_extension_legacy_label_boundary())

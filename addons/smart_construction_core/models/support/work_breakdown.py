@@ -268,11 +268,11 @@ class ConstructionWorkBreakdown(models.Model):
 
 class ProjectWbs(models.Model):
     """
-    兼容层：将历史的 project.wbs 模型指向统一的工程结构表。
+    历史模型门面：将 project.wbs 指向统一的工程结构表。
     所有字段与逻辑复用 construction.work.breakdown，避免旧引用报错。
     """
 
     _name = "project.wbs"
-    _description = "工程结构兼容层"
+    _description = "工程结构历史模型门面"
     _inherit = "construction.work.breakdown"
     _table = "construction_work_breakdown"
