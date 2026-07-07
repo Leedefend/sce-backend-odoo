@@ -119,13 +119,30 @@ make verify.legacy_attachment.missing_residual.summarize \
 ## 自定义前端浏览器验收
 
 后端 custody 只说明文件可被服务端定位；生产可用性还必须验证自定义前端能打开或下载。
-验收入口：
+生产验收必须分两步执行：
+
+1. 先在生产服务器生成浏览器样本清单，清单中的每个样本都必须已经解析到生产本地文件，并记录本地文件大小与 sha256。
+2. 再用自定义前端浏览器会话下载或预览附件，并把浏览器实际拿到的字节 sha256 与生产本地文件 sha256 做强一致比较。
+
+样本清单入口：
+
+```bash
+ENV=prod \
+ENV_FILE=.env.prod \
+DB_NAME=sc_prod \
+PROD_READONLY_VERIFY=1 \
+make verify.legacy_attachment.frontend_browser.sample_manifest.prod \
+  LEGACY_ATTACHMENT_BROWSER_SAMPLE_MANIFEST_OUTPUT=/mnt/artifacts/backend/legacy_attachment_frontend_browser_samples_all_models.json
+```
+
+浏览器验收入口：
 
 ```bash
 FRONTEND_URL=http://127.0.0.1:5179 \
 DB_NAME=sc_prod \
 E2E_LOGIN=<login> \
 E2E_PASSWORD=<password> \
+LEGACY_ATTACHMENT_BROWSER_SAMPLES_FILE=<local-sample-manifest.json> \
 node scripts/verify/legacy_attachment_frontend_browser_acceptance.js
 ```
 
@@ -136,7 +153,8 @@ DB_NAME=sc_prod \
 E2E_LOGIN=<login> \
 E2E_PASSWORD=<password> \
 make verify.legacy_attachment.frontend_browser.acceptance.host \
-  LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL=http://127.0.0.1:5179
+  LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL=http://127.0.0.1:5179 \
+  LEGACY_ATTACHMENT_BROWSER_SAMPLES_FILE=<local-sample-manifest.json>
 ```
 
 该验收使用浏览器登录自定义前端，通过前端 session 调用 `file.download`，并在浏览器内验证：
@@ -144,6 +162,50 @@ make verify.legacy_attachment.frontend_browser.acceptance.host \
 - 图片附件可生成 blob 预览且图片尺寸有效。
 - PDF 附件可生成预览 blob，文件头为 `%PDF-`。
 - Office 文档类附件可触发浏览器下载，下载文件大小与返回内容一致。
+- 若样本包含 `expected_local_sha256` 和 `expected_local_size`，浏览器实际返回内容必须与生产本地文件完全一致，并输出 `production_local_file_verified=true`。
+
+2026-07-07 生产全模型验收结论：
+
+```text
+sample_manifest_prod PASS
+required_model_count=10
+covered_model_count=10
+sample_count=10
+missing_models=[]
+
+frontend_browser_acceptance admin PASS
+covered_models=10/10
+production_local_file_verified=10/10
+
+frontend_browser_acceptance business_user PASS
+covered_models=9/10
+production_local_file_verified=9/9
+excluded_model=sc.project.member.staging
+excluded_reason=business user has no read permission on model sc.project.member.staging
+```
+
+全模型范围：
+
+```text
+construction.contract
+construction.contract.line
+payment.request
+payment.request.line
+project.project
+sc.legacy.direct.acceptance.fact
+sc.legacy.fund.confirmation.document
+sc.legacy.payment.residual.fact
+sc.project.member.staging
+sc.receipt.invoice.line
+```
+
+硬性判定：
+
+- 对生产 `legacy-file://` 迁移附件，已按模型全覆盖抽样验证自定义前端能打开或下载。
+- 浏览器实际拿到的字节与生产服务器 `/mnt/legacy-files` 本地文件 sha256 完全一致，因此该结论证明的是生产服务器自己的附件系统生效，不是旧在线文件系统兜底。
+- `sc.project.member.staging` 对普通业务用户不可读，属于模型权限边界；管理员口径已覆盖该模型附件链路。
+- 全量旧附件索引中剩余 121 条本地文件缺失引用仍是独立残差；这些缺失路径不能被本次浏览器验收视为已可打开。
+- `type=url` 且仍为外部 `http` URL 的附件不属于 `legacy-file://` 本地 custody 证明范围，需要按在线 URL 残差单独分类。
 
 - `sc.legacy.file.index` 索引记录是否能解析到本地非零字节文件。
 - 正式 `ir.attachment` 中仍指向 legacy URL 的附件是否已有本地文件承接。

@@ -352,3 +352,96 @@ artifacts/legacy-attachment-frontend-browser/20260707T112658
 artifacts/legacy-attachment-frontend-browser/ui-entry-20260707T1127
 artifacts/legacy-attachment-frontend-browser/ui-download-20260707T1129
 ```
+
+## 13. 全模型附件浏览器强验收
+
+2026-07-07 19:51-19:53 +0800，扩大到生产 `ir.attachment` 中所有
+`type=url` 且 `url like legacy-file://%` 的业务模型。先在生产服务器生成样本清单，
+再通过本地自定义前端浏览器实例连接生产后端下载或预览，最后比较浏览器实际返回字节与
+生产本地文件 sha256。
+
+生产样本清单：
+
+```text
+command=ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.legacy_attachment.frontend_browser.sample_manifest.prod
+output=/mnt/artifacts/backend/legacy_attachment_frontend_browser_samples_all_models.json
+status=PASS
+required_model_count=10
+covered_model_count=10
+sample_count=10
+missing_models=[]
+expected_source=production_local_legacy_file_root
+```
+
+模型分布：
+
+| 模型 | 生产 legacy-file 附件数 | 浏览器验收 |
+| --- | ---: | --- |
+| `construction.contract` | 1 | `PASS` |
+| `construction.contract.line` | 1 | `PASS` |
+| `payment.request` | 5443 | `PASS` |
+| `payment.request.line` | 4689 | `PASS` |
+| `project.project` | 464 | `PASS` |
+| `sc.legacy.direct.acceptance.fact` | 2 | `PASS` |
+| `sc.legacy.fund.confirmation.document` | 1 | `PASS` |
+| `sc.legacy.payment.residual.fact` | 1 | `PASS` |
+| `sc.project.member.staging` | 7860 | `PASS` with admin, permission-denied for business user |
+| `sc.receipt.invoice.line` | 1079 | `PASS` |
+
+管理员全模型浏览器验收：
+
+```text
+artifact=artifacts/legacy-attachment-frontend-browser/20260707T115308/summary.json
+legacy_attachment_frontend_browser_acceptance PASS
+sample_count=10
+covered_models=10/10
+production_local_file_verified=10/10
+request_mode=url
+```
+
+普通业务用户权限口径验收：
+
+```text
+artifact=artifacts/legacy-attachment-frontend-browser/20260707T115334/summary.json
+legacy_attachment_frontend_browser_acceptance PASS
+sample_count=9
+covered_models=9/10
+production_local_file_verified=9/9
+excluded_model=sc.project.member.staging
+excluded_reason=model read permission denied for business user
+```
+
+中间失败记录用于证明权限边界：
+
+```text
+artifact=artifacts/legacy-attachment-frontend-browser/20260707T115159/summary.json
+result=expected_fail
+reason=PERMISSION_DENIED on sc.project.member.staging
+passed_before_failure=8
+production_local_file_verified_before_failure=8/8
+```
+
+样本本地文件 sha256 证明：
+
+| 模型 | 附件 | 生产本地文件 | sha256 |
+| --- | --- | --- | --- |
+| `construction.contract` | `dzfp_23512000000096427896_四川保盛建设集团有限公司_20230927150933(1).pdf` | `/mnt/legacy-files/UserFile/2023/09/27/0f1dd02adcb3411491054bbc1cf1d0c2_135003.pdf` | `229cb2d5cf7a1e7dcc24bcfae8e0a67ed16dbf4d5e59038538cd199b14c4067c` |
+| `construction.contract.line` | `dzfp_23512000000096427896_四川保盛建设集团有限公司_20230927150933(1).pdf` | `/mnt/legacy-files/UserFile/2023/09/27/0f1dd02adcb3411491054bbc1cf1d0c2_135003.pdf` | `229cb2d5cf7a1e7dcc24bcfae8e0a67ed16dbf4d5e59038538cd199b14c4067c` |
+| `payment.request` | `学院零星机械租赁合同模板.doc` | `/mnt/legacy-files/OldSystem/File_New/OutContract/2020/5/26/d8ccebd639f226b87d01bf64e83f2382.doc` | `ac8be0f0026bca64e473402c4a76f2e07548dc823500aad7cf60c016b4497a51` |
+| `payment.request.line` | `学院零星机械租赁合同模板.doc` | `/mnt/legacy-files/OldSystem/File_New/OutContract/2020/5/26/d8ccebd639f226b87d01bf64e83f2382.doc` | `ac8be0f0026bca64e473402c4a76f2e07548dc823500aad7cf60c016b4497a51` |
+| `project.project` | `邦泰.翡翠城预埋管道工程.doc` | `/mnt/legacy-files/OldSystem/File_New/OutContract/2020/12/25/67f9025bf605b7077353cfee5ab39d06.doc` | `d9c1c84c64d8b5a0d10a13475974a57f37649c35ee751c66514683563376dfc5` |
+| `sc.legacy.direct.acceptance.fact` | `98eccfb212ee4241be2e0fcb5719b4f7.jpg` | `/mnt/legacy-files/OldSystem/File_New/SignalPic/98eccfb212ee4241be2e0fcb5719b4f7.jpg` | `a1d5b705e00cd0f79779a2dc2c31975b6babf622bc117d64cae8af024a09248f` |
+| `sc.legacy.fund.confirmation.document` | `image.png` | `/mnt/legacy-files/UserFile/2026/02/06/83e3919481c644a89c582524a7d3761e_45554.png` | `ff509c5d2c809f50dd69f9b11c18130f97132af8a16b687870a0bdfd1ff02559` |
+| `sc.legacy.payment.residual.fact` | `2026（769号）.pdf` | `/mnt/legacy-files/UserFile/2026/03/19/cb5f5b05a95d4a118f2bd1f5406be539_174096.pdf` | `9fcc5d0d0dcafefba717a5397685ec20ffe2e954c80f81787ed787b0f4ff155e` |
+| `sc.project.member.staging` | `邦泰.翡翠城预埋管道工程.doc` | `/mnt/legacy-files/OldSystem/File_New/OutContract/2020/12/25/67f9025bf605b7077353cfee5ab39d06.doc` | `d9c1c84c64d8b5a0d10a13475974a57f37649c35ee751c66514683563376dfc5` |
+| `sc.receipt.invoice.line` | `张文浩（建筑）.doc` | `/mnt/legacy-files/OldSystem/File_New/Credentials/2019/7/24/a0a52e623399ec232cab20fde6f6c860.doc` | `d4273129fd02c6f5f52ac4ab69618a3fdf839d8adccfbec3e325f50c01e3a6a8` |
+
+强验收结论：
+
+```text
+生产 legacy-file:// 迁移附件已完成全模型浏览器可用性抽样验收。
+10/10 模型均存在生产本地文件样本，浏览器实际返回内容与 /mnt/legacy-files 下生产本地文件 sha256 完全一致。
+因此，本结论证明生产服务器自己的附件系统已经生效，不依赖旧在线文件系统兜底。
+普通业务用户无法读取 sc.project.member.staging 是预期模型权限边界，不是附件系统失败。
+全量旧附件索引剩余 121 条本地文件缺失引用仍按残差专项处理，不能并入本次已验证范围。
+```
