@@ -343,6 +343,14 @@ NOTES_TEXT_SNIPPETS = (
         "matches the reviewed release commit."
     ),
     (
+        "Dev acceptance path: uploaded backup validation, static rebuild, API lock, and\n"
+        "  daily real-user login plus `system.init` probe."
+    ),
+    (
+        "The daily gate must authenticate as the named acceptance user and execute\n"
+        "`system.init`; credential-optional probes are not release signoff evidence."
+    ),
+    (
         "Production deployment is not part of this release-note batch. Production must\n"
         "follow `docs/ops/production_deployment_runbook_v1.md` and\n"
         "`docs/ops/prod_command_policy.md`."

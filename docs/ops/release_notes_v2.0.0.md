@@ -18,7 +18,7 @@ track to `v2.0.0`.
 - Route authority: backend-provided `default_route`.
 - Frontend acceptance: served static bundle must match the target DB and app env.
 - Dev acceptance path: uploaded backup validation, static rebuild, API lock, and
-  optional real-user `system.init` probe.
+  daily real-user login plus `system.init` probe.
 - Release gate: one-command preflight through `make verify.release.v2_0_0.preflight`.
 - Release governance docs: release-control README, release notes, versioning,
   release indexes, evidence manifest, checklist, and verify catalog.
@@ -59,6 +59,8 @@ ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo \
 Daily acceptance now treats product navigation as release evidence: menu action
 count range, forbidden legacy labels, required product paths, and locked action
 targets must all pass in `artifacts/backend/dev_acceptance_release_probe.json`.
+The daily gate must authenticate as the named acceptance user and execute
+`system.init`; credential-optional probes are not release signoff evidence.
 
 Production deployment is not part of this release-note batch. Production must
 follow `docs/ops/production_deployment_runbook_v1.md` and

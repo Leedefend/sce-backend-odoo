@@ -121,7 +121,7 @@ Required evidence:
 - uploaded package checksum validation
 - served frontend bundle DB/env verification
 - `/api/v1/intent?db=sc_demo` OPTIONS/GET behavior
-- optional real-user login and `system.init` result when credentials are provided
+- required daily real-user login and `system.init` result
 - product navigation guard result: action count range, forbidden label list, required path list, and required action target list all pass
 
 ## Prod-Sim Gate
