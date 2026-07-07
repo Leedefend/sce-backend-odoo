@@ -322,6 +322,36 @@ def verify_handler_product_language_boundary() -> list[str]:
     return errors
 
 
+def verify_project_dashboard_open_alias_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_core" / "handlers" / "project_dashboard_open.py"
+    if not path.is_file():
+        return ["smart_construction_core: project.dashboard.open compatibility handler missing"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    required_fragments = {
+        'INTENT_TYPE = "project.dashboard.open"',
+        'DESCRIPTION = "历史入口转发到 project.dashboard.enter"',
+        '"authorities": ["project.dashboard.enter"]',
+        '"projection_only": True',
+        '"compatibility_only": True',
+        '"no_business_fact_authority": True',
+        '"deprecated": True',
+        '"deprecated_replacement_intent": "project.dashboard.enter"',
+    }
+    errors: list[str] = []
+    for fragment in sorted(required_fragments):
+        if text.count(fragment) != 1:
+            errors.append(
+                "smart_construction_core: project.dashboard.open must remain a single "
+                f"deprecated proxy to project.dashboard.enter, missing anchor {fragment!r}"
+            )
+    if "兼容别名" in text:
+        errors.append(
+            "smart_construction_core: project.dashboard.open description must use "
+            "historical-entry wording, not generic compatibility alias wording"
+        )
+    return errors
+
+
 def verify_runtime_comment_product_language_boundary() -> list[str]:
     errors: list[str] = []
     forbidden_tokens = (
@@ -1049,6 +1079,7 @@ def main() -> int:
     errors.extend(verify_static_style_product_language_boundary())
     errors.extend(verify_capability_registry_role_boundary())
     errors.extend(verify_handler_product_language_boundary())
+    errors.extend(verify_project_dashboard_open_alias_boundary())
     errors.extend(verify_runtime_comment_product_language_boundary())
     errors.extend(verify_portal_controller_exception_observability())
     errors.extend(verify_app_entry_exception_observability())

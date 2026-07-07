@@ -12,7 +12,7 @@ from odoo.addons.smart_construction_core.handlers.project_context_resolver impor
 
 class ProjectDashboardOpenHandler(ProjectContextResolverMixin, BaseIntentHandler):
     INTENT_TYPE = "project.dashboard.open"
-    DESCRIPTION = "兼容别名：转发到 project.dashboard.enter"
+    DESCRIPTION = "历史入口转发到 project.dashboard.enter"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]
