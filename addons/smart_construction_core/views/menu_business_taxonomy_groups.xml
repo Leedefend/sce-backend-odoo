@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        Early placeholders for taxonomy submenus referenced by support views.
+        Predeclare taxonomy submenu XMLIDs referenced by support views.
         The full taxonomy file loaded later may refine names, actions, sequences,
-        and group restrictions, but fresh installs need these xmlids available
+        and group restrictions, while fresh installs keep these XMLIDs available
         before historical support views are parsed.
     -->
     <menuitem id="menu_sc_tender_management_group"
