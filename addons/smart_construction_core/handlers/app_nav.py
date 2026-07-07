@@ -41,7 +41,7 @@ def _headers(request) -> Dict[str, Any]:
         if headers:
             return dict(headers)
     except Exception:
-        pass
+        _logger.debug("Unable to read app navigation request headers.", exc_info=True)
     return {}
 
 class AppNavHandler(BaseIntentHandler):

@@ -173,7 +173,7 @@ def _current_plan(env) -> str:
         if callable(plan_fn):
             return str(plan_fn() or "base")
     except Exception:
-        pass
+        _logger.debug("Unable to resolve tenant plan for app catalog.", exc_info=True)
     return "base"
 
 def _feature_flags_for_user(env) -> Set[str]:
@@ -186,7 +186,7 @@ def _feature_flags_for_user(env) -> Set[str]:
         if callable(flags_for):
             return set(flags_for(env.user) or [])
     except Exception:
-        pass
+        _logger.debug("Unable to resolve feature flags for app catalog.", exc_info=True)
     return set()
 
 def _feature_visible(env, su_env, f: Dict[str,Any], visible_mids: Set[int], perms: Set[str]) -> bool:

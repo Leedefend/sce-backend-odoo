@@ -267,6 +267,24 @@ def verify_portal_controller_exception_observability() -> list[str]:
     ]
 
 
+def verify_app_entry_exception_observability() -> list[str]:
+    errors: list[str] = []
+    guarded_paths = (
+        ADDONS / "smart_construction_core" / "handlers" / "app_nav.py",
+        ADDONS / "smart_construction_core" / "handlers" / "app_catalog.py",
+    )
+    for path in guarded_paths:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "except Exception:\n        pass" in text:
+            errors.append(
+                "smart_construction_core: app catalog/navigation entry fallbacks must log "
+                f"exception degradation at debug level: {path.relative_to(ROOT).as_posix()}"
+            )
+    return errors
+
+
 def verify_core_docs_product_examples() -> list[str]:
     errors: list[str] = []
     docs_dir = ADDONS / "smart_construction_core" / "docs"
@@ -438,6 +456,7 @@ def main() -> int:
     errors.extend(verify_handler_product_language_boundary())
     errors.extend(verify_runtime_comment_product_language_boundary())
     errors.extend(verify_portal_controller_exception_observability())
+    errors.extend(verify_app_entry_exception_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_core_extension_legacy_label_boundary())
