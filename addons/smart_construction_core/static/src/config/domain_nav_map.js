@@ -83,14 +83,14 @@ export const PINNED_ENTRIES = [
     name: "工作台",
     icon: "W",
     action_xmlid: "smart_construction_core.action_sc_project_workbench",
-    tag: "试点",
+    tag: "常用",
   },
   {
     key: "dashboard",
     name: "项目看板",
     icon: "B",
     menu_xmlid: "smart_construction_core.menu_sc_project_dashboard",
-    tag: "试点",
+    tag: "常用",
   },
   {
     key: "todo",

@@ -183,6 +183,15 @@ def verify_portal_execute_demo_boundary() -> list[str]:
     return errors
 
 
+def verify_static_navigation_product_labels() -> list[str]:
+    errors: list[str] = []
+    nav_map = ADDONS / "smart_construction_core" / "static/src/config/domain_nav_map.js"
+    text = nav_map.read_text(encoding="utf-8") if nav_map.is_file() else ""
+    if 'tag: "试点"' in text or "tag: '试点'" in text:
+        errors.append("smart_construction_core: pinned navigation entries must not be labeled as pilot")
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     errors.extend(verify_manifest_shape())
@@ -190,6 +199,7 @@ def main() -> int:
     errors.extend(verify_custom_user_payload_boundary())
     errors.extend(verify_python_package_boundaries())
     errors.extend(verify_portal_execute_demo_boundary())
+    errors.extend(verify_static_navigation_product_labels())
 
     if errors:
         print("[industry_module_product_boundary_guard] FAIL", file=sys.stderr)
