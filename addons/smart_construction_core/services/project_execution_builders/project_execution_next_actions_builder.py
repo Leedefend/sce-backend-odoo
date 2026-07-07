@@ -58,21 +58,21 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
             action["reason_code"] = "EXECUTION_TASK_MISSING"
             action["hint"] = "当前状态：执行任务缺失。下一步：先在 Odoo 项目任务中创建或准备任务。"
         else:
-            pilot = guard.pilot_precheck(project)
-            pilot_summary = pilot.get("summary") if isinstance(pilot.get("summary"), dict) else {}
+            readiness = guard.readiness_precheck(project)
+            readiness_summary = readiness.get("summary") if isinstance(readiness.get("summary"), dict) else {}
             scope_ok, scope_reason_code, summary = guard.validate_scope(
                 project,
                 from_state=current_state,
                 to_state=str(action.get("target_state") or current_state),
             )
             alignment_ok, alignment_reason_code, _ = guard.validate_state_alignment(project)
-            pilot_ok = str(pilot_summary.get("overall_state") or "") == "ready"
-            pilot_reason_code = str(pilot_summary.get("primary_reason_code") or "")
-            pilot_message = str(pilot_summary.get("primary_message") or "")
-            if not pilot_ok:
+            readiness_ok = str(readiness_summary.get("overall_state") or "") == "ready"
+            readiness_reason_code = str(readiness_summary.get("primary_reason_code") or "")
+            readiness_message = str(readiness_summary.get("primary_message") or "")
+            if not readiness_ok:
                 action["state"] = "blocked"
-                action["reason_code"] = pilot_reason_code or "PILOT_PRECHECK_BLOCKED"
-                action["hint"] = pilot_message or "当前未通过试点前检查，请先处理阻断项。"
+                action["reason_code"] = readiness_reason_code or "READINESS_PRECHECK_BLOCKED"
+                action["hint"] = readiness_message or "当前未通过上线前检查，请先处理阻断项。"
             elif not scope_ok:
                 action["state"] = "blocked"
                 action["reason_code"] = scope_reason_code
@@ -82,17 +82,17 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
                 action["reason_code"] = alignment_reason_code
                 action["hint"] = "当前 project/task 状态不一致，请先校正后再推进。"
             followup_count = int(summary.get("followup_activity_count") or 0)
-            consistency_state = "consistent" if pilot_ok and scope_ok and (alignment_ok or current_state == "ready") else "blocked"
-            consistency_reason_code = "" if consistency_state == "consistent" else (pilot_reason_code or scope_reason_code or alignment_reason_code)
-            pilot_state = str(pilot_summary.get("overall_state") or "blocked")
-            pilot_failed_count = int(pilot_summary.get("failed_count") or 0)
-            pilot_primary_reason_code = pilot_reason_code
-            pilot_primary_message = pilot_message
+            consistency_state = "consistent" if readiness_ok and scope_ok and (alignment_ok or current_state == "ready") else "blocked"
+            consistency_reason_code = "" if consistency_state == "consistent" else (readiness_reason_code or scope_reason_code or alignment_reason_code)
+            readiness_state = str(readiness_summary.get("overall_state") or "blocked")
+            readiness_failed_count = int(readiness_summary.get("failed_count") or 0)
+            readiness_primary_reason_code = readiness_reason_code
+            readiness_primary_message = readiness_message
         if task_total <= 0:
-            pilot_state = "blocked"
-            pilot_failed_count = 1
-            pilot_primary_reason_code = "EXECUTION_TASK_MISSING"
-            pilot_primary_message = "请先创建项目根任务，并确保仅保留一个开放任务。"
+            readiness_state = "blocked"
+            readiness_failed_count = 1
+            readiness_primary_reason_code = "EXECUTION_TASK_MISSING"
+            readiness_primary_message = "请先创建项目根任务，并确保仅保留一个开放任务。"
         actions = [
             self._next_action(
                 project=project,
@@ -203,10 +203,14 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
                     "consistency_state": consistency_state,
                     "consistency_reason_code": consistency_reason_code,
                     "execution_scope": ProjectExecutionConsistencyGuard.SCOPE,
-                    "pilot_precheck_state": pilot_state,
-                    "pilot_failed_count": pilot_failed_count,
-                    "pilot_primary_reason_code": pilot_primary_reason_code,
-                    "pilot_primary_message": pilot_primary_message,
+                    "readiness_precheck_state": readiness_state,
+                    "readiness_failed_count": readiness_failed_count,
+                    "readiness_primary_reason_code": readiness_primary_reason_code,
+                    "readiness_primary_message": readiness_primary_message,
+                    "pilot_precheck_state": readiness_state,
+                    "pilot_failed_count": readiness_failed_count,
+                    "pilot_primary_reason_code": readiness_primary_reason_code,
+                    "pilot_primary_message": readiness_primary_message,
                 },
             },
         )

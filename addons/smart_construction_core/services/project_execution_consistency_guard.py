@@ -134,7 +134,7 @@ class ProjectExecutionConsistencyGuard:
             return False, "EXECUTION_PROJECT_ACTIVITY_DRIFT", summary
         return True, "", summary
 
-    def pilot_precheck(self, project) -> dict:
+    def readiness_precheck(self, project) -> dict:
         summary = self.summary(project)
         field_summary = self._required_project_field_summary(project)
         alignment_ok, alignment_reason_code, _ = self.validate_state_alignment(project)
@@ -148,21 +148,21 @@ class ProjectExecutionConsistencyGuard:
                 "key": "root_task",
                 "label": "根任务已初始化",
                 "status": "pass" if int(summary.get("root_task_count") or 0) >= 1 else "fail",
-                "reason_code": "" if int(summary.get("root_task_count") or 0) >= 1 else "PILOT_ROOT_TASK_MISSING",
+                "reason_code": "" if int(summary.get("root_task_count") or 0) >= 1 else "READINESS_ROOT_TASK_MISSING",
                 "message": "已检测到项目根任务。"
                 if int(summary.get("root_task_count") or 0) >= 1
-                else "试点前必须至少存在一个项目根任务。",
+                else "上线前必须至少存在一个项目根任务。",
             },
             {
                 "key": "single_open_task",
                 "label": "单开放任务约束",
                 "status": "pass" if single_open_ok else "fail",
-                "reason_code": "" if single_open_ok else "PILOT_SINGLE_OPEN_TASK_REQUIRED",
+                "reason_code": "" if single_open_ok else "READINESS_SINGLE_OPEN_TASK_REQUIRED",
                 "message": "当前满足 single_open_task_only。"
                 if open_count == 1
                 else "当前执行已完成，开放任务已归零。"
                 if execution_state == "done" and open_count == 0
-                else "试点版只允许 1 个开放任务，请收口到单任务后再推进。",
+                else "当前执行准备只允许 1 个开放任务，请收口到单任务后再推进。",
             },
             {
                 "key": "execution_task_consistency",
@@ -177,8 +177,8 @@ class ProjectExecutionConsistencyGuard:
                 "key": "required_fields",
                 "label": "关键字段完整",
                 "status": "pass" if not field_summary["missing_fields"] else "fail",
-                "reason_code": "" if not field_summary["missing_fields"] else "PILOT_REQUIRED_FIELDS_MISSING",
-                "message": "试点必填字段已完整。"
+                "reason_code": "" if not field_summary["missing_fields"] else "READINESS_REQUIRED_FIELDS_MISSING",
+                "message": "上线前必填字段已完整。"
                 if not field_summary["missing_fields"]
                 else "仍缺少关键字段：%s。"
                 % "、".join(str(item.get("label") or item.get("field") or "") for item in field_summary["missing"]),
@@ -194,14 +194,14 @@ class ProjectExecutionConsistencyGuard:
             },
             {
                 "key": "lifecycle_state",
-                "label": "项目生命周期允许试点",
+                "label": "项目生命周期允许执行上线",
                 "status": "pass" if lifecycle_state not in {"paused", "closed", "done", "closing", "warranty"} else "fail",
                 "reason_code": ""
                 if lifecycle_state not in {"paused", "closed", "done", "closing", "warranty"}
-                else "PILOT_LIFECYCLE_STATE_BLOCKED",
-                "message": "当前生命周期允许试点推进。"
+                else "READINESS_LIFECYCLE_STATE_BLOCKED",
+                "message": "当前生命周期允许执行上线推进。"
                 if lifecycle_state not in {"paused", "closed", "done", "closing", "warranty"}
-                else "当前项目生命周期不允许作为 v0.1 首轮试点。",
+                else "当前项目生命周期不允许进入执行上线。",
             },
         ]
         failed = [item for item in checks if str(item.get("status") or "") != "pass"]
@@ -215,11 +215,14 @@ class ProjectExecutionConsistencyGuard:
                 "failed_count": len(failed),
                 "failed_reason_codes": [str(item.get("reason_code") or "") for item in failed if str(item.get("reason_code") or "")],
                 "primary_reason_code": str(primary.get("reason_code") or ""),
-                "primary_message": str(primary.get("message") or "试点前检查通过，可进入首轮试点。"),
+                "primary_message": str(primary.get("message") or "上线前检查通过，可进入执行推进。"),
                 "missing_fields": list(field_summary["missing_fields"]),
                 "single_open_task_only": True,
             },
         }
+
+    def pilot_precheck(self, project) -> dict:
+        return self.readiness_precheck(project)
 
     def reconcile_followup_activity(self, project, *, project_state: str | None = None) -> tuple[bool, str, dict]:
         if not project or not hasattr(project, "activity_schedule"):

@@ -21,7 +21,8 @@ class ProjectExecutionService:
     )
     RUNTIME_BLOCK_MAP = {
         "execution_tasks": "block.project.execution_tasks",
-        "pilot_precheck": "block.project.execution_pilot_precheck",
+        "readiness_precheck": "block.project.execution_readiness_precheck",
+        "pilot_precheck": "block.project.execution_readiness_precheck",
         "next_actions": "block.project.execution_next_actions",
     }
 

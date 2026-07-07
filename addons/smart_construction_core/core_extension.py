@@ -4189,7 +4189,7 @@ def smart_core_scene_entry_orchestrator_specs(env):
             "entry_summary_keys": common_project_summary + ("date_start", "date_end"),
             "entry_blocks": (
                 ("execution_tasks", "执行任务", "deferred"),
-                ("pilot_precheck", "上线前检查", "deferred"),
+                ("readiness_precheck", "上线前检查", "deferred"),
                 ("next_actions", "下一步动作", "deferred"),
             ),
         },
