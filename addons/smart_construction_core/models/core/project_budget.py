@@ -5,7 +5,7 @@ from odoo import fields, models
 class ProjectBudget(models.Model):
     _name = "project.budget"
     _inherit = ["project.budget", "mail.thread", "mail.activity.mixin"]
-    # 兼容旧视图/列表的 active 字段，代理到 is_active，避免缺少数据库列报错
+    # 历史 active 字段代理到 is_active，避免既有视图缺少数据库列报错。
     active = fields.Boolean(related="is_active", string="启用", readonly=False, store=False)
     target_type = fields.Selection(
         [("investment", "投资目标"), ("drawing_budget", "施工图预算"), ("contract_plan", "合约规划"), ("dynamic_cost", "动态成本")],
@@ -98,10 +98,10 @@ class ProjectBudgetLine(models.Model):
         "project.budget.cost.alloc",
         "budget_boq_line_id",
         string="成本分摊",
-        help="记录该清单行如何拆值到不同成本科目（兼容旧版视图）",
+        help="记录该清单行如何拆值到不同成本科目。",
     )
 
-    # 兼容旧版：预算说明
+    # 历史预算说明字段。
     note = fields.Text(string="备注")
     uom_id = fields.Many2one(
         "uom.uom",

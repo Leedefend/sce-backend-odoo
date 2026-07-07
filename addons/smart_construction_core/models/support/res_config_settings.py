@@ -13,13 +13,13 @@ class ResConfigSettings(models.TransientModel):
     is_installed_sale = fields.Boolean(
         string="销售模块安装状态",
         readonly=True,
-        help="兼容设置页中对销售模块安装状态的引用；真实安装状态以当前环境为准。",
+        help="设置页中对销售模块安装状态的引用；真实安装状态以当前环境为准。",
     )
 
     days_to_purchase = fields.Float(
         string="采购交期天数",
         readonly=True,
-        help="兼容设置页中对采购交期字段的引用；"
+        help="设置页中对采购交期字段的引用；"
              "未安装采购库存模块时不会实际生效。",
     )
 

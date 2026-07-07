@@ -361,7 +361,7 @@ class ProjectBoqLine(models.Model):
         string="行类型",
         default="item",
         index=True,
-        help="major/ division 为系统生成的节点；item 为实际清单行；group 兼容旧数据。",
+        help="major/division 为系统生成的节点；item 为实际清单行；group 为历史汇总行。",
     )
 
     @api.depends("parent_path")
