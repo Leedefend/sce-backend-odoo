@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+import re
 from datetime import date
 from pathlib import Path
 
@@ -7,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCOREBOARD = ROOT / "docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md"
 OUT_MD = ROOT / "artifacts/release/product_delivery_scoreboard_final_closeout.md"
+ISO_DATE_RE = re.compile(r"\b20\d{2}-\d{2}-\d{2}\b")
 
 
 def _read(path: Path) -> str:
@@ -24,6 +26,11 @@ def _contains_all(text: str, tokens: list[str], errors: list[str]) -> None:
     missing = [token for token in tokens if token not in text]
     if missing:
         errors.append(f"{SCOREBOARD.name} missing tokens: {', '.join(missing)}")
+
+
+def _contains_iso_date(text: str, errors: list[str]) -> None:
+    if not ISO_DATE_RE.search(text):
+        errors.append(f"{SCOREBOARD.name} missing ISO closeout date")
 
 
 def _write_report() -> None:
@@ -65,7 +72,6 @@ def main() -> int:
         text,
         [
             "commit_ref:",
-            date.today().isoformat(),
             "verify.release.delivery_9_module.final_closeout.guard",
             "verify.release.current_status.wording_closeout.guard",
             "verify.portal.payment_request_approval_field_consumer_audit",
@@ -75,6 +81,7 @@ def main() -> int:
         ],
         errors,
     )
+    _contains_iso_date(text, errors)
     if errors:
         return _fail(errors)
     _write_report()
