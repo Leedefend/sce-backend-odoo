@@ -248,7 +248,7 @@ endef
 # ======================================================
 # ==================== Guards ==========================
 # ======================================================
-.PHONY: check-compose-project check.compose.project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config env.print.db env.matrix.check
+.PHONY: check-compose-project check.compose.project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config env.print.db env.matrix.check verify.daily_dev.runtime_repo.clean
 
 IS_PROD := 0
 ifneq (,$(filter prod,$(ENV)))
@@ -410,6 +410,9 @@ env.matrix.check:
 	  exit 2; \
 	fi; \
 	echo "✅ [env.matrix.check] PASS"
+
+verify.daily_dev.runtime_repo.clean:
+	@bash scripts/ops/daily_dev_runtime_repo_guard.sh
 
 gate.compose.config: check-compose-env
 	@echo "[gate.compose.config] checking container_name..."
