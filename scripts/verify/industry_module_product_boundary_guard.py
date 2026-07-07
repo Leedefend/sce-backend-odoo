@@ -511,7 +511,6 @@ def verify_core_runtime_demo_residual_allowlist() -> list[str]:
             "action_portal_demo_ping",
             "demo_",
             "_demo",
-            "演示",
         },
     }
     forbidden_tokens = ("demo_", "_demo", "sc_demo", "Demo", "演示", "试点")

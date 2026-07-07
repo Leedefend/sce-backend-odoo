@@ -96,7 +96,7 @@ def _registry():
             "action_portal_demo_ping": {
                 "code": "portal_ping_legacy",
                 "label": "执行门户动作",
-                "desc": "兼容旧门户演示动作入口",
+                "desc": "兼容历史门户动作入口",
             }
         }
     }
