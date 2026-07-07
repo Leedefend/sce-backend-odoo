@@ -147,6 +147,16 @@ def _check_record(path: Path) -> list[str]:
                 errors.append(f"{rel}: full-tree release missing git authority evidence: {token}")
     if full_tree_checked and "全量代码树差异 | `0`" not in text:
         errors.append(f"{rel}: full-tree alignment checked without zero full-tree diff evidence")
+    if full_tree_checked and not is_full_tree_release:
+        errors.append(f"{rel}: full-tree alignment checked but release type is not full tree")
+    module_version_checked = (
+        "- [x] 生产模块版本已达到目标版本。" in text
+        or "- [x] 生产模块版本已达到本次发布目标。" in text
+    )
+    if full_tree_checked and not module_version_checked:
+        errors.append(f"{rel}: full-tree alignment checked without module-version target evidence")
+    if full_tree_checked and "模块版本差异 | `PASS`" not in text:
+        errors.append(f"{rel}: full-tree alignment checked without module-version diff PASS evidence")
     if full_tree_unchecked and "生产与日常开发服务器不是全量一致" not in text:
         errors.append(f"{rel}: full-tree alignment unchecked but non-full-alignment statement missing")
 
