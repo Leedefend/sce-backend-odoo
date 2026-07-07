@@ -125,6 +125,7 @@ VERIFY_README_TOKENS = (
     "production read-only business readiness gate",
     "`make verify.production_git.authority.guard`",
     "Verifies the production Git work tree authority baseline",
+    "Does not use Odoo, Docker Compose, or `PROD_READONLY_VERIFY`",
 )
 
 DEPLOY_RUNBOOK_TOKENS = (

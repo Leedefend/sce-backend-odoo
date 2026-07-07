@@ -288,6 +288,7 @@
 - `make verify.production_git.authority.guard`
   - Verifies the production Git work tree authority baseline.
   - Checks the work tree is on `main`, `HEAD` equals `origin/main`, `git status --porcelain` is clean, and the configured remote can read `main`.
+  - Does not use Odoo, Docker Compose, or `PROD_READONLY_VERIFY`; it is a host Git/worktree authority check controlled by `PRODUCTION_GIT_AUTHORITY_*` environment variables.
   - In production, run with `PRODUCTION_GIT_AUTHORITY_REQUIRE_ENV_SKIP=1` so `.env.prod` must be explicitly protected by `skip-worktree`.
   - A `remote_auth_ok=false` failure means the current commit may still be aligned through bundle/release package, but the server is not yet ready for standard autonomous `git fetch origin main` production upgrades.
 - `make verify.scene.product_delivery.readiness.guard`

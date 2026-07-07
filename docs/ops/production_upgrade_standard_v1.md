@@ -136,6 +136,8 @@ PRODUCTION_GIT_AUTHORITY_REQUIRE_ENV_SKIP=1 \
 `make verify.production_git.authority.guard` 只读检查生产工作区是否在 `main`、`HEAD`
 是否等于 `origin/main`、工作区是否干净、`.env.prod` 是否作为生产配置例外被
 `skip-worktree` 保护，以及生产服务器是否具备直接从 GitHub 只读拉取主线的能力。
+该检查不连接 Odoo 或 Docker Compose，不使用 `PROD_READONLY_VERIFY`；其运行边界由
+`PRODUCTION_GIT_AUTHORITY_*` 环境变量控制。
 如果 `git_auth` 失败，不能把生产服务器声明为长期可自治升级状态；只能声明当前
 commit 已对齐，并必须补齐 deploy key。
 
