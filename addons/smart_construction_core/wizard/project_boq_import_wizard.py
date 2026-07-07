@@ -1441,7 +1441,7 @@ class RowParser:
         self.wizard = wizard
 
     def parse_row(self, raw_row, col_map):
-        """返回原始行，供后续按类别定制。"""
+        """返回原始行，供类别化解析扩展使用。"""
         return raw_row
 
 
