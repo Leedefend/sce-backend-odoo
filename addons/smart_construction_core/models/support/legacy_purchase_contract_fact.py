@@ -147,7 +147,7 @@ class ScLegacyPurchaseContractFact(models.Model):
         for rec in self:
             if rec.state == "submit":
                 if policy_model.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
-                    raise UserError(_("历史采购/一般合同事实尚未完成兼容审批流程。"))
+                    raise UserError(_("历史采购/一般合同事实尚未完成历史事实审批恢复流程。"))
                 policy = policy_model.get_active_policy(rec._name, company=rec.company_id)
                 if policy and not policy_model.is_approval_required(rec._name, company=rec.company_id):
                     policy.assert_user_can_approve()
@@ -160,9 +160,9 @@ class ScLegacyPurchaseContractFact(models.Model):
         elif not self.review_ids or self.validation_status == "no":
             reviews = self.request_validation()
             if not reviews:
-                raise UserError(_("历史采购/一般合同事实已启用兼容审批，但没有匹配的统一审批规则，请检查业务审批配置。"))
+                raise UserError(_("历史采购/一般合同事实已启用历史事实审批恢复，但没有匹配的统一审批规则，请检查业务审批配置。"))
         else:
-            raise UserError(_("历史采购/一般合同事实已经在兼容审批流程中，请等待审批完成。"))
+            raise UserError(_("历史采购/一般合同事实已经在历史事实审批恢复流程中，请等待审批完成。"))
 
     def _check_state_from_condition(self):
         self.ensure_one()
@@ -182,7 +182,7 @@ class ScLegacyPurchaseContractFact(models.Model):
             if rec.state != "submit":
                 continue
             if rec.validation_status != "validated":
-                raise UserError(_("历史采购/一般合同事实尚未完成兼容审批流程。"))
+                raise UserError(_("历史采购/一般合同事实尚未完成历史事实审批恢复流程。"))
             rec.with_context(skip_validation_check=True).write({"state": "approved", "reject_reason": False})
 
     def action_on_tier_rejected(self, reason=None):

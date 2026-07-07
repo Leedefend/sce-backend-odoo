@@ -1094,6 +1094,43 @@ def verify_sc_workflow_historical_runtime_boundary() -> list[str]:
     return errors
 
 
+def verify_legacy_purchase_contract_recovery_approval_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_core" / "models" / "support" / "legacy_purchase_contract_fact.py"
+    if not path.is_file():
+        return ["smart_construction_core: legacy purchase contract fact model missing"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    required_fragments = {
+        "allow_legacy_contract_workflow",
+        "历史采购/一般合同事实只作为旧库承载，不再发起新系统审批。",
+        "历史采购/一般合同事实尚未完成历史事实审批恢复流程。",
+        "历史采购/一般合同事实已启用历史事实审批恢复，但没有匹配的统一审批规则，请检查业务审批配置。",
+        "历史采购/一般合同事实已经在历史事实审批恢复流程中，请等待审批完成。",
+    }
+    errors: list[str] = []
+    for fragment in sorted(required_fragments):
+        if text.count(fragment) < 1:
+            errors.append(
+                "smart_construction_core: legacy purchase contract approval recovery "
+                f"boundary missing anchor {fragment!r}"
+            )
+    if text.count("历史采购/一般合同事实尚未完成历史事实审批恢复流程。") != 2:
+        errors.append(
+            "smart_construction_core: legacy purchase contract approval recovery "
+            "must guard both manual approval and tier callback paths"
+        )
+    forbidden_fragments = (
+        "兼容审批流程",
+        "兼容审批",
+    )
+    for fragment in forbidden_fragments:
+        if fragment in text:
+            errors.append(
+                "smart_construction_core: legacy purchase contract fact must use "
+                f"historical approval recovery wording, not generic compatibility wording {fragment!r}"
+            )
+    return errors
+
+
 def verify_platform_admin_facade_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "services" / "platform_admin.py"
     if not path.is_file():
@@ -1346,6 +1383,7 @@ def main() -> int:
     errors.extend(verify_work_breakdown_historical_facade_boundary())
     errors.extend(verify_state_machine_historical_alias_boundary())
     errors.extend(verify_sc_workflow_historical_runtime_boundary())
+    errors.extend(verify_legacy_purchase_contract_recovery_approval_boundary())
     errors.extend(verify_platform_admin_facade_boundary())
     errors.extend(verify_project_showcase_legacy_alias_boundary())
     errors.extend(verify_core_extension_legacy_label_boundary())
