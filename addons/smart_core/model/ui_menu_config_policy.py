@@ -12,14 +12,10 @@ from odoo.addons.smart_core.utils.backend_contract_boundaries import (
     MENU_CONFIG_RUNTIME_SOURCE_CONTRACT,
     MENU_CONFIG_RUNTIME_SOURCE_POLICY,
 )
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 _PROTECTED_NODE_EXCLUDED_FINGERPRINT_TOKENS: set[str] = set()
-
-_CONFIG_ONLY_RECOVERY_MENU_XMLIDS = frozenset({
-    "smart_construction_core.menu_sc_business_config_center",
-    "smart_construction_core.menu_sc_business_config_workbench",
-    "smart_construction_core.menu_ui_menu_config_policy_business_config",
-}) | LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS
+LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS_PARAM = "smart_core.lowcode.system_config_menu_xmlids"
 
 
 def register_protected_node_excluded_fingerprint_token(token: str) -> None:
@@ -30,6 +26,28 @@ def register_protected_node_excluded_fingerprint_token(token: str) -> None:
 
 def protected_node_excluded_fingerprint_tokens() -> tuple[str, ...]:
     return tuple(sorted(_PROTECTED_NODE_EXCLUDED_FINGERPRINT_TOKENS))
+
+
+def _split_xmlid_list(raw) -> set[str]:
+    if isinstance(raw, str):
+        values = raw.split(",")
+    elif isinstance(raw, (list, tuple, set, frozenset)):
+        values = raw
+    else:
+        values = ()
+    return {str(value or "").strip() for value in values if str(value or "").strip()}
+
+
+def _lowcode_system_config_menu_xmlids(env) -> frozenset[str]:
+    xmlids = set(LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS)
+    hook_xmlids = call_extension_hook_first(env, "smart_core_lowcode_system_config_menu_xmlids", env)
+    xmlids.update(_split_xmlid_list(hook_xmlids))
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param(LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS_PARAM, "") or ""
+    except Exception:
+        raw = ""
+    xmlids.update(_split_xmlid_list(raw))
+    return frozenset(xmlids)
 
 
 def _to_int(value) -> int:
@@ -476,12 +494,15 @@ class UiMenuConfigPolicy(models.Model):
             if protected_config_menu_xmlids_by_id_cache is not None:
                 return protected_config_menu_xmlids_by_id_cache
             protected_config_menu_xmlids_by_id_cache = {}
+            protected_xmlids = _lowcode_system_config_menu_xmlids(self.env)
+            if not protected_xmlids:
+                return protected_config_menu_xmlids_by_id_cache
             try:
                 ModelData = self.env["ir.model.data"].sudo()
             except Exception:
                 return protected_config_menu_xmlids_by_id_cache
-            modules = {xmlid.split(".", 1)[0] for xmlid in LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS}
-            names = {xmlid.split(".", 1)[1] for xmlid in LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS}
+            modules = {xmlid.split(".", 1)[0] for xmlid in protected_xmlids if "." in xmlid}
+            names = {xmlid.split(".", 1)[1] for xmlid in protected_xmlids if "." in xmlid}
             try:
                 rows = ModelData.search([
                     ("model", "=", "ir.ui.menu"),
@@ -493,7 +514,7 @@ class UiMenuConfigPolicy(models.Model):
             for row in rows or []:
                 xmlid = "%s.%s" % (str(getattr(row, "module", "") or ""), str(getattr(row, "name", "") or ""))
                 menu_id = _to_int(getattr(row, "res_id", 0))
-                if xmlid in LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS and menu_id:
+                if xmlid in protected_xmlids and menu_id:
                     protected_config_menu_xmlids_by_id_cache[menu_id] = xmlid
             return protected_config_menu_xmlids_by_id_cache
 
@@ -510,7 +531,7 @@ class UiMenuConfigPolicy(models.Model):
 
         def is_protected_runtime_config_xmlid(xmlid: str) -> bool:
             xmlid = str(xmlid or "").strip()
-            if xmlid not in LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS:
+            if xmlid not in _lowcode_system_config_menu_xmlids(self.env):
                 return False
             for menu_id, candidate_xmlid in protected_config_menu_xmlids_by_id().items():
                 if candidate_xmlid == xmlid:
@@ -524,12 +545,15 @@ class UiMenuConfigPolicy(models.Model):
             if config_only_recovery_menu_xmlids_by_id_cache is not None:
                 return config_only_recovery_menu_xmlids_by_id_cache
             config_only_recovery_menu_xmlids_by_id_cache = {}
+            recovery_xmlids = _lowcode_system_config_menu_xmlids(self.env)
+            if not recovery_xmlids:
+                return config_only_recovery_menu_xmlids_by_id_cache
             try:
                 ModelData = self.env["ir.model.data"].sudo()
             except Exception:
                 return config_only_recovery_menu_xmlids_by_id_cache
-            modules = {xmlid.split(".", 1)[0] for xmlid in _CONFIG_ONLY_RECOVERY_MENU_XMLIDS}
-            names = {xmlid.split(".", 1)[1] for xmlid in _CONFIG_ONLY_RECOVERY_MENU_XMLIDS}
+            modules = {xmlid.split(".", 1)[0] for xmlid in recovery_xmlids if "." in xmlid}
+            names = {xmlid.split(".", 1)[1] for xmlid in recovery_xmlids if "." in xmlid}
             try:
                 rows = ModelData.search([
                     ("model", "=", "ir.ui.menu"),
@@ -541,7 +565,7 @@ class UiMenuConfigPolicy(models.Model):
             for row in rows or []:
                 xmlid = "%s.%s" % (str(getattr(row, "module", "") or ""), str(getattr(row, "name", "") or ""))
                 menu_id = _to_int(getattr(row, "res_id", 0))
-                if xmlid in _CONFIG_ONLY_RECOVERY_MENU_XMLIDS and menu_id:
+                if xmlid in recovery_xmlids and menu_id:
                     config_only_recovery_menu_xmlids_by_id_cache[menu_id] = xmlid
             return config_only_recovery_menu_xmlids_by_id_cache
 

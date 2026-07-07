@@ -22,6 +22,17 @@ def _install_module(name, **attrs):
     return module
 
 
+def _lowcode_system_config_menu_xmlids_hook(env, hook_name, *args, **kwargs):
+    del env, args, kwargs
+    if hook_name != "smart_core_lowcode_system_config_menu_xmlids":
+        return None
+    return [
+        "smart_construction_core.menu_sc_business_config_center",
+        "smart_construction_core.menu_sc_business_config_workbench",
+        "smart_construction_core.menu_ui_menu_config_policy_business_config",
+    ]
+
+
 def _load_handler():
     root = Path(__file__).resolve().parents[1]
     exc_mod = _install_module(
@@ -1984,6 +1995,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
 
     def test_runtime_overlay_config_only_keeps_hidden_config_recovery_entries(self):
         module = _load_policy_model()
+        module.call_extension_hook_first = _lowcode_system_config_menu_xmlids_hook
         company = types.SimpleNamespace(id=7)
         user = _User([])
         root = _Menu(291, "智慧施工管理平台")
@@ -2091,6 +2103,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
 
     def test_runtime_overlay_config_recovery_entries_do_not_bypass_menu_acl(self):
         module = _load_policy_model()
+        module.call_extension_hook_first = _lowcode_system_config_menu_xmlids_hook
         company = types.SimpleNamespace(id=7)
         user = _User([])
         root = _Menu(291, "智慧施工管理平台")

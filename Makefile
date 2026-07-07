@@ -4551,7 +4551,8 @@ verify.runtime_contract.test_placeholder.guard: guard.prod.forbid check-compose-
 	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/runtime_contract_test_placeholder_guard.json artifacts/backend/runtime_contract_test_placeholder_guard.json >/dev/null
 
 .PHONY: verify.lowcode_config.boundary.guard
-verify.lowcode_config.boundary.guard: guard.prod.forbid
+verify.lowcode_config.boundary.guard: guard.prod.forbid verify.business_config.guard_inventory verify.smart_core.boundary_guard verify.app_config_engine.boundary_guard verify.view.orchestration_product_boundary_guard verify.view.orchestration_boundary_guard
+	@python3 -m py_compile scripts/verify/lowcode_config_boundary_guard.py
 	@python3 scripts/verify/lowcode_config_boundary_guard.py
 
 .PHONY: verify.lowcode_config.runtime_boundary.guard

@@ -327,6 +327,18 @@ def build_report() -> dict:
             "category": "runtime_protection",
             "message": "menu runtime overlay must use LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS",
         })
+    for token in (
+        "LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS_PARAM",
+        "smart_core_lowcode_system_config_menu_xmlids",
+        "call_extension_hook_first",
+        "_lowcode_system_config_menu_xmlids",
+    ):
+        if token not in runtime_text:
+            errors.append({
+                "category": "runtime_protection",
+                "message": "menu runtime overlay must load protected config menus through platform-neutral extension/config sources",
+                "token": token,
+            })
 
     boundary_text = _read(BOUNDARY_MODULE_PATH)
     if "ensure_lowcode_contract_source_status" not in boundary_text:
@@ -368,6 +380,26 @@ def build_report() -> dict:
         errors.append({
             "category": "custom_upgrade_source_status_backfill",
             "message": "custom module upgrades must backfill explicit low-code source_status",
+        })
+
+    construction_extension_text = _read(ROOT / "addons" / "smart_construction_core" / "core_extension.py")
+    construction_init_text = _read(ROOT / "addons" / "smart_construction_core" / "__init__.py")
+    for token in (
+        "def smart_core_lowcode_system_config_menu_xmlids",
+        "smart_construction_core.menu_sc_business_config_center",
+        "smart_construction_core.menu_sc_business_config_workbench",
+        "smart_construction_core.menu_ui_menu_config_policy_business_config",
+    ):
+        if token not in construction_extension_text:
+            errors.append({
+                "category": "industry_lowcode_config_recovery_hook",
+                "message": "industry module must declare its own low-code protected config recovery menus",
+                "token": token,
+            })
+    if "smart_core_lowcode_system_config_menu_xmlids" not in construction_init_text:
+        errors.append({
+            "category": "industry_lowcode_config_recovery_hook",
+            "message": "industry module must export the low-code protected config recovery menu hook",
         })
 
     makefile_text = _read(ROOT / "Makefile")

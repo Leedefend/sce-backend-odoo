@@ -134,6 +134,7 @@ Primary guard:
 Related guards:
 
 - `make verify.app_config_engine.boundary_guard`
+- `make verify.lowcode_config.boundary.guard`
 - `make verify.view.orchestration_product_boundary_guard`
 - `make verify.business_form.productization.audit`
 - `make verify.view.orchestration_boundary_guard`
@@ -147,3 +148,4 @@ The primary guard verifies:
 - production code does not introduce direct `smart_construction_core`, `industry_compatibility`, `legacy_construction`, `construction_source`, `construction.standard`, `智慧施工管理平台`, or `CONSTRUCTION_` defaults;
 - the boundary document preserves the neutral record context contract and its legacy project compatibility rule;
 - `app_config_engine` has its own local boundary document and guard.
+- the low-code platform boundary has a static aggregate gate before runtime/browser acceptance.

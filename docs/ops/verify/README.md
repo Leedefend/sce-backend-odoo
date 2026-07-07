@@ -54,6 +54,13 @@
   - Keeps the HTTP controller thin, enforces no-business-fact authority markers,
     checks native parse/view-orchestration ownership wording, and prevents
     industry-module references from silently expanding in the platform engine.
+- `make verify.lowcode_config.boundary.guard`
+  - Static low-code platform boundary gate for the productized configuration
+    surface before runtime/browser acceptance.
+  - Aggregates the low-code capability inventory, `smart_core` platform
+    boundary, `app_config_engine` runtime plumbing boundary, product
+    view-orchestration boundary, and full view-orchestration contract boundary,
+    then runs `lowcode_config_boundary_guard.py`.
 - `make verify.smart_core.boundary_guard`
   - Verifies `addons/smart_core` remains the platform kernel, not an industry
     business fact module.

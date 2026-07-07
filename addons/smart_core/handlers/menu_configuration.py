@@ -351,7 +351,11 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             product_key = _to_text(identity.get("product_key"))
             if product_key:
                 return product_key
-        return "construction.standard"
+        try:
+            configured = self.env["ir.config_parameter"].sudo().get_param("smart_core.default_product_key", "")
+        except Exception:
+            configured = ""
+        return _to_text(configured) or "default"
 
     def _formal_product_menu_scope_ids(self, root_menu_id: int) -> set[int]:
         if "sc.product.policy" not in self.env:
