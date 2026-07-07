@@ -310,7 +310,7 @@
         <field name="target_model">sc.dashboard.cockpit.fact；action_sc_cost_big_screen_delivery 按 fact_type=cost_cockpit 过滤。</field>
         <field name="carrier_status">ready</field>
         <field name="next_action">继续按用户验收样例抽查项目级成本大屏指标。</field>
-        <field name="evidence">2026-05-27 服务器 sc_demo：成本大屏 action 788，cost_cockpit 7802 条，金额/指标值合计 2,402,850,271.36；树视图字段合同已通过 dashboard contract 校验。</field>
+        <field name="evidence">2026-05-27 历史验证库：成本大屏 action 788，cost_cockpit 7802 条，金额/指标值合计 2,402,850,271.36；树视图字段合同已通过 dashboard contract 校验。</field>
     </record>
 
     <record id="legacy_report_inventory_operation_big_screen" model="sc.legacy.report.inventory">
@@ -324,6 +324,6 @@
         <field name="target_model">sc.operating.metrics.project；action_sc_operation_big_screen_delivery 提供 tree/form/pivot。</field>
         <field name="carrier_status">ready</field>
         <field name="next_action">继续按用户验收样例抽查项目级经营大屏指标。</field>
-        <field name="evidence">2026-05-27 服务器 sc_demo：经营大屏 action 789，项目指标 898 行；收款 2,364,111,397.18，销项开票 3,047,011,199.60，进项发票 2,576,085,176.79，扣款实缴 88,141,282.74，经营现金净额 1,706,698,383.70。</field>
+        <field name="evidence">2026-05-27 历史验证库：经营大屏 action 789，项目指标 898 行；收款 2,364,111,397.18，销项开票 3,047,011,199.60，进项发票 2,576,085,176.79，扣款实缴 88,141,282.74，经营现金净额 1,706,698,383.70。</field>
     </record>
 </odoo>

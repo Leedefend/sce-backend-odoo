@@ -51,10 +51,10 @@ FORBIDDEN_MANIFEST_XML = {
 }
 
 FORBIDDEN_PRODUCTION_TOKENS = {
-    "smart_construction_core": ("smart_construction_demo.", "sc_demo_", "Demo-", "演示项目"),
-    "smart_construction_bundle": ("smart_construction_demo.", "sc_demo_", "Demo-", "演示项目"),
-    "smart_construction_portal": ("smart_construction_demo.", "sc_demo_", "Demo-", "演示项目"),
-    "smart_construction_scene": ("smart_construction_demo.", "sc_demo_", "Demo-", "演示项目", "（演示）"),
+    "smart_construction_core": ("smart_construction_demo.", "sc_demo", "Demo-", "演示项目"),
+    "smart_construction_bundle": ("smart_construction_demo.", "sc_demo", "Demo-", "演示项目"),
+    "smart_construction_portal": ("smart_construction_demo.", "sc_demo", "Demo-", "演示项目"),
+    "smart_construction_scene": ("smart_construction_demo.", "sc_demo", "Demo-", "演示项目", "（演示）"),
 }
 
 ASSET_DIRS = ("data", "security", "views", "actions", "wizard")
