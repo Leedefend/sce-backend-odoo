@@ -1246,7 +1246,7 @@ class ProjectBoqImportWizard(models.TransientModel):
           每一段单独维护一个“层级栈”（stack: level -> record）；
         - 根据编码/名称/是否有数量，调用 _classify_line 得到 (line_type, level)；
         - level=0 无 parent，level>0 时 parent = stack[level-1]；
-        - 最后将当前记录放入 stack[level]，供后续行作为下级挂接。
+        - 最后将当前记录放入 stack[level]，供后面的行作为下级挂接。
         """
         if not vals_list:
             return 0
@@ -1316,7 +1316,7 @@ class ProjectBoqImportWizard(models.TransientModel):
                 parent = stack.get(level - 1)
                 rec.parent_id = parent.id if parent else False
 
-            # 记录当前层级最近一行，供后续子级挂接。
+            # 记录当前层级最近一行，供后面的子级挂接。
             stack[level] = rec
 
         return len(records)
@@ -1351,7 +1351,7 @@ class ProjectBoqImportWizard(models.TransientModel):
             #
             # 策略：
             # - 只要这一行有 code → 视为“费用汇总行”（group, level 1）
-            # - 同一表中，后续无 code 的行 → 视为该费用下的明细项（item, level 2）
+            # - 同一表中，随后无 code 的行 → 视为该费用下的明细项（item, level 2）
             # - “合计/本表合计”等仍按通用小计过滤逻辑跳过（在别处已经处理）
             if code:
                 return "group", 1
