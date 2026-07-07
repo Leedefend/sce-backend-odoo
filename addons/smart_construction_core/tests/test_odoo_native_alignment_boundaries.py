@@ -5,8 +5,10 @@ from odoo.addons.smart_construction_core.handlers.app_catalog import (
     APP_DELIVERY_FALLBACK_META,
     APP_DELIVERY_SOURCE_AUTHORITY,
 )
+from odoo.addons.smart_construction_core.handlers.approval_policy_configuration import ApprovalPolicyConfigGetHandler
 from odoo.addons.smart_construction_core.handlers.business_evidence_trace import BusinessEvidenceTraceHandler
 from odoo.addons.smart_construction_core.handlers.capability_describe import CapabilityDescribeHandler
+from odoo.addons.smart_construction_core.handlers.capability_visibility_report import CapabilityVisibilityReportHandler
 from odoo.addons.smart_construction_core.handlers.cost_tracking_block_fetch import CostTrackingBlockFetchHandler
 from odoo.addons.smart_construction_core.handlers.cost_tracking_enter import CostTrackingEnterHandler
 from odoo.addons.smart_construction_core.handlers.cost_tracking_record_create import CostTrackingRecordCreateHandler
@@ -32,6 +34,7 @@ from odoo.addons.smart_construction_core.handlers.project_plan_bootstrap_enter i
 from odoo.addons.smart_construction_core.handlers.risk_action_execute import RiskActionExecuteHandler
 from odoo.addons.smart_construction_core.handlers.settlement_slice_block_fetch import SettlementSliceBlockFetchHandler
 from odoo.addons.smart_construction_core.handlers.settlement_slice_enter import SettlementSliceEnterHandler
+from odoo.addons.smart_construction_core.handlers.system_ping_construction import SystemPingConstructionHandler
 from odoo.addons.smart_construction_core.handlers.telemetry_track import TelemetryTrackHandler
 from odoo.addons.smart_construction_core.handlers.workspace_home_enter import WorkspaceHomeEnterHandler
 from odoo.addons.smart_construction_core.services.dashboard_contract_builder import DashboardContractBuilder
@@ -170,6 +173,12 @@ class TestConstructionOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertTrue(APP_DELIVERY_FALLBACK_META.get("no_business_fact_authority"))
         self.assertEqual(CapabilityDescribeHandler.SOURCE_AUTHORITY.get("kind"), "capability_delivery_projection")
         self.assertTrue(CapabilityDescribeHandler.SOURCE_AUTHORITY.get("no_business_fact_authority"))
+        self.assertTrue(CapabilityVisibilityReportHandler.SOURCE_AUTHORITY.get("delivery_only"))
+        self.assertTrue(CapabilityVisibilityReportHandler.SOURCE_AUTHORITY.get("no_business_fact_authority"))
+        self.assertTrue(SystemPingConstructionHandler.SOURCE_AUTHORITY.get("observability_only"))
+        self.assertTrue(SystemPingConstructionHandler.SOURCE_AUTHORITY.get("no_business_fact_authority"))
+        self.assertTrue(ApprovalPolicyConfigGetHandler.source_authority_contract().get("projection_only"))
+        self.assertTrue(ApprovalPolicyConfigGetHandler.source_authority_contract().get("no_business_fact_authority"))
         self.assertTrue(TelemetryTrackHandler.SOURCE_AUTHORITY.get("observability_only"))
 
     def test_evidence_and_project_context_handlers_declare_projection_or_transition_authorities(self):
