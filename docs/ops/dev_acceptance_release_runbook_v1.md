@@ -25,6 +25,10 @@ filestore.
 - Target DB: `sc_demo`
 - Dev env file: `.env.dev`
 - Public dev URL: `http://<host>:18081/` unless nginx is deliberately rebound.
+- The daily development server's non-interactive shell startup files must be
+  compatible with `set -u`. In particular, `/etc/bash.bashrc` must not read
+  an unset `PS1`; use `${PS1:-}` in the non-interactive guard so release logs
+  are not polluted by shell startup noise.
 
 ## Required Sequence
 
@@ -135,3 +139,5 @@ frontend publication checks, API checks, and optional login/system.init results.
 - Filestore archive is missing or does not contain the target DB prefix.
 - Served frontend bundle defaults to the wrong app env or runtime DB.
 - `system.init` fails for the named acceptance user.
+- Non-interactive SSH release commands emit shell-startup errors before the
+  Makefile target begins.
