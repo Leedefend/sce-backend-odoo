@@ -23,7 +23,7 @@ class ScLegacyMaterialCategory(models.Model):
     active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_category_id_unique", "unique(legacy_category_id)", "Legacy material category id must be unique."),
+        ("legacy_category_id_unique", "unique(legacy_category_id)", "历史物资分类记录必须唯一。"),
     ]
 
 
@@ -75,7 +75,7 @@ class ScLegacyMaterialDetail(models.Model):
     active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_material_id_unique", "unique(legacy_material_id)", "Legacy material id must be unique."),
+        ("legacy_material_id_unique", "unique(legacy_material_id)", "历史物资记录必须唯一。"),
     ]
 
     def action_promote_to_product(self):

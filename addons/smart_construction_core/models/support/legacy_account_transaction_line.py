@@ -49,5 +49,5 @@ class ScLegacyAccountTransactionLine(models.Model):
     active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
-        ("source_key_unique", "unique(source_key)", "Legacy account transaction line must be unique."),
+        ("source_key_unique", "unique(source_key)", "历史账户流水行记录必须唯一。"),
     ]

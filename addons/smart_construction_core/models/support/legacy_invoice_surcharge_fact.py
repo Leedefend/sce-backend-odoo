@@ -37,6 +37,6 @@ class ScLegacyInvoiceSurchargeFact(models.Model):
         (
             "legacy_invoice_surcharge_line_direction_unique",
             "unique(direction, legacy_line_id)",
-            "Legacy invoice surcharge line must be unique per direction.",
+            "历史发票附加费行在同一方向下必须唯一。",
         ),
     ]

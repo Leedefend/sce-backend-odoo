@@ -57,6 +57,6 @@ class ScLegacySelfFundingFact(models.Model):
         (
             "legacy_self_funding_unique",
             "unique(source_table, legacy_record_id, line_type)",
-            "Legacy self funding fact must be unique.",
+            "历史自筹资金事实必须唯一。",
         ),
     ]

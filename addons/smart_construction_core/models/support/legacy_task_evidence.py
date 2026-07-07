@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyTaskEvidence(models.Model):
     _name = "sc.legacy.task.evidence"
-    _description = "Legacy Task Todo Evidence Fact"
+    _description = "历史任务待办证据事实"
     _order = "create_date desc, legacy_task_id"
 
     legacy_task_id = fields.Char(required=True, index=True)
@@ -36,9 +36,9 @@ class ScLegacyTaskEvidence(models.Model):
     finish_attachment_ref = fields.Char()
     pc_url = fields.Char()
     app_url = fields.Char()
-    source = fields.Char(string="Legacy Source", index=True)
-    source_id = fields.Char(string="Legacy Source ID", index=True)
-    source_icbd = fields.Char(string="Legacy Source ICBD", index=True)
+    source = fields.Char(string="历史来源", index=True)
+    source_id = fields.Char(string="历史来源ID", index=True)
+    source_icbd = fields.Char(string="历史来源ICBD", index=True)
     business_id = fields.Char(index=True)
     business_name = fields.Char(index=True)
     priority = fields.Char(index=True)
@@ -48,5 +48,5 @@ class ScLegacyTaskEvidence(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_task_id_unique", "unique(legacy_task_id)", "Legacy task id must be unique."),
+        ("legacy_task_id_unique", "unique(legacy_task_id)", "历史任务记录必须唯一。"),
     ]

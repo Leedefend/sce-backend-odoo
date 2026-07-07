@@ -6,7 +6,7 @@ from odoo import api, fields, models
 
 class ScLegacyPaymentResidualFact(models.Model):
     _name = "sc.legacy.payment.residual.fact"
-    _description = "Legacy Payment Residual Fact"
+    _description = "历史付款残留事实"
     _order = "document_date desc, source_table, legacy_record_id"
 
     source_table = fields.Char(string="来源表", required=True, index=True)
@@ -117,6 +117,6 @@ class ScLegacyPaymentResidualFact(models.Model):
         (
             "legacy_payment_residual_unique",
             "unique(source_table, legacy_record_id)",
-            "Legacy payment residual source record must be unique.",
+            "历史付款残留来源记录必须唯一。",
         ),
     ]

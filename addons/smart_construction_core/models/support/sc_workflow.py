@@ -9,7 +9,7 @@ LEGACY_WORKFLOW_RUNTIME_CONTEXT = "allow_legacy_workflow_runtime"
 
 class ScWorkflowDef(models.Model):
     _name = "sc.workflow.def"
-    _description = "SC Legacy Workflow Definition"
+    _description = "SC 历史流程定义"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
 
@@ -143,7 +143,7 @@ class ScWorkflowNode(models.Model):
 
 class ScWorkflowInstance(models.Model):
     _name = "sc.workflow.instance"
-    _description = "SC Legacy Workflow Instance"
+    _description = "SC 历史流程实例"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
 

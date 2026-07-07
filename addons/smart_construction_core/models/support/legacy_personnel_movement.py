@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyPersonnelMovement(models.Model):
     _name = "sc.legacy.personnel.movement"
-    _description = "Legacy Personnel Movement Fact"
+    _description = "历史人员调动事实"
     _order = "entry_date desc, legacy_movement_id"
 
     legacy_movement_id = fields.Char(required=True, index=True)
@@ -35,5 +35,5 @@ class ScLegacyPersonnelMovement(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_personnel_movement_unique", "unique(legacy_movement_id)", "Legacy personnel movement id must be unique."),
+        ("legacy_personnel_movement_unique", "unique(legacy_movement_id)", "历史人员调动记录必须唯一。"),
     ]

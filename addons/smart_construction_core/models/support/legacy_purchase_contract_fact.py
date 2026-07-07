@@ -90,7 +90,7 @@ class ScLegacyPurchaseContractFact(models.Model):
     active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_purchase_contract_unique", "unique(legacy_record_id)", "Legacy purchase contract id must be unique."),
+        ("legacy_purchase_contract_unique", "unique(legacy_record_id)", "历史采购/一般合同记录必须唯一。"),
     ]
 
     @api.depends("install_debug_payment")

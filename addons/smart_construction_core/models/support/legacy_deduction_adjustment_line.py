@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyDeductionAdjustmentLine(models.Model):
     _name = "sc.legacy.deduction.adjustment.line"
-    _description = "Legacy Deduction Settlement Adjustment Line Fact"
+    _description = "历史扣款结算调整行事实"
     _order = "document_date desc, legacy_line_id"
 
     legacy_line_id = fields.Char(required=True, index=True)
@@ -44,5 +44,5 @@ class ScLegacyDeductionAdjustmentLine(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_deduction_line_unique", "unique(legacy_line_id)", "Legacy deduction adjustment line id must be unique."),
+        ("legacy_deduction_line_unique", "unique(legacy_line_id)", "历史扣款调整行记录必须唯一。"),
     ]

@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyFundConfirmationHeader(models.Model):
     _name = "sc.legacy.fund.confirmation.header"
-    _description = "Legacy Fund Confirmation Header Fact"
+    _description = "历史资金确认主表事实"
     _order = "receipt_time desc, document_no desc, legacy_header_id"
 
     legacy_header_id = fields.Char(required=True, index=True)
@@ -46,6 +46,6 @@ class ScLegacyFundConfirmationHeader(models.Model):
         (
             "legacy_fund_confirmation_header_unique",
             "unique(legacy_header_id)",
-            "Legacy fund confirmation header id must be unique.",
+            "历史资金确认主表记录必须唯一。",
         ),
     ]

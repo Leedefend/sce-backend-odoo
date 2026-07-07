@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacySalaryLine(models.Model):
     _name = "sc.legacy.salary.line"
-    _description = "Legacy Salary Line Fact"
+    _description = "历史薪酬行事实"
     _order = "salary_year desc, salary_month desc, legacy_line_id"
 
     legacy_line_id = fields.Char(required=True, index=True)
@@ -81,5 +81,5 @@ class ScLegacySalaryLine(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_salary_line_unique", "unique(legacy_line_id)", "Legacy salary line id must be unique."),
+        ("legacy_salary_line_unique", "unique(legacy_line_id)", "历史薪酬行记录必须唯一。"),
     ]

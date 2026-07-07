@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyFileIndex(models.Model):
     _name = "sc.legacy.file.index"
-    _description = "Legacy File Index Fact"
+    _description = "历史文件索引事实"
     _order = "upload_time desc, legacy_file_key"
 
     legacy_file_key = fields.Char(required=True, index=True)
@@ -33,5 +33,5 @@ class ScLegacyFileIndex(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_file_key_unique", "unique(legacy_file_key)", "Legacy file key must be unique."),
+        ("legacy_file_key_unique", "unique(legacy_file_key)", "历史文件键必须唯一。"),
     ]

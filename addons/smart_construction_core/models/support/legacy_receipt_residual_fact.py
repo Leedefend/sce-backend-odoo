@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyReceiptResidualFact(models.Model):
     _name = "sc.legacy.receipt.residual.fact"
-    _description = "Legacy Receipt Residual Fact"
+    _description = "历史收款残留事实"
     _order = "document_date desc, legacy_record_id"
 
     legacy_record_id = fields.Char(required=True, index=True)
@@ -53,5 +53,5 @@ class ScLegacyReceiptResidualFact(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_receipt_residual_unique", "unique(legacy_record_id)", "Legacy receipt residual record must be unique."),
+        ("legacy_receipt_residual_unique", "unique(legacy_record_id)", "历史收款残留记录必须唯一。"),
     ]

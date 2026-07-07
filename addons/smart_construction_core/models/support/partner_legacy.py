@@ -133,7 +133,7 @@ class ResPartner(models.Model):
         string="供应商附件",
     )
 
-    # Legacy identity carrier fields for idempotent migration replay.
+    # Historical identity carrier fields for idempotent migration replay.
     legacy_partner_id = fields.Char(string="历史供应商编号", index=True)
     legacy_partner_source = fields.Char(string="历史来源", index=True)
     legacy_partner_name = fields.Char(string="历史供应商名称")

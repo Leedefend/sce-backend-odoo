@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyDepartment(models.Model):
     _name = "sc.legacy.department"
-    _description = "Legacy Organization Department Fact"
+    _description = "历史组织部门事实"
     _order = "legacy_department_id"
 
     legacy_department_id = fields.Char(string="原部门编号", required=True, index=True)
@@ -26,7 +26,7 @@ class ScLegacyDepartment(models.Model):
 
 class ScLegacyUserProfile(models.Model):
     _name = "sc.legacy.user.profile"
-    _description = "Legacy User Profile Fact"
+    _description = "历史用户档案事实"
     _order = "legacy_user_id"
 
     legacy_user_id = fields.Char(string="原用户编号", required=True, index=True)
@@ -93,7 +93,7 @@ class ScLegacyUserProfile(models.Model):
 
 class ScLegacyUserRole(models.Model):
     _name = "sc.legacy.user.role"
-    _description = "Legacy User Role Assignment Fact"
+    _description = "历史用户角色分配事实"
     _order = "legacy_assignment_id"
 
     legacy_assignment_id = fields.Char(string="原分配编号", required=True, index=True)
@@ -130,7 +130,7 @@ class ScLegacyUserRole(models.Model):
 
 class ScLegacyUserProjectScope(models.Model):
     _name = "sc.legacy.user.project.scope"
-    _description = "Legacy User Project Scope Fact"
+    _description = "历史用户项目范围事实"
     _order = "created_time desc, legacy_scope_key"
 
     legacy_scope_key = fields.Char(string="原授权范围键", required=True, index=True)
@@ -157,5 +157,5 @@ class ScLegacyUserProjectScope(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_scope_key_unique", "unique(legacy_scope_key)", "Legacy user project scope key must be unique."),
+        ("legacy_scope_key_unique", "unique(legacy_scope_key)", "历史用户项目范围键必须唯一。"),
     ]

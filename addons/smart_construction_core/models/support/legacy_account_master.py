@@ -27,7 +27,7 @@ class ScLegacyAccountMaster(models.Model):
     display_name = fields.Char(string="显示名称", compute="_compute_display_name", store=True, index=True)
 
     _sql_constraints = [
-        ("legacy_account_id_unique", "unique(legacy_account_id)", "Legacy account id must be unique."),
+        ("legacy_account_id_unique", "unique(legacy_account_id)", "历史账户记录必须唯一。"),
     ]
 
     @api.depends("name", "account_no", "legacy_account_id")

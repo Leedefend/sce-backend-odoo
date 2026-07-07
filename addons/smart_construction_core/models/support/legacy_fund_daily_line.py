@@ -46,5 +46,5 @@ class ScLegacyFundDailyLine(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_fund_daily_line_unique", "unique(legacy_line_id)", "Legacy fund daily line id must be unique."),
+        ("legacy_fund_daily_line_unique", "unique(legacy_line_id)", "历史资金日报行记录必须唯一。"),
     ]

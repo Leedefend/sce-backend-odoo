@@ -41,7 +41,7 @@ class ScLegacySupplierContractPricingFact(models.Model):
         (
             "legacy_supplier_contract_pricing_unique",
             "unique(legacy_contract_id)",
-            "Legacy supplier contract pricing must be unique.",
+            "历史供应商合同计价记录必须唯一。",
         ),
     ]
 

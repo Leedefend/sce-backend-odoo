@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyInvoiceTaxFact(models.Model):
     _name = "sc.legacy.invoice.tax.fact"
-    _description = "Legacy Invoice Tax Fact"
+    _description = "历史发票税额事实"
     _order = "document_date desc, id desc"
 
     legacy_source_table = fields.Char(required=True, index=True)

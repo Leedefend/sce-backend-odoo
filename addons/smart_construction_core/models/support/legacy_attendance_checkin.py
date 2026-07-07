@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyAttendanceCheckin(models.Model):
     _name = "sc.legacy.attendance.checkin"
-    _description = "Legacy Attendance Check-in Fact"
+    _description = "历史考勤打卡事实"
     _order = "checkin_datetime desc, legacy_checkin_id"
 
     legacy_checkin_id = fields.Char(required=True, index=True)
@@ -36,5 +36,5 @@ class ScLegacyAttendanceCheckin(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_attendance_checkin_unique", "unique(legacy_checkin_id)", "Legacy attendance check-in id must be unique."),
+        ("legacy_attendance_checkin_unique", "unique(legacy_checkin_id)", "历史考勤打卡记录必须唯一。"),
     ]

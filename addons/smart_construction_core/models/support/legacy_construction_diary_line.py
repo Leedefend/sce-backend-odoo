@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyConstructionDiaryLine(models.Model):
     _name = "sc.legacy.construction.diary.line"
-    _description = "Legacy Construction Diary Line Fact"
+    _description = "历史施工日志行事实"
     _order = "diary_date desc, legacy_line_id"
 
     legacy_line_id = fields.Char(required=True, index=True)
@@ -45,5 +45,5 @@ class ScLegacyConstructionDiaryLine(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_construction_diary_line_unique", "unique(legacy_line_id)", "Legacy construction diary line id must be unique."),
+        ("legacy_construction_diary_line_unique", "unique(legacy_line_id)", "历史施工日志行记录必须唯一。"),
     ]

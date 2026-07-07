@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyInvoiceRegistrationLine(models.Model):
     _name = "sc.legacy.invoice.registration.line"
-    _description = "Legacy Invoice Registration Line Fact"
+    _description = "历史发票登记行事实"
     _order = "invoice_date desc, legacy_line_id"
 
     legacy_line_id = fields.Char(string="旧系统行ID", required=True, index=True)
@@ -62,5 +62,5 @@ class ScLegacyInvoiceRegistrationLine(models.Model):
     active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_invoice_registration_line_unique", "unique(legacy_line_id)", "Legacy invoice registration line id must be unique."),
+        ("legacy_invoice_registration_line_unique", "unique(legacy_line_id)", "历史发票登记行记录必须唯一。"),
     ]

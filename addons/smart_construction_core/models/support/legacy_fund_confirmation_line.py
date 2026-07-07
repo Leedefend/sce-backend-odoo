@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyFundConfirmationLine(models.Model):
     _name = "sc.legacy.fund.confirmation.line"
-    _description = "Legacy Fund Confirmation Line Fact"
+    _description = "历史资金确认行事实"
     _order = "receipt_time desc, legacy_line_id"
 
     legacy_line_id = fields.Char(required=True, index=True)
@@ -53,5 +53,5 @@ class ScLegacyFundConfirmationLine(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_fund_confirmation_line_unique", "unique(legacy_line_id)", "Legacy fund confirmation line id must be unique."),
+        ("legacy_fund_confirmation_line_unique", "unique(legacy_line_id)", "历史资金确认行记录必须唯一。"),
     ]

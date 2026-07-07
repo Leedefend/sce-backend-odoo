@@ -25,6 +25,6 @@ class ScLegacyProjectFundBalanceFact(models.Model):
         (
             "legacy_project_fund_balance_unique",
             "unique(legacy_project_id)",
-            "Legacy project fund balance must be unique.",
+            "历史项目资金余额记录必须唯一。",
         ),
     ]

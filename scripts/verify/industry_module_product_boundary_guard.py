@@ -390,15 +390,19 @@ def verify_my_work_historical_todo_boundary() -> list[str]:
 
 
 def verify_core_model_legacy_product_message_boundary() -> list[str]:
-    model_root = ADDONS / "smart_construction_core" / "models" / "core"
+    model_roots = (
+        ADDONS / "smart_construction_core" / "models" / "core",
+        ADDONS / "smart_construction_core" / "models" / "support",
+    )
     errors: list[str] = []
-    for path in model_root.rglob("*.py"):
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        if "Legacy " in text:
-            errors.append(
-                "smart_construction_core: core business model product messages must use "
-                f"historical source wording, not English Legacy wording: {path.relative_to(ROOT).as_posix()}"
-            )
+    for model_root in model_roots:
+        for path in model_root.rglob("*.py"):
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            if "Legacy " in text:
+                errors.append(
+                    "smart_construction_core: business model product messages must use "
+                    f"historical source wording, not English Legacy wording: {path.relative_to(ROOT).as_posix()}"
+                )
     return errors
 
 

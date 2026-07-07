@@ -44,6 +44,6 @@ class ScLegacyTaxDeductionFact(models.Model):
         (
             "legacy_tax_deduction_line_unique",
             "unique(legacy_line_id)",
-            "Legacy tax deduction line id must be unique.",
+            "历史扣税行记录必须唯一。",
         ),
     ]

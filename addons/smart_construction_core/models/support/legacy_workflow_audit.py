@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyWorkflowAudit(models.Model):
     _name = "sc.legacy.workflow.audit"
-    _description = "Legacy Workflow Audit"
+    _description = "历史流程审计"
     _order = "approved_at desc, received_at desc, id desc"
 
     legacy_workflow_id = fields.Char(required=True, index=True)

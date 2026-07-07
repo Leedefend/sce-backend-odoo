@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyExpenseReimbursementLine(models.Model):
     _name = "sc.legacy.expense.reimbursement.line"
-    _description = "Legacy Expense Reimbursement Line Fact"
+    _description = "历史费用报销行事实"
     _order = "document_date desc, legacy_line_id"
 
     legacy_line_id = fields.Char(required=True, index=True)
@@ -65,5 +65,5 @@ class ScLegacyExpenseReimbursementLine(models.Model):
     active = fields.Boolean(default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_expense_reimbursement_line_unique", "unique(legacy_line_id)", "Legacy expense reimbursement line id must be unique."),
+        ("legacy_expense_reimbursement_line_unique", "unique(legacy_line_id)", "历史费用报销行记录必须唯一。"),
     ]

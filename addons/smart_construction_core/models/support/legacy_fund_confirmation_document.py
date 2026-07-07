@@ -4,7 +4,7 @@ from odoo import fields, models, tools
 
 class ScLegacyFundConfirmationDocument(models.Model):
     _name = "sc.legacy.fund.confirmation.document"
-    _description = "Legacy Arrival Confirmation Document"
+    _description = "历史到账确认单据"
     _auto = False
     _order = "receipt_time desc, document_no desc"
 
