@@ -12,7 +12,15 @@ EXPECTED = {
     "DB_NAME": "sc_demo",
     "ACCEPTANCE_BASE_URL": "http://127.0.0.1:18081",
     "ACCEPTANCE_PROBE_OUTPUT": "artifacts/backend/dev_acceptance_release_probe.json",
+    "FRONTEND_DIST_DIR": "./frontend/apps/web/dist-dev",
 }
+
+FORBIDDEN_OVERRIDES = (
+    "VITE_ODOO_DB",
+    "VITE_APP_ENV",
+    "VITE_BUILD_MODE",
+    "VITE_BUILD_OUT_DIR",
+)
 
 
 def _norm_env_file(value: str) -> str:
@@ -35,11 +43,17 @@ def main() -> int:
         "DB_NAME": os.getenv("DB_NAME", "").strip(),
         "ACCEPTANCE_BASE_URL": os.getenv("ACCEPTANCE_BASE_URL", "").strip().rstrip("/"),
         "ACCEPTANCE_PROBE_OUTPUT": os.getenv("ACCEPTANCE_PROBE_OUTPUT", "").strip(),
+        "FRONTEND_DIST_DIR": os.getenv("FRONTEND_DIST_DIR", "").strip(),
     }
 
     for key, expected in EXPECTED.items():
         if observed[key] != expected:
             errors.append(f"{key} must be {expected!r}, got {observed[key]!r}")
+
+    for key in FORBIDDEN_OVERRIDES:
+        value = os.getenv(key, "").strip()
+        if value:
+            errors.append(f"{key} must not be overridden for daily acceptance release, got {value!r}")
 
     if errors:
         print("[daily_dev_acceptance_env_guard] FAIL")
@@ -51,7 +65,8 @@ def main() -> int:
         "[daily_dev_acceptance_env_guard] PASS "
         "env=dev env_file=.env.dev db=sc_demo "
         "base_url=http://127.0.0.1:18081 "
-        "artifact=artifacts/backend/dev_acceptance_release_probe.json"
+        "artifact=artifacts/backend/dev_acceptance_release_probe.json "
+        "dist=./frontend/apps/web/dist-dev"
     )
     return 0
 

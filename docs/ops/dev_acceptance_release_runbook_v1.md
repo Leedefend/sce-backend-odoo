@@ -74,7 +74,9 @@ filestore.
    It also runs `verify.daily_dev.acceptance.env.guard`, which rejects anything
    other than `ENV=dev`, `ENV_FILE=.env.dev`, `DB_NAME=sc_demo`, and
    `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081`; the evidence artifact must
-   remain `artifacts/backend/dev_acceptance_release_probe.json`.
+   remain `artifacts/backend/dev_acceptance_release_probe.json`, the frontend
+   output must remain `./frontend/apps/web/dist-dev`, and Vite build overrides
+   must stay unset.
 
 ## Acceptance Criteria
 

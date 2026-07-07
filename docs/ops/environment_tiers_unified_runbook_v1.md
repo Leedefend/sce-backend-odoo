@@ -49,8 +49,11 @@ from that same runtime repository.
 That target only accepts `ENV=dev`, `ENV_FILE=.env.dev`, and `DB_NAME=sc_demo`;
 it also requires `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081` and
 `ACCEPTANCE_PROBE_OUTPUT=artifacts/backend/dev_acceptance_release_probe.json`.
-Wrong DB, tier, served URL, or evidence path parameters must fail before
-frontend build or acceptance probes run.
+The frontend build output must stay `FRONTEND_DIST_DIR=./frontend/apps/web/dist-dev`,
+and `VITE_ODOO_DB`, `VITE_APP_ENV`, `VITE_BUILD_MODE`, and
+`VITE_BUILD_OUT_DIR` must not be overridden. Wrong DB, tier, served URL,
+evidence path, or frontend build override parameters must fail before frontend
+build or acceptance probes run.
 
 Production code authority is `main` or a frozen release package applied under `/opt/sce/production/sce-backend-odoo`.
 If production is a Git working tree, run `make verify.production_git.authority.guard` before upgrade.

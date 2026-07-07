@@ -26,6 +26,8 @@ REQUIRED_TOKENS = {
         "make release.daily_dev.acceptance.publish",
         "ACCEPTANCE_BASE_URL=http://127.0.0.1:18081",
         "ACCEPTANCE_PROBE_OUTPUT=artifacts/backend/dev_acceptance_release_probe.json",
+        "FRONTEND_DIST_DIR=./frontend/apps/web/dist-dev",
+        "VITE_BUILD_MODE",
         "make verify.production_git.authority.guard",
     ),
     "daily_policy": (
