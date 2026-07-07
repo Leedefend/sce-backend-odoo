@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
 import re
 import time
 from typing import Any
@@ -15,6 +16,8 @@ from odoo.addons.smart_construction_scene.services.capability_scene_targets impo
 )
 
 CAPABILITY_KEY_REGEX = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
+
+_logger = logging.getLogger(__name__)
 
 RUNTIME_ORCHESTRATION_SCENE_KEYS = {
     "project.plan_bootstrap",
@@ -190,7 +193,7 @@ def _resolve_role_codes_for_user(user) -> set[str]:
             if user.has_group(group_xmlid):
                 roles.add(role_code)
     except Exception:
-        pass
+        _logger.debug("Unable to resolve capability roles from capability groups.", exc_info=True)
     if "finance" in roles:
         roles.add("owner")
     if "pm" in roles:

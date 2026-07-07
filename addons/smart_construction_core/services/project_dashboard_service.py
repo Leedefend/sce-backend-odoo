@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from odoo import fields
@@ -17,6 +18,8 @@ from odoo.addons.smart_construction_core.services.project_task_state_support imp
 )
 
 from .project_dashboard_builders import BUILDERS
+
+_logger = logging.getLogger(__name__)
 
 
 class _NullEvidenceSummaryService:
@@ -357,7 +360,7 @@ class ProjectDashboardService:
             try:
                 project = project.sudo()
             except Exception:
-                pass
+                _logger.debug("Unable to sudo project dashboard project payload record.", exc_info=True)
 
         def _safe_text(value):
             try:

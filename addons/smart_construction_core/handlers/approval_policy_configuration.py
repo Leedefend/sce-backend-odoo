@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any
 
@@ -12,6 +13,9 @@ from odoo.addons.smart_core.utils.backend_contract_boundaries import (
     APPROVAL_POLICY_RUNTIME_SOURCE,
     APPROVAL_POLICY_SOURCE_TENANT_LOWCODING,
 )
+
+
+_logger = logging.getLogger(__name__)
 
 
 BUSINESS_CONFIG_GROUPS = [
@@ -127,7 +131,7 @@ class ApprovalPolicyConfigGetHandler(BaseIntentHandler):
             try:
                 return _to_text(self.env[model]._description) or model
             except Exception:
-                pass
+                _logger.debug("Unable to resolve approval policy target model label.", exc_info=True)
         return model
 
     def _find_policy(self, Policy, model: str):
@@ -156,7 +160,7 @@ class ApprovalPolicyConfigGetHandler(BaseIntentHandler):
                 try:
                     return _iter_records(steps.sorted("sequence"))
                 except Exception:
-                    pass
+                    _logger.debug("Unable to sort approval policy steps with Odoo sorted helper.", exc_info=True)
         return sorted(_iter_records(steps), key=lambda row: (_to_int(getattr(row, "sequence", 0)), _ref_id(row)))
 
     def _serialize_steps(self, Policy, policy) -> list[dict]:
