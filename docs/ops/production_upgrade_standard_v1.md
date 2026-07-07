@@ -251,6 +251,10 @@ cp docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md \
 - 差异登记：发布包差异、模块版本差异、全量代码树差异、数据差异。
 - 回滚点和后续事项。
 
+部署记录不得保留开放占位。常见三字母占位、`待填写`、`| open |` 和
+``| `open` |`` 都会被 `make verify.production_deployment.record.guard`
+拒绝；尚未执行的事项必须写成 `planned`、`retained` 或 `tracked` 等可解释状态。
+
 ## 6. 收口判定
 
 生产升级只有同时满足以下条件，才算完成：

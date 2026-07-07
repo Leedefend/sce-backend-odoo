@@ -273,6 +273,8 @@
 - `make verify.production_deployment.record.guard`
   - Verifies concrete production deployment records under `docs/ops/releases/current/production_deployment_*.md`, or a single record via `PRODUCTION_DEPLOYMENT_RECORD=<path>`.
   - Enforces required sections, sha256 evidence, production backup paths, post-deployment validation PASS rows, demo cleanup evidence, and explicit non-full-alignment wording when full-tree alignment is not checked.
+  - Rejects open-ended production record placeholders, including the common
+    three-letter placeholder, `待填写`, `| open |`, and ``| `open` |``.
 - `make verify.production_release.flow.guard`
   - Verifies the production release-flow control plane is wired together across the flow standard, deployment record template, Makefile target, verify catalog, release checklist, release indexes, deployment runbook, and deployment record guard script.
   - Enforces the release-flow document keeps environment responsibilities, alignment definitions, hard rules, package verification, production validation matrix, difference registration, and closure criteria in order.

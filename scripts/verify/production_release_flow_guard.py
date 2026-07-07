@@ -34,6 +34,7 @@ FLOW_TOKENS = (
     "生产不得直接用日常开发目录整包覆盖",
     "docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md",
     "make verify.production_deployment.record.guard",
+    "该 guard 会拒绝具体生产部署记录中的开放占位",
     "make verify.business_system.usability_readiness.prod",
     "make policy.restore.formal_product_menu",
     "make verify.production_menu.release_gate.guard.prod",
@@ -71,6 +72,7 @@ UPGRADE_STANDARD_TOKENS = (
     "低代码升级必须执行",
     "deployed_not_verified",
     "rolled_forward_with_open_risk",
+    "部署记录不得保留开放占位",
 )
 
 TEMPLATE_TOKENS = (
@@ -114,6 +116,7 @@ VERIFY_README_TOKENS = (
     "`make legacy_attachment.custody_marker.backfill.prod`",
     "Verifies concrete production deployment records",
     "explicit non-full-alignment wording",
+    "Rejects open-ended production record placeholders",
     "production read-only business readiness gate",
     "`make verify.production_git.authority.guard`",
     "Verifies the production Git work tree authority baseline",
@@ -162,6 +165,7 @@ RECORD_GUARD_TOKENS = (
     "DEFAULT_GLOB = \"docs/ops/releases/current/production_deployment_*.md\"",
     "REQUIRED_VALIDATION_TOKENS",
     "REQUIRED_CLOSURE_TOKENS",
+    "FORBIDDEN_OPEN_ENDED_TOKENS",
     "smart_construction_demo XMLID count=0",
     "full-tree alignment unchecked but non-full-alignment statement missing",
 )

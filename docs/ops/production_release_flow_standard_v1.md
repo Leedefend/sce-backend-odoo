@@ -285,6 +285,10 @@ cp docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md \
 make verify.production_deployment.record.guard
 ```
 
+该 guard 会拒绝具体生产部署记录中的开放占位，例如常见三字母占位、`待填写`、
+`| open |` 或 ``| `open` |``。后续事项可以保留为 `planned`、`retained`
+或 `tracked`，但必须写明负责人、节奏和状态含义。
+
 ## 7. 后续迭代节奏
 
 后续迭代按以下节奏推进：
