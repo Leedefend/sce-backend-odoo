@@ -4660,7 +4660,8 @@ verify.release.v2_0_0.control_docs.guard: guard.prod.forbid
 verify.release.v2_0_0.governance.guard: guard.prod.forbid \
 	verify.release.v2_0_0.control_docs.guard \
 	verify.release.v2_0_0.evidence_manifest.guard \
-	verify.release.v2_0_0.checklist.guard
+	verify.release.v2_0_0.checklist.guard \
+	verify.production_release.flow.guard
 	@echo "[OK] verify.release.v2_0_0.governance.guard done"
 
 .PHONY: verify.release.v2_0_0.formal_evidence.schema.guard

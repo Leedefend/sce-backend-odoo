@@ -263,7 +263,7 @@
   - Verifies the v2.0.0 release guard entries appear in expected order in this catalog.
   - Enforces release-control section order, status, scope, boundary and gate command blocks, release document list, rollback list, release-index section order and planned entries, release-notes section order, intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning section order, tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape for the v2.0.0 control README and versioning guide.
 - `make verify.release.v2_0_0.governance.guard`
-  - Runs the v2.0.0 release-control docs, evidence manifest, and checklist guards as one governance closure target.
+  - Runs the v2.0.0 release-control docs, evidence manifest, checklist, and production release-flow guards as one governance closure target.
 - `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`
   - Runs the v2.0.0 governance, product hardening schema, dev acceptance schema, and prod-sim acceptance evidence schema guards as the formal evidence shape closure target.
   - Recorded sample artifact directories may validate schema shape only; final release signoff requires the recorded prod-sim acceptance run directory for that release candidate.

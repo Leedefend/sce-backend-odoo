@@ -130,6 +130,7 @@ VERIFY_README_TOKENS = (
     "backend contract closure mainline summary artifact shape",
     "`make verify.release.v2_0_0.control_docs.guard`",
     "release indexes, verification catalog, and Makefile target phony declarations, dependencies, and guard recipes",
+    "release-control docs, evidence manifest, checklist, and production release-flow guards as one governance closure target",
     "Cross-checks product release readiness Makefile dependencies against the release checklist hardening expansion.",
     "Cross-checks release notes minimum verification subgates against the v2.0.0 preflight Makefile dependencies.",
     "Cross-checks release-control README supporting gates against the v2.0.0 preflight Makefile dependencies.",
@@ -484,6 +485,7 @@ MAKEFILE_TARGET_PREREQS = (
             "verify.release.v2_0_0.control_docs.guard",
             "verify.release.v2_0_0.evidence_manifest.guard",
             "verify.release.v2_0_0.checklist.guard",
+            "verify.production_release.flow.guard",
         ),
     ),
     (
