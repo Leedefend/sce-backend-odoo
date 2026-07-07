@@ -38,6 +38,12 @@ REQUIRED_CLOSURE_TOKENS = [
     "- [x] 生产验证矩阵全部通过。",
     "- [x] demo 模块和 demo XMLID 状态符合生产要求。",
 ]
+FORBIDDEN_OPEN_ENDED_TOKENS = [
+    "TBD",
+    "待填写",
+    "| `open` |",
+    "| open |",
+]
 
 
 def _records() -> list[Path]:
@@ -72,6 +78,10 @@ def _check_record(path: Path) -> list[str]:
 
     if re.search(r"<[^>\n]+>", text):
         errors.append(f"{rel}: unresolved placeholder token remains")
+
+    for token in FORBIDDEN_OPEN_ENDED_TOKENS:
+        if token in text:
+            errors.append(f"{rel}: open-ended deployment record token remains: {token}")
 
     sha_matches = re.findall(r"\b[0-9a-f]{64}\b", text)
     if not sha_matches:
