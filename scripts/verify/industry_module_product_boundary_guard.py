@@ -494,7 +494,6 @@ def verify_core_runtime_demo_residual_allowlist() -> list[str]:
         "models/core/project_core.py": {
             "sc_demo_showcase",
             "sc_demo_showcase_ready",
-            "demo",
             "demo_",
             "_demo",
             "sc_demo",

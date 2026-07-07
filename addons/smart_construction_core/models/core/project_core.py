@@ -641,14 +641,14 @@ class ProjectProject(models.Model):
         related='sc_project_showcase',
         readonly=False,
         store=False,
-        help='兼容旧 demo 字段名；正式运行时请使用 sc_project_showcase。',
+        help='兼容历史字段名；正式运行时请使用 sc_project_showcase。',
     )
     sc_demo_showcase_ready = fields.Boolean(
         '项目样板可展示（兼容旧字段）',
         related='sc_project_showcase_ready',
         readonly=False,
         store=False,
-        help='兼容旧 demo 字段名；正式运行时请使用 sc_project_showcase_ready。',
+        help='兼容历史字段名；正式运行时请使用 sc_project_showcase_ready。',
     )
 
     start_date = fields.Date('计划开工日期')
