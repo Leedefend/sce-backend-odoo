@@ -1387,7 +1387,7 @@ def verify_custom_security_policy_role_login_boundary() -> list[str]:
     if "ROLE_LOGIN_GROUPS" not in text or "LEGACY_ROLE_LOGIN_ALIASES" not in text:
         errors.append(
             "smart_construction_custom: security policy must separate formal role logins "
-            "from legacy demo login aliases"
+            "from historical demo-login aliases"
         )
         return errors
     for login in required_formal_logins:
@@ -1401,8 +1401,8 @@ def verify_custom_security_policy_role_login_boundary() -> list[str]:
         quoted = f'"{login}"'
         if text.count(quoted) != 1 or text.find(quoted) < alias_start:
             errors.append(
-                "smart_construction_custom: legacy demo role login must appear only as "
-                f"compatibility alias: {login!r}"
+                "smart_construction_custom: historical demo role login must appear only as "
+                f"historical alias: {login!r}"
             )
     try:
         module_ast = ast.parse(text, filename=str(path))
@@ -1415,7 +1415,7 @@ def verify_custom_security_policy_role_login_boundary() -> list[str]:
         )
         alias_map = ast.literal_eval(alias_node)
     except Exception as exc:
-        errors.append(f"smart_construction_custom: unable to parse legacy role login aliases: {exc}")
+        errors.append(f"smart_construction_custom: unable to parse historical role login aliases: {exc}")
         return errors
     expected_alias_map = {
         login: (login.replace("sc_", "demo_", 1),)
@@ -1423,8 +1423,8 @@ def verify_custom_security_policy_role_login_boundary() -> list[str]:
     }
     if alias_map != expected_alias_map:
         errors.append(
-            "smart_construction_custom: legacy role login aliases must exactly match "
-            "the formal role login compatibility map"
+            "smart_construction_custom: historical role login aliases must exactly match "
+            "the formal role login alias map"
         )
     return errors
 
