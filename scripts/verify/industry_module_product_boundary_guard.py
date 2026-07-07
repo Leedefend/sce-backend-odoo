@@ -411,6 +411,7 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
         "技术产品占位",
         "技术占位",
         "缺少发票信息（占位）",
+        "(placeholder)",
     )
     guarded_roots = (
         ADDONS / "smart_construction_core" / "models",

@@ -11,15 +11,15 @@ class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
     is_installed_sale = fields.Boolean(
-        string="Sale Installed (placeholder)",
+        string="销售模块安装状态",
         readonly=True,
-        help="占位字段，防止视图引用缺失。真实是否安装销售模块以实际环境为准。",
+        help="兼容设置页中对销售模块安装状态的引用；真实安装状态以当前环境为准。",
     )
 
     days_to_purchase = fields.Float(
-        string="Days to Purchase (placeholder)",
+        string="采购交期天数",
         readonly=True,
-        help="占位字段，用于兼容视图中对 days_to_purchase 的引用；"
+        help="兼容设置页中对采购交期字段的引用；"
              "未安装采购库存模块时不会实际生效。",
     )
 
