@@ -4672,6 +4672,22 @@ verify.release.v2_0_0.formal_evidence.schema.guard: guard.prod.forbid \
 	verify.prod.sim.acceptance.evidence.schema.guard
 	@echo "[OK] verify.release.v2_0_0.formal_evidence.schema.guard done"
 
+.PHONY: verify.release_v2_0_0.preflight verify.release_v2_0_0.product_hardening verify.release_v2_0_0.checklist.guard verify.release_v2_0_0.evidence_manifest.guard verify.release_v2_0_0.control_docs.guard verify.release_v2_0_0.governance.guard verify.release_v2_0_0.formal_evidence.schema.guard
+verify.release_v2_0_0.preflight: verify.release.v2_0_0.preflight
+	@echo "[alias] use verify.release.v2_0_0.preflight"
+verify.release_v2_0_0.product_hardening: verify.release.v2_0_0.product_hardening
+	@echo "[alias] use verify.release.v2_0_0.product_hardening"
+verify.release_v2_0_0.checklist.guard: verify.release.v2_0_0.checklist.guard
+	@echo "[alias] use verify.release.v2_0_0.checklist.guard"
+verify.release_v2_0_0.evidence_manifest.guard: verify.release.v2_0_0.evidence_manifest.guard
+	@echo "[alias] use verify.release.v2_0_0.evidence_manifest.guard"
+verify.release_v2_0_0.control_docs.guard: verify.release.v2_0_0.control_docs.guard
+	@echo "[alias] use verify.release.v2_0_0.control_docs.guard"
+verify.release_v2_0_0.governance.guard: verify.release.v2_0_0.governance.guard
+	@echo "[alias] use verify.release.v2_0_0.governance.guard"
+verify.release_v2_0_0.formal_evidence.schema.guard: verify.release.v2_0_0.formal_evidence.schema.guard
+	@echo "[alias] use verify.release.v2_0_0.formal_evidence.schema.guard"
+
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
 
