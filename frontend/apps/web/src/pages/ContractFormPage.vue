@@ -8782,7 +8782,7 @@ function syncContractV2ShadowStore(rawContract: unknown) {
   v2ContractStore.value = null;
   v2ContractDecodeError.value = '';
   try {
-    const snapshot = decodeContractV2Snapshot(rawContract);
+    const snapshot = decodeContractV2Snapshot(resolveUnifiedPageContractV2(rawContract) || rawContract);
     v2ContractStore.value = createContractV2Store(snapshot);
   } catch (err) {
     if (err instanceof ContractV2DecodeError) {

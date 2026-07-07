@@ -7,7 +7,13 @@ business user has write access and at least one writable record.
 
 import json
 import os
+import ast
 from pathlib import Path
+
+try:
+    from odoo.tools.safe_eval import safe_eval
+except Exception:  # pragma: no cover - local py_compile outside Odoo
+    safe_eval = None
 
 try:
     from odoo.addons.smart_construction_core.core_extension import smart_core_file_upload_allowed_models
@@ -59,8 +65,20 @@ def _first_menu_action_for_model(model_name):
     return {
         "action_id": action.id if action else None,
         "action_name": action.name if action else "",
+        "action_domain": action.domain if action else "",
         "menu_id": menu_id,
     }
+
+
+def _action_domain(row):
+    raw = (row.get("action_domain") or "").strip()
+    if not raw:
+        return []
+    try:
+        domain = safe_eval(raw, {}) if safe_eval else ast.literal_eval(raw)
+    except Exception:
+        return []
+    return domain if isinstance(domain, list) else []
 
 
 def _contract_upload_enabled(model_name, record_id, action_id):
@@ -126,7 +144,8 @@ def _row_for_model(model_name, user):
         return row
 
     sample_ids = []
-    for rec in UserModel.search([], limit=max(SAMPLE_LIMIT * 4, SAMPLE_LIMIT)):
+    sample_domain = _action_domain(row)
+    for rec in UserModel.search(sample_domain, limit=max(SAMPLE_LIMIT * 4, SAMPLE_LIMIT)):
         try:
             rec.check_access_rule("write")
             sample_ids.append(rec.id)
