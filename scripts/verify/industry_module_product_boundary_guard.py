@@ -737,6 +737,35 @@ def verify_core_runtime_demo_residual_allowlist() -> list[str]:
     return errors
 
 
+def verify_project_showcase_legacy_alias_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_core" / "models" / "core" / "project_core.py"
+    if not path.is_file():
+        return ["smart_construction_core: project showcase legacy alias file missing"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    required_lines = {
+        "    sc_demo_showcase = fields.Boolean(",
+        "        related='sc_project_showcase',",
+        "    sc_demo_showcase_ready = fields.Boolean(",
+        "        related='sc_project_showcase_ready',",
+    }
+    errors: list[str] = []
+    for line in sorted(required_lines):
+        if text.count(line) != 1:
+            errors.append(
+                "smart_construction_core: project showcase legacy alias anchor "
+                f"must appear exactly once: {line.strip()}"
+            )
+    scrubbed = text
+    for line in required_lines:
+        scrubbed = scrubbed.replace(line, "")
+    if "sc_demo_showcase" in scrubbed:
+        errors.append(
+            "smart_construction_core: sc_demo_showcase legacy aliases must stay limited "
+            "to the explicit related field anchors in project_core"
+        )
+    return errors
+
+
 def verify_core_extension_legacy_label_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "core_extension.py"
     if not path.is_file():
@@ -874,6 +903,7 @@ def main() -> int:
     errors.extend(verify_scene_registry_engine_fallback_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
+    errors.extend(verify_project_showcase_legacy_alias_boundary())
     errors.extend(verify_core_extension_legacy_label_boundary())
     errors.extend(verify_seed_showcase_product_fields())
     errors.extend(verify_seed_hook_product_language_boundary())
