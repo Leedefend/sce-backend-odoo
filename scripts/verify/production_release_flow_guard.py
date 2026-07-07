@@ -59,6 +59,8 @@ UPGRADE_STANDARD_TOKENS = (
     "生产目录不是 Git 工作区时，不允许 `git pull`",
     "生产 Git 工作区必须具备只读拉取主线的 deploy key",
     "`make verify.production_git.authority.guard`",
+    "该检查不连接 Odoo 或 Docker Compose，不使用 `PROD_READONLY_VERIFY`",
+    "`PRODUCTION_GIT_AUTHORITY_*` 环境变量控制",
     "changed_files.txt",
     "module_upgrade.txt",
     "SHA256SUMS",
