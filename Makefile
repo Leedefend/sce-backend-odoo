@@ -255,7 +255,7 @@ endef
 # ======================================================
 # ==================== Guards ==========================
 # ======================================================
-.PHONY: check-compose-project check.compose.project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config env.print.db env.matrix.check verify.environment.topology.guard verify.daily_dev.runtime_repo.clean
+.PHONY: check-compose-project check.compose.project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config env.print.db env.matrix.check verify.environment.topology.guard verify.daily_dev.runtime_repo.clean verify.daily_dev.acceptance.env.guard
 
 IS_PROD := 0
 ifneq (,$(filter prod,$(ENV)))
@@ -426,6 +426,10 @@ verify.environment.topology.guard:
 verify.daily_dev.runtime_repo.clean:
 	@bash scripts/ops/daily_dev_runtime_repo_guard.sh
 
+verify.daily_dev.acceptance.env.guard:
+	@python3 -m py_compile scripts/verify/daily_dev_acceptance_env_guard.py
+	@ENV="$(ENV)" ENV_FILE="$(ENV_FILE)" DB_NAME="$(DB_NAME)" python3 scripts/verify/daily_dev_acceptance_env_guard.py
+
 gate.compose.config: check-compose-env
 	@echo "[gate.compose.config] checking container_name..."
 	@$(COMPOSE_BASE) config | grep -nE '^\\s*container_name:' && \
@@ -580,7 +584,7 @@ verify.dev.acceptance.release.schema.guard: guard.prod.forbid
 release.dev.acceptance.publish: guard.prod.forbid check-compose-project check-compose-env verify.frontend.build verify.user_confirmed.formal_surface.locked verify.dev.acceptance.release
 	@echo "[release.dev.acceptance.publish] PASS base_url=$(ACCEPTANCE_BASE_URL) db=$(DB_NAME) artifact=$(ACCEPTANCE_PROBE_OUTPUT)"
 
-release.daily_dev.acceptance.publish: guard.prod.forbid env.matrix.check verify.daily_dev.runtime_repo.clean release.dev.acceptance.publish
+release.daily_dev.acceptance.publish: guard.prod.forbid verify.daily_dev.acceptance.env.guard env.matrix.check verify.daily_dev.runtime_repo.clean release.dev.acceptance.publish
 	@echo "[release.daily_dev.acceptance.publish] PASS base_url=$(ACCEPTANCE_BASE_URL) db=$(DB_NAME) head=$$(git rev-parse --short HEAD)"
 
 prod.restart.safe: guard.prod.danger check-compose-project check-compose-env

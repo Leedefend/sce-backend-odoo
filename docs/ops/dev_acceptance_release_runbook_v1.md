@@ -71,6 +71,8 @@ filestore.
    This target first runs `env.matrix.check` and
    `verify.daily_dev.runtime_repo.clean`, so the acceptance publication cannot
    run from the wrong server directory or a dirty runtime repository.
+   It also runs `verify.daily_dev.acceptance.env.guard`, which rejects anything
+   other than `ENV=dev`, `ENV_FILE=.env.dev`, and `DB_NAME=sc_demo`.
 
 ## Acceptance Criteria
 

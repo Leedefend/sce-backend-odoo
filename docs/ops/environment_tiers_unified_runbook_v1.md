@@ -46,6 +46,8 @@ Before publishing or upgrading it, run `make verify.daily_dev.runtime_repo.clean
 inside `/opt/projects/repos/sce-backend-odoo`.
 Daily acceptance publication must use `make release.daily_dev.acceptance.publish`
 from that same runtime repository.
+That target only accepts `ENV=dev`, `ENV_FILE=.env.dev`, and `DB_NAME=sc_demo`;
+wrong DB or tier parameters must fail before frontend build or acceptance probes run.
 
 Production code authority is `main` or a frozen release package applied under `/opt/sce/production/sce-backend-odoo`.
 If production is a Git working tree, run `make verify.production_git.authority.guard` before upgrade.
