@@ -115,6 +115,12 @@
 - `make verify.product.no_demo_data.schema.guard`
   - Verifies the no-demo contamination JSON/MD report shape.
   - Enforces `ok/status/db_name/mode/require_no_demo_data/errors/demo_db_auto_skip/rules` fields in JSON and required Markdown summary tokens.
+- `make verify.production_menu.release_gate.guard.prod`
+  - Read-only production guard for the productized menu release gate.
+  - Verifies startup delivery identity resolves to `construction.standard`.
+  - Verifies `smart_core.platform_release_db` points at the current production database.
+  - Verifies active released snapshots exist for `construction.standard` and `construction.preview`.
+  - Verifies release-gate page counts match released product-policy menu counts and runtime gated navigation does not expose old `用户核对菜单` paths.
 - `make verify.user_module.data_baseline.runtime_audit`
   - Runtime acceptance after installing/upgrading `smart_construction_custom` on a target database.
   - Replays the legacy user data baseline twice and verifies user count, XMLID count, and duplicate-login safety remain stable.

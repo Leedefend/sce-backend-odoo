@@ -178,6 +178,13 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
   make policy.apply.role_matrix
 ```
 
+菜单产品化发布闸必须只读验证，确保 `system.init` 不会退回平台默认菜单或原生菜单投影：
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
+  make verify.production_menu.release_gate.guard.prod
+```
+
 ### 5.4 发布后验证
 
 如果本次升级包含迁移投影、历史数据承载、业务字段、列表/表单契约或用户可见面改动，
