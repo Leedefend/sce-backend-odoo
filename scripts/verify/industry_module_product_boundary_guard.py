@@ -452,6 +452,65 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
     return errors
 
 
+def verify_dashboard_focus_scene_runtime_contract() -> list[str]:
+    errors: list[str] = []
+    guarded_paths = (
+        ADDONS / "smart_construction_scene" / "data" / "sc_scene_layout.xml",
+        ADDONS / "smart_construction_scene" / "data" / "sc_scene_orchestration.xml",
+        ADDONS / "smart_construction_scene" / "profiles" / "scene_registry_content.py",
+        ADDONS / "smart_construction_scene" / "core_extension.py",
+        ROOT / "scripts" / "verify" / "executive_readonly_seed.py",
+        ROOT / "scripts" / "verify" / "executive_readonly_smoke.py",
+    )
+    legacy_xmlid_fragments = (
+        "sc_scene_version_projects_dashboard_showcase_v2",
+        "sc_scene_projects_dashboard_showcase",
+    )
+    for path in guarded_paths:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        scrubbed = text
+        for fragment in legacy_xmlid_fragments:
+            scrubbed = scrubbed.replace(fragment, "")
+        if "dashboard_showcase" in scrubbed:
+            errors.append(
+                "smart_construction_scene: dashboard focus scene may retain legacy XMLIDs only, "
+                f"not runtime showcase code/route/provider keys: {path.relative_to(ROOT).as_posix()}"
+            )
+    required_contracts = {
+        ADDONS / "smart_construction_scene" / "data" / "sc_scene_layout.xml": (
+            "'code': 'projects.dashboard_focus'",
+            "'route': '/s/projects.dashboard_focus'",
+            "'provider': 'projects.dashboard_focus.metrics'",
+            "'provider': 'projects.dashboard_focus.overview'",
+        ),
+        ADDONS / "smart_construction_scene" / "data" / "sc_scene_orchestration.xml": (
+            "<field name=\"code\">projects.dashboard_focus</field>",
+            "<field name=\"name\">项目驾驶舱聚焦</field>",
+        ),
+        ADDONS / "smart_construction_scene" / "profiles" / "scene_registry_content.py": (
+            '"code": "projects.dashboard_focus"',
+            '"route": "/s/projects.dashboard_focus"',
+        ),
+    }
+    for path, required_tokens in required_contracts.items():
+        if not path.is_file():
+            errors.append(
+                "smart_construction_scene: dashboard focus scene contract file missing: "
+                f"{path.relative_to(ROOT).as_posix()}"
+            )
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for token in required_tokens:
+            if token not in text:
+                errors.append(
+                    "smart_construction_scene: dashboard focus scene runtime contract missing "
+                    f"{token!r}: {path.relative_to(ROOT).as_posix()}"
+                )
+    return errors
+
+
 def verify_scene_registry_engine_fallback_observability() -> list[str]:
     path = ADDONS / "smart_construction_scene" / "scene_registry.py"
     if not path.is_file():
@@ -633,6 +692,7 @@ def main() -> int:
     errors.extend(verify_core_model_runtime_exception_observability())
     errors.extend(verify_core_extension_wizard_exception_observability())
     errors.extend(verify_runtime_pending_placeholder_language_boundary())
+    errors.extend(verify_dashboard_focus_scene_runtime_contract())
     errors.extend(verify_scene_registry_engine_fallback_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
