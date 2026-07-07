@@ -128,5 +128,5 @@ def _to_ranked_state_list(counter_map):
 
 
 def _suggested_action_for_reason(*, reason_code, state):
-    # Keep this wrapper for backward compatibility in tests/imports.
+    # Historical import wrapper; new code calls suggested_action_for_capability_reason directly.
     return suggested_action_for_capability_reason(reason_code=reason_code, state=state)

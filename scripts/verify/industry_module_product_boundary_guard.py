@@ -352,6 +352,48 @@ def verify_project_dashboard_open_alias_boundary() -> list[str]:
     return errors
 
 
+def verify_handler_historical_wrapper_boundary() -> list[str]:
+    anchors_by_path = {
+        ADDONS / "smart_construction_core" / "handlers" / "my_work_complete.py": {
+            "# Historical import wrapper; new code calls my_work_failure_meta_for_exception directly.",
+            "def _failure_meta_for_exception(exc):",
+            "return my_work_failure_meta_for_exception(exc)",
+        },
+        ADDONS / "smart_construction_core" / "handlers" / "capability_visibility_report.py": {
+            "# Historical import wrapper; new code calls suggested_action_for_capability_reason directly.",
+            "def _suggested_action_for_reason(*, reason_code, state):",
+            "return suggested_action_for_capability_reason(reason_code=reason_code, state=state)",
+        },
+    }
+    forbidden_fragments = (
+        "Keep this compatibility wrapper",
+        "Keep this wrapper for backward compatibility",
+    )
+    errors: list[str] = []
+    for path, anchors in anchors_by_path.items():
+        if not path.is_file():
+            errors.append(
+                "smart_construction_core: handler historical wrapper anchor file missing: "
+                f"{path.relative_to(ROOT).as_posix()}"
+            )
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for anchor in sorted(anchors):
+            if text.count(anchor) != 1:
+                errors.append(
+                    "smart_construction_core: handler historical wrapper must remain a "
+                    f"single direct delegation, missing anchor {anchor!r}: "
+                    f"{path.relative_to(ROOT).as_posix()}"
+                )
+        for fragment in forbidden_fragments:
+            if fragment in text:
+                errors.append(
+                    "smart_construction_core: handler historical wrapper must not use "
+                    f"generic compatibility wording {fragment!r}: {path.relative_to(ROOT).as_posix()}"
+                )
+    return errors
+
+
 def verify_runtime_comment_product_language_boundary() -> list[str]:
     errors: list[str] = []
     forbidden_tokens = (
@@ -1189,6 +1231,7 @@ def main() -> int:
     errors.extend(verify_capability_registry_role_boundary())
     errors.extend(verify_handler_product_language_boundary())
     errors.extend(verify_project_dashboard_open_alias_boundary())
+    errors.extend(verify_handler_historical_wrapper_boundary())
     errors.extend(verify_runtime_comment_product_language_boundary())
     errors.extend(verify_portal_controller_exception_observability())
     errors.extend(verify_app_entry_exception_observability())

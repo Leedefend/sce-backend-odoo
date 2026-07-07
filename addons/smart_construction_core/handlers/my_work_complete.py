@@ -412,7 +412,7 @@ def _reason_code_for_exception(exc):
 
 
 def _failure_meta_for_exception(exc):
-    # Keep this compatibility wrapper for existing imports in tests and handlers.
+    # Historical import wrapper; new code calls my_work_failure_meta_for_exception directly.
     return my_work_failure_meta_for_exception(exc)
 
 
