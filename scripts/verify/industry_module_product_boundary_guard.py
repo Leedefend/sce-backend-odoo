@@ -410,6 +410,13 @@ def verify_core_model_legacy_product_message_boundary() -> list[str]:
                     "smart_construction_core: business model product messages must use "
                     f"historical source wording, not English Legacy wording: {path.relative_to(ROOT).as_posix()}"
                 )
+            for token in ("旧系统", "老系统"):
+                if token in text:
+                    errors.append(
+                        "smart_construction_core: business model product messages must use "
+                        f"historical source wording, not old-system wording {token!r}: "
+                        f"{path.relative_to(ROOT).as_posix()}"
+                    )
     return errors
 
 

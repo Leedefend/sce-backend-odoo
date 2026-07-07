@@ -30,7 +30,7 @@ class ConstructionContractLegacy(models.Model):
         currency_field="currency_id",
         compute="_compute_visible_contract_amount",
         store=True,
-        help="用户原施工合同台账口径金额；历史数据优先取旧系统合同金额，新建数据回退平台合同明细金额。",
+        help="用户原施工合同台账口径金额；历史数据优先取历史合同金额，新建数据回退平台合同明细金额。",
     )
     document_status = fields.Char(string="单据状态", compute="_compute_document_status")
     engineering_category_text = fields.Char(string="工程类别")

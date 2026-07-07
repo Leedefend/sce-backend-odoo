@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyProjectOperationReportFact(models.Model):
     _name = "sc.legacy.project.operation.report.fact"
-    _description = "旧系统项目经营统计表事实"
+    _description = "历史项目经营统计表事实"
     _order = "legacy_pid desc, legacy_project_name"
 
     legacy_project_id = fields.Char(string="旧项目ID", required=True, index=True)
@@ -47,6 +47,6 @@ class ScLegacyProjectOperationReportFact(models.Model):
         (
             "legacy_project_operation_report_fact_unique",
             "unique(legacy_project_id)",
-            "旧系统项目经营统计表事实已存在。",
+            "历史项目经营统计表事实已存在。",
         )
     ]

@@ -3044,7 +3044,7 @@ def _inject_p1_daily_business_visible_form_sections(self, result, view_type):
         parent.append(group)
         changed = True
     if "附件" in labels and 'string="附件"' not in arch:
-        group = etree.Element("group", string="P1 旧系统表单分区")
+        group = etree.Element("group", string="P1 历史表单分区")
         etree.SubElement(group, "separator", string="附件")
         parent.append(group)
         changed = True

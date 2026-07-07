@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyInvoiceCostProgressReportFact(models.Model):
     _name = "sc.legacy.invoice.cost.progress.report.fact"
-    _description = "旧系统发票成本进度报表事实"
+    _description = "历史发票成本进度报表事实"
     _order = "legacy_project_name"
 
     legacy_project_id = fields.Char(string="旧项目ID", required=True, index=True)
@@ -24,6 +24,6 @@ class ScLegacyInvoiceCostProgressReportFact(models.Model):
         (
             "legacy_invoice_cost_progress_report_fact_unique",
             "unique(legacy_project_id)",
-            "旧系统发票成本进度报表事实已存在。",
+            "历史发票成本进度报表事实已存在。",
         )
     ]

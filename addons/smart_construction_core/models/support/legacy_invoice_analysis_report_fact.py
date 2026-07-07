@@ -7,8 +7,8 @@ class ScLegacyInvoiceAnalysisReportFact(models.Model):
     _description = "历史发票分析报表原始事实"
     _order = "legacy_source_table, legacy_record_id"
 
-    legacy_source_table = fields.Char(string="旧系统来源表", required=True, index=True)
-    legacy_record_id = fields.Char(string="旧系统记录ID", required=True, index=True)
+    legacy_source_table = fields.Char(string="历史来源表", required=True, index=True)
+    legacy_record_id = fields.Char(string="历史记录ID", required=True, index=True)
     fact_type = fields.Selection(
         [
             ("contract_amount", "施工合同金额"),
@@ -18,8 +18,8 @@ class ScLegacyInvoiceAnalysisReportFact(models.Model):
         required=True,
         index=True,
     )
-    legacy_project_id = fields.Char(string="旧系统项目ID", required=True, index=True)
-    legacy_project_name = fields.Char(string="旧系统项目名称", index=True)
+    legacy_project_id = fields.Char(string="历史项目ID", required=True, index=True)
+    legacy_project_name = fields.Char(string="历史项目名称", index=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, ondelete="cascade")
     invoice_company_type = fields.Char(string="发票公司类型", index=True)
     source_amount = fields.Float(string="金额")

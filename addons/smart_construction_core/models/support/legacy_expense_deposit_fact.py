@@ -28,9 +28,9 @@ class ScLegacyExpenseDepositFact(models.Model):
     _description = "历史费用/保证金事实"
     _order = "document_date desc, id desc"
 
-    legacy_source_table = fields.Char(string="旧系统来源表", required=True, index=True)
-    legacy_record_id = fields.Char(string="旧系统记录ID", required=True, index=True)
-    legacy_pid = fields.Char(string="旧系统PID", index=True)
+    legacy_source_table = fields.Char(string="历史来源表", required=True, index=True)
+    legacy_record_id = fields.Char(string="历史记录ID", required=True, index=True)
+    legacy_pid = fields.Char(string="历史PID", index=True)
     source_family = fields.Char(string="来源类型", index=True)
     direction = fields.Selection(
         selection=[
@@ -43,14 +43,14 @@ class ScLegacyExpenseDepositFact(models.Model):
     )
     document_no = fields.Char(string="单号", index=True)
     document_date = fields.Date(string="单据日期", index=True)
-    legacy_state = fields.Char(string="旧系统状态", index=True)
+    legacy_state = fields.Char(string="历史状态", index=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, ondelete="cascade")
-    legacy_project_id = fields.Char(string="旧系统项目ID", index=True)
-    legacy_project_name = fields.Char(string="旧系统项目名称")
-    legacy_tender_project_name = fields.Char(string="旧系统投标项目名称", index=True)
+    legacy_project_id = fields.Char(string="历史项目ID", index=True)
+    legacy_project_name = fields.Char(string="历史项目名称")
+    legacy_tender_project_name = fields.Char(string="历史投标项目名称", index=True)
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True, ondelete="set null")
-    legacy_partner_id = fields.Char(string="旧系统往来单位ID", index=True)
-    legacy_partner_name = fields.Char(string="旧系统往来单位名称")
+    legacy_partner_id = fields.Char(string="历史往来单位ID", index=True)
+    legacy_partner_name = fields.Char(string="历史往来单位名称")
     source_amount = fields.Float(string="金额")
     source_amount_field = fields.Char(string="金额来源字段", index=True)
     source_amount_field_label = fields.Char(string="金额口径", compute="_compute_business_labels", store=True, index=True)

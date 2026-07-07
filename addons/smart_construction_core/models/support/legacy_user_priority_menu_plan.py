@@ -10,8 +10,8 @@ class ScLegacyUserPriorityMenuPlan(models.Model):
     priority_sequence = fields.Integer(string="优先级", required=True, index=True)
     source_document = fields.Char(string="来源文档", required=True, index=True)
     screenshot_ref = fields.Char(string="截图来源", index=True)
-    legacy_menu_group = fields.Char(string="老系统菜单分组", required=True, index=True)
-    legacy_menu_name = fields.Char(string="老系统入口", required=True, index=True)
+    legacy_menu_group = fields.Char(string="历史系统菜单分组", required=True, index=True)
+    legacy_menu_name = fields.Char(string="历史系统入口", required=True, index=True)
     business_domain = fields.Char(string="业务域", index=True)
     target_model = fields.Char(string="主承载模型", index=True)
     target_model_id = fields.Many2one("ir.model", string="主承载模型记录", ondelete="set null", index=True)
@@ -49,7 +49,7 @@ class ScLegacyUserPriorityMenuPlan(models.Model):
         index=True,
     )
     target_iteration = fields.Char(string="目标迭代", index=True)
-    old_system_path = fields.Char(string="老系统路径")
+    old_system_path = fields.Char(string="历史系统路径")
     legacy_source_tables = fields.Text(string="旧表线索")
     legacy_field_list = fields.Text(string="字段列表线索")
     extracted_evidence = fields.Text(string="提取证据")
@@ -68,6 +68,6 @@ class ScLegacyUserPriorityMenuPlan(models.Model):
         (
             "legacy_user_priority_menu_plan_unique",
             "unique(source_document, legacy_menu_group, legacy_menu_name)",
-            "同一来源文档、菜单分组、老系统入口只能形成一条用户优先计划。",
+            "同一来源文档、菜单分组、历史系统入口只能形成一条用户优先计划。",
         ),
     ]

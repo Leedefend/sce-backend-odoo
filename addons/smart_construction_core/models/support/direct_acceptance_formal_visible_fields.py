@@ -341,7 +341,7 @@ class LaborUsageDirectAcceptanceVisible(models.Model):
         default=lambda self: self.env.company.currency_id.id,
     )
     legacy_settlement_status = fields.Char(
-        string="旧系统结算状态",
+        string="历史结算状态",
         compute="_compute_legacy_labor_settlement_fields",
         store=True,
         readonly=True,
@@ -349,14 +349,14 @@ class LaborUsageDirectAcceptanceVisible(models.Model):
     )
     legacy_settlement_state = fields.Selection(
         [("settled", "已结算"), ("unsettled", "未结算"), ("unknown", "未识别")],
-        string="旧系统结算状态分类",
+        string="历史结算状态分类",
         compute="_compute_legacy_labor_settlement_fields",
         store=True,
         readonly=True,
         index=True,
     )
     legacy_settlement_amount = fields.Monetary(
-        string="旧系统结算金额",
+        string="历史结算金额",
         currency_field="currency_id",
         compute="_compute_legacy_labor_settlement_fields",
         store=True,

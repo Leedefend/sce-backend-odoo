@@ -534,7 +534,7 @@ class ScLaborSettlement(models.Model):
                 if line.source_usage_id.contractor_id and line.source_usage_id.contractor_id != record.contractor_id:
                     raise UserError(_("劳务结算明细引用的用工来源劳务单位必须与结算单一致。"))
                 if line.source_usage_id.legacy_settlement_state not in ("unsettled", "unknown"):
-                    raise UserError(_("劳务结算只能引用旧系统未结算或需复核的用工来源。"))
+                    raise UserError(_("劳务结算只能引用历史未结算或需复核的用工来源。"))
 
 
 class ScLaborSettlementLine(models.Model):

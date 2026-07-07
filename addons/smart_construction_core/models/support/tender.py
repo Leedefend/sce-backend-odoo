@@ -410,7 +410,7 @@ class TenderDocPurchase(models.Model):
     legacy_visible_document_state = fields.Char("历史单据状态", readonly=True)
     legacy_source_created_by = fields.Char("录入人", index=True)
     legacy_source_created_at = fields.Datetime("录入时间", index=True)
-    legacy_record_id = fields.Char("旧系统记录ID", index=True)
+    legacy_record_id = fields.Char("历史记录ID", index=True)
     legacy_source_table = fields.Char("来源表", index=True)
     legacy_attachment_ref = fields.Char("历史附件引用", readonly=True, index=True)
     attachment_ids = fields.Many2many("ir.attachment", string="附件")

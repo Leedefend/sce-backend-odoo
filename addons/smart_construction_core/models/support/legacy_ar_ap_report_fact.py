@@ -4,7 +4,7 @@ from odoo import fields, models
 
 class ScLegacyArApReportFact(models.Model):
     _name = "sc.legacy.ar.ap.report.fact"
-    _description = "旧系统应收应付报表事实"
+    _description = "历史应收应付报表事实"
     _order = "legacy_project_name"
 
     legacy_project_id = fields.Char(string="旧项目ID", required=True, index=True)
@@ -39,5 +39,5 @@ class ScLegacyArApReportFact(models.Model):
     currency_id = fields.Many2one(related="project_id.company_id.currency_id", string="币种", readonly=True)
 
     _sql_constraints = [
-        ("legacy_ar_ap_report_fact_unique", "unique(legacy_project_id)", "旧系统应收应付报表事实已存在。")
+        ("legacy_ar_ap_report_fact_unique", "unique(legacy_project_id)", "历史应收应付报表事实已存在。")
     ]
