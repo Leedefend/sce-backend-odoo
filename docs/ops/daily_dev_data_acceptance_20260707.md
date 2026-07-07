@@ -80,6 +80,19 @@ Additional attachment custody remediation:
   `history_attachment_custody_ready`, `gap_count=0`.
 - Re-ran `make verify.p0`: PASS.
 
+Production parity follow-up:
+
+- Production had the same custody marker class of issue on 4 legacy URL
+  attachments.
+- Saved a pre-fix CSV snapshot inside the production DB container:
+  `/tmp/prod_ir_attachment_marker_gap_20260707.csv`
+- Snapshot SHA256:
+  `9b803c6b6303cc6a9e20411e0ff07bfc4b2afb4114496f85ca08202a12bea3e9`
+- Added `binary_embedded=false` marker to those 4 production rows.
+- Re-ran production marker gap SQL: `0`.
+- Re-ran production `history_attachment_custody_probe.py`: PASS,
+  `history_attachment_custody_ready`, `gap_count=0`.
+
 Targeted `BASE_SYSTEM_FILE` mirror attempt:
 
 - Scope: first 5,000 `BASE_SYSTEM_FILE` rows.
