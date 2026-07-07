@@ -1316,7 +1316,7 @@ class ProjectBoqImportWizard(models.TransientModel):
                 parent = stack.get(level - 1)
                 rec.parent_id = parent.id if parent else False
 
-            # 当前层级占位
+            # 记录当前层级最近一行，供后续子级挂接。
             stack[level] = rec
 
         return len(records)
@@ -1402,7 +1402,7 @@ class ProjectBoqImportWizard(models.TransientModel):
 
 
 # -------------------------------------------------------------------------
-# 层级构建器（阶段2占位：封装栈操作，保持现有层级算法）
+# 层级构建器（阶段2扩展点：封装栈操作，保持现有层级算法）
 # -------------------------------------------------------------------------
 class HierarchyBuilder:
     def __init__(self):
@@ -1425,7 +1425,7 @@ class HierarchyBuilder:
 
     def heal_hierarchy(self, records):
         """
-        Phase-2 占位：层级连续性修复接口。
+        Phase-2 扩展点：层级连续性修复接口。
         当前未启用，后续阶段用于批量调整 level/parent_id/display_order。
         """
         return records
@@ -1435,20 +1435,20 @@ class HierarchyBuilder:
 # 阶段2架构：解析器骨架（行为保持不变）
 # -------------------------------------------------------------------------
 class RowParser:
-    """行解析器骨架：后续可按清单类别扩展，当前作为占位，保持现有行为。"""
+    """行解析器骨架：后续可按清单类别扩展，当前保持现有行为。"""
 
     def __init__(self, wizard):
         self.wizard = wizard
 
     def parse_row(self, raw_row, col_map):
-        """占位：返回原始行，供后续按类别定制。"""
+        """返回原始行，供后续按类别定制。"""
         return raw_row
 
 
 class BoqParser:
     """
     Phase-2: 导入解析骨架。
-    当前仍委托原有 _parse_excel/_build_rows_from_iter，承担结构封装与章节池占位，
+    当前仍委托原有 _parse_excel/_build_rows_from_iter，承担结构封装与章节池收集，
     不改变导入业务行为。
     """
 
@@ -1469,7 +1469,7 @@ class BoqParser:
 
     def parse_sheet(self, sheet, sheet_index):
         """
-        占位：保留扩展点（阶段2框架），当前由 wizard._parse_excel 处理。
+        保留扩展点（阶段2框架），当前由 wizard._parse_excel 处理。
         预解析合并单元格标题区并收集章节池（仅收集，不推断）。
         """
         titles = self.parse_merged_title_area(sheet)
@@ -1478,10 +1478,10 @@ class BoqParser:
         return None
 
     def parse_rows(self, data_rows):
-        """占位：保留扩展点（阶段2框架），当前由 wizard._build_rows_from_iter 处理。"""
+        """保留扩展点（阶段2框架），当前由 wizard._build_rows_from_iter 处理。"""
         return None
 
-    # ------------------ 章节/标题预解析（阶段2占位） ------------------
+    # ------------------ 章节/标题预解析（阶段2扩展点） ------------------
     def parse_merged_title_area(self, sheet, max_rows=5):
         """
         简单读取前几行合并单元格的非空文本，作为章节池候选。
