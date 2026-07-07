@@ -31,7 +31,7 @@
         <field name="visible_groups_json"><![CDATA[["issue_header", "responsibility", "rectification", "recheck", "attachments"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.quality.issue", "sc.quality.rectification", "sc.quality.recheck", "sc.site.photo.batch"], "terminal_action": "action_close", "evidence_role": "quality_closure"}]]></field>
         <field name="attachment_policy">recommended</field>
-        <field name="note">质量问题按登记、整改、复验、闭环办理；后续可扩展责任单位、逾期和结算依据策略。</field>
+        <field name="note">质量问题按登记、整改、复验、闭环办理；可按业务配置扩展责任单位、逾期和结算依据策略。</field>
     </record>
 
     <record id="business_category_site_quality_rectification" model="sc.business.category">
@@ -80,7 +80,7 @@
         <field name="visible_groups_json"><![CDATA[["issue_header", "responsibility", "rectification", "recheck", "attachments"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.safety.issue", "sc.safety.rectification", "sc.safety.recheck", "sc.site.photo.batch"], "terminal_action": "action_close", "evidence_role": "safety_closure"}]]></field>
         <field name="attachment_policy">recommended</field>
-        <field name="note">安全问题按登记、整改、复验、闭环办理；后续可扩展危险源、巡检任务和逾期责任策略。</field>
+        <field name="note">安全问题按登记、整改、复验、闭环办理；可按业务配置扩展危险源、巡检任务和逾期责任策略。</field>
     </record>
 
     <record id="business_category_site_safety_rectification" model="sc.business.category">

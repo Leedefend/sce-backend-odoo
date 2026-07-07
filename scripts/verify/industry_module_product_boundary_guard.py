@@ -462,6 +462,7 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
         "兼容历史门户动作入口",
         "Early placeholders",
         "阶段1中",
+        "后续可扩展",
         "当前层级占位",
         "阶段2占位",
         "作为占位",
