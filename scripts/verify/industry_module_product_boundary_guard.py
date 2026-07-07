@@ -135,7 +135,7 @@ def verify_guard_metadata_product_language() -> list[str]:
         if "demo" in reason.lower():
             errors.append(
                 "industry module guard metadata must describe seed excluded assets "
-                "as scenario seed ownership, not demo ownership"
+                "with scenario seed ownership language"
             )
     return errors
 
