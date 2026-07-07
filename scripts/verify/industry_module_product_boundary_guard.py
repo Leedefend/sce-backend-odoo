@@ -661,6 +661,26 @@ def verify_app_entry_exception_observability() -> list[str]:
                 "smart_construction_core: app catalog/navigation entry fallbacks must log "
                 f"exception degradation at debug level: {path.relative_to(ROOT).as_posix()}"
             )
+    app_open_path = ADDONS / "smart_construction_core" / "handlers" / "app_open.py"
+    if app_open_path.is_file():
+        text = app_open_path.read_text(encoding="utf-8", errors="ignore")
+        required_fragments = {
+            '"fallback_kind": "delivery_navigation_fallback"': "workspace fallback kind",
+            '"no_business_fact_authority": True': "workspace fallback authority boundary",
+            "def _permission_denied_response(": "permission envelope helper",
+            "REASON_PERMISSION_DENIED": "permission denial reason code",
+        }
+        for fragment, label in sorted(required_fragments.items()):
+            if fragment not in text:
+                errors.append(
+                    "smart_construction_core: app.open must expose stable product entry "
+                    f"{label}, missing {fragment!r}"
+                )
+        if "raise PermissionError" in text:
+            errors.append(
+                "smart_construction_core: app.open must return a standard permission "
+                "envelope instead of raising PermissionError"
+            )
     return errors
 
 

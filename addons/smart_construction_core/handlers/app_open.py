@@ -5,6 +5,7 @@ from typing import Any, Dict
 from odoo import api, SUPERUSER_ID
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
+from odoo.addons.smart_core.utils.reason_codes import REASON_PERMISSION_DENIED, failure_meta_for_reason
 from .app_catalog import APP_DEFS, APP_DELIVERY_SOURCE_AUTHORITY, _xmlid_to_id, _current_perms
 
 # 如需直接执行契约，可引入：
@@ -57,10 +58,37 @@ def _is_feature_openable(env, su_env, app_id: str, feature: Dict[str, Any], perm
 
 
 def _workspace_fallback_payload(reason: str = "") -> Dict[str, Any]:
-    payload = {"subject": "ui.contract", "scene_key": "workspace.home", "route": "/s/workspace.home"}
+    payload = {
+        "subject": "ui.contract",
+        "scene_key": "workspace.home",
+        "route": "/s/workspace.home",
+        "fallback_kind": "delivery_navigation_fallback",
+        "no_business_fact_authority": True,
+    }
     if reason:
         payload["fallback_reason"] = str(reason)
     return payload
+
+
+def _permission_denied_response(app_id: str, feature_key: str, meta: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "status": "error",
+        "ok": False,
+        "code": 403,
+        "data": {
+            "success": False,
+            "reason_code": REASON_PERMISSION_DENIED,
+            "app": str(app_id or ""),
+            "feature": str(feature_key or ""),
+        },
+        "error": {
+            "code": REASON_PERMISSION_DENIED,
+            "reason_code": REASON_PERMISSION_DENIED,
+            "message": "permission denied for app feature",
+            **failure_meta_for_reason(REASON_PERMISSION_DENIED),
+        },
+        "meta": meta,
+    }
 
 
 def _action_target_payload(su_env, action_xmlid: str) -> Dict[str, Any]:
@@ -145,7 +173,7 @@ class AppOpenHandler(BaseIntentHandler):
         except Exception:
             is_system_admin = False
         if need and not need.issubset(have) and not is_system_admin:
-            raise PermissionError(f"permission denied for {app_id}:{feature_key}")
+            return _permission_denied_response(app_id, feature_key, self._meta(ts0))
 
         o = f.get("open") or {}
         # 1) 菜单：返回前端可直接 contract.get('menu', {id})
