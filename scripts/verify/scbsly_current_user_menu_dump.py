@@ -120,7 +120,7 @@ def report(payload: dict[str, Any]) -> str:
         "",
         f"Status: {payload['status']}",
         f"Base URL: {payload['base_url']}",
-        f"Old User: {payload['old_user'].get('UserName')} / {payload['old_user'].get('PersonName')}",
+        f"Historical User: {payload['old_user'].get('UserName')} / {payload['old_user'].get('PersonName')}",
         f"Generated At: {payload['generated_at']}",
         "",
         "| path | config_id | link |",
