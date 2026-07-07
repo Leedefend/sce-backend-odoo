@@ -29,6 +29,17 @@ set +a
 
 export VITE_ODOO_DB="${VITE_ODOO_DB:-${DB_NAME}}"
 export VITE_APP_ENV="${VITE_APP_ENV:-${ENV_NAME}}"
+case "${ENV_NAME}" in
+  prod|production)
+    VITE_BUILD_MODE="${VITE_BUILD_MODE:-production}"
+    ;;
+  dev|daily|development)
+    VITE_BUILD_MODE="${VITE_BUILD_MODE:-development}"
+    ;;
+  *)
+    VITE_BUILD_MODE="${VITE_BUILD_MODE:-${ENV_NAME}}"
+    ;;
+esac
 FRONTEND_DIST_DIR="${FRONTEND_DIST_DIR:-frontend/apps/web/dist}"
 case "${FRONTEND_DIST_DIR}" in
   /*) FRONTEND_DIST_ABS="${FRONTEND_DIST_DIR}" ;;
@@ -37,6 +48,13 @@ case "${FRONTEND_DIST_DIR}" in
 esac
 export VITE_BUILD_OUT_DIR="${FRONTEND_DIST_ABS}"
 
-echo "[frontend.static.build] env_file=${ENV_FILE} vite_db=${VITE_ODOO_DB} app_env=${VITE_APP_ENV} out_dir=${VITE_BUILD_OUT_DIR}"
+echo "[frontend.static.build] env_file=${ENV_FILE} vite_db=${VITE_ODOO_DB} app_env=${VITE_APP_ENV} mode=${VITE_BUILD_MODE} out_dir=${VITE_BUILD_OUT_DIR}"
 cd "${ROOT_DIR}"
-exec "${ROOT_DIR}/scripts/dev/pnpm_exec.sh" -C frontend/apps/web build
+"${ROOT_DIR}/scripts/dev/pnpm_exec.sh" -C frontend/apps/web exec vite build --mode "${VITE_BUILD_MODE}"
+
+if [[ "${ENV_NAME}" != "prod" && "${ENV_NAME}" != "production" ]]; then
+  if grep -Rqs '"sc_prod"' "${FRONTEND_DIST_ABS}/assets"; then
+    echo "frontend static build produced sc_prod in non-prod env=${ENV_NAME}; refuse to publish" >&2
+    exit 1
+  fi
+fi
