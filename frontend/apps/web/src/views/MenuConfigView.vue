@@ -1694,11 +1694,21 @@ function menuDisplayLabel(menu: MenuConfigMenu | null | undefined) {
   const draft = drafts[menu.id];
   return String(
     draft?.custom_label
-    || menu.display_name
+    || shortMenuLabel(menu.name)
+    || shortMenuLabel(menu.display_name)
+    || shortMenuLabel(menu.complete_name)
     || menu.name
+    || menu.display_name
     || menu.complete_name
     || `菜单 ${menu.id}`,
   ).trim();
+}
+
+function shortMenuLabel(value: string | null | undefined) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  const parts = text.split('/').map((part) => part.trim()).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : text;
 }
 
 function menuPathLabel(menu: MenuConfigMenu | null | undefined) {
