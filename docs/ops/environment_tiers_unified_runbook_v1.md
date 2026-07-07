@@ -34,6 +34,21 @@ It is the single command policy for environment setup, script usage, and Makefil
 | Test dedicated | `test` | `.env.test` | `sc_test` | CI-like gates, strict verification |
 | Production | `prod` | `.env.prod` | `sc_prod` | Formal deployment only, guarded operations |
 
+## Runtime Topology
+
+| Tier | Host alias | Runtime path | ENV | ENV_FILE | DB_NAME |
+| --- | --- | --- | --- | --- | --- |
+| Daily dev | `sc-root` | `/opt/projects/repos/sce-backend-odoo` | `dev` | `.env.dev` | `sc_demo` |
+| Production | `sc-prod` | `/opt/sce/production/sce-backend-odoo` | `prod` | `.env.prod` | `sc_prod` |
+
+The daily development runtime repository is the only deployable `dev` working tree.
+Before publishing or upgrading it, run `make verify.daily_dev.runtime_repo.clean`
+inside `/opt/projects/repos/sce-backend-odoo`.
+
+Production code authority is `main` or a frozen release package applied under `/opt/sce/production/sce-backend-odoo`.
+If production is a Git working tree, run `make verify.production_git.authority.guard` before upgrade.
+Do not deploy from scratch worktrees or archived runtime directories.
+
 ## Mandatory Preflight
 
 Always run before operations:
@@ -47,6 +62,7 @@ This command checks:
 - `.env.dev/.env.test/.env.prod` presence and required keys
 - three-tier env validation via `check-compose-env`
 - DB knob precedence (`DB_NAME`, `DB`, `BD`) to avoid wrong-database execution
+- runtime topology policy for daily development and production
 
 ## Standard Command Entry
 

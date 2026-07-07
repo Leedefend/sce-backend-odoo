@@ -255,7 +255,7 @@ endef
 # ======================================================
 # ==================== Guards ==========================
 # ======================================================
-.PHONY: check-compose-project check.compose.project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config env.print.db env.matrix.check verify.daily_dev.runtime_repo.clean
+.PHONY: check-compose-project check.compose.project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config env.print.db env.matrix.check verify.environment.topology.guard verify.daily_dev.runtime_repo.clean
 
 IS_PROD := 0
 ifneq (,$(filter prod,$(ENV)))
@@ -416,7 +416,12 @@ env.matrix.check:
 	  echo "❌ [env.matrix.check] BD alias broken: expected sc_matrix_legacy got '$$legacy_db_out'"; \
 	  exit 2; \
 	fi; \
+	python3 scripts/verify/environment_topology_guard.py; \
 	echo "✅ [env.matrix.check] PASS"
+
+verify.environment.topology.guard:
+	@python3 -m py_compile scripts/verify/environment_topology_guard.py
+	@python3 scripts/verify/environment_topology_guard.py
 
 verify.daily_dev.runtime_repo.clean:
 	@bash scripts/ops/daily_dev_runtime_repo_guard.sh

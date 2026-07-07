@@ -9,6 +9,7 @@ ad hoc local state.
 
 ## Runtime Repository
 
+- Host alias: `sc-root`
 - Path: `/opt/projects/repos/sce-backend-odoo`
 - Required branch: `main`
 - Required state: clean working tree, aligned with upstream
