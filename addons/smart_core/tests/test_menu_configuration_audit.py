@@ -787,7 +787,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
             [(297, "系统设置")],
         )
 
-    def test_menu_config_panel_keeps_hidden_business_root_menu_recoverable(self):
+    def test_menu_config_panel_excludes_hidden_menu_outside_navigation_boundary(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
         user = _User([])
         business_root = _Menu(291, "智慧施工管理平台")
@@ -827,12 +827,12 @@ class TestMenuConfigurationAudit(unittest.TestCase):
 
         result = handler.handle({"params": handler.params})
 
-        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 292, 379, 999])
-        self.assertEqual(set(result["data"]["policies"].keys()), {291, 292, 379, 999})
-        self.assertFalse(result["data"]["policies"][999]["visible"])
-        self.assertEqual(result["meta"]["scoped_menu_count"], 4)
+        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 292, 379])
+        self.assertEqual(set(result["data"]["policies"].keys()), {291, 292, 379})
+        self.assertNotIn(999, {row["id"] for row in result["data"]["menus"]})
+        self.assertEqual(result["meta"]["scoped_menu_count"], 3)
 
-    def test_menu_config_panel_includes_unconfigured_business_root_menu(self):
+    def test_menu_config_panel_excludes_unrequested_unconfigured_business_root_menu(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")
         user = _User([])
         business_root = _Menu(291, "智慧施工管理平台")
@@ -871,9 +871,10 @@ class TestMenuConfigurationAudit(unittest.TestCase):
 
         result = handler.handle({"params": handler.params})
 
-        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 292, 379, 410])
+        self.assertEqual([row["id"] for row in result["data"]["menus"]], [291, 292, 379])
         self.assertEqual(set(result["data"]["policies"].keys()), {291, 292, 379})
-        self.assertEqual(result["meta"]["scoped_menu_count"], 4)
+        self.assertNotIn(410, {row["id"] for row in result["data"]["menus"]})
+        self.assertEqual(result["meta"]["scoped_menu_count"], 3)
 
     def test_menu_config_panel_excludes_hidden_policy_outside_business_root(self):
         company = types.SimpleNamespace(id=7, display_name="测试公司", name="测试公司")

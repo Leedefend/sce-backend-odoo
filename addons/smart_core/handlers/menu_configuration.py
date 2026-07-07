@@ -487,14 +487,17 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         if root_menu_id and root_menu_id not in requested_menu_ids:
             requested_menu_ids.append(root_menu_id)
         if root_menu_id:
-            all_menus = MenuAll.search([], order="parent_id, sequence, id")
-            candidate_ids = set(self._menu_subtree_ids(all_menus, root_menu_id))
             requested_set = {int(menu_id) for menu_id in requested_menu_ids if int(menu_id or 0)}
-            candidate_ids.update(requested_set)
+            if requested_set:
+                candidate_ids = set(requested_set)
+            else:
+                all_menus = MenuAll.search([], order="parent_id, sequence, id")
+                candidate_ids = set(self._menu_subtree_ids(all_menus, root_menu_id))
             policy_records = self.env[MENU_CONFIG_POLICY_MODEL].sudo().with_context(active_test=False).search([
                 ("company_id", "=", company_id),
                 ("active", "=", True),
                 ("menu_id", "!=", False),
+                ("menu_id", "in", sorted(candidate_ids)),
             ])
             policy_records = self._policies_in_menu_config_scope(policy_records, root_menu_id)
             for policy in policy_records:
