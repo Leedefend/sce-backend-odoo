@@ -248,6 +248,7 @@ def verify_runtime_comment_product_language_boundary() -> list[str]:
         "后续在 _create_with_hierarchy",
         "后续 WBS",
         "后续调试",
+        "后续可根据需要再调整",
         "临时实现",
         "占位实现",
         "占位路由",

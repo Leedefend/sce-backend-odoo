@@ -140,7 +140,7 @@ class ProjectDictionary(models.Model):
     @api.constrains("type", "parent_id")
     def _check_hierarchy_type(self):
         """
-        简单的类型层级规则（后续可根据需要再调整）：
+        类型层级规则（可按业务配置演进）：
         - 专业（discipline）：不允许有上级
         - 章节（chapter）：上级必须是 专业
         - 定额项目（quota_item）：上级必须是 章节
