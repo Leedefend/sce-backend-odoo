@@ -368,6 +368,14 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         for group in policy.menu_groups or []:
             if not isinstance(group, dict):
                 continue
+            group_label = _to_text(group.get("group_label") or group.get("label") or group.get("group_key"))
+            if root_menu_id and group_label:
+                group_menu = Menu.search([
+                    ("parent_id", "=", root_menu_id),
+                    ("name", "=", group_label),
+                ], limit=1)
+                if group_menu:
+                    scoped_ids.add(int(group_menu.id))
             for item in group.get("menus") or []:
                 if not isinstance(item, dict):
                     continue
