@@ -25,7 +25,7 @@ def build(scene_key: str = "finance.payment_requests", runtime: dict | None = No
         "scene_key": scene_key,
         "guidance": {
             "title": "付款申请列表",
-            "message": "从个人付款申请列表进入 payment-entry 主入口，保持 personal-entry 语义，同时保留通用原生列表作为兼容入口。",
+            "message": "从个人付款申请列表进入 payment-entry 主入口，保持 personal-entry 语义，同时保留通用原生列表作为历史入口。",
         },
         "primary_action": primary_action,
         "next_action": {

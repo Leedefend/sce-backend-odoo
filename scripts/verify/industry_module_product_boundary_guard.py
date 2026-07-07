@@ -413,6 +413,21 @@ def verify_core_model_legacy_product_message_boundary() -> list[str]:
     return errors
 
 
+def verify_scene_provider_historical_entry_wording() -> list[str]:
+    providers_root = ADDONS / "smart_construction_scene" / "providers"
+    errors: list[str] = []
+    if not providers_root.is_dir():
+        return errors
+    for path in providers_root.rglob("*.py"):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "兼容入口" in text:
+            errors.append(
+                "smart_construction_scene: provider guidance must use historical-entry "
+                f"wording, not generic compatibility-entry wording: {path.relative_to(ROOT).as_posix()}"
+            )
+    return errors
+
+
 def verify_project_dashboard_open_alias_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "handlers" / "project_dashboard_open.py"
     if not path.is_file():
@@ -1431,6 +1446,7 @@ def main() -> int:
     errors.extend(verify_handler_product_language_boundary())
     errors.extend(verify_my_work_historical_todo_boundary())
     errors.extend(verify_core_model_legacy_product_message_boundary())
+    errors.extend(verify_scene_provider_historical_entry_wording())
     errors.extend(verify_project_dashboard_open_alias_boundary())
     errors.extend(verify_handler_historical_wrapper_boundary())
     errors.extend(verify_runtime_comment_product_language_boundary())
