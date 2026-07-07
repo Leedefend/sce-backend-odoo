@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import re
 
 from odoo.tests.common import TransactionCase, tagged
 
@@ -13,8 +12,11 @@ class TestDemoShowcaseGate(TransactionCase):
         demo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
         addons_root = os.path.abspath(os.path.join(demo_root, os.pardir))
         module_root = os.path.join(addons_root, "smart_construction_core")
-        allow_path = os.path.join("models", "core", "project_core.py")
-        allow_pattern = re.compile(r"\bsc_demo_showcase_ready\s*=\s*fields\.Boolean\b")
+        allow_paths = {
+            os.path.join("models", "core", "project_core.py"),
+            os.path.join("migrations", "17.0.0.60", "post-migration.py"),
+        }
+        legacy_tokens = ("sc_demo_showcase", "sc_demo_showcase_ready")
 
         hits = []
         for root, _, files in os.walk(module_root):
@@ -26,20 +28,20 @@ class TestDemoShowcaseGate(TransactionCase):
                 path = os.path.join(root, name)
                 with open(path, "r", encoding="utf-8") as handle:
                     content = handle.read()
-                if "sc_demo_showcase_ready" not in content:
+                if not any(token in content for token in legacy_tokens):
                     continue
                 rel_path = os.path.relpath(path, module_root)
                 if rel_path.startswith("tests" + os.sep):
                     continue
                 for idx, line in enumerate(content.splitlines(), start=1):
-                    if "sc_demo_showcase_ready" not in line:
+                    if not any(token in line for token in legacy_tokens):
                         continue
-                    if rel_path.endswith(allow_path) and allow_pattern.search(line):
+                    if rel_path in allow_paths:
                         continue
                     hits.append(f"{rel_path}:{idx}")
 
         self.assertFalse(
             hits,
-            "禁止 core 模块硬编码 demo 过滤（sc_demo_showcase_ready），命中：%s"
+            "禁止 core 模块硬编码 demo 过滤（sc_demo_showcase*），命中：%s"
             % ", ".join(hits),
         )

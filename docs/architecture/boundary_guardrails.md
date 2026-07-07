@@ -1,6 +1,9 @@
 # Boundary Guardrails (P-1.6)
 
 This guardrail prevents demo assets from leaking back into core/custom/seed.
+Demo-only showcase actions belong to `smart_construction_demo`; core runtime
+entry logic must use the product fields `sc_project_showcase` and
+`sc_project_showcase_ready`.
 
 ## Lint Rules
 

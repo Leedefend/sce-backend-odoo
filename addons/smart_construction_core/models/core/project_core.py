@@ -626,15 +626,29 @@ class ProjectProject(models.Model):
     location = fields.Char('项目地点')
     contract_no = fields.Char('主合同编号')
     initiation_date = fields.Date('单据日期', default=fields.Date.context_today, tracking=True)
-    sc_demo_showcase = fields.Boolean(
-        '演示项目池',
+    sc_project_showcase = fields.Boolean(
+        '项目样板池',
         default=False,
-        help='用于标记演示项目池的入口筛选项目。',
+        help='用于标记可作为项目入口优先候选的正式样板项目。',
+    )
+    sc_project_showcase_ready = fields.Boolean(
+        '项目样板可展示',
+        default=False,
+        help='用于项目入口候选硬筛选，仅展示数据补齐完成的样板项目。',
+    )
+    sc_demo_showcase = fields.Boolean(
+        '项目样板池（兼容旧字段）',
+        related='sc_project_showcase',
+        readonly=False,
+        store=False,
+        help='兼容旧 demo 字段名；正式运行时请使用 sc_project_showcase。',
     )
     sc_demo_showcase_ready = fields.Boolean(
-        '演示项目可展示',
-        default=False,
-        help='用于演示入口硬筛选，仅展示数据补齐完成的项目。',
+        '项目样板可展示（兼容旧字段）',
+        related='sc_project_showcase_ready',
+        readonly=False,
+        store=False,
+        help='兼容旧 demo 字段名；正式运行时请使用 sc_project_showcase_ready。',
     )
 
     start_date = fields.Date('计划开工日期')

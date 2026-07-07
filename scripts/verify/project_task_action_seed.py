@@ -49,8 +49,8 @@ project_vals = {
 }
 _set_if_field(Project, project_vals, "date_start", fields.Date.today())
 _set_if_field(Project, project_vals, "start_date", fields.Date.today())
-_set_if_field(Project, project_vals, "sc_demo_showcase", True)
-_set_if_field(Project, project_vals, "sc_demo_showcase_ready", True)
+_set_if_field(Project, project_vals, "sc_project_showcase", True)
+_set_if_field(Project, project_vals, "sc_project_showcase_ready", True)
 _set_if_field(Project, project_vals, "sc_execution_state", "ready")
 if "user_ids" in getattr(Project, "_fields", {}):
     project_vals["user_ids"] = [(4, pm_user.id)]

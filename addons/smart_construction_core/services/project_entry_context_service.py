@@ -153,7 +153,7 @@ class ProjectEntryContextService:
         return any(normalized.startswith(prefix) for prefix in cls._NOISY_NAME_PREFIXES)
 
     @classmethod
-    def _is_demo_showroom_project(cls, name):
+    def _is_showroom_project(cls, name):
         normalized = str(name or "").strip()
         return normalized.startswith("展厅-")
 
@@ -163,8 +163,8 @@ class ProjectEntryContextService:
         project_id = int(context.get("project_id") or 0)
         project_name = str(context.get("project_name") or "")
         lifecycle_state = str(getattr(project, "lifecycle_state", "") or "").strip().lower()
-        showcase = bool(getattr(project, "sc_demo_showcase", False))
-        showcase_ready = bool(getattr(project, "sc_demo_showcase_ready", False))
+        showcase = bool(getattr(project, "sc_project_showcase", False))
+        showcase_ready = bool(getattr(project, "sc_project_showcase_ready", False))
         noisy = cls._is_noisy_project_name(project_name)
         rank = 0
         if project_id and project_id == int(active_project_id or 0):
@@ -173,7 +173,7 @@ class ProjectEntryContextService:
             rank += 500
         if showcase:
             rank += 150
-        if cls._is_demo_showroom_project(project_name):
+        if cls._is_showroom_project(project_name):
             rank += 200
         if not noisy:
             rank += 100
@@ -270,8 +270,8 @@ class ProjectEntryContextService:
             "|",
             ("name", "like", "展厅-%"),
             "|",
-            ("sc_demo_showcase", "=", True),
-            ("sc_demo_showcase_ready", "=", True),
+            ("sc_project_showcase", "=", True),
+            ("sc_project_showcase_ready", "=", True),
         ]
 
     def _option_candidate_records(self, Project, active_project_id=0, limit=12, company_id=0, operation_strategy=""):

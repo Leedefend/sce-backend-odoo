@@ -327,7 +327,10 @@ class ProjectDemoCockpitSeed(models.Model):
 
     @api.model
     def _sc_demo_apply_showcase_profile(self, project, profile):
-        vals = {"sc_demo_showcase": True, "sc_demo_showcase_ready": bool(profile.get("showcase_ready"))}
+        vals = {
+            "sc_project_showcase": True,
+            "sc_project_showcase_ready": bool(profile.get("showcase_ready")),
+        }
         if "health_state" in project._fields:
             vals["health_state"] = str(profile.get("health_state") or "warn")
         if "sc_execution_state" in project._fields:

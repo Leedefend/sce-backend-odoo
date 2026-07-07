@@ -76,10 +76,10 @@ def _create_project(user):
     }
     if "user_ids" in Project._fields:
         vals["user_ids"] = [(4, user.id)]
-    if "sc_demo_showcase" in Project._fields:
-        vals["sc_demo_showcase"] = True
-    if "sc_demo_showcase_ready" in Project._fields:
-        vals["sc_demo_showcase_ready"] = True
+    if "sc_project_showcase" in Project._fields:
+        vals["sc_project_showcase"] = True
+    if "sc_project_showcase_ready" in Project._fields:
+        vals["sc_project_showcase_ready"] = True
     return Project.create(vals)
 
 
