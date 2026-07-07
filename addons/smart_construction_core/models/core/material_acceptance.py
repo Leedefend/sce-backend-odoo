@@ -6,6 +6,14 @@ from odoo.exceptions import ValidationError
 from odoo.tools.float_utils import float_compare
 
 
+SYSTEM_DEFAULT_PROJECT_NAME = "系统默认项目（技术兜底）"
+LEGACY_SYSTEM_DEFAULT_PROJECT_NAME = "系统默认项目（待完善）"
+SYSTEM_DEFAULT_SUPPLIER_NAME = "系统默认供应商（技术兜底）"
+LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME = "系统默认供应商（待完善）"
+SYSTEM_DEFAULT_MATERIAL_NAME = "系统默认材料（技术兜底）"
+SYSTEM_DEFAULT_WAREHOUSE_NAME = "系统默认仓库（技术兜底）"
+
+
 class ScMaterialSystemDefaultMixin(models.AbstractModel):
     _name = "sc.material.system.default.mixin"
     _inherit = "sc.system.default.mixin"
@@ -13,26 +21,36 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
 
     @api.model
     def _sc_default_project_id(self):
-        project = self.env["project.project"].search([("name", "=", "系统默认项目（待完善）")], limit=1)
+        project = self.env["project.project"].search(
+            [("name", "in", [SYSTEM_DEFAULT_PROJECT_NAME, LEGACY_SYSTEM_DEFAULT_PROJECT_NAME])],
+            limit=1,
+        )
         if not project:
             project = self.env["project.project"].sudo().create(
                 {
-                    "name": "系统默认项目（待完善）",
+                    "name": SYSTEM_DEFAULT_PROJECT_NAME,
                     "company_id": self.env.company.id,
                 }
             )
+        elif project.name == LEGACY_SYSTEM_DEFAULT_PROJECT_NAME:
+            project.sudo().write({"name": SYSTEM_DEFAULT_PROJECT_NAME})
         return project.id
 
     @api.model
     def _sc_default_supplier_id(self):
-        partner = self.env["res.partner"].search([("name", "=", "系统默认供应商（待完善）")], limit=1)
+        partner = self.env["res.partner"].search(
+            [("name", "in", [SYSTEM_DEFAULT_SUPPLIER_NAME, LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME])],
+            limit=1,
+        )
         if not partner:
             partner = self.env["res.partner"].sudo().create(
                 {
-                    "name": "系统默认供应商（待完善）",
+                    "name": SYSTEM_DEFAULT_SUPPLIER_NAME,
                     "supplier_rank": 1,
                 }
             )
+        elif partner.name == LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME:
+            partner.sudo().write({"name": SYSTEM_DEFAULT_SUPPLIER_NAME})
         return partner.id
 
     @api.model
@@ -41,11 +59,13 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
         if not product:
             product = self.env["product.product"].sudo().create(
                 {
-                    "name": "系统默认材料（待完善）",
+                    "name": SYSTEM_DEFAULT_MATERIAL_NAME,
                     "default_code": "SC-SYSTEM-DEFAULT-MATERIAL",
                     "type": "product",
                 }
             )
+        elif product.name != SYSTEM_DEFAULT_MATERIAL_NAME:
+            product.sudo().write({"name": SYSTEM_DEFAULT_MATERIAL_NAME})
         return product.id
 
     @api.model
@@ -57,7 +77,7 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
         if not warehouse:
             warehouse = self.env["stock.warehouse"].sudo().create(
                 {
-                    "name": "系统默认仓库（待完善）",
+                    "name": SYSTEM_DEFAULT_WAREHOUSE_NAME,
                     "code": "SDF",
                     "company_id": self.env.company.id,
                 }

@@ -402,6 +402,36 @@ def verify_core_extension_wizard_exception_observability() -> list[str]:
     return errors
 
 
+def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
+    errors: list[str] = []
+    guarded_roots = (
+        ADDONS / "smart_construction_core" / "models",
+        ADDONS / "smart_construction_core" / "data",
+        ADDONS / "smart_construction_core" / "views",
+        ADDONS / "smart_construction_core" / "wizard",
+        ADDONS / "smart_construction_scene" / "data",
+        ADDONS / "smart_construction_scene" / "profiles",
+    )
+    for root in guarded_roots:
+        if not root.is_dir():
+            continue
+        for path in root.rglob("*"):
+            if path.suffix not in {".py", ".xml"}:
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            scrubbed = "\n".join(
+                line
+                for line in text.splitlines()
+                if not line.strip().startswith("LEGACY_SYSTEM_DEFAULT_")
+            )
+            if "待完善" in scrubbed:
+                errors.append(
+                    "smart_construction_core: runtime product surface must not expose pending placeholder wording: "
+                    f"{path.relative_to(ROOT).as_posix()}"
+                )
+    return errors
+
+
 def verify_scene_registry_engine_fallback_observability() -> list[str]:
     path = ADDONS / "smart_construction_scene" / "scene_registry.py"
     if not path.is_file():
@@ -593,6 +623,7 @@ def main() -> int:
     errors.extend(verify_policy_capability_dashboard_exception_observability())
     errors.extend(verify_core_model_runtime_exception_observability())
     errors.extend(verify_core_extension_wizard_exception_observability())
+    errors.extend(verify_runtime_pending_placeholder_language_boundary())
     errors.extend(verify_scene_registry_engine_fallback_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())

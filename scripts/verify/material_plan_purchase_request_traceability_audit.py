@@ -46,7 +46,7 @@ def _product():
         return product
     return env["product.product"].sudo().create(  # noqa: F821
         {
-            "name": "系统默认材料（待完善）",
+            "name": "系统默认材料（技术兜底）",
             "default_code": "SC-SYSTEM-DEFAULT-MATERIAL",
             "type": "product",
         }
