@@ -925,6 +925,40 @@ def verify_work_breakdown_historical_facade_boundary() -> list[str]:
     return errors
 
 
+def verify_state_machine_historical_alias_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_core" / "models" / "support" / "state_machine.py"
+    if not path.is_file():
+        return ["smart_construction_core: state machine module missing"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    required_fragments = {
+        "# Historical constant aliases for existing imports; new code uses ScStateMachine.*.",
+        "PROJECT_LIFECYCLE_STATES = ScStateMachine.PROJECT_STATES",
+        "PROJECT_LIFECYCLE_TRANSITIONS = ScStateMachine.PROJECT_TRANSITIONS",
+        "CONTRACT_STATES = ScStateMachine.CONTRACT_STATES",
+        "CONTRACT_TRANSITIONS = ScStateMachine.CONTRACT_TRANSITIONS",
+        "SETTLEMENT_ORDER_STATES = ScStateMachine.SETTLEMENT_ORDER_STATES",
+        "SETTLEMENT_ORDER_TRANSITIONS = ScStateMachine.SETTLEMENT_ORDER_TRANSITIONS",
+        "SETTLEMENT_STATES = ScStateMachine.SETTLEMENT_STATES",
+        "SETTLEMENT_TRANSITIONS = ScStateMachine.SETTLEMENT_TRANSITIONS",
+        "PAYMENT_REQUEST_STATES = ScStateMachine.PAYMENT_REQUEST_STATES",
+        "PAYMENT_REQUEST_TRANSITIONS = ScStateMachine.PAYMENT_REQUEST_TRANSITIONS",
+        "BOQ_SOURCE_TYPES = ScStateMachine.BOQ_SOURCE_TYPES",
+    }
+    errors: list[str] = []
+    for fragment in sorted(required_fragments):
+        if text.count(fragment) != 1:
+            errors.append(
+                "smart_construction_core: state machine historical alias must remain "
+                f"a direct ScStateMachine alias, missing anchor {fragment!r}"
+            )
+    if "Legacy exports for backward compatibility" in text:
+        errors.append(
+            "smart_construction_core: state machine aliases must use historical-alias "
+            "boundary wording, not generic legacy export wording"
+        )
+    return errors
+
+
 def verify_platform_admin_facade_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "services" / "platform_admin.py"
     if not path.is_file():
@@ -1173,6 +1207,7 @@ def main() -> int:
     errors.extend(verify_project_execution_readiness_precheck_boundary())
     errors.extend(verify_budget_compatibility_layer_boundary())
     errors.extend(verify_work_breakdown_historical_facade_boundary())
+    errors.extend(verify_state_machine_historical_alias_boundary())
     errors.extend(verify_platform_admin_facade_boundary())
     errors.extend(verify_project_showcase_legacy_alias_boundary())
     errors.extend(verify_core_extension_legacy_label_boundary())

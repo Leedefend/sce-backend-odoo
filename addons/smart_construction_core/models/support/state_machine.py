@@ -158,7 +158,7 @@ class ScStateMachine:
             raise_guard("P0_STATE_ILLEGAL_TRANSITION", who, _("状态变更"), reasons, hints)
 
 
-# Legacy exports for backward compatibility. Prefer ScStateMachine.* in new code.
+# Historical constant aliases for existing imports; new code uses ScStateMachine.*.
 PROJECT_LIFECYCLE_STATES = ScStateMachine.PROJECT_STATES
 PROJECT_LIFECYCLE_TRANSITIONS = ScStateMachine.PROJECT_TRANSITIONS
 CONTRACT_STATES = ScStateMachine.CONTRACT_STATES
