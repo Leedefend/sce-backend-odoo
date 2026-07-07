@@ -181,7 +181,6 @@ def _acceptance_surface_matchers(contract: dict | None) -> dict:
     tokens = set()
     for key in (
         "acceptance_surface_tokens",
-        "formal_group_child_labels",
         "old_acceptance_group_labels",
         "direct_acceptance_group_labels",
         "joint_acceptance_group_labels",
