@@ -606,7 +606,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
     def _parse_followup_note(self, note_text):
         first_line = str(note_text or "").splitlines()[0] if note_text else ""
         if not first_line.startswith("SC_FOLLOWUP"):
-            # 兼容早期 note: "...reason=OK"
+            # Historical note format: "...reason=OK"
             reason_match = re.search(r"reason=([A-Z0-9_]+)", str(note_text or ""))
             return {"reason_code": reason_match.group(1) if reason_match else ""}
         result = {}

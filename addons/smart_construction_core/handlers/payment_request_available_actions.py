@@ -10,7 +10,7 @@ from odoo.addons.smart_core.core.project_context import (
 )
 try:
     from odoo.addons.smart_core.core.project_context import record_in_business_scope
-except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+except ImportError:  # pragma: no cover - standalone boundary-test fallback
     from odoo.addons.smart_core.core.project_context import record_in_project_scope, selected_project_id_from_context
 
     def record_in_business_scope(env_model, record_id, params=None, context=None):
