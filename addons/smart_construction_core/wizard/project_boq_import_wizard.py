@@ -1402,7 +1402,7 @@ class ProjectBoqImportWizard(models.TransientModel):
 
 
 # -------------------------------------------------------------------------
-# 层级构建器（阶段2扩展点：封装栈操作，保持现有层级算法）
+# 层级构建器（封装栈操作，保持现有层级算法）
 # -------------------------------------------------------------------------
 class HierarchyBuilder:
     def __init__(self):
@@ -1455,7 +1455,7 @@ class BoqParser:
     def __init__(self, wizard):
         self.wizard = wizard
         self.row_parser = RowParser(wizard)
-        # 章节池：收集标题/章节文本（阶段2仅收集，不做推断）
+        # 章节池：收集标题/章节文本，仅收集候选，不做层级推断。
         self.chapter_pool = []
 
     def parse_file(self, data, filename):
@@ -1469,7 +1469,7 @@ class BoqParser:
 
     def parse_sheet(self, sheet, sheet_index):
         """
-        保留扩展点（阶段2框架），当前由 wizard._parse_excel 处理。
+        保留工作表解析扩展点，当前由 wizard._parse_excel 处理。
         预解析合并单元格标题区并收集章节池（仅收集，不推断）。
         """
         titles = self.parse_merged_title_area(sheet)
@@ -1478,14 +1478,14 @@ class BoqParser:
         return None
 
     def parse_rows(self, data_rows):
-        """保留扩展点（阶段2框架），当前由 wizard._build_rows_from_iter 处理。"""
+        """保留行解析扩展点，当前由 wizard._build_rows_from_iter 处理。"""
         return None
 
-    # ------------------ 章节/标题预解析（阶段2扩展点） ------------------
+    # ------------------ 章节/标题预解析 ------------------
     def parse_merged_title_area(self, sheet, max_rows=5):
         """
         简单读取前几行合并单元格的非空文本，作为章节池候选。
-        阶段2仅收集文本，不做层级推断。
+        仅收集文本，不做层级推断。
         """
         titles = []
         try:

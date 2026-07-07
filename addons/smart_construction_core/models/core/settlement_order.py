@@ -239,7 +239,7 @@ class ScSettlementOrder(models.Model):
         column1="settlement_id",
         column2="purchase_id",
         string="采购订单",
-        help="与本结算单关联的采购订单（Phase-3 三单匹配基础版）。",
+        help="与本结算单关联的采购订单，用于三单匹配。",
     )
     invoice_ref = fields.Char(string="发票号/票据号")
     invoice_amount = fields.Monetary(string="发票金额", currency_field="currency_id")
