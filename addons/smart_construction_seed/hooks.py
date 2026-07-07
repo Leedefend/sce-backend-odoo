@@ -52,7 +52,7 @@ def post_init_hook(env_or_cr, registry=None):
 
     is_demo_db = env.cr.dbname in ("sc_demo", "sc_test")
     if ICP.get_param("sc.login.env") == "demo" or mode == "demo" or is_demo_db:
-        _logger.info("Seed: ensure company currency is CNY for demo env")
+        _logger.info("Seed: ensure company currency is CNY for scenario environment")
         _ensure_company_currency_cny(env)
 
     if not enabled:

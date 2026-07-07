@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Smart Construction Seed",
-    "summary": "Production-safe baseline seed scaffolding with explicit demo-only steps",
+    "summary": "Production-safe baseline seed scaffolding with guarded scenario steps",
     "version": "17.0.0.2.1",
     "category": "Tools",
     "license": "LGPL-3",
