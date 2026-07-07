@@ -1291,7 +1291,7 @@ def verify_core_extension_legacy_label_boundary() -> list[str]:
     for literal, reason in allowed_literals.items():
         if text.count(literal) != 1:
             errors.append(
-                "smart_construction_core: core_extension legacy label compatibility literal "
+                "smart_construction_core: core_extension historical label literal "
                 f"{literal} must appear exactly once ({reason})"
             )
     scrubbed = text
@@ -1301,13 +1301,13 @@ def verify_core_extension_legacy_label_boundary() -> list[str]:
         if token in scrubbed:
             errors.append(
                 "smart_construction_core: core_extension may only carry demo/pilot wording "
-                f"inside explicit legacy label compatibility literals, found token {token!r}"
+                f"inside explicit historical label literals, found token {token!r}"
             )
     for token in ("Legacy loader shim", "Legacy hook shim"):
         if token in text:
             errors.append(
                 "smart_construction_core: core_extension platform hooks must use "
-                f"compatibility hook wording, not {token!r}"
+                f"historical hook wording, not {token!r}"
             )
     return errors
 
