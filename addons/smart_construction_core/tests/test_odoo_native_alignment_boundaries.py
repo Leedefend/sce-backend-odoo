@@ -72,12 +72,18 @@ class TestConstructionOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertIn("sc.workflow.workitem", contract.get("historical_todo_authorities") or [])
 
     def test_dashboard_services_declare_business_fact_sources(self):
+        class _ConcreteProjectBlockBuilder(BaseProjectBlockBuilder):
+            block_key = "test.block"
+
+            def build(self, project=None, context=None):
+                return self._envelope(state="ready", visibility={"allowed": True}, data={})
+
         self.assertEqual(ProjectDashboardService.SOURCE_KIND, "project_dashboard_business_fact_projection")
         self.assertIn("project.project", ProjectDashboardService.SOURCE_AUTHORITIES)
         self.assertIn("odoo.read_group", ProjectDashboardService.SOURCE_AUTHORITIES)
         self.assertEqual(DashboardContractBuilder.SOURCE_KIND, "company_dashboard_business_fact_projection")
         self.assertIn("payment.request", DashboardContractBuilder.SOURCE_AUTHORITIES)
-        source = BaseProjectBlockBuilder(self.env)._source_authority_contract()
+        source = _ConcreteProjectBlockBuilder(self.env)._source_authority_contract()
         self.assertTrue(source.get("projection_only"))
         self.assertIn("odoo.orm", source.get("authorities") or [])
 

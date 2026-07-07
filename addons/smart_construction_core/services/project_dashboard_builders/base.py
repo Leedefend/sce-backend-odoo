@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 
-class BaseProjectBlockBuilder:
+
+class BaseProjectBlockBuilder(ABC):
     block_key = ""
     block_type = ""
     title = ""
@@ -114,5 +116,7 @@ class BaseProjectBlockBuilder:
             },
         }
 
+    @abstractmethod
     def build(self, project=None, context=None):
-        raise NotImplementedError
+        """Build a project dashboard block envelope from business facts."""
+        ...
