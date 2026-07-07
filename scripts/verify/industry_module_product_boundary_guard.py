@@ -217,6 +217,23 @@ def verify_handler_product_language_boundary() -> list[str]:
     return errors
 
 
+def verify_core_docs_product_examples() -> list[str]:
+    errors: list[str] = []
+    docs_dir = ADDONS / "smart_construction_core" / "docs"
+    forbidden_tokens = ("project.project_demo", "account.analytic.account_contract_demo", "project.wbs_demo")
+    if not docs_dir.is_dir():
+        return errors
+    for path in docs_dir.rglob("*.md"):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for token in forbidden_tokens:
+            if token in text:
+                errors.append(
+                    "smart_construction_core: docs must use product external-id examples, "
+                    f"not demo token {token!r}: {path.relative_to(ROOT).as_posix()}"
+                )
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     errors.extend(verify_manifest_shape())
@@ -227,6 +244,7 @@ def main() -> int:
     errors.extend(verify_static_navigation_product_labels())
     errors.extend(verify_capability_registry_role_boundary())
     errors.extend(verify_handler_product_language_boundary())
+    errors.extend(verify_core_docs_product_examples())
 
     if errors:
         print("[industry_module_product_boundary_guard] FAIL", file=sys.stderr)
