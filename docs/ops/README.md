@@ -8,6 +8,7 @@
 - 验证入口（含 strict/兼容模式说明）: `docs/ops/verify/README.md`
 - 三环境统一运行手册（dev/test/prod）: `docs/ops/environment_tiers_unified_runbook_v1.md`
 - 生产发布链路规范（dev -> prod-sim -> release package -> prod）: `docs/ops/production_release_flow_standard_v1.md`
+- 生产环境升级标准（发布类型、发布包、备份、验证、回滚、收口判定）: `docs/ops/production_upgrade_standard_v1.md`
 - 生产环境正式部署规范（含数据重建流程）: `docs/ops/production_deployment_runbook_v1.md`
 - 历史附件 custody marker 补齐手册: `docs/ops/legacy_attachment_custody_marker_runbook.md`
 - Codex 生产部署协助策略: `docs/ops/codex_production_assist_policy.md`

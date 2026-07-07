@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 FILES = {
     "flow": ROOT / "docs/ops/production_release_flow_standard_v1.md",
+    "upgrade_standard": ROOT / "docs/ops/production_upgrade_standard_v1.md",
     "ops_readme": ROOT / "docs/ops/README.md",
     "deploy_runbook": ROOT / "docs/ops/production_deployment_runbook_v1.md",
     "prod_policy": ROOT / "docs/ops/prod_command_policy.md",
@@ -24,6 +25,7 @@ FILES = {
 
 FLOW_TOKENS = (
     "生产发布链路规范 v1",
+    "docs/ops/production_upgrade_standard_v1.md",
     "发布包对齐",
     "模块版本对齐",
     "全量代码树对齐",
@@ -38,6 +40,30 @@ FLOW_TOKENS = (
     "make legacy_attachment.custody_marker.backfill.prod",
     "生产与日常开发服务器完全一致",
     "发布结论区分了“发布包对齐”和“全量对齐”",
+    "生产目录不是 Git 工作区时，不得临场 `git pull` 或整目录覆盖",
+)
+
+UPGRADE_STANDARD_TOKENS = (
+    "生产环境升级标准 v1",
+    "全量版本升级",
+    "增量功能升级",
+    "只读验证资产升级",
+    "生产热修复",
+    "数据重建/补链",
+    "生产目录不是 Git 工作区时，不允许 `git pull`",
+    "changed_files.txt",
+    "module_upgrade.txt",
+    "SHA256SUMS",
+    "PRECHECK.md",
+    "APPLY.md",
+    "VALIDATION.md",
+    "ROLLBACK.md",
+    "不覆盖数据库、filestore、附件镜像目录",
+    "Python handler/model 变更：至少 `prod.restart.safe`。",
+    "XML/security/data/migration 变更：必须 `mod.upgrade`，然后 `prod.restart.safe`。",
+    "低代码升级必须执行",
+    "deployed_not_verified",
+    "rolled_forward_with_open_risk",
 )
 
 TEMPLATE_TOKENS = (
@@ -142,6 +168,20 @@ def main() -> int:
     contents = {label: _read(path, errors) for label, path in FILES.items()}
 
     _require_tokens("flow", contents["flow"], FLOW_TOKENS, errors)
+    _require_tokens("upgrade_standard", contents["upgrade_standard"], UPGRADE_STANDARD_TOKENS, errors)
+    _require_order(
+        "upgrade_standard",
+        contents["upgrade_standard"],
+        (
+            "## 1. 目标",
+            "## 2. 升级类型",
+            "## 3. 标准升级链路",
+            "## 4. 回滚标准",
+            "## 5. 部署记录",
+            "## 6. 收口判定",
+        ),
+        errors,
+    )
     _require_order(
         "flow",
         contents["flow"],
@@ -169,6 +209,8 @@ def main() -> int:
 
     if "production_release_flow_standard_v1.md" not in contents["ops_readme"]:
         errors.append("ops_readme: missing production release flow entry")
+    if "production_upgrade_standard_v1.md" not in contents["ops_readme"]:
+        errors.append("ops_readme: missing production upgrade standard entry")
     if "production_release_flow_standard_v1.md" not in contents["deploy_runbook"]:
         errors.append("deploy_runbook: missing production release flow reference")
 

@@ -11,7 +11,9 @@
 
 本文是生产发布的流程总纲；具体命令红线继续以
 `docs/ops/prod_command_policy.md` 为准，生产部署细节继续以
-`docs/ops/production_deployment_runbook_v1.md` 为准。
+`docs/ops/production_deployment_runbook_v1.md` 为准；每次升级的发布类型、
+发布包、备份、验证和回滚判定必须先按
+`docs/ops/production_upgrade_standard_v1.md` 执行。
 
 ## 2. 环境职责
 
@@ -85,6 +87,7 @@ where name in (...);
 7. 生产写入前必须完成数据库和 filestore 备份，并记录备份路径。
 8. 生产升级后必须跑完验证矩阵；只完成模块升级不算发布完成。
 9. 任何生产修复必须回写到本地代码和发布包，避免生产成为唯一真实版本。
+10. 生产目录不是 Git 工作区时，不得临场 `git pull` 或整目录覆盖；必须使用 release package 或已审定的文件清单，并记录备份和 sha256。
 
 ## 5. 标准发布流程
 
