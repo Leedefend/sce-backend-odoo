@@ -202,6 +202,21 @@ def verify_capability_registry_role_boundary() -> list[str]:
     return errors
 
 
+def verify_handler_product_language_boundary() -> list[str]:
+    errors: list[str] = []
+    handlers_dir = ADDONS / "smart_construction_core" / "handlers"
+    forbidden_tokens = ("这里演示",)
+    for path in handlers_dir.rglob("*.py"):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for token in forbidden_tokens:
+            if token in text:
+                errors.append(
+                    "smart_construction_core: handler product code contains demo-oriented wording "
+                    f"{token!r}: {path.relative_to(ROOT).as_posix()}"
+                )
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     errors.extend(verify_manifest_shape())
@@ -211,6 +226,7 @@ def main() -> int:
     errors.extend(verify_portal_execute_demo_boundary())
     errors.extend(verify_static_navigation_product_labels())
     errors.extend(verify_capability_registry_role_boundary())
+    errors.extend(verify_handler_product_language_boundary())
 
     if errors:
         print("[industry_module_product_boundary_guard] FAIL", file=sys.stderr)

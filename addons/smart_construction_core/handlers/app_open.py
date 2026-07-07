@@ -154,7 +154,7 @@ class AppOpenHandler(BaseIntentHandler):
             data = {"subject": "menu", "id": int(mid)}  # 零推理：前端直接把这个交回 contract
             return {"status":"success","data":data,"meta":self._meta(ts0),"ok":True}
 
-        # 2) 动作：这里演示“直接执行并回传契约（无数据）”，也可只返回目标让前端再调
+        # 2) 动作：按客户端能力返回动作目标或执行后契约。
         if o.get("odoo_action_xmlid"):
             if str(payload.get("client_type") or payload.get("clientType") or "").strip() in {"wx_mini", "harmony_h5"}:
                 data = _action_target_payload(su_env, o["odoo_action_xmlid"])
