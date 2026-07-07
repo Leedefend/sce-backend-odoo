@@ -149,6 +149,43 @@ def verify_custom_user_payload_boundary() -> list[str]:
     return errors
 
 
+def verify_legacy_temporary_account_boundary() -> list[str]:
+    allowed_hits = {
+        "addons/smart_construction_custom/data/user_master_v1.xml": 1,
+        "addons/smart_construction_core/models/support/runtime_user_management.py": 1,
+    }
+    errors: list[str] = []
+    scan_roots = (
+        ADDONS / "smart_construction_core",
+        ADDONS / "smart_construction_custom",
+    )
+    actual_hits: dict[str, int] = {}
+    for root in scan_roots:
+        if not root.is_dir():
+            continue
+        for path in root.rglob("*"):
+            if path.suffix not in {".py", ".xml"}:
+                continue
+            relative = path.relative_to(ROOT).as_posix()
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            count = text.count("临时账号")
+            if count:
+                actual_hits[relative] = count
+    for relative, count in sorted(actual_hits.items()):
+        if allowed_hits.get(relative) != count:
+            errors.append(
+                "smart_construction_core: temporary-account wording must stay limited "
+                f"to the legacy user payload and runtime-user exclusion guard: {relative}"
+            )
+    for relative, count in sorted(allowed_hits.items()):
+        if actual_hits.get(relative) != count:
+            errors.append(
+                "smart_construction_core: expected temporary-account compatibility anchor "
+                f"{relative} count={count}"
+            )
+    return errors
+
+
 def verify_python_package_boundaries() -> list[str]:
     errors: list[str] = []
     for relative in REQUIRED_PACKAGE_DIRS:
@@ -766,6 +803,7 @@ def main() -> int:
     errors.extend(verify_manifest_shape())
     errors.extend(verify_production_token_boundary())
     errors.extend(verify_custom_user_payload_boundary())
+    errors.extend(verify_legacy_temporary_account_boundary())
     errors.extend(verify_python_package_boundaries())
     errors.extend(verify_portal_execute_demo_boundary())
     errors.extend(verify_static_navigation_product_labels())
