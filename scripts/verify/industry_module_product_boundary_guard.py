@@ -237,12 +237,35 @@ def verify_core_docs_product_examples() -> list[str]:
 def verify_core_runtime_demo_residual_allowlist() -> list[str]:
     errors: list[str] = []
     module_root = ADDONS / "smart_construction_core"
-    allowed_paths = {
-        "core_extension.py",
-        "models/core/project_core.py",
-        "models/support/portal_execute.py",
-        "models/support/runtime_user_management.py",
-        "services/portal_execute_button_service.py",
+    allowed_tokens_by_path = {
+        "core_extension.py": {
+            "演示",
+            "showcase",
+            "试点",
+        },
+        "models/core/project_core.py": {
+            "sc_demo_showcase",
+            "sc_demo_showcase_ready",
+            "demo",
+            "demo_",
+            "_demo",
+            "sc_demo",
+        },
+        "models/support/portal_execute.py": {
+            "action_portal_demo_ping",
+            "demo_",
+            "_demo",
+        },
+        "models/support/runtime_user_management.py": {
+            "Demo",
+            "demo_",
+        },
+        "services/portal_execute_button_service.py": {
+            "action_portal_demo_ping",
+            "demo_",
+            "_demo",
+            "演示",
+        },
     }
     forbidden_tokens = ("demo_", "_demo", "sc_demo", "Demo", "演示", "试点")
     excluded_parts = {"tests", "migrations", "docs", "tools", "__pycache__"}
@@ -251,11 +274,17 @@ def verify_core_runtime_demo_residual_allowlist() -> list[str]:
         if any(part in excluded_parts for part in path.relative_to(module_root).parts):
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
-        if not any(token in text for token in forbidden_tokens):
+        hits = {token for token in forbidden_tokens if token in text}
+        if not hits:
             continue
-        if relative in allowed_paths:
+        allowed_tokens = allowed_tokens_by_path.get(relative, set())
+        unexpected = hits - allowed_tokens
+        if not unexpected:
             continue
-        errors.append(f"smart_construction_core: unexpected demo/pilot token in runtime python: {relative}")
+        errors.append(
+            "smart_construction_core: unexpected demo/pilot token in runtime python: "
+            f"{relative} tokens={','.join(sorted(unexpected))}"
+        )
     return errors
 
 
