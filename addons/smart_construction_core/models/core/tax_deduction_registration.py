@@ -168,7 +168,7 @@ class ScTaxDeductionRegistration(models.Model):
         (
             "legacy_source_unique",
             "unique(legacy_source_model, legacy_record_id)",
-            "Legacy tax deduction source must be unique.",
+            "历史扣税登记来源记录必须唯一。",
         ),
     ]
 

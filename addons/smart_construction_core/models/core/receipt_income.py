@@ -133,7 +133,7 @@ class ScReceiptIncome(models.Model):
         (
             "legacy_source_unique",
             "unique(legacy_source_model, legacy_record_id)",
-            "Legacy receipt income source must be unique.",
+            "历史收款收入来源记录必须唯一。",
         ),
         (
             "amount_manual_nonnegative",

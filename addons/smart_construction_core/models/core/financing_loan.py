@@ -221,7 +221,7 @@ class ScFinancingLoan(models.Model):
         (
             "legacy_source_unique",
             "unique(legacy_source_model, legacy_record_id)",
-            "Legacy financing loan source must be unique.",
+            "历史融资借款来源记录必须唯一。",
         ),
         ("amount_nonnegative", "CHECK(amount >= 0)", "Financing loan amount must be non-negative."),
     ]

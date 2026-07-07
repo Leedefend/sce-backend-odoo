@@ -389,6 +389,19 @@ def verify_my_work_historical_todo_boundary() -> list[str]:
     return errors
 
 
+def verify_core_model_legacy_product_message_boundary() -> list[str]:
+    model_root = ADDONS / "smart_construction_core" / "models" / "core"
+    errors: list[str] = []
+    for path in model_root.rglob("*.py"):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "Legacy " in text:
+            errors.append(
+                "smart_construction_core: core business model product messages must use "
+                f"historical source wording, not English Legacy wording: {path.relative_to(ROOT).as_posix()}"
+            )
+    return errors
+
+
 def verify_project_dashboard_open_alias_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "handlers" / "project_dashboard_open.py"
     if not path.is_file():
@@ -1406,6 +1419,7 @@ def main() -> int:
     errors.extend(verify_security_group_historical_boundary())
     errors.extend(verify_handler_product_language_boundary())
     errors.extend(verify_my_work_historical_todo_boundary())
+    errors.extend(verify_core_model_legacy_product_message_boundary())
     errors.extend(verify_project_dashboard_open_alias_boundary())
     errors.extend(verify_handler_historical_wrapper_boundary())
     errors.extend(verify_runtime_comment_product_language_boundary())

@@ -86,7 +86,7 @@ class ScConstructionDiary(models.Model):
         (
             "legacy_source_unique",
             "unique(legacy_source_model, legacy_record_id)",
-            "Legacy construction diary source must be unique.",
+            "历史施工日志来源记录必须唯一。",
         ),
     ]
 

@@ -230,7 +230,7 @@ class ScInvoiceRegistration(models.Model):
         (
             "legacy_source_unique",
             "unique(legacy_source_model, legacy_record_id)",
-            "Legacy invoice registration source must be unique.",
+            "历史发票登记来源记录必须唯一。",
         ),
     ]
 

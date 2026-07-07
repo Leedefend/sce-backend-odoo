@@ -143,7 +143,7 @@ class ScGeneralContract(models.Model):
         (
             "legacy_source_unique",
             "unique(legacy_source_model, legacy_record_id)",
-            "Legacy general contract source must be unique.",
+            "历史总包合同来源记录必须唯一。",
         ),
         ("amount_total_nonnegative", "CHECK(amount_total >= 0)", "Contract amount must be non-negative."),
     ]

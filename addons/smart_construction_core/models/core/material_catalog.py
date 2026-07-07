@@ -73,7 +73,7 @@ class ScMaterialCatalog(models.Model):
         (
             "legacy_material_detail_unique",
             "unique(legacy_material_detail_id)",
-            "Legacy material detail must be unique.",
+            "历史物资明细记录必须唯一。",
         ),
     ]
 

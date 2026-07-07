@@ -224,7 +224,7 @@ class ScExpenseClaim(models.Model):
         (
             "legacy_source_unique",
             "unique(legacy_source_model, legacy_record_id)",
-            "Legacy expense/deposit claim source must be unique.",
+            "历史费用/保证金来源记录必须唯一。",
         ),
         ("amount_nonnegative", "CHECK(amount >= 0)", "Claim amount must be non-negative."),
         ("paid_amount_nonnegative", "CHECK(paid_amount IS NULL OR paid_amount >= 0)", "Paid amount must be non-negative."),

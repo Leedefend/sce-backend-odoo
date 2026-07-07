@@ -74,7 +74,7 @@ class ScSettlementAdjustment(models.Model):
     active = fields.Boolean("有效", default=True, index=True)
 
     _sql_constraints = [
-        ("legacy_line_unique", "unique(legacy_line_id)", "Legacy settlement adjustment line id must be unique."),
+        ("legacy_line_unique", "unique(legacy_line_id)", "历史结算调整行记录必须唯一。"),
         ("amount_nonnegative", "CHECK(amount >= 0)", "Adjustment amount must be non-negative."),
     ]
 

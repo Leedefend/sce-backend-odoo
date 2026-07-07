@@ -94,7 +94,7 @@ class ScTreasuryReconciliation(models.Model):
         (
             "legacy_source_unique",
             "unique(legacy_source_model, legacy_record_id)",
-            "Legacy treasury reconciliation source must be unique.",
+            "历史资金对账来源记录必须唯一。",
         ),
     ]
 
