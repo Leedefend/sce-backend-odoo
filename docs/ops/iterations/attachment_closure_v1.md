@@ -207,6 +207,77 @@ sc.receipt.invoice.line
 - 全量旧附件索引中剩余 121 条本地文件缺失引用仍是独立残差；这些缺失路径不能被本次浏览器验收视为已可打开。
 - `type=url` 且仍为外部 `http` URL 的附件不属于 `legacy-file://` 本地 custody 证明范围，需要按在线 URL 残差单独分类。
 
+## 自定义前端上传闭环验收
+
+历史附件可读不等于业务办理附件闭环。业务办理场景还必须证明新附件能从自定义前端上传到生产附件系统，并能从同一业务记录读回。
+
+验收入口：
+
+```bash
+FRONTEND_URL=http://127.0.0.1:5179 \
+DB_NAME=sc_prod \
+E2E_LOGIN=<business-login> \
+E2E_PASSWORD=<password> \
+MVP_MODEL=project.project \
+RECORD_ID=<writable-record-id> \
+ACTION_ID=<form-action-id> \
+MENU_ID=<menu-id> \
+node scripts/verify/attachment_upload_frontend_browser_acceptance.js
+```
+
+或使用 Make 入口：
+
+```bash
+DB_NAME=sc_prod \
+E2E_LOGIN=<business-login> \
+E2E_PASSWORD=<password> \
+MVP_MODEL=project.project \
+RECORD_ID=<writable-record-id> \
+ACTION_ID=<form-action-id> \
+MENU_ID=<menu-id> \
+make verify.attachment_upload.frontend_browser.acceptance.host \
+  LEGACY_ATTACHMENT_BROWSER_FRONTEND_URL=http://127.0.0.1:5179
+```
+
+该验收必须覆盖：
+
+- 真实业务用户登录自定义前端。
+- 打开真实业务表单的附件上传控件。
+- 通过浏览器文件选择上传一个受控小文件。
+- 从 `file.upload` 响应取得 `ir.attachment` id。
+- 通过 `file.download` intent 读回，sha256 与上传文件一致。
+- 通过前端附件列表打开 `AttachmentViewer`，再点击弹窗下载，浏览器下载文件 sha256 与上传文件一致。
+- 生产后端复核上传附件为 `type=binary`，`store_fname` 有值，`db_datas` 为空，证明新附件走 Odoo filestore 而不是旧在线源兜底。
+- 验收结束必须删除测试附件，并确认 `remaining_ids=[]`。
+
+2026-07-07 生产上传闭环结论：
+
+```text
+frontend_upload_acceptance PASS
+business_user=wutao
+model=project.project
+record_id=71
+action_id=506
+menu_id=790
+attachment_id=21806
+fixture_sha256=6d8ca743f8b5113126c9f7e2b31443ad4d054f33404a118d2bb4283d37d7cd57
+intent_download_sha256=6d8ca743f8b5113126c9f7e2b31443ad4d054f33404a118d2bb4283d37d7cd57
+ui_download_sha256=6d8ca743f8b5113126c9f7e2b31443ad4d054f33404a118d2bb4283d37d7cd57
+console_errors=0
+backend_type=binary
+backend_store_fname=d2/d299238ab19f37f1efd324545d9299dfc33eab6b
+backend_db_datas_present=false
+cleanup_ok=true
+readonly_recheck_remaining_count=0
+```
+
+上传闭环硬性判定：
+
+- 业务办理附件上传链路已在生产真实业务表单上通过。
+- 新上传附件进入生产 Odoo `ir.attachment` 标准二进制/filestore 体系，不依赖旧在线文件系统。
+- 上传后 intent 读回和 UI 下载读回的字节 sha256 均与原始上传文件一致。
+- 验收附件已提交清理，并经只读复核确认不在生产业务记录上残留测试附件。
+
 - `sc.legacy.file.index` 索引记录是否能解析到本地非零字节文件。
 - 正式 `ir.attachment` 中仍指向 legacy URL 的附件是否已有本地文件承接。
 

@@ -445,3 +445,67 @@ production_local_file_verified_before_failure=8/8
 普通业务用户无法读取 sc.project.member.staging 是预期模型权限边界，不是附件系统失败。
 全量旧附件索引剩余 121 条本地文件缺失引用仍按残差专项处理，不能并入本次已验证范围。
 ```
+
+## 14. 业务办理附件上传闭环验收
+
+2026-07-07 20:03 +0800，补充验证生产真实业务办理中的新附件上传能力。验收通过本地自定义前端
+实例 `http://127.0.0.1:5179` 连接生产后端 `sc_prod`，使用普通业务用户打开
+`project.project/71` 的项目台账表单，执行浏览器文件选择上传、前端回显、intent 读回和弹窗下载。
+
+验收命令：
+
+```bash
+FRONTEND_URL=http://127.0.0.1:5179 \
+DB_NAME=sc_prod \
+E2E_LOGIN=wutao \
+MVP_MODEL=project.project \
+RECORD_ID=71 \
+ACTION_ID=506 \
+MENU_ID=790 \
+node scripts/verify/attachment_upload_frontend_browser_acceptance.js
+```
+
+浏览器验收结果：
+
+```text
+artifact=artifacts/attachment-upload-frontend-browser/20260707T120322/summary.json
+attachment_upload_frontend_browser_acceptance PASS
+attachment_id=21806
+fixture_sha256=6d8ca743f8b5113126c9f7e2b31443ad4d054f33404a118d2bb4283d37d7cd57
+intent_download_sha256=6d8ca743f8b5113126c9f7e2b31443ad4d054f33404a118d2bb4283d37d7cd57
+ui_download_sha256=6d8ca743f8b5113126c9f7e2b31443ad4d054f33404a118d2bb4283d37d7cd57
+console_errors=0
+```
+
+生产后端 filestore 复核：
+
+```text
+attachment_id=21806
+name=production upload acceptance 1783425802983.txt
+res_model=project.project
+res_id=71
+type=binary
+mimetype=text/plain
+file_size=103
+checksum=d299238ab19f37f1efd324545d9299dfc33eab6b
+store_fname=d2/d299238ab19f37f1efd324545d9299dfc33eab6b
+db_datas_present=false
+```
+
+清理结果：
+
+```text
+deleted_attachment_ids=[21805,21806]
+remaining_ids=[]
+cleanup_ok=true
+readonly_recheck_remaining_count=0
+```
+
+上传闭环结论：
+
+```text
+业务办理附件上传链路已在生产真实业务表单通过。
+新附件写入生产 Odoo ir.attachment 标准二进制/filestore 体系，store_fname 有值且 db_datas 为空。
+上传文件、file.download intent 读回、AttachmentViewer 弹窗下载三者 sha256 完全一致。
+验收附件已提交清理，并经只读复核确认生产业务记录未残留测试附件。
+```
