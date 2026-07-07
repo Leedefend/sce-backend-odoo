@@ -1010,6 +1010,39 @@ def verify_state_machine_historical_alias_boundary() -> list[str]:
     return errors
 
 
+def verify_sc_workflow_historical_runtime_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_core" / "models" / "support" / "sc_workflow.py"
+    if not path.is_file():
+        return ["smart_construction_core: historical sc.workflow runtime file missing"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    required_fragments = {
+        'LEGACY_WORKFLOW_RUNTIME_PARAM = "sc.workflow.legacy_runtime_enabled"',
+        'LEGACY_WORKFLOW_RUNTIME_CONTEXT = "allow_legacy_workflow_runtime"',
+        "SC workflow is a historical workflow runtime. ",
+        "Use base_tier_validation for approval runtime, or enable %s explicitly.",
+        "SC workflow runtime is disabled because approval runtime is base_tier_validation. ",
+        "Enable %s only for historical workflow runtime recovery.",
+    }
+    errors: list[str] = []
+    for fragment in sorted(required_fragments):
+        if text.count(fragment) != 1:
+            errors.append(
+                "smart_construction_core: sc.workflow historical runtime boundary "
+                f"must keep explicit runtime-gate anchor {fragment!r}"
+            )
+    forbidden_fragments = (
+        "SC workflow is retained for legacy compatibility",
+        "Enable %s only for legacy compatibility",
+    )
+    for fragment in forbidden_fragments:
+        if fragment in text:
+            errors.append(
+                "smart_construction_core: sc.workflow runtime must use historical-runtime "
+                f"wording, not generic legacy compatibility wording {fragment!r}"
+            )
+    return errors
+
+
 def verify_platform_admin_facade_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "services" / "platform_admin.py"
     if not path.is_file():
@@ -1260,6 +1293,7 @@ def main() -> int:
     errors.extend(verify_budget_compatibility_layer_boundary())
     errors.extend(verify_work_breakdown_historical_facade_boundary())
     errors.extend(verify_state_machine_historical_alias_boundary())
+    errors.extend(verify_sc_workflow_historical_runtime_boundary())
     errors.extend(verify_platform_admin_facade_boundary())
     errors.extend(verify_project_showcase_legacy_alias_boundary())
     errors.extend(verify_core_extension_legacy_label_boundary())

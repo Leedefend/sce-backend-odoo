@@ -65,7 +65,7 @@ class ScWorkflowDef(models.Model):
         if not self._legacy_runtime_enabled():
             raise UserError(
                 _(
-                    "SC workflow is retained for legacy compatibility. "
+                    "SC workflow is a historical workflow runtime. "
                     "Use base_tier_validation for approval runtime, or enable %s explicitly."
                 )
                 % LEGACY_WORKFLOW_RUNTIME_PARAM
@@ -196,7 +196,7 @@ class ScWorkflowInstance(models.Model):
             raise UserError(
                 _(
                     "SC workflow runtime is disabled because approval runtime is base_tier_validation. "
-                    "Enable %s only for legacy compatibility."
+                    "Enable %s only for historical workflow runtime recovery."
                 )
                 % LEGACY_WORKFLOW_RUNTIME_PARAM
             )
