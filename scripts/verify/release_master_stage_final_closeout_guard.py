@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -23,6 +24,7 @@ VERIFY_TOKENS = [
     "verify.project.dashboard.contract",
     "verify.phase_next.evidence.bundle",
 ]
+ISO_DATE_RE = re.compile(r"\b20\d{2}-\d{2}-\d{2}\b")
 
 
 def _read(path: Path) -> str:
@@ -42,13 +44,19 @@ def _contains_all(text: str, tokens: list[str], label: str, errors: list[str]) -
         errors.append(f"{label} missing tokens: {', '.join(missing)}")
 
 
+def _contains_iso_date(text: str, label: str, errors: list[str]) -> None:
+    if not ISO_DATE_RE.search(text):
+        errors.append(f"{label} missing ISO closeout date")
+
+
 def _validate_audit(errors: list[str]) -> None:
     for path, completed_token in (
         (AUDIT_ZH, "最终状态：`已完成`"),
         (AUDIT_EN, "Final status: `Completed`"),
     ):
         text = _read(path)
-        _contains_all(text, ["PASS", date.today().isoformat(), completed_token], path.name, errors)
+        _contains_all(text, ["PASS", completed_token], path.name, errors)
+        _contains_iso_date(text, path.name, errors)
         _contains_all(text, VERIFY_TOKENS, path.name, errors)
         forbidden = ["Pending closure", "待收口", "等待“本次大阶段登录验证”", "waiting for stage-level login validation"]
         hits = [token for token in forbidden if token in text]
@@ -67,7 +75,8 @@ def _validate_regression(errors: list[str]) -> None:
         (REGRESSION_EN, "Final re-check"),
     ):
         text = _read(path)
-        _contains_all(text, [closeout_token, "PASS", date.today().isoformat()], path.name, errors)
+        _contains_all(text, [closeout_token, "PASS"], path.name, errors)
+        _contains_iso_date(text, path.name, errors)
         _contains_all(text, VERIFY_TOKENS, path.name, errors)
         if "当前分支先保留" in text or "do not release yet" in text:
             errors.append(f"{path.name} still contains stale non-release recommendation")

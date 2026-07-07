@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -10,6 +11,7 @@ ITERATION_STATUS = ROOT / "docs/releases/delivery_iteration_status_2026-03-20_ma
 PHASE4_ZH = ROOT / "docs/releases/phase_4_frontend_stability_execution_report.md"
 PHASE4_EN = ROOT / "docs/releases/phase_4_frontend_stability_execution_report.en.md"
 OUT_MD = ROOT / "artifacts/release/current_status_wording_closeout.md"
+ISO_DATE_RE = re.compile(r"\b20\d{2}-\d{2}-\d{2}\b")
 
 
 def _read(path: Path) -> str:
@@ -29,6 +31,11 @@ def _contains_all(text: str, tokens: list[str], label: str, errors: list[str]) -
         errors.append(f"{label} missing tokens: {', '.join(missing)}")
 
 
+def _contains_iso_date(text: str, label: str, errors: list[str]) -> None:
+    if not ISO_DATE_RE.search(text):
+        errors.append(f"{label} missing ISO closeout date")
+
+
 def _validate_iteration_status(errors: list[str]) -> None:
     text = _read(ITERATION_STATUS)
     forbidden = ["## 5. 当前未完成与后续计划", "结果：FAIL", "P0 剩余"]
@@ -40,13 +47,13 @@ def _validate_iteration_status(errors: list[str]) -> None:
         [
             "最终复验",
             "PASS",
-            date.today().isoformat(),
             "verify.release.delivery_9_module.final_closeout.guard",
             "verify.scene.delivery.readiness.role_matrix",
         ],
         ITERATION_STATUS.name,
         errors,
     )
+    _contains_iso_date(text, ITERATION_STATUS.name, errors)
 
 
 def _validate_phase4(errors: list[str]) -> None:

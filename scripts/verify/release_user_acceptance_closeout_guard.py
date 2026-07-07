@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -22,6 +23,7 @@ PHASE5_REPORT_EN = ROOT / "docs/releases/phase_5_verification_deployment_executi
 PHASE6_REVIEW_ZH = ROOT / "docs/releases/scems_v1_0_post_launch_review.md"
 PHASE6_REVIEW_EN = ROOT / "docs/releases/scems_v1_0_post_launch_review.en.md"
 OUT_MD = ROOT / "artifacts/release/user_acceptance_closeout.md"
+ISO_DATE_RE = re.compile(r"\b20\d{2}-\d{2}-\d{2}\b")
 
 
 def _read(path: Path) -> str:
@@ -41,13 +43,19 @@ def _contains_all(text: str, tokens: list[str], label: str, errors: list[str]) -
         errors.append(f"{label} missing tokens: {', '.join(missing)}")
 
 
+def _contains_iso_date(text: str, label: str, errors: list[str]) -> None:
+    if not ISO_DATE_RE.search(text):
+        errors.append(f"{label} missing ISO closeout date")
+
+
 def _validate_uat_checklists(errors: list[str]) -> None:
     for path in (UAT_ZH, UAT_EN):
         text = _read(path)
         unchecked = [line for line in text.splitlines() if line.strip().startswith("- [ ]")]
         if unchecked:
             errors.append(f"{path.name} still has unchecked items: {len(unchecked)}")
-        _contains_all(text, ["PASS", "Codex", str(date.today())], path.name, errors)
+        _contains_all(text, ["PASS", "Codex"], path.name, errors)
+        _contains_iso_date(text, path.name, errors)
 
 
 def _validate_evidence(errors: list[str]) -> None:

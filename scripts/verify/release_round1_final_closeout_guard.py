@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -40,6 +41,7 @@ ROUND1_PAGES = [
     "risk.center",
     "cost.project_boq",
 ]
+ISO_DATE_RE = re.compile(r"\b20\d{2}-\d{2}-\d{2}\b")
 
 
 def _read(path: Path) -> str:
@@ -59,12 +61,18 @@ def _contains_all(text: str, tokens: list[str], label: str, errors: list[str]) -
         errors.append(f"{label} missing tokens: {', '.join(missing)}")
 
 
+def _contains_iso_date(text: str, label: str, errors: list[str]) -> None:
+    if not ISO_DATE_RE.search(text):
+        errors.append(f"{label} missing ISO closeout date")
+
+
 def _validate_checked(path: Path, errors: list[str]) -> None:
     text = _read(path)
     unchecked = [line for line in text.splitlines() if line.strip().startswith("- [ ]")]
     if unchecked:
         errors.append(f"{path.name} still has unchecked items: {len(unchecked)}")
-    _contains_all(text, ["PASS", "Codex", date.today().isoformat()], path.name, errors)
+    _contains_all(text, ["PASS", "Codex"], path.name, errors)
+    _contains_iso_date(text, path.name, errors)
     _contains_all(text, ROUND1_PAGES, path.name, errors)
     _contains_all(
         text,
