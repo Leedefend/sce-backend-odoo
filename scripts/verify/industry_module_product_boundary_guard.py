@@ -714,6 +714,34 @@ def verify_app_entry_exception_observability() -> list[str]:
     return errors
 
 
+def verify_runtime_abstract_method_boundary() -> list[str]:
+    errors: list[str] = []
+    guarded_roots = (
+        ADDONS / "smart_construction_core" / "handlers",
+        ADDONS / "smart_construction_core" / "models",
+        ADDONS / "smart_construction_core" / "services",
+        ADDONS / "smart_construction_core" / "tools",
+        ADDONS / "smart_construction_bundle",
+        ADDONS / "smart_owner_core",
+        ADDONS / "smart_owner_bundle",
+    )
+    excluded_parts = {"tests", "__pycache__"}
+    for root in guarded_roots:
+        if not root.is_dir():
+            continue
+        for path in root.rglob("*.py"):
+            relative_parts = path.relative_to(root).parts
+            if any(part in excluded_parts for part in relative_parts):
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            if "raise NotImplementedError" in text:
+                errors.append(
+                    "industry modules: abstract runtime boundaries must use ABC/"
+                    f"abstractmethod contracts, not bare NotImplementedError: {path.relative_to(ROOT).as_posix()}"
+                )
+    return errors
+
+
 def verify_scene_governance_exception_observability() -> list[str]:
     errors: list[str] = []
     guarded_paths = (
@@ -1584,6 +1612,7 @@ def main() -> int:
     errors.extend(verify_runtime_comment_product_language_boundary())
     errors.extend(verify_portal_controller_exception_observability())
     errors.extend(verify_app_entry_exception_observability())
+    errors.extend(verify_runtime_abstract_method_boundary())
     errors.extend(verify_scene_governance_exception_observability())
     errors.extend(verify_core_api_controller_exception_observability())
     errors.extend(verify_business_slice_project_resolution_observability())
