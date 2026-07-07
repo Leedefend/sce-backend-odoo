@@ -1,5 +1,5 @@
 /** @odoo-module **/
-// Legacy fallback map: used for icon/label hints when scenes API is unavailable.
+// Historical fallback map: used for icon/label hints when scenes API is unavailable.
 // Role entries are now backend-orchestrated via /api/scenes/my.
 
 export const ROLE_ENTRY_MAP = [

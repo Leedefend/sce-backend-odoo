@@ -275,6 +275,13 @@ def verify_static_navigation_product_labels() -> list[str]:
     text = nav_map.read_text(encoding="utf-8") if nav_map.is_file() else ""
     if 'tag: "试点"' in text or "tag: '试点'" in text:
         errors.append("smart_construction_core: pinned navigation entries must not be labeled as pilot")
+    role_entry_map = ADDONS / "smart_construction_core" / "static/src/config/role_entry_map.js"
+    role_entry_text = role_entry_map.read_text(encoding="utf-8") if role_entry_map.is_file() else ""
+    if "Legacy fallback map" in role_entry_text:
+        errors.append(
+            "smart_construction_core: static role entry fallback must use historical "
+            "fallback wording, not legacy fallback wording"
+        )
     return errors
 
 
