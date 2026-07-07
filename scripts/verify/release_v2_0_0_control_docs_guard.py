@@ -141,6 +141,7 @@ VERIFY_README_TOKENS = (
     "release guard entries appear in expected order",
     "Enforces release-control section order, status, scope, boundary and gate command blocks, release document list, rollback list, release-index section order and planned entries, release-notes section order, intent, scope, tag plan, production boundary, known limits, acceptance command blocks, versioning section order, tag type, no-history-rewrite, tag pre-check, formal release line, and promotion order shape",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
+    "bundle installation schema, platform performance schema, dev acceptance schema, and prod-sim acceptance evidence schema guards",
     "Recorded sample artifact directories may validate schema shape only",
     "final release signoff requires the recorded prod-sim acceptance run directory",
     "`make verify.production_deployment.record.guard`",

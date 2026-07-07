@@ -53,7 +53,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 | Evidence manifest guard | `make verify.release.v2_0_0.evidence_manifest.guard` | PASS | `docs/ops/releases/v2.0.0/evidence_manifest.md` |
 | Release control docs guard | `make verify.release.v2_0_0.control_docs.guard` | PASS | `docs/ops/releases/v2.0.0/README.md`, `docs/ops/release_notes_v2.0.0.md`, `docs/ops/versioning.md`, `docs/ops/releases/README.md`, `docs/ops/releases/README.zh.md`, and `docs/ops/verify/README.md` |
 | Release governance guard | `make verify.release.v2_0_0.governance.guard` | PASS | release-control docs, evidence manifest, checklist, and production release-flow guard terminal output |
-| Formal evidence schema guard | `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard` | PASS | governance, hardening, dev acceptance, and prod-sim acceptance evidence shape guard terminal output |
+| Formal evidence schema guard | `PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard` | PASS | governance, bundle installation schema, platform performance schema, dev acceptance schema, and prod-sim acceptance evidence shape guard terminal output |
 
 ## Evidence Rules
 
