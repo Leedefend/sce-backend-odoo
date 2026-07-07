@@ -285,6 +285,26 @@ def verify_static_navigation_product_labels() -> list[str]:
     return errors
 
 
+def verify_business_category_alias_placeholder_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_core" / "views" / "support" / "business_category_views.xml"
+    if not path.is_file():
+        return ["smart_construction_core: business category views missing"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    required = 'placeholder="用户历史名称、历史系统名称、行业别名"'
+    errors: list[str] = []
+    if text.count(required) != 1:
+        errors.append(
+            "smart_construction_core: business category alias placeholder must distinguish "
+            "user historical names, historical-system names, and industry aliases"
+        )
+    if "用户历史名称、历史名称、行业别名" in text:
+        errors.append(
+            "smart_construction_core: business category alias placeholder must not collapse "
+            "historical-system names into generic historical names"
+        )
+    return errors
+
+
 def verify_static_style_product_language_boundary() -> list[str]:
     errors: list[str] = []
     static_root = ADDONS / "smart_construction_core" / "static" / "src"
@@ -1467,6 +1487,7 @@ def main() -> int:
     errors.extend(verify_portal_execute_demo_boundary())
     errors.extend(verify_portal_execute_legacy_method_anchor_boundary())
     errors.extend(verify_static_navigation_product_labels())
+    errors.extend(verify_business_category_alias_placeholder_boundary())
     errors.extend(verify_static_style_product_language_boundary())
     errors.extend(verify_capability_registry_role_boundary())
     errors.extend(verify_security_group_historical_boundary())

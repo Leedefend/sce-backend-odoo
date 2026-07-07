@@ -84,7 +84,7 @@
                             <field name="ledger_policy_json" placeholder="{}"/>
                         </page>
                         <page string="别名和说明">
-                            <field name="source_aliases" placeholder="用户历史名称、历史名称、行业别名"/>
+                            <field name="source_aliases" placeholder="用户历史名称、历史系统名称、行业别名"/>
                             <field name="note"/>
                         </page>
                     </notebook>
