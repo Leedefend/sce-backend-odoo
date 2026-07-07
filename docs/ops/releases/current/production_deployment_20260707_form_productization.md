@@ -166,6 +166,8 @@ smart_construction_demo|uninstalled|
 
 附件补齐与表单产品化部署分开判定。
 
+2026-07-07 08:47-08:50 +0800 已在正式生产服务器复核：
+
 已通过：
 
 ```text
@@ -180,19 +182,45 @@ legacy_url_missing_local_file=0
 file_index_rows=243713
 local_file_ok=243592
 missing_local_file=121
-source_table=BASE_SYSTEM_FILE
+missing_by_source:
+  BASE_SYSTEM_FILE=114
+  T_BILL_FILE=7
 ```
 
-已尝试从两个在线源补齐 `BASE_SYSTEM_FILE` 缺失文件：
+已重新尝试从两个在线源补齐 `BASE_SYSTEM_FILE` 缺失文件，写入根目录改为可写的
+`/mnt/legacy-online-mirror`：
 
 ```text
 records_checked=125213
-already_local_ok=125096
-downloaded_local_ok=3
+already_local_ok=125099
 download_failed=114
 ```
 
-剩余缺失主要由旧系统 `ShowFileById` 返回 HTTP 500 导致，属于外部旧源不可取附件遗留，不阻塞本次表单产品化生产部署结论；后续应作为附件运维专项继续跟踪。
+代表样本确认：
+
+```text
+SCBS GetFileByBillId: 200, returns ATTR_PATH=.../ShowFileById/...?...FileId=...
+SCBSLY_V2 GetFileByBillId: 200, Data=[]
+direct legacy path: 404
+ShowFileById download: HTTP 500
+local archive same-name / same-id probe: no hit
+```
+
+同时修正生产后台任务输出目录权限：
+
+```text
+/mnt/legacy-online-mirror/_jobs owner=odoo:odoo
+ODOO_JOBS_WRITABLE=1
+```
+
+本次复核证据已固化在生产服务器：
+
+```text
+/data/odoo/legacy_attachments/checks/prod_attachment_residual_20260707T0850_audit.json
+/data/odoo/legacy_attachments/checks/prod_attachment_residual_20260707T0850_base_retry.json
+```
+
+剩余缺失由旧系统 `ShowFileById` 返回 HTTP 500、直接路径 404、生产本地归档未命中共同导致，属于外部旧源不可取附件遗留，不阻塞本次表单产品化生产部署结论；后续应作为附件运维专项继续跟踪，不能假设后台任务会自动补齐。
 
 ## 8. 回滚点
 
@@ -219,13 +247,13 @@ download_failed=114
 ```text
 本次表单产品化生产增量发布已完成，生产服务健康，核心业务验证矩阵通过，具备生产运行条件。
 生产不是开发工作区全量镜像；后续迭代必须从当前 main 和本部署记录出发，经 prod-sim 回放后形成下一发布包。
-附件仍有 121 个 BASE_SYSTEM_FILE 本地文件缺失，需作为发布后运维专项继续处理。
+附件仍有 121 个本地文件缺失（BASE_SYSTEM_FILE=114，T_BILL_FILE=7），需作为发布后运维专项继续处理。
 ```
 
 ## 10. 后续事项
 
 | 事项 | 负责人 | 截止时间 | 状态 |
 | --- | --- | --- | --- |
-| 将 121 个 `BASE_SYSTEM_FILE` 缺失附件作为运维专项继续补齐 | `TBD` | `TBD` | `open` |
+| 将 121 个缺失附件（`BASE_SYSTEM_FILE=114`，`T_BILL_FILE=7`）作为运维专项继续补齐 | `TBD` | `TBD` | `open` |
 | 下一轮迭代从当前 `main` 和本部署记录出发建立候选发布范围 | `TBD` | `TBD` | `open` |
 | 后续生产发布恢复 prod-sim 优先回放要求 | `TBD` | `TBD` | `open` |
