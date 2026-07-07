@@ -609,7 +609,7 @@ def run(env):
             vals["cost_manager_id"] = demo_cost.id
         if demo_pm and not project.doc_manager_id:
             vals["doc_manager_id"] = demo_pm.id
-        vals["sc_demo_showcase"] = True
+        vals["sc_project_showcase"] = True
         if vals:
             project.write(vals)
 

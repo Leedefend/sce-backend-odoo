@@ -139,9 +139,9 @@ def run(env):
             missing_items = _collect_missing(env, project)
             if missing_items:
                 incomplete.append((project, missing_items))
-                project.write({"sc_demo_showcase": True, "sc_demo_showcase_ready": False})
+                project.write({"sc_project_showcase": True, "sc_project_showcase_ready": False})
             else:
-                project.write({"sc_demo_showcase": True, "sc_demo_showcase_ready": True})
+                project.write({"sc_project_showcase": True, "sc_project_showcase_ready": True})
         if incomplete:
             lines = [
                 f"- {p.project_code or p.name}: {p.name} -> {', '.join(items)}"

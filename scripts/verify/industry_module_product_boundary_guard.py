@@ -288,6 +288,65 @@ def verify_core_runtime_demo_residual_allowlist() -> list[str]:
     return errors
 
 
+def verify_seed_showcase_product_fields() -> list[str]:
+    errors: list[str] = []
+    seed_files = (
+        ADDONS / "smart_construction_seed" / "seed" / "steps" / "step_20_projects_demo.py",
+        ADDONS / "smart_construction_seed" / "seed" / "steps" / "step_90_verify_demo.py",
+    )
+    forbidden_fields = ("sc_demo_showcase", "sc_demo_showcase_ready")
+    for path in seed_files:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for field in forbidden_fields:
+            if field in text:
+                errors.append(
+                    "smart_construction_seed: project showcase seed must write product fields "
+                    f"not legacy alias {field!r}: {path.relative_to(ROOT).as_posix()}"
+                )
+    return errors
+
+
+def verify_custom_security_policy_role_login_boundary() -> list[str]:
+    path = ADDONS / "smart_construction_custom" / "models" / "security_policy.py"
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    required_formal_logins = (
+        "sc_role_project_read",
+        "sc_role_project_user",
+        "sc_role_project_manager",
+        "sc_role_owner",
+        "sc_role_pm",
+        "sc_role_finance",
+        "sc_role_executive",
+    )
+    legacy_logins = tuple(login.replace("sc_", "demo_", 1) for login in required_formal_logins)
+    errors: list[str] = []
+    if "ROLE_LOGIN_GROUPS" not in text or "LEGACY_ROLE_LOGIN_ALIASES" not in text:
+        errors.append(
+            "smart_construction_custom: security policy must separate formal role logins "
+            "from legacy demo login aliases"
+        )
+        return errors
+    for login in required_formal_logins:
+        if f'"{login}"' not in text:
+            errors.append(
+                "smart_construction_custom: security policy missing formal role login "
+                f"{login!r}"
+            )
+    alias_start = text.find("LEGACY_ROLE_LOGIN_ALIASES")
+    for login in legacy_logins:
+        quoted = f'"{login}"'
+        if text.count(quoted) != 1 or text.find(quoted) < alias_start:
+            errors.append(
+                "smart_construction_custom: legacy demo role login must appear only as "
+                f"compatibility alias: {login!r}"
+            )
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     errors.extend(verify_manifest_shape())
@@ -300,6 +359,8 @@ def main() -> int:
     errors.extend(verify_handler_product_language_boundary())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
+    errors.extend(verify_seed_showcase_product_fields())
+    errors.extend(verify_custom_security_policy_role_login_boundary())
 
     if errors:
         print("[industry_module_product_boundary_guard] FAIL", file=sys.stderr)
