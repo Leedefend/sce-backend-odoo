@@ -95,6 +95,7 @@ where name in (...);
 10. 生产目录不是 Git 工作区时，不得临场 `git pull` 或整目录覆盖；必须使用 release package 或已审定的文件清单，并记录备份和 sha256。
 11. 生产目录是 Git 工作区后，主线 `main` 是生产代码权威来源；生产服务器必须具备只读 deploy key，允许直接 `git fetch origin main`。
 12. 若生产服务器临时缺少 GitHub deploy key，只能使用 Git bundle 或 release package 作为过渡，部署记录必须记录 `git_auth` 缺口，不能把该状态视为长期标准。
+13. 全量主线对齐发布必须在部署记录中留存 `production_git_authority_guard` 完整 JSON 证据；至少包含 `status`、`branch`、`head`、`remote_head`、`status_porcelain`、`remote_auth_ok`、`env_file_skip_worktree`。
 
 ## 5. 标准发布流程
 
@@ -315,3 +316,4 @@ make verify.production_deployment.record.guard
 - 发布结论区分了“发布包对齐”和“全量对齐”。
 - `make verify.production_deployment.record.guard` 通过。
 - 对于全量主线对齐发布，`make verify.production_git.authority.guard` 通过；若只因 deploy key 缺失失败，必须登记为后续阻断事项并通过 bundle/release package 保证当前 commit 对齐。
+- 全量主线对齐发布的部署记录包含 `production_git_authority_guard` 完整 JSON 证据，能证明 branch、HEAD、origin/main、工作区 clean、remote auth 和 `.env.prod` skip-worktree 状态。

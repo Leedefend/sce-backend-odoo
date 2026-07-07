@@ -177,6 +177,26 @@ from ir_module_module
 where name='smart_construction_demo';
 ```
 
+Production Git authority evidence for `full tree` releases:
+
+```bash
+PRODUCTION_GIT_AUTHORITY_REQUIRE_ENV_SKIP=1 \
+  make verify.production_git.authority.guard
+```
+
+```json
+{
+  "guard": "production_git_authority_guard",
+  "status": "PASS",
+  "branch": "main",
+  "head": "<production-head-sha>",
+  "remote_head": "<origin-main-sha>",
+  "status_porcelain": "",
+  "remote_auth_ok": true,
+  "env_file_skip_worktree": true
+}
+```
+
 ## 8. 回滚点
 
 | 回滚对象 | 路径/版本 | 操作说明 |

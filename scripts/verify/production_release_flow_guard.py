@@ -46,6 +46,8 @@ FLOW_TOKENS = (
     "生产与日常开发服务器完全一致",
     "发布结论区分了“发布包对齐”和“全量对齐”",
     "生产目录不是 Git 工作区时，不得临场 `git pull` 或整目录覆盖",
+    "全量主线对齐发布必须在部署记录中留存 `production_git_authority_guard` 完整 JSON 证据",
+    "至少包含 `status`、`branch`、`head`、`remote_head`、`status_porcelain`、`remote_auth_ok`、`env_file_skip_worktree`",
 )
 
 UPGRADE_STANDARD_TOKENS = (
@@ -86,6 +88,11 @@ TEMPLATE_TOKENS = (
     "## 9. 收口结论",
     "`verify.non_demo_data_contamination`",
     "smart_construction_demo",
+    "Production Git authority evidence for `full tree` releases",
+    "PRODUCTION_GIT_AUTHORITY_REQUIRE_ENV_SKIP=1",
+    "\"guard\": \"production_git_authority_guard\"",
+    "\"remote_auth_ok\": true",
+    "\"env_file_skip_worktree\": true",
     "生产与日常开发服务器不是全量一致",
     "`planned: <meaning>` / `retained: <meaning>` / `tracked: <meaning>` / `closed: <evidence>`",
 )
@@ -121,6 +128,8 @@ VERIFY_README_TOKENS = (
     "Verifies concrete production deployment records",
     "explicit `incremental package` / `full tree` / `hotfix` release type",
     "For full-tree releases, requires production Git authority evidence",
+    "future full-tree releases to preserve the full `production_git_authority_guard` JSON evidence",
+    "`status`, `branch`, `head`, `remote_head`, `status_porcelain`, `remote_auth_ok`, and `env_file_skip_worktree`",
     "If the record claims production and daily development are fully aligned",
     "explicit non-full-alignment wording",
     "Rejects open-ended production record placeholders",
