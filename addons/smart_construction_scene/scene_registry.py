@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 import os
 import time
 from importlib.util import module_from_spec, spec_from_file_location
@@ -10,6 +11,8 @@ import yaml
 SCENE_VERSION = "v2"
 SCHEMA_VERSION = "v2"
 IMPORTED_SCENES_PARAM = "sc.scene.package.imported_scenes"
+
+_logger = logging.getLogger(__name__)
 
 
 _SCENE_REGISTRY_CONTENT_MODULE = None
@@ -105,7 +108,7 @@ def _load_scene_registry_content_entries_with_timings():
             if isinstance(rows, list) and rows:
                 return rows, timings_ms
         except Exception:
-            pass
+            _logger.debug("Unable to load scene registry entries through engine; using direct loader.", exc_info=True)
     rows, direct_timings = _load_entries_directly()
     if isinstance(direct_timings, dict):
         for key, value in direct_timings.items():

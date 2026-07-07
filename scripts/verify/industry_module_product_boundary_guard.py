@@ -365,6 +365,19 @@ def verify_policy_capability_dashboard_exception_observability() -> list[str]:
     return errors
 
 
+def verify_scene_registry_engine_fallback_observability() -> list[str]:
+    path = ADDONS / "smart_construction_scene" / "scene_registry.py"
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    if "except Exception:\n            pass" not in text:
+        return []
+    return [
+        "smart_construction_scene: scene registry engine fallback must log "
+        "exception degradation before using direct loader"
+    ]
+
+
 def verify_core_docs_product_examples() -> list[str]:
     errors: list[str] = []
     docs_dir = ADDONS / "smart_construction_core" / "docs"
@@ -541,6 +554,7 @@ def main() -> int:
     errors.extend(verify_core_api_controller_exception_observability())
     errors.extend(verify_business_slice_project_resolution_observability())
     errors.extend(verify_policy_capability_dashboard_exception_observability())
+    errors.extend(verify_scene_registry_engine_fallback_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_core_extension_legacy_label_boundary())
