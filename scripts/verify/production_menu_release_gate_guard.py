@@ -80,6 +80,13 @@ def _walk(nodes, path=()):
         yield from _walk(node.get("children"), current)
 
 
+def _formal_group_nodes(nav: list[dict]) -> list[dict]:
+    if len(nav) == 1 and isinstance(nav[0], dict) and _node_label(nav[0]) in {"系统菜单", "智慧施工管理平台"}:
+        children = nav[0].get("children")
+        return children if isinstance(children, list) else []
+    return nav
+
+
 def _released_policy_menu_count(product_key: str) -> int:
     return len(_released_policy_menus(product_key))
 
@@ -240,7 +247,7 @@ def _assert_runtime_gate(product_key: str, released_policy_count: int) -> dict:
         raise AssertionError(f"{product_key} forbidden runtime menu paths: {forbidden_paths[:20]}")
     if not gated_nav:
         raise AssertionError(f"{product_key} gated runtime nav is empty")
-    top_groups = [_node_label(node) for node in gated_nav if isinstance(node, dict)]
+    top_groups = [_node_label(node) for node in _formal_group_nodes(gated_nav) if isinstance(node, dict)]
     missing_groups = [label for label in EXPECTED_FORMAL_TOP_GROUPS if label not in top_groups]
     if missing_groups:
         raise AssertionError(f"{product_key} missing formal top groups: {missing_groups}; actual={top_groups}")
