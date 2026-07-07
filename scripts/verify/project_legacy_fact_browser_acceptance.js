@@ -97,7 +97,7 @@ async function openProjectList(page) {
   await page.waitForFunction((expectedProjectCodeLabel) => {
     const text = String(document.body?.textContent || '');
     return text.includes(expectedProjectCodeLabel) && !text.includes('正在加载列表');
-  }, '旧系统项目编号', { timeout: 90000 });
+  }, '历史项目编号', { timeout: 90000 });
 }
 
 async function openProjectRecord(page) {
@@ -112,7 +112,7 @@ async function openLegacyTab(page) {
   const legacyTab = page.getByText('历史项目资料', { exact: true }).first();
   await legacyTab.waitFor({ timeout: 20000 });
   await legacyTab.click();
-  await page.waitForFunction(() => String(document.body?.textContent || '').includes('旧系统项目编号'), null, {
+  await page.waitForFunction(() => String(document.body?.textContent || '').includes('历史项目编号'), null, {
     timeout: 20000,
   });
 }
@@ -150,7 +150,7 @@ async function main() {
     await openProjectList(page);
     const list = await snapshot(page, 'project_list');
     requireIncludes(list.text, '项目台账', 'list_title', result.errors);
-    requireIncludes(list.text, '旧系统项目编号', 'list_legacy_project_code_header', result.errors);
+    requireIncludes(list.text, '历史项目编号', 'list_legacy_project_code_header', result.errors);
 
     await openProjectRecord(page);
     const formBefore = await snapshot(page, 'project_form_before_legacy_tab');
@@ -158,7 +158,7 @@ async function main() {
 
     await openLegacyTab(page);
     const legacy = await snapshot(page, 'project_form_legacy_tab');
-    requireIncludes(legacy.text, '旧系统项目编号', 'legacy_tab_project_code_label', result.errors);
+    requireIncludes(legacy.text, '历史项目编号', 'legacy_tab_project_code_label', result.errors);
     requireIncludes(legacy.text, EXPECTED_PROJECT_CODE, 'legacy_tab_project_code_value', result.errors);
     requireIncludes(legacy.text, EXPECTED_LEGACY_PROJECT_ID, 'legacy_tab_project_id_value', result.errors);
     requireIncludes(legacy.text, EXPECTED_COMPANY, 'legacy_tab_company_value', result.errors);

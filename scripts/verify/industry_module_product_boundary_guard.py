@@ -305,6 +305,25 @@ def verify_business_category_alias_placeholder_boundary() -> list[str]:
     return errors
 
 
+def verify_historical_verify_script_wording() -> list[str]:
+    paths = (
+        ROOT / "scripts" / "verify" / "project_legacy_fact_browser_acceptance.js",
+        ROOT / "scripts" / "verify" / "model_view_standardization_plan.py",
+    )
+    errors: list[str] = []
+    for path in paths:
+        if not path.is_file():
+            errors.append(f"industry verify script missing: {path.relative_to(ROOT).as_posix()}")
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "旧系统" in text or "老系统" in text:
+            errors.append(
+                "industry verify scripts must use historical source wording, "
+                f"not old-system wording: {path.relative_to(ROOT).as_posix()}"
+            )
+    return errors
+
+
 def verify_static_style_product_language_boundary() -> list[str]:
     errors: list[str] = []
     static_root = ADDONS / "smart_construction_core" / "static" / "src"
@@ -1488,6 +1507,7 @@ def main() -> int:
     errors.extend(verify_portal_execute_legacy_method_anchor_boundary())
     errors.extend(verify_static_navigation_product_labels())
     errors.extend(verify_business_category_alias_placeholder_boundary())
+    errors.extend(verify_historical_verify_script_wording())
     errors.extend(verify_static_style_product_language_boundary())
     errors.extend(verify_capability_registry_role_boundary())
     errors.extend(verify_security_group_historical_boundary())
