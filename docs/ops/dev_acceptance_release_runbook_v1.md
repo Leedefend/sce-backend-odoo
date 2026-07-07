@@ -57,6 +57,21 @@ filestore.
    make release.dev.acceptance.publish
    ```
 
+   On the daily development runtime server, use the stricter topology-locked
+   entrypoint instead:
+
+   ```bash
+   ACCEPTANCE_BACKUP_DIR=/tmp/20260512T125816 \
+   ACCEPTANCE_BASE_URL=http://127.0.0.1:18081 \
+   ACCEPTANCE_LOGIN=wutao ACCEPTANCE_PASSWORD='<password>' \
+   ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo \
+   make release.daily_dev.acceptance.publish
+   ```
+
+   This target first runs `env.matrix.check` and
+   `verify.daily_dev.runtime_repo.clean`, so the acceptance publication cannot
+   run from the wrong server directory or a dirty runtime repository.
+
 ## Acceptance Criteria
 
 - `SHA256SUMS` passes.

@@ -23,6 +23,7 @@ REQUIRED_TOKENS = {
         "Production code authority is `main` or a frozen release package applied under `/opt/sce/production/sce-backend-odoo`.",
         "Do not deploy from scratch worktrees or archived runtime directories.",
         "make verify.daily_dev.runtime_repo.clean",
+        "make release.daily_dev.acceptance.publish",
         "make verify.production_git.authority.guard",
     ),
     "daily_policy": (
@@ -51,6 +52,7 @@ REQUIRED_TOKENS = {
         "python3 scripts/verify/environment_topology_guard.py",
         "verify.environment.topology.guard:",
         "verify.daily_dev.runtime_repo.clean:",
+        "release.daily_dev.acceptance.publish: guard.prod.forbid env.matrix.check verify.daily_dev.runtime_repo.clean release.dev.acceptance.publish",
         "bash scripts/ops/daily_dev_runtime_repo_guard.sh",
         ".PHONY: verify.production_git.authority.guard",
     ),

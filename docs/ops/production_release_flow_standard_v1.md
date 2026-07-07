@@ -107,6 +107,13 @@ ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make up
 ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make verify.dev.acceptance.release
 ```
 
+On the daily development runtime server, acceptance publication must use the
+topology-locked entrypoint:
+
+```bash
+ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make release.daily_dev.acceptance.publish
+```
+
 开发阶段允许模块版本领先生产，但必须记录该差异。不能因为 dev 验证通过就直接判断生产可部署。
 
 ### 5.2 发布冻结
