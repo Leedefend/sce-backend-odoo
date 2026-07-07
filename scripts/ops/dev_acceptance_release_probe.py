@@ -222,7 +222,7 @@ def _int_env(value: str) -> int | None:
         return None
 
 
-def _split_labels(value: str) -> list[str]:
+def _split_csv(value: str) -> list[str]:
     return [item.strip() for item in str(value or "").split(",") if item.strip()]
 
 
@@ -234,6 +234,7 @@ def probe_login(
     nav_min_actions: int | None = None,
     nav_max_actions: int | None = None,
     nav_forbidden_labels: list[str] | None = None,
+    nav_required_paths: list[str] | None = None,
 ) -> dict[str, Any]:
     if not login or not password:
         return {"enabled": False}
@@ -296,15 +297,19 @@ def probe_login(
         result["checks"]["nav_count"] = len(nav) if isinstance(nav, list) else None
         nav_rows = _walk_nav(nav)
         forbidden_labels = nav_forbidden_labels or []
+        required_paths = nav_required_paths or []
+        nav_path_set = {row["path"] for row in nav_rows}
         forbidden_hits = [
             row["path"]
             for row in nav_rows
             if any(token in row["path"] for token in forbidden_labels)
         ]
+        required_path_misses = [path for path in required_paths if path not in nav_path_set]
         result["checks"]["nav_node_count"] = len(nav_rows)
         result["checks"]["nav_action_count"] = sum(1 for row in nav_rows if row.get("action_id"))
         result["checks"]["nav_leaf_count"] = sum(1 for row in nav_rows if row.get("child_count") == 0)
         result["checks"]["nav_forbidden_label_hits"] = forbidden_hits[:50]
+        result["checks"]["nav_required_path_misses"] = required_path_misses
         result["checks"]["nav_paths_sample"] = [row["path"] for row in nav_rows[:80]]
         if not result["checks"]["role_code"]:
             errors.append("role_code_missing")
@@ -318,6 +323,8 @@ def probe_login(
             errors.append("nav_action_count_above_max")
         if forbidden_hits:
             errors.append("nav_forbidden_label_hits")
+        if required_path_misses:
+            errors.append("nav_required_path_misses")
     if init_status != 200 or not result["checks"]["system_init_ok"]:
         errors.append("system_init_failed")
 
@@ -339,6 +346,7 @@ def main() -> int:
     parser.add_argument("--nav-min-actions", default=os.getenv("ACCEPTANCE_NAV_MIN_ACTIONS", ""))
     parser.add_argument("--nav-max-actions", default=os.getenv("ACCEPTANCE_NAV_MAX_ACTIONS", ""))
     parser.add_argument("--nav-forbidden-labels", default=os.getenv("ACCEPTANCE_NAV_FORBIDDEN_LABELS", ""))
+    parser.add_argument("--nav-required-paths", default=os.getenv("ACCEPTANCE_NAV_REQUIRED_PATHS", ""))
     parser.add_argument("--output", default=os.getenv("ACCEPTANCE_PROBE_OUTPUT", str(DEFAULT_ARTIFACT)))
     args = parser.parse_args()
 
@@ -357,7 +365,8 @@ def main() -> int:
             args.password,
             nav_min_actions=_int_env(args.nav_min_actions),
             nav_max_actions=_int_env(args.nav_max_actions),
-            nav_forbidden_labels=_split_labels(args.nav_forbidden_labels),
+            nav_forbidden_labels=_split_csv(args.nav_forbidden_labels),
+            nav_required_paths=_split_csv(args.nav_required_paths),
         ),
     }
     statuses = [

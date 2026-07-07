@@ -51,6 +51,10 @@ it also requires `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081` and
 `ACCEPTANCE_LOGIN=wutao`, a non-empty `ACCEPTANCE_PASSWORD`, and
 `ACCEPTANCE_NAV_MIN_ACTIONS=60`, `ACCEPTANCE_NAV_MAX_ACTIONS=70`, and
 `ACCEPTANCE_NAV_FORBIDDEN_LABELS=用户核对菜单,用户数据验收,用户验收,直营项目系统菜单`.
+`ACCEPTANCE_NAV_REQUIRED_PATHS` must include the locked daily product path
+sample covering customer, supplier, project ledger, general contract,
+construction diary, inbound, payment request, project capital overview, payroll,
+company archive, and input invoice entries.
 `ACCEPTANCE_PROBE_OUTPUT=artifacts/backend/dev_acceptance_release_probe.json`.
 The frontend build output must stay `FRONTEND_DIST_DIR=./frontend/apps/web/dist-dev`,
 and `VITE_ODOO_DB`, `VITE_APP_ENV`, `VITE_BUILD_MODE`, and

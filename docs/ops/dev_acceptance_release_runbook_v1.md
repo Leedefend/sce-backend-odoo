@@ -79,6 +79,10 @@ filestore.
    navigation baseline requires `ACCEPTANCE_NAV_MIN_ACTIONS=60`,
    `ACCEPTANCE_NAV_MAX_ACTIONS=70`, and
    `ACCEPTANCE_NAV_FORBIDDEN_LABELS=用户核对菜单,用户数据验收,用户验收,直营项目系统菜单`.
+   It also requires `ACCEPTANCE_NAV_REQUIRED_PATHS` to include the locked daily
+   product path sample for customer, supplier, project ledger, general contract,
+   construction diary, inbound, payment request, project capital overview,
+   payroll, company archive, and input invoice entries.
    The evidence artifact must remain `artifacts/backend/dev_acceptance_release_probe.json`,
    the frontend output must remain `./frontend/apps/web/dist-dev`,
    `VITE_PLATFORM_ADMIN_DB` must remain `sc_platform_core`, and Vite build or
@@ -96,7 +100,8 @@ filestore.
 - `/api/v1/intent?db=sc_demo` returns `204` for `OPTIONS` and `405` for `GET`.
 - Daily development publication must authenticate as `wutao` and run
   `system.init`; the resulting navigation must contain product action menus in
-  the locked daily range and must not expose old acceptance menu labels.
+  the locked daily range, include the locked required path sample, and must not
+  expose old acceptance menu labels.
   Generic dev acceptance may still omit credentials only when it is not being
   used as a daily release gate.
 

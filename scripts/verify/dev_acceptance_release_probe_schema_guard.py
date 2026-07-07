@@ -128,8 +128,9 @@ def _check_login(value: object, errors: list[str]) -> str:
             errors.append(f"login.checks.{key} must be int when present")
     if checks.get("role_code") is not None and not isinstance(checks.get("role_code"), str):
         errors.append("login.checks.role_code must be string when present")
-    if checks.get("nav_forbidden_label_hits") is not None and not _string_list(checks.get("nav_forbidden_label_hits")):
-        errors.append("login.checks.nav_forbidden_label_hits must be string list when present")
+    for key in ("nav_forbidden_label_hits", "nav_required_path_misses"):
+        if checks.get(key) is not None and not _string_list(checks.get(key)):
+            errors.append(f"login.checks.{key} must be string list when present")
     if checks.get("nav_paths_sample") is not None and not _string_list(checks.get("nav_paths_sample")):
         errors.append("login.checks.nav_paths_sample must be string list when present")
     if login.get("status") == "PASS":
@@ -147,6 +148,8 @@ def _check_login(value: object, errors: list[str]) -> str:
             errors.append("login.checks.nav_action_count must be positive when login passes")
         if checks.get("nav_forbidden_label_hits"):
             errors.append("login.checks.nav_forbidden_label_hits must be empty when login passes")
+        if checks.get("nav_required_path_misses"):
+            errors.append("login.checks.nav_required_path_misses must be empty when login passes")
     return str(login.get("status") or "FAIL")
 
 
