@@ -23,7 +23,7 @@ INDUSTRY_MODULES = (
 # Source assets intentionally carried but not loaded by manifests.
 ALLOWED_UNDECLARED_XML = {
     "smart_construction_core": {
-        "data/tax.xml": "empty compatibility stub; taxes are created idempotently by hooks.ensure_core_taxes",
+        "data/tax.xml": "manifest-excluded tax anchor; taxes are created idempotently by hooks.ensure_core_taxes",
         "views/res_users_views.xml": "legacy user-form experiment; enterprise/user module owns user profile surface",
         "views/support/partner_acceptance_product_menu_policy.xml": "historical acceptance policy; not part of formal runtime menu policy",
     },
@@ -118,6 +118,19 @@ def verify_manifest_shape() -> list[str]:
         for item in sorted(FORBIDDEN_MANIFEST_XML.get(module, set()) & data_set):
             errors.append(f"{module}: forbidden production manifest asset is loaded: {item}")
 
+    return errors
+
+
+def verify_guard_metadata_product_language() -> list[str]:
+    text = Path(__file__).read_text(encoding="utf-8", errors="ignore")
+    forbidden_tokens = ("compatibility " + "stub",)
+    errors: list[str] = []
+    for token in forbidden_tokens:
+        if token in text:
+            errors.append(
+                "industry module guard metadata must describe excluded assets with product "
+                f"ownership language, not {token!r}"
+            )
     return errors
 
 
@@ -830,6 +843,7 @@ def verify_custom_security_policy_role_login_boundary() -> list[str]:
 def main() -> int:
     errors: list[str] = []
     errors.extend(verify_manifest_shape())
+    errors.extend(verify_guard_metadata_product_language())
     errors.extend(verify_production_token_boundary())
     errors.extend(verify_custom_user_payload_boundary())
     errors.extend(verify_legacy_temporary_account_boundary())
