@@ -35,6 +35,7 @@ FLOW_TOKENS = (
     "docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md",
     "make verify.production_deployment.record.guard",
     "make verify.business_system.usability_readiness.prod",
+    "make policy.restore.formal_product_menu",
     "make verify.production_menu.release_gate.guard.prod",
     "make history.attachment.custody.probe.prod",
     "make verify.legacy_attachment.mirror.completeness.audit.prod",
@@ -88,6 +89,7 @@ MAKEFILE_TOKENS = (
     ".PHONY: verify.production_deployment.record.guard",
     ".PHONY: verify.business_capability.productization_p1 verify.business_system.usability_readiness verify.business_system.usability_readiness.prod",
     "verify.business_system.usability_readiness.prod: guard.prod.readonly check-compose-project check-compose-env",
+    "policy.restore.formal_product_menu: guard.prod.danger check-compose-project check-compose-env",
     "verify.production_menu.release_gate.guard.prod: guard.prod.readonly check-compose-project check-compose-env",
     "BUSINESS_SYSTEM_READINESS_PROD_READONLY=1 BUSINESS_SYSTEM_READINESS_INCLUDE_P1=0",
     "history.attachment.custody.probe.prod: guard.prod.readonly check-compose-project check-compose-env",
@@ -106,6 +108,7 @@ MAKEFILE_TOKENS = (
 VERIFY_README_TOKENS = (
     "`make verify.production_deployment.record.guard`",
     "`make verify.business_system.usability_readiness.prod`",
+    "`make policy.restore.formal_product_menu`",
     "`make verify.production_menu.release_gate.guard.prod`",
     "`make history.attachment.custody.probe.prod`",
     "`make legacy_attachment.custody_marker.backfill.prod`",
@@ -118,6 +121,7 @@ VERIFY_README_TOKENS = (
 
 DEPLOY_RUNBOOK_TOKENS = (
     "make verify.business_system.usability_readiness.prod",
+    "make policy.restore.formal_product_menu",
     "make verify.production_menu.release_gate.guard.prod",
     "make history.attachment.custody.probe.prod",
     "make legacy_attachment.custody_marker.backfill.prod",
@@ -133,6 +137,7 @@ SERVER_POST_UPGRADE_RUNBOOK_TOKENS = (
 
 PROD_POLICY_TOKENS = (
     "make verify.business_system.usability_readiness.prod",
+    "make policy.restore.formal_product_menu",
     "make verify.production_menu.release_gate.guard.prod",
     "make history.attachment.custody.probe.prod",
     "make prod.frontend.build",

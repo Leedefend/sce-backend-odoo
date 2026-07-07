@@ -37,6 +37,7 @@ Makefile guards and script-level guards.
 - `make prod.upgrade.core`
 - `make history.production.fresh_init`
 - `make legacy_attachment.custody_marker.backfill.prod`
+- `make policy.restore.formal_product_menu`
 - `make smoke.business_full`
 - `make smoke.role_matrix`
 
@@ -75,6 +76,13 @@ Production frontend static rebuild after frontend changes:
 ```bash
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
   make prod.frontend.build
+```
+
+Restore the formal product menu release policy from the locked baseline:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
+  make policy.restore.formal_product_menu
 ```
 
 Read-only production business readiness verification:

@@ -189,6 +189,9 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
 
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
   make policy.apply.role_matrix
+
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
+  make policy.restore.formal_product_menu
 ```
 
 ### 5.6 发布后验证矩阵

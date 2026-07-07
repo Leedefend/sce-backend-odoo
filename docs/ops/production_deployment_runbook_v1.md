@@ -178,6 +178,13 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
   make policy.apply.role_matrix
 ```
 
+正式产品菜单发布策略必须从锁定基线恢复，不能使用用户核对/验收恢复脚本生成生产产品菜单：
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
+  make policy.restore.formal_product_menu
+```
+
 菜单产品化发布闸必须只读验证，确保 `system.init` 不会退回平台默认菜单或原生菜单投影：
 
 ```bash

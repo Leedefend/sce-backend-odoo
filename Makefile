@@ -778,6 +778,9 @@ verify.construction_product_menu.release: guard.prod.forbid check-compose-projec
 verify.production_menu.release_gate.guard.prod: guard.prod.readonly check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) PROD_READONLY_VERIFY=1 bash scripts/ops/odoo_shell_exec.sh < scripts/verify/production_menu_release_gate_guard.py
 
+policy.restore.formal_product_menu: guard.prod.danger check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/ops/formal_product_menu_policy_restore.py
+
 verify.tender_optional_scope_metadata.probe: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/tender_optional_scope_metadata_probe.py
 

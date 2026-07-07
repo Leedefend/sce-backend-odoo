@@ -121,6 +121,10 @@
   - Verifies `smart_core.platform_release_db` points at the current production database.
   - Verifies active released snapshots exist for `construction.standard` and `construction.preview`.
   - Verifies release-gate page counts match released product-policy menu counts and runtime gated navigation does not expose old `用户核对菜单` paths.
+- `make policy.restore.formal_product_menu`
+  - Write operation guarded by `PROD_DANGER=1`.
+  - Restores `construction.standard` and `construction.preview` product policies from `formal_business_product_menu_policy_v1.json`.
+  - Rewrites the active release snapshot page contracts from the formal product menu baseline, excluding user-acceptance/history verification menus.
 - `make verify.user_module.data_baseline.runtime_audit`
   - Runtime acceptance after installing/upgrading `smart_construction_custom` on a target database.
   - Replays the legacy user data baseline twice and verifies user count, XMLID count, and duplicate-login safety remain stable.

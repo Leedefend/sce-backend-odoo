@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Restore released formal contract menus plus accepted-data verification menus.
 
+Deprecated for production product navigation. Use
+``scripts/ops/formal_product_menu_policy_restore.py`` or
+``make policy.restore.formal_product_menu`` for the formal product menu release
+policy. This script is retained for migration/acceptance investigations only.
+
 Run with:
     PROJECT=sc-backend-odoo-dev DB_NAME=sc_demo bash scripts/ops/odoo_shell_exec.sh < scripts/ops/contract_product_acceptance_policy_restore.py
 """

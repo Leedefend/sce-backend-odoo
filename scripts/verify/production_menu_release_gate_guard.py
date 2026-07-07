@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
 from odoo.addons.smart_core.handlers.system_init import (
@@ -16,6 +17,16 @@ EXPECTED_BASE_PRODUCT_KEY = "construction"
 EXPECTED_PLATFORM_RELEASE_DB_MATCH_CURRENT = True
 MIN_RELEASED_POLICY_MENU_COUNT = 1
 FORBIDDEN_RUNTIME_LABEL_TOKENS = ("用户核对菜单",)
+FORBIDDEN_POLICY_PATH_TOKENS = ("用户核对菜单", "旧业务数据核对", "直营项目数据核对")
+BASELINE_FILE = "formal_business_product_menu_policy_v1.json"
+
+
+def _baseline_candidates() -> list[Path]:
+    return [
+        Path("/mnt/scripts/verify/baselines") / BASELINE_FILE,
+        Path.cwd() / "scripts" / "verify" / "baselines" / BASELINE_FILE,
+        Path("/home/lidefend/workspace/sce-backend-odoo/scripts/verify/baselines") / BASELINE_FILE,
+    ]
 
 
 def _text(value):
@@ -36,23 +47,89 @@ def _walk(nodes, path=()):
 
 
 def _released_policy_menu_count(product_key: str) -> int:
+    return len(_released_policy_menus(product_key))
+
+
+def _policy_row(group_label: str, menu: dict) -> tuple[str, str, str, str]:
+    return (
+        _text(group_label),
+        _text(menu.get("label") or menu.get("name")),
+        _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key")),
+        _text(menu.get("res_model") or menu.get("model")),
+    )
+
+
+def _load_formal_baseline() -> dict[str, list[tuple[str, str, str, str]]]:
+    path = next((candidate for candidate in _baseline_candidates() if candidate.is_file()), None)
+    if not path:
+        raise AssertionError(f"missing formal product menu baseline: {BASELINE_FILE}")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    products = payload.get("products") if isinstance(payload, dict) else payload
+    if not isinstance(products, list):
+        raise AssertionError(f"{BASELINE_FILE} products must be a list")
+    out: dict[str, list[tuple[str, str, str, str]]] = {}
+    for product in products:
+        if not isinstance(product, dict):
+            continue
+        product_key = _text(product.get("product_key"))
+        rows = []
+        for group in product.get("menu_groups") or []:
+            if not isinstance(group, dict):
+                continue
+            group_label = _text(group.get("group_label") or group.get("label"))
+            for menu in group.get("menus") or []:
+                if isinstance(menu, dict):
+                    rows.append(_policy_row(group_label, menu))
+        out[product_key] = rows
+    return out
+
+
+def _released_policy_menus(product_key: str) -> list[dict]:
     policy = env["sc.product.policy"].sudo().search([("product_key", "=", product_key)], limit=1)  # noqa: F821
     if not policy:
         raise AssertionError(f"missing product policy: {product_key}")
     if not policy.active or policy.access_level != "public":
         raise AssertionError(f"{product_key} policy must be active public")
-    count = 0
+    rows = []
     for group in policy.menu_groups or []:
         if not isinstance(group, dict):
             continue
+        group_label = _text(group.get("group_label") or group.get("label") or group.get("group_key"))
         for menu in group.get("menus") or []:
             if not isinstance(menu, dict):
                 continue
             if menu.get("enabled") and _text(menu.get("release_state")) == "released":
-                count += 1
-    if count < MIN_RELEASED_POLICY_MENU_COUNT:
+                visible_path = _text(menu.get("visible_menu_path"))
+                label = _text(menu.get("label") or menu.get("name"))
+                if any(token in visible_path or token in group_label or token in label for token in FORBIDDEN_POLICY_PATH_TOKENS):
+                    raise AssertionError(
+                        f"{product_key} product policy contains acceptance menu: {group_label} / {label} / {visible_path}"
+                    )
+                row = dict(menu)
+                row["_group_label"] = group_label
+                rows.append(row)
+    if len(rows) < MIN_RELEASED_POLICY_MENU_COUNT:
         raise AssertionError(f"{product_key} has no released product menus")
-    return count
+    return rows
+
+
+def _assert_policy_matches_formal_baseline(product_key: str, baseline: dict[str, list[tuple[str, str, str, str]]]) -> dict:
+    expected = baseline.get(product_key)
+    if expected is None:
+        raise AssertionError(f"formal baseline missing product: {product_key}")
+    rows = _released_policy_menus(product_key)
+    actual = [_policy_row(_text(row.get("_group_label")), row) for row in rows]
+    if actual != expected:
+        expected_set = set(expected)
+        actual_set = set(actual)
+        raise AssertionError(
+            "%s formal product menu policy drift: only_expected=%s only_actual=%s"
+            % (product_key, sorted(expected_set - actual_set)[:20], sorted(actual_set - expected_set)[:20])
+        )
+    return {
+        "baseline_menu_count": len(expected),
+        "policy_released_menu_count": len(actual),
+    }
 
 
 def _active_snapshot(product_key: str):
@@ -145,9 +222,13 @@ def _assert_runtime_gate(product_key: str, released_policy_count: int) -> dict:
 def main():
     identity = _assert_startup_identity()
     platform_release_db = _assert_platform_release_db()
+    baseline = _load_formal_baseline()
     products = []
     for product_key in PRODUCT_KEYS:
-        products.append(_assert_runtime_gate(product_key, _released_policy_menu_count(product_key)))
+        policy_meta = _assert_policy_matches_formal_baseline(product_key, baseline)
+        runtime_meta = _assert_runtime_gate(product_key, int(policy_meta["policy_released_menu_count"]))
+        runtime_meta.update(policy_meta)
+        products.append(runtime_meta)
     print(
         json.dumps(
             {
