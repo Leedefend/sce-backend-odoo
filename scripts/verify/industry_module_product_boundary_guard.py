@@ -329,6 +329,7 @@ def verify_business_slice_project_resolution_observability() -> list[str]:
         ADDONS / "smart_construction_core" / "services" / "cost_tracking_service.py",
         ADDONS / "smart_construction_core" / "services" / "payment_slice_service.py",
         ADDONS / "smart_construction_core" / "services" / "project_execution_service.py",
+        ADDONS / "smart_construction_core" / "services" / "project_plan_bootstrap_service.py",
         ADDONS / "smart_construction_core" / "services" / "settlement_slice_service.py",
     )
     for path in guarded_paths:

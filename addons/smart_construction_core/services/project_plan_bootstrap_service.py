@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
+
 from odoo import fields
 
 from odoo.addons.smart_construction_core.services.project_state_explain_service import lifecycle_state_label
 from odoo.addons.smart_construction_core.services.project_plan_bootstrap_builders import BUILDERS
+
+
+_logger = logging.getLogger(__name__)
 
 
 class ProjectPlanBootstrapService:
@@ -124,6 +129,7 @@ class ProjectPlanBootstrapService:
                     return record, diagnostics
                 diagnostics["reason"] = "explicit project_id not found or inaccessible"
             except Exception:
+                _logger.debug("Unable to resolve explicit project plan bootstrap project.", exc_info=True)
                 diagnostics["reason"] = "explicit project_id browse failed"
         try:
             if "create_uid" in getattr(Project, "_fields", {}):
@@ -142,6 +148,7 @@ class ProjectPlanBootstrapService:
             else:
                 diagnostics["candidate_counts"]["creator_domain"] = 0
         except Exception:
+            _logger.debug("Unable to resolve project plan bootstrap project by creator domain.", exc_info=True)
             diagnostics["candidate_counts"]["creator_domain"] = -1
             diagnostics["reason"] = "creator_domain search failed"
         domain = self._project_domain_for_user()
@@ -162,6 +169,7 @@ class ProjectPlanBootstrapService:
                 )
                 return record, diagnostics
         except Exception:
+            _logger.debug("Unable to resolve project plan bootstrap project by user domain.", exc_info=True)
             diagnostics["candidate_counts"]["user_domain"] = -1
             diagnostics["reason"] = "user_domain search failed"
         try:
@@ -177,6 +185,7 @@ class ProjectPlanBootstrapService:
                 )
                 return record, diagnostics
         except Exception:
+            _logger.debug("Unable to resolve project plan bootstrap project by global fallback.", exc_info=True)
             diagnostics["candidate_counts"]["global"] = -1
             diagnostics["reason"] = "global search failed"
         diagnostics.update(
