@@ -244,6 +244,12 @@ REQUIRED_TEXT_SNIPPETS = (
         "catalog complete before release."
     ),
     (
+        "The readiness chain includes `make verify.industry_module.product_boundary`,\n"
+        "which runs the industry boundary regression test before the guard and rejects\n"
+        "production manifest `demo` entries, bare runtime `pass`, bare runtime\n"
+        "`NotImplementedError`, and app delivery fallback boundary drift."
+    ),
+    (
         "The readiness chain also includes `make verify.product.menu.release.ready`, so\n"
         "formal product menu changes, system configuration entries, and runtime user\n"
         "menu configuration boundaries must pass the menu release gate before release."

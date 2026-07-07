@@ -53,6 +53,10 @@ before the final tag.
 The readiness chain includes `make verify.docs.product_boundary`, so new addon
 modules and product-boundary edits must keep the formal product boundary
 catalog complete before release.
+The readiness chain includes `make verify.industry_module.product_boundary`,
+which runs the industry boundary regression test before the guard and rejects
+production manifest `demo` entries, bare runtime `pass`, bare runtime
+`NotImplementedError`, and app delivery fallback boundary drift.
 The readiness chain also includes `make verify.product.menu.release.ready`, so
 formal product menu changes, system configuration entries, and runtime user
 menu configuration boundaries must pass the menu release gate before release.
