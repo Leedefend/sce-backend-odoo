@@ -465,6 +465,7 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
         "现阶段",
         "后续可扩展",
         "后续补充",
+        "后续阶段",
         "后续绑定正式入口",
         "当前层级占位",
         "阶段2占位",

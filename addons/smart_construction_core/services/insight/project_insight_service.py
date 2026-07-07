@@ -245,7 +245,7 @@ def _build_ui_model(initiation: Dict[str, Any]) -> Dict[str, Any]:
         },
         "next_best": {"title": _("建议现在先做这一件："), "item": map_best(best)} if best else None,
         "more": {
-            "collapsed_title": _("还有 %s 项准备会在后续阶段影响执行（可稍后处理）") % len(rest),
+            "collapsed_title": _("还有 %s 项准备会在执行过程中影响执行（可稍后处理）") % len(rest),
             "items": [map_more(risk) for risk in rest],
         }
         if rest
