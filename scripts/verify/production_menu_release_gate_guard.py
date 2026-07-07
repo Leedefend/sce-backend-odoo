@@ -50,16 +50,15 @@ def _released_policy_menu_count(product_key: str) -> int:
     return len(_released_policy_menus(product_key))
 
 
-def _policy_row(group_label: str, menu: dict) -> tuple[str, str, str, str]:
+def _policy_row(group_label: str, menu: dict) -> tuple[str, str, str]:
     return (
         _text(group_label),
         _text(menu.get("label") or menu.get("name")),
         _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key")),
-        _text(menu.get("res_model") or menu.get("model")),
     )
 
 
-def _load_formal_baseline() -> dict[str, list[tuple[str, str, str, str]]]:
+def _load_formal_baseline() -> dict[str, list[tuple[str, str, str]]]:
     path = next((candidate for candidate in _baseline_candidates() if candidate.is_file()), None)
     if not path:
         raise AssertionError(f"missing formal product menu baseline: {BASELINE_FILE}")
