@@ -327,7 +327,7 @@ def collect_projection_followup_issues(semantic: dict[str, int]) -> list[dict[st
             "res_partner",
             "LOWER(COALESCE(sc_source_created_by, '')) IN ('odoobot', 'false', 'admin', 'administrator')",
         ),
-        message="客户/供应商录入人出现系统占位值，需追溯旧系统真实用户。",
+        message="客户/供应商录入人出现系统占位值，需追溯历史来源真实用户。",
         sample_sql="""
             SELECT id, name, sc_source_created_by, sc_source_created_at, sc_source_fact_source
               FROM res_partner
@@ -397,7 +397,7 @@ def collect_issues(counts: dict[str, int]) -> list[dict[str, object]]:
         key="contract.supplier_entry_source_missing",
         severity="info",
         count=supplier_contract_entry_missing,
-        message="供应商合同运行时载荷未携带旧系统录入人/录入时间；不能用 Odoo 创建人或导入时间替代。",
+        message="供应商合同运行时载荷未携带历史来源录入人/录入时间；不能用 Odoo 创建人或导入时间替代。",
         sample_sql="""
             SELECT id, legacy_contract_id, legacy_document_no, legacy_contract_no, subject, note
               FROM construction_contract
@@ -437,7 +437,7 @@ def collect_issues(counts: dict[str, int]) -> list[dict[str, object]]:
             "AND (visible_received_amount IS NULL OR visible_unreceived_amount IS NULL) "
             "AND (COALESCE(visible_received_amount_source, '') = '' OR COALESCE(visible_unreceived_amount_source, '') = '')",
         ),
-        message="收入合同缺少旧系统累计收款/未收款余额来源证据，不能按合同金额倒推造数。",
+        message="收入合同缺少历史来源累计收款/未收款余额来源证据，不能按合同金额倒推造数。",
         sample_sql="""
             SELECT id, legacy_contract_id, legacy_document_no, subject,
                    visible_contract_amount, visible_received_amount, visible_unreceived_amount,
