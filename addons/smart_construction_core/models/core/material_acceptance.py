@@ -6,12 +6,14 @@ from odoo.exceptions import ValidationError
 from odoo.tools.float_utils import float_compare
 
 
-SYSTEM_DEFAULT_PROJECT_NAME = "系统默认项目（技术兜底）"
+SYSTEM_DEFAULT_PROJECT_NAME = "系统默认项目"
 LEGACY_SYSTEM_DEFAULT_PROJECT_NAME = "系统默认项目（待完善）"
-SYSTEM_DEFAULT_SUPPLIER_NAME = "系统默认供应商（技术兜底）"
+LEGACY_TECHNICAL_DEFAULT_PROJECT_NAME = "系统默认项目（技术兜底）"
+SYSTEM_DEFAULT_SUPPLIER_NAME = "系统默认供应商"
 LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME = "系统默认供应商（待完善）"
-SYSTEM_DEFAULT_MATERIAL_NAME = "系统默认材料（技术兜底）"
-SYSTEM_DEFAULT_WAREHOUSE_NAME = "系统默认仓库（技术兜底）"
+LEGACY_TECHNICAL_DEFAULT_SUPPLIER_NAME = "系统默认供应商（技术兜底）"
+SYSTEM_DEFAULT_MATERIAL_NAME = "系统默认材料"
+SYSTEM_DEFAULT_WAREHOUSE_NAME = "系统默认仓库"
 
 
 class ScMaterialSystemDefaultMixin(models.AbstractModel):
@@ -22,7 +24,17 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
     @api.model
     def _sc_default_project_id(self):
         project = self.env["project.project"].search(
-            [("name", "in", [SYSTEM_DEFAULT_PROJECT_NAME, LEGACY_SYSTEM_DEFAULT_PROJECT_NAME])],
+            [
+                (
+                    "name",
+                    "in",
+                    [
+                        SYSTEM_DEFAULT_PROJECT_NAME,
+                        LEGACY_SYSTEM_DEFAULT_PROJECT_NAME,
+                        LEGACY_TECHNICAL_DEFAULT_PROJECT_NAME,
+                    ],
+                )
+            ],
             limit=1,
         )
         if not project:
@@ -32,14 +44,24 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
                     "company_id": self.env.company.id,
                 }
             )
-        elif project.name == LEGACY_SYSTEM_DEFAULT_PROJECT_NAME:
+        elif project.name in (LEGACY_SYSTEM_DEFAULT_PROJECT_NAME, LEGACY_TECHNICAL_DEFAULT_PROJECT_NAME):
             project.sudo().write({"name": SYSTEM_DEFAULT_PROJECT_NAME})
         return project.id
 
     @api.model
     def _sc_default_supplier_id(self):
         partner = self.env["res.partner"].search(
-            [("name", "in", [SYSTEM_DEFAULT_SUPPLIER_NAME, LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME])],
+            [
+                (
+                    "name",
+                    "in",
+                    [
+                        SYSTEM_DEFAULT_SUPPLIER_NAME,
+                        LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME,
+                        LEGACY_TECHNICAL_DEFAULT_SUPPLIER_NAME,
+                    ],
+                )
+            ],
             limit=1,
         )
         if not partner:
@@ -49,7 +71,7 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
                     "supplier_rank": 1,
                 }
             )
-        elif partner.name == LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME:
+        elif partner.name in (LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME, LEGACY_TECHNICAL_DEFAULT_SUPPLIER_NAME):
             partner.sudo().write({"name": SYSTEM_DEFAULT_SUPPLIER_NAME})
         return partner.id
 

@@ -572,7 +572,7 @@ class ProjectMaterialPlanLine(models.Model):
         if not product:
             product = self.env["product.product"].sudo().create(
                 {
-                    "name": "系统默认材料（技术兜底）",
+                    "name": "系统默认材料",
                     "default_code": "SC-SYSTEM-DEFAULT-MATERIAL",
                     "type": "product",
                 }

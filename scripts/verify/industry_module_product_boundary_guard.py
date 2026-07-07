@@ -787,6 +787,7 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
         "技术材料占位",
         "技术产品占位",
         "技术占位",
+        "技术兜底",
         "缺少发票信息（占位）",
         "(placeholder)",
         "projects.dashboard_showcase",
@@ -836,6 +837,8 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
     allowed_pending_compatibility_lines = {
         'LEGACY_SYSTEM_DEFAULT_PROJECT_NAME = "系统默认项目（待完善）"',
         'LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME = "系统默认供应商（待完善）"',
+        'LEGACY_TECHNICAL_DEFAULT_PROJECT_NAME = "系统默认项目（技术兜底）"',
+        'LEGACY_TECHNICAL_DEFAULT_SUPPLIER_NAME = "系统默认供应商（技术兜底）"',
     }
     for root in guarded_roots:
         if not root.is_dir():
@@ -873,6 +876,8 @@ def verify_material_historical_default_name_boundary() -> list[str]:
     required_anchors = {
         'LEGACY_SYSTEM_DEFAULT_PROJECT_NAME = "系统默认项目（待完善）"',
         'LEGACY_SYSTEM_DEFAULT_SUPPLIER_NAME = "系统默认供应商（待完善）"',
+        'LEGACY_TECHNICAL_DEFAULT_PROJECT_NAME = "系统默认项目（技术兜底）"',
+        'LEGACY_TECHNICAL_DEFAULT_SUPPLIER_NAME = "系统默认供应商（技术兜底）"',
     }
     errors: list[str] = []
     for anchor in sorted(required_anchors):
@@ -888,6 +893,11 @@ def verify_material_historical_default_name_boundary() -> list[str]:
         errors.append(
             "smart_construction_core: material historical default-name anchor may only use "
             "pending wording inside explicit legacy system default constants"
+        )
+    if "技术兜底" in scrubbed:
+        errors.append(
+            "smart_construction_core: material historical default-name anchor may only use "
+            "technical-default wording inside explicit legacy technical default constants"
         )
     return errors
 
