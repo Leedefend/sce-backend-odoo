@@ -919,6 +919,8 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
     cost_domain_text = cost_domain.read_text(encoding="utf-8", errors="ignore") if cost_domain.is_file() else ""
     required_fragments = {
         "core import": "from ..support import budget_compat  # 历史 project.budget.line 模型兼容层，需在主模型前加载",
+        "compat facade wording": "历史模型门面：将 project.budget.line 指向现用 project.budget.boq.line。",
+        "compat description": '_description = "项目预算行历史模型门面"',
         "compat name": '_name = "project.budget.line"',
         "compat inherit": '_inherit = "project.budget.boq.line"',
         "compat table": '_table = "project_budget_boq_line"',
@@ -935,6 +937,12 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
             "smart_construction_core: budget compatibility import must use historical-model "
             "boundary wording, not generic old-compatibility wording"
         )
+    for fragment in ("兼容层：历史模型 project.budget.line", "项目预算行(兼容层)"):
+        if fragment in compat_text:
+            errors.append(
+                "smart_construction_core: budget compatibility layer must use "
+                f"historical-model facade wording, not generic compatibility wording {fragment!r}"
+            )
     if 'project.budget.line -> 现用 project.budget.boq.line' in cost_domain_text:
         errors.append(
             "smart_construction_core: cost_domain must not describe budget compatibility "
