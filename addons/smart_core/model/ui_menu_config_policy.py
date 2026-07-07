@@ -766,6 +766,73 @@ class UiMenuConfigPolicy(models.Model):
                 return False
             return True
 
+        def complete_overlay_navigation_contract(node: dict, action_meta: dict) -> dict:
+            menu_id = int(node.get("menu_id") or 0)
+            route = str(action_meta.get("route") or node.get("route") or "").strip()
+            action_id = _to_int(action_meta.get("action_id") or node.get("action_id"))
+            model = str(action_meta.get("model") or node.get("model") or "").strip()
+            view_modes_raw = action_meta.get("view_modes") or node.get("view_modes") or []
+            if isinstance(view_modes_raw, (list, tuple)):
+                view_modes = [str(item).strip() for item in view_modes_raw if str(item).strip()]
+            else:
+                view_modes = [item.strip() for item in str(view_modes_raw or "").split(",") if item.strip()]
+            native_view_mode = ",".join(view_modes)
+
+            node["is_visible"] = True
+            node["scene_key"] = None
+            node["native_action_id"] = action_id or None
+            node["native_model"] = model or None
+            node["native_view_mode"] = native_view_mode or None
+            node["confidence"] = "medium"
+
+            if action_id:
+                node["target_type"] = "action"
+                node["delivery_mode"] = "custom_action"
+                node["is_clickable"] = True
+                node["compatibility_used"] = True
+                node["target"] = {
+                    "action_id": action_id,
+                    "res_model": model or None,
+                    "view_mode": native_view_mode or None,
+                }
+                node["entry_target"] = {
+                    "type": "compatibility",
+                    "route": route or "/a/%s?menu_id=%s" % (action_id, menu_id),
+                    "compatibility_refs": {
+                        "menu_id": menu_id,
+                        "action_id": action_id,
+                        "model": model or None,
+                        "view_modes": view_modes,
+                    },
+                }
+                node["active_match"] = {
+                    "menu_id": menu_id,
+                    "scene_key": None,
+                    "action_id": action_id,
+                    "route_prefix": "/a/%s" % action_id,
+                }
+                node["availability_status"] = "ok"
+                node["reason_code"] = ""
+            else:
+                node["target_type"] = "directory"
+                node["delivery_mode"] = "none"
+                node["is_clickable"] = False
+                node["compatibility_used"] = False
+                node["target"] = {}
+                node["entry_target"] = {
+                    "type": "directory",
+                    "route": route or "/m/%s" % menu_id,
+                }
+                node["active_match"] = {
+                    "menu_id": menu_id,
+                    "scene_key": None,
+                    "action_id": None,
+                    "route_prefix": route or "/m/%s" % menu_id,
+                }
+                node["availability_status"] = "ok"
+                node["reason_code"] = "DIRECTORY_ONLY"
+            return node
+
         def build_missing_menu_node(menu, policy=None, seen: set[int] | None = None) -> dict | None:
             menu = menu.exists()
             if not menu:
@@ -824,7 +891,7 @@ class UiMenuConfigPolicy(models.Model):
                 node["model"] = action_meta["model"]
             if action_meta.get("view_modes"):
                 node["view_modes"] = action_meta["view_modes"]
-            return node
+            return complete_overlay_navigation_contract(node, action_meta)
 
         def remove_node(nodes: list[dict], menu_id: int, source_menu=None, source_label: str = "") -> tuple[list[dict], dict | None]:
             removed = None

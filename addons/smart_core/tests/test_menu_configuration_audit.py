@@ -501,6 +501,30 @@ class TestMenuConfigurationAudit(unittest.TestCase):
     def setUp(self):
         self.module = _load_handler()
 
+    def assertOverlayDirectoryNavigationContract(self, node):
+        self.assertEqual(node["target_type"], "directory")
+        self.assertEqual(node["delivery_mode"], "none")
+        self.assertIsNone(node["scene_key"])
+        self.assertIsNone(node["native_action_id"])
+        self.assertIsNone(node["native_model"])
+        self.assertIsNone(node["native_view_mode"])
+        self.assertEqual(node["confidence"], "medium")
+        self.assertFalse(node["compatibility_used"])
+        self.assertFalse(node["is_clickable"])
+
+    def assertOverlayActionNavigationContract(self, node, *, action_id, model, view_mode="tree,form"):
+        self.assertEqual(node["target_type"], "action")
+        self.assertEqual(node["delivery_mode"], "custom_action")
+        self.assertIsNone(node["scene_key"])
+        self.assertEqual(node["native_action_id"], action_id)
+        self.assertEqual(node["native_model"], model)
+        self.assertEqual(node["native_view_mode"], view_mode)
+        self.assertEqual(node["confidence"], "medium")
+        self.assertTrue(node["compatibility_used"])
+        self.assertTrue(node["is_clickable"])
+        self.assertEqual(node["target"]["action_id"], action_id)
+        self.assertEqual(node["entry_target"]["type"], "compatibility")
+
     def test_menu_config_protected_node_exclusions_are_extension_registered(self):
         module = _load_policy_model()
 
@@ -1527,6 +1551,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(office_node["name"], "综合办公")
         self.assertEqual(office_node["parent_id"], 291)
         self.assertEqual(office_node["sequence"], 70)
+        self.assertOverlayDirectoryNavigationContract(office_node)
         self.assertEqual(stats["moved_count"], 1)
 
     def test_runtime_overlay_moves_node_when_real_menu_id_is_in_meta(self):
@@ -2047,6 +2072,19 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         settings_node = next(child for child in root_node["children"] if child["menu_id"] == 297)
         self.assertEqual(settings_node["name"], "系统设置")
         self.assertEqual([child["menu_id"] for child in settings_node["children"]], [827, 646])
+        self.assertOverlayDirectoryNavigationContract(settings_node)
+        workbench_node = next(child for child in settings_node["children"] if child["menu_id"] == 827)
+        menu_config_node = next(child for child in settings_node["children"] if child["menu_id"] == 646)
+        self.assertOverlayActionNavigationContract(
+            workbench_node,
+            action_id=1009,
+            model="sc.business.config.workbench",
+        )
+        self.assertOverlayActionNavigationContract(
+            menu_config_node,
+            action_id=1014,
+            model="ui.menu.config.policy",
+        )
         self.assertEqual(stats["hidden_count"], 0)
         self.assertTrue(stats["config_only"])
 
