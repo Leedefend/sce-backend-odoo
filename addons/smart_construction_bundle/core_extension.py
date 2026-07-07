@@ -29,6 +29,27 @@ def _build_bundle_product_fact() -> dict:
     }
 
 
+def smart_core_resolve_startup_delivery_identity(env, params=None):
+    params = params if isinstance(params, dict) else {}
+    bundle = str((params.get("sc.bundle") or (env.context or {}).get("sc.bundle") or "")).strip().lower()
+    if bundle not in {"", "construction"}:
+        return None
+    profile = product_profile()
+    product_key = str(profile.get("product_key") or "construction.standard").strip() or "construction.standard"
+    if "." in product_key:
+        base_product_key, edition_key = product_key.split(".", 1)
+    else:
+        base_product_key, edition_key = "construction", "standard"
+    return {
+        "product_key": product_key,
+        "base_product_key": base_product_key or "construction",
+        "edition_key": edition_key or "standard",
+        "source": "smart_construction_bundle",
+        "projection_only": True,
+        "no_business_fact_authority": True,
+    }
+
+
 def get_system_init_fact_contributions(env, user, context=None):
     context = context if isinstance(context, dict) else {}
     bundle = str((context.get("sc.bundle") or (env.context or {}).get("sc.bundle") or "")).strip().lower()
