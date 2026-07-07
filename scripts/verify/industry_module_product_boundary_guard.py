@@ -767,6 +767,63 @@ def verify_core_runtime_demo_residual_allowlist() -> list[str]:
     return errors
 
 
+def verify_project_execution_readiness_precheck_boundary() -> list[str]:
+    module_root = ADDONS / "smart_construction_core"
+    allowed_fragments_by_path = {
+        "services/project_execution_service.py": {
+            '"pilot_precheck": "block.project.execution_readiness_precheck"',
+            "Compatibility key for older orchestration clients; new callers use readiness_precheck.",
+        },
+        "services/project_execution_builders/project_execution_pilot_precheck_builder.py": {
+            "ProjectExecutionPilotPrecheckBuilder = ProjectExecutionReadinessPrecheckBuilder",
+            "Compatibility alias for older imports; the product block is readiness_precheck.",
+        },
+        "services/project_execution_builders/__init__.py": {
+            "from .project_execution_pilot_precheck_builder import ProjectExecutionReadinessPrecheckBuilder",
+        },
+        "services/project_execution_builders/project_execution_next_actions_builder.py": {
+            '"pilot_precheck_state": readiness_state',
+            '"pilot_failed_count": readiness_failed_count',
+            '"pilot_primary_reason_code": readiness_primary_reason_code',
+            '"pilot_primary_message": readiness_primary_message',
+            "Compatibility metrics for older consumers; new payloads use readiness_precheck_*.",
+        },
+        "services/project_execution_consistency_guard.py": {
+            "def pilot_precheck(self, project) -> dict:",
+            "Compatibility method for older callers; use readiness_precheck for new code.",
+        },
+    }
+    errors: list[str] = []
+    for relative, allowed_fragments in allowed_fragments_by_path.items():
+        path = module_root / relative
+        if not path.is_file():
+            errors.append(
+                "smart_construction_core: project execution readiness compatibility "
+                f"anchor file missing: {relative}"
+            )
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for fragment in allowed_fragments:
+            if text.count(fragment) != 1:
+                errors.append(
+                    "smart_construction_core: project execution pilot_precheck compatibility "
+                    f"anchor must appear exactly once in {relative}: {fragment!r}"
+                )
+    for path in module_root.rglob("*.py"):
+        if any(part in {"tests", "migrations", "docs", "tools", "__pycache__"} for part in path.relative_to(module_root).parts):
+            continue
+        relative = path.relative_to(module_root).as_posix()
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for fragment in allowed_fragments_by_path.get(relative, set()):
+            text = text.replace(fragment, "")
+        if "pilot_precheck" in text or "ProjectExecutionPilotPrecheck" in text:
+            errors.append(
+                "smart_construction_core: project execution readiness precheck is the product "
+                f"contract; pilot_precheck may only appear in explicit compatibility anchors: {relative}"
+            )
+    return errors
+
+
 def verify_project_showcase_legacy_alias_boundary() -> list[str]:
     path = ADDONS / "smart_construction_core" / "models" / "core" / "project_core.py"
     if not path.is_file():
@@ -962,6 +1019,7 @@ def main() -> int:
     errors.extend(verify_scene_registry_engine_fallback_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
+    errors.extend(verify_project_execution_readiness_precheck_boundary())
     errors.extend(verify_project_showcase_legacy_alias_boundary())
     errors.extend(verify_core_extension_legacy_label_boundary())
     errors.extend(verify_seed_showcase_product_fields())

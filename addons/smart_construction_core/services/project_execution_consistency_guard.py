@@ -222,6 +222,7 @@ class ProjectExecutionConsistencyGuard:
         }
 
     def pilot_precheck(self, project) -> dict:
+        """Compatibility method for older callers; use readiness_precheck for new code."""
         return self.readiness_precheck(project)
 
     def reconcile_followup_activity(self, project, *, project_state: str | None = None) -> tuple[bool, str, dict]:

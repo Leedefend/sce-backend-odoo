@@ -27,6 +27,7 @@ class ProjectExecutionService:
     RUNTIME_BLOCK_MAP = {
         "execution_tasks": "block.project.execution_tasks",
         "readiness_precheck": "block.project.execution_readiness_precheck",
+        # Compatibility key for older orchestration clients; new callers use readiness_precheck.
         "pilot_precheck": "block.project.execution_readiness_precheck",
         "next_actions": "block.project.execution_next_actions",
     }

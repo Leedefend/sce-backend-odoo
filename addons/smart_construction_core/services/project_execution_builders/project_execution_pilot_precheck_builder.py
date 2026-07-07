@@ -44,4 +44,5 @@ class ProjectExecutionReadinessPrecheckBuilder(BaseProjectBlockBuilder):
         return self._envelope(state="ready", visibility=visibility, data=data)
 
 
+# Compatibility alias for older imports; the product block is readiness_precheck.
 ProjectExecutionPilotPrecheckBuilder = ProjectExecutionReadinessPrecheckBuilder

@@ -207,6 +207,7 @@ class ProjectExecutionNextActionsBuilder(BaseProjectBlockBuilder):
                     "readiness_failed_count": readiness_failed_count,
                     "readiness_primary_reason_code": readiness_primary_reason_code,
                     "readiness_primary_message": readiness_primary_message,
+                    # Compatibility metrics for older consumers; new payloads use readiness_precheck_*.
                     "pilot_precheck_state": readiness_state,
                     "pilot_failed_count": readiness_failed_count,
                     "pilot_primary_reason_code": readiness_primary_reason_code,
