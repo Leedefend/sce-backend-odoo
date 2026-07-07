@@ -21,6 +21,29 @@ BASELINE_FILE = "formal_business_product_menu_policy_v1.json"
 PRODUCT_KEYS = ("construction.standard", "construction.preview")
 OUTPUT_JSON_NAME = "formal_product_menu_policy_restore_v1.json"
 ACTIVATED_MENU_XMLIDS: list[str] = []
+FORMAL_MASTER_DATA_MENU_CONFIG = (
+    {
+        "xmlid": "smart_construction_core.menu_sc_master_data_center",
+        "custom_label": "基础资料",
+        "sequence_override": 10,
+        "target_parent_xmlid": "",
+        "note": "正式产品菜单分组：基础资料。",
+    },
+    {
+        "xmlid": "smart_construction_core.menu_sc_customer_partner",
+        "custom_label": "客户",
+        "sequence_override": 1,
+        "target_parent_xmlid": "smart_construction_core.menu_sc_master_data_center",
+        "note": "正式产品菜单：客户主数据。",
+    },
+    {
+        "xmlid": "smart_construction_core.menu_sc_supplier_partner",
+        "custom_label": "供应商",
+        "sequence_override": 2,
+        "target_parent_xmlid": "smart_construction_core.menu_sc_master_data_center",
+        "note": "正式产品菜单：供应商主数据。",
+    },
+)
 
 
 def _text(value) -> str:
@@ -244,12 +267,56 @@ def _sync_platform_release_gate(product_key: str, pages: list[dict]) -> dict:
         return {"status": "FAIL", "reason": "platform_release_db_unavailable", "platform_db": platform_db, "error": str(exc)}
 
 
+def _ensure_formal_master_data_menu_config() -> dict:
+    Policy = env["ui.menu.config.policy"].sudo()  # noqa: F821
+    company = env.ref("base.main_company", raise_if_not_found=False) or env.company  # noqa: F821
+    rows = []
+    for spec in FORMAL_MASTER_DATA_MENU_CONFIG:
+        menu = env.ref(spec["xmlid"], raise_if_not_found=False)  # noqa: F821
+        if not menu:
+            raise RuntimeError("formal menu config xmlid does not resolve: %s" % spec["xmlid"])
+        target_parent = (
+            env.ref(spec["target_parent_xmlid"], raise_if_not_found=False)  # noqa: F821
+            if spec.get("target_parent_xmlid")
+            else False
+        )
+        values = {
+            "company_id": int(company.id),
+            "menu_id": int(menu.id),
+            "target_parent_menu_id": int(target_parent.id) if target_parent else False,
+            "custom_label": spec["custom_label"],
+            "sequence_override": int(spec["sequence_override"]),
+            "visible": True,
+            "active": True,
+            "note": spec["note"],
+        }
+        policy = Policy.search([("company_id", "=", company.id), ("menu_id", "=", menu.id)], limit=1)
+        status = "UPDATED" if policy else "CREATED"
+        if policy:
+            policy.write(values)
+        else:
+            policy = Policy.create(values)
+        rows.append(
+            {
+                "status": status,
+                "policy_id": int(policy.id),
+                "menu_xmlid": spec["xmlid"],
+                "menu_id": int(menu.id),
+                "target_parent_menu_id": int(target_parent.id) if target_parent else 0,
+                "custom_label": spec["custom_label"],
+                "sequence_override": int(spec["sequence_override"]),
+            }
+        )
+    return {"status": "PASS", "rows": rows}
+
+
 def main() -> None:
     baseline = _load_baseline_products()
     Policy = env["sc.product.policy"].sudo()  # noqa: F821
     policy_results = {}
     snapshot_results = {}
     group_counts = {}
+    menu_config_result = _ensure_formal_master_data_menu_config()
     for product_key in PRODUCT_KEYS:
         product = _hydrate_product(baseline[product_key])
         policy = Policy.search([("product_key", "=", product_key)], limit=1)
@@ -295,6 +362,7 @@ def main() -> None:
         "policy_results": policy_results,
         "snapshot_results": snapshot_results,
         "group_counts": group_counts,
+        "menu_config_result": menu_config_result,
         "activated_menu_xmlids": sorted(set(ACTIVATED_MENU_XMLIDS)),
     }
     _write_json(_artifact_root() / OUTPUT_JSON_NAME, result)

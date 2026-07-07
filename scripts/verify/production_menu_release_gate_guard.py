@@ -19,6 +19,22 @@ MIN_RELEASED_POLICY_MENU_COUNT = 1
 FORBIDDEN_RUNTIME_LABEL_TOKENS = ("用户核对菜单",)
 FORBIDDEN_POLICY_PATH_TOKENS = ("用户核对菜单", "旧业务数据核对", "直营项目数据核对")
 BASELINE_FILE = "formal_business_product_menu_policy_v1.json"
+EXPECTED_FORMAL_TOP_GROUPS = (
+    "基础资料",
+    "项目中心",
+    "合同中心",
+    "施工管理",
+    "物资与分包",
+    "财务中心",
+    "人事行政",
+    "资料证照",
+    "基础设置",
+    "税务中心",
+)
+REQUIRED_FORMAL_MENU_XMLIDS = (
+    "smart_construction_core.menu_sc_customer_partner",
+    "smart_construction_core.menu_sc_supplier_partner",
+)
 
 
 def _baseline_candidates() -> list[Path]:
@@ -35,6 +51,24 @@ def _text(value):
 
 def _node_label(node: dict) -> str:
     return _text(node.get("label") or node.get("name") or node.get("title"))
+
+
+def _node_menu_xmlid(node: dict) -> str:
+    direct = _text(
+        node.get("menu_xmlid")
+        or node.get("xmlid")
+        or node.get("menu_key")
+        or node.get("page_key")
+    )
+    if direct:
+        return direct
+    meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    return _text(
+        meta.get("menu_xmlid")
+        or meta.get("xmlid")
+        or meta.get("menu_key")
+        or meta.get("page_key")
+    )
 
 
 def _walk(nodes, path=()):
@@ -206,6 +240,18 @@ def _assert_runtime_gate(product_key: str, released_policy_count: int) -> dict:
         raise AssertionError(f"{product_key} forbidden runtime menu paths: {forbidden_paths[:20]}")
     if not gated_nav:
         raise AssertionError(f"{product_key} gated runtime nav is empty")
+    top_groups = [_node_label(node) for node in gated_nav if isinstance(node, dict)]
+    missing_groups = [label for label in EXPECTED_FORMAL_TOP_GROUPS if label not in top_groups]
+    if missing_groups:
+        raise AssertionError(f"{product_key} missing formal top groups: {missing_groups}; actual={top_groups}")
+    leaf_xmlids = {
+        _node_menu_xmlid(node)
+        for _path, node in _walk(gated_nav)
+        if isinstance(node, dict) and not node.get("children")
+    }
+    missing_xmlids = [xmlid for xmlid in REQUIRED_FORMAL_MENU_XMLIDS if xmlid not in leaf_xmlids]
+    if missing_xmlids:
+        raise AssertionError(f"{product_key} missing required formal menu xmlids: {missing_xmlids}")
     return {
         "product_key": product_key,
         "snapshot_id": int(snapshot.id),
@@ -214,6 +260,7 @@ def _assert_runtime_gate(product_key: str, released_policy_count: int) -> dict:
         "gate_page_count": int(gate.get("page_count") or 0),
         "raw_nav_node_count": sum(1 for _path, _node in _walk(raw_nav)),
         "gated_nav_node_count": sum(1 for _path, _node in _walk(gated_nav)),
+        "top_groups": top_groups,
         "gate_meta": gate_meta,
     }
 
