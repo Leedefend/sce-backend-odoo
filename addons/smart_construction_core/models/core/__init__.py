@@ -4,7 +4,7 @@ from . import purchase_extend
 from . import cost_domain
 from . import cost_period
 from ..support import system_default_mixin
-from ..support import budget_compat  # 历史 project.budget.line 模型兼容层，需在主模型前加载
+from ..support import budget_compat  # 历史 project.budget.line 模型门面，需在主模型前加载
 from . import progress_entry
 from . import project_project_financial
 from . import project_budget

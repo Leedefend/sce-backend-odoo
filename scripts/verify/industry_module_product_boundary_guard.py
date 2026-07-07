@@ -920,7 +920,7 @@ def verify_budget_compatibility_layer_boundary() -> list[str]:
     cost_domain_text = cost_domain.read_text(encoding="utf-8", errors="ignore") if cost_domain.is_file() else ""
     readme_text = readme.read_text(encoding="utf-8", errors="ignore") if readme.is_file() else ""
     required_fragments = {
-        "core import": "from ..support import budget_compat  # 历史 project.budget.line 模型兼容层，需在主模型前加载",
+        "core import": "from ..support import budget_compat  # 历史 project.budget.line 模型门面，需在主模型前加载",
         "compat facade wording": "历史模型门面：将 project.budget.line 指向现用 project.budget.boq.line。",
         "compat description": '_description = "项目预算行历史模型门面"',
         "compat name": '_name = "project.budget.line"',
