@@ -364,7 +364,28 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         if not policy:
             return set()
         Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
+        ConfigPolicy = self.env[MENU_CONFIG_POLICY_MODEL].sudo().with_context(active_test=False) if MENU_CONFIG_POLICY_MODEL in self.env else None
+        configured_target_by_menu: dict[int, int] = {}
+        if ConfigPolicy is not None:
+            for row in ConfigPolicy.search([
+                ("company_id", "=", int(self.env.company.id or 0)),
+                ("active", "=", True),
+                ("menu_id", "!=", False),
+                ("target_parent_menu_id", "!=", False),
+            ]):
+                configured_target_by_menu[int(row.menu_id.id)] = int(row.target_parent_menu_id.id)
         scoped_ids: set[int] = set()
+
+        def add_menu_with_parent_chain(menu) -> None:
+            while menu:
+                current_id = _to_int(getattr(menu, "id", 0))
+                if not current_id:
+                    break
+                scoped_ids.add(current_id)
+                if root_menu_id and current_id == root_menu_id:
+                    break
+                menu = getattr(menu, "parent_id", None)
+
         for group in policy.menu_groups or []:
             if not isinstance(group, dict):
                 continue
@@ -385,14 +406,14 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 if not menu_id:
                     continue
                 menu = Menu.browse(menu_id).exists()
-                while menu:
-                    current_id = _to_int(getattr(menu, "id", 0))
-                    if not current_id:
-                        break
-                    scoped_ids.add(current_id)
-                    if root_menu_id and current_id == root_menu_id:
-                        break
-                    menu = getattr(menu, "parent_id", None)
+                target_parent_id = configured_target_by_menu.get(menu_id)
+                if target_parent_id:
+                    if menu:
+                        scoped_ids.add(int(menu.id))
+                    target_parent = Menu.browse(target_parent_id).exists()
+                    add_menu_with_parent_chain(target_parent)
+                else:
+                    add_menu_with_parent_chain(menu)
         if root_menu_id:
             scoped_ids.add(root_menu_id)
         return scoped_ids
