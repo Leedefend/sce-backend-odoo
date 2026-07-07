@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
+
 from odoo import http
 from odoo.http import request
 from odoo.exceptions import UserError, ValidationError, AccessError
@@ -9,6 +11,9 @@ from .api_base import fail, fail_from_exception, ok
 from odoo.addons.smart_construction_core.services.portal_execute_button_service import (
     PortalExecuteButtonService,
 )
+
+
+_logger = logging.getLogger(__name__)
 
 
 class PortalExecuteButtonController(http.Controller):
@@ -73,5 +78,5 @@ def _merge_payload(params):
         if request.jsonrequest:
             payload.update(request.jsonrequest)
     except Exception:
-        pass
+        _logger.debug("Unable to merge portal execute button JSON payload.", exc_info=True)
     return payload

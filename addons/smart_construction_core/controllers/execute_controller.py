@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
+
 from odoo import http
 from odoo.http import request
 
 from odoo.addons.smart_core.handlers.ui_contract import UiContractHandler
 
 from .api_base import fail, fail_from_exception, ok
+
+
+_logger = logging.getLogger(__name__)
 
 
 class ExecuteController(http.Controller):
@@ -39,7 +44,7 @@ def _merge_payload(params):
         if request.jsonrequest:
             payload.update(request.jsonrequest)
     except Exception:
-        pass
+        _logger.debug("Unable to merge execute button JSON payload.", exc_info=True)
     return payload
 
 

@@ -303,6 +303,26 @@ def verify_scene_governance_exception_observability() -> list[str]:
     return errors
 
 
+def verify_core_api_controller_exception_observability() -> list[str]:
+    errors: list[str] = []
+    guarded_paths = (
+        ADDONS / "smart_construction_core" / "controllers" / "frontend_api.py",
+        ADDONS / "smart_construction_core" / "controllers" / "execute_controller.py",
+        ADDONS / "smart_construction_core" / "controllers" / "portal_execute_button_controller.py",
+        ADDONS / "smart_construction_core" / "controllers" / "meta_controller.py",
+    )
+    for path in guarded_paths:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "except Exception:\n        pass" in text:
+            errors.append(
+                "smart_construction_core: core API controllers must log JSON/session "
+                f"fallback exceptions at debug level: {path.relative_to(ROOT).as_posix()}"
+            )
+    return errors
+
+
 def verify_core_docs_product_examples() -> list[str]:
     errors: list[str] = []
     docs_dir = ADDONS / "smart_construction_core" / "docs"
@@ -476,6 +496,7 @@ def main() -> int:
     errors.extend(verify_portal_controller_exception_observability())
     errors.extend(verify_app_entry_exception_observability())
     errors.extend(verify_scene_governance_exception_observability())
+    errors.extend(verify_core_api_controller_exception_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_core_extension_legacy_label_boundary())

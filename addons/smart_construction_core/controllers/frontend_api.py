@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import SUPERUSER_ID, api, http
 from odoo.http import request
 from odoo.modules.registry import Registry
@@ -12,6 +14,8 @@ from odoo.addons.smart_core.core.exceptions import (
     DEFAULT_CONTRACT_VERSION,
     build_error_envelope,
 )
+
+_logger = logging.getLogger(__name__)
 
 # ------- 工具函数 -------
 
@@ -30,7 +34,7 @@ def _get_payload(kwargs: dict) -> dict:
         if isinstance(data2, dict):
             return data2
     except Exception:
-        pass
+        _logger.debug("Unable to parse frontend API JSON payload.", exc_info=True)
     return {}
 
 def _pick_db(payload: dict, kwargs: dict) -> str | None:
@@ -52,7 +56,7 @@ def _pick_db(payload: dict, kwargs: dict) -> str | None:
         if len(dbs) == 1:
             return dbs[0]
     except Exception:
-        pass
+        _logger.debug("Unable to list databases for frontend API fallback.", exc_info=True)
     return None
 
 def _meta(trace_id: str) -> dict:

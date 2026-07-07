@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
+
 from odoo import http
 from odoo.http import request
 
 from .api_base import fail, fail_from_exception, ok
+
+
+_logger = logging.getLogger(__name__)
 
 
 class MetaController(http.Controller):
@@ -92,5 +97,5 @@ def _merge_payload(params):
         if request.jsonrequest:
             payload.update(request.jsonrequest)
     except Exception:
-        pass
+        _logger.debug("Unable to merge meta controller JSON payload.", exc_info=True)
     return payload
