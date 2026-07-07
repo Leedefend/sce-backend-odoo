@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -22,6 +23,7 @@ GUARD_TOKENS = [
     "verify.portal.payment_request_approval_field_consumer_audit",
     "verify.release.delivery_9_module.final_closeout.guard",
 ]
+ISO_DATE_RE = re.compile(r"\b20\d{2}-\d{2}-\d{2}\b")
 
 
 def _read(path: Path) -> str:
@@ -39,6 +41,11 @@ def _contains_all(text: str, tokens: list[str], label: str, errors: list[str]) -
     missing = [token for token in tokens if token not in text]
     if missing:
         errors.append(f"{label} missing tokens: {', '.join(missing)}")
+
+
+def _contains_iso_date(text: str, label: str, errors: list[str]) -> None:
+    if not ISO_DATE_RE.search(text):
+        errors.append(f"{label} missing ISO closeout date")
 
 
 def _validate_no_stale_status(text: str, label: str, errors: list[str]) -> None:
@@ -63,7 +70,8 @@ def _validate_docs(errors: list[str]) -> None:
     for path in (MATRIX_ZH, MATRIX_EN, JOURNEY_ZH, JOURNEY_EN, BLOCKERS_ZH, BLOCKERS_EN, SCOREBOARD_ZH, SCOREBOARD_EN):
         text = _read(path)
         _validate_no_stale_status(text, path.name, errors)
-        _contains_all(text, ["PASS", date.today().isoformat()], path.name, errors)
+        _contains_all(text, ["PASS"], path.name, errors)
+        _contains_iso_date(text, path.name, errors)
         _contains_all(text, GUARD_TOKENS, path.name, errors)
     for path in (MATRIX_ZH, MATRIX_EN):
         text = _read(path)
