@@ -227,6 +227,6 @@ smart_construction_demo|uninstalled|
 
 | 事项 | 负责人 | 截止时间 | 状态 |
 | --- | --- | --- | --- |
-| 后续生产发布优先按生产升级标准构建正式 release package | `TBD` | `TBD` | `open` |
-| 生产附件剩余在线源不可取文件继续按运维专项跟踪 | `TBD` | `TBD` | `open` |
-| 下一轮迭代从 `main@c802c81ab` 和本部署记录出发 | `TBD` | `TBD` | `open` |
+| 后续生产发布优先按生产升级标准构建正式 release package | `Ops` | `2026-07-08` | `closed: production upgrade standard is now the required path` |
+| 生产附件剩余在线源不可取文件继续按运维专项跟踪 | `Ops` | `post-release operations` | `tracked: legacy attachment residual专项` |
+| 下一轮迭代从 `main@c802c81ab` 和本部署记录出发 | `Ops` | `2026-07-07` | `closed: superseded by main_full_alignment_20260707` |

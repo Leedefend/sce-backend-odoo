@@ -257,6 +257,6 @@ ODOO_JOBS_WRITABLE=1
 
 | 事项 | 负责人 | 截止时间 | 状态 |
 | --- | --- | --- | --- |
-| 将 121 条缺失引用对应的 120 个唯一缺失路径（`BASE_SYSTEM_FILE=114`，`T_BILL_FILE=7`）作为运维专项继续补齐 | `TBD` | `TBD` | `open` |
-| 下一轮迭代从当前 `main` 和本部署记录出发建立候选发布范围 | `TBD` | `TBD` | `open` |
-| 后续生产发布恢复 prod-sim 优先回放要求 | `TBD` | `TBD` | `open` |
+| 将 121 条缺失引用对应的 120 个唯一缺失路径（`BASE_SYSTEM_FILE=114`，`T_BILL_FILE=7`）作为运维专项继续补齐 | `Ops` | `post-release operations` | `tracked: legacy attachment residual专项` |
+| 下一轮迭代从当前 `main` 和本部署记录出发建立候选发布范围 | `Ops` | `2026-07-07` | `closed: superseded by main_full_alignment_20260707` |
+| 后续生产发布恢复 prod-sim 优先回放要求 | `Ops` | `2026-07-08` | `closed: enforced by production release flow and v2.0.0 evidence schema guard` |

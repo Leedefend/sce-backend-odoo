@@ -180,5 +180,5 @@ smart_construction_demo|uninstalled|
 
 | 事项 | 负责人 | 截止时间 | 状态 |
 | --- | --- | --- | --- |
-| 下一次迭代从当前生产基线建立候选发布范围 | `TBD` | `TBD` | `open` |
-| 将本次规范和部署记录纳入下一次 release evidence | `TBD` | `TBD` | `open` |
+| 下一次迭代从当前生产基线建立候选发布范围 | `Ops` | `2026-07-07` | `closed: superseded by main_full_alignment_20260707` |
+| 将本次规范和部署记录纳入下一次 release evidence | `Ops` | `2026-07-08` | `closed: covered by v2.0.0 evidence manifest and production release standards` |
