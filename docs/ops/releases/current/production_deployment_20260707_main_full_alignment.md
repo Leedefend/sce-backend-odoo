@@ -229,3 +229,62 @@ smart_construction_demo|uninstalled|
 | 后续生产发布以 `git fetch && git checkout "$APPROVED_MAIN_COMMIT"` 或 release tag 为标准入口 | `TBD` | `TBD` | `open` |
 | 清理旧生产目录 `/opt/sce/production/sce-backend-odoo.pre_main_align_20260707T1712` 前至少保留一个发布观察周期 | `TBD` | `TBD` | `open` |
 | `.env.prod` 后续从仓库跟踪文件迁出或改为模板化配置，避免配置例外长期存在 | `TBD` | `TBD` | `open` |
+
+## 11. 附件 Custody Evidence 补充部署
+
+2026-07-07 19:15 +0800，生产从 `origin/main` 快进到
+`46d434177d9c96e335777723fd79f6da435a34e5`，部署范围仅包含附件在线源 custody
+evidence 生成器、附件 job audit 默认证据目录、生产发布流程文档和守卫更新；不涉及 Odoo
+模块代码升级，不需要 `mod.upgrade`。
+
+生产对齐状态：
+
+```text
+HEAD=origin/main=46d434177d9c96e335777723fd79f6da435a34e5
+git status --short: clean
+production_git_authority_guard: PASS
+production_release_flow_guard: PASS
+```
+
+新增标准链路：
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.legacy_online_attachment.custody.evidence.prod
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.legacy_online_attachment.mirror.job.audit.prod
+```
+
+在线源附件验收结果：
+
+```text
+verify.legacy_online_attachment.custody.evidence.prod PASS
+file_index_rows=69352
+files_local_ok=69352
+files_local_missing=0
+zero_size_local_file=0
+output=/mnt/artifacts/backend/legacy-online-mirror-jobs/custody_evidence_20260707T111524Z/sc_legacy_file_index_online_custody_evidence.json
+
+verify.legacy_online_attachment.mirror.job.audit.prod PASS
+strict=true
+mirror_result_files=1
+job_failure_count=0
+missing_files=0
+json_output=/mnt/artifacts/backend/legacy_online_attachment_mirror_job_audit.json
+```
+
+全量旧附件索引残差仍单独成立，不能与在线源附件闭环混同：
+
+```text
+file_index_rows=243713
+local_file_ok=243592
+missing_local_file=121
+missing_by_source:
+  BASE_SYSTEM_FILE=114
+  T_BILL_FILE=7
+```
+
+补充结论：
+
+```text
+生产在线源附件（online_old_scbs / online_old_scbsly）已经完成本地 custody evidence 和严格 job audit 闭环。
+生产全量旧附件索引仍有 121 条本地文件缺失，应继续作为旧源残差专项处理。
+```
