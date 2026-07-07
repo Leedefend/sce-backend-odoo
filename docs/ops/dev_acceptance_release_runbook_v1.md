@@ -83,6 +83,8 @@ filestore.
    product path sample for customer, supplier, project ledger, general contract,
    construction diary, inbound, payment request, project capital overview,
    payroll, company archive, and input invoice entries.
+   `ACCEPTANCE_NAV_REQUIRED_ACTIONS` must pin the same sample paths to their
+   locked runtime action ids.
    The evidence artifact must remain `artifacts/backend/dev_acceptance_release_probe.json`,
    the frontend output must remain `./frontend/apps/web/dist-dev`,
    `VITE_PLATFORM_ADMIN_DB` must remain `sc_platform_core`, and Vite build or
@@ -100,8 +102,9 @@ filestore.
 - `/api/v1/intent?db=sc_demo` returns `204` for `OPTIONS` and `405` for `GET`.
 - Daily development publication must authenticate as `wutao` and run
   `system.init`; the resulting navigation must contain product action menus in
-  the locked daily range, include the locked required path sample, and must not
-  expose old acceptance menu labels.
+  the locked daily range, include the locked required path sample, point those
+  paths to the locked runtime action ids, and must not expose old acceptance
+  menu labels.
   Generic dev acceptance may still omit credentials only when it is not being
   used as a daily release gate.
 

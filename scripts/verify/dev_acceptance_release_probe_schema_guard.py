@@ -29,6 +29,22 @@ def _string_list(value: object) -> bool:
     return isinstance(value, list) and all(isinstance(item, str) for item in value)
 
 
+def _nav_action_mismatch_list(value: object) -> bool:
+    if not isinstance(value, list):
+        return False
+    for item in value:
+        if not isinstance(item, dict):
+            return False
+        if not isinstance(item.get("path"), str) or not item.get("path"):
+            return False
+        if not isinstance(item.get("expected_action_id"), int):
+            return False
+        actual = item.get("actual_action_id")
+        if actual is not None and not isinstance(actual, int):
+            return False
+    return True
+
+
 def _check_status_block(prefix: str, value: object, errors: list[str]) -> dict:
     if not isinstance(value, dict):
         errors.append(f"{prefix} must be object")
@@ -131,6 +147,10 @@ def _check_login(value: object, errors: list[str]) -> str:
     for key in ("nav_forbidden_label_hits", "nav_required_path_misses"):
         if checks.get(key) is not None and not _string_list(checks.get(key)):
             errors.append(f"login.checks.{key} must be string list when present")
+    if checks.get("nav_required_action_mismatches") is not None and not _nav_action_mismatch_list(
+        checks.get("nav_required_action_mismatches")
+    ):
+        errors.append("login.checks.nav_required_action_mismatches must be action mismatch list when present")
     if checks.get("nav_paths_sample") is not None and not _string_list(checks.get("nav_paths_sample")):
         errors.append("login.checks.nav_paths_sample must be string list when present")
     if login.get("status") == "PASS":
@@ -150,6 +170,8 @@ def _check_login(value: object, errors: list[str]) -> str:
             errors.append("login.checks.nav_forbidden_label_hits must be empty when login passes")
         if checks.get("nav_required_path_misses"):
             errors.append("login.checks.nav_required_path_misses must be empty when login passes")
+        if checks.get("nav_required_action_mismatches"):
+            errors.append("login.checks.nav_required_action_mismatches must be empty when login passes")
     return str(login.get("status") or "FAIL")
 
 

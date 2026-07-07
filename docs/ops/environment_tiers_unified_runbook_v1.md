@@ -55,6 +55,8 @@ it also requires `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081` and
 sample covering customer, supplier, project ledger, general contract,
 construction diary, inbound, payment request, project capital overview, payroll,
 company archive, and input invoice entries.
+`ACCEPTANCE_NAV_REQUIRED_ACTIONS` must pin that same sample to locked runtime
+action ids.
 `ACCEPTANCE_PROBE_OUTPUT=artifacts/backend/dev_acceptance_release_probe.json`.
 The frontend build output must stay `FRONTEND_DIST_DIR=./frontend/apps/web/dist-dev`,
 and `VITE_ODOO_DB`, `VITE_APP_ENV`, `VITE_BUILD_MODE`, and

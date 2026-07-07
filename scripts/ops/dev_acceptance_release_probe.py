@@ -226,6 +226,23 @@ def _split_csv(value: str) -> list[str]:
     return [item.strip() for item in str(value or "").split(",") if item.strip()]
 
 
+def _parse_required_actions(value: str) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for item in str(value or "").split("|"):
+        raw = item.strip()
+        if not raw:
+            continue
+        if "=>" not in raw:
+            continue
+        path, action_id = raw.rsplit("=>", 1)
+        path = path.strip()
+        try:
+            out[path] = int(action_id.strip())
+        except ValueError:
+            continue
+    return out
+
+
 def probe_login(
     base_url: str,
     db_name: str,
@@ -235,6 +252,7 @@ def probe_login(
     nav_max_actions: int | None = None,
     nav_forbidden_labels: list[str] | None = None,
     nav_required_paths: list[str] | None = None,
+    nav_required_actions: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     if not login or not password:
         return {"enabled": False}
@@ -298,18 +316,30 @@ def probe_login(
         nav_rows = _walk_nav(nav)
         forbidden_labels = nav_forbidden_labels or []
         required_paths = nav_required_paths or []
+        required_actions = nav_required_actions or {}
         nav_path_set = {row["path"] for row in nav_rows}
+        nav_action_by_path = {row["path"]: row.get("action_id") for row in nav_rows}
         forbidden_hits = [
             row["path"]
             for row in nav_rows
             if any(token in row["path"] for token in forbidden_labels)
         ]
         required_path_misses = [path for path in required_paths if path not in nav_path_set]
+        required_action_mismatches = [
+            {
+                "path": path,
+                "expected_action_id": expected,
+                "actual_action_id": nav_action_by_path.get(path),
+            }
+            for path, expected in required_actions.items()
+            if nav_action_by_path.get(path) != expected
+        ]
         result["checks"]["nav_node_count"] = len(nav_rows)
         result["checks"]["nav_action_count"] = sum(1 for row in nav_rows if row.get("action_id"))
         result["checks"]["nav_leaf_count"] = sum(1 for row in nav_rows if row.get("child_count") == 0)
         result["checks"]["nav_forbidden_label_hits"] = forbidden_hits[:50]
         result["checks"]["nav_required_path_misses"] = required_path_misses
+        result["checks"]["nav_required_action_mismatches"] = required_action_mismatches
         result["checks"]["nav_paths_sample"] = [row["path"] for row in nav_rows[:80]]
         if not result["checks"]["role_code"]:
             errors.append("role_code_missing")
@@ -325,6 +355,8 @@ def probe_login(
             errors.append("nav_forbidden_label_hits")
         if required_path_misses:
             errors.append("nav_required_path_misses")
+        if required_action_mismatches:
+            errors.append("nav_required_action_mismatches")
     if init_status != 200 or not result["checks"]["system_init_ok"]:
         errors.append("system_init_failed")
 
@@ -347,6 +379,7 @@ def main() -> int:
     parser.add_argument("--nav-max-actions", default=os.getenv("ACCEPTANCE_NAV_MAX_ACTIONS", ""))
     parser.add_argument("--nav-forbidden-labels", default=os.getenv("ACCEPTANCE_NAV_FORBIDDEN_LABELS", ""))
     parser.add_argument("--nav-required-paths", default=os.getenv("ACCEPTANCE_NAV_REQUIRED_PATHS", ""))
+    parser.add_argument("--nav-required-actions", default=os.getenv("ACCEPTANCE_NAV_REQUIRED_ACTIONS", ""))
     parser.add_argument("--output", default=os.getenv("ACCEPTANCE_PROBE_OUTPUT", str(DEFAULT_ARTIFACT)))
     args = parser.parse_args()
 
@@ -367,6 +400,7 @@ def main() -> int:
             nav_max_actions=_int_env(args.nav_max_actions),
             nav_forbidden_labels=_split_csv(args.nav_forbidden_labels),
             nav_required_paths=_split_csv(args.nav_required_paths),
+            nav_required_actions=_parse_required_actions(args.nav_required_actions),
         ),
     }
     statuses = [

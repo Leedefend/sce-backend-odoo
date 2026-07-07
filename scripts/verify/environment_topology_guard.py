@@ -31,6 +31,7 @@ REQUIRED_TOKENS = {
         "ACCEPTANCE_NAV_MAX_ACTIONS=70",
         "ACCEPTANCE_NAV_FORBIDDEN_LABELS=用户核对菜单,用户数据验收,用户验收,直营项目系统菜单",
         "ACCEPTANCE_NAV_REQUIRED_PATHS",
+        "ACCEPTANCE_NAV_REQUIRED_ACTIONS",
         "ACCEPTANCE_PROBE_OUTPUT=artifacts/backend/dev_acceptance_release_probe.json",
         "FRONTEND_DIST_DIR=./frontend/apps/web/dist-dev",
         "VITE_BUILD_MODE",
