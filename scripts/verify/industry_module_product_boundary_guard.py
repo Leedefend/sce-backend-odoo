@@ -309,6 +309,7 @@ def verify_historical_verify_script_wording() -> list[str]:
     paths = (
         ROOT / "scripts" / "verify" / "project_legacy_fact_browser_acceptance.js",
         ROOT / "scripts" / "verify" / "model_view_standardization_plan.py",
+        ROOT / "scripts" / "verify" / "product_menu_catalog_runtime_audit.py",
     )
     errors: list[str] = []
     for path in paths:
