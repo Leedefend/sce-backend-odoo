@@ -454,7 +454,7 @@ class ConstructionContract(models.Model):
             amount = 13.0
             xmlid = "smart_construction_seed.tax_13"
 
-        # 优先 XMLID（seed/demo 可提供）
+        # Prefer the seeded XMLID before falling back to a matching tax record.
         tax = self.env.ref(xmlid, raise_if_not_found=False)
         if tax:
             return tax

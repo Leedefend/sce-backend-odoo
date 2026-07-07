@@ -217,6 +217,34 @@ def verify_handler_product_language_boundary() -> list[str]:
     return errors
 
 
+def verify_runtime_comment_product_language_boundary() -> list[str]:
+    errors: list[str] = []
+    forbidden_tokens = ("seed/demo", "demo 可提供", "demo xmlid", "demo XMLID")
+    scan_roots = (
+        ADDONS / "smart_construction_core" / "models",
+        ADDONS / "smart_construction_core" / "services",
+        ADDONS / "smart_construction_core" / "handlers",
+        ADDONS / "smart_construction_scene",
+        ADDONS / "smart_construction_portal",
+        ADDONS / "smart_construction_custom" / "models",
+    )
+    excluded_parts = {"tests", "docs", "migrations", "tools", "__pycache__"}
+    for root in scan_roots:
+        if not root.is_dir():
+            continue
+        for path in root.rglob("*.py"):
+            if any(part in excluded_parts for part in path.relative_to(root).parts):
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            for token in forbidden_tokens:
+                if token in text:
+                    errors.append(
+                        "industry modules: runtime code comments must use product seed/fixture language, "
+                        f"not demo wording {token!r}: {path.relative_to(ROOT).as_posix()}"
+                    )
+    return errors
+
+
 def verify_core_docs_product_examples() -> list[str]:
     errors: list[str] = []
     docs_dir = ADDONS / "smart_construction_core" / "docs"
@@ -386,6 +414,7 @@ def main() -> int:
     errors.extend(verify_static_navigation_product_labels())
     errors.extend(verify_capability_registry_role_boundary())
     errors.extend(verify_handler_product_language_boundary())
+    errors.extend(verify_runtime_comment_product_language_boundary())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_core_extension_legacy_label_boundary())
