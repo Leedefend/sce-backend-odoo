@@ -229,6 +229,10 @@ def verify_runtime_comment_product_language_boundary() -> list[str]:
         "临时实现",
         "占位实现",
         "占位路由",
+        "阶段2架构",
+        "解析器骨架",
+        "行解析器骨架",
+        "导入解析骨架",
     )
     scan_roots = (
         ADDONS / "smart_construction_core" / "models",

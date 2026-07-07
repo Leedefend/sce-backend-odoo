@@ -1425,17 +1425,17 @@ class HierarchyBuilder:
 
     def heal_hierarchy(self, records):
         """
-        Phase-2 扩展点：层级连续性修复接口。
-        当前未启用，后续阶段用于批量调整 level/parent_id/display_order。
+        层级连续性修复扩展点。
+        当前保持导入行为稳定，可用于统一调整 level/parent_id/display_order。
         """
         return records
 
 
 # -------------------------------------------------------------------------
-# 阶段2架构：解析器骨架（行为保持不变）
+# 导入解析适配层（行为保持不变）
 # -------------------------------------------------------------------------
 class RowParser:
-    """行解析器骨架：后续可按清单类别扩展，当前保持现有行为。"""
+    """行解析适配器；可按清单类别扩展并保持默认行为稳定。"""
 
     def __init__(self, wizard):
         self.wizard = wizard
@@ -1447,7 +1447,7 @@ class RowParser:
 
 class BoqParser:
     """
-    Phase-2: 导入解析骨架。
+    导入解析适配层。
     当前仍委托原有 _parse_excel/_build_rows_from_iter，承担结构封装与章节池收集，
     不改变导入业务行为。
     """
