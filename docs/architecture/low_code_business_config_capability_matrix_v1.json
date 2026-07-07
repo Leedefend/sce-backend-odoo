@@ -13,8 +13,8 @@
       "preview": "business_config_surface + navigation browser acceptance",
       "publish_versioning": "ui.business.config.contract version + ui.menu.config.policy compatibility mirror",
       "rollback": "ui.menu_config.rollback",
-      "audit": "ui.menu_config.audit",
-      "acceptance": ["verify.business_config.coverage", "verify.business_config.browser_acceptance", "verify.business_config.low_code_acceptance", "verify.business_config.low_code_menu_navigation_alignment"],
+      "audit": "ui.menu_config.audit + menu_config_navigation_boundary unit guard",
+      "acceptance": ["verify.business_config.coverage", "verify.business_config.browser_acceptance", "verify.business_config.low_code_acceptance", "verify.business_config.low_code_menu_navigation_alignment", "verify.business_config.unit"],
       "status": "ready",
       "release_blockers": []
     },

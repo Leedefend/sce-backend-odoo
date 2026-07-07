@@ -160,6 +160,17 @@ def build_report() -> dict:
             "category": "menu_contract_source_status",
             "message": "menu orchestration contracts must stamp tenant_runtime source_status",
         })
+    for token in (
+        "requested_set = {int(menu_id) for menu_id in requested_menu_ids",
+        "if requested_set:",
+        '("menu_id", "in", sorted(candidate_ids))',
+    ):
+        if token not in menu_handler_text:
+            errors.append({
+                "category": "menu_config_navigation_boundary",
+                "message": "menu config panel must be constrained by current product navigation menu_ids before falling back to root subtree",
+                "token": token,
+            })
 
     form_handler_text = _read(ROOT / "addons" / "smart_core" / "handlers" / "form_field_configuration.py")
     if "LOWCODE_SOURCE_STATUS_TENANT_RUNTIME" not in form_handler_text:

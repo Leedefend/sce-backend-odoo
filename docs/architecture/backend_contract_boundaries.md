@@ -41,6 +41,7 @@
 
 - 低代码表单字段顺序、显隐、分组必须写入正式 view orchestration，并带 `view_orchestration.context.source = smart_core.lowcode.*`。
 - 低代码菜单可见性、排序、父级调整必须写入 menu orchestration，并带 `menu_orchestration.source = smart_core.lowcode.menu_config`。
+- 菜单配置面板的可配置范围必须以当前产品导航 `menu_ids` 为边界；`ir.ui.menu` 业务根全量子树只能作为无导航上下文时的兼容回退，不能作为用户可配置菜单口径。
 - 低代码审批启用、审批方式、审批步骤编排属于行业审批运行时策略，写入 `sc.approval.policy` / `sc.approval.step`，不写入表单或菜单契约；`source_authority` 必须声明 `lowcode_boundary = approval_policy`、`policy_source = sc.approval.policy`。
 - 低代码“新增菜单”只创建运行时菜单入口和菜单配置策略，满足管理员即时调整；长期交付菜单必须沉淀到 L2 行业模块或 L3 用户模块。
 - 低代码写入意图的 `source_authority` 必须声明 `lowcode_boundary` 和 `contract_source`，让审计能从响应元信息直接识别边界。
@@ -87,6 +88,7 @@
 - 新增扫描类别必须新增 `BOUNDARY_RULES` 规则项，不能在 `build_report()` 中复制独立扫描分支。
 - 表单配置写入意图的 `source_authority` 必须带 `lowcode_boundary = form_config` 和 `contract_source = smart_core.lowcode.form_field_policy`。
 - 菜单配置写入意图的 `source_authority` 必须带 `lowcode_boundary = menu_config` 和 `contract_source = smart_core.lowcode.menu_config`。
+- 菜单配置读取意图必须受当前产品导航边界约束；不能把历史验收、迁移核对、系统配置或平台治理菜单从 root subtree 重新暴露为“可配置菜单”。
 - 审批配置写入意图的 `source_authority` 必须带 `lowcode_boundary = approval_policy` 和 `policy_source = sc.approval.policy`。
 - 用户模块偏好 source 优先于契约名称分类，防止 `view_orchestration:*` 用户偏好被误判为 L4 低代码配置。
 
