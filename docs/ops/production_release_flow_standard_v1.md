@@ -192,6 +192,7 @@ BASE_URL=http://127.0.0.1:8072 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_
 BASE_URL=http://127.0.0.1:8072 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 make smoke.role_matrix
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod make verify.non_demo_data_contamination
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.business_system.usability_readiness.prod
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make history.attachment.custody.probe.prod
 ```
 
 如果本次发布范围包含历史附件镜像或补齐任务，还必须执行对应的生产只读附件验收：
@@ -199,6 +200,14 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.b
 ```bash
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.legacy_attachment.mirror.completeness.audit.prod
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.legacy_online_attachment.mirror.job.audit.prod
+```
+
+如果附件 custody 探针报告 `legacy_url_attachment_boundary_marker_gap`，必须先保存受影响
+`ir_attachment` 行快照，再通过受控写入入口补齐 marker，并复跑只读探针：
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 make legacy_attachment.custody_marker.backfill.prod
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make history.attachment.custody.probe.prod
 ```
 
 必须额外确认：

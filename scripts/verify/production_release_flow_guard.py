@@ -32,8 +32,10 @@ FLOW_TOKENS = (
     "docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md",
     "make verify.production_deployment.record.guard",
     "make verify.business_system.usability_readiness.prod",
+    "make history.attachment.custody.probe.prod",
     "make verify.legacy_attachment.mirror.completeness.audit.prod",
     "make verify.legacy_online_attachment.mirror.job.audit.prod",
+    "make legacy_attachment.custody_marker.backfill.prod",
     "生产与日常开发服务器完全一致",
     "发布结论区分了“发布包对齐”和“全量对齐”",
 )
@@ -55,6 +57,8 @@ MAKEFILE_TOKENS = (
     ".PHONY: verify.business_capability.productization_p1 verify.business_system.usability_readiness verify.business_system.usability_readiness.prod",
     "verify.business_system.usability_readiness.prod: guard.prod.readonly check-compose-project check-compose-env",
     "BUSINESS_SYSTEM_READINESS_PROD_READONLY=1 BUSINESS_SYSTEM_READINESS_INCLUDE_P1=0",
+    "history.attachment.custody.probe.prod: guard.prod.readonly check-compose-project check-compose-env",
+    "legacy_attachment.custody_marker.backfill.prod: guard.prod.danger check-compose-project check-compose-env",
     "verify.legacy_attachment.mirror.completeness.audit.prod: guard.prod.readonly check-compose-project check-compose-env",
     "verify.legacy_online_attachment.mirror.job.audit.prod: guard.prod.readonly check-compose-project check-compose-env",
     "python3 -m py_compile scripts/verify/production_deployment_record_guard.py",
@@ -64,6 +68,8 @@ MAKEFILE_TOKENS = (
 VERIFY_README_TOKENS = (
     "`make verify.production_deployment.record.guard`",
     "`make verify.business_system.usability_readiness.prod`",
+    "`make history.attachment.custody.probe.prod`",
+    "`make legacy_attachment.custody_marker.backfill.prod`",
     "Verifies concrete production deployment records",
     "explicit non-full-alignment wording",
     "production read-only business readiness gate",
@@ -71,12 +77,17 @@ VERIFY_README_TOKENS = (
 
 DEPLOY_RUNBOOK_TOKENS = (
     "make verify.business_system.usability_readiness.prod",
+    "make history.attachment.custody.probe.prod",
+    "make legacy_attachment.custody_marker.backfill.prod",
     "PROD_READONLY_VERIFY=1",
+    "PROD_DANGER=1",
     "只运行历史业务可用性 probe 与 formal backfill audit",
 )
 
 PROD_POLICY_TOKENS = (
     "make verify.business_system.usability_readiness.prod",
+    "make history.attachment.custody.probe.prod",
+    "make legacy_attachment.custody_marker.backfill.prod",
     "make verify.legacy_attachment.mirror.completeness.audit.prod",
     "make verify.legacy_online_attachment.mirror.job.audit.prod",
     "PROD_READONLY_VERIFY=1",

@@ -217,6 +217,7 @@ REQUIRED_SECTION_LISTS = (
             "Record deployment acceptance separately if production deployment follows.",
             "If production deployment follows, create a concrete deployment record from `docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md` and run `make verify.production_deployment.record.guard`.",
             "If production deployment follows, run `make verify.production_release.flow.guard` to verify the production release-flow control plane remains wired.",
+            "If production deployment includes migrated or legacy attachments, run `make history.attachment.custody.probe.prod`; if it reports a marker gap, snapshot affected `ir_attachment` rows before `make legacy_attachment.custody_marker.backfill.prod`.",
         ),
     ),
     (

@@ -319,6 +319,24 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
 
 该入口只运行历史业务可用性 probe 与 formal backfill audit，不执行 P1 聚合或任何写入型修复。
 
+生产附件 custody 验收必须使用只读入口：
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
+  make history.attachment.custody.probe.prod
+```
+
+如果该探针报告 `legacy_url_attachment_boundary_marker_gap`，必须先导出受影响
+`ir_attachment` 行快照，再通过受控入口补齐 marker：
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
+  make legacy_attachment.custody_marker.backfill.prod
+```
+
+补齐后必须复跑 `make history.attachment.custody.probe.prod`，确认决策为
+`history_attachment_custody_ready`。
+
 ### 6.4 断点续跑
 
 如果重建中断，禁止重新发明服务器脚本。保留同一个 `RUN_ID`，用失败 step 续跑：

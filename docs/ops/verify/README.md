@@ -259,6 +259,8 @@
   - Verifies the production release-flow control plane is wired together across the flow standard, deployment record template, Makefile target, verify catalog, release checklist, release indexes, deployment runbook, and deployment record guard script.
   - Enforces the release-flow document keeps environment responsibilities, alignment definitions, hard rules, package verification, production validation matrix, difference registration, and closure criteria in order.
   - Enforces the production read-only business readiness gate is wired through Makefile, production command policy, deployment runbook, and release-flow validation matrix: `make verify.business_system.usability_readiness.prod`.
+  - Enforces the production read-only attachment custody gate is wired through Makefile, production command policy, deployment runbook, and release-flow validation matrix: `make history.attachment.custody.probe.prod`.
+  - Enforces the production attachment custody marker backfill entry remains explicitly guarded by `PROD_DANGER=1`: `make legacy_attachment.custody_marker.backfill.prod`.
   - Enforces the production read-only attachment validation targets remain registered for attachment-scope releases.
 - `make verify.scene.product_delivery.readiness.guard`
   - Enforces final product delivery readiness thresholds from `scripts/verify/baselines/scene_product_delivery_readiness_guard.json`.

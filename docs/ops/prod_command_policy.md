@@ -13,6 +13,7 @@ Makefile guards and script-level guards.
 - `make up/down/logs/ps`
 - `make diag.project`
 - `make verify.business_system.usability_readiness.prod` (requires `PROD_READONLY_VERIFY=1`)
+- `make history.attachment.custody.probe.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make verify.legacy_attachment.mirror.completeness.audit.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make verify.legacy_online_attachment.mirror.job.audit.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make verify.baseline` (requires PROD_DANGER=1)
@@ -31,6 +32,7 @@ Makefile guards and script-level guards.
 - `make audit.project.actions`
 - `make prod.upgrade.core`
 - `make history.production.fresh_init`
+- `make legacy_attachment.custody_marker.backfill.prod`
 - `make smoke.business_full`
 - `make smoke.role_matrix`
 
@@ -69,6 +71,20 @@ Read-only production business readiness verification:
 ```bash
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
   make verify.business_system.usability_readiness.prod
+```
+
+Read-only production attachment custody verification:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
+  make history.attachment.custody.probe.prod
+```
+
+Production attachment custody marker backfill:
+
+```bash
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
+  make legacy_attachment.custody_marker.backfill.prod
 ```
 
 Resume a production history initialization from a replay step:
