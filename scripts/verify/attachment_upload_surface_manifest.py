@@ -16,16 +16,17 @@ except Exception:  # pragma: no cover - loaded inside Odoo shell in real runs
 
 
 OUTPUT = Path(
-    os.getenv(
+    os.getenv("LEGACY_ATTACHMENT_UPLOAD_SURFACE_OUTPUT")
+    or os.getenv(
         "ATTACHMENT_UPLOAD_SURFACE_MANIFEST_OUTPUT",
         "/mnt/artifacts/backend/attachment_upload_surface_manifest.json",
     )
 )
-LOGIN = os.getenv("ATTACHMENT_UPLOAD_SURFACE_LOGIN") or os.getenv("E2E_LOGIN") or "wutao"
-SAMPLE_LIMIT = int(os.getenv("ATTACHMENT_UPLOAD_SURFACE_SAMPLE_LIMIT") or "3")
+LOGIN = os.getenv("LEGACY_ATTACHMENT_UPLOAD_SURFACE_LOGIN") or os.getenv("ATTACHMENT_UPLOAD_SURFACE_LOGIN") or os.getenv("E2E_LOGIN") or "wutao"
+SAMPLE_LIMIT = int(os.getenv("LEGACY_ATTACHMENT_UPLOAD_SURFACE_SAMPLE_LIMIT") or os.getenv("ATTACHMENT_UPLOAD_SURFACE_SAMPLE_LIMIT") or "3")
 REQUIRED_MODELS = {
     item.strip()
-    for item in os.getenv("ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS", "").split(",")
+    for item in (os.getenv("LEGACY_ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS") or os.getenv("ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS") or "").split(",")
     if item.strip()
 }
 

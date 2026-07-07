@@ -217,6 +217,7 @@ class ScGeneralContract(models.Model):
             allowed = {
                 "partner_id",
                 "note",
+                "attachment_ids",
                 "active",
                 "write_uid",
                 "write_date",

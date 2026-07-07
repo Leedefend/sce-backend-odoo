@@ -272,7 +272,7 @@ class ScReceiptIncome(models.Model):
                 rec.receipt_flow_label = _("收款收入")
 
     def _history_surface_allowed_write_fields(self):
-        return set()
+        return {"attachment_ids"}
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):

@@ -1313,7 +1313,7 @@ verify.attachment_upload.frontend_browser.matrix.host:
 
 .PHONY: verify.attachment_upload.surface_manifest.prod
 verify.attachment_upload.surface_manifest.prod: guard.prod.readonly check-compose-project check-compose-env
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) ATTACHMENT_UPLOAD_SURFACE_LOGIN="$${ATTACHMENT_UPLOAD_SURFACE_LOGIN:-$(E2E_LOGIN)}" ATTACHMENT_UPLOAD_SURFACE_MANIFEST_OUTPUT="$(ATTACHMENT_UPLOAD_SURFACE_MANIFEST_OUTPUT)" ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS="$(ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/attachment_upload_surface_manifest.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) LEGACY_ATTACHMENT_UPLOAD_SURFACE_LOGIN="$${ATTACHMENT_UPLOAD_SURFACE_LOGIN:-$(E2E_LOGIN)}" LEGACY_ATTACHMENT_UPLOAD_SURFACE_OUTPUT="$(ATTACHMENT_UPLOAD_SURFACE_MANIFEST_OUTPUT)" LEGACY_ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS="$(ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/attachment_upload_surface_manifest.py
 
 .PHONY: verify.legacy_attachment.frontend_browser.sample_manifest.prod
 verify.legacy_attachment.frontend_browser.sample_manifest.prod: guard.prod.readonly check-compose-project check-compose-env

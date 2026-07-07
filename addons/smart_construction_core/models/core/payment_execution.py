@@ -411,7 +411,7 @@ class ScPaymentExecution(models.Model):
         return category.id if category else False
 
     def _history_surface_allowed_write_fields(self):
-        return set()
+        return {"attachment_ids"}
 
     def write(self, vals):
         if (
