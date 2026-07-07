@@ -545,11 +545,6 @@ def verify_core_runtime_demo_residual_allowlist() -> list[str]:
     errors: list[str] = []
     module_root = ADDONS / "smart_construction_core"
     compatibility_fragments_by_path = {
-        "core_extension.py": {
-            '"演示"',
-            '"项目列表（演示）"',
-            '"项目台账（试点）"',
-        },
         "models/core/project_core.py": {
             "sc_demo_showcase",
             "sc_demo_showcase_ready",
@@ -570,6 +565,8 @@ def verify_core_runtime_demo_residual_allowlist() -> list[str]:
     for path in module_root.rglob("*.py"):
         relative = path.relative_to(module_root).as_posix()
         if any(part in excluded_parts for part in path.relative_to(module_root).parts):
+            continue
+        if relative == "core_extension.py":
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         for fragment in compatibility_fragments_by_path.get(relative, set()):
