@@ -39,6 +39,8 @@ REQUIRED_TOKENS = (
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
     "Evidence from `sc_prod_sim` must not be presented as `sc_prod` evidence.",
     "Production deployment evidence is recorded separately after supervised",
+    "`make history.attachment.custody.probe.prod`",
+    "`make legacy_attachment.custody_marker.backfill.prod`",
     "Failed evidence is not overwritten without preserving the failure reason",
     "prod-sim acceptance artifact path to be recorded",
     "Schema-only guard runs may use recorded artifact directories to verify evidence",
@@ -151,6 +153,8 @@ REQUIRED_LOCAL_STATUS_NESTED_ITEMS = (
 REQUIRED_EVIDENCE_RULES = (
     "Evidence from `sc_prod_sim` must not be presented as `sc_prod` evidence.",
     "Production deployment evidence is recorded separately after supervised",
+    "If production deployment includes migrated or legacy attachments, production",
+    "If the attachment custody probe reports a marker gap, snapshot affected",
     "Snapshot changes must include the command that produced them.",
     "Failed evidence is not overwritten without preserving the failure reason in an",
 )

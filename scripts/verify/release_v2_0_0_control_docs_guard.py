@@ -149,6 +149,10 @@ VERIFY_README_TOKENS = (
     "`make verify.production_release.flow.guard`",
     "Verifies the production release-flow control plane is wired together",
     "closure criteria in order",
+    "production read-only attachment custody gate",
+    "`make history.attachment.custody.probe.prod`",
+    "production attachment custody marker backfill entry",
+    "`make legacy_attachment.custody_marker.backfill.prod`",
 )
 
 README_STATUS_ITEMS = (

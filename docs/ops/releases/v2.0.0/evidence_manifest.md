@@ -60,6 +60,10 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 - Evidence from `sc_prod_sim` must not be presented as `sc_prod` evidence.
 - Production deployment evidence is recorded separately after supervised
   deployment begins.
+- If production deployment includes migrated or legacy attachments, production
+  evidence must include `make history.attachment.custody.probe.prod`.
+- If the attachment custody probe reports a marker gap, snapshot affected
+  `ir_attachment` rows before `make legacy_attachment.custody_marker.backfill.prod`.
 - Snapshot changes must include the command that produced them.
 - Failed evidence is not overwritten without preserving the failure reason in an
   iteration record.
