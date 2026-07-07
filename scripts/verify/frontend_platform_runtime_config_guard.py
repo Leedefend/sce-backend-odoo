@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "frontend/apps/web/src/config.ts"
 DB_CONTEXT = ROOT / "frontend/apps/web/src/services/dbContext.ts"
 INDEX_HTML = ROOT / "frontend/apps/web/index.html"
+FRONTEND_STATIC_BUILD = ROOT / "scripts/dev/frontend_static_build.sh"
 FRONTEND_FILES = [
     ROOT / "frontend/apps/web/src/stores/session.ts",
     ROOT / "frontend/apps/web/src/views/ActionView.vue",
@@ -26,6 +27,7 @@ def main() -> int:
     errors: list[str] = []
     config_text = _read(CONFIG)
     db_context_text = _read(DB_CONTEXT)
+    static_build_text = _read(FRONTEND_STATIC_BUILD)
     if "const startupRootXmlid = String(import.meta.env.VITE_STARTUP_ROOT_XMLID ?? 'smart_construction_core.menu_sc_root').trim();" not in config_text:
         errors.append("config.ts must expose VITE_STARTUP_ROOT_XMLID with the construction root only as compatibility default")
     if "const localDevPinnedDb = isLocalDevRuntime && !runtimeDb && !localBlockedEnvDb ? 'sc_demo' : '';" not in config_text:
@@ -69,6 +71,18 @@ def main() -> int:
         errors.append("config.ts must expose VITE_APP_TITLE with the construction title only as compatibility default")
     if "appBrand," not in config_text:
         errors.append("config.ts must publish appBrand in runtime config")
+    if "VITE_BUILD_MODE" not in static_build_text:
+        errors.append("frontend_static_build.sh must route Vite mode through VITE_BUILD_MODE")
+    if "prod|production)" not in static_build_text or 'VITE_BUILD_MODE="${VITE_BUILD_MODE:-production}"' not in static_build_text:
+        errors.append("frontend_static_build.sh must map prod/production env to Vite production mode")
+    if "dev|daily|development)" not in static_build_text or 'VITE_BUILD_MODE="${VITE_BUILD_MODE:-development}"' not in static_build_text:
+        errors.append("frontend_static_build.sh must map dev/daily/development env to Vite development mode")
+    if 'exec vite build --mode "${VITE_BUILD_MODE}"' not in static_build_text:
+        errors.append("frontend_static_build.sh must invoke vite build with the resolved VITE_BUILD_MODE")
+    if "grep -Rqs" not in static_build_text or '"sc_prod"' not in static_build_text or "FRONTEND_DIST_ABS" not in static_build_text:
+        errors.append("frontend_static_build.sh must reject sc_prod assets for non-production builds")
+    if "-C frontend/apps/web build" in static_build_text:
+        errors.append("frontend_static_build.sh must not call the frontend package build script without an explicit Vite mode")
     for env_key in (
         "VITE_BRAND_NAME",
         "VITE_BRAND_SUBTITLE",
