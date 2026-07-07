@@ -641,6 +641,12 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
 
         effective_menu_rows = self._effective_menu_rows(menu_rows, policy_by_menu)
         effective_menu_rows = self._filter_rows_to_root_scope(effective_menu_rows, root_menu_id)
+        formal_scope_ids = self._formal_product_menu_scope_ids(root_menu_id)
+        if formal_scope_ids:
+            effective_menu_rows = [
+                row for row in effective_menu_rows
+                if _to_int(row.get("id") or row.get("menu_id")) in formal_scope_ids
+            ]
         scoped_menu_ids = {int(row["id"]) for row in effective_menu_rows}
         policy_by_menu = {
             menu_id: policy
