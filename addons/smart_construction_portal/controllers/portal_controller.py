@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
 from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
 
 from odoo import http
@@ -11,6 +12,9 @@ from odoo.addons.smart_construction_portal.services.portal_contract_service impo
     PortalContractService,
 )
 from odoo.addons.smart_core.security.auth import decode_token
+
+
+_logger = logging.getLogger(__name__)
 
 
 class PortalController(http.Controller):
@@ -85,7 +89,7 @@ def _merge_payload(params):
         if request.jsonrequest:
             payload.update(request.jsonrequest)
     except Exception:
-        pass
+        _logger.debug("Unable to merge portal JSON payload.", exc_info=True)
     return payload
 
 
@@ -167,7 +171,7 @@ def _ensure_portal_user(params):
     try:
         request.update_env(user=user.id)
     except Exception:
-        pass
+        _logger.debug("Unable to update portal request environment.", exc_info=True)
     return user
 
 
@@ -179,4 +183,4 @@ def _bind_session_user(user):
         if sid and hasattr(user, "_compute_session_token"):
             request.session.session_token = user._compute_session_token(sid)
     except Exception:
-        pass
+        _logger.debug("Unable to bind portal user session.", exc_info=True)

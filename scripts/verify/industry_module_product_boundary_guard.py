@@ -254,6 +254,19 @@ def verify_runtime_comment_product_language_boundary() -> list[str]:
     return errors
 
 
+def verify_portal_controller_exception_observability() -> list[str]:
+    path = ADDONS / "smart_construction_portal" / "controllers" / "portal_controller.py"
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    if "except Exception:\n        pass" not in text:
+        return []
+    return [
+        "smart_construction_portal: public portal controller must not silently swallow "
+        "exceptions; log degraded auth/session/payload paths at debug level"
+    ]
+
+
 def verify_core_docs_product_examples() -> list[str]:
     errors: list[str] = []
     docs_dir = ADDONS / "smart_construction_core" / "docs"
@@ -424,6 +437,7 @@ def main() -> int:
     errors.extend(verify_capability_registry_role_boundary())
     errors.extend(verify_handler_product_language_boundary())
     errors.extend(verify_runtime_comment_product_language_boundary())
+    errors.extend(verify_portal_controller_exception_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
     errors.extend(verify_core_extension_legacy_label_boundary())
