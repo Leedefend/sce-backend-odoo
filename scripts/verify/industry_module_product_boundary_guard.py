@@ -192,6 +192,25 @@ def verify_static_navigation_product_labels() -> list[str]:
     return errors
 
 
+def verify_static_style_product_language_boundary() -> list[str]:
+    errors: list[str] = []
+    static_root = ADDONS / "smart_construction_core" / "static" / "src"
+    forbidden_tokens = ("容器骨架",)
+    if not static_root.is_dir():
+        return errors
+    for path in static_root.rglob("*"):
+        if path.suffix not in {".css", ".scss"}:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for token in forbidden_tokens:
+            if token in text:
+                errors.append(
+                    "smart_construction_core: static style comments must use product layout language, "
+                    f"not development wording {token!r}: {path.relative_to(ROOT).as_posix()}"
+                )
+    return errors
+
+
 def verify_capability_registry_role_boundary() -> list[str]:
     errors: list[str] = []
     registry = ADDONS / "smart_construction_core" / "services/capability_registry.py"
@@ -726,6 +745,7 @@ def main() -> int:
     errors.extend(verify_python_package_boundaries())
     errors.extend(verify_portal_execute_demo_boundary())
     errors.extend(verify_static_navigation_product_labels())
+    errors.extend(verify_static_style_product_language_boundary())
     errors.extend(verify_capability_registry_role_boundary())
     errors.extend(verify_handler_product_language_boundary())
     errors.extend(verify_runtime_comment_product_language_boundary())
