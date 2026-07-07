@@ -51,8 +51,12 @@ it also requires `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081` and
 `ACCEPTANCE_PROBE_OUTPUT=artifacts/backend/dev_acceptance_release_probe.json`.
 The frontend build output must stay `FRONTEND_DIST_DIR=./frontend/apps/web/dist-dev`,
 and `VITE_ODOO_DB`, `VITE_APP_ENV`, `VITE_BUILD_MODE`, and
-`VITE_BUILD_OUT_DIR` must not be overridden. Wrong DB, tier, served URL,
-evidence path, or frontend build override parameters must fail before frontend
+`VITE_BUILD_OUT_DIR` must not be overridden. `VITE_PLATFORM_ADMIN_DB` must stay
+`sc_platform_core`, and `VITE_API_BASE_URL`, `VITE_API_PROXY_TARGET`,
+`VITE_ODOO_DB_LOCKED`, `VITE_DELIVERY_MODE`, `VITE_FEATURE_FLAGS`,
+`VITE_LITE_CONTRACT_PILOT`, `VITE_LITE_CONTRACT_ROLLOUT`, and `VITE_TENANT`
+must stay unset. Wrong DB, tier, served URL, evidence
+path, or frontend build/runtime override parameters must fail before frontend
 build or acceptance probes run.
 
 Production code authority is `main` or a frozen release package applied under `/opt/sce/production/sce-backend-odoo`.

@@ -75,8 +75,9 @@ filestore.
    other than `ENV=dev`, `ENV_FILE=.env.dev`, `DB_NAME=sc_demo`, and
    `ACCEPTANCE_BASE_URL=http://127.0.0.1:18081`; the evidence artifact must
    remain `artifacts/backend/dev_acceptance_release_probe.json`, the frontend
-   output must remain `./frontend/apps/web/dist-dev`, and Vite build overrides
-   must stay unset.
+   output must remain `./frontend/apps/web/dist-dev`,
+   `VITE_PLATFORM_ADMIN_DB` must remain `sc_platform_core`, and Vite build or
+   runtime overrides must stay unset.
 
 ## Acceptance Criteria
 

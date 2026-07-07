@@ -28,6 +28,8 @@ REQUIRED_TOKENS = {
         "ACCEPTANCE_PROBE_OUTPUT=artifacts/backend/dev_acceptance_release_probe.json",
         "FRONTEND_DIST_DIR=./frontend/apps/web/dist-dev",
         "VITE_BUILD_MODE",
+        "VITE_PLATFORM_ADMIN_DB",
+        "VITE_API_BASE_URL",
         "make verify.production_git.authority.guard",
     ),
     "daily_policy": (

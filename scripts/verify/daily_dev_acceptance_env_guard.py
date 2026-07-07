@@ -13,13 +13,22 @@ EXPECTED = {
     "ACCEPTANCE_BASE_URL": "http://127.0.0.1:18081",
     "ACCEPTANCE_PROBE_OUTPUT": "artifacts/backend/dev_acceptance_release_probe.json",
     "FRONTEND_DIST_DIR": "./frontend/apps/web/dist-dev",
+    "VITE_PLATFORM_ADMIN_DB": "sc_platform_core",
 }
 
 FORBIDDEN_OVERRIDES = (
+    "VITE_API_BASE_URL",
+    "VITE_API_PROXY_TARGET",
     "VITE_ODOO_DB",
+    "VITE_ODOO_DB_LOCKED",
     "VITE_APP_ENV",
     "VITE_BUILD_MODE",
     "VITE_BUILD_OUT_DIR",
+    "VITE_DELIVERY_MODE",
+    "VITE_FEATURE_FLAGS",
+    "VITE_LITE_CONTRACT_PILOT",
+    "VITE_LITE_CONTRACT_ROLLOUT",
+    "VITE_TENANT",
 )
 
 
@@ -44,6 +53,7 @@ def main() -> int:
         "ACCEPTANCE_BASE_URL": os.getenv("ACCEPTANCE_BASE_URL", "").strip().rstrip("/"),
         "ACCEPTANCE_PROBE_OUTPUT": os.getenv("ACCEPTANCE_PROBE_OUTPUT", "").strip(),
         "FRONTEND_DIST_DIR": os.getenv("FRONTEND_DIST_DIR", "").strip(),
+        "VITE_PLATFORM_ADMIN_DB": os.getenv("VITE_PLATFORM_ADMIN_DB", "").strip(),
     }
 
     for key, expected in EXPECTED.items():
@@ -66,7 +76,8 @@ def main() -> int:
         "env=dev env_file=.env.dev db=sc_demo "
         "base_url=http://127.0.0.1:18081 "
         "artifact=artifacts/backend/dev_acceptance_release_probe.json "
-        "dist=./frontend/apps/web/dist-dev"
+        "dist=./frontend/apps/web/dist-dev "
+        "platform_admin_db=sc_platform_core"
     )
     return 0
 
