@@ -17,7 +17,7 @@
         <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, T_GYSHT_INFO, C_JFHKLR, C_JFHKLR_TH_ZCDF, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
         <field name="target_model">sc.ar.ap.project.summary；复用收入合同、供应商合同、收款、付款、进销项发票、抵扣、附加税、自筹与项目资金余额事实，按项目和往来单位形成项目级应收应付入口。</field>
         <field name="carrier_status">ready</field>
-        <field name="next_action">已提供“客户账款”用户入口承载项目级应收应付；后续继续按旧过程常用查询条件做项目、往来单位、日期区间对账。</field>
+        <field name="next_action">已提供“客户账款”用户入口承载项目级应收应付；持续按旧过程常用查询条件做项目、往来单位、日期区间对账。</field>
         <field name="evidence">ts_function_RecordUserClick: 8243 clicks, 18 users, last 2026-04-10。</field>
     </record>
 
@@ -38,7 +38,7 @@
         <field name="source_tables">C_Base_ZHSZ, BASE_SYSTEM_PROJECT, C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_JFHKLR_TH, C_JFHKLR_TH_ZCDF_CB, C_ZFSQGL_FKZH_CB, C_FKGL_ZHJZJWL, BGGL_JHK_HKDJ, BGGL_JHK_JKSQ, ZJGL_ZCDFSZ_FXJK_HK, ZJGL_ZCDFSZ_FXJK_JK, ZJGL_BZJGL_Pay_FBZJ, ZJGL_BZJGL_Pay_FBZJTH, ZJGL_BZJGL_Branch_SBZJDJ, ZJGL_BZJGL_Branch_SBZJTH, ZJGL_ZJSZ_DKGL_DKDJ, ZJGL_ZJSZ_DKGL_HKDJ, T_KK_SJDJB_CB, T_KK_SJTHB_CB。</field>
         <field name="target_model">sc.legacy.account.master + sc.legacy.account.transaction.line + sc.legacy.fund.daily.line + sc.account.income.expense.summary；已具备账户主数据、账户往来来源明细、公司财务收支来源明细、收款登记来源明细、收入退回来源明细、供应商付款来源明细、风险借还款来源明细、保证金来源明细、贷款来源明细、扣款实缴/退回来源明细与第一版账户收支统计只读聚合。</field>
         <field name="carrier_status">ready</field>
-        <field name="next_action">已提供“账户收支统计表”用户入口，账户主数据、账户往来、资金日报与有效账户金额来源已覆盖；后续继续做未绑定账户治理和区间、项目、账户类型对账。员工借还款、多账户付款、投标退款候选分支已核实当前旧库无有效账户金额行。</field>
+        <field name="next_action">已提供“账户收支统计表”用户入口，账户主数据、账户往来、资金日报与有效账户金额来源已覆盖；持续做未绑定账户治理和区间、项目、账户类型对账。员工借还款、多账户付款、投标退款候选分支已核实当前旧库无有效账户金额行。</field>
         <field name="evidence">ts_function_RecordUserClick: 1549 clicks, 10 users, last 2026-04-10；另有旧页面同名入口 517 clicks。</field>
     </record>
 
@@ -121,7 +121,7 @@
         <field name="source_tables">C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_JFHKLR_CB, CWGL_FYBX, CWGL_FYBX_CB, BGGL_XZ_GZ, BGGL_XZ_GZ_CB, T_ProjectContract_Out, T_ProjectContract_Out_CB, ZJGL_SZQR_DKQRB, ZJGL_SZQR_DKQRB_CB。</field>
         <field name="target_model">sc.company.operation.summary；已按已迁移事实承载收款、公司财务收支、费用/保证金、工资办理、发票税额。</field>
         <field name="carrier_status">ready</field>
-        <field name="next_action">已提供“公司经营情况表”用户入口，收款、公司财务收支、费用/保证金、工资办理、发票税额可见；后续继续补旧过程年度/区间过滤对账，并核对管理费、企业所得税、手续费等细项。</field>
+        <field name="next_action">已提供“公司经营情况表”用户入口，收款、公司财务收支、费用/保证金、工资办理、发票税额可见；继续补齐旧过程年度/区间过滤对账，并核对管理费、企业所得税、手续费等细项。</field>
         <field name="evidence">ts_function_RecordUserClick: 726 clicks, 7 users, last 2026-04-08。</field>
     </record>
 
@@ -226,7 +226,7 @@
         <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, C_JFHKLR, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB, T_RK_RKD, T_RK_RKDCB, T_FK_Supplier, SGGL_FBGL_*, LW_Base_*, T_ZL_*, GLFY_*。</field>
         <field name="target_model">sc.comprehensive.cost.summary；复用收入合同、收款、发票、供应商合同、材料库存、费用报销、工资、付款执行等已迁移事实，按项目汇总收入、成本、应付、利润。</field>
         <field name="carrier_status">ready</field>
-        <field name="next_action">已提供“成本统计表（综合）”用户入口，收入、收款、发票、供应商合同、材料库存、费用报销、工资、付款执行等已迁移事实可见；后续继续补劳务/分包、租赁/机械事实投影与旧过程利润/价差细项对账。</field>
+        <field name="next_action">已提供“成本统计表（综合）”用户入口，收入、收款、发票、供应商合同、材料库存、费用报销、工资、付款执行等已迁移事实可见；继续补齐劳务/分包、租赁/机械事实投影与旧过程利润/价差细项对账。</field>
         <field name="evidence">ts_function_RecordUserClick: 51 clicks, 5 users, last 2026-04-08；当前开发库已有收款 19894 行、付款 8247 行、发票 28010 行、费用/保证金 36496 行、工资办理 6915 行、材料库存事实 16389 行。</field>
     </record>
 
