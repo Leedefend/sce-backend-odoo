@@ -404,6 +404,14 @@ def verify_core_extension_wizard_exception_observability() -> list[str]:
 
 def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
     errors: list[str] = []
+    forbidden_user_surface_tokens = (
+        "样例单号",
+        "来源样例",
+        "技术材料占位",
+        "技术产品占位",
+        "技术占位",
+        "缺少发票信息（占位）",
+    )
     guarded_roots = (
         ADDONS / "smart_construction_core" / "models",
         ADDONS / "smart_construction_core" / "data",
@@ -429,6 +437,12 @@ def verify_runtime_pending_placeholder_language_boundary() -> list[str]:
                     "smart_construction_core: runtime product surface must not expose pending placeholder wording: "
                     f"{path.relative_to(ROOT).as_posix()}"
                 )
+            for token in forbidden_user_surface_tokens:
+                if token in scrubbed:
+                    errors.append(
+                        "smart_construction_core: runtime product surface must not expose sample/technical "
+                        f"placeholder wording {token!r}: {path.relative_to(ROOT).as_posix()}"
+                    )
     return errors
 
 

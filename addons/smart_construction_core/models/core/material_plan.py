@@ -543,7 +543,7 @@ class ProjectMaterialPlanLine(models.Model):
         index=True,
     )
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", index=True)
-    product_id = fields.Many2one("product.product", string="技术材料占位", required=True)
+    product_id = fields.Many2one("product.product", string="材料", required=True)
     material_name = fields.Char(string="材料名称", compute="_compute_material_text", store=True)
     spec = fields.Char("规格")
     spec_model = fields.Char(string="规格型号", compute="_compute_material_text", store=True)
@@ -572,7 +572,7 @@ class ProjectMaterialPlanLine(models.Model):
         if not product:
             product = self.env["product.product"].sudo().create(
                 {
-                    "name": "系统默认材料（技术占位）",
+                    "name": "系统默认材料（技术兜底）",
                     "default_code": "SC-SYSTEM-DEFAULT-MATERIAL",
                     "type": "product",
                 }
@@ -632,7 +632,7 @@ class ProjectMaterialPlanLine(models.Model):
             if line.product_id and line.uom_id:
                 base_uom = line.product_id.uom_po_id or line.product_id.uom_id
                 if line.uom_id.category_id != base_uom.category_id:
-                    raise ValidationError(_("计划行单位必须与技术材料占位单位同类别"))
+                    raise ValidationError(_("计划行单位必须与材料单位同类别"))
 
     def _ensure_technical_product(self):
         for line in self:

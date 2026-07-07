@@ -31,7 +31,7 @@ class ScLaborSettlementCandidate(models.Model):
     last_usage_date = fields.Date(string="最近用工日期", readonly=True)
     currency_id = fields.Many2one("res.currency", string="币种", readonly=True)
     legacy_settlement_amount = fields.Monetary(string="旧系统金额", currency_field="currency_id", readonly=True)
-    sample_usage_names = fields.Char(string="样例单号", readonly=True)
+    sample_usage_names = fields.Char(string="来源单号", readonly=True)
     review_reason = fields.Char(string="核对原因", readonly=True)
 
     def _raise_readonly_projection(self):

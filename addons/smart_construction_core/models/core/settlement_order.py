@@ -496,9 +496,9 @@ class ScSettlementOrder(models.Model):
                     mismatch.append(_("采购订单状态不合规"))
                 # 供应商不一致由 constrains 硬拦，这里不重复
 
-            # 发票占位（软提示）
+            # 发票信息软提示
             if not rec.invoice_ref:
-                warnings.append(_("缺少发票信息（占位）"))
+                warnings.append(_("缺少发票信息"))
             else:
                 if rec.invoice_amount and rec.amount_total and rec.invoice_amount < rec.amount_total:
                     warnings.append(_("发票金额小于结算金额"))

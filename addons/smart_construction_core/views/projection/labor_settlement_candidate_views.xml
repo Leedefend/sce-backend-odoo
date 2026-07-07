@@ -76,7 +76,7 @@
                             <field name="last_usage_date"/>
                         </group>
                     </group>
-                    <group string="来源样例">
+                    <group string="来源记录">
                         <field name="sample_usage_names"/>
                     </group>
                 </sheet>

@@ -93,7 +93,7 @@ class ScMaterialPrice(models.Model):
     name = fields.Char(string="价格名称", compute="_compute_name", store=True)
     material_catalog_id = fields.Many2one("sc.material.catalog", string="材料档案", required=True, index=True, tracking=True)
     company_id = fields.Many2one("res.company", string="公司", related="material_catalog_id.company_id", store=True, index=True)
-    product_id = fields.Many2one("product.product", string="技术产品占位", index=True)
+    product_id = fields.Many2one("product.product", string="关联产品", index=True)
     supplier_id = fields.Many2one("res.partner", string="供应商", index=True, tracking=True)
     project_id = fields.Many2one("project.project", string="项目", index=True)
     price_type = fields.Selection(

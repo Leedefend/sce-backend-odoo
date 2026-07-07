@@ -55,7 +55,7 @@ class ScP1RelationshipReviewQueue(models.Model):
         index=True,
     )
     review_reason = fields.Char(string="复核原因", readonly=True)
-    sample_record_names = fields.Char(string="样例单号", readonly=True)
+    sample_record_names = fields.Char(string="来源单号", readonly=True)
 
     def _raise_readonly_projection(self):
         raise UserError("P1关系人工复核队列是只读派生结果，不能写回用户已确认历史事实。")

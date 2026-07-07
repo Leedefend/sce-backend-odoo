@@ -99,7 +99,7 @@ class MaterialPlanToRfqWizard(models.TransientModel):
                 if not product:
                     product = self.env["product.product"].search([("default_code", "=", "SC-SYSTEM-DEFAULT-MATERIAL")], limit=1)
                 if not product:
-                    raise UserError(_("缺少系统默认材料技术占位，请联系管理员。"))
+                    raise UserError(_("缺少系统默认材料兜底记录，请联系管理员。"))
                 qty = (
                     getattr(line, "qty", None)
                     or getattr(line, "product_qty", None)
