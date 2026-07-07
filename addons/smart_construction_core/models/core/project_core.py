@@ -1188,7 +1188,7 @@ class ProjectProject(models.Model):
             try:
                 creation_service.post_create_bootstrap(projects)
             except Exception:
-                pass
+                _logger.debug("Unable to run project post-create bootstrap.", exc_info=True)
         return projects
 
     def init(self):

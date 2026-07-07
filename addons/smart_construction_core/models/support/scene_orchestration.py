@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
 import re
 
 from odoo import api, models, fields, _
@@ -13,6 +14,8 @@ from odoo.addons.smart_core.security.platform_company_access import (
 from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 
 CAPABILITY_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
+
+_logger = logging.getLogger(__name__)
 
 
 class ScCapabilityGroup(models.Model):
@@ -312,7 +315,7 @@ class ScCapability(models.Model):
                 try:
                     cap.sudo().write({"is_test": True})
                 except Exception:
-                    pass
+                    _logger.debug("Unable to auto-heal validation capability test flag.", exc_info=True)
             if cap.is_test and not include_tests:
                 continue
             if cap.key in ignore_set:

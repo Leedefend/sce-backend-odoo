@@ -366,6 +366,24 @@ def verify_policy_capability_dashboard_exception_observability() -> list[str]:
     return errors
 
 
+def verify_core_model_runtime_exception_observability() -> list[str]:
+    errors: list[str] = []
+    guarded_paths = (
+        ADDONS / "smart_construction_core" / "models" / "core" / "project_core.py",
+        ADDONS / "smart_construction_core" / "models" / "support" / "scene_orchestration.py",
+    )
+    for path in guarded_paths:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "except Exception:\n                pass" in text or "except Exception:\n                    pass" in text:
+            errors.append(
+                "smart_construction_core: core runtime model degradation paths must log "
+                f"exceptions at debug level: {path.relative_to(ROOT).as_posix()}"
+            )
+    return errors
+
+
 def verify_scene_registry_engine_fallback_observability() -> list[str]:
     path = ADDONS / "smart_construction_scene" / "scene_registry.py"
     if not path.is_file():
@@ -555,6 +573,7 @@ def main() -> int:
     errors.extend(verify_core_api_controller_exception_observability())
     errors.extend(verify_business_slice_project_resolution_observability())
     errors.extend(verify_policy_capability_dashboard_exception_observability())
+    errors.extend(verify_core_model_runtime_exception_observability())
     errors.extend(verify_scene_registry_engine_fallback_observability())
     errors.extend(verify_core_docs_product_examples())
     errors.extend(verify_core_runtime_demo_residual_allowlist())
