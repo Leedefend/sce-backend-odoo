@@ -173,6 +173,7 @@ CHECKLIST_TOKENS = (
     "docs/ops/production_release_flow_standard_v1.md",
     "docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md",
     "make verify.production_deployment.record.guard",
+    "rerun `make verify.production_release.flow.guard` to verify the production release-flow control plane remains wired at deployment time",
 )
 
 INDEX_TOKENS = (
