@@ -20,7 +20,7 @@ class ProjectInitiationEnterHandler(BaseIntentHandler):
     """Product scene entry intent: create minimal project initiation record."""
 
     INTENT_TYPE = "project.initiation.enter"
-    DESCRIPTION = "创建项目立项记录并返回后续契约入口"
+    DESCRIPTION = "创建项目立项记录并返回流程契约入口"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["base.group_user"]

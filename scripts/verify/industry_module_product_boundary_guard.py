@@ -224,7 +224,7 @@ def verify_capability_registry_role_boundary() -> list[str]:
 def verify_handler_product_language_boundary() -> list[str]:
     errors: list[str] = []
     handlers_dir = ADDONS / "smart_construction_core" / "handlers"
-    forbidden_tokens = ("这里演示", "demo ping", "演示", "试点")
+    forbidden_tokens = ("这里演示", "demo ping", "演示", "试点", "后续契约入口")
     for path in handlers_dir.rglob("*.py"):
         text = path.read_text(encoding="utf-8", errors="ignore")
         for token in forbidden_tokens:
