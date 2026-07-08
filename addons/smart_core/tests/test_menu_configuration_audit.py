@@ -2506,6 +2506,31 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual(material_state["runtime_visibility_reason"], "visible_descendant_carrier")
         self.assertIn(295, runtime["carrier_menu_ids"])
 
+    def test_runtime_navigation_state_marks_configured_visible_absent_menu_explicitly(self):
+        module = _load_handler()
+
+        runtime = module._build_runtime_navigation_states(
+            [
+                {
+                    "menu_id": 291,
+                    "name": "智慧施工管理平台",
+                    "children": [
+                        {"menu_id": 361, "name": "一般合同", "children": []},
+                    ],
+                }
+            ],
+            {
+                293: {"visible": True},
+                361: {"visible": True},
+            },
+        )
+
+        contract_center_state = runtime["states"]["293"]
+        self.assertFalse(contract_center_state["runtime_visible"])
+        self.assertTrue(contract_center_state["configured_visible"])
+        self.assertEqual(contract_center_state["runtime_state"], "configured_visible_runtime_absent")
+        self.assertEqual(contract_center_state["runtime_visibility_reason"], "configured_visible_runtime_absent")
+
 
 if __name__ == "__main__":
     unittest.main()

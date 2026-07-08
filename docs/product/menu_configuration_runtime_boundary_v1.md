@@ -77,6 +77,7 @@
 | `visible_protected` | 配置意图隐藏但系统保护要求保留 | 显示中 · 系统保护 |
 | `hidden_configured` | `configured_visible=false` 且 `runtime_visible=false` | 已隐藏 |
 | `hidden_permission` | 配置可见但当前用户无权限 | 当前用户不可见 |
+| `configured_visible_runtime_absent` | 配置可见但最终导航因产品菜单重组、运行态投影或其他非权限原因未包含该菜单 | 当前未进入导航 |
 | `candidate` | 无配置意图且不在最终导航 | 候选 |
 
 菜单树筛选中的“已启用/已隐藏”必须基于 `runtime_visible`，不是基于 `configured_visible`。

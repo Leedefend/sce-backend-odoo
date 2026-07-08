@@ -224,12 +224,13 @@ def _build_runtime_navigation_states(nav_tree: list[dict], configured_by_menu: d
         if not menu_id or menu_id in states:
             continue
         configured_visible = _to_bool(configured.get("visible"), True) if isinstance(configured, dict) else True
+        hidden_reason = "configured_visible_runtime_absent" if configured_visible else "hidden_configured"
         states[menu_id] = {
             "menu_id": menu_id,
             "runtime_visible": False,
             "configured_visible": configured_visible,
-            "runtime_visibility_reason": "hidden_configured" if configured_visible is False else "hidden_permission",
-            "runtime_state": "hidden_configured" if configured_visible is False else "hidden_permission",
+            "runtime_visibility_reason": hidden_reason,
+            "runtime_state": hidden_reason,
             "runtime_path": "",
         }
     return {

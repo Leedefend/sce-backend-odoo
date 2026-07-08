@@ -1137,6 +1137,7 @@ function menuHandlingStateLabel(menu: MenuConfigMenu | null | undefined) {
   }
   const draft = menu ? drafts[menu.id] : null;
   if (state && state.runtime_visibility_reason === 'hidden_permission') return '当前用户不可见';
+  if (state && state.runtime_visibility_reason === 'configured_visible_runtime_absent') return '当前未进入导航';
   return draft?.policy_id ? '当前隐藏' : '候选';
 }
 
