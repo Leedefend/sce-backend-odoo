@@ -95,6 +95,7 @@
     "make verify.lowcode_config.customer_module_asset.acceptance_template",
     "make verify.lowcode_config.customer_module_asset.acceptance_apply.dry_run",
     "make verify.lowcode_config.customer_module_asset.pipeline",
+    "make verify.lowcode_config.customer_module_asset.release_hardening.guard",
     "make verify.lowcode_config.customer_module_asset.replay.guard",
     "make verify.business_config.unit",
     "make verify.business_config.snapshot"

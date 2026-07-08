@@ -4582,6 +4582,11 @@ verify.lowcode_config.customer_module_asset.acceptance_apply.dry_run: verify.low
 verify.lowcode_config.customer_module_asset.pipeline: verify.lowcode_config.customer_module_asset.acceptance_apply.dry_run verify.lowcode_config.customer_module_asset.replay.guard
 	@echo "[lowcode_customer_config_pipeline] PASS"
 
+.PHONY: verify.lowcode_config.customer_module_asset.release_hardening.guard
+verify.lowcode_config.customer_module_asset.release_hardening.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/lowcode_customer_config_release_hardening_guard.py
+	@python3 scripts/verify/lowcode_customer_config_release_hardening_guard.py
+
 .PHONY: verify.lowcode_config.customer_module_asset.replay.guard
 verify.lowcode_config.customer_module_asset.replay.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/lowcode_customer_config_module_asset_replay_guard.py
@@ -4638,6 +4643,7 @@ verify.product.release.ready: guard.prod.forbid \
 	verify.industry_module.product_boundary \
 	verify.user_module.product_boundary \
 	verify.lowcode_config.customer_module_asset.pipeline \
+	verify.lowcode_config.customer_module_asset.release_hardening.guard \
 	verify.product.surface.clean \
 	verify.product.menu.release.ready \
 	verify.product.complexity.bound \

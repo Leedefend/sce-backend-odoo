@@ -66,6 +66,12 @@
     `smart_construction_custom` install path, including module data files,
     post-init hooks, XML function entries, source markers, and source-status
     backfill.
+- `make verify.lowcode_config.customer_module_asset.release_hardening.guard`
+  - Verifies the customer low-code module asset pipeline remains wired into
+    formal product release readiness.
+  - Checks the Makefile release target, v2.0.0 checklist, evidence manifest,
+    and `lowcode_customer_config_baseline_manifest.v1` agree on the candidate,
+    draft, acceptance-template, dry-run apply, safety-test, and replay chain.
 - `make verify.lowcode_config.runtime_boundary.guard`
   - Runtime low-code boundary gate for live Odoo databases after module
     install/upgrade.
