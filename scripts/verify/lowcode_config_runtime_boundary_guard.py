@@ -15,12 +15,20 @@ from odoo.addons.smart_core.utils.backend_contract_boundaries import (
     normalize_lowcode_source_status,
     view_orchestration_source_status,
 )
+from odoo.addons.smart_core.model.ui_menu_config_policy import (
+    LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS_PARAM,
+)
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 
-LOWCODE_CONFIG_RECOVERY_PARENT_XMLIDS = {
-    "smart_construction_core.menu_sc_business_config_center",
-}
-LOWCODE_GLOBAL_CONFIG_ENTRY_XMLIDS = set(LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS) - LOWCODE_CONFIG_RECOVERY_PARENT_XMLIDS
+def _split_xmlid_list(raw) -> set[str]:
+    if isinstance(raw, str):
+        values = raw.split(",")
+    elif isinstance(raw, (list, tuple, set, frozenset)):
+        values = raw
+    else:
+        values = ()
+    return {str(value or "").strip() for value in values if str(value or "").strip()}
 
 
 def _env():
@@ -38,6 +46,26 @@ def _visible_menu_ids(env_obj, user) -> set[int]:
         return {int(menu_id) for menu_id in menu_model._visible_menu_ids(debug=False)}
     except TypeError:
         return {int(menu_id) for menu_id in menu_model._visible_menu_ids()}
+
+
+def _lowcode_system_config_menu_xmlids(env_obj) -> set[str]:
+    xmlids = set(LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS)
+    hook_xmlids = call_extension_hook_first(env_obj, "smart_core_lowcode_system_config_menu_xmlids", env_obj)
+    xmlids.update(_split_xmlid_list(hook_xmlids))
+    try:
+        raw = env_obj["ir.config_parameter"].sudo().get_param(LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS_PARAM, "") or ""
+    except Exception:
+        raw = ""
+    xmlids.update(_split_xmlid_list(raw))
+    return xmlids
+
+
+def _lowcode_global_config_entry_xmlids(env_obj, system_xmlids: set[str]) -> set[str]:
+    recovery_parent = call_extension_hook_first(env_obj, "smart_core_lowcode_config_recovery_parent_menu_xmlids", env_obj)
+    recovery_parent_xmlids = _split_xmlid_list(recovery_parent)
+    if not recovery_parent_xmlids:
+        recovery_parent_xmlids = {xmlid for xmlid in system_xmlids if xmlid.endswith(".menu_sc_business_config_center")}
+    return set(system_xmlids) - recovery_parent_xmlids
 
 
 def _menu_orchestration_source_status(payload: dict) -> tuple[str, bool]:
@@ -68,6 +96,8 @@ def main() -> int:
     strict_source_status = os.getenv("LOWCODE_CONFIG_RUNTIME_SOURCE_STATUS_STRICT", "").strip() in {"1", "true", "True"}
     errors: list[dict] = []
     warnings: list[dict] = []
+    system_config_xmlids = _lowcode_system_config_menu_xmlids(env_obj)
+    global_config_entry_xmlids = _lowcode_global_config_entry_xmlids(env_obj, system_config_xmlids)
     admin_xmlids = (
         "smart_core.group_smart_core_admin",
         "smart_core.group_smart_core_business_config_admin",
@@ -77,7 +107,7 @@ def main() -> int:
     admin_group_ids = {int(group.id) for group in admin_groups}
     system_menus = [
         (xmlid, menu)
-        for xmlid in sorted(LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS)
+        for xmlid in sorted(system_config_xmlids)
         for menu in [_ref(env_obj, xmlid)]
         if menu
     ]
@@ -85,7 +115,7 @@ def main() -> int:
     global_config_menu_ids = {
         menu_id: xmlid
         for menu_id, xmlid in system_menu_ids.items()
-        if xmlid in LOWCODE_GLOBAL_CONFIG_ENTRY_XMLIDS
+        if xmlid in global_config_entry_xmlids
     }
 
     User = env_obj["res.users"].sudo()
@@ -186,6 +216,8 @@ def main() -> int:
         "guard": "lowcode_config_runtime_boundary_guard",
         "schema_version": "1.0",
         "database": env_obj.cr.dbname,
+        "declared_system_config_menu_xmlids": sorted(system_config_xmlids),
+        "declared_global_config_entry_xmlids": sorted(global_config_entry_xmlids),
         "system_config_menu_xmlids": sorted(system_menu_ids.values()),
         "global_config_entry_xmlids": sorted(global_config_menu_ids.values()),
         "active_internal_user_count": len(users),

@@ -3734,6 +3734,13 @@ def smart_core_lowcode_system_config_menu_xmlids(env):
     ]
 
 
+def smart_core_lowcode_config_recovery_parent_menu_xmlids(env):
+    del env
+    return [
+        "smart_construction_core.menu_sc_business_config_center",
+    ]
+
+
 def smart_core_business_root_menu_xmlid(env):
     del env
     return "smart_construction_core.menu_sc_root"

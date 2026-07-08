@@ -322,6 +322,7 @@ def build_report() -> dict:
         })
 
     runtime_text = _read(ROOT / "addons" / "smart_core" / "model" / "ui_menu_config_policy.py")
+    runtime_guard_text = _read(ROOT / "scripts" / "verify" / "lowcode_config_runtime_boundary_guard.py")
     if "LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS" not in runtime_text:
         errors.append({
             "category": "runtime_protection",
@@ -337,6 +338,19 @@ def build_report() -> dict:
             errors.append({
                 "category": "runtime_protection",
                 "message": "menu runtime overlay must load protected config menus through platform-neutral extension/config sources",
+                "token": token,
+            })
+    for token in (
+        "LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS_PARAM",
+        "smart_core_lowcode_system_config_menu_xmlids",
+        "smart_core_lowcode_config_recovery_parent_menu_xmlids",
+        "_lowcode_system_config_menu_xmlids",
+        "_lowcode_global_config_entry_xmlids",
+    ):
+        if token not in runtime_guard_text:
+            errors.append({
+                "category": "runtime_boundary_guard_source",
+                "message": "runtime low-code boundary guard must use the same protected config menu sources as runtime overlay",
                 "token": token,
             })
 
@@ -386,6 +400,7 @@ def build_report() -> dict:
     construction_init_text = _read(ROOT / "addons" / "smart_construction_core" / "__init__.py")
     for token in (
         "def smart_core_lowcode_system_config_menu_xmlids",
+        "def smart_core_lowcode_config_recovery_parent_menu_xmlids",
         "smart_construction_core.menu_sc_business_config_center",
         "smart_construction_core.menu_sc_business_config_workbench",
         "smart_construction_core.menu_ui_menu_config_policy_business_config",
@@ -400,6 +415,11 @@ def build_report() -> dict:
         errors.append({
             "category": "industry_lowcode_config_recovery_hook",
             "message": "industry module must export the low-code protected config recovery menu hook",
+        })
+    if "smart_core_lowcode_config_recovery_parent_menu_xmlids" not in construction_init_text:
+        errors.append({
+            "category": "industry_lowcode_config_recovery_hook",
+            "message": "industry module must export the low-code recovery parent menu hook",
         })
 
     makefile_text = _read(ROOT / "Makefile")
