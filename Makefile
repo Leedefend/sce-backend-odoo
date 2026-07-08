@@ -4580,7 +4580,7 @@ verify.product.no_demo_data.schema.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/non_demo_data_contamination_guard_schema_guard.py
 	@python3 scripts/verify/non_demo_data_contamination_guard_schema_guard.py
 
-verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready verify.runtime_contract.test_placeholder.guard verify.lowcode_config.boundary.guard verify.lowcode_config.runtime_boundary.guard verify.product.no_demo_data
+verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready verify.runtime_contract.test_placeholder.guard verify.lowcode_config.boundary.guard verify.lowcode_config.runtime_boundary.guard verify.business_config.snapshot verify.product.no_demo_data
 	@echo "[OK] verify.product.surface.clean done"
 
 verify.product.complexity.bound: guard.prod.forbid verify.complexity.guard

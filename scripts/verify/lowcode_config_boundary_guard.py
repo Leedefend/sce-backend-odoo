@@ -301,8 +301,22 @@ def _validate_lowcode_capability_boundaries(errors: list[dict]) -> list[str]:
 
 
 def _validate_lowcode_release_verification_docs(errors: list[dict]) -> None:
+    makefile_text = _read(ROOT / "Makefile")
+    product_surface_deps = _target_deps(makefile_text, "verify.product.surface.clean")
     verify_index_text = _read(VERIFY_INDEX_DOC)
     production_standard_text = _read(PRODUCTION_UPGRADE_STANDARD_DOC)
+    for target in (
+        "verify.lowcode_config.boundary.guard",
+        "verify.lowcode_config.runtime_boundary.guard",
+        "verify.business_config.snapshot",
+    ):
+        if target not in product_surface_deps:
+            errors.append({
+                "category": "lowcode_release_verification_gate",
+                "path": "Makefile",
+                "message": "product surface gate must include the complete low-code release evidence chain",
+                "target": target,
+            })
     verify_index_tokens = (
         "make verify.lowcode_config.boundary.guard",
         "make verify.lowcode_config.runtime_boundary.guard",
