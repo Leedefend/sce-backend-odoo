@@ -45,6 +45,10 @@ REQUIRED_TOKENS = (
     "docs/ops/releases/templates/production_deployment_record_TEMPLATE.zh.md",
     "make verify.production_deployment.record.guard",
     "make verify.production_release.flow.guard",
+    "Low-code release evidence must include",
+    "artifacts/backend/lowcode_config_runtime_boundary_guard.json",
+    "artifacts/backend/business_config_contract_snapshot.json",
+    "addons/smart_construction_custom/data/lowcode_customer_config_baseline_manifest_v1.json",
     "Prod and prod-sim evidence are mixed.",
 )
 
@@ -156,6 +160,7 @@ REQUIRED_SECTION_LISTS = (
             "If `verify.bundle.installation.ready` fails, update or repair the bundle",
             "If `verify.platform.performance.smoke` fails on `system.init` payload size,",
             "Product hardening failures must not be hidden by the governance preflight.",
+            "Low-code release evidence must include",
         ),
     ),
     (

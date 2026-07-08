@@ -103,6 +103,10 @@ The product readiness target expands to:
   confirm the smoke is exercising the Web boot registry mode before changing
   thresholds or startup contracts.
 - Product hardening failures must not be hidden by the governance preflight.
+- Low-code release evidence must include
+  `artifacts/backend/lowcode_config_runtime_boundary_guard.json`,
+  `artifacts/backend/business_config_contract_snapshot.json`, and
+  `addons/smart_construction_custom/data/lowcode_customer_config_baseline_manifest_v1.json`.
 
 ## Dev Acceptance Gate
 
