@@ -1032,6 +1032,20 @@ const roleGroupDomainOptions = computed(() => {
   ];
 });
 
+function isProductNavigationRoot(menu: MenuConfigMenu | null | undefined) {
+  if (!menu) return false;
+  const label = String(menu.display_name || menu.name || '').trim();
+  const completeName = String(menu.complete_name || '').trim();
+  return label === '智慧施工管理平台' || completeName === '智慧施工管理平台';
+}
+
+const displayTreeSource = computed<MenuConfigMenu[]>(() => {
+  if (tree.value.length !== 1) return tree.value;
+  const [root] = tree.value;
+  if (!isProductNavigationRoot(root) || !root.children?.length) return tree.value;
+  return root.children;
+});
+
 const flatRows = computed<FlatRow[]>(() => {
   const out: FlatRow[] = [];
   const walk = (items: MenuConfigMenu[], level = 1) => {
@@ -1042,7 +1056,7 @@ const flatRows = computed<FlatRow[]>(() => {
       if (item.children?.length) walk(item.children, level + 1);
     });
   };
-  walk(tree.value);
+  walk(displayTreeSource.value);
   return out;
 });
 
@@ -1174,7 +1188,7 @@ function menuMatchesStateFilter(menu: MenuConfigMenu) {
 const visibleTree = computed<MenuConfigMenu[]>(() => {
   const term = normalizedSearchText.value;
   if (!term && menuStateFilter.value === 'all') {
-    return tree.value;
+    return displayTreeSource.value;
   }
 
   const filterBranch = (items: MenuConfigMenu[]): MenuConfigMenu[] => {
@@ -1189,7 +1203,7 @@ const visibleTree = computed<MenuConfigMenu[]>(() => {
     });
   };
 
-  return filterBranch(tree.value);
+  return filterBranch(displayTreeSource.value);
 });
 
 const selectedIds = computed(() => {
