@@ -194,6 +194,7 @@ export interface BusinessConfigSurfacePayload {
   view_id: number;
   role_key: string;
   snapshot_summary?: BusinessConfigSnapshotSummaryPayload;
+  delivery_readiness?: BusinessConfigDeliveryReadinessPayload;
   sections: Array<{
     key: 'form' | 'list_search' | 'menu' | string;
     label: string;
@@ -204,6 +205,23 @@ export interface BusinessConfigSurfacePayload {
       path?: string;
       query?: Record<string, string>;
     };
+  }>;
+}
+
+export interface BusinessConfigDeliveryReadinessPayload {
+  schema_version: 'low_code_delivery_readiness.v1' | string;
+  overall_status: 'ready' | 'attention' | string;
+  ready_count: number;
+  total_count: number;
+  blocker_count: number;
+  items: Array<{
+    id: string;
+    label: string;
+    section_key: string;
+    status: 'ready' | 'pending' | string;
+    contract_count: number;
+    boundary: string;
+    action: string;
   }>;
 }
 

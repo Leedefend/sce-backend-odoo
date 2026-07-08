@@ -15,6 +15,14 @@ from ..utils.extension_hooks import call_extension_hook_first
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
 PLATFORM_ADMIN_GROUP = "smart_core.group_smart_core_admin"
 ANALYSIS_VIEW_TYPES = ("pivot", "graph", "calendar", "dashboard")
+DELIVERY_CAPABILITIES = (
+    ("form_field_structure", "表单配置", "form"),
+    ("list_search_configuration", "列表与搜索配置", "list_search"),
+    ("menu_orchestration", "菜单配置", "menu"),
+    ("approval_policy_configuration", "审批配置", "approval"),
+    ("version_snapshot_rollback", "版本与快照", "version"),
+    ("capability_boundary_and_coverage", "覆盖与边界", "coverage"),
+)
 
 
 def _to_int(value: Any) -> int:
@@ -353,6 +361,51 @@ class _BusinessConfigSurfaceBase(BaseIntentHandler):
             "changed": changed[:50],
         }
 
+    def _delivery_readiness(self, sections: list[dict], snapshot_summary: dict) -> dict:
+        section_by_key = {str(section.get("key") or ""): section for section in sections}
+        items = []
+        blocker_count = 0
+        ready_count = 0
+        for capability_id, label, section_key in DELIVERY_CAPABILITIES:
+            section = section_by_key.get(section_key) or {}
+            if section_key == "version":
+                contract_count = _to_int(snapshot_summary.get("contract_count"))
+                boundary = "business_contract_version"
+                status = "ready" if contract_count else "pending"
+                action = "snapshot_compare"
+            elif section_key == "coverage":
+                contract_count = _to_int(snapshot_summary.get("action_scope_count"))
+                boundary = "coverage_guard"
+                status = "ready"
+                action = "coverage_scan"
+            else:
+                contract_count = _to_int(section.get("contract_count"))
+                boundary = _to_text(section.get("boundary"))
+                status = "ready" if contract_count else "pending"
+                action = "configure"
+            if status == "ready":
+                ready_count += 1
+            else:
+                blocker_count += 1
+            items.append({
+                "id": capability_id,
+                "label": label,
+                "section_key": section_key,
+                "status": status,
+                "contract_count": contract_count,
+                "boundary": boundary,
+                "action": action,
+            })
+        overall_status = "ready" if blocker_count == 0 else "attention"
+        return {
+            "schema_version": "low_code_delivery_readiness.v1",
+            "overall_status": overall_status,
+            "ready_count": ready_count,
+            "total_count": len(items),
+            "blocker_count": blocker_count,
+            "items": items,
+        }
+
 
 class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
     INTENT_TYPE = BUSINESS_CONFIG_INTENTS["surface_get"]
@@ -443,6 +496,7 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
             "boundary": "business_contract_with_policy_runtime",
         })
         sections.append(self._approval_policy_section(model))
+        snapshot_summary = self._snapshot_summary()
         return {
             "ok": True,
             "data": {
@@ -451,7 +505,8 @@ class BusinessConfigSurfaceGetHandler(_BusinessConfigSurfaceBase):
                 "view_id": view_id,
                 "role_key": role_key,
                 "sections": sections,
-                "snapshot_summary": self._snapshot_summary(),
+                "snapshot_summary": snapshot_summary,
+                "delivery_readiness": self._delivery_readiness(sections, snapshot_summary),
             },
             "meta": {
                 "intent": self.INTENT_TYPE,

@@ -277,6 +277,26 @@ OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS = {
             "changed_count",
         ),
     },
+    "low-code delivery readiness workbench": {
+        "addons/smart_core/handlers/business_config_surface.py": (
+            "DELIVERY_CAPABILITIES",
+            "low_code_delivery_readiness.v1",
+            '"delivery_readiness": self._delivery_readiness(sections, snapshot_summary)',
+        ),
+        "frontend/apps/web/src/api/businessConfig.ts": (
+            "BusinessConfigDeliveryReadinessPayload",
+            "delivery_readiness?: BusinessConfigDeliveryReadinessPayload",
+        ),
+        "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue": (
+            "data-lowcode-delivery-readiness=\"low_code_delivery_readiness.v1\"",
+            "deliveryReadinessStatusText",
+            "runDeliveryReadinessAction",
+        ),
+        "addons/smart_core/tests/test_business_config_surface.py": (
+            "test_surface_delivery_readiness_marks_empty_authoring_sections_pending",
+            "low_code_delivery_readiness.v1",
+        ),
+    },
 }
 
 

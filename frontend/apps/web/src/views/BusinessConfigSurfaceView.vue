@@ -34,6 +34,30 @@
       <small v-if="advancedPanelOpen && message.detail">{{ message.detail }}</small>
     </div>
 
+    <section v-if="deliveryReadiness" class="delivery-readiness-panel" data-lowcode-delivery-readiness="low_code_delivery_readiness.v1">
+      <div class="delivery-readiness-head">
+        <div>
+          <span>交付状态</span>
+          <strong>{{ deliveryReadinessStatusText }}</strong>
+        </div>
+        <em>{{ deliveryReadinessProgressText }}</em>
+      </div>
+      <div class="delivery-readiness-grid">
+        <button
+          v-for="item in deliveryReadinessItems"
+          :key="item.id"
+          type="button"
+          class="delivery-readiness-item"
+          :class="{ 'delivery-readiness-item--pending': item.status !== 'ready' }"
+          @click="runDeliveryReadinessAction(item)"
+        >
+          <span>{{ item.label }}</span>
+          <strong>{{ deliveryReadinessItemStatusText(item) }}</strong>
+          <em>{{ deliveryReadinessItemMetaText(item) }}</em>
+        </button>
+      </div>
+    </section>
+
     <section v-if="!coverageScan" class="workbench-flow">
       <article class="flow-card flow-card--primary">
         <span class="flow-step">1</span>
@@ -1241,6 +1265,18 @@ const headerDesignerButtonLabel = computed(() => {
   return '先选择页面';
 });
 const snapshotSummary = computed<BusinessConfigSnapshotSummaryPayload | null>(() => surface.value?.snapshot_summary || null);
+const deliveryReadiness = computed(() => surface.value?.delivery_readiness || null);
+const deliveryReadinessItems = computed(() => deliveryReadiness.value?.items || []);
+const deliveryReadinessStatusText = computed(() => {
+  const readiness = deliveryReadiness.value;
+  if (!readiness) return '';
+  return readiness.overall_status === 'ready' ? '可交付' : '待处理';
+});
+const deliveryReadinessProgressText = computed(() => {
+  const readiness = deliveryReadiness.value;
+  if (!readiness) return '';
+  return `${readiness.ready_count}/${readiness.total_count} 项就绪`;
+});
 const snapshotSummaryText = computed(() => {
   const summary = snapshotSummary.value;
   if (!summary) return '';
@@ -1845,6 +1881,42 @@ function remediationActionLabel(code: string) {
   if (code === 'configure_menu') return '配置菜单';
   if (code === 'review_user_preference_boundary') return '检查个人设置';
   return code;
+}
+
+function deliveryReadinessItemStatusText(item: NonNullable<BusinessConfigSurfacePayload['delivery_readiness']>['items'][number]) {
+  if (item.status === 'ready') return '就绪';
+  return '待处理';
+}
+
+function deliveryReadinessItemMetaText(item: NonNullable<BusinessConfigSurfacePayload['delivery_readiness']>['items'][number]) {
+  const countText = item.contract_count ? `${item.contract_count} 项` : '未建立';
+  return advancedPanelOpen.value && item.boundary ? `${countText} · ${boundaryLabel(item.boundary)}` : countText;
+}
+
+function runDeliveryReadinessAction(item: NonNullable<BusinessConfigSurfacePayload['delivery_readiness']>['items'][number]) {
+  if (item.action === 'coverage_scan') {
+    scanSystemRootCoverage();
+    return;
+  }
+  if (item.action === 'snapshot_compare') {
+    advancedPanelOpen.value = true;
+    return;
+  }
+  if (item.section_key === 'menu') {
+    openMenuConfig();
+    return;
+  }
+  if (item.section_key === 'approval') {
+    loadApprovalConfig();
+    return;
+  }
+  if (item.section_key === 'list_search') {
+    loadListSearchConfig();
+    return;
+  }
+  if (item.section_key === 'form') {
+    openFormConfig();
+  }
 }
 
 function withSurfaceLoadTimeout<T>(request: Promise<T>) {
@@ -3405,6 +3477,7 @@ h1 {
 }
 
 .status,
+.delivery-readiness-panel,
 .workbench-flow,
 .scope-panel,
 .loading-state,
@@ -3435,6 +3508,95 @@ h1 {
   border: 1px solid var(--sc-app-success-border);
   background: var(--sc-app-success-bg);
   color: var(--sc-app-success-text);
+}
+
+.delivery-readiness-panel {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
+}
+
+.delivery-readiness-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.delivery-readiness-head div {
+  display: grid;
+  gap: 2px;
+}
+
+.delivery-readiness-head span,
+.delivery-readiness-head em {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.delivery-readiness-head strong {
+  color: var(--sc-app-text-primary);
+  font-size: 16px;
+}
+
+.delivery-readiness-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.delivery-readiness-item {
+  min-width: 0;
+  min-height: 82px;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  border: 1px solid var(--sc-app-success-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.delivery-readiness-item--pending {
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+}
+
+.delivery-readiness-item span,
+.delivery-readiness-item em {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delivery-readiness-item span {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.delivery-readiness-item strong {
+  color: var(--sc-app-success-text);
+  font-size: 12px;
+}
+
+.delivery-readiness-item--pending strong {
+  color: var(--sc-app-warning-text);
+}
+
+.delivery-readiness-item em {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-style: normal;
 }
 
 .workbench-flow {

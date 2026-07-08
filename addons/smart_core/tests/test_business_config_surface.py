@@ -310,6 +310,36 @@ class BusinessConfigSurfaceTests(unittest.TestCase):
         self.assertEqual(result["data"]["role_key"], "sales")
         self.assertEqual(sections["list_search"]["boundary"], "business_contract_not_user_preference")
         self.assertEqual(sections["analysis"]["boundary"], "business_contract")
+        readiness = result["data"]["delivery_readiness"]
+        self.assertEqual(readiness["schema_version"], "low_code_delivery_readiness.v1")
+        self.assertEqual(readiness["overall_status"], "ready")
+        self.assertEqual(readiness["ready_count"], readiness["total_count"])
+        readiness_items = {row["section_key"]: row for row in readiness["items"]}
+        self.assertEqual(readiness_items["form"]["id"], "form_field_structure")
+        self.assertEqual(readiness_items["list_search"]["contract_count"], 2)
+        self.assertEqual(readiness_items["menu"]["boundary"], "business_contract_with_policy_runtime")
+        self.assertEqual(readiness_items["version"]["contract_count"], 7)
+        self.assertEqual(readiness_items["coverage"]["action"], "coverage_scan")
+
+    def test_surface_delivery_readiness_marks_empty_authoring_sections_pending(self):
+        env = _Env({
+            "ui.business.config.contract": _ContractModel([]),
+        })
+        handler = self.module.BusinessConfigSurfaceGetHandler(
+            env=env,
+            params={"model": "res.partner", "action_id": 11},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        readiness = result["data"]["delivery_readiness"]
+        self.assertEqual(readiness["overall_status"], "attention")
+        self.assertGreater(readiness["blocker_count"], 0)
+        readiness_items = {row["section_key"]: row for row in readiness["items"]}
+        self.assertEqual(readiness_items["form"]["status"], "pending")
+        self.assertEqual(readiness_items["list_search"]["status"], "pending")
+        self.assertEqual(readiness_items["coverage"]["status"], "ready")
 
     def test_surface_exposes_analysis_section_from_action_view_mode(self):
         env = _Env({
