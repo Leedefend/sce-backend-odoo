@@ -35,6 +35,7 @@ REQUIRED_MANIFEST_KEYS = {
     "acceptance_apply_dry_run_make_target": "make verify.lowcode_config.customer_module_asset.acceptance_apply.dry_run",
     "accepted_module_asset_replay_guard": "make verify.lowcode_config.customer_module_asset.replay.guard",
     "customer_module_asset_pipeline_make_target": "make verify.lowcode_config.customer_module_asset.pipeline",
+    "customer_module_asset_release_hardening_guard_make_target": "make verify.lowcode_config.customer_module_asset.release_hardening.guard",
 }
 
 

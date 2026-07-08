@@ -142,6 +142,7 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         "accepted_module_asset": "addons/smart_construction_custom/data/lowcode_customer_config_contracts_v1.json",
         "accepted_module_asset_replay_guard": "make verify.lowcode_config.customer_module_asset.replay.guard",
         "customer_module_asset_pipeline_make_target": "make verify.lowcode_config.customer_module_asset.pipeline",
+        "customer_module_asset_release_hardening_guard_make_target": "make verify.lowcode_config.customer_module_asset.release_hardening.guard",
     }
     for key, expected in expected_extraction.items():
         if extraction.get(key) != expected:
@@ -259,6 +260,7 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         "make verify.lowcode_config.customer_module_asset.acceptance_template",
         "make verify.lowcode_config.customer_module_asset.acceptance_apply.dry_run",
         "make verify.lowcode_config.customer_module_asset.pipeline",
+        "make verify.lowcode_config.customer_module_asset.release_hardening.guard",
         "make verify.lowcode_config.customer_module_asset.replay.guard",
         "make verify.business_config.snapshot",
     ):
