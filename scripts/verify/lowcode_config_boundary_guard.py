@@ -542,6 +542,30 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
                     "message": "customer low-code acceptance apply script must preserve explicit manual acceptance semantics",
                     "token": token,
                 })
+    acceptance_apply_test = ROOT / "scripts" / "verify" / "lowcode_customer_config_apply_acceptance_decisions_test.py"
+    if not acceptance_apply_test.is_file():
+        errors.append({
+            "category": "customer_config_baseline_acceptance_apply",
+            "message": "customer low-code acceptance apply safety tests are missing",
+        })
+    else:
+        acceptance_apply_test_text = _read(acceptance_apply_test)
+        for token in (
+            "test_accepts_reviewed_matching_tenant_runtime_record",
+            "test_pending_decision_does_not_enter_asset",
+            "test_rejects_accepted_without_reviewer",
+            "test_rejects_accepted_without_review_note",
+            "test_rejects_payload_hash_mismatch",
+            "test_rejects_non_tenant_runtime_record",
+            "test_rejects_unknown_decision",
+            "test_rejects_duplicate_decisions",
+        ):
+            if token not in acceptance_apply_test_text:
+                errors.append({
+                    "category": "customer_config_baseline_acceptance_apply",
+                    "message": "customer low-code acceptance apply safety tests must cover strict acceptance gates",
+                    "token": token,
+                })
     accepted_asset_path = ROOT / expected_extraction["accepted_module_asset"]
     if not accepted_asset_path.is_file():
         errors.append({
