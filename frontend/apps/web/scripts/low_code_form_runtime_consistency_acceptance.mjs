@@ -37,15 +37,26 @@ async function openFormDesigner(page) {
   await page.waitForSelector(".config-card", { timeout: 30000 });
   await page.getByRole("button", { name: "配置表单字段" }).first().click();
   await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
-  let field = page.locator(`[data-field-name="${FIELD_NAME}"]`).first();
-  if (!(await field.count())) {
-    field = page.locator("[data-field-name]").first();
-    await field.waitFor({ state: "attached", timeout: 30000 });
-    FIELD_NAME = String(await field.getAttribute("data-field-name") || "").trim();
-    FIELD_LABEL = await selectedFieldLabel(page) || FIELD_LABEL;
-  } else {
-    await field.waitFor({ state: "attached", timeout: 30000 });
+  await ensureDesignerField(page);
+}
+
+async function ensureDesignerField(page) {
+  await page.locator("[data-field-name]").first().waitFor({ state: "attached", timeout: 30000 });
+  await page.waitForFunction(() => {
+    const fields = Array.from(document.querySelectorAll("[data-field-name]"));
+    return fields.length >= 10 && fields.every((field) => String(field.getAttribute("data-field-name") || "").trim());
+  }, null, { timeout: 30000 }).catch(() => {});
+
+  const preferred = page.locator(`[data-field-name="${FIELD_NAME}"]`).first();
+  if (await preferred.count()) {
+    await preferred.waitFor({ state: "attached", timeout: 30000 });
+    return;
   }
+
+  const fallback = page.locator("[data-field-name]").first();
+  await fallback.waitFor({ state: "attached", timeout: 30000 });
+  FIELD_NAME = String(await fallback.getAttribute("data-field-name") || "").trim();
+  FIELD_LABEL = await selectedFieldLabel(page) || FIELD_LABEL;
 }
 
 async function selectField(page) {
@@ -114,7 +125,7 @@ async function renameFieldInDesigner(page, targetLabel, stage) {
   }, targetLabel);
   await responsePromise;
   await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
-  await page.locator(`[data-field-name="${FIELD_NAME}"]`).first().waitFor({ state: "attached", timeout: 30000 });
+  await ensureDesignerField(page);
   await page.waitForFunction(({ fieldName, label }) => {
     const fieldNode = document.querySelector(`[data-field-name="${fieldName}"]`);
     const editor = fieldNode?.querySelector(".field-label-editor");
@@ -145,7 +156,7 @@ async function moveFieldInDesigner(page, targetGroup) {
   await page.waitForFunction(() => !document.body.innerText.includes("表单设置已调整，保存后生效"), { timeout: 30000 });
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForSelector(".contract-form-settings", { timeout: 30000 });
-  await page.locator(`[data-field-name="${FIELD_NAME}"]`).first().waitFor({ timeout: 30000 });
+  await ensureDesignerField(page);
 }
 
 async function businessRuntimeEvidence(page) {
