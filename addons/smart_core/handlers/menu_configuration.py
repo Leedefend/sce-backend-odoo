@@ -4,6 +4,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+try:
+    from odoo import SUPERUSER_ID, api
+except Exception:  # pragma: no cover - lightweight unit-test stubs
+    SUPERUSER_ID = 1
+    api = None
 from odoo.exceptions import AccessError, ValidationError
 
 from ..core.base_handler import BaseIntentHandler
@@ -679,25 +684,66 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         identity = call_extension_hook_first(self.env, "smart_core_resolve_startup_delivery_identity", self.env, {})
         return identity if isinstance(identity, dict) else {}
 
-    def _runtime_release_navigation_tree(self) -> tuple[list[dict], dict]:
+    def _runtime_release_navigation_tree(self, root_menu_id: int = 0) -> tuple[list[dict], dict]:
         try:
-            from ..delivery.final_menu_navigation_service import FinalMenuNavigationService
+            if api is None:
+                raise RuntimeError("odoo_api_unavailable")
+            from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
+            from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
+            from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
+            from odoo.addons.smart_core.core.system_init_nav_request_builder import SystemInitNavRequestBuilder
+            from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
 
-            navigation = FinalMenuNavigationService(self.env).build(scene_map={}, policy={})
-            nav_fact = navigation.get("nav_fact") if isinstance(navigation, dict) else {}
-            nav = nav_fact.get("tree") if isinstance(nav_fact, dict) and isinstance(nav_fact.get("tree"), list) else []
+            params = {}
+            if root_menu_id:
+                params["root_menu_id"] = root_menu_id
+            su_env = api.Environment(self.env.cr, SUPERUSER_ID, dict(self.env.context or {}))
+            nav_request = SystemInitNavRequestBuilder.build(params, "web")
+            nav_data, nav_versions = NavDispatcher(self.env, su_env).build_nav(nav_request)
+            native_nav = NavTreeCleaner().clean(nav_data.get("nav") if isinstance(nav_data, dict) else [])
+            OdooNavAdapter().enrich(self.env, native_nav)
+            identity = self._current_delivery_identity()
+            navigation = DeliveryEngine(self.env).build(
+                data={"role_surface": self._runtime_role_surface()},
+                product_key=_to_text(identity.get("product_key")) if isinstance(identity, dict) else "",
+                edition_key=_to_text(identity.get("edition_key")) if isinstance(identity, dict) else "",
+                base_product_key=_to_text(identity.get("base_product_key")) if isinstance(identity, dict) else "",
+                native_nav=native_nav,
+            )
+            nav = navigation.get("nav") if isinstance(navigation, dict) and isinstance(navigation.get("nav"), list) else []
             meta = navigation.get("meta") if isinstance(navigation, dict) and isinstance(navigation.get("meta"), dict) else {}
             return nav, {
-                "source": "final_menu_navigation",
+                "source": "delivery_engine_v1",
+                "nav_versions": nav_versions if isinstance(nav_versions, dict) else {},
                 "user_menu_config": meta.get("user_menu_config") if isinstance(meta.get("user_menu_config"), dict) else {},
             }
         except Exception as exc:
-            _logger.debug("MENU_CONFIG_RELEASE_NAVIGATION_STATE_FAILED error=%s", exc)
-            return [], {"source": "final_menu_navigation", "error": "runtime_navigation_unavailable"}
+            _logger.debug("MENU_CONFIG_DELIVERY_NAVIGATION_STATE_FAILED error=%s", exc)
+            try:
+                from ..delivery.final_menu_navigation_service import FinalMenuNavigationService
+
+                navigation = FinalMenuNavigationService(self.env).build(scene_map={}, policy={})
+                nav_fact = navigation.get("nav_fact") if isinstance(navigation, dict) else {}
+                nav = nav_fact.get("tree") if isinstance(nav_fact, dict) and isinstance(nav_fact.get("tree"), list) else []
+                meta = navigation.get("meta") if isinstance(navigation, dict) and isinstance(navigation.get("meta"), dict) else {}
+                return nav, {
+                    "source": "final_menu_navigation_fallback",
+                    "error": "delivery_navigation_unavailable",
+                    "user_menu_config": meta.get("user_menu_config") if isinstance(meta.get("user_menu_config"), dict) else {},
+                }
+            except Exception as fallback_exc:
+                _logger.debug("MENU_CONFIG_RELEASE_NAVIGATION_STATE_FAILED error=%s", fallback_exc)
+                return [], {"source": "delivery_engine_v1", "error": "runtime_navigation_unavailable"}
 
     def _runtime_navigation_state(self, configured_by_menu: dict[int, dict], menu_rows: list[dict] | None = None) -> dict:
-        del menu_rows
-        nav_tree, nav_meta = self._runtime_release_navigation_tree()
+        root_menu_id = 0
+        for row in menu_rows or []:
+            parent_id = _to_int(row.get("parent_id")) if isinstance(row, dict) else 0
+            menu_id = _to_int(row.get("id") or row.get("menu_id")) if isinstance(row, dict) else 0
+            if menu_id and not parent_id:
+                root_menu_id = menu_id
+                break
+        nav_tree, nav_meta = self._runtime_release_navigation_tree(root_menu_id=root_menu_id)
         runtime = _build_runtime_navigation_states(nav_tree, configured_by_menu)
         runtime["source"] = "release_navigation_v1"
         runtime["navigation_meta"] = nav_meta

@@ -899,6 +899,51 @@ class MenuService:
                     visit(children)
 
         visit(native_nav or [])
+        if self.env is None:
+            return groups
+        try:
+            Menu = self.env["ir.ui.menu"].sudo()
+        except Exception:
+            return groups
+
+        root_id = 0
+        root_xmlid = str(call_extension_hook_first(self.env, "smart_core_business_root_menu_xmlid", self.env) or "").strip()
+        if not root_xmlid:
+            try:
+                root_xmlid = str(
+                    self.env["ir.config_parameter"].sudo().get_param("smart_core.business_root_menu_xmlid", "") or ""
+                ).strip()
+            except Exception:
+                root_xmlid = ""
+        if root_xmlid and hasattr(self.env, "ref"):
+            try:
+                root = self.env.ref(root_xmlid, raise_if_not_found=False)
+            except TypeError:
+                try:
+                    root = self.env.ref(root_xmlid)
+                except Exception:
+                    root = None
+            except Exception:
+                root = None
+            if root and getattr(root, "_name", "") == "ir.ui.menu":
+                try:
+                    root_id = int(root.id or 0)
+                except Exception:
+                    root_id = 0
+        if not root_id:
+            return groups
+        try:
+            menus = Menu.search([("parent_id", "=", root_id)])
+        except Exception:
+            return groups
+        for menu in menus or []:
+            label = str(getattr(menu, "name", "") or "").strip()
+            try:
+                menu_id = int(getattr(menu, "id", 0) or 0)
+            except Exception:
+                menu_id = 0
+            if label and menu_id:
+                groups[label] = menu_id
         return groups
 
     def _native_runtime_config_menus(
