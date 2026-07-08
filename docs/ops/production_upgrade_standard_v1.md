@@ -209,7 +209,9 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make history.
 专项能力必须加入专项 guard。例如低代码升级必须执行：
 
 ```bash
-python3 scripts/verify/lowcode_config_boundary_guard.py
+make verify.lowcode_config.boundary.guard
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.lowcode_config.runtime_boundary.guard
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.business_config.snapshot
 python3 scripts/verify/business_config_guard_inventory.py
 python3 scripts/verify/backend_contract_boundary_guard.py
 ```

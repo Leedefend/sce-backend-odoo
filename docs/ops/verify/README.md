@@ -61,6 +61,24 @@
     boundary, `app_config_engine` runtime plumbing boundary, product
     view-orchestration boundary, and full view-orchestration contract boundary,
     then runs `lowcode_config_boundary_guard.py`.
+  - Locks the customer baseline manifest
+    `lowcode_customer_config_baseline_manifest.v1` to the
+    `smart_construction_custom` install path, including module data files,
+    post-init hooks, XML function entries, source markers, and source-status
+    backfill.
+- `make verify.lowcode_config.runtime_boundary.guard`
+  - Runtime low-code boundary gate for live Odoo databases after module
+    install/upgrade.
+  - Runs with `LOWCODE_CONFIG_RUNTIME_SOURCE_STATUS_STRICT=1`, verifies
+    protected configuration menu recovery entries, rejects ordinary business
+    user access to global low-code configuration entries, and checks
+    `ui.business.config.contract` source-status custody.
+- `make verify.business_config.snapshot`
+  - Exports the live `ui.business.config.contract` baseline to
+    `artifacts/backend/business_config_contract_snapshot.json`.
+  - Supports `BUSINESS_CONFIG_SNAPSHOT_COMPARE_PATH` for cross-environment
+    comparison, so local, daily-dev, prod-sim, and production configuration
+    state can be checked without relying on untracked manual database edits.
 - `make verify.smart_core.boundary_guard`
   - Verifies `addons/smart_core` remains the platform kernel, not an industry
     business fact module.

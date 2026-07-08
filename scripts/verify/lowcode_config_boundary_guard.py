@@ -182,6 +182,8 @@ LOWCODE_CAPABILITY_REQUIREMENTS = {
 
 LOWCODE_BOUNDARY_DOC = ROOT / "docs" / "architecture" / "backend_contract_boundaries.md"
 LOWCODE_CAPABILITY_MATRIX = ROOT / "docs" / "architecture" / "low_code_business_config_capability_matrix_v1.json"
+VERIFY_INDEX_DOC = ROOT / "docs" / "ops" / "verify" / "README.md"
+PRODUCTION_UPGRADE_STANDARD_DOC = ROOT / "docs" / "ops" / "production_upgrade_standard_v1.md"
 
 
 def _load_boundaries():
@@ -296,6 +298,47 @@ def _validate_lowcode_capability_boundaries(errors: list[dict]) -> list[str]:
                     "token": token,
                 })
     return capability_ids
+
+
+def _validate_lowcode_release_verification_docs(errors: list[dict]) -> None:
+    verify_index_text = _read(VERIFY_INDEX_DOC)
+    production_standard_text = _read(PRODUCTION_UPGRADE_STANDARD_DOC)
+    verify_index_tokens = (
+        "make verify.lowcode_config.boundary.guard",
+        "make verify.lowcode_config.runtime_boundary.guard",
+        "make verify.business_config.snapshot",
+        "lowcode_customer_config_baseline_manifest.v1",
+        "LOWCODE_CONFIG_RUNTIME_SOURCE_STATUS_STRICT=1",
+        "BUSINESS_CONFIG_SNAPSHOT_COMPARE_PATH",
+        "smart_construction_custom",
+        "source-status",
+        "ordinary business",
+        "global low-code configuration entries",
+    )
+    for token in verify_index_tokens:
+        if token not in verify_index_text:
+            errors.append({
+                "category": "lowcode_release_verification_docs",
+                "path": VERIFY_INDEX_DOC.relative_to(ROOT).as_posix(),
+                "message": "verification index must document the complete low-code release evidence chain",
+                "token": token,
+            })
+    production_standard_tokens = (
+        "make verify.lowcode_config.boundary.guard",
+        "make verify.lowcode_config.runtime_boundary.guard",
+        "make verify.business_config.snapshot",
+        "PROD_READONLY_VERIFY=1",
+        "python3 scripts/verify/business_config_guard_inventory.py",
+        "python3 scripts/verify/backend_contract_boundary_guard.py",
+    )
+    for token in production_standard_tokens:
+        if token not in production_standard_text:
+            errors.append({
+                "category": "lowcode_release_verification_docs",
+                "path": PRODUCTION_UPGRADE_STANDARD_DOC.relative_to(ROOT).as_posix(),
+                "message": "production upgrade standard must require static, runtime, snapshot, and backend low-code evidence",
+                "token": token,
+            })
 
 
 def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
@@ -498,6 +541,7 @@ def build_report() -> dict:
     system_config_menu_xmlids = set(getattr(boundaries, "LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS", set()))
     capability_ids = _validate_lowcode_capability_boundaries(errors)
     _validate_customer_config_baseline_manifest(errors)
+    _validate_lowcode_release_verification_docs(errors)
 
     missing_statuses = sorted(REQUIRED_SOURCE_STATUSES - source_statuses)
     if missing_statuses:
