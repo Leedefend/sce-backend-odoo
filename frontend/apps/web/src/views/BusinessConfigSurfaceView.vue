@@ -223,16 +223,22 @@
               </button>
             </div>
           </div>
-          <div class="section-grid">
-            <article v-for="section in visibleConfigSections" :key="section.key" class="config-card">
+          <div class="section-grid" data-lowcode-config-task-grid="v1">
+            <article v-for="section in visibleConfigSections" :key="section.key" class="config-card" data-lowcode-config-task-card="v1">
               <div class="config-card-head">
-                <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
-                <strong :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
+                <div>
+                  <span>{{ sectionTaskKindLabel(section.key) }}</span>
+                  <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
+                </div>
+                <strong class="config-status-badge" :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
               </div>
-              <p>{{ sectionPrimaryCopy(section.key) }}</p>
-              <div class="config-card-meta">
+              <div class="config-task-impact">
+                <span>{{ sectionPrimaryCopy(section.key) }}</span>
+                <em>{{ sectionImpactText(section.key) }}</em>
+              </div>
+              <div class="config-card-meta" data-lowcode-config-task-meta="v1">
                 <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
-                <span v-if="sectionConfigProgressText(section.key, section.contract_count)">{{ sectionConfigProgressText(section.key, section.contract_count) }}</span>
+                <span>{{ sectionTaskCoverageText(section.key, section.contract_count) }}</span>
               </div>
               <div class="config-card-actions">
                 <button
@@ -251,16 +257,16 @@
                   :disabled="!currentModel || listSearchBusy"
                   @click="loadListSearchConfig"
                 >
-                  {{ listSearchBusy ? '读取中...' : '配置列表与搜索' }}
+                  {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
                 </button>
                 <button
                   v-else-if="section.key === 'form'"
                   type="button"
-                  class="ghost small"
+                  class="ghost small primary"
                   :disabled="!canOpenDesigner"
                   @click="openFormConfig"
                 >
-                  配置表单字段
+                  {{ sectionPrimaryActionLabel(section.key) }}
                 </button>
                 <button
                   v-else-if="section.key === 'menu'"
@@ -268,12 +274,12 @@
                   class="ghost small"
                   @click="openMenuConfig"
                 >
-                  调整菜单入口
+                  {{ sectionPrimaryActionLabel(section.key) }}
                 </button>
                 <button
                   v-if="section.key === 'menu'"
                   type="button"
-                  class="ghost small primary"
+                  class="ghost small"
                   @click="openCreateMenuConfig"
                 >
                   新增菜单
@@ -285,16 +291,16 @@
                   :disabled="!currentModel || listSearchBusy"
                   @click="loadAnalysisConfig"
                 >
-                  {{ listSearchBusy ? '读取中...' : '配置分析视图' }}
+                  {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
                 </button>
                 <button
                   v-else-if="section.key === 'approval'"
                   type="button"
-                  class="ghost small"
+                  class="ghost small primary"
                   :disabled="!currentModel || approvalLoading"
                   @click="loadApprovalConfig"
                 >
-                  {{ approvalLoading ? '读取中...' : '设置审批' }}
+                  {{ approvalLoading ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
                 </button>
                 <button
                   v-if="section.key === 'approval' && section.route?.path"
@@ -1614,6 +1620,34 @@ function sectionPrimaryCopy(sectionKey: string) {
   return '调整当前业务页面配置。';
 }
 
+function sectionTaskKindLabel(sectionKey: string) {
+  if (sectionKey === 'form') return '页面结构';
+  if (sectionKey === 'list_search') return '查询体验';
+  if (sectionKey === 'analysis') return '分析视图';
+  if (sectionKey === 'menu') return '导航入口';
+  if (sectionKey === 'approval') return '办理规则';
+  return '业务配置';
+}
+
+function sectionImpactText(sectionKey: string) {
+  const page = selectedCoverageRow.value?.name || selectedPageLabel.value || '当前页面';
+  if (sectionKey === 'form') return `影响 ${page} 的表单填写体验`;
+  if (sectionKey === 'list_search') return `影响 ${page} 的列表和检索默认值`;
+  if (sectionKey === 'analysis') return `影响 ${page} 的统计分析视图`;
+  if (sectionKey === 'menu') return `影响 ${page} 的导航可见性`;
+  if (sectionKey === 'approval') return `影响 ${page} 的提交和审核判断`;
+  return `影响 ${page}`;
+}
+
+function sectionPrimaryActionLabel(sectionKey: string) {
+  if (sectionKey === 'form') return '配置表单';
+  if (sectionKey === 'list_search') return '配置列表';
+  if (sectionKey === 'analysis') return '配置分析';
+  if (sectionKey === 'menu') return '配置菜单';
+  if (sectionKey === 'approval') return '配置审批';
+  return '配置';
+}
+
 function selectedPageViewTypes() {
   const row = selectedCoverageRow.value;
   const fromTarget = (row?.target_view_types || []).map((item) => String(item || '').trim()).filter(Boolean);
@@ -1654,6 +1688,14 @@ function sectionConfigProgressText(sectionKey: string, contractCount: number) {
   const expected = sectionExpectedContractCount(sectionKey);
   const count = Math.max(0, Math.min(Number(contractCount || 0), expected));
   return `${count}/${expected}`;
+}
+
+function sectionTaskCoverageText(sectionKey: string, contractCount: number) {
+  if (sectionKey === 'menu') {
+    return Number(contractCount || 0) > 0 ? '已有菜单显示规则' : '使用默认菜单显示';
+  }
+  const progress = sectionConfigProgressText(sectionKey, contractCount);
+  return progress ? `覆盖 ${progress}` : '覆盖 0/1';
 }
 
 function viewTypeLabel(viewType: string) {
@@ -4172,14 +4214,15 @@ h1 {
 
 .section-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
 }
 
 .config-card {
   min-width: 0;
   display: grid;
-  gap: 10px;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 12px;
   padding: 14px;
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
@@ -4193,7 +4236,18 @@ h1 {
   gap: 12px;
 }
 
-.config-card strong {
+.config-card-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.config-card-head span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.config-status-badge {
   min-height: 24px;
   display: inline-flex;
   align-items: center;
@@ -4206,30 +4260,54 @@ h1 {
   white-space: nowrap;
 }
 
-.config-card strong.config-status--empty {
+.config-status-badge.config-status--empty {
   border-color: var(--sc-app-border);
   background: var(--sc-app-panel-muted);
   color: var(--sc-app-text-secondary);
 }
 
-.config-card p {
-  margin: 0;
+.config-task-impact {
+  display: grid;
+  gap: 5px;
   color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 
+.config-task-impact span,
+.config-task-impact em {
+  min-width: 0;
+}
+
+.config-task-impact em {
+  color: var(--sc-app-text-muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
 .config-card-meta {
   min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.config-card-meta span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 0 8px;
+  background: var(--sc-app-bg);
   color: var(--sc-app-text-secondary);
   font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .config-card-actions {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
