@@ -484,6 +484,18 @@ MAKEFILE_TARGET_PREREQS = (
         ),
     ),
     (
+        "verify.product.surface.clean",
+        (
+            "guard.prod.forbid",
+            "verify.product.capability.matrix.ready",
+            "verify.runtime_contract.test_placeholder.guard",
+            "verify.lowcode_config.boundary.guard",
+            "verify.lowcode_config.runtime_boundary.guard",
+            "verify.business_config.snapshot",
+            "verify.product.no_demo_data",
+        ),
+    ),
+    (
         "verify.release.v2_0_0.governance.guard",
         (
             "guard.prod.forbid",
