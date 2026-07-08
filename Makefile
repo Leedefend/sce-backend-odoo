@@ -4578,6 +4578,10 @@ verify.lowcode_config.customer_module_asset.acceptance_apply.dry_run: verify.low
 	@python3 scripts/verify/lowcode_customer_config_apply_acceptance_decisions_test.py
 	@LOWCODE_CUSTOMER_CONFIG_MODULE_ASSET_DRAFT_INPUT=artifacts/backend/lowcode_customer_config_module_asset_draft.json LOWCODE_CUSTOMER_CONFIG_ACCEPTANCE_DECISIONS_INPUT=artifacts/backend/lowcode_customer_config_acceptance_decisions_template.json LOWCODE_CUSTOMER_CONFIG_ACCEPTED_ASSET_OUTPUT=artifacts/backend/lowcode_customer_config_contracts_candidate.json python3 scripts/verify/lowcode_customer_config_apply_acceptance_decisions.py
 
+.PHONY: verify.lowcode_config.customer_module_asset.pipeline
+verify.lowcode_config.customer_module_asset.pipeline: verify.lowcode_config.customer_module_asset.acceptance_apply.dry_run verify.lowcode_config.customer_module_asset.replay.guard
+	@echo "[lowcode_customer_config_pipeline] PASS"
+
 .PHONY: verify.lowcode_config.customer_module_asset.replay.guard
 verify.lowcode_config.customer_module_asset.replay.guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/lowcode_customer_config_module_asset_replay_guard.py

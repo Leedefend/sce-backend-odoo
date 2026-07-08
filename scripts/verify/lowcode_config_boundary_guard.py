@@ -434,6 +434,7 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
         "accepted_module_asset_schema_version": "lowcode_customer_config_contracts.v1",
         "accepted_module_asset": "addons/smart_construction_custom/data/lowcode_customer_config_contracts_v1.json",
         "accepted_module_asset_replay_guard": "make verify.lowcode_config.customer_module_asset.replay.guard",
+        "customer_module_asset_pipeline_make_target": "make verify.lowcode_config.customer_module_asset.pipeline",
     }
     for key, expected in expected_extraction.items():
         if extraction.get(key) != expected:
@@ -732,6 +733,7 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
         "make verify.lowcode_config.customer_module_asset.draft",
         "make verify.lowcode_config.customer_module_asset.acceptance_template",
         "make verify.lowcode_config.customer_module_asset.acceptance_apply.dry_run",
+        "make verify.lowcode_config.customer_module_asset.pipeline",
         "make verify.lowcode_config.customer_module_asset.replay.guard",
         "make verify.business_config.unit",
         "make verify.business_config.snapshot",
