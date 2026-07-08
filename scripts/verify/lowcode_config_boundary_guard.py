@@ -424,6 +424,9 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
         "module_asset_draft_make_target": "make verify.lowcode_config.customer_module_asset.draft",
         "module_asset_draft_script": "scripts/verify/lowcode_customer_config_module_asset_draft.py",
         "module_asset_draft_artifact": "artifacts/backend/lowcode_customer_config_module_asset_draft.json",
+        "accepted_module_asset_schema_version": "lowcode_customer_config_contracts.v1",
+        "accepted_module_asset": "addons/smart_construction_custom/data/lowcode_customer_config_contracts_v1.json",
+        "accepted_module_asset_replay_guard": "make verify.lowcode_config.customer_module_asset.replay.guard",
     }
     for key, expected in expected_extraction.items():
         if extraction.get(key) != expected:
@@ -480,6 +483,43 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
                     "message": "customer low-code module asset draft must preserve review-only promotion semantics",
                     "token": token,
                 })
+    accepted_asset_path = ROOT / expected_extraction["accepted_module_asset"]
+    if not accepted_asset_path.is_file():
+        errors.append({
+            "category": "customer_config_baseline_manifest",
+            "message": "accepted customer low-code module asset is missing",
+            "path": expected_extraction["accepted_module_asset"],
+        })
+    else:
+        try:
+            accepted_asset = json.loads(_read(accepted_asset_path))
+        except json.JSONDecodeError as exc:
+            errors.append({
+                "category": "customer_config_baseline_module_asset",
+                "message": "accepted customer low-code module asset is invalid JSON",
+                "error": str(exc),
+            })
+            accepted_asset = {}
+        for key, expected in (
+            ("schema_version", "lowcode_customer_config_contracts.v1"),
+            ("source_draft_schema", "lowcode_customer_config_module_asset_draft.v1"),
+            ("target_module", "smart_construction_custom"),
+            ("artifact_status", "accepted_module_asset"),
+        ):
+            if accepted_asset.get(key) != expected:
+                errors.append({
+                    "category": "customer_config_baseline_module_asset",
+                    "message": "accepted customer low-code module asset metadata drifted",
+                    "key": key,
+                    "expected": expected,
+                    "actual": accepted_asset.get(key),
+                })
+    replay_guard_path = ROOT / "scripts" / "verify" / "lowcode_customer_config_module_asset_replay_guard.py"
+    if not replay_guard_path.is_file():
+        errors.append({
+            "category": "customer_config_baseline_module_asset",
+            "message": "accepted customer low-code module asset replay guard is missing",
+        })
     surfaces = payload.get("replayable_surfaces") if isinstance(payload.get("replayable_surfaces"), list) else []
     surface_names = {str(item.get("surface") or "").strip() for item in surfaces if isinstance(item, dict)}
     for surface in ("menu_preferences", "form_preferences", "user_data_baseline"):
@@ -554,6 +594,7 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
         "def apply_user_preferences",
         "apply_user_menu_preferences()",
         "apply_user_form_preferences()",
+        "apply_customer_lowcode_contract_assets()",
         "backfill_lowcode_contract_source_status(env)",
         "def apply_user_data_baseline",
         "apply_user_data_baseline()",
@@ -588,6 +629,9 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
         'PARTNER_FORM_PREFERENCE_SOURCE = "smart_construction_custom.partner_form_preference"',
         'USER_FORM_PREFERENCE_SOURCE = "smart_construction_custom.user_form_preference"',
         '"productization_source": "smart_construction_custom.user_menu_preference"',
+        'CUSTOMER_LOWCODE_CONTRACT_ASSET_SOURCE = "smart_construction_custom.lowcode_customer_config_contracts"',
+        "apply_customer_lowcode_contract_assets",
+        "_upsert_customer_lowcode_contract_asset_record",
         "ensure_lowcode_contract_source_status",
         "_upsert_form_contract",
     ):
@@ -603,6 +647,7 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
         "make verify.lowcode_config.runtime_boundary.guard",
         "make verify.lowcode_config.customer_baseline.candidate",
         "make verify.lowcode_config.customer_module_asset.draft",
+        "make verify.lowcode_config.customer_module_asset.replay.guard",
         "make verify.business_config.unit",
         "make verify.business_config.snapshot",
     ):

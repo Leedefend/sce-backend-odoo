@@ -4551,7 +4551,7 @@ verify.runtime_contract.test_placeholder.guard: guard.prod.forbid check-compose-
 	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/runtime_contract_test_placeholder_guard.json artifacts/backend/runtime_contract_test_placeholder_guard.json >/dev/null
 
 .PHONY: verify.lowcode_config.boundary.guard
-verify.lowcode_config.boundary.guard: guard.prod.forbid verify.business_config.guard_inventory verify.smart_core.boundary_guard verify.app_config_engine.boundary_guard verify.view.orchestration_product_boundary_guard verify.view.orchestration_boundary_guard
+verify.lowcode_config.boundary.guard: guard.prod.forbid verify.business_config.guard_inventory verify.smart_core.boundary_guard verify.app_config_engine.boundary_guard verify.view.orchestration_product_boundary_guard verify.view.orchestration_boundary_guard verify.lowcode_config.customer_module_asset.replay.guard
 	@python3 -m py_compile scripts/verify/lowcode_config_boundary_guard.py
 	@python3 scripts/verify/lowcode_config_boundary_guard.py
 
@@ -4566,6 +4566,11 @@ verify.lowcode_config.customer_baseline.candidate: guard.prod.forbid check-compo
 verify.lowcode_config.customer_module_asset.draft: verify.lowcode_config.customer_baseline.candidate
 	@python3 -m py_compile scripts/verify/lowcode_customer_config_module_asset_draft.py
 	@LOWCODE_CUSTOMER_CONFIG_BASELINE_CANDIDATE_INPUT=artifacts/backend/lowcode_customer_config_baseline_candidate.json LOWCODE_CUSTOMER_CONFIG_MODULE_ASSET_DRAFT_PATH=artifacts/backend/lowcode_customer_config_module_asset_draft.json python3 scripts/verify/lowcode_customer_config_module_asset_draft.py
+
+.PHONY: verify.lowcode_config.customer_module_asset.replay.guard
+verify.lowcode_config.customer_module_asset.replay.guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/lowcode_customer_config_module_asset_replay_guard.py
+	@python3 scripts/verify/lowcode_customer_config_module_asset_replay_guard.py
 
 .PHONY: verify.lowcode_config.runtime_boundary.guard
 verify.lowcode_config.runtime_boundary.guard: guard.prod.forbid check-compose-project check-compose-env

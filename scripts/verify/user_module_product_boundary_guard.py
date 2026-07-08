@@ -131,6 +131,9 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         "module_asset_draft_make_target": "make verify.lowcode_config.customer_module_asset.draft",
         "module_asset_draft_script": "scripts/verify/lowcode_customer_config_module_asset_draft.py",
         "module_asset_draft_artifact": "artifacts/backend/lowcode_customer_config_module_asset_draft.json",
+        "accepted_module_asset_schema_version": "lowcode_customer_config_contracts.v1",
+        "accepted_module_asset": "addons/smart_construction_custom/data/lowcode_customer_config_contracts_v1.json",
+        "accepted_module_asset_replay_guard": "make verify.lowcode_config.customer_module_asset.replay.guard",
     }
     for key, expected in expected_extraction.items():
         if extraction.get(key) != expected:
@@ -152,6 +155,21 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         ):
             if token not in draft_text:
                 failures.append(f"low-code customer configuration module asset draft script missing {token}")
+    accepted_asset = ROOT / expected_extraction["accepted_module_asset"]
+    if not accepted_asset.exists():
+        failures.append("accepted low-code customer configuration module asset is missing")
+    else:
+        asset_payload = json.loads(accepted_asset.read_text(encoding="utf-8"))
+        for key, expected in (
+            ("schema_version", "lowcode_customer_config_contracts.v1"),
+            ("source_draft_schema", "lowcode_customer_config_module_asset_draft.v1"),
+            ("target_module", "smart_construction_custom"),
+            ("artifact_status", "accepted_module_asset"),
+        ):
+            if asset_payload.get(key) != expected:
+                failures.append(f"accepted low-code customer configuration module asset {key} mismatch")
+    if not (ROOT / "scripts/verify/lowcode_customer_config_module_asset_replay_guard.py").exists():
+        failures.append("accepted low-code customer configuration module asset replay guard is missing")
     surfaces = payload.get("replayable_surfaces") if isinstance(payload.get("replayable_surfaces"), list) else []
     surface_names = {str(item.get("surface") or "").strip() for item in surfaces if isinstance(item, dict)}
     for surface in ("menu_preferences", "form_preferences", "user_data_baseline"):
@@ -164,6 +182,7 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         "addons/smart_construction_custom/hooks.py",
         "addons/smart_construction_custom/data/user_preferences.xml",
         "addons/smart_construction_custom/data/user_menu_preferences.xml",
+        "addons/smart_construction_custom/data/lowcode_customer_config_contracts_v1.json",
         "addons/smart_construction_custom/data/user_module_data_baseline_contract_v1.json",
     ):
         if required not in required_asset_set:
@@ -176,6 +195,7 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         "make verify.lowcode_config.runtime_boundary.guard",
         "make verify.lowcode_config.customer_baseline.candidate",
         "make verify.lowcode_config.customer_module_asset.draft",
+        "make verify.lowcode_config.customer_module_asset.replay.guard",
         "make verify.business_config.snapshot",
     ):
         if guard not in required_guards:
@@ -427,6 +447,19 @@ def verify_hook_boundary() -> list[str]:
     else:
         if "apply_user_data_baseline" not in _call_names(apply_user_data):
             failures.append("hooks.apply_user_data_baseline must delegate to sc.user.preference.initialization")
+    apply_user_preferences = _function_by_name(tree, "apply_user_preferences")
+    preference_calls = _call_names(apply_user_preferences)
+    for required in (
+        "apply_user_menu_preferences",
+        "apply_user_form_preferences",
+        "apply_customer_lowcode_contract_assets",
+        "backfill_lowcode_contract_source_status",
+    ):
+        if required not in preference_calls:
+            failures.append(f"hooks.apply_user_preferences missing {required}")
+    if all(name in preference_calls for name in ("apply_user_form_preferences", "apply_customer_lowcode_contract_assets")):
+        if preference_calls.index("apply_customer_lowcode_contract_assets") < preference_calls.index("apply_user_form_preferences"):
+            failures.append("hooks.apply_user_preferences must replay accepted low-code assets after default form preferences")
     return failures
 
 

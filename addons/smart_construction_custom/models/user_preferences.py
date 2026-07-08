@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+from pathlib import Path
 import xml.etree.ElementTree as ET
 
 from odoo import api, models
@@ -9,6 +10,8 @@ from odoo.tools.safe_eval import safe_eval
 
 PARTNER_FORM_PREFERENCE_SOURCE = "smart_construction_custom.partner_form_preference"
 USER_FORM_PREFERENCE_SOURCE = "smart_construction_custom.user_form_preference"
+CUSTOMER_LOWCODE_CONTRACT_ASSET_SOURCE = "smart_construction_custom.lowcode_customer_config_contracts"
+CUSTOMER_LOWCODE_CONTRACT_ASSET_PATH = Path(__file__).resolve().parents[1] / "data" / "lowcode_customer_config_contracts_v1.json"
 
 PARTNER_ACTIONS = {
     "customer": {
@@ -386,6 +389,28 @@ class ScUserPreferenceInitialization(models.TransientModel):
         params.set_param("sc.custom.user_form_preferences_ready", "1")
         params.set_param("sc.custom.user_form_preferences_contract_count", str(len(applied)))
         params.set_param("sc.custom.user_form_preferences_skipped", json.dumps(skipped, ensure_ascii=False))
+        return True
+
+    @api.model
+    def apply_customer_lowcode_contract_assets(self):
+        if "ui.business.config.contract" not in self.env:
+            return False
+        asset = self._load_customer_lowcode_contract_asset()
+        applied = []
+        skipped = []
+        for record in asset.get("accepted_contracts") or []:
+            if not isinstance(record, dict):
+                skipped.append("invalid_record")
+                continue
+            rec = self._upsert_customer_lowcode_contract_asset_record(record)
+            if rec:
+                applied.append(int(rec.id))
+            else:
+                skipped.append(str(record.get("contract_key") or record.get("name") or "unknown"))
+        params = self.env["ir.config_parameter"].sudo()
+        params.set_param("sc.custom.customer_lowcode_contract_assets_ready", "1")
+        params.set_param("sc.custom.customer_lowcode_contract_assets_contract_count", str(len(applied)))
+        params.set_param("sc.custom.customer_lowcode_contract_assets_skipped", json.dumps(skipped, ensure_ascii=False))
         return True
 
     @api.model
@@ -1217,6 +1242,87 @@ class ScUserPreferenceInitialization(models.TransientModel):
             rec = Contract.create(vals)
             rec.action_publish()
         return rec
+
+    @api.model
+    def _load_customer_lowcode_contract_asset(self):
+        try:
+            payload = json.loads(CUSTOMER_LOWCODE_CONTRACT_ASSET_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            payload = {}
+        if payload.get("schema_version") != "lowcode_customer_config_contracts.v1":
+            return {"accepted_contracts": []}
+        if payload.get("target_module") != "smart_construction_custom":
+            return {"accepted_contracts": []}
+        return payload
+
+    @api.model
+    def _upsert_customer_lowcode_contract_asset_record(self, record):
+        name = str(record.get("name") or record.get("contract_key") or "").strip()
+        model_name = str(record.get("model") or "").strip()
+        view_type = str(record.get("view_type") or "").strip() or "form"
+        payload = record.get("contract_json") if isinstance(record.get("contract_json"), dict) else {}
+        if not name or not model_name or model_name not in self.env or not payload:
+            return False
+        self._stamp_customer_lowcode_contract_asset_source(payload, record)
+        payload = ensure_lowcode_contract_source_status(payload)
+        Contract = self.env["ui.business.config.contract"].with_context(active_test=False).sudo()
+        rec = Contract.search([("name", "=", name), ("company_id", "=", self.env.company.id)], limit=1)
+        action = self.env["ir.actions.act_window"].sudo().browse(self._customer_lowcode_asset_int(record.get("action_id")))
+        view = self.env["ir.ui.view"].sudo().browse(self._customer_lowcode_asset_int(record.get("view_id")))
+        vals = {
+            "name": name,
+            "model": model_name,
+            "view_type": view_type,
+            "action_id": action.id if action.exists() else False,
+            "view_id": view.id if view.exists() else False,
+            "company_id": self.env.company.id,
+            "priority": int(record.get("priority") or 700),
+            "active": True,
+            "contract_json": payload,
+        }
+        if rec:
+            if (
+                rec.contract_json != payload
+                or rec.status != "published"
+                or not rec.active
+                or rec.action_id.id != vals["action_id"]
+                or rec.view_id.id != vals["view_id"]
+                or rec.company_id != self.env.company
+                or int(rec.priority or 0) != int(vals["priority"] or 0)
+                or rec.view_type != view_type
+                or rec.model != model_name
+            ):
+                rec.write(vals)
+                rec.action_publish()
+        else:
+            rec = Contract.create(vals)
+            rec.action_publish()
+        return rec
+
+    @api.model
+    def _stamp_customer_lowcode_contract_asset_source(self, payload, record):
+        source_status = str(record.get("source_status") or "tenant_runtime").strip() or "tenant_runtime"
+        if isinstance(payload.get("menu_orchestration"), dict):
+            orchestration = payload["menu_orchestration"]
+            orchestration.setdefault("source", CUSTOMER_LOWCODE_CONTRACT_ASSET_SOURCE)
+            orchestration.setdefault("source_status", source_status)
+            orchestration.setdefault("scope", "customer_lowcode_contract_asset")
+            return
+        orchestration = payload.setdefault("view_orchestration", {})
+        if not isinstance(orchestration, dict):
+            payload["view_orchestration"] = orchestration = {}
+        context = orchestration.setdefault("context", {})
+        if isinstance(context, dict):
+            context.setdefault("source", CUSTOMER_LOWCODE_CONTRACT_ASSET_SOURCE)
+            context.setdefault("scope", "customer_lowcode_contract_asset")
+            context.setdefault("source_status", source_status)
+
+    @api.model
+    def _customer_lowcode_asset_int(self, value):
+        try:
+            return int(value or 0)
+        except Exception:
+            return 0
 
     @api.model
     def _enrich_partner_field_contract_row(self, row, name, *, china=None):

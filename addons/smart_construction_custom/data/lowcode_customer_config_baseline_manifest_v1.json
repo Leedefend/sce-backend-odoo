@@ -28,6 +28,9 @@
     "module_asset_draft_make_target": "make verify.lowcode_config.customer_module_asset.draft",
     "module_asset_draft_script": "scripts/verify/lowcode_customer_config_module_asset_draft.py",
     "module_asset_draft_artifact": "artifacts/backend/lowcode_customer_config_module_asset_draft.json",
+    "accepted_module_asset_schema_version": "lowcode_customer_config_contracts.v1",
+    "accepted_module_asset": "addons/smart_construction_custom/data/lowcode_customer_config_contracts_v1.json",
+    "accepted_module_asset_replay_guard": "make verify.lowcode_config.customer_module_asset.replay.guard",
     "default_source_status_filter": [
       "tenant_runtime"
     ],
@@ -73,6 +76,7 @@
     "addons/smart_construction_custom/hooks.py",
     "addons/smart_construction_custom/data/user_preferences.xml",
     "addons/smart_construction_custom/data/user_menu_preferences.xml",
+    "addons/smart_construction_custom/data/lowcode_customer_config_contracts_v1.json",
     "addons/smart_construction_custom/data/user_module_data_baseline_contract_v1.json"
   ],
   "required_guards": [
@@ -80,6 +84,7 @@
     "make verify.lowcode_config.runtime_boundary.guard",
     "make verify.lowcode_config.customer_baseline.candidate",
     "make verify.lowcode_config.customer_module_asset.draft",
+    "make verify.lowcode_config.customer_module_asset.replay.guard",
     "make verify.business_config.unit",
     "make verify.business_config.snapshot"
   ],

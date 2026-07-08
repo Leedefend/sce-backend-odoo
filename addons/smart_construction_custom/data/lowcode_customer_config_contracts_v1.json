@@ -1,0 +1,26 @@
+{
+  "schema_version": "lowcode_customer_config_contracts.v1",
+  "artifact_status": "accepted_module_asset",
+  "source_draft_schema": "lowcode_customer_config_module_asset_draft.v1",
+  "target_module": "smart_construction_custom",
+  "promotion_boundary": {
+    "source": "reviewed low-code customer module asset draft",
+    "target_model": "ui.business.config.contract",
+    "rule": "Only manually accepted customer configuration records may be added to accepted_contracts."
+  },
+  "accepted_contracts": [],
+  "acceptance": {
+    "required_before_adding_records": [
+      "Confirm every record is customer-confirmed configuration.",
+      "Confirm the record belongs to the customer module baseline, not generic product_release behavior.",
+      "Confirm the replayed payload keeps explicit low-code source_status semantics."
+    ],
+    "required_after_adding_records": [
+      "make verify.lowcode_config.boundary.guard",
+      "make verify.lowcode_config.runtime_boundary.guard",
+      "make verify.lowcode_config.customer_module_asset.replay.guard",
+      "make verify.business_config.unit",
+      "make verify.business_config.snapshot"
+    ]
+  }
+}
