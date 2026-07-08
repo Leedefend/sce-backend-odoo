@@ -109,6 +109,7 @@
 - `make verify.user_module.product_boundary`
   - Verifies the P2 user module keeps user data baseline, user preferences, and replay hooks as separate carriers.
   - Ensures `smart_construction_custom` loads user data baseline before user preference contracts.
+  - Ensures the low-code customer configuration baseline manifest is carried by the user module, owned by `smart_construction_custom`, and covers replayable menu preferences, form preferences, and user data baseline surfaces.
   - Ensures the real legacy user master payload is carried by the user module and loaded only through an idempotent loader.
   - Ensures the user module carries a locked user-visible historical business data baseline manifest, covering all 11 productized business families plus post-asset replay/write/projection closure targets.
   - Ensures the baseline manifest pins the private external asset package lock and exposes `user_module.history_business_baseline.restore` as the official restore entry.

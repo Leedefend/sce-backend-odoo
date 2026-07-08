@@ -23,6 +23,7 @@ MODELS_INIT = MODULE / "models/__init__.py"
 USER_DATA_BASELINE_XML = MODULE / "data/user_data_baseline.xml"
 LEGACY_USER_MASTER_XML = MODULE / "data/user_master_v1.xml"
 HISTORY_BUSINESS_BASELINE_MANIFEST = MODULE / "data/user_history_business_data_baseline_manifest_v1.json"
+LOWCODE_CUSTOMER_CONFIG_BASELINE_MANIFEST = MODULE / "data/lowcode_customer_config_baseline_manifest_v1.json"
 USER_DATA_REBASELINE_SOURCE_MANIFEST = MODULE / "data/user_data_rebaseline_source_manifest_v1.json"
 USER_DATA_REBASELINE_REPLAY_PREFLIGHT = MODULE / "data/user_data_rebaseline_replay_asset_preflight_v1.json"
 USER_MODULE_DATA_BASELINE_CONTRACT = MODULE / "data/user_module_data_baseline_contract_v1.json"
@@ -94,12 +95,58 @@ def verify_manifest_boundary() -> list[str]:
         failures.append("legacy user master payload must be loaded by the idempotent data baseline loader, not direct XML data")
     if "data/user_history_business_data_baseline_manifest_v1.json" in data_files:
         failures.append("history business baseline manifest must be read by the idempotent loader, not direct XML data")
+    if "data/lowcode_customer_config_baseline_manifest_v1.json" in data_files:
+        failures.append("low-code customer config baseline manifest must be guarded as a module contract, not direct XML data")
 
     baseline_index = _index(data_files, baseline)
     preference_index = _index(data_files, preferences)
     if baseline_index >= 0 and preference_index >= 0 and baseline_index > preference_index:
         failures.append("user data baseline must load before user preference contracts")
 
+    return failures
+
+
+def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
+    failures: list[str] = []
+    if not LOWCODE_CUSTOMER_CONFIG_BASELINE_MANIFEST.exists():
+        return ["user module must carry the low-code customer configuration baseline manifest"]
+    payload = json.loads(LOWCODE_CUSTOMER_CONFIG_BASELINE_MANIFEST.read_text(encoding="utf-8"))
+    if payload.get("schema_version") != "lowcode_customer_config_baseline_manifest.v1":
+        failures.append("low-code customer configuration baseline manifest schema_version mismatch")
+    boundary = payload.get("module_boundary") if isinstance(payload.get("module_boundary"), dict) else {}
+    if boundary.get("owner_module") != "smart_construction_custom":
+        failures.append("low-code customer configuration baseline manifest must be owned by smart_construction_custom")
+    promotion_rule = payload.get("promotion_rule") if isinstance(payload.get("promotion_rule"), dict) else {}
+    promotion_text = json.dumps(promotion_rule, ensure_ascii=False)
+    for token in ("tenant_runtime", "product_release", "smart_construction_custom"):
+        if token not in promotion_text:
+            failures.append(f"low-code customer configuration baseline promotion rule missing {token}")
+    surfaces = payload.get("replayable_surfaces") if isinstance(payload.get("replayable_surfaces"), list) else []
+    surface_names = {str(item.get("surface") or "").strip() for item in surfaces if isinstance(item, dict)}
+    for surface in ("menu_preferences", "form_preferences", "user_data_baseline"):
+        if surface not in surface_names:
+            failures.append(f"low-code customer configuration baseline missing replayable surface: {surface}")
+    required_assets = payload.get("required_module_assets") if isinstance(payload.get("required_module_assets"), list) else []
+    required_asset_set = {str(item) for item in required_assets}
+    for required in (
+        "addons/smart_construction_custom/models/user_preferences.py",
+        "addons/smart_construction_custom/hooks.py",
+        "addons/smart_construction_custom/data/user_preferences.xml",
+        "addons/smart_construction_custom/data/user_menu_preferences.xml",
+        "addons/smart_construction_custom/data/user_module_data_baseline_contract_v1.json",
+    ):
+        if required not in required_asset_set:
+            failures.append(f"low-code customer configuration baseline missing required asset: {required}")
+        elif not (ROOT / required).exists():
+            failures.append(f"low-code customer configuration baseline references missing asset: {required}")
+    required_guards = set(map(str, payload.get("required_guards") if isinstance(payload.get("required_guards"), list) else []))
+    for guard in (
+        "make verify.lowcode_config.boundary.guard",
+        "make verify.lowcode_config.runtime_boundary.guard",
+        "make verify.business_config.snapshot",
+    ):
+        if guard not in required_guards:
+            failures.append(f"low-code customer configuration baseline missing required guard: {guard}")
     return failures
 
 
@@ -463,6 +510,7 @@ def verify_industry_modules_do_not_carry_user_data() -> list[str]:
 def main() -> int:
     failures = (
         verify_manifest_boundary()
+        + verify_lowcode_customer_config_baseline_manifest()
         + verify_history_business_data_baseline_manifest()
         + verify_user_data_rebaseline_contract()
         + verify_xml_boundary()
