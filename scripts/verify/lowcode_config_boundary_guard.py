@@ -144,6 +144,11 @@ LOWCODE_CAPABILITY_REQUIREMENTS = {
                 "BUSINESS_CONFIG_SNAPSHOT_PATH",
                 "snapshot",
             ),
+            "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue": (
+                "business_config_snapshot_remediation_plan.v1",
+                "downloadSnapshotRemediationPlan",
+                "下载整改清单",
+            ),
         },
         "acceptance_targets": (
             "verify.business_config.snapshot",

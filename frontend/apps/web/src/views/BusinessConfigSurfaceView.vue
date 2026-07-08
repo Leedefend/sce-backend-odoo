@@ -348,6 +348,9 @@
         <button type="button" class="ghost small" :disabled="snapshotCompareLoading || !snapshotCompareText.trim()" @click="compareSnapshot">
           {{ snapshotCompareLoading ? '对比中...' : '对比快照' }}
         </button>
+        <button type="button" class="ghost small" :disabled="!snapshotCompareResult" @click="downloadSnapshotRemediationPlan">
+          下载整改清单
+        </button>
       </div>
       <textarea
         v-model="snapshotCompareText"
@@ -355,6 +358,9 @@
         rows="5"
         placeholder="粘贴 make verify.business_config.snapshot 导出的 JSON"
       ></textarea>
+      <div v-if="snapshotCompareResult" class="snapshot-remediation-summary">
+        <span>{{ snapshotRemediationSummary }}</span>
+      </div>
       <div v-if="snapshotCompareResult" class="snapshot-diff-list">
         <div v-for="item in snapshotCompareChangedRows" :key="item.key" class="snapshot-diff-row">
           <strong>{{ item.name || item.model }}</strong>
@@ -1258,6 +1264,13 @@ const snapshotCompareSummary = computed(() => {
 const snapshotCompareChangedRows = computed(() => (snapshotCompareResult.value?.changed || []).slice(0, 8));
 const snapshotCompareAddedRows = computed(() => (snapshotCompareResult.value?.added || []).slice(0, 6));
 const snapshotCompareRemovedRows = computed(() => (snapshotCompareResult.value?.removed || []).slice(0, 6));
+const snapshotRemediationSummary = computed(() => {
+  const result = snapshotCompareResult.value;
+  if (!result) return '';
+  const total = result.changed_count + result.added_count + result.removed_count;
+  if (!total) return '两个环境配置一致，无需生成整改动作。';
+  return `可生成 ${total} 条整改项：新增 ${result.added_count}，移除 ${result.removed_count}，变化 ${result.changed_count}。`;
+});
 const pageTypeOptions = [
   { key: 'all' as const, label: '全部页面' },
   { key: 'form' as const, label: '表单页面' },
@@ -2011,6 +2024,115 @@ async function downloadSnapshot() {
   } finally {
     snapshotExportLoading.value = false;
   }
+}
+
+function normalizeSnapshotFileToken(value: string) {
+  return String(value || 'business-config').replace(/[^a-zA-Z0-9_-]+/g, '-');
+}
+
+function snapshotContractIdentity(row: Partial<BusinessConfigSnapshotComparePayload['added'][number]>) {
+  return {
+    name: row.name || '',
+    model: row.model || '',
+    view_type: row.view_type || '',
+    action_id: Number(row.action_id || 0),
+    view_id: Number(row.view_id || 0),
+    role_key: row.role_key || '',
+  };
+}
+
+function buildSnapshotRemediationPlan(result: BusinessConfigSnapshotComparePayload) {
+  const generatedAt = new Date().toISOString();
+  const actions = [
+    ...result.added.map((row) => ({
+      action: 'review_added_contract',
+      severity: 'review_required',
+      reason: '当前环境存在基线快照中没有的业务配置合同，确认是否应沉淀到目标环境或回退。',
+      contract: snapshotContractIdentity(row),
+      current: {
+        status: row.status,
+        version_no: row.version_no,
+        payload_hash: row.payload_hash || '',
+      },
+    })),
+    ...result.removed.map((row) => ({
+      action: 'restore_or_accept_removed_contract',
+      severity: 'review_required',
+      reason: '基线快照存在但当前环境缺失该业务配置合同，确认是否需要从基线恢复或接受删除。',
+      contract: snapshotContractIdentity(row),
+      baseline: {
+        status: row.status,
+        version_no: row.version_no,
+        payload_hash: row.payload_hash || '',
+      },
+    })),
+    ...result.changed.map((row) => ({
+      action: 'review_changed_contract',
+      severity: 'review_required',
+      reason: '当前环境与基线快照的业务配置合同状态或内容不同，确认保留当前版本还是按基线调整。',
+      contract: {
+        key: row.key,
+        name: row.name || '',
+        model: row.model || '',
+        view_type: row.view_type || '',
+      },
+      baseline: {
+        status: row.previous_status || '',
+        version_no: row.previous_version_no || 0,
+      },
+      current: {
+        status: row.current_status || '',
+        version_no: row.current_version_no || 0,
+      },
+    })),
+  ];
+  return {
+    schema_version: 'business_config_snapshot_remediation_plan.v1',
+    generated_at: generatedAt,
+    source: 'business_config_snapshot_compare',
+    current_database: result.current_database,
+    baseline_database: result.baseline_database,
+    summary: {
+      current_contract_count: result.current_contract_count,
+      baseline_contract_count: result.baseline_contract_count,
+      added_count: result.added_count,
+      removed_count: result.removed_count,
+      changed_count: result.changed_count,
+      action_count: actions.length,
+    },
+    acceptance: {
+      product_boundary: 'Only ui.business.config.contract changes are represented here.',
+      execution_policy: 'This plan is review evidence. Apply changes through low-code configuration screens, migrations, or customer module baselines.',
+      required_after_action: [
+        'make verify.business_config.snapshot',
+        'make verify.lowcode_config.runtime_boundary.guard',
+        'make verify.product.surface.clean',
+      ],
+    },
+    actions,
+  };
+}
+
+function downloadJsonFile(payload: unknown, filename: string) {
+  const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function downloadSnapshotRemediationPlan() {
+  const result = snapshotCompareResult.value;
+  if (!result) return;
+  const plan = buildSnapshotRemediationPlan(result);
+  const current = normalizeSnapshotFileToken(result.current_database);
+  const baseline = normalizeSnapshotFileToken(result.baseline_database);
+  downloadJsonFile(plan, `business-config-remediation-${baseline}-to-${current}.json`);
+  setMessage('已生成整改清单', snapshotRemediationSummary.value);
 }
 
 async function compareSnapshot() {
@@ -3771,6 +3893,14 @@ h1 {
 .snapshot-diff-list {
   display: grid;
   gap: 6px;
+}
+
+.snapshot-remediation-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
 }
 
 .snapshot-diff-row {

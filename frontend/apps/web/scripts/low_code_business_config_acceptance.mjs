@@ -1067,6 +1067,24 @@ async function main() {
     const advancedConfigCheckPanelCount = await page.locator(".scan-panel--admin").filter({ hasText: "配置检查明细" }).count();
     const snapshotDownloadButtonCount = await page.getByRole("button", { name: "下载当前快照" }).count();
     const snapshotCompareButtonCount = await page.getByRole("button", { name: "对比快照" }).count();
+    const snapshotRemediationButtonCount = await page.getByRole("button", { name: "下载整改清单" }).count();
+    const currentSnapshot = await browserIntent(page, "ui.business_config.snapshot.export");
+    await page.locator(".snapshot-input").fill(JSON.stringify(currentSnapshot));
+    await page.getByRole("button", { name: "对比快照" }).click();
+    await page.waitForFunction(() => {
+      const button = Array.from(document.querySelectorAll("button"))
+        .find((node) => node.textContent?.includes("下载整改清单"));
+      return button && !button.disabled;
+    }, null, { timeout: 20000 });
+    const remediationDownload = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: "下载整改清单" }).click(),
+    ]).then(([download]) => download);
+    const remediationDownloadPath = await remediationDownload.path();
+    const remediationDownloadName = remediationDownload.suggestedFilename();
+    assert(remediationDownloadPath, "整改清单下载文件不可用", { remediationDownloadName });
+    const remediationPlan = JSON.parse(await fs.readFile(remediationDownloadPath, "utf8"));
+    const remediationSummaryText = await page.locator(".snapshot-remediation-summary").innerText();
     await page.getByRole("button", { name: "高级设置" }).click();
     await page.waitForSelector(".scope-panel", { state: "detached", timeout: 10000 });
     await page.locator(".selected-page-overview").getByRole("button", { name: "预览页面" }).click();
@@ -1175,6 +1193,11 @@ async function main() {
       advancedForbiddenTerms,
       snapshotDownloadButtonCount,
       snapshotCompareButtonCount,
+      snapshotRemediationButtonCount,
+      snapshotRemediationSummaryText: remediationSummaryText,
+      snapshotRemediationDownloadName: remediationDownloadName,
+      snapshotRemediationPlanSchema: remediationPlan.schema_version,
+      snapshotRemediationActionCount: remediationPlan.summary?.action_count,
       previewUrl,
     };
     report.artifacts.defaultConfigPage = await captureStep(page, "default-config-page");
@@ -1251,9 +1274,14 @@ async function main() {
         && advancedText.includes("配置状态")
         && snapshotDownloadButtonCount === 1
         && snapshotCompareButtonCount === 1
+        && snapshotRemediationButtonCount === 1
+        && remediationSummaryText.includes("无需生成整改动作")
+        && remediationDownloadName.startsWith("business-config-remediation-")
+        && remediationPlan.schema_version === "business_config_snapshot_remediation_plan.v1"
+        && remediationPlan.summary?.action_count === 0
         && advancedForbiddenTerms.length === 0,
       "高级设置不可用或露出了治理/技术话术",
-      { advancedScopeLabels, advancedPanelVisible, advancedConfigCheckPanelCount, snapshotDownloadButtonCount, snapshotCompareButtonCount, advancedForbiddenTerms },
+      { advancedScopeLabels, advancedPanelVisible, advancedConfigCheckPanelCount, snapshotDownloadButtonCount, snapshotCompareButtonCount, snapshotRemediationButtonCount, remediationSummaryText, remediationDownloadName, remediationPlan, advancedForbiddenTerms },
     );
     assert(!advancedText.includes("编辑入口待接入"), "高级设置中出现未接入编辑入口", { advancedText });
     assert(previewUrl.includes("/a/562"), "业务页面预览入口不可用", { previewUrl });
