@@ -74,9 +74,17 @@
 | --- | --- | --- |
 | `visible_configured` | `configured_visible=true` 且 `runtime_visible=true` | 显示中 |
 | `visible_carrier` | `configured_visible=false` 且 `runtime_visible=true` 且存在可见子菜单 | 显示中 · 承载子菜单 |
+| `visible_release_navigation_group` | 产品发布导航使用合成分组，且该分组通过后端显式 `config_menu_id/config_ref` 映射到可配置菜单 | 显示中 · 产品导航分组 |
 | `visible_protected` | 配置意图隐藏但系统保护要求保留 | 显示中 · 系统保护 |
 | `hidden_configured` | `configured_visible=false` 且 `runtime_visible=false` | 已隐藏 |
 | `hidden_permission` | 配置可见但当前用户无权限 | 当前用户不可见 |
+
+配置中心边界：
+
+- `配置中心` 是治理分组，可以作为主导航分组显示。
+- `配置工作台` 是低代码配置主入口，必须在配置中心下可达。
+- `菜单配置` 是低代码菜单恢复入口，必须受保护，避免管理员把配置能力彻底切断。
+- `配置中心`、`配置工作台`、`菜单配置` 都是平台治理入口，显示名称和基础位置以产品发布定义为准；历史低代码 policy 即使保存了 `custom_label=配置中心`，运行态 overlay 也不能把 `配置工作台` 改成同名分组，避免形成 `配置中心 / 配置中心` 这类重复菜单。
 | `configured_visible_runtime_absent` | 配置可见但最终导航因产品菜单重组、运行态投影或其他非权限原因未包含该菜单 | 当前未进入导航 |
 | `candidate` | 无配置意图且不在最终导航 | 候选 |
 
@@ -130,6 +138,20 @@
   }
 }
 ```
+
+### 分组菜单契约
+
+分组菜单必须按 Odoo 原生结构处理，不能让前端靠名称或合成 id 猜测。
+
+- 真实 Odoo 分组菜单：后端必须下发 `config_menu_id`、`config_ref={model:"ir.ui.menu", id}`、`configurable=true`、`node_kind=menu_group`。
+- 产品发布合成分组：如果它投影的是一个真实 Odoo 分组菜单，后端必须映射到真实 `config_menu_id/config_ref`；如果不能写回真实菜单，后端必须下发 `configurable=false`、`synthetic=true`、`node_kind=navigation_group`。
+- 配置面板只允许按后端 `config_menu_id/config_ref/runtime.states` 展示；禁止按 label、菜单 id 数值区间、AppShell 已渲染节点反推出“可配置/显示/隐藏”。
+- 主导航和菜单配置面必须消费同一份后端最终导航事实。前端可以裁剪视图和展示交互，但不能生成新的菜单运行态事实。
+
+工程守卫：
+
+- `scripts/verify/lowcode_config_boundary_guard.py` 会拦截前端重新引入 `AppShell` 反推、label 匹配、合成 id 阈值判断、前端合成 runtime state。
+- `verify.business_config.unit` 必须包含该守卫；低代码边界相关改动必须先通过它。
 
 前端只能消费这个解释结果：
 

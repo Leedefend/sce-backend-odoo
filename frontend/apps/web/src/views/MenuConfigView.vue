@@ -678,6 +678,7 @@ import {
   type MenuConfigAuditPayload,
   type MenuConfigGroup,
   type MenuConfigMenu,
+  type MenuConfigPayload,
   type MenuConfigPolicy,
   type MenuConfigRuntimePayload,
   type MenuConfigRuntimeState,
@@ -694,6 +695,14 @@ import { executePageContractAction } from '../app/pageContractActionRuntime';
 type MenuConfigNavNode = NavNode & {
   action_id?: number | string;
   model?: string;
+  config_menu_id?: number | string;
+  configurable?: boolean;
+  config_ref?: { model?: string; id?: number | string };
+  meta?: NavNode['meta'] & {
+    config_menu_id?: number | string;
+    configurable?: boolean;
+    config_ref?: { model?: string; id?: number | string };
+  };
 };
 
 type MenuNavigationResponse = {
@@ -1129,6 +1138,9 @@ function menuHandlingStateLabel(menu: MenuConfigMenu | null | undefined) {
   if (state?.runtime_visible) {
     if (state.runtime_visibility_reason === 'visible_descendant_carrier' || state.runtime_state === 'visible_carrier') {
       return '办理面显示 · 承载子菜单';
+    }
+    if (state.runtime_visibility_reason === 'visible_release_navigation_group' || state.runtime_state === 'visible_release_navigation_group') {
+      return '办理面显示 · 产品导航分组';
     }
     if (state.runtime_visibility_reason === 'visible_protected' || state.runtime_state === 'visible_protected') {
       return '办理面显示 · 系统保护';
@@ -2048,49 +2060,48 @@ function navMenuId(node: NavNode) {
   return Number(node.menu_id || node.meta?.menu_id || node.id || 0);
 }
 
+function navConfigMenuId(node: MenuConfigNavNode) {
+  const meta = node.meta || {};
+  const configRef = node.config_ref || meta.config_ref || {};
+  const configRefModel = String(configRef.model || 'ir.ui.menu').trim();
+  const candidates = [
+    node.config_menu_id,
+    meta.config_menu_id,
+    configRefModel === 'ir.ui.menu' ? configRef.id : 0,
+    node.configurable === false || meta.configurable === false ? 0 : navMenuId(node),
+  ];
+  for (const candidate of candidates) {
+    const menuId = Number(candidate || 0);
+    if (Number.isFinite(menuId) && menuId > 0) return menuId;
+  }
+  return 0;
+}
+
 function navMenuLabel(node: NavNode) {
   return String(node.title || node.name || node.label || '').trim();
-}
-
-function normalizedMenuLabel(value: string) {
-  return String(value || '').trim().toLowerCase();
-}
-
-function canMatchNavigationGroupByLabel(node: MenuConfigNavNode) {
-  const meta = node.meta || {};
-  const hasChildren = Array.isArray(node.children) && node.children.length > 0;
-  const hasAction = Boolean(node.action_id || meta.action_id || node.model || meta.model || node.action || meta.action);
-  return hasChildren && !hasAction;
 }
 
 function buildTreeFromNavigation(
   navNodes: NavNode[],
   menuById: Map<number, MenuConfigMenu>,
-  menuByLabel: Map<string, MenuConfigMenu[]>,
   usedMenuIds = new Set<number>(),
 ): MenuConfigMenu[] {
   return navNodes.flatMap((node) => {
-    const menuId = navMenuId(node);
+    const configMenuId = navConfigMenuId(node as MenuConfigNavNode);
+    const runtimeNodeId = navMenuId(node);
     const label = navMenuLabel(node);
-    let menu = menuById.get(menuId);
+    let menu = menuById.get(configMenuId);
     if (menu && usedMenuIds.has(menu.id)) {
       menu = undefined;
     }
-    if (!menu && (!menuId || canMatchNavigationGroupByLabel(node))) {
-      const candidates = menuByLabel.get(normalizedMenuLabel(label)) || [];
-      menu = candidates.find((candidate) => (
-        !usedMenuIds.has(candidate.id)
-        && (!menuId || !String(candidate.action || '').trim())
-      ));
-    }
     if (!menu) {
       const children = Array.isArray(node.children)
-        ? buildTreeFromNavigation(node.children as NavNode[], menuById, menuByLabel, usedMenuIds)
+        ? buildTreeFromNavigation(node.children as NavNode[], menuById, usedMenuIds)
         : [];
-      if (!children.length || !label || !menuId) return children;
+      if (!children.length || !label || !runtimeNodeId) return children;
       return [{
-        id: menuId,
-        menu_id: menuId,
+        id: runtimeNodeId,
+        menu_id: runtimeNodeId,
         name: label,
         display_name: label,
         complete_name: label,
@@ -2113,7 +2124,7 @@ function buildTreeFromNavigation(
       display_name: label || menu.display_name,
       sequence: Number(node.sequence ?? node.meta?.sequence ?? menu.sequence ?? 0),
       children: Array.isArray(node.children)
-        ? buildTreeFromNavigation(node.children as NavNode[], menuById, menuByLabel, usedMenuIds)
+        ? buildTreeFromNavigation(node.children as NavNode[], menuById, usedMenuIds)
         : [],
     }];
   });
@@ -2142,7 +2153,7 @@ function collectNavigationMenuIds() {
   const seen = new Set<number>();
   const walk = (items: Array<{ menu_id?: number; id?: number; children?: unknown[] }>) => {
     items.forEach((item) => {
-      const menuId = navMenuId(item as NavNode);
+      const menuId = navConfigMenuId(item as MenuConfigNavNode);
       if (Number.isFinite(menuId) && menuId > 0 && !seen.has(menuId)) {
         seen.add(menuId);
         ids.push(menuId);
@@ -2191,20 +2202,12 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
     auditResult.value = null;
     company.value = payload.company || null;
     menus.value = payload.menus || [];
-    runtimeState.value = payload.runtime || null;
     const menuById = new Map((payload.menus || []).map((menu) => [menu.id, menu]));
-    const menuByLabel = new Map<string, MenuConfigMenu[]>();
-    (payload.menus || []).forEach((menu) => {
-      const labels = [menu.name, menu.display_name].map(normalizedMenuLabel).filter(Boolean);
-      labels.forEach((label) => {
-        const list = menuByLabel.get(label) || [];
-        list.push(menu);
-        menuByLabel.set(label, list);
-      });
-    });
     const usedMenuIds = new Set<number>();
-    const navigationTree = buildTreeFromNavigation(scopedNavigationTree(), menuById, menuByLabel, usedMenuIds);
+    const scopedNavTree = scopedNavigationTree();
+    const navigationTree = buildTreeFromNavigation(scopedNavTree, menuById, usedMenuIds);
     const completeTree = mergeNavigationAndConfigTrees(navigationTree, payload.tree || [], usedMenuIds);
+    runtimeState.value = payload.runtime || null;
     tree.value = completeTree;
     const routeMenuId = Number(route.query.menu_id || 0);
     const firstMenuId = completeTree[0]?.id || payload.menus?.[0]?.id || 0;

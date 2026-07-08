@@ -97,6 +97,11 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         meta["scene_key"] = scene_key
     if menu_id:
         meta["menu_id"] = menu_id
+        meta["config_menu_id"] = menu_id
+        meta["configurable"] = True
+        meta["synthetic"] = False
+        meta["node_kind"] = "menu_action" if (action_id or model or route or scene_key) else "menu_group"
+        meta["config_ref"] = {"model": "ir.ui.menu", "id": menu_id}
     action_xmlid = str(menu.get("action_xmlid") or "").strip()
     if action_id:
         meta["action_id"] = action_id
@@ -182,6 +187,10 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         "children": [],
         "meta": meta,
     }
+    if isinstance(menu_id, int) and menu_id > 0:
+        node["config_menu_id"] = int(menu_id)
+        node["configurable"] = True
+        node["config_ref"] = {"model": "ir.ui.menu", "id": int(menu_id)}
     for field, value in (
         ("route", route),
         ("scene_key", scene_key),
@@ -201,15 +210,28 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
     return node
 
 
-def build_delivery_menu_group(group_key: str, group_label: str, children: list[dict]) -> Dict[str, Any]:
+def build_delivery_menu_group(
+    group_key: str,
+    group_label: str,
+    children: list[dict],
+    *,
+    config_menu_id: int = 0,
+) -> Dict[str, Any]:
+    config_menu_id = int(config_menu_id or 0)
     meta = {
         "group_key": group_key,
         "source": "delivery_engine_v1",
         "default_source_authority": source_authority_contract(),
+        "synthetic": True,
+        "node_kind": "navigation_group",
+        "configurable": bool(config_menu_id),
     }
+    if config_menu_id:
+        meta["config_menu_id"] = config_menu_id
+        meta["config_ref"] = {"model": "ir.ui.menu", "id": config_menu_id}
     if children and any(((child.get("meta") or {}).get("release_state") == "preview") for child in children if isinstance(child, dict)):
         meta["release_state"] = "preview"
-    return {
+    node = {
         "key": f"group:{group_key}",
         "label": group_label,
         "title": group_label,
@@ -217,6 +239,13 @@ def build_delivery_menu_group(group_key: str, group_label: str, children: list[d
         "children": children,
         "meta": meta,
     }
+    if config_menu_id:
+        node["config_menu_id"] = config_menu_id
+        node["configurable"] = True
+        node["config_ref"] = {"model": "ir.ui.menu", "id": config_menu_id}
+    else:
+        node["configurable"] = False
+    return node
 
 
 def build_delivery_menu_root(group_nodes: list[dict], role_code: str) -> Dict[str, Any]:
@@ -230,5 +259,9 @@ def build_delivery_menu_root(group_nodes: list[dict], role_code: str) -> Dict[st
             "source": "delivery_engine_v1",
             "role_code": role_code,
             "default_source_authority": source_authority_contract(),
+            "synthetic": True,
+            "node_kind": "navigation_root",
+            "configurable": False,
         },
+        "configurable": False,
     }

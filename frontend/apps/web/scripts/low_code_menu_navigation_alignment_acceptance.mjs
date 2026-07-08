@@ -5,6 +5,14 @@ const DB_NAME = process.env.DB_NAME || "sc_demo";
 const LOGIN = process.env.E2E_LOGIN || "wutao";
 const PASSWORD = process.env.E2E_PASSWORD || "123456";
 const ROOT_MENU_XMLID = process.env.LOW_CODE_MENU_ROOT_XMLID || "smart_construction_core.menu_sc_root";
+const MENU_CONFIG_ROUTE = process.env.LOW_CODE_MENU_CONFIG_ROUTE
+  || `/admin/menu-config?menu_id=646&action_id=841&root_menu_xmlid=${encodeURIComponent(ROOT_MENU_XMLID)}&return_to_business_config=1`;
+const REQUIRED_CONFIG_TREE_ROWS = [
+  { menuId: 465, label: "施工管理" },
+  { menuId: 295, label: "物资与分包" },
+  { menuId: 297, label: "配置中心" },
+  { menuId: 646, label: "菜单配置" },
+];
 
 function assert(condition, message, details = {}) {
   if (!condition) {
@@ -21,6 +29,23 @@ function normalize(value) {
 function menuIdOf(node) {
   const meta = node?.meta && typeof node.meta === "object" ? node.meta : {};
   for (const candidate of [node?.menu_id, meta.menu_id, node?.id]) {
+    const parsed = Number(candidate || 0);
+    if (Number.isInteger(parsed) && parsed > 0) return parsed;
+  }
+  return 0;
+}
+
+function configMenuIdOf(node) {
+  const meta = node?.meta && typeof node.meta === "object" ? node.meta : {};
+  const configRef = (node?.config_ref && typeof node.config_ref === "object")
+    ? node.config_ref
+    : (meta.config_ref && typeof meta.config_ref === "object" ? meta.config_ref : {});
+  const configRefModel = normalize(configRef.model || "ir.ui.menu");
+  for (const candidate of [
+    node?.config_menu_id,
+    meta.config_menu_id,
+    configRefModel === "ir.ui.menu" ? configRef.id : 0,
+  ]) {
     const parsed = Number(candidate || 0);
     if (Number.isInteger(parsed) && parsed > 0) return parsed;
   }
@@ -44,6 +69,29 @@ function flattenTree(nodes, parent = null, out = []) {
       node,
     });
     flattenTree(node.children, { menuId, path: [...(parent?.path || []), label].filter(Boolean) }, out);
+  }
+  return out;
+}
+
+function flattenNavigationContract(nodes, parent = null, out = []) {
+  for (const node of Array.isArray(nodes) ? nodes : []) {
+    if (!node || typeof node !== "object") continue;
+    const menuId = menuIdOf(node);
+    const configMenuId = configMenuIdOf(node);
+    const meta = node.meta && typeof node.meta === "object" ? node.meta : {};
+    const label = labelOf(node);
+    out.push({
+      menuId,
+      configMenuId,
+      configurable: node.configurable ?? meta.configurable ?? null,
+      configRef: node.config_ref || meta.config_ref || null,
+      synthetic: meta.synthetic ?? null,
+      nodeKind: normalize(meta.node_kind),
+      label,
+      path: [...(parent?.path || []), label].filter(Boolean).join(" / "),
+      node,
+    });
+    flattenNavigationContract(node.children, { path: [...(parent?.path || []), label].filter(Boolean) }, out);
   }
   return out;
 }
@@ -96,6 +144,44 @@ async function navigationRequest(page) {
   }, { dbName: DB_NAME, tokenValue: token });
   assert(response.status >= 200 && response.status < 300 && response.body?.ok === true, "业务办理导航请求失败", response);
   return response.body;
+}
+
+async function verifyMenuConfigTreeUi(page) {
+  await page.goto(`${BASE_URL}${MENU_CONFIG_ROUTE}`, { waitUntil: "domcontentloaded" });
+  await page.waitForFunction(
+    () => !document.body.innerText.includes("正在加载菜单配置...") && /\d+ 个可配置菜单/.test(document.body.innerText),
+    null,
+    { timeout: 90000 },
+  );
+  const rows = await page.evaluate(() => Array.from(document.querySelectorAll(".tree-node")).map((element) => ({
+    menuId: Number(element.getAttribute("data-menu-id") || 0),
+    text: String(element.textContent || "").replace(/\s+/g, " ").trim(),
+  })));
+  const violations = [];
+  const sample = [];
+  for (const expected of REQUIRED_CONFIG_TREE_ROWS) {
+    const row = rows.find((item) => item.menuId === expected.menuId || item.text.includes(expected.label));
+    if (row) sample.push(row);
+    if (!row) {
+      violations.push({ ...expected, reason: "missing_tree_row" });
+      continue;
+    }
+    if (row.menuId !== expected.menuId) {
+      violations.push({ ...expected, actual_menu_id: row.menuId, text: row.text, reason: "tree_row_not_real_odoo_menu_id" });
+    }
+    if (row.text.includes("候选")) {
+      violations.push({ ...expected, actual_menu_id: row.menuId, text: row.text, reason: "visible_group_rendered_as_candidate" });
+    }
+    if (!row.text.includes("启用")) {
+      violations.push({ ...expected, actual_menu_id: row.menuId, text: row.text, reason: "visible_group_not_enabled_in_tree" });
+    }
+  }
+  return {
+    ok: violations.length === 0,
+    checked: REQUIRED_CONFIG_TREE_ROWS.length,
+    violations,
+    sample,
+  };
 }
 
 function expectedVisiblePolicies(audit, panel) {
@@ -167,6 +253,22 @@ function analyzeAlignment({ audit, panel, navigation }) {
   const runtimeStates = panel.runtime?.states || audit.runtime?.states || {};
   const navTree = navigation.nav_fact?.tree || navigation.nav_explained?.tree || [];
   const actual = flattenTree(navTree).filter((row) => row.menuId);
+  const contractRows = flattenNavigationContract(navTree);
+  const groupContractMismatches = REQUIRED_CONFIG_TREE_ROWS.flatMap((expected) => {
+    const row = contractRows.find((item) => item.configMenuId === expected.menuId || item.menuId === expected.menuId || item.label === expected.label);
+    if (!row) return [{ ...expected, reason: "missing_navigation_contract_row" }];
+    const problems = [];
+    if (row.configMenuId !== expected.menuId) {
+      problems.push({ ...expected, actual_menu_id: row.menuId, actual_config_menu_id: row.configMenuId, path: row.path, reason: "navigation_group_not_mapped_to_real_odoo_menu" });
+    }
+    if (row.configurable !== true) {
+      problems.push({ ...expected, actual_configurable: row.configurable, path: row.path, reason: "navigation_group_not_configurable" });
+    }
+    if (!row.configRef || Number(row.configRef.id || 0) !== expected.menuId || normalize(row.configRef.model || "ir.ui.menu") !== "ir.ui.menu") {
+      problems.push({ ...expected, actual_config_ref: row.configRef, path: row.path, reason: "navigation_group_missing_config_ref" });
+    }
+    return problems;
+  });
   const actualById = new Map();
   const duplicates = [];
   for (const row of actual) {
@@ -231,7 +333,8 @@ function analyzeAlignment({ audit, panel, navigation }) {
       && runtimeHiddenButVisible.length === 0
       && duplicates.length === 0
       && labelMismatches.length === 0
-      && parentMismatches.length === 0,
+      && parentMismatches.length === 0
+      && groupContractMismatches.length === 0,
     summary: {
       base_url: BASE_URL,
       db: DB_NAME,
@@ -249,6 +352,7 @@ function analyzeAlignment({ audit, panel, navigation }) {
       duplicate_count: duplicates.length,
       label_mismatch_count: labelMismatches.length,
       parent_mismatch_count: parentMismatches.length,
+      group_contract_mismatch_count: groupContractMismatches.length,
       order_mismatch_count: 0,
       navigation_config_only: Boolean(userMenuConfig.nav_fact?.config_only ?? userMenuConfig.config_only),
     },
@@ -258,6 +362,7 @@ function analyzeAlignment({ audit, panel, navigation }) {
     duplicates,
     labelMismatches,
     parentMismatches,
+    groupContractMismatches,
     orderMismatches: [],
     actualSample: actual.slice(0, 20).map((row) => ({ menu_id: row.menuId, label: row.label, path: row.path })),
     menuConfigSample: [],
@@ -277,6 +382,11 @@ async function main() {
       navigationRequest(page),
     ]);
     const result = analyzeAlignment({ audit, panel, navigation });
+    const menuConfigTreeUi = await verifyMenuConfigTreeUi(page);
+    result.summary.menu_config_tree_ui_violation_count = menuConfigTreeUi.violations.length;
+    result.menuConfigTreeUi = menuConfigTreeUi;
+    result.menuConfigSample = menuConfigTreeUi.sample;
+    result.ok = result.ok && menuConfigTreeUi.ok;
     console.log(JSON.stringify(result, null, 2));
     assert(result.ok, "菜单配置与最终业务办理导航未严格对齐", result);
   } finally {

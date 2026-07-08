@@ -178,13 +178,33 @@ def _nav_node_menu_id(node: dict) -> int:
     return 0
 
 
+def _nav_node_config_menu_id(node: dict) -> int:
+    if not isinstance(node, dict):
+        return 0
+    meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    config_ref = node.get("config_ref") if isinstance(node.get("config_ref"), dict) else meta.get("config_ref")
+    config_ref = config_ref if isinstance(config_ref, dict) else {}
+    for candidate in (
+        node.get("config_menu_id"),
+        meta.get("config_menu_id"),
+        config_ref.get("id") if config_ref.get("model") in (None, "", "ir.ui.menu") else 0,
+    ):
+        menu_id = _to_int(candidate)
+        if menu_id:
+            return menu_id
+    return _nav_node_menu_id(node)
+
+
 def _nav_node_label(node: dict) -> str:
     if not isinstance(node, dict):
         return ""
     return _to_text(node.get("name") or node.get("label") or node.get("title"))
 
 
-def _build_runtime_navigation_states(nav_tree: list[dict], configured_by_menu: dict[int, dict]) -> dict:
+def _build_runtime_navigation_states(
+    nav_tree: list[dict],
+    configured_by_menu: dict[int, dict],
+) -> dict:
     states: dict[int, dict] = {}
     visible_ids: set[int] = set()
     carrier_ids: set[int] = set()
@@ -194,24 +214,33 @@ def _build_runtime_navigation_states(nav_tree: list[dict], configured_by_menu: d
         for node in nodes if isinstance(nodes, list) else []:
             if not isinstance(node, dict):
                 continue
-            menu_id = _nav_node_menu_id(node)
+            runtime_node_id = _nav_node_menu_id(node)
+            menu_id = _nav_node_config_menu_id(node)
             label = _nav_node_label(node)
             next_path = [*(path or []), label] if label else list(path or [])
             child_ids = walk(node.get("children") if isinstance(node.get("children"), list) else [], next_path)
-            if menu_id:
-                visible_ids.add(menu_id)
-                descendant_ids.add(menu_id)
+            state_menu_id = menu_id
+            configured = configured_by_menu.get(state_menu_id) or {}
+            if state_menu_id:
+                visible_ids.add(state_menu_id)
+                descendant_ids.add(state_menu_id)
                 descendant_ids.update(child_ids)
-                configured = configured_by_menu.get(menu_id) or {}
                 configured_visible = _to_bool(configured.get("visible"), True) if configured else None
                 if configured and configured_visible is False and child_ids:
-                    carrier_ids.add(menu_id)
-                states[menu_id] = {
-                    "menu_id": menu_id,
+                    carrier_ids.add(state_menu_id)
+                if runtime_node_id and runtime_node_id != state_menu_id:
+                    runtime_state = "visible_release_navigation_group"
+                    runtime_reason = "visible_release_navigation_group"
+                else:
+                    runtime_state = "visible_carrier" if state_menu_id in carrier_ids else "visible_configured"
+                    runtime_reason = "visible_descendant_carrier" if state_menu_id in carrier_ids else "visible_configured"
+                states[state_menu_id] = {
+                    "menu_id": state_menu_id,
+                    "runtime_node_id": runtime_node_id,
                     "runtime_visible": True,
                     "configured_visible": configured_visible,
-                    "runtime_visibility_reason": "visible_descendant_carrier" if menu_id in carrier_ids else "visible_configured",
-                    "runtime_state": "visible_carrier" if menu_id in carrier_ids else "visible_configured",
+                    "runtime_visibility_reason": runtime_reason,
+                    "runtime_state": runtime_state,
                     "runtime_path": " / ".join(next_path),
                 }
             else:
@@ -639,29 +668,41 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             "preview_summary": _to_text(policy.preview_summary),
         }
 
-    def _runtime_navigation_state(self, configured_by_menu: dict[int, dict]) -> dict:
+    def _runtime_role_surface(self) -> dict:
+        return {
+            "role_code": "business_config_admin" if self.env.user.has_group(BUSINESS_CONFIG_GROUP) else "",
+            "is_platform_admin": bool(self.env.user.has_group(PLATFORM_ADMIN_GROUP)),
+            "is_business_config_admin": bool(self.env.user.has_group(BUSINESS_CONFIG_GROUP)),
+        }
+
+    def _current_delivery_identity(self) -> dict:
+        identity = call_extension_hook_first(self.env, "smart_core_resolve_startup_delivery_identity", self.env, {})
+        return identity if isinstance(identity, dict) else {}
+
+    def _runtime_release_navigation_tree(self) -> tuple[list[dict], dict]:
         try:
             from ..delivery.final_menu_navigation_service import FinalMenuNavigationService
+
             navigation = FinalMenuNavigationService(self.env).build(scene_map={}, policy={})
-        except Exception as exc:
-            _logger.debug("MENU_CONFIG_RUNTIME_NAVIGATION_STATE_FAILED error=%s", exc)
-            return {
-                "visible_menu_ids": [],
-                "carrier_menu_ids": [],
-                "states": {},
-                "summary": {
-                    "runtime_visible_count": 0,
-                    "runtime_carrier_count": 0,
-                    "configured_hidden_runtime_visible_count": 0,
-                },
-                "error": "runtime_navigation_unavailable",
+            nav_fact = navigation.get("nav_fact") if isinstance(navigation, dict) else {}
+            nav = nav_fact.get("tree") if isinstance(nav_fact, dict) and isinstance(nav_fact.get("tree"), list) else []
+            meta = navigation.get("meta") if isinstance(navigation, dict) and isinstance(navigation.get("meta"), dict) else {}
+            return nav, {
+                "source": "final_menu_navigation",
+                "user_menu_config": meta.get("user_menu_config") if isinstance(meta.get("user_menu_config"), dict) else {},
             }
-        nav_fact = navigation.get("nav_fact") if isinstance(navigation, dict) else {}
-        nav_tree = nav_fact.get("tree") if isinstance(nav_fact, dict) and isinstance(nav_fact.get("tree"), list) else []
+        except Exception as exc:
+            _logger.debug("MENU_CONFIG_RELEASE_NAVIGATION_STATE_FAILED error=%s", exc)
+            return [], {"source": "final_menu_navigation", "error": "runtime_navigation_unavailable"}
+
+    def _runtime_navigation_state(self, configured_by_menu: dict[int, dict], menu_rows: list[dict] | None = None) -> dict:
+        del menu_rows
+        nav_tree, nav_meta = self._runtime_release_navigation_tree()
         runtime = _build_runtime_navigation_states(nav_tree, configured_by_menu)
-        runtime["source"] = "final_menu_navigation"
-        user_menu_config = ((navigation.get("meta") or {}).get("user_menu_config") or {}) if isinstance(navigation, dict) else {}
-        runtime["navigation_meta"] = user_menu_config if isinstance(user_menu_config, dict) else {}
+        runtime["source"] = "release_navigation_v1"
+        runtime["navigation_meta"] = nav_meta
+        if nav_meta.get("error"):
+            runtime["error"] = nav_meta.get("error")
         return runtime
 
     def _group_option_records(self, menus, policies):
@@ -763,7 +804,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             for menu_id, policy in policy_by_menu.items()
             if int(menu_id or 0) in scoped_menu_ids
         }
-        runtime_state = self._runtime_navigation_state(policy_by_menu)
+        runtime_state = self._runtime_navigation_state(policy_by_menu, effective_menu_rows)
 
         groups = self._group_option_records(menus, policies)
         group_rows = [
@@ -1372,7 +1413,7 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
             for row in applicable_rows
             if _to_int(row.get("menu_id"))
         }
-        runtime_state = self._runtime_navigation_state(runtime_configured_by_menu)
+        runtime_state = self._runtime_navigation_state(runtime_configured_by_menu, applicable_rows)
         summary = {
             "runtime_source": runtime_source,
             "configured_policy_count": len(policy_rows),

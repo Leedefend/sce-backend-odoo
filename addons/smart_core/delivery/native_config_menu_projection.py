@@ -14,6 +14,7 @@ CONFIG_GROUP_LABEL = "配置中心"
 SOURCE_KIND = "native_business_config_menu_projection"
 SOURCE_AUTHORITIES = ("ir.ui.menu", "ir.actions", "res.groups", MENU_CONFIG_POLICY_MODEL)
 NO_BUSINESS_FACT_AUTHORITY = True
+NATIVE_CONFIG_DELIVERY_EXCLUDED_MENU_XMLIDS_PARAM = "smart_core.native_config_delivery_excluded_menu_xmlids"
 
 
 def source_authority_contract() -> dict[str, Any]:
@@ -45,6 +46,24 @@ def _xmlid(record: Any) -> str:
         return _text(record.get_external_id().get(record.id))
     except Exception:
         return ""
+
+
+def _csv_values(value: Any) -> set[str]:
+    if isinstance(value, (list, tuple, set)):
+        return {_text(item) for item in value if _text(item)}
+    return {_text(item) for item in _text(value).replace("\n", ",").split(",") if _text(item)}
+
+
+def native_config_delivery_excluded_menu_xmlids(env) -> set[str]:
+    xmlids: set[str] = set()
+    hook_xmlids = call_extension_hook_first(env, "smart_core_native_config_delivery_excluded_menu_xmlids", env)
+    xmlids.update(_csv_values(hook_xmlids))
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param(NATIVE_CONFIG_DELIVERY_EXCLUDED_MENU_XMLIDS_PARAM, "")
+    except Exception:
+        raw = ""
+    xmlids.update(_csv_values(raw))
+    return xmlids
 
 
 def native_config_root(env):
@@ -157,13 +176,16 @@ def native_config_app_children(env) -> list[dict[str, Any]]:
     return rows
 
 
-def _node_to_delivery_menu(node: dict[str, Any]) -> dict[str, Any] | None:
+def _node_to_delivery_menu(node: dict[str, Any], excluded_xmlids: set[str] | None = None) -> dict[str, Any] | None:
     if not isinstance(node, dict):
         return None
     meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
     menu_id = int(node.get("menu_id") or meta.get("menu_id") or 0)
     label = _text(node.get("label"))
     if not menu_id or not label:
+        return None
+    menu_xmlid = _text(meta.get("menu_xmlid"))
+    if menu_xmlid and menu_xmlid in (excluded_xmlids or set()):
         return None
     route = _text(node.get("route") or meta.get("route"))
     return {
@@ -174,7 +196,7 @@ def _node_to_delivery_menu(node: dict[str, Any]) -> dict[str, Any] | None:
         "scene_key": "",
         "product_key": "",
         "capability_key": "",
-        "menu_xmlid": _text(meta.get("menu_xmlid")),
+        "menu_xmlid": menu_xmlid,
         "scene_source": SOURCE_KIND,
         "action_id": meta.get("action_id") or node.get("action_id"),
         "action_xmlid": _text(meta.get("action_xmlid")),
@@ -188,12 +210,13 @@ def _node_to_delivery_menu(node: dict[str, Any]) -> dict[str, Any] | None:
 
 def native_config_delivery_groups(env) -> list[dict[str, Any]]:
     menus = []
+    excluded_xmlids = native_config_delivery_excluded_menu_xmlids(env)
     for node in native_config_app_children(env):
-        menu = _node_to_delivery_menu(node)
+        menu = _node_to_delivery_menu(node, excluded_xmlids)
         if menu:
             menus.append(menu)
         for child in node.get("children") or []:
-            child_menu = _node_to_delivery_menu(child)
+            child_menu = _node_to_delivery_menu(child, excluded_xmlids)
             if child_menu:
                 menus.append(child_menu)
     if not menus:

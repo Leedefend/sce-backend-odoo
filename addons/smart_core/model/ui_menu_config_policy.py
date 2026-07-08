@@ -16,6 +16,7 @@ from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_fir
 
 _PROTECTED_NODE_EXCLUDED_FINGERPRINT_TOKENS: set[str] = set()
 LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS_PARAM = "smart_core.lowcode.system_config_menu_xmlids"
+NATIVE_CONFIG_DELIVERY_EXCLUDED_MENU_XMLIDS_PARAM = "smart_core.native_config_delivery_excluded_menu_xmlids"
 
 
 def register_protected_node_excluded_fingerprint_token(token: str) -> None:
@@ -44,6 +45,18 @@ def _lowcode_system_config_menu_xmlids(env) -> frozenset[str]:
     xmlids.update(_split_xmlid_list(hook_xmlids))
     try:
         raw = env["ir.config_parameter"].sudo().get_param(LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS_PARAM, "") or ""
+    except Exception:
+        raw = ""
+    xmlids.update(_split_xmlid_list(raw))
+    return frozenset(xmlids)
+
+
+def _native_config_delivery_excluded_menu_xmlids(env) -> frozenset[str]:
+    xmlids = set()
+    hook_xmlids = call_extension_hook_first(env, "smart_core_native_config_delivery_excluded_menu_xmlids", env)
+    xmlids.update(_split_xmlid_list(hook_xmlids))
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param(NATIVE_CONFIG_DELIVERY_EXCLUDED_MENU_XMLIDS_PARAM, "") or ""
     except Exception:
         raw = ""
     xmlids.update(_split_xmlid_list(raw))
@@ -576,6 +589,48 @@ class UiMenuConfigPolicy(models.Model):
             menu = self.env["ir.ui.menu"].browse(menu_id).exists()
             return bool(menu and menu_visible_to_user(menu))
 
+        delivery_excluded_menu_xmlids_by_id_cache = None
+
+        def delivery_excluded_menu_xmlids_by_id() -> dict[int, str]:
+            nonlocal delivery_excluded_menu_xmlids_by_id_cache
+            if delivery_excluded_menu_xmlids_by_id_cache is not None:
+                return delivery_excluded_menu_xmlids_by_id_cache
+            delivery_excluded_menu_xmlids_by_id_cache = {}
+            excluded_xmlids = _native_config_delivery_excluded_menu_xmlids(self.env)
+            if not excluded_xmlids:
+                return delivery_excluded_menu_xmlids_by_id_cache
+            try:
+                ModelData = self.env["ir.model.data"].sudo()
+            except Exception:
+                return delivery_excluded_menu_xmlids_by_id_cache
+            modules = {xmlid.split(".", 1)[0] for xmlid in excluded_xmlids if "." in xmlid}
+            names = {xmlid.split(".", 1)[1] for xmlid in excluded_xmlids if "." in xmlid}
+            try:
+                rows = ModelData.search([
+                    ("model", "=", "ir.ui.menu"),
+                    ("module", "in", list(modules)),
+                    ("name", "in", list(names)),
+                ])
+            except Exception:
+                rows = []
+            for row in rows or []:
+                xmlid = "%s.%s" % (str(getattr(row, "module", "") or ""), str(getattr(row, "name", "") or ""))
+                menu_id = _to_int(getattr(row, "res_id", 0))
+                if xmlid in excluded_xmlids and menu_id:
+                    delivery_excluded_menu_xmlids_by_id_cache[menu_id] = xmlid
+            return delivery_excluded_menu_xmlids_by_id_cache
+
+        def is_delivery_excluded_menu_id(menu_id: int) -> bool:
+            menu_id = _to_int(menu_id)
+            return bool(menu_id and menu_id in delivery_excluded_menu_xmlids_by_id())
+
+        def is_delivery_excluded_node(node: dict) -> bool:
+            menu_id = node_menu_id(node)
+            if is_delivery_excluded_menu_id(menu_id):
+                return True
+            xmlid = node_menu_xmlid(node)
+            return bool(xmlid and xmlid in _native_config_delivery_excluded_menu_xmlids(self.env))
+
         def is_protected_runtime_config_node(node: dict) -> bool:
             meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
             menu_id = node_menu_id(node)
@@ -611,6 +666,9 @@ class UiMenuConfigPolicy(models.Model):
             return False
 
         def apply_node(node: dict) -> dict | None:
+            if is_delivery_excluded_node(node):
+                stats["hidden_count"] += 1
+                return None
             normalized_menu_id = node_menu_id(node)
             children = node.get("children")
             policy = policies_by_menu.get(normalized_menu_id)
@@ -625,7 +683,7 @@ class UiMenuConfigPolicy(models.Model):
                 policy_matched_by_label = bool(policy)
             if policy:
                 stats["applied_count"] += 1
-                skip_policy_effects = False
+                skip_policy_effects = is_protected_runtime_config_menu_id(normalized_menu_id)
                 if not policy_visible(policy):
                     if not stats.get("config_only") and policy_matched_by_label and isinstance(children, list) and children:
                         stats["protected_count"] += 1
@@ -680,6 +738,9 @@ class UiMenuConfigPolicy(models.Model):
                 if not isinstance(node, dict):
                     continue
                 next_node = dict(node)
+                if is_delivery_excluded_node(next_node):
+                    stats["unconfigured_hidden_count"] += 1
+                    continue
                 children = next_node.get("children") if isinstance(next_node.get("children"), list) else []
                 next_children = prune_unconfigured_nodes(children, depth=depth + 1) if children else []
                 if children:
@@ -705,6 +766,8 @@ class UiMenuConfigPolicy(models.Model):
             kept = []
             for node in nodes or []:
                 if not isinstance(node, dict):
+                    continue
+                if is_delivery_excluded_node(node):
                     continue
                 policy = policy_for_node(node)
                 if (policy and policy_visible(policy)) or is_protected_runtime_config_node(node):
@@ -904,6 +967,8 @@ class UiMenuConfigPolicy(models.Model):
             menu_id = int(menu.id or 0)
             seen = set(seen or set())
             policy = policy if policy is not None else policies_by_menu.get(menu_id)
+            if is_delivery_excluded_menu_id(menu_id):
+                return None
             if menu_id in seen:
                 return None
             seen.add(menu_id)
@@ -920,7 +985,7 @@ class UiMenuConfigPolicy(models.Model):
                 and not structural_container
             ):
                 return None
-            label = policy_custom_label(policy) if policy else ""
+            label = "" if protected_config_menu else (policy_custom_label(policy) if policy else "")
             label = label or str(menu.name or "").strip()
             if not label:
                 return None
@@ -1166,6 +1231,47 @@ class UiMenuConfigPolicy(models.Model):
                     next_nodes.append(moved_node)
             return sort_children(next_nodes)
 
+        def annotate_config_contract_node(node: dict) -> dict:
+            node = dict(node)
+            meta = dict(node.get("meta") if isinstance(node.get("meta"), dict) else {})
+            menu_id = node_menu_id(node)
+            existing_config_id = _to_int(node.get("config_menu_id") or meta.get("config_menu_id"))
+            config_ref = node.get("config_ref") if isinstance(node.get("config_ref"), dict) else meta.get("config_ref")
+            if isinstance(config_ref, dict) and str(config_ref.get("model") or "ir.ui.menu") == "ir.ui.menu":
+                existing_config_id = existing_config_id or _to_int(config_ref.get("id"))
+            config_menu_id = existing_config_id
+            if not config_menu_id and menu_id:
+                try:
+                    if self.env["ir.ui.menu"].browse(menu_id).exists():
+                        config_menu_id = menu_id
+                except Exception:
+                    config_menu_id = 0
+
+            if config_menu_id:
+                node["config_menu_id"] = config_menu_id
+                node["configurable"] = True
+                node["config_ref"] = {"model": "ir.ui.menu", "id": config_menu_id}
+                meta["config_menu_id"] = config_menu_id
+                meta["configurable"] = True
+                meta["config_ref"] = {"model": "ir.ui.menu", "id": config_menu_id}
+                meta["synthetic"] = False if config_menu_id == menu_id else bool(meta.get("synthetic", True))
+                if not meta.get("node_kind"):
+                    meta["node_kind"] = "menu_group" if node.get("children") and not node.get("action_id") else "menu_action"
+            else:
+                node["configurable"] = False
+                meta["configurable"] = False
+                meta["synthetic"] = True
+                meta.setdefault("node_kind", "navigation_group" if node.get("children") else "navigation_node")
+
+            children = node.get("children") if isinstance(node.get("children"), list) else []
+            if children:
+                node["children"] = [annotate_config_contract_node(child) for child in children if isinstance(child, dict)]
+            node["meta"] = meta
+            return node
+
+        def annotate_config_contract_nodes(nodes: list[dict]) -> list[dict]:
+            return [annotate_config_contract_node(node) for node in nodes if isinstance(node, dict)]
+
         out = dict(nav_fact)
         applied_flat = [
             applied
@@ -1186,4 +1292,6 @@ class UiMenuConfigPolicy(models.Model):
         out["tree"] = align_visible_configured_parentage(
             materialize_visible_configured_nodes(apply_moves(prune_unconfigured_nodes(applied_tree)))
         )
+        out["flat"] = annotate_config_contract_nodes(out["flat"])
+        out["tree"] = annotate_config_contract_nodes(out["tree"])
         return out, stats

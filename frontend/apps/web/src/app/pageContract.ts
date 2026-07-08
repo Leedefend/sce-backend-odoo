@@ -233,7 +233,9 @@ export function usePageContract(pageKey: string, options: UsePageContractOptions
 
   function sectionTagIs(key: string, expected: Exclude<SectionTag, ''>, fallback = true): boolean {
     if (!sections.value.size) return fallback;
-    return sections.value.get(key)?.tag === expected;
+    const tag = sections.value.get(key)?.tag;
+    if (!tag) return fallback;
+    return tag === expected;
   }
 
   function actionText(key: string, fallback: string): string {

@@ -757,6 +757,124 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
             })
 
 
+def _validate_menu_config_runtime_authority(errors: list[dict]) -> None:
+    frontend_path = ROOT / "frontend" / "apps" / "web" / "src" / "views" / "MenuConfigView.vue"
+    handler_path = ROOT / "addons" / "smart_core" / "handlers" / "menu_configuration.py"
+    runtime_path = ROOT / "addons" / "smart_core" / "model" / "ui_menu_config_policy.py"
+    delivery_path = ROOT / "addons" / "smart_core" / "delivery" / "menu_service.py"
+    defaults_path = ROOT / "addons" / "smart_core" / "core" / "delivery_menu_defaults.py"
+
+    frontend_text = _read(frontend_path)
+    handler_text = _read(handler_path)
+    runtime_text = _read(runtime_path)
+    delivery_text = _read(delivery_path)
+    defaults_text = _read(defaults_path)
+
+    frontend_forbidden = {
+        "appShellVisibleMenuIds": "front-end must not infer menu runtime state from AppShell rendered ids",
+        "appShellVisibleLabels": "front-end must not infer menu runtime state from AppShell rendered labels",
+        "alignRuntimeStateWithAppShellNavigation": "front-end must not synthesize runtime states",
+        "collectRuntimeVisibleLabelsFromNav": "front-end must not label-match final navigation",
+        "canMatchNavigationGroupByLabel": "front-end must not map navigation groups by label",
+        "visible_app_shell_navigation": "front-end must not invent AppShell visibility reasons",
+        "menuId < 800000000": "front-end must not classify synthetic menu ids by numeric ranges",
+        "menuId >= 800000000": "front-end must not classify synthetic menu ids by numeric ranges",
+    }
+    for token, message in frontend_forbidden.items():
+        if token in frontend_text:
+            errors.append({
+                "category": "menu_config_frontend_runtime_authority",
+                "path": frontend_path.relative_to(ROOT).as_posix(),
+                "message": message,
+                "token": token,
+            })
+
+    for token in (
+        "navConfigMenuId",
+        "config_menu_id",
+        "config_ref",
+        "runtimeState.value = payload.runtime || null",
+    ):
+        if token not in frontend_text:
+            errors.append({
+                "category": "menu_config_frontend_runtime_authority",
+                "path": frontend_path.relative_to(ROOT).as_posix(),
+                "message": "menu config front-end must consume backend navigation/config/runtime facts directly",
+                "token": token,
+            })
+
+    handler_forbidden = {
+        "menu_labels_by_id": "runtime navigation state must not map release groups by label",
+        "label_to_configured_ids": "runtime navigation state must not map release groups by label",
+        "matched_by_release_group": "runtime navigation state must be driven by config_menu_id/config_ref, not label matching",
+    }
+    for token, message in handler_forbidden.items():
+        if token in handler_text:
+            errors.append({
+                "category": "menu_config_backend_runtime_authority",
+                "path": handler_path.relative_to(ROOT).as_posix(),
+                "message": message,
+                "token": token,
+            })
+
+    for token in (
+        "def _nav_node_config_menu_id",
+        "node.get(\"config_menu_id\")",
+        "meta.get(\"config_menu_id\")",
+        "config_ref.get(\"id\")",
+    ):
+        if token not in handler_text:
+            errors.append({
+                "category": "menu_config_backend_runtime_authority",
+                "path": handler_path.relative_to(ROOT).as_posix(),
+                "message": "menu config runtime states must be keyed by backend explicit config references",
+                "token": token,
+            })
+
+    for token in (
+        "annotate_config_contract_node",
+        "config_menu_id",
+        "configurable",
+        "config_ref",
+        "node_kind",
+    ):
+        if token not in runtime_text:
+            errors.append({
+                "category": "menu_config_backend_runtime_authority",
+                "path": runtime_path.relative_to(ROOT).as_posix(),
+                "message": "final navigation overlay must annotate every node with backend config contract facts",
+                "token": token,
+            })
+
+    for token in (
+        "_native_group_config_menu_ids_by_label",
+        "build_delivery_menu_group",
+        "config_menu_id=int(row.get(\"config_menu_id\") or 0)",
+    ):
+        if token not in delivery_text:
+            errors.append({
+                "category": "menu_config_delivery_group_authority",
+                "path": delivery_path.relative_to(ROOT).as_posix(),
+                "message": "delivery navigation groups must resolve real Odoo group menu references in backend",
+                "token": token,
+            })
+
+    for token in (
+        "config_menu_id: int = 0",
+        "\"node_kind\": \"navigation_group\"",
+        "\"configurable\": bool(config_menu_id)",
+        "meta[\"config_ref\"] = {\"model\": \"ir.ui.menu\", \"id\": config_menu_id}",
+        "node[\"config_ref\"] = {\"model\": \"ir.ui.menu\", \"id\": config_menu_id}",
+    ):
+        if token not in defaults_text:
+            errors.append({
+                "category": "menu_config_delivery_group_authority",
+                "path": defaults_path.relative_to(ROOT).as_posix(),
+                "message": "delivery menu defaults must expose group configurability as backend facts",
+                "token": token,
+            })
+
+
 def build_report() -> dict:
     errors: list[dict] = []
     boundaries = _load_boundaries()
@@ -765,6 +883,7 @@ def build_report() -> dict:
     capability_ids = _validate_lowcode_capability_boundaries(errors)
     _validate_customer_config_baseline_manifest(errors)
     _validate_lowcode_release_verification_docs(errors)
+    _validate_menu_config_runtime_authority(errors)
 
     missing_statuses = sorted(REQUIRED_SOURCE_STATUSES - source_statuses)
     if missing_statuses:

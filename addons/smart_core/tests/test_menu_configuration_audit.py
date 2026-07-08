@@ -33,6 +33,12 @@ def _lowcode_system_config_menu_xmlids_hook(env, hook_name, *args, **kwargs):
     ]
 
 
+def _lowcode_config_boundary_hooks(env, hook_name, *args, **kwargs):
+    if hook_name == "smart_core_native_config_delivery_excluded_menu_xmlids":
+        return []
+    return _lowcode_system_config_menu_xmlids_hook(env, hook_name, *args, **kwargs)
+
+
 def _load_handler():
     root = Path(__file__).resolve().parents[1]
     exc_mod = _install_module(
@@ -2000,8 +2006,8 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         user = _User([])
         root = _Menu(291, "智慧施工管理平台")
         home = _Menu(464, "首页", parent=root, sequence=10)
-        settings = _Menu(297, "基础设置", parent=root, sequence=70)
-        workbench = _Menu(827, "配置中心", parent=settings, sequence=10, action="ir.actions.act_window(1009,)")
+        settings = _Menu(297, "配置中心", parent=root, sequence=70)
+        workbench = _Menu(827, "配置工作台", parent=settings, sequence=10, action="ir.actions.act_window(1009,)")
         menu_config = _Menu(646, "菜单配置", parent=settings, sequence=20, action="ir.actions.act_window(1014,)")
         menus = _MenuModel([root, home, settings, workbench, menu_config], visible_ids=[291, 464, 297, 827, 646])
         env = _Env(
@@ -2083,7 +2089,7 @@ class TestMenuConfigurationAudit(unittest.TestCase):
 
         root_node = overlaid["tree"][0]
         settings_node = next(child for child in root_node["children"] if child["menu_id"] == 297)
-        self.assertEqual(settings_node["name"], "系统设置")
+        self.assertEqual(settings_node["name"], "配置中心")
         self.assertEqual([child["menu_id"] for child in settings_node["children"]], [827, 646])
         self.assertOverlayDirectoryNavigationContract(settings_node)
         workbench_node = next(child for child in settings_node["children"] if child["menu_id"] == 827)
@@ -2153,7 +2159,103 @@ class TestMenuConfigurationAudit(unittest.TestCase):
             user=user,
         )
 
-        self.assertEqual(overlaid["tree"], [{"menu_id": 291, "name": "智慧施工管理平台", "children": []}])
+        self.assertEqual(len(overlaid["tree"]), 1)
+        self.assertEqual(overlaid["tree"][0]["menu_id"], 291)
+        self.assertEqual(overlaid["tree"][0]["name"], "智慧施工管理平台")
+        self.assertEqual(overlaid["tree"][0]["children"], [])
+        self.assertTrue(overlaid["tree"][0]["configurable"])
+        self.assertEqual(overlaid["tree"][0]["config_menu_id"], 291)
+        self.assertEqual(overlaid["tree"][0]["config_ref"], {"model": "ir.ui.menu", "id": 291})
+        self.assertEqual(stats["hidden_count"], 0)
+
+    def test_runtime_overlay_protected_workbench_ignores_confusing_custom_label(self):
+        module = _load_policy_model()
+        module.call_extension_hook_first = _lowcode_config_boundary_hooks
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        settings = _Menu(297, "配置中心", parent=root, sequence=70)
+        workbench = _Menu(827, "配置工作台", parent=settings, sequence=10, action="ir.actions.act_window(1009,)")
+        menu_config = _Menu(646, "菜单配置", parent=settings, sequence=20, action="ir.actions.act_window(1014,)")
+        menus = _MenuModel([root, settings, workbench, menu_config], visible_ids=[291, 297, 827, 646])
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([
+                    _ActionWindow(1009, res_model="ui.business.config.contract"),
+                    _ActionWindow(1014, res_model="ui.menu.config.policy"),
+                ]),
+                "ir.model.data": _ModelDataModel([
+                    types.SimpleNamespace(
+                        model="ir.ui.menu",
+                        res_id=297,
+                        module="smart_construction_core",
+                        name="menu_sc_business_config_center",
+                    ),
+                    types.SimpleNamespace(
+                        model="ir.ui.menu",
+                        res_id=827,
+                        module="smart_construction_core",
+                        name="menu_sc_business_config_workbench",
+                    ),
+                    types.SimpleNamespace(
+                        model="ir.ui.menu",
+                        res_id=646,
+                        module="smart_construction_core",
+                        name="menu_ui_menu_config_policy_business_config",
+                    ),
+                ]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                297: {"active": True, "menu_id": 297, "menu_label": "配置中心", "visible": True},
+                827: {
+                    "active": True,
+                    "menu_id": 827,
+                    "menu_label": "配置工作台",
+                    "visible": True,
+                    "custom_label": "配置中心",
+                },
+                646: {"active": True, "menu_id": 646, "menu_label": "菜单配置", "visible": True},
+            },
+            "ui.business.config.contract.menu_orchestration",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [
+                            {
+                                "menu_id": 297,
+                                "name": "配置中心",
+                                "sequence": 70,
+                                "children": [
+                                    {"menu_id": 827, "name": "配置工作台", "sequence": 10, "children": []},
+                                    {"menu_id": 646, "name": "菜单配置", "sequence": 20, "children": []},
+                                ],
+                            }
+                        ],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        settings_node = overlaid["tree"][0]["children"][0]
+        self.assertEqual([child["menu_id"] for child in settings_node["children"]], [827, 646])
+        workbench_node = settings_node["children"][0]
+        self.assertEqual(workbench_node["name"], "配置工作台")
+        self.assertNotEqual(workbench_node.get("name"), settings_node.get("name"))
         self.assertEqual(stats["hidden_count"], 0)
 
     def test_runtime_overlay_config_only_does_not_recover_hidden_acceptance_entries(self):
@@ -2530,6 +2632,69 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertTrue(contract_center_state["configured_visible"])
         self.assertEqual(contract_center_state["runtime_state"], "configured_visible_runtime_absent")
         self.assertEqual(contract_center_state["runtime_visibility_reason"], "configured_visible_runtime_absent")
+
+    def test_runtime_navigation_state_maps_release_group_config_ref_to_configured_menu(self):
+        module = _load_handler()
+
+        runtime = module._build_runtime_navigation_states(
+            [
+                {
+                    "menu_id": 880000001,
+                    "name": "系统菜单",
+                    "children": [
+                        {
+                            "menu_id": 889777446,
+                            "label": "合同中心",
+                            "config_menu_id": 293,
+                            "config_ref": {"model": "ir.ui.menu", "id": 293},
+                            "children": [
+                                {"menu_id": 361, "label": "一般合同", "children": []},
+                            ],
+                        },
+                    ],
+                }
+            ],
+            {
+                293: {"visible": True},
+                361: {"visible": True},
+            },
+        )
+
+        contract_center_state = runtime["states"]["293"]
+        self.assertTrue(contract_center_state["runtime_visible"])
+        self.assertTrue(contract_center_state["configured_visible"])
+        self.assertEqual(contract_center_state["runtime_node_id"], 889777446)
+        self.assertEqual(contract_center_state["runtime_state"], "visible_release_navigation_group")
+        self.assertEqual(contract_center_state["runtime_visibility_reason"], "visible_release_navigation_group")
+
+    def test_runtime_navigation_state_does_not_map_release_group_by_label(self):
+        module = _load_handler()
+
+        runtime = module._build_runtime_navigation_states(
+            [
+                {
+                    "menu_id": 880000001,
+                    "name": "系统菜单",
+                    "children": [
+                        {
+                            "menu_id": 889777446,
+                            "label": "合同中心",
+                            "children": [
+                                {"menu_id": 361, "label": "一般合同", "children": []},
+                            ],
+                        },
+                    ],
+                }
+            ],
+            {
+                293: {"visible": True},
+                361: {"visible": True},
+            },
+        )
+
+        contract_center_state = runtime["states"]["293"]
+        self.assertFalse(contract_center_state["runtime_visible"])
+        self.assertEqual(contract_center_state["runtime_state"], "configured_visible_runtime_absent")
 
 
 if __name__ == "__main__":

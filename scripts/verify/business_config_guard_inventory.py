@@ -206,6 +206,10 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
             "policy.visible !== true",
             "navigation_config_only",
             "parent_mismatch_count",
+            "group_contract_mismatch_count",
+            "menu_config_tree_ui_violation_count",
+            "visible_group_rendered_as_candidate",
+            "tree_row_not_real_odoo_menu_id",
         ),
     },
     "verify.business_config.low_code_global_stability": {
