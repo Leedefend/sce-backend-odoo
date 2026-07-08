@@ -300,6 +300,7 @@ def _validate_lowcode_capability_boundaries(errors: list[dict]) -> list[str]:
 
 def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
     manifest_path = ROOT / "addons" / "smart_construction_custom" / "data" / "lowcode_customer_config_baseline_manifest_v1.json"
+    custom_module_path = ROOT / "addons" / "smart_construction_custom"
     if not manifest_path.is_file():
         errors.append({
             "category": "customer_config_baseline_manifest",
@@ -359,6 +360,44 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
                 "message": "customer low-code baseline manifest missing replayable surface",
                 "surface": surface,
             })
+    for item in surfaces:
+        if not isinstance(item, dict):
+            errors.append({
+                "category": "customer_config_baseline_manifest",
+                "message": "customer low-code baseline manifest replayable surface must be an object",
+                "surface": item,
+            })
+            continue
+        surface = str(item.get("surface") or "").strip()
+        if not surface:
+            errors.append({
+                "category": "customer_config_baseline_manifest",
+                "message": "customer low-code baseline manifest replayable surface must be named",
+            })
+            continue
+        for key in ("runtime_carriers", "baseline_carrier", "install_hook"):
+            value = item.get(key)
+            if not value or (isinstance(value, list) and not all(str(entry).strip() for entry in value)):
+                errors.append({
+                    "category": "customer_config_baseline_manifest",
+                    "message": "customer low-code baseline manifest replayable surface missing binding field",
+                    "surface": surface,
+                    "field": key,
+                })
+        if surface == "form_preferences":
+            markers = item.get("source_markers")
+            if not isinstance(markers, list) or not all(str(marker).strip() for marker in markers):
+                errors.append({
+                    "category": "customer_config_baseline_manifest",
+                    "message": "form preferences surface must declare replayable source markers",
+                    "surface": surface,
+                })
+        elif not str(item.get("source_marker") or "").strip():
+            errors.append({
+                "category": "customer_config_baseline_manifest",
+                "message": "customer low-code baseline manifest replayable surface missing source marker",
+                "surface": surface,
+            })
     required_assets = payload.get("required_module_assets") if isinstance(payload.get("required_module_assets"), list) else []
     for rel_path in required_assets:
         path = ROOT / str(rel_path)
@@ -367,6 +406,67 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
                 "category": "customer_config_baseline_manifest",
                 "message": "customer low-code baseline manifest references missing asset",
                 "path": str(rel_path),
+            })
+    custom_manifest_text = _read(custom_module_path / "__manifest__.py")
+    for asset in (
+        '"data/user_data_baseline.xml"',
+        '"data/user_preferences.xml"',
+        '"data/user_menu_preferences.xml"',
+        '"post_init_hook": "post_init_hook"',
+    ):
+        if asset not in custom_manifest_text:
+            errors.append({
+                "category": "customer_config_baseline_module_binding",
+                "message": "smart_construction_custom manifest must install the customer low-code baseline binding",
+                "asset": asset,
+            })
+    custom_hook_text = _read(custom_module_path / "hooks.py")
+    for token in (
+        "def apply_user_preferences",
+        "apply_user_menu_preferences()",
+        "apply_user_form_preferences()",
+        "backfill_lowcode_contract_source_status(env)",
+        "def apply_user_data_baseline",
+        "apply_user_data_baseline()",
+        "def post_init_hook",
+    ):
+        if token not in custom_hook_text:
+            errors.append({
+                "category": "customer_config_baseline_hook_binding",
+                "message": "smart_construction_custom hooks must replay customer low-code baselines on fresh install",
+                "token": token,
+            })
+    user_pref_xml = _read(custom_module_path / "data" / "user_preferences.xml")
+    if 'model="sc.user.preference.initialization" name="apply_user_form_preferences"' not in user_pref_xml:
+        errors.append({
+            "category": "customer_config_baseline_xml_binding",
+            "message": "user_preferences.xml must replay form preferences during module install/update",
+        })
+    user_menu_pref_xml = _read(custom_module_path / "data" / "user_menu_preferences.xml")
+    for token in (
+        'model="sc.user.preference.initialization" name="apply_user_menu_preferences"',
+        'model="sc.user.preference.initialization" name="backfill_lowcode_contract_source_status"',
+        'model="sc.user.preference.initialization" name="enforce_product_menu_runtime_cleanup"',
+    ):
+        if token not in user_menu_pref_xml:
+            errors.append({
+                "category": "customer_config_baseline_xml_binding",
+                "message": "user_menu_preferences.xml must replay menu preferences and cleanup/backfill during module install/update",
+                "token": token,
+            })
+    user_pref_model_text = _read(custom_module_path / "models" / "user_preferences.py")
+    for token in (
+        'PARTNER_FORM_PREFERENCE_SOURCE = "smart_construction_custom.partner_form_preference"',
+        'USER_FORM_PREFERENCE_SOURCE = "smart_construction_custom.user_form_preference"',
+        '"productization_source": "smart_construction_custom.user_menu_preference"',
+        "ensure_lowcode_contract_source_status",
+        "_upsert_form_contract",
+    ):
+        if token not in user_pref_model_text:
+            errors.append({
+                "category": "customer_config_baseline_source_binding",
+                "message": "customer low-code baseline generators must stamp replayable source markers and contract status",
+                "token": token,
             })
     required_guards = set(map(str, payload.get("required_guards") if isinstance(payload.get("required_guards"), list) else []))
     for guard in (
@@ -380,6 +480,14 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
                 "category": "customer_config_baseline_manifest",
                 "message": "customer low-code baseline manifest must require guard",
                 "guard": guard,
+            })
+    acceptance_policy = payload.get("acceptance_policy") if isinstance(payload.get("acceptance_policy"), dict) else {}
+    for policy in ("fresh_install", "upgrade", "runtime", "cross_environment"):
+        if not str(acceptance_policy.get(policy) or "").strip():
+            errors.append({
+                "category": "customer_config_baseline_manifest",
+                "message": "customer low-code baseline manifest must define acceptance policy",
+                "policy": policy,
             })
 
 
