@@ -25,7 +25,7 @@
               sequence="60"
               groups="smart_construction_core.group_sc_cap_data_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_business_config_center"
-              name="业务配置"
+              name="配置中心"
               parent="menu_sc_root"
               sequence="85"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>

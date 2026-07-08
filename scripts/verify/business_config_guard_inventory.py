@@ -99,6 +99,7 @@ FULL_ACCEPTANCE_TARGETS = {
     "verify.business_config.snapshot",
     "verify.business_config.approval_runtime",
     "verify.business_config.browser_acceptance",
+    "verify.product.navigation_boundary",
     "verify.business_config.low_code_acceptance",
     "verify.business_config.low_code_runtime_consistency",
     "verify.business_config.low_code_group_matrix",
@@ -111,6 +112,7 @@ FULL_ACCEPTANCE_TARGETS = {
 
 FULL_ACCEPTANCE_TARGETS_WITHOUT_CAPABILITY_OWNER = {
     "verify.frontend.build",
+    "verify.product.navigation_boundary",
     "verify.user_menu.reachability.guard",
     "verify.full_product_capability_scope",
 }
@@ -140,6 +142,9 @@ TARGET_SCRIPT_REQUIREMENTS = {
     ),
     "verify.business_config.browser_acceptance": (
         "scripts/verify/business_config_runtime_routes_browser_acceptance.mjs",
+    ),
+    "verify.product.navigation_boundary": (
+        "frontend/apps/web/scripts/product_navigation_boundary_acceptance.mjs",
     ),
     "verify.business_config.low_code_acceptance": (
         "scripts/low_code_business_config_acceptance.mjs|frontend/apps/web/scripts/low_code_business_config_acceptance.mjs",
@@ -200,6 +205,7 @@ TARGET_SOURCE_MARKER_REQUIREMENTS = {
             "configuredParentId",
             "policy.visible !== true",
             "navigation_config_only",
+            "parent_mismatch_count",
         ),
     },
     "verify.business_config.low_code_global_stability": {

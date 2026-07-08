@@ -20,11 +20,16 @@ from ..utils.backend_contract_boundaries import (
     VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
     ensure_view_orchestration_source,
 )
+from ..utils.extension_hooks import call_extension_hook_first
 from ..utils.reason_codes import REASON_MISSING_PARAMS, REASON_NOT_FOUND, REASON_OK, REASON_USER_ERROR, REASON_WRITE_FAILED
 
 BUSINESS_CONFIG_ADMIN_GROUP = "smart_core.group_smart_core_business_config_admin"
 _logger = logging.getLogger(__name__)
 _FORM_FIELD_LABEL_OVERRIDES: dict[tuple[str, str], str] = {}
+STANDARD_LOWCODE_COLUMN_LABELS = {
+    "source_created_by": "录入人",
+    "source_created_at": "录入时间",
+}
 BUSINESS_CONFIG_CONTRACT_AUTHORITIES = ("ui.business.config.contract", "ui.business.config.contract.version")
 LOWCODE_BUSINESS_FIELD_TYPES = {
     "boolean",
@@ -142,6 +147,23 @@ def register_form_field_label_override(model_name: str, field_name: str, label: 
 
 def _form_field_label_override(model_name: str, field_name: str) -> str:
     return _FORM_FIELD_LABEL_OVERRIDES.get((str(model_name or "").strip(), str(field_name or "").strip()), "")
+
+
+def _legacy_visible_business_label(env, model_name: str, field_name: str, current_label: str = "") -> str:
+    name = str(field_name or "").strip()
+    model = str(model_name or "").strip()
+    label = str(current_label or "").strip()
+    if name in STANDARD_LOWCODE_COLUMN_LABELS:
+        return STANDARD_LOWCODE_COLUMN_LABELS[name]
+    try:
+        label_maps = call_extension_hook_first(env, "smart_core_legacy_visible_business_column_labels", env)
+    except Exception:
+        label_maps = {}
+    label_map = label_maps.get(model, {}) if isinstance(label_maps, dict) and isinstance(label_maps.get(model), dict) else {}
+    business_label = str(label_map.get(name) or "").strip()
+    if business_label and (not label or label.startswith("历史验收可见字段") or label == name):
+        return business_label
+    return label
 
 
 def _is_lowcode_business_field_candidate(field_name: str, field_type: str, label: str = "") -> bool:
@@ -2152,11 +2174,12 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
                 if override_label:
                     return override_label
                 cleaned_configured_label = _clean_lowcode_user_label(name, configured_label) if configured_label else ""
-                return (
+                resolved_label = (
                     cleaned_configured_label
                     or action_view_column_labels.get(name)
                     or _clean_lowcode_user_label(name, model_field_labels.get(name) or name)
                 )
+                return _legacy_visible_business_label(self.env, model, name, resolved_label) or resolved_label
             list_column_labels = {
                 name: resolve_list_label(name)
                 for name in list_columns

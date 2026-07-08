@@ -682,6 +682,7 @@ import {
   type MenuConfigVersionsPayload,
 } from '../api/menuConfig';
 import { useSessionStore } from '../stores/session';
+import { apiRequest } from '../api/client';
 import { config } from '../config';
 import { BUSINESS_CONFIG_ROUTE_FLAGS, MENU_CONFIG_RUNTIME_SOURCES } from '../app/businessConfigBoundaries';
 import { usePageContract } from '../app/pageContract';
@@ -690,6 +691,12 @@ import { executePageContractAction } from '../app/pageContractActionRuntime';
 type MenuConfigNavNode = NavNode & {
   action_id?: number | string;
   model?: string;
+};
+
+type MenuNavigationResponse = {
+  ok?: boolean;
+  nav_fact?: { tree?: NavNode[] };
+  nav_explained?: { tree?: NavNode[] };
 };
 
 type DraftPolicy = {
@@ -718,6 +725,7 @@ const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
 const pageActionIntent = pageContract.actionIntent;
+const finalNavigationTree = ref<NavNode[]>([]);
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
 const pageSectionsReady = computed(() => (
@@ -1202,14 +1210,39 @@ function isBusinessRootNode(node: NavNode) {
   return label === BUSINESS_MENU_ROOT_LABEL || Number(navMenuId(node)) === Number(rootMenu.value?.id || 0);
 }
 
+function unwrapProductNavigationRoot(nodes: NavNode[]) {
+  if (nodes.length !== 1) return nodes;
+  const [node] = nodes;
+  if (navMenuLabel(node) !== '系统菜单' || !Array.isArray(node.children)) return nodes;
+  return node.children as NavNode[];
+}
+
 function scopedNavigationTree() {
-  const nodes = Array.isArray(session.menuTree) ? (session.menuTree as NavNode[]) : [];
+  const sourceNodes = Array.isArray(session.menuTree) && session.menuTree.length
+    ? (session.menuTree as NavNode[])
+    : finalNavigationTree.value;
+  const nodes = unwrapProductNavigationRoot(sourceNodes);
   const explicitRootId = Number(rootMenu.value?.id || 0);
   const matched = nodes.find((node) => (
     (explicitRootId && Number(navMenuId(node)) === explicitRootId)
     || isBusinessRootNode(node)
   ));
   return matched ? [matched] : nodes.filter((node) => navMenuLabel(node) !== '系统菜单');
+}
+
+async function loadFinalNavigationTree() {
+  const response = await apiRequest<MenuNavigationResponse>('/api/menu/navigation', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  const tree = response.nav_fact?.tree || response.nav_explained?.tree || [];
+  finalNavigationTree.value = Array.isArray(tree) ? tree : [];
+}
+
+async function ensureProductNavigationReady() {
+  if (Array.isArray(session.menuTree) && session.menuTree.length) return;
+  if (!session.token) return;
+  await session.loadAppInit();
 }
 
 const navigationMenus = computed(() => flattenMenuTree(tree.value));
@@ -2071,30 +2104,11 @@ function markHandlingMembership(items: MenuConfigMenu[], usedMenuIds: Set<number
   });
 }
 
-function markMissingConfigSubtree(item: MenuConfigMenu): MenuConfigMenu {
-  return {
-    ...item,
-    children: (item.children || []).map(markMissingConfigSubtree),
-    menu_config_missing: true,
-  } as MenuConfigTreeNode;
-}
-
-function collectMissingConfigTree(items: MenuConfigMenu[], usedMenuIds: Set<number>): MenuConfigMenu[] {
-  return items.flatMap((item) => {
-    const menuId = Number(item.id || 0);
-    if (menuId && !usedMenuIds.has(menuId)) {
-      return [markMissingConfigSubtree(item)];
-    }
-    return item.children?.length ? collectMissingConfigTree(item.children, usedMenuIds) : [];
-  });
-}
-
 function mergeNavigationAndConfigTrees(navigationTree: MenuConfigMenu[], configTree: MenuConfigMenu[], usedMenuIds: Set<number>) {
   if (!navigationTree.length) {
     return markHandlingMembership(configTree, usedMenuIds);
   }
-  const missingConfigTree = collectMissingConfigTree(configTree, usedMenuIds);
-  return [...navigationTree, ...missingConfigTree];
+  return navigationTree;
 }
 
 function collectNavigationMenuIds() {
@@ -2141,6 +2155,8 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
     setSaveNotice('');
   }
   try {
+    await ensureProductNavigationReady();
+    await loadFinalNavigationTree();
     const payload = await loadMenuConfigurationPanel({
       menu_ids: collectNavigationMenuIds(),
       root_menu_id: Number(rootMenu.value?.id || 0) || undefined,

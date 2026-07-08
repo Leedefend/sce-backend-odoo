@@ -79,13 +79,16 @@ async function selectedFieldLabel(page) {
 }
 
 async function selectField(page) {
-  const field = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
-  await field.scrollIntoViewIfNeeded();
-  await field.evaluate((el) => {
+  const selector = `.field--selectable[data-field-name="${FIELD_NAME}"]`;
+  await page.waitForSelector(selector, { timeout: 30000 });
+  await page.evaluate((fieldSelector) => {
+    const el = document.querySelector(fieldSelector);
+    if (!el) throw new Error(`field not found: ${fieldSelector}`);
+    el.scrollIntoView({ block: "center", inline: "nearest" });
     el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
-  });
+  }, selector);
   await page.locator(".contract-field-selection-card").waitFor({ timeout: 5000 }).catch(async () => {
-    await field.click({ force: true });
+    await page.locator(selector).first().click({ force: true });
     await page.locator(".contract-field-selection-card").waitFor({ timeout: 10000 });
   });
 }
@@ -132,12 +135,16 @@ async function moveFieldByDrag(page, targetGroup, stage) {
   const target = groups.find((item) => item.title === targetGroup);
   assert(target, "拖拽目标分组缺失", { stage, targetGroup, groups });
 
-  const source = page.locator(`.field--selectable[data-field-name="${FIELD_NAME}"]`).first();
+  const sourceSelector = `.field--selectable[data-field-name="${FIELD_NAME}"]`;
+  await page.waitForSelector(sourceSelector, { timeout: 30000 });
+  const source = page.locator(sourceSelector).first();
   const targetGroupNode = page.locator(".native-container--group").nth(target.index);
   const targetField = targetGroupNode.locator(".field--selectable").first();
   const targetStrip = targetGroupNode.locator(':scope > [data-drop-zone="field-group"]').first();
   const dropTarget = await targetField.count() ? targetField : targetStrip;
-  await source.scrollIntoViewIfNeeded();
+  await source.scrollIntoViewIfNeeded().catch(async () => {
+    await page.locator(sourceSelector).first().waitFor({ timeout: 30000 });
+  });
   await dropTarget.scrollIntoViewIfNeeded();
   await source.dragTo(dropTarget);
   await page.waitForTimeout(300);

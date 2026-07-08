@@ -27,11 +27,12 @@
       <transition name="expand">
         <MenuTree
           v-if="node.children?.length"
-          v-show="expanded.has(nodeKey(node))"
+          v-show="searchActive || expanded.has(nodeKey(node))"
           :nodes="node.children"
           :active-menu-id="activeMenuId"
           :capabilities="capabilities"
           :level="level + 1"
+          :search-active="searchActive"
           @select="emit('select', $event)"
         />
       </transition>
@@ -45,10 +46,11 @@ import type { NavNode } from '@sc/schema';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useSessionStore } from '../stores/session';
 
-const props = withDefaults(defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[]; level?: number }>(), {
+const props = withDefaults(defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[]; level?: number; searchActive?: boolean }>(), {
   activeMenuId: undefined,
   capabilities: () => [],
   level: 0,
+  searchActive: false,
 });
 const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
 

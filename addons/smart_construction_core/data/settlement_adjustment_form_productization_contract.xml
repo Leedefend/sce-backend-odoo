@@ -47,6 +47,148 @@
             <field name="action" ref="smart_construction_core.action_sc_expense_contract_variation"/>
         </record>
 
+        <record id="business_config_contract_income_contract_variation_productized_tree_v1" model="ui.business.config.contract">
+            <field name="name">income_contract_variation_productized_tree_v1</field>
+            <field name="model">sc.settlement.adjustment</field>
+            <field name="view_type">tree</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_income_contract_variation"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'tree': {
+                            'title': '收入合同签证',
+                            'columns': [
+                                {'name': 'date_adjustment', 'sequence': 10},
+                                {'name': 'name', 'sequence': 20},
+                                {'name': 'project_id', 'sequence': 30},
+                                {'name': 'settlement_id', 'sequence': 40},
+                                {'name': 'adjustment_type', 'sequence': 50},
+                                {'name': 'item_name', 'sequence': 60},
+                                {'name': 'account_name', 'sequence': 70},
+                                {'name': 'amount', 'sequence': 80},
+                                {'name': 'signed_amount', 'sequence': 90},
+                                {'name': 'state', 'sequence': 100}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_income_contract_variation_productized_search_v1" model="ui.business.config.contract">
+            <field name="name">income_contract_variation_productized_search_v1</field>
+            <field name="model">sc.settlement.adjustment</field>
+            <field name="view_type">search</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_income_contract_variation"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'search': {
+                            'title': '收入合同签证',
+                            'filters': [
+                                {'field': 'name', 'sequence': 10},
+                                {'field': 'project_id', 'sequence': 20},
+                                {'field': 'settlement_id', 'sequence': 30},
+                                {'field': 'item_name', 'sequence': 40},
+                                {'field': 'account_name', 'sequence': 50},
+                                {'name': 'active_rows', 'sequence': 60},
+                                {'name': 'confirmed', 'sequence': 70}
+                            ],
+                            'group_by': [
+                                {'field': 'project_id', 'sequence': 10},
+                                {'field': 'settlement_id', 'sequence': 20},
+                                {'field': 'adjustment_type', 'sequence': 30},
+                                {'field': 'state', 'sequence': 40}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_expense_contract_variation_productized_tree_v1" model="ui.business.config.contract">
+            <field name="name">expense_contract_variation_productized_tree_v1</field>
+            <field name="model">sc.settlement.adjustment</field>
+            <field name="view_type">tree</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_expense_contract_variation"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'tree': {
+                            'title': '支出合同签证',
+                            'columns': [
+                                {'name': 'date_adjustment', 'sequence': 10},
+                                {'name': 'name', 'sequence': 20},
+                                {'name': 'project_id', 'sequence': 30},
+                                {'name': 'settlement_id', 'sequence': 40},
+                                {'name': 'adjustment_type', 'sequence': 50},
+                                {'name': 'item_name', 'sequence': 60},
+                                {'name': 'account_name', 'sequence': 70},
+                                {'name': 'amount', 'sequence': 80},
+                                {'name': 'signed_amount', 'sequence': 90},
+                                {'name': 'state', 'sequence': 100}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_expense_contract_variation_productized_search_v1" model="ui.business.config.contract">
+            <field name="name">expense_contract_variation_productized_search_v1</field>
+            <field name="model">sc.settlement.adjustment</field>
+            <field name="view_type">search</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_expense_contract_variation"/>
+            <field name="priority">700</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'search': {
+                            'title': '支出合同签证',
+                            'filters': [
+                                {'field': 'name', 'sequence': 10},
+                                {'field': 'project_id', 'sequence': 20},
+                                {'field': 'settlement_id', 'sequence': 30},
+                                {'field': 'item_name', 'sequence': 40},
+                                {'field': 'account_name', 'sequence': 50},
+                                {'name': 'active_rows', 'sequence': 60},
+                                {'name': 'confirmed', 'sequence': 70}
+                            ],
+                            'group_by': [
+                                {'field': 'project_id', 'sequence': 10},
+                                {'field': 'settlement_id', 'sequence': 20},
+                                {'field': 'adjustment_type', 'sequence': 30},
+                                {'field': 'state', 'sequence': 40}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
         <record id="business_config_contract_income_contract_variation_productized_form_v1" model="ui.business.config.contract">
             <field name="name">income_contract_variation_productized_form_v1</field>
             <field name="model">sc.settlement.adjustment</field>

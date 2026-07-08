@@ -765,6 +765,11 @@ verify.business_config.snapshot: guard.prod.forbid check-compose-project check-c
 verify.business_config.browser_acceptance: guard.prod.forbid
 	@BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) node scripts/verify/business_config_runtime_routes_browser_acceptance.mjs
 
+verify.product.navigation_boundary: guard.prod.forbid
+	@BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) LOGIN=$${E2E_LOGIN:-admin} PASSWORD=$${E2E_PASSWORD:-admin} node frontend/apps/web/scripts/product_navigation_boundary_acceptance.mjs
+
+.PHONY: verify.product.navigation_boundary
+
 verify.business_config.low_code_acceptance: guard.prod.forbid
 	@cd frontend/apps/web && BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node scripts/low_code_business_config_acceptance.mjs
 
@@ -786,7 +791,7 @@ verify.business_config.low_code_global_stability: guard.prod.forbid
 verify.business_config.approval_runtime: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_config_approval_runtime_smoke.py
 
-verify.business_config.full_acceptance: verify.business_config.guard_inventory verify.business_config.unit verify.frontend.build verify.business_config.coverage verify.business_config.list_config_boundary verify.full_product_capability_scope verify.business_config.snapshot verify.business_config.approval_runtime verify.business_config.browser_acceptance verify.business_config.low_code_acceptance verify.business_config.low_code_runtime_consistency verify.business_config.low_code_group_matrix verify.business_config.low_code_layout_runtime verify.business_config.low_code_menu_navigation_alignment verify.business_config.low_code_global_stability verify.user_menu.reachability.guard
+verify.business_config.full_acceptance: verify.business_config.guard_inventory verify.business_config.unit verify.frontend.build verify.business_config.coverage verify.business_config.list_config_boundary verify.full_product_capability_scope verify.business_config.snapshot verify.business_config.approval_runtime verify.business_config.browser_acceptance verify.product.navigation_boundary verify.business_config.low_code_acceptance verify.business_config.low_code_runtime_consistency verify.business_config.low_code_group_matrix verify.business_config.low_code_layout_runtime verify.business_config.low_code_menu_navigation_alignment verify.business_config.low_code_global_stability verify.user_menu.reachability.guard
 
 verify.business.finance_document_tier_runtime_smoke: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_finance_document_tier_runtime_smoke.py

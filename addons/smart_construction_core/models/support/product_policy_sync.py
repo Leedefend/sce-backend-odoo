@@ -546,6 +546,8 @@ USER_CONFIRMED_ENTRY_MATRIX_SCRIPT_PATHS = (
     "scripts/verify/user_confirmed_62_business_entry_integration_matrix.py",
 )
 USER_CONFIRMED_FORMAL_HIDDEN_GROUP_LABELS = {"用户核对菜单", "用户验收", "用户数据验收"}
+CONFIG_CENTER_GROUP_LABEL = "配置中心"
+LEGACY_CONFIG_GROUP_LABELS = {"基础设置", "系统设置", "业务配置"}
 USER_CONFIRMED_FORMAL_VISIBLE_PARENT_XMLIDS = {
     "smart_construction_core.menu_sc_material_management_group",
     "smart_construction_core.menu_sc_labor_management_group",
@@ -931,6 +933,28 @@ class ScProductPolicy(models.Model):
         return label not in USER_CONFIRMED_FORMAL_HIDDEN_GROUP_LABELS and "acceptance" not in key.lower()
 
     @api.model
+    def _canonical_formal_product_group_label(self, label):
+        label = _text(label)
+        if label in LEGACY_CONFIG_GROUP_LABELS:
+            return CONFIG_CENTER_GROUP_LABEL
+        return label
+
+    @api.model
+    def _normalize_menu_for_canonical_group(self, menu, canonical_label, legacy_label=""):
+        row = dict(menu or {})
+        if canonical_label:
+            row["product_key"] = canonical_label
+        if legacy_label and canonical_label and legacy_label != canonical_label:
+            for key in ("visible_menu_path", "menu_complete_name"):
+                value = _text(row.get(key))
+                if value:
+                    row[key] = value.replace(" / %s /" % legacy_label, " / %s /" % canonical_label).replace(
+                        "/%s/" % legacy_label,
+                        "/%s/" % canonical_label,
+                    )
+        return row
+
+    @api.model
     def _hydrate_user_confirmed_formal_menu(self, menu):
         row = dict(menu or {})
         menu_xmlid = _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
@@ -970,14 +994,23 @@ class ScProductPolicy(models.Model):
     @api.model
     def _formal_user_confirmed_menu_groups(self, menu_groups, matrix_index=None):
         out = []
+        by_label = {}
         for group in menu_groups or []:
             if not self._is_user_confirmed_formal_group(group):
                 continue
+            legacy_label = _text(group.get("group_label") or group.get("label") or group.get("title"))
+            canonical_label = self._canonical_formal_product_group_label(legacy_label)
             next_group = dict(group)
+            next_group["group_label"] = canonical_label
+            next_group["group_key"] = "construction.%s" % canonical_label
             next_group["menus"] = [
-                self._annotate_user_confirmed_business_entry(
-                    self._hydrate_user_confirmed_formal_menu(menu),
-                    matrix_index or {},
+                self._normalize_menu_for_canonical_group(
+                    self._annotate_user_confirmed_business_entry(
+                        self._hydrate_user_confirmed_formal_menu(menu),
+                        matrix_index or {},
+                    ),
+                    canonical_label,
+                    legacy_label,
                 )
                 for menu in (group.get("menus") or [])
                 if isinstance(menu, dict)
@@ -985,6 +1018,14 @@ class ScProductPolicy(models.Model):
                 not in USER_CONFIRMED_FORMAL_DEPRECATED_MENU_XMLIDS
             ]
             self._consolidate_contract_handling_menu_entries(next_group)
+            existing = by_label.get(canonical_label)
+            if existing is not None:
+                existing["menus"] = [
+                    *(existing.get("menus") or []),
+                    *(next_group.get("menus") or []),
+                ]
+                continue
+            by_label[canonical_label] = next_group
             out.append(next_group)
         return out
 

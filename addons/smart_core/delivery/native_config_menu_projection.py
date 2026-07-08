@@ -9,7 +9,7 @@ from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_fir
 
 CONFIG_APP_ID = "config"
 CONFIG_GROUP_KEY = "platform.config"
-CONFIG_GROUP_LABEL = "基础设置"
+CONFIG_GROUP_LABEL = "配置中心"
 
 SOURCE_KIND = "native_business_config_menu_projection"
 SOURCE_AUTHORITIES = ("ir.ui.menu", "ir.actions", "res.groups", MENU_CONFIG_POLICY_MODEL)

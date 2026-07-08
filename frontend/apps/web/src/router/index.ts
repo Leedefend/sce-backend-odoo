@@ -27,7 +27,7 @@ function routeTitle(routeName: string | symbol | null | undefined): string {
     'scene-packages': '场景发布包',
     'usage-analytics': '使用分析',
     'release-operator': '产品发布',
-    'business-config': '业务配置工作台',
+    'business-config': '配置工作台',
     'menu-config': '菜单配置',
     'form-field-config': '表单字段配置',
     'model-form': '业务表单',

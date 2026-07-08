@@ -745,6 +745,17 @@ async function clickFirstAvailableAnalysisField(page, tabLabels) {
   return { editedTab: "", optionCount: 0 };
 }
 
+async function clickButtonByProductAliases(scope, names) {
+  for (const name of names) {
+    const button = scope.getByRole("button", { name });
+    if (await button.count()) {
+      await button.first().click();
+      return name;
+    }
+  }
+  throw new Error(`expected one of buttons: ${names.join(", ")}`);
+}
+
 async function main() {
   await ensureDirs();
   const boundaryConstants = await auditLowCodeBoundaryConstants();
@@ -856,7 +867,7 @@ async function main() {
     await page.waitForSelector(".version-panel", { state: "detached", timeout: 10000 });
     currentStep = "open approval panel";
     const approvalCard = page.locator(".config-card").filter({ hasText: "审批规则" });
-    await approvalCard.getByRole("button", { name: "设置审批" }).click();
+    await clickButtonByProductAliases(approvalCard, ["配置审批"]);
     await page.waitForSelector(".approval-panel", { timeout: 10000 });
     const approvalConfigEnvelope = await browserIntentEnvelope(page, "sc.approval_policy.config.get", {
       model: CONFIG_MODEL,
@@ -956,7 +967,10 @@ async function main() {
       }, null, { timeout: 20000 });
       await approvalPanel.getByRole("button", { name: "关闭" }).click();
       await page.waitForSelector(".approval-panel", { state: "detached", timeout: 10000 });
-      await page.locator(".config-card").filter({ hasText: "审批规则" }).getByRole("button", { name: "设置审批" }).click();
+      await clickButtonByProductAliases(
+        page.locator(".config-card").filter({ hasText: "审批规则" }),
+        ["配置审批"],
+      );
       await page.waitForSelector(".approval-panel", { timeout: 10000 });
       approvalPanel = page.locator(".approval-panel");
       approvalPersistReloadName = await approvalPanel.locator(".approval-step-row").nth(0).locator("input[type='text']").inputValue();
@@ -976,7 +990,7 @@ async function main() {
     await page.waitForSelector(".approval-panel", { state: "detached", timeout: 10000 });
     currentStep = "open menu config panel";
     const menuCard = page.locator(".config-card").filter({ hasText: "菜单入口" });
-    await menuCard.getByRole("button", { name: "调整菜单入口" }).click();
+    await clickButtonByProductAliases(menuCard, ["配置菜单"]);
     await page.waitForURL((url) => String(url).includes("/admin/menu-config"), { timeout: 20000 });
     await page.waitForSelector(".menu-config-editor", { timeout: 20000 });
     await page.waitForFunction(() => !document.querySelector(".menu-config-editor .loading-state"), null, { timeout: 20000 });
@@ -1449,7 +1463,7 @@ async function main() {
     const analysisCards = await page.locator(".config-card h2").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
-    await page.getByRole("button", { name: "配置分析视图" }).click();
+    await clickButtonByProductAliases(page, ["配置分析"]);
     await page.waitForSelector(".edit-panel", { timeout: 20000 });
     const analysisPanel = page.locator(".edit-panel").filter({ hasText: "分析视图设置" });
     const analysisTitle = await analysisPanel.locator("h2").innerText();

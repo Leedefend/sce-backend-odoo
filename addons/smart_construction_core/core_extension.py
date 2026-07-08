@@ -3999,7 +3999,7 @@ def smart_core_menu_delivery_token_policy(env):
         "证照",
         "借阅",
         "业务配置",
-        "基础设置",
+        "配置中心",
         "组织架构",
         "历史用户",
         "历史用户权限",
@@ -4045,7 +4045,7 @@ def smart_core_business_nav_group_display_order(env):
         "财务中心": 60,
         "人事行政": 70,
         "资料证照": 80,
-        "基础设置": 990,
+        "配置中心": 990,
         "配置": 990,
         "系统配置": 990,
     }
@@ -4288,7 +4288,7 @@ def smart_core_user_data_acceptance_nav_contract(env):
     del env
     return {
         "formal_group_child_labels": ["客户", "供应商"],
-        "formal_group_labels": ["基础设置"],
+        "formal_group_labels": ["配置中心"],
         "old_acceptance_group_labels": ["用户核对菜单", "旧业务数据核对"],
         "direct_acceptance_group_labels": ["直营项目数据核对", "直营项目系统菜单"],
         "joint_acceptance_group_labels": ["联营项目数据核对", "联营项目系统菜单"],

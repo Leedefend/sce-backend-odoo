@@ -195,8 +195,8 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
             policy={
                 "menu_groups": [
                     {
-                        "group_key": "construction.basic_setup",
-                        "group_label": "基础设置",
+                        "group_key": "construction.config_center",
+                        "group_label": "配置中心",
                         "menus": [
                             {
                                 "menu_key": "customer",
@@ -250,8 +250,8 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
             policy={
                 "menu_groups": [
                     {
-                        "group_key": "construction.basic_setup",
-                        "group_label": "基础设置",
+                        "group_key": "construction.config_center",
+                        "group_label": "配置中心",
                         "menus": [
                             {
                                 "menu_key": "customer",
@@ -268,7 +268,7 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
             role_surface={"role_code": "employee", "is_business_config_admin": True},
             native_nav=[
                 {
-                    "label": "基础设置",
+                    "label": "配置中心",
                     "children": [
                         self._native_leaf(
                             label="客户",
@@ -283,7 +283,7 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         )
 
         groups = (nav[0].get("children") or []) if nav else []
-        self.assertEqual([group.get("label") for group in groups], ["基础设置"])
+        self.assertEqual([group.get("label") for group in groups], ["配置中心"])
         self.assertEqual(groups[0]["children"][0]["label"], "客户")
 
     def test_business_config_role_builds_policy_menu_without_native_fact_for_release_snapshot(self):

@@ -22,6 +22,7 @@ def _load_boundary_constants() -> dict:
         "LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS": module.LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS,
         "VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY": module.VIEW_ORCHESTRATION_SOURCE_FIELD_POLICY,
         "MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING": module.MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+        "MENU_CONFIG_POLICY_MODEL": module.MENU_CONFIG_POLICY_MODEL,
         "APPROVAL_POLICY_SOURCE_TENANT_LOWCODING": module.APPROVAL_POLICY_SOURCE_TENANT_LOWCODING,
     }
 
@@ -57,6 +58,12 @@ ALLOWED_DIRECT_CONTRACT_WRITERS = {
         "boundary": "industry_formal_list_contract_projection",
         "reason": "upgrades released industry list contracts from transition fields to formal product fields",
         "expected_source": "smart_construction_core.formal_settlement_list_contract_sync",
+    },
+    "addons/smart_construction_core/migrations/17.0.0.61/post-migration.py": {
+        "layer": "L2",
+        "boundary": "industry_stale_contract_scope_cleanup_migration",
+        "reason": "archives stale action-scoped business config contracts whose action model no longer matches the contract model",
+        "expected_source": "smart_construction_core.stale_contract_scope_cleanup",
     },
 }
 ALLOWED_APPROVAL_POLICY_RUNTIME_WRITERS = {
@@ -97,6 +104,13 @@ ALLOWED_LOWCODING_POLICY_RUNTIME_WRITERS = {
         "expected_source": "smart_construction_core.product_policy_sync",
         "target_models": ["ui.menu.config.policy"],
     },
+    "addons/smart_construction_core/migrations/17.0.0.61/post-migration.py": {
+        "layer": "L2",
+        "boundary": "industry_product_menu_policy_baseline_migration",
+        "reason": "normalizes legacy config menu labels in released menu runtime policies during industry module upgrade",
+        "expected_source": "smart_construction_core.config_center_label_migration",
+        "target_models": ["ui.menu.config.policy"],
+    },
 }
 
 def _is_contract_writer(text: str) -> bool:
@@ -126,7 +140,12 @@ def _is_approval_policy_runtime_writer(text: str) -> bool:
 
 
 def _is_lowcoding_policy_runtime_writer(text: str) -> bool:
-    if "ui.form.field.policy" not in text and "ui.menu.config.policy" not in text:
+    uses_menu_policy_constant_writer = "Policy = env[MENU_CONFIG_POLICY_MODEL]" in text
+    if (
+        "ui.form.field.policy" not in text
+        and "ui.menu.config.policy" not in text
+        and not uses_menu_policy_constant_writer
+    ):
         return False
     write_markers = (
         'self.env["ui.form.field.policy"].create(',

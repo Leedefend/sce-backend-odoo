@@ -149,6 +149,15 @@ def _audit(env_obj):
         if not action.exists():
             skipped.append({**item, "reason": "action_missing"})
             continue
+        action_model = _text(getattr(action, "res_model", ""))
+        if action_model and action_model != item["model"]:
+            skipped.append({
+                **item,
+                "name": _text(action.name),
+                "action_model": action_model,
+                "reason": "action_model_mismatch",
+            })
+            continue
         modes = _view_modes(action)
         if modes and modes[0] not in {"tree", "list"}:
             skipped.append({

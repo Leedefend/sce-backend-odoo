@@ -169,6 +169,11 @@ def main():
     base_params = {
         "limit": int(os.getenv("BUSINESS_CONFIG_COVERAGE_LIMIT", "1000")),
         "root_menu_xmlid": ROOT_MENU_XMLID,
+        "use_product_navigation_actions": os.getenv("BUSINESS_CONFIG_COVERAGE_USE_PRODUCT_NAV", "1").strip().lower()
+        not in {"0", "false", "no", "off"},
+        "product_key": os.getenv("BUSINESS_CONFIG_COVERAGE_PRODUCT_KEY", ""),
+        "edition_key": os.getenv("BUSINESS_CONFIG_COVERAGE_EDITION_KEY", ""),
+        "base_product_key": os.getenv("BUSINESS_CONFIG_COVERAGE_BASE_PRODUCT_KEY", ""),
     }
     rows = [
         _scope_result(

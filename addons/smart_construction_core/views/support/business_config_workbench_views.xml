@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
   <record id="action_sc_business_config_workbench" model="ir.actions.act_window">
-    <field name="name">业务配置工作台</field>
+    <field name="name">配置工作台</field>
     <field name="res_model">ui.business.config.contract</field>
     <field name="view_mode">tree,form</field>
     <field name="target">current</field>
@@ -14,7 +14,7 @@
   </record>
 
   <menuitem id="menu_sc_business_config_workbench"
-            name="业务配置工作台"
+            name="配置工作台"
             parent="smart_construction_core.menu_sc_business_config_center"
             action="smart_construction_core.action_sc_business_config_workbench"
             sequence="5"

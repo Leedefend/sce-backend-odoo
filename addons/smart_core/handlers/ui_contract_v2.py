@@ -174,6 +174,10 @@ LEGACY_VISIBLE_BUSINESS_COLUMN_LABELS_BY_MODEL = {
         "legacy_visible_05": "材料名称",
     },
 }
+STANDARD_LOWCODE_COLUMN_LABELS = {
+    "source_created_by": "录入人",
+    "source_created_at": "录入时间",
+}
 
 
 class UiContractV2Handler(BaseIntentHandler):
@@ -258,6 +262,8 @@ class UiContractV2Handler(BaseIntentHandler):
     ) -> str:
         field_name = str(field_name or "").strip()
         model_key = str(model_name or "").strip()
+        if field_name in STANDARD_LOWCODE_COLUMN_LABELS:
+            return STANDARD_LOWCODE_COLUMN_LABELS[field_name]
         label_maps = call_extension_hook_first(
             self.env,
             "smart_core_legacy_visible_business_column_labels",
@@ -268,7 +274,21 @@ class UiContractV2Handler(BaseIntentHandler):
         label_map = label_maps.get(model_key, {}) if isinstance(label_maps.get(model_key), dict) else {}
         business_label = label_map.get(field_name)
         if not business_label:
-            return str(current_label or "").strip()
+            label = str(current_label or "").strip()
+            if model_key in self.env and (
+                field_name.startswith("legacy_visible_")
+                or field_name.startswith("p1_visible_")
+            ):
+                try:
+                    field = self.env[model_key]._fields.get(field_name)
+                except Exception:
+                    field = None
+                field_label = str(getattr(field, "string", "") or "").strip()
+                if field_name.startswith("p1_visible_") and field_label.startswith("P1可见"):
+                    field_label = field_label[len("P1可见"):].strip()
+                if field_label and field_label != field_name and (not label or label == field_name):
+                    return field_label
+            return label
         label = str(current_label or "").strip()
         if not label or label.startswith("历史验收可见字段"):
             return business_label

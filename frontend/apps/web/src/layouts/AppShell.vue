@@ -141,7 +141,7 @@
           @click="openBusinessConfigWorkbench"
         >
           <span class="published-app__mark">配</span>
-          <span class="published-app__label">业务配置工作台</span>
+          <span class="published-app__label">配置工作台</span>
         </button>
       </div>
 
@@ -155,6 +155,7 @@
             :nodes="filteredMenu"
             :active-menu-id="activeMenuId"
             :capabilities="capabilities"
+            :search-active="Boolean(query.trim())"
             @select="handleSelect"
           />
         </div>
@@ -736,7 +737,7 @@ function businessConfigWorkbenchRoute(queryOverride: LocationQueryRaw = {}) {
 
 function isBusinessConfigWorkbenchNode(node: NavNode) {
   const label = String(node.title || node.name || node.label || '').trim();
-  return label === '业务配置工作台';
+  return label === '配置工作台' || label === '业务配置工作台';
 }
 
 function openAppTarget(target: unknown, fallbackAppId: string) {
@@ -891,7 +892,7 @@ const routeBusinessCategoryLabel = computed(() => asText(
 
 const configurationRouteTitle = computed(() => {
   if (route.name === 'menu-config') return '菜单配置';
-  if (route.name === 'business-config') return '业务配置工作台';
+  if (route.name === 'business-config') return '配置工作台';
   if (route.path.startsWith('/admin/')) return '配置中心';
   return '';
 });
@@ -1436,6 +1437,14 @@ function handleSelect(node: NavNode) {
       })).catch(() => {});
       return;
     }
+  }
+  if (resolved.kind === 'redirect' && resolved.target?.meta?.action_id) {
+    openAction(router, resolved.target.meta as never, targetMenuId);
+    return;
+  }
+  if (resolved.kind === 'leaf' && resolved.meta?.action_id) {
+    openAction(router, resolved.meta as never, targetMenuId);
+    return;
   }
   router.push(`/m/${targetMenuId}`).catch(() => {});
 }

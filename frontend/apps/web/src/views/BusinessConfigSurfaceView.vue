@@ -1589,6 +1589,8 @@ function boundaryLabel(boundary: unknown) {
   if (value === 'business_contract') return '业务默认配置';
   if (value === 'business_contract_not_user_preference') return '业务默认配置';
   if (value === 'business_contract_with_policy_runtime') return '菜单显示规则';
+  if (value === 'business_contract_version') return '版本记录';
+  if (value === 'coverage_guard') return '覆盖检查';
   if (value === 'industry_policy_runtime') return '行业业务规则';
   return value || '未声明来源';
 }

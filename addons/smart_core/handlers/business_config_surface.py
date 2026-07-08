@@ -21,7 +21,7 @@ DELIVERY_CAPABILITIES = (
     ("menu_orchestration", "菜单配置", "menu"),
     ("approval_policy_configuration", "审批配置", "approval"),
     ("version_snapshot_rollback", "版本与快照", "version"),
-    ("capability_boundary_and_coverage", "覆盖与边界", "coverage"),
+    ("capability_boundary_and_coverage", "覆盖检查", "coverage"),
 )
 
 
@@ -689,6 +689,38 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
                 action_ids.add(action_id)
         return action_ids
 
+    def _delivery_navigation_action_ids(self, *, product_key: str = "", edition_key: str = "", base_product_key: str = "") -> set[int]:
+        from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
+
+        try:
+            payload = DeliveryEngine(self.env).build(
+                data={},
+                product_key=_to_text(product_key) or None,
+                edition_key=_to_text(edition_key) or None,
+                base_product_key=_to_text(base_product_key) or None,
+                native_nav=[],
+            )
+        except Exception:
+            return set()
+        nav = payload.get("nav") if isinstance(payload, dict) and isinstance(payload.get("nav"), list) else []
+        action_ids: set[int] = set()
+
+        def collect(node):
+            if not isinstance(node, dict):
+                return
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            entry_target = meta.get("entry_target") if isinstance(meta.get("entry_target"), dict) else {}
+            refs = entry_target.get("compatibility_refs") if isinstance(entry_target.get("compatibility_refs"), dict) else {}
+            action_id = _to_int(meta.get("action_id")) or _to_int(refs.get("action_id")) or _to_int(node.get("action_id"))
+            if action_id:
+                action_ids.add(action_id)
+            for child in node.get("children") if isinstance(node.get("children"), list) else []:
+                collect(child)
+
+        for node in nav:
+            collect(node)
+        return action_ids
+
     def _action_rows(
         self,
         *,
@@ -697,16 +729,32 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
         include_unreachable_actions: bool = False,
         include_all_root_menu_actions: bool = False,
         root_menu_xmlid: str = "",
+        use_product_navigation_actions: bool = False,
+        product_key: str = "",
+        edition_key: str = "",
+        base_product_key: str = "",
     ):
         if "ir.actions.act_window" not in self.env:
             return []
         Action = self.env["ir.actions.act_window"].sudo()
         domain = [("res_model", "!=", False)]
         if not include_unreachable_actions:
-            menu_action_ids = sorted(self._menu_action_ids(
-                root_menu_xmlid=root_menu_xmlid,
-                include_all_root_menu_actions=include_all_root_menu_actions,
-            ))
+            if use_product_navigation_actions and not include_all_root_menu_actions:
+                menu_action_ids = sorted(self._delivery_navigation_action_ids(
+                    product_key=product_key,
+                    edition_key=edition_key,
+                    base_product_key=base_product_key,
+                ))
+                if not menu_action_ids:
+                    menu_action_ids = sorted(self._menu_action_ids(
+                        root_menu_xmlid=root_menu_xmlid,
+                        include_all_root_menu_actions=include_all_root_menu_actions,
+                    ))
+            else:
+                menu_action_ids = sorted(self._menu_action_ids(
+                    root_menu_xmlid=root_menu_xmlid,
+                    include_all_root_menu_actions=include_all_root_menu_actions,
+                ))
             if not menu_action_ids:
                 return []
             domain.append(("id", "in", menu_action_ids))
@@ -955,6 +1003,10 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
         model = _to_text(params.get("model"))
         include_unreachable_actions = bool(params.get("include_unreachable_actions") or params.get("includeUnreachableActions"))
         include_all_root_menu_actions = bool(params.get("include_all_root_menu_actions") or params.get("includeAllRootMenuActions"))
+        use_product_navigation_actions = bool(params.get("use_product_navigation_actions") or params.get("useProductNavigationActions"))
+        product_key = _to_text(params.get("product_key") or params.get("productKey"))
+        edition_key = _to_text(params.get("edition_key") or params.get("editionKey"))
+        base_product_key = _to_text(params.get("base_product_key") or params.get("baseProductKey"))
         skip_unavailable_models = bool(params.get("skip_unavailable_models") or params.get("skipUnavailableModels"))
         root_menu_xmlid = _to_text(params.get("root_menu_xmlid") or params.get("rootMenuXmlid"))
         raw_limit = _to_int(params.get("limit")) or 1000
@@ -966,6 +1018,10 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
                 include_unreachable_actions=include_unreachable_actions,
                 include_all_root_menu_actions=include_all_root_menu_actions,
                 root_menu_xmlid=root_menu_xmlid,
+                use_product_navigation_actions=use_product_navigation_actions,
+                product_key=product_key,
+                edition_key=edition_key,
+                base_product_key=base_product_key,
             )
             if _to_text(getattr(action, "res_model", ""))
             and (
@@ -1023,6 +1079,10 @@ class BusinessConfigCoverageScanHandler(_BusinessConfigSurfaceBase):
                 "limit": limit,
                 "include_unreachable_actions": include_unreachable_actions,
                 "include_all_root_menu_actions": include_all_root_menu_actions,
+                "use_product_navigation_actions": use_product_navigation_actions,
+                "product_key": product_key,
+                "edition_key": edition_key,
+                "base_product_key": base_product_key,
                 "skip_unavailable_models": skip_unavailable_models,
                 "root_menu_xmlid": root_menu_xmlid,
                 "runtime_evidence_source": "ui.business.config.contract._effective_view_orchestration_contracts",

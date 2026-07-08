@@ -306,9 +306,9 @@
         <field name="sequence">38</field>
     </record>
 
-    <!-- 业务配置：给业务系统管理员，不开放平台系统权限 -->
+    <!-- 配置中心：给业务系统管理员，不开放平台系统权限 -->
     <menuitem id="menu_sc_business_config_center"
-              name="业务配置"
+              name="配置中心"
               parent="menu_sc_root"
               sequence="85"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>

@@ -8,13 +8,12 @@ from odoo.exceptions import AccessDenied
 from odoo.addons.smart_core.core.trace import get_trace_id
 from odoo.addons.smart_core.core.request_identity import identity_id
 from odoo.addons.smart_core.core.request_transaction import rollback_request_env
-from odoo.addons.smart_core.delivery.menu_fact_service import MenuFactService
-from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import MenuDeliveryConvergenceService
-from odoo.addons.smart_core.delivery.menu_target_interpreter_service import MenuTargetInterpreterService
+from odoo.addons.smart_core.delivery.final_menu_navigation_service import (
+    FinalMenuNavigationService,
+    source_authority_contract,
+)
 from odoo.addons.smart_core.security.auth import get_user_from_token
-from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
-from odoo.addons.smart_core.utils.backend_contract_boundaries import MENU_CONFIG_NAV_ENABLED_PARAM, MENU_CONFIG_POLICY_MODEL
 from odoo.addons.smart_core.core.exceptions import (
     AUTH_REQUIRED,
     BAD_REQUEST,
@@ -23,25 +22,6 @@ from odoo.addons.smart_core.core.exceptions import (
     DEFAULT_CONTRACT_VERSION,
     build_error_envelope,
 )
-
-SOURCE_KIND = "platform_menu_delivery_projection"
-SOURCE_AUTHORITIES = (
-    "ir.ui.menu",
-    "ir.actions.act_window",
-    "res.groups",
-    MENU_CONFIG_POLICY_MODEL,
-    "extension_business_config_role_resolver",
-)
-NO_BUSINESS_FACT_AUTHORITY = True
-
-
-def source_authority_contract() -> dict:
-    return {
-        "kind": SOURCE_KIND,
-        "authorities": list(SOURCE_AUTHORITIES),
-        "projection_only": True,
-        "no_business_fact_authority": NO_BUSINESS_FACT_AUTHORITY,
-    }
 
 
 def _meta(trace_id: str) -> dict:
@@ -162,111 +142,6 @@ def _resolve_navigation_scene_map(env, scene_map: dict | None = None) -> dict:
     return resolved if any(resolved.values()) else {}
 
 
-def _fact_node(node: dict) -> dict:
-    children = node.get("children") if isinstance(node.get("children"), list) else []
-    menu_id = node.get("menu_id")
-    return {
-        "menu_id": menu_id,
-        "key": f"menu:{menu_id}" if isinstance(menu_id, int) else "menu:unknown",
-        "name": str(node.get("name") or ""),
-        "parent_id": node.get("parent_id"),
-        "complete_name": str(node.get("complete_name") or ""),
-        "sequence": node.get("sequence"),
-        "groups": node.get("groups") if isinstance(node.get("groups"), list) else [],
-        "web_icon": str(node.get("web_icon") or ""),
-        "has_children": bool(children),
-        "action_raw": str(node.get("action_raw") or ""),
-        "action_type": str(node.get("action_type") or ""),
-        "action_id": node.get("action_id"),
-        "action_exists": bool(node.get("action_exists")),
-        "action_meta": node.get("action_meta") if isinstance(node.get("action_meta"), dict) else {},
-        "children": [_fact_node(child) for child in children],
-    }
-
-
-def _flat_fact_node(node: dict) -> dict:
-    menu_id = node.get("menu_id")
-    child_ids = node.get("child_ids") if isinstance(node.get("child_ids"), list) else []
-    return {
-        "menu_id": menu_id,
-        "key": f"menu:{menu_id}" if isinstance(menu_id, int) else "menu:unknown",
-        "name": str(node.get("name") or ""),
-        "parent_id": node.get("parent_id"),
-        "complete_name": str(node.get("complete_name") or ""),
-        "sequence": node.get("sequence"),
-        "groups": node.get("groups") if isinstance(node.get("groups"), list) else [],
-        "web_icon": str(node.get("web_icon") or ""),
-        "has_children": bool(child_ids),
-        "action_raw": str(node.get("action_raw") or ""),
-        "action_type": str(node.get("action_type") or ""),
-        "action_id": node.get("action_id"),
-        "action_exists": bool(node.get("action_exists")),
-        "action_meta": node.get("action_meta") if isinstance(node.get("action_meta"), dict) else {},
-        "child_ids": child_ids,
-    }
-
-
-def _is_admin_user(env) -> bool:
-    try:
-        return bool(user_is_platform_admin(env.user))
-    except Exception:
-        return False
-
-
-def _configured_business_config_admin_group_xmlids(env) -> list[str]:
-    hook_groups = call_extension_hook_first(
-        env,
-        "smart_core_business_config_admin_group_xmlids",
-        env,
-    )
-    if isinstance(hook_groups, (list, tuple, set)):
-        groups = [str(item or "").strip() for item in hook_groups if str(item or "").strip()]
-        if groups:
-            return groups
-    try:
-        raw = env["ir.config_parameter"].sudo().get_param("smart_core.business_config_admin_group_xmlids", "")
-    except Exception:
-        raw = ""
-    groups = [item.strip() for item in str(raw or "").split(",") if item.strip()]
-    return groups or ["smart_core.group_smart_core_business_config_admin"]
-
-
-def _is_business_config_user(env) -> bool:
-    for group_xmlid in _configured_business_config_admin_group_xmlids(env):
-        try:
-            if env.user.has_group(group_xmlid):
-                return True
-        except Exception:
-            continue
-    return False
-
-
-def _apply_user_menu_config(env, nav_fact: dict) -> tuple[dict, dict]:
-    try:
-        raw = env["ir.config_parameter"].sudo().get_param(MENU_CONFIG_NAV_ENABLED_PARAM, "")
-    except Exception:
-        raw = ""
-    normalized = str(raw or "").strip().lower()
-    if normalized in {"0", "false", "no", "off"}:
-        return nav_fact, {
-            "applied": False,
-            "reason": "disabled",
-            MENU_CONFIG_NAV_ENABLED_PARAM: normalized,
-            "applied_count": 0,
-            "hidden_count": 0,
-            "renamed_count": 0,
-            "reordered_count": 0,
-            "moved_count": 0,
-        }
-    if MENU_CONFIG_POLICY_MODEL not in env:
-        return nav_fact, {"applied": False, "applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
-    overlaid, stats = env[MENU_CONFIG_POLICY_MODEL].apply_runtime_overlay(nav_fact, user=env.user)
-    if not isinstance(stats, dict):
-        stats = {}
-    stats.setdefault("applied", True)
-    return overlaid, stats
-
-
 class PlatformMenuAPI(http.Controller):
     @http.route('/api/menu/tree', type='http', auth='public', csrf=False, cors='*', methods=['POST'])
     def api_menu_tree(self, **kwargs):
@@ -274,35 +149,21 @@ class PlatformMenuAPI(http.Controller):
         trace_id = get_trace_id(request.httprequest.headers)
         try:
             env = _resolve_request_env()
-            facts = MenuFactService(env).export_visible_menu_facts()
-            if not facts.flat:
+            navigation = FinalMenuNavigationService(env).build(scene_map=_resolve_navigation_scene_map(env), policy={})
+            nav_fact_filtered = navigation.get("nav_fact") if isinstance(navigation.get("nav_fact"), dict) else {}
+            meta = navigation.get("meta") if isinstance(navigation.get("meta"), dict) else {}
+            if not nav_fact_filtered.get("flat"):
                 _rollback_request_env()
                 return _json_response(_error_resp(BAD_REQUEST, '未找到平台菜单根节点。', trace_id), status=400)
-            nav_fact = {
-                "flat": [_flat_fact_node(node) for node in facts.flat],
-                "tree": [_fact_node(node) for node in facts.tree],
-            }
-            nav_explained = MenuTargetInterpreterService(env).interpret(
-                nav_fact,
-                scene_map=_resolve_navigation_scene_map(env),
-                policy={},
-            )
-            nav_fact_filtered, _, convergence = MenuDeliveryConvergenceService(env).apply(
-                nav_fact,
-                nav_explained,
-                is_admin=_is_admin_user(env),
-                is_business_config_admin=_is_business_config_user(env),
-            )
-            nav_fact_filtered, user_menu_config = _apply_user_menu_config(env, nav_fact_filtered)
             return _json_response({
                 'ok': True,
                 'nav_fact': nav_fact_filtered,
                 'meta': {
                     **_meta(trace_id),
-                    'source_authority': source_authority_contract(),
-                    'menu_fact_source_authority': facts.source_authority,
-                    'delivery_convergence': convergence,
-                    'user_menu_config': user_menu_config,
+                    'source_authority': meta.get("source_authority") or source_authority_contract(),
+                    'menu_fact_source_authority': meta.get("menu_fact_source_authority") or {},
+                    'delivery_convergence': meta.get("delivery_convergence") or {},
+                    'user_menu_config': (meta.get("user_menu_config") or {}).get("nav_fact") or {},
                 },
             })
         except AccessDenied as exc:
@@ -328,33 +189,18 @@ class PlatformMenuAPI(http.Controller):
         trace_id = get_trace_id(request.httprequest.headers)
         try:
             env = _resolve_request_env()
-            facts = MenuFactService(env).export_visible_menu_facts()
-            if not facts.flat:
-                _rollback_request_env()
-                return _json_response(_error_resp(BAD_REQUEST, '未找到平台菜单根节点。', trace_id), status=400)
-
-            nav_fact = {
-                "flat": [_flat_fact_node(node) for node in facts.flat],
-                "tree": [_fact_node(node) for node in facts.tree],
-            }
             scene_map = _resolve_navigation_scene_map(
                 env,
                 payload.get("scene_map") if isinstance(payload.get("scene_map"), dict) else {},
             )
             policy = payload.get("policy") if isinstance(payload.get("policy"), dict) else {}
-            nav_explained = MenuTargetInterpreterService(env).interpret(
-                nav_fact,
-                scene_map=scene_map,
-                policy=policy,
-            )
-            nav_fact_filtered, nav_explained_filtered, convergence = MenuDeliveryConvergenceService(env).apply(
-                nav_fact,
-                nav_explained,
-                is_admin=_is_admin_user(env),
-                is_business_config_admin=_is_business_config_user(env),
-            )
-            nav_fact_filtered, user_menu_config = _apply_user_menu_config(env, nav_fact_filtered)
-            nav_explained_filtered, explained_user_menu_config = _apply_user_menu_config(env, nav_explained_filtered)
+            navigation = FinalMenuNavigationService(env).build(scene_map=scene_map, policy=policy)
+            nav_fact_filtered = navigation.get("nav_fact") if isinstance(navigation.get("nav_fact"), dict) else {}
+            nav_explained_filtered = navigation.get("nav_explained") if isinstance(navigation.get("nav_explained"), dict) else {}
+            meta = navigation.get("meta") if isinstance(navigation.get("meta"), dict) else {}
+            if not nav_fact_filtered.get("flat"):
+                _rollback_request_env()
+                return _json_response(_error_resp(BAD_REQUEST, '未找到平台菜单根节点。', trace_id), status=400)
             return _json_response(
                 {
                     'ok': True,
@@ -362,13 +208,10 @@ class PlatformMenuAPI(http.Controller):
                     'nav_explained': nav_explained_filtered,
                     'meta': {
                         **_meta(trace_id),
-                        'source_authority': source_authority_contract(),
-                        'menu_fact_source_authority': facts.source_authority,
-                        'delivery_convergence': convergence,
-                        'user_menu_config': {
-                            "nav_fact": user_menu_config,
-                            "nav_explained": explained_user_menu_config,
-                        },
+                        'source_authority': meta.get("source_authority") or source_authority_contract(),
+                        'menu_fact_source_authority': meta.get("menu_fact_source_authority") or {},
+                        'delivery_convergence': meta.get("delivery_convergence") or {},
+                        'user_menu_config': meta.get("user_menu_config") or {},
                     },
                 }
             )

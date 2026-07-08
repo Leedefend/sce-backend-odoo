@@ -55,6 +55,7 @@ LOWCODE_CAPABILITY_REQUIREMENTS = {
             "frontend/apps/web/scripts/low_code_menu_navigation_alignment_acceptance.mjs": (
                 "configuredParentId",
                 "navigation_config_only",
+                "parent_mismatch_count",
             ),
         },
         "acceptance_targets": (

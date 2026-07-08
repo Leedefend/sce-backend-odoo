@@ -33,7 +33,7 @@ class MenuDeliveryConvergenceService:
         "表单字段",
         "字段配置",
         "数据字典",
-        "基础设置",
+        "配置中心",
         "业务字典",
     )
     SYSTEM_CONFIG_TOKENS = (

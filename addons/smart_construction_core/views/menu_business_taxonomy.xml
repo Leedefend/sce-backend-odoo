@@ -109,7 +109,7 @@
     </record>
 
     <record id="menu_sc_business_config_center" model="ir.ui.menu">
-        <field name="name">业务配置</field>
+        <field name="name">配置中心</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
         <field name="sequence">90</field>
         <field name="action" eval="False"/>

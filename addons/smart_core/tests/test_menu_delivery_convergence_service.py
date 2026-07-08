@@ -31,8 +31,8 @@ class TestMenuDeliveryConvergenceService(TransactionCase):
             "delivery_business_config",
         )
 
-    def test_basic_setup_group_is_not_ordinary_user_product_surface(self):
-        path = ["平台", "基础设置", "客户"]
+    def test_config_center_group_is_not_ordinary_user_product_surface(self):
+        path = ["平台", "配置中心", "客户"]
 
         self.assertEqual(self._classify("客户", path), "hidden_business_config")
         self.assertEqual(
@@ -41,7 +41,7 @@ class TestMenuDeliveryConvergenceService(TransactionCase):
         )
 
     def test_form_field_configuration_is_business_config_surface(self):
-        path = ["平台", "基础设置", "字段策略台账"]
+        path = ["平台", "配置中心", "字段策略台账"]
 
         self.assertEqual(self._classify("字段策略台账", path), "hidden_business_config")
         self.assertEqual(
@@ -49,7 +49,7 @@ class TestMenuDeliveryConvergenceService(TransactionCase):
             "delivery_business_config",
         )
         self.assertEqual(
-            self._classify("新增表单字段", ["平台", "基础设置", "新增表单字段"], is_admin=True),
+            self._classify("新增表单字段", ["平台", "配置中心", "新增表单字段"], is_admin=True),
             "delivery_business_config",
         )
 

@@ -122,6 +122,7 @@
 | `addons/smart_core/handlers/menu_configuration.py` | L4 | 菜单低代码运行时配置：`menu_lowcode_runtime_config` | `smart_core.lowcode.menu_config` |
 | `addons/smart_construction_custom/models/user_preferences.py` | L3 | 用户偏好投影初始化：`user_preference_projection` | `smart_construction_custom.*preference` |
 | `addons/smart_construction_core/models/support/formal_list_contract_sync.py` | L2 | 行业正式列表契约投影：`industry_formal_list_contract_projection` | `smart_construction_core.formal_settlement_list_contract_sync` |
+| `addons/smart_construction_core/migrations/17.0.0.61/post-migration.py` | L2 | 行业过期契约作用域清理迁移：`industry_stale_contract_scope_cleanup_migration` | `smart_construction_core.stale_contract_scope_cleanup` |
 
 ## 当前允许直接写审批运行时策略的入口
 
@@ -137,6 +138,7 @@
 | `addons/smart_core/model/ui_form_custom_field_wizard.py` | L4 | 自定义字段同步表单策略：`form_custom_field_policy_creation` | `smart_core.lowcode.form_field_policy` |
 | `addons/smart_core/handlers/menu_configuration.py` | L4 | 菜单低代码策略配置：`menu_config_policy_runtime_configuration` | `smart_core.lowcode.menu_config` |
 | `addons/smart_construction_core/models/support/product_policy_sync.py` | L2 | 行业产品菜单默认策略投影：`industry_product_menu_policy_projection` | `smart_construction_core.product_policy_sync` |
+| `addons/smart_construction_core/migrations/17.0.0.61/post-migration.py` | L2 | 行业产品菜单策略基线迁移：`industry_product_menu_policy_baseline_migration` | `smart_construction_core.config_center_label_migration` |
 
 新增直接写 `ui.business.config.contract` 的入口必须先更新本表和 `scripts/verify/backend_contract_boundary_guard.py`，并说明为什么不能通过现有 handler 或用户模块承载。
 新增直接写 `sc.approval.policy` / `sc.approval.step` 的入口必须先更新本表和 `scripts/verify/backend_contract_boundary_guard.py`，并说明为什么不能通过审批配置 handler 承载。

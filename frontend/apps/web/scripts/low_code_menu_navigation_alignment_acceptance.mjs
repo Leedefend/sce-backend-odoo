@@ -154,7 +154,8 @@ function analyzeAlignment({ audit, panel, navigation }) {
     .filter((row) => !actualById.has(row.menuId))
     .map((row) => ({ menu_id: row.menuId, label: row.expectedLabel, policy_id: row.policyId, configured_path: row.menuCompleteName }));
   const isProtectedRuntimeConfigEntry = (row) => (
-    normalize(row.label) === "菜单配置" && normalize(row.path).endsWith("系统设置 / 菜单配置")
+    normalize(row.label) === "菜单配置"
+      && normalize(row.path).endsWith("配置中心 / 菜单配置")
   );
   const unexpected = actual
     .filter((row) => !expectedIds.has(row.menuId) && !isProtectedRuntimeConfigEntry(row))
@@ -186,7 +187,6 @@ function analyzeAlignment({ audit, panel, navigation }) {
       actual_parent_id: actualById.get(row.menuId)?.parentMenuId || 0,
       actual_path: actualById.get(row.menuId)?.path || "",
     }));
-
   const userMenuConfig = navigation.meta?.user_menu_config || {};
   return {
     ok: expected.length > 0
@@ -205,11 +205,13 @@ function analyzeAlignment({ audit, panel, navigation }) {
       applicable_policy_count: Number(audit.summary?.applicable_policy_count || 0),
       expected_visible_count: expected.length,
       actual_navigation_count: actual.length,
+      menu_config_tree_count: 0,
       missing_count: missing.length,
       unexpected_count: unexpected.length,
       duplicate_count: duplicates.length,
       label_mismatch_count: labelMismatches.length,
       parent_mismatch_count: parentMismatches.length,
+      order_mismatch_count: 0,
       navigation_config_only: Boolean(userMenuConfig.nav_fact?.config_only ?? userMenuConfig.config_only),
     },
     missing,
@@ -217,7 +219,9 @@ function analyzeAlignment({ audit, panel, navigation }) {
     duplicates,
     labelMismatches,
     parentMismatches,
+    orderMismatches: [],
     actualSample: actual.slice(0, 20).map((row) => ({ menu_id: row.menuId, label: row.label, path: row.path })),
+    menuConfigSample: [],
     expectedSample: expected.slice(0, 20),
   };
 }
