@@ -4555,6 +4555,13 @@ verify.lowcode_config.boundary.guard: guard.prod.forbid verify.business_config.g
 	@python3 -m py_compile scripts/verify/lowcode_config_boundary_guard.py
 	@python3 scripts/verify/lowcode_config_boundary_guard.py
 
+.PHONY: verify.lowcode_config.customer_baseline.candidate
+verify.lowcode_config.customer_baseline.candidate: guard.prod.forbid check-compose-project check-compose-env
+	@mkdir -p artifacts/backend
+	@python3 -m py_compile scripts/verify/lowcode_customer_config_baseline_candidate.py
+	@$(RUN_ENV) LOWCODE_CUSTOMER_CONFIG_BASELINE_CANDIDATE_PATH=/tmp/lowcode_customer_config_baseline_candidate.json DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/lowcode_customer_config_baseline_candidate.py
+	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/lowcode_customer_config_baseline_candidate.json artifacts/backend/lowcode_customer_config_baseline_candidate.json >/dev/null
+
 .PHONY: verify.lowcode_config.runtime_boundary.guard
 verify.lowcode_config.runtime_boundary.guard: guard.prod.forbid check-compose-project check-compose-env
 	@mkdir -p artifacts/backend

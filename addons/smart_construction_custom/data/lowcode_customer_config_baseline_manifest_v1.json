@@ -19,6 +19,16 @@
     "customer_confirmed_destination": "smart_construction_custom or an explicit customer module",
     "rule": "A low-code save is not a delivery baseline until the confirmed result is captured in a replayable module asset, migration, or idempotent initializer."
   },
+  "extraction_assistant": {
+    "schema_version": "lowcode_customer_config_baseline_candidate.v1",
+    "make_target": "make verify.lowcode_config.customer_baseline.candidate",
+    "script": "scripts/verify/lowcode_customer_config_baseline_candidate.py",
+    "artifact": "artifacts/backend/lowcode_customer_config_baseline_candidate.json",
+    "default_source_status_filter": [
+      "tenant_runtime"
+    ],
+    "policy": "The candidate artifact is review evidence only. Accepted rows must be converted into smart_construction_custom assets, migrations, or an idempotent initializer before release."
+  },
   "replayable_surfaces": [
     {
       "surface": "menu_preferences",
@@ -64,6 +74,7 @@
   "required_guards": [
     "make verify.lowcode_config.boundary.guard",
     "make verify.lowcode_config.runtime_boundary.guard",
+    "make verify.lowcode_config.customer_baseline.candidate",
     "make verify.business_config.unit",
     "make verify.business_config.snapshot"
   ],

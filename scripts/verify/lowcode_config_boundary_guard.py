@@ -385,6 +385,7 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
             "message": "customer low-code baseline manifest schema_version drifted",
         })
     required_top_level = {
+        "extraction_assistant",
         "module_boundary",
         "promotion_rule",
         "replayable_surfaces",
@@ -413,6 +414,45 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
                 "message": "promotion rule must preserve low-code runtime to replayable customer baseline semantics",
                 "token": token,
             })
+    extraction = payload.get("extraction_assistant") if isinstance(payload.get("extraction_assistant"), dict) else {}
+    expected_extraction = {
+        "schema_version": "lowcode_customer_config_baseline_candidate.v1",
+        "make_target": "make verify.lowcode_config.customer_baseline.candidate",
+        "script": "scripts/verify/lowcode_customer_config_baseline_candidate.py",
+        "artifact": "artifacts/backend/lowcode_customer_config_baseline_candidate.json",
+    }
+    for key, expected in expected_extraction.items():
+        if extraction.get(key) != expected:
+            errors.append({
+                "category": "customer_config_baseline_manifest",
+                "message": "customer low-code baseline manifest must declare the extraction assistant",
+                "key": key,
+                "expected": expected,
+                "actual": extraction.get(key),
+            })
+    extraction_script = ROOT / expected_extraction["script"]
+    if not extraction_script.is_file():
+        errors.append({
+            "category": "customer_config_baseline_manifest",
+            "message": "customer low-code baseline extraction assistant script is missing",
+            "path": expected_extraction["script"],
+        })
+    else:
+        extraction_text = _read(extraction_script)
+        for token in (
+            "lowcode_customer_config_baseline_candidate.v1",
+            "LOWCODE_CUSTOMER_BASELINE_SOURCE_STATUSES",
+            "target_module",
+            "smart_construction_custom",
+            "review_required",
+            "not_a_direct_module_asset",
+        ):
+            if token not in extraction_text:
+                errors.append({
+                    "category": "customer_config_baseline_extraction",
+                    "message": "customer low-code baseline extraction assistant must preserve review-only module promotion semantics",
+                    "token": token,
+                })
     surfaces = payload.get("replayable_surfaces") if isinstance(payload.get("replayable_surfaces"), list) else []
     surface_names = {str(item.get("surface") or "").strip() for item in surfaces if isinstance(item, dict)}
     for surface in ("menu_preferences", "form_preferences", "user_data_baseline"):
@@ -534,6 +574,7 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
     for guard in (
         "make verify.lowcode_config.boundary.guard",
         "make verify.lowcode_config.runtime_boundary.guard",
+        "make verify.lowcode_config.customer_baseline.candidate",
         "make verify.business_config.unit",
         "make verify.business_config.snapshot",
     ):

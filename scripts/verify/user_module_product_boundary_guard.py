@@ -121,6 +121,18 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
     for token in ("tenant_runtime", "product_release", "smart_construction_custom"):
         if token not in promotion_text:
             failures.append(f"low-code customer configuration baseline promotion rule missing {token}")
+    extraction = payload.get("extraction_assistant") if isinstance(payload.get("extraction_assistant"), dict) else {}
+    expected_extraction = {
+        "schema_version": "lowcode_customer_config_baseline_candidate.v1",
+        "make_target": "make verify.lowcode_config.customer_baseline.candidate",
+        "script": "scripts/verify/lowcode_customer_config_baseline_candidate.py",
+        "artifact": "artifacts/backend/lowcode_customer_config_baseline_candidate.json",
+    }
+    for key, expected in expected_extraction.items():
+        if extraction.get(key) != expected:
+            failures.append(f"low-code customer configuration baseline extraction assistant {key} mismatch")
+    if not (ROOT / expected_extraction["script"]).exists():
+        failures.append("low-code customer configuration baseline extraction assistant script is missing")
     surfaces = payload.get("replayable_surfaces") if isinstance(payload.get("replayable_surfaces"), list) else []
     surface_names = {str(item.get("surface") or "").strip() for item in surfaces if isinstance(item, dict)}
     for surface in ("menu_preferences", "form_preferences", "user_data_baseline"):
@@ -143,6 +155,7 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
     for guard in (
         "make verify.lowcode_config.boundary.guard",
         "make verify.lowcode_config.runtime_boundary.guard",
+        "make verify.lowcode_config.customer_baseline.candidate",
         "make verify.business_config.snapshot",
     ):
         if guard not in required_guards:
