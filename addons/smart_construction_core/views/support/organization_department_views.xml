@@ -68,7 +68,7 @@
 
     <menuitem id="menu_sc_organization_department"
               name="组织架构"
-              parent="menu_sc_business_config_center"
+              parent="menu_sc_business_base_config_group"
               action="action_sc_organization_department"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_data_read"/>

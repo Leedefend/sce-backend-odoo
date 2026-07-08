@@ -153,14 +153,14 @@
 
     <menuitem id="menu_ui_form_field_policy_business_config"
               name="表单字段配置"
-              parent="smart_construction_core.menu_sc_business_config_center"
+              parent="smart_construction_core.menu_sc_lowcode_system_config_group"
               action="smart_construction_core.action_ui_form_field_policy_business_config"
               sequence="15"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 
     <menuitem id="menu_ui_form_custom_field_wizard_business_config"
               name="新增表单字段"
-              parent="smart_construction_core.menu_sc_business_config_center"
+              parent="smart_construction_core.menu_sc_lowcode_system_config_group"
               action="smart_construction_core.action_ui_form_custom_field_wizard_business_config"
               sequence="16"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>

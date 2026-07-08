@@ -2,7 +2,7 @@
 <odoo>
   <menuitem id="menu_ui_menu_config_policy_business_config"
             name="菜单配置"
-            parent="smart_construction_core.menu_sc_business_config_center"
+            parent="smart_construction_core.menu_sc_lowcode_system_config_group"
             action="smart_core.action_ui_menu_config_policy"
             sequence="6"
             groups="smart_construction_core.group_sc_cap_business_config_admin,smart_core.group_smart_core_business_config_admin,smart_core.group_smart_core_admin"/>

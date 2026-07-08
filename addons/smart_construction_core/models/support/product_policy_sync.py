@@ -547,7 +547,35 @@ USER_CONFIRMED_ENTRY_MATRIX_SCRIPT_PATHS = (
 )
 USER_CONFIRMED_FORMAL_HIDDEN_GROUP_LABELS = {"用户核对菜单", "用户验收", "用户数据验收"}
 CONFIG_CENTER_GROUP_LABEL = "配置中心"
+CONFIG_CENTER_BUSINESS_BASE_LABEL = "业务基础数据"
+CONFIG_CENTER_LOWCODING_LABEL = "低代码系统配置"
 LEGACY_CONFIG_GROUP_LABELS = {"基础设置", "系统设置", "业务配置"}
+CONFIG_CENTER_LOWCODING_MENU_XMLIDS = {
+    "smart_construction_core.menu_sc_business_config_workbench",
+    "smart_construction_core.menu_ui_menu_config_policy_business_config",
+    "smart_construction_core.menu_ui_form_field_policy_business_config",
+    "smart_construction_core.menu_ui_form_custom_field_wizard_business_config",
+}
+CONFIG_CENTER_BUSINESS_BASE_MENU_XMLIDS = {
+    "smart_construction_core.menu_sc_business_category",
+    "smart_construction_core.menu_sc_dictionary",
+    "smart_construction_core.menu_sc_organization_department",
+    "smart_construction_core.menu_sc_approval_scope",
+    "smart_construction_core.menu_sc_approval_policy",
+    "smart_construction_core.menu_sc_project_stage_requirement_items",
+    "smart_construction_core.menu_sc_project_cost_code",
+    "smart_construction_core.menu_sc_company_document_archive",
+}
+CONFIG_CENTER_INTERNAL_INCUBATING_MENU_XMLID_TOKENS = {
+    "menu_project_quota",
+    "menu_sc_dictionary_root",
+    "menu_sc_dictionary_all",
+    "menu_sc_dictionary_discipline",
+    "menu_sc_dictionary_chapter",
+    "menu_sc_dictionary_quota_item",
+    "menu_sc_dictionary_sub_item",
+    "menu_quota_import_wizard",
+}
 USER_CONFIRMED_FORMAL_VISIBLE_PARENT_XMLIDS = {
     "smart_construction_core.menu_sc_material_management_group",
     "smart_construction_core.menu_sc_labor_management_group",
@@ -1026,6 +1054,50 @@ class ScProductPolicy(models.Model):
                 ]
                 continue
             by_label[canonical_label] = next_group
+            out.append(next_group)
+        return out
+
+    @api.model
+    def _normalize_config_center_product_menu_groups(self, menu_groups):
+        out = []
+        for group in menu_groups or []:
+            if not isinstance(group, dict):
+                continue
+            group_label = _text(group.get("group_label") or group.get("label"))
+            next_group = dict(group)
+            menus = []
+            for menu in group.get("menus") or []:
+                if not isinstance(menu, dict):
+                    continue
+                next_menu = dict(menu)
+                menu_xmlid = _text(next_menu.get("menu_xmlid") or next_menu.get("page_key") or next_menu.get("menu_key"))
+                if any(token in menu_xmlid for token in CONFIG_CENTER_INTERNAL_INCUBATING_MENU_XMLID_TOKENS):
+                    continue
+                if group_label == CONFIG_CENTER_GROUP_LABEL:
+                    label = _text(next_menu.get("label") or next_menu.get("page_label"))
+                    subgroup = ""
+                    if menu_xmlid in CONFIG_CENTER_LOWCODING_MENU_XMLIDS:
+                        subgroup = CONFIG_CENTER_LOWCODING_LABEL
+                        next_menu["product_domain"] = "lowcode_system_config"
+                        next_menu["product_domain_label"] = CONFIG_CENTER_LOWCODING_LABEL
+                        next_menu["entry_intent"] = "config"
+                        next_menu["entry_intent_label"] = "配置"
+                        next_menu["policy_note"] = "config_center_lowcode_system_config_grouped"
+                    elif menu_xmlid in CONFIG_CENTER_BUSINESS_BASE_MENU_XMLIDS:
+                        subgroup = CONFIG_CENTER_BUSINESS_BASE_LABEL
+                        next_menu["product_domain"] = "business_base_data"
+                        next_menu["product_domain_label"] = CONFIG_CENTER_BUSINESS_BASE_LABEL
+                        next_menu["entry_intent"] = "master_data"
+                        next_menu["entry_intent_label"] = "维护"
+                        next_menu["policy_note"] = "config_center_business_base_data_grouped"
+                    if subgroup and label:
+                        next_menu["visible_menu_path"] = "智慧施工管理平台 / %s / %s / %s" % (
+                            CONFIG_CENTER_GROUP_LABEL,
+                            subgroup,
+                            label,
+                        )
+                menus.append(next_menu)
+            next_group["menus"] = menus
             out.append(next_group)
         return out
 
@@ -1545,6 +1617,7 @@ class ScProductPolicy(models.Model):
             menu_groups = self._apply_finance_cash_noncash_product_menu_overrides(menu_groups)
             menu_groups = self._move_tax_product_menus_to_tax_center(menu_groups)
             menu_groups = self._normalize_product_menu_business_domains(menu_groups)
+            menu_groups = self._normalize_config_center_product_menu_groups(menu_groups)
             capabilities = self._capabilities_from_user_confirmed_menu_groups(menu_groups)
             values = {
                 "active": bool(item.get("active", True)),

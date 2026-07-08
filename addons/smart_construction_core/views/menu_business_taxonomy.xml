@@ -2442,7 +2442,7 @@
               groups="smart_construction_core.group_sc_cap_contact_manager"/>
     <record id="menu_sc_dictionary" model="ir.ui.menu">
         <field name="name">数据字典</field>
-        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_base_config_group"/>
         <field name="sequence">70</field>
     </record>
     <record id="menu_sc_organization_department" model="ir.ui.menu">
@@ -2460,12 +2460,12 @@
     </record>
     <record id="menu_sc_approval_policy" model="ir.ui.menu">
         <field name="name">审批配置</field>
-        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_base_config_group"/>
         <field name="sequence">31</field>
     </record>
     <record id="menu_sc_project_cost_code" model="ir.ui.menu">
         <field name="name">预算类型</field>
-        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_base_config_group"/>
         <field name="sequence">50</field>
     </record>
     <record id="menu_sc_approval_scope" model="ir.ui.menu">
@@ -2478,9 +2478,11 @@
         <field name="sequence">40</field>
     </record>
     <record id="menu_project_quota_root" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_config_center"/>
         <field name="sequence">80</field>
     </record>
     <record id="menu_sc_dictionary_root" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_config_center"/>
         <field name="sequence">90</field>
     </record>
     <record id="menu_sc_legacy_user_priority_menu_plan" model="ir.ui.menu">

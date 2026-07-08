@@ -279,7 +279,7 @@
 
     <menuitem id="menu_project_quota_root"
               name="定额库"
-              parent="menu_sc_business_config_center"
+              parent="menu_sc_config_center"
               sequence="30"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 
@@ -306,7 +306,7 @@
 
     <menuitem id="menu_sc_dictionary_root"
               name="定额字典"
-              parent="menu_sc_business_config_center"
+              parent="menu_sc_config_center"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
 
@@ -348,7 +348,7 @@
     <!-- 全局业务字典：项目类型、资料分类、合同类别等业务基础配置。 -->
     <menuitem id="menu_sc_dictionary"
               name="业务字典"
-              parent="menu_sc_business_config_center"
+              parent="menu_sc_business_base_config_group"
               action="action_sc_dictionary_manage"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>

@@ -29,6 +29,16 @@
               parent="menu_sc_root"
               sequence="85"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_business_base_config_group"
+              name="业务基础数据"
+              parent="menu_sc_business_config_center"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_lowcode_system_config_group"
+              name="低代码系统配置"
+              parent="menu_sc_business_config_center"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_business_config_admin,smart_core.group_smart_core_business_config_admin,smart_core.group_smart_core_admin"/>
     <menuitem id="menu_sc_config_center"
               name="系统配置"
               parent="menu_sc_root"

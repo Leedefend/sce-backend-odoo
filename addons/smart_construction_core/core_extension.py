@@ -3727,15 +3727,30 @@ def smart_core_native_config_root_menu_xmlid(env):
 
 def smart_core_native_config_delivery_excluded_menu_xmlids(env):
     del env
-    return []
+    return [
+        "smart_construction_core.menu_project_quota_root",
+        "smart_construction_core.menu_project_quota_center",
+        "smart_construction_core.menu_project_quota_subitem",
+        "smart_construction_core.menu_project_quota_tree",
+        "smart_construction_core.menu_sc_dictionary_root",
+        "smart_construction_core.menu_sc_dictionary_all",
+        "smart_construction_core.menu_sc_dictionary_discipline",
+        "smart_construction_core.menu_sc_dictionary_chapter",
+        "smart_construction_core.menu_sc_dictionary_quota_item",
+        "smart_construction_core.menu_sc_dictionary_sub_item",
+        "smart_construction_core.menu_quota_import_wizard",
+    ]
 
 
 def smart_core_lowcode_system_config_menu_xmlids(env):
     del env
     return [
         "smart_construction_core.menu_sc_business_config_center",
+        "smart_construction_core.menu_sc_lowcode_system_config_group",
         "smart_construction_core.menu_sc_business_config_workbench",
         "smart_construction_core.menu_ui_menu_config_policy_business_config",
+        "smart_construction_core.menu_ui_form_field_policy_business_config",
+        "smart_construction_core.menu_ui_form_custom_field_wizard_business_config",
     ]
 
 

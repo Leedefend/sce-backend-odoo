@@ -118,7 +118,7 @@
 
     <menuitem id="menu_sc_approval_policy"
               name="审批规则"
-              parent="smart_construction_core.menu_sc_business_config_center"
+              parent="smart_construction_core.menu_sc_business_base_config_group"
               action="action_sc_approval_policy"
               sequence="30"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>

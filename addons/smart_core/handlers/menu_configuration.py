@@ -474,14 +474,14 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
 
     def _formal_product_menu_scope_ids(self, root_menu_id: int) -> set[int]:
         if "sc.product.policy" not in self.env:
-            return set()
+            return self._native_config_menu_scope_ids(root_menu_id)
         product_key = self._current_product_key()
         policy = self.env["sc.product.policy"].sudo().search([
             ("product_key", "=", product_key),
             ("active", "=", True),
         ], limit=1)
         if not policy:
-            return set()
+            return self._native_config_menu_scope_ids(root_menu_id)
         Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
         ConfigPolicy = self.env[MENU_CONFIG_POLICY_MODEL].sudo().with_context(active_test=False) if MENU_CONFIG_POLICY_MODEL in self.env else None
         configured_target_by_menu: dict[int, int] = {}
@@ -535,7 +535,47 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                     add_menu_with_parent_chain(menu)
         if root_menu_id:
             scoped_ids.add(root_menu_id)
+        scoped_ids.update(self._native_config_menu_scope_ids(root_menu_id))
         return scoped_ids
+
+    def _native_config_menu_scope_ids(self, root_menu_id: int) -> set[int]:
+        """Include productized native configuration entries in the panel scope.
+
+        The menu configuration surface is still scoped by product policy, but
+        configuration-center entries generated from Odoo menus are runtime
+        product entries too. The native projection already applies role
+        visibility and the industry exclusion hook, so this keeps the panel
+        aligned with the delivered navigation without admitting internal tools.
+        """
+        try:
+            from odoo.addons.smart_core.delivery.native_config_menu_projection import (
+                native_config_app_children,
+                native_config_delivery_excluded_menu_xmlids,
+            )
+        except Exception:
+            return set()
+
+        root_menu_id = _to_int(root_menu_id)
+        excluded_xmlids = native_config_delivery_excluded_menu_xmlids(self.env)
+        out: set[int] = set()
+
+        def visit(node: dict) -> None:
+            if not isinstance(node, dict):
+                return
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            if _to_text(meta.get("menu_xmlid")) in excluded_xmlids:
+                return
+            menu_id = _to_int(node.get("menu_id") or node.get("id"))
+            if menu_id:
+                out.add(menu_id)
+            for child in node.get("children") or []:
+                visit(child)
+
+        for node in native_config_app_children(self.env) or []:
+            visit(node)
+        if root_menu_id and out:
+            out.add(root_menu_id)
+        return out
 
     def _menu_config_candidate_ids(self, root_menu_id: int, requested_menu_ids: list[int], all_menus) -> set[int]:
         requested_set = {int(menu_id) for menu_id in requested_menu_ids if int(menu_id or 0)}
@@ -595,9 +635,12 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
 
     def _effective_menu_rows(self, rows: list[dict], policy_by_menu: dict[int, dict]) -> list[dict]:
         by_id = {int(row["id"]): dict(row) for row in rows}
+        protected_lowcode_menu_ids = self._protected_lowcode_menu_ids()
         for menu_id, policy in policy_by_menu.items():
             row = by_id.get(int(menu_id or 0))
             if not row:
+                continue
+            if int(menu_id or 0) in protected_lowcode_menu_ids:
                 continue
             target_parent_id = _to_int(policy.get("target_parent_menu_id"))
             if target_parent_id and target_parent_id != int(row.get("id") or 0):
@@ -672,6 +715,16 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             "scope_summary": _to_text(policy.scope_summary),
             "preview_summary": _to_text(policy.preview_summary),
         }
+
+    def _protected_lowcode_menu_ids(self) -> set[int]:
+        xmlids = call_extension_hook_first(self.env, "smart_core_lowcode_system_config_menu_xmlids", self.env)
+        candidates = xmlids if isinstance(xmlids, (list, tuple, set)) else []
+        out: set[int] = set()
+        for xmlid in candidates:
+            record = _xmlid_record(self.env, _to_text(xmlid))
+            if record and getattr(record, "_name", "") == "ir.ui.menu":
+                out.add(int(record.id or 0))
+        return out
 
     def _runtime_role_surface(self) -> dict:
         return {

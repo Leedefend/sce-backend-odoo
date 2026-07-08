@@ -738,6 +738,67 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         self.assertEqual(leaf.get("label"), "收款登记")
         self.assertEqual((leaf.get("meta") or {}).get("entry_intent"), "handling")
 
+    def test_explicit_menu_path_group_uses_native_group_config_menu_id(self):
+        nav = menu_service.MenuService().build_nav(
+            policy={
+                "menu_groups": [
+                    {
+                        "group_key": "construction.config",
+                        "group_label": "配置中心",
+                        "menus": [
+                            {
+                                "menu_key": "menu_config",
+                                "label": "菜单配置",
+                                "menu_id": 646,
+                                "route": "/a/841?menu_id=646",
+                                "action_id": 841,
+                                "menu_xmlid": "smart_construction_core.menu_ui_menu_config_policy_business_config",
+                                "res_model": "ui.menu.config.policy",
+                                "visible_menu_path": "智慧施工管理平台 / 配置中心 / 低代码系统配置 / 菜单配置",
+                                "entry_intent": "config",
+                                "release_state": "released",
+                                "enabled": True,
+                            }
+                        ],
+                    }
+                ]
+            },
+            role_surface={"role_code": "business_config_admin"},
+            native_nav=[
+                {
+                    "label": "智慧施工管理平台",
+                    "menu_id": 291,
+                    "children": [
+                        {
+                            "label": "配置中心",
+                            "menu_id": 297,
+                            "children": [
+                                {
+                                    "label": "低代码系统配置",
+                                    "menu_id": 861,
+                                    "children": [
+                                        self._native_leaf(
+                                            label="菜单配置",
+                                            menu_id=646,
+                                            route="/a/841?menu_id=646",
+                                            action_id=841,
+                                            model="ui.menu.config.policy",
+                                        )
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        )
+
+        config_center = next(group for group in (nav[0].get("children") or []) if group.get("label") == "配置中心")
+        lowcode_group = next(child for child in config_center.get("children") or [] if child.get("label") == "低代码系统配置")
+        self.assertEqual(lowcode_group.get("config_menu_id"), 861)
+        self.assertTrue(lowcode_group.get("configurable"))
+        self.assertEqual((lowcode_group.get("config_ref") or {}).get("id"), 861)
+
 
 if __name__ == "__main__":
     unittest.main()

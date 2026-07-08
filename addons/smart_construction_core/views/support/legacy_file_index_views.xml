@@ -128,7 +128,7 @@
 
     <menuitem id="menu_sc_company_document_archive"
               name="公司资料存档"
-              parent="smart_construction_core.menu_sc_business_config_center"
+              parent="smart_construction_core.menu_sc_business_base_config_group"
               action="action_sc_company_document_archive"
               sequence="35"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>

@@ -321,7 +321,7 @@
               groups="smart_core.group_smart_core_admin"/>
     <menuitem id="menu_sc_project_cost_code"
               name="成本科目"
-              parent="menu_sc_business_config_center"
+              parent="menu_sc_business_base_config_group"
               action="action_project_cost_code"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_business_config_admin"/>

@@ -106,6 +106,10 @@ class MenuService:
             row["delivery_bucket"] = "native_preview"
             row["source_authority"] = self.source_authority_contract()
             return row
+        if str(row.get("scene_source") or "").strip() == "native_business_config_menu_projection":
+            row["delivery_bucket"] = "delivery_business_config"
+            row["source_authority"] = self.source_authority_contract()
+            return row
         service = MenuDeliveryConvergenceService(self.env)
         category = service._classify_leaf(
             label,
@@ -403,6 +407,7 @@ class MenuService:
         group_label: str,
         menu: dict,
         child: dict,
+        group_config_menu_ids_by_label: dict[str, int] | None = None,
     ) -> None:
         group_parts = self._acceptance_menu_group_parts(menu, group_label)
         if not group_parts:
@@ -413,6 +418,7 @@ class MenuService:
             parent_key=parent_key,
             group_parts=group_parts,
             child=child,
+            group_config_menu_ids_by_label=group_config_menu_ids_by_label,
         )
 
     def _acceptance_group_key(self, parent_key: str, label: str, index: int) -> str:
@@ -426,6 +432,7 @@ class MenuService:
         parent_key: str,
         group_parts: list[str],
         child: dict,
+        group_config_menu_ids_by_label: dict[str, int] | None = None,
     ) -> None:
         if not group_parts:
             nodes.append(child)
@@ -437,6 +444,7 @@ class MenuService:
                 self._acceptance_group_key(parent_key, label, len(nodes) + 1),
                 label,
                 [],
+                config_menu_id=int((group_config_menu_ids_by_label or {}).get(label) or 0),
             )
             meta = dict(group.get("meta") if isinstance(group.get("meta"), dict) else {})
             meta["explicit_menu_path_group"] = True
@@ -448,6 +456,7 @@ class MenuService:
             parent_key=next_parent_key,
             group_parts=group_parts[1:],
             child=child,
+            group_config_menu_ids_by_label=group_config_menu_ids_by_label,
         )
 
     def _business_entry_intent(self, node: dict) -> str:
@@ -1034,7 +1043,7 @@ class MenuService:
             else self._native_preview_menus(native_nav=native_nav or [], policy=policy)
         )
         if self.env is not None and (is_admin or is_business_config_admin):
-            grouped_native = list(grouped_native or []) + native_config_delivery_groups(self.env)
+            grouped_native = native_config_delivery_groups(self.env) + list(grouped_native or [])
         groups_by_key = {}
         group_order = []
         scene_group_map = {}
@@ -1231,6 +1240,7 @@ class MenuService:
                         parent_key=str(row.get("group_key") or group_key),
                         group_parts=self._acceptance_menu_group_parts(menu, group_label),
                         child=child,
+                        group_config_menu_ids_by_label=native_group_config_ids_by_label,
                     )
             else:
                 children = []
@@ -1244,6 +1254,7 @@ class MenuService:
                         group_label=group_label,
                         menu=menu,
                         child=child,
+                        group_config_menu_ids_by_label=native_group_config_ids_by_label,
                     )
                 children = self._group_children_by_business_intent(
                     children,

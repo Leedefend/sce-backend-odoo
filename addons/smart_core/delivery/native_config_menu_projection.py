@@ -176,7 +176,12 @@ def native_config_app_children(env) -> list[dict[str, Any]]:
     return rows
 
 
-def _node_to_delivery_menu(node: dict[str, Any], excluded_xmlids: set[str] | None = None) -> dict[str, Any] | None:
+def _node_to_delivery_menu(
+    node: dict[str, Any],
+    excluded_xmlids: set[str] | None = None,
+    *,
+    path_labels: list[str] | None = None,
+) -> dict[str, Any] | None:
     if not isinstance(node, dict):
         return None
     meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
@@ -188,6 +193,12 @@ def _node_to_delivery_menu(node: dict[str, Any], excluded_xmlids: set[str] | Non
     if menu_xmlid and menu_xmlid in (excluded_xmlids or set()):
         return None
     route = _text(node.get("route") or meta.get("route"))
+    action_id = meta.get("action_id") or node.get("action_id")
+    model = _text(meta.get("model"))
+    if not action_id and not model:
+        return None
+    visible_path_parts = [_text(item) for item in (path_labels or []) if _text(item)]
+    visible_path_parts.append(label)
     return {
         "menu_key": f"system.menu_{menu_id}",
         "label": label,
@@ -198,12 +209,13 @@ def _node_to_delivery_menu(node: dict[str, Any], excluded_xmlids: set[str] | Non
         "capability_key": "",
         "menu_xmlid": menu_xmlid,
         "scene_source": SOURCE_KIND,
-        "action_id": meta.get("action_id") or node.get("action_id"),
+        "action_id": action_id,
         "action_xmlid": _text(meta.get("action_xmlid")),
-        "model": _text(meta.get("model")),
+        "model": model,
         "entry_target": meta.get("entry_target") if isinstance(meta.get("entry_target"), dict) else {},
         "view_modes": meta.get("view_modes") if isinstance(meta.get("view_modes"), list) else [],
         "delivery_bucket": "delivery_business_config",
+        "visible_menu_path": " / ".join(visible_path_parts),
         "source_authority": source_authority_contract(),
     }
 
@@ -211,14 +223,20 @@ def _node_to_delivery_menu(node: dict[str, Any], excluded_xmlids: set[str] | Non
 def native_config_delivery_groups(env) -> list[dict[str, Any]]:
     menus = []
     excluded_xmlids = native_config_delivery_excluded_menu_xmlids(env)
-    for node in native_config_app_children(env):
-        menu = _node_to_delivery_menu(node, excluded_xmlids)
+    root = native_config_root(env)
+    root_label = _text(getattr(root, "name", "")) or CONFIG_GROUP_LABEL
+
+    def visit(node: dict[str, Any], ancestors: list[str]) -> None:
+        if not isinstance(node, dict):
+            return
+        menu = _node_to_delivery_menu(node, excluded_xmlids, path_labels=ancestors)
         if menu:
             menus.append(menu)
         for child in node.get("children") or []:
-            child_menu = _node_to_delivery_menu(child, excluded_xmlids)
-            if child_menu:
-                menus.append(child_menu)
+            visit(child, [*ancestors, _text(node.get("label"))])
+
+    for node in native_config_app_children(env):
+        visit(node, ["智慧施工管理平台", root_label])
     if not menus:
         return []
     return [
