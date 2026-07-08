@@ -278,9 +278,11 @@ async function main() {
     const initialGroup = await selectedFieldGroup(page);
     const initialLabel = await selectedFieldLabel(page) || FIELD_LABEL;
     const baselineGroup = EXPECTED_GROUPS.includes(initialGroup) ? initialGroup : HOME_GROUP;
+    const restoreGroup = initialGroup || baselineGroup;
     report.initialLabel = initialLabel;
     report.initialGroup = initialGroup;
     report.baselineGroup = baselineGroup;
+    report.restoreGroup = restoreGroup;
     const actualGroups = await groupTitles(page);
     const missingGroups = EXPECTED_GROUPS.filter((group) => !actualGroups.includes(group));
     assert(!missingGroups.length, "配置页分组不完整", { expectedGroups: EXPECTED_GROUPS, actualGroups, missingGroups });
@@ -311,7 +313,7 @@ async function main() {
       }
     }
 
-    await ensureFieldInGroup(page, baselineGroup, "restore", initialLabel);
+    await ensureFieldInGroup(page, restoreGroup, "restore", initialLabel);
     report.ok = true;
     console.log(JSON.stringify(report, null, 2));
   } catch (error) {
