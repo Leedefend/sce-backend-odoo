@@ -135,6 +135,9 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         "acceptance_decision_template_make_target": "make verify.lowcode_config.customer_module_asset.acceptance_template",
         "acceptance_decision_template_script": "scripts/verify/lowcode_customer_config_acceptance_decision_template.py",
         "acceptance_decision_template_artifact": "artifacts/backend/lowcode_customer_config_acceptance_decisions_template.json",
+        "acceptance_apply_dry_run_make_target": "make verify.lowcode_config.customer_module_asset.acceptance_apply.dry_run",
+        "acceptance_apply_script": "scripts/verify/lowcode_customer_config_apply_acceptance_decisions.py",
+        "acceptance_apply_dry_run_artifact": "artifacts/backend/lowcode_customer_config_contracts_candidate.json",
         "accepted_module_asset_schema_version": "lowcode_customer_config_contracts.v1",
         "accepted_module_asset": "addons/smart_construction_custom/data/lowcode_customer_config_contracts_v1.json",
         "accepted_module_asset_replay_guard": "make verify.lowcode_config.customer_module_asset.replay.guard",
@@ -176,6 +179,25 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         ):
             if token not in decision_template_text:
                 failures.append(f"low-code customer configuration acceptance decision template script missing {token}")
+    acceptance_apply_script = ROOT / expected_extraction["acceptance_apply_script"]
+    if not acceptance_apply_script.exists():
+        failures.append("low-code customer configuration acceptance apply script is missing")
+    else:
+        acceptance_apply_text = acceptance_apply_script.read_text(encoding="utf-8")
+        for token in (
+            "lowcode_customer_config_acceptance_decisions.v1",
+            "lowcode_customer_config_contracts.v1",
+            "LOWCODE_CUSTOMER_CONFIG_APPLY_ACCEPTANCE",
+            "LOWCODE_CUSTOMER_CONFIG_ACCEPTED_ASSET_OUTPUT",
+            "accepted",
+            "reviewer",
+            "review_note",
+            "payload_hash",
+            "tenant_runtime",
+            "apply_to_module",
+        ):
+            if token not in acceptance_apply_text:
+                failures.append(f"low-code customer configuration acceptance apply script missing {token}")
     accepted_asset = ROOT / expected_extraction["accepted_module_asset"]
     if not accepted_asset.exists():
         failures.append("accepted low-code customer configuration module asset is missing")
@@ -217,6 +239,7 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         "make verify.lowcode_config.customer_baseline.candidate",
         "make verify.lowcode_config.customer_module_asset.draft",
         "make verify.lowcode_config.customer_module_asset.acceptance_template",
+        "make verify.lowcode_config.customer_module_asset.acceptance_apply.dry_run",
         "make verify.lowcode_config.customer_module_asset.replay.guard",
         "make verify.business_config.snapshot",
     ):
