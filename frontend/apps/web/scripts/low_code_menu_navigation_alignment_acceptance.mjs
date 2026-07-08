@@ -8,7 +8,7 @@ const ROOT_MENU_XMLID = process.env.LOW_CODE_MENU_ROOT_XMLID || "smart_construct
 const MENU_CONFIG_ROUTE = process.env.LOW_CODE_MENU_CONFIG_ROUTE
   || `/admin/menu-config?menu_id=646&action_id=841&root_menu_xmlid=${encodeURIComponent(ROOT_MENU_XMLID)}&return_to_business_config=1`;
 const REQUIRED_CONFIG_TREE_ROWS = [
-  { menuId: 859, label: "基础资料" },
+  { menuId: 850, label: "基础资料" },
   { menuId: 292, label: "项目中心" },
   { menuId: 293, label: "合同中心" },
   { menuId: 465, label: "施工管理" },
