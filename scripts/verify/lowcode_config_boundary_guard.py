@@ -298,12 +298,98 @@ def _validate_lowcode_capability_boundaries(errors: list[dict]) -> list[str]:
     return capability_ids
 
 
+def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
+    manifest_path = ROOT / "addons" / "smart_construction_custom" / "data" / "lowcode_customer_config_baseline_manifest_v1.json"
+    if not manifest_path.is_file():
+        errors.append({
+            "category": "customer_config_baseline_manifest",
+            "message": "customer-confirmed low-code configuration baseline manifest is missing",
+            "path": manifest_path.relative_to(ROOT).as_posix(),
+        })
+        return
+    try:
+        payload = json.loads(_read(manifest_path))
+    except json.JSONDecodeError as exc:
+        errors.append({
+            "category": "customer_config_baseline_manifest",
+            "message": "customer low-code baseline manifest is invalid JSON",
+            "error": str(exc),
+        })
+        return
+    if payload.get("schema_version") != "lowcode_customer_config_baseline_manifest.v1":
+        errors.append({
+            "category": "customer_config_baseline_manifest",
+            "message": "customer low-code baseline manifest schema_version drifted",
+        })
+    required_top_level = {
+        "module_boundary",
+        "promotion_rule",
+        "replayable_surfaces",
+        "required_module_assets",
+        "required_guards",
+        "acceptance_policy",
+    }
+    missing_top_level = sorted(required_top_level - set(payload))
+    if missing_top_level:
+        errors.append({
+            "category": "customer_config_baseline_manifest",
+            "message": "customer low-code baseline manifest missing required sections",
+            "missing": missing_top_level,
+        })
+    module_boundary = payload.get("module_boundary") if isinstance(payload.get("module_boundary"), dict) else {}
+    if module_boundary.get("owner_module") != "smart_construction_custom":
+        errors.append({
+            "category": "customer_config_baseline_manifest",
+            "message": "customer low-code baseline manifest must be owned by smart_construction_custom",
+        })
+    promotion_rule = payload.get("promotion_rule") if isinstance(payload.get("promotion_rule"), dict) else {}
+    for token in ("tenant_runtime", "product_release", "smart_construction_custom"):
+        if token not in json.dumps(promotion_rule, ensure_ascii=False):
+            errors.append({
+                "category": "customer_config_baseline_manifest",
+                "message": "promotion rule must preserve low-code runtime to replayable customer baseline semantics",
+                "token": token,
+            })
+    surfaces = payload.get("replayable_surfaces") if isinstance(payload.get("replayable_surfaces"), list) else []
+    surface_names = {str(item.get("surface") or "").strip() for item in surfaces if isinstance(item, dict)}
+    for surface in ("menu_preferences", "form_preferences", "user_data_baseline"):
+        if surface not in surface_names:
+            errors.append({
+                "category": "customer_config_baseline_manifest",
+                "message": "customer low-code baseline manifest missing replayable surface",
+                "surface": surface,
+            })
+    required_assets = payload.get("required_module_assets") if isinstance(payload.get("required_module_assets"), list) else []
+    for rel_path in required_assets:
+        path = ROOT / str(rel_path)
+        if not path.is_file():
+            errors.append({
+                "category": "customer_config_baseline_manifest",
+                "message": "customer low-code baseline manifest references missing asset",
+                "path": str(rel_path),
+            })
+    required_guards = set(map(str, payload.get("required_guards") if isinstance(payload.get("required_guards"), list) else []))
+    for guard in (
+        "make verify.lowcode_config.boundary.guard",
+        "make verify.lowcode_config.runtime_boundary.guard",
+        "make verify.business_config.unit",
+        "make verify.business_config.snapshot",
+    ):
+        if guard not in required_guards:
+            errors.append({
+                "category": "customer_config_baseline_manifest",
+                "message": "customer low-code baseline manifest must require guard",
+                "guard": guard,
+            })
+
+
 def build_report() -> dict:
     errors: list[dict] = []
     boundaries = _load_boundaries()
     source_statuses = set(getattr(boundaries, "LOWCODE_SOURCE_STATUSES", set()))
     system_config_menu_xmlids = set(getattr(boundaries, "LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS", set()))
     capability_ids = _validate_lowcode_capability_boundaries(errors)
+    _validate_customer_config_baseline_manifest(errors)
 
     missing_statuses = sorted(REQUIRED_SOURCE_STATUSES - source_statuses)
     if missing_statuses:
