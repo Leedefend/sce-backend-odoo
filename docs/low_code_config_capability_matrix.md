@@ -21,7 +21,7 @@
 | 产品发布菜单 | 项目、合同、结算、付款、材料、劳务等正式业务办理入口 | 允许按租户/角色覆盖，必须有版本和来源 | 允许按租户/角色覆盖，不能反向污染行业发布基线 | P1/P2/P3 视确认状态分流 |
 | 用户/租户配置菜单 | 客户确认的菜单拆分、标签、分组、角色可见性 | 允许，需版本、审计、回滚 | 允许，长期生效需沉淀到用户模块或保留 P3 版本 | P2 用户产品或 P3 运行时配置 |
 
-菜单配置的生效链路必须锁定为：原生菜单/产品发布基线 -> `menu_orchestration` 低代码覆盖 -> `/api/menu/navigation` 最终低代码导航。主导航和菜单配置默认左侧树均以产品发布菜单 `release_navigation_v1` 为权威，保证管理员看到和配置的是同一套产品菜单；`/api/menu/navigation` 只服务预览、审计和低代码运行时对齐验收，不得反向覆盖产品发布主导航，也不得作为默认配置目录来源。`verify.product.navigation_boundary` 必须验证主导航与菜单配置默认树一致；`verify.business_config.low_code_menu_navigation_alignment` 必须验证低代码最终出口与已发布菜单配置合同的可见性、标签和父级一致。
+菜单配置的生效链路必须锁定为：原生菜单/产品发布基线 -> `menu_orchestration` 低代码配置意图 -> 运行态最终导航解释。产品发布菜单 `release_navigation_v1` 是默认目录和候选目录权威；运行态最终导航是主导航和菜单配置“当前显示状态”的事实权威。菜单配置目录可以比主导航多，包含可恢复隐藏菜单和产品候选菜单，但主导航显示的菜单不得在菜单配置面板中被标为“当前隐藏”。`policy.visible` 和 `menu_orchestration.visible` 只能表示配置意图，父级承载菜单必须按运行态解释显示为“显示中/承载子菜单”等状态。`verify.product.navigation_boundary` 必须验证产品发布基线可重放；`verify.business_config.low_code_menu_navigation_alignment` 必须验证主导航和菜单配置运行态状态同源一致。详细边界见 `docs/product/menu_configuration_runtime_boundary_v1.md`。
 
 ## 低代码到正式产品的分流规则
 
