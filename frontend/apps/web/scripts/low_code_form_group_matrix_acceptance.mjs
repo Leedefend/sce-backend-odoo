@@ -275,18 +275,22 @@ async function main() {
     await login(page);
     await openFormDesigner(page);
     report.field = FIELD_NAME;
+    const initialGroup = await selectedFieldGroup(page);
     const initialLabel = await selectedFieldLabel(page) || FIELD_LABEL;
+    const baselineGroup = EXPECTED_GROUPS.includes(initialGroup) ? initialGroup : HOME_GROUP;
     report.initialLabel = initialLabel;
+    report.initialGroup = initialGroup;
+    report.baselineGroup = baselineGroup;
     const actualGroups = await groupTitles(page);
     const missingGroups = EXPECTED_GROUPS.filter((group) => !actualGroups.includes(group));
     assert(!missingGroups.length, "配置页分组不完整", { expectedGroups: EXPECTED_GROUPS, actualGroups, missingGroups });
 
-    await ensureFieldInGroup(page, HOME_GROUP, "baseline", initialLabel);
-    const dragTarget = EXPECTED_GROUPS.find((group) => group !== HOME_GROUP);
+    await ensureFieldInGroup(page, baselineGroup, "baseline", initialLabel);
+    const dragTarget = EXPECTED_GROUPS.find((group) => group !== baselineGroup);
     if (dragTarget) {
       await openFormDesigner(page);
-      await moveFieldByDrag(page, dragTarget, `${HOME_GROUP}->${dragTarget}:drag`);
-      report.drag = await assertGroupEverywhere(page, dragTarget, `${HOME_GROUP}->${dragTarget}:drag-verify`, initialLabel);
+      await moveFieldByDrag(page, dragTarget, `${baselineGroup}->${dragTarget}:drag`);
+      report.drag = await assertGroupEverywhere(page, dragTarget, `${baselineGroup}->${dragTarget}:drag-verify`, initialLabel);
     }
 
     for (const sourceGroup of EXPECTED_GROUPS) {
@@ -307,7 +311,7 @@ async function main() {
       }
     }
 
-    await ensureFieldInGroup(page, HOME_GROUP, "restore", initialLabel);
+    await ensureFieldInGroup(page, baselineGroup, "restore", initialLabel);
     report.ok = true;
     console.log(JSON.stringify(report, null, 2));
   } catch (error) {

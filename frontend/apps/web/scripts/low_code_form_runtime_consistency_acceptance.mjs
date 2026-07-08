@@ -241,7 +241,9 @@ async function main() {
 
     const initialGroup = await selectedFieldGroup(page);
     const initialLabel = await selectedFieldLabel(page) || FIELD_LABEL;
+    const restoreGroup = initialGroup || HOME_GROUP;
     report.checks.initial = { group: initialGroup, label: initialLabel };
+    report.checks.restoreTarget = { group: restoreGroup };
     const tempTarget = await resolveMoveTargetGroup(page, initialGroup);
     report.checks.moveGroupOptions = tempTarget;
     if (initialGroup !== tempTarget.targetGroup) {
@@ -250,17 +252,17 @@ async function main() {
     report.checks.afterMoveToTemp = await assertRuntimeGroup(page, tempTarget.targetGroup, "afterMoveToTemp", initialLabel);
 
     await openFormDesigner(page);
-    await moveFieldInDesigner(page, HOME_GROUP);
-    report.checks.afterRestoreHome = await assertRuntimeGroup(page, HOME_GROUP, "afterRestoreHome", initialLabel);
+    await moveFieldInDesigner(page, restoreGroup);
+    report.checks.afterRestoreHome = await assertRuntimeGroup(page, restoreGroup, "afterRestoreHome", initialLabel);
 
     const renamedLabel = `${initialLabel}验收`;
     await openFormDesigner(page);
     await renameFieldInDesigner(page, renamedLabel, "rename");
-    report.checks.afterRename = await assertRuntimeGroup(page, HOME_GROUP, "afterRename", renamedLabel);
+    report.checks.afterRename = await assertRuntimeGroup(page, restoreGroup, "afterRename", renamedLabel);
 
     await openFormDesigner(page);
     await renameFieldInDesigner(page, initialLabel, "renameRestore");
-    report.checks.afterRenameRestore = await assertRuntimeGroup(page, HOME_GROUP, "afterRenameRestore", initialLabel);
+    report.checks.afterRenameRestore = await assertRuntimeGroup(page, restoreGroup, "afterRenameRestore", initialLabel);
 
     report.ok = true;
     console.log(JSON.stringify(report, null, 2));
