@@ -74,6 +74,7 @@ The product readiness target expands to:
   - `verify.docs.product_boundary`
   - `verify.industry_module.product_boundary`
   - `verify.user_module.product_boundary`
+  - `verify.lowcode_config.customer_module_asset.pipeline`
   - `verify.product.surface.clean`
   - `verify.product.menu.release.ready`
   - `verify.product.complexity.bound`

@@ -1,6 +1,6 @@
 # Bundle Installation Report
 
-- baseline_shape_count: 31
+- baseline_shape_count: 29
 - error_count: 0
 - warning_count: 0
 

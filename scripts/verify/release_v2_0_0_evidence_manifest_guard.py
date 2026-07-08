@@ -36,6 +36,9 @@ REQUIRED_TOKENS = (
     "`docs/ops/releases/README.zh.md`",
     "`docs/ops/verify/README.md`",
     "`make verify.release.v2_0_0.governance.guard`",
+    "verify.lowcode_config.customer_module_asset.pipeline",
+    "customer low-code",
+    "asset candidate, draft, decision template, dry-run apply, safety tests, and",
     "release-control docs, evidence manifest, checklist, and production release-flow guard terminal output",
     "governance, bundle installation schema, platform performance schema, dev acceptance schema, and prod-sim acceptance evidence shape guard terminal output",
     "`PROD_SIM_ACCEPTANCE_ARTIFACT_DIR=<run_dir> make verify.release.v2_0_0.formal_evidence.schema.guard`",
@@ -101,7 +104,7 @@ REQUIRED_TABLE_ROWS = {
     "## Required Product Hardening Before Formal `v2.0.0`": (
         ("Product release readiness", "`make verify.release.v2_0_0.product_hardening`", "PASS", "`artifacts/backend/bundle_installation_report.json` and related product gate artifacts"),
         ("Low-code boundary hardening", "included in `make verify.release.v2_0_0.product_hardening` via `verify.product.surface.clean`", "PASS", "`artifacts/backend/lowcode_config_runtime_boundary_guard.json` and `artifacts/backend/business_config_contract_snapshot.json`"),
-        ("P2 user module low-code baseline", "included in `make verify.release.v2_0_0.product_hardening` via `verify.user_module.product_boundary`", "PASS", "`addons/smart_construction_custom/data/lowcode_customer_config_baseline_manifest_v1.json`"),
+        ("P2 user module low-code baseline", "included in `make verify.release.v2_0_0.product_hardening` via `verify.lowcode_config.customer_module_asset.pipeline`", "PASS", "`addons/smart_construction_custom/data/lowcode_customer_config_baseline_manifest_v1.json`"),
         ("Bundle installation schema", "`make verify.bundle.installation.ready.schema.guard`", "PASS", "`artifacts/backend/bundle_installation_report.json`"),
         ("View richness hardening", "included in `make verify.release.v2_0_0.product_hardening`", "PASS", "`docs/product/view_richness_post_ga_report_v1.md`"),
         ("Platform performance smoke", "included in `make verify.release.v2_0_0.product_hardening`", "PASS", "`artifacts/backend/platform_performance_smoke.json`"),
