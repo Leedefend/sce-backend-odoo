@@ -34,59 +34,47 @@
       <small v-if="advancedPanelOpen && message.detail">{{ message.detail }}</small>
     </div>
 
-    <section v-if="deliveryReadiness" class="delivery-readiness-panel" data-lowcode-delivery-readiness="low_code_delivery_readiness.v1">
-      <div class="delivery-readiness-head">
-        <div>
-          <span>交付状态</span>
-          <strong>{{ deliveryReadinessStatusText }}</strong>
+    <section v-if="!coverageScan" class="workbench-start" data-lowcode-workbench-ia="start">
+      <div class="workbench-start-main">
+        <div class="workbench-start-copy">
+          <span>当前范围</span>
+          <strong>{{ selectedPageLabel || currentModel || '未选择业务页面' }}</strong>
+          <em>{{ startScopeSummary }}</em>
         </div>
-        <em>{{ deliveryReadinessProgressText }}</em>
+        <div class="workbench-start-actions">
+          <button type="button" class="ghost primary" :disabled="scanLoading" @click="scanSystemRootCoverage">
+            {{ scanLoading ? '读取中...' : '选择业务页面' }}
+          </button>
+          <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">
+            {{ headerDesignerButtonLabel }}
+          </button>
+          <button type="button" class="ghost" :disabled="!previewRouteTarget.path" @click="previewSelectedRuntimeRoute">预览页面</button>
+        </div>
       </div>
-      <div class="delivery-readiness-grid">
-        <button
-          v-for="item in deliveryReadinessItems"
-          :key="item.id"
-          type="button"
-          class="delivery-readiness-item"
-          :class="{ 'delivery-readiness-item--pending': item.status !== 'ready' }"
-          @click="runDeliveryReadinessAction(item)"
-        >
-          <span>{{ item.label }}</span>
-          <strong>{{ deliveryReadinessItemStatusText(item) }}</strong>
-          <em>{{ deliveryReadinessItemMetaText(item) }}</em>
-        </button>
-      </div>
-    </section>
-
-    <section v-if="!coverageScan" class="workbench-flow">
-      <article class="flow-card flow-card--primary">
-        <span class="flow-step">1</span>
-        <div>
-          <h2>选择业务页面</h2>
-          <p>读取可配置页面列表，选择要调整的页面。</p>
+      <aside v-if="surface" class="workbench-start-status" data-lowcode-delivery-readiness="low_code_delivery_readiness.v1">
+        <div class="delivery-readiness-head">
+          <div>
+            <span>交付状态</span>
+            <strong>{{ deliveryReadinessStatusText }}</strong>
+          </div>
+          <em>{{ deliveryReadinessProgressText }}</em>
         </div>
-        <button type="button" class="ghost primary" :disabled="scanLoading" @click="scanSystemRootCoverage">
-          {{ scanLoading ? '读取中...' : '选择页面' }}
-        </button>
-      </article>
-      <article class="flow-card">
-        <span class="flow-step">2</span>
-        <div>
-          <h2>{{ currentModelIsRuntimeConfig ? '使用专用配置' : '配置表单字段' }}</h2>
-          <p>{{ currentModelIsRuntimeConfig ? '审批、菜单等配置对象使用对应的专用配置面板。' : '按旧表单分区调整字段显示、顺序和分组。' }}</p>
+        <div class="delivery-readiness-grid delivery-readiness-grid--compact">
+          <button
+            v-for="item in deliveryReadinessItems"
+            :key="item.id"
+            type="button"
+            class="delivery-readiness-item"
+            :class="{ 'delivery-readiness-item--pending': item.status !== 'ready' }"
+            @click="runDeliveryReadinessAction(item)"
+          >
+            <span>{{ item.label }}</span>
+            <strong>{{ deliveryReadinessItemStatusText(item) }}</strong>
+            <em>{{ deliveryReadinessItemMetaText(item) }}</em>
+          </button>
         </div>
-        <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">
-          {{ currentModelIsRuntimeConfig ? '使用专用配置' : '配置表单字段' }}
-        </button>
-      </article>
-      <article class="flow-card">
-        <span class="flow-step">3</span>
-        <div>
-          <h2>保存并预览</h2>
-          <p>保存配置后打开业务页面确认效果。</p>
-        </div>
-        <button type="button" class="ghost" :disabled="!previewRouteTarget.path" @click="previewSelectedRuntimeRoute">预览配置</button>
-      </article>
+        <div v-if="!deliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
+      </aside>
     </section>
 
     <section v-if="advancedPanelOpen" class="scope-panel">
@@ -155,7 +143,7 @@
           {{ item.label }} {{ item.count }}
         </span>
       </div>
-      <div class="config-workspace">
+      <div class="config-workspace" data-lowcode-workbench-ia="three-column">
         <aside class="page-picker-panel" aria-label="业务页面列表">
           <div class="page-picker-head">
             <div>
@@ -320,6 +308,35 @@
             </article>
           </div>
         </section>
+        <aside v-if="surface" class="workbench-status-rail" aria-label="交付状态" data-lowcode-delivery-readiness="low_code_delivery_readiness.v1">
+          <div class="delivery-readiness-head">
+            <div>
+              <span>交付状态</span>
+              <strong>{{ deliveryReadinessStatusText }}</strong>
+            </div>
+            <em>{{ deliveryReadinessProgressText }}</em>
+          </div>
+          <div class="delivery-readiness-grid delivery-readiness-grid--rail">
+            <button
+              v-for="item in deliveryReadinessItems"
+              :key="`rail-${item.id}`"
+              type="button"
+              class="delivery-readiness-item"
+              :class="{ 'delivery-readiness-item--pending': item.status !== 'ready' }"
+              @click="runDeliveryReadinessAction(item)"
+            >
+              <span>{{ item.label }}</span>
+              <strong>{{ deliveryReadinessItemStatusText(item) }}</strong>
+              <em>{{ deliveryReadinessItemMetaText(item) }}</em>
+            </button>
+          </div>
+          <div v-if="!deliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
+          <div v-if="snapshotSummary" class="workbench-status-snapshot">
+            <span>配置快照</span>
+            <strong>{{ snapshotSummary.contract_count }}</strong>
+            <em>已发布 {{ snapshotSummary.status_counts?.published || 0 }}</em>
+          </div>
+        </aside>
       </div>
     </section>
     <section v-if="advancedPanelOpen && coverageScan" class="scan-panel scan-panel--admin">
@@ -1264,17 +1281,25 @@ const headerDesignerButtonLabel = computed(() => {
   if (currentModelIsRuntimeConfig.value) return '使用专用配置';
   return '先选择页面';
 });
+const startScopeSummary = computed(() => {
+  const parts = [
+    currentModel.value ? `对象 ${currentModel.value}` : '',
+    scopeAction.value ? `页面 ${scopeAction.value}` : '',
+    scopeRole.value ? `角色 ${scopeRole.value}` : '',
+  ].filter(Boolean);
+  return parts.length ? parts.join(' · ') : '先从业务页面目录选择配置对象';
+});
 const snapshotSummary = computed<BusinessConfigSnapshotSummaryPayload | null>(() => surface.value?.snapshot_summary || null);
 const deliveryReadiness = computed(() => surface.value?.delivery_readiness || null);
 const deliveryReadinessItems = computed(() => deliveryReadiness.value?.items || []);
 const deliveryReadinessStatusText = computed(() => {
   const readiness = deliveryReadiness.value;
-  if (!readiness) return '';
+  if (!readiness) return '读取中';
   return readiness.overall_status === 'ready' ? '可交付' : '待处理';
 });
 const deliveryReadinessProgressText = computed(() => {
   const readiness = deliveryReadiness.value;
-  if (!readiness) return '';
+  if (!readiness) return snapshotSummary.value ? `配置 ${snapshotSummary.value.contract_count}` : '';
   return `${readiness.ready_count}/${readiness.total_count} 项就绪`;
 });
 const snapshotSummaryText = computed(() => {
@@ -3477,8 +3502,7 @@ h1 {
 }
 
 .status,
-.delivery-readiness-panel,
-.workbench-flow,
+.workbench-start,
 .scope-panel,
 .loading-state,
 .scan-panel {
@@ -3510,13 +3534,70 @@ h1 {
   color: var(--sc-app-success-text);
 }
 
-.delivery-readiness-panel {
+.workbench-start,
+.workbench-start-status,
+.workbench-status-rail {
   display: grid;
   gap: 10px;
   padding: 14px;
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
   background: var(--sc-app-panel);
+}
+
+.workbench-start {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  align-items: stretch;
+}
+
+.workbench-start-main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.workbench-start-copy {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.workbench-start-copy span,
+.workbench-start-copy em {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.workbench-start-copy strong {
+  min-width: 0;
+  color: var(--sc-app-text-primary);
+  font-size: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workbench-start-actions {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.workbench-start-status,
+.workbench-status-rail {
+  background: var(--sc-app-bg);
+}
+
+.workbench-status-rail {
+  position: sticky;
+  top: 12px;
+  align-content: start;
 }
 
 .delivery-readiness-head {
@@ -3549,9 +3630,14 @@ h1 {
   gap: 8px;
 }
 
+.delivery-readiness-grid--compact,
+.delivery-readiness-grid--rail {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .delivery-readiness-item {
   min-width: 0;
-  min-height: 82px;
+  min-height: 74px;
   display: grid;
   align-content: center;
   gap: 5px;
@@ -3599,51 +3685,11 @@ h1 {
   font-style: normal;
 }
 
-.workbench-flow {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr 1fr;
-  gap: 10px;
-}
-
-.flow-card {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 8px;
-  background: var(--sc-app-panel);
-}
-
-.flow-card--primary {
-  border-color: var(--sc-app-accent);
-}
-
-.flow-step {
-  display: inline-grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--sc-app-bg);
-  color: var(--sc-app-text-primary);
-  font-weight: 700;
-}
-
-.flow-card h2,
 .config-card h2,
 .edit-panel h2,
 .version-panel h2 {
   margin: 0;
   font-size: 15px;
-}
-
-.flow-card p {
-  margin: 4px 0 0;
-  color: var(--sc-app-text-secondary);
-  font-size: 12px;
 }
 
 .scope-panel {
@@ -3762,9 +3808,37 @@ h1 {
 
 .config-workspace {
   display: grid;
-  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr) minmax(230px, 280px);
   gap: 12px;
   align-items: start;
+}
+
+.workbench-status-snapshot {
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid var(--sc-app-border);
+  padding-top: 10px;
+}
+
+.workbench-status-empty {
+  border: 1px dashed var(--sc-app-border);
+  border-radius: 6px;
+  padding: 10px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.workbench-status-snapshot span,
+.workbench-status-snapshot em {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.workbench-status-snapshot strong {
+  color: var(--sc-app-text-primary);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
 }
 
 .page-picker-panel,
@@ -4928,7 +5002,7 @@ h1 {
     justify-content: flex-start;
   }
 
-  .workbench-flow,
+  .workbench-start,
   .scope-panel,
   .config-workspace,
   .config-editor-panel,
@@ -4942,6 +5016,21 @@ h1 {
   }
 
   .approval-rule-panel {
+    position: static;
+  }
+
+  .workbench-start-main,
+  .workbench-start-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workbench-start-actions .ghost,
+  .delivery-readiness-item {
+    width: 100%;
+  }
+
+  .workbench-status-rail {
     position: static;
   }
 

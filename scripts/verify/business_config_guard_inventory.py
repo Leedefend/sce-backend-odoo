@@ -289,6 +289,9 @@ OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS = {
         ),
         "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue": (
             "data-lowcode-delivery-readiness=\"low_code_delivery_readiness.v1\"",
+            "data-lowcode-workbench-ia=\"start\"",
+            "data-lowcode-workbench-ia=\"three-column\"",
+            "workbench-status-rail",
             "deliveryReadinessStatusText",
             "runDeliveryReadinessAction",
         ),
