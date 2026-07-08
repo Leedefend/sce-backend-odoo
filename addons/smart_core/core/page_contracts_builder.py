@@ -1210,6 +1210,8 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "model_label_mail_activity": "待办活动",
                     "model_label_mail_message": "消息提醒",
                     "model_label_mail_followers": "关注记录",
+                    "model_label_project_task": "项目任务",
+                    "model_label_project_project": "项目主数据",
                     "priority_high": "高",
                     "priority_medium": "中",
                     "priority_low": "低",

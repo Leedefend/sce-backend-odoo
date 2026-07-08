@@ -3824,10 +3824,17 @@ const runtimeCapabilities = computed(() => {
   });
   return out;
 });
+const runtimeUserGroups = computed(() => {
+  const user = session.user as { groups_xmlids?: unknown } | null;
+  return Array.isArray(user?.groups_xmlids)
+    ? user.groups_xmlids.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+});
 const policyContext = computed(() => ({
   profile: renderProfile.value,
   formData: formData as Record<string, unknown>,
   capabilities: runtimeCapabilities.value,
+  userGroups: runtimeUserGroups.value,
   roleCode: runtimeRoleCode.value,
 }));
 

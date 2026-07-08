@@ -22,7 +22,7 @@
     "frontend/apps/web/src/components/page/blocks/BlockAlertPanel.vue": "c52d52b93af891ca3c950d0227726fcb622f313b58cc49308a4adfd0436fc250",
     "frontend/apps/web/src/components/page/blocks/BlockEntryGrid.vue": "02d1d60eb68cf42fbf15d029ef46d3b028736ca91f3e6b20812b3c5bc4fc350d",
     "frontend/apps/web/src/components/page/blocks/BlockMetricRow.vue": "af6f27feba82b0c608c95f6d3f38f432e9cc5aa3ecbd2c210e14cd510a93ed10",
-    "frontend/apps/web/src/components/page/blocks/BlockProgressSummary.vue": "655a96d6eb2b21745a6c9878012566f6b9be3a9d2c1c60b62daa10c6e66402bc",
+    "frontend/apps/web/src/components/page/blocks/BlockProgressSummary.vue": "39a01a1542fd3c0eb2dd24ca7745679dce4b4cbee6b843c767cd82476c3b115e",
     "frontend/apps/web/src/components/page/blocks/BlockRecordSummary.vue": "b810434915eb09d29e544e22766cdb757aa04fef6c968e71d48a29a25902e00a",
     "frontend/apps/web/src/components/page/blocks/BlockRecordTable.vue": "f115c09ce0866a4a9d02f38ec0f136c43bc103f4f2f9f4de2c24df0f40562a58",
     "frontend/apps/web/src/components/page/blocks/BlockTodoList.vue": "4647975e405ecdf25c77f98cb3ad00395b32ca5d66728f6fc8bbdddbd125d7dc"
