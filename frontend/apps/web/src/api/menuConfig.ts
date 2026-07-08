@@ -41,11 +41,35 @@ export interface MenuConfigGroup {
   category: string;
 }
 
+export interface MenuConfigRuntimeState {
+  menu_id: number;
+  runtime_visible: boolean;
+  configured_visible?: boolean | null;
+  runtime_visibility_reason?: string;
+  runtime_state?: string;
+  runtime_path?: string;
+}
+
+export interface MenuConfigRuntimePayload {
+  visible_menu_ids?: number[];
+  carrier_menu_ids?: number[];
+  states?: Record<string, MenuConfigRuntimeState>;
+  summary?: {
+    runtime_visible_count?: number;
+    runtime_carrier_count?: number;
+    configured_hidden_runtime_visible_count?: number;
+  };
+  source?: string;
+  navigation_meta?: Record<string, unknown>;
+  error?: string;
+}
+
 export interface MenuConfigPayload {
   company?: { id: number; name: string } | null;
   menus: MenuConfigMenu[];
   tree: MenuConfigMenu[];
   policies: Record<string, MenuConfigPolicy>;
+  runtime?: MenuConfigRuntimePayload;
   groups: MenuConfigGroup[];
 }
 
@@ -70,6 +94,9 @@ export interface MenuConfigAuditPayload {
     configured_policy_count: number;
     applicable_policy_count: number;
     hidden_count: number;
+    runtime_hidden_count?: number;
+    runtime_visible_count?: number;
+    runtime_carrier_count?: number;
     renamed_count: number;
     reordered_count: number;
     moved_count: number;
@@ -78,6 +105,7 @@ export interface MenuConfigAuditPayload {
   };
   policies: MenuConfigAuditPolicy[];
   applicable_policies: MenuConfigAuditPolicy[];
+  runtime?: MenuConfigRuntimePayload;
 }
 
 export interface MenuConfigRollbackPayload {

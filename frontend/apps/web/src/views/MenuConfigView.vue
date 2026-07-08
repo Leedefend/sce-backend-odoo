@@ -69,7 +69,8 @@
       <strong>菜单配置生效检查</strong>
       <span>
         配置 {{ auditSummary.configuredCount }} 项，当前用户命中 {{ auditSummary.applicableCount }} 项；
-        隐藏 {{ auditSummary.hiddenCount }}，改名 {{ auditSummary.renamedCount }}，移动 {{ auditSummary.movedCount }}，排序 {{ auditSummary.reorderedCount }}。
+        配置隐藏 {{ auditSummary.hiddenCount }}，当前显示 {{ auditSummary.runtimeVisibleCount }}，承载显示 {{ auditSummary.runtimeCarrierCount }}；
+        改名 {{ auditSummary.renamedCount }}，移动 {{ auditSummary.movedCount }}，排序 {{ auditSummary.reorderedCount }}。
       </span>
       <span v-if="auditSummary.notApplicableCount">
         {{ auditSummary.notApplicableCount }} 项因业务角色范围未命中当前用户。
@@ -678,6 +679,8 @@ import {
   type MenuConfigGroup,
   type MenuConfigMenu,
   type MenuConfigPolicy,
+  type MenuConfigRuntimePayload,
+  type MenuConfigRuntimeState,
   type MenuConfigSaveRow,
   type MenuConfigVersionsPayload,
 } from '../api/menuConfig';
@@ -800,6 +803,7 @@ const menus = ref<MenuConfigMenu[]>([]);
 const tree = ref<MenuConfigMenu[]>([]);
 const collapsedMenuIds = ref<Set<number>>(new Set());
 const groups = ref<MenuConfigGroup[]>([]);
+const runtimeState = ref<MenuConfigRuntimePayload | null>(null);
 const originalPolicies = ref<Record<number, DraftPolicy>>({});
 const drafts = reactive<Record<number, DraftPolicy>>({});
 const roleGroupDomainSelections = reactive<Record<number, string>>({});
@@ -964,6 +968,9 @@ const auditSummary = computed(() => {
     configuredCount: Number(summary.configured_policy_count || 0),
     applicableCount: Number(summary.applicable_policy_count || 0),
     hiddenCount: Number(summary.hidden_count || 0),
+    runtimeVisibleCount: Number(summary.runtime_visible_count || auditResult.value?.runtime?.summary?.runtime_visible_count || 0),
+    runtimeHiddenCount: Number(summary.runtime_hidden_count || 0),
+    runtimeCarrierCount: Number(summary.runtime_carrier_count || auditResult.value?.runtime?.summary?.runtime_carrier_count || 0),
     renamedCount: Number(summary.renamed_count || 0),
     reorderedCount: Number(summary.reordered_count || 0),
     movedCount: Number(summary.moved_count || 0),
@@ -1103,16 +1110,34 @@ function menuMatchesSearch(menu: MenuConfigMenu) {
   return menuSearchText(menu).includes(term);
 }
 
+function runtimeStateForMenu(menu: MenuConfigMenu | null | undefined): MenuConfigRuntimeState | null {
+  if (!menu) return null;
+  const states = runtimeState.value?.states || {};
+  return states[String(menu.id)] || states[String(menu.menu_id)] || null;
+}
+
 function isMenuShownInHandling(menu: MenuConfigMenu | null | undefined) {
   if (!menu) return false;
+  const state = runtimeStateForMenu(menu);
+  if (state) return Boolean(state.runtime_visible);
   const draft = drafts[menu.id];
   return Boolean(draft?.policy_id && draft.visible);
 }
 
 function menuHandlingStateLabel(menu: MenuConfigMenu | null | undefined) {
-  if (isMenuShownInHandling(menu)) return '办理面显示';
+  const state = runtimeStateForMenu(menu);
+  if (state?.runtime_visible) {
+    if (state.runtime_visibility_reason === 'visible_descendant_carrier' || state.runtime_state === 'visible_carrier') {
+      return '办理面显示 · 承载子菜单';
+    }
+    if (state.runtime_visibility_reason === 'visible_protected' || state.runtime_state === 'visible_protected') {
+      return '办理面显示 · 系统保护';
+    }
+    return '办理面显示';
+  }
   const draft = menu ? drafts[menu.id] : null;
-  return draft?.policy_id ? '未显示' : '未配置';
+  if (state && state.runtime_visibility_reason === 'hidden_permission') return '当前用户不可见';
+  return draft?.policy_id ? '当前隐藏' : '候选';
 }
 
 function menuHandlingStateClass(menu: MenuConfigMenu | null | undefined) {
@@ -1124,7 +1149,7 @@ function menuHandlingStateClass(menu: MenuConfigMenu | null | undefined) {
 function menuTreeStateLabel(menu: MenuConfigMenu | null | undefined) {
   const state = menuHandlingStateClass(menu);
   if (state === 'visible') return '启用';
-  if (state === 'hidden') return '隐藏';
+  if (state === 'hidden') return '当前隐藏';
   return '候选';
 }
 
@@ -2165,6 +2190,7 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
     auditResult.value = null;
     company.value = payload.company || null;
     menus.value = payload.menus || [];
+    runtimeState.value = payload.runtime || null;
     const menuById = new Map((payload.menus || []).map((menu) => [menu.id, menu]));
     const menuByLabel = new Map<string, MenuConfigMenu[]>();
     (payload.menus || []).forEach((menu) => {
@@ -2232,7 +2258,9 @@ async function auditMenuConfiguration() {
   error.value = '';
   message.value = '';
   try {
-    auditResult.value = await loadMenuConfigurationAudit({ company_id: company.value?.id || undefined });
+    const payload = await loadMenuConfigurationAudit({ company_id: company.value?.id || undefined });
+    auditResult.value = payload;
+    runtimeState.value = payload.runtime || runtimeState.value;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '菜单配置生效检查失败';
   } finally {

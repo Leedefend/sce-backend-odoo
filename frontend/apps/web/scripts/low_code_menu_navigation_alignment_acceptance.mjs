@@ -99,6 +99,29 @@ async function navigationRequest(page) {
 }
 
 function expectedVisiblePolicies(audit, panel) {
+  const runtimeStates = panel.runtime?.states || audit.runtime?.states || {};
+  const runtimeExpected = Object.values(runtimeStates)
+    .filter((state) => state && typeof state === "object" && state.runtime_visible === true)
+    .map((state) => {
+      const menuId = Number(state.menu_id || 0);
+      const menu = (panel.menus || []).find((row) => Number(row.id || row.menu_id || 0) === menuId) || {};
+      return {
+        menuId,
+        expectedLabel: normalize(menu.name || menu.display_name),
+        labelExplicit: false,
+        expectedParentId: 0,
+        targetParentId: 0,
+        configuredParentId: Number(menu.parent_id || 0),
+        policyId: 0,
+        menuCompleteName: normalize(menu.complete_name),
+        runtimeState: normalize(state.runtime_state),
+        runtimeReason: normalize(state.runtime_visibility_reason),
+        runtimePath: normalize(state.runtime_path),
+      };
+    })
+    .filter((row) => row.menuId > 0);
+  if (runtimeExpected.length) return runtimeExpected;
+
   const menuById = new Map((panel.menus || []).map((menu) => [Number(menu.id || menu.menu_id || 0), menu]));
   const policyByMenuId = new Map((audit.applicable_policies || [])
     .map((policy) => [Number(policy.menu_id || 0), policy])
@@ -141,6 +164,7 @@ function analyzeAlignment({ audit, panel, navigation }) {
   const expected = expectedVisiblePolicies(audit, panel);
   const expectedById = new Map(expected.map((row) => [row.menuId, row]));
   const expectedIds = new Set(expectedById.keys());
+  const runtimeStates = panel.runtime?.states || audit.runtime?.states || {};
   const navTree = navigation.nav_fact?.tree || navigation.nav_explained?.tree || [];
   const actual = flattenTree(navTree).filter((row) => row.menuId);
   const actualById = new Map();
@@ -161,6 +185,18 @@ function analyzeAlignment({ audit, panel, navigation }) {
     .filter((row) => !expectedIds.has(row.menuId) && !isProtectedRuntimeConfigEntry(row))
     .map((row) => ({ menu_id: row.menuId, label: row.label, path: row.path }))
     .slice(0, 50);
+  const runtimeHiddenButVisible = actual
+    .filter((row) => {
+      const state = runtimeStates[String(row.menuId)];
+      return state && state.runtime_visible === false;
+    })
+    .map((row) => ({
+      menu_id: row.menuId,
+      label: row.label,
+      path: row.path,
+      runtime_state: runtimeStates[String(row.menuId)]?.runtime_state || "",
+      runtime_reason: runtimeStates[String(row.menuId)]?.runtime_visibility_reason || "",
+    }));
   const labelMismatches = expected
     .filter((row) => {
       const actualRow = actualById.get(row.menuId);
@@ -192,6 +228,7 @@ function analyzeAlignment({ audit, panel, navigation }) {
     ok: expected.length > 0
       && missing.length === 0
       && unexpected.length === 0
+      && runtimeHiddenButVisible.length === 0
       && duplicates.length === 0
       && labelMismatches.length === 0
       && parentMismatches.length === 0,
@@ -208,6 +245,7 @@ function analyzeAlignment({ audit, panel, navigation }) {
       menu_config_tree_count: 0,
       missing_count: missing.length,
       unexpected_count: unexpected.length,
+      runtime_hidden_but_visible_count: runtimeHiddenButVisible.length,
       duplicate_count: duplicates.length,
       label_mismatch_count: labelMismatches.length,
       parent_mismatch_count: parentMismatches.length,
@@ -216,6 +254,7 @@ function analyzeAlignment({ audit, panel, navigation }) {
     },
     missing,
     unexpected,
+    runtimeHiddenButVisible,
     duplicates,
     labelMismatches,
     parentMismatches,

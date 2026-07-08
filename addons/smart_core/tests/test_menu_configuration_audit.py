@@ -2474,6 +2474,38 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertEqual([node["menu_id"] for node in overlaid["tree"]], [11])
         self.assertEqual(stats["unconfigured_hidden_count"], 2)
 
+    def test_runtime_navigation_state_marks_hidden_parent_with_visible_child_as_carrier(self):
+        module = _load_handler()
+
+        runtime = module._build_runtime_navigation_states(
+            [
+                {
+                    "menu_id": 291,
+                    "name": "智慧施工管理平台",
+                    "children": [
+                        {
+                            "menu_id": 295,
+                            "name": "物资与分包",
+                            "children": [
+                                {"menu_id": 500, "name": "材料合同", "children": []},
+                            ],
+                        }
+                    ],
+                }
+            ],
+            {
+                295: {"visible": False},
+                500: {"visible": True},
+            },
+        )
+
+        material_state = runtime["states"]["295"]
+        self.assertTrue(material_state["runtime_visible"])
+        self.assertFalse(material_state["configured_visible"])
+        self.assertEqual(material_state["runtime_state"], "visible_carrier")
+        self.assertEqual(material_state["runtime_visibility_reason"], "visible_descendant_carrier")
+        self.assertIn(295, runtime["carrier_menu_ids"])
+
 
 if __name__ == "__main__":
     unittest.main()

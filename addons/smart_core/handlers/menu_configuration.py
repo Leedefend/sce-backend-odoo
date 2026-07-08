@@ -167,6 +167,86 @@ def _menu_orchestration_summary(contract_json: dict) -> dict:
     }
 
 
+def _nav_node_menu_id(node: dict) -> int:
+    if not isinstance(node, dict):
+        return 0
+    meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    for candidate in (node.get("menu_id"), meta.get("menu_id"), node.get("id")):
+        menu_id = _to_int(candidate)
+        if menu_id:
+            return menu_id
+    return 0
+
+
+def _nav_node_label(node: dict) -> str:
+    if not isinstance(node, dict):
+        return ""
+    return _to_text(node.get("name") or node.get("label") or node.get("title"))
+
+
+def _build_runtime_navigation_states(nav_tree: list[dict], configured_by_menu: dict[int, dict]) -> dict:
+    states: dict[int, dict] = {}
+    visible_ids: set[int] = set()
+    carrier_ids: set[int] = set()
+
+    def walk(nodes: list[dict], path: list[str] | None = None) -> set[int]:
+        descendant_ids: set[int] = set()
+        for node in nodes if isinstance(nodes, list) else []:
+            if not isinstance(node, dict):
+                continue
+            menu_id = _nav_node_menu_id(node)
+            label = _nav_node_label(node)
+            next_path = [*(path or []), label] if label else list(path or [])
+            child_ids = walk(node.get("children") if isinstance(node.get("children"), list) else [], next_path)
+            if menu_id:
+                visible_ids.add(menu_id)
+                descendant_ids.add(menu_id)
+                descendant_ids.update(child_ids)
+                configured = configured_by_menu.get(menu_id) or {}
+                configured_visible = _to_bool(configured.get("visible"), True) if configured else None
+                if configured and configured_visible is False and child_ids:
+                    carrier_ids.add(menu_id)
+                states[menu_id] = {
+                    "menu_id": menu_id,
+                    "runtime_visible": True,
+                    "configured_visible": configured_visible,
+                    "runtime_visibility_reason": "visible_descendant_carrier" if menu_id in carrier_ids else "visible_configured",
+                    "runtime_state": "visible_carrier" if menu_id in carrier_ids else "visible_configured",
+                    "runtime_path": " / ".join(next_path),
+                }
+            else:
+                descendant_ids.update(child_ids)
+        return descendant_ids
+
+    walk(nav_tree)
+    for menu_id, configured in configured_by_menu.items():
+        menu_id = _to_int(menu_id)
+        if not menu_id or menu_id in states:
+            continue
+        configured_visible = _to_bool(configured.get("visible"), True) if isinstance(configured, dict) else True
+        states[menu_id] = {
+            "menu_id": menu_id,
+            "runtime_visible": False,
+            "configured_visible": configured_visible,
+            "runtime_visibility_reason": "hidden_configured" if configured_visible is False else "hidden_permission",
+            "runtime_state": "hidden_configured" if configured_visible is False else "hidden_permission",
+            "runtime_path": "",
+        }
+    return {
+        "visible_menu_ids": sorted(visible_ids),
+        "carrier_menu_ids": sorted(carrier_ids),
+        "states": {str(menu_id): state for menu_id, state in sorted(states.items())},
+        "summary": {
+            "runtime_visible_count": len(visible_ids),
+            "runtime_carrier_count": len(carrier_ids),
+            "configured_hidden_runtime_visible_count": sum(
+                1 for menu_id in carrier_ids
+                if _to_bool((configured_by_menu.get(menu_id) or {}).get("visible"), True) is False
+            ),
+        },
+    }
+
+
 class MenuConfigurationLoadHandler(BaseIntentHandler):
     INTENT_TYPE = MENU_CONFIG_INTENTS["panel_get"]
     DESCRIPTION = "读取菜单配置面板数据"
@@ -558,6 +638,31 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             "preview_summary": _to_text(policy.preview_summary),
         }
 
+    def _runtime_navigation_state(self, configured_by_menu: dict[int, dict]) -> dict:
+        try:
+            from ..delivery.final_menu_navigation_service import FinalMenuNavigationService
+            navigation = FinalMenuNavigationService(self.env).build(scene_map={}, policy={})
+        except Exception as exc:
+            _logger.debug("MENU_CONFIG_RUNTIME_NAVIGATION_STATE_FAILED error=%s", exc)
+            return {
+                "visible_menu_ids": [],
+                "carrier_menu_ids": [],
+                "states": {},
+                "summary": {
+                    "runtime_visible_count": 0,
+                    "runtime_carrier_count": 0,
+                    "configured_hidden_runtime_visible_count": 0,
+                },
+                "error": "runtime_navigation_unavailable",
+            }
+        nav_fact = navigation.get("nav_fact") if isinstance(navigation, dict) else {}
+        nav_tree = nav_fact.get("tree") if isinstance(nav_fact, dict) and isinstance(nav_fact.get("tree"), list) else []
+        runtime = _build_runtime_navigation_states(nav_tree, configured_by_menu)
+        runtime["source"] = "final_menu_navigation"
+        user_menu_config = ((navigation.get("meta") or {}).get("user_menu_config") or {}) if isinstance(navigation, dict) else {}
+        runtime["navigation_meta"] = user_menu_config if isinstance(user_menu_config, dict) else {}
+        return runtime
+
     def _group_option_records(self, menus, policies):
         del menus, policies
         groups = self.env["res.groups"].sudo().search([("sc_assignable_user_permission", "=", True)])
@@ -657,6 +762,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             for menu_id, policy in policy_by_menu.items()
             if int(menu_id or 0) in scoped_menu_ids
         }
+        runtime_state = self._runtime_navigation_state(policy_by_menu)
 
         groups = self._group_option_records(menus, policies)
         group_rows = [
@@ -675,6 +781,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
                 "menus": effective_menu_rows,
                 "tree": self._build_tree(effective_menu_rows),
                 "policies": policy_by_menu,
+                "runtime": runtime_state,
                 "groups": group_rows,
             },
             "meta": {
@@ -1254,6 +1361,17 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
             ]
         else:
             applicable_rows = [row for row in policy_rows if row["applicable"]]
+        runtime_configured_by_menu = {
+            _to_int(row.get("menu_id")): {
+                "visible": _to_bool(row.get("visible"), True),
+                "custom_label": _to_text(row.get("custom_label")),
+                "target_parent_menu_id": _to_int(row.get("target_parent_menu_id")),
+                "sequence_override": _to_int(row.get("sequence_override")),
+            }
+            for row in applicable_rows
+            if _to_int(row.get("menu_id"))
+        }
+        runtime_state = self._runtime_navigation_state(runtime_configured_by_menu)
         summary = {
             "runtime_source": runtime_source,
             "configured_policy_count": len(policy_rows),
@@ -1262,6 +1380,12 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
             "contract_authoritative": runtime_source == MENU_CONFIG_RUNTIME_SOURCE_CONTRACT,
             "applicable_policy_count": len(applicable_rows),
             "hidden_count": sum(1 for row in applicable_rows if row["flags"]["hidden"]),
+            "runtime_hidden_count": sum(
+                1 for state in (runtime_state.get("states") or {}).values()
+                if isinstance(state, dict) and not _to_bool(state.get("runtime_visible"), False)
+            ),
+            "runtime_visible_count": _to_int((runtime_state.get("summary") or {}).get("runtime_visible_count")),
+            "runtime_carrier_count": _to_int((runtime_state.get("summary") or {}).get("runtime_carrier_count")),
             "renamed_count": sum(1 for row in applicable_rows if row["flags"]["renamed"]),
             "reordered_count": sum(1 for row in applicable_rows if row["flags"]["reordered"]),
             "moved_count": sum(1 for row in applicable_rows if row["flags"]["moved"]),
@@ -1277,6 +1401,7 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
                 "summary": summary,
                 "policies": policy_rows,
                 "applicable_policies": applicable_rows,
+                "runtime": runtime_state,
             },
             "meta": {
                 "intent": self.INTENT_TYPE,
