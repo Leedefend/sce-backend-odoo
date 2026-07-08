@@ -24,10 +24,14 @@
     "make_target": "make verify.lowcode_config.customer_baseline.candidate",
     "script": "scripts/verify/lowcode_customer_config_baseline_candidate.py",
     "artifact": "artifacts/backend/lowcode_customer_config_baseline_candidate.json",
+    "module_asset_draft_schema_version": "lowcode_customer_config_module_asset_draft.v1",
+    "module_asset_draft_make_target": "make verify.lowcode_config.customer_module_asset.draft",
+    "module_asset_draft_script": "scripts/verify/lowcode_customer_config_module_asset_draft.py",
+    "module_asset_draft_artifact": "artifacts/backend/lowcode_customer_config_module_asset_draft.json",
     "default_source_status_filter": [
       "tenant_runtime"
     ],
-    "policy": "The candidate artifact is review evidence only. Accepted rows must be converted into smart_construction_custom assets, migrations, or an idempotent initializer before release."
+    "policy": "The candidate artifact and module asset draft are review evidence only. Accepted rows must be converted into smart_construction_custom assets, migrations, or an idempotent initializer before release."
   },
   "replayable_surfaces": [
     {
@@ -75,6 +79,7 @@
     "make verify.lowcode_config.boundary.guard",
     "make verify.lowcode_config.runtime_boundary.guard",
     "make verify.lowcode_config.customer_baseline.candidate",
+    "make verify.lowcode_config.customer_module_asset.draft",
     "make verify.business_config.unit",
     "make verify.business_config.snapshot"
   ],

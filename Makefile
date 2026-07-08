@@ -4562,6 +4562,11 @@ verify.lowcode_config.customer_baseline.candidate: guard.prod.forbid check-compo
 	@$(RUN_ENV) LOWCODE_CUSTOMER_CONFIG_BASELINE_CANDIDATE_PATH=/tmp/lowcode_customer_config_baseline_candidate.json DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/lowcode_customer_config_baseline_candidate.py
 	@$(RUN_ENV) $(COMPOSE_BASE) cp $(ODOO_SERVICE):/tmp/lowcode_customer_config_baseline_candidate.json artifacts/backend/lowcode_customer_config_baseline_candidate.json >/dev/null
 
+.PHONY: verify.lowcode_config.customer_module_asset.draft
+verify.lowcode_config.customer_module_asset.draft: verify.lowcode_config.customer_baseline.candidate
+	@python3 -m py_compile scripts/verify/lowcode_customer_config_module_asset_draft.py
+	@LOWCODE_CUSTOMER_CONFIG_BASELINE_CANDIDATE_INPUT=artifacts/backend/lowcode_customer_config_baseline_candidate.json LOWCODE_CUSTOMER_CONFIG_MODULE_ASSET_DRAFT_PATH=artifacts/backend/lowcode_customer_config_module_asset_draft.json python3 scripts/verify/lowcode_customer_config_module_asset_draft.py
+
 .PHONY: verify.lowcode_config.runtime_boundary.guard
 verify.lowcode_config.runtime_boundary.guard: guard.prod.forbid check-compose-project check-compose-env
 	@mkdir -p artifacts/backend

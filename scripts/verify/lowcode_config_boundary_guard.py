@@ -420,6 +420,10 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
         "make_target": "make verify.lowcode_config.customer_baseline.candidate",
         "script": "scripts/verify/lowcode_customer_config_baseline_candidate.py",
         "artifact": "artifacts/backend/lowcode_customer_config_baseline_candidate.json",
+        "module_asset_draft_schema_version": "lowcode_customer_config_module_asset_draft.v1",
+        "module_asset_draft_make_target": "make verify.lowcode_config.customer_module_asset.draft",
+        "module_asset_draft_script": "scripts/verify/lowcode_customer_config_module_asset_draft.py",
+        "module_asset_draft_artifact": "artifacts/backend/lowcode_customer_config_module_asset_draft.json",
     }
     for key, expected in expected_extraction.items():
         if extraction.get(key) != expected:
@@ -451,6 +455,29 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
                 errors.append({
                     "category": "customer_config_baseline_extraction",
                     "message": "customer low-code baseline extraction assistant must preserve review-only module promotion semantics",
+                    "token": token,
+                })
+    draft_script = ROOT / expected_extraction["module_asset_draft_script"]
+    if not draft_script.is_file():
+        errors.append({
+            "category": "customer_config_baseline_manifest",
+            "message": "customer low-code module asset draft script is missing",
+            "path": expected_extraction["module_asset_draft_script"],
+        })
+    else:
+        draft_text = _read(draft_script)
+        for token in (
+            "lowcode_customer_config_module_asset_draft.v1",
+            "lowcode_customer_config_baseline_candidate.v1",
+            "smart_construction_custom",
+            "review_required",
+            "not_applied_to_module",
+            "proposed_assets",
+        ):
+            if token not in draft_text:
+                errors.append({
+                    "category": "customer_config_baseline_module_asset_draft",
+                    "message": "customer low-code module asset draft must preserve review-only promotion semantics",
                     "token": token,
                 })
     surfaces = payload.get("replayable_surfaces") if isinstance(payload.get("replayable_surfaces"), list) else []
@@ -575,6 +602,7 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
         "make verify.lowcode_config.boundary.guard",
         "make verify.lowcode_config.runtime_boundary.guard",
         "make verify.lowcode_config.customer_baseline.candidate",
+        "make verify.lowcode_config.customer_module_asset.draft",
         "make verify.business_config.unit",
         "make verify.business_config.snapshot",
     ):

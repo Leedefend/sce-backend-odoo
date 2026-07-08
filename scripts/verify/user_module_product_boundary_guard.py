@@ -127,12 +127,31 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         "make_target": "make verify.lowcode_config.customer_baseline.candidate",
         "script": "scripts/verify/lowcode_customer_config_baseline_candidate.py",
         "artifact": "artifacts/backend/lowcode_customer_config_baseline_candidate.json",
+        "module_asset_draft_schema_version": "lowcode_customer_config_module_asset_draft.v1",
+        "module_asset_draft_make_target": "make verify.lowcode_config.customer_module_asset.draft",
+        "module_asset_draft_script": "scripts/verify/lowcode_customer_config_module_asset_draft.py",
+        "module_asset_draft_artifact": "artifacts/backend/lowcode_customer_config_module_asset_draft.json",
     }
     for key, expected in expected_extraction.items():
         if extraction.get(key) != expected:
             failures.append(f"low-code customer configuration baseline extraction assistant {key} mismatch")
     if not (ROOT / expected_extraction["script"]).exists():
         failures.append("low-code customer configuration baseline extraction assistant script is missing")
+    draft_script = ROOT / expected_extraction["module_asset_draft_script"]
+    if not draft_script.exists():
+        failures.append("low-code customer configuration module asset draft script is missing")
+    else:
+        draft_text = draft_script.read_text(encoding="utf-8")
+        for token in (
+            "lowcode_customer_config_module_asset_draft.v1",
+            "lowcode_customer_config_baseline_candidate.v1",
+            "smart_construction_custom",
+            "review_required",
+            "not_applied_to_module",
+            "proposed_assets",
+        ):
+            if token not in draft_text:
+                failures.append(f"low-code customer configuration module asset draft script missing {token}")
     surfaces = payload.get("replayable_surfaces") if isinstance(payload.get("replayable_surfaces"), list) else []
     surface_names = {str(item.get("surface") or "").strip() for item in surfaces if isinstance(item, dict)}
     for surface in ("menu_preferences", "form_preferences", "user_data_baseline"):
@@ -156,6 +175,7 @@ def verify_lowcode_customer_config_baseline_manifest() -> list[str]:
         "make verify.lowcode_config.boundary.guard",
         "make verify.lowcode_config.runtime_boundary.guard",
         "make verify.lowcode_config.customer_baseline.candidate",
+        "make verify.lowcode_config.customer_module_asset.draft",
         "make verify.business_config.snapshot",
     ):
         if guard not in required_guards:
