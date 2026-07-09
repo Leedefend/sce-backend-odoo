@@ -56,6 +56,14 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 本地完整收口会串起快速预检、开发静态包构建、dev nginx 重启、浏览器操作验收、正式前端构建和 diff 检查。默认 nginx 容器名来自 `COMPOSE_PROJECT_NAME`，特殊环境可用 `FRONTEND_NGINX_CONTAINER=...` 覆盖。
 
+摘要一致性校验可单独运行：
+
+```bash
+make verify.business_config.config_workbench_operation_summary_guard
+```
+
+该门禁读取最新 `report.json` 与 `summary.json`，校验核心指标、业务页面上下文、浏览器健康和证据目录精确集合，防止摘要输出与完整报告漂移。
+
 浏览器验收默认只在终端输出摘要，完整报告写入 `report.json`，摘要写入 `summary.json`。需要排查失败细节时可打开 verbose：
 
 ```bash
