@@ -67,6 +67,7 @@ const ACCEPTANCE_COVERAGE = {
     "default_visible_technical_terms_hidden",
     "editor_action_semantics_visible",
     "list_search_return_workbench_visible",
+    "list_search_save_action_label_consistent",
     "list_search_editor_focused_after_entry",
     "list_search_editor_primary_focus",
     "approval_editor_visible",
@@ -935,6 +936,8 @@ async function main() {
     checks.listSearchCanvasCount = await listSearchPanel.locator(".field-chip-editor").count();
     checks.listSearchPanelViewport = await viewportEvidence(listSearchPanel);
     checks.listSearchReturnWorkbenchButtonCount = await listSearchPanel.getByRole("button", { name: "返回工作台" }).count();
+    checks.listSearchSaveButtonCount = await listSearchPanel.getByRole("button", { name: "保存列表与搜索" }).count();
+    checks.listSearchLegacySaveButtonCount = await listSearchPanel.getByRole("button", { name: "保存设置" }).count();
     checks.listSearchActionHintText = await listSearchPanel.locator(".field-chip-action-hint").first().innerText();
     checks.listSearchActionAriaCount = await listSearchPanel.locator(".field-chip button[aria-label^='上移'], .field-chip button[aria-label^='下移'], .field-chip button[aria-label^='移除']").count();
     checks.listSearchVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".edit-panel");
@@ -1111,6 +1114,12 @@ async function main() {
       checks,
     );
     assert(checks.listSearchReturnWorkbenchButtonCount > 0, "列表与搜索配置面必须提供明确返回工作台动作", checks);
+    assert(
+      checks.listSearchSaveButtonCount > 0
+      && checks.listSearchLegacySaveButtonCount === 0,
+      "列表与搜索保存动作必须明确表达保存列表与搜索，不能使用保存设置模糊标签",
+      checks,
+    );
     assert(
       checks.listSearchPanelViewport.startsInPrimaryViewport === true
       && checks.listSearchPanelViewport.startsInEditorFocusViewport === true,

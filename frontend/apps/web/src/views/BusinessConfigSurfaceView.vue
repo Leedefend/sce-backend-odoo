@@ -751,7 +751,7 @@
             {{ hasAnalysisDraftChanges ? (listSearchSaving ? '保存中...' : '保存并预览') : '预览页面' }}
           </button>
           <button type="button" class="ghost small" :disabled="listSearchSaving || !hasAnalysisDraftChanges" @click="saveAnalysisConfig">
-            {{ listSearchSaving ? '保存中...' : '保存设置' }}
+            {{ listSearchSaving ? '保存中...' : '保存分析视图' }}
           </button>
           <button type="button" class="ghost small" :disabled="listSearchSaving || !hasAnalysisDraftChanges" @click="resetAnalysisDraft">
             放弃调整
@@ -873,7 +873,7 @@
             {{ hasListSearchDraftChanges ? (listSearchSaving ? '保存中...' : '保存并预览') : '预览页面' }}
           </button>
           <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="saveListSearchConfig">
-            {{ listSearchSaving ? '保存中...' : '保存设置' }}
+            {{ listSearchSaving ? '保存中...' : '保存列表与搜索' }}
           </button>
           <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="resetListSearchDraft">
             放弃调整
@@ -3086,7 +3086,7 @@ async function loadListSearchConfig() {
     listSearchPanelOpen.value = true;
     await focusActiveEditorPanel();
     if (!configuredListColumns.length && suggestedListColumns.length) {
-      setMessage('已按当前页面生成列表草稿', '调整后点击保存设置，才会发布为正式业务配置');
+      setMessage('已按当前页面生成列表草稿', '调整后点击保存列表与搜索，才会发布为正式业务配置');
     }
   } catch (err) {
     error.value = err instanceof Error ? err.message : '列表与搜索设置读取失败';
@@ -3151,7 +3151,7 @@ async function loadAnalysisConfig() {
       (!configuredPivotMeasures.length && !configuredPivotDimensions.length && (suggestedPivotMeasures.length || suggestedPivotDimensions.length))
       || (!configuredGraphMeasures.length && !configuredGraphDimensions.length && (suggestedGraphMeasures.length || suggestedGraphDimensions.length))
     ) {
-      setMessage('已按当前页面生成分析草稿', '调整后点击保存设置，才会发布为正式业务配置');
+      setMessage('已按当前页面生成分析草稿', '调整后点击保存分析视图，才会发布为正式业务配置');
     }
   } catch (err) {
     error.value = err instanceof Error ? err.message : '分析视图设置读取失败';
