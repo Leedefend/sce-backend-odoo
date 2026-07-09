@@ -197,6 +197,143 @@ function buildFailureCoverageSummary({ screenshots, consoleErrors, requestFailed
   };
 }
 
+function taskResult(pass, evidence, details = {}) {
+  return {
+    status: pass ? "pass" : "fail",
+    evidence,
+    details,
+  };
+}
+
+function scoreResult(score, reason) {
+  return { score, reason };
+}
+
+function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors, requestFailed }) {
+  const screenshotReady = (key) => Boolean(screenshots[key]);
+  const expectedCards = ["表单字段与布局", "列表与搜索", "菜单入口", "审批规则"];
+  const cardsComplete = expectedCards.every((item) => checks.cardsAfterSelect?.includes(item))
+    && expectedCards.every((item) => checks.directStartCards?.includes(item));
+  const pageContextVisible = String(checks.selectedText || "").includes(CONFIG_PAGE_LABEL)
+    && String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL)
+    && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL);
+  const entryNamesStable = checks.cardsAfterSelect?.join("|") === checks.directStartCards?.join("|")
+    && checks.formDesignerReturnButtonCount > 0;
+  const listSearchUsable = checks.listSearchTitle === "列表与搜索设置"
+    && checks.listSearchTabs?.join("|") === "列表列|搜索条件|默认分组"
+    && checks.listSearchCanvasCount === 1;
+  const approvalUsable = checks.approvalTitle === "审批规则"
+    && checks.approvalRulePanelCount === 1
+    && checks.approvalStepCanvasCount === 1;
+  const formUsable = checks.formDesignerTitle === "当前页面字段配置"
+    && String(checks.formDesignerStepText || "").includes(CONFIG_PAGE_LABEL)
+    && checks.formDesignerReturnButtonCount > 0;
+  const menuUsable = checks.menuSideSections?.join("|") === "新增入口|批量维护|检查发布"
+    && checks.menuTreeRows > 0
+    && !String(checks.menuTreeHead || "").includes("0 个可配置菜单");
+  const mobileStable = checks.mobileOrder?.[0]?.top !== null
+    && checks.mobileOrder?.[1]?.top !== null
+    && checks.mobileOrder?.[0]?.top < checks.mobileOrder?.[1]?.top
+    && checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8;
+  const browserHealthy = consoleErrors.length === 0 && requestFailed.length === 0 && metrics?.health_passed === true;
+  const evidenceReady = ACCEPTANCE_COVERAGE.screenshotKeys.every(screenshotReady)
+    && metrics?.coverage_ratio === 1;
+  const searchUsable = checks.searchRows?.length === 1
+    && checks.searchRows[0] === SWITCH_PAGE_LABEL
+    && String(checks.switchedTitle || "").includes(SWITCH_PAGE_LABEL);
+
+  const taskResults = {
+    find_business_page: taskResult(
+      checks.scanRowsBeforeSelect >= 2 && checks.scanRowsAfterSelect >= 2 && searchUsable,
+      ["selectedFromScan", "switchedPage"],
+      { scanRowsBeforeSelect: checks.scanRowsBeforeSelect, scanRowsAfterSelect: checks.scanRowsAfterSelect, searchRows: checks.searchRows },
+    ),
+    understand_config_scope: taskResult(
+      pageContextVisible && cardsComplete,
+      ["selectedFromScan", "directSelected"],
+      { cardsAfterSelect: checks.cardsAfterSelect, directStartCards: checks.directStartCards },
+    ),
+    configure_form_fields: taskResult(
+      formUsable && String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL),
+      ["formDesignerEntry"],
+      { formDesignerTitle: checks.formDesignerTitle, formReturnedTitle: checks.formReturnedTitle },
+    ),
+    configure_list_search: taskResult(
+      listSearchUsable,
+      ["listSearchEntry"],
+      { listSearchTitle: checks.listSearchTitle, listSearchTabs: checks.listSearchTabs },
+    ),
+    configure_approval_rules: taskResult(
+      approvalUsable,
+      ["approvalEntry"],
+      { approvalTitle: checks.approvalTitle, approvalRulePanelCount: checks.approvalRulePanelCount },
+    ),
+    configure_menu_entry: taskResult(
+      menuUsable,
+      ["menuConfig"],
+      { menuSideSections: checks.menuSideSections, menuTreeHead: checks.menuTreeHead, menuTreeRows: checks.menuTreeRows },
+    ),
+    return_to_workbench: taskResult(
+      String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL)
+      && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL)
+      && checks.returnedCards?.includes("菜单入口"),
+      ["formDesignerEntry", "menuConfig"],
+      { formReturnedTitle: checks.formReturnedTitle, returnedTitle: checks.returnedTitle },
+    ),
+    mobile_operation: taskResult(
+      mobileStable,
+      ["mobileSelected"],
+      { mobileOrder: checks.mobileOrder, mobileBodyWidth: checks.mobileBodyWidth },
+    ),
+  };
+
+  const dimensions = {
+    current_context: scoreResult(pageContextVisible ? 2 : 0, "标题、卡片和返回路径必须指向当前业务页面。"),
+    information_architecture: scoreResult(cardsComplete && checks.directDeliveryStatusCount === 1 ? 2 : 0, "配置任务、页面目录和交付状态必须层级清晰。"),
+    operation_convention: scoreResult(searchUsable && formUsable && listSearchUsable && approvalUsable && menuUsable ? 2 : 0, "搜索、选择、配置、返回必须符合常见后台产品习惯。"),
+    entry_naming: scoreResult(entryNamesStable ? 2 : 0, "同一能力的入口命名必须稳定且使用业务语言。"),
+    task_efficiency: scoreResult(formUsable && listSearchUsable && approvalUsable && menuUsable ? 2 : 0, "关键配置任务必须能从卡片主入口直接进入。"),
+    status_feedback: scoreResult(metrics?.journey_passed_count === ACCEPTANCE_COVERAGE.journeys.length ? 2 : 0, "加载、禁用、返回和健康状态必须可被报告证明。"),
+    error_recovery: scoreResult(String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL) && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL) ? 2 : 0, "从子能力返回必须保留业务页面上下文。"),
+    visual_stability: scoreResult(mobileStable ? 2 : 0, "桌面和 390px 移动端不得遮挡或横向溢出。"),
+    user_language: scoreResult(cardsComplete && entryNamesStable && !String(checks.selectedText || "").includes(CONFIG_MODEL) ? 2 : 0, "默认界面必须使用业务语言，不要求用户理解技术模型。"),
+    verifiability: scoreResult(evidenceReady ? 2 : 0, "结论必须可由截图、指标和报告文件复现。"),
+  };
+  const scoreTotal = Object.values(dimensions).reduce((sum, item) => sum + item.score, 0);
+  const zeroScoreDimensions = Object.entries(dimensions).filter(([, item]) => item.score === 0).map(([key]) => key);
+
+  const blockingIssues = [];
+  if (!ok) blockingIssues.push("operation_gate_failed");
+  if (!pageContextVisible) blockingIssues.push("current_business_page_context_unclear");
+  if (!cardsComplete) blockingIssues.push("config_task_cards_incomplete");
+  if (!entryNamesStable) blockingIssues.push("capability_entry_naming_inconsistent");
+  if (!formUsable || !listSearchUsable || !approvalUsable || !menuUsable) blockingIssues.push("capability_entry_not_product_usable");
+  if (!mobileStable) blockingIssues.push("mobile_layout_not_stable");
+  if (!browserHealthy) blockingIssues.push("browser_health_failed");
+  if (!evidenceReady) blockingIssues.push("acceptance_evidence_incomplete");
+
+  const riskItems = [];
+  if (scoreTotal < 20) riskItems.push("product_usability_score_not_full");
+  if (zeroScoreDimensions.length) riskItems.push(`zero_score_dimensions:${zeroScoreDimensions.join(",")}`);
+
+  return {
+    schema_version: "config_workbench_product_usability.v1",
+    delivery_status: blockingIssues.length ? "delivery_blocked" : (scoreTotal >= 18 && !zeroScoreDimensions.length ? "delivery_ready" : "delivery_risk"),
+    score_total: scoreTotal,
+    score_required: 18,
+    max_score: 20,
+    dimensions,
+    blocking_issues: blockingIssues,
+    risk_items: riskItems,
+    task_results: taskResults,
+    evidence: {
+      report_path: REPORT_PATH,
+      command: "DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verify.business_config.config_workbench_operation_acceptance",
+      screenshots,
+    },
+  };
+}
+
 async function main() {
   await fs.mkdir(ARTIFACT_ROOT, { recursive: true });
   const executablePath = findCachedChromiumExecutable();
@@ -368,28 +505,52 @@ async function main() {
     assert(consoleErrors.length === 0 && requestFailed.length === 0, "浏览器存在控制台错误或失败请求", { consoleErrors, requestFailed });
 
     const metrics = buildCoverageSummary({ screenshots, consoleErrors, requestFailed });
+    const productUsability = buildProductUsability({
+      ok: true,
+      metrics,
+      checks,
+      screenshots,
+      consoleErrors,
+      requestFailed,
+    });
+    assert(
+      productUsability.delivery_status === "delivery_ready",
+      "配置工作台尚未达到交付级产品化验收标准",
+      { productUsability },
+    );
+
     const report = {
       ok: true,
       baseUrl: BASE_URL,
       dbName: DB_NAME,
       login: LOGIN,
       metrics,
+      product_usability: productUsability,
       checks,
       screenshots,
       consoleErrors,
       requestFailed,
     };
     await fs.writeFile(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-    console.log(JSON.stringify({ ok: true, reportPath: REPORT_PATH, metrics, checks }, null, 2));
+    console.log(JSON.stringify({ ok: true, reportPath: REPORT_PATH, metrics, product_usability: productUsability, checks }, null, 2));
   } catch (err) {
     const failureMessage = err instanceof Error ? err.message : String(err);
     const metrics = buildFailureCoverageSummary({ screenshots, consoleErrors, requestFailed, failureMessage });
+    const productUsability = err?.details?.productUsability || buildProductUsability({
+      ok: false,
+      metrics,
+      checks,
+      screenshots,
+      consoleErrors,
+      requestFailed,
+    });
     const report = {
       ok: false,
       baseUrl: BASE_URL,
       dbName: DB_NAME,
       login: LOGIN,
       metrics,
+      product_usability: productUsability,
       checks,
       screenshots,
       consoleErrors,
