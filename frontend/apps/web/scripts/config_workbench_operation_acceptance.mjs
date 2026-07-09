@@ -408,6 +408,112 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   };
 }
 
+function professionalScore(pass, reason, evidence = {}) {
+  return {
+    score: pass ? 3 : 0,
+    reason,
+    evidence,
+  };
+}
+
+function buildProfessionalReadiness({ metrics, checks, screenshots, consoleErrors, requestFailed, productUsability }) {
+  const screenshotsComplete = ACCEPTANCE_COVERAGE.screenshotKeys.every((key) => Boolean(screenshots[key]));
+  const taskStatuses = Object.values(productUsability.task_results || {}).map((item) => item.status);
+  const allTasksPassed = taskStatuses.length === 8 && taskStatuses.every((status) => status === "pass");
+  const pageStructurePassed = productUsability.page_structure?.status === "pass";
+  const healthPassed = consoleErrors.length === 0
+    && requestFailed.length === 0
+    && metrics?.health_passed === true;
+  const cards = checks.cardsAfterSelect || [];
+  const directCards = checks.directStartCards || [];
+  const cardsStable = cards.length === 4 && cards.join("|") === directCards.join("|");
+  const menuBoundaryStable = checks.menuSideSections?.join("|") === "新增入口|批量维护|检查发布"
+    && checks.menuTreeRows > 0
+    && !String(checks.menuTreeHead || "").includes("0 个可配置菜单")
+    && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL);
+  const workflowClosure = String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL)
+    && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL)
+    && checks.returnedCards?.includes("菜单入口");
+  const responsiveProof = checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8
+    && productUsability.page_structure?.mobile_selected?.result?.order?.length === 3;
+  const cognitiveLoadControlled = pageStructurePassed
+    && cardsStable
+    && checks.pageStructureDesktop?.pageDirectory?.rowCount >= 2
+    && checks.pageStructureDesktop?.pageDirectory?.searchControlCount === 1
+    && checks.pageStructureDesktop?.pageDirectory?.filterControlCount >= 3;
+  const capabilityDepthReady = checks.formDesignerTitle === "当前页面字段配置"
+    && checks.listSearchTabs?.join("|") === "列表列|搜索条件|默认分组"
+    && checks.approvalRulePanelCount === 1
+    && checks.approvalStepCanvasCount === 1
+    && checks.menuSelectedPanelCount === 1;
+  const releaseRepeatable = metrics?.coverage_ratio === 1
+    && metrics?.journey_passed_count === ACCEPTANCE_COVERAGE.journeys.length
+    && metrics?.assertion_passed_count === ACCEPTANCE_COVERAGE.assertions.length
+    && productUsability.delivery_status === "delivery_ready"
+    && productUsability.blocking_issues?.length === 0
+    && productUsability.risk_items?.length === 0;
+
+  const dimensions = {
+    user_task_closure: professionalScore(allTasksPassed, "专业产品必须覆盖并通过关键用户任务闭环。", { taskStatuses }),
+    page_structure_contract: professionalScore(pageStructurePassed, "专业产品必须有稳定页面结构合同。", productUsability.page_structure),
+    cognitive_load_control: professionalScore(cognitiveLoadControlled, "专业产品必须降低扫描成本，目录、任务和状态职责清楚。", {
+      cards,
+      rowCount: checks.pageStructureDesktop?.pageDirectory?.rowCount,
+      searchControlCount: checks.pageStructureDesktop?.pageDirectory?.searchControlCount,
+      filterControlCount: checks.pageStructureDesktop?.pageDirectory?.filterControlCount,
+    }),
+    naming_and_language_consistency: professionalScore(cardsStable && !String(checks.selectedText || "").includes(CONFIG_MODEL), "专业产品必须全链路名称稳定并默认使用业务语言。", { cards, directCards }),
+    capability_depth: professionalScore(capabilityDepthReady, "专业产品不能只到入口，表单、列表搜索、审批、菜单必须进入可操作配置面。", {
+      formDesignerTitle: checks.formDesignerTitle,
+      listSearchTabs: checks.listSearchTabs,
+      approvalRulePanelCount: checks.approvalRulePanelCount,
+      approvalStepCanvasCount: checks.approvalStepCanvasCount,
+      menuSelectedPanelCount: checks.menuSelectedPanelCount,
+    }),
+    workflow_recovery: professionalScore(workflowClosure, "专业产品必须从子能力返回原工作台上下文。", {
+      formReturnedTitle: checks.formReturnedTitle,
+      returnedTitle: checks.returnedTitle,
+      returnedCards: checks.returnedCards,
+    }),
+    responsive_resilience: professionalScore(responsiveProof, "专业产品必须在 390px 移动端保持顺序和宽度稳定。", {
+      mobileOrder: checks.mobileOrder,
+      mobileBodyWidth: checks.mobileBodyWidth,
+    }),
+    boundary_integrity: professionalScore(menuBoundaryStable, "专业产品必须保持菜单配置能力边界和业务返回上下文不混淆。", {
+      menuSideSections: checks.menuSideSections,
+      menuTreeHead: checks.menuTreeHead,
+      returnedTitle: checks.returnedTitle,
+    }),
+    operational_health: professionalScore(healthPassed, "专业产品必须无浏览器错误和失败请求。", { consoleErrors, requestFailed }),
+    evidence_and_repeatability: professionalScore(screenshotsComplete && releaseRepeatable, "专业产品验收必须可由命令、报告、截图重复证明。", {
+      screenshotsComplete,
+      coverageRatio: metrics?.coverage_ratio,
+      journeyPassed: metrics?.journey_passed_count,
+      assertionPassed: metrics?.assertion_passed_count,
+    }),
+  };
+  const scoreTotal = Object.values(dimensions).reduce((sum, item) => sum + item.score, 0);
+  const maxScore = Object.keys(dimensions).length * 3;
+  const failedDimensions = Object.entries(dimensions).filter(([, item]) => item.score === 0).map(([key]) => key);
+  const blockers = [];
+  if (productUsability.delivery_status !== "delivery_ready") blockers.push("product_usability_not_delivery_ready");
+  failedDimensions.forEach((key) => blockers.push(`professional_dimension_failed:${key}`));
+  return {
+    schema_version: "config_workbench_professional_readiness.v1",
+    status: blockers.length ? "professional_blocked" : "professional_ready",
+    score_total: scoreTotal,
+    score_required: maxScore,
+    max_score: maxScore,
+    dimensions,
+    blockers,
+    evidence: {
+      report_path: REPORT_PATH,
+      command: "DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verify.business_config.config_workbench_operation_acceptance",
+      screenshots,
+    },
+  };
+}
+
 async function main() {
   await fs.mkdir(ARTIFACT_ROOT, { recursive: true });
   const executablePath = findCachedChromiumExecutable();
@@ -654,10 +760,23 @@ async function main() {
       consoleErrors,
       requestFailed,
     });
+    const professionalReadiness = buildProfessionalReadiness({
+      metrics,
+      checks,
+      screenshots,
+      consoleErrors,
+      requestFailed,
+      productUsability,
+    });
     assert(
       productUsability.delivery_status === "delivery_ready",
       "配置工作台尚未达到交付级产品化验收标准",
       { productUsability },
+    );
+    assert(
+      professionalReadiness.status === "professional_ready",
+      "配置工作台尚未达到专业产品水准验收标准",
+      { professionalReadiness },
     );
 
     const report = {
@@ -667,13 +786,14 @@ async function main() {
       login: LOGIN,
       metrics,
       product_usability: productUsability,
+      professional_readiness: professionalReadiness,
       checks,
       screenshots,
       consoleErrors,
       requestFailed,
     };
     await fs.writeFile(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-    console.log(JSON.stringify({ ok: true, reportPath: REPORT_PATH, metrics, product_usability: productUsability, checks }, null, 2));
+    console.log(JSON.stringify({ ok: true, reportPath: REPORT_PATH, metrics, product_usability: productUsability, professional_readiness: professionalReadiness, checks }, null, 2));
   } catch (err) {
     const failureMessage = err instanceof Error ? err.message : String(err);
     const metrics = buildFailureCoverageSummary({ screenshots, consoleErrors, requestFailed, failureMessage });
@@ -685,6 +805,14 @@ async function main() {
       consoleErrors,
       requestFailed,
     });
+    const professionalReadiness = err?.details?.professionalReadiness || buildProfessionalReadiness({
+      metrics,
+      checks,
+      screenshots,
+      consoleErrors,
+      requestFailed,
+      productUsability,
+    });
     const report = {
       ok: false,
       baseUrl: BASE_URL,
@@ -692,6 +820,7 @@ async function main() {
       login: LOGIN,
       metrics,
       product_usability: productUsability,
+      professional_readiness: professionalReadiness,
       checks,
       screenshots,
       consoleErrors,

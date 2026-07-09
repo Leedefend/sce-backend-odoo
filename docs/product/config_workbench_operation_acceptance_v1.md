@@ -226,6 +226,41 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 只有操作级门禁通过且 `delivery_status = delivery_ready` 时，才能说“配置工作台已经达到正式交付用户使用的产品标准”。
 
+## 专业产品水准验收标准
+
+`delivery_ready` 只代表可以交付用户使用；专业产品水准还必须证明该能力具备稳定演进、可复验、低认知负担和完整任务闭环。报告中必须输出 `professional_readiness.schema_version = config_workbench_professional_readiness.v1`。
+
+专业产品结论分级：
+
+| 结论 | 含义 | 是否达到专业产品水准 |
+| --- | --- | --- |
+| `professional_ready` | 交付验收通过，且专业维度全项满分 | 是 |
+| `professional_blocked` | 任一专业维度失败，或交付验收未通过 | 否 |
+
+专业产品验收采用 10 个维度，每项 0 或 3 分，满分 30 分。必须 `score_total = 30 / 30`，且 `blockers = []`，才能认定为 `professional_ready`。
+
+| 维度 | 专业水准要求 |
+| --- | --- |
+| 用户任务闭环 | 找页面、理解范围、配置表单、配置列表搜索、配置审批、配置菜单、返回、小屏操作全部通过 |
+| 页面结构合同 | 桌面、直达、移动端结构合同全部通过 |
+| 认知负载控制 | 页面目录、配置任务、交付状态职责清晰，用户能快速扫描并定位任务 |
+| 命名和语言一致性 | 同一能力全链路名称一致，默认界面不要求用户理解技术模型 |
+| 能力深度 | 不止有入口，表单、列表搜索、审批、菜单都能进入可操作配置面 |
+| 流程恢复 | 从子能力返回后保持原业务页面、配置卡片和上下文 |
+| 响应式韧性 | 390px 移动端结构顺序、宽度和关键区域稳定 |
+| 边界完整性 | 菜单配置能力边界与业务返回上下文不混淆 |
+| 运行健康 | 无 console error，无非取消类 failed request |
+| 证据和可重复性 | 有命令、报告、截图、指标，能重复复验 |
+
+专业产品阻断项：
+
+- `product_usability.delivery_status != delivery_ready`。
+- 任一专业维度得分为 0。
+- 报告未输出 `professional_readiness`。
+- 专业评分不是 `30 / 30`。
+
+只有 `delivery_status = delivery_ready` 且 `professional_readiness.status = professional_ready` 时，才能说“配置工作台达到真正专业产品水准”。
+
 ## 当前已固化的问题
 
 - 选择业务页面时不能因 URL query 更新导致工作台重挂载、页面目录和配置卡片丢失。
@@ -263,6 +298,9 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - `product_usability.blocking_issues = []`
 - `product_usability.risk_items = []`
 - `product_usability.page_structure.status = pass`
+- `professional_readiness.status = professional_ready`
+- `professional_readiness.score_total = 30 / 30`
+- `professional_readiness.blockers = []`
 
 关键可见结果：
 
@@ -278,4 +316,5 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 当前上下文、页面结构、信息架构、操作习惯、入口命名、任务效率、状态反馈、容错返回、视觉稳定、用户语言、可验证性均为 2 分。
 - 页面结构合同通过：桌面端选页态具备顶部上下文、当前配置区、页面目录区、交付状态区；直达起始态具备顶部上下文、当前配置任务区、交付状态区；移动端顺序为当前配置区、页面目录区、交付状态区。
 - 找页面、理解配置范围、配置表单字段、配置列表与搜索、配置审批规则、配置菜单入口、返回工作台、小屏操作 8 个用户任务均通过。
+- 专业产品水准验收通过：用户任务闭环、页面结构合同、认知负载控制、命名和语言一致性、能力深度、流程恢复、响应式韧性、边界完整性、运行健康、证据和可重复性均满分。
 - 因操作级门禁和产品化可用性验收同时通过，本专题当前结论为：配置工作台达到正式交付用户使用的产品标准。
