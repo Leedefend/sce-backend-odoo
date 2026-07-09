@@ -42,6 +42,7 @@ const ACCEPTANCE_COVERAGE = {
     "open_form_designer",
     "return_from_form_designer",
     "open_menu_config",
+    "open_menu_create_panel",
     "return_to_workbench",
     "open_mobile_workbench",
     "mobile_select_page",
@@ -90,6 +91,7 @@ const ACCEPTANCE_COVERAGE = {
     "menu_tree_not_empty",
     "menu_tree_search_feedback_visible",
     "menu_save_action_label_consistent",
+    "menu_create_panel_close_label_consistent",
     "return_context_retained",
     "mobile_config_before_picker",
     "mobile_current_config_in_viewport",
@@ -1003,6 +1005,13 @@ async function main() {
     checks.menuSelectedPanelCount = await page.locator(".menu-selected-panel").count();
     checks.menuSaveButtonCount = await page.getByRole("button", { name: "保存菜单配置" }).count();
     checks.menuLegacySaveButtonCount = await page.getByRole("button", { name: "保存修改" }).count();
+    await page.getByRole("button", { name: "新增一级菜单" }).click();
+    const menuCreatePanel = page.locator(".create-panel");
+    await menuCreatePanel.waitFor({ state: "visible", timeout: 60000 });
+    checks.menuCreatePanelCount = await menuCreatePanel.count();
+    checks.menuCreatePanelTitle = await menuCreatePanel.locator(".create-panel-header strong").innerText();
+    checks.menuCreatePanelCloseButtonCount = await menuCreatePanel.getByRole("button", { name: "收起新增入口" }).count();
+    checks.menuCreatePanelLegacyCloseButtonCount = await menuCreatePanel.getByRole("button", { name: "关闭" }).count();
     checks.menuConfigVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".menu-config-page");
     screenshots.menuConfig = await capture(page, "07-menu-config");
     await page.getByRole("button", { name: "返回配置工作台" }).click();
@@ -1205,6 +1214,14 @@ async function main() {
       checks.menuSaveButtonCount > 0
       && checks.menuLegacySaveButtonCount === 0,
       "菜单配置保存动作必须明确表达保存菜单配置，不能使用保存修改模糊标签",
+      checks,
+    );
+    assert(
+      checks.menuCreatePanelCount === 1
+      && checks.menuCreatePanelTitle === "新增菜单入口"
+      && checks.menuCreatePanelCloseButtonCount > 0
+      && checks.menuCreatePanelLegacyCloseButtonCount === 0,
+      "菜单新增入口面板必须提供明确收起新增入口动作，不能使用关闭模糊标签",
       checks,
     );
     assert(checks.returnedTitle.includes(CONFIG_PAGE_LABEL) && checks.returnedCards.includes("菜单入口"), "菜单配置返回工作台后上下文丢失", checks);

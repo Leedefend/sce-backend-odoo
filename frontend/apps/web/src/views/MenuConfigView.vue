@@ -137,7 +137,7 @@
           <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('sibling')">新增同级</button>
           <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('child')">新增下级</button>
           <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('copy')">复制当前入口</button>
-          <button type="button" class="link-button" @click="createPanelOpen = false">关闭</button>
+          <button type="button" class="link-button" @click="createPanelOpen = false">收起新增入口</button>
         </div>
       </div>
       <div class="create-form">
