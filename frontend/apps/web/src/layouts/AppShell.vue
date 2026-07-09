@@ -299,6 +299,7 @@ import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
+import { BUSINESS_CONFIG_MODES, BUSINESS_CONFIG_ROUTE_FLAGS } from '../app/businessConfigBoundaries';
 import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
 import { config } from '../config';
 import { openAction } from '../services/action_service';
@@ -905,8 +906,18 @@ const configurationRouteTitle = computed(() => {
   if (route.path.startsWith('/admin/')) return '配置中心';
   return '';
 });
+const businessConfigFormTitle = computed(() => {
+  if (route.query.config_mode !== BUSINESS_CONFIG_MODES.lowCode) return '';
+  const pageLabel = asText(route.query.page_label)
+    || asText(route.query.pageLabel)
+    || asText(route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnPageLabel]);
+  return pageLabel ? `配置：${pageLabel}` : '表单配置';
+});
 
 const pageTitle = computed(() => {
+  if (businessConfigFormTitle.value) {
+    return businessConfigFormTitle.value;
+  }
   if (configurationRouteTitle.value) {
     return configurationRouteTitle.value;
   }

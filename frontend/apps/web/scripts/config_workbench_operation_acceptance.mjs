@@ -64,6 +64,7 @@ const ACCEPTANCE_COVERAGE = {
     "approval_rule_canvas_visible",
     "approval_editor_focused_after_entry",
     "form_designer_visible",
+    "form_designer_shell_title_context",
     "form_designer_return_visible",
     "form_designer_business_actions_hidden",
     "menu_side_sections_complete",
@@ -356,7 +357,8 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && checks.approvalStepCanvasCount === 1;
   const formUsable = checks.formDesignerTitle === "当前页面字段配置"
     && String(checks.formDesignerStepText || "").includes(CONFIG_PAGE_LABEL)
-    && checks.formDesignerReturnButtonCount > 0;
+    && checks.formDesignerReturnButtonCount > 0
+    && String(checks.formDesignerShellTitle || "").includes(CONFIG_PAGE_LABEL);
   const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
     && checks.approvalPanelViewport?.startsInPrimaryViewport === true;
   const formDesignerActionHygieneReady = (checks.formDesignerBusinessActionButtons || []).length === 0;
@@ -402,7 +404,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     configure_form_fields: taskResult(
       formUsable && formDesignerActionHygieneReady && String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL),
       ["formDesignerEntry"],
-      { formDesignerTitle: checks.formDesignerTitle, formReturnedTitle: checks.formReturnedTitle, formDesignerBusinessActionButtons: checks.formDesignerBusinessActionButtons },
+      { formDesignerTitle: checks.formDesignerTitle, formDesignerShellTitle: checks.formDesignerShellTitle, formReturnedTitle: checks.formReturnedTitle, formDesignerBusinessActionButtons: checks.formDesignerBusinessActionButtons },
     ),
     configure_list_search: taskResult(
       listSearchUsable && checks.listSearchPanelViewport?.startsInPrimaryViewport === true,
@@ -560,6 +562,7 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     naming_and_language_consistency: professionalScore(cardsStable && !visibleTechnicalTerms.length, "专业产品必须全链路名称稳定并默认使用业务语言。", { cards, directCards, visibleTechnicalTerms }),
     capability_depth: professionalScore(capabilityDepthReady && editorFocusReady && actionSemanticsReady, "专业产品不能只到入口，表单、列表搜索、审批、菜单必须进入可操作配置面，并且进入后焦点和动作语义清楚。", {
       formDesignerTitle: checks.formDesignerTitle,
+      formDesignerShellTitle: checks.formDesignerShellTitle,
       listSearchTabs: checks.listSearchTabs,
       approvalRulePanelCount: checks.approvalRulePanelCount,
       approvalStepCanvasCount: checks.approvalStepCanvasCount,
@@ -771,6 +774,7 @@ async function main() {
     await page.waitForURL((url) => String(url).includes(`/f/${CONFIG_MODEL}/new`), { timeout: 60000 });
     await page.waitForSelector(".contract-form-settings", { timeout: 60000 });
     checks.formDesignerTitle = await page.locator(".contract-form-settings h4").innerText();
+    checks.formDesignerShellTitle = await page.locator(".topbar .headline").innerText().catch(() => "");
     checks.formDesignerStepText = await page.locator(".contract-form-design-strip").innerText();
     checks.formDesignerReturnButtonCount = await page.getByRole("button", { name: /返回配置/ }).count();
     checks.formDesignerVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".contract-form-settings");
@@ -871,6 +875,7 @@ async function main() {
     assert(
       checks.formDesignerTitle === "当前页面字段配置"
       && checks.formDesignerStepText.includes(CONFIG_PAGE_LABEL)
+      && checks.formDesignerShellTitle.includes(CONFIG_PAGE_LABEL)
       && checks.formDesignerReturnButtonCount > 0
       && checks.formReturnedTitle.includes(CONFIG_PAGE_LABEL),
       "表单配置入口没有形成进入设计器并返回工作台闭环",
