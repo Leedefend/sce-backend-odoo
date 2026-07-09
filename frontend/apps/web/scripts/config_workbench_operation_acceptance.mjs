@@ -79,6 +79,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_designer_business_actions_hidden",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
+    "menu_tree_search_feedback_visible",
     "return_context_retained",
     "mobile_config_before_picker",
     "mobile_current_config_in_viewport",
@@ -641,7 +642,9 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     && checks.approvalStepCanvasCount === 1
     && checks.approvalStepMoveButtonCount > 0
     && checks.approvalReturnWorkbenchButtonCount > 0
-    && checks.menuSelectedPanelCount === 1;
+    && checks.menuSelectedPanelCount === 1
+    && checks.menuSearchInputCount > 0
+    && checks.menuSearchClearButtonCount > 0;
   const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
     && checks.approvalPanelViewport?.startsInPrimaryViewport === true
     && checks.listSearchPanelViewport?.startsInEditorFocusViewport === true
@@ -679,6 +682,9 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       approvalStepMoveButtonCount: checks.approvalStepMoveButtonCount,
       approvalReturnWorkbenchButtonCount: checks.approvalReturnWorkbenchButtonCount,
       menuSelectedPanelCount: checks.menuSelectedPanelCount,
+      menuSearchInputCount: checks.menuSearchInputCount,
+      menuSearchSummaryText: checks.menuSearchSummaryText,
+      menuSearchClearButtonCount: checks.menuSearchClearButtonCount,
       listSearchPanelViewport: checks.listSearchPanelViewport,
       approvalPanelViewport: checks.approvalPanelViewport,
       formDesignerBusinessActionButtons: checks.formDesignerBusinessActionButtons,
@@ -933,6 +939,9 @@ async function main() {
     ));
     checks.menuTreeHead = await page.locator(".menu-config-tree .tree-panel-head").innerText();
     checks.menuTreeRows = await page.locator(".menu-config-tree .tree-scroll .tree-node").count();
+    checks.menuSearchInputCount = await page.locator(".menu-config-tree .tree-search input").count();
+    checks.menuSearchSummaryText = await page.locator(".menu-config-tree .tree-search-summary span").innerText();
+    checks.menuSearchClearButtonCount = await page.locator(".menu-config-tree .tree-clear-filter").count();
     checks.menuSelectedPanelCount = await page.locator(".menu-selected-panel").count();
     checks.menuConfigVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".menu-config-page");
     screenshots.menuConfig = await capture(page, "07-menu-config");
@@ -1063,6 +1072,13 @@ async function main() {
     assert(checks.formDesignerBusinessActionButtons.length === 0, "表单配置态不应出现业务办理动作按钮", checks);
     assert(checks.menuSideSections.join("|") === "新增入口|批量维护|检查发布", "菜单配置侧栏操作分组不完整", checks);
     assert(checks.menuTreeRows > 0 && !checks.menuTreeHead.includes("0 个可配置菜单"), "从配置工作台进入菜单配置后菜单目录为空", checks);
+    assert(
+      checks.menuSearchInputCount > 0
+      && checks.menuSearchClearButtonCount > 0
+      && /^显示 \d+ \/ \d+，未保存 \d+$/.test(String(checks.menuSearchSummaryText || "")),
+      "菜单配置必须提供目录搜索数量反馈和清空筛选动作",
+      checks,
+    );
     assert(checks.returnedTitle.includes(CONFIG_PAGE_LABEL) && checks.returnedCards.includes("菜单入口"), "菜单配置返回工作台后上下文丢失", checks);
     assert(
       checks.mobileOrder[0].top !== null

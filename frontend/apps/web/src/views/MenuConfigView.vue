@@ -198,6 +198,17 @@
         </div>
         <div class="tree-search">
           <input v-model="searchText" type="search" placeholder="搜索菜单名称或路径" />
+          <div class="tree-search-summary">
+            <span>{{ treeSearchSummary }}</span>
+            <button
+              type="button"
+              class="link-button tree-clear-filter"
+              :disabled="!treeViewFiltered"
+              @click="clearTreeFilter"
+            >
+              清空筛选
+            </button>
+          </div>
         </div>
         <div class="tree-state-tabs" aria-label="菜单状态筛选">
           <button
@@ -1192,6 +1203,11 @@ function menuMatchesStateFilter(menu: MenuConfigMenu) {
   return menuHandlingStateClass(menu) === menuStateFilter.value;
 }
 
+function clearTreeFilter() {
+  searchText.value = '';
+  menuStateFilter.value = 'all';
+}
+
 const visibleTree = computed<MenuConfigMenu[]>(() => {
   const term = normalizedSearchText.value;
   if (!term && menuStateFilter.value === 'all') {
@@ -1241,6 +1257,12 @@ const filteredRows = computed(() => {
 });
 
 const dirtyCount = computed(() => Object.keys(drafts).filter((key) => isDirty(Number(key))).length);
+const treeSearchSummary = computed(() => {
+  const total = flatRows.value.length;
+  const current = visibleFlatRows.value.length;
+  const dirty = dirtyCount.value;
+  return `显示 ${current} / ${total}，未保存 ${dirty}`;
+});
 const selectedMenu = computed(() => menus.value.find((menu) => Number(menu.id) === Number(selectedMenuId.value)) || null);
 const selectedDraft = computed(() => (
   selectedMenu.value ? draftFor(selectedMenu.value.id) || defaultDraftForEmpty() : defaultDraftForEmpty()
@@ -2800,6 +2822,30 @@ h1 {
   border: 1px solid var(--sc-app-border);
   border-radius: 6px;
   padding: 0 10px;
+}
+
+.tree-search-summary {
+  min-height: 26px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--sc-app-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.tree-clear-filter {
+  flex: 0 0 auto;
+  min-height: 24px;
+  padding: 0;
+  font-size: 12px;
+}
+
+.tree-clear-filter:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .tree-state-tabs {
