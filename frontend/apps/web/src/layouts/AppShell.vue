@@ -549,6 +549,7 @@ const businessRouteUsesCompactTopbar = computed(() => route.name === 'action' ||
 const useMinimalTopbar = computed(() =>
   route.name === 'workbench'
   || route.name === 'home'
+  || isConfigurationRoute.value
   || businessRouteUsesCompactTopbar.value,
 );
 const showTopbarHeadline = computed(() => !sceneHeaderMinimal.value && (!useMinimalTopbar.value || route.name === 'record'));

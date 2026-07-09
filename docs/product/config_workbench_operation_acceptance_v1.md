@@ -65,8 +65,8 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 26 |
-| assertion_passed_count | 已通过断言数 | 26 |
+| assertion_count | 用户可感知断言数 | 28 |
+| assertion_passed_count | 已通过断言数 | 28 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 8 |
 | screenshot_captured_count | 实际截图数 | 8 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -82,7 +82,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 当前配置标题与配置卡片。
 - 搜索结果与切换后的标题、配置卡片。
 - 直达已选页面的配置卡片与交付状态。
-- 默认交付状态只展示用户任务相关的表单、列表搜索、菜单、审批四项状态。
+- 默认交付状态只展示用户任务相关的表单、列表搜索、菜单、审批四项状态，不展示配置快照等内部审计信息。
 - 列表搜索面板标题、配置类型页签、字段配置画布。
 - 列表搜索面板打开后的首屏焦点位置。
 - 审批规则标题、规则面板、步骤编排画布。
@@ -92,6 +92,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 菜单配置侧栏分组、菜单目录数量。
 - 返回工作台后的标题和配置卡片。
 - 移动端视觉顺序和页面宽度。
+- 移动端配置工作台顶栏必须使用紧凑模式，不展示平台副标题。
 
 报告中 `screenshots` 是证据链，至少包含：
 
@@ -141,6 +142,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 关键操作没有返回路径、取消路径或状态反馈。
 - 配置入口可点击但进入后不是对应能力，或需要用户理解技术参数才能继续。
 - 默认交付状态混入版本快照、覆盖检查等内部审计指标，导致业务配置用户扫描成本升高。
+- 移动端配置工作台顶栏展示平台副标题或过多非任务信息，挤占首屏配置内容。
 - 点击配置入口后，目标编辑面没有进入当前首屏焦点，用户仍停留在概览区猜下一步。
 - 表单设计器等配置态混入业务办理按钮，例如“保存草稿”“提交”，导致配置动作与业务提交动作混淆。
 - 页面结构在 390px 移动端出现横向溢出、主要按钮不可见、内容遮挡或顺序反常。
@@ -296,7 +298,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 26 / 26`
+- `assertion_passed_count = 28 / 28`
 - `screenshot_captured_count = 8 / 8`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`

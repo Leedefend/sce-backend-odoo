@@ -435,7 +435,7 @@
             </button>
           </div>
           <div v-if="!visibleDeliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
-          <div v-if="snapshotSummary" class="workbench-status-snapshot">
+          <div v-if="advancedPanelOpen && snapshotSummary" class="workbench-status-snapshot">
             <span>配置快照</span>
             <strong>{{ snapshotSummary.contract_count }}</strong>
             <em>已发布 {{ snapshotSummary.status_counts?.published || 0 }}</em>

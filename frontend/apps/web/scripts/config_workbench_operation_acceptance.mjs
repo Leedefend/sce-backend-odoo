@@ -55,6 +55,7 @@ const ACCEPTANCE_COVERAGE = {
     "direct_delivery_status_visible",
     "delivery_status_default_user_task_only",
     "direct_delivery_status_default_user_task_only",
+    "delivery_status_default_snapshot_hidden",
     "list_search_editor_visible",
     "list_search_tabs_complete",
     "list_search_editor_focused_after_entry",
@@ -68,6 +69,7 @@ const ACCEPTANCE_COVERAGE = {
     "menu_tree_not_empty",
     "return_context_retained",
     "mobile_config_before_picker",
+    "mobile_configuration_topbar_compact",
     "mobile_no_horizontal_overflow",
     "no_console_errors",
     "no_request_failures",
@@ -363,10 +365,13 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && checks.mobileOrder?.[2]?.top !== null
     && checks.mobileOrder?.[0]?.top < checks.mobileOrder?.[1]?.top
     && checks.mobileOrder?.[1]?.top < checks.mobileOrder?.[2]?.top
-    && checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8;
+    && checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8
+    && checks.mobileConfigurationTopbar?.platformEyebrowVisible === false;
   const browserHealthy = consoleErrors.length === 0 && requestFailed.length === 0 && metrics?.health_passed === true;
   const defaultDeliveryStatusFocused = defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels)
-    && defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels);
+    && defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels)
+    && checks.defaultSnapshotSummaryCount === 0
+    && checks.mobileSnapshotSummaryCount === 0;
   const visibleTechnicalTermsClean = [
     ...(checks.selectedVisibleTechnicalTerms || []),
     ...(checks.directStartVisibleTechnicalTerms || []),
@@ -420,7 +425,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     mobile_operation: taskResult(
       mobileStable,
       ["mobileSelected"],
-      { mobileOrder: checks.mobileOrder, mobileBodyWidth: checks.mobileBodyWidth },
+      { mobileOrder: checks.mobileOrder, mobileBodyWidth: checks.mobileBodyWidth, mobileConfigurationTopbar: checks.mobileConfigurationTopbar },
     ),
   };
 
@@ -512,7 +517,8 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL)
     && checks.returnedCards?.includes("菜单入口");
   const responsiveProof = checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8
-    && productUsability.page_structure?.mobile_selected?.result?.order?.length === 3;
+    && productUsability.page_structure?.mobile_selected?.result?.order?.length === 3
+    && checks.mobileConfigurationTopbar?.platformEyebrowVisible === false;
   const cognitiveLoadControlled = pageStructurePassed
     && cardsStable
     && checks.pageStructureDesktop?.pageDirectory?.rowCount >= 2
@@ -565,6 +571,7 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     responsive_resilience: professionalScore(responsiveProof, "专业产品必须在 390px 移动端保持顺序和宽度稳定。", {
       mobileOrder: checks.mobileOrder,
       mobileBodyWidth: checks.mobileBodyWidth,
+      mobileConfigurationTopbar: checks.mobileConfigurationTopbar,
     }),
     boundary_integrity: professionalScore(menuBoundaryStable, "专业产品必须保持菜单配置能力边界和业务返回上下文不混淆。", {
       menuSideSections: checks.menuSideSections,
@@ -639,6 +646,7 @@ async function main() {
     checks.scanRowsAfterSelect = await page.locator(".scan-row").count();
     checks.selectedVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".scan-panel");
     checks.deliveryReadinessLabels = await deliveryReadinessLabels(page, ".workbench-status-rail");
+    checks.defaultSnapshotSummaryCount = await page.locator(".workbench-status-rail .workbench-status-snapshot").count();
     checks.pageStructureDesktop = await page.evaluate(() => {
       const rectInfo = (selector) => {
         const el = document.querySelector(selector);
@@ -809,6 +817,16 @@ async function main() {
       bodyScrollWidth: document.body.scrollWidth,
       documentScrollWidth: document.documentElement.scrollWidth,
     }));
+    checks.mobileConfigurationTopbar = await page.evaluate(() => {
+      const topbar = document.querySelector(".topbar");
+      const platformEyebrow = document.querySelector(".topbar .eyebrow");
+      return {
+        platformEyebrowVisible: Boolean(platformEyebrow && getComputedStyle(platformEyebrow).display !== "none"),
+        topbarClass: topbar?.className || "",
+        actionCount: document.querySelectorAll(".topbar-actions button").length,
+      };
+    });
+    checks.mobileSnapshotSummaryCount = await page.locator(".workbench-status-rail .workbench-status-snapshot").count();
     screenshots.mobileSelected = await capture(page, "08-mobile-selected");
 
     assert(checks.scanRowsBeforeSelect >= 2 && checks.scanRowsAfterSelect >= 2, "业务页面列表选择后不应丢失", checks);
@@ -820,6 +838,7 @@ async function main() {
     assert(checks.directStartCards.includes("表单字段与布局") && checks.directDeliveryStatusCount === 1, "直达已选页面缺少配置任务或交付状态", checks);
     assert(defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels), "默认交付状态不应展示内部审计指标", checks);
     assert(defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels), "直达态默认交付状态不应展示内部审计指标", checks);
+    assert(checks.defaultSnapshotSummaryCount === 0 && checks.mobileSnapshotSummaryCount === 0, "默认交付状态不应展示配置快照审计信息", checks);
     assert(
       checks.listSearchTitle === "列表与搜索设置"
       && checks.listSearchTabs.join("|") === "列表列|搜索条件|默认分组"
@@ -853,6 +872,7 @@ async function main() {
       "移动端选择页面后应先展示当前配置，再展示页面目录",
       checks,
     );
+    assert(checks.mobileConfigurationTopbar.platformEyebrowVisible === false, "移动端配置工作台顶栏不应展示平台副标题", checks);
     assert(checks.mobileBodyWidth.documentScrollWidth <= checks.mobileBodyWidth.innerWidth + 8, "移动端出现横向溢出", checks);
     assert(consoleErrors.length === 0 && requestFailed.length === 0, "浏览器存在控制台错误或失败请求", { consoleErrors, requestFailed });
 
