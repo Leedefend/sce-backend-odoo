@@ -21,6 +21,15 @@ BASELINE_FILE = "formal_business_product_menu_policy_v1.json"
 PRODUCT_KEYS = ("construction.standard", "construction.preview")
 OUTPUT_JSON_NAME = "formal_product_menu_policy_restore_v1.json"
 ACTIVATED_MENU_XMLIDS: list[str] = []
+CONFIG_CENTER_GROUP_LABEL = "配置中心"
+CONFIG_CENTER_LOWCODING_LABEL = "低代码系统配置"
+LEGACY_CONFIG_GROUP_LABELS = {"基础设置", "系统设置", "业务配置"}
+CONFIG_CENTER_LOWCODING_MENU_XMLIDS = {
+    "smart_construction_core.menu_sc_business_config_workbench",
+    "smart_construction_core.menu_ui_menu_config_policy_business_config",
+    "smart_construction_core.menu_ui_form_field_policy_business_config",
+    "smart_construction_core.menu_ui_form_custom_field_wizard_business_config",
+}
 FORMAL_MASTER_DATA_MENU_CONFIG = (
     {
         "xmlid": "smart_construction_core.menu_sc_master_data_center",
@@ -147,19 +156,73 @@ def _hydrate_menu_row(menu: dict) -> dict:
     return row
 
 
+def _canonical_group_label(label: str) -> str:
+    label = _text(label)
+    if label in LEGACY_CONFIG_GROUP_LABELS:
+        return CONFIG_CENTER_GROUP_LABEL
+    return label
+
+
+def _normalize_menu_for_group(menu: dict, *, canonical_label: str, legacy_label: str) -> dict:
+    row = dict(menu or {})
+    menu_xmlid = _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
+    if canonical_label:
+        row["product_key"] = canonical_label
+    if legacy_label and canonical_label and legacy_label != canonical_label:
+        for key in ("visible_menu_path", "menu_complete_name"):
+            value = _text(row.get(key))
+            if value:
+                row[key] = value.replace(" / %s /" % legacy_label, " / %s /" % canonical_label).replace(
+                    "/%s/" % legacy_label,
+                    "/%s/" % canonical_label,
+                )
+    if canonical_label == CONFIG_CENTER_GROUP_LABEL and menu_xmlid in CONFIG_CENTER_LOWCODING_MENU_XMLIDS:
+        label = _text(row.get("label") or row.get("page_label") or row.get("name"))
+        if label:
+            row["visible_menu_path"] = "智慧施工管理平台 / %s / %s / %s" % (
+                CONFIG_CENTER_GROUP_LABEL,
+                CONFIG_CENTER_LOWCODING_LABEL,
+                label,
+            )
+        row["product_domain"] = "lowcode_system_config"
+        row["product_domain_label"] = CONFIG_CENTER_LOWCODING_LABEL
+        row["entry_intent"] = "config"
+        row["entry_intent_label"] = "配置"
+        row["policy_note"] = "config_center_lowcode_system_config_grouped"
+    return row
+
+
 def _hydrate_group(group: dict) -> dict:
     row = dict(group or {})
+    legacy_label = _text(row.get("group_label") or row.get("label") or row.get("title"))
+    canonical_label = _canonical_group_label(legacy_label)
+    row["group_label"] = canonical_label
+    row["group_key"] = "construction.%s" % canonical_label if canonical_label else _text(row.get("group_key"))
+    row["label"] = canonical_label or _text(row.get("label"))
+    row["title"] = canonical_label or _text(row.get("title"))
     menus = []
     for menu in row.get("menus") or []:
         if not isinstance(menu, dict):
             continue
-        menus.append(_hydrate_menu_row(menu))
+        menus.append(
+            _normalize_menu_for_group(
+                _hydrate_menu_row(menu),
+                canonical_label=canonical_label,
+                legacy_label=legacy_label,
+            )
+        )
     row["menus"] = menus
     return row
 
 
 def _hydrate_capability(row: dict) -> dict:
     payload = dict(row or {})
+    legacy_group_label = _text(payload.get("group_label"))
+    canonical_group_label = _canonical_group_label(legacy_group_label)
+    if canonical_group_label:
+        payload["group_label"] = canonical_group_label
+        payload["group_key"] = "construction.%s" % canonical_group_label
+        payload["product_key"] = canonical_group_label
     menu_xmlid = _text(payload.get("menu_xmlid") or payload.get("target_page_key"))
     if menu_xmlid:
         menu_record = env.ref(menu_xmlid, raise_if_not_found=False)  # noqa: F821
@@ -169,14 +232,39 @@ def _hydrate_capability(row: dict) -> dict:
             payload["target_page_key"] = menu_xmlid
             payload["action_id"] = int(action.id or 0)
             payload["res_model"] = _text(getattr(action, "res_model", "")) or _text(payload.get("res_model"))
+        if canonical_group_label == CONFIG_CENTER_GROUP_LABEL and menu_xmlid in CONFIG_CENTER_LOWCODING_MENU_XMLIDS:
+            label = _text(payload.get("label") or payload.get("name"))
+            if label:
+                payload["visible_menu_path"] = "智慧施工管理平台 / %s / %s / %s" % (
+                    CONFIG_CENTER_GROUP_LABEL,
+                    CONFIG_CENTER_LOWCODING_LABEL,
+                    label,
+                )
+            payload["product_domain"] = "lowcode_system_config"
     payload.pop("id", None)
     return payload
+
+
+def _merge_menu_groups(groups: list[dict]) -> list[dict]:
+    out = []
+    by_label = {}
+    for group in groups:
+        label = _text(group.get("group_label") or group.get("label"))
+        existing = by_label.get(label)
+        if existing is not None:
+            existing["menus"] = [*(existing.get("menus") or []), *(group.get("menus") or [])]
+            continue
+        by_label[label] = group
+        out.append(group)
+    return out
 
 
 def _hydrate_product(product: dict) -> dict:
     payload = dict(product or {})
     payload.pop("id", None)
-    payload["menu_groups"] = [_hydrate_group(group) for group in payload.get("menu_groups") or [] if isinstance(group, dict)]
+    payload["menu_groups"] = _merge_menu_groups(
+        [_hydrate_group(group) for group in payload.get("menu_groups") or [] if isinstance(group, dict)]
+    )
     payload["capabilities"] = [
         _hydrate_capability(row)
         for row in payload.get("capabilities") or []

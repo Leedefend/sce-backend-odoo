@@ -34,7 +34,7 @@ EXPECTED_FORMAL_TOP_GROUPS = (
     "财务中心",
     "人事行政",
     "资料证照",
-    "基础设置",
+    "配置中心",
     "税务中心",
 )
 REQUIRED_FORMAL_MENU_XMLIDS = (
@@ -42,6 +42,15 @@ REQUIRED_FORMAL_MENU_XMLIDS = (
     "smart_construction_core.menu_sc_supplier_partner",
 )
 FORMAL_MENU_CONFIG_MAX_EXTRA_MENU_COUNT = 80
+CONFIG_CENTER_GROUP_LABEL = "配置中心"
+CONFIG_CENTER_LOWCODING_LABEL = "低代码系统配置"
+LEGACY_CONFIG_GROUP_LABELS = {"基础设置", "系统设置", "业务配置"}
+CONFIG_CENTER_LOWCODING_MENU_XMLIDS = {
+    "smart_construction_core.menu_sc_business_config_workbench",
+    "smart_construction_core.menu_ui_menu_config_policy_business_config",
+    "smart_construction_core.menu_ui_form_field_policy_business_config",
+    "smart_construction_core.menu_ui_form_custom_field_wizard_business_config",
+}
 
 
 def _baseline_candidates() -> list[Path]:
@@ -99,11 +108,34 @@ def _released_policy_menu_count(product_key: str) -> int:
 
 
 def _policy_row(group_label: str, menu: dict) -> tuple[str, str, str]:
+    group_label = _canonical_group_label(group_label)
+    menu = _normalize_menu_for_group(menu, group_label)
     return (
         _text(group_label),
         _text(menu.get("label") or menu.get("name")),
         _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key")),
     )
+
+
+def _canonical_group_label(label: str) -> str:
+    label = _text(label)
+    if label in LEGACY_CONFIG_GROUP_LABELS:
+        return CONFIG_CENTER_GROUP_LABEL
+    return label
+
+
+def _normalize_menu_for_group(menu: dict, group_label: str) -> dict:
+    row = dict(menu or {})
+    menu_xmlid = _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
+    if group_label == CONFIG_CENTER_GROUP_LABEL and menu_xmlid in CONFIG_CENTER_LOWCODING_MENU_XMLIDS:
+        label = _text(row.get("label") or row.get("name") or row.get("page_label"))
+        if label:
+            row["visible_menu_path"] = "智慧施工管理平台 / %s / %s / %s" % (
+                CONFIG_CENTER_GROUP_LABEL,
+                CONFIG_CENTER_LOWCODING_LABEL,
+                label,
+            )
+    return row
 
 
 def _load_formal_baseline() -> dict[str, list[tuple[str, str, str]]]:
