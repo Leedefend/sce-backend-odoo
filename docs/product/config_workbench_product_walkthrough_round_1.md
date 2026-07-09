@@ -41,6 +41,7 @@
 | CW-P1-010 | P1 | 移动端选择业务页面后真实视口仍停在页面目录滚动位置，fullPage 截图看起来顺序正确但用户当前看不到配置任务入口 | `08-mobile-selected.png`、`09-mobile-viewport.png` | 已修复：移动端选页后自动回到当前配置区；门禁新增真实视口截图、首屏位置和 `scrollY` 证据 |
 | CW-P1-011 | P1 | 当前配置任务区把业务页面名称截断为“项目合...”，用户在核心任务区不能完整确认正在配置的对象 | `01-selected-from-scan.png` | 已修复：当前页面名允许换行完整展示；门禁新增视觉截断检测 |
 | CW-P1-012 | P1 | 点击列表与搜索后编辑面虽然进入首屏，但仍被上方卡片区压低，用户视线没有直接落到正在编辑的配置面 | `04-list-search-entry.png` | 已修复：编辑面打开后按固定顶栏留白定位到视口上部；门禁新增列表与审批编辑主焦点断言 |
+| CW-P1-013 | P1 | 证据目录残留旧截图，人工验收可能打开非本次报告引用的页面状态 | `artifacts/playwright/config-workbench-operation` | 已修复：验收运行前清理专题产物目录；门禁要求目录截图集合与本次报告完全一致 |
 | CW-P2-001 | P2 | 专业门禁能防回退，但不能替代主动走查；如果只扩展评分，容易产生“看起来专业但不发现问题”的假象 | 本轮讨论 | 已固化：新增本走查文档，后续迭代必须先走查再补门禁 |
 
 ## 已加入门禁
@@ -69,6 +70,7 @@
 - 移动端配置工作台顶栏必须是紧凑模式，不展示平台副标题。
 - 移动端选页后当前配置区必须进入真实视口首屏，不能只用 fullPage 截图证明整体顺序。
 - 当前配置区和直达态必须完整展示业务页面名称，不得用省略号截断核心对象。
+- 验收证据目录只能包含本次运行生成的截图，不能残留旧截图。
 - 默认可见界面不得展示字段技术名、技术参数或英文兜底标签。
 - 表单设计器所在全局顶栏必须显示当前配置页面上下文。
 
@@ -94,7 +96,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - `product_usability.score_total = 22 / 22`
 - `professional_readiness.status = professional_ready`
 - `professional_readiness.score_total = 30 / 30`
-- `assertion_passed_count = 34 / 34`
+- `assertion_passed_count = 35 / 35`
 - `formDesignerBusinessActionButtons = []`
 - `formDesignerShellTitle = 配置：项目合同汇总`
 - `pageStructureDesktop.currentConfig.overviewLabelTruncated = false`

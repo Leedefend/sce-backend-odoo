@@ -77,6 +77,7 @@ const ACCEPTANCE_COVERAGE = {
     "mobile_current_config_in_viewport",
     "mobile_configuration_topbar_compact",
     "mobile_no_horizontal_overflow",
+    "artifact_directory_exact",
     "no_console_errors",
     "no_request_failures",
   ],
@@ -163,6 +164,34 @@ async function capture(page, name, options = {}) {
   const filePath = path.join(ARTIFACT_ROOT, `${name}.png`);
   await page.screenshot({ path: filePath, fullPage: options.fullPage !== false });
   return filePath;
+}
+
+async function prepareArtifactRoot() {
+  const normalized = path.normalize(ARTIFACT_ROOT);
+  if (!normalized.endsWith(path.normalize("artifacts/playwright/config-workbench-operation"))) {
+    throw new Error(`Refuse to clean unexpected artifact directory: ${ARTIFACT_ROOT}`);
+  }
+  await fs.rm(ARTIFACT_ROOT, { recursive: true, force: true });
+  await fs.mkdir(ARTIFACT_ROOT, { recursive: true });
+}
+
+async function listArtifactEvidenceFiles() {
+  const files = await fs.readdir(ARTIFACT_ROOT).catch(() => []);
+  return files.filter((item) => item.endsWith(".png") || item === "report.json").sort();
+}
+
+function expectedArtifactPngFiles() {
+  return [
+    "01-selected-from-scan.png",
+    "02-switched-page.png",
+    "03-direct-selected.png",
+    "04-list-search-entry.png",
+    "05-approval-entry.png",
+    "06-form-designer-entry.png",
+    "07-menu-config.png",
+    "08-mobile-selected.png",
+    "09-mobile-viewport.png",
+  ];
 }
 
 async function visibleTechnicalTerms(page, scope = "body") {
@@ -645,7 +674,7 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
 }
 
 async function main() {
-  await fs.mkdir(ARTIFACT_ROOT, { recursive: true });
+  await prepareArtifactRoot();
   const executablePath = findCachedChromiumExecutable();
   const browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
@@ -892,6 +921,7 @@ async function main() {
     checks.mobileSnapshotSummaryCount = await page.locator(".workbench-status-rail .workbench-status-snapshot").count();
     screenshots.mobileSelected = await capture(page, "08-mobile-selected");
     screenshots.mobileViewport = await capture(page, "09-mobile-viewport", { fullPage: false });
+    checks.artifactEvidenceFiles = await listArtifactEvidenceFiles();
 
     assert(checks.scanRowsBeforeSelect >= 2 && checks.scanRowsAfterSelect >= 2, "业务页面列表选择后不应丢失", checks);
     assert(checks.selectedText.includes(CONFIG_PAGE_LABEL), "选择页面后未展示当前配置上下文", checks);
@@ -969,6 +999,11 @@ async function main() {
     );
     assert(checks.mobileConfigurationTopbar.platformEyebrowVisible === false, "移动端配置工作台顶栏不应展示平台副标题", checks);
     assert(checks.mobileBodyWidth.documentScrollWidth <= checks.mobileBodyWidth.innerWidth + 8, "移动端出现横向溢出", checks);
+    assert(
+      checks.artifactEvidenceFiles.join("|") === expectedArtifactPngFiles().join("|"),
+      "验收证据目录必须只包含本次运行生成的截图，不能混入历史截图",
+      checks,
+    );
     assert(consoleErrors.length === 0 && requestFailed.length === 0, "浏览器存在控制台错误或失败请求", { consoleErrors, requestFailed });
 
     const metrics = buildCoverageSummary({ screenshots, consoleErrors, requestFailed });

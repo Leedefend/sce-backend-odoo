@@ -65,8 +65,8 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 34 |
-| assertion_passed_count | 已通过断言数 | 34 |
+| assertion_count | 用户可感知断言数 | 35 |
+| assertion_passed_count | 已通过断言数 | 35 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -108,6 +108,8 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - `menuConfig`
 - `mobileSelected`
 - `mobileViewport`
+
+每次运行前必须清理本专题证据目录。运行后目录中只能保留本次报告引用的 9 张截图和 `report.json`，不得混入旧截图或旧报告中的页面状态。
 
 失败分类：
 
@@ -155,6 +157,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 表单设计器等配置态混入业务办理按钮，例如“保存草稿”“提交”，导致配置动作与业务提交动作混淆。
 - 页面结构在 390px 移动端出现横向溢出、主要按钮不可见、内容遮挡或顺序反常。
 - 出现空白页、骨架常驻、加载完成后无解释的空状态。
+- 验收证据目录混入历史截图，导致人工看图结论可能引用旧页面状态。
 - 出现 console error、非取消类 failed request 或未处理异常。
 
 ### 量化评分
@@ -306,7 +309,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 34 / 34`
+- `assertion_passed_count = 35 / 35`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`
