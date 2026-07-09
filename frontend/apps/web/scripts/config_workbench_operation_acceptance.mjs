@@ -98,6 +98,7 @@ const ACCEPTANCE_COVERAGE = {
     "menu_side_sections_complete",
     "menu_tree_not_empty",
     "menu_tree_search_feedback_visible",
+    "menu_workspace_aligned_with_header",
     "menu_save_action_label_consistent",
     "menu_create_panel_close_label_consistent",
     "menu_action_labels_object_consistent",
@@ -1114,6 +1115,28 @@ async function main() {
     ));
     checks.menuTreeHead = await page.locator(".menu-config-tree .tree-panel-head").innerText();
     checks.menuTreeRows = await page.locator(".menu-config-tree .tree-scroll .tree-node").count();
+    checks.menuWorkspaceAlignment = await page.evaluate(() => {
+      const header = document.querySelector(".menu-config-header");
+      const workspace = document.querySelector(".menu-config-workspace");
+      const headerRect = header?.getBoundingClientRect();
+      const workspaceRect = workspace?.getBoundingClientRect();
+      if (!headerRect || !workspaceRect) return { ready: false, leftDelta: null, rightDelta: null };
+      return {
+        ready: true,
+        header: {
+          left: Math.round(headerRect.left),
+          right: Math.round(headerRect.right),
+          width: Math.round(headerRect.width),
+        },
+        workspace: {
+          left: Math.round(workspaceRect.left),
+          right: Math.round(workspaceRect.right),
+          width: Math.round(workspaceRect.width),
+        },
+        leftDelta: Math.round(Math.abs(headerRect.left - workspaceRect.left)),
+        rightDelta: Math.round(Math.abs(headerRect.right - workspaceRect.right)),
+      };
+    });
     checks.menuSearchInputCount = await page.locator(".menu-config-tree .tree-search input").count();
     checks.menuSearchSummaryText = await page.locator(".menu-config-tree .tree-search-summary span").innerText();
     checks.menuSearchClearButtonCount = await page.locator(".menu-config-tree .tree-clear-filter").count();
@@ -1391,6 +1414,13 @@ async function main() {
     );
     assert(checks.menuSideSections.join("|") === "新增入口|批量维护|检查发布", "菜单配置侧栏操作分组不完整", checks);
     assert(checks.menuTreeRows > 0 && !checks.menuTreeHead.includes("0 个可配置菜单"), "从配置工作台进入菜单配置后菜单目录为空", checks);
+    assert(
+      checks.menuWorkspaceAlignment?.ready === true
+      && checks.menuWorkspaceAlignment?.leftDelta <= 1
+      && checks.menuWorkspaceAlignment?.rightDelta <= 1,
+      "菜单配置主工作区外边界必须与页面头部对齐，不能整体缩进形成视觉断层",
+      checks,
+    );
     assert(
       checks.menuSearchInputCount > 0
       && checks.menuSearchClearButtonCount > 0

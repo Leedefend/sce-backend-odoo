@@ -2765,7 +2765,7 @@ h1 {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
   min-height: 0;
-  padding: 0 18px 18px;
+  padding: 0 0 18px;
 }
 
 .menu-config-tree {
