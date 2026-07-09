@@ -99,6 +99,7 @@ const ACCEPTANCE_COVERAGE = {
     "menu_save_action_label_consistent",
     "menu_create_panel_close_label_consistent",
     "menu_action_labels_object_consistent",
+    "menu_side_panel_no_bulk_overlap",
     "return_context_retained",
     "mobile_config_before_picker",
     "mobile_current_config_in_viewport",
@@ -1043,6 +1044,36 @@ async function main() {
     checks.menuActionLabelsAfterBulkOpen = await page.locator(".menu-config-page button").evaluateAll((buttons) => (
       buttons.map((button) => button.textContent?.trim()).filter(Boolean)
     ));
+    await page.locator(".menu-bulk-panel").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(100);
+    checks.menuBulkOverlapEvidence = await page.evaluate(() => {
+      const bulk = document.querySelector(".menu-bulk-panel");
+      const side = document.querySelector(".menu-side-panel");
+      if (!bulk || !side) return { ready: false, blockedBySidePanel: true };
+      const bulkRect = bulk.getBoundingClientRect();
+      const sideRect = side.getBoundingClientRect();
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      const x = Math.min(Math.max(bulkRect.right - 24, bulkRect.left + 24), viewportWidth - 24);
+      const y = Math.min(Math.max(bulkRect.top + 96, 24), viewportHeight - 24);
+      const topElement = document.elementFromPoint(x, y);
+      return {
+        ready: true,
+        blockedBySidePanel: Boolean(topElement && side.contains(topElement)),
+        sample: { x: Math.round(x), y: Math.round(y) },
+        bulkRect: {
+          top: Math.round(bulkRect.top),
+          right: Math.round(bulkRect.right),
+          bottom: Math.round(bulkRect.bottom),
+        },
+        sideRect: {
+          top: Math.round(sideRect.top),
+          right: Math.round(sideRect.right),
+          bottom: Math.round(sideRect.bottom),
+        },
+        topElementClass: topElement instanceof HTMLElement ? topElement.className : "",
+      };
+    });
     checks.menuConfigVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".menu-config-page");
     screenshots.menuConfig = await capture(page, "07-menu-config");
     await page.getByRole("button", { name: "返回配置工作台" }).click();
@@ -1281,6 +1312,12 @@ async function main() {
       && !["刷新", "新增同级", "新增下级", "复制当前入口", "查看配置说明", "生效检查", "版本与回滚", "展开批量编辑表格", "展开批量调整", "收起批量调整", "展开", "收起"]
         .some((label) => [...(checks.menuActionLabels || []), ...(checks.menuActionLabelsAfterBulkOpen || [])].includes(label)),
       "菜单配置页辅助动作必须携带菜单对象，不能使用泛化动作标签",
+      checks,
+    );
+    assert(
+      checks.menuBulkOverlapEvidence?.ready === true
+      && checks.menuBulkOverlapEvidence?.blockedBySidePanel === false,
+      "菜单配置滚动到批量维护区后，右侧摘要栏不能悬浮遮挡批量表格",
       checks,
     );
     assert(checks.returnedTitle.includes(CONFIG_PAGE_LABEL) && checks.returnedCards.includes("菜单入口"), "菜单配置返回工作台后上下文丢失", checks);

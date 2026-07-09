@@ -3219,10 +3219,9 @@ h1 {
 }
 
 .menu-side-panel {
-  position: sticky;
-  top: 12px;
   display: grid;
   gap: 0;
+  align-self: start;
   min-width: 0;
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
