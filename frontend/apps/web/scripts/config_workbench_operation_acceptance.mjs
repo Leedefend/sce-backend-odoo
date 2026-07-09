@@ -66,6 +66,7 @@ const ACCEPTANCE_COVERAGE = {
     "direct_delivery_status_default_user_task_only",
     "delivery_status_default_snapshot_hidden",
     "version_panel_close_label_consistent",
+    "version_panel_action_labels_object_consistent",
     "list_search_editor_visible",
     "list_search_tabs_complete",
     "default_visible_technical_terms_hidden",
@@ -938,6 +939,9 @@ async function main() {
     checks.versionPanelTitle = await versionPanel.locator("h2").innerText();
     checks.versionPanelCloseButtonCount = await versionPanel.getByRole("button", { name: "收起版本记录" }).count();
     checks.versionPanelLegacyCloseButtonCount = await versionPanel.getByRole("button", { name: "关闭" }).count();
+    checks.versionPanelActionLabels = await versionPanel.locator("button").evaluateAll((buttons) => (
+      buttons.map((button) => button.textContent?.trim()).filter(Boolean)
+    ));
 
     await openDirectSelectedWorkbench(page);
     await clickConfigCardButton(page, "列表与搜索", "配置列表与搜索");
@@ -1127,6 +1131,12 @@ async function main() {
       && checks.versionPanelCloseButtonCount > 0
       && checks.versionPanelLegacyCloseButtonCount === 0,
       "配置版本记录面板必须提供明确收起版本记录动作，不能使用关闭模糊标签",
+      checks,
+    );
+    assert(
+      checks.versionPanelActionLabels?.includes("恢复上一版本配置")
+      && !["恢复上一版", "恢复此版本", "当前版本"].some((label) => checks.versionPanelActionLabels?.includes(label)),
+      "配置版本记录面板的恢复动作必须携带配置对象，不能使用泛化版本动作标签",
       checks,
     );
     assert([

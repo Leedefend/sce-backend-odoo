@@ -732,7 +732,7 @@
                 :disabled="versionsLoading || listSearchSaving || version.version_no === contract.version_no"
                 @click="rollbackContractFromWorkbench(contract, version.version_no)"
               >
-                {{ version.version_no === contract.version_no ? '当前版本' : '恢复此版本' }}
+                {{ version.version_no === contract.version_no ? '当前生效版本' : '恢复到此版本配置' }}
               </button>
             </div>
           </div>
@@ -1967,7 +1967,7 @@ function versionContractImpactText(contract: BusinessConfigContractVersionsPaylo
 }
 
 function versionRollbackButtonLabel(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
-  return contract.versions.length < 2 ? '暂无可回滚版本' : '恢复上一版';
+  return contract.versions.length < 2 ? '暂无可回滚版本' : '恢复上一版本配置';
 }
 
 function versionContractDecisionText(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {

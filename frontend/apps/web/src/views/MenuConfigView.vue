@@ -1009,7 +1009,7 @@ const selectedRollbackVersion = computed(() => {
 const rollbackButtonText = computed(() => {
   if (!versionState.value?.contract) return '先查看版本';
   if (!canRollbackMenuConfiguration.value) return '暂无可回滚版本';
-  return selectedVersionNo.value ? `回滚到版本 ${selectedVersionNo.value}` : '回滚上一版';
+  return selectedVersionNo.value ? `回滚到版本 ${selectedVersionNo.value} 菜单配置` : '回滚到上一版本菜单配置';
 });
 
 const rollbackButtonDisabled = computed(() => (

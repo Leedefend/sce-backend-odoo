@@ -95,8 +95,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 18 |
 | action_passed_count | 已成功执行的关键动作数 | 18 |
-| assertion_count | 用户可感知断言数 | 54 |
-| assertion_passed_count | 已通过断言数 | 54 |
+| assertion_count | 用户可感知断言数 | 55 |
+| assertion_passed_count | 已通过断言数 | 55 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -116,6 +116,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - 直达已选页面的配置卡片、交付状态和顶部范围动作。
 - 默认交付状态只展示用户任务相关的表单、列表搜索、菜单、审批四项状态，不展示配置快照等内部审计信息。
 - 配置版本记录面板必须能从任务卡打开，并提供明确“收起版本记录”动作，不得使用“关闭”模糊标签。
+- 配置版本记录面板的版本恢复动作必须携带配置对象，不得使用“恢复上一版”“恢复此版本”“当前版本”等泛化标签。
 - 列表搜索面板标题、配置类型页签、字段配置画布。
 - 列表搜索面板必须提供明确“返回工作台”动作。
 - 列表搜索保存动作必须明确使用“保存列表与搜索”，不得使用“保存设置”模糊标签。
@@ -357,7 +358,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 18 / 18`
-- `assertion_passed_count = 54 / 54`
+- `assertion_passed_count = 55 / 55`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`
