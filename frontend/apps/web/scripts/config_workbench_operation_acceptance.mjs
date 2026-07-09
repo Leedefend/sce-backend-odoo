@@ -47,6 +47,7 @@ const ACCEPTANCE_COVERAGE = {
   assertions: [
     "page_picker_retained_after_select",
     "selected_context_visible",
+    "selected_page_label_not_truncated",
     "selected_cards_complete",
     "search_result_exact",
     "switch_title_synced",
@@ -282,6 +283,8 @@ function buildPageStructureResult(checks) {
   const mobileViewport = checks.mobileViewport || {};
   const desktopSelectedPass = String(desktop.headerTitle || "").includes(CONFIG_PAGE_LABEL)
     && desktop.currentConfig?.count === 1
+    && desktop.currentConfig?.overviewLabel === CONFIG_PAGE_LABEL
+    && desktop.currentConfig?.overviewLabelTruncated === false
     && expectedCards.every((item) => desktop.currentConfig?.cardTitles?.includes(item))
     && desktop.pageDirectory?.count === 1
     && desktop.pageDirectory?.searchControlCount === 1
@@ -291,6 +294,8 @@ function buildPageStructureResult(checks) {
     && desktop.crossZoneLeakage?.directoryRowsInsideConfig === 0;
   const directStartPass = String(directStart.headerTitle || "").includes(CONFIG_PAGE_LABEL)
     && directStart.topContext?.count === 1
+    && directStart.topContext?.overviewLabel === CONFIG_PAGE_LABEL
+    && directStart.topContext?.overviewLabelTruncated === false
     && directStart.currentConfig?.count === 1
     && expectedCards.every((item) => directStart.currentConfig?.cardTitles?.includes(item))
     && directStart.deliveryStatus?.count === 1
@@ -353,7 +358,11 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && expectedCards.every((item) => checks.directStartCards?.includes(item));
   const pageContextVisible = String(checks.selectedText || "").includes(CONFIG_PAGE_LABEL)
     && String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL)
-    && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL);
+    && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL)
+    && checks.pageStructureDesktop?.currentConfig?.overviewLabel === CONFIG_PAGE_LABEL
+    && checks.pageStructureDesktop?.currentConfig?.overviewLabelTruncated === false
+    && checks.directStartStructure?.topContext?.overviewLabel === CONFIG_PAGE_LABEL
+    && checks.directStartStructure?.topContext?.overviewLabelTruncated === false;
   const entryNamesStable = checks.cardsAfterSelect?.join("|") === checks.directStartCards?.join("|")
     && checks.formDesignerReturnButtonCount > 0;
   const listSearchUsable = checks.listSearchTitle === "列表与搜索设置"
@@ -679,10 +688,18 @@ async function main() {
           display: el ? getComputedStyle(el).display : null,
         };
       };
+      const labelInfo = (selector) => {
+        const el = document.querySelector(selector);
+        return {
+          overviewLabel: el?.textContent?.trim() || "",
+          overviewLabelTruncated: el ? el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1 : true,
+        };
+      };
       return {
         headerTitle: document.querySelector(".business-config-header h1")?.textContent?.trim() || "",
         currentConfig: {
           ...rectInfo(".page-config-panel"),
+          ...labelInfo(".page-config-panel .selected-page-overview strong"),
           overviewCount: document.querySelectorAll(".page-config-panel .selected-page-overview").length,
           cardTitles: Array.from(document.querySelectorAll(".page-config-panel [data-lowcode-config-task-card='v1'] h2"))
             .map((node) => node.textContent?.trim())
@@ -739,10 +756,18 @@ async function main() {
           display: el ? getComputedStyle(el).display : null,
         };
       };
+      const labelInfo = (selector) => {
+        const el = document.querySelector(selector);
+        return {
+          overviewLabel: el?.textContent?.trim() || "",
+          overviewLabelTruncated: el ? el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1 : true,
+        };
+      };
       return {
         headerTitle: document.querySelector(".business-config-header h1")?.textContent?.trim() || "",
         topContext: {
           ...rectInfo(".workbench-start-lead"),
+          ...labelInfo(".workbench-start-lead strong"),
           actionCount: document.querySelectorAll(".workbench-start-lead button").length,
         },
         currentConfig: {
@@ -862,6 +887,14 @@ async function main() {
 
     assert(checks.scanRowsBeforeSelect >= 2 && checks.scanRowsAfterSelect >= 2, "业务页面列表选择后不应丢失", checks);
     assert(checks.selectedText.includes(CONFIG_PAGE_LABEL), "选择页面后未展示当前配置上下文", checks);
+    assert(
+      checks.pageStructureDesktop.currentConfig.overviewLabel === CONFIG_PAGE_LABEL
+      && checks.pageStructureDesktop.currentConfig.overviewLabelTruncated === false
+      && checks.directStartStructure.topContext.overviewLabel === CONFIG_PAGE_LABEL
+      && checks.directStartStructure.topContext.overviewLabelTruncated === false,
+      "当前配置区必须完整展示业务页面名称，不能用省略号截断核心对象",
+      checks,
+    );
     assert(checks.cardsAfterSelect.includes("表单字段与布局") && checks.cardsAfterSelect.includes("列表与搜索"), "选择页面后配置卡片不完整", checks);
     assert(checks.searchRows.length === 1 && checks.searchRows[0] === SWITCH_PAGE_LABEL, "业务页面搜索结果不符合用户预期", checks);
     assert(checks.switchedTitle.includes(SWITCH_PAGE_LABEL), "切换页面后标题未同步", checks);

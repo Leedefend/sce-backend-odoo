@@ -4169,9 +4169,8 @@ h1 {
 
 .selected-page-overview strong {
   color: var(--sc-app-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .selected-page-overview-meta {

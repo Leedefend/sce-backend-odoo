@@ -65,8 +65,8 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 31 |
-| assertion_passed_count | 已通过断言数 | 31 |
+| assertion_count | 用户可感知断言数 | 32 |
+| assertion_passed_count | 已通过断言数 | 32 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -80,6 +80,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 - 业务页面列表选择前后数量。
 - 当前配置标题与配置卡片。
+- 当前配置区必须完整展示业务页面名称，不能用省略号截断核心对象。
 - 搜索结果与切换后的标题、配置卡片。
 - 直达已选页面的配置卡片与交付状态。
 - 默认交付状态只展示用户任务相关的表单、列表搜索、菜单、审批四项状态，不展示配置快照等内部审计信息。
@@ -139,6 +140,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 出现以下任一项，直接判定 `delivery_blocked`：
 
 - 用户进入页面后 5 秒内无法判断当前在配置哪个业务页面。
+- 当前配置区或直达态把业务页面名称截断，导致用户无法在任务区确认正在配置的核心对象。
 - 页面主任务不清晰，用户不知道下一步应该点击哪里。
 - 同一个能力在不同位置使用不同名称，导致认知不一致。
 - 主导航、配置工作台、菜单配置之间上下文丢失或口径不一致。
@@ -304,7 +306,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 31 / 31`
+- `assertion_passed_count = 32 / 32`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`
