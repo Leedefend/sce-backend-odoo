@@ -459,7 +459,7 @@
             <span class="menu-side-section-title">批量维护</span>
             <p>用于连续维护多条菜单；日常配置优先使用当前菜单面板。</p>
             <button type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
-              {{ bulkPanelOpen ? '收起批量调整' : '展开批量调整' }}
+              {{ bulkPanelOpen ? '收起批量维护表格' : '展开批量维护表格' }}
             </button>
           </div>
           <div class="menu-side-section menu-side-action-group menu-utility-section">
@@ -490,7 +490,7 @@
                 只看已配置
               </label>
               <button type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
-                {{ bulkPanelOpen ? '收起' : '展开' }}
+                {{ bulkPanelOpen ? '收起批量维护表格' : '展开批量维护表格' }}
               </button>
             </div>
           </div>

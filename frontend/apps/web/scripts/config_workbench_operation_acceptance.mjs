@@ -44,6 +44,7 @@ const ACCEPTANCE_COVERAGE = {
     "return_from_form_designer",
     "open_menu_config",
     "open_menu_create_panel",
+    "open_menu_bulk_panel",
     "return_to_workbench",
     "open_mobile_workbench",
     "mobile_select_page",
@@ -1025,6 +1026,10 @@ async function main() {
     checks.menuActionLabels = await page.locator(".menu-config-page button").evaluateAll((buttons) => (
       buttons.map((button) => button.textContent?.trim()).filter(Boolean)
     ));
+    await page.getByRole("button", { name: "展开批量维护表格" }).first().click();
+    checks.menuActionLabelsAfterBulkOpen = await page.locator(".menu-config-page button").evaluateAll((buttons) => (
+      buttons.map((button) => button.textContent?.trim()).filter(Boolean)
+    ));
     checks.menuConfigVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".menu-config-page");
     screenshots.menuConfig = await capture(page, "07-menu-config");
     await page.getByRole("button", { name: "返回配置工作台" }).click();
@@ -1245,10 +1250,10 @@ async function main() {
       checks,
     );
     assert(
-      ["刷新菜单配置", "新增同级菜单", "新增下级菜单", "复制当前菜单入口", "查看菜单配置说明", "检查菜单生效", "查看菜单版本与回滚", "展开批量维护表格"]
-        .every((label) => checks.menuActionLabels?.includes(label))
-      && !["刷新", "新增同级", "新增下级", "复制当前入口", "查看配置说明", "生效检查", "版本与回滚", "展开批量编辑表格"]
-        .some((label) => checks.menuActionLabels?.includes(label)),
+      ["刷新菜单配置", "新增同级菜单", "新增下级菜单", "复制当前菜单入口", "查看菜单配置说明", "检查菜单生效", "查看菜单版本与回滚", "展开批量维护表格", "收起批量维护表格"]
+        .every((label) => [...(checks.menuActionLabels || []), ...(checks.menuActionLabelsAfterBulkOpen || [])].includes(label))
+      && !["刷新", "新增同级", "新增下级", "复制当前入口", "查看配置说明", "生效检查", "版本与回滚", "展开批量编辑表格", "展开批量调整", "收起批量调整", "展开", "收起"]
+        .some((label) => [...(checks.menuActionLabels || []), ...(checks.menuActionLabelsAfterBulkOpen || [])].includes(label)),
       "菜单配置页辅助动作必须携带菜单对象，不能使用泛化动作标签",
       checks,
     );

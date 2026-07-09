@@ -93,8 +93,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | --- | --- | --- |
 | journey_count | 用户路径数 | 10 |
 | journey_passed_count | 已通过用户路径数 | 10 |
-| action_count | 脚本模拟的关键用户动作数 | 17 |
-| action_passed_count | 已成功执行的关键动作数 | 17 |
+| action_count | 脚本模拟的关键用户动作数 | 18 |
+| action_passed_count | 已成功执行的关键动作数 | 18 |
 | assertion_count | 用户可感知断言数 | 54 |
 | assertion_passed_count | 已通过断言数 | 54 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
@@ -356,7 +356,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 通过证据：
 
 - `journey_passed_count = 10 / 10`
-- `action_passed_count = 17 / 17`
+- `action_passed_count = 18 / 18`
 - `assertion_passed_count = 54 / 54`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
