@@ -53,6 +53,7 @@ const ACCEPTANCE_COVERAGE = {
     "selected_cards_complete",
     "search_result_exact",
     "switch_title_synced",
+    "switch_current_label_not_broken",
     "switch_cards_complete",
     "direct_selected_cards_visible",
     "direct_delivery_status_visible",
@@ -850,6 +851,15 @@ async function main() {
     }, SWITCH_PAGE_LABEL, { timeout: 60000 });
     await page.waitForTimeout(800);
     checks.switchedTitle = await page.locator(".business-config-header h1").innerText();
+    checks.switchedCurrentLabelLayout = await page.locator(".page-config-panel .selected-page-overview strong").evaluate((node) => {
+      const rects = Array.from(node.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0);
+      return {
+        text: node.textContent?.trim() || "",
+        lineCount: rects.length,
+        scrollWidth: node.scrollWidth,
+        clientWidth: node.clientWidth,
+      };
+    });
     checks.cardsAfterSwitch = await visibleCardTitles(page);
     screenshots.switchedPage = await capture(page, "02-switched-page");
 
@@ -1035,6 +1045,12 @@ async function main() {
     assert(checks.cardsAfterSelect.includes("表单字段与布局") && checks.cardsAfterSelect.includes("列表与搜索"), "选择页面后配置卡片不完整", checks);
     assert(checks.searchRows.length === 1 && checks.searchRows[0] === SWITCH_PAGE_LABEL, "业务页面搜索结果不符合用户预期", checks);
     assert(checks.switchedTitle.includes(SWITCH_PAGE_LABEL), "切换页面后标题未同步", checks);
+    assert(
+      checks.switchedCurrentLabelLayout.text === SWITCH_PAGE_LABEL
+      && checks.switchedCurrentLabelLayout.lineCount === 1,
+      "短业务页面名称在当前配置区不应被拆字换行",
+      checks,
+    );
     assert(checks.cardsAfterSwitch.includes("表单字段与布局") && checks.cardsAfterSwitch.includes("列表与搜索"), "切换页面后配置卡片不完整", checks);
     assert(checks.directStartCards.includes("表单字段与布局") && checks.directDeliveryStatusCount === 1, "直达已选页面缺少配置任务或交付状态", checks);
     assert(defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels), "默认交付状态不应展示内部审计指标", checks);

@@ -3845,7 +3845,8 @@ h1 {
   min-width: 0;
   color: var(--sc-app-text-primary);
   font-size: 18px;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: keep-all;
   white-space: normal;
 }
 
@@ -4199,7 +4200,8 @@ h1 {
 
 .selected-page-overview strong {
   color: var(--sc-app-text-primary);
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: keep-all;
   white-space: normal;
 }
 
