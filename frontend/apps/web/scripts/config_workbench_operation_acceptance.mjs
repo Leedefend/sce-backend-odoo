@@ -95,7 +95,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_field_create_panel_close_label_consistent",
     "form_designer_business_actions_hidden",
     "form_designer_side_panels_no_footer_overlap",
-    "lowcode_workspace_structural_gap_unified",
+    "product_workspace_structural_gap_unified",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
     "menu_tree_search_feedback_visible",
@@ -293,7 +293,7 @@ async function viewportEvidence(locator) {
   }));
 }
 
-async function lowcodeWorkspaceGapEvidence(page, items = []) {
+async function productWorkspaceGapEvidence(page, items = []) {
   return page.evaluate((selectors) => {
     const parsePx = (value) => {
       const parsed = Number(String(value || "").replace("px", ""));
@@ -960,7 +960,7 @@ async function main() {
         deliveryStatus: rectInfo(".workbench-start-status"),
       };
     });
-    checks.lowcodeWorkspaceGaps = await lowcodeWorkspaceGapEvidence(page, [
+    checks.productWorkspaceGaps = await productWorkspaceGapEvidence(page, [
       { page: "business_config", selector: ".workbench-start", scope: "direct_two_column_workbench" },
     ]);
     screenshots.directSelected = await capture(page, "03-direct-selected");
@@ -986,7 +986,7 @@ async function main() {
     checks.listSearchTabsPosition = await listSearchPanel.locator(".list-search-tabs").evaluate((node) => getComputedStyle(node).position);
     checks.listSearchCanvasCount = await listSearchPanel.locator(".field-chip-editor").count();
     checks.listSearchPanelViewport = await viewportEvidence(listSearchPanel);
-    checks.lowcodeWorkspaceGaps.push(...await lowcodeWorkspaceGapEvidence(page, [
+    checks.productWorkspaceGaps.push(...await productWorkspaceGapEvidence(page, [
       { page: "business_config", selector: ".edit-panel.config-editor-panel", scope: "list_search_inline_editor" },
     ]));
     checks.listSearchReturnWorkbenchButtonCount = await listSearchPanel.getByRole("button", { name: "返回工作台" }).count();
@@ -1088,7 +1088,7 @@ async function main() {
         .map((button) => button.textContent?.trim())
         .filter((text) => text === "保存草稿" || text === "提交")
     ));
-    checks.lowcodeWorkspaceGaps.push(...await lowcodeWorkspaceGapEvidence(page, [
+    checks.productWorkspaceGaps.push(...await productWorkspaceGapEvidence(page, [
       { page: "form_designer", selector: ".form-grid--designer-workspace", scope: "designer_three_column" },
       { page: "form_designer", selector: ".contract-form-designer-control-grid", scope: "designer_center_control_grid" },
     ]));
@@ -1190,7 +1190,7 @@ async function main() {
         maxPanelDelta: Math.max(0, ...panels.flatMap((item) => [item.leftDelta, item.rightDelta])),
       };
     });
-    checks.lowcodeWorkspaceGaps.push(...await lowcodeWorkspaceGapEvidence(page, [
+    checks.productWorkspaceGaps.push(...await productWorkspaceGapEvidence(page, [
       { page: "menu_config", selector: ".menu-config-workspace", scope: "menu_two_column_workspace" },
       { page: "menu_config", selector: ".menu-config-editor", scope: "menu_editor_columns" },
     ]));
@@ -1231,7 +1231,7 @@ async function main() {
         maxPanelDelta: Math.max(0, ...panels.flatMap((item) => [item.leftDelta, item.rightDelta])),
       };
     });
-    checks.lowcodeWorkspaceGaps.push(...await lowcodeWorkspaceGapEvidence(page, [
+    checks.productWorkspaceGaps.push(...await productWorkspaceGapEvidence(page, [
       { page: "menu_config", selector: ".menu-config-workspace", scope: "menu_two_column_after_create_open" },
       { page: "menu_config", selector: ".menu-config-editor", scope: "menu_editor_after_create_open" },
     ]));
@@ -1502,9 +1502,9 @@ async function main() {
       checks,
     );
     assert(
-      (checks.lowcodeWorkspaceGaps || []).length >= 8
-      && (checks.lowcodeWorkspaceGaps || []).every((item) => item.ready === true && item.columnGapPx === 0),
-      "低代码工作台结构分栏间隙必须纳入统一样式体系并保持为 0",
+      (checks.productWorkspaceGaps || []).length >= 8
+      && (checks.productWorkspaceGaps || []).every((item) => item.ready === true && item.columnGapPx === 0),
+      "产品页面结构分栏间隙必须纳入统一样式体系并保持为 0",
       checks,
     );
     assert(checks.menuSideSections.join("|") === "新增入口|批量维护|检查发布", "菜单配置侧栏操作分组不完整", checks);

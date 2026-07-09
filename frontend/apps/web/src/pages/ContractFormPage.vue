@@ -11821,7 +11821,7 @@ onBeforeUnmount(() => {
 .form-grid--designer-workspace {
   grid-template-columns: 240px minmax(0, 1fr) 360px;
   align-items: start;
-  gap: var(--sc-lowcode-workspace-gap);
+  gap: var(--sc-product-workspace-gap);
 }
 
 .card--flow .form-grid {
@@ -12171,7 +12171,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: minmax(220px, 0.72fr) minmax(320px, 1.28fr);
   align-items: start;
-  gap: var(--sc-lowcode-workspace-gap);
+  gap: var(--sc-product-workspace-gap);
 }
 
 .contract-form-designer-sidebar {
@@ -13306,7 +13306,7 @@ onBeforeUnmount(() => {
 
   .form-grid--designer-workspace,
   .contract-form-designer-control-grid {
-    row-gap: var(--sc-lowcode-panel-gap);
+    row-gap: var(--sc-product-workspace-stack-gap);
   }
 
   .form-grid--designer-workspace .contract-form-designer-sidebar,

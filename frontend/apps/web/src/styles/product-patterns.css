@@ -1,9 +1,13 @@
 /* Product-delivery UI patterns built on token system */
 
 :root {
-  --sc-lowcode-workspace-gap: 0px;
-  --sc-lowcode-panel-gap: 12px;
-  --sc-lowcode-panel-radius: 8px;
+  --sc-product-workspace-gap: 0px;
+  --sc-product-workspace-stack-gap: 12px;
+  --sc-product-panel-gap: 12px;
+  --sc-product-panel-radius: 8px;
+  --sc-lowcode-workspace-gap: var(--sc-product-workspace-gap);
+  --sc-lowcode-panel-gap: var(--sc-product-panel-gap);
+  --sc-lowcode-panel-radius: var(--sc-product-panel-radius);
 }
 
 .sc-page {
@@ -244,10 +248,22 @@
   padding: calc(var(--sc-component-dialog-padding) * 1px);
 }
 
+.sc-product-workspace {
+  gap: var(--sc-product-workspace-gap);
+}
+
+.sc-product-workspace-stack {
+  row-gap: var(--sc-product-workspace-stack-gap);
+}
+
+.sc-product-panel-gap {
+  gap: var(--sc-product-panel-gap);
+}
+
 .sc-lowcode-workspace {
-  gap: var(--sc-lowcode-workspace-gap);
+  gap: var(--sc-product-workspace-gap);
 }
 
 .sc-lowcode-panel-gap {
-  gap: var(--sc-lowcode-panel-gap);
+  gap: var(--sc-product-panel-gap);
 }

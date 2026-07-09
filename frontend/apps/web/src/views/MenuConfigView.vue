@@ -184,7 +184,7 @@
       </div>
     </section>
 
-    <div class="menu-config-workspace sc-lowcode-workspace">
+    <div class="menu-config-workspace sc-product-workspace sc-lowcode-workspace">
       <aside class="menu-config-tree">
         <div class="tree-panel-head">
           <div>
@@ -2765,7 +2765,7 @@ h1 {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
   min-height: 0;
-  gap: var(--sc-lowcode-workspace-gap);
+  gap: var(--sc-product-workspace-gap);
   padding: 0 0 18px;
 }
 
@@ -3016,7 +3016,7 @@ h1 {
   grid-template-columns: minmax(0, 1fr) 260px;
   align-content: start;
   align-items: start;
-  gap: var(--sc-lowcode-workspace-gap);
+  gap: var(--sc-product-workspace-gap);
   border: 1px solid var(--sc-app-border);
   padding: 12px;
   background: var(--sc-app-panel);
@@ -3620,12 +3620,12 @@ tr.dirty td:first-child {
 
   .menu-config-workspace {
     grid-template-columns: 1fr;
-    row-gap: var(--sc-lowcode-panel-gap);
+    row-gap: var(--sc-product-workspace-stack-gap);
   }
 
   .menu-config-editor {
     grid-template-columns: 1fr;
-    row-gap: var(--sc-lowcode-panel-gap);
+    row-gap: var(--sc-product-workspace-stack-gap);
   }
 
   .menu-side-panel,
