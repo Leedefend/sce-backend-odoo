@@ -802,8 +802,12 @@ verify.contract_product_menu.release: guard.prod.forbid check-compose-project ch
 verify.construction_product_menu.release: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/construction_product_menu_release_audit.py
 
+.PHONY: policy.sync.config_center_menu_baseline
 verify.production_menu.release_gate.guard.prod: guard.prod.readonly check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) PROD_READONLY_VERIFY=1 bash scripts/ops/odoo_shell_exec.sh < scripts/verify/production_menu_release_gate_guard.py
+
+policy.sync.config_center_menu_baseline: guard.prod.danger check-compose-project check-compose-env
+	@$(RUN_ENV) APPLY="$(APPLY)" DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/ops/config_center_menu_baseline_sync.py
 
 policy.restore.formal_product_menu: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/ops/formal_product_menu_policy_restore.py
