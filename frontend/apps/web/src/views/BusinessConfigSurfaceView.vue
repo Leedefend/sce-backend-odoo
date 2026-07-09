@@ -673,7 +673,7 @@
           <p>{{ versionPanelDescription }}</p>
         </div>
         <button type="button" class="ghost small" :disabled="versionsLoading" @click="versionsPanelOpen = false">
-          关闭
+          收起版本记录
         </button>
       </div>
       <div class="version-guide">

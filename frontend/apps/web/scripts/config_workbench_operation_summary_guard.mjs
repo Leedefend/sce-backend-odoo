@@ -67,8 +67,8 @@ async function main() {
   assertEqual(summary.menuTreeHead, report.checks?.menuTreeHead || "", "summary menu tree head drifted");
 
   if (summary.ok !== true) fail("config workbench summary is not ok", { summary });
-  if (summary.assertion !== "52/52") fail("config workbench assertion gate is not complete", { summary });
-  if (summary.journeys !== "10/10" || summary.actions !== "16/16") fail("config workbench journey/action gate is not complete", { summary });
+  if (summary.assertion !== "53/53") fail("config workbench assertion gate is not complete", { summary });
+  if (summary.journeys !== "10/10" || summary.actions !== "17/17") fail("config workbench journey/action gate is not complete", { summary });
   if (summary.screenshots !== "9/9") fail("config workbench screenshot gate is not complete", { summary });
   if (summary.delivery !== "delivery_ready" || summary.professional !== "professional_ready") fail("config workbench readiness status is not complete", { summary });
   if (summary.consoleErrors !== 0 || summary.requestFailed !== 0) fail("config workbench browser health is not clean", { summary });

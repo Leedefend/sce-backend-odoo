@@ -37,6 +37,7 @@ const ACCEPTANCE_COVERAGE = {
     "select_page",
     "switch_page",
     "open_direct_selected_url",
+    "open_version_panel",
     "open_list_search_config",
     "open_approval_config",
     "open_form_designer",
@@ -63,6 +64,7 @@ const ACCEPTANCE_COVERAGE = {
     "delivery_status_default_user_task_only",
     "direct_delivery_status_default_user_task_only",
     "delivery_status_default_snapshot_hidden",
+    "version_panel_close_label_consistent",
     "list_search_editor_visible",
     "list_search_tabs_complete",
     "default_visible_technical_terms_hidden",
@@ -928,6 +930,13 @@ async function main() {
     });
     screenshots.directSelected = await capture(page, "03-direct-selected");
 
+    await clickConfigCardButton(page, "表单字段与布局", "版本记录");
+    const versionPanel = page.locator(".version-panel");
+    await versionPanel.waitFor({ state: "visible", timeout: 60000 });
+    checks.versionPanelTitle = await versionPanel.locator("h2").innerText();
+    checks.versionPanelCloseButtonCount = await versionPanel.getByRole("button", { name: "收起版本记录" }).count();
+    checks.versionPanelLegacyCloseButtonCount = await versionPanel.getByRole("button", { name: "关闭" }).count();
+
     await openDirectSelectedWorkbench(page);
     await clickConfigCardButton(page, "列表与搜索", "配置列表与搜索");
     const listSearchPanel = page.locator(".edit-panel").filter({ hasText: "列表与搜索设置" });
@@ -1104,6 +1113,13 @@ async function main() {
     assert(defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels), "默认交付状态不应展示内部审计指标", checks);
     assert(defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels), "直达态默认交付状态不应展示内部审计指标", checks);
     assert(checks.defaultSnapshotSummaryCount === 0 && checks.mobileSnapshotSummaryCount === 0, "默认交付状态不应展示配置快照审计信息", checks);
+    assert(
+      String(checks.versionPanelTitle || "").includes("版本")
+      && checks.versionPanelCloseButtonCount > 0
+      && checks.versionPanelLegacyCloseButtonCount === 0,
+      "配置版本记录面板必须提供明确收起版本记录动作，不能使用关闭模糊标签",
+      checks,
+    );
     assert([
       ...(checks.selectedVisibleTechnicalTerms || []),
       ...(checks.directStartVisibleTechnicalTerms || []),
