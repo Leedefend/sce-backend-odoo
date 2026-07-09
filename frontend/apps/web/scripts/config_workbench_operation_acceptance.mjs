@@ -53,6 +53,8 @@ const ACCEPTANCE_COVERAGE = {
     "switch_cards_complete",
     "direct_selected_cards_visible",
     "direct_delivery_status_visible",
+    "delivery_status_default_user_task_only",
+    "direct_delivery_status_default_user_task_only",
     "list_search_editor_visible",
     "list_search_tabs_complete",
     "list_search_editor_focused_after_entry",
@@ -169,6 +171,20 @@ async function visibleTechnicalTerms(page, scope = "body") {
     .map((item) => String(item || "").trim())
     .filter(Boolean)
     .filter((item, index, items) => items.indexOf(item) === index);
+}
+
+async function deliveryReadinessLabels(page, scope) {
+  return page.locator(`${scope} .delivery-readiness-item span`).evaluateAll((nodes) => (
+    nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+  ));
+}
+
+function defaultDeliveryReadinessIsUserTaskOnly(labels = []) {
+  const expected = ["表单配置", "列表与搜索配置", "菜单配置", "审批配置"];
+  return labels.length === expected.length
+    && expected.every((label) => labels.includes(label))
+    && !labels.includes("版本与快照")
+    && !labels.includes("覆盖检查");
 }
 
 async function viewportEvidence(locator) {
@@ -349,6 +365,8 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && checks.mobileOrder?.[1]?.top < checks.mobileOrder?.[2]?.top
     && checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8;
   const browserHealthy = consoleErrors.length === 0 && requestFailed.length === 0 && metrics?.health_passed === true;
+  const defaultDeliveryStatusFocused = defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels)
+    && defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels);
   const visibleTechnicalTermsClean = [
     ...(checks.selectedVisibleTechnicalTerms || []),
     ...(checks.directStartVisibleTechnicalTerms || []),
@@ -409,7 +427,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   const dimensions = {
     current_context: scoreResult(pageContextVisible ? 2 : 0, "标题、卡片和返回路径必须指向当前业务页面。"),
     page_structure: scoreResult(pageStructure.status === "pass" ? 2 : 0, "页面必须符合配置工作台结构合同。"),
-    information_architecture: scoreResult(cardsComplete && checks.directDeliveryStatusCount === 1 && pageStructure.status === "pass" ? 2 : 0, "配置任务、页面目录和交付状态必须层级清晰。"),
+    information_architecture: scoreResult(cardsComplete && checks.directDeliveryStatusCount === 1 && pageStructure.status === "pass" && defaultDeliveryStatusFocused ? 2 : 0, "配置任务、页面目录和交付状态必须层级清晰，默认只展示用户任务状态。"),
     operation_convention: scoreResult(searchUsable && formUsable && listSearchUsable && approvalUsable && menuUsable && editorFocusReady && formDesignerActionHygieneReady ? 2 : 0, "搜索、选择、配置、返回必须符合常见后台产品习惯。"),
     entry_naming: scoreResult(entryNamesStable ? 2 : 0, "同一能力的入口命名必须稳定且使用业务语言。"),
     task_efficiency: scoreResult(formUsable && listSearchUsable && approvalUsable && menuUsable && editorFocusReady ? 2 : 0, "关键配置任务必须能从卡片主入口直接进入并进入当前编辑焦点。"),
@@ -429,6 +447,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   if (!cardsComplete) blockingIssues.push("config_task_cards_incomplete");
   if (!entryNamesStable) blockingIssues.push("capability_entry_naming_inconsistent");
   if (!formUsable || !listSearchUsable || !approvalUsable || !menuUsable) blockingIssues.push("capability_entry_not_product_usable");
+  if (!defaultDeliveryStatusFocused) blockingIssues.push("delivery_status_default_noise_leaked");
   if (!editorFocusReady) blockingIssues.push("config_editor_not_focused_after_entry");
   if (!formDesignerActionHygieneReady) blockingIssues.push("form_designer_business_actions_leaked");
   if (pageStructure.status !== "pass") blockingIssues.push("page_structure_contract_failed");
@@ -498,7 +517,9 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     && cardsStable
     && checks.pageStructureDesktop?.pageDirectory?.rowCount >= 2
     && checks.pageStructureDesktop?.pageDirectory?.searchControlCount === 1
-    && checks.pageStructureDesktop?.pageDirectory?.filterControlCount >= 3;
+    && checks.pageStructureDesktop?.pageDirectory?.filterControlCount >= 3
+    && defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels)
+    && defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels);
   const capabilityDepthReady = checks.formDesignerTitle === "当前页面字段配置"
     && checks.listSearchTabs?.join("|") === "列表列|搜索条件|默认分组"
     && checks.approvalRulePanelCount === 1
@@ -522,6 +543,8 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       rowCount: checks.pageStructureDesktop?.pageDirectory?.rowCount,
       searchControlCount: checks.pageStructureDesktop?.pageDirectory?.searchControlCount,
       filterControlCount: checks.pageStructureDesktop?.pageDirectory?.filterControlCount,
+      deliveryReadinessLabels: checks.deliveryReadinessLabels,
+      directDeliveryReadinessLabels: checks.directDeliveryReadinessLabels,
     }),
     naming_and_language_consistency: professionalScore(cardsStable && !visibleTechnicalTerms.length, "专业产品必须全链路名称稳定并默认使用业务语言。", { cards, directCards, visibleTechnicalTerms }),
     capability_depth: professionalScore(capabilityDepthReady && editorFocusReady && actionSemanticsReady, "专业产品不能只到入口，表单、列表搜索、审批、菜单必须进入可操作配置面，并且进入后焦点和动作语义清楚。", {
@@ -615,6 +638,7 @@ async function main() {
     checks.cardsAfterSelect = await visibleCardTitles(page);
     checks.scanRowsAfterSelect = await page.locator(".scan-row").count();
     checks.selectedVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".scan-panel");
+    checks.deliveryReadinessLabels = await deliveryReadinessLabels(page, ".workbench-status-rail");
     checks.pageStructureDesktop = await page.evaluate(() => {
       const rectInfo = (selector) => {
         const el = document.querySelector(selector);
@@ -673,6 +697,7 @@ async function main() {
     await openDirectSelectedWorkbench(page);
     checks.directStartCards = await visibleCardTitles(page, '[data-lowcode-workbench-ia="start"]');
     checks.directDeliveryStatusCount = await page.locator('[data-lowcode-delivery-readiness="low_code_delivery_readiness.v1"]').count();
+    checks.directDeliveryReadinessLabels = await deliveryReadinessLabels(page, ".workbench-start-status");
     checks.directStartVisibleTechnicalTerms = await visibleTechnicalTerms(page, "[data-lowcode-workbench-ia='start']");
     checks.directStartStructure = await page.evaluate(() => {
       const rectInfo = (selector) => {
@@ -793,6 +818,8 @@ async function main() {
     assert(checks.switchedTitle.includes(SWITCH_PAGE_LABEL), "切换页面后标题未同步", checks);
     assert(checks.cardsAfterSwitch.includes("表单字段与布局") && checks.cardsAfterSwitch.includes("列表与搜索"), "切换页面后配置卡片不完整", checks);
     assert(checks.directStartCards.includes("表单字段与布局") && checks.directDeliveryStatusCount === 1, "直达已选页面缺少配置任务或交付状态", checks);
+    assert(defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels), "默认交付状态不应展示内部审计指标", checks);
+    assert(defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels), "直达态默认交付状态不应展示内部审计指标", checks);
     assert(
       checks.listSearchTitle === "列表与搜索设置"
       && checks.listSearchTabs.join("|") === "列表列|搜索条件|默认分组"

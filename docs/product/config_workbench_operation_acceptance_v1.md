@@ -65,8 +65,8 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 24 |
-| assertion_passed_count | 已通过断言数 | 24 |
+| assertion_count | 用户可感知断言数 | 26 |
+| assertion_passed_count | 已通过断言数 | 26 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 8 |
 | screenshot_captured_count | 实际截图数 | 8 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -82,6 +82,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 当前配置标题与配置卡片。
 - 搜索结果与切换后的标题、配置卡片。
 - 直达已选页面的配置卡片与交付状态。
+- 默认交付状态只展示用户任务相关的表单、列表搜索、菜单、审批四项状态。
 - 列表搜索面板标题、配置类型页签、字段配置画布。
 - 列表搜索面板打开后的首屏焦点位置。
 - 审批规则标题、规则面板、步骤编排画布。
@@ -139,6 +140,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 主导航、配置工作台、菜单配置之间上下文丢失或口径不一致。
 - 关键操作没有返回路径、取消路径或状态反馈。
 - 配置入口可点击但进入后不是对应能力，或需要用户理解技术参数才能继续。
+- 默认交付状态混入版本快照、覆盖检查等内部审计指标，导致业务配置用户扫描成本升高。
 - 点击配置入口后，目标编辑面没有进入当前首屏焦点，用户仍停留在概览区猜下一步。
 - 表单设计器等配置态混入业务办理按钮，例如“保存草稿”“提交”，导致配置动作与业务提交动作混淆。
 - 页面结构在 390px 移动端出现横向溢出、主要按钮不可见、内容遮挡或顺序反常。
@@ -153,7 +155,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 | --- | --- | --- | --- |
 | 当前上下文 | 看不出正在配置什么 | 需要阅读多处信息才能判断 | 标题、卡片、返回路径都清楚指向当前业务页面 |
 | 页面结构 | 页面区域职责混杂或缺区 | 区域存在但结构证据不完整 | 桌面和移动端均符合页面结构合同 |
-| 信息架构 | 页面区域混乱，主次不清 | 能完成任务但扫描成本高 | 目录、当前配置、状态、操作区层级清晰 |
+| 信息架构 | 页面区域混乱，主次不清 | 能完成任务但扫描成本高 | 目录、当前配置、状态、操作区层级清晰，默认状态只展示用户任务相关内容 |
 | 操作习惯 | 操作方式反直觉或隐藏 | 基本可用但需要学习 | 搜索、选择、编辑、保存、返回符合常见后台产品习惯 |
 | 入口命名 | 文案不统一或技术化 | 大体一致但有轻微歧义 | 同一能力全链路名称一致，使用业务语言 |
 | 任务效率 | 完成主路径需要明显绕路 | 路径可完成但步骤偏多 | 关键任务 3 次主要点击内进入目标配置面，并且目标编辑区进入首屏焦点 |
@@ -294,7 +296,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 21 / 21`
+- `assertion_passed_count = 26 / 26`
 - `screenshot_captured_count = 8 / 8`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`

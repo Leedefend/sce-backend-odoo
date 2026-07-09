@@ -155,11 +155,11 @@
             <span>交付状态</span>
             <strong>{{ deliveryReadinessStatusText }}</strong>
           </div>
-          <em>{{ deliveryReadinessProgressText }}</em>
+          <em>{{ visibleDeliveryReadinessProgressText }}</em>
         </div>
         <div class="delivery-readiness-grid delivery-readiness-grid--compact">
           <button
-            v-for="item in deliveryReadinessItems"
+            v-for="item in visibleDeliveryReadinessItems"
             :key="item.id"
             type="button"
             class="delivery-readiness-item"
@@ -171,7 +171,7 @@
             <em>{{ deliveryReadinessItemMetaText(item) }}</em>
           </button>
         </div>
-        <div v-if="!deliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
+        <div v-if="!visibleDeliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
       </aside>
     </section>
 
@@ -418,11 +418,11 @@
               <span>交付状态</span>
               <strong>{{ deliveryReadinessStatusText }}</strong>
             </div>
-            <em>{{ deliveryReadinessProgressText }}</em>
+            <em>{{ visibleDeliveryReadinessProgressText }}</em>
           </div>
           <div class="delivery-readiness-grid delivery-readiness-grid--rail">
             <button
-              v-for="item in deliveryReadinessItems"
+              v-for="item in visibleDeliveryReadinessItems"
               :key="`rail-${item.id}`"
               type="button"
               class="delivery-readiness-item"
@@ -434,7 +434,7 @@
               <em>{{ deliveryReadinessItemMetaText(item) }}</em>
             </button>
           </div>
-          <div v-if="!deliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
+          <div v-if="!visibleDeliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
           <div v-if="snapshotSummary" class="workbench-status-snapshot">
             <span>配置快照</span>
             <strong>{{ snapshotSummary.contract_count }}</strong>
@@ -1153,6 +1153,7 @@ import { useSessionStore } from '../stores/session';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
 const ACTIVE_EDITOR_SCROLL_OPTIONS: ScrollIntoViewOptions = { block: 'start', behavior: 'auto' };
+const CORE_DELIVERY_READINESS_SECTIONS = new Set(['form', 'list_search', 'menu', 'approval']);
 
 const route = useRoute();
 const router = useRouter();
@@ -1403,15 +1404,21 @@ const startScopeSummary = computed(() => {
 const snapshotSummary = computed<BusinessConfigSnapshotSummaryPayload | null>(() => surface.value?.snapshot_summary || null);
 const deliveryReadiness = computed(() => surface.value?.delivery_readiness || null);
 const deliveryReadinessItems = computed(() => deliveryReadiness.value?.items || []);
-const deliveryReadinessStatusText = computed(() => {
-  const readiness = deliveryReadiness.value;
-  if (!readiness) return '读取中';
-  return readiness.overall_status === 'ready' ? '可交付' : '待处理';
+const visibleDeliveryReadinessItems = computed(() => {
+  const items = deliveryReadinessItems.value;
+  if (advancedPanelOpen.value) return items;
+  return items.filter((item) => CORE_DELIVERY_READINESS_SECTIONS.has(String(item.section_key || '')));
 });
-const deliveryReadinessProgressText = computed(() => {
-  const readiness = deliveryReadiness.value;
-  if (!readiness) return snapshotSummary.value ? `配置 ${snapshotSummary.value.contract_count}` : '';
-  return `${readiness.ready_count}/${readiness.total_count} 项就绪`;
+const deliveryReadinessStatusText = computed(() => {
+  const items = visibleDeliveryReadinessItems.value;
+  if (!deliveryReadiness.value || !items.length) return '读取中';
+  return items.every((item) => item.status === 'ready') ? '可交付' : '待处理';
+});
+const visibleDeliveryReadinessProgressText = computed(() => {
+  const items = visibleDeliveryReadinessItems.value;
+  if (!deliveryReadiness.value || !items.length) return snapshotSummary.value ? `配置 ${snapshotSummary.value.contract_count}` : '';
+  const readyCount = items.filter((item) => item.status === 'ready').length;
+  return `${readyCount}/${items.length} 项就绪`;
 });
 const snapshotSummaryText = computed(() => {
   const summary = snapshotSummary.value;
