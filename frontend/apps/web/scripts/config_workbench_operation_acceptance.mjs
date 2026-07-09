@@ -55,10 +55,13 @@ const ACCEPTANCE_COVERAGE = {
     "direct_delivery_status_visible",
     "list_search_editor_visible",
     "list_search_tabs_complete",
+    "list_search_editor_focused_after_entry",
     "approval_editor_visible",
     "approval_rule_canvas_visible",
+    "approval_editor_focused_after_entry",
     "form_designer_visible",
     "form_designer_return_visible",
+    "form_designer_business_actions_hidden",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
     "return_context_retained",
@@ -166,6 +169,26 @@ async function visibleTechnicalTerms(page, scope = "body") {
     .map((item) => String(item || "").trim())
     .filter(Boolean)
     .filter((item, index, items) => items.indexOf(item) === index);
+}
+
+async function viewportEvidence(locator) {
+  return locator.evaluate((el) => {
+    const rect = el.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    return {
+      top: Math.round(rect.top),
+      bottom: Math.round(rect.bottom),
+      height: Math.round(rect.height),
+      viewportHeight,
+      startsInPrimaryViewport: rect.top >= 0 && rect.top <= Math.min(420, viewportHeight * 0.55),
+    };
+  }).catch(() => ({
+    top: null,
+    bottom: null,
+    height: null,
+    viewportHeight: null,
+    startsInPrimaryViewport: false,
+  }));
 }
 
 function buildCoverageSummary({ screenshots, consoleErrors, requestFailed }) {
@@ -313,6 +336,9 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   const formUsable = checks.formDesignerTitle === "当前页面字段配置"
     && String(checks.formDesignerStepText || "").includes(CONFIG_PAGE_LABEL)
     && checks.formDesignerReturnButtonCount > 0;
+  const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
+    && checks.approvalPanelViewport?.startsInPrimaryViewport === true;
+  const formDesignerActionHygieneReady = (checks.formDesignerBusinessActionButtons || []).length === 0;
   const menuUsable = checks.menuSideSections?.join("|") === "新增入口|批量维护|检查发布"
     && checks.menuTreeRows > 0
     && !String(checks.menuTreeHead || "").includes("0 个可配置菜单");
@@ -347,19 +373,19 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
       { cardsAfterSelect: checks.cardsAfterSelect, directStartCards: checks.directStartCards },
     ),
     configure_form_fields: taskResult(
-      formUsable && String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL),
+      formUsable && formDesignerActionHygieneReady && String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL),
       ["formDesignerEntry"],
-      { formDesignerTitle: checks.formDesignerTitle, formReturnedTitle: checks.formReturnedTitle },
+      { formDesignerTitle: checks.formDesignerTitle, formReturnedTitle: checks.formReturnedTitle, formDesignerBusinessActionButtons: checks.formDesignerBusinessActionButtons },
     ),
     configure_list_search: taskResult(
-      listSearchUsable,
+      listSearchUsable && checks.listSearchPanelViewport?.startsInPrimaryViewport === true,
       ["listSearchEntry"],
-      { listSearchTitle: checks.listSearchTitle, listSearchTabs: checks.listSearchTabs },
+      { listSearchTitle: checks.listSearchTitle, listSearchTabs: checks.listSearchTabs, listSearchPanelViewport: checks.listSearchPanelViewport },
     ),
     configure_approval_rules: taskResult(
-      approvalUsable,
+      approvalUsable && checks.approvalPanelViewport?.startsInPrimaryViewport === true,
       ["approvalEntry"],
-      { approvalTitle: checks.approvalTitle, approvalRulePanelCount: checks.approvalRulePanelCount },
+      { approvalTitle: checks.approvalTitle, approvalRulePanelCount: checks.approvalRulePanelCount, approvalPanelViewport: checks.approvalPanelViewport },
     ),
     configure_menu_entry: taskResult(
       menuUsable,
@@ -384,9 +410,9 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     current_context: scoreResult(pageContextVisible ? 2 : 0, "标题、卡片和返回路径必须指向当前业务页面。"),
     page_structure: scoreResult(pageStructure.status === "pass" ? 2 : 0, "页面必须符合配置工作台结构合同。"),
     information_architecture: scoreResult(cardsComplete && checks.directDeliveryStatusCount === 1 && pageStructure.status === "pass" ? 2 : 0, "配置任务、页面目录和交付状态必须层级清晰。"),
-    operation_convention: scoreResult(searchUsable && formUsable && listSearchUsable && approvalUsable && menuUsable ? 2 : 0, "搜索、选择、配置、返回必须符合常见后台产品习惯。"),
+    operation_convention: scoreResult(searchUsable && formUsable && listSearchUsable && approvalUsable && menuUsable && editorFocusReady && formDesignerActionHygieneReady ? 2 : 0, "搜索、选择、配置、返回必须符合常见后台产品习惯。"),
     entry_naming: scoreResult(entryNamesStable ? 2 : 0, "同一能力的入口命名必须稳定且使用业务语言。"),
-    task_efficiency: scoreResult(formUsable && listSearchUsable && approvalUsable && menuUsable ? 2 : 0, "关键配置任务必须能从卡片主入口直接进入。"),
+    task_efficiency: scoreResult(formUsable && listSearchUsable && approvalUsable && menuUsable && editorFocusReady ? 2 : 0, "关键配置任务必须能从卡片主入口直接进入并进入当前编辑焦点。"),
     status_feedback: scoreResult(metrics?.journey_passed_count === ACCEPTANCE_COVERAGE.journeys.length ? 2 : 0, "加载、禁用、返回和健康状态必须可被报告证明。"),
     error_recovery: scoreResult(String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL) && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL) ? 2 : 0, "从子能力返回必须保留业务页面上下文。"),
     visual_stability: scoreResult(mobileStable && pageStructure.status === "pass" ? 2 : 0, "桌面和 390px 移动端不得遮挡或横向溢出。"),
@@ -403,6 +429,8 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   if (!cardsComplete) blockingIssues.push("config_task_cards_incomplete");
   if (!entryNamesStable) blockingIssues.push("capability_entry_naming_inconsistent");
   if (!formUsable || !listSearchUsable || !approvalUsable || !menuUsable) blockingIssues.push("capability_entry_not_product_usable");
+  if (!editorFocusReady) blockingIssues.push("config_editor_not_focused_after_entry");
+  if (!formDesignerActionHygieneReady) blockingIssues.push("form_designer_business_actions_leaked");
   if (pageStructure.status !== "pass") blockingIssues.push("page_structure_contract_failed");
   if (!visibleTechnicalTermsClean) blockingIssues.push("visible_technical_terms_leaked");
   if (!mobileStable) blockingIssues.push("mobile_layout_not_stable");
@@ -476,6 +504,9 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     && checks.approvalRulePanelCount === 1
     && checks.approvalStepCanvasCount === 1
     && checks.menuSelectedPanelCount === 1;
+  const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
+    && checks.approvalPanelViewport?.startsInPrimaryViewport === true;
+  const actionSemanticsReady = (checks.formDesignerBusinessActionButtons || []).length === 0;
   const releaseRepeatable = metrics?.coverage_ratio === 1
     && metrics?.journey_passed_count === ACCEPTANCE_COVERAGE.journeys.length
     && metrics?.assertion_passed_count === ACCEPTANCE_COVERAGE.assertions.length
@@ -493,12 +524,15 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       filterControlCount: checks.pageStructureDesktop?.pageDirectory?.filterControlCount,
     }),
     naming_and_language_consistency: professionalScore(cardsStable && !visibleTechnicalTerms.length, "专业产品必须全链路名称稳定并默认使用业务语言。", { cards, directCards, visibleTechnicalTerms }),
-    capability_depth: professionalScore(capabilityDepthReady, "专业产品不能只到入口，表单、列表搜索、审批、菜单必须进入可操作配置面。", {
+    capability_depth: professionalScore(capabilityDepthReady && editorFocusReady && actionSemanticsReady, "专业产品不能只到入口，表单、列表搜索、审批、菜单必须进入可操作配置面，并且进入后焦点和动作语义清楚。", {
       formDesignerTitle: checks.formDesignerTitle,
       listSearchTabs: checks.listSearchTabs,
       approvalRulePanelCount: checks.approvalRulePanelCount,
       approvalStepCanvasCount: checks.approvalStepCanvasCount,
       menuSelectedPanelCount: checks.menuSelectedPanelCount,
+      listSearchPanelViewport: checks.listSearchPanelViewport,
+      approvalPanelViewport: checks.approvalPanelViewport,
+      formDesignerBusinessActionButtons: checks.formDesignerBusinessActionButtons,
     }),
     workflow_recovery: professionalScore(workflowClosure, "专业产品必须从子能力返回原工作台上下文。", {
       formReturnedTitle: checks.formReturnedTitle,
@@ -680,6 +714,7 @@ async function main() {
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
     checks.listSearchCanvasCount = await listSearchPanel.locator(".field-chip-editor").count();
+    checks.listSearchPanelViewport = await viewportEvidence(listSearchPanel);
     screenshots.listSearchEntry = await capture(page, "04-list-search-entry");
 
     await openDirectSelectedWorkbench(page);
@@ -689,6 +724,7 @@ async function main() {
     checks.approvalTitle = await approvalPanel.locator("h2").innerText();
     checks.approvalRulePanelCount = await approvalPanel.locator(".approval-rule-panel").count();
     checks.approvalStepCanvasCount = await approvalPanel.locator(".approval-steps").count();
+    checks.approvalPanelViewport = await viewportEvidence(approvalPanel);
     screenshots.approvalEntry = await capture(page, "05-approval-entry");
 
     await openDirectSelectedWorkbench(page);
@@ -699,6 +735,11 @@ async function main() {
     checks.formDesignerStepText = await page.locator(".contract-form-design-strip").innerText();
     checks.formDesignerReturnButtonCount = await page.getByRole("button", { name: /返回配置/ }).count();
     checks.formDesignerVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".contract-form-settings");
+    checks.formDesignerBusinessActionButtons = await page.locator("button").evaluateAll((buttons) => (
+      buttons
+        .map((button) => button.textContent?.trim())
+        .filter((text) => text === "保存草稿" || text === "提交")
+    ));
     screenshots.formDesignerEntry = await capture(page, "06-form-designer-entry");
     await page.getByRole("button", { name: /返回配置/ }).first().click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 60000 });
@@ -759,6 +800,7 @@ async function main() {
       "列表与搜索配置入口没有打开可操作编辑面板",
       checks,
     );
+    assert(checks.listSearchPanelViewport.startsInPrimaryViewport === true, "列表与搜索配置入口打开后没有进入当前编辑焦点", checks);
     assert(
       checks.approvalTitle === "审批规则"
       && checks.approvalRulePanelCount === 1
@@ -766,6 +808,7 @@ async function main() {
       "审批配置入口没有打开规则配置画布",
       checks,
     );
+    assert(checks.approvalPanelViewport.startsInPrimaryViewport === true, "审批配置入口打开后没有进入当前编辑焦点", checks);
     assert(
       checks.formDesignerTitle === "当前页面字段配置"
       && checks.formDesignerStepText.includes(CONFIG_PAGE_LABEL)
@@ -774,6 +817,7 @@ async function main() {
       "表单配置入口没有形成进入设计器并返回工作台闭环",
       checks,
     );
+    assert(checks.formDesignerBusinessActionButtons.length === 0, "表单配置态不应出现业务办理动作按钮", checks);
     assert(checks.menuSideSections.join("|") === "新增入口|批量维护|检查发布", "菜单配置侧栏操作分组不完整", checks);
     assert(checks.menuTreeRows > 0 && !checks.menuTreeHead.includes("0 个可配置菜单"), "从配置工作台进入菜单配置后菜单目录为空", checks);
     assert(checks.returnedTitle.includes(CONFIG_PAGE_LABEL) && checks.returnedCards.includes("菜单入口"), "菜单配置返回工作台后上下文丢失", checks);

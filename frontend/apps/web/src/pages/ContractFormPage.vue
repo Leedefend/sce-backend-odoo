@@ -69,7 +69,7 @@
           {{ draftSaveButtonLabel }}
         </button>
         <button
-          v-if="!isProjectIntakeCreateMode"
+          v-if="showPrimaryBusinessFormAction"
           class="sc-btn sc-btn-primary sc-btn-sm"
           :disabled="primaryFormActionDisabled"
           @click="runPrimaryFormAction"
@@ -1959,7 +1959,8 @@ const submitButtonLabel = computed(() => {
   }
   return formUiLabel('save');
 });
-const showDraftSaveAction = computed(() => !isProjectIntakeCreateMode.value && !recordId.value && canSave.value);
+const showPrimaryBusinessFormAction = computed(() => !showCurrentFormFieldConfigScope.value && !isProjectIntakeCreateMode.value);
+const showDraftSaveAction = computed(() => showPrimaryBusinessFormAction.value && !recordId.value && canSave.value);
 const draftSaveButtonLabel = computed(() => (busy.value && busyKind.value === 'save' ? formUiLabel('saving') : '保存草稿'));
 const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boolean(recordId.value) && hasChanges.value);
 
@@ -1979,7 +1980,10 @@ function isHeaderConfigAction(action: ContractAction) {
   return label.includes('设置') || key.includes('setting') || key.includes('config') || source.includes('setting') || source.includes('config');
 }
 
-const headerBusinessActionsVisible = computed(() => headerActionsVisible.value.filter((action) => !isHeaderConfigAction(action)));
+const headerBusinessActionsVisible = computed(() => {
+  if (showCurrentFormFieldConfigScope.value) return [];
+  return headerActionsVisible.value.filter((action) => !isHeaderConfigAction(action));
+});
 const headerConfigActionsVisible = computed(() => headerActionsVisible.value.filter((action) => isHeaderConfigAction(action)));
 
 function headerActionButtonClass(action: ContractAction) {

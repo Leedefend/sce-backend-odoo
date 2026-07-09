@@ -1109,7 +1109,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   auditBusinessAnalysisConfig,
@@ -1152,6 +1152,7 @@ import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { useSessionStore } from '../stores/session';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
+const ACTIVE_EDITOR_SCROLL_OPTIONS: ScrollIntoViewOptions = { block: 'start', behavior: 'auto' };
 
 const route = useRoute();
 const router = useRouter();
@@ -1163,6 +1164,12 @@ const pageSectionTagIs = pageContract.sectionTagIs;
 const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
+
+async function focusActiveEditorPanel() {
+  await nextTick();
+  const panel = document.querySelector<HTMLElement>('.config-editor-panel');
+  panel?.scrollIntoView(ACTIVE_EDITOR_SCROLL_OPTIONS);
+}
 const pageSectionsReady = computed(() => (
   pageSectionEnabled('root', true)
   && pageSectionEnabled('header', true)
@@ -3039,6 +3046,7 @@ async function loadListSearchConfig() {
     analysisPanelOpen.value = false;
     approvalPanelOpen.value = false;
     listSearchPanelOpen.value = true;
+    await focusActiveEditorPanel();
     if (!configuredListColumns.length && suggestedListColumns.length) {
       setMessage('已按当前页面生成列表草稿', '调整后点击保存设置，才会发布为正式业务配置');
     }
@@ -3100,6 +3108,7 @@ async function loadAnalysisConfig() {
     approvalPanelOpen.value = false;
     analysisPanelOpen.value = true;
     activeAnalysisEditor.value = requestedAnalysisTab.value;
+    await focusActiveEditorPanel();
     if (
       (!configuredPivotMeasures.length && !configuredPivotDimensions.length && (suggestedPivotMeasures.length || suggestedPivotDimensions.length))
       || (!configuredGraphMeasures.length && !configuredGraphDimensions.length && (suggestedGraphMeasures.length || suggestedGraphDimensions.length))
@@ -3166,6 +3175,7 @@ async function loadApprovalConfig() {
     listSearchPanelOpen.value = false;
     analysisPanelOpen.value = false;
     approvalPanelOpen.value = true;
+    await focusActiveEditorPanel();
   } catch (err) {
     error.value = err instanceof Error ? err.message : '审批设置读取失败';
   } finally {
