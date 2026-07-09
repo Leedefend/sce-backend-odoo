@@ -73,6 +73,7 @@ const ACCEPTANCE_COVERAGE = {
     "approval_return_workbench_visible",
     "approval_step_precise_reorder_visible",
     "approval_full_rule_label_consistent",
+    "approval_discard_label_consistent",
     "approval_editor_focused_after_entry",
     "approval_editor_primary_focus",
     "form_designer_visible",
@@ -939,6 +940,8 @@ async function main() {
     checks.approvalReturnWorkbenchButtonCount = await approvalPanel.getByRole("button", { name: "返回工作台" }).count();
     checks.approvalFullRuleButtonCount = await approvalPanel.getByRole("button", { name: "打开完整规则" }).count();
     checks.approvalLegacyMoreRuleButtonCount = await approvalPanel.getByRole("button", { name: "更多规则" }).count();
+    checks.approvalDiscardButtonCount = await approvalPanel.getByRole("button", { name: "放弃调整" }).count();
+    checks.approvalLegacyRestoreButtonCount = await approvalPanel.getByRole("button", { name: "还原" }).count();
     screenshots.approvalEntry = await capture(page, "05-approval-entry");
 
     await openDirectSelectedWorkbench(page);
@@ -1110,6 +1113,12 @@ async function main() {
       checks.approvalFullRuleButtonCount > 0
       && checks.approvalLegacyMoreRuleButtonCount === 0,
       "审批完整规则入口必须明确表达打开完整规则，不能使用更多规则模糊标签",
+      checks,
+    );
+    assert(
+      checks.approvalDiscardButtonCount > 0
+      && checks.approvalLegacyRestoreButtonCount === 0,
+      "审批未保存调整恢复动作必须使用放弃调整，不能使用还原模糊标签",
       checks,
     );
     assert(

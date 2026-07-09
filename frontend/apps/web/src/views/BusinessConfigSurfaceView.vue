@@ -658,7 +658,7 @@
           {{ approvalLoading ? '保存中...' : '保存审批设置' }}
         </button>
         <button type="button" class="ghost small" :disabled="approvalLoading || !hasApprovalDraftChanges" @click="resetApprovalDraft">
-          还原
+          放弃调整
         </button>
         <button type="button" class="ghost small" :disabled="!approvalSection?.route?.path" @click="approvalSection && openApprovalConfig(approvalSection)">
           打开完整规则
@@ -1406,7 +1406,7 @@ const approvalRuntimeText = computed(() => {
 });
 const approvalEffectGuideText = computed(() => {
   const target = approvalAudit.value?.policy?.target_model_label || selectedPageLabel.value || '当前业务';
-  return `保存后立即影响${target}的办理审批判断；未保存调整可用“还原”放弃。`;
+  return `保存后立即影响${target}的办理审批判断；未保存调整可用“放弃调整”撤销。`;
 });
 const approvalImpactSummaryText = computed(() => {
   if (!approvalForm.value.approval_required) {

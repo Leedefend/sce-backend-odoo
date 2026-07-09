@@ -95,8 +95,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 47 |
-| assertion_passed_count | 已通过断言数 | 47 |
+| assertion_count | 用户可感知断言数 | 48 |
+| assertion_passed_count | 已通过断言数 | 48 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -122,6 +122,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - 审批规则标题、规则面板、步骤编排画布。
 - 审批规则面板必须提供明确“返回工作台”动作。
 - 审批规则完整配置入口必须明确使用“打开完整规则”，不得使用“更多规则”模糊标签。
+- 审批规则放弃未保存调整必须使用“放弃调整”，不得使用“还原”模糊标签。
 - 审批步骤必须提供上移和下移按钮，不能只依赖拖拽排序。
 - 审批步骤动作必须提供可见说明和精确动作标签，用户不需要猜测符号含义。
 - 审批规则面板打开后的首屏主焦点位置。
@@ -350,7 +351,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 47 / 47`
+- `assertion_passed_count = 48 / 48`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`
