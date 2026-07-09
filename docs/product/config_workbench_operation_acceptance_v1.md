@@ -40,6 +40,22 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 该门禁是本专题的第一判断口径。每次修复操作级问题后优先跑它，而不是先跑全量低代码验收。
 
+## 迭代效率入口
+
+本专题日常迭代分两级执行，避免每次都靠人工拼接命令：
+
+```bash
+DB_NAME=sc_demo make verify.business_config.config_workbench_operation_quick
+```
+
+快速预检只做脚本语法、前端类型检查和 `git diff --check`，适合每次小改动后先确认没有低级错误。
+
+```bash
+DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verify.business_config.config_workbench_operation_local_closeout
+```
+
+本地完整收口会串起快速预检、开发静态包构建、dev nginx 重启、浏览器操作验收、正式前端构建和 diff 检查。默认 nginx 容器名来自 `COMPOSE_PROJECT_NAME`，特殊环境可用 `FRONTEND_NGINX_CONTAINER=...` 覆盖。
+
 ## 操作矩阵
 
 | 路径 | 用户动作 | 合格口径 |

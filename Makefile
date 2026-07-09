@@ -776,6 +776,28 @@ verify.business_config.low_code_acceptance: guard.prod.forbid
 verify.business_config.config_workbench_operation_acceptance: guard.prod.forbid
 	@cd frontend/apps/web && BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node scripts/config_workbench_operation_acceptance.mjs
 
+.PHONY: verify.business_config.config_workbench_operation_quick verify.business_config.config_workbench_operation_local_closeout
+
+verify.business_config.config_workbench_operation_quick: guard.prod.forbid
+	@node --check frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs
+	@scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck
+	@git diff --check
+
+verify.business_config.config_workbench_operation_local_closeout: guard.prod.forbid verify.business_config.config_workbench_operation_quick
+	@ENV=$${ENV:-dev} DB_NAME=$(DB_NAME) FRONTEND_DIST_DIR=$${FRONTEND_DIST_DIR:-frontend/apps/web/dist-dev} bash scripts/dev/frontend_static_build.sh
+	@container="$${FRONTEND_NGINX_CONTAINER:-$(COMPOSE_PROJECT_NAME)-nginx-1}"; \
+	  if docker ps --format '{{.Names}}' | grep -qx "$$container"; then \
+	    docker restart "$$container" >/dev/null; \
+	    echo "[config-workbench.closeout] restarted $$container"; \
+	  else \
+	    echo "[config-workbench.closeout] nginx container not running: $$container" >&2; \
+	    echo "Set FRONTEND_NGINX_CONTAINER or start the daily dev stack before local closeout." >&2; \
+	    exit 2; \
+	  fi
+	@$(MAKE) DB_NAME=$(DB_NAME) WORKFLOW_CONTRACT_FRONTEND_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) verify.business_config.config_workbench_operation_acceptance
+	@scripts/dev/pnpm_exec.sh -C frontend/apps/web build
+	@git diff --check
+
 verify.business_config.low_code_runtime_consistency: guard.prod.forbid
 	@cd frontend/apps/web && BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node scripts/low_code_form_runtime_consistency_acceptance.mjs
 
