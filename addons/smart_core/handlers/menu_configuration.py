@@ -473,15 +473,27 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         return _to_text(configured) or "default"
 
     def _formal_product_menu_scope_ids(self, root_menu_id: int) -> set[int]:
+        root_menu_id = _to_int(root_menu_id)
+        cache = getattr(self, "_formal_product_menu_scope_ids_cache", None)
+        if cache is None:
+            cache = {}
+            setattr(self, "_formal_product_menu_scope_ids_cache", cache)
+        if root_menu_id in cache:
+            return set(cache[root_menu_id])
+
         if "sc.product.policy" not in self.env:
-            return self._native_config_menu_scope_ids(root_menu_id)
+            result = self._native_config_menu_scope_ids(root_menu_id)
+            cache[root_menu_id] = set(result)
+            return result
         product_key = self._current_product_key()
         policy = self.env["sc.product.policy"].sudo().search([
             ("product_key", "=", product_key),
             ("active", "=", True),
         ], limit=1)
         if not policy:
-            return self._native_config_menu_scope_ids(root_menu_id)
+            result = self._native_config_menu_scope_ids(root_menu_id)
+            cache[root_menu_id] = set(result)
+            return result
         Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
         ConfigPolicy = self.env[MENU_CONFIG_POLICY_MODEL].sudo().with_context(active_test=False) if MENU_CONFIG_POLICY_MODEL in self.env else None
         configured_target_by_menu: dict[int, int] = {}
@@ -536,6 +548,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         if root_menu_id:
             scoped_ids.add(root_menu_id)
         scoped_ids.update(self._native_config_menu_scope_ids(root_menu_id))
+        cache[root_menu_id] = set(scoped_ids)
         return scoped_ids
 
     def _native_config_menu_scope_ids(self, root_menu_id: int) -> set[int]:

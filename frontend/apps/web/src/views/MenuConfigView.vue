@@ -686,7 +686,6 @@ import {
   type MenuConfigVersionsPayload,
 } from '../api/menuConfig';
 import { useSessionStore } from '../stores/session';
-import { apiRequest } from '../api/client';
 import { config } from '../config';
 import { BUSINESS_CONFIG_ROUTE_FLAGS, MENU_CONFIG_RUNTIME_SOURCES } from '../app/businessConfigBoundaries';
 import { usePageContract } from '../app/pageContract';
@@ -703,12 +702,6 @@ type MenuConfigNavNode = NavNode & {
     configurable?: boolean;
     config_ref?: { model?: string; id?: number | string };
   };
-};
-
-type MenuNavigationResponse = {
-  ok?: boolean;
-  nav_fact?: { tree?: NavNode[] };
-  nav_explained?: { tree?: NavNode[] };
 };
 
 type DraftPolicy = {
@@ -737,7 +730,6 @@ const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
 const pageActionIntent = pageContract.actionIntent;
-const finalNavigationTree = ref<NavNode[]>([]);
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
 const pageSectionsReady = computed(() => (
@@ -1272,7 +1264,7 @@ function unwrapProductNavigationRoot(nodes: NavNode[]) {
 function scopedNavigationTree() {
   const sourceNodes = Array.isArray(session.menuTree) && session.menuTree.length
     ? (session.menuTree as NavNode[])
-    : finalNavigationTree.value;
+    : [];
   const nodes = unwrapProductNavigationRoot(sourceNodes);
   const explicitRootId = Number(rootMenu.value?.id || 0);
   const matched = nodes.find((node) => (
@@ -1280,15 +1272,6 @@ function scopedNavigationTree() {
     || isBusinessRootNode(node)
   ));
   return matched ? [matched] : nodes.filter((node) => navMenuLabel(node) !== '系统菜单');
-}
-
-async function loadFinalNavigationTree() {
-  const response = await apiRequest<MenuNavigationResponse>('/api/menu/navigation', {
-    method: 'POST',
-    body: JSON.stringify({}),
-  });
-  const tree = response.nav_fact?.tree || response.nav_explained?.tree || [];
-  finalNavigationTree.value = Array.isArray(tree) ? tree : [];
 }
 
 async function ensureProductNavigationReady() {
@@ -2207,7 +2190,6 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
   }
   try {
     await ensureProductNavigationReady();
-    await loadFinalNavigationTree();
     const payload = await loadMenuConfigurationPanel({
       menu_ids: collectNavigationMenuIds(),
       root_menu_id: Number(rootMenu.value?.id || 0) || undefined,
