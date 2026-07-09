@@ -25,7 +25,7 @@
           新增一级菜单
         </button>
         <button type="button" class="primary" :disabled="!dirtyCount || saving" @click="saveChanges">
-          {{ saving ? '保存中...' : '保存修改' }}
+          {{ saving ? '保存中...' : '保存菜单配置' }}
         </button>
       </div>
     </header>

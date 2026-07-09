@@ -89,6 +89,7 @@ const ACCEPTANCE_COVERAGE = {
     "menu_side_sections_complete",
     "menu_tree_not_empty",
     "menu_tree_search_feedback_visible",
+    "menu_save_action_label_consistent",
     "return_context_retained",
     "mobile_config_before_picker",
     "mobile_current_config_in_viewport",
@@ -1000,6 +1001,8 @@ async function main() {
     checks.menuSearchSummaryText = await page.locator(".menu-config-tree .tree-search-summary span").innerText();
     checks.menuSearchClearButtonCount = await page.locator(".menu-config-tree .tree-clear-filter").count();
     checks.menuSelectedPanelCount = await page.locator(".menu-selected-panel").count();
+    checks.menuSaveButtonCount = await page.getByRole("button", { name: "保存菜单配置" }).count();
+    checks.menuLegacySaveButtonCount = await page.getByRole("button", { name: "保存修改" }).count();
     checks.menuConfigVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".menu-config-page");
     screenshots.menuConfig = await capture(page, "07-menu-config");
     await page.getByRole("button", { name: "返回配置工作台" }).click();
@@ -1196,6 +1199,12 @@ async function main() {
       && checks.menuSearchClearButtonCount > 0
       && /^显示 \d+ \/ \d+，未保存 \d+$/.test(String(checks.menuSearchSummaryText || "")),
       "菜单配置必须提供目录搜索数量反馈和清空筛选动作",
+      checks,
+    );
+    assert(
+      checks.menuSaveButtonCount > 0
+      && checks.menuLegacySaveButtonCount === 0,
+      "菜单配置保存动作必须明确表达保存菜单配置，不能使用保存修改模糊标签",
       checks,
     );
     assert(checks.returnedTitle.includes(CONFIG_PAGE_LABEL) && checks.returnedCards.includes("菜单入口"), "菜单配置返回工作台后上下文丢失", checks);
