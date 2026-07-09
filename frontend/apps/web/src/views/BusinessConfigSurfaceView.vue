@@ -1,5 +1,11 @@
 <template>
-  <section v-if="pageSectionsReady" class="business-config-page" :style="pageSectionStyle('root')" :data-contract-sections="pageSectionsFingerprint">
+  <section
+    v-if="pageSectionsReady"
+    class="business-config-page"
+    :class="{ 'business-config-page--editor-open': listSearchPanelOpen || approvalPanelOpen || analysisPanelOpen }"
+    :style="pageSectionStyle('root')"
+    :data-contract-sections="pageSectionsFingerprint"
+  >
     <header class="business-config-header">
       <div>
         <p class="eyebrow">低代码页面设计器</p>
@@ -1153,6 +1159,7 @@ import { useSessionStore } from '../stores/session';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
 const ACTIVE_EDITOR_SCROLL_OPTIONS: ScrollIntoViewOptions = { block: 'start', behavior: 'auto' };
+const ACTIVE_EDITOR_VIEWPORT_TOP = 96;
 const CORE_DELIVERY_READINESS_SECTIONS = new Set(['form', 'list_search', 'menu', 'approval']);
 const BUSINESS_FIELD_LABEL_OVERRIDES: Record<string, string> = {
   can_review: '可审批',
@@ -1172,7 +1179,19 @@ const pageGlobalActions = pageContract.globalActions;
 async function focusActiveEditorPanel() {
   await nextTick();
   const panel = document.querySelector<HTMLElement>('.config-editor-panel');
-  panel?.scrollIntoView(ACTIVE_EDITOR_SCROLL_OPTIONS);
+  if (!panel) return;
+  await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+  const scrollContainer = panel.closest<HTMLElement>('.content');
+  const rect = panel.getBoundingClientRect();
+  if (scrollContainer) {
+    const containerRect = scrollContainer.getBoundingClientRect();
+    scrollContainer.scrollBy({
+      top: rect.top - containerRect.top - ACTIVE_EDITOR_VIEWPORT_TOP,
+      behavior: 'auto',
+    });
+    return;
+  }
+  window.scrollBy({ top: rect.top - ACTIVE_EDITOR_VIEWPORT_TOP, behavior: 'auto' });
 }
 
 async function focusSelectedConfigPanelOnMobile() {
@@ -3676,6 +3695,10 @@ onMounted(() => {
   padding-bottom: 18px;
 }
 
+.business-config-page--editor-open {
+  padding-bottom: 56vh;
+}
+
 .business-config-header {
   display: flex;
   align-items: center;
@@ -3814,9 +3837,8 @@ h1 {
   min-width: 0;
   color: var(--sc-app-text-primary);
   font-size: 18px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .workbench-start-actions {

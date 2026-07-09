@@ -61,9 +61,11 @@ const ACCEPTANCE_COVERAGE = {
     "list_search_tabs_complete",
     "default_visible_technical_terms_hidden",
     "list_search_editor_focused_after_entry",
+    "list_search_editor_primary_focus",
     "approval_editor_visible",
     "approval_rule_canvas_visible",
     "approval_editor_focused_after_entry",
+    "approval_editor_primary_focus",
     "form_designer_visible",
     "form_designer_shell_title_context",
     "form_designer_return_visible",
@@ -206,6 +208,7 @@ async function viewportEvidence(locator) {
       height: Math.round(rect.height),
       viewportHeight,
       startsInPrimaryViewport: rect.top >= 0 && rect.top <= Math.min(420, viewportHeight * 0.55),
+      startsInEditorFocusViewport: rect.top >= 0 && rect.top <= Math.min(180, viewportHeight * 0.24),
     };
   }).catch(() => ({
     top: null,
@@ -213,6 +216,7 @@ async function viewportEvidence(locator) {
     height: null,
     viewportHeight: null,
     startsInPrimaryViewport: false,
+    startsInEditorFocusViewport: false,
   }));
 }
 
@@ -376,7 +380,9 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && checks.formDesignerReturnButtonCount > 0
     && String(checks.formDesignerShellTitle || "").includes(CONFIG_PAGE_LABEL);
   const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
-    && checks.approvalPanelViewport?.startsInPrimaryViewport === true;
+    && checks.approvalPanelViewport?.startsInPrimaryViewport === true
+    && checks.listSearchPanelViewport?.startsInEditorFocusViewport === true
+    && checks.approvalPanelViewport?.startsInEditorFocusViewport === true;
   const formDesignerActionHygieneReady = (checks.formDesignerBusinessActionButtons || []).length === 0;
   const menuUsable = checks.menuSideSections?.join("|") === "新增入口|批量维护|检查发布"
     && checks.menuTreeRows > 0
@@ -558,7 +564,9 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     && checks.approvalStepCanvasCount === 1
     && checks.menuSelectedPanelCount === 1;
   const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
-    && checks.approvalPanelViewport?.startsInPrimaryViewport === true;
+    && checks.approvalPanelViewport?.startsInPrimaryViewport === true
+    && checks.listSearchPanelViewport?.startsInEditorFocusViewport === true
+    && checks.approvalPanelViewport?.startsInEditorFocusViewport === true;
   const actionSemanticsReady = (checks.formDesignerBusinessActionButtons || []).length === 0;
   const releaseRepeatable = metrics?.coverage_ratio === 1
     && metrics?.journey_passed_count === ACCEPTANCE_COVERAGE.journeys.length
@@ -917,7 +925,12 @@ async function main() {
       "列表与搜索配置入口没有打开可操作编辑面板",
       checks,
     );
-    assert(checks.listSearchPanelViewport.startsInPrimaryViewport === true, "列表与搜索配置入口打开后没有进入当前编辑焦点", checks);
+    assert(
+      checks.listSearchPanelViewport.startsInPrimaryViewport === true
+      && checks.listSearchPanelViewport.startsInEditorFocusViewport === true,
+      "列表与搜索配置入口打开后没有进入当前编辑主焦点",
+      checks,
+    );
     assert(
       checks.approvalTitle === "审批规则"
       && checks.approvalRulePanelCount === 1
@@ -925,7 +938,12 @@ async function main() {
       "审批配置入口没有打开规则配置画布",
       checks,
     );
-    assert(checks.approvalPanelViewport.startsInPrimaryViewport === true, "审批配置入口打开后没有进入当前编辑焦点", checks);
+    assert(
+      checks.approvalPanelViewport.startsInPrimaryViewport === true
+      && checks.approvalPanelViewport.startsInEditorFocusViewport === true,
+      "审批配置入口打开后没有进入当前编辑主焦点",
+      checks,
+    );
     assert(
       checks.formDesignerTitle === "当前页面字段配置"
       && checks.formDesignerStepText.includes(CONFIG_PAGE_LABEL)
