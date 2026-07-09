@@ -1,5 +1,6 @@
 import { intentRequest } from './intents';
 import { MENU_CONFIG_INTENTS } from '../app/businessConfigBoundaries';
+import type { NavNode } from '@sc/schema';
 
 export interface MenuConfigMenu {
   id: number;
@@ -54,6 +55,7 @@ export interface MenuConfigRuntimePayload {
   visible_menu_ids?: number[];
   carrier_menu_ids?: number[];
   states?: Record<string, MenuConfigRuntimeState>;
+  tree?: NavNode[];
   summary?: {
     runtime_visible_count?: number;
     runtime_carrier_count?: number;

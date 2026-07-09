@@ -812,6 +812,7 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         nav_tree, nav_meta = self._runtime_release_navigation_tree(root_menu_id=root_menu_id)
         runtime = _build_runtime_navigation_states(nav_tree, configured_by_menu)
         runtime["source"] = "release_navigation_v1"
+        runtime["tree"] = nav_tree
         runtime["navigation_meta"] = nav_meta
         if nav_meta.get("error"):
             runtime["error"] = nav_meta.get("error")

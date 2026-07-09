@@ -1031,10 +1031,16 @@ function isProductNavigationRoot(menu: MenuConfigMenu | null | undefined) {
   return label === '智慧施工管理平台' || completeName === '智慧施工管理平台';
 }
 
+function isSystemNavigationRoot(menu: MenuConfigMenu | null | undefined) {
+  if (!menu) return false;
+  const label = String(menu.display_name || menu.name || '').trim();
+  return label === '系统菜单';
+}
+
 const displayTreeSource = computed<MenuConfigMenu[]>(() => {
   if (tree.value.length !== 1) return tree.value;
   const [root] = tree.value;
-  if (!isProductNavigationRoot(root) || !root.children?.length) return tree.value;
+  if ((!isProductNavigationRoot(root) && !isSystemNavigationRoot(root)) || !root.children?.length) return tree.value;
   return root.children;
 });
 
@@ -1137,6 +1143,15 @@ function isMenuShownInHandling(menu: MenuConfigMenu | null | undefined) {
   if (state) return Boolean(state.runtime_visible);
   const draft = drafts[menu.id];
   return Boolean(draft?.policy_id && draft.visible);
+}
+
+function isMenuConfigSurfaceMenu(menu: MenuConfigMenu | null | undefined) {
+  if (!menu) return false;
+  if (isRuntimeMenuGroup(menu)) return true;
+  const state = runtimeStateForMenu(menu);
+  if (!state) return true;
+  return state.runtime_state !== 'configured_visible_runtime_absent'
+    && state.runtime_visibility_reason !== 'configured_visible_runtime_absent';
 }
 
 function menuHandlingStateLabel(menu: MenuConfigMenu | null | undefined) {
@@ -1285,7 +1300,9 @@ const navigationParentMenus = computed(() => navigationMenus.value.filter((menu)
   Boolean(menu.children?.length) || !String(menu.action || '').trim()
 )));
 const configuredParentMenus = computed(() => menus.value.filter((menu) => (
-  !isRuntimeMenuGroup(menu) && (Boolean(menu.children?.length) || !String(menu.action || '').trim())
+  !isRuntimeMenuGroup(menu)
+  && isMenuConfigSurfaceMenu(menu)
+  && (Boolean(menu.children?.length) || !String(menu.action || '').trim())
 )));
 const createParentOptions = computed(() => {
   const byId = new Map<number, MenuConfigMenu>();
@@ -2138,11 +2155,27 @@ function markHandlingMembership(items: MenuConfigMenu[], usedMenuIds: Set<number
   });
 }
 
+function filterMenuConfigSurfaceTree(items: MenuConfigMenu[]): MenuConfigMenu[] {
+  return items.flatMap((item) => {
+    const children = item.children?.length ? filterMenuConfigSurfaceTree(item.children) : [];
+    if (isMenuConfigSurfaceMenu(item) || children.length) {
+      return [{ ...item, children }];
+    }
+    return [];
+  });
+}
+
 function mergeNavigationAndConfigTrees(navigationTree: MenuConfigMenu[], configTree: MenuConfigMenu[], usedMenuIds: Set<number>) {
   if (!navigationTree.length) {
-    return markHandlingMembership(configTree, usedMenuIds);
+    return filterMenuConfigSurfaceTree(markHandlingMembership(configTree, usedMenuIds));
   }
   return navigationTree;
+}
+
+function runtimeNavigationTreeFromPayload(payload: MenuConfigPayload) {
+  return Array.isArray(payload.runtime?.tree) && payload.runtime.tree.length
+    ? (payload.runtime.tree as NavNode[])
+    : scopedNavigationTree();
 }
 
 function collectNavigationMenuIds() {
@@ -2200,7 +2233,7 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
     menus.value = payload.menus || [];
     const menuById = new Map((payload.menus || []).map((menu) => [menu.id, menu]));
     const usedMenuIds = new Set<number>();
-    const scopedNavTree = scopedNavigationTree();
+    const scopedNavTree = runtimeNavigationTreeFromPayload(payload);
     const navigationTree = buildTreeFromNavigation(scopedNavTree, menuById, usedMenuIds);
     const completeTree = mergeNavigationAndConfigTrees(navigationTree, payload.tree || [], usedMenuIds);
     runtimeState.value = payload.runtime || null;

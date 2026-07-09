@@ -171,7 +171,7 @@ async function navigationRequest(page) {
   return response.body;
 }
 
-async function verifyMenuConfigTreeUi(page, requiredRows) {
+async function verifyMenuConfigTreeUi(page, requiredRows, panel) {
   await page.goto(`${BASE_URL}${MENU_CONFIG_ROUTE}`, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(
     () => !document.body.innerText.includes("正在加载菜单配置...") && /\d+ 个可配置菜单/.test(document.body.innerText),
@@ -184,6 +184,25 @@ async function verifyMenuConfigTreeUi(page, requiredRows) {
   })));
   const violations = [];
   const sample = [];
+  const runtimeStates = panel?.runtime?.states || {};
+  for (const row of rows) {
+    const state = runtimeStates[String(row.menuId)];
+    if (
+      state
+      && (
+        state.runtime_state === "configured_visible_runtime_absent"
+        || state.runtime_visibility_reason === "configured_visible_runtime_absent"
+      )
+    ) {
+      violations.push({
+        menuId: row.menuId,
+        text: row.text,
+        runtime_state: state.runtime_state || "",
+        runtime_reason: state.runtime_visibility_reason || "",
+        reason: "runtime_absent_menu_rendered_in_config_tree",
+      });
+    }
+  }
   for (const expected of requiredRows) {
     if (!expected.menuId) {
       violations.push({ ...expected, reason: "required_menu_not_resolved" });
@@ -413,7 +432,7 @@ async function main() {
     ]);
     const requiredConfigRows = resolveRequiredConfigRows(panel);
     const result = analyzeAlignment({ audit, panel, navigation, requiredConfigRows });
-    const menuConfigTreeUi = await verifyMenuConfigTreeUi(page, requiredConfigRows);
+    const menuConfigTreeUi = await verifyMenuConfigTreeUi(page, requiredConfigRows, panel);
     result.summary.menu_config_tree_ui_violation_count = menuConfigTreeUi.violations.length;
     result.menuConfigTreeUi = menuConfigTreeUi;
     result.menuConfigSample = menuConfigTreeUi.sample;
