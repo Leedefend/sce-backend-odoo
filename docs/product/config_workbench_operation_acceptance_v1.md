@@ -95,8 +95,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 17 |
 | action_passed_count | 已成功执行的关键动作数 | 17 |
-| assertion_count | 用户可感知断言数 | 53 |
-| assertion_passed_count | 已通过断言数 | 53 |
+| assertion_count | 用户可感知断言数 | 54 |
+| assertion_passed_count | 已通过断言数 | 54 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -137,6 +137,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - 菜单配置侧栏分组、菜单目录数量、目录搜索反馈和清空筛选动作。
 - 菜单配置保存动作必须明确使用“保存菜单配置”，不得使用“保存修改”模糊标签。
 - 菜单新增入口面板必须能从菜单配置页打开，并提供明确“收起新增入口”动作，不得使用“关闭”模糊标签。
+- 菜单配置页辅助动作必须携带菜单对象，刷新、新增、复制、检查、版本、批量维护等动作不得使用泛化标签。
 - 返回工作台后的标题和配置卡片。
 - 移动端真实视口中当前配置区的首屏位置、视觉顺序和页面宽度。
 - 移动端配置工作台顶栏必须使用紧凑模式，不展示平台副标题。
@@ -356,7 +357,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 17 / 17`
-- `assertion_passed_count = 53 / 53`
+- `assertion_passed_count = 54 / 54`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`

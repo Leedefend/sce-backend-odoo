@@ -94,6 +94,7 @@ const ACCEPTANCE_COVERAGE = {
     "menu_tree_search_feedback_visible",
     "menu_save_action_label_consistent",
     "menu_create_panel_close_label_consistent",
+    "menu_action_labels_object_consistent",
     "return_context_retained",
     "mobile_config_before_picker",
     "mobile_current_config_in_viewport",
@@ -1021,6 +1022,9 @@ async function main() {
     checks.menuCreatePanelTitle = await menuCreatePanel.locator(".create-panel-header strong").innerText();
     checks.menuCreatePanelCloseButtonCount = await menuCreatePanel.getByRole("button", { name: "收起新增入口" }).count();
     checks.menuCreatePanelLegacyCloseButtonCount = await menuCreatePanel.getByRole("button", { name: "关闭" }).count();
+    checks.menuActionLabels = await page.locator(".menu-config-page button").evaluateAll((buttons) => (
+      buttons.map((button) => button.textContent?.trim()).filter(Boolean)
+    ));
     checks.menuConfigVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".menu-config-page");
     screenshots.menuConfig = await capture(page, "07-menu-config");
     await page.getByRole("button", { name: "返回配置工作台" }).click();
@@ -1238,6 +1242,14 @@ async function main() {
       && checks.menuCreatePanelCloseButtonCount > 0
       && checks.menuCreatePanelLegacyCloseButtonCount === 0,
       "菜单新增入口面板必须提供明确收起新增入口动作，不能使用关闭模糊标签",
+      checks,
+    );
+    assert(
+      ["刷新菜单配置", "新增同级菜单", "新增下级菜单", "复制当前菜单入口", "查看菜单配置说明", "检查菜单生效", "查看菜单版本与回滚", "展开批量维护表格"]
+        .every((label) => checks.menuActionLabels?.includes(label))
+      && !["刷新", "新增同级", "新增下级", "复制当前入口", "查看配置说明", "生效检查", "版本与回滚", "展开批量编辑表格"]
+        .some((label) => checks.menuActionLabels?.includes(label)),
+      "菜单配置页辅助动作必须携带菜单对象，不能使用泛化动作标签",
       checks,
     );
     assert(checks.returnedTitle.includes(CONFIG_PAGE_LABEL) && checks.returnedCards.includes("菜单入口"), "菜单配置返回工作台后上下文丢失", checks);

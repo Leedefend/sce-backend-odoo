@@ -20,7 +20,7 @@
         <button v-if="canReturnToBusinessConfig" type="button" class="ghost" @click="returnToBusinessConfig">
           返回配置工作台
         </button>
-        <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel()">刷新</button>
+        <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel()">刷新菜单配置</button>
         <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('custom')">
           新增一级菜单
         </button>
@@ -134,9 +134,9 @@
       <div class="create-panel-header">
         <strong>新增菜单入口</strong>
         <div class="create-shortcuts">
-          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('sibling')">新增同级</button>
-          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('child')">新增下级</button>
-          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('copy')">复制当前入口</button>
+          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('sibling')">新增同级菜单</button>
+          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('child')">新增下级菜单</button>
+          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('copy')">复制当前菜单入口</button>
           <button type="button" class="link-button" @click="createPanelOpen = false">收起新增入口</button>
         </div>
       </div>
@@ -441,9 +441,9 @@
           </div>
           <div class="menu-side-section menu-side-action-group">
             <span class="menu-side-section-title">新增入口</span>
-            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('sibling')">新增同级</button>
-            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('child')">新增下级</button>
-            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('copy')">复制当前入口</button>
+            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('sibling')">新增同级菜单</button>
+            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('child')">新增下级菜单</button>
+            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('copy')">复制当前菜单入口</button>
             <button
               type="button"
               class="ghost danger-ghost"
@@ -465,13 +465,13 @@
           <div class="menu-side-section menu-side-action-group menu-utility-section">
             <span class="menu-side-section-title">检查发布</span>
             <button type="button" class="ghost" @click="showGuide = !showGuide">
-              {{ showGuide ? '收起配置说明' : '查看配置说明' }}
+              {{ showGuide ? '收起菜单配置说明' : '查看菜单配置说明' }}
             </button>
             <button type="button" class="ghost" :disabled="loading || auditing || saving" @click="auditMenuConfiguration">
-              {{ auditing ? '检查中...' : '生效检查' }}
+              {{ auditing ? '检查中...' : '检查菜单生效' }}
             </button>
             <button type="button" class="ghost" :disabled="loading || versionLoading || saving" @click="toggleVersionPanel">
-              {{ versionPanelOpen ? '收起版本与回滚' : (versionLoading ? '加载中...' : '版本与回滚') }}
+              {{ versionPanelOpen ? '收起菜单版本与回滚' : (versionLoading ? '加载中...' : '查看菜单版本与回滚') }}
             </button>
           </div>
         </aside>
@@ -498,7 +498,7 @@
           <div v-if="loading" class="loading-state">正在加载菜单配置...</div>
           <div v-else-if="!bulkPanelOpen" class="bulk-collapsed-state">
             <span>批量维护已收起，日常调整建议使用当前菜单主编辑区。</span>
-            <button type="button" class="link-button" @click="bulkPanelOpen = true">展开批量编辑表格</button>
+            <button type="button" class="link-button" @click="bulkPanelOpen = true">展开批量维护表格</button>
           </div>
           <div v-else class="table-wrap">
             <table>
