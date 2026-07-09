@@ -68,6 +68,7 @@ const ACCEPTANCE_COVERAGE = {
     "approval_editor_visible",
     "approval_rule_canvas_visible",
     "approval_return_workbench_visible",
+    "approval_step_precise_reorder_visible",
     "approval_editor_focused_after_entry",
     "approval_editor_primary_focus",
     "form_designer_visible",
@@ -442,6 +443,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   const approvalUsable = checks.approvalTitle === "审批规则"
     && checks.approvalRulePanelCount === 1
     && checks.approvalStepCanvasCount === 1
+    && checks.approvalStepMoveButtonCount > 0
     && checks.approvalReturnWorkbenchButtonCount > 0;
   const formUsable = checks.formDesignerTitle === "当前页面字段配置"
     && String(checks.formDesignerStepText || "").includes(CONFIG_PAGE_LABEL)
@@ -637,6 +639,7 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     && checks.listSearchReturnWorkbenchButtonCount > 0
     && checks.approvalRulePanelCount === 1
     && checks.approvalStepCanvasCount === 1
+    && checks.approvalStepMoveButtonCount > 0
     && checks.approvalReturnWorkbenchButtonCount > 0
     && checks.menuSelectedPanelCount === 1;
   const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
@@ -673,6 +676,7 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       listSearchReturnWorkbenchButtonCount: checks.listSearchReturnWorkbenchButtonCount,
       approvalRulePanelCount: checks.approvalRulePanelCount,
       approvalStepCanvasCount: checks.approvalStepCanvasCount,
+      approvalStepMoveButtonCount: checks.approvalStepMoveButtonCount,
       approvalReturnWorkbenchButtonCount: checks.approvalReturnWorkbenchButtonCount,
       menuSelectedPanelCount: checks.menuSelectedPanelCount,
       listSearchPanelViewport: checks.listSearchPanelViewport,
@@ -893,6 +897,7 @@ async function main() {
     checks.approvalRulePanelCount = await approvalPanel.locator(".approval-rule-panel").count();
     checks.approvalStepCanvasCount = await approvalPanel.locator(".approval-steps").count();
     checks.approvalPanelViewport = await viewportEvidence(approvalPanel);
+    checks.approvalStepMoveButtonCount = await approvalPanel.locator(".approval-step-actions button[title='上移'], .approval-step-actions button[title='下移']").count();
     checks.approvalReturnWorkbenchButtonCount = await approvalPanel.getByRole("button", { name: "返回工作台" }).count();
     screenshots.approvalEntry = await capture(page, "05-approval-entry");
 
@@ -1027,6 +1032,7 @@ async function main() {
       checks,
     );
     assert(checks.approvalReturnWorkbenchButtonCount > 0, "审批配置面必须提供明确返回工作台动作", checks);
+    assert(checks.approvalStepMoveButtonCount > 0, "审批步骤必须提供上移和下移按钮，不能只依赖拖拽排序", checks);
     assert(
       checks.approvalPanelViewport.startsInPrimaryViewport === true
       && checks.approvalPanelViewport.startsInEditorFocusViewport === true,

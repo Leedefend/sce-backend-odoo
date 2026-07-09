@@ -646,6 +646,8 @@
               <input v-model="step.amount_max" type="number" min="0" step="0.01" placeholder="不限制" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额上限`" />
             </div>
             <div class="approval-step-actions">
+              <button type="button" title="上移" :disabled="approvalLoading || !approvalForm.approval_required || index === 0" @click="moveApprovalStep(index, -1)">↑</button>
+              <button type="button" title="下移" :disabled="approvalLoading || !approvalForm.approval_required || index === approvalSteps.length - 1" @click="moveApprovalStep(index, 1)">↓</button>
               <button type="button" title="移除" :disabled="approvalLoading || !approvalForm.approval_required" @click="removeApprovalStep(index)">×</button>
             </div>
           </div>
@@ -3317,6 +3319,15 @@ function removeApprovalStep(index: number) {
   approvalSteps.value.splice(index, 1);
 }
 
+function moveApprovalStep(index: number, delta: number) {
+  const targetIndex = index + delta;
+  if (targetIndex < 0 || targetIndex >= approvalSteps.value.length) return;
+  const next = [...approvalSteps.value];
+  const [item] = next.splice(index, 1);
+  next.splice(targetIndex, 0, item);
+  approvalSteps.value = next;
+}
+
 function startApprovalStepDrag(index: number, event: DragEvent) {
   approvalStepDragIndex.value = index;
   approvalStepDropIndex.value = index;
@@ -4729,10 +4740,10 @@ h1 {
 .approval-step-table-head,
 .approval-step-row {
   display: grid;
-  grid-template-columns: 44px minmax(180px, 1.2fr) minmax(190px, 1.1fr) minmax(118px, 0.7fr) minmax(118px, 0.7fr) 42px;
+  grid-template-columns: 44px minmax(150px, 1.15fr) minmax(150px, 1fr) minmax(96px, 0.7fr) minmax(96px, 0.7fr) minmax(104px, auto);
   gap: 8px;
   align-items: center;
-  min-width: 780px;
+  min-width: 760px;
 }
 
 .approval-step-table-head {
