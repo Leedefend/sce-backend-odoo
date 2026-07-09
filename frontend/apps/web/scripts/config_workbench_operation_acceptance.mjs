@@ -209,9 +209,77 @@ function scoreResult(score, reason) {
   return { score, reason };
 }
 
+function buildPageStructureResult(checks) {
+  const expectedCards = ["表单字段与布局", "列表与搜索", "菜单入口", "审批规则"];
+  const desktop = checks.pageStructureDesktop || {};
+  const directStart = checks.directStartStructure || {};
+  const mobileOrder = checks.mobileOrder || [];
+  const mobileBodyWidth = checks.mobileBodyWidth || {};
+  const desktopSelectedPass = String(desktop.headerTitle || "").includes(CONFIG_PAGE_LABEL)
+    && desktop.currentConfig?.count === 1
+    && expectedCards.every((item) => desktop.currentConfig?.cardTitles?.includes(item))
+    && desktop.pageDirectory?.count === 1
+    && desktop.pageDirectory?.searchControlCount === 1
+    && desktop.pageDirectory?.rowCount >= 2
+    && desktop.deliveryStatus?.count === 1
+    && desktop.crossZoneLeakage?.cardsInsideDirectory === 0
+    && desktop.crossZoneLeakage?.directoryRowsInsideConfig === 0;
+  const directStartPass = String(directStart.headerTitle || "").includes(CONFIG_PAGE_LABEL)
+    && directStart.topContext?.count === 1
+    && directStart.currentConfig?.count === 1
+    && expectedCards.every((item) => directStart.currentConfig?.cardTitles?.includes(item))
+    && directStart.deliveryStatus?.count === 1
+    && directStart.pageDirectory?.count === 0;
+  const mobilePass = mobileOrder[0]?.top !== null
+    && mobileOrder[1]?.top !== null
+    && mobileOrder[2]?.top !== null
+    && mobileOrder[0]?.top < mobileOrder[1]?.top
+    && mobileOrder[1]?.top < mobileOrder[2]?.top
+    && mobileBodyWidth.documentScrollWidth <= mobileBodyWidth.innerWidth + 8;
+  const failures = [];
+  if (!desktopSelectedPass) failures.push("desktop_selected_structure_not_canonical");
+  if (!directStartPass) failures.push("direct_start_structure_not_canonical");
+  if (!mobilePass) failures.push("mobile_structure_order_or_width_invalid");
+  return {
+    schema_version: "config_workbench_page_structure.v1",
+    status: failures.length ? "fail" : "pass",
+    failures,
+    desktop_selected: {
+      standard: [
+        "header_context",
+        "current_config_panel",
+        "page_directory_panel",
+        "delivery_status_rail",
+      ],
+      result: desktop,
+    },
+    direct_selected_start: {
+      standard: [
+        "header_context",
+        "top_context_actions",
+        "current_config_panel",
+        "delivery_status_panel",
+      ],
+      result: directStart,
+    },
+    mobile_selected: {
+      standard_order: [
+        "current_config_panel",
+        "page_directory_panel",
+        "delivery_status_rail",
+      ],
+      result: {
+        order: mobileOrder,
+        width: mobileBodyWidth,
+      },
+    },
+  };
+}
+
 function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors, requestFailed }) {
   const screenshotReady = (key) => Boolean(screenshots[key]);
   const expectedCards = ["表单字段与布局", "列表与搜索", "菜单入口", "审批规则"];
+  const pageStructure = buildPageStructureResult(checks);
   const cardsComplete = expectedCards.every((item) => checks.cardsAfterSelect?.includes(item))
     && expectedCards.every((item) => checks.directStartCards?.includes(item));
   const pageContextVisible = String(checks.selectedText || "").includes(CONFIG_PAGE_LABEL)
@@ -233,7 +301,9 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && !String(checks.menuTreeHead || "").includes("0 个可配置菜单");
   const mobileStable = checks.mobileOrder?.[0]?.top !== null
     && checks.mobileOrder?.[1]?.top !== null
+    && checks.mobileOrder?.[2]?.top !== null
     && checks.mobileOrder?.[0]?.top < checks.mobileOrder?.[1]?.top
+    && checks.mobileOrder?.[1]?.top < checks.mobileOrder?.[2]?.top
     && checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8;
   const browserHealthy = consoleErrors.length === 0 && requestFailed.length === 0 && metrics?.health_passed === true;
   const evidenceReady = ACCEPTANCE_COVERAGE.screenshotKeys.every(screenshotReady)
@@ -289,17 +359,19 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
 
   const dimensions = {
     current_context: scoreResult(pageContextVisible ? 2 : 0, "标题、卡片和返回路径必须指向当前业务页面。"),
-    information_architecture: scoreResult(cardsComplete && checks.directDeliveryStatusCount === 1 ? 2 : 0, "配置任务、页面目录和交付状态必须层级清晰。"),
+    page_structure: scoreResult(pageStructure.status === "pass" ? 2 : 0, "页面必须符合配置工作台结构合同。"),
+    information_architecture: scoreResult(cardsComplete && checks.directDeliveryStatusCount === 1 && pageStructure.status === "pass" ? 2 : 0, "配置任务、页面目录和交付状态必须层级清晰。"),
     operation_convention: scoreResult(searchUsable && formUsable && listSearchUsable && approvalUsable && menuUsable ? 2 : 0, "搜索、选择、配置、返回必须符合常见后台产品习惯。"),
     entry_naming: scoreResult(entryNamesStable ? 2 : 0, "同一能力的入口命名必须稳定且使用业务语言。"),
     task_efficiency: scoreResult(formUsable && listSearchUsable && approvalUsable && menuUsable ? 2 : 0, "关键配置任务必须能从卡片主入口直接进入。"),
     status_feedback: scoreResult(metrics?.journey_passed_count === ACCEPTANCE_COVERAGE.journeys.length ? 2 : 0, "加载、禁用、返回和健康状态必须可被报告证明。"),
     error_recovery: scoreResult(String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL) && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL) ? 2 : 0, "从子能力返回必须保留业务页面上下文。"),
-    visual_stability: scoreResult(mobileStable ? 2 : 0, "桌面和 390px 移动端不得遮挡或横向溢出。"),
+    visual_stability: scoreResult(mobileStable && pageStructure.status === "pass" ? 2 : 0, "桌面和 390px 移动端不得遮挡或横向溢出。"),
     user_language: scoreResult(cardsComplete && entryNamesStable && !String(checks.selectedText || "").includes(CONFIG_MODEL) ? 2 : 0, "默认界面必须使用业务语言，不要求用户理解技术模型。"),
     verifiability: scoreResult(evidenceReady ? 2 : 0, "结论必须可由截图、指标和报告文件复现。"),
   };
   const scoreTotal = Object.values(dimensions).reduce((sum, item) => sum + item.score, 0);
+  const maxScore = Object.keys(dimensions).length * 2;
   const zeroScoreDimensions = Object.entries(dimensions).filter(([, item]) => item.score === 0).map(([key]) => key);
 
   const blockingIssues = [];
@@ -308,21 +380,23 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   if (!cardsComplete) blockingIssues.push("config_task_cards_incomplete");
   if (!entryNamesStable) blockingIssues.push("capability_entry_naming_inconsistent");
   if (!formUsable || !listSearchUsable || !approvalUsable || !menuUsable) blockingIssues.push("capability_entry_not_product_usable");
+  if (pageStructure.status !== "pass") blockingIssues.push("page_structure_contract_failed");
   if (!mobileStable) blockingIssues.push("mobile_layout_not_stable");
   if (!browserHealthy) blockingIssues.push("browser_health_failed");
   if (!evidenceReady) blockingIssues.push("acceptance_evidence_incomplete");
 
   const riskItems = [];
-  if (scoreTotal < 20) riskItems.push("product_usability_score_not_full");
+  if (scoreTotal < maxScore) riskItems.push("product_usability_score_not_full");
   if (zeroScoreDimensions.length) riskItems.push(`zero_score_dimensions:${zeroScoreDimensions.join(",")}`);
 
   return {
     schema_version: "config_workbench_product_usability.v1",
-    delivery_status: blockingIssues.length ? "delivery_blocked" : (scoreTotal >= 18 && !zeroScoreDimensions.length ? "delivery_ready" : "delivery_risk"),
+    delivery_status: blockingIssues.length ? "delivery_blocked" : (scoreTotal >= 20 && !zeroScoreDimensions.length ? "delivery_ready" : "delivery_risk"),
     score_total: scoreTotal,
-    score_required: 18,
-    max_score: 20,
+    score_required: 20,
+    max_score: maxScore,
     dimensions,
+    page_structure: pageStructure,
     blocking_issues: blockingIssues,
     risk_items: riskItems,
     task_results: taskResults,
@@ -370,6 +444,44 @@ async function main() {
     checks.selectedText = await page.locator(".selected-page-overview").first().innerText();
     checks.cardsAfterSelect = await visibleCardTitles(page);
     checks.scanRowsAfterSelect = await page.locator(".scan-row").count();
+    checks.pageStructureDesktop = await page.evaluate(() => {
+      const rectInfo = (selector) => {
+        const el = document.querySelector(selector);
+        const rect = el?.getBoundingClientRect();
+        return {
+          count: document.querySelectorAll(selector).length,
+          top: rect ? rect.top : null,
+          left: rect ? rect.left : null,
+          width: rect ? rect.width : null,
+          height: rect ? rect.height : null,
+          display: el ? getComputedStyle(el).display : null,
+        };
+      };
+      return {
+        headerTitle: document.querySelector(".business-config-header h1")?.textContent?.trim() || "",
+        currentConfig: {
+          ...rectInfo(".page-config-panel"),
+          overviewCount: document.querySelectorAll(".page-config-panel .selected-page-overview").length,
+          cardTitles: Array.from(document.querySelectorAll(".page-config-panel [data-lowcode-config-task-card='v1'] h2"))
+            .map((node) => node.textContent?.trim())
+            .filter(Boolean),
+        },
+        pageDirectory: {
+          ...rectInfo(".page-picker-panel"),
+          searchControlCount: document.querySelectorAll(".scan-toolbar input[placeholder*='页面名称'], .scan-toolbar input[type='search']").length,
+          filterControlCount: document.querySelectorAll(".scan-toolbar .page-type-tabs button").length,
+          rowCount: document.querySelectorAll(".page-picker-panel .scan-row").length,
+        },
+        deliveryStatus: {
+          ...rectInfo(".workbench-status-rail"),
+          readinessCount: document.querySelectorAll(".workbench-status-rail [data-lowcode-delivery-readiness], .workbench-status-rail").length,
+        },
+        crossZoneLeakage: {
+          cardsInsideDirectory: document.querySelectorAll(".page-picker-panel [data-lowcode-config-task-card='v1']").length,
+          directoryRowsInsideConfig: document.querySelectorAll(".page-config-panel .scan-row").length,
+        },
+      };
+    });
     screenshots.selectedFromScan = await capture(page, "01-selected-from-scan");
 
     await page.getByPlaceholder("输入页面名称").fill(SWITCH_PAGE_LABEL);
@@ -390,6 +502,35 @@ async function main() {
     await openDirectSelectedWorkbench(page);
     checks.directStartCards = await visibleCardTitles(page, '[data-lowcode-workbench-ia="start"]');
     checks.directDeliveryStatusCount = await page.locator('[data-lowcode-delivery-readiness="low_code_delivery_readiness.v1"]').count();
+    checks.directStartStructure = await page.evaluate(() => {
+      const rectInfo = (selector) => {
+        const el = document.querySelector(selector);
+        const rect = el?.getBoundingClientRect();
+        return {
+          count: document.querySelectorAll(selector).length,
+          top: rect ? rect.top : null,
+          left: rect ? rect.left : null,
+          width: rect ? rect.width : null,
+          height: rect ? rect.height : null,
+          display: el ? getComputedStyle(el).display : null,
+        };
+      };
+      return {
+        headerTitle: document.querySelector(".business-config-header h1")?.textContent?.trim() || "",
+        topContext: {
+          ...rectInfo(".workbench-start-lead"),
+          actionCount: document.querySelectorAll(".workbench-start-lead button").length,
+        },
+        currentConfig: {
+          ...rectInfo(".workbench-start-config"),
+          cardTitles: Array.from(document.querySelectorAll("[data-lowcode-workbench-ia='start'] [data-lowcode-config-task-card='v1'] h2"))
+            .map((node) => node.textContent?.trim())
+            .filter(Boolean),
+        },
+        pageDirectory: rectInfo(".page-picker-panel"),
+        deliveryStatus: rectInfo(".workbench-start-status"),
+      };
+    });
     screenshots.directSelected = await capture(page, "03-direct-selected");
 
     await openDirectSelectedWorkbench(page);
