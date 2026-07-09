@@ -12188,10 +12188,7 @@ onBeforeUnmount(() => {
 .form-grid--designer-workspace .contract-form-designer-sidebar {
   grid-column: 1;
   grid-row: 4 / span 2;
-  position: sticky;
-  top: 12px;
-  max-height: calc(100vh - 24px);
-  overflow: auto;
+  align-self: start;
 }
 
 .contract-form-designer-sidebar-head {
@@ -12454,10 +12451,7 @@ onBeforeUnmount(() => {
 .form-grid--designer-workspace .contract-form-inspector {
   grid-column: 3;
   grid-row: 4 / span 2;
-  position: sticky;
-  top: 12px;
-  max-height: calc(100vh - 24px);
-  overflow: auto;
+  align-self: start;
 }
 
 .contract-field-selection-panel {

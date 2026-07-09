@@ -93,6 +93,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_designer_discard_label_consistent",
     "form_field_create_panel_close_label_consistent",
     "form_designer_business_actions_hidden",
+    "form_designer_side_panels_no_footer_overlap",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
     "menu_tree_search_feedback_visible",
@@ -1010,6 +1011,40 @@ async function main() {
     await page.getByRole("button", { name: "取消新增字段" }).click();
     await page.locator(".contract-field-create-dialog").waitFor({ state: "hidden", timeout: 60000 });
     screenshots.formDesignerEntry = await capture(page, "06-form-designer-entry");
+    await page.locator(".contract-field-governance-footer").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(100);
+    checks.formDesignerFooterOverlapEvidence = await page.evaluate(() => {
+      const footer = document.querySelector(".contract-field-governance-footer");
+      const sidebar = document.querySelector(".contract-form-designer-sidebar");
+      const inspector = document.querySelector(".contract-form-inspector");
+      if (!footer || !sidebar || !inspector) return { ready: false, blockedBySidePanels: true };
+      const footerRect = footer.getBoundingClientRect();
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      const y = Math.min(Math.max(footerRect.top + Math.min(28, footerRect.height / 2), 24), viewportHeight - 24);
+      const leftX = Math.min(Math.max(footerRect.left + 32, 24), viewportWidth - 24);
+      const rightX = Math.min(Math.max(footerRect.right - 32, 24), viewportWidth - 24);
+      const leftElement = document.elementFromPoint(leftX, y);
+      const rightElement = document.elementFromPoint(rightX, y);
+      const leftBlocked = Boolean(leftElement && sidebar.contains(leftElement));
+      const rightBlocked = Boolean(rightElement && inspector.contains(rightElement));
+      return {
+        ready: true,
+        blockedBySidePanels: leftBlocked || rightBlocked,
+        samples: {
+          left: { x: Math.round(leftX), y: Math.round(y), blocked: leftBlocked },
+          right: { x: Math.round(rightX), y: Math.round(y), blocked: rightBlocked },
+        },
+        footerRect: {
+          top: Math.round(footerRect.top),
+          left: Math.round(footerRect.left),
+          right: Math.round(footerRect.right),
+          bottom: Math.round(footerRect.bottom),
+        },
+        leftElementClass: leftElement instanceof HTMLElement ? leftElement.className : "",
+        rightElementClass: rightElement instanceof HTMLElement ? rightElement.className : "",
+      };
+    });
     await page.getByRole("button", { name: "返回工作台" }).first().click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 60000 });
     await page.waitForSelector('[data-lowcode-config-task-card="v1"]', { timeout: 60000 });
@@ -1283,6 +1318,12 @@ async function main() {
       checks,
     );
     assert(checks.formDesignerBusinessActionButtons.length === 0, "表单配置态不应出现业务办理动作按钮", checks);
+    assert(
+      checks.formDesignerFooterOverlapEvidence?.ready === true
+      && checks.formDesignerFooterOverlapEvidence?.blockedBySidePanels === false,
+      "表单设计器滚动到底部操作区后，左右辅助栏不能悬浮遮挡保存和返回动作",
+      checks,
+    );
     assert(checks.menuSideSections.join("|") === "新增入口|批量维护|检查发布", "菜单配置侧栏操作分组不完整", checks);
     assert(checks.menuTreeRows > 0 && !checks.menuTreeHead.includes("0 个可配置菜单"), "从配置工作台进入菜单配置后菜单目录为空", checks);
     assert(
