@@ -2,7 +2,7 @@
 <template>
   <LayoutShell
     :flow="isProjectIntakeCreateMode"
-    :class="{ 'contract-form-native-shell': useNativeFormTree }"
+    :class="['sc-page', { 'contract-form-native-shell': useNativeFormTree }]"
     :data-v2-shadow-store="String(v2ShadowStoreReady)"
     :data-v2-shadow-widgets="String(v2ShadowWidgetCount)"
     :data-v2-shadow-actions="String(v2ShadowActionCount)"
@@ -108,7 +108,7 @@
     <StatusPanel v-else-if="status === 'loading'" title="正在加载页面..." variant="info" />
     <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
 
-    <section v-else :class="['card', { 'card--flow': isProjectIntakeCreateMode }]">
+    <section v-else :class="['card', 'sc-panel', { 'card--flow': isProjectIntakeCreateMode }]">
       <section v-if="warnings.length && !isProjectIntakeCreateMode" class="block warn">
         <h3>提示信息</h3>
         <ul>
@@ -11547,7 +11547,7 @@ onBeforeUnmount(() => {
 
 .card {
   border: 1px solid var(--sc-app-border);
-  border-radius: 8px;
+  border-radius: var(--sc-product-panel-radius);
   padding: 14px;
   background: var(--sc-app-panel);
   max-width: 1360px;

@@ -96,6 +96,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_designer_business_actions_hidden",
     "form_designer_side_panels_no_footer_overlap",
     "product_workspace_structural_gap_unified",
+    "business_runtime_workspace_structural_gap_unified",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
     "menu_tree_search_feedback_visible",
@@ -965,6 +966,26 @@ async function main() {
     ]);
     screenshots.directSelected = await capture(page, "03-direct-selected");
 
+    await page.goto(`${BASE_URL}/a/${CONFIG_ACTION_ID}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForSelector(".page .list-toolbar, .page .list-empty-state", { timeout: 60000 });
+    checks.businessRuntimeWorkspaceGaps = await productWorkspaceGapEvidence(page, [
+      { page: "business_runtime", selector: ".page", scope: "list_page_stack" },
+    ]);
+    checks.businessRuntimeListPageClass = await page.locator(".page").first().evaluate((node) => node.className || "");
+    checks.businessRuntimeListToolbarCount = await page.locator(".page .list-toolbar").count();
+    await page.goto(`${BASE_URL}/f/${encodeURIComponent(CONFIG_MODEL)}/new?db=${encodeURIComponent(DB_NAME)}&action_id=${CONFIG_ACTION_ID}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForSelector(".card .form-grid", { timeout: 60000 });
+    checks.businessRuntimeWorkspaceGaps.push(...await productWorkspaceGapEvidence(page, [
+      { page: "business_runtime", selector: ".card", scope: "form_panel_shell" },
+    ]));
+    checks.businessRuntimeFormShellClass = await page.locator(".card").first().evaluate((node) => node.className || "");
+    checks.businessRuntimeFormBusinessActionButtons = await page.locator("button").evaluateAll((buttons) => (
+      buttons
+        .map((button) => button.textContent?.trim())
+        .filter((text) => text === "保存草稿" || text === "提交")
+    ));
+
+    await openDirectSelectedWorkbench(page);
     await clickConfigCardButton(page, "表单字段与布局", "版本记录");
     const versionPanel = page.locator(".version-panel");
     await versionPanel.waitFor({ state: "visible", timeout: 60000 });
@@ -1505,6 +1526,17 @@ async function main() {
       (checks.productWorkspaceGaps || []).length >= 8
       && (checks.productWorkspaceGaps || []).every((item) => item.ready === true && item.columnGapPx === 0),
       "产品页面结构分栏间隙必须纳入统一样式体系并保持为 0",
+      checks,
+    );
+    assert(
+      (checks.businessRuntimeWorkspaceGaps || []).length >= 2
+      && (checks.businessRuntimeWorkspaceGaps || []).every((item) => item.ready === true)
+      && (checks.businessRuntimeWorkspaceGaps || []).some((item) => item.scope === "list_page_stack" && item.rowGapPx === 12)
+      && String(checks.businessRuntimeListPageClass || "").includes("sc-page")
+      && String(checks.businessRuntimeFormShellClass || "").includes("sc-panel")
+      && checks.businessRuntimeListToolbarCount > 0
+      && (checks.businessRuntimeFormBusinessActionButtons || []).length > 0,
+      "正常业务办理列表和表单页面必须纳入产品级页面结构体系，并保留业务办理动作",
       checks,
     );
     assert(checks.menuSideSections.join("|") === "新增入口|批量维护|检查发布", "菜单配置侧栏操作分组不完整", checks);

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 <template>
-  <section class="page">
+  <section class="page sc-page sc-product-workspace-stack">
     <PageHeader
       v-if="status !== 'ok' && status !== 'empty'"
       :title="title"
@@ -2057,7 +2057,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .page {
   display: grid;
-  gap: 6px;
+  gap: var(--sc-product-workspace-stack-gap);
   min-width: 0;
 }
 

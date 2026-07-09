@@ -152,7 +152,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - `product_usability.score_total = 22 / 22`
 - `professional_readiness.status = professional_ready`
 - `professional_readiness.score_total = 30 / 30`
-- `assertion_passed_count = 61 / 61`
+- `assertion_passed_count = 62 / 62`
 - `formDesignerBusinessActionButtons = []`
 - `formDesignerShellTitle = 配置：项目合同汇总`
 - `formDesignerCurrentPageLabel = 项目合同汇总`
