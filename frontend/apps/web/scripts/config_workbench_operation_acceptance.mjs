@@ -1121,6 +1121,24 @@ async function main() {
       const headerRect = header?.getBoundingClientRect();
       const workspaceRect = workspace?.getBoundingClientRect();
       if (!headerRect || !workspaceRect) return { ready: false, leftDelta: null, rightDelta: null };
+      const panelSelectors = [".menu-config-workspace", ".status", ".guide-panel", ".audit-panel", ".version-panel", ".create-panel"];
+      const panels = panelSelectors
+        .flatMap((selector) => Array.from(document.querySelectorAll(selector)).map((node) => ({ selector, node })))
+        .filter(({ node }) => {
+          const rect = node.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        })
+        .map(({ selector, node }) => {
+          const rect = node.getBoundingClientRect();
+          return {
+            selector,
+            left: Math.round(rect.left),
+            right: Math.round(rect.right),
+            width: Math.round(rect.width),
+            leftDelta: Math.round(Math.abs(headerRect.left - rect.left)),
+            rightDelta: Math.round(Math.abs(headerRect.right - rect.right)),
+          };
+        });
       return {
         ready: true,
         header: {
@@ -1135,6 +1153,8 @@ async function main() {
         },
         leftDelta: Math.round(Math.abs(headerRect.left - workspaceRect.left)),
         rightDelta: Math.round(Math.abs(headerRect.right - workspaceRect.right)),
+        panels,
+        maxPanelDelta: Math.max(0, ...panels.flatMap((item) => [item.leftDelta, item.rightDelta])),
       };
     });
     checks.menuSearchInputCount = await page.locator(".menu-config-tree .tree-search input").count();
@@ -1146,6 +1166,34 @@ async function main() {
     await page.getByRole("button", { name: "新增一级菜单" }).click();
     const menuCreatePanel = page.locator(".create-panel");
     await menuCreatePanel.waitFor({ state: "visible", timeout: 60000 });
+    checks.menuWorkspaceAlignmentAfterCreateOpen = await page.evaluate(() => {
+      const header = document.querySelector(".menu-config-header");
+      const headerRect = header?.getBoundingClientRect();
+      if (!headerRect) return { ready: false, maxPanelDelta: null, panels: [] };
+      const panelSelectors = [".menu-config-workspace", ".status", ".guide-panel", ".audit-panel", ".version-panel", ".create-panel"];
+      const panels = panelSelectors
+        .flatMap((selector) => Array.from(document.querySelectorAll(selector)).map((node) => ({ selector, node })))
+        .filter(({ node }) => {
+          const rect = node.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        })
+        .map(({ selector, node }) => {
+          const rect = node.getBoundingClientRect();
+          return {
+            selector,
+            left: Math.round(rect.left),
+            right: Math.round(rect.right),
+            width: Math.round(rect.width),
+            leftDelta: Math.round(Math.abs(headerRect.left - rect.left)),
+            rightDelta: Math.round(Math.abs(headerRect.right - rect.right)),
+          };
+        });
+      return {
+        ready: true,
+        panels,
+        maxPanelDelta: Math.max(0, ...panels.flatMap((item) => [item.leftDelta, item.rightDelta])),
+      };
+    });
     checks.menuCreatePanelCount = await menuCreatePanel.count();
     checks.menuCreatePanelTitle = await menuCreatePanel.locator(".create-panel-header strong").innerText();
     checks.menuCreatePanelCloseButtonCount = await menuCreatePanel.getByRole("button", { name: "收起新增入口" }).count();
@@ -1417,8 +1465,11 @@ async function main() {
     assert(
       checks.menuWorkspaceAlignment?.ready === true
       && checks.menuWorkspaceAlignment?.leftDelta <= 1
-      && checks.menuWorkspaceAlignment?.rightDelta <= 1,
-      "菜单配置主工作区外边界必须与页面头部对齐，不能整体缩进形成视觉断层",
+      && checks.menuWorkspaceAlignment?.rightDelta <= 1
+      && checks.menuWorkspaceAlignment?.maxPanelDelta <= 1
+      && checks.menuWorkspaceAlignmentAfterCreateOpen?.ready === true
+      && checks.menuWorkspaceAlignmentAfterCreateOpen?.maxPanelDelta <= 1,
+      "菜单配置主工作区和状态/辅助面板外边界必须与页面头部对齐，不能整体缩进形成视觉断层",
       checks,
     );
     assert(

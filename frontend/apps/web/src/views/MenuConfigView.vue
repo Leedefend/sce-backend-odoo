@@ -2496,7 +2496,7 @@ h1 {
 }
 
 .status {
-  margin: 0 18px;
+  margin: 0;
   padding: 10px 12px;
   border-radius: 6px;
   font-size: 13px;
@@ -2505,7 +2505,7 @@ h1 {
 .guide-panel {
   display: grid;
   gap: 12px;
-  margin: 0 18px;
+  margin: 0;
   padding: 14px 16px;
   border: 1px solid var(--sc-app-info-border);
   border-radius: 8px;
@@ -2563,7 +2563,7 @@ h1 {
 }
 
 .audit-panel {
-  margin: 0 18px;
+  margin: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -2587,7 +2587,7 @@ h1 {
 }
 
 .version-panel {
-  margin: 0 18px;
+  margin: 0;
   display: grid;
   gap: 10px;
   padding: 12px;
@@ -2713,7 +2713,7 @@ h1 {
 }
 
 .create-panel {
-  margin: 0 18px;
+  margin: 0;
   display: grid;
   gap: 10px;
   padding: 10px 12px;
