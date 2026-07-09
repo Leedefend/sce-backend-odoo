@@ -51,6 +51,7 @@ const ACCEPTANCE_COVERAGE = {
     "selected_context_visible",
     "selected_page_label_not_truncated",
     "selected_cards_complete",
+    "task_card_primary_actions_consistent",
     "search_result_exact",
     "switch_title_synced",
     "switch_current_label_not_broken",
@@ -157,6 +158,18 @@ async function login(page) {
 async function visibleCardTitles(page, scope = "") {
   return page.locator(`${scope} [data-lowcode-config-task-card="v1"] h2`).evaluateAll((nodes) => (
     nodes.map((node) => node.textContent?.trim()).filter(Boolean)
+  ));
+}
+
+async function visibleCardPrimaryActions(page, scope = "") {
+  return page.locator(`${scope} [data-lowcode-config-task-card="v1"]`).evaluateAll((cards) => (
+    cards.map((card) => {
+      const title = card.querySelector("h2")?.textContent?.trim() || "";
+      const actions = Array.from(card.querySelectorAll("button"))
+        .map((button) => button.textContent?.trim())
+        .filter(Boolean);
+      return { title, actions };
+    })
   ));
 }
 
@@ -790,6 +803,7 @@ async function main() {
     await page.waitForTimeout(800);
     checks.selectedText = await page.locator(".selected-page-overview").first().innerText();
     checks.cardsAfterSelect = await visibleCardTitles(page);
+    checks.cardPrimaryActionsAfterSelect = await visibleCardPrimaryActions(page);
     checks.scanRowsAfterSelect = await page.locator(".scan-row").count();
     checks.selectedVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".scan-panel");
     checks.deliveryReadinessLabels = await deliveryReadinessLabels(page, ".workbench-status-rail");
@@ -911,7 +925,7 @@ async function main() {
     screenshots.directSelected = await capture(page, "03-direct-selected");
 
     await openDirectSelectedWorkbench(page);
-    await clickConfigCardButton(page, "列表与搜索", "配置列表");
+    await clickConfigCardButton(page, "列表与搜索", "配置列表与搜索");
     const listSearchPanel = page.locator(".edit-panel").filter({ hasText: "列表与搜索设置" });
     await listSearchPanel.waitFor({ state: "visible", timeout: 60000 });
     checks.listSearchTitle = await listSearchPanel.locator("h2").innerText();
@@ -927,7 +941,7 @@ async function main() {
     screenshots.listSearchEntry = await capture(page, "04-list-search-entry");
 
     await openDirectSelectedWorkbench(page);
-    await clickConfigCardButton(page, "审批规则", "配置审批");
+    await clickConfigCardButton(page, "审批规则", "配置审批规则");
     const approvalPanel = page.locator(".approval-panel");
     await approvalPanel.waitFor({ state: "visible", timeout: 60000 });
     checks.approvalTitle = await approvalPanel.locator("h2").innerText();
@@ -945,7 +959,7 @@ async function main() {
     screenshots.approvalEntry = await capture(page, "05-approval-entry");
 
     await openDirectSelectedWorkbench(page);
-    await clickConfigCardButton(page, "表单字段与布局", "配置表单字段");
+    await clickConfigCardButton(page, "表单字段与布局", "配置表单与布局");
     await page.waitForURL((url) => String(url).includes(`/f/${CONFIG_MODEL}/new`), { timeout: 60000 });
     await page.waitForSelector(".contract-form-settings", { timeout: 60000 });
     checks.formDesignerTitle = await page.locator(".contract-form-settings h4").innerText();
@@ -1052,6 +1066,16 @@ async function main() {
       checks,
     );
     assert(checks.cardsAfterSelect.includes("表单字段与布局") && checks.cardsAfterSelect.includes("列表与搜索"), "选择页面后配置卡片不完整", checks);
+    assert(
+      checks.cardPrimaryActionsAfterSelect?.some((item) => item.title === "表单字段与布局" && item.actions.includes("配置表单与布局"))
+      && checks.cardPrimaryActionsAfterSelect?.some((item) => item.title === "列表与搜索" && item.actions.includes("配置列表与搜索"))
+      && checks.cardPrimaryActionsAfterSelect?.some((item) => item.title === "审批规则" && item.actions.includes("配置审批规则"))
+      && !(checks.cardPrimaryActionsAfterSelect || []).flatMap((item) => item.actions || []).includes("配置表单字段")
+      && !(checks.cardPrimaryActionsAfterSelect || []).flatMap((item) => item.actions || []).includes("配置列表")
+      && !(checks.cardPrimaryActionsAfterSelect || []).flatMap((item) => item.actions || []).includes("配置审批"),
+      "配置任务卡主操作必须与任务对象口径一致",
+      checks,
+    );
     assert(checks.searchRows.length === 1 && checks.searchRows[0] === SWITCH_PAGE_LABEL, "业务页面搜索结果不符合用户预期", checks);
     assert(checks.switchedTitle.includes(SWITCH_PAGE_LABEL), "切换页面后标题未同步", checks);
     assert(

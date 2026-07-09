@@ -1782,11 +1782,11 @@ function sectionImpactText(sectionKey: string) {
 }
 
 function sectionPrimaryActionLabel(sectionKey: string) {
-  if (sectionKey === 'form') return '配置表单字段';
-  if (sectionKey === 'list_search') return '配置列表';
+  if (sectionKey === 'form') return '配置表单与布局';
+  if (sectionKey === 'list_search') return '配置列表与搜索';
   if (sectionKey === 'analysis') return '配置分析';
   if (sectionKey === 'menu') return '配置菜单';
-  if (sectionKey === 'approval') return '配置审批';
+  if (sectionKey === 'approval') return '配置审批规则';
   return '配置';
 }
 
