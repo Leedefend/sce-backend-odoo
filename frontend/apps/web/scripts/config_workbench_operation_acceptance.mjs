@@ -56,6 +56,7 @@ const ACCEPTANCE_COVERAGE = {
     "switch_cards_complete",
     "direct_selected_cards_visible",
     "direct_delivery_status_visible",
+    "direct_top_actions_scope_clear",
     "delivery_status_default_user_task_only",
     "direct_delivery_status_default_user_task_only",
     "delivery_status_default_snapshot_hidden",
@@ -369,6 +370,7 @@ function buildPageStructureResult(checks) {
     && directStart.topContext?.count === 1
     && directStart.topContext?.overviewLabel === CONFIG_PAGE_LABEL
     && directStart.topContext?.overviewLabelTruncated === false
+    && directStart.topContext?.actionCount <= 2
     && directStart.currentConfig?.count === 1
     && expectedCards.every((item) => directStart.currentConfig?.cardTitles?.includes(item))
     && directStart.deliveryStatus?.count === 1
@@ -1019,6 +1021,13 @@ async function main() {
       && checks.directStartStructure.topContext.overviewLabel === CONFIG_PAGE_LABEL
       && checks.directStartStructure.topContext.overviewLabelTruncated === false,
       "当前配置区必须完整展示业务页面名称，不能用省略号截断核心对象",
+      checks,
+    );
+    assert(
+      checks.directStartStructure.topContext.actionCount <= 2
+      && checks.directStartCards.includes("表单字段与布局")
+      && checks.directStartCards.includes("列表与搜索"),
+      "直达态顶部只应保留范围类动作，具体配置入口必须由配置任务卡承载",
       checks,
     );
     assert(checks.cardsAfterSelect.includes("表单字段与布局") && checks.cardsAfterSelect.includes("列表与搜索"), "选择页面后配置卡片不完整", checks);

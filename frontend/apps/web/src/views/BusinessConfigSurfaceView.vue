@@ -22,9 +22,6 @@
         >
           {{ action.label }}
         </button>
-        <button type="button" class="ghost primary" :disabled="!canOpenDesigner" @click="openFormConfig">
-          {{ headerDesignerButtonLabel }}
-        </button>
         <button type="button" class="ghost" :disabled="scanLoading" @click="scanSystemRootCoverage">
           {{ scanLoading ? '读取中...' : '选择业务页面' }}
         </button>
@@ -51,9 +48,6 @@
           <div class="workbench-start-actions">
             <button type="button" class="ghost primary" :disabled="scanLoading" @click="scanSystemRootCoverage">
               {{ scanLoading ? '读取中...' : '选择业务页面' }}
-            </button>
-            <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">
-              {{ headerDesignerButtonLabel }}
             </button>
             <button type="button" class="ghost" :disabled="!previewRouteTarget.path" @click="previewSelectedRuntimeRoute">预览页面</button>
           </div>
@@ -1430,11 +1424,6 @@ const approvalImpactSummaryText = computed(() => {
   return `${modeLabel}，默认岗位：${scopeLabel}，${suffix}${stepPreview ? `：${stepPreview}` : ''}。`;
 });
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value && !currentModelIsRuntimeConfig.value));
-const headerDesignerButtonLabel = computed(() => {
-  if (canOpenDesigner.value) return '配置表单字段';
-  if (currentModelIsRuntimeConfig.value) return '使用专用配置';
-  return '先选择页面';
-});
 const startScopeSummary = computed(() => {
   if (selectedPageLabel.value) return '当前页面配置，只影响这个业务页面';
   if (currentModel.value) return '已选择业务页面，可配置表单、列表、菜单和审批';

@@ -95,8 +95,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 40 |
-| assertion_passed_count | 已通过断言数 | 42 |
+| assertion_count | 用户可感知断言数 | 43 |
+| assertion_passed_count | 已通过断言数 | 43 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -112,7 +112,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - 当前配置标题与配置卡片。
 - 当前配置区必须完整展示业务页面名称，不能用省略号截断核心对象。
 - 搜索结果与切换后的标题、配置卡片。
-- 直达已选页面的配置卡片与交付状态。
+- 直达已选页面的配置卡片、交付状态和顶部范围动作。
 - 默认交付状态只展示用户任务相关的表单、列表搜索、菜单、审批四项状态，不展示配置快照等内部审计信息。
 - 列表搜索面板标题、配置类型页签、字段配置画布。
 - 列表搜索面板必须提供明确“返回工作台”动作。
@@ -221,7 +221,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | 用户任务 | 合格标准 | 证据 |
 | --- | --- | --- |
 | 找到要配置的业务页面 | 用户能通过目录或搜索准确选中目标页面，选择后目录不消失 | 截图、搜索结果、选中状态 |
-| 理解当前页面能配置什么 | 四类配置任务名称、影响范围、状态表达清楚 | 当前配置卡片截图 |
+| 理解当前页面能配置什么 | 四类配置任务名称、影响范围、状态表达清楚，顶部范围动作不重复具体配置入口 | 当前配置卡片截图 |
 | 配置表单字段 | 入口名称统一，进入设计器后显示当前业务页面名、可配置项、影响范围，并可返回；配置态不得复用“新建”业务办理标题 | 表单设计器截图、返回后标题 |
 | 配置列表与搜索 | 进入后能看到列表列、搜索条件、默认分组三个常见配置类型，字段动作语义清楚，且编辑面进入首屏主焦点 | 列表搜索面板截图、首屏主焦点位置指标 |
 | 配置审批规则 | 进入后能看到规则开关、审批方式、步骤编排和保存状态，步骤动作语义清楚，且编辑面进入首屏主焦点 | 审批面板截图、首屏主焦点位置指标 |
@@ -348,7 +348,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 42 / 42`
+- `assertion_passed_count = 43 / 43`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`
@@ -366,6 +366,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 关键可见结果：
 
 - 选择业务页面后，配置卡片完整展示：表单字段与布局、列表与搜索、菜单入口、审批规则。
+- 直达已选页顶部只保留选择业务页面、预览页面等范围动作，表单、列表、菜单、审批配置入口统一由任务卡承载。
 - 列表与搜索入口可打开设置面板，并展示列表列、搜索条件、默认分组三类配置，字段上移、下移、移除动作有可理解语义。
 - 审批入口可打开审批规则画布，并展示规则设置与审批步骤编排，步骤上移、下移、移除动作有可理解语义。
 - 表单入口可进入当前页面字段配置设计器，当前页面名显示为“项目合同汇总”，并能返回“项目合同汇总”配置工作台上下文。
