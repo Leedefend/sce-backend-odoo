@@ -1389,12 +1389,9 @@ const headerDesignerButtonLabel = computed(() => {
   return '先选择页面';
 });
 const startScopeSummary = computed(() => {
-  const parts = [
-    currentModel.value ? `对象 ${currentModel.value}` : '',
-    scopeAction.value ? `页面 ${scopeAction.value}` : '',
-    scopeRole.value ? `角色 ${scopeRole.value}` : '',
-  ].filter(Boolean);
-  return parts.length ? parts.join(' · ') : '先从业务页面目录选择配置对象';
+  if (selectedPageLabel.value) return '当前页面配置，只影响这个业务页面';
+  if (currentModel.value) return '已选择业务页面，可配置表单、列表、菜单和审批';
+  return '先从业务页面目录选择配置对象';
 });
 const snapshotSummary = computed<BusinessConfigSnapshotSummaryPayload | null>(() => surface.value?.snapshot_summary || null);
 const deliveryReadiness = computed(() => surface.value?.delivery_readiness || null);

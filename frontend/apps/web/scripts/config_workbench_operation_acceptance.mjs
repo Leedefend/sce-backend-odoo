@@ -151,6 +151,23 @@ async function capture(page, name) {
   return filePath;
 }
 
+async function visibleTechnicalTerms(page, scope = "body") {
+  const text = await page.locator(scope).innerText({ timeout: 10000 }).catch(() => "");
+  const patterns = [
+    /construction\.[a-z0-9_.]+/gi,
+    /ui\.[a-z0-9_.]+/gi,
+    /\b(action_id|view_id|role_key|model=|root_menu_xmlid)\b/gi,
+    /\b(user_confirmed_|technical_|synced_from_|generated_from_|migrated_from_|daily_dev)\w*/gi,
+    /对象\s+[a-z0-9_.]+/gi,
+    /页面\s*(ID|id)\s*[:：]?\s*\d+/g,
+  ];
+  return patterns
+    .flatMap((pattern) => text.match(pattern) || [])
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .filter((item, index, items) => items.indexOf(item) === index);
+}
+
 function buildCoverageSummary({ screenshots, consoleErrors, requestFailed }) {
   const screenshotCount = Object.keys(screenshots).filter((key) => ACCEPTANCE_COVERAGE.screenshotKeys.includes(key)).length;
   return {
@@ -306,6 +323,12 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && checks.mobileOrder?.[1]?.top < checks.mobileOrder?.[2]?.top
     && checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8;
   const browserHealthy = consoleErrors.length === 0 && requestFailed.length === 0 && metrics?.health_passed === true;
+  const visibleTechnicalTermsClean = [
+    ...(checks.selectedVisibleTechnicalTerms || []),
+    ...(checks.directStartVisibleTechnicalTerms || []),
+    ...(checks.formDesignerVisibleTechnicalTerms || []),
+    ...(checks.menuConfigVisibleTechnicalTerms || []),
+  ].length === 0;
   const evidenceReady = ACCEPTANCE_COVERAGE.screenshotKeys.every(screenshotReady)
     && metrics?.coverage_ratio === 1;
   const searchUsable = checks.searchRows?.length === 1
@@ -367,7 +390,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     status_feedback: scoreResult(metrics?.journey_passed_count === ACCEPTANCE_COVERAGE.journeys.length ? 2 : 0, "加载、禁用、返回和健康状态必须可被报告证明。"),
     error_recovery: scoreResult(String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL) && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL) ? 2 : 0, "从子能力返回必须保留业务页面上下文。"),
     visual_stability: scoreResult(mobileStable && pageStructure.status === "pass" ? 2 : 0, "桌面和 390px 移动端不得遮挡或横向溢出。"),
-    user_language: scoreResult(cardsComplete && entryNamesStable && !String(checks.selectedText || "").includes(CONFIG_MODEL) ? 2 : 0, "默认界面必须使用业务语言，不要求用户理解技术模型。"),
+    user_language: scoreResult(cardsComplete && entryNamesStable && visibleTechnicalTermsClean ? 2 : 0, "默认界面必须使用业务语言，不要求用户理解技术模型。"),
     verifiability: scoreResult(evidenceReady ? 2 : 0, "结论必须可由截图、指标和报告文件复现。"),
   };
   const scoreTotal = Object.values(dimensions).reduce((sum, item) => sum + item.score, 0);
@@ -381,6 +404,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   if (!entryNamesStable) blockingIssues.push("capability_entry_naming_inconsistent");
   if (!formUsable || !listSearchUsable || !approvalUsable || !menuUsable) blockingIssues.push("capability_entry_not_product_usable");
   if (pageStructure.status !== "pass") blockingIssues.push("page_structure_contract_failed");
+  if (!visibleTechnicalTermsClean) blockingIssues.push("visible_technical_terms_leaked");
   if (!mobileStable) blockingIssues.push("mobile_layout_not_stable");
   if (!browserHealthy) blockingIssues.push("browser_health_failed");
   if (!evidenceReady) blockingIssues.push("acceptance_evidence_incomplete");
@@ -427,6 +451,12 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
   const cards = checks.cardsAfterSelect || [];
   const directCards = checks.directStartCards || [];
   const cardsStable = cards.length === 4 && cards.join("|") === directCards.join("|");
+  const visibleTechnicalTerms = [
+    ...(checks.selectedVisibleTechnicalTerms || []),
+    ...(checks.directStartVisibleTechnicalTerms || []),
+    ...(checks.formDesignerVisibleTechnicalTerms || []),
+    ...(checks.menuConfigVisibleTechnicalTerms || []),
+  ];
   const menuBoundaryStable = checks.menuSideSections?.join("|") === "新增入口|批量维护|检查发布"
     && checks.menuTreeRows > 0
     && !String(checks.menuTreeHead || "").includes("0 个可配置菜单")
@@ -462,7 +492,7 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       searchControlCount: checks.pageStructureDesktop?.pageDirectory?.searchControlCount,
       filterControlCount: checks.pageStructureDesktop?.pageDirectory?.filterControlCount,
     }),
-    naming_and_language_consistency: professionalScore(cardsStable && !String(checks.selectedText || "").includes(CONFIG_MODEL), "专业产品必须全链路名称稳定并默认使用业务语言。", { cards, directCards }),
+    naming_and_language_consistency: professionalScore(cardsStable && !visibleTechnicalTerms.length, "专业产品必须全链路名称稳定并默认使用业务语言。", { cards, directCards, visibleTechnicalTerms }),
     capability_depth: professionalScore(capabilityDepthReady, "专业产品不能只到入口，表单、列表搜索、审批、菜单必须进入可操作配置面。", {
       formDesignerTitle: checks.formDesignerTitle,
       listSearchTabs: checks.listSearchTabs,
@@ -550,6 +580,7 @@ async function main() {
     checks.selectedText = await page.locator(".selected-page-overview").first().innerText();
     checks.cardsAfterSelect = await visibleCardTitles(page);
     checks.scanRowsAfterSelect = await page.locator(".scan-row").count();
+    checks.selectedVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".scan-panel");
     checks.pageStructureDesktop = await page.evaluate(() => {
       const rectInfo = (selector) => {
         const el = document.querySelector(selector);
@@ -608,6 +639,7 @@ async function main() {
     await openDirectSelectedWorkbench(page);
     checks.directStartCards = await visibleCardTitles(page, '[data-lowcode-workbench-ia="start"]');
     checks.directDeliveryStatusCount = await page.locator('[data-lowcode-delivery-readiness="low_code_delivery_readiness.v1"]').count();
+    checks.directStartVisibleTechnicalTerms = await visibleTechnicalTerms(page, "[data-lowcode-workbench-ia='start']");
     checks.directStartStructure = await page.evaluate(() => {
       const rectInfo = (selector) => {
         const el = document.querySelector(selector);
@@ -666,6 +698,7 @@ async function main() {
     checks.formDesignerTitle = await page.locator(".contract-form-settings h4").innerText();
     checks.formDesignerStepText = await page.locator(".contract-form-design-strip").innerText();
     checks.formDesignerReturnButtonCount = await page.getByRole("button", { name: /返回配置/ }).count();
+    checks.formDesignerVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".contract-form-settings");
     screenshots.formDesignerEntry = await capture(page, "06-form-designer-entry");
     await page.getByRole("button", { name: /返回配置/ }).first().click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 60000 });
@@ -682,6 +715,7 @@ async function main() {
     checks.menuTreeHead = await page.locator(".menu-config-tree .tree-panel-head").innerText();
     checks.menuTreeRows = await page.locator(".menu-config-tree .tree-scroll .tree-node").count();
     checks.menuSelectedPanelCount = await page.locator(".menu-selected-panel").count();
+    checks.menuConfigVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".menu-config-page");
     screenshots.menuConfig = await capture(page, "07-menu-config");
     await page.getByRole("button", { name: "返回配置工作台" }).click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 60000 });

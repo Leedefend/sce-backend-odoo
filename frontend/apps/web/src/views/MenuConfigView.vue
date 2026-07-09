@@ -1412,7 +1412,7 @@ function roleScopeSummary(menuId: number) {
 
 function displayNoteValue(value: string) {
   const note = String(value || '').trim();
-  if (/^(user_confirmed_|system_|technical_)/i.test(note)) return '';
+  if (/^(user_confirmed_|system_|technical_|synced_from_|generated_from_|migrated_from_)/i.test(note)) return '';
   return note;
 }
 
