@@ -2173,9 +2173,7 @@ function mergeNavigationAndConfigTrees(navigationTree: MenuConfigMenu[], configT
 }
 
 function runtimeNavigationTreeFromPayload(payload: MenuConfigPayload) {
-  return Array.isArray(payload.runtime?.tree) && payload.runtime.tree.length
-    ? (payload.runtime.tree as NavNode[])
-    : scopedNavigationTree();
+  return Array.isArray(payload.runtime?.tree) ? (payload.runtime.tree as NavNode[]) : [];
 }
 
 function collectNavigationMenuIds() {
@@ -2234,6 +2232,9 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
     const menuById = new Map((payload.menus || []).map((menu) => [menu.id, menu]));
     const usedMenuIds = new Set<number>();
     const scopedNavTree = runtimeNavigationTreeFromPayload(payload);
+    if (!scopedNavTree.length) {
+      throw new Error('菜单配置缺少最终运行时导航树，已阻止回退到原生菜单结构。');
+    }
     const navigationTree = buildTreeFromNavigation(scopedNavTree, menuById, usedMenuIds);
     const completeTree = mergeNavigationAndConfigTrees(navigationTree, payload.tree || [], usedMenuIds);
     runtimeState.value = payload.runtime || null;

@@ -794,6 +794,9 @@ def _validate_menu_config_runtime_authority(errors: list[dict]) -> None:
         "config_menu_id",
         "config_ref",
         "runtimeState.value = payload.runtime || null",
+        "runtimeNavigationTreeFromPayload(payload)",
+        "payload.runtime?.tree",
+        "throw new Error('菜单配置缺少最终运行时导航树，已阻止回退到原生菜单结构。')",
     ):
         if token not in frontend_text:
             errors.append({
@@ -802,6 +805,17 @@ def _validate_menu_config_runtime_authority(errors: list[dict]) -> None:
                 "message": "menu config front-end must consume backend navigation/config/runtime facts directly",
                 "token": token,
             })
+    runtime_tree_function = frontend_text[
+        frontend_text.find("function runtimeNavigationTreeFromPayload"):
+        frontend_text.find("function collectNavigationMenuIds")
+    ]
+    if "scopedNavigationTree()" in runtime_tree_function:
+        errors.append({
+            "category": "menu_config_frontend_runtime_authority",
+            "path": frontend_path.relative_to(ROOT).as_posix(),
+            "message": "menu config display tree must fail closed when backend runtime.tree is missing, not fall back to session/AppShell navigation",
+            "token": "scopedNavigationTree()",
+        })
 
     handler_forbidden = {
         "menu_labels_by_id": "runtime navigation state must not map release groups by label",
@@ -822,6 +836,7 @@ def _validate_menu_config_runtime_authority(errors: list[dict]) -> None:
         "node.get(\"config_menu_id\")",
         "meta.get(\"config_menu_id\")",
         "config_ref.get(\"id\")",
+        "runtime[\"tree\"] = nav_tree",
     ):
         if token not in handler_text:
             errors.append({

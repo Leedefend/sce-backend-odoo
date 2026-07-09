@@ -99,6 +99,8 @@
 1. 配置目录：可配置菜单集合，包括最终导航菜单、可恢复隐藏菜单、产品范围内候选菜单。
 2. 运行态解释：最终导航树里的 menu id、路径、状态原因。
 
+`ui.menu_config.panel.get` 必须直接返回最终运行态导航树 `runtime.tree`。菜单配置页展示树必须以 `runtime.tree` 为唯一导航结构权威；如果响应缺少 `runtime.tree`，前端必须失败关闭并提示契约缺失，禁止回退到 `session.menuTree`、AppShell 已渲染菜单或 `ir.ui.menu` 原生父子树。
+
 配置面板禁止只读 `ui.menu.config.policy.visible` 后直接得出“当前隐藏”。
 
 ### 写路径
@@ -146,11 +148,12 @@
 - 真实 Odoo 分组菜单：后端必须下发 `config_menu_id`、`config_ref={model:"ir.ui.menu", id}`、`configurable=true`、`node_kind=menu_group`。
 - 产品发布合成分组：如果它投影的是一个真实 Odoo 分组菜单，后端必须映射到真实 `config_menu_id/config_ref`；如果不能写回真实菜单，后端必须下发 `configurable=false`、`synthetic=true`、`node_kind=navigation_group`。
 - 配置面板只允许按后端 `config_menu_id/config_ref/runtime.states` 展示；禁止按 label、菜单 id 数值区间、AppShell 已渲染节点反推出“可配置/显示/隐藏”。
-- 主导航和菜单配置面必须消费同一份后端最终导航事实。前端可以裁剪视图和展示交互，但不能生成新的菜单运行态事实。
+- 主导航和菜单配置面必须消费同一份后端最终导航事实。前端可以裁剪视图和展示交互，但不能生成新的菜单运行态事实；菜单配置展示树不得使用 session/AppShell 导航作为兼容回退。
 
 工程守卫：
 
 - `scripts/verify/lowcode_config_boundary_guard.py` 会拦截前端重新引入 `AppShell` 反推、label 匹配、合成 id 阈值判断、前端合成 runtime state。
+- `scripts/verify/lowcode_config_boundary_guard.py` 会拦截菜单配置展示树回退 `session.menuTree/scopedNavigationTree()`，并要求后端 `panel.get` 输出 `runtime.tree`。
 - `verify.business_config.unit` 必须包含该守卫；低代码边界相关改动必须先通过它。
 
 前端只能消费这个解释结果：

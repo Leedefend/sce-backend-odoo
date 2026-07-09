@@ -2696,6 +2696,48 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertFalse(contract_center_state["runtime_visible"])
         self.assertEqual(contract_center_state["runtime_state"], "configured_visible_runtime_absent")
 
+    def test_panel_runtime_state_exposes_authoritative_navigation_tree(self):
+        module = _load_handler()
+        handler = object.__new__(module.MenuConfigurationLoadHandler)
+        nav_tree = [
+            {
+                "menu_id": 880000001,
+                "name": "系统菜单",
+                "children": [
+                    {
+                        "menu_id": 889777446,
+                        "label": "合同中心",
+                        "config_menu_id": 293,
+                        "config_ref": {"model": "ir.ui.menu", "id": 293},
+                        "children": [
+                            {"menu_id": 484, "label": "收入合同签证", "children": []},
+                            {"menu_id": 486, "label": "收入合同结算", "children": []},
+                        ],
+                    },
+                ],
+            }
+        ]
+        handler._runtime_release_navigation_tree = lambda root_menu_id=0: (
+            nav_tree,
+            {"source": "test_runtime_navigation"},
+        )
+
+        runtime = handler._runtime_navigation_state(
+            {
+                293: {"visible": True},
+                483: {"visible": True},
+                484: {"visible": True},
+                486: {"visible": True},
+            },
+            [{"id": 291, "parent_id": 0}],
+        )
+
+        self.assertIs(runtime["tree"], nav_tree)
+        self.assertTrue(runtime["states"]["293"]["runtime_visible"])
+        self.assertEqual(runtime["states"]["293"]["runtime_state"], "visible_release_navigation_group")
+        self.assertFalse(runtime["states"]["483"]["runtime_visible"])
+        self.assertEqual(runtime["states"]["483"]["runtime_state"], "configured_visible_runtime_absent")
+
 
 if __name__ == "__main__":
     unittest.main()

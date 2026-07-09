@@ -41,7 +41,7 @@
 
 - 低代码表单字段顺序、显隐、分组必须写入正式 view orchestration，并带 `view_orchestration.context.source = smart_core.lowcode.*`。
 - 低代码菜单可见性、排序、父级调整必须写入 menu orchestration，并带 `menu_orchestration.source = smart_core.lowcode.menu_config`。
-- 菜单配置面板的可配置范围必须以当前产品导航 `menu_ids` 为边界；`ir.ui.menu` 业务根全量子树只能作为无导航上下文时的兼容回退，不能作为用户可配置菜单口径。
+- 菜单配置面板的可配置范围必须以当前产品导航 `menu_ids` 为边界；`ui.menu_config.panel.get` 必须返回最终运行态导航树 `runtime.tree`，前端展示树只能消费该后端事实。`ir.ui.menu` 业务根全量子树只能作为后端候选素材，不能作为用户可见配置树口径；缺少 `runtime.tree` 时前端必须失败关闭，禁止回退到 `session.menuTree`、AppShell 渲染结果或原生父子树。
 - 低代码审批启用、审批方式、审批步骤编排属于行业审批运行时策略，写入 `sc.approval.policy` / `sc.approval.step`，不写入表单或菜单契约；`source_authority` 必须声明 `lowcode_boundary = approval_policy`、`policy_source = sc.approval.policy`。
 - 低代码“新增菜单”只创建运行时菜单入口和菜单配置策略，满足管理员即时调整；长期交付菜单必须沉淀到 L2 行业模块或 L3 用户模块。
 - 低代码写入意图的 `source_authority` 必须声明 `lowcode_boundary` 和 `contract_source`，让审计能从响应元信息直接识别边界。
