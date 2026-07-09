@@ -58,6 +58,7 @@ const ACCEPTANCE_COVERAGE = {
     "delivery_status_default_snapshot_hidden",
     "list_search_editor_visible",
     "list_search_tabs_complete",
+    "default_visible_technical_terms_hidden",
     "list_search_editor_focused_after_entry",
     "approval_editor_visible",
     "approval_rule_canvas_visible",
@@ -165,6 +166,8 @@ async function visibleTechnicalTerms(page, scope = "body") {
     /ui\.[a-z0-9_.]+/gi,
     /\b(action_id|view_id|role_key|model=|root_menu_xmlid)\b/gi,
     /\b(user_confirmed_|technical_|synced_from_|generated_from_|migrated_from_|daily_dev)\w*/gi,
+    /\b[a-z][a-z0-9]*_[a-z0-9_]+\b/gi,
+    /\b[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)+\b/g,
     /对象\s+[a-z0-9_.]+/gi,
     /页面\s*(ID|id)\s*[:：]?\s*\d+/g,
   ];
@@ -375,6 +378,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   const visibleTechnicalTermsClean = [
     ...(checks.selectedVisibleTechnicalTerms || []),
     ...(checks.directStartVisibleTechnicalTerms || []),
+    ...(checks.listSearchVisibleTechnicalTerms || []),
     ...(checks.formDesignerVisibleTechnicalTerms || []),
     ...(checks.menuConfigVisibleTechnicalTerms || []),
   ].length === 0;
@@ -506,6 +510,7 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
   const visibleTechnicalTerms = [
     ...(checks.selectedVisibleTechnicalTerms || []),
     ...(checks.directStartVisibleTechnicalTerms || []),
+    ...(checks.listSearchVisibleTechnicalTerms || []),
     ...(checks.formDesignerVisibleTechnicalTerms || []),
     ...(checks.menuConfigVisibleTechnicalTerms || []),
   ];
@@ -748,6 +753,7 @@ async function main() {
     ));
     checks.listSearchCanvasCount = await listSearchPanel.locator(".field-chip-editor").count();
     checks.listSearchPanelViewport = await viewportEvidence(listSearchPanel);
+    checks.listSearchVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".edit-panel");
     screenshots.listSearchEntry = await capture(page, "04-list-search-entry");
 
     await openDirectSelectedWorkbench(page);
@@ -839,6 +845,13 @@ async function main() {
     assert(defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels), "默认交付状态不应展示内部审计指标", checks);
     assert(defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels), "直达态默认交付状态不应展示内部审计指标", checks);
     assert(checks.defaultSnapshotSummaryCount === 0 && checks.mobileSnapshotSummaryCount === 0, "默认交付状态不应展示配置快照审计信息", checks);
+    assert([
+      ...(checks.selectedVisibleTechnicalTerms || []),
+      ...(checks.directStartVisibleTechnicalTerms || []),
+      ...(checks.listSearchVisibleTechnicalTerms || []),
+      ...(checks.formDesignerVisibleTechnicalTerms || []),
+      ...(checks.menuConfigVisibleTechnicalTerms || []),
+    ].length === 0, "默认界面不应泄漏技术字段或技术参数", checks);
     assert(
       checks.listSearchTitle === "列表与搜索设置"
       && checks.listSearchTabs.join("|") === "列表列|搜索条件|默认分组"

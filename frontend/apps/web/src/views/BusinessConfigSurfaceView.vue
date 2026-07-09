@@ -1154,6 +1154,9 @@ import { useSessionStore } from '../stores/session';
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
 const ACTIVE_EDITOR_SCROLL_OPTIONS: ScrollIntoViewOptions = { block: 'start', behavior: 'auto' };
 const CORE_DELIVERY_READINESS_SECTIONS = new Set(['form', 'list_search', 'menu', 'approval']);
+const BUSINESS_FIELD_LABEL_OVERRIDES: Record<string, string> = {
+  can_review: '可审批',
+};
 
 const route = useRoute();
 const router = useRouter();
@@ -2804,7 +2807,7 @@ function fieldOptionLabel(field: { name: string; label: string; type: string }) 
   if (!duplicatedFieldLabels.value.has(label)) return label;
   const type = fieldTypeLabel(field.type);
   const hint = shortFieldNameHint(field.name);
-  return `${label}（${[type, hint].filter(Boolean).join(' · ')}）`;
+  return `${label}（${[type, advancedPanelOpen.value ? hint : ''].filter(Boolean).join(' · ')}）`;
 }
 
 function fieldOptionHelpText(field: { name: string; label: string; type: string }) {
@@ -2813,6 +2816,8 @@ function fieldOptionHelpText(field: { name: string; label: string; type: string 
 
 function cleanBusinessFieldLabel(name: unknown, label: unknown) {
   const fieldName = String(name || '').trim();
+  const override = BUSINESS_FIELD_LABEL_OVERRIDES[fieldName];
+  if (override) return override;
   let text = String(label || fieldName || '').trim();
   if (fieldName.startsWith('p1_visible_') && text.startsWith('P1可见')) {
     text = text.slice('P1可见'.length).trim();

@@ -36,6 +36,7 @@
 | CW-P1-005 | P1 | 表单字段配置态仍露出业务办理动作“保存草稿”“提交”，配置动作与业务提交动作混淆 | `06-form-designer-entry.png` | 已修复：低代码字段配置作用域下隐藏业务办理动作，只保留配置动作 |
 | CW-P1-006 | P1 | 默认交付状态直接展示“版本与快照 1212 项”“覆盖检查 1040 项”，业务配置管理员被内部审计指标打断 | `03-direct-selected.png` | 已修复：默认只展示表单、列表搜索、菜单、审批四项用户任务状态；高级设置展开后仍可查看完整审计信息 |
 | CW-P1-007 | P1 | 移动端配置工作台默认展示平台副标题和配置快照，挤占首屏并暴露内部审计信息 | `08-mobile-selected.png` | 已修复：配置中心使用紧凑顶栏；默认隐藏配置快照，保留高级设置查看 |
+| CW-P1-008 | P1 | 列表与搜索字段池默认展示 `affiliated_person`、`category_id` 等技术字段名，以及 `Can Review` 英文兜底标签 | `04-list-search-entry.png` | 已修复：默认只展示业务字段名；高级设置展开后才显示短字段名提示；补充可见技术词硬断言 |
 | CW-P2-001 | P2 | 专业门禁能防回退，但不能替代主动走查；如果只扩展评分，容易产生“看起来专业但不发现问题”的假象 | 本轮讨论 | 已固化：新增本走查文档，后续迭代必须先走查再补门禁 |
 
 ## 已加入门禁
@@ -62,6 +63,7 @@
 - 默认交付状态只展示表单、列表搜索、菜单、审批四项用户任务状态。
 - 默认交付状态不得展示配置快照审计信息。
 - 移动端配置工作台顶栏必须是紧凑模式，不展示平台副标题。
+- 默认可见界面不得展示字段技术名、技术参数或英文兜底标签。
 
 该检查进入：
 
@@ -85,7 +87,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - `product_usability.score_total = 22 / 22`
 - `professional_readiness.status = professional_ready`
 - `professional_readiness.score_total = 30 / 30`
-- `assertion_passed_count = 28 / 28`
+- `assertion_passed_count = 29 / 29`
 - `formDesignerBusinessActionButtons = []`
 - `listSearchPanelViewport.startsInPrimaryViewport = true`
 - `approvalPanelViewport.startsInPrimaryViewport = true`
@@ -94,6 +96,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - `defaultSnapshotSummaryCount = 0`
 - `mobileConfigurationTopbar.platformEyebrowVisible = false`
 - `mobileSnapshotSummaryCount = 0`
+- `listSearchVisibleTechnicalTerms = []`
 - `visibleTechnicalTerms = []`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`

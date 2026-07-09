@@ -65,8 +65,8 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 28 |
-| assertion_passed_count | 已通过断言数 | 28 |
+| assertion_count | 用户可感知断言数 | 29 |
+| assertion_passed_count | 已通过断言数 | 29 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 8 |
 | screenshot_captured_count | 实际截图数 | 8 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -85,6 +85,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 默认交付状态只展示用户任务相关的表单、列表搜索、菜单、审批四项状态，不展示配置快照等内部审计信息。
 - 列表搜索面板标题、配置类型页签、字段配置画布。
 - 列表搜索面板打开后的首屏焦点位置。
+- 默认可见界面不得出现模型名、字段技术名、技术参数或英文兜底标签。
 - 审批规则标题、规则面板、步骤编排画布。
 - 审批规则面板打开后的首屏焦点位置。
 - 表单设计器标题、当前页面上下文、返回配置入口。
@@ -141,6 +142,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 主导航、配置工作台、菜单配置之间上下文丢失或口径不一致。
 - 关键操作没有返回路径、取消路径或状态反馈。
 - 配置入口可点击但进入后不是对应能力，或需要用户理解技术参数才能继续。
+- 列表搜索字段池默认展示字段技术名或英文兜底标签，导致用户需要理解底层字段。
 - 默认交付状态混入版本快照、覆盖检查等内部审计指标，导致业务配置用户扫描成本升高。
 - 移动端配置工作台顶栏展示平台副标题或过多非任务信息，挤占首屏配置内容。
 - 点击配置入口后，目标编辑面没有进入当前首屏焦点，用户仍停留在概览区猜下一步。
@@ -298,7 +300,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 28 / 28`
+- `assertion_passed_count = 29 / 29`
 - `screenshot_captured_count = 8 / 8`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`
