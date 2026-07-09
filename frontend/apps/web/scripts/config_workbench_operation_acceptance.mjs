@@ -73,6 +73,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_designer_visible",
     "form_designer_shell_title_context",
     "form_designer_current_page_business_label",
+    "form_designer_field_search_visible",
     "form_designer_return_visible",
     "form_designer_business_actions_hidden",
     "menu_side_sections_complete",
@@ -445,6 +446,8 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   const formUsable = checks.formDesignerTitle === "当前页面字段配置"
     && String(checks.formDesignerStepText || "").includes(CONFIG_PAGE_LABEL)
     && checks.formDesignerCurrentPageLabel === CONFIG_PAGE_LABEL
+    && checks.formDesignerFieldSearchInputCount > 0
+    && checks.formDesignerFieldSearchResultCount > 0
     && checks.formDesignerReturnButtonCount > 0
     && String(checks.formDesignerShellTitle || "").includes(CONFIG_PAGE_LABEL);
   const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
@@ -628,6 +631,8 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     && defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels);
   const capabilityDepthReady = checks.formDesignerTitle === "当前页面字段配置"
     && checks.formDesignerCurrentPageLabel === CONFIG_PAGE_LABEL
+    && checks.formDesignerFieldSearchInputCount > 0
+    && checks.formDesignerFieldSearchResultCount > 0
     && checks.listSearchTabs?.join("|") === "列表列|搜索条件|默认分组"
     && checks.listSearchReturnWorkbenchButtonCount > 0
     && checks.approvalRulePanelCount === 1
@@ -662,6 +667,8 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       formDesignerTitle: checks.formDesignerTitle,
       formDesignerShellTitle: checks.formDesignerShellTitle,
       formDesignerCurrentPageLabel: checks.formDesignerCurrentPageLabel,
+      formDesignerFieldSearchInputCount: checks.formDesignerFieldSearchInputCount,
+      formDesignerFieldSearchResultCount: checks.formDesignerFieldSearchResultCount,
       listSearchTabs: checks.listSearchTabs,
       listSearchReturnWorkbenchButtonCount: checks.listSearchReturnWorkbenchButtonCount,
       approvalRulePanelCount: checks.approvalRulePanelCount,
@@ -897,6 +904,8 @@ async function main() {
     checks.formDesignerShellTitle = await page.locator(".topbar .headline").innerText().catch(() => "");
     checks.formDesignerStepText = await page.locator(".contract-form-design-strip").innerText();
     checks.formDesignerCurrentPageLabel = await page.locator(".contract-form-design-strip strong").first().innerText();
+    checks.formDesignerFieldSearchInputCount = await page.locator(".contract-form-field-search input").count();
+    checks.formDesignerFieldSearchResultCount = await page.locator(".contract-form-field-search-item").count();
     checks.formDesignerReturnButtonCount = await page.getByRole("button", { name: /返回配置/ }).count();
     checks.formDesignerVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".contract-form-settings");
     checks.formDesignerBusinessActionButtons = await page.locator("button").evaluateAll((buttons) => (
@@ -1031,6 +1040,12 @@ async function main() {
       && checks.formDesignerReturnButtonCount > 0
       && checks.formReturnedTitle.includes(CONFIG_PAGE_LABEL),
       "表单配置入口没有形成进入设计器并返回工作台闭环",
+      checks,
+    );
+    assert(
+      checks.formDesignerFieldSearchInputCount > 0
+      && checks.formDesignerFieldSearchResultCount > 0,
+      "表单字段配置面必须提供字段搜索和可选字段结果，避免大量字段只能滚动查找",
       checks,
     );
     assert(

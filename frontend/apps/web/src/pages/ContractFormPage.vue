@@ -247,6 +247,44 @@
                   </div>
                   <em>{{ formDesignerGroupNavigatorItems.length }} 个分组</em>
                 </header>
+                <section class="contract-form-field-search" aria-label="字段快速查找">
+                  <label>
+                    <span>查找字段</span>
+                    <input
+                      v-model="formDesignerFieldSearchText"
+                      type="search"
+                      placeholder="搜索字段名称"
+                      :disabled="busy"
+                    />
+                  </label>
+                  <div class="contract-form-field-search-summary">
+                    <span>匹配 {{ formDesignerFilteredFieldRows.length }} / {{ currentFormDesignFieldCount }}</span>
+                    <button
+                      v-if="formDesignerFieldSearchText"
+                      class="link-button"
+                      type="button"
+                      :disabled="busy"
+                      @click="formDesignerFieldSearchText = ''"
+                    >
+                      清空
+                    </button>
+                  </div>
+                  <div v-if="formDesignerFilteredFieldRows.length" class="contract-form-field-search-results">
+                    <button
+                      v-for="item in formDesignerFilteredFieldRows.slice(0, 8)"
+                      :key="`form-field-search-${item.fieldKey}`"
+                      type="button"
+                      class="contract-form-field-search-item"
+                      :class="{ 'contract-form-field-search-item--active': item.fieldKey === selectedFormSettingsFieldKey }"
+                      :disabled="busy"
+                      @click="selectFormDesignerField(item.fieldKey)"
+                    >
+                      <span>{{ item.label }}</span>
+                      <em>{{ item.groupTitle }}</em>
+                    </button>
+                  </div>
+                  <p v-else class="contract-form-field-search-empty">没有匹配字段</p>
+                </section>
                 <section class="contract-form-field-navigator" aria-label="字段分组导航">
                   <header>
                     <strong>分组导航</strong>
@@ -2164,6 +2202,7 @@ const selectedFormSettingsFieldKey = ref('');
 const selectedFormSettingsFieldLabel = ref('');
 const selectedFormSettingsFieldGroupTitleDraft = ref('');
 const selectedFormSettingsFieldGroupTitleEdit = ref('');
+const formDesignerFieldSearchText = ref('');
 const selectedFormSettingsOrderTargetKey = ref('');
 const selectedFormSettingsOrderPlacement = ref<'before' | 'after'>('before');
 const isContractFieldOrderEditable = computed(() => (
@@ -3179,6 +3218,33 @@ const formDesignerGroupNavigatorItems = computed(() => {
     count: item.fieldKeys.length,
     active: Boolean(selectedGroupTitle && fieldGroupTitleMatches(item.title, selectedGroupTitle)),
   }));
+});
+
+const formDesignerFieldSearchQuery = computed(() => String(formDesignerFieldSearchText.value || '').trim().toLowerCase());
+
+const formDesignerSearchableFieldRows = computed(() => {
+  const keys = currentFormOrderedFieldKeys.value.length ? currentFormOrderedFieldKeys.value : currentFormDesignFieldKeys.value;
+  return keys.map((fieldKey) => {
+    const groupTitle = normalizeFieldGroupTitle(effectiveFieldGroupTitleForDraft(fieldKey))
+      || nativeFieldStructureGroups.value.find((group) => group.fieldKeys.includes(fieldKey))?.title
+      || '业务配置字段';
+    return {
+      fieldKey,
+      label: formDesignFieldLabel(fieldKey),
+      groupTitle,
+    };
+  });
+});
+
+const formDesignerFilteredFieldRows = computed(() => {
+  const query = formDesignerFieldSearchQuery.value;
+  const rows = formDesignerSearchableFieldRows.value;
+  if (!query) return rows.slice(0, 8);
+  return rows.filter((row) => (
+    row.label.toLowerCase().includes(query)
+    || row.fieldKey.toLowerCase().includes(query)
+    || row.groupTitle.toLowerCase().includes(query)
+  ));
 });
 
 const selectedFormSettingsFieldGroupTitle = computed(() => {
@@ -9912,6 +9978,19 @@ function selectFormDesignerGroup(title: string) {
   });
 }
 
+function selectFormDesignerField(fieldKey: string) {
+  const key = String(fieldKey || '').trim();
+  if (!key) return;
+  onFormSettingsFieldSelect({
+    field: {
+      name: key,
+      key,
+      label: formDesignFieldLabel(key),
+    } as FormSectionFieldSchema,
+    groupTitle: effectiveFieldGroupTitleForDraft(key) || '业务配置字段',
+  });
+}
+
 function openCentralCustomFieldCreate() {
   const selectedFieldKey = selectedFormSettingsFieldKey.value;
   const groupTitle = selectedFormSettingsFieldGroupTitle.value
@@ -12152,6 +12231,97 @@ onBeforeUnmount(() => {
   font-style: normal;
   line-height: 1.4;
   white-space: nowrap;
+}
+
+.contract-form-field-search {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+}
+
+.contract-form-field-search label {
+  display: grid;
+  gap: 5px;
+}
+
+.contract-form-field-search label span,
+.contract-form-field-search-summary {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-form-field-search input {
+  min-width: 0;
+  height: 34px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+  font: inherit;
+}
+
+.contract-form-field-search-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.contract-form-field-search-results {
+  display: grid;
+  gap: 5px;
+  max-height: 228px;
+  overflow: auto;
+}
+
+.contract-form-field-search-item {
+  min-width: 0;
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 0 8px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.contract-form-field-search-item:hover,
+.contract-form-field-search-item--active {
+  border-color: var(--sc-app-accent);
+  background: var(--sc-app-panel-muted);
+}
+
+.contract-form-field-search-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contract-form-field-search-item em {
+  min-width: 0;
+  max-width: 92px;
+  overflow: hidden;
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contract-form-field-search-empty {
+  margin: 0;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
 }
 
 .contract-form-field-navigator {
