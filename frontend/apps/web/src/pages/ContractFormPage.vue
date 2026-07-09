@@ -58,7 +58,7 @@
           :disabled="busy"
           @click="returnToBusinessConfigDesigner"
         >
-          返回配置
+          返回工作台
         </button>
         <button
           v-if="showDraftSaveAction"
@@ -534,7 +534,7 @@
               {{ hasCurrentFormFieldDraftChanges ? '保存并预览' : '预览当前页面' }}
             </button>
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
-            <button class="ghost" type="button" :disabled="busy" @click="returnToBusinessConfigDesigner">返回配置</button>
+            <button class="ghost" type="button" :disabled="busy" @click="returnToBusinessConfigDesigner">返回工作台</button>
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
           </div>
         </section>

@@ -78,6 +78,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_designer_current_page_business_label",
     "form_designer_field_search_visible",
     "form_designer_return_visible",
+    "form_designer_return_label_consistent",
     "form_designer_business_actions_hidden",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
@@ -936,7 +937,8 @@ async function main() {
     checks.formDesignerCurrentPageLabel = await page.locator(".contract-form-design-strip strong").first().innerText();
     checks.formDesignerFieldSearchInputCount = await page.locator(".contract-form-field-search input").count();
     checks.formDesignerFieldSearchResultCount = await page.locator(".contract-form-field-search-item").count();
-    checks.formDesignerReturnButtonCount = await page.getByRole("button", { name: /返回配置/ }).count();
+    checks.formDesignerReturnButtonCount = await page.getByRole("button", { name: "返回工作台" }).count();
+    checks.formDesignerLegacyReturnButtonCount = await page.getByRole("button", { name: "返回配置" }).count();
     checks.formDesignerVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".contract-form-settings");
     checks.formDesignerBusinessActionButtons = await page.locator("button").evaluateAll((buttons) => (
       buttons
@@ -944,7 +946,7 @@ async function main() {
         .filter((text) => text === "保存草稿" || text === "提交")
     ));
     screenshots.formDesignerEntry = await capture(page, "06-form-designer-entry");
-    await page.getByRole("button", { name: /返回配置/ }).first().click();
+    await page.getByRole("button", { name: "返回工作台" }).first().click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 60000 });
     await page.waitForSelector('[data-lowcode-config-task-card="v1"]', { timeout: 60000 });
     checks.formReturnedTitle = await page.locator(".business-config-header h1").innerText();
@@ -1097,6 +1099,7 @@ async function main() {
       "表单配置入口没有形成进入设计器并返回工作台闭环",
       checks,
     );
+    assert(checks.formDesignerLegacyReturnButtonCount === 0, "表单设计器返回动作必须统一为返回工作台，不能继续使用返回配置", checks);
     assert(
       checks.formDesignerFieldSearchInputCount > 0
       && checks.formDesignerFieldSearchResultCount > 0,

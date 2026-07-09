@@ -95,8 +95,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 43 |
-| assertion_passed_count | 已通过断言数 | 43 |
+| assertion_count | 用户可感知断言数 | 44 |
+| assertion_passed_count | 已通过断言数 | 44 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -124,7 +124,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - 审批步骤必须提供上移和下移按钮，不能只依赖拖拽排序。
 - 审批步骤动作必须提供可见说明和精确动作标签，用户不需要猜测符号含义。
 - 审批规则面板打开后的首屏主焦点位置。
-- 表单设计器标题、当前页面上下文、返回配置入口。
+- 表单设计器标题、当前页面上下文、返回工作台入口；不得继续使用“返回配置”模糊标签。
 - 表单设计器所在全局顶栏必须显示当前配置页面上下文，不能回退为角色首页。
 - 表单设计器字段目录必须提供字段搜索和匹配结果，避免大量字段只能滚动查找。
 - 表单设计器配置态不得出现业务办理动作按钮。
@@ -348,7 +348,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 43 / 43`
+- `assertion_passed_count = 44 / 44`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`
@@ -369,7 +369,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - 直达已选页顶部只保留选择业务页面、预览页面等范围动作，表单、列表、菜单、审批配置入口统一由任务卡承载。
 - 列表与搜索入口可打开设置面板，并展示列表列、搜索条件、默认分组三类配置，字段上移、下移、移除动作有可理解语义。
 - 审批入口可打开审批规则画布，并展示规则设置与审批步骤编排，步骤上移、下移、移除动作有可理解语义。
-- 表单入口可进入当前页面字段配置设计器，当前页面名显示为“项目合同汇总”，并能返回“项目合同汇总”配置工作台上下文。
+- 表单入口可进入当前页面字段配置设计器，当前页面名显示为“项目合同汇总”，并通过“返回工作台”回到“项目合同汇总”配置工作台上下文。
 - 菜单配置入口可进入菜单配置页，菜单目录显示可配置菜单总量，侧栏分组为新增入口、批量维护、检查发布，并提供目录搜索数量反馈和清空筛选动作。
 - 移动端宽度 `390px` 下无横向溢出，选择页面后真实视口回到当前配置区，当前配置区域先于页面目录展示。
 
