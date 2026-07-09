@@ -14,6 +14,8 @@ const CONFIG_PAGE_LABEL = process.env.LOW_CODE_CONFIG_PAGE_LABEL || "项目合�
 const SWITCH_PAGE_LABEL = process.env.LOW_CODE_SWITCH_PAGE_LABEL || "合同办理";
 const ARTIFACT_ROOT = path.resolve(process.cwd(), "../../../artifacts/playwright/config-workbench-operation");
 const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
+const SUMMARY_PATH = path.join(ARTIFACT_ROOT, "summary.json");
+const VERBOSE_OUTPUT = ["1", "true", "yes"].includes(String(process.env.CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE || "").toLowerCase());
 const ACCEPTANCE_COVERAGE = {
   journeys: [
     "workbench_select_page",
@@ -294,6 +296,37 @@ function buildFailureCoverageSummary({ screenshots, consoleErrors, requestFailed
     actions: ACCEPTANCE_COVERAGE.actions,
     assertions: ACCEPTANCE_COVERAGE.assertions,
   };
+}
+
+function buildTerminalSummary(report) {
+  const metrics = report.metrics || {};
+  const productUsability = report.product_usability || {};
+  const professionalReadiness = report.professional_readiness || {};
+  const checks = report.checks || {};
+  return {
+    ok: report.ok === true,
+    reportPath: REPORT_PATH,
+    summaryPath: SUMMARY_PATH,
+    assertion: `${metrics.assertion_passed_count || 0}/${metrics.assertion_count || 0}`,
+    journeys: `${metrics.journey_passed_count || 0}/${metrics.journey_count || 0}`,
+    actions: `${metrics.action_passed_count || 0}/${metrics.action_count || 0}`,
+    screenshots: `${metrics.screenshot_captured_count || 0}/${metrics.screenshot_required_count || 0}`,
+    delivery: productUsability.delivery_status || "unknown",
+    professional: professionalReadiness.status || "unknown",
+    consoleErrors: metrics.browser_console_error_count ?? 0,
+    requestFailed: metrics.browser_request_failed_count ?? 0,
+    currentPage: checks.pageStructureDesktop?.currentConfig?.overviewLabel || "",
+    formDesignerCurrentPageLabel: checks.formDesignerCurrentPageLabel || "",
+    menuTreeHead: checks.menuTreeHead || "",
+    failure: report.failure?.message || metrics.failure_message || "",
+  };
+}
+
+async function writeReportAndSummary(report) {
+  const summary = buildTerminalSummary(report);
+  await fs.writeFile(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  await fs.writeFile(SUMMARY_PATH, `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+  return summary;
 }
 
 function taskResult(pass, evidence, details = {}) {
@@ -1058,8 +1091,8 @@ async function main() {
       consoleErrors,
       requestFailed,
     };
-    await fs.writeFile(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-    console.log(JSON.stringify({ ok: true, reportPath: REPORT_PATH, metrics, product_usability: productUsability, professional_readiness: professionalReadiness, checks }, null, 2));
+    const summary = await writeReportAndSummary(report);
+    console.log(JSON.stringify(VERBOSE_OUTPUT ? report : summary, null, 2));
   } catch (err) {
     const failureMessage = err instanceof Error ? err.message : String(err);
     const metrics = buildFailureCoverageSummary({ screenshots, consoleErrors, requestFailed, failureMessage });
@@ -1096,8 +1129,8 @@ async function main() {
         details: err?.details || {},
       },
     };
-    await fs.writeFile(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-    console.error(JSON.stringify(report, null, 2));
+    const summary = await writeReportAndSummary(report);
+    console.error(JSON.stringify(VERBOSE_OUTPUT ? report : summary, null, 2));
     process.exitCode = 1;
   } finally {
     await browser.close();

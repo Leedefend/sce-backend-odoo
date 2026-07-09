@@ -56,6 +56,12 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 本地完整收口会串起快速预检、开发静态包构建、dev nginx 重启、浏览器操作验收、正式前端构建和 diff 检查。默认 nginx 容器名来自 `COMPOSE_PROJECT_NAME`，特殊环境可用 `FRONTEND_NGINX_CONTAINER=...` 覆盖。
 
+浏览器验收默认只在终端输出摘要，完整报告写入 `report.json`，摘要写入 `summary.json`。需要排查失败细节时可打开 verbose：
+
+```bash
+CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verify.business_config.config_workbench_operation_acceptance
+```
+
 ## 操作矩阵
 
 | 路径 | 用户动作 | 合格口径 |
@@ -125,7 +131,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - `mobileSelected`
 - `mobileViewport`
 
-每次运行前必须清理本专题证据目录。运行后目录中只能保留本次报告引用的 9 张截图和 `report.json`，不得混入旧截图或旧报告中的页面状态。
+每次运行前必须清理本专题证据目录。运行后目录中只能保留本次报告引用的 9 张截图、`report.json` 和 `summary.json`，不得混入旧截图或旧报告中的页面状态。
 
 失败分类：
 
@@ -318,6 +324,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 数据库：`sc_demo`
 - 登录用户：`wutao`
 - 报告文件：`artifacts/playwright/config-workbench-operation/report.json`
+- 摘要文件：`artifacts/playwright/config-workbench-operation/summary.json`
 
 结论：配置工作台操作级验收通过。本结论只覆盖本专题定义的用户操作路径，不替代全量低代码底层验收、生产发布验收或菜单运行时全量边界验收。
 
