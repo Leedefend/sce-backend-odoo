@@ -62,6 +62,7 @@ const ACCEPTANCE_COVERAGE = {
     "list_search_editor_visible",
     "list_search_tabs_complete",
     "default_visible_technical_terms_hidden",
+    "editor_action_semantics_visible",
     "list_search_return_workbench_visible",
     "list_search_editor_focused_after_entry",
     "list_search_editor_primary_focus",
@@ -440,11 +441,15 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   const listSearchUsable = checks.listSearchTitle === "列表与搜索设置"
     && checks.listSearchTabs?.join("|") === "列表列|搜索条件|默认分组"
     && checks.listSearchCanvasCount === 1
+    && checks.listSearchActionHintText?.includes("上移")
+    && checks.listSearchActionAriaCount >= 3
     && checks.listSearchReturnWorkbenchButtonCount > 0;
   const approvalUsable = checks.approvalTitle === "审批规则"
     && checks.approvalRulePanelCount === 1
     && checks.approvalStepCanvasCount === 1
     && checks.approvalStepMoveButtonCount > 0
+    && checks.approvalStepActionHintText?.includes("上移")
+    && checks.approvalStepActionAriaCount >= 3
     && checks.approvalReturnWorkbenchButtonCount > 0;
   const formUsable = checks.formDesignerTitle === "当前页面字段配置"
     && String(checks.formDesignerStepText || "").includes(CONFIG_PAGE_LABEL)
@@ -638,9 +643,13 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     && checks.formDesignerFieldSearchResultCount > 0
     && checks.listSearchTabs?.join("|") === "列表列|搜索条件|默认分组"
     && checks.listSearchReturnWorkbenchButtonCount > 0
+    && checks.listSearchActionHintText?.includes("上移")
+    && checks.listSearchActionAriaCount >= 3
     && checks.approvalRulePanelCount === 1
     && checks.approvalStepCanvasCount === 1
     && checks.approvalStepMoveButtonCount > 0
+    && checks.approvalStepActionHintText?.includes("上移")
+    && checks.approvalStepActionAriaCount >= 3
     && checks.approvalReturnWorkbenchButtonCount > 0
     && checks.menuSelectedPanelCount === 1
     && checks.menuSearchInputCount > 0
@@ -677,9 +686,13 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       formDesignerFieldSearchResultCount: checks.formDesignerFieldSearchResultCount,
       listSearchTabs: checks.listSearchTabs,
       listSearchReturnWorkbenchButtonCount: checks.listSearchReturnWorkbenchButtonCount,
+      listSearchActionHintText: checks.listSearchActionHintText,
+      listSearchActionAriaCount: checks.listSearchActionAriaCount,
       approvalRulePanelCount: checks.approvalRulePanelCount,
       approvalStepCanvasCount: checks.approvalStepCanvasCount,
       approvalStepMoveButtonCount: checks.approvalStepMoveButtonCount,
+      approvalStepActionHintText: checks.approvalStepActionHintText,
+      approvalStepActionAriaCount: checks.approvalStepActionAriaCount,
       approvalReturnWorkbenchButtonCount: checks.approvalReturnWorkbenchButtonCount,
       menuSelectedPanelCount: checks.menuSelectedPanelCount,
       menuSearchInputCount: checks.menuSearchInputCount,
@@ -892,6 +905,8 @@ async function main() {
     checks.listSearchCanvasCount = await listSearchPanel.locator(".field-chip-editor").count();
     checks.listSearchPanelViewport = await viewportEvidence(listSearchPanel);
     checks.listSearchReturnWorkbenchButtonCount = await listSearchPanel.getByRole("button", { name: "返回工作台" }).count();
+    checks.listSearchActionHintText = await listSearchPanel.locator(".field-chip-action-hint").first().innerText();
+    checks.listSearchActionAriaCount = await listSearchPanel.locator(".field-chip button[aria-label^='上移'], .field-chip button[aria-label^='下移'], .field-chip button[aria-label^='移除']").count();
     checks.listSearchVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".edit-panel");
     screenshots.listSearchEntry = await capture(page, "04-list-search-entry");
 
@@ -904,6 +919,8 @@ async function main() {
     checks.approvalStepCanvasCount = await approvalPanel.locator(".approval-steps").count();
     checks.approvalPanelViewport = await viewportEvidence(approvalPanel);
     checks.approvalStepMoveButtonCount = await approvalPanel.locator(".approval-step-actions button[title='上移'], .approval-step-actions button[title='下移']").count();
+    checks.approvalStepActionHintText = await approvalPanel.locator(".approval-step-action-hint").innerText();
+    checks.approvalStepActionAriaCount = await approvalPanel.locator(".approval-step-actions button[aria-label^='上移第'], .approval-step-actions button[aria-label^='下移第'], .approval-step-actions button[aria-label^='移除第']").count();
     checks.approvalReturnWorkbenchButtonCount = await approvalPanel.getByRole("button", { name: "返回工作台" }).count();
     screenshots.approvalEntry = await capture(page, "05-approval-entry");
 
@@ -1026,6 +1043,13 @@ async function main() {
       "列表与搜索配置入口没有打开可操作编辑面板",
       checks,
     );
+    assert(
+      checks.listSearchActionHintText?.includes("上移")
+      && checks.listSearchActionHintText?.includes("移除")
+      && checks.listSearchActionAriaCount >= 3,
+      "列表与搜索字段动作必须提供可见说明和精确动作标签",
+      checks,
+    );
     assert(checks.listSearchReturnWorkbenchButtonCount > 0, "列表与搜索配置面必须提供明确返回工作台动作", checks);
     assert(
       checks.listSearchPanelViewport.startsInPrimaryViewport === true
@@ -1042,6 +1066,13 @@ async function main() {
     );
     assert(checks.approvalReturnWorkbenchButtonCount > 0, "审批配置面必须提供明确返回工作台动作", checks);
     assert(checks.approvalStepMoveButtonCount > 0, "审批步骤必须提供上移和下移按钮，不能只依赖拖拽排序", checks);
+    assert(
+      checks.approvalStepActionHintText?.includes("上移")
+      && checks.approvalStepActionHintText?.includes("下移")
+      && checks.approvalStepActionAriaCount >= 3,
+      "审批步骤动作必须提供可见说明和精确动作标签",
+      checks,
+    );
     assert(
       checks.approvalPanelViewport.startsInPrimaryViewport === true
       && checks.approvalPanelViewport.startsInEditorFocusViewport === true,

@@ -596,6 +596,7 @@
           <div>
             <strong>审批步骤编排</strong>
             <span>{{ approvalForm.approval_required ? `${activeApprovalStepCount} 个启用步骤，拖动整行调整顺序` : '启用审批后配置办理节点' }}</span>
+            <em v-if="approvalForm.approval_required" class="approval-step-action-hint">也可以用上移、下移精确调整步骤顺序。</em>
           </div>
           <button type="button" class="ghost small" :disabled="approvalLoading || !approvalForm.approval_required" @click="addApprovalStep">
             添加步骤
@@ -646,9 +647,9 @@
               <input v-model="step.amount_max" type="number" min="0" step="0.01" placeholder="不限制" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额上限`" />
             </div>
             <div class="approval-step-actions">
-              <button type="button" title="上移" :disabled="approvalLoading || !approvalForm.approval_required || index === 0" @click="moveApprovalStep(index, -1)">↑</button>
-              <button type="button" title="下移" :disabled="approvalLoading || !approvalForm.approval_required || index === approvalSteps.length - 1" @click="moveApprovalStep(index, 1)">↓</button>
-              <button type="button" title="移除" :disabled="approvalLoading || !approvalForm.approval_required" @click="removeApprovalStep(index)">×</button>
+              <button type="button" title="上移" :aria-label="`上移第${index + 1}步`" :disabled="approvalLoading || !approvalForm.approval_required || index === 0" @click="moveApprovalStep(index, -1)">↑</button>
+              <button type="button" title="下移" :aria-label="`下移第${index + 1}步`" :disabled="approvalLoading || !approvalForm.approval_required || index === approvalSteps.length - 1" @click="moveApprovalStep(index, 1)">↓</button>
+              <button type="button" title="移除" :aria-label="`移除第${index + 1}步`" :disabled="approvalLoading || !approvalForm.approval_required" @click="removeApprovalStep(index)">×</button>
             </div>
           </div>
         </div>
@@ -781,6 +782,7 @@
             <strong>{{ analysisEditorLabel(activeAnalysisEditor) }}</strong>
             <span>{{ analysisEditorCount(activeAnalysisEditor) }} 项</span>
           </header>
+          <p class="field-chip-action-hint">拖动手柄或使用上移、下移调整顺序，移除会从当前配置中取消显示。</p>
           <label v-if="activeAnalysisEditor === 'graphMeasure' || activeAnalysisEditor === 'graphDimension'" class="inline-select">
             图表类型
             <select v-model="graphType">
@@ -813,9 +815,9 @@
                 @dragend.stop="clearChipDrag"
               >⋮⋮</span>
               {{ fieldDisplayLabel(name) }}
-              <button type="button" title="上移" :disabled="index === 0" @click="moveAnalysisName(activeAnalysisEditor, name, -1)">↑</button>
-              <button type="button" title="下移" :disabled="index === parseNames(analysisEditorState(activeAnalysisEditor).text.value).length - 1" @click="moveAnalysisName(activeAnalysisEditor, name, 1)">↓</button>
-              <button type="button" title="移除" @click="removeAnalysisName(activeAnalysisEditor, name)">×</button>
+              <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="moveAnalysisName(activeAnalysisEditor, name, -1)">↑</button>
+              <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === parseNames(analysisEditorState(activeAnalysisEditor).text.value).length - 1" @click="moveAnalysisName(activeAnalysisEditor, name, 1)">↓</button>
+              <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="removeAnalysisName(activeAnalysisEditor, name)">×</button>
             </span>
           </div>
           <input
@@ -902,6 +904,7 @@
             <strong>默认列表列</strong>
             <span>{{ parseNames(listColumnsText).length }} 项</span>
           </header>
+          <p class="field-chip-action-hint">拖动手柄或使用上移、下移调整顺序，移除会从当前配置中取消显示。</p>
           <div class="field-chip-list">
             <span
               v-for="(name, index) in parseNames(listColumnsText)"
@@ -926,9 +929,9 @@
                 @dragend.stop="clearChipDrag"
               >⋮⋮</span>
               {{ fieldDisplayLabel(name) }}
-              <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('list', name, -1)">↑</button>
-              <button type="button" title="下移" :disabled="index === parseNames(listColumnsText).length - 1" @click="moveListSearchName('list', name, 1)">↓</button>
-              <button type="button" title="移除" @click="removeListSearchName('list', name)">×</button>
+              <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="moveListSearchName('list', name, -1)">↑</button>
+              <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === parseNames(listColumnsText).length - 1" @click="moveListSearchName('list', name, 1)">↓</button>
+              <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="removeListSearchName('list', name)">×</button>
             </span>
           </div>
           <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addListSearchName('list')">
@@ -970,6 +973,7 @@
             <strong>搜索筛选字段</strong>
             <span>{{ parseNames(searchFiltersText).length }} 项</span>
           </header>
+          <p class="field-chip-action-hint">拖动手柄或使用上移、下移调整顺序，移除会从当前配置中取消显示。</p>
           <div class="field-chip-list">
             <span
               v-for="(name, index) in parseNames(searchFiltersText)"
@@ -994,9 +998,9 @@
                 @dragend.stop="clearChipDrag"
               >⋮⋮</span>
               {{ fieldDisplayLabel(name) }}
-              <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('filter', name, -1)">↑</button>
-              <button type="button" title="下移" :disabled="index === parseNames(searchFiltersText).length - 1" @click="moveListSearchName('filter', name, 1)">↓</button>
-              <button type="button" title="移除" @click="removeListSearchName('filter', name)">×</button>
+              <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="moveListSearchName('filter', name, -1)">↑</button>
+              <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === parseNames(searchFiltersText).length - 1" @click="moveListSearchName('filter', name, 1)">↓</button>
+              <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="removeListSearchName('filter', name)">×</button>
             </span>
           </div>
           <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addListSearchName('filter')">
@@ -1038,6 +1042,7 @@
             <strong>搜索分组字段</strong>
             <span>{{ parseNames(searchGroupByText).length }} 项</span>
           </header>
+          <p class="field-chip-action-hint">拖动手柄或使用上移、下移调整顺序，移除会从当前配置中取消显示。</p>
           <div class="field-chip-list">
             <span
               v-for="(name, index) in parseNames(searchGroupByText)"
@@ -1062,9 +1067,9 @@
                 @dragend.stop="clearChipDrag"
               >⋮⋮</span>
               {{ fieldDisplayLabel(name) }}
-              <button type="button" title="上移" :disabled="index === 0" @click="moveListSearchName('group', name, -1)">↑</button>
-              <button type="button" title="下移" :disabled="index === parseNames(searchGroupByText).length - 1" @click="moveListSearchName('group', name, 1)">↓</button>
-              <button type="button" title="移除" @click="removeListSearchName('group', name)">×</button>
+              <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="moveListSearchName('group', name, -1)">↑</button>
+              <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === parseNames(searchGroupByText).length - 1" @click="moveListSearchName('group', name, 1)">↓</button>
+              <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="removeListSearchName('group', name)">×</button>
             </span>
           </div>
           <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addListSearchName('group')">
@@ -5111,6 +5116,19 @@ h1 {
 .field-chip-editor strong {
   color: var(--sc-app-text-primary);
   font-size: 14px;
+}
+
+.field-chip-action-hint,
+.approval-step-action-hint {
+  margin: -2px 0 0;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.approval-step-action-hint {
+  display: block;
+  font-style: normal;
 }
 
 .inline-select {
