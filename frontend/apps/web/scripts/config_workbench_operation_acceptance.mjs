@@ -62,10 +62,12 @@ const ACCEPTANCE_COVERAGE = {
     "list_search_editor_visible",
     "list_search_tabs_complete",
     "default_visible_technical_terms_hidden",
+    "list_search_return_workbench_visible",
     "list_search_editor_focused_after_entry",
     "list_search_editor_primary_focus",
     "approval_editor_visible",
     "approval_rule_canvas_visible",
+    "approval_return_workbench_visible",
     "approval_editor_focused_after_entry",
     "approval_editor_primary_focus",
     "form_designer_visible",
@@ -434,10 +436,12 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && checks.formDesignerReturnButtonCount > 0;
   const listSearchUsable = checks.listSearchTitle === "列表与搜索设置"
     && checks.listSearchTabs?.join("|") === "列表列|搜索条件|默认分组"
-    && checks.listSearchCanvasCount === 1;
+    && checks.listSearchCanvasCount === 1
+    && checks.listSearchReturnWorkbenchButtonCount > 0;
   const approvalUsable = checks.approvalTitle === "审批规则"
     && checks.approvalRulePanelCount === 1
-    && checks.approvalStepCanvasCount === 1;
+    && checks.approvalStepCanvasCount === 1
+    && checks.approvalReturnWorkbenchButtonCount > 0;
   const formUsable = checks.formDesignerTitle === "当前页面字段配置"
     && String(checks.formDesignerStepText || "").includes(CONFIG_PAGE_LABEL)
     && checks.formDesignerCurrentPageLabel === CONFIG_PAGE_LABEL
@@ -498,12 +502,12 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     configure_list_search: taskResult(
       listSearchUsable && checks.listSearchPanelViewport?.startsInPrimaryViewport === true,
       ["listSearchEntry"],
-      { listSearchTitle: checks.listSearchTitle, listSearchTabs: checks.listSearchTabs, listSearchPanelViewport: checks.listSearchPanelViewport },
+      { listSearchTitle: checks.listSearchTitle, listSearchTabs: checks.listSearchTabs, listSearchPanelViewport: checks.listSearchPanelViewport, listSearchReturnWorkbenchButtonCount: checks.listSearchReturnWorkbenchButtonCount },
     ),
     configure_approval_rules: taskResult(
       approvalUsable && checks.approvalPanelViewport?.startsInPrimaryViewport === true,
       ["approvalEntry"],
-      { approvalTitle: checks.approvalTitle, approvalRulePanelCount: checks.approvalRulePanelCount, approvalPanelViewport: checks.approvalPanelViewport },
+      { approvalTitle: checks.approvalTitle, approvalRulePanelCount: checks.approvalRulePanelCount, approvalPanelViewport: checks.approvalPanelViewport, approvalReturnWorkbenchButtonCount: checks.approvalReturnWorkbenchButtonCount },
     ),
     configure_menu_entry: taskResult(
       menuUsable,
@@ -625,8 +629,10 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
   const capabilityDepthReady = checks.formDesignerTitle === "当前页面字段配置"
     && checks.formDesignerCurrentPageLabel === CONFIG_PAGE_LABEL
     && checks.listSearchTabs?.join("|") === "列表列|搜索条件|默认分组"
+    && checks.listSearchReturnWorkbenchButtonCount > 0
     && checks.approvalRulePanelCount === 1
     && checks.approvalStepCanvasCount === 1
+    && checks.approvalReturnWorkbenchButtonCount > 0
     && checks.menuSelectedPanelCount === 1;
   const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
     && checks.approvalPanelViewport?.startsInPrimaryViewport === true
@@ -657,8 +663,10 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       formDesignerShellTitle: checks.formDesignerShellTitle,
       formDesignerCurrentPageLabel: checks.formDesignerCurrentPageLabel,
       listSearchTabs: checks.listSearchTabs,
+      listSearchReturnWorkbenchButtonCount: checks.listSearchReturnWorkbenchButtonCount,
       approvalRulePanelCount: checks.approvalRulePanelCount,
       approvalStepCanvasCount: checks.approvalStepCanvasCount,
+      approvalReturnWorkbenchButtonCount: checks.approvalReturnWorkbenchButtonCount,
       menuSelectedPanelCount: checks.menuSelectedPanelCount,
       listSearchPanelViewport: checks.listSearchPanelViewport,
       approvalPanelViewport: checks.approvalPanelViewport,
@@ -866,6 +874,7 @@ async function main() {
     ));
     checks.listSearchCanvasCount = await listSearchPanel.locator(".field-chip-editor").count();
     checks.listSearchPanelViewport = await viewportEvidence(listSearchPanel);
+    checks.listSearchReturnWorkbenchButtonCount = await listSearchPanel.getByRole("button", { name: "返回工作台" }).count();
     checks.listSearchVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".edit-panel");
     screenshots.listSearchEntry = await capture(page, "04-list-search-entry");
 
@@ -877,6 +886,7 @@ async function main() {
     checks.approvalRulePanelCount = await approvalPanel.locator(".approval-rule-panel").count();
     checks.approvalStepCanvasCount = await approvalPanel.locator(".approval-steps").count();
     checks.approvalPanelViewport = await viewportEvidence(approvalPanel);
+    checks.approvalReturnWorkbenchButtonCount = await approvalPanel.getByRole("button", { name: "返回工作台" }).count();
     screenshots.approvalEntry = await capture(page, "05-approval-entry");
 
     await openDirectSelectedWorkbench(page);
@@ -993,6 +1003,7 @@ async function main() {
       "列表与搜索配置入口没有打开可操作编辑面板",
       checks,
     );
+    assert(checks.listSearchReturnWorkbenchButtonCount > 0, "列表与搜索配置面必须提供明确返回工作台动作", checks);
     assert(
       checks.listSearchPanelViewport.startsInPrimaryViewport === true
       && checks.listSearchPanelViewport.startsInEditorFocusViewport === true,
@@ -1006,6 +1017,7 @@ async function main() {
       "审批配置入口没有打开规则配置画布",
       checks,
     );
+    assert(checks.approvalReturnWorkbenchButtonCount > 0, "审批配置面必须提供明确返回工作台动作", checks);
     assert(
       checks.approvalPanelViewport.startsInPrimaryViewport === true
       && checks.approvalPanelViewport.startsInEditorFocusViewport === true,

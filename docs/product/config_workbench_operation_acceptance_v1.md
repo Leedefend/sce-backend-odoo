@@ -95,8 +95,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 36 |
-| assertion_passed_count | 已通过断言数 | 36 |
+| assertion_count | 用户可感知断言数 | 38 |
+| assertion_passed_count | 已通过断言数 | 38 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -115,9 +115,11 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - 直达已选页面的配置卡片与交付状态。
 - 默认交付状态只展示用户任务相关的表单、列表搜索、菜单、审批四项状态，不展示配置快照等内部审计信息。
 - 列表搜索面板标题、配置类型页签、字段配置画布。
+- 列表搜索面板必须提供明确“返回工作台”动作。
 - 列表搜索面板打开后的首屏主焦点位置。
 - 默认可见界面不得出现模型名、字段技术名、技术参数或英文兜底标签。
 - 审批规则标题、规则面板、步骤编排画布。
+- 审批规则面板必须提供明确“返回工作台”动作。
 - 审批规则面板打开后的首屏主焦点位置。
 - 表单设计器标题、当前页面上下文、返回配置入口。
 - 表单设计器所在全局顶栏必须显示当前配置页面上下文，不能回退为角色首页。
@@ -340,7 +342,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 36 / 36`
+- `assertion_passed_count = 38 / 38`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`

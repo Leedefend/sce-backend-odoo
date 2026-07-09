@@ -540,7 +540,7 @@
           <p>{{ approvalPolicyLabel }}</p>
         </div>
         <button type="button" class="ghost small" :disabled="approvalLoading" @click="approvalPanelOpen = false">
-          关闭
+          返回工作台
         </button>
       </div>
       <aside class="approval-rule-panel" aria-label="审批规则设置">
@@ -868,6 +868,9 @@
           <p>{{ listSearchPanelDescription }}</p>
         </div>
         <div class="edit-panel-actions">
+          <button type="button" class="ghost small" :disabled="listSearchSaving" @click="listSearchPanelOpen = false">
+            返回工作台
+          </button>
           <button type="button" class="ghost small primary" :disabled="listSearchSaving || !previewRouteTarget.path" @click="previewListSearchConfig">
             {{ hasListSearchDraftChanges ? (listSearchSaving ? '保存中...' : '保存并预览') : '预览页面' }}
           </button>
