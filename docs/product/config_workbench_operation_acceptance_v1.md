@@ -65,8 +65,8 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 35 |
-| assertion_passed_count | 已通过断言数 | 35 |
+| assertion_count | 用户可感知断言数 | 36 |
+| assertion_passed_count | 已通过断言数 | 36 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -184,7 +184,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 | --- | --- | --- |
 | 找到要配置的业务页面 | 用户能通过目录或搜索准确选中目标页面，选择后目录不消失 | 截图、搜索结果、选中状态 |
 | 理解当前页面能配置什么 | 四类配置任务名称、影响范围、状态表达清楚 | 当前配置卡片截图 |
-| 配置表单字段 | 入口名称统一，进入设计器后显示当前页面、可配置项、影响范围，并可返回 | 表单设计器截图、返回后标题 |
+| 配置表单字段 | 入口名称统一，进入设计器后显示当前业务页面名、可配置项、影响范围，并可返回；配置态不得复用“新建”业务办理标题 | 表单设计器截图、返回后标题 |
 | 配置列表与搜索 | 进入后能看到列表列、搜索条件、默认分组三个常见配置类型，且编辑面进入首屏主焦点 | 列表搜索面板截图、首屏主焦点位置指标 |
 | 配置审批规则 | 进入后能看到规则开关、审批方式、步骤编排和保存状态，且编辑面进入首屏主焦点 | 审批面板截图、首屏主焦点位置指标 |
 | 配置菜单入口 | 菜单配置显示真实菜单目录和新增、批量、检查发布分组 | 菜单配置截图 |
@@ -309,7 +309,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 35 / 35`
+- `assertion_passed_count = 36 / 36`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`
@@ -329,7 +329,7 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 选择业务页面后，配置卡片完整展示：表单字段与布局、列表与搜索、菜单入口、审批规则。
 - 列表与搜索入口可打开设置面板，并展示列表列、搜索条件、默认分组三类配置。
 - 审批入口可打开审批规则画布，并展示规则设置与审批步骤编排。
-- 表单入口可进入当前页面字段配置设计器，并能返回“项目合同汇总”配置工作台上下文。
+- 表单入口可进入当前页面字段配置设计器，当前页面名显示为“项目合同汇总”，并能返回“项目合同汇总”配置工作台上下文。
 - 菜单配置入口可进入菜单配置页，菜单目录显示 `122 个可配置菜单`，侧栏分组为新增入口、批量维护、检查发布。
 - 移动端宽度 `390px` 下无横向溢出，选择页面后真实视口回到当前配置区，当前配置区域先于页面目录展示。
 

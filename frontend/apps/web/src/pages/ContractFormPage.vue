@@ -2907,12 +2907,20 @@ const showLowCodeTechnicalDetails = computed(() => {
   return hudFlag === '1' || hudFlag === 'true' || surface === 'hud';
 });
 
+const currentFormConfigPageLabel = computed(() => normalizeConfigPageLabel(
+  routeQueryText('page_label')
+  || routeQueryText('pageLabel')
+  || currentBusinessCategoryLabel.value
+  || pageTitle.value
+  || '当前表单',
+));
+
 const formFieldConfigScope = computed(() => {
-  const page = pageDisplayTitle.value || '当前表单';
+  const page = currentFormConfigPageLabel.value || '当前表单';
   return {
-    scope: `${page}这个页面`,
+    scope: page,
     saveTarget: '只影响当前页面，不影响其它页面',
-    summary: `本页按旧表单分区调整${page}的字段名称、显示、顺序、分组和新增字段，保存后只影响这个页面。`,
+    summary: `本页调整${page}的字段名称、显示、顺序、分组和新增字段，保存后只影响当前页面。`,
   };
 });
 
@@ -10544,6 +10552,14 @@ function routeQueryText(key: string) {
   const value = route.query[key];
   if (Array.isArray(value)) return String(value[0] || '').trim();
   return String(value || '').trim();
+}
+
+function normalizeConfigPageLabel(value: string) {
+  return String(value || '')
+    .trim()
+    .replace(/^新建\s*/, '')
+    .replace(/\s*这个页面$/, '')
+    .trim();
 }
 
 function lowCodeReturnQuery() {

@@ -68,6 +68,7 @@ const ACCEPTANCE_COVERAGE = {
     "approval_editor_primary_focus",
     "form_designer_visible",
     "form_designer_shell_title_context",
+    "form_designer_current_page_business_label",
     "form_designer_return_visible",
     "form_designer_business_actions_hidden",
     "menu_side_sections_complete",
@@ -406,6 +407,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && checks.approvalStepCanvasCount === 1;
   const formUsable = checks.formDesignerTitle === "当前页面字段配置"
     && String(checks.formDesignerStepText || "").includes(CONFIG_PAGE_LABEL)
+    && checks.formDesignerCurrentPageLabel === CONFIG_PAGE_LABEL
     && checks.formDesignerReturnButtonCount > 0
     && String(checks.formDesignerShellTitle || "").includes(CONFIG_PAGE_LABEL);
   const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
@@ -588,6 +590,7 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     && defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels)
     && defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels);
   const capabilityDepthReady = checks.formDesignerTitle === "当前页面字段配置"
+    && checks.formDesignerCurrentPageLabel === CONFIG_PAGE_LABEL
     && checks.listSearchTabs?.join("|") === "列表列|搜索条件|默认分组"
     && checks.approvalRulePanelCount === 1
     && checks.approvalStepCanvasCount === 1
@@ -619,6 +622,7 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     capability_depth: professionalScore(capabilityDepthReady && editorFocusReady && actionSemanticsReady, "专业产品不能只到入口，表单、列表搜索、审批、菜单必须进入可操作配置面，并且进入后焦点和动作语义清楚。", {
       formDesignerTitle: checks.formDesignerTitle,
       formDesignerShellTitle: checks.formDesignerShellTitle,
+      formDesignerCurrentPageLabel: checks.formDesignerCurrentPageLabel,
       listSearchTabs: checks.listSearchTabs,
       approvalRulePanelCount: checks.approvalRulePanelCount,
       approvalStepCanvasCount: checks.approvalStepCanvasCount,
@@ -849,6 +853,7 @@ async function main() {
     checks.formDesignerTitle = await page.locator(".contract-form-settings h4").innerText();
     checks.formDesignerShellTitle = await page.locator(".topbar .headline").innerText().catch(() => "");
     checks.formDesignerStepText = await page.locator(".contract-form-design-strip").innerText();
+    checks.formDesignerCurrentPageLabel = await page.locator(".contract-form-design-strip strong").first().innerText();
     checks.formDesignerReturnButtonCount = await page.getByRole("button", { name: /返回配置/ }).count();
     checks.formDesignerVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".contract-form-settings");
     checks.formDesignerBusinessActionButtons = await page.locator("button").evaluateAll((buttons) => (
@@ -981,6 +986,12 @@ async function main() {
       && checks.formDesignerReturnButtonCount > 0
       && checks.formReturnedTitle.includes(CONFIG_PAGE_LABEL),
       "表单配置入口没有形成进入设计器并返回工作台闭环",
+      checks,
+    );
+    assert(
+      checks.formDesignerCurrentPageLabel === CONFIG_PAGE_LABEL
+      && !String(checks.formDesignerStepText || "").includes(`新建${CONFIG_PAGE_LABEL}这个页面`),
+      "表单配置态当前页面必须使用业务页面名，不能复用业务新建动作标题",
       checks,
     );
     assert(checks.formDesignerBusinessActionButtons.length === 0, "表单配置态不应出现业务办理动作按钮", checks);
