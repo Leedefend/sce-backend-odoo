@@ -8,16 +8,16 @@ const ROOT_MENU_XMLID = process.env.LOW_CODE_MENU_ROOT_XMLID || "smart_construct
 const MENU_CONFIG_ROUTE = process.env.LOW_CODE_MENU_CONFIG_ROUTE
   || `/admin/menu-config?menu_id=646&action_id=841&root_menu_xmlid=${encodeURIComponent(ROOT_MENU_XMLID)}&return_to_business_config=1`;
 const REQUIRED_CONFIG_TREE_ROWS = [
-  { menuId: 850, label: "基础资料" },
-  { menuId: 292, label: "项目中心" },
-  { menuId: 293, label: "合同中心" },
-  { menuId: 465, label: "施工管理" },
-  { menuId: 295, label: "物资与分包" },
-  { menuId: 306, label: "财务中心" },
-  { menuId: 350, label: "人事行政" },
-  { menuId: 358, label: "资料证照" },
-  { menuId: 297, label: "配置中心" },
-  { menuId: 646, label: "菜单配置" },
+  { completeName: "智慧施工管理平台/基础资料", label: "基础资料" },
+  { completeName: "智慧施工管理平台/项目中心", label: "项目中心" },
+  { completeName: "智慧施工管理平台/合同中心", label: "合同中心" },
+  { completeName: "智慧施工管理平台/施工管理", label: "施工管理" },
+  { completeName: "智慧施工管理平台/物资与分包", label: "物资与分包" },
+  { completeName: "智慧施工管理平台/财务中心", label: "财务中心" },
+  { completeName: "智慧施工管理平台/人事行政", label: "人事行政" },
+  { completeName: "智慧施工管理平台/资料证照", label: "资料证照" },
+  { completeName: "智慧施工管理平台/配置中心", label: "配置中心" },
+  { completeName: "智慧施工管理平台/配置中心/低代码系统配置/菜单配置", label: "菜单配置" },
 ];
 
 function assert(condition, message, details = {}) {
@@ -30,6 +30,25 @@ function assert(condition, message, details = {}) {
 
 function normalize(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function normalizeMenuPath(value) {
+  return normalize(value).replace(/\s*\/\s*/g, "/");
+}
+
+function resolveRequiredConfigRows(panel) {
+  const menus = Array.isArray(panel?.menus) ? panel.menus : [];
+  return REQUIRED_CONFIG_TREE_ROWS.map((expected) => {
+    const completeName = normalizeMenuPath(expected.completeName);
+    const exact = menus.find((menu) => normalizeMenuPath(menu.complete_name || menu.menu_complete_name) === completeName);
+    const labelMatches = menus.filter((menu) => normalize(menu.name || menu.display_name) === expected.label);
+    const menu = exact || (labelMatches.length === 1 ? labelMatches[0] : null);
+    return {
+      ...expected,
+      menuId: Number(menu?.id || menu?.menu_id || 0),
+      resolvedCompleteName: normalizeMenuPath(menu?.complete_name || menu?.menu_complete_name),
+    };
+  });
 }
 
 function menuIdOf(node) {
@@ -152,7 +171,7 @@ async function navigationRequest(page) {
   return response.body;
 }
 
-async function verifyMenuConfigTreeUi(page) {
+async function verifyMenuConfigTreeUi(page, requiredRows) {
   await page.goto(`${BASE_URL}${MENU_CONFIG_ROUTE}`, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(
     () => !document.body.innerText.includes("正在加载菜单配置...") && /\d+ 个可配置菜单/.test(document.body.innerText),
@@ -165,7 +184,11 @@ async function verifyMenuConfigTreeUi(page) {
   })));
   const violations = [];
   const sample = [];
-  for (const expected of REQUIRED_CONFIG_TREE_ROWS) {
+  for (const expected of requiredRows) {
+    if (!expected.menuId) {
+      violations.push({ ...expected, reason: "required_menu_not_resolved" });
+      continue;
+    }
     const row = rows.find((item) => item.menuId === expected.menuId || item.text.includes(expected.label));
     if (row) sample.push(row);
     if (!row) {
@@ -252,7 +275,7 @@ function expectedVisiblePolicies(audit, panel) {
   return rows;
 }
 
-function analyzeAlignment({ audit, panel, navigation }) {
+function analyzeAlignment({ audit, panel, navigation, requiredConfigRows }) {
   const expected = expectedVisiblePolicies(audit, panel);
   const expectedById = new Map(expected.map((row) => [row.menuId, row]));
   const expectedIds = new Set(expectedById.keys());
@@ -260,7 +283,8 @@ function analyzeAlignment({ audit, panel, navigation }) {
   const navTree = navigation.nav_fact?.tree || navigation.nav_explained?.tree || [];
   const actual = flattenTree(navTree).filter((row) => row.menuId);
   const contractRows = flattenNavigationContract(navTree);
-  const groupContractMismatches = REQUIRED_CONFIG_TREE_ROWS.flatMap((expected) => {
+  const groupContractMismatches = requiredConfigRows.flatMap((expected) => {
+    if (!expected.menuId) return [{ ...expected, reason: "required_menu_not_resolved" }];
     const row = contractRows.find((item) => item.configMenuId === expected.menuId || item.menuId === expected.menuId || item.label === expected.label);
     if (!row) return [{ ...expected, reason: "missing_navigation_contract_row" }];
     const problems = [];
@@ -387,8 +411,9 @@ async function main() {
       intentRequest(page, "ui.menu_config.audit", params),
       navigationRequest(page),
     ]);
-    const result = analyzeAlignment({ audit, panel, navigation });
-    const menuConfigTreeUi = await verifyMenuConfigTreeUi(page);
+    const requiredConfigRows = resolveRequiredConfigRows(panel);
+    const result = analyzeAlignment({ audit, panel, navigation, requiredConfigRows });
+    const menuConfigTreeUi = await verifyMenuConfigTreeUi(page, requiredConfigRows);
     result.summary.menu_config_tree_ui_violation_count = menuConfigTreeUi.violations.length;
     result.menuConfigTreeUi = menuConfigTreeUi;
     result.menuConfigSample = menuConfigTreeUi.sample;

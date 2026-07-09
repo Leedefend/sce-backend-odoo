@@ -111,13 +111,10 @@
     <record id="menu_sc_business_config_center" model="ir.ui.menu">
         <field name="name">配置中心</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
-        <field name="sequence">90</field>
+        <field name="sequence">85</field>
         <field name="action" eval="False"/>
         <field name="groups_id" eval="[(6, 0, [
-            ref('smart_construction_core.group_sc_cap_business_config_admin'),
-            ref('smart_construction_core.group_sc_cap_config_admin'),
-            ref('smart_core.group_smart_core_business_config_admin'),
-            ref('smart_core.group_smart_core_admin')
+            ref('smart_construction_core.group_sc_cap_business_config_admin')
         ])]"/>
     </record>
 
