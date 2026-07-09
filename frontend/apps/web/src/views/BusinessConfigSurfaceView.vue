@@ -406,7 +406,7 @@
                   class="ghost small"
                   @click="openApprovalConfig(section)"
                 >
-                  更多规则
+                  打开完整规则
                 </button>
               </div>
             </article>
@@ -661,7 +661,7 @@
           还原
         </button>
         <button type="button" class="ghost small" :disabled="!approvalSection?.route?.path" @click="approvalSection && openApprovalConfig(approvalSection)">
-          更多规则
+          打开完整规则
         </button>
       </div>
     </section>

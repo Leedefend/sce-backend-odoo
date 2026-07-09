@@ -72,6 +72,7 @@ const ACCEPTANCE_COVERAGE = {
     "approval_rule_canvas_visible",
     "approval_return_workbench_visible",
     "approval_step_precise_reorder_visible",
+    "approval_full_rule_label_consistent",
     "approval_editor_focused_after_entry",
     "approval_editor_primary_focus",
     "form_designer_visible",
@@ -936,6 +937,8 @@ async function main() {
     checks.approvalStepActionHintText = await approvalPanel.locator(".approval-step-action-hint").innerText();
     checks.approvalStepActionAriaCount = await approvalPanel.locator(".approval-step-actions button[aria-label^='上移第'], .approval-step-actions button[aria-label^='下移第'], .approval-step-actions button[aria-label^='移除第']").count();
     checks.approvalReturnWorkbenchButtonCount = await approvalPanel.getByRole("button", { name: "返回工作台" }).count();
+    checks.approvalFullRuleButtonCount = await approvalPanel.getByRole("button", { name: "打开完整规则" }).count();
+    checks.approvalLegacyMoreRuleButtonCount = await approvalPanel.getByRole("button", { name: "更多规则" }).count();
     screenshots.approvalEntry = await capture(page, "05-approval-entry");
 
     await openDirectSelectedWorkbench(page);
@@ -1101,6 +1104,12 @@ async function main() {
       && checks.approvalStepActionHintText?.includes("下移")
       && checks.approvalStepActionAriaCount >= 3,
       "审批步骤动作必须提供可见说明和精确动作标签",
+      checks,
+    );
+    assert(
+      checks.approvalFullRuleButtonCount > 0
+      && checks.approvalLegacyMoreRuleButtonCount === 0,
+      "审批完整规则入口必须明确表达打开完整规则，不能使用更多规则模糊标签",
       checks,
     );
     assert(
