@@ -665,6 +665,22 @@ class UiMenuConfigPolicy(models.Model):
                 return True
             return False
 
+        def normalize_protected_runtime_config_node(node: dict) -> dict:
+            menu_id = node_menu_id(node)
+            if not is_protected_runtime_config_menu_id(menu_id):
+                return node
+            menu = self.env["ir.ui.menu"].browse(menu_id).exists()
+            if not menu:
+                return node
+            if not _to_int(node.get("sequence")):
+                node["sequence"] = int(menu.sequence or 0)
+            label = str(menu.name or "").strip()
+            if label:
+                node.setdefault("name", label)
+                node.setdefault("label", label)
+                node.setdefault("title", label)
+            return node
+
         def apply_node(node: dict) -> dict | None:
             if is_delivery_excluded_node(node):
                 stats["hidden_count"] += 1
@@ -704,6 +720,8 @@ class UiMenuConfigPolicy(models.Model):
                     if sequence:
                         node["sequence"] = sequence
                         stats["reordered_count"] += 1
+            if is_protected_runtime_config_node(node):
+                node = normalize_protected_runtime_config_node(node)
             if isinstance(children, list):
                 next_children = []
                 for child in children:

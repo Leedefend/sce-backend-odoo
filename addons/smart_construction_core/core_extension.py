@@ -3746,7 +3746,16 @@ def smart_core_lowcode_system_config_menu_xmlids(env):
     del env
     return [
         "smart_construction_core.menu_sc_business_config_center",
+        "smart_construction_core.menu_sc_business_base_config_group",
         "smart_construction_core.menu_sc_lowcode_system_config_group",
+        "smart_construction_core.menu_sc_business_category",
+        "smart_construction_core.menu_sc_dictionary",
+        "smart_construction_core.menu_sc_organization_department",
+        "smart_construction_core.menu_sc_approval_scope",
+        "smart_construction_core.menu_sc_approval_policy",
+        "smart_construction_core.menu_sc_project_stage_requirement_items",
+        "smart_construction_core.menu_sc_project_cost_code",
+        "smart_construction_core.menu_sc_company_document_archive",
         "smart_construction_core.menu_sc_business_config_workbench",
         "smart_construction_core.menu_ui_menu_config_policy_business_config",
         "smart_construction_core.menu_ui_form_field_policy_business_config",

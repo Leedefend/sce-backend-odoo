@@ -39,6 +39,27 @@ def _lowcode_config_boundary_hooks(env, hook_name, *args, **kwargs):
     return _lowcode_system_config_menu_xmlids_hook(env, hook_name, *args, **kwargs)
 
 
+def _config_center_product_baseline_menu_xmlids_hook(env, hook_name, *args, **kwargs):
+    del env, args, kwargs
+    if hook_name != "smart_core_lowcode_system_config_menu_xmlids":
+        return None
+    return [
+        "smart_construction_core.menu_sc_business_config_center",
+        "smart_construction_core.menu_sc_business_base_config_group",
+        "smart_construction_core.menu_sc_lowcode_system_config_group",
+        "smart_construction_core.menu_sc_business_category",
+        "smart_construction_core.menu_sc_dictionary",
+        "smart_construction_core.menu_sc_approval_scope",
+        "smart_construction_core.menu_sc_approval_policy",
+        "smart_construction_core.menu_sc_project_stage_requirement_items",
+        "smart_construction_core.menu_sc_project_cost_code",
+        "smart_construction_core.menu_sc_business_config_workbench",
+        "smart_construction_core.menu_ui_menu_config_policy_business_config",
+        "smart_construction_core.menu_ui_form_field_policy_business_config",
+        "smart_construction_core.menu_ui_form_custom_field_wizard_business_config",
+    ]
+
+
 def _load_handler():
     root = Path(__file__).resolve().parents[1]
     exc_mod = _install_module(
@@ -2106,6 +2127,145 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         )
         self.assertEqual(stats["hidden_count"], 0)
         self.assertTrue(stats["config_only"])
+
+    def test_runtime_overlay_config_only_recovers_config_center_product_baseline(self):
+        module = _load_policy_model()
+        module.call_extension_hook_first = _config_center_product_baseline_menu_xmlids_hook
+        company = types.SimpleNamespace(id=7)
+        user = _User([])
+        root = _Menu(291, "智慧施工管理平台")
+        home = _Menu(464, "首页", parent=root, sequence=10)
+        config_center = _Menu(297, "配置中心", parent=root, sequence=70)
+        business_base = _Menu(852, "业务基础数据", parent=config_center, sequence=10)
+        lowcode = _Menu(853, "低代码系统配置", parent=config_center, sequence=20)
+        business_category = _Menu(410, "业务分类字典", parent=business_base, sequence=5, action="ir.actions.act_window(1010,)")
+        dictionary = _Menu(449, "数据字典", parent=business_base, sequence=70, action="ir.actions.act_window(1011,)")
+        approval_scope = _Menu(414, "审批岗位人员", parent=business_base, sequence=30, action="ir.actions.act_window(1012,)")
+        approval_policy = _Menu(413, "审批配置", parent=business_base, sequence=31, action="ir.actions.act_window(1013,)")
+        stage_requirement = _Menu(451, "阶段要求配置", parent=business_base, sequence=45, action="ir.actions.act_window(1015,)")
+        cost_code = _Menu(406, "预算类型", parent=business_base, sequence=50, action="ir.actions.act_window(1016,)")
+        workbench = _Menu(827, "配置工作台", parent=lowcode, sequence=5, action="ir.actions.act_window(1009,)")
+        menu_config = _Menu(646, "菜单配置", parent=lowcode, sequence=6, action="ir.actions.act_window(1014,)")
+        form_policy = _Menu(644, "表单字段配置", parent=lowcode, sequence=15, action="ir.actions.act_window(1017,)")
+        custom_field = _Menu(645, "新增表单字段", parent=lowcode, sequence=16, action="ir.actions.act_window(1018,)")
+        menus = _MenuModel(
+            [
+                root,
+                home,
+                config_center,
+                business_base,
+                lowcode,
+                business_category,
+                dictionary,
+                approval_scope,
+                approval_policy,
+                stage_requirement,
+                cost_code,
+                workbench,
+                menu_config,
+                form_policy,
+                custom_field,
+            ],
+            visible_ids=[291, 464, 297, 852, 853, 410, 449, 414, 413, 451, 406, 827, 646, 644, 645],
+        )
+        xmlid_rows = [
+            (297, "menu_sc_business_config_center"),
+            (852, "menu_sc_business_base_config_group"),
+            (853, "menu_sc_lowcode_system_config_group"),
+            (410, "menu_sc_business_category"),
+            (449, "menu_sc_dictionary"),
+            (414, "menu_sc_approval_scope"),
+            (413, "menu_sc_approval_policy"),
+            (451, "menu_sc_project_stage_requirement_items"),
+            (406, "menu_sc_project_cost_code"),
+            (827, "menu_sc_business_config_workbench"),
+            (646, "menu_ui_menu_config_policy_business_config"),
+            (644, "menu_ui_form_field_policy_business_config"),
+            (645, "menu_ui_form_custom_field_wizard_business_config"),
+        ]
+        env = _Env(
+            {
+                "ir.ui.menu": menus,
+                "ir.actions.act_window": _ActionWindowModel([
+                    _ActionWindow(1009, res_model="ui.business.config.contract"),
+                    _ActionWindow(1010, res_model="sc.business.category"),
+                    _ActionWindow(1011, res_model="sc.dictionary"),
+                    _ActionWindow(1012, res_model="sc.approval.scope"),
+                    _ActionWindow(1013, res_model="sc.approval.policy"),
+                    _ActionWindow(1014, res_model="ui.menu.config.policy"),
+                    _ActionWindow(1015, res_model="sc.project.stage.requirement.item"),
+                    _ActionWindow(1016, res_model="sc.project.cost.code"),
+                    _ActionWindow(1017, res_model="ui.form.field.policy"),
+                    _ActionWindow(1018, res_model="ui.form.custom.field.wizard"),
+                ]),
+                "ir.model.data": _ModelDataModel([
+                    types.SimpleNamespace(
+                        model="ir.ui.menu",
+                        res_id=menu_id,
+                        module="smart_construction_core",
+                        name=name,
+                    )
+                    for menu_id, name in xmlid_rows
+                ]),
+            },
+            company=company,
+            user=user,
+        )
+        policy_model = object.__new__(module.UiMenuConfigPolicy)
+        policy_model.env = env
+        policy_model._runtime_menu_config_source_for_user = lambda user=None: (
+            {
+                291: {"active": True, "menu_id": 291, "menu_label": "智慧施工管理平台", "visible": True},
+                464: {"active": True, "menu_id": 464, "menu_label": "首页", "visible": True, "sequence_override": 10},
+                297: {"active": True, "menu_id": 297, "menu_label": "配置中心", "visible": True, "sequence_override": 70},
+                646: {"active": True, "menu_id": 646, "menu_label": "菜单配置", "visible": True, "sequence_override": 6},
+            },
+            "ui.business.config.contract.menu_orchestration",
+        )
+
+        overlaid, stats = policy_model.apply_runtime_overlay(
+            {
+                "tree": [
+                    {
+                        "menu_id": 291,
+                        "name": "智慧施工管理平台",
+                        "children": [
+                            {"menu_id": 464, "name": "首页", "children": []},
+                            {
+                                "menu_id": 297,
+                                "name": "配置中心",
+                                "children": [
+                                    {
+                                        "menu_id": 853,
+                                        "name": "低代码系统配置",
+                                        "children": [{"menu_id": 646, "name": "菜单配置", "children": []}],
+                                    }
+                                ],
+                            },
+                        ],
+                    }
+                ],
+                "flat": [],
+            },
+            user=user,
+        )
+
+        root_node = overlaid["tree"][0]
+        config_node = next(child for child in root_node["children"] if child["menu_id"] == 297)
+        node_label = lambda node: node.get("label") or node.get("name")
+        self.assertEqual([node_label(child) for child in config_node["children"]], ["业务基础数据", "低代码系统配置"])
+        business_base_node = next(child for child in config_node["children"] if child["menu_id"] == 852)
+        lowcode_node = next(child for child in config_node["children"] if child["menu_id"] == 853)
+        self.assertEqual(
+            [node_label(child) for child in business_base_node["children"]],
+            ["业务分类字典", "审批岗位人员", "审批配置", "阶段要求配置", "预算类型", "数据字典"],
+        )
+        self.assertEqual(
+            [node_label(child) for child in lowcode_node["children"]],
+            ["配置工作台", "菜单配置", "表单字段配置", "新增表单字段"],
+        )
+        self.assertTrue(stats["config_only"])
+        self.assertEqual(stats["hidden_count"], 0)
 
     def test_runtime_overlay_config_recovery_entries_do_not_bypass_menu_acl(self):
         module = _load_policy_model()

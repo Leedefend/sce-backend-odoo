@@ -686,16 +686,75 @@ def _runtime_business_config_productization_sources(env) -> set[str]:
     return {_text(item) for item in payload if _text(item)}
 
 
+def _runtime_business_config_protected_menu_refs(env) -> dict:
+    refs = {"menu_ids": set(), "menu_xmlids": set()}
+    if env is None:
+        return refs
+    try:
+        from odoo.addons.smart_core.model.ui_menu_config_policy import _lowcode_system_config_menu_xmlids
+
+        xmlids = {_text(xmlid) for xmlid in _lowcode_system_config_menu_xmlids(env) if _text(xmlid)}
+    except Exception:
+        xmlids = set()
+    refs["menu_xmlids"] = xmlids
+    if not xmlids:
+        return refs
+    try:
+        ModelData = env["ir.model.data"].sudo()
+        modules = {xmlid.split(".", 1)[0] for xmlid in xmlids if "." in xmlid}
+        names = {xmlid.split(".", 1)[1] for xmlid in xmlids if "." in xmlid}
+        rows = ModelData.search([
+            ("model", "=", "ir.ui.menu"),
+            ("module", "in", list(modules)),
+            ("name", "in", list(names)),
+        ])
+    except Exception:
+        rows = []
+    for row in rows or []:
+        xmlid = "%s.%s" % (_text(getattr(row, "module", "")), _text(getattr(row, "name", "")))
+        try:
+            menu_id = int(getattr(row, "res_id", 0) or 0)
+        except Exception:
+            menu_id = 0
+        if xmlid in xmlids and menu_id:
+            refs["menu_ids"].add(menu_id)
+    return refs
+
+
+def _node_is_protected_runtime_business_config_menu(node: dict, protected_refs: dict | None = None) -> bool:
+    if not isinstance(protected_refs, dict):
+        return False
+    protected_menu_ids = protected_refs.get("menu_ids") if isinstance(protected_refs.get("menu_ids"), set) else set()
+    protected_xmlids = protected_refs.get("menu_xmlids") if isinstance(protected_refs.get("menu_xmlids"), set) else set()
+    if not protected_menu_ids and not protected_xmlids:
+        return False
+    meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    entry_target = meta.get("entry_target") if isinstance(meta.get("entry_target"), dict) else {}
+    compatibility_refs = entry_target.get("compatibility_refs") if isinstance(entry_target.get("compatibility_refs"), dict) else {}
+    menu_id = node.get("menu_id") or meta.get("menu_id") or compatibility_refs.get("menu_id")
+    try:
+        normalized_menu_id = int(menu_id or 0)
+    except Exception:
+        normalized_menu_id = 0
+    if normalized_menu_id and normalized_menu_id in protected_menu_ids:
+        return True
+    xmlid = _text(node.get("menu_xmlid") or meta.get("menu_xmlid") or compatibility_refs.get("menu_xmlid"))
+    return bool(xmlid and xmlid in protected_xmlids)
+
+
 def _node_is_runtime_business_config_entry(
     node: dict,
     *,
     env=None,
     productization_sources: set[str] | None = None,
+    protected_menu_refs: dict | None = None,
     acceptance_matchers: dict | None = None,
 ) -> bool:
     """Keep already-authorized runtime configuration entries available."""
     if _node_is_user_acceptance_surface(node, acceptance_matchers=acceptance_matchers):
         return False
+    if _node_is_protected_runtime_business_config_menu(node, protected_refs=protected_menu_refs):
+        return True
     meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
     productization_source = _text(meta.get("productization_source"))
     sources = productization_sources if isinstance(productization_sources, set) else _runtime_business_config_productization_sources(env)
@@ -726,6 +785,7 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict, *, env=None) -> tup
     removed_leaf_count = 0
     runtime_business_config_count = 0
     runtime_business_config_sources = _runtime_business_config_productization_sources(env)
+    protected_menu_refs = _runtime_business_config_protected_menu_refs(env)
     acceptance_matchers = _acceptance_surface_matchers(_resolve_user_acceptance_nav_contract(env))
 
     def _filter_node(node: dict):
@@ -752,6 +812,7 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict, *, env=None) -> tup
             node,
             env=env,
             productization_sources=runtime_business_config_sources,
+            protected_menu_refs=protected_menu_refs,
             acceptance_matchers=acceptance_matchers,
         ):
             kept_leaf_count += 1

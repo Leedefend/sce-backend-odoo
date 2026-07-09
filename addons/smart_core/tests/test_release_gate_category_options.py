@@ -67,6 +67,56 @@ class _MenuConfigOverlayEnv:
         raise KeyError(model)
 
 
+class _ModelDataRows(list):
+    def sudo(self):
+        return self
+
+    def search(self, domain):
+        model = next((value for field, op, value in domain if field == "model" and op == "="), "")
+        modules = set(next((value for field, op, value in domain if field == "module" and op == "in"), []) or [])
+        names = set(next((value for field, op, value in domain if field == "name" and op == "in"), []) or [])
+        rows = list(self)
+        if model:
+            rows = [row for row in rows if getattr(row, "model", "") == model]
+        if modules:
+            rows = [row for row in rows if getattr(row, "module", "") in modules]
+        if names:
+            rows = [row for row in rows if getattr(row, "name", "") in names]
+        return rows
+
+
+class _ProtectedMenuReleaseGateEnv:
+    user = object()
+
+    def __init__(self):
+        self.model_data = _ModelDataRows([
+            type("ModelDataRow", (), {
+                "model": "ir.ui.menu",
+                "module": "smart_construction_core",
+                "name": "menu_sc_business_config_workbench",
+                "res_id": 827,
+            })(),
+            type("ModelDataRow", (), {
+                "model": "ir.ui.menu",
+                "module": "smart_construction_core",
+                "name": "menu_ui_form_field_policy_business_config",
+                "res_id": 644,
+            })(),
+        ])
+
+    def __getitem__(self, model):
+        if model == "ir.model.data":
+            return self.model_data
+        if model == "ir.config_parameter":
+            return _ConfigParam({
+                "smart_core.lowcode.system_config_menu_xmlids": (
+                    "smart_construction_core.menu_sc_business_config_workbench,"
+                    "smart_construction_core.menu_ui_form_field_policy_business_config"
+                ),
+            })
+        raise KeyError(model)
+
+
 @tagged("post_install", "-at_install", "release_gate_category_options")
 class TestReleaseGateCategoryOptions(TransactionCase):
     def test_category_option_menu_refs_are_release_gate_keys(self):
@@ -166,6 +216,61 @@ class TestReleaseGateCategoryOptions(TransactionCase):
         self.assertNotIn("历史物资库存事实", labels)
         self.assertEqual(meta["removed_leaf_count"], 1)
         self.assertEqual(meta["runtime_business_config_passthrough_count"], 1)
+
+    def test_release_gate_keeps_protected_runtime_config_menus(self):
+        nav = [
+            {
+                "menu_id": 291,
+                "name": "智慧施工管理平台",
+                "children": [
+                    {"menu_id": 500, "name": "项目台账", "route": "/a/100?menu_id=500", "children": []},
+                    {
+                        "menu_id": 297,
+                        "name": "配置中心",
+                        "children": [
+                            {
+                                "menu_id": 853,
+                                "name": "低代码系统配置",
+                                "children": [
+                                    {
+                                        "menu_id": 827,
+                                        "name": "配置工作台",
+                                        "route": "/a/1009?menu_id=827",
+                                        "model": "ui.business.config.contract",
+                                        "children": [],
+                                    },
+                                    {
+                                        "menu_id": 644,
+                                        "name": "表单字段配置",
+                                        "route": "/a/1017?menu_id=644",
+                                        "model": "ui.form.field.policy",
+                                        "children": [],
+                                    },
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            }
+        ]
+        gate = {
+            "applied": True,
+            "product_key": "construction.standard",
+            "allowed": {
+                "menu_ids": ["291", "500"],
+                "action_ids": ["100"],
+                "routes": ["/a/100?menu_id=500"],
+            },
+        }
+
+        filtered, meta = _filter_nav_by_release_gate(nav, gate, env=_ProtectedMenuReleaseGateEnv())
+
+        root = filtered[0]
+        config_center = next(child for child in root["children"] if child["name"] == "配置中心")
+        lowcode_group = config_center["children"][0]
+        self.assertEqual([child["name"] for child in lowcode_group["children"]], ["配置工作台", "表单字段配置"])
+        self.assertEqual(meta["removed_leaf_count"], 0)
+        self.assertEqual(meta["runtime_business_config_passthrough_count"], 2)
 
     def test_release_target_integrity_allows_action_only_formal_entry(self):
         service = EditionReleaseSnapshotService(self.env)
