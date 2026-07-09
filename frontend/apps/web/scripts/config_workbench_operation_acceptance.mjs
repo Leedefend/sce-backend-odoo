@@ -41,6 +41,7 @@ const ACCEPTANCE_COVERAGE = {
     "open_list_search_config",
     "open_approval_config",
     "open_form_designer",
+    "open_form_field_create_panel",
     "return_from_form_designer",
     "open_menu_config",
     "open_menu_create_panel",
@@ -90,6 +91,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_designer_return_visible",
     "form_designer_return_label_consistent",
     "form_designer_discard_label_consistent",
+    "form_field_create_panel_close_label_consistent",
     "form_designer_business_actions_hidden",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
@@ -999,6 +1001,13 @@ async function main() {
         .map((button) => button.textContent?.trim())
         .filter((text) => text === "保存草稿" || text === "提交")
     ));
+    await page.locator(".contract-field-central-create").click();
+    await page.locator(".contract-field-create-dialog").waitFor({ state: "visible", timeout: 60000 });
+    checks.formFieldCreateDialogTitle = await page.locator("#contract-field-create-title").innerText();
+    checks.formFieldCreateCloseLabelCount = await page.locator(".contract-field-create-close[aria-label='取消新增字段']").count();
+    checks.formFieldCreateLegacyCloseLabelCount = await page.locator(".contract-field-create-close[aria-label='关闭']").count();
+    await page.getByRole("button", { name: "取消新增字段" }).click();
+    await page.locator(".contract-field-create-dialog").waitFor({ state: "hidden", timeout: 60000 });
     screenshots.formDesignerEntry = await capture(page, "06-form-designer-entry");
     await page.getByRole("button", { name: "返回工作台" }).first().click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 60000 });
@@ -1227,6 +1236,13 @@ async function main() {
       checks.formDesignerFieldSearchInputCount > 0
       && checks.formDesignerFieldSearchResultCount > 0,
       "表单字段配置面必须提供字段搜索和可选字段结果，避免大量字段只能滚动查找",
+      checks,
+    );
+    assert(
+      checks.formFieldCreateDialogTitle === "新增字段"
+      && checks.formFieldCreateCloseLabelCount === 1
+      && checks.formFieldCreateLegacyCloseLabelCount === 0,
+      "表单新增字段面板关闭动作必须指向具体对象，不能使用关闭模糊标签",
       checks,
     );
     assert(

@@ -808,7 +808,7 @@
           >
             <header class="contract-field-create-head">
               <h3 id="contract-field-create-title">新增字段</h3>
-              <button type="button" class="contract-field-create-close" :disabled="busy" aria-label="关闭" @click="closeInlineCustomFieldCreate">x</button>
+              <button type="button" class="contract-field-create-close" :disabled="busy" aria-label="取消新增字段" @click="closeInlineCustomFieldCreate">x</button>
             </header>
             <label class="contract-mode-prompt-field">
               <span>字段标题</span>
@@ -4996,7 +4996,7 @@ function formUiLabel(key: string) {
     save: '保存',
     saving: '保存中...',
     discard: '放弃',
-    reload: '刷新',
+    reload: '刷新表单数据',
     save_success: '保存成功，已同步最新表单内容。',
   };
   return formUiLabels()[key] || fallbackLabels[key] || key;
