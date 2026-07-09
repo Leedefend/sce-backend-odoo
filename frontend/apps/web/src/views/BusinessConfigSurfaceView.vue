@@ -36,19 +36,117 @@
 
     <section v-if="!coverageScan" class="workbench-start" data-lowcode-workbench-ia="start">
       <div class="workbench-start-main">
-        <div class="workbench-start-copy">
-          <span>当前范围</span>
-          <strong>{{ selectedPageLabel || currentModel || '未选择业务页面' }}</strong>
-          <em>{{ startScopeSummary }}</em>
+        <div class="workbench-start-lead">
+          <div class="workbench-start-copy">
+            <span>当前范围</span>
+            <strong>{{ selectedPageLabel || currentModel || '未选择业务页面' }}</strong>
+            <em>{{ startScopeSummary }}</em>
+          </div>
+          <div class="workbench-start-actions">
+            <button type="button" class="ghost primary" :disabled="scanLoading" @click="scanSystemRootCoverage">
+              {{ scanLoading ? '读取中...' : '选择业务页面' }}
+            </button>
+            <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">
+              {{ headerDesignerButtonLabel }}
+            </button>
+            <button type="button" class="ghost" :disabled="!previewRouteTarget.path" @click="previewSelectedRuntimeRoute">预览页面</button>
+          </div>
         </div>
-        <div class="workbench-start-actions">
-          <button type="button" class="ghost primary" :disabled="scanLoading" @click="scanSystemRootCoverage">
-            {{ scanLoading ? '读取中...' : '选择业务页面' }}
-          </button>
-          <button type="button" class="ghost" :disabled="!canOpenDesigner" @click="openFormConfig">
-            {{ headerDesignerButtonLabel }}
-          </button>
-          <button type="button" class="ghost" :disabled="!previewRouteTarget.path" @click="previewSelectedRuntimeRoute">预览页面</button>
+        <div v-if="currentModel && visibleConfigSections.length" class="workbench-start-config">
+          <div class="selected-page-overview">
+            <div>
+              <span>正在配置</span>
+              <strong>{{ selectedPageLabel || currentModel }}</strong>
+            </div>
+            <div class="selected-page-overview-side">
+              <div class="selected-page-overview-meta">
+                <span>页面配置</span>
+                <span>{{ startScopeSummary }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="section-grid section-grid--start" data-lowcode-config-task-grid="v1">
+            <article v-for="section in visibleConfigSections" :key="`start-${section.key}`" class="config-card" data-lowcode-config-task-card="v1">
+              <div class="config-card-head">
+                <div>
+                  <span>{{ sectionTaskKindLabel(section.key) }}</span>
+                  <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
+                </div>
+                <strong class="config-status-badge" :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
+              </div>
+              <div class="config-task-impact">
+                <span>{{ sectionPrimaryCopy(section.key) }}</span>
+                <em>{{ sectionImpactText(section.key) }}</em>
+              </div>
+              <div class="config-card-meta" data-lowcode-config-task-meta="v1">
+                <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
+                <span>{{ sectionTaskCoverageText(section.key, section.contract_count) }}</span>
+              </div>
+              <div class="config-card-actions">
+                <button
+                  v-if="section.key === 'form' || section.key === 'list_search' || section.key === 'analysis'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || versionsLoading"
+                  @click="loadVersions(section.key)"
+                >
+                  {{ versionsLoading ? '读取中...' : '版本记录' }}
+                </button>
+                <button
+                  v-if="section.key === 'list_search'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || listSearchBusy"
+                  @click="loadListSearchConfig"
+                >
+                  {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
+                </button>
+                <button
+                  v-else-if="section.key === 'form'"
+                  type="button"
+                  class="ghost small primary"
+                  :disabled="!canOpenDesigner"
+                  @click="openFormConfig"
+                >
+                  {{ sectionPrimaryActionLabel(section.key) }}
+                </button>
+                <button
+                  v-else-if="section.key === 'menu'"
+                  type="button"
+                  class="ghost small"
+                  @click="openMenuConfig"
+                >
+                  {{ sectionPrimaryActionLabel(section.key) }}
+                </button>
+                <button
+                  v-if="section.key === 'menu'"
+                  type="button"
+                  class="ghost small"
+                  @click="openCreateMenuConfig"
+                >
+                  新增菜单
+                </button>
+                <button
+                  v-else-if="section.key === 'analysis'"
+                  type="button"
+                  class="ghost small"
+                  :disabled="!currentModel || listSearchBusy"
+                  @click="loadAnalysisConfig"
+                >
+                  {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
+                </button>
+                <button
+                  v-else-if="section.key === 'approval'"
+                  type="button"
+                  class="ghost small primary"
+                  :disabled="!currentModel || approvalLoading"
+                  @click="loadApprovalConfig"
+                >
+                  {{ approvalLoading ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
+                </button>
+              </div>
+            </article>
+          </div>
         </div>
       </div>
       <aside v-if="surface" class="workbench-start-status" data-lowcode-delivery-readiness="low_code_delivery_readiness.v1">
@@ -201,7 +299,7 @@
           <div v-else class="empty-state">当前没有匹配的业务页面，可调整搜索条件或取消“只看需处理”。</div>
         </aside>
 
-        <section v-if="!loading && (currentModel || visibleConfigSections.length)" class="page-config-panel" aria-label="已选页面配置">
+        <section v-if="(!loading || surface) && (currentModel || visibleConfigSections.length)" class="page-config-panel" aria-label="已选页面配置">
           <div class="selected-page-overview">
             <div>
               <span>正在配置</span>
@@ -1045,16 +1143,19 @@ import {
 import {
   BUSINESS_CONFIG_INTENTS,
   BUSINESS_CONFIG_MODES,
+  BUSINESS_CONFIG_MODELS,
   BUSINESS_CONFIG_ROUTE_FLAGS,
   isBusinessConfigRuntimeModel,
 } from '../app/businessConfigBoundaries';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { useSessionStore } from '../stores/session';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
 
 const route = useRoute();
 const router = useRouter();
+const session = useSessionStore();
 const pageContract = usePageContract('business_config');
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
@@ -1642,7 +1743,7 @@ function sectionImpactText(sectionKey: string) {
 }
 
 function sectionPrimaryActionLabel(sectionKey: string) {
-  if (sectionKey === 'form') return '配置表单';
+  if (sectionKey === 'form') return '配置表单字段';
   if (sectionKey === 'list_search') return '配置列表';
   if (sectionKey === 'analysis') return '配置分析';
   if (sectionKey === 'menu') return '配置菜单';
@@ -2333,17 +2434,13 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
   analysisAudit.value = null;
   versionsPanelOpen.value = false;
   versionContracts.value = [];
-  await router.replace({
-    path: route.path,
-    query: {
-      ...route.query,
-      model: row.model || undefined,
-      action_id: row.action_id ? String(row.action_id) : undefined,
-      view_id: row.view_id ? String(row.view_id) : undefined,
-      role_key: scopeRole.value || undefined,
-      page_label: row.name || undefined,
-      open_list_search: undefined,
-    },
+  replaceWorkbenchQuerySilently({
+    model: row.model || undefined,
+    action_id: row.action_id ? String(row.action_id) : undefined,
+    view_id: row.view_id ? String(row.view_id) : undefined,
+    role_key: scopeRole.value || undefined,
+    page_label: row.name || undefined,
+    open_list_search: undefined,
   });
   await loadSurface();
 }
@@ -3376,20 +3473,72 @@ function sectionKeyForViewType(viewType: string) {
   return 'list_search';
 }
 
+function navNodeMenuId(node: Record<string, unknown>) {
+  const meta = node.meta && typeof node.meta === 'object' ? node.meta as Record<string, unknown> : {};
+  for (const candidate of [node.menu_id, meta.menu_id, node.id]) {
+    const parsed = Number(candidate || 0);
+    if (Number.isInteger(parsed) && parsed > 0) return parsed;
+  }
+  return 0;
+}
+
+function navNodeActionId(node: Record<string, unknown>) {
+  const meta = node.meta && typeof node.meta === 'object' ? node.meta as Record<string, unknown> : {};
+  for (const candidate of [node.action_id, meta.action_id]) {
+    const parsed = Number(candidate || 0);
+    if (Number.isInteger(parsed) && parsed > 0) return parsed;
+  }
+  return 0;
+}
+
+function navNodeModel(node: Record<string, unknown>) {
+  const meta = node.meta && typeof node.meta === 'object' ? node.meta as Record<string, unknown> : {};
+  return String(node.model || meta.model || '').trim();
+}
+
+function navNodeLabel(node: Record<string, unknown>) {
+  const meta = node.meta && typeof node.meta === 'object' ? node.meta as Record<string, unknown> : {};
+  return String(node.name || node.label || node.title || meta.name || meta.label || '').trim();
+}
+
+function findMenuConfigNavigationEntry(items: unknown[]): { menuId: number; actionId: number } | null {
+  for (const item of Array.isArray(items) ? items : []) {
+    if (!item || typeof item !== 'object') continue;
+    const node = item as Record<string, unknown>;
+    const model = navNodeModel(node);
+    const label = navNodeLabel(node);
+    const menuId = navNodeMenuId(node);
+    const actionId = navNodeActionId(node);
+    if (label === '菜单配置' && model === BUSINESS_CONFIG_MODELS.menuConfigPolicy && menuId && actionId) {
+      return { menuId, actionId };
+    }
+    const childMatch = findMenuConfigNavigationEntry(Array.isArray(node.children) ? node.children : []);
+    if (childMatch) return childMatch;
+  }
+  return null;
+}
+
+function menuConfigWorkbenchReturnQuery() {
+  const menuEntry = findMenuConfigNavigationEntry(session.menuTree || []);
+  return {
+    menu_id: menuEntry?.menuId ? String(menuEntry.menuId) : undefined,
+    action_id: menuEntry?.actionId ? String(menuEntry.actionId) : undefined,
+    root_menu_xmlid: route.query.root_menu_xmlid || undefined,
+    [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
+    [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] || '1',
+    [BUSINESS_CONFIG_ROUTE_FLAGS.returnModel]: currentModel.value || undefined,
+    [BUSINESS_CONFIG_ROUTE_FLAGS.returnActionId]: scopeAction.value ? String(scopeAction.value) : undefined,
+    [BUSINESS_CONFIG_ROUTE_FLAGS.returnMenuId]: route.query.menu_id || undefined,
+    [BUSINESS_CONFIG_ROUTE_FLAGS.returnPageLabel]: selectedPageLabel.value || undefined,
+    [BUSINESS_CONFIG_ROUTE_FLAGS.returnViewId]: scopeView.value ? String(scopeView.value) : undefined,
+    [BUSINESS_CONFIG_ROUTE_FLAGS.returnRoleKey]: scopeRole.value || undefined,
+  };
+}
+
 function openMenuConfig() {
   router.push({
     path: '/admin/menu-config',
-    query: {
-      menu_id: route.query.menu_id || undefined,
-      action_id: scopeAction.value ? String(scopeAction.value) : undefined,
-      model: currentModel.value || undefined,
-      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
-      page_label: selectedPageLabel.value || undefined,
-      view_id: scopeView.value ? String(scopeView.value) : undefined,
-      role_key: scopeRole.value || undefined,
-      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
-      [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: '1',
-    },
+    query: menuConfigWorkbenchReturnQuery(),
   });
 }
 
@@ -3397,15 +3546,7 @@ function openCreateMenuConfig() {
   router.push({
     path: '/admin/menu-config',
     query: {
-      menu_id: route.query.menu_id || undefined,
-      action_id: scopeAction.value ? String(scopeAction.value) : undefined,
-      model: currentModel.value || undefined,
-      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
-      page_label: selectedPageLabel.value || undefined,
-      view_id: scopeView.value ? String(scopeView.value) : undefined,
-      role_key: scopeRole.value || undefined,
-      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
-      [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] || '1',
+      ...menuConfigWorkbenchReturnQuery(),
       create_menu: '1',
     },
   });
@@ -3437,6 +3578,7 @@ function openFormConfig() {
       role_key: scopeRole.value || undefined,
       page_label: selectedPageLabel.value || undefined,
       config_mode: BUSINESS_CONFIG_MODES.lowCode,
+      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
     },
   });
 }
@@ -3451,6 +3593,20 @@ async function clearConsumedOpenIntent(keys: string[]) {
     }
   });
   if (!changed) return;
+  const query = params.toString();
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+}
+
+function replaceWorkbenchQuerySilently(nextValues: Record<string, string | number | undefined>) {
+  const params = new URLSearchParams(window.location.search);
+  Object.entries(nextValues).forEach(([key, value]) => {
+    const text = String(value ?? '').trim();
+    if (text) {
+      params.set(key, text);
+    } else {
+      params.delete(key);
+    }
+  });
   const query = params.toString();
   window.history.replaceState(window.history.state, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
 }
@@ -3596,10 +3752,22 @@ h1 {
 
 .workbench-start-main {
   min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.workbench-start-lead {
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.workbench-start-config {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
 }
 
 .workbench-start-copy {
@@ -4218,6 +4386,10 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
+}
+
+.section-grid--start {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .config-card {
@@ -5099,7 +5271,7 @@ h1 {
     position: static;
   }
 
-  .workbench-start-main,
+  .workbench-start-lead,
   .workbench-start-actions {
     align-items: stretch;
     flex-direction: column;
@@ -5112,6 +5284,14 @@ h1 {
 
   .workbench-status-rail {
     position: static;
+  }
+
+  .page-config-panel {
+    order: -1;
+  }
+
+  .page-picker-panel .scan-list {
+    max-height: min(520px, 62vh);
   }
 
   .selected-page-overview {

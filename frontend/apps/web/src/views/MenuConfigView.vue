@@ -428,11 +428,11 @@
               </span>
             </div>
           </div>
-          <div v-if="selectedMenu" class="menu-side-section menu-side-action-group">
+          <div class="menu-side-section menu-side-action-group">
             <span class="menu-side-section-title">新增入口</span>
-            <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('sibling')">新增同级</button>
-            <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('child')">新增下级</button>
-            <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('copy')">复制当前入口</button>
+            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('sibling')">新增同级</button>
+            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('child')">新增下级</button>
+            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('copy')">复制当前入口</button>
             <button
               type="button"
               class="ghost danger-ghost"
@@ -1257,6 +1257,10 @@ const selectedMenuDeleteHint = computed(() => {
   return '系统内置菜单不能物理删除，需要关闭“显示菜单”来隐藏。';
 });
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || config.startupRootXmlid || '').trim());
+const shouldLoadFullRootMenuConfig = computed(() => (
+  String(route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig] || '').trim() === '1'
+  && Boolean(rootMenuXmlid.value)
+));
 const rootMenu = computed(() => (
   rootMenuXmlid.value
     ? menus.value.find((menu) => menu.xmlid === rootMenuXmlid.value) || null
@@ -2200,12 +2204,12 @@ function returnToBusinessConfig() {
     path: '/admin/business-config',
     query: {
       root_menu_xmlid: route.query.root_menu_xmlid || undefined,
-      model: route.query.model || undefined,
-      action_id: route.query.action_id || undefined,
-      menu_id: route.query.menu_id || undefined,
-      page_label: route.query.page_label || undefined,
-      view_id: route.query.view_id || undefined,
-      role_key: route.query.role_key || undefined,
+      model: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnModel] || route.query.model || undefined,
+      action_id: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnActionId] || route.query.action_id || undefined,
+      menu_id: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnMenuId] || undefined,
+      page_label: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnPageLabel] || route.query.page_label || undefined,
+      view_id: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnViewId] || route.query.view_id || undefined,
+      role_key: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnRoleKey] || route.query.role_key || undefined,
       [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] || '1',
     },
   });
@@ -2221,8 +2225,9 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
   }
   try {
     await ensureProductNavigationReady();
+    const scopedMenuIds = shouldLoadFullRootMenuConfig.value ? [] : collectNavigationMenuIds();
     const payload = await loadMenuConfigurationPanel({
-      menu_ids: collectNavigationMenuIds(),
+      menu_ids: scopedMenuIds.length ? scopedMenuIds : undefined,
       root_menu_id: Number(rootMenu.value?.id || 0) || undefined,
       root_menu_xmlid: rootMenuXmlid.value || undefined,
     });

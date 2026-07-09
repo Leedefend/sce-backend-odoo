@@ -26,6 +26,12 @@ export const BUSINESS_CONFIG_ACTION_KEYS = {
 export const BUSINESS_CONFIG_ROUTE_FLAGS = {
   returnToBusinessConfig: 'return_to_business_config',
   openPages: 'open_pages',
+  returnModel: 'return_model',
+  returnActionId: 'return_action_id',
+  returnMenuId: 'return_menu_id',
+  returnViewId: 'return_view_id',
+  returnRoleKey: 'return_role_key',
+  returnPageLabel: 'return_page_label',
 } as const;
 
 export const BUSINESS_CONFIG_INTENTS = {
