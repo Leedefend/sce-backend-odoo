@@ -1,5 +1,11 @@
 /* Product-delivery UI patterns built on token system */
 
+:root {
+  --sc-lowcode-workspace-gap: 0px;
+  --sc-lowcode-panel-gap: 12px;
+  --sc-lowcode-panel-radius: 8px;
+}
+
 .sc-page {
   background: var(--sc-app-bg);
   color: var(--sc-app-text-primary);
@@ -236,4 +242,12 @@
   background: var(--sc-app-panel);
   box-shadow: var(--sc-semantic-shadow-modal);
   padding: calc(var(--sc-component-dialog-padding) * 1px);
+}
+
+.sc-lowcode-workspace {
+  gap: var(--sc-lowcode-workspace-gap);
+}
+
+.sc-lowcode-panel-gap {
+  gap: var(--sc-lowcode-panel-gap);
 }

@@ -241,7 +241,7 @@
           {{ item.label }} {{ item.count }}
         </span>
       </div>
-      <div class="config-workspace" data-lowcode-workbench-ia="three-column">
+      <div class="config-workspace sc-lowcode-workspace" data-lowcode-workbench-ia="three-column">
         <aside class="page-picker-panel" aria-label="业务页面列表">
           <div class="page-picker-head">
             <div>
@@ -3764,7 +3764,7 @@ h1 {
 .scope-panel,
 .loading-state,
 .scan-panel {
-  margin: 0 18px;
+  margin: 0;
 }
 
 .status {
@@ -3799,12 +3799,14 @@ h1 {
   gap: 10px;
   padding: 14px;
   border: 1px solid var(--sc-app-border);
-  border-radius: 8px;
+  border-radius: var(--sc-lowcode-panel-radius);
   background: var(--sc-app-panel);
 }
 
 .workbench-start {
   grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  column-gap: var(--sc-lowcode-workspace-gap);
+  row-gap: var(--sc-lowcode-panel-gap);
   align-items: stretch;
 }
 
@@ -4079,7 +4081,7 @@ h1 {
 .config-workspace {
   display: grid;
   grid-template-columns: minmax(260px, 300px) minmax(0, 1fr) minmax(230px, 280px);
-  gap: 12px;
+  gap: var(--sc-lowcode-workspace-gap);
   align-items: start;
 }
 
@@ -4546,15 +4548,17 @@ h1 {
 .edit-panel {
   display: grid;
   gap: 12px;
-  margin: 0 18px;
+  margin: 0;
   padding: 14px;
   border: 1px solid var(--sc-app-border);
-  border-radius: 8px;
+  border-radius: var(--sc-lowcode-panel-radius);
   background: var(--sc-app-panel);
 }
 
 .config-editor-panel {
   grid-template-columns: 220px minmax(0, 1fr);
+  column-gap: var(--sc-lowcode-workspace-gap);
+  row-gap: var(--sc-lowcode-panel-gap);
   align-items: start;
 }
 
@@ -5328,6 +5332,11 @@ h1 {
   .approval-config-grid,
   .edit-grid {
     grid-template-columns: 1fr;
+  }
+
+  .config-workspace,
+  .config-editor-panel {
+    row-gap: var(--sc-lowcode-panel-gap);
   }
 
   .config-editor-panel .list-search-tabs {

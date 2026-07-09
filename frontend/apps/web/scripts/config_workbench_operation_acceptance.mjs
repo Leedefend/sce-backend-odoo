@@ -95,6 +95,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_field_create_panel_close_label_consistent",
     "form_designer_business_actions_hidden",
     "form_designer_side_panels_no_footer_overlap",
+    "lowcode_workspace_structural_gap_unified",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
     "menu_tree_search_feedback_visible",
@@ -290,6 +291,28 @@ async function viewportEvidence(locator) {
     startsInPrimaryViewport: false,
     startsInEditorFocusViewport: false,
   }));
+}
+
+async function lowcodeWorkspaceGapEvidence(page, items = []) {
+  return page.evaluate((selectors) => {
+    const parsePx = (value) => {
+      const parsed = Number(String(value || "").replace("px", ""));
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+    return selectors.map((item) => {
+      const el = document.querySelector(item.selector);
+      if (!el) return { ...item, ready: false, columnGapPx: null, rowGapPx: null, display: "" };
+      const style = getComputedStyle(el);
+      return {
+        ...item,
+        ready: true,
+        display: style.display,
+        columnGapPx: parsePx(style.columnGap),
+        rowGapPx: parsePx(style.rowGap),
+        className: el.className || "",
+      };
+    });
+  }, items);
 }
 
 function buildCoverageSummary({ screenshots, consoleErrors, requestFailed }) {
@@ -937,6 +960,9 @@ async function main() {
         deliveryStatus: rectInfo(".workbench-start-status"),
       };
     });
+    checks.lowcodeWorkspaceGaps = await lowcodeWorkspaceGapEvidence(page, [
+      { page: "business_config", selector: ".workbench-start", scope: "direct_two_column_workbench" },
+    ]);
     screenshots.directSelected = await capture(page, "03-direct-selected");
 
     await clickConfigCardButton(page, "表单字段与布局", "版本记录");
@@ -960,6 +986,9 @@ async function main() {
     checks.listSearchTabsPosition = await listSearchPanel.locator(".list-search-tabs").evaluate((node) => getComputedStyle(node).position);
     checks.listSearchCanvasCount = await listSearchPanel.locator(".field-chip-editor").count();
     checks.listSearchPanelViewport = await viewportEvidence(listSearchPanel);
+    checks.lowcodeWorkspaceGaps.push(...await lowcodeWorkspaceGapEvidence(page, [
+      { page: "business_config", selector: ".edit-panel.config-editor-panel", scope: "list_search_inline_editor" },
+    ]));
     checks.listSearchReturnWorkbenchButtonCount = await listSearchPanel.getByRole("button", { name: "返回工作台" }).count();
     checks.listSearchSaveButtonCount = await listSearchPanel.getByRole("button", { name: "保存列表与搜索" }).count();
     checks.listSearchLegacySaveButtonCount = await listSearchPanel.getByRole("button", { name: "保存设置" }).count();
@@ -1059,6 +1088,10 @@ async function main() {
         .map((button) => button.textContent?.trim())
         .filter((text) => text === "保存草稿" || text === "提交")
     ));
+    checks.lowcodeWorkspaceGaps.push(...await lowcodeWorkspaceGapEvidence(page, [
+      { page: "form_designer", selector: ".form-grid--designer-workspace", scope: "designer_three_column" },
+      { page: "form_designer", selector: ".contract-form-designer-control-grid", scope: "designer_center_control_grid" },
+    ]));
     await page.locator(".contract-field-central-create").click();
     await page.locator(".contract-field-create-dialog").waitFor({ state: "visible", timeout: 60000 });
     checks.formFieldCreateDialogTitle = await page.locator("#contract-field-create-title").innerText();
@@ -1157,6 +1190,10 @@ async function main() {
         maxPanelDelta: Math.max(0, ...panels.flatMap((item) => [item.leftDelta, item.rightDelta])),
       };
     });
+    checks.lowcodeWorkspaceGaps.push(...await lowcodeWorkspaceGapEvidence(page, [
+      { page: "menu_config", selector: ".menu-config-workspace", scope: "menu_two_column_workspace" },
+      { page: "menu_config", selector: ".menu-config-editor", scope: "menu_editor_columns" },
+    ]));
     checks.menuSearchInputCount = await page.locator(".menu-config-tree .tree-search input").count();
     checks.menuSearchSummaryText = await page.locator(".menu-config-tree .tree-search-summary span").innerText();
     checks.menuSearchClearButtonCount = await page.locator(".menu-config-tree .tree-clear-filter").count();
@@ -1194,6 +1231,10 @@ async function main() {
         maxPanelDelta: Math.max(0, ...panels.flatMap((item) => [item.leftDelta, item.rightDelta])),
       };
     });
+    checks.lowcodeWorkspaceGaps.push(...await lowcodeWorkspaceGapEvidence(page, [
+      { page: "menu_config", selector: ".menu-config-workspace", scope: "menu_two_column_after_create_open" },
+      { page: "menu_config", selector: ".menu-config-editor", scope: "menu_editor_after_create_open" },
+    ]));
     checks.menuCreatePanelCount = await menuCreatePanel.count();
     checks.menuCreatePanelTitle = await menuCreatePanel.locator(".create-panel-header strong").innerText();
     checks.menuCreatePanelCloseButtonCount = await menuCreatePanel.getByRole("button", { name: "收起新增入口" }).count();
@@ -1458,6 +1499,12 @@ async function main() {
       checks.formDesignerFooterOverlapEvidence?.ready === true
       && checks.formDesignerFooterOverlapEvidence?.blockedBySidePanels === false,
       "表单设计器滚动到底部操作区后，左右辅助栏不能悬浮遮挡保存和返回动作",
+      checks,
+    );
+    assert(
+      (checks.lowcodeWorkspaceGaps || []).length >= 8
+      && (checks.lowcodeWorkspaceGaps || []).every((item) => item.ready === true && item.columnGapPx === 0),
+      "低代码工作台结构分栏间隙必须纳入统一样式体系并保持为 0",
       checks,
     );
     assert(checks.menuSideSections.join("|") === "新增入口|批量维护|检查发布", "菜单配置侧栏操作分组不完整", checks);
