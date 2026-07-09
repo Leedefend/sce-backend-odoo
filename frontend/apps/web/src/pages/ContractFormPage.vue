@@ -535,7 +535,7 @@
             </button>
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
             <button class="ghost" type="button" :disabled="busy" @click="returnToBusinessConfigDesigner">返回工作台</button>
-            <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
+            <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">放弃调整</button>
           </div>
         </section>
         <section v-if="showNativeDefaultSectionTitle" class="native-default-section-head">
@@ -10623,7 +10623,7 @@ function resetContractFieldOrder() {
   });
   formConfigAuditResult.value = null;
   markPendingFormConfigOperations('reverted');
-  appendFormConfigOperation('重置表单设置', '撤销当前页面未保存的表单配置调整', 'done');
+  appendFormConfigOperation('放弃表单调整', '撤销当前页面未保存的表单配置调整', 'done');
   contractModeFeedback.value = '';
 }
 

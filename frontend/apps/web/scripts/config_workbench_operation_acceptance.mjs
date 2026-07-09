@@ -80,6 +80,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_designer_field_search_visible",
     "form_designer_return_visible",
     "form_designer_return_label_consistent",
+    "form_designer_discard_label_consistent",
     "form_designer_business_actions_hidden",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
@@ -949,6 +950,8 @@ async function main() {
     checks.formDesignerFieldSearchResultCount = await page.locator(".contract-form-field-search-item").count();
     checks.formDesignerReturnButtonCount = await page.getByRole("button", { name: "返回工作台" }).count();
     checks.formDesignerLegacyReturnButtonCount = await page.getByRole("button", { name: "返回配置" }).count();
+    checks.formDesignerDiscardButtonCount = await page.getByRole("button", { name: "放弃调整" }).count();
+    checks.formDesignerLegacyResetButtonCount = await page.getByRole("button", { name: "重置" }).count();
     checks.formDesignerVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".contract-form-settings");
     checks.formDesignerBusinessActionButtons = await page.locator("button").evaluateAll((buttons) => (
       buttons
@@ -1116,6 +1119,12 @@ async function main() {
       checks,
     );
     assert(checks.formDesignerLegacyReturnButtonCount === 0, "表单设计器返回动作必须统一为返回工作台，不能继续使用返回配置", checks);
+    assert(
+      checks.formDesignerDiscardButtonCount > 0
+      && checks.formDesignerLegacyResetButtonCount === 0,
+      "表单设计器放弃未保存调整必须使用放弃调整，不能使用重置模糊标签",
+      checks,
+    );
     assert(
       checks.formDesignerFieldSearchInputCount > 0
       && checks.formDesignerFieldSearchResultCount > 0,

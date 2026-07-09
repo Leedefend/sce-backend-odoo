@@ -95,8 +95,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 15 |
 | action_passed_count | 已成功执行的关键动作数 | 15 |
-| assertion_count | 用户可感知断言数 | 45 |
-| assertion_passed_count | 已通过断言数 | 45 |
+| assertion_count | 用户可感知断言数 | 46 |
+| assertion_passed_count | 已通过断言数 | 46 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -125,6 +125,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - 审批步骤动作必须提供可见说明和精确动作标签，用户不需要猜测符号含义。
 - 审批规则面板打开后的首屏主焦点位置。
 - 表单设计器标题、当前页面上下文、返回工作台入口；不得继续使用“返回配置”模糊标签。
+- 表单设计器放弃未保存调整必须使用“放弃调整”，不得使用“重置”模糊标签。
 - 表单设计器所在全局顶栏必须显示当前配置页面上下文，不能回退为角色首页。
 - 表单设计器字段目录必须提供字段搜索和匹配结果，避免大量字段只能滚动查找。
 - 表单设计器配置态不得出现业务办理动作按钮。
@@ -348,7 +349,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 15 / 15`
-- `assertion_passed_count = 45 / 45`
+- `assertion_passed_count = 46 / 46`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`
