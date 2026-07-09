@@ -71,6 +71,7 @@ const ACCEPTANCE_COVERAGE = {
     "menu_tree_not_empty",
     "return_context_retained",
     "mobile_config_before_picker",
+    "mobile_current_config_in_viewport",
     "mobile_configuration_topbar_compact",
     "mobile_no_horizontal_overflow",
     "no_console_errors",
@@ -85,6 +86,7 @@ const ACCEPTANCE_COVERAGE = {
     "formDesignerEntry",
     "menuConfig",
     "mobileSelected",
+    "mobileViewport",
   ],
 };
 
@@ -154,9 +156,9 @@ async function clickConfigCardButton(page, cardTitle, buttonName) {
   await card.getByRole("button", { name: buttonName }).click();
 }
 
-async function capture(page, name) {
+async function capture(page, name, options = {}) {
   const filePath = path.join(ARTIFACT_ROOT, `${name}.png`);
-  await page.screenshot({ path: filePath, fullPage: true });
+  await page.screenshot({ path: filePath, fullPage: options.fullPage !== false });
   return filePath;
 }
 
@@ -277,6 +279,7 @@ function buildPageStructureResult(checks) {
   const directStart = checks.directStartStructure || {};
   const mobileOrder = checks.mobileOrder || [];
   const mobileBodyWidth = checks.mobileBodyWidth || {};
+  const mobileViewport = checks.mobileViewport || {};
   const desktopSelectedPass = String(desktop.headerTitle || "").includes(CONFIG_PAGE_LABEL)
     && desktop.currentConfig?.count === 1
     && expectedCards.every((item) => desktop.currentConfig?.cardTitles?.includes(item))
@@ -295,6 +298,9 @@ function buildPageStructureResult(checks) {
   const mobilePass = mobileOrder[0]?.top !== null
     && mobileOrder[1]?.top !== null
     && mobileOrder[2]?.top !== null
+    && mobileOrder[0]?.top >= 0
+    && mobileOrder[0]?.top <= 220
+    && mobileViewport.currentConfigVisibleInPrimaryViewport === true
     && mobileOrder[0]?.top < mobileOrder[1]?.top
     && mobileOrder[1]?.top < mobileOrder[2]?.top
     && mobileBodyWidth.documentScrollWidth <= mobileBodyWidth.innerWidth + 8;
@@ -333,6 +339,7 @@ function buildPageStructureResult(checks) {
       result: {
         order: mobileOrder,
         width: mobileBodyWidth,
+        viewport: mobileViewport,
       },
     },
   };
@@ -368,6 +375,9 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   const mobileStable = checks.mobileOrder?.[0]?.top !== null
     && checks.mobileOrder?.[1]?.top !== null
     && checks.mobileOrder?.[2]?.top !== null
+    && checks.mobileOrder?.[0]?.top >= 0
+    && checks.mobileOrder?.[0]?.top <= 220
+    && checks.mobileViewport?.currentConfigVisibleInPrimaryViewport === true
     && checks.mobileOrder?.[0]?.top < checks.mobileOrder?.[1]?.top
     && checks.mobileOrder?.[1]?.top < checks.mobileOrder?.[2]?.top
     && checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8
@@ -431,7 +441,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     mobile_operation: taskResult(
       mobileStable,
       ["mobileSelected"],
-      { mobileOrder: checks.mobileOrder, mobileBodyWidth: checks.mobileBodyWidth, mobileConfigurationTopbar: checks.mobileConfigurationTopbar },
+      { mobileOrder: checks.mobileOrder, mobileViewport: checks.mobileViewport, mobileBodyWidth: checks.mobileBodyWidth, mobileConfigurationTopbar: checks.mobileConfigurationTopbar },
     ),
   };
 
@@ -578,6 +588,7 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     }),
     responsive_resilience: professionalScore(responsiveProof, "专业产品必须在 390px 移动端保持顺序和宽度稳定。", {
       mobileOrder: checks.mobileOrder,
+      mobileViewport: checks.mobileViewport,
       mobileBodyWidth: checks.mobileBodyWidth,
       mobileConfigurationTopbar: checks.mobileConfigurationTopbar,
     }),
@@ -822,6 +833,15 @@ async function main() {
       const rect = el?.getBoundingClientRect();
       return { selector, top: rect ? rect.top : null, display: el ? getComputedStyle(el).display : null };
     }));
+    checks.mobileViewport = await page.evaluate(() => ({
+      scrollY: Math.round(window.scrollY || document.documentElement.scrollTop || 0),
+      innerHeight: window.innerHeight,
+      currentConfigVisibleInPrimaryViewport: (() => {
+        const rect = document.querySelector(".page-config-panel")?.getBoundingClientRect();
+        if (!rect) return false;
+        return rect.top >= 0 && rect.top <= Math.min(220, window.innerHeight * 0.35);
+      })(),
+    }));
     checks.mobileBodyWidth = await page.evaluate(() => ({
       innerWidth: window.innerWidth,
       bodyScrollWidth: document.body.scrollWidth,
@@ -838,6 +858,7 @@ async function main() {
     });
     checks.mobileSnapshotSummaryCount = await page.locator(".workbench-status-rail .workbench-status-snapshot").count();
     screenshots.mobileSelected = await capture(page, "08-mobile-selected");
+    screenshots.mobileViewport = await capture(page, "09-mobile-viewport", { fullPage: false });
 
     assert(checks.scanRowsBeforeSelect >= 2 && checks.scanRowsAfterSelect >= 2, "业务页面列表选择后不应丢失", checks);
     assert(checks.selectedText.includes(CONFIG_PAGE_LABEL), "选择页面后未展示当前配置上下文", checks);
@@ -886,7 +907,12 @@ async function main() {
     assert(checks.menuTreeRows > 0 && !checks.menuTreeHead.includes("0 个可配置菜单"), "从配置工作台进入菜单配置后菜单目录为空", checks);
     assert(checks.returnedTitle.includes(CONFIG_PAGE_LABEL) && checks.returnedCards.includes("菜单入口"), "菜单配置返回工作台后上下文丢失", checks);
     assert(
-      checks.mobileOrder[0].top !== null && checks.mobileOrder[1].top !== null && checks.mobileOrder[0].top < checks.mobileOrder[1].top,
+      checks.mobileOrder[0].top !== null
+      && checks.mobileOrder[1].top !== null
+      && checks.mobileOrder[0].top >= 0
+      && checks.mobileOrder[0].top <= 220
+      && checks.mobileOrder[0].top < checks.mobileOrder[1].top
+      && checks.mobileViewport.currentConfigVisibleInPrimaryViewport === true,
       "移动端选择页面后应先展示当前配置，再展示页面目录",
       checks,
     );

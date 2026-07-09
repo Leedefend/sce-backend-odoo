@@ -1174,6 +1174,13 @@ async function focusActiveEditorPanel() {
   const panel = document.querySelector<HTMLElement>('.config-editor-panel');
   panel?.scrollIntoView(ACTIVE_EDITOR_SCROLL_OPTIONS);
 }
+
+async function focusSelectedConfigPanelOnMobile() {
+  await nextTick();
+  if (!window.matchMedia('(max-width: 900px)').matches) return;
+  const panel = document.querySelector<HTMLElement>('.page-config-panel');
+  panel?.scrollIntoView(ACTIVE_EDITOR_SCROLL_OPTIONS);
+}
 const pageSectionsReady = computed(() => (
   pageSectionEnabled('root', true)
   && pageSectionEnabled('header', true)
@@ -2457,6 +2464,7 @@ async function focusScanRow(row: BusinessConfigCoverageScanItem) {
     open_list_search: undefined,
   });
   await loadSurface();
+  await focusSelectedConfigPanelOnMobile();
 }
 
 function hydrateSelectedCoverageRowFromScan() {
