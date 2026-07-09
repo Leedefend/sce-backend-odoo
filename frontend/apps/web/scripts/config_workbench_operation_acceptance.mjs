@@ -76,6 +76,7 @@ const ACCEPTANCE_COVERAGE = {
     "list_search_save_action_label_consistent",
     "list_search_editor_focused_after_entry",
     "list_search_editor_primary_focus",
+    "inline_editor_side_controls_no_footer_overlap",
     "approval_editor_visible",
     "approval_rule_canvas_visible",
     "approval_return_workbench_visible",
@@ -955,6 +956,7 @@ async function main() {
     checks.listSearchTabs = await listSearchPanel.locator(".list-search-tabs button span").evaluateAll((nodes) => (
       nodes.map((node) => node.textContent?.trim()).filter(Boolean)
     ));
+    checks.listSearchTabsPosition = await listSearchPanel.locator(".list-search-tabs").evaluate((node) => getComputedStyle(node).position);
     checks.listSearchCanvasCount = await listSearchPanel.locator(".field-chip-editor").count();
     checks.listSearchPanelViewport = await viewportEvidence(listSearchPanel);
     checks.listSearchReturnWorkbenchButtonCount = await listSearchPanel.getByRole("button", { name: "返回工作台" }).count();
@@ -962,6 +964,32 @@ async function main() {
     checks.listSearchLegacySaveButtonCount = await listSearchPanel.getByRole("button", { name: "保存设置" }).count();
     checks.listSearchActionHintText = await listSearchPanel.locator(".field-chip-action-hint").first().innerText();
     checks.listSearchActionAriaCount = await listSearchPanel.locator(".field-chip button[aria-label^='上移'], .field-chip button[aria-label^='下移'], .field-chip button[aria-label^='移除']").count();
+    await listSearchPanel.locator(".edit-meta").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(100);
+    checks.listSearchFooterOverlapEvidence = await page.evaluate(() => {
+      const panel = document.querySelector(".edit-panel.config-editor-panel");
+      const tabs = panel?.querySelector(".list-search-tabs");
+      const meta = panel?.querySelector(".edit-meta");
+      if (!panel || !tabs || !meta) return { ready: false, blockedByTabs: true };
+      const metaRect = meta.getBoundingClientRect();
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      const x = Math.min(Math.max(metaRect.left + 32, 24), viewportWidth - 24);
+      const y = Math.min(Math.max(metaRect.top + Math.min(16, metaRect.height / 2), 24), viewportHeight - 24);
+      const topElement = document.elementFromPoint(x, y);
+      return {
+        ready: true,
+        blockedByTabs: Boolean(topElement && tabs.contains(topElement)),
+        sample: { x: Math.round(x), y: Math.round(y) },
+        metaRect: {
+          top: Math.round(metaRect.top),
+          left: Math.round(metaRect.left),
+          right: Math.round(metaRect.right),
+          bottom: Math.round(metaRect.bottom),
+        },
+        topElementClass: topElement instanceof HTMLElement ? topElement.className : "",
+      };
+    });
     checks.listSearchVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".edit-panel");
     screenshots.listSearchEntry = await capture(page, "04-list-search-entry");
 
@@ -971,6 +999,7 @@ async function main() {
     await approvalPanel.waitFor({ state: "visible", timeout: 60000 });
     checks.approvalTitle = await approvalPanel.locator("h2").innerText();
     checks.approvalRulePanelCount = await approvalPanel.locator(".approval-rule-panel").count();
+    checks.approvalRulePanelPosition = await approvalPanel.locator(".approval-rule-panel").evaluate((node) => getComputedStyle(node).position);
     checks.approvalStepCanvasCount = await approvalPanel.locator(".approval-steps").count();
     checks.approvalPanelViewport = await viewportEvidence(approvalPanel);
     checks.approvalStepMoveButtonCount = await approvalPanel.locator(".approval-step-actions button[title='上移'], .approval-step-actions button[title='下移']").count();
@@ -981,6 +1010,32 @@ async function main() {
     checks.approvalLegacyMoreRuleButtonCount = await approvalPanel.getByRole("button", { name: "更多规则" }).count();
     checks.approvalDiscardButtonCount = await approvalPanel.getByRole("button", { name: "放弃调整" }).count();
     checks.approvalLegacyRestoreButtonCount = await approvalPanel.getByRole("button", { name: "还原" }).count();
+    await approvalPanel.locator(".edit-panel-actions").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(100);
+    checks.approvalFooterOverlapEvidence = await page.evaluate(() => {
+      const panel = document.querySelector(".approval-panel");
+      const rulePanel = panel?.querySelector(".approval-rule-panel");
+      const actions = panel?.querySelector(".edit-panel-actions");
+      if (!panel || !rulePanel || !actions) return { ready: false, blockedByRulePanel: true };
+      const actionsRect = actions.getBoundingClientRect();
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      const x = Math.min(Math.max(actionsRect.left + 32, 24), viewportWidth - 24);
+      const y = Math.min(Math.max(actionsRect.top + Math.min(18, actionsRect.height / 2), 24), viewportHeight - 24);
+      const topElement = document.elementFromPoint(x, y);
+      return {
+        ready: true,
+        blockedByRulePanel: Boolean(topElement && rulePanel.contains(topElement)),
+        sample: { x: Math.round(x), y: Math.round(y) },
+        actionsRect: {
+          top: Math.round(actionsRect.top),
+          left: Math.round(actionsRect.left),
+          right: Math.round(actionsRect.right),
+          bottom: Math.round(actionsRect.bottom),
+        },
+        topElementClass: topElement instanceof HTMLElement ? topElement.className : "",
+      };
+    });
     screenshots.approvalEntry = await capture(page, "05-approval-entry");
 
     await openDirectSelectedWorkbench(page);
@@ -1246,6 +1301,16 @@ async function main() {
       checks.listSearchPanelViewport.startsInPrimaryViewport === true
       && checks.listSearchPanelViewport.startsInEditorFocusViewport === true,
       "列表与搜索配置入口打开后没有进入当前编辑主焦点",
+      checks,
+    );
+    assert(
+      checks.listSearchFooterOverlapEvidence?.ready === true
+      && checks.listSearchFooterOverlapEvidence?.blockedByTabs === false
+      && checks.listSearchTabsPosition !== "sticky"
+      && checks.approvalFooterOverlapEvidence?.ready === true
+      && checks.approvalFooterOverlapEvidence?.blockedByRulePanel === false
+      && checks.approvalRulePanelPosition !== "sticky",
+      "内嵌配置编辑器滚动到底部状态或操作区后，左侧辅助控制不能悬浮遮挡后续内容",
       checks,
     );
     assert(

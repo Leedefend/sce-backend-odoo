@@ -4608,8 +4608,6 @@ h1 {
 }
 
 .approval-rule-panel {
-  position: sticky;
-  top: 12px;
   display: grid;
   align-content: start;
   gap: 12px;
@@ -4866,8 +4864,6 @@ h1 {
 }
 
 .config-editor-panel .list-search-tabs {
-  position: sticky;
-  top: 12px;
   display: grid;
   align-content: start;
   justify-self: stretch;
