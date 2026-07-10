@@ -96,6 +96,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_designer_business_actions_hidden",
     "form_designer_side_panels_no_footer_overlap",
     "product_workspace_structural_gap_unified",
+    "product_page_region_outer_edges_aligned",
     "business_runtime_workspace_structural_gap_unified",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
@@ -311,6 +312,60 @@ async function productWorkspaceGapEvidence(page, items = []) {
         columnGapPx: parsePx(style.columnGap),
         rowGapPx: parsePx(style.rowGap),
         className: el.className || "",
+      };
+    });
+  }, items);
+}
+
+async function productPageRegionAlignmentEvidence(page, items = []) {
+  return page.evaluate((configs) => {
+    const rectFor = (selector) => {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return null;
+      return {
+        left: Math.round(rect.left),
+        right: Math.round(rect.right),
+        top: Math.round(rect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        className: el.className || "",
+      };
+    };
+    return configs.map((item) => {
+      const anchor = rectFor(item.anchor);
+      const regions = (item.regions || []).map((region) => {
+        const rect = rectFor(region.selector);
+        if (!anchor || !rect) {
+          return {
+            ...region,
+            ready: Boolean(region.optional && anchor),
+            optionalMissing: Boolean(region.optional && !rect),
+            leftDelta: null,
+            rightDelta: null,
+            rect,
+          };
+        }
+        return {
+          ...region,
+          ready: true,
+          leftDelta: Math.round(Math.abs(anchor.left - rect.left)),
+          rightDelta: Math.round(Math.abs(anchor.right - rect.right)),
+          rect,
+        };
+      });
+      return {
+        page: item.page,
+        scope: item.scope,
+        anchor: item.anchor,
+        anchorReady: Boolean(anchor),
+        anchorRect: anchor,
+        regions,
+        ready: Boolean(anchor) && regions.length > 0 && regions.every((region) => region.ready),
+        maxDelta: Math.max(0, ...regions
+          .filter((region) => region.ready && region.leftDelta !== null && region.rightDelta !== null)
+          .flatMap((region) => [region.leftDelta, region.rightDelta])),
       };
     });
   }, items);
@@ -536,6 +591,8 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8
     && checks.mobileConfigurationTopbar?.platformEyebrowVisible === false;
   const browserHealthy = consoleErrors.length === 0 && requestFailed.length === 0 && metrics?.health_passed === true;
+  const productRegionAlignmentReady = (checks.productPageRegionAlignment || []).length >= 4
+    && (checks.productPageRegionAlignment || []).every((item) => item.ready === true && item.maxDelta <= 1);
   const defaultDeliveryStatusFocused = defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels)
     && defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels)
     && checks.defaultSnapshotSummaryCount === 0
@@ -607,7 +664,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     task_efficiency: scoreResult(formUsable && listSearchUsable && approvalUsable && menuUsable && editorFocusReady ? 2 : 0, "关键配置任务必须能从卡片主入口直接进入并进入当前编辑焦点。"),
     status_feedback: scoreResult(metrics?.journey_passed_count === ACCEPTANCE_COVERAGE.journeys.length ? 2 : 0, "加载、禁用、返回和健康状态必须可被报告证明。"),
     error_recovery: scoreResult(String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL) && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL) ? 2 : 0, "从子能力返回必须保留业务页面上下文。"),
-    visual_stability: scoreResult(mobileStable && pageStructure.status === "pass" ? 2 : 0, "桌面和 390px 移动端不得遮挡或横向溢出。"),
+    visual_stability: scoreResult(mobileStable && pageStructure.status === "pass" && productRegionAlignmentReady ? 2 : 0, "桌面区域外边界必须对齐，390px 移动端不得遮挡或横向溢出。"),
     user_language: scoreResult(cardsComplete && entryNamesStable && visibleTechnicalTermsClean ? 2 : 0, "默认界面必须使用业务语言，不要求用户理解技术模型。"),
     verifiability: scoreResult(evidenceReady ? 2 : 0, "结论必须可由截图、指标和报告文件复现。"),
   };
@@ -626,6 +683,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   if (!formDesignerActionHygieneReady) blockingIssues.push("form_designer_business_actions_leaked");
   if (pageStructure.status !== "pass") blockingIssues.push("page_structure_contract_failed");
   if (!visibleTechnicalTermsClean) blockingIssues.push("visible_technical_terms_leaked");
+  if (!productRegionAlignmentReady) blockingIssues.push("product_page_region_alignment_failed");
   if (!mobileStable) blockingIssues.push("mobile_layout_not_stable");
   if (!browserHealthy) blockingIssues.push("browser_health_failed");
   if (!evidenceReady) blockingIssues.push("acceptance_evidence_incomplete");
@@ -689,6 +747,8 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
   const responsiveProof = checks.mobileBodyWidth?.documentScrollWidth <= checks.mobileBodyWidth?.innerWidth + 8
     && productUsability.page_structure?.mobile_selected?.result?.order?.length === 3
     && checks.mobileConfigurationTopbar?.platformEyebrowVisible === false;
+  const productRegionAlignmentReady = (checks.productPageRegionAlignment || []).length >= 4
+    && (checks.productPageRegionAlignment || []).every((item) => item.ready === true && item.maxDelta <= 1);
   const cognitiveLoadControlled = pageStructurePassed
     && cardsStable
     && checks.pageStructureDesktop?.pageDirectory?.rowCount >= 2
@@ -766,11 +826,12 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       returnedTitle: checks.returnedTitle,
       returnedCards: checks.returnedCards,
     }),
-    responsive_resilience: professionalScore(responsiveProof, "专业产品必须在 390px 移动端保持顺序和宽度稳定。", {
+    responsive_resilience: professionalScore(responsiveProof && productRegionAlignmentReady, "专业产品必须在桌面保持页面区域外边界对齐，并在 390px 移动端保持顺序和宽度稳定。", {
       mobileOrder: checks.mobileOrder,
       mobileViewport: checks.mobileViewport,
       mobileBodyWidth: checks.mobileBodyWidth,
       mobileConfigurationTopbar: checks.mobileConfigurationTopbar,
+      productPageRegionAlignment: checks.productPageRegionAlignment,
     }),
     boundary_integrity: professionalScore(menuBoundaryStable, "专业产品必须保持菜单配置能力边界和业务返回上下文不混淆。", {
       menuSideSections: checks.menuSideSections,
@@ -964,6 +1025,16 @@ async function main() {
     checks.productWorkspaceGaps = await productWorkspaceGapEvidence(page, [
       { page: "business_config", selector: ".workbench-start", scope: "direct_two_column_workbench" },
     ]);
+    checks.productPageRegionAlignment = await productPageRegionAlignmentEvidence(page, [
+      {
+        page: "business_config",
+        scope: "direct_selected_start",
+        anchor: ".business-config-header",
+        regions: [
+          { selector: "[data-lowcode-workbench-ia='start']", name: "start_surface" },
+        ],
+      },
+    ]);
     screenshots.directSelected = await capture(page, "03-direct-selected");
 
     await page.goto(`${BASE_URL}/a/${CONFIG_ACTION_ID}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -971,12 +1042,32 @@ async function main() {
     checks.businessRuntimeWorkspaceGaps = await productWorkspaceGapEvidence(page, [
       { page: "business_runtime", selector: ".page", scope: "list_page_stack" },
     ]);
+    checks.productPageRegionAlignment.push(...await productPageRegionAlignmentEvidence(page, [
+      {
+        page: "business_runtime",
+        scope: "list_page_regions",
+        anchor: ".page .list-toolbar",
+        regions: [
+          { selector: ".page .table, .page .list-empty-state", name: "list_main_surface" },
+        ],
+      },
+    ]));
     checks.businessRuntimeListPageClass = await page.locator(".page").first().evaluate((node) => node.className || "");
     checks.businessRuntimeListToolbarCount = await page.locator(".page .list-toolbar").count();
     await page.goto(`${BASE_URL}/f/${encodeURIComponent(CONFIG_MODEL)}/new?db=${encodeURIComponent(DB_NAME)}&action_id=${CONFIG_ACTION_ID}`, { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.waitForSelector(".card .form-grid", { timeout: 60000 });
     checks.businessRuntimeWorkspaceGaps.push(...await productWorkspaceGapEvidence(page, [
       { page: "business_runtime", selector: ".card", scope: "form_panel_shell" },
+    ]));
+    checks.productPageRegionAlignment.push(...await productPageRegionAlignmentEvidence(page, [
+      {
+        page: "business_runtime",
+        scope: "form_page_regions",
+        anchor: ".template-page-header",
+        regions: [
+          { selector: ".card", name: "form_main_surface" },
+        ],
+      },
     ]));
     checks.businessRuntimeFormShellClass = await page.locator(".card").first().evaluate((node) => node.className || "");
     checks.businessRuntimeFormBusinessActionButtons = await page.locator("button").evaluateAll((buttons) => (
@@ -1211,6 +1302,18 @@ async function main() {
         maxPanelDelta: Math.max(0, ...panels.flatMap((item) => [item.leftDelta, item.rightDelta])),
       };
     });
+    checks.productPageRegionAlignment.push(...await productPageRegionAlignmentEvidence(page, [
+      {
+        page: "menu_config",
+        scope: "menu_page_regions",
+        anchor: ".menu-config-header",
+        regions: [
+          { selector: ".menu-config-workspace", name: "menu_main_surface" },
+          { selector: ".guide-panel", name: "menu_guide_feedback", optional: true },
+          { selector: ".audit-panel", name: "menu_audit_feedback", optional: true },
+        ],
+      },
+    ]));
     checks.productWorkspaceGaps.push(...await productWorkspaceGapEvidence(page, [
       { page: "menu_config", selector: ".menu-config-workspace", scope: "menu_two_column_workspace" },
       { page: "menu_config", selector: ".menu-config-editor", scope: "menu_editor_columns" },
@@ -1526,6 +1629,12 @@ async function main() {
       (checks.productWorkspaceGaps || []).length >= 8
       && (checks.productWorkspaceGaps || []).every((item) => item.ready === true && item.columnGapPx === 0),
       "产品页面结构分栏间隙必须纳入统一样式体系并保持为 0",
+      checks,
+    );
+    assert(
+      (checks.productPageRegionAlignment || []).length >= 4
+      && (checks.productPageRegionAlignment || []).every((item) => item.ready === true && item.maxDelta <= 1),
+      "产品页面 Header、Toolbar、主内容和反馈区域外边界必须统一对齐，不能出现页面结构断层",
       checks,
     );
     assert(

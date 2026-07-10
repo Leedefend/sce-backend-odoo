@@ -176,7 +176,7 @@ Summary 只展示首屏决策信息：
 | 页面栈间距 | 纵向业务页面 `rowGapPx = 12` |
 | 面板壳层 | 表单、配置主面板使用 `sc-panel` 或等价产品面板 |
 | 区域语义 | Header、Toolbar、Summary、Main Surface、Primary Actions、Feedback Layer 使用 `sc-product-*` 标记 |
-| 外边界对齐 | 同页 Header 与主内容左右差值不超过 1px |
+| 外边界对齐 | 同页 Header、Toolbar、主内容、反馈区域左右差值不超过 1px，并进入浏览器验收报告 |
 | 移动端 | 390px 无横向溢出，主任务进入真实视口 |
 | 浏览器健康 | console error = 0，failed request = 0 |
 
@@ -191,6 +191,17 @@ Summary 只展示首屏决策信息：
 - 页面是否像工作工具，而不是卡片拼贴。
 - 滚动到底部时辅助栏是否遮挡操作区。
 - 移动端首屏是否展示当前任务，而不是目录或说明。
+
+### 浏览器验收口径
+
+配置工作台操作验收必须输出 `productPageRegionAlignment` 证据。该证据至少覆盖：
+
+- 配置工作台直达态：Page Header 与起始配置区。
+- 业务列表页：Toolbar 与列表主内容。
+- 业务表单页：Page Header 与表单主面板。
+- 菜单配置页：Page Header 与工作区，以及当前可见的说明、检查反馈区。
+
+所有实际渲染区域的 `maxDelta` 必须小于等于 1px。可选反馈区未渲染时不阻断；一旦渲染，必须参与对齐验收。该指标失败时，不能给出“产品结构已收口”的结论。
 
 ## 落地路径
 
