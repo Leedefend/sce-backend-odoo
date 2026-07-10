@@ -134,10 +134,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     headers.set('Authorization', `Bearer ${session.token}`);
   }
 
-  const debugIntent =
-    import.meta.env.DEV ||
-    localStorage.getItem('DEBUG_INTENT') === '1' ||
-    new URLSearchParams(window.location.search).get('debug') === '1';
+  const debugIntent = import.meta.env.DEV;
 
   // A2: 网络级别校验 - 针对 system.init 请求
   const resolvedPath = resolveApiPath(path, dbHeader);

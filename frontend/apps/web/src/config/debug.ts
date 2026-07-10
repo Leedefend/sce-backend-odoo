@@ -42,6 +42,7 @@ export function isDeliveryModeEnabled() {
 
 export function isHudEnabled(route: RouteLocationNormalizedLoaded) {
   if (isDeliveryModeEnabled()) return false;
+  if (!import.meta.env.DEV) return false;
   const directHud = firstQueryValue(route.query.hud);
   const nestedHud = extractHudFromSceneQuery(route.query.scene);
   const rawHud =
@@ -50,19 +51,18 @@ export function isHudEnabled(route: RouteLocationNormalizedLoaded) {
     import.meta.env.DEV ||
     isTruthyHudValue(directHud) ||
     isTruthyHudValue(nestedHud) ||
-    isTruthyHudValue(rawHud) ||
-    localStorage.getItem('__HUD__') === '1'
+    isTruthyHudValue(rawHud)
   );
 }
 
 export function isSceneBlocksDebugEnabled(route: RouteLocationNormalizedLoaded) {
   if (isDeliveryModeEnabled()) return false;
+  if (!import.meta.env.DEV) return false;
   const direct = firstQueryValue(route.query.scene_blocks);
   const raw =
     typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('scene_blocks') : '';
   return (
     isTruthyHudValue(direct) ||
-    isTruthyHudValue(raw) ||
-    localStorage.getItem('__SCENE_BLOCKS__') === '1'
+    isTruthyHudValue(raw)
   );
 }

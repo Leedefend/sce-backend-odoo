@@ -1459,19 +1459,13 @@ export const useSessionStore = defineStore('session', {
         || currentUrl.searchParams.get('sceneKey')
         || '',
       ).trim();
-      const debugIntent =
-        import.meta.env.DEV ||
-        localStorage.getItem('DEBUG_INTENT') === '1' ||
-        new URLSearchParams(window.location.search).get('debug') === '1';
+      const debugIntent = import.meta.env.DEV;
 
       // A1: 打印本次 system.init 的有效参数
       if (debugIntent) {
         console.group('[A1] system.init 请求诊断');
         console.log('1. API Base URL:', import.meta.env.VITE_API_BASE_URL);
         console.log('2. Authorization 存在:', !!this.token);
-        if (this.token) {
-          console.log('   Token 前10位:', this.token.substring(0, 10) + '...');
-        }
         console.log('3. X-Odoo-DB 环境变量:', import.meta.env.VITE_ODOO_DB);
       }
 

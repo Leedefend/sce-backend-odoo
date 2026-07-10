@@ -1372,7 +1372,7 @@ const displayBreadcrumb = computed(() => {
 });
 
 const showRefresh = computed(
-  () => !isDeliveryMode.value && (import.meta.env.DEV || localStorage.getItem('DEBUG_INTENT') === '1'),
+  () => !isDeliveryMode.value && import.meta.env.DEV,
 );
 
 const activeMenuId = computed(() => {
