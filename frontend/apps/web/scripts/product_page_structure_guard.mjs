@@ -313,6 +313,11 @@ assertContains(
   "config workbench acceptance doc must describe readiness score guard requirements",
 );
 assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  /failure[\s\S]+consoleErrors[\s\S]+requestFailed[\s\S]+report\.screenshots/,
+  "config workbench acceptance doc must describe report evidence payload guard requirements",
+);
+assertContains(
   "frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
   /CONFIG_WORKBENCH_OPERATION_COVERAGE/,
   "config workbench acceptance must use the shared operation coverage source",

@@ -108,6 +108,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 
 `summary_guard` 不再维护固定断言总数，而是读取 `report.json` 中的实际覆盖数量，要求 journey、action、assertion、screenshot 全部通过。同时必须包含页面结构关键断言：`product_workspace_structural_gap_unified`、`product_page_region_outer_edges_aligned`、`product_page_runtime_semantics_present`、`business_runtime_workspace_structural_gap_unified`、`menu_workspace_aligned_with_header`、`mobile_no_horizontal_overflow`、`no_console_errors`、`no_request_failures`。守卫还必须校验 `product_usability` 和 `professional_readiness` 的 schema、满分评分、阻断项、风险项和页面结构状态，不能只相信 `delivery_ready` 或 `professional_ready` 字符串。
 
+`summary_guard` 还必须校验 ok 报告没有 `failure` payload，`consoleErrors` 和 `requestFailed` 数组为空，且 `report.screenshots` 的 key 与截图文件名和证据目录完全一致。
+
 报告中 `checks` 用于解释结论，必须包含：
 
 - 业务页面列表选择前后数量。
