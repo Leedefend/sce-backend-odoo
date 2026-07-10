@@ -156,3 +156,53 @@ export const CONFIG_WORKBENCH_OPERATION_COVERAGE = {
     "evidence_and_repeatability",
   ],
 };
+
+function duplicateValues(values = []) {
+  const seen = new Set();
+  const duplicated = new Set();
+  values.forEach((value) => {
+    if (seen.has(value)) duplicated.add(value);
+    seen.add(value);
+  });
+  return Array.from(duplicated);
+}
+
+function assertUniqueList(name, values = []) {
+  const duplicates = duplicateValues(values);
+  if (duplicates.length) {
+    throw new Error(`Config workbench operation coverage ${name} contains duplicate values: ${duplicates.join(", ")}`);
+  }
+}
+
+export function validateConfigWorkbenchOperationCoverage(coverage = CONFIG_WORKBENCH_OPERATION_COVERAGE) {
+  [
+    "journeys",
+    "actions",
+    "assertions",
+    "screenshotKeys",
+    "productUsabilityTasks",
+    "productUsabilityDimensions",
+    "professionalDimensions",
+  ].forEach((key) => {
+    if (!Array.isArray(coverage[key]) || coverage[key].length === 0) {
+      throw new Error(`Config workbench operation coverage ${key} must be a non-empty array`);
+    }
+    assertUniqueList(key, coverage[key]);
+  });
+
+  const screenshotFileKeys = Object.keys(coverage.screenshotFiles || {});
+  const missingScreenshotFiles = coverage.screenshotKeys.filter((key) => !screenshotFileKeys.includes(key));
+  const extraScreenshotFiles = screenshotFileKeys.filter((key) => !coverage.screenshotKeys.includes(key));
+  if (missingScreenshotFiles.length || extraScreenshotFiles.length) {
+    throw new Error(`Config workbench screenshot file map drifted: missing=${missingScreenshotFiles.join(",")} extra=${extraScreenshotFiles.join(",")}`);
+  }
+
+  const screenshotFileNames = coverage.screenshotKeys.map((key) => coverage.screenshotFiles[key]);
+  assertUniqueList("screenshotFiles", screenshotFileNames);
+  const invalidScreenshotFiles = screenshotFileNames.filter((fileName) => !/^\d{2}-[a-z0-9-]+\.png$/.test(fileName));
+  if (invalidScreenshotFiles.length) {
+    throw new Error(`Config workbench screenshot files must use numbered png names: ${invalidScreenshotFiles.join(", ")}`);
+  }
+
+  return true;
+}

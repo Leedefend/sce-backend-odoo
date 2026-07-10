@@ -1,6 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CONFIG_WORKBENCH_OPERATION_COVERAGE } from "./lib/config_workbench_operation_coverage.mjs";
+import {
+  CONFIG_WORKBENCH_OPERATION_COVERAGE,
+  validateConfigWorkbenchOperationCoverage,
+} from "./lib/config_workbench_operation_coverage.mjs";
 import { readPageModes, readProductPageRegionClasses } from "./lib/product_page_structure_source.mjs";
 
 function findRepoRoot(start) {
@@ -82,6 +85,7 @@ const shellFiles = [
 
 const ALLOWED_PAGE_MODES = readPageModes();
 const PRODUCT_REGION_CLASSES = readProductPageRegionClasses();
+validateConfigWorkbenchOperationCoverage();
 const CONFIG_WORKBENCH_COUNTS = {
   journeys: CONFIG_WORKBENCH_OPERATION_COVERAGE.journeys.length,
   actions: CONFIG_WORKBENCH_OPERATION_COVERAGE.actions.length,

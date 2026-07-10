@@ -2,7 +2,10 @@ import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
-import { CONFIG_WORKBENCH_OPERATION_COVERAGE as ACCEPTANCE_COVERAGE } from "./lib/config_workbench_operation_coverage.mjs";
+import {
+  CONFIG_WORKBENCH_OPERATION_COVERAGE as ACCEPTANCE_COVERAGE,
+  validateConfigWorkbenchOperationCoverage,
+} from "./lib/config_workbench_operation_coverage.mjs";
 import { readProductPageRegionClasses } from "./lib/product_page_structure_source.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:18081";
@@ -19,6 +22,7 @@ const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
 const SUMMARY_PATH = path.join(ARTIFACT_ROOT, "summary.json");
 const VERBOSE_OUTPUT = ["1", "true", "yes"].includes(String(process.env.CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE || "").toLowerCase());
 const PRODUCT_PAGE_REGION_CLASSES = readProductPageRegionClasses();
+validateConfigWorkbenchOperationCoverage();
 function assert(condition, message, details = {}) {
   if (!condition) {
     const error = new Error(message);

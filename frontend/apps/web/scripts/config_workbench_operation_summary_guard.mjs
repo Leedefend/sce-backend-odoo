@@ -1,6 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { CONFIG_WORKBENCH_OPERATION_COVERAGE as ACCEPTANCE_COVERAGE } from "./lib/config_workbench_operation_coverage.mjs";
+import {
+  CONFIG_WORKBENCH_OPERATION_COVERAGE as ACCEPTANCE_COVERAGE,
+  validateConfigWorkbenchOperationCoverage,
+} from "./lib/config_workbench_operation_coverage.mjs";
 
 const ARTIFACT_ROOT = path.resolve(process.cwd(), "artifacts/playwright/config-workbench-operation");
 const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
@@ -22,6 +25,8 @@ const REQUIRED_ASSERTIONS = [
   "no_console_errors",
   "no_request_failures",
 ];
+
+validateConfigWorkbenchOperationCoverage();
 
 function fail(message, details = {}) {
   const error = new Error(message);
