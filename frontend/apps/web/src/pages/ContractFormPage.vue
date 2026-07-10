@@ -3016,12 +3016,12 @@ const formConfigAuditSummary = computed(() => {
     ? `业务配置已接管旧规则字段：${result.skippedLegacyPolicyFields.join('、')}`
     : '无被接管的旧规则字段';
   const activeLegacyText = result.activeLegacyPolicyFields.length
-    ? `兼容生效：${result.activeLegacyPolicyFields.join('、')}`
-    : '无兼容字段生效';
+    ? `系统补充规则生效：${result.activeLegacyPolicyFields.join('、')}`
+    : '无系统补充字段生效';
   const layoutText = result.hasBusinessConfigFormLayout
     ? `正式布局 ${result.businessConfigFormLayoutFields.length}，${result.layoutMatchesFields ? '字段顺序一致' : '字段顺序不一致'}`
     : '未固化正式布局';
-  return `配置字段 ${result.businessConfigFormFields.length} / legacy policy ${result.legacyPolicyFields.length}，${layoutText}，${conflictText}，${activeLegacyText}`;
+  return `配置字段 ${result.businessConfigFormFields.length} / 系统补充规则 ${result.legacyPolicyFields.length}，${layoutText}，${conflictText}，${activeLegacyText}`;
 });
 
 const selectedFormSettingsFieldRow = computed(() => {
@@ -3956,6 +3956,22 @@ const contractMetaLine = computed(() => {
   });
   return `契约模式：${modeLabel} · 承载界面：${surfaceLabel} · 视图类型：${viewTypeLabel} · 页面状态：${profileLabels[renderProfile.value] || renderProfile.value} · 筛选项：${filters} · 流转项：${transitions} · 操作权限：${permissionLabels.join('、') || '无可用权限'}`;
 });
+
+function viewTypeDisplayLabel(value: unknown) {
+  const normalized = String(value || '').trim().toLowerCase();
+  const labels: Record<string, string> = {
+    form: '表单',
+    tree: '列表',
+    list: '列表',
+    kanban: '看板',
+    search: '搜索',
+    calendar: '日历',
+    pivot: '透视',
+    graph: '图表',
+  };
+  if (!normalized || normalized === '-') return '未配置';
+  return labels[normalized] || normalized.replace(/[_-]+/g, ' ');
+}
 
 const showDebugActions = computed(() => renderProfile.value !== 'create');
 const showDebugActionsVisible = computed(() => showHud.value && showDebugActions.value);
@@ -9157,9 +9173,9 @@ function analyzeFormContractReadiness(
   const viewType = String(row.view_type || '').trim().toLowerCase();
   const v2ViewType = String(v2?.pageInfo?.viewType || '').trim().toLowerCase();
   if (requirePureFormViewType) {
-    if (headViewType && headViewType !== 'form') issues.push(`head.view_type is ${headViewType}, expected form`);
-    if (viewType && viewType !== 'form') issues.push(`view_type is ${viewType}, expected form`);
-    if (v2ViewType && v2ViewType !== 'form') issues.push(`v2.pageInfo.viewType is ${v2ViewType}, expected form`);
+    if (headViewType && headViewType !== 'form') issues.push(`页面头部视图为 ${viewTypeDisplayLabel(headViewType)}，应为表单视图`);
+    if (viewType && viewType !== 'form') issues.push(`页面视图为 ${viewTypeDisplayLabel(viewType)}，应为表单视图`);
+    if (v2ViewType && v2ViewType !== 'form') issues.push(`页面结构视图为 ${viewTypeDisplayLabel(v2ViewType)}，应为表单视图`);
   }
 
   const visible = resolveUnifiedPageContractV2VisibleFields(row);
