@@ -79,6 +79,18 @@ const regionFiles = [
   },
 ];
 
+const pageModeFiles = [
+  { file: "frontend/apps/web/src/views/ActionView.vue", mode: "list" },
+  { file: "frontend/apps/web/src/pages/ListPage.vue", mode: "list" },
+  { file: "frontend/apps/web/src/pages/KanbanPage.vue", mode: "list" },
+  { file: "frontend/apps/web/src/views/RecordView.vue", mode: "detail" },
+  { file: "frontend/apps/web/src/pages/ModelListPage.vue", mode: "list" },
+  { file: "frontend/apps/web/src/views/PlaceholderView.vue", mode: "workspace" },
+  { file: "frontend/apps/web/src/pages/ContractFormPage.vue", mode: "form" },
+  { file: "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue", mode: "admin" },
+  { file: "frontend/apps/web/src/views/MenuConfigView.vue", mode: "admin" },
+];
+
 assertContains(
   "frontend/apps/web/src/styles/product-patterns.css",
   /--sc-product-workspace-gap:\s*0px;/,
@@ -126,6 +138,14 @@ for (const { file, markers } of regionFiles) {
   }
 }
 
+for (const { file, mode } of pageModeFiles) {
+  assertContains(
+    file,
+    new RegExp(`data-product-page-mode=["']${mode}["']`),
+    "page shell must expose its product page mode in DOM",
+  );
+}
+
 assertContains(
   "frontend/apps/web/src/pages/ContractFormPage.vue",
   /'sc-page'/,
@@ -152,4 +172,5 @@ console.log(JSON.stringify({
   schema_version: "product_page_structure_guard.v1",
   shell_files: shellFiles.length,
   region_files: regionFiles.length,
+  page_mode_files: pageModeFiles.length,
 }));

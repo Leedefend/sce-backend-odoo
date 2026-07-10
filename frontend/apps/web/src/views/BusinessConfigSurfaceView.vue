@@ -5,6 +5,7 @@
     :class="{ 'business-config-page--editor-open': listSearchPanelOpen || approvalPanelOpen || analysisPanelOpen }"
     :style="pageSectionStyle('root')"
     :data-contract-sections="pageSectionsFingerprint"
+    data-product-page-mode="admin"
   >
     <header class="business-config-header sc-product-page-header">
       <div>

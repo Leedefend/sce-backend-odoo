@@ -58,7 +58,7 @@
 - 多栏工作区使用 `sc-product-workspace`。
 - 可见面板使用 `sc-panel` 或 `sc-panel-flat`。
 - 页面区域必须使用产品语义 class：`sc-product-page-header`、`sc-product-page-toolbar`、`sc-product-summary-strip`、`sc-product-main-surface`、`sc-product-primary-actions`、`sc-product-feedback-layer`。
-- 页面模式必须体现在 DOM 或验收证据中，不能只存在于文档。
+- 页面模式必须使用 `data-product-page-mode` 体现在 DOM 或验收证据中，不能只存在于文档。
 
 ### 间距
 
@@ -171,6 +171,7 @@ Summary 只展示首屏决策信息：
 | 指标 | 合格线 |
 | --- | --- |
 | `sc-page` 覆盖 | 正常业务列表、业务表单、配置工作台、菜单配置均有产品壳层 |
+| 页面模式 | 高频页面 DOM 暴露 `data-product-page-mode`，值限定在 `dashboard/workspace/list/form/detail/admin` |
 | 工作区列间距 | 多栏结构 `columnGapPx = 0` |
 | 页面栈间距 | 纵向业务页面 `rowGapPx = 12` |
 | 面板壳层 | 表单、配置主面板使用 `sc-panel` 或等价产品面板 |
@@ -219,6 +220,7 @@ make verify.product.page_structure
 
 - 产品级 token：`--sc-product-workspace-gap`、`--sc-product-workspace-stack-gap`
 - 产品级 class：`sc-product-workspace`、`sc-product-workspace-stack`
+- 页面模式 DOM 标记：`data-product-page-mode`
 - 页面壳层：`ActionView`、`ListPage`、`KanbanPage`、`RecordView`、`ModelListPage`、`PlaceholderView`
 - 业务表单壳层：`ContractFormPage`
 - 配置工作台与菜单配置工作区

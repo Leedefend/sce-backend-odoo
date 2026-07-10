@@ -1,5 +1,5 @@
 <template>
-  <section class="page sc-page sc-product-workspace-stack">
+  <section class="page sc-page sc-product-workspace-stack" data-product-page-mode="detail">
     <!-- Page intent: surface record status, risks, metrics, and next actions. -->
     <header class="header sc-product-page-header">
       <div>

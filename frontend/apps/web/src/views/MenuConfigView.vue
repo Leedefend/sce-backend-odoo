@@ -1,5 +1,11 @@
 <template>
-  <section v-if="pageSectionsReady" class="menu-config-page" :style="pageSectionStyle('root')" :data-contract-sections="pageSectionsFingerprint">
+  <section
+    v-if="pageSectionsReady"
+    class="menu-config-page"
+    :style="pageSectionStyle('root')"
+    :data-contract-sections="pageSectionsFingerprint"
+    data-product-page-mode="admin"
+  >
     <header class="menu-config-header sc-product-page-header">
       <div>
         <p class="eyebrow">{{ companyLabel }}</p>

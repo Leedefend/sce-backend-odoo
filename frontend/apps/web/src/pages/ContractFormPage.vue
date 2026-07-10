@@ -3,6 +3,7 @@
   <LayoutShell
     :flow="isProjectIntakeCreateMode"
     :class="['sc-page', { 'contract-form-native-shell': useNativeFormTree }]"
+    data-product-page-mode="form"
     :data-v2-shadow-store="String(v2ShadowStoreReady)"
     :data-v2-shadow-widgets="String(v2ShadowWidgetCount)"
     :data-v2-shadow-actions="String(v2ShadowActionCount)"

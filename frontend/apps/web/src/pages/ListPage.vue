@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 <template>
-  <section class="page sc-page sc-product-workspace-stack">
+  <section class="page sc-page sc-product-workspace-stack" data-product-page-mode="list">
     <PageHeader
       v-if="status !== 'ok' && status !== 'empty'"
       :title="title"
