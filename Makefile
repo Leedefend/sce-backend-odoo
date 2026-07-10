@@ -993,7 +993,7 @@ verify.finance_interfund.position.bundle_summary: guard.prod.forbid check-compos
 verify.finance_interfund.position.all: verify.finance_interfund.projection.static_guard verify.interfund_user_data.full_coverage.audit verify.interfund_borrow.classification_gap.audit verify.finance_business_fact.scope.audit verify.finance_business_fact.projection.audit verify.finance_business_project.summary.audit verify.interfund_movement.fact.audit verify.interfund_movement_project.summary.audit verify.interfund_treasury_ledger.backfill_readiness.audit verify.company_contractor.responsibility_fact.audit verify.company_contractor.responsibility_summary.audit verify.company_contractor.responsibility_http.smoke verify.finance_project_capital.position.audit verify.finance_project_counterparty.position.audit verify.finance_counterparty.position_summary.audit verify.finance_counterparty.identity_quality.audit verify.finance_position.drilldown_usability.audit verify.finance_interfund.position.menu_runtime.audit verify.finance_interfund.position.bundle_summary
 	@echo "FINANCE_INTERFUND_POSITION_AUDIT_ALL_PASS db=$(DB_NAME)"
 
-.PHONY: verify.business_capability.productization_p1 verify.business_system.usability_readiness verify.business_system.usability_readiness.prod verify.system_user_experience.coverage_guard verify.frontend.config_workbench_navigation_boundary.guard verify.project_context.selector_product_boundary.guard verify.project_context.selector_product_boundary.guard.prod verify.formal_menu.no_legacy_carrier_guard verify.formal_menu.runtime_no_legacy_carrier_guard verify.formal_menu.runtime_no_legacy_carrier_guard.prod verify.formal_list_surface.no_test_placeholder_guard verify.formal_list_surface.no_test_placeholder_guard.prod policy.cleanup.formal_list_surface_test_contract verify.system_user_experience.quick verify.system_user_experience.shell_acceptance verify.system_user_experience.business_form_user_perspective verify.system_user_experience.full_browser verify.formal_business.release_gate formal_entry_metadata.non_business_creator.write
+.PHONY: verify.business_capability.productization_p1 verify.business_system.usability_readiness verify.business_system.usability_readiness.prod verify.productization.system_closure.topic_guard verify.system_user_experience.coverage_guard verify.frontend.config_workbench_navigation_boundary.guard verify.project_context.selector_product_boundary.guard verify.project_context.selector_product_boundary.guard.prod verify.formal_menu.no_legacy_carrier_guard verify.formal_menu.runtime_no_legacy_carrier_guard verify.formal_menu.runtime_no_legacy_carrier_guard.prod verify.formal_list_surface.no_test_placeholder_guard verify.formal_list_surface.no_test_placeholder_guard.prod policy.cleanup.formal_list_surface_test_contract verify.system_user_experience.quick verify.system_user_experience.shell_acceptance verify.system_user_experience.business_form_user_perspective verify.system_user_experience.full_browser verify.formal_business.release_gate formal_entry_metadata.non_business_creator.write
 verify.formal_business.release_gate: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/validate_formal_business_release_gate.sh
 
@@ -1005,6 +1005,10 @@ verify.business_system.usability_readiness: guard.prod.forbid check-compose-proj
 
 verify.business_system.usability_readiness.prod: guard.prod.readonly check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" BUSINESS_SYSTEM_READINESS_PROD_READONLY=1 BUSINESS_SYSTEM_READINESS_INCLUDE_P1=0 BUSINESS_SYSTEM_READINESS_ARTIFACT_DIR="$(BUSINESS_SYSTEM_READINESS_ARTIFACT_DIR)" bash scripts/ops/validate_business_system_usability_readiness.sh
+
+verify.productization.system_closure.topic_guard: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/productization_system_closure_topic_guard.py
+	@python3 scripts/verify/productization_system_closure_topic_guard.py
 
 verify.system_user_experience.coverage_guard: guard.prod.forbid
 	@python3 scripts/verify/system_user_experience_coverage_guard.py
@@ -1044,7 +1048,7 @@ policy.cleanup.formal_list_surface_test_contract: guard.prod.danger check-compos
 	@python3 -m py_compile scripts/ops/formal_list_surface_test_contract_cleanup.py
 	@$(RUN_ENV) APPLY="$(APPLY)" DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/ops/formal_list_surface_test_contract_cleanup.py
 
-verify.system_user_experience.quick: guard.prod.forbid verify.system_user_experience.coverage_guard verify.frontend.config_workbench_navigation_boundary.guard verify.project_context.selector_product_boundary.guard verify.formal_menu.runtime_no_legacy_carrier_guard verify.formal_list_surface.no_test_placeholder_guard verify.product.page_structure
+verify.system_user_experience.quick: guard.prod.forbid verify.productization.system_closure.topic_guard verify.system_user_experience.coverage_guard verify.frontend.config_workbench_navigation_boundary.guard verify.project_context.selector_product_boundary.guard verify.formal_menu.runtime_no_legacy_carrier_guard verify.formal_list_surface.no_test_placeholder_guard verify.product.page_structure
 	@node --check frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs
 	@node --check frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs
 	@node --check frontend/apps/web/scripts/business_form_user_perspective_acceptance.mjs
