@@ -812,10 +812,10 @@
     </record>
     <record id="action_sc_receipt_income_arrival_confirmation" model="ir.actions.act_window">
         <field name="name">到款确认表</field>
-        <field name="res_model">sc.legacy.fund.confirmation.document</field>
+        <field name="res_model">sc.receipt.income</field>
         <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_fund_confirmation_document_search"/>
-        <field name="domain">[]</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_receipt_income_search"/>
+        <field name="domain">[('source_kind', '=', 'receipt_income'), ('receipt_type', '=', '到款确认表')]</field>
         <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
@@ -837,6 +837,46 @@
         <field name="search_view_id" ref="smart_construction_core.view_sc_fund_account_operation_search"/>
         <field name="domain">[('business_category_id.code', '=', 'finance.fund.daily_report')]</field>
         <field name="context">{'default_operation_type': 'fund_daily_report', 'default_operation_reason': '资金日报表', 'default_business_category_code': 'finance.fund.daily_report', 'search_default_type_fund_daily_report': 1, 'search_default_group_operation_date': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+    <record id="action_sc_fuel_card_registration_formal" model="ir.actions.act_window">
+        <field name="name">油卡登记</field>
+        <field name="res_model">sc.fund.account.operation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_fund_account_operation_user_tree"/>
+        <field name="views" eval="[(ref('smart_construction_core.view_sc_fund_account_operation_user_tree'), 'tree'), (ref('smart_construction_core.view_sc_fund_account_operation_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_fund_account_operation_user_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_fund_account_operation_form')})
+        ]"/>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_fund_account_operation_search"/>
+        <field name="domain">[('legacy_source_model', '=', 'sc.legacy.fuel.card.fact')]</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_type_balance_adjustment': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+    <record id="action_sc_fuel_card_recharge_formal" model="ir.actions.act_window">
+        <field name="name">充值登记</field>
+        <field name="res_model">sc.fund.account.operation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_fund_account_operation_user_tree"/>
+        <field name="views" eval="[(ref('smart_construction_core.view_sc_fund_account_operation_user_tree'), 'tree'), (ref('smart_construction_core.view_sc_fund_account_operation_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_fund_account_operation_user_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_fund_account_operation_form')})
+        ]"/>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_fund_account_operation_search"/>
+        <field name="domain">[('legacy_source_model', '=', 'sc.legacy.fuel.card.recharge.fact')]</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_type_balance_adjustment': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -1893,13 +1933,13 @@
     <menuitem id="menu_sc_legacy_fuel_card_fact_acceptance"
               name="油卡登记"
               parent="smart_construction_core.menu_sc_receipt_payment_group"
-              action="smart_construction_core.action_sc_legacy_fuel_card_fact"
+              action="smart_construction_core.action_sc_fuel_card_registration_formal"
               sequence="30"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_legacy_fuel_card_recharge_fact_acceptance"
               name="充值登记"
               parent="smart_construction_core.menu_sc_receipt_payment_group"
-              action="smart_construction_core.action_sc_legacy_fuel_card_recharge_fact"
+              action="smart_construction_core.action_sc_fuel_card_recharge_formal"
               sequence="40"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_legacy_fuel_card_refuel_fact_acceptance"

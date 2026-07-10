@@ -155,10 +155,10 @@
 
     <record id="action_sc_company_user_roster_formal" model="ir.actions.act_window">
         <field name="name">公司人员名册</field>
-        <field name="res_model">sc.legacy.user.profile</field>
+        <field name="res_model">res.users</field>
         <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="view_sc_legacy_user_profile_search"/>
-        <field name="context">{}</field>
+        <field name="domain">[('sc_runtime_company_real_user', '=', True)]</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_business_config_admin')

@@ -72,6 +72,16 @@ run_history_business_usable_probe() {
   make history.business.usable.probe DB_NAME="$DB_NAME"
 }
 
+run_formal_menu_runtime_no_legacy_carrier_guard() {
+  if truthy "$PROD_READONLY"; then
+    python3 scripts/verify/formal_menu_no_legacy_carrier_guard.py
+    DB_NAME="$DB_NAME" PROD_READONLY_VERIFY=1 \
+      bash scripts/ops/odoo_shell_exec.sh < scripts/verify/formal_menu_runtime_no_legacy_carrier_guard.py
+    return
+  fi
+  make verify.formal_menu.runtime_no_legacy_carrier_guard DB_NAME="$DB_NAME"
+}
+
 run_formal_business_backfill_audit() {
   if truthy "$PROD_READONLY"; then
     DB_NAME="$DB_NAME" MIGRATION_ARTIFACT_ROOT="$MIGRATION_ARTIFACT_ROOT" \
@@ -86,6 +96,8 @@ echo "BUSINESS_SYSTEM_READINESS_START: db=${DB_NAME} started_at=${STARTED_AT} in
 run_check "python_compile_readiness_inputs" \
   python3 -m py_compile \
     scripts/migration/history_business_usable_probe.py \
+    scripts/verify/formal_menu_no_legacy_carrier_guard.py \
+    scripts/verify/formal_menu_runtime_no_legacy_carrier_guard.py \
     scripts/verify/formal_business_backfill_audit_probe.py
 
 if [[ "$INCLUDE_P1" == "1" || "$INCLUDE_P1" == "true" || "$INCLUDE_P1" == "yes" ]]; then
@@ -98,6 +110,9 @@ fi
 
 run_check "history_business_usable_probe" \
   run_history_business_usable_probe
+
+run_check "formal_menu_runtime_no_legacy_carrier_guard" \
+  run_formal_menu_runtime_no_legacy_carrier_guard
 
 run_check "formal_business_backfill_audit" \
   run_formal_business_backfill_audit
@@ -130,11 +145,13 @@ def marker(prefix):
 
 
 history = marker("HISTORY_BUSINESS_USABLE_PROBE=") or {}
+formal_menu_runtime = marker("FORMAL_MENU_RUNTIME_NO_LEGACY_CARRIER_GUARD=") or {}
 formal = marker("FORMAL_BUSINESS_BACKFILL_AUDIT_PROBE=") or {}
 
 criteria = {
     "p1_productization_gate": p1_status,
     "history_business_usable_probe": history.get("status", "MISSING"),
+    "formal_menu_runtime_no_legacy_carrier_guard": formal_menu_runtime.get("status", "MISSING"),
     "formal_business_backfill_audit": formal.get("status", "MISSING"),
 }
 shell_checks_ok = bool(int(sys.argv[8]) == 0)
@@ -152,6 +169,7 @@ payload = {
     "shell_checks_ok": shell_checks_ok,
     "criteria": criteria,
     "history_business_usable_probe": history,
+    "formal_menu_runtime_no_legacy_carrier_guard": formal_menu_runtime,
     "formal_business_backfill_audit": formal,
 }
 
@@ -178,6 +196,7 @@ lines.extend(
         "## Probe Summary",
         f"- history_business_usable_probe decision: `{history.get('decision', 'MISSING')}`",
         f"- history_business_usable_probe gap_count: `{history.get('gap_count', 'MISSING')}`",
+        f"- formal_menu_runtime_no_legacy_carrier_guard checked_menu_count: `{formal_menu_runtime.get('checked_menu_count', 'MISSING')}`",
         f"- formal_business_backfill_audit decision: `{formal.get('decision', 'MISSING')}`",
         f"- formal_business_backfill_audit gap_count: `{formal.get('gap_count', 'MISSING')}`",
         "",

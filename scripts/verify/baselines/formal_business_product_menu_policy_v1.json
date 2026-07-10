@@ -446,7 +446,7 @@
           "product_domain": "equipment",
           "product_key": "物资与分包",
           "release_state": "released",
-          "res_model": "sc.legacy.direct.acceptance.fact",
+          "res_model": "sc.material.rental.order",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_material_rental_in_acceptance",
           "target_scene_key": "",
@@ -500,7 +500,7 @@
           "product_domain": "equipment",
           "product_key": "物资与分包",
           "release_state": "released",
-          "res_model": "sc.legacy.direct.acceptance.fact",
+          "res_model": "sc.material.rental.order",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_material_rental_return_acceptance",
           "target_scene_key": "",
@@ -1141,11 +1141,12 @@
           "product_domain": "finance_receipt",
           "product_key": "财务中心",
           "release_state": "released",
-          "res_model": "sc.legacy.fund.confirmation.document",
+          "res_model": "sc.receipt.income",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_arrival_confirmation",
           "target_scene_key": "",
-          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 收款管理 / 到款确认表"
+          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 收款管理 / 到款确认表",
+          "action_xmlid": "smart_construction_core.action_sc_receipt_income_arrival_confirmation"
         },
         {
           "access_level": "public",
@@ -1505,11 +1506,12 @@
           "product_domain": "finance_fuel_card",
           "product_key": "财务中心",
           "release_state": "released",
-          "res_model": "sc.legacy.fuel.card.fact",
+          "res_model": "sc.fund.account.operation",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_legacy_fuel_card_fact_acceptance",
           "target_scene_key": "",
-          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 油卡登记"
+          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 油卡登记",
+          "action_xmlid": "smart_construction_core.action_sc_fuel_card_registration_formal"
         },
         {
           "access_level": "public",
@@ -1592,11 +1594,12 @@
           "product_domain": "finance_fuel_card",
           "product_key": "财务中心",
           "release_state": "released",
-          "res_model": "sc.legacy.fuel.card.recharge.fact",
+          "res_model": "sc.fund.account.operation",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_legacy_fuel_card_recharge_fact_acceptance",
           "target_scene_key": "",
-          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 充值登记"
+          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 充值登记",
+          "action_xmlid": "smart_construction_core.action_sc_fuel_card_recharge_formal"
         },
         {
           "access_level": "public",
@@ -1650,7 +1653,7 @@
           "product_domain": "finance_self_funding",
           "product_key": "财务中心",
           "release_state": "released",
-          "res_model": "sc.legacy.self.funding.fact",
+          "res_model": "sc.self.funding.registration",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_self_funding_advance_income",
           "target_scene_key": "",
@@ -1679,7 +1682,7 @@
           "product_domain": "finance_self_funding",
           "product_key": "财务中心",
           "release_state": "released",
-          "res_model": "sc.legacy.self.funding.fact",
+          "res_model": "sc.self.funding.registration",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_self_funding_advance_refund",
           "target_scene_key": "",
@@ -2280,11 +2283,12 @@
           "product_domain": "hr_admin",
           "product_key": "人事行政",
           "release_state": "released",
-          "res_model": "sc.legacy.user.profile",
+          "res_model": "res.users",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_company_user_roster_formal",
           "target_scene_key": "",
-          "visible_menu_path": "智慧施工管理平台 / 人事行政 / 公司人员名册"
+          "visible_menu_path": "智慧施工管理平台 / 人事行政 / 公司人员名册",
+          "action_xmlid": "smart_construction_core.action_sc_company_user_roster_formal"
         },
         {
           "access_level": "public",
@@ -2550,19 +2554,19 @@
           "entry_intent": "config",
           "entry_kind": "user_visible_menu_page",
           "entry_target_policy": "keep_separate_config",
-          "group_key": "construction.基础设置",
-          "group_label": "基础设置",
+          "group_key": "construction.配置中心",
+          "group_label": "配置中心",
           "integration_target": "ui.menu.config.policy 菜单配置",
           "label": "菜单配置",
           "menu_xmlid": "smart_construction_core.menu_ui_menu_config_policy_business_config",
           "product_domain": "system_config",
-          "product_key": "基础设置",
+          "product_key": "配置中心",
           "release_state": "released",
           "res_model": "ui.menu.config.policy",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_ui_menu_config_policy_business_config",
           "target_scene_key": "",
-          "visible_menu_path": "智慧施工管理平台 / 基础设置 / 菜单配置"
+          "visible_menu_path": "智慧施工管理平台 / 配置中心 / 菜单配置"
         },
         {
           "access_level": "public",
@@ -3611,7 +3615,7 @@
               "entry_intent": "source_fact",
               "entry_intent_label": "来源事实",
               "entry_target_policy": "keep_separate_source_fact",
-              "fact_model": "sc.legacy.direct.acceptance.fact",
+              "fact_model": "sc.material.rental.order",
               "integration_target": "设备/租赁来源事实明细",
               "label": "租入",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -3634,7 +3638,7 @@
                 "equipment_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.direct.acceptance.fact",
+              "res_model": "sc.material.rental.order",
               "route": "/a/903?menu_id=783",
               "scene_key": "",
               "sequence": 130,
@@ -3713,7 +3717,7 @@
               "entry_intent": "source_fact",
               "entry_intent_label": "来源事实",
               "entry_target_policy": "keep_separate_source_fact",
-              "fact_model": "sc.legacy.direct.acceptance.fact",
+              "fact_model": "sc.material.rental.order",
               "integration_target": "设备/租赁来源事实明细",
               "label": "还租",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -3736,7 +3740,7 @@
                 "equipment_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.direct.acceptance.fact",
+              "res_model": "sc.material.rental.order",
               "route": "/a/904?menu_id=784",
               "scene_key": "",
               "sequence": 132,
@@ -4913,7 +4917,7 @@
               "entry_intent": "source_fact",
               "entry_intent_label": "来源事实",
               "entry_target_policy": "keep_separate_source_fact",
-              "fact_model": "sc.legacy.fund.confirmation.document",
+              "fact_model": "sc.receipt.income",
               "integration_target": "到款确认来源事实明细",
               "label": "到款确认表",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -4937,7 +4941,7 @@
                 "fund_account_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.fund.confirmation.document",
+              "res_model": "sc.receipt.income",
               "route": "/a/783",
               "scene_key": "",
               "sequence": 46,
@@ -4948,7 +4952,8 @@
                 "tree",
                 "form"
               ],
-              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 收款管理 / 到款确认表"
+              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 收款管理 / 到款确认表",
+              "action_xmlid": "smart_construction_core.action_sc_receipt_income_arrival_confirmation"
             },
             {
               "access_level": "public",
@@ -5795,7 +5800,7 @@
               "entry_intent": "source_fact",
               "entry_intent_label": "来源事实",
               "entry_target_policy": "keep_separate_source_fact",
-              "fact_model": "sc.legacy.fuel.card.fact",
+              "fact_model": "sc.fund.account.operation",
               "integration_target": "油卡费用来源事实明细",
               "label": "油卡登记",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -5819,7 +5824,7 @@
                 "fund_account_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.fuel.card.fact",
+              "res_model": "sc.fund.account.operation",
               "route": "/a/906",
               "scene_key": "",
               "sequence": 178,
@@ -5830,7 +5835,8 @@
                 "tree",
                 "form"
               ],
-              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 油卡登记"
+              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 油卡登记",
+              "action_xmlid": "smart_construction_core.action_sc_fuel_card_registration_formal"
             },
             {
               "access_level": "public",
@@ -6001,7 +6007,7 @@
               "entry_intent": "source_fact",
               "entry_intent_label": "来源事实",
               "entry_target_policy": "keep_separate_source_fact",
-              "fact_model": "sc.legacy.fuel.card.recharge.fact",
+              "fact_model": "sc.fund.account.operation",
               "integration_target": "油卡充值来源事实明细",
               "label": "充值登记",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -6025,7 +6031,7 @@
                 "fund_account_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.fuel.card.recharge.fact",
+              "res_model": "sc.fund.account.operation",
               "route": "/a/907",
               "scene_key": "",
               "sequence": 227,
@@ -6036,7 +6042,8 @@
                 "tree",
                 "form"
               ],
-              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 充值登记"
+              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 充值登记",
+              "action_xmlid": "smart_construction_core.action_sc_fuel_card_recharge_formal"
             },
             {
               "access_level": "public",
@@ -6142,7 +6149,7 @@
                 ]
               },
               "entry_target_policy": "keep_list_form",
-              "fact_model": "sc.legacy.self.funding.fact",
+              "fact_model": "sc.self.funding.registration",
               "integration_action_id": 997,
               "integration_action_xmlid": "smart_construction_core.action_sc_self_funding_registration",
               "integration_model": "sc.self.funding.registration",
@@ -6173,7 +6180,7 @@
                 "fund_account_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.self.funding.fact",
+              "res_model": "sc.self.funding.registration",
               "route": "/a/998?menu_id=731",
               "scene_key": "",
               "sequence": 258,
@@ -6220,7 +6227,7 @@
                 ]
               },
               "entry_target_policy": "keep_list_form",
-              "fact_model": "sc.legacy.self.funding.fact",
+              "fact_model": "sc.self.funding.registration",
               "integration_action_id": 999,
               "integration_action_xmlid": "smart_construction_core.action_sc_self_funding_registration_refund",
               "integration_model": "sc.self.funding.registration",
@@ -6248,7 +6255,7 @@
                 "project_id",
                 "partner_id"
               ],
-              "res_model": "sc.legacy.self.funding.fact",
+              "res_model": "sc.self.funding.registration",
               "route": "/a/999?menu_id=732",
               "scene_key": "",
               "sequence": 281,
@@ -7209,7 +7216,7 @@
               "entry_intent": "query",
               "entry_intent_label": "查询",
               "entry_target_policy": "keep_separate_query",
-              "fact_model": "sc.legacy.user.profile",
+              "fact_model": "res.users",
               "integration_target": "人员名册查询",
               "label": "公司人员名册",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -7231,7 +7238,7 @@
                 "employee_id",
                 "period_id"
               ],
-              "res_model": "sc.legacy.user.profile",
+              "res_model": "res.users",
               "route": "/a/859",
               "scene_key": "",
               "sequence": 20,
@@ -7242,7 +7249,8 @@
                 "tree",
                 "form"
               ],
-              "visible_menu_path": "智慧施工管理平台 / 人事行政 / 公司人员名册"
+              "visible_menu_path": "智慧施工管理平台 / 人事行政 / 公司人员名册",
+              "action_xmlid": "smart_construction_core.action_sc_company_user_roster_formal"
             },
             {
               "access_level": "public",
@@ -7745,10 +7753,10 @@
         },
         {
           "category": "user_confirmed_formal_product_menu",
-          "group_key": "construction.基础设置",
-          "group_label": "基础设置",
-          "key": "construction.基础设置",
-          "label": "基础设置",
+          "group_key": "construction.配置中心",
+          "group_label": "配置中心",
+          "key": "construction.配置中心",
+          "label": "配置中心",
           "menus": [
             {
               "access_level": "public",
@@ -7778,7 +7786,7 @@
               "policy_note": "released_as_user_confirmed_formal_product_menu",
               "product_domain": "system_config",
               "product_domain_label": "系统配置",
-              "product_key": "基础设置",
+              "product_key": "配置中心",
               "productization_source": "user_confirmed_62_business_entry_integration_matrix",
               "release_domain": "construction",
               "release_state": "released",
@@ -7797,10 +7805,10 @@
                 "tree",
                 "form"
               ],
-              "visible_menu_path": "智慧施工管理平台 / 基础设置 / 菜单配置"
+              "visible_menu_path": "智慧施工管理平台 / 配置中心 / 菜单配置"
             }
           ],
-          "title": "基础设置"
+          "title": "配置中心"
         },
         {
           "category": "user_visible_menu",
@@ -8692,7 +8700,7 @@
           "product_domain": "equipment",
           "product_key": "物资与分包",
           "release_state": "released",
-          "res_model": "sc.legacy.direct.acceptance.fact",
+          "res_model": "sc.material.rental.order",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_material_rental_in_acceptance",
           "target_scene_key": "",
@@ -8746,7 +8754,7 @@
           "product_domain": "equipment",
           "product_key": "物资与分包",
           "release_state": "released",
-          "res_model": "sc.legacy.direct.acceptance.fact",
+          "res_model": "sc.material.rental.order",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_material_rental_return_acceptance",
           "target_scene_key": "",
@@ -9387,11 +9395,12 @@
           "product_domain": "finance_receipt",
           "product_key": "财务中心",
           "release_state": "released",
-          "res_model": "sc.legacy.fund.confirmation.document",
+          "res_model": "sc.receipt.income",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_arrival_confirmation",
           "target_scene_key": "",
-          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 收款管理 / 到款确认表"
+          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 收款管理 / 到款确认表",
+          "action_xmlid": "smart_construction_core.action_sc_receipt_income_arrival_confirmation"
         },
         {
           "access_level": "public",
@@ -9751,11 +9760,12 @@
           "product_domain": "finance_fuel_card",
           "product_key": "财务中心",
           "release_state": "released",
-          "res_model": "sc.legacy.fuel.card.fact",
+          "res_model": "sc.fund.account.operation",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_legacy_fuel_card_fact_acceptance",
           "target_scene_key": "",
-          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 油卡登记"
+          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 油卡登记",
+          "action_xmlid": "smart_construction_core.action_sc_fuel_card_registration_formal"
         },
         {
           "access_level": "public",
@@ -9838,11 +9848,12 @@
           "product_domain": "finance_fuel_card",
           "product_key": "财务中心",
           "release_state": "released",
-          "res_model": "sc.legacy.fuel.card.recharge.fact",
+          "res_model": "sc.fund.account.operation",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_legacy_fuel_card_recharge_fact_acceptance",
           "target_scene_key": "",
-          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 充值登记"
+          "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 充值登记",
+          "action_xmlid": "smart_construction_core.action_sc_fuel_card_recharge_formal"
         },
         {
           "access_level": "public",
@@ -9896,7 +9907,7 @@
           "product_domain": "finance_self_funding",
           "product_key": "财务中心",
           "release_state": "released",
-          "res_model": "sc.legacy.self.funding.fact",
+          "res_model": "sc.self.funding.registration",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_self_funding_advance_income",
           "target_scene_key": "",
@@ -9925,7 +9936,7 @@
           "product_domain": "finance_self_funding",
           "product_key": "财务中心",
           "release_state": "released",
-          "res_model": "sc.legacy.self.funding.fact",
+          "res_model": "sc.self.funding.registration",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_self_funding_advance_refund",
           "target_scene_key": "",
@@ -10526,11 +10537,12 @@
           "product_domain": "hr_admin",
           "product_key": "人事行政",
           "release_state": "released",
-          "res_model": "sc.legacy.user.profile",
+          "res_model": "res.users",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_sc_company_user_roster_formal",
           "target_scene_key": "",
-          "visible_menu_path": "智慧施工管理平台 / 人事行政 / 公司人员名册"
+          "visible_menu_path": "智慧施工管理平台 / 人事行政 / 公司人员名册",
+          "action_xmlid": "smart_construction_core.action_sc_company_user_roster_formal"
         },
         {
           "access_level": "public",
@@ -10796,19 +10808,19 @@
           "entry_intent": "config",
           "entry_kind": "user_visible_menu_page",
           "entry_target_policy": "keep_separate_config",
-          "group_key": "construction.基础设置",
-          "group_label": "基础设置",
+          "group_key": "construction.配置中心",
+          "group_label": "配置中心",
           "integration_target": "ui.menu.config.policy 菜单配置",
           "label": "菜单配置",
           "menu_xmlid": "smart_construction_core.menu_ui_menu_config_policy_business_config",
           "product_domain": "system_config",
-          "product_key": "基础设置",
+          "product_key": "配置中心",
           "release_state": "released",
           "res_model": "ui.menu.config.policy",
           "source_kind": "user_confirmed_menu_policy_baseline",
           "target_page_key": "smart_construction_core.menu_ui_menu_config_policy_business_config",
           "target_scene_key": "",
-          "visible_menu_path": "智慧施工管理平台 / 基础设置 / 菜单配置"
+          "visible_menu_path": "智慧施工管理平台 / 配置中心 / 菜单配置"
         },
         {
           "access_level": "public",
@@ -11857,7 +11869,7 @@
               "entry_intent": "source_fact",
               "entry_intent_label": "来源事实",
               "entry_target_policy": "keep_separate_source_fact",
-              "fact_model": "sc.legacy.direct.acceptance.fact",
+              "fact_model": "sc.material.rental.order",
               "integration_target": "设备/租赁来源事实明细",
               "label": "租入",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -11880,7 +11892,7 @@
                 "equipment_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.direct.acceptance.fact",
+              "res_model": "sc.material.rental.order",
               "route": "/a/903?menu_id=783",
               "scene_key": "",
               "sequence": 130,
@@ -11959,7 +11971,7 @@
               "entry_intent": "source_fact",
               "entry_intent_label": "来源事实",
               "entry_target_policy": "keep_separate_source_fact",
-              "fact_model": "sc.legacy.direct.acceptance.fact",
+              "fact_model": "sc.material.rental.order",
               "integration_target": "设备/租赁来源事实明细",
               "label": "还租",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -11982,7 +11994,7 @@
                 "equipment_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.direct.acceptance.fact",
+              "res_model": "sc.material.rental.order",
               "route": "/a/904?menu_id=784",
               "scene_key": "",
               "sequence": 132,
@@ -13159,7 +13171,7 @@
               "entry_intent": "source_fact",
               "entry_intent_label": "来源事实",
               "entry_target_policy": "keep_separate_source_fact",
-              "fact_model": "sc.legacy.fund.confirmation.document",
+              "fact_model": "sc.receipt.income",
               "integration_target": "到款确认来源事实明细",
               "label": "到款确认表",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -13183,7 +13195,7 @@
                 "fund_account_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.fund.confirmation.document",
+              "res_model": "sc.receipt.income",
               "route": "/a/783",
               "scene_key": "",
               "sequence": 46,
@@ -13194,7 +13206,8 @@
                 "tree",
                 "form"
               ],
-              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 收款管理 / 到款确认表"
+              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 收款管理 / 到款确认表",
+              "action_xmlid": "smart_construction_core.action_sc_receipt_income_arrival_confirmation"
             },
             {
               "access_level": "public",
@@ -14041,7 +14054,7 @@
               "entry_intent": "source_fact",
               "entry_intent_label": "来源事实",
               "entry_target_policy": "keep_separate_source_fact",
-              "fact_model": "sc.legacy.fuel.card.fact",
+              "fact_model": "sc.fund.account.operation",
               "integration_target": "油卡费用来源事实明细",
               "label": "油卡登记",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -14065,7 +14078,7 @@
                 "fund_account_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.fuel.card.fact",
+              "res_model": "sc.fund.account.operation",
               "route": "/a/906",
               "scene_key": "",
               "sequence": 178,
@@ -14076,7 +14089,8 @@
                 "tree",
                 "form"
               ],
-              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 油卡登记"
+              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 油卡登记",
+              "action_xmlid": "smart_construction_core.action_sc_fuel_card_registration_formal"
             },
             {
               "access_level": "public",
@@ -14247,7 +14261,7 @@
               "entry_intent": "source_fact",
               "entry_intent_label": "来源事实",
               "entry_target_policy": "keep_separate_source_fact",
-              "fact_model": "sc.legacy.fuel.card.recharge.fact",
+              "fact_model": "sc.fund.account.operation",
               "integration_target": "油卡充值来源事实明细",
               "label": "充值登记",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -14271,7 +14285,7 @@
                 "fund_account_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.fuel.card.recharge.fact",
+              "res_model": "sc.fund.account.operation",
               "route": "/a/907",
               "scene_key": "",
               "sequence": 227,
@@ -14282,7 +14296,8 @@
                 "tree",
                 "form"
               ],
-              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 充值登记"
+              "visible_menu_path": "智慧施工管理平台 / 财务中心 / 油卡管理 / 充值登记",
+              "action_xmlid": "smart_construction_core.action_sc_fuel_card_recharge_formal"
             },
             {
               "access_level": "public",
@@ -14388,7 +14403,7 @@
                 ]
               },
               "entry_target_policy": "keep_list_form",
-              "fact_model": "sc.legacy.self.funding.fact",
+              "fact_model": "sc.self.funding.registration",
               "integration_action_id": 997,
               "integration_action_xmlid": "smart_construction_core.action_sc_self_funding_registration",
               "integration_model": "sc.self.funding.registration",
@@ -14419,7 +14434,7 @@
                 "fund_account_id",
                 "cost_item_id"
               ],
-              "res_model": "sc.legacy.self.funding.fact",
+              "res_model": "sc.self.funding.registration",
               "route": "/a/998?menu_id=731",
               "scene_key": "",
               "sequence": 258,
@@ -14466,7 +14481,7 @@
                 ]
               },
               "entry_target_policy": "keep_list_form",
-              "fact_model": "sc.legacy.self.funding.fact",
+              "fact_model": "sc.self.funding.registration",
               "integration_action_id": 999,
               "integration_action_xmlid": "smart_construction_core.action_sc_self_funding_registration_refund",
               "integration_model": "sc.self.funding.registration",
@@ -14494,7 +14509,7 @@
                 "project_id",
                 "partner_id"
               ],
-              "res_model": "sc.legacy.self.funding.fact",
+              "res_model": "sc.self.funding.registration",
               "route": "/a/999?menu_id=732",
               "scene_key": "",
               "sequence": 281,
@@ -15455,7 +15470,7 @@
               "entry_intent": "query",
               "entry_intent_label": "查询",
               "entry_target_policy": "keep_separate_query",
-              "fact_model": "sc.legacy.user.profile",
+              "fact_model": "res.users",
               "integration_target": "人员名册查询",
               "label": "公司人员名册",
               "locked_data_policy": "read_only_source_facts_no_rewrite",
@@ -15477,7 +15492,7 @@
                 "employee_id",
                 "period_id"
               ],
-              "res_model": "sc.legacy.user.profile",
+              "res_model": "res.users",
               "route": "/a/859",
               "scene_key": "",
               "sequence": 20,
@@ -15488,7 +15503,8 @@
                 "tree",
                 "form"
               ],
-              "visible_menu_path": "智慧施工管理平台 / 人事行政 / 公司人员名册"
+              "visible_menu_path": "智慧施工管理平台 / 人事行政 / 公司人员名册",
+              "action_xmlid": "smart_construction_core.action_sc_company_user_roster_formal"
             },
             {
               "access_level": "public",
@@ -15991,10 +16007,10 @@
         },
         {
           "category": "user_confirmed_formal_product_menu",
-          "group_key": "construction.基础设置",
-          "group_label": "基础设置",
-          "key": "construction.基础设置",
-          "label": "基础设置",
+          "group_key": "construction.配置中心",
+          "group_label": "配置中心",
+          "key": "construction.配置中心",
+          "label": "配置中心",
           "menus": [
             {
               "access_level": "public",
@@ -16024,7 +16040,7 @@
               "policy_note": "released_as_user_confirmed_formal_product_menu",
               "product_domain": "system_config",
               "product_domain_label": "系统配置",
-              "product_key": "基础设置",
+              "product_key": "配置中心",
               "productization_source": "user_confirmed_62_business_entry_integration_matrix",
               "release_domain": "construction",
               "release_state": "released",
@@ -16043,10 +16059,10 @@
                 "tree",
                 "form"
               ],
-              "visible_menu_path": "智慧施工管理平台 / 基础设置 / 菜单配置"
+              "visible_menu_path": "智慧施工管理平台 / 配置中心 / 菜单配置"
             }
           ],
-          "title": "基础设置"
+          "title": "配置中心"
         },
         {
           "category": "user_visible_menu",

@@ -196,10 +196,6 @@ ALLOWED_COMPAT_LEGACY_BUSINESS_MENU_XMLIDS = {
     "smart_construction_core.menu_sc_tax_certificate_registration_user",
     "smart_construction_core.menu_sc_supplier_contract_current",
     "smart_construction_core.menu_scbsly_acceptance_supplier_contract_current",
-    "smart_construction_core.menu_sc_arrival_confirmation",
-    "smart_construction_core.menu_sc_legacy_fuel_card_fact_acceptance",
-    "smart_construction_core.menu_sc_legacy_fuel_card_recharge_fact_acceptance",
-    "smart_construction_core.menu_sc_company_user_roster_formal",
 }
 
 ALLOWED_COMPAT_LEGACY_BUSINESS_MODELS = {

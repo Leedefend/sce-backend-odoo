@@ -34,7 +34,7 @@ EXPECTED_GROUP_COUNTS = {
     "财务中心": 42,
     "人事行政": 8,
     "资料证照": 3,
-    "基础设置": 1,
+    "配置中心": 1,
     "税务中心": 6,
 }
 FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = {
