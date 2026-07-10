@@ -451,3 +451,22 @@ DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verif
 - 收口后工作区保持干净。
 
 本分支可进入合并或部署前总闸流程；新的非阻断体验优化应进入后续专题分支。
+
+## 合并前扩展复核
+
+复核时间：2026-07-10
+
+由于本分支触及页面结构、配置工作台、菜单配置和低代码导航对齐，分支收口后补充执行了相关边界门禁：
+
+```bash
+DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.product.navigation_boundary
+DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 E2E_LOGIN=wutao E2E_PASSWORD=123456 make verify.business_config.low_code_menu_navigation_alignment
+```
+
+结果：
+
+- 产品导航边界通过，主导航与菜单配置顶层标签对齐，未出现低代码事实扩散、历史基础设置分组或菜单配置与主导航不一致。
+- 菜单低代码运行时对齐通过：`missing_count = 0`、`unexpected_count = 0`、`runtime_hidden_but_visible_count = 0`、`duplicate_count = 0`、`label_mismatch_count = 0`、`parent_mismatch_count = 0`、`group_contract_mismatch_count = 0`、`order_mismatch_count = 0`。
+- 菜单配置树 UI 抽样通过，未发现配置树显示违规。
+
+该复核证明本专题收口没有重新引入此前反复出现的主导航、菜单配置、低代码运行时对齐漂移问题。
