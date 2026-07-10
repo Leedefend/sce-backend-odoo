@@ -143,6 +143,28 @@ export function resolveBatchActionErrorLabel(options: {
   return options.text('batch_label_delete', '批量删除');
 }
 
+function resolveBatchReasonLabel(reason: unknown, text: (key: string, fallback: string) => string): string {
+  const raw = String(reason || '').trim();
+  const key = raw.toUpperCase();
+  const mapping: Record<string, string> = {
+    ACTION_UNSUPPORTED: text('reason_action_unsupported', '暂不支持此操作'),
+    EXECUTE_FAILED: text('reason_execute_failed', '操作未完成'),
+    PERMISSION_DENIED: text('reason_permission_denied', '权限不足'),
+    ACCESS_DENIED: text('reason_permission_denied', '权限不足'),
+    NOT_FOUND: text('reason_not_found', '记录不存在'),
+    BUSINESS_RULE_FAILED: text('reason_business_rule_failed', '业务规则限制'),
+    VALIDATION_ERROR: text('reason_validation_error', '校验未通过'),
+    MISSING_PARAMS: text('reason_missing_params', '参数不完整'),
+    CONFLICT: text('reason_conflict', '数据已变化'),
+    NETWORK_ERROR: text('reason_network_error', '网络异常'),
+    SYSTEM_ERROR: text('reason_system_error', '系统异常'),
+    INTERNAL_ERROR: text('reason_system_error', '系统异常'),
+    UNKNOWN: text('reason_unknown', '待确认'),
+  };
+  if (!raw) return text('reason_unknown', '待确认');
+  return mapping[key] || raw.replace(/[_-]+/g, ' ').toLowerCase().replace(/(^|\s)\S/g, (s) => s.toUpperCase());
+}
+
 export function buildBatchErrorLine(options: {
   err: unknown;
   fallback: { model: string; op: string; label: string };
@@ -152,7 +174,9 @@ export function buildBatchErrorLine(options: {
   const issueCounter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
   const issue = collectErrorContextIssue(issueCounter, options.err, { model: options.fallback.model, op: options.fallback.op });
   const scope = issueScopeLabel(issue);
-  const reasonText = issue.reasonCode ? `${options.text('batch_error_reason_prefix', '原因=')}${issue.reasonCode}` : '';
+  const reasonText = issue.reasonCode
+    ? `${options.text('batch_error_reason_prefix', '原因：')}${resolveBatchReasonLabel(issue.reasonCode, options.text)}`
+    : '';
   if (!(options.err instanceof ApiError)) {
     return [
       options.fallback.label,

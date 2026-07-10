@@ -219,6 +219,8 @@ FORBIDDEN_PHRASES = {
     "governance.runtime_source": "页面诊断标签必须使用产品化中文表达",
     "JSON.stringify(layoutStats": "记录页诊断信息必须使用产品化摘要",
     "({{ actionFeedback.reasonCode }})": "记录操作反馈必须展示产品化原因标签",
+    "batch_error_reason_prefix', '原因='": "列表批量错误摘要必须使用中文标点",
+    "${options.text('batch_error_reason_prefix', '原因=')}${issue.reasonCode}": "列表批量错误摘要必须展示产品化原因标签",
     "window.alert(err instanceof Error ? err.message : '附件打开失败')": "列表页附件错误必须使用页面内反馈",
     "confirm(toolbarUiLabel('batch_confirm_delete'": "列表批量删除必须使用产品化确认弹窗",
     "confirm('确认删除这条关联记录？')": "关联记录删除必须使用产品化确认弹窗",
