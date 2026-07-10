@@ -564,6 +564,12 @@ function onZoneAction(payload: PageBlockActionEvent) {
 .page-renderer--role-home :deep(.zone-key-analysis .zone-renderer-body.display-grid) {
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
 }
+.page-renderer--role-home :deep(.zone-key-analysis .zone-renderer-body.display-grid > :only-child) {
+  grid-column: 1 / -1;
+}
+.page-renderer--role-home :deep(.zone-key-analysis .zone-renderer-body.display-grid > :only-child .summary-grid) {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
 .page-renderer--role-home :deep(.block) {
   border-radius: 8px;
   padding: 10px;
