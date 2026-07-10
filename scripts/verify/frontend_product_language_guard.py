@@ -199,6 +199,8 @@ FORBIDDEN_PHRASES = {
     "governance.runtime_source": "页面诊断标签必须使用产品化中文表达",
     "JSON.stringify(layoutStats": "记录页诊断信息必须使用产品化摘要",
     "window.alert(err instanceof Error ? err.message : '附件打开失败')": "列表页附件错误必须使用页面内反馈",
+    "confirm(toolbarUiLabel('batch_confirm_delete'": "列表批量删除必须使用产品化确认弹窗",
+    "confirm('确认删除这条关联记录？')": "关联记录删除必须使用产品化确认弹窗",
 }
 
 

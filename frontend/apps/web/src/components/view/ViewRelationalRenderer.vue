@@ -22,6 +22,16 @@
       </li>
     </ul>
     <div v-if="truncated" class="relational-meta">当前仅显示前 {{ rows.length }} 条记录。</div>
+    <ProductConfirmDialog
+      :open="deleteConfirm.state.open"
+      :title="deleteConfirm.state.title"
+      :message="deleteConfirm.state.message"
+      :confirm-label="deleteConfirm.state.confirmLabel"
+      :cancel-label="deleteConfirm.state.cancelLabel"
+      :tone="deleteConfirm.state.tone"
+      @confirm="deleteConfirm.confirm"
+      @cancel="deleteConfirm.cancel"
+    />
 
     <div v-if="editorVisible" class="relational-editor">
       <div class="editor-card">
@@ -45,7 +55,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import ProductConfirmDialog from '../ProductConfirmDialog.vue';
 import { useEditTx } from '../../composables/useEditTx';
+import { useProductConfirmDialog } from '../../composables/useProductConfirmDialog';
 import { pickContractNavQuery } from '../../app/navigationContext';
 import {
   createRelationRendererRecord,
@@ -76,6 +88,7 @@ const saving = ref(false);
 const editorError = ref('');
 const editTx = useEditTx();
 const editTxState = computed(() => editTx.state.value);
+const deleteConfirm = useProductConfirmDialog();
 
 const headerLabel = computed(() => (props.model ? props.model : '关联记录'));
 const countLabel = computed(() => `共 ${props.ids.length} 条`);
@@ -194,7 +207,14 @@ async function saveRow() {
 
 async function removeRow(row: { id: number }) {
   if (!props.model) return;
-  if (!confirm('确认删除这条关联记录？')) return;
+  const confirmed = await deleteConfirm.open({
+    title: '确认删除关联记录',
+    message: '删除后该关联记录将从当前业务中移除，请确认是否继续。',
+    confirmLabel: '删除',
+    cancelLabel: '取消',
+    tone: 'danger',
+  });
+  if (!confirmed) return;
   try {
     await editTx.save(async () => {
       return unlinkRelationRendererRecord({ model: props.model, ids: [row.id] });

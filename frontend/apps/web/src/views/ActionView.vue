@@ -527,6 +527,16 @@
       :title="vm.hud?.title || pageText('dev_context_title', '页面上下文')"
       :entries="vm.hud?.entries || []"
     />
+    <ProductConfirmDialog
+      :open="batchDeleteConfirm.state.open"
+      :title="batchDeleteConfirm.state.title"
+      :message="batchDeleteConfirm.state.message"
+      :confirm-label="batchDeleteConfirm.state.confirmLabel"
+      :cancel-label="batchDeleteConfirm.state.cancelLabel"
+      :tone="batchDeleteConfirm.state.tone"
+      @confirm="batchDeleteConfirm.confirm"
+      @cancel="batchDeleteConfirm.cancel"
+    />
     <div
       v-if="businessCategoryCreatePickerVisible"
       class="business-category-picker-backdrop"
@@ -577,6 +587,7 @@ import ListPage from '../pages/ListPage.vue';
 import KanbanPage from '../pages/KanbanPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
+import ProductConfirmDialog from '../components/ProductConfirmDialog.vue';
 import GroupSummaryBar from '../components/GroupSummaryBar.vue';
 import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import ActionSurfaceToolbar from '../components/action/ActionSurfaceToolbar.vue';
@@ -585,6 +596,7 @@ import { isHudEnabled, isSceneBlocksDebugEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useStatus } from '../composables/useStatus';
+import { useProductConfirmDialog } from '../composables/useProductConfirmDialog';
 import {
   parseContractContextRaw,
   resolveContractAccessPolicy,
@@ -939,6 +951,7 @@ const hasAssigneeField = ref(false);
 const selectedAssigneeId = ref<number | null>(null);
 const selectedIds = ref<number[]>([]);
 const batchMessage = ref('');
+const batchDeleteConfirm = useProductConfirmDialog();
 const groupRuntimeCapsule = createActionViewGroupRuntimeCapsule();
 const { state: groupRuntimeState } = groupRuntimeCapsule;
 const {
@@ -1891,7 +1904,14 @@ async function runBatchPolicyAction(action: 'archive' | 'activate' | 'delete') {
     return;
   }
   if (action === 'delete') {
-    if (!confirm(toolbarUiLabel('batch_confirm_delete', `确认删除选中的 ${selected.length} 条记录？`))) {
+    const confirmed = await batchDeleteConfirm.open({
+      title: toolbarUiLabel('batch_confirm_delete_title', '确认删除记录'),
+      message: toolbarUiLabel('batch_confirm_delete', `确认删除选中的 ${selected.length} 条记录？`),
+      confirmLabel: toolbarUiLabel('batch_confirm_delete_ok', '删除'),
+      cancelLabel: toolbarUiLabel('batch_confirm_delete_cancel', '取消'),
+      tone: 'danger',
+    });
+    if (!confirmed) {
       return;
     }
     const seed = resolveBatchDeleteExecutionSeed({
