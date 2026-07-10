@@ -216,8 +216,10 @@ export async function intentRequest<T>(payload: IntentPayload) {
     if (!parsed.ok) {
       throwEnvelopeError(effectivePayload, envelopeTrace, parsed.error);
     }
-    // eslint-disable-next-line no-console
-    console.info(`[trace] intent=${effectivePayload.intent} status=ok trace=${envelopeTrace}`);
+    if (import.meta.env.DEV) {
+      const devConsole = console;
+      devConsole.info(`[trace] intent=${effectivePayload.intent} status=ok trace=${envelopeTrace}`);
+    }
     return parsed.data;
   } catch (err) {
     const errorTrace = err instanceof ApiError ? err.traceId || traceId : traceId;
@@ -227,10 +229,9 @@ export async function intentRequest<T>(payload: IntentPayload) {
       latencyMs: Date.now() - startedAt,
       writeMode: effectivePayload.intent.includes('write') || effectivePayload.intent.includes('create') ? 'write' : 'read',
     });
-    // eslint-disable-next-line no-console
-    if (!effectivePayload.silentErrors) {
-      // eslint-disable-next-line no-console
-      console.warn(`[trace] intent=${effectivePayload.intent} status=error trace=${errorTrace}`);
+    if (import.meta.env.DEV && !effectivePayload.silentErrors) {
+      const devConsole = console;
+      devConsole.warn(`[trace] intent=${effectivePayload.intent} status=error trace=${errorTrace}`);
     }
     throw err;
   }

@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCAN_DIRS = [
+    ROOT / "frontend" / "apps" / "web" / "src" / "app",
     ROOT / "frontend" / "apps" / "web" / "src" / "app" / "action_runtime",
     ROOT / "frontend" / "apps" / "web" / "src" / "app" / "assemblers",
     ROOT / "frontend" / "apps" / "web" / "src" / "app" / "contracts",
@@ -245,6 +246,9 @@ FORBIDDEN_PHRASES = {
     "localStorage.getItem('__HUD__')": "生产构建不能通过本地存储打开 HUD 诊断",
     "localStorage.getItem('__SCENE_BLOCKS__')": "生产构建不能通过本地存储打开场景区块诊断",
     "Token 前10位": "前端诊断日志不能输出令牌片段",
+    "console.info(`[trace]": "intent trace 不能直接输出到生产控制台",
+    "console.warn(`[trace]": "intent trace 不能直接输出到生产控制台",
+    "console.info('[noise-guard]": "浏览器扩展噪音处理不能直接输出到生产控制台",
     "window.alert(err instanceof Error ? err.message : '附件打开失败')": "列表页附件错误必须使用页面内反馈",
     "confirm(toolbarUiLabel('batch_confirm_delete'": "列表批量删除必须使用产品化确认弹窗",
     "confirm('确认删除这条关联记录？')": "关联记录删除必须使用产品化确认弹窗",
@@ -302,7 +306,7 @@ def iter_files() -> list[Path]:
         for path in directory.rglob("*"):
             if path.is_file() and path.suffix in SCAN_SUFFIXES:
                 files.append(path)
-    return sorted(files)
+    return sorted(set(files))
 
 
 def main() -> int:

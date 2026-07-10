@@ -28,8 +28,10 @@ function installExtensionNoiseGuard() {
       return;
     }
     event.preventDefault();
-    // eslint-disable-next-line no-console
-    console.info('[noise-guard] ignored browser extension error', { filename, message });
+    if (import.meta.env.DEV) {
+      const devConsole = console;
+      devConsole.info('[noise-guard] ignored browser extension error', { filename, message });
+    }
   });
   window.addEventListener('unhandledrejection', (event) => {
     const reason = (event as PromiseRejectionEvent).reason;
@@ -38,8 +40,10 @@ function installExtensionNoiseGuard() {
       return;
     }
     event.preventDefault();
-    // eslint-disable-next-line no-console
-    console.info('[noise-guard] ignored browser extension rejection', { message });
+    if (import.meta.env.DEV) {
+      const devConsole = console;
+      devConsole.info('[noise-guard] ignored browser extension rejection', { message });
+    }
   });
 }
 
