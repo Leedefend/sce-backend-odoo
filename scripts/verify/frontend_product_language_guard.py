@@ -231,6 +231,8 @@ FORBIDDEN_PHRASES = {
     "HUD: orchestration_blocks": "首页验收信息不能暴露工程字段名",
     "scene_key={{": "首页入口验收信息不能暴露工程字段名",
     "capability_key={{": "首页入口验收信息不能暴露工程字段名",
+    "兜底入口": "应用壳层 HUD 指标必须使用产品化入口口径",
+    "auto=[": "应用壳层 HUD 治理摘要不能直接暴露工程原因编码",
     "return `mode=${mode}": "表单契约元信息不能暴露工程字段名",
     "view_type=${viewType}": "表单契约元信息不能暴露工程字段名",
     "profile=${renderProfile.value}": "表单契约元信息不能暴露工程字段名",

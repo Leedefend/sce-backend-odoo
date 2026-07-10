@@ -1082,13 +1082,26 @@ const sceneGovernanceGatesSummary = computed(() => {
 const sceneGovernanceReasonsSummary = computed(() => {
   const reasons = asDict(sceneGovernanceSnapshot.value?.reasons);
   if (!reasons) return '-';
+  const adjustmentCount = Array.isArray(reasons.auto_degrade_reason_codes)
+    ? reasons.auto_degrade_reason_codes.map((item) => String(item || '')).filter(Boolean).length
+    : 0;
+  const issueCount = Array.isArray(reasons.resolve_error_codes)
+    ? reasons.resolve_error_codes.map((item) => String(item || '')).filter(Boolean).length
+    : 0;
+  return `自动调整：${adjustmentCount}；解析异常：${issueCount}`;
+});
+
+const sceneGovernanceQualitySummary = computed(() => {
+  const reasons = asDict(sceneGovernanceSnapshot.value?.reasons);
+  if (!reasons) return '-';
   const autoCodes = Array.isArray(reasons.auto_degrade_reason_codes)
     ? reasons.auto_degrade_reason_codes.map((item) => String(item || '')).filter(Boolean)
     : [];
   const resolveCodes = Array.isArray(reasons.resolve_error_codes)
     ? reasons.resolve_error_codes.map((item) => String(item || '')).filter(Boolean)
     : [];
-  return `auto=[${autoCodes.join(',') || '-'}] resolve=[${resolveCodes.join(',') || '-'}]`;
+  if (!autoCodes.length && !resolveCodes.length) return '正常';
+  return '需关注';
 });
 
 const sceneGovernanceConsumptionSummary = computed(() => {
@@ -1138,6 +1151,7 @@ const hudEntries = computed(() => {
       { label: '运行来源', value: String(sceneGovernanceSnapshot.value.runtime_source || '-') },
       { label: '治理门禁', value: sceneGovernanceGatesSummary.value },
       { label: '治理原因', value: sceneGovernanceReasonsSummary.value },
+      { label: '治理质量', value: sceneGovernanceQualitySummary.value },
       { label: '场景消费', value: sceneGovernanceConsumptionSummary.value },
     );
   }
@@ -1146,9 +1160,9 @@ const hudEntries = computed(() => {
       { label: '业务集合数', value: String(extractionStats.value.business_collections ?? '-') },
       { label: '业务数据行数', value: String(extractionStats.value.business_rows_total ?? '-') },
       { label: '今日业务入口', value: String(extractionStats.value.today_actions_business ?? '-') },
-      { label: '今日兜底入口', value: String(extractionStats.value.today_actions_fallback ?? '-') },
+      { label: '今日补充入口', value: String(extractionStats.value.today_actions_fallback ?? '-') },
       { label: '风险业务入口', value: String(extractionStats.value.risk_actions_business ?? '-') },
-      { label: '风险兜底入口', value: String(extractionStats.value.risk_actions_fallback ?? '-') },
+      { label: '风险补充入口', value: String(extractionStats.value.risk_actions_fallback ?? '-') },
     );
   }
   return entries;
