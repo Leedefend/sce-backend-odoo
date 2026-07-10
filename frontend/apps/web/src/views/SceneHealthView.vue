@@ -2,14 +2,14 @@
   <section class="scene-health">
     <header v-if="pageSectionEnabled('header', true) && pageSectionTagIs('header', 'header')" class="header" :style="pageSectionStyle('header')">
       <div>
-        <h2>{{ pageText('title', 'Scene Health Dashboard') }}</h2>
+        <h2>{{ pageText('title', '场景健康状态') }}</h2>
         <p>{{ pageText('subtitle', '可视化查看场景健康状态与自动降级结果。') }}</p>
       </div>
       <div class="actions">
         <label>
-          <span>Company</span>
+          <span>公司</span>
           <select v-model="companyIdText" @change="loadHealth">
-            <option value="">Current</option>
+            <option value="">当前公司</option>
             <option v-for="company in companies" :key="company.id" :value="String(company.id)">
               {{ company.name }}
             </option>
@@ -28,7 +28,7 @@
 
     <StatusPanel
       v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && loading"
-      :title="pageText('loading_title', 'Loading scene health...')"
+      :title="pageText('loading_title', '正在加载场景健康状态')"
       variant="info"
       :style="pageSectionStyle('status_loading')"
     />
@@ -55,35 +55,35 @@
       :style="pageSectionStyle('content')"
     >
       <article class="pill-row">
-        <span class="pill">channel: {{ health.scene_channel || '-' }}</span>
+        <span class="pill">通道：{{ sceneChannelLabel(health.scene_channel) }}</span>
         <span class="pill" :class="{ warn: health.rollback_active }">
-          rollback: {{ health.rollback_active ? 'active' : 'off' }}
+          回滚：{{ health.rollback_active ? '已启用' : '未启用' }}
         </span>
-        <span class="pill">version: {{ health.scene_version || '-' }}</span>
-        <span class="pill">schema: {{ health.schema_version || '-' }}</span>
+        <span class="pill">版本：{{ health.scene_version || '-' }}</span>
+        <span class="pill">结构：{{ health.schema_version || '-' }}</span>
       </article>
 
       <section v-if="pageSectionEnabled('cards', true) && pageSectionTagIs('cards', 'section')" class="cards" :style="pageSectionStyle('cards')">
         <article class="card danger">
-          <h3>Critical Resolve Errors</h3>
+          <h3>关键解析错误</h3>
           <p>{{ health.summary.critical_resolve_errors_count }}</p>
         </article>
         <article class="card danger">
-          <h3>Critical Drift Warn</h3>
+          <h3>关键漂移预警</h3>
           <p>{{ health.summary.critical_drift_warn_count }}</p>
         </article>
         <article class="card">
-          <h3>Non-Critical Debt</h3>
+          <h3>一般治理项</h3>
           <p>{{ health.summary.non_critical_debt_count }}</p>
         </article>
       </section>
 
       <article v-if="pageSectionEnabled('meta', true) && pageSectionTagIs('meta', 'section')" class="meta" :style="pageSectionStyle('meta')">
-        <p><strong>contract_ref:</strong> {{ health.contract_ref || '-' }}</p>
-        <p><strong>trace_id:</strong> {{ health.trace_id || '-' }}</p>
-        <p><strong>updated_at:</strong> {{ health.last_updated_at || '-' }}</p>
-        <p><strong>auto_degrade:</strong> {{ autoDegradeLabel }}</p>
-        <p v-if="governanceTraceId"><strong>governance_trace:</strong> {{ governanceTraceId }}</p>
+        <p><strong>契约引用：</strong> {{ health.contract_ref || '-' }}</p>
+        <p><strong>追踪 ID：</strong> {{ health.trace_id || '-' }}</p>
+        <p><strong>更新时间：</strong> {{ health.last_updated_at || '-' }}</p>
+        <p><strong>自动降级：</strong> {{ autoDegradeLabel }}</p>
+        <p v-if="governanceTraceId"><strong>治理追踪：</strong> {{ governanceTraceId }}</p>
       </article>
 
       <article
@@ -91,34 +91,34 @@
         class="meta"
         :style="pageSectionStyle('governance_runtime')"
       >
-        <p><strong>governance.scene_channel:</strong> {{ governanceSnapshot.scene_channel || '-' }}</p>
-        <p><strong>governance.runtime_source:</strong> {{ governanceSnapshot.runtime_source || '-' }}</p>
-        <p><strong>governance.gates:</strong> {{ governanceGatesLabel }}</p>
-        <p><strong>governance.reasons:</strong> {{ governanceReasonsLabel }}</p>
-        <p><strong>governance.scene_ready_consumption:</strong> {{ governanceConsumptionLabel }}</p>
+        <p><strong>治理通道：</strong> {{ sceneChannelLabel(governanceSnapshot.scene_channel) }}</p>
+        <p><strong>运行来源：</strong> {{ governanceSnapshot.runtime_source || '-' }}</p>
+        <p><strong>治理门禁：</strong> {{ governanceGatesLabel }}</p>
+        <p><strong>治理原因：</strong> {{ governanceReasonsLabel }}</p>
+        <p><strong>场景消费：</strong> {{ governanceConsumptionLabel }}</p>
       </article>
 
       <section v-if="pageSectionEnabled('governance', true) && pageSectionTagIs('governance', 'section')" class="governance" :style="pageSectionStyle('governance')">
-        <h3>Governance Actions</h3>
+        <h3>治理操作</h3>
         <div class="governance-grid">
           <label>
-            <span>Target Channel</span>
+            <span>目标通道</span>
             <select v-model="targetChannel">
-              <option value="stable">stable</option>
-              <option value="beta">beta</option>
-              <option value="dev">dev</option>
+              <option value="stable">稳定版</option>
+              <option value="beta">灰度版</option>
+              <option value="dev">开发版</option>
             </select>
           </label>
           <label class="reason">
-            <span>Reason (required)</span>
-            <input v-model="governanceReason" type="text" placeholder="input reason" />
+            <span>操作说明（必填）</span>
+            <input v-model="governanceReason" type="text" placeholder="填写本次治理原因" />
           </label>
         </div>
         <div class="governance-actions">
-          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('set_channel')">Set Channel</button>
-          <button class="danger" :disabled="governanceBusy" @click="runGovernance('rollback')">Rollback</button>
-          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('pin_stable')">Pin Stable</button>
-          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('export_contract')">Export Contract</button>
+          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('set_channel')">切换通道</button>
+          <button class="danger" :disabled="governanceBusy" @click="runGovernance('rollback')">回滚稳定版</button>
+          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('pin_stable')">固定稳定版</button>
+          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('export_contract')">导出契约</button>
         </div>
       </section>
 
@@ -127,7 +127,7 @@
         :style="pageSectionStyle('details_resolve_errors')"
         :open="pageSectionOpenDefault('details_resolve_errors', true)"
       >
-        <summary>Resolve Errors ({{ health.details?.resolve_errors?.length || 0 }})</summary>
+        <summary>解析错误（{{ health.details?.resolve_errors?.length || 0 }}）</summary>
         <pre>{{ JSON.stringify(health.details?.resolve_errors || [], null, 2) }}</pre>
       </details>
       <details
@@ -135,7 +135,7 @@
         :style="pageSectionStyle('details_drift')"
         :open="pageSectionOpenDefault('details_drift', false)"
       >
-        <summary>Drift ({{ health.details?.drift?.length || 0 }})</summary>
+        <summary>配置漂移（{{ health.details?.drift?.length || 0 }}）</summary>
         <pre>{{ JSON.stringify(health.details?.drift || [], null, 2) }}</pre>
       </details>
       <details
@@ -143,7 +143,7 @@
         :style="pageSectionStyle('details_debt')"
         :open="pageSectionOpenDefault('details_debt', false)"
       >
-        <summary>Debt ({{ health.details?.debt?.length || 0 }})</summary>
+        <summary>治理事项（{{ health.details?.debt?.length || 0 }}）</summary>
         <pre>{{ JSON.stringify(health.details?.debt || [], null, 2) }}</pre>
       </details>
     </div>
@@ -191,18 +191,26 @@ const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionOpenDefault = pageContract.sectionOpenDefault;
 const pageSectionTagIs = pageContract.sectionTagIs;
-const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', 'health request failed')));
+const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', '场景健康状态加载失败')));
 const headerActions = computed(() => {
   if (pageGlobalActions.value.length) return pageGlobalActions.value;
-  return [{ key: 'refresh_page', label: pageActionText('refresh_page', 'Refresh'), intent: 'api.data' }];
+  return [{ key: 'refresh_page', label: pageActionText('refresh_page', '刷新'), intent: 'api.data' }];
 });
 
 const autoDegradeLabel = computed(() => {
   const value = health.value?.auto_degrade;
-  if (!value) return 'triggered=false';
+  if (!value) return '已触发=否';
   const reasons = Array.isArray(value.reason_codes) && value.reason_codes.length ? value.reason_codes.join(',') : '-';
-  return `triggered=${Boolean(value.triggered)} action=${value.action_taken || '-'} reasons=${reasons}`;
+  return `已触发=${Boolean(value.triggered) ? '是' : '否'}；动作=${value.action_taken || '-'}；原因=${reasons}`;
 });
+
+function sceneChannelLabel(value: unknown): string {
+  const channel = String(value || '');
+  if (channel === 'stable') return '稳定版';
+  if (channel === 'beta') return '灰度版';
+  if (channel === 'dev') return '开发版';
+  return channel || '-';
+}
 
 const governanceSnapshot = computed(() => {
   const value = session.sceneGovernanceV1;
@@ -214,12 +222,12 @@ const governanceGatesLabel = computed(() => {
   if (!gates || typeof gates !== 'object') return '-';
   const row = gates as Record<string, unknown>;
   return [
-    `orchestrator=${Boolean(row.orchestrator_applied)}`,
-    `governance=${Boolean(row.governance_applied)}`,
-    `delivery=${Boolean(row.delivery_policy_applied)}`,
-    `nav_policy_ok=${Boolean(row.nav_policy_validation_ok)}`,
-    `auto_degrade=${Boolean(row.auto_degrade_triggered)}`,
-  ].join(' | ');
+    `编排=${Boolean(row.orchestrator_applied) ? '已应用' : '未应用'}`,
+    `治理=${Boolean(row.governance_applied) ? '已应用' : '未应用'}`,
+    `交付策略=${Boolean(row.delivery_policy_applied) ? '已应用' : '未应用'}`,
+    `导航策略=${Boolean(row.nav_policy_validation_ok) ? '通过' : '未通过'}`,
+    `自动降级=${Boolean(row.auto_degrade_triggered) ? '已触发' : '未触发'}`,
+  ].join('；');
 });
 
 const governanceReasonsLabel = computed(() => {
@@ -234,7 +242,7 @@ const governanceReasonsLabel = computed(() => {
     : [];
   const autoText = autoCodes.length ? autoCodes.join(',') : '-';
   const resolveText = resolveCodes.length ? resolveCodes.join(',') : '-';
-  return `auto_degrade=[${autoText}] resolve_errors=[${resolveText}]`;
+  return `自动降级=[${autoText}]；解析错误=[${resolveText}]`;
 });
 
 const governanceConsumptionLabel = computed(() => {
@@ -255,7 +263,7 @@ const governanceConsumptionLabel = computed(() => {
     : {};
   const baseSearch = Number(baseRate.search || 0).toFixed(2);
   const surfaceAction = Number(surfaceRate.action_surface || 0).toFixed(2);
-  return `enabled=${enabled} scene_types=${sceneTypes} scenes=${scenes} base.search=${baseSearch} surface.action=${surfaceAction}`;
+  return `启用=${enabled ? '是' : '否'}；场景类型=${sceneTypes}；场景=${scenes}；基础检索=${baseSearch}；操作面=${surfaceAction}`;
 });
 
 function validateHealthContract(raw: unknown): SceneHealthContract {
@@ -319,7 +327,7 @@ async function loadHealth() {
     errorTraceId.value = parsed.trace_id || response.traceId || '';
   } catch (err) {
     health.value = null;
-    errorText.value = err instanceof Error ? err.message : pageText('error_fallback', 'health request failed');
+    errorText.value = err instanceof Error ? err.message : pageText('error_fallback', '场景健康状态加载失败');
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';
   } finally {
@@ -350,7 +358,7 @@ async function executeHeaderAction(actionKey: string) {
 async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' | 'export_contract') {
   const reason = governanceReason.value.trim();
   if (!reason) {
-    errorText.value = pageText('error_reason_required', 'reason is required for governance action');
+    errorText.value = pageText('error_reason_required', '请填写治理操作说明');
     statusError.value = { message: errorText.value };
     return;
   }
@@ -359,7 +367,7 @@ async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' |
   statusError.value = null;
   try {
     if (action === 'rollback') {
-      const ok = window.confirm('Confirm rollback to stable pinned mode?');
+      const ok = window.confirm('确认回滚并固定到稳定版？');
       if (!ok) {
         governanceBusy.value = false;
         return;
@@ -383,7 +391,7 @@ async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' |
     governanceTraceId.value = response.data.trace_id || response.traceId || '';
     await loadHealth();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : pageText('error_governance_failed', 'governance action failed');
+    errorText.value = err instanceof Error ? err.message : pageText('error_governance_failed', '治理操作失败');
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';
   } finally {
