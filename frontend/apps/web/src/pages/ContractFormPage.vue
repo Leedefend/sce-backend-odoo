@@ -1029,6 +1029,28 @@
       title="表单上下文"
       :entries="hudEntries"
     />
+    <ProductConfirmDialog
+      :open="actionSafetyConfirm.state.open"
+      :title="actionSafetyConfirm.state.title"
+      :message="actionSafetyConfirm.state.message"
+      :confirm-label="actionSafetyConfirm.state.confirmLabel"
+      :cancel-label="actionSafetyConfirm.state.cancelLabel"
+      :tone="actionSafetyConfirm.state.tone"
+      @confirm="actionSafetyConfirm.confirm"
+      @cancel="actionSafetyConfirm.cancel"
+    />
+    <ProductInputDialog
+      :open="actionInputDialog.state.open"
+      :title="actionInputDialog.state.title"
+      :label="actionInputDialog.state.label"
+      :placeholder="actionInputDialog.state.placeholder"
+      :value="actionInputDialog.state.value"
+      :confirm-label="actionInputDialog.state.confirmLabel"
+      :cancel-label="actionInputDialog.state.cancelLabel"
+      :required="actionInputDialog.state.required"
+      @confirm="actionInputDialog.confirm"
+      @cancel="actionInputDialog.cancel"
+    />
 
     <div
       v-if="relationSearchDialog.open"
@@ -1125,6 +1147,8 @@ import { useRoute, useRouter } from 'vue-router';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
+import ProductConfirmDialog from '../components/ProductConfirmDialog.vue';
+import ProductInputDialog from '../components/ProductInputDialog.vue';
 import AttachmentViewer from '../components/attachment/AttachmentViewer.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
 import PageHeaderTemplate from '../components/template/PageHeader.vue';
@@ -1144,6 +1168,8 @@ import { mapDescriptorSelectionOptions, mapRelationOptions } from '../components
 import { dispatchTemplateFieldChange } from '../components/template/fieldChange.dispatcher';
 import { isHudEnabled, isSceneBlocksDebugEnabled } from '../config/debug';
 import { config } from '../config';
+import { useProductConfirmDialog } from '../composables/useProductConfirmDialog';
+import { useProductInputDialog } from '../composables/useProductInputDialog';
 import { intentRequest } from '../api/intents';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { ApiError } from '../api/client';
@@ -1328,10 +1354,17 @@ function resolveV2ButtonStatus(
   return null;
 }
 
-function collectActionParams(action: ContractAction): Record<string, unknown> | null {
+async function collectActionParams(action: ContractAction): Promise<Record<string, unknown> | null> {
   const requiredParams = new Set((action.requiredParams || []).map((item) => item.toLowerCase()));
   if (!action.requiresReason && !requiredParams.has('reason')) return {};
-  const reason = window.prompt(`${action.label || '操作'}原因`)?.trim() || '';
+  const reason = (await actionInputDialog.open({
+    title: `${action.label || '操作'}原因`,
+    label: '操作原因',
+    placeholder: '请填写本次操作原因',
+    confirmLabel: '继续',
+    cancelLabel: '取消',
+    required: true,
+  }))?.trim() || '';
   if (!reason) {
     errorMessage.value = '请填写操作原因';
     status.value = 'error';
@@ -1508,6 +1541,8 @@ const formSettingsActiveTab = ref<'structure' | 'fields' | 'details' | 'actions'
 const contractModeFeedback = ref('');
 const contractPromptRule = ref<Record<string, unknown> | null>(null);
 const contractPromptValues = reactive<Record<string, string>>({});
+const actionSafetyConfirm = useProductConfirmDialog();
+const actionInputDialog = useProductInputDialog();
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
 const v2ContractStore = ref<ContractV2NormalizedStore | null>(null);
@@ -5637,7 +5672,14 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
     });
   } catch (err) {
     if (relation === 'sc.dictionary' && mode === 'page' && entry?.canCreate && Object.keys(entry?.defaultVals || {}).length) {
-      const label = String(window.prompt(relationUiLabel(descriptor, 'page_unavailable_prompt')) || '').trim();
+      const label = String(await actionInputDialog.open({
+        title: relationUiLabel(descriptor, 'page_unavailable_prompt'),
+        label: relationUiLabel(descriptor, 'create_label_placeholder'),
+        placeholder: relationUiLabel(descriptor, 'create_label_placeholder'),
+        confirmLabel: relationUiLabel(descriptor, 'quick_create_confirm'),
+        cancelLabel: relationUiLabel(descriptor, 'cancel'),
+        required: true,
+      }) || '').trim();
       if (label) await quickCreateRelation(fieldName, descriptor, label);
       return;
     }
@@ -6578,7 +6620,7 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
   const action = contractActionFromNativeRow(row);
   if (!action) return;
   if ((action.kind === 'object' || action.kind === 'server') && action.methodName && recordId.value) {
-    if (!action.enabled || !confirmActionSafety(action)) return;
+    if (!action.enabled || !await confirmActionSafety(action)) return;
     if (!await ensureSavedBeforeRecordAction()) return;
     busyKind.value = 'action';
     try {
@@ -9785,11 +9827,17 @@ onErrorCaptured((err) => {
   return false;
 });
 
-function confirmActionSafety(action: ContractAction) {
+async function confirmActionSafety(action: ContractAction) {
   const safety = action.actionSafety;
   if (!safety || safety.classification !== 'danger' || !safety.requiresConfirm) return true;
   const message = safety.confirmMessage || action.hint || action.label;
-  return window.confirm(message);
+  return actionSafetyConfirm.open({
+    title: '确认执行操作',
+    message: String(message || '该操作执行后将立即生效，请确认是否继续。'),
+    confirmLabel: '继续',
+    cancelLabel: '取消',
+    tone: 'danger',
+  });
 }
 
 async function ensureSavedBeforeRecordAction() {
@@ -9819,7 +9867,7 @@ function applyRouteConfigMode(rawMode: unknown) {
   }
 }
 
-function promptContractActionParams(rule: Record<string, unknown>, providedValues?: Record<string, string>) {
+function promptContractActionParams(rule: Record<string, unknown>, providedValues: Record<string, string> = {}) {
   const target = parseMaybeJsonRecord(rule.target);
   const params = { ...parseMaybeJsonRecord(target.params || rule.params) };
   const promptSchema = parseMaybeJsonRecord(target.prompt_schema || target.promptSchema || rule.prompt_schema || rule.promptSchema);
@@ -9838,9 +9886,7 @@ function promptContractActionParams(rule: Record<string, unknown>, providedValue
       .map((row) => `${String(row.value || '').trim()}=${String(row.label || row.value || '').trim()}`)
       .filter(Boolean);
     const suffix = options.length ? ` (${options.join(', ')})` : '';
-    const rawValue = providedValues
-      ? String(providedValues[name] || '').trim()
-      : window.prompt(`${label}${suffix}`, String(field.default || ''))?.trim() || '';
+    const rawValue = String(providedValues[name] || '').trim();
     const optionMatch = optionRows.find((row) => (
       String(row.value || '').trim() === rawValue
       || String(row.label || '').trim() === rawValue
@@ -9893,6 +9939,10 @@ async function runContractRuleAction(rule: Record<string, unknown>, providedPara
     return;
   }
   if (!intent) return;
+  if (!providedParams && rulePromptFields(rule).length) {
+    openContractModeAction(rule);
+    return;
+  }
   const params = providedParams || promptContractActionParams(rule);
   if (params === null) return;
   busyKind.value = 'action';
@@ -10800,7 +10850,7 @@ async function saveContractFieldOrder() {
 
 async function runAction(action: ContractAction) {
   if (!action.enabled) return;
-  if (!confirmActionSafety(action)) return;
+  if (!await confirmActionSafety(action)) return;
   if (action.intent === 'ui.local_mode' || action.intent === 'ui.mode' || action.clientMode) {
     applyClientMode(action.clientMode, true);
     return;
@@ -10842,7 +10892,7 @@ async function runAction(action: ContractAction) {
     return;
   }
   if (action.mutation) {
-    const params = collectActionParams(action);
+    const params = await collectActionParams(action);
     if (params === null) return;
     busyKind.value = 'action';
     try {
@@ -10948,7 +10998,7 @@ async function runPrimaryFormAction() {
 }
 
 async function executePrimarySubmitAction(action: ContractAction, resId: number) {
-  if (!confirmActionSafety(action)) return;
+  if (!await confirmActionSafety(action)) return;
   busyKind.value = 'action';
   try {
     const response = await executeButton({

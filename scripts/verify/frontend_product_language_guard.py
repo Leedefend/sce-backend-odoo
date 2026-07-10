@@ -206,6 +206,10 @@ FORBIDDEN_PHRASES = {
     "window.confirm(`确认删除新增菜单": "菜单删除必须使用产品化确认弹窗",
     "window.confirm([\n    `确认恢复": "配置版本恢复必须使用产品化确认弹窗",
     "window.confirm(\n    `${pageText('confirm_batch_complete_prefix'": "我的工作台批量完成必须使用产品化确认弹窗",
+    "window.prompt(`${action.label || '操作'}原因`)": "表单操作原因必须使用产品化输入弹窗",
+    "window.prompt(relationUiLabel(descriptor, 'page_unavailable_prompt'))": "表单关联快速创建必须使用产品化输入弹窗",
+    "return window.confirm(message)": "表单危险操作必须使用产品化确认弹窗",
+    "window.prompt(`${label}${suffix}`": "表单动态参数必须使用页面内参数表单",
 }
 
 
