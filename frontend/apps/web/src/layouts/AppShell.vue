@@ -156,7 +156,7 @@
 
     <section
       class="content"
-      :class="{ 'content--scene-compact': sceneHeaderMinimal, 'content--with-activity-tabs': activityPages.length }"
+      :class="{ 'content--scene-compact': sceneHeaderMinimal, 'content--with-activity-tabs': visibleActivityPages.length }"
     >
       <header
         class="topbar sc-toolbar"
@@ -203,9 +203,9 @@
         </div>
       </header>
 
-      <nav v-if="activityPages.length" class="activity-tabs" aria-label="活动页面">
+      <nav v-if="visibleActivityPages.length" class="activity-tabs" aria-label="办理页切换">
         <div
-          v-for="page in activityPages"
+          v-for="page in visibleActivityPages"
           :key="page.key"
           class="activity-tab"
           :class="{ active: page.key === activeActivityPageKey }"
@@ -228,6 +228,7 @@
             ×
           </button>
         </div>
+        <span v-if="hiddenActivityPageCount > 0" class="activity-tabs-count">+{{ hiddenActivityPageCount }}</span>
       </nav>
 
       <StatusPanel
@@ -1399,7 +1400,26 @@ function filterNodes(nodes: NavNode[], q: string): NavNode[] {
 
 const filteredMenu = computed(() => filterNodes(visibleMenuNodes.value, query.value));
 const isConfigurationRoute = computed(() => route.path.startsWith('/admin/'));
+const routeSupportsActivityTabs = computed(() =>
+  route.name === 'record' || route.name === 'model-form',
+);
 const activityPages = computed(() => (isConfigurationRoute.value ? [] : session.activityPages));
+const visibleActivityPages = computed(() => {
+  if (!routeSupportsActivityTabs.value) return [];
+  const pages = activityPages.value.filter((page) => page.kind === 'record_form');
+  if (!pages.length) return [];
+  const activeKey = activeActivityPageKey.value;
+  const visibleKeys = new Set<string>();
+  if (activeKey) visibleKeys.add(activeKey);
+  [...pages]
+    .sort((a, b) => b.last_active_at - a.last_active_at)
+    .slice(0, 4)
+    .forEach((page) => visibleKeys.add(page.key));
+  return pages.filter((page) => visibleKeys.has(page.key)).sort((a, b) => a.created_at - b.created_at);
+});
+const hiddenActivityPageCount = computed(() =>
+  Math.max(0, activityPages.value.filter((page) => page.kind === 'record_form').length - visibleActivityPages.value.length),
+);
 const activeActivityPageKey = computed(() => (isConfigurationRoute.value ? '' : session.activeActivityPageKey));
 
 function buildMenuSelectionQuery(): LocationQueryRaw {
@@ -2183,6 +2203,20 @@ async function logout() {
   overflow-y: hidden;
   padding: 0 2px 1px;
   scrollbar-width: thin;
+}
+
+.activity-tabs-count {
+  flex: 0 0 auto;
+  height: 26px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .activity-tab {
