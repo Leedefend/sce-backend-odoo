@@ -631,7 +631,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     schema_version: "config_workbench_product_usability.v1",
     delivery_status: blockingIssues.length ? "delivery_blocked" : (scoreTotal >= 20 && !zeroScoreDimensions.length ? "delivery_ready" : "delivery_risk"),
     score_total: scoreTotal,
-    score_required: 20,
+    score_required: maxScore,
     max_score: maxScore,
     dimensions,
     page_structure: pageStructure,
