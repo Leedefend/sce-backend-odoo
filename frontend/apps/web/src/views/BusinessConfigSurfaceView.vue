@@ -278,8 +278,8 @@
               </div>
               <div v-if="advancedPanelOpen" class="scan-row-admin-actions">
                 <span>{{ severityLabel(row.severity) }}</span>
-                <span v-if="row.missing_view_types.length">需补 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
-                <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
+                <span v-if="row.missing_view_types.length">待配置 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
+                <span v-if="row.runtime_missing_view_types.length">办理页未生效 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
               </div>
               <div class="scan-row-actions">
                 <button
@@ -457,9 +457,9 @@
           <span>{{ row.view_mode || '-' }}</span>
           <span>菜单 {{ row.menu_count }}</span>
           <span v-if="row.user_preference_count">个人设置 {{ row.user_preference_count }} · {{ boundaryLabel(row.user_preference_boundary) }}</span>
-          <span v-if="row.missing_view_types.length">需补 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
+          <span v-if="row.missing_view_types.length">待配置 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
           <span v-else>配置完整</span>
-          <span v-if="row.runtime_missing_view_types.length">运行时未命中 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
+          <span v-if="row.runtime_missing_view_types.length">办理页未生效 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
           <span v-else>运行时完整</span>
           <span>{{ runtimeEvidenceText(row) }}</span>
           <span v-if="runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
@@ -1893,7 +1893,7 @@ function rowActionHintText(row: BusinessConfigCoverageScanItem) {
   const reasons = new Set(Object.values(row.runtime_gap_reasons || {}).map((item) => String(item || '').trim()).filter(Boolean));
   if (reasons.has('missing_contract')) {
     const missingContractTypes = rowMissingContractViewTypes(row);
-    return `需补 ${missingContractTypes.map(viewTypeLabel).join('、')}`;
+    return `待配置 ${missingContractTypes.map(viewTypeLabel).join('、')}`;
   }
   if (reasons.has('not_published')) return '需发布配置版本';
   if (reasons.has('not_runtime_applicable')) return '需检查作用域';
