@@ -274,6 +274,16 @@ assertDocContainsAll(
   CONFIG_WORKBENCH_OPERATION_COVERAGE.screenshotKeys,
   "config workbench acceptance doc must document every screenshot evidence key",
 );
+assertDocContainsAll(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  CONFIG_WORKBENCH_OPERATION_COVERAGE.productUsabilityTasks,
+  "config workbench acceptance doc must document every product usability task key",
+);
+assertDocContainsAll(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  CONFIG_WORKBENCH_OPERATION_COVERAGE.professionalDimensions,
+  "config workbench acceptance doc must document every professional readiness dimension key",
+);
 assertContains(
   "docs/product/product_page_structure_design_v1.md",
   /PAGE_MODES[\s\S]+PRODUCT_PAGE_REGION_CLASSES|PRODUCT_PAGE_REGION_CLASSES[\s\S]+PAGE_MODES/,

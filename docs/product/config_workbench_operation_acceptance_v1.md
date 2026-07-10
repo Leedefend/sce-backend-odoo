@@ -298,6 +298,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - `page_structure`：页面结构合同逐项结果。
 - `evidence`：截图、报告路径、浏览器验证命令。
 
+`task_results` 必须覆盖 8 个用户任务：`find_business_page`、`understand_config_scope`、`configure_form_fields`、`configure_list_search`、`configure_approval_rules`、`configure_menu_entry`、`return_to_workbench`、`mobile_operation`，且逐项 `status = pass`。
+
 只有操作级门禁通过且 `delivery_status = delivery_ready` 时，才能说“配置工作台已经达到正式交付用户使用的产品标准”。
 
 ## 专业产品水准验收标准
@@ -312,6 +314,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | `professional_blocked` | 任一专业维度失败，或交付验收未通过 | 否 |
 
 专业产品验收采用 10 个维度，每项 0 或 3 分，满分 30 分。必须 `score_total = 30 / 30`，且 `blockers = []`，才能认定为 `professional_ready`。
+
+`professional_readiness.dimensions` 必须覆盖：`user_task_closure`、`page_structure_contract`、`cognitive_load_control`、`naming_and_language_consistency`、`capability_depth`、`workflow_recovery`、`responsive_resilience`、`boundary_integrity`、`operational_health`、`evidence_and_repeatability`，且逐项满分。
 
 | 维度 | 专业水准要求 |
 | --- | --- |
