@@ -54,8 +54,8 @@
       >
         <h3>导入能力包</h3>
         <label>
-          <span>能力包 JSON</span>
-          <textarea v-model="importText" rows="10" placeholder="粘贴场景能力包 JSON"></textarea>
+          <span>能力包配置内容</span>
+          <textarea v-model="importText" rows="10" placeholder="粘贴场景能力包配置内容"></textarea>
         </label>
         <label>
           <span>导入策略</span>
@@ -154,11 +154,11 @@ const headerActions = computed(() => pageGlobalActions.value);
 function parsePackageJson(): Record<string, unknown> {
   const raw = importText.value.trim();
   if (!raw) {
-    throw new Error('请先粘贴能力包 JSON');
+    throw new Error('请先粘贴能力包配置内容');
   }
   const payload = JSON.parse(raw) as unknown;
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    throw new Error('能力包 JSON 必须是对象结构');
+    throw new Error('能力包配置内容必须是完整对象结构');
   }
   return payload as Record<string, unknown>;
 }

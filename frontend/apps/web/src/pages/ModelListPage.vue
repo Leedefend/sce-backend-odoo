@@ -1,8 +1,8 @@
 <template>
   <main class="page sc-page sc-product-workspace-stack" data-product-page-mode="list">
     <StatusPanel
-      title="Legacy List Route"
-      message="This route has been redirected to contract-driven ActionView."
+      title="列表入口已升级"
+      message="正在切换到新的列表页面。"
       variant="info"
     />
   </main>

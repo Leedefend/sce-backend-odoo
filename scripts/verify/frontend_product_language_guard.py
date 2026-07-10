@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCAN_DIRS = [
     ROOT / "frontend" / "apps" / "web" / "src" / "app" / "action_runtime",
+    ROOT / "frontend" / "apps" / "web" / "src" / "app" / "assemblers",
     ROOT / "frontend" / "apps" / "web" / "src" / "app" / "contracts",
     ROOT / "frontend" / "apps" / "web" / "src" / "app" / "suggested_action",
     ROOT / "frontend" / "apps" / "web" / "src" / "components",
@@ -149,6 +150,20 @@ FORBIDDEN_PHRASES = {
     "scene mutation execute failed": "表单页场景操作错误必须使用产品化中文表达",
     "contract not renderable": "表单契约错误必须转换为产品化中文表达",
     "Failed to load my work": "我的工作台错误兜底必须使用产品化中文表达",
+    "Legacy List Route": "列表入口页面必须使用产品化中文表达",
+    "contract-driven ActionView": "列表入口页面不能暴露前端实现名称",
+    "View Context": "页面诊断标题必须使用产品化中文表达",
+    "block_type={{": "页面区块兜底不能暴露工程字段名",
+    "'unknown error'": "页面错误兜底必须使用产品化中文表达",
+    "unknown v2 contract decode error": "表单契约解析错误必须使用产品化中文表达",
+    "能力包 JSON": "能力包页面字段标签必须使用产品化中文表达",
+    "场景能力包 JSON": "能力包页面占位说明必须使用产品化中文表达",
+    "快照 JSON": "配置快照页面错误提示必须使用产品化中文表达",
+    "make verify.business_config.snapshot": "配置工作台不能在用户界面暴露工程命令",
+    "make verify.lowcode_config.runtime_boundary.guard": "配置工作台不能在用户界面暴露工程命令",
+    "make verify.product.surface.clean": "配置工作台不能在用户界面暴露工程命令",
+    "Only ui.business.config.contract": "配置整改清单必须使用产品化中文表达",
+    "This plan is review evidence": "配置整改清单必须使用产品化中文表达",
 }
 
 

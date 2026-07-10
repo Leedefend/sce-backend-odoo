@@ -502,7 +502,7 @@
         v-model="snapshotCompareText"
         class="snapshot-input"
         rows="5"
-        placeholder="粘贴 make verify.business_config.snapshot 导出的 JSON"
+        placeholder="粘贴从目标环境导出的配置快照内容"
       ></textarea>
       <div v-if="snapshotCompareResult" class="snapshot-remediation-summary">
         <span>{{ snapshotRemediationSummary }}</span>
@@ -2383,12 +2383,12 @@ function buildSnapshotRemediationPlan(result: BusinessConfigSnapshotComparePaylo
       action_count: actions.length,
     },
     acceptance: {
-      product_boundary: 'Only ui.business.config.contract changes are represented here.',
-      execution_policy: 'This plan is review evidence. Apply changes through low-code configuration screens, migrations, or customer module baselines.',
+      product_boundary: '仅包含低代码配置契约的差异项。',
+      execution_policy: '本清单用于上线复核，变更应通过低代码配置页面、迁移脚本或客户模块基线完成。',
       required_after_action: [
-        'make verify.business_config.snapshot',
-        'make verify.lowcode_config.runtime_boundary.guard',
-        'make verify.product.surface.clean',
+        '复核配置快照一致性',
+        '复核低代码运行边界',
+        '复核产品界面无工程口径残留',
       ],
     },
     actions,
@@ -2433,7 +2433,7 @@ async function compareSnapshot() {
     );
   } catch (err) {
     snapshotCompareResult.value = null;
-    error.value = err instanceof Error ? err.message : '快照 JSON 解析或对比失败';
+    error.value = err instanceof Error ? err.message : '配置快照解析或对比失败';
   } finally {
     snapshotCompareLoading.value = false;
   }

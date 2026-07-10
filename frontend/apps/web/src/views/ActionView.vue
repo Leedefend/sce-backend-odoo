@@ -524,7 +524,7 @@
     <DevContextPanel
       :visible="isSectionVisible('dev_context', { defaultEnabled: pageSectionEnabled('dev_context', true), tag: 'div', vmVisible: vm.sections.hud && Boolean(vm.hud?.visible) })"
       :style="getSectionStyle('dev_context')"
-      :title="vm.hud?.title || 'View Context'"
+      :title="vm.hud?.title || pageText('dev_context_title', '页面上下文')"
       :entries="vm.hud?.entries || []"
     />
     <div

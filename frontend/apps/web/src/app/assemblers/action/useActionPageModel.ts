@@ -249,7 +249,7 @@ export function useActionPageModel(options: UseActionPageModelOptions) {
         : undefined,
       hud: {
         visible: Boolean(unref(options.hud.visible)) && sectionVisibility.hud,
-        title: 'View Context',
+        title: '页面上下文',
         entries: asList(unref(options.hud.entries)) as Array<{ label: string; value: unknown }>,
       },
       sections: sectionVisibility,

@@ -8876,7 +8876,7 @@ function syncContractV2ShadowStore(rawContract: unknown) {
       v2ContractDecodeError.value = err.issues.slice(0, 4).map((issue) => `${issue.path} ${issue.message}`).join(' | ');
       return;
     }
-    v2ContractDecodeError.value = err instanceof Error ? err.message : 'unknown v2 contract decode error';
+    v2ContractDecodeError.value = err instanceof Error ? err.message : '表单配置解析失败';
   }
 }
 

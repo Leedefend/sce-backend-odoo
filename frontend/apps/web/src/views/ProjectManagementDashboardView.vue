@@ -668,7 +668,7 @@ async function loadDashboard() {
   } catch (err) {
     status.value = 'error';
     errorTitle.value = '项目管理场景加载失败';
-    errorMessage.value = err instanceof Error ? err.message : 'unknown error';
+    errorMessage.value = err instanceof Error ? err.message : '项目管理场景加载失败';
   }
 }
 

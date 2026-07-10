@@ -368,7 +368,7 @@ async function loadContract() {
     rawContract.value = (data && typeof data === 'object') ? data : {};
     status.value = 'idle';
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'unknown error';
+    errorMessage.value = err instanceof Error ? err.message : '场景区块加载失败';
     status.value = 'error';
   }
 }
