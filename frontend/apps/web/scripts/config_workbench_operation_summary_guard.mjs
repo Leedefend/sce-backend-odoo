@@ -86,6 +86,22 @@ function assertMetricCount(actual, expected, message) {
   if (actual !== expected) fail(message, { actual, expected });
 }
 
+function assertScreenshotEvidence(screenshots = {}) {
+  assertExactList(
+    Object.keys(screenshots || {}),
+    ACCEPTANCE_COVERAGE.screenshotKeys,
+    "config workbench report screenshot keys drifted",
+  );
+  const mismatches = ACCEPTANCE_COVERAGE.screenshotKeys
+    .map((key) => ({
+      key,
+      actual: path.basename(String(screenshots[key] || "")),
+      expected: ACCEPTANCE_COVERAGE.screenshotFiles[key],
+    }))
+    .filter((item) => item.actual !== item.expected);
+  if (mismatches.length) fail("config workbench report screenshot files drifted", { mismatches, screenshots });
+}
+
 function assertIncludesAll(actual = [], required = [], message) {
   const missing = required.filter((item) => !actual.includes(item));
   if (missing.length) fail(message, { missing, required, actual });
@@ -130,6 +146,7 @@ async function main() {
   assertEqual(summary.menuTreeHead, report.checks?.menuTreeHead || "", "summary menu tree head drifted");
 
   if (summary.ok !== true) fail("config workbench summary is not ok", { summary });
+  if ("failure" in report) fail("config workbench ok report must not include failure payload", { failure: report.failure });
   assertEqual(report.metrics?.schema_version, "config_workbench_operation_acceptance_metrics.v1", "config workbench metrics schema drifted");
   assertEqual(report.metrics?.coverage_ratio, 1, "config workbench coverage ratio is not complete");
   assertEqual(report.metrics?.health_passed, true, "config workbench health flag is not true");
@@ -150,6 +167,7 @@ async function main() {
   assertFullCoverage(summary.journeys, report.metrics?.journey_passed_count, report.metrics?.journey_count, "config workbench journey gate is not complete");
   assertFullCoverage(summary.actions, report.metrics?.action_passed_count, report.metrics?.action_count, "config workbench action gate is not complete");
   assertFullCoverage(summary.screenshots, report.metrics?.screenshot_captured_count, report.metrics?.screenshot_required_count, "config workbench screenshot gate is not complete");
+  assertScreenshotEvidence(report.screenshots);
   if (summary.delivery !== "delivery_ready" || summary.professional !== "professional_ready") fail("config workbench readiness status is not complete", { summary });
   assertEqual(report.product_usability?.schema_version, "config_workbench_product_usability.v1", "config workbench product usability schema drifted");
   assertEqual(report.professional_readiness?.schema_version, "config_workbench_professional_readiness.v1", "config workbench professional readiness schema drifted");
@@ -176,6 +194,8 @@ async function main() {
   assertEmptyArray(report.product_usability?.risk_items, "config workbench product usability has risk items");
   assertEmptyArray(report.professional_readiness?.blockers, "config workbench professional readiness has blockers");
   assertEqual(report.product_usability?.page_structure?.status, "pass", "config workbench product page structure is not pass");
+  assertEmptyArray(report.consoleErrors, "config workbench report has console errors");
+  assertEmptyArray(report.requestFailed, "config workbench report has failed requests");
   if (summary.consoleErrors !== 0 || summary.requestFailed !== 0) fail("config workbench browser health is not clean", { summary });
   if (summary.currentPage !== "项目合同汇总" || summary.formDesignerCurrentPageLabel !== "项目合同汇总") fail("config workbench page context summary is not aligned", { summary });
 
