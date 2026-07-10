@@ -483,7 +483,7 @@ function buttonTooltip(btn: ViewButton) {
       .slice(0, 4);
     const level = String(session.productFacts.license?.level || '').trim();
     const suffix = level && level !== 'enterprise'
-      ? `${pageText('missing_capability_license_prefix', '；当前 License: ')}${level}`
+      ? `${pageText('missing_capability_license_prefix', '；当前授权级别：')}${level}`
       : '';
     return `${pageText('missing_capability_prefix', '缺少能力：')}${details.join(pageText('missing_capability_sep', '、'))}${suffix}`;
   }

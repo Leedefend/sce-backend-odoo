@@ -74,7 +74,7 @@
         </label>
         <button class="secondary" :disabled="loading" @click="copyExportParams">{{ pageText('action_copy_export_params', '复制导出参数') }}</button>
         <button class="secondary" :disabled="loading" @click="resetFilters">{{ pageText('action_reset_filters', '重置筛选') }}</button>
-        <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">{{ pageText('action_export_csv', '导出 CSV') }}</button>
+        <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">{{ pageText('action_export_csv', '导出报表') }}</button>
         <button
           v-for="action in headerActions"
           :key="action.key"
@@ -364,7 +364,7 @@ function resolveContextAwareErrorText(err: unknown, fallback: string) {
   const issue = collectErrorContextIssue(counter, err, {});
   const scope = issueScopeLabel(issue);
   if (!scope && issue.reasonCode === 'UNKNOWN') return fallback;
-  return `${fallback} (${scope || 'unknown'} / ${issue.reasonCode})`;
+  return `${fallback}（${scope || '未归类'} / ${issue.reasonCode}）`;
 }
 
 async function exportCsv() {

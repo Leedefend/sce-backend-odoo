@@ -62,11 +62,11 @@
       </div>
       <div class="detail">
         <span class="label">{{ pageText('hud_label_menu', '菜单') }}</span>
-        <span class="value">{{ menuId || pageText('hud_value_na', 'N/A') }}</span>
+        <span class="value">{{ menuId || pageText('hud_value_na', '暂无') }}</span>
       </div>
       <div v-if="showHud" class="detail">
         <span class="label">{{ pageText('hud_label_action', '动作') }}</span>
-        <span class="value">{{ actionId || pageText('hud_value_na', 'N/A') }}</span>
+        <span class="value">{{ actionId || pageText('hud_value_na', '暂无') }}</span>
       </div>
       <div class="detail">
         <span class="label">{{ pageText('hud_label_route', '路由') }}</span>
@@ -94,12 +94,12 @@
       </div>
       <div v-if="showHud" class="detail">
         <span class="label">{{ pageText('hud_label_last_intent', '最近意图') }}</span>
-        <span class="value">{{ lastIntent || pageText('hud_value_na', 'N/A') }}</span>
+        <span class="value">{{ lastIntent || pageText('hud_value_na', '暂无') }}</span>
       </div>
       <div v-if="showHud" class="detail">
         <span class="label">{{ pageText('hud_label_trace_id', '追踪 ID') }}</span>
         <span class="value">
-          {{ lastTraceId || pageText('hud_value_na', 'N/A') }}
+          {{ lastTraceId || pageText('hud_value_na', '暂无') }}
           <button v-if="lastTraceId" class="ghost mini" @click="copyTrace">{{ pageText('action_copy', '复制') }}</button>
         </span>
       </div>
@@ -107,7 +107,7 @@
         <span class="label">{{ pageText('hud_label_data_source', '数据源协议') }}</span>
         <span class="value">
           {{ hasStatusPanelDataSource ? pageText('hud_value_ready', '就绪') : pageText('hud_value_missing', '缺失') }}
-          （type={{ statusPanelDataSourceType || pageText('hud_value_na', 'N/A') }}）
+          （{{ pageText('hud_data_source_type_label', '类型') }}：{{ statusPanelDataSourceType || pageText('hud_value_na', '暂无') }}）
         </span>
       </div>
     </div>
@@ -250,8 +250,8 @@ const hasStatusPanelDataSource = computed(() => pageHasDataSource('ds_section_st
 const workbenchOrchestrationDatasets = computed<Record<string, unknown>>(() => {
   const headerSummary = [
     { key: 'reason', label: pageText('hud_label_reason', '原因'), value: reasonLabel.value, tone: 'info' },
-    { key: 'menu', label: pageText('hud_label_menu', '菜单'), value: menuId.value || pageText('hud_value_na', 'N/A'), tone: 'neutral' },
-    { key: 'action', label: pageText('hud_label_action', '动作'), value: actionId.value || pageText('hud_value_na', 'N/A'), tone: 'neutral' },
+    { key: 'menu', label: pageText('hud_label_menu', '菜单'), value: menuId.value || pageText('hud_value_na', '暂无'), tone: 'neutral' },
+    { key: 'action', label: pageText('hud_label_action', '动作'), value: actionId.value || pageText('hud_value_na', '暂无'), tone: 'neutral' },
   ];
   const panelSummary = [
     { key: 'panel', label: pageText('panel_title', '页面暂时无法打开'), value: message.value || '-', tone: panelVariant.value === 'error' ? 'danger' : 'warning' },
@@ -268,8 +268,8 @@ const workbenchOrchestrationDatasets = computed<Record<string, unknown>>(() => {
   }));
   const hudEntries = [
     { id: 'route', title: pageText('hud_label_route', '路由'), description: route.fullPath, tone: 'info' },
-    { id: 'trace', title: pageText('hud_label_trace_id', '追踪 ID'), description: lastTraceId.value || pageText('hud_value_na', 'N/A'), tone: 'neutral' },
-    { id: 'intent', title: pageText('hud_label_last_intent', '最近意图'), description: lastIntent.value || pageText('hud_value_na', 'N/A'), tone: 'neutral' },
+    { id: 'trace', title: pageText('hud_label_trace_id', '追踪 ID'), description: lastTraceId.value || pageText('hud_value_na', '暂无'), tone: 'neutral' },
+    { id: 'intent', title: pageText('hud_label_last_intent', '最近意图'), description: lastIntent.value || pageText('hud_value_na', '暂无'), tone: 'neutral' },
   ];
   return {
     ds_section_header: headerSummary,
@@ -327,7 +327,7 @@ const message = computed(() => {
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
       return pageText('message_act_unsupported_type', '');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
-      return pageText('message_contract_context_missing', '当前入口缺少页面所需上下文（例如 action_id）。');
+      return pageText('message_contract_context_missing', '当前入口缺少页面所需上下文，请从菜单或角色首页重新进入。');
     case ErrorCodes.CAPABILITY_MISSING:
       return pageText('message_capability_missing', '');
     default:

@@ -637,8 +637,8 @@ const productDeliverySurface = computed(() => {
     ? pageText('scene_delivery_title_advisory', '当前场景提供下一步建议')
     : pageText('scene_delivery_title_direct', '当前场景已准备好交付入口');
   const message = advisoryOnly
-    ? pageText('scene_delivery_message_advisory', '当前阶段保持 advisory-only，由后端语义决定下一步提示，不在前端扩展深链行为。')
-    : pageText('scene_delivery_message_direct', '当前阶段使用后端提供的交付语义，统一呈现 direct delivery 入口，不在前端推导业务规则。');
+    ? pageText('scene_delivery_message_advisory', '当前阶段仅展示系统建议，由平台语义决定下一步提示，不在页面内追加业务规则。')
+    : pageText('scene_delivery_message_direct', '当前阶段使用平台提供的交付语义，统一呈现办理入口，不在页面内推导业务规则。');
 
   return {
     visible: true,
@@ -1059,7 +1059,7 @@ async function resolveScene() {
           ? `${pageText('forbidden_message_missing_prefix', '缺少能力：')}${details.join(pageText('forbidden_message_missing_sep', '、'))}`
           : pageText('forbidden_message_scope_missing', '当前角色能力范围不包含该场景所需能力。'),
         hint: level && level !== 'enterprise'
-          ? `${pageText('forbidden_hint_license_prefix', '当前 License：')}${level}${pageText('forbidden_hint_license_suffix', '，可联系管理员评估升级或开通。')}`
+          ? `${pageText('forbidden_hint_license_prefix', '当前授权级别：')}${level}${pageText('forbidden_hint_license_suffix', '，可联系管理员评估升级或开通。')}`
           : pageText('forbidden_hint_default', '可联系管理员开通对应能力。'),
       };
       status.value = 'forbidden';

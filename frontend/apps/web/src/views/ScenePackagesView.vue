@@ -3,7 +3,7 @@
     <header v-if="pageSectionEnabled('header', true) && pageSectionTagIs('header', 'header')" class="header" :style="pageSectionStyle('header')">
       <div>
         <h2>{{ pageText('title', '场景能力包') }}</h2>
-        <p>{{ pageText('subtitle', '导入、导出与审阅已安装的 Scene 能力包。') }}</p>
+        <p>{{ pageText('subtitle', '导入、导出与审阅已安装的场景能力包。') }}</p>
       </div>
       <button
         v-for="action in headerActions"

@@ -492,7 +492,7 @@
       </header>
       <div class="advanced-contract">
         <p class="contract-label">{{ t('label.contract_summary', '配置摘要') }}</p>
-        <p>view_type={{ contractViewType || '-' }} · mode={{ vm.page.viewMode || '-' }} · records={{ records.length }}</p>
+        <p>{{ t('label.view_type', '视图类型') }}：{{ contractViewType || '-' }} · {{ t('label.view_mode', '页面模式') }}：{{ vm.page.viewMode || '-' }} · {{ t('label.record_count', '记录数') }}：{{ records.length }}</p>
       </div>
       <div v-if="vm.content.advanced?.rows.length" class="advanced-list">
         <article v-for="row in vm.content.advanced?.rows || []" :key="row.key" class="advanced-item">

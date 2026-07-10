@@ -86,11 +86,11 @@
           <button class="link-btn done-btn" @click="retryFailedTodos">{{ pageText('retry_action_retry_failed', '重试失败项') }}</button>
           <button class="link-btn" @click="copyRetrySummary">{{ pageText('retry_action_copy_summary', '复制失败摘要') }}</button>
           <button class="link-btn" @click="copyVisibleRetrySummary">{{ pageText('retry_action_copy_current_view', '复制当前视图') }}</button>
-          <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">{{ pageText('retry_action_export_failed_csv', '导出失败 CSV') }}</button>
+          <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">{{ pageText('retry_action_export_failed_csv', '导出失败明细') }}</button>
           <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">{{ pageText('retry_action_copy_retry_request', '复制重试请求') }}</button>
-          <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">{{ pageText('retry_action_export_retry_json', '导出重试 JSON') }}</button>
+          <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">{{ pageText('retry_action_export_retry_json', '导出重试配置') }}</button>
           <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">{{ pageText('retry_action_focus_in_main_list', '主列表定位失败') }}</button>
-          <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">{{ pageText('retry_action_copy_trace', '复制 Trace') }}</button>
+          <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">{{ pageText('retry_action_copy_trace', '复制追踪 ID') }}</button>
           <button class="link-btn secondary-btn" @click="clearRetryFailed">{{ pageText('retry_action_ignore', '忽略') }}</button>
         </div>
       <details v-if="retryRequestParams" class="retry-request-preview">
@@ -1575,10 +1575,10 @@ function exportRetryRequestJson() {
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(href);
-    actionFeedback.value = pageText('feedback_export_retry_json_ok', '重试请求 JSON 已导出');
+    actionFeedback.value = pageText('feedback_export_retry_json_ok', '重试配置已导出');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = pageText('feedback_export_retry_json_failed', '导出重试请求 JSON 失败');
+    actionFeedback.value = pageText('feedback_export_retry_json_failed', '导出重试配置失败');
     actionFeedbackError.value = true;
   }
 }
@@ -1632,10 +1632,10 @@ function exportRetryFailedCsv() {
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(href);
-    actionFeedback.value = `${pageText('feedback_export_failed_csv_ok_prefix', '失败明细 CSV 已导出（')}${retryFailedItems.value.length}${pageText('feedback_export_failed_csv_ok_suffix', ' 条）')}`;
+    actionFeedback.value = `${pageText('feedback_export_failed_csv_ok_prefix', '失败明细已导出（')}${retryFailedItems.value.length}${pageText('feedback_export_failed_csv_ok_suffix', ' 条）')}`;
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = pageText('feedback_export_failed_csv_failed', '导出失败明细 CSV 失败');
+    actionFeedback.value = pageText('feedback_export_failed_csv_failed', '导出失败明细失败');
     actionFeedbackError.value = true;
   }
 }
