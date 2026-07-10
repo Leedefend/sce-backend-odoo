@@ -993,7 +993,7 @@ verify.finance_interfund.position.bundle_summary: guard.prod.forbid check-compos
 verify.finance_interfund.position.all: verify.finance_interfund.projection.static_guard verify.interfund_user_data.full_coverage.audit verify.interfund_borrow.classification_gap.audit verify.finance_business_fact.scope.audit verify.finance_business_fact.projection.audit verify.finance_business_project.summary.audit verify.interfund_movement.fact.audit verify.interfund_movement_project.summary.audit verify.interfund_treasury_ledger.backfill_readiness.audit verify.company_contractor.responsibility_fact.audit verify.company_contractor.responsibility_summary.audit verify.company_contractor.responsibility_http.smoke verify.finance_project_capital.position.audit verify.finance_project_counterparty.position.audit verify.finance_counterparty.position_summary.audit verify.finance_counterparty.identity_quality.audit verify.finance_position.drilldown_usability.audit verify.finance_interfund.position.menu_runtime.audit verify.finance_interfund.position.bundle_summary
 	@echo "FINANCE_INTERFUND_POSITION_AUDIT_ALL_PASS db=$(DB_NAME)"
 
-.PHONY: verify.business_capability.productization_p1 verify.business_system.usability_readiness verify.business_system.usability_readiness.prod verify.formal_business.release_gate formal_entry_metadata.non_business_creator.write
+.PHONY: verify.business_capability.productization_p1 verify.business_system.usability_readiness verify.business_system.usability_readiness.prod verify.system_user_experience.coverage_guard verify.system_user_experience.quick verify.system_user_experience.shell_acceptance verify.system_user_experience.business_form_user_perspective verify.system_user_experience.full_browser verify.formal_business.release_gate formal_entry_metadata.non_business_creator.write
 verify.formal_business.release_gate: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/validate_formal_business_release_gate.sh
 
@@ -1005,6 +1005,31 @@ verify.business_system.usability_readiness: guard.prod.forbid check-compose-proj
 
 verify.business_system.usability_readiness.prod: guard.prod.readonly check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" BUSINESS_SYSTEM_READINESS_PROD_READONLY=1 BUSINESS_SYSTEM_READINESS_INCLUDE_P1=0 BUSINESS_SYSTEM_READINESS_ARTIFACT_DIR="$(BUSINESS_SYSTEM_READINESS_ARTIFACT_DIR)" bash scripts/ops/validate_business_system_usability_readiness.sh
+
+verify.system_user_experience.coverage_guard: guard.prod.forbid
+	@python3 scripts/verify/system_user_experience_coverage_guard.py
+
+verify.system_user_experience.quick: guard.prod.forbid verify.system_user_experience.coverage_guard verify.product.page_structure
+	@node --check frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs
+	@node --check frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs
+	@node --check frontend/apps/web/scripts/business_form_user_perspective_acceptance.mjs
+	@node --check frontend/apps/web/scripts/business_form_user_perspective_summary_guard.mjs
+	@node --check frontend/apps/web/scripts/system_user_experience_shell_acceptance.mjs
+	@node --check frontend/apps/web/scripts/system_user_experience_shell_summary_guard.mjs
+	@node --check frontend/apps/web/scripts/system_user_experience_full_browser_summary_guard.mjs
+	@git diff --check
+
+verify.system_user_experience.shell_acceptance: guard.prod.forbid
+	@cd frontend/apps/web && BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node scripts/system_user_experience_shell_acceptance.mjs
+	@cd frontend/apps/web && node scripts/system_user_experience_shell_summary_guard.mjs
+
+verify.system_user_experience.business_form_user_perspective: guard.prod.forbid
+	@BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node frontend/apps/web/scripts/business_form_user_perspective_acceptance.mjs
+	@cd frontend/apps/web && node scripts/business_form_user_perspective_summary_guard.mjs
+
+verify.system_user_experience.full_browser: guard.prod.forbid verify.system_user_experience.coverage_guard verify.product.page_structure verify.business_config.config_workbench_operation_acceptance verify.business_config.config_workbench_operation_summary_guard verify.system_user_experience.shell_acceptance verify.system_user_experience.business_form_user_perspective
+	@cd frontend/apps/web && node scripts/system_user_experience_full_browser_summary_guard.mjs
+	@echo "[OK] verify.system_user_experience.full_browser done"
 
 formal_entry_metadata.surface.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) FORMAL_ENTRY_METADATA_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/ops/formal_entry_metadata_surface_write.py

@@ -555,6 +555,12 @@ function onZoneAction(payload: PageBlockActionEvent) {
 .page-renderer--role-home :deep(.zone-key-today_focus .display-grid) {
   grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
 }
+.page-renderer--role-home :deep(.zone-key-today_focus .display-grid > :only-child) {
+  grid-column: 1 / -1;
+}
+.page-renderer--role-home :deep(.zone-key-today_focus .block-todo-list .todo-list) {
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
 .page-renderer--role-home :deep(.zone-key-analysis .zone-renderer-body.display-grid) {
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
 }

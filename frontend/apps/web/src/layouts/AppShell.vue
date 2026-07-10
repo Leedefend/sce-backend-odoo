@@ -133,7 +133,7 @@
       </div>
 
       <div v-if="showAdminShortcuts" class="admin-shortcuts">
-        <div class="admin-shortcuts__header">配置工作台</div>
+        <div class="admin-shortcuts__header">配置中心</div>
         <button
           class="published-app"
           :class="{ active: route.name === 'business-config' }"
@@ -394,7 +394,9 @@ const menuCount = computed(() => visibleMenuNodes.value.length);
 const routeAllowsEmptyMenu = computed(() => route.meta?.adminOnly === true || route.path.startsWith('/admin/'));
 const rootTitle = computed(() => {
   const root = rootNode.value;
-  return normalizeDeliveryText(root?.title || root?.name || root?.label || '智能工程协作平台');
+  const rawTitle = normalizeDeliveryText(root?.title || root?.name || root?.label || '');
+  if (!rawTitle || rawTitle === '系统菜单') return config.appBrand.name || '智能施工企业管理平台';
+  return rawTitle;
 });
 const userName = computed(() => session.user?.name ?? '访客');
 const enterpriseLabel = computed(() => {
@@ -1551,7 +1553,7 @@ async function logout() {
 }
 
 .shell--configuration .content {
-  padding: 8px 24px;
+  padding: 8px 14px 14px;
 }
 
 .sidebar {
@@ -2020,10 +2022,10 @@ async function logout() {
 }
 
 .content {
-  padding: 8px 18px;
+  padding: 8px 14px 14px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
   height: 100vh;
   overflow: auto;
@@ -2036,11 +2038,14 @@ async function logout() {
 }
 
 .content--scene-compact {
-  gap: 4px;
-  padding: 8px 18px;
+  gap: 8px;
+  padding: 8px 14px 14px;
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2048,7 +2053,7 @@ async function logout() {
   min-width: 0;
   background: var(--panel);
   border-radius: 8px;
-  padding: 5px 9px;
+  padding: 8px 10px;
   border: 1px solid var(--sc-app-border);
   box-shadow: var(--sc-app-shadow);
 }
@@ -2189,28 +2194,30 @@ async function logout() {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .activity-tabs {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0;
+  padding: 0 2px 1px;
   scrollbar-width: thin;
 }
 
 .activity-tab {
-  flex: 0 1 132px;
-  min-width: 78px;
-  max-width: 176px;
+  flex: 0 1 152px;
+  min-width: 104px;
+  max-width: 200px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 18px;
   align-items: center;
   border: 1px solid var(--sc-app-border);
-  border-radius: 5px;
+  border-radius: 6px;
   background: var(--sc-app-panel);
   color: var(--sc-app-text-secondary);
   overflow: hidden;
@@ -2225,7 +2232,7 @@ async function logout() {
 .activity-tab-main,
 .activity-tab-close {
   min-width: 0;
-  height: 22px;
+  height: 26px;
   border: 0;
   background: transparent;
   color: inherit;

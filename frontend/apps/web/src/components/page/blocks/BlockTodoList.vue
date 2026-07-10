@@ -153,6 +153,7 @@ function sourceLabel(value: unknown) {
   padding: 7px 12px;
   cursor: pointer;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .todo-open-btn {
@@ -178,6 +179,7 @@ function sourceLabel(value: unknown) {
   justify-content: space-between;
   gap: 10px;
   min-height: 100px;
+  min-width: 0;
 }
 .todo-item.actionable {
   cursor: pointer;
@@ -197,6 +199,8 @@ function sourceLabel(value: unknown) {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 .todo-desc {
   margin: 6px 0 0;

@@ -348,16 +348,16 @@
             </option>
           </select>
           <select v-model="reasonFilter" class="filter-select">
-            <option value="ALL">{{ pageText('filter_reason_all', '全部原因码') }}</option>
+            <option value="ALL">{{ pageText('filter_reason_all', '全部状态') }}</option>
             <option v-for="reason in reasonOptions" :key="`reason-${reason}`" :value="reason">
-              {{ reason }}
+              {{ workItemReasonLabel(reason) }}
             </option>
           </select>
           <select v-model="sortBy" class="filter-select">
             <option value="priority">{{ pageText('sort_priority', '排序：优先级') }}</option>
             <option value="deadline">{{ pageText('sort_deadline', '排序：截止日') }}</option>
             <option value="title">{{ pageText('sort_title', '排序：事项标题') }}</option>
-            <option value="reason_code">{{ pageText('sort_reason_code', '排序：原因码') }}</option>
+            <option value="reason_code">{{ pageText('sort_reason_code', '排序：状态') }}</option>
             <option value="source">{{ pageText('sort_source', '排序：来源') }}</option>
             <option value="id">{{ pageText('sort_id', '排序：ID') }}</option>
           </select>
@@ -421,7 +421,7 @@
               <th>{{ pageText('table_col_action', '动作') }}</th>
               <th>{{ pageText('table_col_deadline', '截止日') }}</th>
               <th>{{ pageText('table_col_priority', '优先级') }}</th>
-              <th>{{ pageText('table_col_reason_code', '原因码') }}</th>
+              <th>{{ pageText('table_col_reason_code', '状态') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -445,13 +445,13 @@
                 />
               </td>
               <td>
-                <div>{{ item.title || '-' }}</div>
-                <small class="item-meta">{{ item.source || '-' }}</small>
+                <div>{{ workItemDisplayTitle(item) }}</div>
+                <small class="item-meta">{{ workItemSourceLabel(item.source) }}</small>
               </td>
               <td>{{ item.action_label || '-' }}</td>
               <td>{{ item.deadline || '-' }}</td>
               <td>{{ formatPriority(item.priority) }}</td>
-              <td>{{ item.reason_code || '-' }}</td>
+              <td>{{ workItemReasonLabel(item.reason_code) }}</td>
             </tr>
           </tbody>
         </table>
@@ -748,6 +748,30 @@ const groupedVisibleRetryItems = computed(() => {
   return Array.from(map.entries()).map(([reasonCode, rows]) => ({ reasonCode, items: rows }));
 });
 const headerActions = computed(() => pageGlobalActions.value);
+
+function normalizeWorkItemText(raw: unknown) {
+  return String(raw || '')
+    .replace(/\s*\/\s*admin\s*/gi, ' ')
+    .replace(/\bDelivery Action Smoke\s*\d*\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function workItemReasonLabel(reason: unknown) {
+  const raw = String(reason || '').trim();
+  const key = raw.toUpperCase();
+  const mapping: Record<string, string> = {
+    TIER_REVIEW_PENDING: pageText('reason_tier_review_pending', '待审批复核'),
+    PENDING: pageText('reason_pending', '待处理'),
+    TODO: pageText('reason_todo', '待处理'),
+    APPROVAL_PENDING: pageText('reason_approval_pending', '待审批'),
+    REVIEW_PENDING: pageText('reason_review_pending', '待复核'),
+    UNKNOWN: pageText('reason_unknown', '待确认'),
+  };
+  if (!raw) return '-';
+  return mapping[key] || raw.replace(/_/g, ' ').toLowerCase().replace(/(^|\s)\S/g, (s) => s.toUpperCase());
+}
+
 function workItemSourceLabel(source: unknown) {
   const raw = String(source || '').trim();
   const mapping: Record<string, string> = {
@@ -761,6 +785,31 @@ function workItemSourceLabel(source: unknown) {
     capability_fallback: '系统补充',
   };
   return mapping[raw] || mapping[raw.toLowerCase()] || raw || '业务事项';
+}
+
+function workItemDisplayTitle(item: MyWorkRecordItem) {
+  const cleaned = normalizeWorkItemText(item.title);
+  const requestMatch = cleaned.match(/\b(PRQ\d+)\b/i);
+  const amountMatch = cleaned.match(/¥\s*[\d,.]+|￥\s*[\d,.]+/);
+  const source = workItemSourceLabel(item.source);
+  if (requestMatch && source.includes('审批')) {
+    return `${pageText('work_item_payment_review_title', '付款申请待审批')} · ${requestMatch[1].toUpperCase()}`;
+  }
+  if (requestMatch) {
+    return `${source} · ${requestMatch[1].toUpperCase()}`;
+  }
+  if (amountMatch && source.includes('审批')) {
+    return `${pageText('work_item_payment_review_title', '付款申请待审批')} · ${amountMatch[0].replace('￥', '¥')}`;
+  }
+  return cleaned || source || pageText('work_item_default_title', '待处理事项');
+}
+
+function workItemDescription(item: MyWorkRecordItem) {
+  return [
+    workItemSourceLabel(item.source),
+    item.deadline ? `${pageText('work_item_deadline_prefix', '截至')} ${item.deadline}` : '',
+    item.reason_code ? workItemReasonLabel(item.reason_code) : '',
+  ].filter(Boolean).join(' · ');
 }
 
 function workItemActionLabel(item: MyWorkRecordItem) {
@@ -781,12 +830,8 @@ const myWorkOrchestrationDatasets = computed<Record<string, unknown>>(() => {
   }));
   const todoRows = displayItems.value.slice(0, 12).map((item) => ({
     id: item.id,
-    title: String(item.title || '-'),
-    description: [
-      workItemSourceLabel(item.source),
-      item.deadline ? `截至 ${item.deadline}` : '',
-      item.reason_code ? `原因 ${item.reason_code}` : '',
-    ].filter(Boolean).join(' · '),
+    title: workItemDisplayTitle(item),
+    description: workItemDescription(item),
     source: String(item.source || 'business'),
     source_label: workItemSourceLabel(item.source),
     tone: item.reason_code ? 'warning' : 'info',

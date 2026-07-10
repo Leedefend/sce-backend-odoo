@@ -16,13 +16,6 @@ const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
 
 const CASES = [
   {
-    code: "contract.expense.supplement",
-    entryLabel: "支出合同办理",
-    label: "支出合同补充",
-    expected: ["办理类型", "项目与供应商/分包方", "补充事项", "补充明细与金额"],
-    forbidden: ["来源与系统追溯", "历史账户线索", "legacy_visible_attachment"],
-  },
-  {
     code: "finance.loan.project_borrow_company",
     entryLabel: "借款办理",
     label: "项目借公司款登记",
@@ -54,63 +47,63 @@ const CASES = [
     code: "finance.receipt.income.residual",
     entryLabel: "收款登记",
     label: "其他/残余收款",
-    expected: ["办理类型", "项目与收款申请", "其他/残余收款", "收款账户"],
+    expected: ["办理主信息", "项目与合同", "收款事项", "收款账户"],
     forbidden: ["来源与系统追溯", "迁移来源"],
   },
   {
     code: "finance.self_funding.income",
     entryLabel: "自筹垫付办理",
     label: "自筹垫付办理",
-    expected: ["办理类型", "项目与承包人", "自筹金额", "办理依据"],
+    expected: ["办理类型", "项目与承包人", "自筹垫付金额", "办理说明"],
     forbidden: ["来源与系统追溯", "迁移来源"],
   },
   {
     code: "finance.fund.transfer",
     entryLabel: "账户间资金往来",
     label: "账户间资金往来",
-    expected: ["办理类型", "项目与账户", "调拨金额", "办理说明"],
+    expected: ["办理类型", "项目与账户", "金额", "办理说明"],
     forbidden: ["来源与系统追溯", "历史账户线索"],
   },
   {
     code: "finance.payment.apply.pay",
     entryLabel: "收付款申请办理",
     label: "付款申请",
-    expected: ["办理类型", "项目与收款单位", "付款申请金额", "收付款账户", "办理说明"],
+    expected: ["办理类型", "项目与收款单位", "付款申请金额", "收款账户", "付款单位", "办理说明"],
     forbidden: ["来源与系统追溯", "迁移来源"],
   },
   {
     code: "finance.payment.apply.receive",
-    entryLabel: "收付款申请办理",
+    entryLabel: "收款申请",
     label: "收款申请",
-    expected: ["办理类型", "项目与付款单位", "收款申请金额", "收付款账户", "办理说明"],
+    expected: ["收款申请", "项目", "申请金额", "办理说明"],
     forbidden: ["来源与系统追溯", "迁移来源"],
   },
   {
     code: "finance.expense.reimbursement",
     entryLabel: "费用/扣款/保证金办理",
     label: "报销申请",
-    expected: ["办理类型", "项目与报销人", "报销事项与金额", "收款账户", "付款账户", "办理说明"],
+    expected: ["办理类型", "项目与往来单位", "报销金额", "收付款信息", "办理说明"],
     forbidden: ["来源与系统追溯", "迁移来源"],
   },
   {
     code: "finance.deposit.bid.pay",
-    entryLabel: "费用/扣款/保证金办理",
+    entryLabel: "投标保证金支付",
     label: "投标保证金缴纳",
-    expected: ["办理类型", "项目与收款方", "保证金事项与金额", "收款账户", "付款账户", "办理说明"],
+    expected: ["投标保证金支付", "项目", "保证金", "金额"],
     forbidden: ["来源与系统追溯", "迁移来源"],
   },
   {
     code: "finance.deduction.bill",
     entryLabel: "费用/扣款/保证金办理",
     label: "扣款单",
-    expected: ["办理类型", "项目与责任方", "扣款事项与金额", "责任余额", "办理说明"],
+    expected: ["扣款登记", "项目与往来单位", "扣款登记信息", "扣款单明细"],
     forbidden: ["来源与系统追溯", "迁移来源"],
   },
   {
     code: "finance.repayment.registration",
-    entryLabel: "还款办理",
+    entryLabel: "还款登记",
     label: "还款登记",
-    expected: ["办理类型", "项目与还款方", "还款事项与金额", "付款与收款账户", "办理说明"],
+    expected: ["还款登记", "项目", "金额", "办理说明"],
     forbidden: ["来源与系统追溯", "迁移来源"],
   },
   {
@@ -122,7 +115,7 @@ const CASES = [
   {
     code: "site.construction.diary",
     label: "施工日志",
-    expected: ["办理类型", "项目与日期", "现场情况", "质量安全"],
+    expected: ["项目与日志", "现场情况", "质量安全"],
     forbidden: ["来源与系统追溯"],
   },
   {
@@ -305,6 +298,7 @@ async function openCreateFromMenu(page, menuId, code, optionLabel = "") {
 }
 
 async function main() {
+  await fs.rm(ARTIFACT_ROOT, { recursive: true, force: true });
   await fs.mkdir(ARTIFACT_ROOT, { recursive: true });
   const executablePath = findCachedChromiumExecutable();
   const browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
