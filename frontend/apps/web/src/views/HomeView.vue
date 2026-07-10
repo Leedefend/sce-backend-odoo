@@ -56,13 +56,13 @@
           {{ partialDataDetailLine }}
         </p>
         <p v-if="isHudEnabled" class="hud-line">
-          HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
+          验收视图：{{ roleLabel }} · 默认入口：{{ roleLandingLabel || '未配置' }}
         </p>
         <p v-if="isHudEnabled" class="hud-line">
-          HUD: internal_tiles={{ internalTileCount }} · visible_mode=show_all
+          入口统计：内部入口 {{ internalTileCount }} 项 · 当前显示全部
         </p>
         <p v-if="isHudEnabled" class="hud-line">
-          HUD: orchestration_blocks={{ orchestrationBlocks.length }} · role_variant={{ roleVariantCode || '-' }}
+          编排状态：{{ orchestrationBlocks.length }} 个区块 · 角色版本：{{ roleVariantCode || '默认' }}
         </p>
       </div>
     </header>
@@ -401,7 +401,7 @@
                   <span :class="{ hit: part.hit }">{{ part.text }}</span>
                 </template>
               </p>
-              <p v-if="isHudEnabled" class="hud-meta">scene_key={{ entry.sceneKey }} · capability_key={{ entry.key }}</p>
+              <p v-if="isHudEnabled" class="hud-meta">场景：{{ entry.sceneTitle || entry.groupLabel || '未命名场景' }} · 能力：{{ entry.title || '未命名能力' }}</p>
               <p v-if="entry.state === 'LOCKED'" class="lock-reason">
                 {{ entry.reason || lockReasonLabel(entry.reasonCode) }}
               </p>

@@ -3916,7 +3916,45 @@ const contractMetaLine = computed(() => {
   const viewType = String(contract.value.head?.view_type || contract.value.view_type || '-');
   const filters = Array.isArray(contract.value.search?.filters) ? contract.value.search.filters.length : 0;
   const transitions = Array.isArray(contract.value.workflow?.transitions) ? contract.value.workflow.transitions.length : 0;
-  return `mode=${mode} · surface=${surface} · view_type=${viewType} · profile=${renderProfile.value} · filters=${filters} · transitions=${transitions} · rights=${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}`;
+  const profileLabels: Record<string, string> = {
+    create: '新建',
+    edit: '编辑',
+    readonly: '只读',
+  };
+  const permissionLabels = [
+    rights.value.read ? '可查看' : '',
+    rights.value.write ? '可编辑' : '',
+    rights.value.create ? '可新建' : '',
+    rights.value.unlink ? '可删除' : '',
+  ].filter(Boolean);
+  const valueLabel = (value: string, labels: Record<string, string>) => {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (!normalized || normalized === '-') return '未配置';
+    return labels[normalized] || value;
+  };
+  const modeLabel = valueLabel(mode, {
+    native: '原生表单',
+    governed: '治理表单',
+    action: '动作页面',
+    legacy: '历史承载',
+  });
+  const surfaceLabel = valueLabel(surface, {
+    native: '原生界面',
+    governed: '治理界面',
+    business_config: '配置界面',
+    lowcode_config: '低代码配置',
+  });
+  const viewTypeLabel = valueLabel(viewType, {
+    form: '表单',
+    tree: '列表',
+    list: '列表',
+    kanban: '看板',
+    search: '搜索',
+    calendar: '日历',
+    pivot: '透视',
+    graph: '图表',
+  });
+  return `契约模式：${modeLabel} · 承载界面：${surfaceLabel} · 视图类型：${viewTypeLabel} · 页面状态：${profileLabels[renderProfile.value] || renderProfile.value} · 筛选项：${filters} · 流转项：${transitions} · 操作权限：${permissionLabels.join('、') || '无可用权限'}`;
 });
 
 const showDebugActions = computed(() => renderProfile.value !== 'create');

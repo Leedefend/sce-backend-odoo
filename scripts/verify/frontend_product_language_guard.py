@@ -210,6 +210,15 @@ FORBIDDEN_PHRASES = {
     "window.prompt(relationUiLabel(descriptor, 'page_unavailable_prompt'))": "表单关联快速创建必须使用产品化输入弹窗",
     "return window.confirm(message)": "表单危险操作必须使用产品化确认弹窗",
     "window.prompt(`${label}${suffix}`": "表单动态参数必须使用页面内参数表单",
+    "HUD: role_key": "首页验收信息不能暴露工程字段名",
+    "HUD: internal_tiles": "首页验收信息不能暴露工程字段名",
+    "HUD: orchestration_blocks": "首页验收信息不能暴露工程字段名",
+    "scene_key={{": "首页入口验收信息不能暴露工程字段名",
+    "capability_key={{": "首页入口验收信息不能暴露工程字段名",
+    "return `mode=${mode}": "表单契约元信息不能暴露工程字段名",
+    "view_type=${viewType}": "表单契约元信息不能暴露工程字段名",
+    "profile=${renderProfile.value}": "表单契约元信息不能暴露工程字段名",
+    "rights=${rights.value": "表单契约元信息不能暴露工程字段名",
 }
 
 
