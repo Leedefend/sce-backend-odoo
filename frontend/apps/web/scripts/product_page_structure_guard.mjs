@@ -277,6 +277,16 @@ assertContains(
   /productPageRuntimeSemantics/,
   "config workbench acceptance doc must describe runtime page semantics evidence",
 );
+assertContains(
+  "frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
+  /CONFIG_WORKBENCH_OPERATION_COVERAGE/,
+  "config workbench acceptance must use the shared operation coverage source",
+);
+assertContains(
+  "frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs",
+  /CONFIG_WORKBENCH_OPERATION_COVERAGE/,
+  "config workbench summary guard must use the shared operation coverage source",
+);
 assertNotContains(
   "docs/product/config_workbench_operation_acceptance_v1.md",
   /62\s*\/\s*62|当前为 62|合格线\s*\|\s*62/,

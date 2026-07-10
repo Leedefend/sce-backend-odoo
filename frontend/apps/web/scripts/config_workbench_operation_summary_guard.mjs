@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { CONFIG_WORKBENCH_OPERATION_COVERAGE as ACCEPTANCE_COVERAGE } from "./lib/config_workbench_operation_coverage.mjs";
 
 const ARTIFACT_ROOT = path.resolve(process.cwd(), "artifacts/playwright/config-workbench-operation");
 const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
@@ -64,6 +65,19 @@ function assertIncludesAll(actual = [], required = [], message) {
   if (missing.length) fail(message, { missing, required, actual });
 }
 
+function assertExactList(actual = [], expected = [], message) {
+  const actualList = Array.isArray(actual) ? actual : [];
+  const expectedList = Array.isArray(expected) ? expected : [];
+  const missing = expectedList.filter((item) => !actualList.includes(item));
+  const extra = actualList.filter((item) => !expectedList.includes(item));
+  const orderMismatch = expectedList
+    .map((item, index) => ({ index, actual: actualList[index], expected: item }))
+    .filter((item) => item.actual !== item.expected);
+  if (missing.length || extra.length || orderMismatch.length || actualList.length !== expectedList.length) {
+    fail(message, { missing, extra, orderMismatch, actual: actualList, expected: expectedList });
+  }
+}
+
 async function main() {
   const [report, summary, files] = await Promise.all([
     readJson(REPORT_PATH),
@@ -90,6 +104,9 @@ async function main() {
   assertEqual(summary.menuTreeHead, report.checks?.menuTreeHead || "", "summary menu tree head drifted");
 
   if (summary.ok !== true) fail("config workbench summary is not ok", { summary });
+  assertExactList(report.metrics?.journeys, ACCEPTANCE_COVERAGE.journeys, "config workbench journey coverage source drifted");
+  assertExactList(report.metrics?.actions, ACCEPTANCE_COVERAGE.actions, "config workbench action coverage source drifted");
+  assertExactList(report.metrics?.assertions, ACCEPTANCE_COVERAGE.assertions, "config workbench assertion coverage source drifted");
   assertIncludesAll(report.metrics?.assertions || [], REQUIRED_ASSERTIONS, "config workbench required assertion coverage drifted");
   assertFullCoverage(summary.assertion, report.metrics?.assertion_passed_count, report.metrics?.assertion_count, "config workbench assertion gate is not complete");
   assertFullCoverage(summary.journeys, report.metrics?.journey_passed_count, report.metrics?.journey_count, "config workbench journey gate is not complete");
