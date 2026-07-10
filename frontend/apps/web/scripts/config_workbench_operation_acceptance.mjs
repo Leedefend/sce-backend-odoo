@@ -368,6 +368,20 @@ function scoreResult(score, reason) {
   return { score, reason };
 }
 
+function assertCoverageKeys(actualObject, expectedKeys, message) {
+  const actualKeys = Object.keys(actualObject || {});
+  const missing = expectedKeys.filter((key) => !actualKeys.includes(key));
+  const extra = actualKeys.filter((key) => !expectedKeys.includes(key));
+  const orderMismatch = expectedKeys
+    .map((key, index) => ({ index, actual: actualKeys[index], expected: key }))
+    .filter((item) => item.actual !== item.expected);
+  assert(
+    missing.length === 0 && extra.length === 0 && orderMismatch.length === 0 && actualKeys.length === expectedKeys.length,
+    message,
+    { actualKeys, expectedKeys, missing, extra, orderMismatch },
+  );
+}
+
 function buildPageStructureResult(checks) {
   const expectedCards = ["表单字段与布局", "列表与搜索", "菜单入口", "审批规则"];
   const desktop = checks.pageStructureDesktop || {};
@@ -564,6 +578,11 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
       { mobileOrder: checks.mobileOrder, mobileViewport: checks.mobileViewport, mobileBodyWidth: checks.mobileBodyWidth, mobileConfigurationTopbar: checks.mobileConfigurationTopbar },
     ),
   };
+  assertCoverageKeys(
+    taskResults,
+    ACCEPTANCE_COVERAGE.productUsabilityTasks,
+    "配置工作台用户任务验收结果必须与共享 coverage 完全一致",
+  );
 
   const dimensions = {
     current_context: scoreResult(pageContextVisible ? 2 : 0, "标题、卡片和返回路径必须指向当前业务页面。"),
@@ -578,6 +597,11 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     user_language: scoreResult(cardsComplete && entryNamesStable && visibleTechnicalTermsClean ? 2 : 0, "默认界面必须使用业务语言，不要求用户理解技术模型。"),
     verifiability: scoreResult(evidenceReady ? 2 : 0, "结论必须可由截图、指标和报告文件复现。"),
   };
+  assertCoverageKeys(
+    dimensions,
+    ACCEPTANCE_COVERAGE.productUsabilityDimensions,
+    "配置工作台交付维度必须与共享 coverage 完全一致",
+  );
   const scoreTotal = Object.values(dimensions).reduce((sum, item) => sum + item.score, 0);
   const maxScore = Object.keys(dimensions).length * 2;
   const zeroScoreDimensions = Object.entries(dimensions).filter(([, item]) => item.score === 0).map(([key]) => key);
@@ -633,7 +657,8 @@ function professionalScore(pass, reason, evidence = {}) {
 function buildProfessionalReadiness({ metrics, checks, screenshots, consoleErrors, requestFailed, productUsability }) {
   const screenshotsComplete = ACCEPTANCE_COVERAGE.screenshotKeys.every((key) => Boolean(screenshots[key]));
   const taskStatuses = Object.values(productUsability.task_results || {}).map((item) => item.status);
-  const allTasksPassed = taskStatuses.length === 8 && taskStatuses.every((status) => status === "pass");
+  const allTasksPassed = taskStatuses.length === ACCEPTANCE_COVERAGE.productUsabilityTasks.length
+    && taskStatuses.every((status) => status === "pass");
   const pageStructurePassed = productUsability.page_structure?.status === "pass";
   const healthPassed = consoleErrors.length === 0
     && requestFailed.length === 0
@@ -760,6 +785,11 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       assertionPassed: metrics?.assertion_passed_count,
     }),
   };
+  assertCoverageKeys(
+    dimensions,
+    ACCEPTANCE_COVERAGE.professionalDimensions,
+    "配置工作台专业产品维度必须与共享 coverage 完全一致",
+  );
   const scoreTotal = Object.values(dimensions).reduce((sum, item) => sum + item.score, 0);
   const maxScore = Object.keys(dimensions).length * 3;
   const failedDimensions = Object.entries(dimensions).filter(([, item]) => item.score === 0).map(([key]) => key);
