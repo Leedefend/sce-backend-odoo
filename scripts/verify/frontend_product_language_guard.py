@@ -237,6 +237,7 @@ FORBIDDEN_PHRASES = {
     "runGovernance('export_contract')\">导出契约": "场景健康页治理导出操作必须使用产品化文案",
     "视图类型') }}：{{ contractViewType || '-'": "列表配置摘要必须展示产品化视图名称",
     "页面模式') }}：{{ vm.page.viewMode || '-'": "列表配置摘要必须展示产品化页面模式",
+    "item.view_type || 'list' }}": "配置工作台个人设置记录必须展示产品化视图名称",
 }
 
 

@@ -1112,7 +1112,7 @@
           v-for="item in listSearchAudit.user_preferences.slice(0, 6)"
           :key="item.id || item.scope_key"
         >
-          {{ item.user_name || '用户' }} · {{ item.view_type || 'list' }} · {{ item.column_count }}列
+          {{ item.user_name || '用户' }} · {{ viewTypeLabel(item.view_type || 'list') }} · {{ item.column_count }}列
         </span>
       </div>
     </section>
