@@ -192,6 +192,12 @@ FORBIDDEN_PHRASES = {
     "if (typeof value === 'object') return JSON.stringify(value);": "通用页面表格不能直接展示结构数据",
     "模式: ": "我的工作台状态标签必须使用中文标点",
     "命中重放#": "我的工作台重放反馈必须使用产品化中文表达",
+    "Export SA": "页面诊断操作必须使用产品化中文表达",
+    "Extraction stats": "页面诊断反馈必须使用产品化中文表达",
+    "suggested_action traces": "页面诊断导出反馈必须使用产品化中文表达",
+    "label: 'scene_key'": "页面诊断标签必须使用产品化中文表达",
+    "governance.runtime_source": "页面诊断标签必须使用产品化中文表达",
+    "JSON.stringify(layoutStats": "记录页诊断信息必须使用产品化摘要",
 }
 
 

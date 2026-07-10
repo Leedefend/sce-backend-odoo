@@ -401,7 +401,7 @@ const enterpriseLabel = computed(() => {
   }
   const directName = String(user?.company_name || '').trim();
   if (directName) return directName;
-  return effectiveDb.value && effectiveDb.value !== 'N/A' ? effectiveDb.value : '默认企业';
+  return effectiveDb.value && effectiveDb.value !== '暂无' ? effectiveDb.value : '默认企业';
 });
 const sidebarSubtitle = computed(() => {
   if (!isDeliveryMode.value) return userName.value;
@@ -497,12 +497,12 @@ const activeAppId = computed(() => {
   if (route.name === 'home' || route.name === 'scene-home') return 'workspace';
   return '';
 });
-const effectiveDb = computed(() => asText(initMeta.value?.effective_db) ?? 'N/A');
+const effectiveDb = computed(() => asText(initMeta.value?.effective_db) ?? '暂无');
 const navVersion = computed(() => {
   const meta = initMeta.value;
   const navMeta = asDict(meta?.nav_meta);
   const parts = asDict(meta?.parts);
-  return asText(meta?.nav_version) || asText(navMeta?.menu) || asText(parts?.nav) || 'N/A';
+  return asText(meta?.nav_version) || asText(navMeta?.menu) || asText(parts?.nav) || '暂无';
 });
 const suggestedActionStamp = ref(0);
 const hudMessage = ref('');
@@ -1102,53 +1102,53 @@ const sceneGovernanceConsumptionSummary = computed(() => {
   const surfaceRate = asDict(aggregate?.surface_nonempty_rate);
   const searchBase = Number(baseRate?.search || 0).toFixed(2);
   const actionSurface = Number(surfaceRate?.action_surface || 0).toFixed(2);
-  return `enabled=${enabled} types=${sceneTypes} scenes=${scenes} base.search=${searchBase} surface.action=${actionSurface}`;
+  return `启用：${enabled ? '是' : '否'}；场景类型：${sceneTypes}；场景：${scenes}；基础检索：${searchBase}；操作面：${actionSurface}`;
 });
 
 const hudEntries = computed(() => {
   const entries = [
-  { label: 'scene_key', value: routeSceneKey.value || '-' },
-  { label: 'entry_source', value: currentEntrySource.value },
-  { label: 'nav_entry_total', value: runtimeNavigationRegistry.value.entries.length || 0 },
-  { label: 'nav_scene_entries', value: runtimeNavigationRegistry.value.sceneEntries.length || 0 },
-  { label: 'nav_cap_entries', value: runtimeNavigationRegistry.value.capabilityEntries.length || 0 },
-  { label: 'role_scene_candidates', value: roleSceneCoverage.value.total || 0 },
-  { label: 'role_scene_matched', value: roleSceneCoverage.value.matchedCount || 0 },
-  { label: 'role_scene_missing', value: roleSceneCoverage.value.missingCount || 0 },
-  { label: 'role_scene_missing_keys', value: roleSceneCoverage.value.missingPreview },
-  { label: 'role_scope', value: String(roleSurface.value?.role_code || '-') },
-  { label: 'requested_surface', value: String(route.query.surface || '-') },
-  { label: 'scene_capability_count', value: routeSceneCapabilityKeys.value.length || 0 },
-  { label: 'scene_capabilities', value: routeSceneCapabilityKeys.value.slice(0, 8).join(',') || '-' },
-  { label: 'scene_capability_groups', value: routeSceneCapabilityGroups.value.join(',') || '-' },
-  { label: 'menu_id', value: activeMenuId.value || '-' },
-  { label: 'menu_label', value: menuLabel.value || '-' },
-  { label: 'route', value: route.fullPath },
-  { label: 'user', value: userName.value || '-' },
-  { label: 'db', value: effectiveDb.value || '-' },
-  { label: 'nav_version', value: navVersion.value || '-' },
-  { label: 'model', value: asText(asDict(session.currentAction)?.model) || '-' },
-  { label: 'sa_kind', value: latestSuggestedAction.value?.suggested_action_kind || '-' },
-  { label: 'sa_success', value: String(latestSuggestedAction.value?.suggested_action_success ?? '-') },
-  { label: 'sa_ts', value: latestSuggestedActionTs.value },
+  { label: '场景标识', value: routeSceneKey.value || '-' },
+  { label: '入口来源', value: currentEntrySource.value },
+  { label: '导航入口数', value: runtimeNavigationRegistry.value.entries.length || 0 },
+  { label: '场景入口数', value: runtimeNavigationRegistry.value.sceneEntries.length || 0 },
+  { label: '能力入口数', value: runtimeNavigationRegistry.value.capabilityEntries.length || 0 },
+  { label: '角色候选场景', value: roleSceneCoverage.value.total || 0 },
+  { label: '角色已匹配场景', value: roleSceneCoverage.value.matchedCount || 0 },
+  { label: '角色缺失场景', value: roleSceneCoverage.value.missingCount || 0 },
+  { label: '缺失场景预览', value: roleSceneCoverage.value.missingPreview },
+  { label: '当前角色', value: String(roleSurface.value?.role_code || '-') },
+  { label: '请求界面', value: String(route.query.surface || '-') },
+  { label: '场景能力数', value: routeSceneCapabilityKeys.value.length || 0 },
+  { label: '场景能力', value: routeSceneCapabilityKeys.value.slice(0, 8).join('、') || '-' },
+  { label: '能力分组', value: routeSceneCapabilityGroups.value.join('、') || '-' },
+  { label: '菜单编号', value: activeMenuId.value || '-' },
+  { label: '菜单名称', value: menuLabel.value || '-' },
+  { label: '当前页面', value: route.fullPath },
+  { label: '当前用户', value: userName.value || '-' },
+  { label: '当前企业库', value: effectiveDb.value || '-' },
+  { label: '导航版本', value: navVersion.value || '-' },
+  { label: '业务模型', value: asText(asDict(session.currentAction)?.model) || '-' },
+  { label: '建议动作类型', value: latestSuggestedAction.value?.suggested_action_kind || '-' },
+  { label: '建议动作结果', value: latestSuggestedAction.value?.suggested_action_success === undefined ? '-' : (latestSuggestedAction.value.suggested_action_success ? '成功' : '失败') },
+  { label: '建议动作时间', value: latestSuggestedActionTs.value },
   ];
   if (sceneGovernanceSnapshot.value) {
     entries.push(
-      { label: 'governance.scene_channel', value: String(sceneGovernanceSnapshot.value.scene_channel || '-') },
-      { label: 'governance.runtime_source', value: String(sceneGovernanceSnapshot.value.runtime_source || '-') },
-      { label: 'governance.gates', value: sceneGovernanceGatesSummary.value },
-      { label: 'governance.reasons', value: sceneGovernanceReasonsSummary.value },
-      { label: 'governance.scene_ready_consumption', value: sceneGovernanceConsumptionSummary.value },
+      { label: '治理通道', value: String(sceneGovernanceSnapshot.value.scene_channel || '-') },
+      { label: '运行来源', value: String(sceneGovernanceSnapshot.value.runtime_source || '-') },
+      { label: '治理门禁', value: sceneGovernanceGatesSummary.value },
+      { label: '治理原因', value: sceneGovernanceReasonsSummary.value },
+      { label: '场景消费', value: sceneGovernanceConsumptionSummary.value },
     );
   }
   if (showExtractionStats.value) {
     entries.push(
-      { label: 'extract.business_collections', value: String(extractionStats.value.business_collections ?? '-') },
-      { label: 'extract.business_rows_total', value: String(extractionStats.value.business_rows_total ?? '-') },
-      { label: 'extract.today_business', value: String(extractionStats.value.today_actions_business ?? '-') },
-      { label: 'extract.today_fallback', value: String(extractionStats.value.today_actions_fallback ?? '-') },
-      { label: 'extract.risk_business', value: String(extractionStats.value.risk_actions_business ?? '-') },
-      { label: 'extract.risk_fallback', value: String(extractionStats.value.risk_actions_fallback ?? '-') },
+      { label: '业务集合数', value: String(extractionStats.value.business_collections ?? '-') },
+      { label: '业务数据行数', value: String(extractionStats.value.business_rows_total ?? '-') },
+      { label: '今日业务入口', value: String(extractionStats.value.today_actions_business ?? '-') },
+      { label: '今日兜底入口', value: String(extractionStats.value.today_actions_fallback ?? '-') },
+      { label: '风险业务入口', value: String(extractionStats.value.risk_actions_business ?? '-') },
+      { label: '风险兜底入口', value: String(extractionStats.value.risk_actions_fallback ?? '-') },
     );
   }
   return entries;
@@ -1157,19 +1157,19 @@ const defaultKindActions = ['open_record', 'copy_trace', 'refresh'];
 const hudActions = computed(() => [
   {
     key: 'toggle-extract-stats',
-    label: showExtractionStats.value ? 'Hide extract stats' : 'Show extract stats',
+    label: showExtractionStats.value ? '隐藏抽取统计' : '显示抽取统计',
     onClick: () => {
       showExtractionStats.value = !showExtractionStats.value;
       hudMessage.value = showExtractionStats.value
-        ? 'Extraction stats are visible in HUD.'
-        : 'Extraction stats are hidden.';
+        ? '抽取统计已显示。'
+        : '抽取统计已隐藏。';
     },
   },
-  { key: 'export-sa-all', label: 'Export SA all', onClick: () => exportSuggestedActionJson() },
-  { key: 'export-sa-ok', label: 'Export SA ok', onClick: () => exportSuggestedActionJson({ success: true }, 'ok') },
-  { key: 'export-sa-fail', label: 'Export SA fail', onClick: () => exportSuggestedActionJson({ success: false }, 'fail') },
-  { key: 'export-sa-1h', label: 'Export SA 1h', onClick: () => exportSuggestedActionJson({ since_ts: sinceTsFromHours(1) }, '1h') },
-  { key: 'export-sa-24h', label: 'Export SA 24h', onClick: () => exportSuggestedActionJson({ since_ts: sinceTsFromHours(24) }, '24h') },
+  { key: 'export-sa-all', label: '导出全部建议动作', onClick: () => exportSuggestedActionJson() },
+  { key: 'export-sa-ok', label: '导出成功动作', onClick: () => exportSuggestedActionJson({ success: true }, 'ok') },
+  { key: 'export-sa-fail', label: '导出失败动作', onClick: () => exportSuggestedActionJson({ success: false }, 'fail') },
+  { key: 'export-sa-1h', label: '导出近 1 小时', onClick: () => exportSuggestedActionJson({ since_ts: sinceTsFromHours(1) }, '1h') },
+  { key: 'export-sa-24h', label: '导出近 24 小时', onClick: () => exportSuggestedActionJson({ since_ts: sinceTsFromHours(24) }, '24h') },
   ...resolveKindExportActions(),
 ]);
 
@@ -1178,7 +1178,7 @@ function resolveKindExportActions() {
   const chosenKinds = [...new Set([...rankedKinds, ...defaultKindActions])].slice(0, 3);
   return chosenKinds.map((kind) => ({
     key: `export-sa-kind-${kind}`,
-    label: `Export SA ${kind}`,
+    label: `导出动作类型 ${kind}`,
     onClick: () => exportSuggestedActionJson({ kind }, `kind-${kind}`),
   }));
 }
@@ -1231,9 +1231,9 @@ function exportSuggestedActionJson(filter: { success?: boolean; kind?: string; s
     downloadTextAsFile(`suggested-action-traces-${sanitizeExportSuffix(suffix)}-${now}.json`, content);
     const filterSummary = summarizeSuggestedActionTraceFilter(filter);
     const details = [suffix, filterSummary].filter(Boolean).join(', ');
-    hudMessage.value = `Exported suggested_action traces (${details}).`;
+    hudMessage.value = `建议动作追踪已导出（${details}）。`;
   } catch {
-    hudMessage.value = 'Failed to export suggested_action traces.';
+    hudMessage.value = '建议动作追踪导出失败。';
   }
 }
 

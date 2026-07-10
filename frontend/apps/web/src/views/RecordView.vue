@@ -425,9 +425,9 @@ const hudEntries = computed(() => [
   { label: '入口来源', value: actionContext.value.source },
   { label: '渲染模式', value: renderMode.value },
   { label: '布局已加载', value: Boolean(viewContract.value?.layout) },
-  { label: '布局节点', value: JSON.stringify(layoutStats.value) },
-  { label: '未支持节点', value: missingNodes.value.join(',') || '-' },
-  { label: '已覆盖能力', value: supportedNodes.join(',') },
+  { label: '布局节点', value: layoutStatsText.value },
+  { label: '未支持节点', value: missingNodes.value.join('、') || '-' },
+  { label: '已覆盖能力', value: supportedNodes.join('、') },
   { label: '最近意图', value: lastIntent.value || '-' },
   { label: '写入模式', value: lastWriteMode.value || '-' },
   { label: '追踪 ID', value: traceId.value || lastTraceId.value || '-' },
@@ -438,6 +438,15 @@ const hudEntries = computed(() => [
   { label: '耗时', value: lastLatencyMs.value ?? '-' },
   { label: '当前路由', value: route.fullPath },
 ]);
+const layoutStatsText = computed(() => {
+  const stats = layoutStats.value;
+  return [
+    `分组 ${stats.group}`,
+    `字段 ${stats.field}`,
+    `页签 ${stats.notebook + stats.page}`,
+    `未支持 ${stats.unsupported}`,
+  ].join('；');
+});
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
@@ -786,11 +795,7 @@ function formatFieldValue(value: unknown) {
     return value.map((item) => String(item ?? '')).filter(Boolean).join(', ') || '-';
   }
   if (typeof value === 'object') {
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return '[object]';
-    }
+    return '多项内容';
   }
   return String(value);
 }
