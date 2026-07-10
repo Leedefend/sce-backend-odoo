@@ -82,6 +82,10 @@ function assertFullCoverage(summaryValue, passed, total, message) {
   }
 }
 
+function assertMetricCount(actual, expected, message) {
+  if (actual !== expected) fail(message, { actual, expected });
+}
+
 function assertIncludesAll(actual = [], required = [], message) {
   const missing = required.filter((item) => !actual.includes(item));
   if (missing.length) fail(message, { missing, required, actual });
@@ -126,11 +130,18 @@ async function main() {
   assertEqual(summary.menuTreeHead, report.checks?.menuTreeHead || "", "summary menu tree head drifted");
 
   if (summary.ok !== true) fail("config workbench summary is not ok", { summary });
+  assertEqual(report.metrics?.schema_version, "config_workbench_operation_acceptance_metrics.v1", "config workbench metrics schema drifted");
+  assertEqual(report.metrics?.coverage_ratio, 1, "config workbench coverage ratio is not complete");
+  assertEqual(report.metrics?.health_passed, true, "config workbench health flag is not true");
   assertExactList(
     Object.keys(ACCEPTANCE_COVERAGE.screenshotFiles || {}),
     ACCEPTANCE_COVERAGE.screenshotKeys,
     "config workbench screenshot coverage file map drifted",
   );
+  assertMetricCount(report.metrics?.journey_count, ACCEPTANCE_COVERAGE.journeys.length, "config workbench journey count drifted");
+  assertMetricCount(report.metrics?.action_count, ACCEPTANCE_COVERAGE.actions.length, "config workbench action count drifted");
+  assertMetricCount(report.metrics?.assertion_count, ACCEPTANCE_COVERAGE.assertions.length, "config workbench assertion count drifted");
+  assertMetricCount(report.metrics?.screenshot_required_count, ACCEPTANCE_COVERAGE.screenshotKeys.length, "config workbench screenshot count drifted");
   assertExactList(report.metrics?.journeys, ACCEPTANCE_COVERAGE.journeys, "config workbench journey coverage source drifted");
   assertExactList(report.metrics?.actions, ACCEPTANCE_COVERAGE.actions, "config workbench action coverage source drifted");
   assertExactList(report.metrics?.assertions, ACCEPTANCE_COVERAGE.assertions, "config workbench assertion coverage source drifted");
