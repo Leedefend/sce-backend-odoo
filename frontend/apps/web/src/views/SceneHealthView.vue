@@ -267,12 +267,12 @@ const governanceConsumptionLabel = computed(() => {
 });
 
 function validateHealthContract(raw: unknown): SceneHealthContract {
-  if (!raw || typeof raw !== 'object') throw new Error('scene.health response missing');
+  if (!raw || typeof raw !== 'object') throw new Error(pageText('error_health_payload_missing', '场景健康数据返回为空'));
   const value = raw as Record<string, unknown>;
   const requiredRoot = ['scene_channel', 'rollback_active', 'summary', 'details', 'trace_id'];
   for (const key of requiredRoot) {
     if (!(key in value)) {
-      throw new Error(`scene.health missing key: ${key}`);
+      throw new Error(`${pageText('error_health_payload_incomplete', '场景健康数据不完整：')}${key}`);
     }
   }
   const summary = value.summary as Record<string, unknown>;
@@ -280,12 +280,12 @@ function validateHealthContract(raw: unknown): SceneHealthContract {
     typeof summary?.critical_resolve_errors_count !== 'number' ||
     typeof summary?.critical_drift_warn_count !== 'number'
   ) {
-    throw new Error('scene.health.summary critical counters missing');
+    throw new Error(pageText('error_health_summary_incomplete', '场景健康汇总数据不完整'));
   }
   if ('details' in value) {
     const details = value.details as Record<string, unknown>;
     if (!Array.isArray(details?.resolve_errors) || !Array.isArray(details?.drift) || !Array.isArray(details?.debt)) {
-      throw new Error('scene.health.details arrays missing');
+      throw new Error(pageText('error_health_details_incomplete', '场景健康明细数据不完整'));
     }
   }
   return value as unknown as SceneHealthContract;

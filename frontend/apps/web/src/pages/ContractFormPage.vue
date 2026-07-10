@@ -2933,7 +2933,7 @@ async function auditCurrentFormConfiguration() {
       hasConflict: Boolean(result.has_conflict),
     };
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'form config audit failed';
+    errorMessage.value = err instanceof Error ? err.message : '表单配置审计失败';
     status.value = 'error';
   } finally {
     formConfigAuditBusy.value = false;
@@ -6612,7 +6612,7 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
       await reload();
       return;
     } catch (err) {
-      errorMessage.value = err instanceof Error ? err.message : 'action execute failed';
+      errorMessage.value = err instanceof Error ? err.message : '操作执行失败';
       status.value = 'error';
       return;
     } finally {
@@ -9239,7 +9239,7 @@ async function loadContract() {
     });
   }
   if (!response?.data || typeof response.data !== 'object') {
-    throw new Error('empty contract');
+    throw new Error('表单配置返回为空');
   }
   const markerCheck = validateSurfaceMarkers(
     response.data,
@@ -9247,11 +9247,11 @@ async function loadContract() {
     requestedSurface.value,
   );
   if (!markerCheck.ok) {
-    throw new Error(`contract surface markers invalid: ${markerCheck.issues.slice(0, 4).join(' | ')}`);
+    throw new Error(`表单配置标记不完整：${markerCheck.issues.slice(0, 4).join(' | ')}`);
   }
   const readiness = analyzeFormContractReadiness(response.data, { requirePureFormViewType: false });
   if (!readiness.usable) {
-    throw new Error(`contract not renderable: ${readiness.issues.slice(0, 4).join(' | ')}`);
+    throw new Error(`表单配置暂不可渲染：${readiness.issues.slice(0, 4).join(' | ')}`);
   }
   contract.value = response.data as ActionContract;
   contractMeta.value = response.meta || null;
@@ -9408,7 +9408,7 @@ async function loadNativeChatterTimeline(targetResId = recordId.value, targetMod
     });
     chatterTimeline.value = Array.isArray(response.items) ? response.items : [];
   } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : 'chatter timeline load failed';
+    chatterError.value = err instanceof Error ? err.message : '协作记录加载失败';
   } finally {
     chatterLoading.value = false;
   }
@@ -9546,7 +9546,7 @@ async function sendNativeChatter() {
     chatterError.value = '';
     await loadNativeChatterTimeline();
   } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : 'chatter post failed';
+    chatterError.value = err instanceof Error ? err.message : '协作消息发送失败';
   } finally {
     chatterPosting.value = false;
   }
@@ -9579,7 +9579,7 @@ async function scheduleNativeChatterActivity() {
     chatterError.value = '';
     await loadNativeChatterTimeline();
   } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : 'chatter activity schedule failed';
+    chatterError.value = err instanceof Error ? err.message : '计划事项创建失败';
   } finally {
     chatterPosting.value = false;
   }
@@ -9735,7 +9735,7 @@ async function reload() {
         });
         return;
       }
-      errorMessage.value = err instanceof Error ? err.message : 'load failed';
+      errorMessage.value = err instanceof Error ? err.message : '表单加载失败';
       status.value = 'error';
     } finally {
       if (activeReloadIdentity === reloadIdentity) {
@@ -9779,8 +9779,8 @@ async function discardChanges() {
 }
 
 onErrorCaptured((err) => {
-  const message = err instanceof Error ? err.message : String(err || 'unknown render error');
-  renderErrorMessage.value = `ContractFormPage render error: ${message}`;
+  const message = err instanceof Error ? err.message : String(err || '未知渲染异常');
+  renderErrorMessage.value = `表单页面渲染失败：${message}`;
   console.error('[ContractFormPage] render failed', err);
   return false;
 });
@@ -9905,7 +9905,7 @@ async function runContractRuleAction(rule: Record<string, unknown>, providedPara
     contractModeFeedback.value = String(target.success_message || '已更新').trim();
     await reload();
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'contract action failed';
+    errorMessage.value = err instanceof Error ? err.message : '表单配置操作失败';
     status.value = 'error';
   } finally {
     busyKind.value = null;
@@ -10299,7 +10299,7 @@ async function setInlineFieldPolicy(fieldKey: string, params: Record<string, unk
     contractModeFeedback.value = '字段配置已更新';
     await reload();
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'field policy update failed';
+    errorMessage.value = err instanceof Error ? err.message : '字段显示规则更新失败';
     status.value = 'error';
   } finally {
     busyKind.value = null;
@@ -10404,7 +10404,7 @@ async function submitInlineCustomFieldCreate() {
     closeInlineCustomFieldCreate();
     await reload();
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'custom field create failed';
+    errorMessage.value = err instanceof Error ? err.message : '自定义字段创建失败';
     status.value = 'error';
   } finally {
     busyKind.value = null;
@@ -10790,7 +10790,7 @@ async function saveContractFieldOrder() {
     await hydrateLowCodeDraftFromContract();
     return true;
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'field order update failed';
+    errorMessage.value = err instanceof Error ? err.message : '表单字段顺序更新失败';
     status.value = 'error';
     return false;
   } finally {
@@ -10837,7 +10837,7 @@ async function runAction(action: ContractAction) {
       window.open(navUrl, action.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
       return;
     }
-    errorMessage.value = 'contract open action missing action_id';
+    errorMessage.value = '打开操作缺少目标页面';
     status.value = 'error';
     return;
   }
@@ -10861,7 +10861,7 @@ async function runAction(action: ContractAction) {
       await applyProjectionRefreshPolicy(action.refreshPolicy);
       return;
     } catch (err) {
-      errorMessage.value = err instanceof Error ? err.message : 'scene mutation execute failed';
+      errorMessage.value = err instanceof Error ? err.message : '场景操作执行失败';
       status.value = 'error';
       return;
     } finally {
@@ -10917,7 +10917,7 @@ async function runAction(action: ContractAction) {
       }
       return;
     } catch (err) {
-      errorMessage.value = err instanceof Error ? err.message : 'action execute failed';
+      errorMessage.value = err instanceof Error ? err.message : '操作执行失败';
       status.value = 'error';
     } finally {
       busyKind.value = null;

@@ -12,7 +12,7 @@
       :record-count="records.length"
     />
 
-    <StatusPanel v-if="loading" title="Loading cards..." variant="info" />
+    <StatusPanel v-if="loading" title="卡片加载中..." variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
       :title="errorCopy.title"
@@ -195,7 +195,7 @@ const props = defineProps<{
 const errorCopy = computed(() =>
   resolveErrorCopy(
     props.error || null,
-    props.errorMessage || 'Card load failed',
+    props.errorMessage || '卡片加载失败',
   ),
 );
 const emptyCopy = computed(() => resolveEmptyCopy('card'));

@@ -592,7 +592,7 @@ const hasFilterPreset = ref(false);
 const appliedPresetLabel = ref('');
 const routeContextSource = ref('');
 const lastTrackedPreset = ref('');
-const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
+const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_load_my_work_failed', '我的工作台加载失败')));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const generatedAtText = computed(() => {
   const raw = String(generatedAt.value || '').trim();

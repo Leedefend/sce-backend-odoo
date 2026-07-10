@@ -16,8 +16,8 @@
       :style="pageSectionStyle('card')"
     >
       <h1>{{ pageText('title', '页面暂未配置') }}</h1>
-      <p>{{ pageText('route_label', '页面地址') }}: {{ route.path }}</p>
-      <p>{{ pageText('params_label', '页面参数') }}: {{ route.params }}</p>
+      <p>{{ pageText('route_label', '页面地址') }}：{{ route.path }}</p>
+      <p>{{ pageText('params_label', '页面参数') }}：{{ routeParamsText }}</p>
     </section>
   </main>
 </template>
@@ -39,6 +39,12 @@ const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
 const headerActions = computed(() => pageGlobalActions.value);
+const routeParamsText = computed(() => {
+  const entries = Object.entries(route.params)
+    .map(([key, value]) => `${key}=${Array.isArray(value) ? value.join(',') : String(value || '')}`)
+    .filter((item) => item.trim());
+  return entries.length ? entries.join('；') : pageText('params_empty', '无');
+});
 
 async function executeHeaderAction(actionKey: string) {
   const handled = await executePageContractAction({
