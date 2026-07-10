@@ -132,19 +132,6 @@
         </div>
       </div>
 
-      <div v-if="showAdminShortcuts" class="admin-shortcuts">
-        <div class="admin-shortcuts__header">配置中心</div>
-        <button
-          class="published-app"
-          :class="{ active: route.name === 'business-config' }"
-          type="button"
-          @click="openBusinessConfigWorkbench"
-        >
-          <span class="published-app__mark">配</span>
-          <span class="published-app__label">配置工作台</span>
-        </button>
-      </div>
-
       <div class="nav-shell">
         <div class="search">
           <input v-model="query" type="search" placeholder="搜索菜单..." />
@@ -492,7 +479,6 @@ const isBusinessConfigAdmin = computed(() => {
     'smart_construction_core.group_sc_role_business_admin',
   ].includes(String(group || '').trim()));
 });
-const showAdminShortcuts = computed(() => isPlatformAdmin.value || isBusinessConfigAdmin.value);
 const visiblePublishedApps = computed(() => (isPlatformAdmin.value ? appCatalog.value : []));
 const showPublishedApps = computed(() => isPlatformAdmin.value && (visiblePublishedApps.value.length > 0 || appCatalogLoading.value));
 const activeAppId = computed(() => {
@@ -731,10 +717,6 @@ function appBadge(app: PublishedApp) {
 function pushRoute(path: string) {
   if (!path) return;
   router.push(path).catch(() => {});
-}
-
-function openBusinessConfigWorkbench() {
-  router.push(businessConfigWorkbenchRoute()).catch(() => {});
 }
 
 function businessConfigWorkbenchRoute(queryOverride: LocationQueryRaw = {}) {
@@ -1558,8 +1540,8 @@ async function logout() {
 
 .sidebar {
   padding: 18px 16px 14px;
-  display: grid;
-  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   border-right: 1px solid var(--sc-app-border);
   background: transparent;
@@ -1621,6 +1603,7 @@ async function logout() {
   border-radius: 8px;
   background: var(--sc-app-panel);
   padding: 8px;
+  flex: 1 1 auto;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 6px;
@@ -1878,26 +1861,11 @@ async function logout() {
   min-width: 0;
 }
 
-.admin-shortcuts {
-  display: grid;
-  gap: 4px;
-  padding: 0 0 8px;
-  border-bottom: 1px solid var(--layout-divider);
-  min-width: 0;
-}
-
 .published-apps__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 2px;
-  color: var(--sc-app-text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.admin-shortcuts__header {
   padding: 0 2px;
   color: var(--sc-app-text-secondary);
   font-size: 12px;
