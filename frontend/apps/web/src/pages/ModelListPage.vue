@@ -1,5 +1,5 @@
 <template>
-  <main class="page">
+  <main class="page sc-page sc-product-workspace-stack">
     <StatusPanel
       title="Legacy List Route"
       message="This route has been redirected to contract-driven ActionView."

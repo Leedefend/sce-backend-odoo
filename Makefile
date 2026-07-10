@@ -776,13 +776,18 @@ verify.business_config.low_code_acceptance: guard.prod.forbid
 verify.business_config.config_workbench_operation_acceptance: guard.prod.forbid
 	@cd frontend/apps/web && BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node scripts/config_workbench_operation_acceptance.mjs
 
-.PHONY: verify.business_config.config_workbench_operation_quick verify.business_config.config_workbench_operation_summary_guard verify.business_config.config_workbench_operation_local_closeout
+.PHONY: verify.business_config.config_workbench_operation_quick verify.business_config.config_workbench_operation_summary_guard verify.business_config.config_workbench_operation_local_closeout verify.product.page_structure
 
 verify.business_config.config_workbench_operation_quick: guard.prod.forbid
 	@node --check frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs
 	@node --check frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs
+	@node --check frontend/apps/web/scripts/product_page_structure_guard.mjs
+	@$(MAKE) verify.product.page_structure
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck
 	@git diff --check
+
+verify.product.page_structure: guard.prod.forbid
+	@cd frontend/apps/web && node scripts/product_page_structure_guard.mjs
 
 verify.business_config.config_workbench_operation_summary_guard: guard.prod.forbid
 	@node frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs

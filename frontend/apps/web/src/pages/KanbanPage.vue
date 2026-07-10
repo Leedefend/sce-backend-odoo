@@ -1,5 +1,5 @@
 <template>
-  <section class="page">
+  <section class="page sc-page sc-product-workspace-stack">
     <PageHeader
       v-if="status !== 'ok'"
       :title="title"
@@ -362,7 +362,7 @@ function formatValue(value: unknown) {
 <style scoped>
 .page {
   display: grid;
-  gap: 16px;
+  gap: var(--sc-product-workspace-stack-gap);
 }
 
 

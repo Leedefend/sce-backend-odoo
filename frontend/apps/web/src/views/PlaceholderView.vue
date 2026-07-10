@@ -1,5 +1,5 @@
 <template>
-  <main class="page">
+  <main class="page sc-page sc-product-workspace-stack">
     <section v-if="headerActions.length" class="page-actions">
       <button
         v-for="action in headerActions"
@@ -66,7 +66,7 @@ async function executeHeaderAction(actionKey: string) {
 .page {
   min-height: 100vh;
   display: grid;
-  gap: 12px;
+  gap: var(--sc-product-workspace-stack-gap);
   place-items: center;
   background: var(--sc-app-muted-bg);
   font-family: "IBM Plex Sans", system-ui, sans-serif;

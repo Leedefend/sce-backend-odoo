@@ -1,5 +1,5 @@
 <template>
-  <section class="page">
+  <section class="page sc-page sc-product-workspace-stack">
     <!-- Page intent: surface record status, risks, metrics, and next actions. -->
     <header class="header">
       <div>
@@ -1116,7 +1116,7 @@ function handleProjectContextChanged(): void {
 <style scoped>
 .page {
   display: grid;
-  gap: 16px;
+  gap: var(--sc-product-workspace-stack-gap);
   color: var(--sc-app-text-primary);
 }
 

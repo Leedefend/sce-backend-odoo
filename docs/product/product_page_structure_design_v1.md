@@ -199,11 +199,29 @@ Summary 只展示首屏决策信息：
 
 - `ActionView.vue`
 - `ListPage.vue`
+- `KanbanPage.vue`
+- `RecordView.vue`
+- `ModelListPage.vue`
+- `PlaceholderView.vue`
 - `ContractFormPage.vue`
 - `BusinessConfigSurfaceView.vue`
 - `MenuConfigView.vue`
 
-当前配置工作台专题已覆盖其中一部分，后续继续扩展到看板、详情、工作台首页。
+当前已完成高频业务壳层和配置壳层的基础接入，并新增静态门禁：
+
+```bash
+make verify.product.page_structure
+```
+
+该门禁当前覆盖：
+
+- 产品级 token：`--sc-product-workspace-gap`、`--sc-product-workspace-stack-gap`
+- 产品级 class：`sc-product-workspace`、`sc-product-workspace-stack`
+- 页面壳层：`ActionView`、`ListPage`、`KanbanPage`、`RecordView`、`ModelListPage`、`PlaceholderView`
+- 业务表单壳层：`ContractFormPage`
+- 配置工作台与菜单配置工作区
+
+后续继续扩展到工作台首页、场景页和详情页内部内容区。
 
 ### 第二阶段：Header/Toolbar 职责收敛
 
