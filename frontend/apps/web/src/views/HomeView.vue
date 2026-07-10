@@ -68,7 +68,7 @@
     </header>
 
     <section v-if="homeStrictContractMissingSummary" class="contract-missing-alert">
-      <p class="contract-missing-title">配置缺口提示</p>
+      <p class="contract-missing-title">配置状态提示</p>
       <p class="contract-missing-summary">{{ homeStrictContractMissingSummary }}</p>
       <p v-if="homeStrictContractDefaultsSummary" class="contract-missing-defaults">{{ homeStrictContractDefaultsSummary }}</p>
     </section>
@@ -627,7 +627,7 @@ const homeStrictContractMissingSummary = computed(() => {
   if (!Array.isArray(raw) || !raw.length) return '';
   const missing = raw.map((item) => asText(item)).filter(Boolean);
   if (!missing.length) return '';
-  return `严格模式检测到后端配置缺口：${missing.join(', ')}`;
+  return `严格模式检测到页面配置不完整：${missing.join(', ')}`;
 });
 const homeStrictContractDefaultsSummary = computed(() => {
   if (!homeStrictContractMode.value) return '';
@@ -635,7 +635,7 @@ const homeStrictContractDefaultsSummary = computed(() => {
   if (!Array.isArray(raw) || !raw.length) return '';
   const defaults = raw.map((item) => asText(item)).filter(Boolean);
   if (!defaults.length) return '';
-  return `当前由后端兜底补齐：${defaults.join(', ')}`;
+  return `系统已自动补齐：${defaults.join(', ')}`;
 });
 const workspaceLayoutActions = computed(() => (
   workspaceLayout.value.actions && typeof workspaceLayout.value.actions === 'object'

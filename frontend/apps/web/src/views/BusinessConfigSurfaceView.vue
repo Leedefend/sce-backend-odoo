@@ -1922,7 +1922,7 @@ function rowHasAnalysisConfig(row: BusinessConfigCoverageScanItem) {
 }
 
 function runtimeReasonLabel(reason: string) {
-  if (reason === 'missing_contract') return '待完善配置';
+  if (reason === 'missing_contract') return '未配置';
   if (reason === 'not_published') return '未发布';
   if (reason === 'not_runtime_applicable') return '作用域未命中';
   if (reason === 'not_published_or_not_runtime_applicable') return '未发布/作用域未命中';
@@ -2266,7 +2266,7 @@ function buildCoverageSummaryText() {
     `低代码配置覆盖验收：${overallStatusLabel(summary.overall_status)}`,
     `${coverageScopeLabel.value}；范围：${scan.model || '全部模型'}，动作 ${summary.action_count}`,
     `严重级别：阻断 ${summary.severity_counts.error || 0}，警告 ${summary.severity_counts.warning || 0}，提示 ${summary.severity_counts.notice || 0}`,
-    `待完善：配置 ${summary.missing_count}，办理页 ${summary.runtime_missing_count}，分析页 ${summary.runtime_missing_analysis_count || 0}，无菜单 ${summary.no_menu_count}，个人设置 ${summary.user_preference_count}`,
+    `未配置：配置 ${summary.missing_count}，办理页 ${summary.runtime_missing_count}，分析页 ${summary.runtime_missing_analysis_count || 0}，无菜单 ${summary.no_menu_count}，个人设置 ${summary.user_preference_count}`,
     `原因：未发布 ${summary.not_published_gap_count}，作用域未命中 ${summary.not_runtime_applicable_gap_count}`,
     `整改：${actions}`,
     `运行页面证据：\n${routeEvidence}`,
@@ -2588,7 +2588,7 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
   const missingContractTypes = rowBootstrapMissingViewTypes(row, ['form', 'tree', 'search', 'pivot', 'graph']);
   if (!missingContractTypes.length) {
     await openVersionsForRuntimeGaps(row);
-    setMessage('没有可自动补齐的配置项', '当前待完善项需要检查发布状态或配置作用域。');
+    setMessage('没有可自动生成的配置项', '当前项目需要检查发布状态或配置作用域。');
     return;
   }
   listSearchSaving.value = true;

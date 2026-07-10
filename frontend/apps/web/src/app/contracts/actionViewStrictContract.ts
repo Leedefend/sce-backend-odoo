@@ -59,14 +59,14 @@ export function useActionViewStrictContractBundle(options: StrictContractBundleO
     if (!strictContractMode.value) return '';
     const missing = strictContractMissingPaths.value;
     if (!missing.length) return '';
-    return `${options.pageText('strict_contract_missing_summary_prefix', '严格模式检测到后端配置缺口：')}${missing.join(', ')}`;
+    return `${options.pageText('strict_contract_missing_summary_prefix', '严格模式检测到页面配置不完整：')}${missing.join(', ')}`;
   });
 
   const strictContractDefaultsSummary = computed(() => {
     if (!strictContractMode.value) return '';
     const defaults = strictContractDefaultsApplied.value;
     if (!defaults.length) return '';
-    return `${options.pageText('strict_contract_missing_defaults_prefix', '当前由后端兜底补齐：')}${defaults.join(', ')}`;
+    return `${options.pageText('strict_contract_missing_defaults_prefix', '系统已自动补齐：')}${defaults.join(', ')}`;
   });
 
   const strictViewModeLabelMap = computed<Record<string, string>>(() => {

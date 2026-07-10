@@ -130,7 +130,7 @@
         </ul>
       </section>
       <section v-if="strictContractMissingSummary && !isProjectIntakeCreateMode" class="block contract-missing-block">
-        <h3>配置缺口提示</h3>
+        <h3>配置状态提示</h3>
         <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
         <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
       </section>
@@ -6768,7 +6768,7 @@ const strictContractMissingSummary = computed(() => {
   if (!Array.isArray(raw) || !raw.length) return '';
   const missing = raw.map((item) => String(item || '').trim()).filter(Boolean);
   if (!missing.length) return '';
-  return `严格模式检测到后端配置缺口：${missing.join(', ')}`;
+  return `严格模式检测到页面配置不完整：${missing.join(', ')}`;
 });
 const strictContractDefaultsSummary = computed(() => {
   if (!strictContractMode.value) return '';
@@ -6776,7 +6776,7 @@ const strictContractDefaultsSummary = computed(() => {
   if (!Array.isArray(raw) || !raw.length) return '';
   const defaults = raw.map((item) => String(item || '').trim()).filter(Boolean);
   if (!defaults.length) return '';
-  return `当前由后端兜底补齐：${defaults.join(', ')}`;
+  return `系统已自动补齐：${defaults.join(', ')}`;
 });
 const sceneValidationRequiredFields = computed<string[]>(() => {
   if (!useSceneFormAugmentations.value) return [];

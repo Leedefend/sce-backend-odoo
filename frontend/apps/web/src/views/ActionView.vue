@@ -2014,7 +2014,7 @@ const { vm } = useActionPageModel({
   strict: {
     missingSummary: strictContractMissingSummary,
     defaultsSummary: strictContractDefaultsSummary,
-    title: computed(() => t('strict_contract_missing_title', '配置缺口提示')),
+    title: computed(() => t('strict_contract_missing_title', '配置状态提示')),
   },
   groupSummary: {
     items: groupSummaryItems,
