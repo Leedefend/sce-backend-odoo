@@ -7,7 +7,7 @@
         <p class="meta">{{ subtitle }}</p>
         <p v-if="readonlyHint" class="meta readonly-hint">{{ readonlyHint }}</p>
         <p v-if="actionFeedback" class="meta action-feedback" :class="{ error: !actionFeedback.success }">
-          {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
+          {{ actionFeedback.message }} <span v-if="!actionFeedback.success && actionFeedback.reasonCode" class="code">({{ actionFeedback.reasonCode }})</span>
         </p>
       </div>
       <div class="actions sc-product-primary-actions">
@@ -955,8 +955,11 @@ async function applyButtonEffect(effect: ButtonEffect) {
     return;
   }
   if (effect.type === 'toast' && effect.message) {
-    // eslint-disable-next-line no-console
-    console.info(`[toast] ${effect.message}`);
+    actionFeedback.value = {
+      message: String(effect.message),
+      reasonCode: 'ACTION_COMPLETED',
+      success: true,
+    };
   }
 }
 

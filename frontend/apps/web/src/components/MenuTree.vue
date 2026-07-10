@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watchEffect } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import type { NavNode } from '@sc/schema';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useSessionStore } from '../stores/session';
@@ -210,22 +210,6 @@ function blockedTitle(node: NavNode) {
   return tip || undefined;
 }
 
-// 调试：打印接收到的节点
-onMounted(() => {
-  if (import.meta.env.DEV) {
-    console.info('[MenuTree] Received nodes:', props.nodes.length);
-    if (props.nodes.length > 0) {
-      console.info('[MenuTree] First node:', {
-        key: props.nodes[0].key,
-        name: props.nodes[0].name,
-        label: props.nodes[0].label,
-        menu_id: props.nodes[0].menu_id,
-        children: props.nodes[0].children?.length || 0,
-        meta: props.nodes[0].meta
-      });
-    }
-  }
-});
 </script>
 
 <style scoped>

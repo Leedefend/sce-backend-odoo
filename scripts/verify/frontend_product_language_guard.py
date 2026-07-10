@@ -220,6 +220,9 @@ FORBIDDEN_PHRASES = {
     "view_type=${viewType}": "表单契约元信息不能暴露工程字段名",
     "profile=${renderProfile.value}": "表单契约元信息不能暴露工程字段名",
     "rights=${rights.value": "表单契约元信息不能暴露工程字段名",
+    "[MenuTree] Received nodes": "导航菜单不能保留临时调试日志",
+    "[MenuTree] First node": "导航菜单不能保留临时调试日志",
+    "console.info(`[toast]": "记录操作反馈必须显示在页面内，不能只写入控制台",
 }
 
 
