@@ -7,15 +7,7 @@ const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
 const SUMMARY_PATH = path.join(ARTIFACT_ROOT, "summary.json");
 
 const EXPECTED_FILES = [
-  "01-selected-from-scan.png",
-  "02-switched-page.png",
-  "03-direct-selected.png",
-  "04-list-search-entry.png",
-  "05-approval-entry.png",
-  "06-form-designer-entry.png",
-  "07-menu-config.png",
-  "08-mobile-selected.png",
-  "09-mobile-viewport.png",
+  ...ACCEPTANCE_COVERAGE.screenshotKeys.map((key) => ACCEPTANCE_COVERAGE.screenshotFiles[key]),
   "report.json",
   "summary.json",
 ];
@@ -104,6 +96,11 @@ async function main() {
   assertEqual(summary.menuTreeHead, report.checks?.menuTreeHead || "", "summary menu tree head drifted");
 
   if (summary.ok !== true) fail("config workbench summary is not ok", { summary });
+  assertExactList(
+    Object.keys(ACCEPTANCE_COVERAGE.screenshotFiles || {}),
+    ACCEPTANCE_COVERAGE.screenshotKeys,
+    "config workbench screenshot coverage file map drifted",
+  );
   assertExactList(report.metrics?.journeys, ACCEPTANCE_COVERAGE.journeys, "config workbench journey coverage source drifted");
   assertExactList(report.metrics?.actions, ACCEPTANCE_COVERAGE.actions, "config workbench action coverage source drifted");
   assertExactList(report.metrics?.assertions, ACCEPTANCE_COVERAGE.assertions, "config workbench assertion coverage source drifted");

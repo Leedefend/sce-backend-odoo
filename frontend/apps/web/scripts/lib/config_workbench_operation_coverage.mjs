@@ -109,5 +109,15 @@ export const CONFIG_WORKBENCH_OPERATION_COVERAGE = {
     "mobileSelected",
     "mobileViewport",
   ],
+  screenshotFiles: {
+    selectedFromScan: "01-selected-from-scan.png",
+    switchedPage: "02-switched-page.png",
+    directSelected: "03-direct-selected.png",
+    listSearchEntry: "04-list-search-entry.png",
+    approvalEntry: "05-approval-entry.png",
+    formDesignerEntry: "06-form-designer-entry.png",
+    menuConfig: "07-menu-config.png",
+    mobileSelected: "08-mobile-selected.png",
+    mobileViewport: "09-mobile-viewport.png",
+  },
 };
-

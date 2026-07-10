@@ -97,8 +97,10 @@ async function clickConfigCardButton(page, cardTitle, buttonName) {
   await card.getByRole("button", { name: buttonName }).click();
 }
 
-async function capture(page, name, options = {}) {
-  const filePath = path.join(ARTIFACT_ROOT, `${name}.png`);
+async function capture(page, key, options = {}) {
+  const fileName = ACCEPTANCE_COVERAGE.screenshotFiles[key];
+  assert(fileName, "未知截图证据 key", { key });
+  const filePath = path.join(ARTIFACT_ROOT, fileName);
   await page.screenshot({ path: filePath, fullPage: options.fullPage !== false });
   return filePath;
 }
@@ -118,17 +120,7 @@ async function listArtifactEvidenceFiles() {
 }
 
 function expectedArtifactPngFiles() {
-  return [
-    "01-selected-from-scan.png",
-    "02-switched-page.png",
-    "03-direct-selected.png",
-    "04-list-search-entry.png",
-    "05-approval-entry.png",
-    "06-form-designer-entry.png",
-    "07-menu-config.png",
-    "08-mobile-selected.png",
-    "09-mobile-viewport.png",
-  ];
+  return ACCEPTANCE_COVERAGE.screenshotKeys.map((key) => ACCEPTANCE_COVERAGE.screenshotFiles[key]);
 }
 
 async function visibleTechnicalTerms(page, scope = "body") {
@@ -876,7 +868,7 @@ async function main() {
         },
       };
     });
-    screenshots.selectedFromScan = await capture(page, "01-selected-from-scan");
+    screenshots.selectedFromScan = await capture(page, "selectedFromScan");
 
     await page.getByPlaceholder("输入页面名称").fill(SWITCH_PAGE_LABEL);
     await page.waitForTimeout(500);
@@ -900,7 +892,7 @@ async function main() {
       };
     });
     checks.cardsAfterSwitch = await visibleCardTitles(page);
-    screenshots.switchedPage = await capture(page, "02-switched-page");
+    screenshots.switchedPage = await capture(page, "switchedPage");
 
     await openDirectSelectedWorkbench(page);
     checks.directStartCards = await visibleCardTitles(page, '[data-lowcode-workbench-ia="start"]');
@@ -968,7 +960,7 @@ async function main() {
         ],
       },
     ]);
-    screenshots.directSelected = await capture(page, "03-direct-selected");
+    screenshots.directSelected = await capture(page, "directSelected");
 
     await page.goto(`${BASE_URL}/a/${CONFIG_ACTION_ID}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.waitForSelector(".page .list-toolbar, .page .list-empty-state", { timeout: 60000 });
@@ -1088,7 +1080,7 @@ async function main() {
       };
     });
     checks.listSearchVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".edit-panel");
-    screenshots.listSearchEntry = await capture(page, "04-list-search-entry");
+    screenshots.listSearchEntry = await capture(page, "listSearchEntry");
 
     await openDirectSelectedWorkbench(page);
     await clickConfigCardButton(page, "审批规则", "配置审批规则");
@@ -1133,7 +1125,7 @@ async function main() {
         topElementClass: topElement instanceof HTMLElement ? topElement.className : "",
       };
     });
-    screenshots.approvalEntry = await capture(page, "05-approval-entry");
+    screenshots.approvalEntry = await capture(page, "approvalEntry");
 
     await openDirectSelectedWorkbench(page);
     await clickConfigCardButton(page, "表单字段与布局", "配置表单与布局");
@@ -1166,7 +1158,7 @@ async function main() {
     checks.formFieldCreateLegacyCloseLabelCount = await page.locator(".contract-field-create-close[aria-label='关闭']").count();
     await page.getByRole("button", { name: "取消新增字段" }).click();
     await page.locator(".contract-field-create-dialog").waitFor({ state: "hidden", timeout: 60000 });
-    screenshots.formDesignerEntry = await capture(page, "06-form-designer-entry");
+    screenshots.formDesignerEntry = await capture(page, "formDesignerEntry");
     await page.locator(".contract-field-governance-footer").scrollIntoViewIfNeeded();
     await page.waitForTimeout(100);
     checks.formDesignerFooterOverlapEvidence = await page.evaluate(() => {
@@ -1367,7 +1359,7 @@ async function main() {
       };
     });
     checks.menuConfigVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".menu-config-page");
-    screenshots.menuConfig = await capture(page, "07-menu-config");
+    screenshots.menuConfig = await capture(page, "menuConfig");
     await page.getByRole("button", { name: "返回配置工作台" }).click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 60000 });
     await page.waitForSelector('[data-lowcode-config-task-card="v1"]', { timeout: 60000 });
@@ -1413,8 +1405,8 @@ async function main() {
       };
     });
     checks.mobileSnapshotSummaryCount = await page.locator(".workbench-status-rail .workbench-status-snapshot").count();
-    screenshots.mobileSelected = await capture(page, "08-mobile-selected");
-    screenshots.mobileViewport = await capture(page, "09-mobile-viewport", { fullPage: false });
+    screenshots.mobileSelected = await capture(page, "mobileSelected");
+    screenshots.mobileViewport = await capture(page, "mobileViewport", { fullPage: false });
     checks.artifactEvidenceFiles = await listArtifactEvidenceFiles();
 
     assert(checks.scanRowsBeforeSelect >= 2 && checks.scanRowsAfterSelect >= 2, "业务页面列表选择后不应丢失", checks);
