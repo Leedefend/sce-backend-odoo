@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { CONFIG_WORKBENCH_OPERATION_COVERAGE } from "./lib/config_workbench_operation_coverage.mjs";
 import { readPageModes, readProductPageRegionClasses } from "./lib/product_page_structure_source.mjs";
 
 function findRepoRoot(start) {
@@ -81,6 +82,12 @@ const shellFiles = [
 
 const ALLOWED_PAGE_MODES = readPageModes();
 const PRODUCT_REGION_CLASSES = readProductPageRegionClasses();
+const CONFIG_WORKBENCH_COUNTS = {
+  journeys: CONFIG_WORKBENCH_OPERATION_COVERAGE.journeys.length,
+  actions: CONFIG_WORKBENCH_OPERATION_COVERAGE.actions.length,
+  assertions: CONFIG_WORKBENCH_OPERATION_COVERAGE.assertions.length,
+  screenshots: CONFIG_WORKBENCH_OPERATION_COVERAGE.screenshotKeys.length,
+};
 assertArrayEqual(ALLOWED_PAGE_MODES, CANONICAL_PAGE_MODES, "PAGE_MODES must match canonical product page modes");
 assertArrayEqual(
   Object.keys(PRODUCT_REGION_CLASSES),
@@ -262,6 +269,11 @@ assertDocContainsAll(
   Object.values(PRODUCT_REGION_CLASSES),
   "product page structure design must document every canonical product page region class",
 );
+assertDocContainsAll(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  CONFIG_WORKBENCH_OPERATION_COVERAGE.screenshotKeys,
+  "config workbench acceptance doc must document every screenshot evidence key",
+);
 assertContains(
   "docs/product/product_page_structure_design_v1.md",
   /PAGE_MODES[\s\S]+PRODUCT_PAGE_REGION_CLASSES|PRODUCT_PAGE_REGION_CLASSES[\s\S]+PAGE_MODES/,
@@ -286,6 +298,46 @@ assertContains(
   "frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs",
   /CONFIG_WORKBENCH_OPERATION_COVERAGE/,
   "config workbench summary guard must use the shared operation coverage source",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`journey_count\\s*\\|[^\\n]+\\|\\s*${CONFIG_WORKBENCH_COUNTS.journeys}\\s*\\|`),
+  "config workbench acceptance doc journey count must match shared coverage",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`action_count\\s*\\|[^\\n]+\\|\\s*${CONFIG_WORKBENCH_COUNTS.actions}\\s*\\|`),
+  "config workbench acceptance doc action count must match shared coverage",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`assertion_count\\s*\\|[^\\n]+当前为 ${CONFIG_WORKBENCH_COUNTS.assertions}\\s*\\|`),
+  "config workbench acceptance doc assertion count must match shared coverage",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`screenshot_required_count\\s*\\|[^\\n]+\\|\\s*${CONFIG_WORKBENCH_COUNTS.screenshots}\\s*\\|`),
+  "config workbench acceptance doc screenshot count must match shared coverage",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`journey_passed_count = ${CONFIG_WORKBENCH_COUNTS.journeys} / ${CONFIG_WORKBENCH_COUNTS.journeys}`),
+  "config workbench acceptance evidence journey ratio must match shared coverage",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`action_passed_count = ${CONFIG_WORKBENCH_COUNTS.actions} / ${CONFIG_WORKBENCH_COUNTS.actions}`),
+  "config workbench acceptance evidence action ratio must match shared coverage",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`assertion_passed_count = ${CONFIG_WORKBENCH_COUNTS.assertions} / ${CONFIG_WORKBENCH_COUNTS.assertions}`),
+  "config workbench acceptance evidence assertion ratio must match shared coverage",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`screenshot_captured_count = ${CONFIG_WORKBENCH_COUNTS.screenshots} / ${CONFIG_WORKBENCH_COUNTS.screenshots}`),
+  "config workbench acceptance evidence screenshot ratio must match shared coverage",
 );
 assertNotContains(
   "docs/product/config_workbench_operation_acceptance_v1.md",
@@ -322,4 +374,8 @@ console.log(JSON.stringify({
   page_mode_files: pageModeFiles.length,
   page_modes: ALLOWED_PAGE_MODES.length,
   region_classes: Object.keys(PRODUCT_REGION_CLASSES).length,
+  config_workbench_journeys: CONFIG_WORKBENCH_COUNTS.journeys,
+  config_workbench_actions: CONFIG_WORKBENCH_COUNTS.actions,
+  config_workbench_assertions: CONFIG_WORKBENCH_COUNTS.assertions,
+  config_workbench_screenshots: CONFIG_WORKBENCH_COUNTS.screenshots,
 }));
