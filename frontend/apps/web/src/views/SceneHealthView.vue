@@ -60,7 +60,7 @@
           回滚：{{ health.rollback_active ? '已启用' : '未启用' }}
         </span>
         <span class="pill">版本：{{ health.scene_version || '-' }}</span>
-        <span class="pill">结构：{{ health.schema_version || '-' }}</span>
+        <span class="pill">健康模型：{{ healthSchemaVersionLabel }}</span>
       </article>
 
       <section v-if="pageSectionEnabled('cards', true) && pageSectionTagIs('cards', 'section')" class="cards" :style="pageSectionStyle('cards')">
@@ -92,7 +92,7 @@
         :style="pageSectionStyle('governance_runtime')"
       >
         <p><strong>治理通道：</strong> {{ sceneChannelLabel(governanceSnapshot.scene_channel) }}</p>
-        <p><strong>运行来源：</strong> {{ governanceSnapshot.runtime_source || '-' }}</p>
+        <p><strong>运行策略：</strong> {{ runtimeSourceLabel(governanceSnapshot.runtime_source) }}</p>
         <p><strong>治理门禁：</strong> {{ governanceGatesLabel }}</p>
         <p><strong>治理原因：</strong> {{ governanceReasonsLabel }}</p>
         <p><strong>场景消费：</strong> {{ governanceConsumptionLabel }}</p>
@@ -118,7 +118,7 @@
           <button class="secondary" :disabled="governanceBusy" @click="runGovernance('set_channel')">切换通道</button>
           <button class="danger" :disabled="governanceBusy" @click="runGovernance('rollback')">回滚稳定版</button>
           <button class="secondary" :disabled="governanceBusy" @click="runGovernance('pin_stable')">固定稳定版</button>
-          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('export_contract')">导出契约</button>
+          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('export_contract')">下载治理快照</button>
         </div>
       </section>
 
@@ -235,12 +235,32 @@ const autoDegradeLabel = computed(() => {
   return `${Boolean(value.triggered) ? '已触发' : '未触发'}；处理动作：${value.action_taken || '无'}；原因：${reasons}`;
 });
 
+const healthSchemaVersionLabel = computed(() => {
+  const value = String(health.value?.schema_version || '').trim();
+  if (!value) return '未返回';
+  if (value === 'scene_health_v1') return '标准版';
+  return value.replace(/[_-]+/g, ' ');
+});
+
 function sceneChannelLabel(value: unknown): string {
   const channel = String(value || '');
   if (channel === 'stable') return '稳定版';
   if (channel === 'beta') return '灰度版';
   if (channel === 'dev') return '开发版';
   return channel || '-';
+}
+
+function runtimeSourceLabel(value: unknown): string {
+  const source = String(value || '').trim().toLowerCase();
+  if (!source) return '未返回';
+  if (source === 'governed') return '治理结果';
+  if (source === 'stable') return '稳定版';
+  if (source === 'rollback') return '回滚稳定版';
+  if (source === 'contract') return '已发布配置';
+  if (source === 'fallback') return '兼容配置';
+  if (source === 'legacy') return '历史兼容';
+  if (source === 'dev') return '开发配置';
+  return source.replace(/[_-]+/g, ' ');
 }
 
 const governanceSnapshot = computed(() => {

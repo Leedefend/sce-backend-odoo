@@ -232,6 +232,9 @@ FORBIDDEN_PHRASES = {
     "console.warn('[scene-view] scene-ready hydration failed": "场景兜底渲染不能写入生产控制台",
     "console.error('[ActionView] render failed": "列表渲染失败必须通过页面错误面板反馈，不能只写入控制台",
     "console.error('[ContractFormPage] render failed": "表单渲染失败必须通过页面错误面板反馈，不能只写入控制台",
+    "结构：{{ health.schema_version": "场景健康页不能直接展示协议结构字段",
+    "运行来源：</strong> {{ governanceSnapshot.runtime_source": "场景健康页不能直接展示运行来源字段",
+    "runGovernance('export_contract')\">导出契约": "场景健康页治理导出操作必须使用产品化文案",
 }
 
 
