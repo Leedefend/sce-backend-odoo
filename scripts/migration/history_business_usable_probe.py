@@ -181,9 +181,12 @@ def field_coverage(model_name: str, field_names: list[str]) -> dict[str, object]
 
 
 ALLOWED_COMPAT_LEGACY_BUSINESS_MENU_XMLIDS = {
-    # These entries are part of the 55 user-confirmed surfaces. They expose
+    # These entries are part of the user-confirmed formal surfaces. They expose
     # old-system fact carriers directly because there is no lossless new-system
     # semantic model yet; the acceptance target is faithful fact carrying.
+    #
+    # Keep this list narrow: a legacy menu is allowed only when the formal
+    # product menu baseline deliberately publishes it as a product surface.
     "smart_construction_core.menu_scbs55_user_acceptance_080_公司人员名册_配置",
     "smart_construction_core.menu_scbs55_user_acceptance_350_到款确认表",
     "smart_construction_core.menu_scbs55_user_acceptance_360_资金日报表",
@@ -193,6 +196,10 @@ ALLOWED_COMPAT_LEGACY_BUSINESS_MENU_XMLIDS = {
     "smart_construction_core.menu_sc_tax_certificate_registration_user",
     "smart_construction_core.menu_sc_supplier_contract_current",
     "smart_construction_core.menu_scbsly_acceptance_supplier_contract_current",
+    "smart_construction_core.menu_sc_arrival_confirmation",
+    "smart_construction_core.menu_sc_legacy_fuel_card_fact_acceptance",
+    "smart_construction_core.menu_sc_legacy_fuel_card_recharge_fact_acceptance",
+    "smart_construction_core.menu_sc_company_user_roster_formal",
 }
 
 ALLOWED_COMPAT_LEGACY_BUSINESS_MODELS = {
