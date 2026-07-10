@@ -322,6 +322,11 @@ assertContains(
   "config workbench acceptance doc must describe report evidence payload guard requirements",
 );
 assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  /专题收口顺序[\s\S]+config_workbench_operation_quick[\s\S]+config_workbench_operation_local_closeout[\s\S]+config_workbench_operation_summary_guard/,
+  "config workbench acceptance doc must describe the closeout command order",
+);
+assertContains(
   "frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
   /CONFIG_WORKBENCH_OPERATION_COVERAGE/,
   "config workbench acceptance must use the shared operation coverage source",

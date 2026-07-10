@@ -64,6 +64,16 @@ make verify.business_config.config_workbench_operation_summary_guard
 
 该门禁读取最新 `report.json` 与 `summary.json`，校验核心指标、业务页面上下文、浏览器健康和证据目录精确集合，防止摘要输出与完整报告漂移。
 
+## 专题收口顺序
+
+本专题进入收口时，必须按以下顺序执行，不能跳过中间层直接给出交付结论：
+
+1. `make verify.business_config.config_workbench_operation_quick`：确认脚本语法、coverage 源、页面结构守卫、前端类型检查和 diff 检查通过。
+2. `make verify.business_config.config_workbench_operation_local_closeout`：确认本地开发服务、静态构建、浏览器操作验收、summary guard 和正式前端构建闭环。
+3. `make verify.business_config.config_workbench_operation_summary_guard`：在完整浏览器验收后单独复核最新报告和摘要没有漂移。
+
+如果本轮改动触及后端配置合同、菜单运行时、权限边界、全局页面结构 token 或生产发布脚本，还必须升级执行对应的全量低代码、菜单边界、前端 build 或发布链路门禁。本专题门禁通过，只能证明配置工作台操作级产品化合格，不能替代这些更大边界的验收。
+
 浏览器验收默认只在终端输出摘要，完整报告写入 `report.json`，摘要写入 `summary.json`。需要排查失败细节时可打开 verbose：
 
 ```bash
