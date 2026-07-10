@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { readPageModes, readProductPageRegionClasses } from "./lib/product_page_structure_source.mjs";
 
 function findRepoRoot(start) {
   let current = path.resolve(start);
@@ -50,26 +51,6 @@ function assertArrayEqual(actual, expected, message) {
   }
 }
 
-function pageModesFromRuntimeSource() {
-  const content = read("frontend/apps/web/src/app/pageMode.ts");
-  const match = content.match(/export const PAGE_MODES = \[([^\]]+)\] as const;/s);
-  if (!match) fail("PAGE_MODES must be exported from pageMode.ts");
-  const modes = Array.from(match[1].matchAll(/'([^']+)'/g)).map((item) => item[1]);
-  if (!modes.length) fail("PAGE_MODES must not be empty");
-  return modes;
-}
-
-function productRegionClassesFromRuntimeSource() {
-  const content = read("frontend/apps/web/src/app/productPageStructure.ts");
-  const match = content.match(/export const PRODUCT_PAGE_REGION_CLASSES = \{([\s\S]+?)\} as const;/);
-  if (!match) fail("PRODUCT_PAGE_REGION_CLASSES must be exported from productPageStructure.ts");
-  const classes = Object.fromEntries(
-    Array.from(match[1].matchAll(/([a-zA-Z0-9_]+):\s*'([^']+)'/g)).map((item) => [item[1], item[2]]),
-  );
-  if (!Object.keys(classes).length) fail("PRODUCT_PAGE_REGION_CLASSES must not be empty");
-  return classes;
-}
-
 function walkFiles(dir, result = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === "dist" || entry.name === "dist-dev" || entry.name === "node_modules") continue;
@@ -92,8 +73,8 @@ const shellFiles = [
   "frontend/apps/web/src/views/PlaceholderView.vue",
 ];
 
-const ALLOWED_PAGE_MODES = pageModesFromRuntimeSource();
-const PRODUCT_REGION_CLASSES = productRegionClassesFromRuntimeSource();
+const ALLOWED_PAGE_MODES = readPageModes();
+const PRODUCT_REGION_CLASSES = readProductPageRegionClasses();
 assertArrayEqual(ALLOWED_PAGE_MODES, CANONICAL_PAGE_MODES, "PAGE_MODES must match canonical product page modes");
 assertArrayEqual(
   Object.keys(PRODUCT_REGION_CLASSES),

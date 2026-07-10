@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
+import { readProductPageRegionClasses } from "./lib/product_page_structure_source.mjs";
 
 const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:18081";
 const DB_NAME = process.env.DB_NAME || "sc_demo";
@@ -129,21 +130,6 @@ const ACCEPTANCE_COVERAGE = {
     "mobileViewport",
   ],
 };
-
-function readProductPageRegionClasses() {
-  const sourcePath = path.resolve(process.cwd(), "src/app/productPageStructure.ts");
-  const content = fsSync.readFileSync(sourcePath, "utf8");
-  const match = content.match(/export const PRODUCT_PAGE_REGION_CLASSES = \{([\s\S]+?)\} as const;/);
-  if (!match) throw new Error("PRODUCT_PAGE_REGION_CLASSES must be exported from productPageStructure.ts");
-  const classes = {};
-  for (const item of match[1].matchAll(/([a-zA-Z0-9_]+):\s*'([^']+)'/g)) {
-    classes[item[1]] = item[2];
-  }
-  for (const key of ["pageHeader", "pageToolbar", "mainSurface"]) {
-    if (!classes[key]) throw new Error(`PRODUCT_PAGE_REGION_CLASSES.${key} is required`);
-  }
-  return classes;
-}
 
 function assert(condition, message, details = {}) {
   if (!condition) {

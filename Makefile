@@ -779,6 +779,7 @@ verify.business_config.config_workbench_operation_acceptance: guard.prod.forbid
 .PHONY: verify.business_config.config_workbench_operation_quick verify.business_config.config_workbench_operation_summary_guard verify.business_config.config_workbench_operation_local_closeout verify.product.page_structure
 
 verify.business_config.config_workbench_operation_quick: guard.prod.forbid
+	@node --check frontend/apps/web/scripts/lib/product_page_structure_source.mjs
 	@node --check frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs
 	@node --check frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs
 	@node --check frontend/apps/web/scripts/product_page_structure_guard.mjs
