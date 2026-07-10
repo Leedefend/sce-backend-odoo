@@ -45,6 +45,20 @@ function assertEqual(actual, expected, message) {
   if (actual !== expected) fail(message, { actual, expected });
 }
 
+function assertEmptyArray(actual, message) {
+  if (!Array.isArray(actual) || actual.length !== 0) fail(message, { actual });
+}
+
+function assertReadyScore(section, message) {
+  if (!section || typeof section !== "object") fail(`${message}: section is missing`, { section });
+  if (!Number.isInteger(section.score_total) || !Number.isInteger(section.max_score)) {
+    fail(`${message}: score fields are invalid`, { score_total: section.score_total, max_score: section.max_score });
+  }
+  if (section.score_total !== section.max_score) {
+    fail(message, { score_total: section.score_total, max_score: section.max_score, score_required: section.score_required });
+  }
+}
+
 function assertFullCoverage(summaryValue, passed, total, message) {
   if (!Number.isInteger(total) || total <= 0) fail(`${message}: total is invalid`, { summaryValue, passed, total });
   if (passed !== total || summaryValue !== `${total}/${total}`) {
@@ -110,6 +124,14 @@ async function main() {
   assertFullCoverage(summary.actions, report.metrics?.action_passed_count, report.metrics?.action_count, "config workbench action gate is not complete");
   assertFullCoverage(summary.screenshots, report.metrics?.screenshot_captured_count, report.metrics?.screenshot_required_count, "config workbench screenshot gate is not complete");
   if (summary.delivery !== "delivery_ready" || summary.professional !== "professional_ready") fail("config workbench readiness status is not complete", { summary });
+  assertEqual(report.product_usability?.schema_version, "config_workbench_product_usability.v1", "config workbench product usability schema drifted");
+  assertEqual(report.professional_readiness?.schema_version, "config_workbench_professional_readiness.v1", "config workbench professional readiness schema drifted");
+  assertReadyScore(report.product_usability, "config workbench product usability score is not complete");
+  assertReadyScore(report.professional_readiness, "config workbench professional readiness score is not complete");
+  assertEmptyArray(report.product_usability?.blocking_issues, "config workbench product usability has blocking issues");
+  assertEmptyArray(report.product_usability?.risk_items, "config workbench product usability has risk items");
+  assertEmptyArray(report.professional_readiness?.blockers, "config workbench professional readiness has blockers");
+  assertEqual(report.product_usability?.page_structure?.status, "pass", "config workbench product page structure is not pass");
   if (summary.consoleErrors !== 0 || summary.requestFailed !== 0) fail("config workbench browser health is not clean", { summary });
   if (summary.currentPage !== "项目合同汇总" || summary.formDesignerCurrentPageLabel !== "项目合同汇总") fail("config workbench page context summary is not aligned", { summary });
 
