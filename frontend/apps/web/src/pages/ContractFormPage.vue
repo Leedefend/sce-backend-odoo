@@ -8395,9 +8395,12 @@ async function persistNativeFavoriteField(name: string, checked: boolean, previo
     };
     changedFieldSet.delete(name);
     dirtyFieldSet.delete(name);
-  } catch (err) {
+  } catch {
     formData[name] = previousValue;
-    console.warn('[native-favorite] failed to save favorite state', err);
+    submissionFeedback.value = {
+      kind: 'error',
+      message: '收藏状态保存失败，请稍后重试。',
+    };
   }
 }
 
@@ -9845,11 +9848,8 @@ async function preloadFormAuxiliaryData(reloadToken: number) {
     await hydrateSelectedRelationOptions();
     if (reloadToken !== activeReloadToken) return;
     await hydrateVisibleOne2manyRows();
-  } catch (err) {
-    if (showHud.value) {
-      // eslint-disable-next-line no-console
-      console.info('[ContractFormPage] auxiliary form preload skipped', err);
-    }
+  } catch {
+    // Auxiliary data can be completed by explicit field interactions after the form renders.
   }
 }
 
@@ -10934,7 +10934,7 @@ async function runAction(action: ContractAction) {
     if (params === null) return;
     busyKind.value = 'action';
     try {
-      const result = await executeSceneMutation({
+      await executeSceneMutation({
         mutation: action.mutation,
         actionKey: action.key,
         recordId: recordId.value,
@@ -10942,10 +10942,10 @@ async function runAction(action: ContractAction) {
         context: action.context,
         params,
       });
-      if (showHud.value) {
-        // eslint-disable-next-line no-console
-        console.info(`[scene-mutation] intent=${result.intent} trace=${result.traceId} action=${action.key}`);
-      }
+      submissionFeedback.value = {
+        kind: 'success',
+        message: '操作已完成，页面数据已刷新。',
+      };
       await applyProjectionRefreshPolicy(action.refreshPolicy);
       return;
     } catch (err) {

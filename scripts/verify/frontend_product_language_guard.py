@@ -226,6 +226,10 @@ FORBIDDEN_PHRASES = {
     "console.warn('[list-columns]": "列表列配置失败必须通过页面状态反馈，不能只写入控制台",
     "console.warn('[list-field-mutation]": "列表字段操作失败必须通过页面状态反馈，不能只写入控制台",
     "console.warn(message, payload)": "列表运行时警告不能直接暴露到生产控制台",
+    "console.warn('[native-favorite]": "表单收藏失败必须通过页面反馈，不能只写入控制台",
+    "console.info('[ContractFormPage] auxiliary form preload skipped": "表单辅助数据预加载兜底不能写入生产控制台",
+    "console.info(`[scene-mutation]": "场景操作结果必须通过页面反馈，不能只写入控制台",
+    "console.warn('[scene-view] scene-ready hydration failed": "场景兜底渲染不能写入生产控制台",
 }
 
 

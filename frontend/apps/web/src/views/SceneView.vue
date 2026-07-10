@@ -577,10 +577,8 @@ async function hydrateSceneReadyForCurrentScene(sceneKey: string) {
       setSceneRegistryFromSceneReadyContract(readyContract as never);
       return true;
     }
-  } catch (err) {
+  } catch {
     // Ignore hydration failures here; the existing fallback rendering can continue.
-    // eslint-disable-next-line no-console
-    console.warn('[scene-view] scene-ready hydration failed', err);
   }
   return false;
 }
