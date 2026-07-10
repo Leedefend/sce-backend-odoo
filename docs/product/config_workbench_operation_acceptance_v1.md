@@ -291,7 +291,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 交付验收必须产生一份 `product_usability` 结论，至少包含：
 
 - `delivery_status`：`delivery_ready`、`delivery_blocked` 或 `delivery_risk`。
-- `score_total`：0 到 22。
+- `score_total`：0 到当前交付维度满分，当前为 11 个维度 x 2 分 = 22。
 - `blocking_issues`：硬性阻断项列表。
 - `risk_items`：非阻断但建议修复的问题。
 - `task_results`：用户任务验收表逐项结果。
@@ -299,6 +299,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - `evidence`：截图、报告路径、浏览器验证命令。
 
 `task_results` 必须覆盖 8 个用户任务：`find_business_page`、`understand_config_scope`、`configure_form_fields`、`configure_list_search`、`configure_approval_rules`、`configure_menu_entry`、`return_to_workbench`、`mobile_operation`，且逐项 `status = pass`。
+
+`product_usability.dimensions` 必须覆盖：`current_context`、`page_structure`、`information_architecture`、`operation_convention`、`entry_naming`、`task_efficiency`、`status_feedback`、`error_recovery`、`visual_stability`、`user_language`、`verifiability`，且逐项满分。
 
 只有操作级门禁通过且 `delivery_status = delivery_ready` 时，才能说“配置工作台已经达到正式交付用户使用的产品标准”。
 

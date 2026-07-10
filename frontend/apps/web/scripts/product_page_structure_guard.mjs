@@ -87,6 +87,9 @@ const CONFIG_WORKBENCH_COUNTS = {
   actions: CONFIG_WORKBENCH_OPERATION_COVERAGE.actions.length,
   assertions: CONFIG_WORKBENCH_OPERATION_COVERAGE.assertions.length,
   screenshots: CONFIG_WORKBENCH_OPERATION_COVERAGE.screenshotKeys.length,
+  productUsabilityTasks: CONFIG_WORKBENCH_OPERATION_COVERAGE.productUsabilityTasks.length,
+  productUsabilityScore: CONFIG_WORKBENCH_OPERATION_COVERAGE.productUsabilityDimensions.length * 2,
+  professionalScore: CONFIG_WORKBENCH_OPERATION_COVERAGE.professionalDimensions.length * 3,
 };
 assertArrayEqual(ALLOWED_PAGE_MODES, CANONICAL_PAGE_MODES, "PAGE_MODES must match canonical product page modes");
 assertArrayEqual(
@@ -281,6 +284,11 @@ assertDocContainsAll(
 );
 assertDocContainsAll(
   "docs/product/config_workbench_operation_acceptance_v1.md",
+  CONFIG_WORKBENCH_OPERATION_COVERAGE.productUsabilityDimensions,
+  "config workbench acceptance doc must document every product usability dimension key",
+);
+assertDocContainsAll(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
   CONFIG_WORKBENCH_OPERATION_COVERAGE.professionalDimensions,
   "config workbench acceptance doc must document every professional readiness dimension key",
 );
@@ -353,6 +361,21 @@ assertContains(
   "docs/product/config_workbench_operation_acceptance_v1.md",
   new RegExp(`screenshot_captured_count = ${CONFIG_WORKBENCH_COUNTS.screenshots} / ${CONFIG_WORKBENCH_COUNTS.screenshots}`),
   "config workbench acceptance evidence screenshot ratio must match shared coverage",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`task_results[^\\n]+${CONFIG_WORKBENCH_COUNTS.productUsabilityTasks} 个用户任务`),
+  "config workbench acceptance doc task count must match shared coverage",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`product_usability\\.score_total = ${CONFIG_WORKBENCH_COUNTS.productUsabilityScore} / ${CONFIG_WORKBENCH_COUNTS.productUsabilityScore}`),
+  "config workbench acceptance evidence product usability score must match shared coverage",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  new RegExp(`professional_readiness\\.score_total = ${CONFIG_WORKBENCH_COUNTS.professionalScore} / ${CONFIG_WORKBENCH_COUNTS.professionalScore}`),
+  "config workbench acceptance evidence professional score must match shared coverage",
 );
 assertNotContains(
   "docs/product/config_workbench_operation_acceptance_v1.md",
