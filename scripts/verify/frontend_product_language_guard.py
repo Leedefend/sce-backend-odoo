@@ -221,6 +221,8 @@ FORBIDDEN_PHRASES = {
     "({{ actionFeedback.reasonCode }})": "记录操作反馈必须展示产品化原因标签",
     "batch_error_reason_prefix', '原因='": "列表批量错误摘要必须使用中文标点",
     "${options.text('batch_error_reason_prefix', '原因=')}${issue.reasonCode}": "列表批量错误摘要必须展示产品化原因标签",
+    "原因：{{ reasonCode }}": "通用错误状态面板必须展示产品化原因标签",
+    "[${reason}]": "通用错误状态面板普通用户上下文不能暴露工程原因码",
     "window.alert(err instanceof Error ? err.message : '附件打开失败')": "列表页附件错误必须使用页面内反馈",
     "confirm(toolbarUiLabel('batch_confirm_delete'": "列表批量删除必须使用产品化确认弹窗",
     "confirm('确认删除这条关联记录？')": "关联记录删除必须使用产品化确认弹窗",

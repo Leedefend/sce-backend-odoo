@@ -9,7 +9,7 @@
     <div v-if="variant === 'error' && showHudMeta" class="error-meta">
       <p class="trace">错误码：{{ errorCode ?? '无' }}</p>
       <p class="trace">追踪 ID：{{ traceId || '无' }}</p>
-      <p v-if="reasonCode" class="trace">原因：{{ reasonCode }}</p>
+      <p v-if="reasonCode" class="trace">原因：{{ reasonLabel }}</p>
       <p v-if="errorCategory" class="trace">分类：{{ errorCategory }}</p>
       <p v-if="errorModel" class="trace">模型：{{ errorModel }}</p>
       <p v-if="errorOp" class="trace">操作：{{ errorOp }}</p>
@@ -82,18 +82,62 @@ const suggestedActionLabel = computed(() => suggestedActionRuntime.label.value);
 const showHudMeta = computed(() => isHudEnabled(route));
 const errorModel = computed(() => String(props.errorDetails?.model || '').trim());
 const errorOp = computed(() => String(props.errorDetails?.op || '').trim().toLowerCase());
+const reasonLabel = computed(() => resolveStatusReasonLabel(props.reasonCode));
+const operationLabel = computed(() => resolveStatusOperationLabel(errorOp.value));
 const compactContext = computed(() => {
-  const scope = [errorModel.value, errorOp.value].filter(Boolean).join('/');
-  const reason = String(props.reasonCode || '').trim().toUpperCase();
-  if (scope && reason) return `${scope} [${reason}]`;
-  if (scope) return scope;
-  if (reason) return `[${reason}]`;
+  const reason = reasonLabel.value;
+  const operation = operationLabel.value;
+  if (operation && props.reasonCode) return `${operation} · ${reason}`;
+  if (operation) return operation;
+  if (props.reasonCode) return reason;
   return '';
 });
 const userHint = computed(() => {
   if (showHudMeta.value) return '';
   return props.hint || '';
 });
+
+function resolveStatusReasonLabel(reason: unknown): string {
+  const raw = String(reason || '').trim();
+  const key = raw.toUpperCase();
+  const mapping: Record<string, string> = {
+    ACTION_UNSUPPORTED: '暂不支持此操作',
+    EXECUTE_FAILED: '操作未完成',
+    PERMISSION_DENIED: '权限不足',
+    ACCESS_DENIED: '权限不足',
+    NOT_FOUND: '记录不存在',
+    BUSINESS_RULE_FAILED: '业务规则限制',
+    VALIDATION_ERROR: '校验未通过',
+    MISSING_PARAMS: '参数不完整',
+    CONFLICT: '数据已变化',
+    NETWORK_ERROR: '网络异常',
+    SYSTEM_ERROR: '系统异常',
+    INTERNAL_ERROR: '系统异常',
+    UNKNOWN: '待确认',
+  };
+  if (!raw) return '待确认';
+  return mapping[key] || raw.replace(/[_-]+/g, ' ').toLowerCase().replace(/(^|\s)\S/g, (s) => s.toUpperCase());
+}
+
+function resolveStatusOperationLabel(op: unknown): string {
+  const raw = String(op || '').trim().toLowerCase();
+  const mapping: Record<string, string> = {
+    read: '数据读取',
+    search: '数据查询',
+    search_read: '数据查询',
+    load: '页面加载',
+    write: '数据保存',
+    create: '数据新增',
+    unlink: '数据删除',
+    delete: '数据删除',
+    execute: '业务操作',
+    action: '业务操作',
+    export: '数据导出',
+    export_csv: '数据导出',
+    import: '数据导入',
+  };
+  return mapping[raw] || '';
+}
 
 function runSuggestedAction() {
   const ran = suggestedActionRuntime.run({
