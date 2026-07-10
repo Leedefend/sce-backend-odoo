@@ -589,8 +589,8 @@ verify.dev.acceptance.release.schema.guard: guard.prod.forbid
 release.dev.acceptance.publish: guard.prod.forbid check-compose-project check-compose-env verify.frontend.build verify.user_confirmed.formal_surface.locked verify.dev.acceptance.release
 	@echo "[release.dev.acceptance.publish] PASS base_url=$(ACCEPTANCE_BASE_URL) db=$(DB_NAME) artifact=$(ACCEPTANCE_PROBE_OUTPUT)"
 
-release.daily_dev.acceptance.publish: ACCEPTANCE_NAV_MIN_ACTIONS := 60
-release.daily_dev.acceptance.publish: ACCEPTANCE_NAV_MAX_ACTIONS := 70
+release.daily_dev.acceptance.publish: ACCEPTANCE_NAV_MIN_ACTIONS := 100
+release.daily_dev.acceptance.publish: ACCEPTANCE_NAV_MAX_ACTIONS := 115
 release.daily_dev.acceptance.publish: ACCEPTANCE_NAV_FORBIDDEN_LABELS := 用户核对菜单,用户数据验收,用户验收,直营项目系统菜单
 release.daily_dev.acceptance.publish: ACCEPTANCE_NAV_REQUIRED_PATHS := 智慧施工管理平台 / 基础资料 / 客户,智慧施工管理平台 / 基础资料 / 供应商,智慧施工管理平台 / 项目中心 / 项目管理 / 项目台账,智慧施工管理平台 / 合同中心 / 支出合同台账 / 一般合同（公司）,智慧施工管理平台 / 施工管理 / 施工日志,智慧施工管理平台 / 物资与分包 / 材料管理 / 入库单,智慧施工管理平台 / 财务中心 / 收付款办理 / 支付申请,智慧施工管理平台 / 财务中心 / 资金分析 / 项目资金总览,智慧施工管理平台 / 人事行政 / 项目管理人员工资登记,智慧施工管理平台 / 资料证照 / 公司资料存档,智慧施工管理平台 / 税务中心 / 进项发票
 release.daily_dev.acceptance.publish: ACCEPTANCE_NAV_REQUIRED_ACTIONS := 智慧施工管理平台 / 基础资料 / 客户=>786|智慧施工管理平台 / 基础资料 / 供应商=>787|智慧施工管理平台 / 项目中心 / 项目管理 / 项目台账=>506|智慧施工管理平台 / 合同中心 / 支出合同台账 / 一般合同（公司）=>669|智慧施工管理平台 / 施工管理 / 施工日志=>701|智慧施工管理平台 / 物资与分包 / 材料管理 / 入库单=>983|智慧施工管理平台 / 财务中心 / 收付款办理 / 支付申请=>780|智慧施工管理平台 / 财务中心 / 资金分析 / 项目资金总览=>995|智慧施工管理平台 / 人事行政 / 项目管理人员工资登记=>862|智慧施工管理平台 / 资料证照 / 公司资料存档=>615|智慧施工管理平台 / 税务中心 / 进项发票=>756
