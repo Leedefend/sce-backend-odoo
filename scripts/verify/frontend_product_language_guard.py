@@ -198,6 +198,7 @@ FORBIDDEN_PHRASES = {
     "label: 'scene_key'": "页面诊断标签必须使用产品化中文表达",
     "governance.runtime_source": "页面诊断标签必须使用产品化中文表达",
     "JSON.stringify(layoutStats": "记录页诊断信息必须使用产品化摘要",
+    "window.alert(err instanceof Error ? err.message : '附件打开失败')": "列表页附件错误必须使用页面内反馈",
 }
 
 

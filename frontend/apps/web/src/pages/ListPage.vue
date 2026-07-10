@@ -123,6 +123,7 @@
         <button type="button" class="ghost" :disabled="loading" @click="clearSelection">{{ uiLabel('clear', '清空') }}</button>
         <span v-if="selectedCount > 0 && batchMessage" class="batch-message">{{ batchMessage }}</span>
       </section>
+      <p v-if="attachmentErrorText" class="list-inline-feedback is-error">{{ attachmentErrorText }}</p>
 
       <section class="table sc-product-main-surface">
 	        <section v-if="showGroupedRows" class="grouped-table">
@@ -843,6 +844,7 @@ const emit = defineEmits<{
   'column-widths-change': [payload: { columnWidths: Record<string, number> }];
 }>();
 const attachmentViewerRef = ref<InstanceType<typeof AttachmentViewer> | null>(null);
+const attachmentErrorText = ref('');
 function uiLabel(key: string, fallback: string, vars: Record<string, string | number> = {}) {
   const candidate = String(props.uiLabels?.[key] || '').trim();
   const template = candidate || fallback;
@@ -1063,6 +1065,7 @@ function attachmentLinks(value: unknown) {
 }
 
 async function previewAttachmentLink(link: { name: string; url: string }, row: Record<string, unknown>) {
+  attachmentErrorText.value = '';
   try {
     const context = {
       model: props.model,
@@ -1075,7 +1078,7 @@ async function previewAttachmentLink(link: { name: string; url: string }, row: R
     }
     openExternalAttachmentUrl(link.url);
   } catch (err) {
-    window.alert(err instanceof Error ? err.message : '附件打开失败');
+    attachmentErrorText.value = err instanceof Error ? err.message : uiLabel('attachment_open_failed', '附件打开失败，请稍后重试。');
   }
 }
 
@@ -1087,13 +1090,14 @@ function isAttachmentCountCell(field: string, value: unknown) {
 
 async function previewRecordAttachmentCount(row: Record<string, unknown>, value: unknown) {
   const text = String(normalizeCellRawValue(value) ?? '').trim() || '附件';
+  attachmentErrorText.value = '';
   try {
     await attachmentViewerRef.value?.open({
       model: props.model,
       res_id: Number(row.id || 0) || undefined,
     }, text);
   } catch (err) {
-    window.alert(err instanceof Error ? err.message : '附件打开失败');
+    attachmentErrorText.value = err instanceof Error ? err.message : uiLabel('attachment_open_failed', '附件打开失败，请稍后重试。');
   }
 }
 
@@ -2418,6 +2422,21 @@ onBeforeUnmount(() => {
   font-size: 13px;
   color: var(--sc-app-success-text);
   overflow-wrap: anywhere;
+}
+
+.list-inline-feedback {
+  margin: 0;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.list-inline-feedback.is-error {
+  border-color: var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
 }
 
 .batch-note {
