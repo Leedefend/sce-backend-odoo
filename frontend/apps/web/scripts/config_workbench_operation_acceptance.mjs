@@ -97,6 +97,7 @@ const ACCEPTANCE_COVERAGE = {
     "form_designer_side_panels_no_footer_overlap",
     "product_workspace_structural_gap_unified",
     "product_page_region_outer_edges_aligned",
+    "product_page_runtime_semantics_present",
     "business_runtime_workspace_structural_gap_unified",
     "menu_side_sections_complete",
     "menu_tree_not_empty",
@@ -371,6 +372,31 @@ async function productPageRegionAlignmentEvidence(page, items = []) {
   }, items);
 }
 
+async function productPageRuntimeSemanticEvidence(page, items = []) {
+  return page.evaluate((configs) => configs.map((item) => {
+    const checks = (item.checks || []).map((check) => {
+      const el = document.querySelector(check.selector);
+      const className = el?.className || "";
+      const mode = el?.getAttribute("data-product-page-mode") || "";
+      const requiredClasses = check.classes || [];
+      return {
+        ...check,
+        ready: Boolean(el),
+        className,
+        mode,
+        classPass: requiredClasses.every((classNamePart) => String(className).split(/\s+/).includes(classNamePart)),
+        modePass: check.mode ? mode === check.mode : true,
+      };
+    });
+    return {
+      page: item.page,
+      scope: item.scope,
+      checks,
+      ready: checks.length > 0 && checks.every((check) => check.ready && check.classPass && check.modePass),
+    };
+  }), items);
+}
+
 function buildCoverageSummary({ screenshots, consoleErrors, requestFailed }) {
   const screenshotCount = Object.keys(screenshots).filter((key) => ACCEPTANCE_COVERAGE.screenshotKeys.includes(key)).length;
   return {
@@ -593,6 +619,8 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   const browserHealthy = consoleErrors.length === 0 && requestFailed.length === 0 && metrics?.health_passed === true;
   const productRegionAlignmentReady = (checks.productPageRegionAlignment || []).length >= 4
     && (checks.productPageRegionAlignment || []).every((item) => item.ready === true && item.maxDelta <= 1);
+  const productRuntimeSemanticsReady = (checks.productPageRuntimeSemantics || []).length >= 4
+    && (checks.productPageRuntimeSemantics || []).every((item) => item.ready === true);
   const defaultDeliveryStatusFocused = defaultDeliveryReadinessIsUserTaskOnly(checks.deliveryReadinessLabels)
     && defaultDeliveryReadinessIsUserTaskOnly(checks.directDeliveryReadinessLabels)
     && checks.defaultSnapshotSummaryCount === 0
@@ -664,7 +692,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     task_efficiency: scoreResult(formUsable && listSearchUsable && approvalUsable && menuUsable && editorFocusReady ? 2 : 0, "关键配置任务必须能从卡片主入口直接进入并进入当前编辑焦点。"),
     status_feedback: scoreResult(metrics?.journey_passed_count === ACCEPTANCE_COVERAGE.journeys.length ? 2 : 0, "加载、禁用、返回和健康状态必须可被报告证明。"),
     error_recovery: scoreResult(String(checks.formReturnedTitle || "").includes(CONFIG_PAGE_LABEL) && String(checks.returnedTitle || "").includes(CONFIG_PAGE_LABEL) ? 2 : 0, "从子能力返回必须保留业务页面上下文。"),
-    visual_stability: scoreResult(mobileStable && pageStructure.status === "pass" && productRegionAlignmentReady ? 2 : 0, "桌面区域外边界必须对齐，390px 移动端不得遮挡或横向溢出。"),
+    visual_stability: scoreResult(mobileStable && pageStructure.status === "pass" && productRegionAlignmentReady && productRuntimeSemanticsReady ? 2 : 0, "桌面区域外边界必须对齐，运行时区域语义必须存在，390px 移动端不得遮挡或横向溢出。"),
     user_language: scoreResult(cardsComplete && entryNamesStable && visibleTechnicalTermsClean ? 2 : 0, "默认界面必须使用业务语言，不要求用户理解技术模型。"),
     verifiability: scoreResult(evidenceReady ? 2 : 0, "结论必须可由截图、指标和报告文件复现。"),
   };
@@ -684,6 +712,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   if (pageStructure.status !== "pass") blockingIssues.push("page_structure_contract_failed");
   if (!visibleTechnicalTermsClean) blockingIssues.push("visible_technical_terms_leaked");
   if (!productRegionAlignmentReady) blockingIssues.push("product_page_region_alignment_failed");
+  if (!productRuntimeSemanticsReady) blockingIssues.push("product_page_runtime_semantics_missing");
   if (!mobileStable) blockingIssues.push("mobile_layout_not_stable");
   if (!browserHealthy) blockingIssues.push("browser_health_failed");
   if (!evidenceReady) blockingIssues.push("acceptance_evidence_incomplete");
@@ -749,6 +778,8 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
     && checks.mobileConfigurationTopbar?.platformEyebrowVisible === false;
   const productRegionAlignmentReady = (checks.productPageRegionAlignment || []).length >= 4
     && (checks.productPageRegionAlignment || []).every((item) => item.ready === true && item.maxDelta <= 1);
+  const productRuntimeSemanticsReady = (checks.productPageRuntimeSemantics || []).length >= 4
+    && (checks.productPageRuntimeSemantics || []).every((item) => item.ready === true);
   const cognitiveLoadControlled = pageStructurePassed
     && cardsStable
     && checks.pageStructureDesktop?.pageDirectory?.rowCount >= 2
@@ -826,12 +857,13 @@ function buildProfessionalReadiness({ metrics, checks, screenshots, consoleError
       returnedTitle: checks.returnedTitle,
       returnedCards: checks.returnedCards,
     }),
-    responsive_resilience: professionalScore(responsiveProof && productRegionAlignmentReady, "专业产品必须在桌面保持页面区域外边界对齐，并在 390px 移动端保持顺序和宽度稳定。", {
+    responsive_resilience: professionalScore(responsiveProof && productRegionAlignmentReady && productRuntimeSemanticsReady, "专业产品必须在桌面保持页面区域外边界对齐，运行时语义可审计，并在 390px 移动端保持顺序和宽度稳定。", {
       mobileOrder: checks.mobileOrder,
       mobileViewport: checks.mobileViewport,
       mobileBodyWidth: checks.mobileBodyWidth,
       mobileConfigurationTopbar: checks.mobileConfigurationTopbar,
       productPageRegionAlignment: checks.productPageRegionAlignment,
+      productPageRuntimeSemantics: checks.productPageRuntimeSemantics,
     }),
     boundary_integrity: professionalScore(menuBoundaryStable, "专业产品必须保持菜单配置能力边界和业务返回上下文不混淆。", {
       menuSideSections: checks.menuSideSections,
@@ -1035,6 +1067,17 @@ async function main() {
         ],
       },
     ]);
+    checks.productPageRuntimeSemantics = await productPageRuntimeSemanticEvidence(page, [
+      {
+        page: "business_config",
+        scope: "direct_selected_start",
+        checks: [
+          { selector: ".business-config-page", name: "page_shell", classes: ["sc-page"], mode: "admin" },
+          { selector: ".business-config-header", name: "page_header", classes: ["sc-product-page-header"] },
+          { selector: "[data-lowcode-workbench-ia='start']", name: "main_surface", classes: ["sc-product-main-surface"] },
+        ],
+      },
+    ]);
     screenshots.directSelected = await capture(page, "03-direct-selected");
 
     await page.goto(`${BASE_URL}/a/${CONFIG_ACTION_ID}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -1052,6 +1095,17 @@ async function main() {
         ],
       },
     ]));
+    checks.productPageRuntimeSemantics.push(...await productPageRuntimeSemanticEvidence(page, [
+      {
+        page: "business_runtime",
+        scope: "list_page_regions",
+        checks: [
+          { selector: ".page", name: "page_shell", classes: ["sc-page", "sc-product-workspace-stack"], mode: "list" },
+          { selector: ".page .list-toolbar", name: "page_toolbar", classes: ["sc-product-page-toolbar"] },
+          { selector: ".page .table, .page .list-empty-state", name: "main_surface", classes: ["sc-product-main-surface"] },
+        ],
+      },
+    ]));
     checks.businessRuntimeListPageClass = await page.locator(".page").first().evaluate((node) => node.className || "");
     checks.businessRuntimeListToolbarCount = await page.locator(".page .list-toolbar").count();
     await page.goto(`${BASE_URL}/f/${encodeURIComponent(CONFIG_MODEL)}/new?db=${encodeURIComponent(DB_NAME)}&action_id=${CONFIG_ACTION_ID}`, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -1066,6 +1120,17 @@ async function main() {
         anchor: ".template-page-header",
         regions: [
           { selector: ".card", name: "form_main_surface" },
+        ],
+      },
+    ]));
+    checks.productPageRuntimeSemantics.push(...await productPageRuntimeSemanticEvidence(page, [
+      {
+        page: "business_runtime",
+        scope: "form_page_regions",
+        checks: [
+          { selector: "[data-product-page-mode='form']", name: "page_shell", classes: ["sc-page"], mode: "form" },
+          { selector: ".template-page-header", name: "page_header", classes: ["sc-product-page-header"] },
+          { selector: ".card", name: "main_surface", classes: ["sc-product-main-surface"] },
         ],
       },
     ]));
@@ -1311,6 +1376,17 @@ async function main() {
           { selector: ".menu-config-workspace", name: "menu_main_surface" },
           { selector: ".guide-panel", name: "menu_guide_feedback", optional: true },
           { selector: ".audit-panel", name: "menu_audit_feedback", optional: true },
+        ],
+      },
+    ]));
+    checks.productPageRuntimeSemantics.push(...await productPageRuntimeSemanticEvidence(page, [
+      {
+        page: "menu_config",
+        scope: "menu_page_regions",
+        checks: [
+          { selector: ".menu-config-page", name: "page_shell", classes: ["sc-page"], mode: "admin" },
+          { selector: ".menu-config-header", name: "page_header", classes: ["sc-product-page-header"] },
+          { selector: ".menu-config-workspace", name: "main_surface", classes: ["sc-product-main-surface"] },
         ],
       },
     ]));
@@ -1635,6 +1711,12 @@ async function main() {
       (checks.productPageRegionAlignment || []).length >= 4
       && (checks.productPageRegionAlignment || []).every((item) => item.ready === true && item.maxDelta <= 1),
       "产品页面 Header、Toolbar、主内容和反馈区域外边界必须统一对齐，不能出现页面结构断层",
+      checks,
+    );
+    assert(
+      (checks.productPageRuntimeSemantics || []).length >= 4
+      && (checks.productPageRuntimeSemantics || []).every((item) => item.ready === true),
+      "产品页面模式和区域语义必须真实渲染到运行时 DOM，不能只停留在源码或文档",
       checks,
     );
     assert(

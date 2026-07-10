@@ -1,7 +1,7 @@
 <template>
   <section
     v-if="pageSectionsReady"
-    class="business-config-page"
+    class="business-config-page sc-page"
     :class="{ 'business-config-page--editor-open': listSearchPanelOpen || approvalPanelOpen || analysisPanelOpen }"
     :style="pageSectionStyle('root')"
     :data-contract-sections="pageSectionsFingerprint"
@@ -38,7 +38,7 @@
       <small v-if="advancedPanelOpen && message.detail">{{ message.detail }}</small>
     </div>
 
-    <section v-if="!coverageScan" class="workbench-start" data-lowcode-workbench-ia="start">
+    <section v-if="!coverageScan" class="workbench-start sc-product-main-surface" data-lowcode-workbench-ia="start">
       <div class="workbench-start-main">
         <div class="workbench-start-lead">
           <div class="workbench-start-copy">

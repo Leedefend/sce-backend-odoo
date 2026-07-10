@@ -1,7 +1,7 @@
 <template>
   <section
     v-if="pageSectionsReady"
-    class="menu-config-page"
+    class="menu-config-page sc-page"
     :style="pageSectionStyle('root')"
     :data-contract-sections="pageSectionsFingerprint"
     data-product-page-mode="admin"

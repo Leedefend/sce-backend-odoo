@@ -177,6 +177,7 @@ Summary 只展示首屏决策信息：
 | 面板壳层 | 表单、配置主面板使用 `sc-panel` 或等价产品面板 |
 | 区域语义 | Header、Toolbar、Summary、Main Surface、Primary Actions、Feedback Layer 使用 `sc-product-*` 标记 |
 | 外边界对齐 | 同页 Header、Toolbar、主内容、反馈区域左右差值不超过 1px，并进入浏览器验收报告 |
+| 运行时语义 | 真实浏览器 DOM 中必须能采集到页面模式和区域语义，不能只由源码静态门禁证明 |
 | 移动端 | 390px 无横向溢出，主任务进入真实视口 |
 | 浏览器健康 | console error = 0，failed request = 0 |
 
@@ -202,6 +203,15 @@ Summary 只展示首屏决策信息：
 - 菜单配置页：Page Header 与工作区，以及当前可见的说明、检查反馈区。
 
 所有实际渲染区域的 `maxDelta` 必须小于等于 1px。可选反馈区未渲染时不阻断；一旦渲染，必须参与对齐验收。该指标失败时，不能给出“产品结构已收口”的结论。
+
+配置工作台操作验收还必须输出 `productPageRuntimeSemantics` 证据。该证据至少覆盖：
+
+- 配置工作台直达态：`sc-page`、`data-product-page-mode="admin"`、`sc-product-page-header`、`sc-product-main-surface`。
+- 业务列表页：`data-product-page-mode="list"`、`sc-product-page-toolbar`、`sc-product-main-surface`。
+- 业务表单页：`data-product-page-mode="form"`、`sc-product-page-header`、`sc-product-main-surface`。
+- 菜单配置页：`sc-page`、`data-product-page-mode="admin"`、`sc-product-page-header`、`sc-product-main-surface`。
+
+该指标失败时，说明运行时页面没有进入产品级页面结构体系，不能给出“专业产品 ready”的结论。
 
 ## 落地路径
 
