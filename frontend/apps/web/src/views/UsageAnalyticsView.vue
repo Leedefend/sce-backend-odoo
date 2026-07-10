@@ -26,7 +26,7 @@
           <select v-model="hiddenReasonFilter" :disabled="loading">
             <option value="ALL">{{ pageText('option_all', '全部') }}</option>
             <option v-for="item in reasonCounts" :key="`reason-filter-${item.reason_code}`" :value="item.reason_code">
-              {{ item.reason_code }} ({{ item.count }})
+              {{ visibilityReasonLabel(item.reason_code) }} ({{ item.count }})
             </option>
           </select>
         </label>
@@ -228,12 +228,12 @@
           <h3>{{ pageText('table_visibility_reason_counts', '隐藏原因统计') }}</h3>
           <table>
             <thead>
-              <tr><th>{{ pageText('table_reason_code', '原因编码') }}</th><th>{{ pageText('table_count', '次数') }}</th></tr>
+              <tr><th>{{ pageText('table_reason_code', '隐藏原因') }}</th><th>{{ pageText('table_count', '次数') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!reasonCounts.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
               <tr v-for="item in reasonCounts" :key="item.reason_code">
-                <td>{{ item.reason_code }}</td>
+                <td>{{ visibilityReasonLabel(item.reason_code) }}</td>
                 <td>{{ item.count }}</td>
               </tr>
             </tbody>
@@ -250,7 +250,7 @@
               <tr v-if="!filteredHiddenSamples.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
               <tr v-for="item in filteredHiddenSamples" :key="item.key">
                 <td>{{ item.key }}</td>
-                <td>{{ item.reason_code || item.reason || '-' }}</td>
+                <td>{{ visibilityReasonLabel(item.reason_code || item.reason) }}</td>
               </tr>
             </tbody>
           </table>
@@ -359,12 +359,33 @@ const canExport = computed(() => Boolean(report.value || visibility.value));
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', '使用分析加载失败')));
 const headerActions = computed(() => pageGlobalActions.value);
 
+function visibilityReasonLabel(reason: unknown) {
+  const raw = String(reason || '').trim();
+  const key = raw.toUpperCase();
+  const mapping: Record<string, string> = {
+    OK: pageText('reason_ok', '正常'),
+    UNKNOWN: pageText('reason_unknown', '待确认'),
+    PERMISSION_DENIED: pageText('reason_permission_denied', '权限不足'),
+    ACCESS_RESTRICTED: pageText('reason_access_restricted', '访问受限'),
+    PROJECT_SCOPE_DENIED: pageText('reason_project_scope_denied', '不在当前项目范围'),
+    ROLE_RESTRICTED: pageText('reason_role_restricted', '角色不可见'),
+    CAPABILITY_DISABLED: pageText('reason_capability_disabled', '能力未启用'),
+    CAPABILITY_LOCKED: pageText('reason_capability_locked', '能力已锁定'),
+    RELEASE_NOT_ALLOWED: pageText('reason_release_not_allowed', '未进入当前发布范围'),
+    PRODUCT_KEY_REQUIRED: pageText('reason_product_key_required', '缺少产品范围'),
+    ACTIVE_RELEASE_SNAPSHOT_NOT_FOUND: pageText('reason_active_release_snapshot_not_found', '未找到当前发布版本'),
+    ACTIVE_RELEASE_HAS_NO_ALLOWED_PAGES: pageText('reason_active_release_has_no_allowed_pages', '当前发布版本暂无可见页面'),
+  };
+  if (!raw) return '-';
+  return mapping[key] || raw.replace(/_/g, ' ').toLowerCase().replace(/(^|\s)\S/g, (s) => s.toUpperCase());
+}
+
 function resolveContextAwareErrorText(err: unknown, fallback: string) {
   const counter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
   const issue = collectErrorContextIssue(counter, err, {});
   const scope = issueScopeLabel(issue);
   if (!scope && issue.reasonCode === 'UNKNOWN') return fallback;
-  return `${fallback}（${scope || '未归类'} / ${issue.reasonCode}）`;
+  return `${fallback}（${scope || '未归类'} / ${visibilityReasonLabel(issue.reasonCode)}）`;
 }
 
 async function exportCsv() {
