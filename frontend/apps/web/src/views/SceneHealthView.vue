@@ -128,7 +128,13 @@
         :open="pageSectionOpenDefault('details_resolve_errors', true)"
       >
         <summary>解析错误（{{ health.details?.resolve_errors?.length || 0 }}）</summary>
-        <pre>{{ JSON.stringify(health.details?.resolve_errors || [], null, 2) }}</pre>
+        <ul v-if="health.details?.resolve_errors?.length" class="diagnostic-list">
+          <li v-for="item in health.details.resolve_errors" :key="diagnosticItemKey(item)">
+            <strong>{{ diagnosticItemTitle(item) }}</strong>
+            <span>{{ diagnosticItemMeta(item) }}</span>
+          </li>
+        </ul>
+        <p v-else class="empty-text">暂无解析错误</p>
       </details>
       <details
         v-if="pageSectionEnabled('details_drift', true) && pageSectionTagIs('details_drift', 'details')"
@@ -136,7 +142,13 @@
         :open="pageSectionOpenDefault('details_drift', false)"
       >
         <summary>配置漂移（{{ health.details?.drift?.length || 0 }}）</summary>
-        <pre>{{ JSON.stringify(health.details?.drift || [], null, 2) }}</pre>
+        <ul v-if="health.details?.drift?.length" class="diagnostic-list">
+          <li v-for="item in health.details.drift" :key="diagnosticItemKey(item)">
+            <strong>{{ diagnosticItemTitle(item) }}</strong>
+            <span>{{ diagnosticItemMeta(item) }}</span>
+          </li>
+        </ul>
+        <p v-else class="empty-text">暂无配置漂移</p>
       </details>
       <details
         v-if="pageSectionEnabled('details_debt', true) && pageSectionTagIs('details_debt', 'details')"
@@ -144,7 +156,13 @@
         :open="pageSectionOpenDefault('details_debt', false)"
       >
         <summary>治理事项（{{ health.details?.debt?.length || 0 }}）</summary>
-        <pre>{{ JSON.stringify(health.details?.debt || [], null, 2) }}</pre>
+        <ul v-if="health.details?.debt?.length" class="diagnostic-list">
+          <li v-for="item in health.details.debt" :key="diagnosticItemKey(item)">
+            <strong>{{ diagnosticItemTitle(item) }}</strong>
+            <span>{{ diagnosticItemMeta(item) }}</span>
+          </li>
+        </ul>
+        <p v-else class="empty-text">暂无治理事项</p>
       </details>
     </div>
   </section>
@@ -165,7 +183,7 @@ import {
   governanceRollback,
   governanceSetChannel,
 } from '../api/scene';
-import type { SceneChannel, SceneHealthContract } from '../contracts/scene';
+import type { SceneChannel, SceneDiagnosticsItem, SceneHealthContract } from '../contracts/scene';
 import { useSessionStore } from '../stores/session';
 
 const loading = ref(false);
@@ -199,9 +217,9 @@ const headerActions = computed(() => {
 
 const autoDegradeLabel = computed(() => {
   const value = health.value?.auto_degrade;
-  if (!value) return '已触发=否';
-  const reasons = Array.isArray(value.reason_codes) && value.reason_codes.length ? value.reason_codes.join(',') : '-';
-  return `已触发=${Boolean(value.triggered) ? '是' : '否'}；动作=${value.action_taken || '-'}；原因=${reasons}`;
+  if (!value) return '未触发';
+  const reasons = Array.isArray(value.reason_codes) && value.reason_codes.length ? value.reason_codes.join('、') : '无';
+  return `${Boolean(value.triggered) ? '已触发' : '未触发'}；处理动作：${value.action_taken || '无'}；原因：${reasons}`;
 });
 
 function sceneChannelLabel(value: unknown): string {
@@ -222,11 +240,11 @@ const governanceGatesLabel = computed(() => {
   if (!gates || typeof gates !== 'object') return '-';
   const row = gates as Record<string, unknown>;
   return [
-    `编排=${Boolean(row.orchestrator_applied) ? '已应用' : '未应用'}`,
-    `治理=${Boolean(row.governance_applied) ? '已应用' : '未应用'}`,
-    `交付策略=${Boolean(row.delivery_policy_applied) ? '已应用' : '未应用'}`,
-    `导航策略=${Boolean(row.nav_policy_validation_ok) ? '通过' : '未通过'}`,
-    `自动降级=${Boolean(row.auto_degrade_triggered) ? '已触发' : '未触发'}`,
+    `编排：${Boolean(row.orchestrator_applied) ? '已应用' : '未应用'}`,
+    `治理：${Boolean(row.governance_applied) ? '已应用' : '未应用'}`,
+    `交付策略：${Boolean(row.delivery_policy_applied) ? '已应用' : '未应用'}`,
+    `导航策略：${Boolean(row.nav_policy_validation_ok) ? '通过' : '未通过'}`,
+    `自动降级：${Boolean(row.auto_degrade_triggered) ? '已触发' : '未触发'}`,
   ].join('；');
 });
 
@@ -240,9 +258,9 @@ const governanceReasonsLabel = computed(() => {
   const resolveCodes = Array.isArray(row.resolve_error_codes)
     ? row.resolve_error_codes.map((item) => String(item || '')).filter(Boolean)
     : [];
-  const autoText = autoCodes.length ? autoCodes.join(',') : '-';
-  const resolveText = resolveCodes.length ? resolveCodes.join(',') : '-';
-  return `自动降级=[${autoText}]；解析错误=[${resolveText}]`;
+  const autoText = autoCodes.length ? autoCodes.join('、') : '无';
+  const resolveText = resolveCodes.length ? resolveCodes.join('、') : '无';
+  return `自动降级：${autoText}；解析错误：${resolveText}`;
 });
 
 const governanceConsumptionLabel = computed(() => {
@@ -263,8 +281,35 @@ const governanceConsumptionLabel = computed(() => {
     : {};
   const baseSearch = Number(baseRate.search || 0).toFixed(2);
   const surfaceAction = Number(surfaceRate.action_surface || 0).toFixed(2);
-  return `启用=${enabled ? '是' : '否'}；场景类型=${sceneTypes}；场景=${scenes}；基础检索=${baseSearch}；操作面=${surfaceAction}`;
+  return `启用：${enabled ? '是' : '否'}；场景类型：${sceneTypes}；场景：${scenes}；基础检索：${baseSearch}；操作面：${surfaceAction}`;
 });
+
+function diagnosticItemKey(item: SceneDiagnosticsItem) {
+  return [
+    item.scene_key,
+    item.code,
+    item.severity,
+    item.created_at,
+    item.ts,
+    item.message,
+  ].map((part) => String(part || '')).join(':');
+}
+
+function diagnosticItemTitle(item: SceneDiagnosticsItem) {
+  const scene = String(item.scene_key || '').trim();
+  const message = String(item.message || '').trim();
+  if (scene && message) return `${scene}：${message}`;
+  return message || scene || '待确认事项';
+}
+
+function diagnosticItemMeta(item: SceneDiagnosticsItem) {
+  const parts = [
+    item.severity ? `级别：${item.severity}` : '',
+    item.code ? `原因：${item.code}` : '',
+    item.created_at || item.ts ? `时间：${item.created_at || item.ts}` : '',
+  ].filter(Boolean);
+  return parts.join('；') || '暂无更多说明';
+}
 
 function validateHealthContract(raw: unknown): SceneHealthContract {
   if (!raw || typeof raw !== 'object') throw new Error(pageText('error_health_payload_missing', '场景健康数据返回为空'));
@@ -565,13 +610,31 @@ summary {
   font-weight: 600;
 }
 
-pre {
-  overflow: auto;
-  background: var(--sc-app-text-primary);
-  color: var(--sc-app-panel);
-  border-radius: var(--sc-component-panel-radius);
+.diagnostic-list {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diagnostic-list li {
+  display: grid;
+  gap: 4px;
   padding: 10px;
-  font-size: 12px;
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-muted-bg);
+  border: 1px solid var(--sc-app-border);
+}
+
+.diagnostic-list span,
+.empty-text {
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+}
+
+.empty-text {
+  margin: 10px 0 0;
 }
 
 .secondary {

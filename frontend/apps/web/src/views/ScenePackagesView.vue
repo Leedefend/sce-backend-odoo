@@ -44,7 +44,23 @@
       >
         <h3>已安装能力包</h3>
         <p class="hint">共 {{ packages.length }} 个</p>
-        <pre>{{ JSON.stringify(packages, null, 2) }}</pre>
+        <div v-if="packages.length" class="package-table">
+          <div class="package-row package-row--head">
+            <span>名称</span>
+            <span>版本</span>
+            <span>场景数</span>
+            <span>导入策略</span>
+            <span>导入时间</span>
+          </div>
+          <div v-for="pkg in packages" :key="`${pkg.package_name}:${pkg.package_version}:${pkg.checksum}`" class="package-row">
+            <strong>{{ pkg.package_name || '-' }}</strong>
+            <span>{{ pkg.package_version || '-' }}</span>
+            <span>{{ pkg.scene_count ?? 0 }}</span>
+            <span>{{ strategyLabel(pkg.strategy) }}</span>
+            <span>{{ pkg.imported_at || '-' }}</span>
+          </div>
+        </div>
+        <p v-else class="empty-text">暂无已安装能力包</p>
       </article>
 
       <article
@@ -73,7 +89,18 @@
           <button class="secondary" :disabled="busy" @click="runDryRun">预检查</button>
           <button class="danger" :disabled="busy" @click="runImport">导入</button>
         </div>
-        <pre v-if="dryRunResult">{{ JSON.stringify(dryRunResult, null, 2) }}</pre>
+        <div v-if="dryRunResult" class="result-panel">
+          <h4>预检查结果</h4>
+          <div class="metric-grid">
+            <span>新增 {{ dryRunResult.summary.additions_count }} 项</span>
+            <span>冲突 {{ dryRunResult.summary.conflicts_count }} 项</span>
+            <span>总计 {{ dryRunResult.summary.scene_count }} 个场景</span>
+          </div>
+          <p class="hint">能力包：{{ dryRunResult.package_name }} / {{ dryRunResult.package_version }}</p>
+          <ul v-if="dryRunPreviewItems.length" class="result-list">
+            <li v-for="item in dryRunPreviewItems" :key="item">{{ item }}</li>
+          </ul>
+        </div>
       </article>
 
       <article
@@ -104,8 +131,17 @@
         </label>
         <div class="actions">
           <button class="secondary" :disabled="busy" @click="runExport">导出</button>
+          <button class="secondary" :disabled="!exportResult" @click="downloadExportPackage">下载能力包配置</button>
         </div>
-        <pre v-if="exportResult">{{ JSON.stringify(exportResult, null, 2) }}</pre>
+        <div v-if="exportSummary" class="result-panel">
+          <h4>导出结果</h4>
+          <div class="metric-grid">
+            <span>能力包 {{ exportSummary.packageName }}</span>
+            <span>版本 {{ exportSummary.packageVersion }}</span>
+            <span>{{ exportSummary.sceneCount }} 个场景</span>
+          </div>
+          <p class="hint">配置内容已准备，可下载后交付或归档。</p>
+        </div>
       </article>
     </section>
   </section>
@@ -150,6 +186,29 @@ const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
 const headerActions = computed(() => pageGlobalActions.value);
+const dryRunPreviewItems = computed(() => {
+  if (!dryRunResult.value) return [];
+  const additions = dryRunResult.value.report.additions.slice(0, 5).map((item) => `新增：${item.scene_key}`);
+  const conflicts = dryRunResult.value.report.conflicts.slice(0, 5).map((item) => `冲突：${item.scene_key}`);
+  return [...additions, ...conflicts];
+});
+const exportSummary = computed(() => {
+  const pkg = exportResult.value;
+  if (!pkg) return null;
+  return {
+    packageName: String(pkg.package_name || exportName.value || '-'),
+    packageVersion: String(pkg.package_version || exportVersion.value || '-'),
+    sceneCount: Number(pkg.scene_count || 0),
+  };
+});
+
+function strategyLabel(value: unknown) {
+  const raw = String(value || '').trim();
+  if (raw === 'skip_existing') return '跳过已存在项';
+  if (raw === 'override_existing') return '覆盖已存在项';
+  if (raw === 'rename_on_conflict') return '冲突时重命名';
+  return raw || '-';
+}
 
 function parsePackageJson(): Record<string, unknown> {
   const raw = importText.value.trim();
@@ -250,6 +309,20 @@ async function runExport() {
   }
 }
 
+function downloadExportPackage() {
+  if (!exportResult.value) return;
+  const filename = `${exportSummary.value?.packageName || 'scene-package'}-${exportSummary.value?.packageVersion || 'latest'}.json`;
+  const blob = new Blob([JSON.stringify(exportResult.value, null, 2)], { type: 'application/json;charset=utf-8' });
+  const href = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = href;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(href);
+}
+
 onMounted(loadPackages);
 
 async function executeHeaderAction(actionKey: string) {
@@ -304,6 +377,70 @@ async function executeHeaderAction(actionKey: string) {
   color: var(--sc-semantic-text-muted);
 }
 
+.empty-text {
+  color: var(--sc-app-text-secondary);
+  margin: 0;
+}
+
+.package-table,
+.result-panel {
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.package-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.4fr) minmax(90px, 0.8fr) minmax(80px, 0.6fr) minmax(130px, 1fr) minmax(160px, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-top: 1px solid var(--sc-app-border);
+  font-size: 13px;
+}
+
+.package-row:first-child {
+  border-top: 0;
+}
+
+.package-row--head {
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
+  font-weight: 600;
+}
+
+.result-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: var(--sc-app-muted-bg);
+}
+
+.result-panel h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.metric-grid span {
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-weight: 600;
+}
+
+.result-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--sc-app-text-secondary);
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -338,10 +475,9 @@ button.danger {
   color: var(--sc-semantic-text-on-interactive);
 }
 
-pre {
-  background: var(--sc-app-muted-bg);
-  border-radius: 8px;
-  padding: 10px;
-  overflow: auto;
+@media (max-width: 760px) {
+  .package-row {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 </style>

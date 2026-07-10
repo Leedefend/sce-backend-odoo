@@ -179,6 +179,14 @@ FORBIDDEN_PHRASES = {
     "当前 License": "授权提示必须使用产品化中文表达",
     "导出 CSV": "分析页面操作按钮必须使用产品化中文表达",
     "Scene 能力包": "能力包页面说明必须使用产品化中文表达",
+    "JSON.stringify(packages": "能力包页面不能直接展示原始结构数据",
+    "JSON.stringify(dryRunResult": "能力包预检查结果必须使用产品化摘要",
+    "<pre v-if=\"exportResult\"": "能力包导出结果必须使用产品化摘要",
+    "JSON.stringify(health.details": "场景健康明细必须使用产品化清单",
+    "replay_audit_id:": "我的工作台重放审计信息必须使用产品化中文表达",
+    "replay_age_ms:": "我的工作台重放耗时必须使用产品化中文表达",
+    "payload.action || 'unknown'": "我的工作台建议动作反馈必须使用产品化兜底",
+    "已触发=": "场景健康状态必须使用产品化中文标点与表达",
 }
 
 

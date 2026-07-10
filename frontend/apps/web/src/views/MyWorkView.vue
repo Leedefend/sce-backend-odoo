@@ -733,8 +733,8 @@ const batchEvidenceText = computed(() => {
   if (!lastBatchTraceId.value && !lastReplayAuditId.value) return '';
   const rows = [];
   if (lastBatchTraceId.value) rows.push(`${pageText('batch_trace_label', '追踪 ID')}：${lastBatchTraceId.value}`);
-  if (lastReplayAuditId.value > 0) rows.push(`replay_audit_id: ${lastReplayAuditId.value}`);
-  if (lastReplayAgeMs.value > 0) rows.push(`replay_age_ms: ${lastReplayAgeMs.value}`);
+  if (lastReplayAuditId.value > 0) rows.push(`${pageText('batch_replay_audit_label', '重放审计编号')}：${lastReplayAuditId.value}`);
+  if (lastReplayAgeMs.value > 0) rows.push(`${pageText('batch_replay_age_label', '重放耗时')}：${lastReplayAgeMs.value}ms`);
   return rows.join(' | ');
 });
 const groupedVisibleRetryItems = computed(() => {
@@ -1148,9 +1148,10 @@ async function executeHeaderAction(actionKey: string) {
 }
 
 function onErrorSuggestedActionExecuted(payload: { action: string; success: boolean }) {
+  const actionLabel = payload.action || pageText('suggested_action_unknown', '建议动作');
   actionFeedback.value = payload.success
-    ? `${pageText('feedback_suggest_action_ok_prefix', '已执行建议动作：')}${payload.action || 'unknown'}`
-    : `${pageText('feedback_suggest_action_failed_prefix', '建议动作执行失败：')}${payload.action || 'unknown'}`;
+    ? `${pageText('feedback_suggest_action_ok_prefix', '已执行建议动作：')}${actionLabel}`
+    : `${pageText('feedback_suggest_action_failed_prefix', '建议动作执行失败：')}${actionLabel}`;
   actionFeedbackError.value = !payload.success;
 }
 
