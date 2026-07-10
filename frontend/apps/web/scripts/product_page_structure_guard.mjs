@@ -51,6 +51,12 @@ function assertArrayEqual(actual, expected, message) {
   }
 }
 
+function assertDocContainsAll(file, values, message) {
+  const content = read(file);
+  const missing = values.filter((value) => !content.includes(value));
+  if (missing.length) fail(message, { file, missing, values });
+}
+
 function walkFiles(dir, result = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === "dist" || entry.name === "dist-dev" || entry.name === "node_modules") continue;
@@ -235,6 +241,31 @@ assertContains(
   "frontend/apps/web/src/app/productPageStructure.ts",
   /export type ProductPageRegionClass = typeof PRODUCT_PAGE_REGION_CLASSES\[keyof typeof PRODUCT_PAGE_REGION_CLASSES\];/,
   "ProductPageRegionClass must be derived from PRODUCT_PAGE_REGION_CLASSES",
+);
+assertDocContainsAll(
+  "docs/product/page_mode_spec_v1.md",
+  ALLOWED_PAGE_MODES,
+  "Chinese page mode spec must document every canonical product page mode",
+);
+assertDocContainsAll(
+  "docs/product/page_mode_spec_v1.en.md",
+  ALLOWED_PAGE_MODES,
+  "English page mode spec must document every canonical product page mode",
+);
+assertDocContainsAll(
+  "docs/product/product_page_structure_design_v1.md",
+  ALLOWED_PAGE_MODES,
+  "product page structure design must document every canonical product page mode",
+);
+assertDocContainsAll(
+  "docs/product/product_page_structure_design_v1.md",
+  Object.values(PRODUCT_REGION_CLASSES),
+  "product page structure design must document every canonical product page region class",
+);
+assertContains(
+  "docs/product/product_page_structure_design_v1.md",
+  /PAGE_MODES[\s\S]+PRODUCT_PAGE_REGION_CLASSES|PRODUCT_PAGE_REGION_CLASSES[\s\S]+PAGE_MODES/,
+  "product page structure design must reference runtime canonical constants",
 );
 
 assertContains(
