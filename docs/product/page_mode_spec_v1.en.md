@@ -75,6 +75,8 @@ The frontend uses `resolvePageMode(sceneKey, layoutKind)`:
 - `layout.kind=ledger|workspace` -> `workspace`
 - default -> `workspace`
 
+The canonical frontend allowlist is exported as `PAGE_MODES` from `frontend/apps/web/src/app/pageMode.ts`, and `PageMode` must be derived from `PAGE_MODES[number]`. Static guards read this constant instead of maintaining a separate mode list.
+
 `ledger` must not be returned as `PageMode`. When project ledger needs special visuals, read `layout.kind=ledger` instead of extending page mode.
 
 ### 4.2 DOM Evidence

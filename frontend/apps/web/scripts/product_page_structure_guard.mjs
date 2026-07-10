@@ -15,7 +15,6 @@ function findRepoRoot(start) {
 }
 
 const ROOT = findRepoRoot(process.cwd());
-const ALLOWED_PAGE_MODES = ["dashboard", "workspace", "list", "form", "detail", "admin"];
 
 function read(relPath) {
   return fs.readFileSync(path.join(ROOT, relPath), "utf8");
@@ -34,6 +33,15 @@ function assertContains(file, pattern, message) {
 function assertNotContains(file, pattern, message) {
   const content = read(file);
   if (pattern.test(content)) fail(message, { file, pattern: String(pattern) });
+}
+
+function pageModesFromRuntimeSource() {
+  const content = read("frontend/apps/web/src/app/pageMode.ts");
+  const match = content.match(/export const PAGE_MODES = \[([^\]]+)\] as const;/s);
+  if (!match) fail("PAGE_MODES must be exported from pageMode.ts");
+  const modes = Array.from(match[1].matchAll(/'([^']+)'/g)).map((item) => item[1]);
+  if (!modes.length) fail("PAGE_MODES must not be empty");
+  return modes;
 }
 
 function walkFiles(dir, result = []) {
@@ -104,6 +112,8 @@ const pageModeFiles = [
   { file: "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue", mode: "admin" },
   { file: "frontend/apps/web/src/views/MenuConfigView.vue", mode: "admin" },
 ];
+
+const ALLOWED_PAGE_MODES = pageModesFromRuntimeSource();
 
 assertContains(
   "frontend/apps/web/src/styles/product-patterns.css",
@@ -177,8 +187,8 @@ for (const filePath of walkFiles(path.join(ROOT, "frontend/apps/web/src"))) {
 
 assertContains(
   "frontend/apps/web/src/app/pageMode.ts",
-  /export type PageMode = 'dashboard' \| 'workspace' \| 'list' \| 'form' \| 'detail' \| 'admin';/,
-  "PageMode union must match canonical product page modes",
+  /export type PageMode = typeof PAGE_MODES\[number\];/,
+  "PageMode union must be derived from PAGE_MODES",
 );
 assertNotContains(
   "frontend/apps/web/src/app/pageMode.ts",

@@ -1,4 +1,6 @@
-export type PageMode = 'dashboard' | 'workspace' | 'list' | 'form' | 'detail' | 'admin';
+export const PAGE_MODES = ['dashboard', 'workspace', 'list', 'form', 'detail', 'admin'] as const;
+
+export type PageMode = typeof PAGE_MODES[number];
 
 export function resolvePageMode(sceneKey: string, layoutKind: string): PageMode {
   const key = String(sceneKey || '').trim();

@@ -75,6 +75,8 @@
 - `layout.kind=ledger|workspace` -> `workspace`
 - 默认 -> `workspace`
 
+前端 canonical 允许值由 `frontend/apps/web/src/app/pageMode.ts` 的 `PAGE_MODES` 导出，`PageMode` 类型必须从 `PAGE_MODES[number]` 派生。静态门禁从该常量读取允许值，不再单独维护模式列表。
+
 `ledger` 不允许作为 `PageMode` 返回值。需要项目台账特殊视觉时，应读取 `layout.kind=ledger`，不能扩展页面模式。
 
 ### 4.2 DOM 证据
