@@ -290,6 +290,11 @@ assertContains(
   "config workbench acceptance doc must describe runtime page semantics evidence",
 );
 assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  /product_usability[\s\S]+professional_readiness[\s\S]+schema[\s\S]+满分评分[\s\S]+阻断项[\s\S]+风险项/,
+  "config workbench acceptance doc must describe readiness score guard requirements",
+);
+assertContains(
   "frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
   /CONFIG_WORKBENCH_OPERATION_COVERAGE/,
   "config workbench acceptance must use the shared operation coverage source",
