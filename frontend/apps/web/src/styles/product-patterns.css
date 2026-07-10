@@ -256,6 +256,19 @@
   row-gap: var(--sc-product-workspace-stack-gap);
 }
 
+.sc-product-page-header,
+.sc-product-page-toolbar,
+.sc-product-summary-strip,
+.sc-product-main-surface,
+.sc-product-primary-actions,
+.sc-product-feedback-layer {
+  min-width: 0;
+}
+
+.sc-product-primary-actions {
+  justify-content: flex-end;
+}
+
 .sc-product-panel-gap {
   gap: var(--sc-product-panel-gap);
 }

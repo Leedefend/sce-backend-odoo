@@ -57,6 +57,7 @@
 - 纵向页面栈使用 `sc-product-workspace-stack`。
 - 多栏工作区使用 `sc-product-workspace`。
 - 可见面板使用 `sc-panel` 或 `sc-panel-flat`。
+- 页面区域必须使用产品语义 class：`sc-product-page-header`、`sc-product-page-toolbar`、`sc-product-summary-strip`、`sc-product-main-surface`、`sc-product-primary-actions`、`sc-product-feedback-layer`。
 - 页面模式必须体现在 DOM 或验收证据中，不能只存在于文档。
 
 ### 间距
@@ -173,6 +174,7 @@ Summary 只展示首屏决策信息：
 | 工作区列间距 | 多栏结构 `columnGapPx = 0` |
 | 页面栈间距 | 纵向业务页面 `rowGapPx = 12` |
 | 面板壳层 | 表单、配置主面板使用 `sc-panel` 或等价产品面板 |
+| 区域语义 | Header、Toolbar、Summary、Main Surface、Primary Actions、Feedback Layer 使用 `sc-product-*` 标记 |
 | 外边界对齐 | 同页 Header 与主内容左右差值不超过 1px |
 | 移动端 | 390px 无横向溢出，主任务进入真实视口 |
 | 浏览器健康 | console error = 0，failed request = 0 |
@@ -232,6 +234,17 @@ make verify.product.page_structure
 - 列表页 Header 与 Toolbar 分离。
 - 表单页业务动作和配置动作隔离。
 - 配置页范围动作与任务动作隔离。
+
+当前已完成区域语义的第一层固化：
+
+- 公共页面 Header 组件接入 `sc-product-page-header`。
+- 列表页接入 `sc-product-page-toolbar`、`sc-product-summary-strip`、`sc-product-feedback-layer`、`sc-product-main-surface`。
+- 看板页接入 `sc-product-page-toolbar`、`sc-product-main-surface`。
+- 记录详情页接入 `sc-product-page-header`、`sc-product-primary-actions`、`sc-product-main-surface`。
+- 合同表单主区域接入 `sc-product-main-surface`。
+- 配置工作台与菜单配置接入 `sc-product-page-header`、`sc-product-main-surface`。
+
+`make verify.product.page_structure` 已纳入这些区域语义检查。后续任何页面如果新增 Header、Toolbar、Summary、主内容、操作反馈区域，都必须先选择对应产品区域，不能只写局部业务 class。
 
 ### 第三阶段：内容区产品化
 

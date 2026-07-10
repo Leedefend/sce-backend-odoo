@@ -1,6 +1,6 @@
 <template>
   <section v-if="pageSectionsReady" class="menu-config-page" :style="pageSectionStyle('root')" :data-contract-sections="pageSectionsFingerprint">
-    <header class="menu-config-header">
+    <header class="menu-config-header sc-product-page-header">
       <div>
         <p class="eyebrow">{{ companyLabel }}</p>
         <h1>菜单配置</h1>
@@ -184,7 +184,7 @@
       </div>
     </section>
 
-    <div class="menu-config-workspace sc-product-workspace sc-lowcode-workspace">
+    <div class="menu-config-workspace sc-product-workspace sc-product-main-surface sc-lowcode-workspace">
       <aside class="menu-config-tree">
         <div class="tree-panel-head">
           <div>

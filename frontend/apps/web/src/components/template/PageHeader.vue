@@ -1,5 +1,9 @@
 <template>
-  <header class="template-page-header" :class="{ 'template-page-header--title-hidden': hideTitle }" data-component="PageHeader">
+  <header
+    class="template-page-header sc-product-page-header"
+    :class="{ 'template-page-header--title-hidden': hideTitle }"
+    data-component="PageHeader"
+  >
     <div class="template-page-header-main">
       <h1 v-if="!hideTitle">{{ title }}</h1>
       <p v-if="!hideTitle && subtitle" class="template-page-subtitle">{{ subtitle }}</p>

@@ -6,7 +6,7 @@
     :style="pageSectionStyle('root')"
     :data-contract-sections="pageSectionsFingerprint"
   >
-    <header class="business-config-header">
+    <header class="business-config-header sc-product-page-header">
       <div>
         <p class="eyebrow">低代码页面设计器</p>
         <h1>{{ designerTitle }}</h1>
@@ -241,7 +241,7 @@
           {{ item.label }} {{ item.count }}
         </span>
       </div>
-      <div class="config-workspace sc-product-workspace sc-lowcode-workspace" data-lowcode-workbench-ia="three-column">
+      <div class="config-workspace sc-product-workspace sc-product-main-surface sc-lowcode-workspace" data-lowcode-workbench-ia="three-column">
         <aside class="page-picker-panel" aria-label="业务页面列表">
           <div class="page-picker-head">
             <div>

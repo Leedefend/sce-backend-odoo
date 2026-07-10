@@ -1,7 +1,7 @@
 <template>
   <section class="page sc-page sc-product-workspace-stack">
     <!-- Page intent: surface record status, risks, metrics, and next actions. -->
-    <header class="header">
+    <header class="header sc-product-page-header">
       <div>
         <h2>{{ title }}</h2>
         <p class="meta">{{ subtitle }}</p>
@@ -10,7 +10,7 @@
           {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
         </p>
       </div>
-      <div class="actions">
+      <div class="actions sc-product-primary-actions">
         <button
           v-for="action in headerActions"
           :key="`header-${action.key}`"
@@ -73,7 +73,7 @@
       :on-retry="reload"
     />
 
-    <section v-else class="card" :class="{ editing: status === 'editing' }">
+    <section v-else class="card sc-product-main-surface" :class="{ editing: status === 'editing' }">
       <div v-if="pageSectionEnabled('save_banner', true) && pageSectionTagIs('save_banner', 'div') && editTxState === 'saved'" class="banner success" :style="pageSectionStyle('save_banner')">
         {{ pageText('banner_saved', 'Saved. Changes have been applied.') }}
       </div>

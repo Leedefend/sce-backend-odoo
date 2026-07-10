@@ -108,7 +108,7 @@
     <StatusPanel v-else-if="status === 'loading'" title="正在加载页面..." variant="info" />
     <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
 
-    <section v-else :class="['card', 'sc-panel', { 'card--flow': isProjectIntakeCreateMode }]">
+    <section v-else :class="['card', 'sc-panel', 'sc-product-main-surface', { 'card--flow': isProjectIntakeCreateMode }]">
       <section v-if="warnings.length && !isProjectIntakeCreateMode" class="block warn">
         <h3>提示信息</h3>
         <ul>

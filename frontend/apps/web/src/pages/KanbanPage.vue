@@ -37,7 +37,7 @@
     />
 
     <template v-else>
-      <section class="kanban-toolbar">
+      <section class="kanban-toolbar sc-product-page-toolbar">
         <div class="kanban-title">
           <h2>{{ title }}</h2>
           <p>{{ compactSubtitle }}</p>
@@ -82,7 +82,7 @@
 
       <slot name="toolbar"></slot>
 
-      <section class="grid">
+      <section class="grid sc-product-main-surface">
         <article
           v-for="(row, index) in records"
           :key="String(row.id ?? index)"

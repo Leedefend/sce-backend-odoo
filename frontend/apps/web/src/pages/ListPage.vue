@@ -24,7 +24,7 @@
       :on-retry="onReload"
     />
     <template v-else-if="status === 'empty'">
-      <section class="list-toolbar">
+      <section class="list-toolbar sc-product-page-toolbar">
         <div class="list-title">
           <h2>{{ title }}</h2>
           <p v-if="toolbarSubtitle">{{ toolbarSubtitle }}</p>
@@ -76,7 +76,7 @@
     </template>
 
     <template v-else>
-      <section class="list-toolbar">
+      <section class="list-toolbar sc-product-page-toolbar">
         <div class="list-title">
           <h2>{{ title }}</h2>
           <p v-if="toolbarSubtitle">{{ toolbarSubtitle }}</p>
@@ -101,14 +101,14 @@
         </div>
       </section>
 
-      <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip">
+      <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip sc-product-summary-strip">
         <article v-for="item in summaryItems" :key="item.key" class="summary-card" :class="`tone-${item.tone || 'neutral'}`">
           <p class="summary-label">{{ item.label }}</p>
           <p class="summary-value">{{ item.value }}</p>
         </article>
       </section>
 
-      <section v-if="showBatchBar" class="batch-bar">
+      <section v-if="showBatchBar" class="batch-bar sc-product-feedback-layer">
         <span>{{ uiLabel('selected_count', '已选 {count} 条', { count: selectedCount }) }}</span>
         <button
           v-for="action in selectionActions"
@@ -124,7 +124,7 @@
         <span v-if="selectedCount > 0 && batchMessage" class="batch-message">{{ batchMessage }}</span>
       </section>
 
-      <section class="table">
+      <section class="table sc-product-main-surface">
 	        <section v-if="showGroupedRows" class="grouped-table">
         <header class="grouped-toolbar">
           <div class="grouped-toolbar-title">

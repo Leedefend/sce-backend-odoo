@@ -1,5 +1,5 @@
 <template>
-  <header class="header">
+  <header class="header sc-product-page-header">
     <div>
       <h2 class="title">{{ title }}</h2>
       <p class="subtitle">{{ subtitle }}</p>

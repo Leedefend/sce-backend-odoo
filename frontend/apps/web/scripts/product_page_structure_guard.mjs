@@ -44,6 +44,41 @@ const shellFiles = [
   "frontend/apps/web/src/views/PlaceholderView.vue",
 ];
 
+const regionFiles = [
+  {
+    file: "frontend/apps/web/src/components/page/PageHeader.vue",
+    markers: [/sc-product-page-header/],
+  },
+  {
+    file: "frontend/apps/web/src/components/template/PageHeader.vue",
+    markers: [/sc-product-page-header/],
+  },
+  {
+    file: "frontend/apps/web/src/pages/ListPage.vue",
+    markers: [/sc-product-page-toolbar/, /sc-product-summary-strip/, /sc-product-feedback-layer/, /sc-product-main-surface/],
+  },
+  {
+    file: "frontend/apps/web/src/pages/KanbanPage.vue",
+    markers: [/sc-product-page-toolbar/, /sc-product-main-surface/],
+  },
+  {
+    file: "frontend/apps/web/src/views/RecordView.vue",
+    markers: [/sc-product-page-header/, /sc-product-primary-actions/, /sc-product-main-surface/],
+  },
+  {
+    file: "frontend/apps/web/src/pages/ContractFormPage.vue",
+    markers: [/sc-product-main-surface/],
+  },
+  {
+    file: "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue",
+    markers: [/sc-product-page-header/, /sc-product-main-surface/],
+  },
+  {
+    file: "frontend/apps/web/src/views/MenuConfigView.vue",
+    markers: [/sc-product-page-header/, /sc-product-main-surface/],
+  },
+];
+
 assertContains(
   "frontend/apps/web/src/styles/product-patterns.css",
   /--sc-product-workspace-gap:\s*0px;/,
@@ -64,11 +99,31 @@ assertContains(
   /\.sc-product-workspace-stack\s*\{\s*row-gap:\s*var\(--sc-product-workspace-stack-gap\);/s,
   "product workspace stack class must use product stack gap token",
 );
+for (const marker of [
+  "sc-product-page-header",
+  "sc-product-page-toolbar",
+  "sc-product-summary-strip",
+  "sc-product-main-surface",
+  "sc-product-primary-actions",
+  "sc-product-feedback-layer",
+]) {
+  assertContains(
+    "frontend/apps/web/src/styles/product-patterns.css",
+    new RegExp(`\\.${marker}\\b`),
+    `${marker} must be defined as a product page region marker`,
+  );
+}
 
 for (const file of shellFiles) {
   assertContains(file, /sc-page/, "page shell must opt into product page surface");
   assertContains(file, /sc-product-workspace-stack/, "page shell must opt into product stack spacing");
   assertNotContains(file, /\.page\s*\{[^}]*\bgap:\s*(6px|16px);/s, "page shell must not hard-code legacy page gap");
+}
+
+for (const { file, markers } of regionFiles) {
+  for (const marker of markers) {
+    assertContains(file, marker, "page structure region must opt into product semantic marker");
+  }
 }
 
 assertContains(
@@ -96,4 +151,5 @@ console.log(JSON.stringify({
   ok: true,
   schema_version: "product_page_structure_guard.v1",
   shell_files: shellFiles.length,
+  region_files: regionFiles.length,
 }));
