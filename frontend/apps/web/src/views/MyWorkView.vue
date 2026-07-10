@@ -151,7 +151,7 @@
         v-model.trim="retrySearchText"
         class="search-input retry-search"
         type="search"
-        :placeholder="pageText('retry_search_placeholder', '筛选失败明细：ID / 原因码 / 消息')"
+        :placeholder="pageText('retry_search_placeholder', '筛选失败明细：事项编号 / 状态 / 内容')"
       />
       <div class="retry-toggle">
         <button
