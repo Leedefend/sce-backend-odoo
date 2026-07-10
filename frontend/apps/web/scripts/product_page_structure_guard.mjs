@@ -327,6 +327,11 @@ assertContains(
   "config workbench acceptance doc must describe the closeout command order",
 );
 assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  /截图复核结论[\s\S]+表单设计器[\s\S]+移动端真实视口[\s\S]+不在本分支继续扩大范围/,
+  "config workbench acceptance doc must record screenshot review closeout judgment",
+);
+assertContains(
   "frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
   /CONFIG_WORKBENCH_OPERATION_COVERAGE/,
   "config workbench acceptance must use the shared operation coverage source",
