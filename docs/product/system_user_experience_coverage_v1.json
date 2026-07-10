@@ -1,0 +1,190 @@
+{
+  "version": "v1",
+  "scope": "system_user_experience_coverage",
+  "objective": "从真实用户使用视角覆盖登录、首页、导航、办理、查询、配置、支持和移动端体验。",
+  "coverage_thresholds": {
+    "min_roles": 6,
+    "min_journeys": 10,
+    "min_surface_types": 11,
+    "min_page_modes": 6,
+    "min_user_actions": 30,
+    "min_automated_evidence": 8,
+    "min_browser_evidence": 4
+  },
+  "roles": [
+    {"code": "executive", "name": "领导", "primary_goal": "判断经营状态、风险和决策事项"},
+    {"code": "project_manager", "name": "项目经理", "primary_goal": "完成施工、材料、分包、进度和现场事项办理"},
+    {"code": "finance", "name": "财务人员", "primary_goal": "完成收付款、费用、保证金、发票、资金和结算处理"},
+    {"code": "business_operator", "name": "经营人员", "primary_goal": "完成项目、投标、合同和基础资料维护"},
+    {"code": "config_admin", "name": "配置管理员", "primary_goal": "调整菜单、表单、列表、搜索和发布配置"},
+    {"code": "support_operator", "name": "支持人员", "primary_goal": "只读诊断系统健康、发布状态和用户问题"}
+  ],
+  "surface_types": ["login", "home", "navigation", "dashboard", "workspace", "list", "form", "detail", "admin", "support", "mobile"],
+  "page_modes": ["dashboard", "workspace", "list", "form", "detail", "admin"],
+  "journeys": [
+    {
+      "id": "UX-J001",
+      "role": "business_operator",
+      "name": "登录后进入业务首页并定位当前工作",
+      "entry": "登录页 -> 我的工作",
+      "surface_type": "home",
+      "page_mode": "workspace",
+      "actions": ["登录", "识别角色", "查看待办", "进入常用业务"],
+      "success_criteria": ["5 秒内知道今天要处理什么", "首屏不暴露技术字段", "失败状态有明确解释"],
+      "automated_evidence": ["verify.product.page_structure", "verify.portal.fe_smoke.host"],
+      "browser_evidence": true
+    },
+    {
+      "id": "UX-J002",
+      "role": "business_operator",
+      "name": "主导航进入项目台账并完成查询",
+      "entry": "项目中心 / 项目管理 / 项目台账",
+      "surface_type": "navigation",
+      "page_mode": "list",
+      "actions": ["展开导航", "打开列表", "搜索", "筛选", "分页", "刷新"],
+      "success_criteria": ["导航路径与页面标题一致", "列表工具栏只承载查询控制", "空态和加载态可理解"],
+      "automated_evidence": ["verify.product.navigation_boundary", "verify.product.page_structure"],
+      "browser_evidence": true
+    },
+    {
+      "id": "UX-J003",
+      "role": "business_operator",
+      "name": "收入合同台账查看并进入关联单据",
+      "entry": "合同中心 / 收入合同台账",
+      "surface_type": "list",
+      "page_mode": "list",
+      "actions": ["打开台账", "查看关键字段", "进入结算", "进入签证"],
+      "success_criteria": ["先看到合同身份和状态", "关联入口不依赖技术 id", "返回路径稳定"],
+      "automated_evidence": ["verify.formal_business_operation_capability_matrix", "verify.formal_business_operation_core_flow_smoke"],
+      "browser_evidence": true
+    },
+    {
+      "id": "UX-J004",
+      "role": "finance",
+      "name": "支付申请办理",
+      "entry": "财务中心 / 收付款办理 / 支付申请",
+      "surface_type": "form",
+      "page_mode": "form",
+      "actions": ["新建", "填写关键字段", "保存", "查看状态", "返回列表"],
+      "success_criteria": ["第一屏明确单据对象、状态和主动作", "必填校验是业务语言", "保存反馈不遮挡继续操作"],
+      "automated_evidence": ["verify.business_system.usability_readiness", "verify.p1.daily_business_form.usability.audit"],
+      "browser_evidence": true
+    },
+    {
+      "id": "UX-J005",
+      "role": "finance",
+      "name": "结算单查询和详情阅读",
+      "entry": "财务中心 / 收付款办理 / 结算中心 / 结算单",
+      "surface_type": "detail",
+      "page_mode": "detail",
+      "actions": ["搜索结算单", "打开详情", "查看金额和关联对象", "返回列表"],
+      "success_criteria": ["详情页身份、金额、状态和来源清晰", "分区职责明确", "历史信息不干扰主阅读"],
+      "automated_evidence": ["verify.business_system.usability_readiness"],
+      "browser_evidence": false
+    },
+    {
+      "id": "UX-J006",
+      "role": "project_manager",
+      "name": "施工日志录入",
+      "entry": "施工管理 / 施工日志",
+      "surface_type": "mobile",
+      "page_mode": "form",
+      "actions": ["打开列表", "新建日志", "填写施工内容", "上传附件", "保存"],
+      "success_criteria": ["附件作为业务证据可见", "字段分组符合现场填写顺序", "移动端不横向溢出"],
+      "automated_evidence": ["verify.business_system.usability_readiness", "verify.product.page_structure"],
+      "browser_evidence": true
+    },
+    {
+      "id": "UX-J007",
+      "role": "project_manager",
+      "name": "材料入库单办理",
+      "entry": "物资与分包 / 材料管理 / 入库单",
+      "surface_type": "form",
+      "page_mode": "form",
+      "actions": ["打开入库单", "新建", "选择项目与材料", "填写数量", "保存"],
+      "success_criteria": ["主对象和明细行关系清楚", "明细行编辑不挤压主操作区", "错误定位到具体字段或行"],
+      "automated_evidence": ["verify.formal_business_operation_core_flow_smoke"],
+      "browser_evidence": false
+    },
+    {
+      "id": "UX-J008",
+      "role": "project_manager",
+      "name": "分包申请办理",
+      "entry": "物资与分包 / 专业分包 / 分包申请",
+      "surface_type": "form",
+      "page_mode": "form",
+      "actions": ["打开分包申请", "新建", "填写分包单位", "填写金额", "保存"],
+      "success_criteria": ["供应商选择、项目范围和金额含义清楚", "状态下一步明确", "返回列表能找到刚保存记录"],
+      "automated_evidence": ["verify.business_system.usability_readiness"],
+      "browser_evidence": false
+    },
+    {
+      "id": "UX-J009",
+      "role": "executive",
+      "name": "经营驾驶舱查看风险和资金状态",
+      "entry": "首页 / 经营驾驶舱",
+      "surface_type": "dashboard",
+      "page_mode": "dashboard",
+      "actions": ["查看汇总", "识别风险", "下钻明细", "返回驾驶舱"],
+      "success_criteria": ["10 秒内看清状态、风险、下一步", "指标名称是业务语言", "下钻路径可返回"],
+      "automated_evidence": ["verify.business_system.usability_readiness"],
+      "browser_evidence": true
+    },
+    {
+      "id": "UX-J010",
+      "role": "config_admin",
+      "name": "菜单配置与主导航一致性调整",
+      "entry": "配置中心 / 低代码系统配置 / 菜单配置",
+      "surface_type": "admin",
+      "page_mode": "admin",
+      "actions": ["打开菜单配置", "查看可配置菜单", "拖拽排序", "保存", "刷新导航"],
+      "success_criteria": ["配置面与主导航口径一致", "分组菜单与真实菜单职责清楚", "保存反馈与页面边界对齐"],
+      "automated_evidence": ["verify.business_config.low_code_menu_navigation_alignment", "verify.business_config.config_workbench_operation_local_closeout"],
+      "browser_evidence": true
+    },
+    {
+      "id": "UX-J011",
+      "role": "config_admin",
+      "name": "表单设计器调整字段与分区",
+      "entry": "配置中心 / 低代码系统配置 / 表单设计",
+      "surface_type": "workspace",
+      "page_mode": "admin",
+      "actions": ["选择业务对象", "调整字段", "调整分区", "预览", "保存"],
+      "success_criteria": ["配置对象明确", "配置动作不混入业务提交", "预览说明影响范围"],
+      "automated_evidence": ["verify.business_config.config_workbench_operation_local_closeout"],
+      "browser_evidence": true
+    },
+    {
+      "id": "UX-J012",
+      "role": "support_operator",
+      "name": "支持诊断和发布状态检查",
+      "entry": "配置中心 / 系统支持",
+      "surface_type": "support",
+      "page_mode": "admin",
+      "actions": ["查看系统健康", "查看发布版本", "导出诊断信息", "查看配置变更"],
+      "success_criteria": ["支持入口只读", "健康状态和异常解释可读", "诊断包不要求用户理解服务器路径"],
+      "automated_evidence": ["verify.business_system.usability_readiness.prod", "release.daily_dev.acceptance.publish"],
+      "browser_evidence": false
+    }
+  ],
+  "issue_taxonomy": [
+    {"code": "IA", "name": "信息架构"},
+    {"code": "TASK", "name": "任务流"},
+    {"code": "STRUCTURE", "name": "页面结构"},
+    {"code": "LANGUAGE", "name": "用户语言"},
+    {"code": "DATA", "name": "数据可理解性"},
+    {"code": "PERFORMANCE", "name": "性能与反馈"},
+    {"code": "MOBILE", "name": "移动端"},
+    {"code": "ACCESS", "name": "权限与可达性"}
+  ],
+  "acceptance_gates": [
+    "verify.system_user_experience.coverage_guard",
+    "verify.product.page_structure",
+    "verify.product.navigation_boundary",
+    "verify.business_system.usability_readiness",
+    "verify.business_config.config_workbench_operation_local_closeout",
+    "verify.system_user_experience.shell_acceptance",
+    "verify.system_user_experience.business_form_user_perspective",
+    "verify.system_user_experience.full_browser"
+  ]
+}

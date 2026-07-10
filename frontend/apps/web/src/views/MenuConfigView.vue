@@ -2429,7 +2429,7 @@ onMounted(async () => {
 <style scoped>
 .menu-config-page {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   min-height: calc(100vh - 96px);
 }
 
@@ -2769,7 +2769,7 @@ h1 {
 
 .menu-config-workspace {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   min-height: 0;
   gap: var(--sc-product-workspace-gap);
   padding: 0 0 18px;
@@ -2779,7 +2779,10 @@ h1 {
   min-width: 0;
   border: 1px solid var(--sc-app-border);
   border-right: 0;
+  border-radius: 8px 0 0 8px;
   background: var(--sc-app-panel);
+  box-shadow: var(--sc-app-shadow);
+  overflow: hidden;
 }
 
 .tree-panel-head {
@@ -2902,7 +2905,7 @@ h1 {
 
 .tree-scroll {
   overflow: auto;
-  max-height: calc(100vh - 220px);
+  max-height: calc(100vh - 246px);
   padding: 6px;
 }
 
@@ -3019,13 +3022,15 @@ h1 {
 .menu-config-editor {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-columns: minmax(0, 1fr) 280px;
   align-content: start;
   align-items: start;
   gap: var(--sc-product-workspace-gap);
   border: 1px solid var(--sc-app-border);
+  border-radius: 0 8px 8px 0;
   padding: 12px;
   background: var(--sc-app-panel);
+  box-shadow: var(--sc-app-shadow);
 }
 
 .menu-selected-panel,
@@ -3033,7 +3038,7 @@ h1 {
   min-width: 0;
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
-  background: var(--sc-app-surface);
+  background: var(--sc-app-panel);
 }
 
 .menu-selected-panel {
@@ -3153,7 +3158,7 @@ h1 {
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
   padding: 12px;
-  background: var(--sc-app-bg);
+  background: var(--sc-app-muted-bg);
 }
 
 .menu-detail-section-head {
@@ -3231,9 +3236,11 @@ h1 {
   align-self: start;
   min-width: 0;
   border: 1px solid var(--sc-app-border);
-  border-radius: 8px;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
   padding: 12px;
-  background: var(--sc-app-surface);
+  background: var(--sc-app-panel);
+  box-shadow: var(--sc-app-shadow);
 }
 
 .menu-side-panel-head {
@@ -3375,7 +3382,7 @@ h1 {
 
 .table-wrap {
   overflow: auto;
-  max-height: calc(100vh - 220px);
+  max-height: min(420px, calc(100vh - 260px));
 }
 
 table {

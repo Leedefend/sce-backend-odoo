@@ -49,6 +49,8 @@ esac
 export VITE_BUILD_OUT_DIR="${FRONTEND_DIST_ABS}"
 
 echo "[frontend.static.build] env_file=${ENV_FILE} vite_db=${VITE_ODOO_DB} app_env=${VITE_APP_ENV} mode=${VITE_BUILD_MODE} out_dir=${VITE_BUILD_OUT_DIR}"
+mkdir -p "${FRONTEND_DIST_ABS}"
+find "${FRONTEND_DIST_ABS}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 cd "${ROOT_DIR}"
 "${ROOT_DIR}/scripts/dev/pnpm_exec.sh" -C frontend/apps/web exec vite build --mode "${VITE_BUILD_MODE}"
 

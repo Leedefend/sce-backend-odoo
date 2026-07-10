@@ -30,11 +30,14 @@ defineProps<{
 .template-page-header {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
-  border-bottom: 1px solid var(--sc-app-border);
-  padding: 4px 0 6px;
-  margin-bottom: 6px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-product-panel-radius);
+  background: var(--sc-app-panel);
+  box-shadow: var(--sc-app-shadow);
+  padding: 10px 12px;
+  margin-bottom: 12px;
   min-width: 0;
 }
 
@@ -60,12 +63,13 @@ defineProps<{
 }
 
 .template-page-header-status {
+  flex: 1 1 auto;
   display: grid;
   gap: 4px;
   margin-left: auto;
   text-align: right;
-  min-width: 240px;
-  padding-top: 3px;
+  min-width: 0;
+  padding-top: 0;
 }
 
 .template-page-header-status:empty {
@@ -76,6 +80,7 @@ defineProps<{
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
   justify-content: flex-end;
 }
 

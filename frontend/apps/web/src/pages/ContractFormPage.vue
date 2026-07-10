@@ -53,6 +53,7 @@
         </section>
       </template>
       <template #actions>
+        <span class="contract-header-action-label">办理操作</span>
         <button
           v-if="showReturnToBusinessConfigAction"
           class="sc-btn sc-btn-ghost sc-btn-sm"
@@ -11924,17 +11925,23 @@ onBeforeUnmount(() => {
 
 .contract-form-native-shell :deep(.template-page-header) {
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-product-panel-radius);
+  background: var(--sc-app-panel);
+  box-shadow: var(--sc-app-shadow);
 }
 
 .contract-form-native-shell :deep(.template-page-header-main) {
-  min-width: 180px;
-  max-width: 280px;
+  min-width: 220px;
+  max-width: 360px;
 }
 
 .contract-form-native-shell :deep(.template-page-header-main h1) {
   color: var(--sc-app-text-primary);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -11948,7 +11955,31 @@ onBeforeUnmount(() => {
 
 .contract-form-native-shell :deep(.template-page-header-actions) {
   flex: 0 0 auto;
-  gap: 6px;
+  gap: 8px;
+  align-items: center;
+}
+
+.contract-header-action-label {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.contract-form-native-shell :deep(.template-page-header-actions .sc-btn) {
+  min-height: 34px;
+  padding: 6px 12px;
+  font-weight: 600;
+}
+
+.contract-form-native-shell :deep(.template-page-header-actions .sc-btn-primary) {
+  min-width: 76px;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+}
+
+.contract-form-native-shell :deep(.template-page-header-actions .contract-header-config-action) {
+  font-weight: 500;
+  opacity: 0.78;
 }
 
 .contract-header-action-separator {
@@ -11971,7 +12002,7 @@ onBeforeUnmount(() => {
 @media (max-width: 860px) {
   .contract-form-native-shell :deep(.template-page-header) {
     align-items: stretch;
-    flex-direction: row;
+    flex-direction: column;
     flex-wrap: nowrap;
   }
 
@@ -11984,7 +12015,7 @@ onBeforeUnmount(() => {
 
   .contract-form-native-shell :deep(.template-page-header-actions) {
     flex: 0 0 auto;
-    justify-content: flex-end;
+    justify-content: flex-start;
     width: auto;
   }
 }

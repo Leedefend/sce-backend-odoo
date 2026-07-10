@@ -1192,9 +1192,9 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
     const statusRaw = asText(row.status).toLowerCase();
     return {
       id: asText(row.id) || `todo-${idx + 1}`,
-      title: asText(row.title) || `${pageText('todo_title_fallback_prefix', '待办 ')}${idx + 1}`,
+      title: normalizeHomeTodoTitle(asText(row.title), idx),
       actionLabel: asText(row.action_label),
-      description: asText(row.description) || pageText('todo_desc_fallback', '点击进入处理'),
+      description: normalizeHomeTodoDescription(asText(row.description)),
       count: Number(row.count || 0),
       status: statusRaw === 'urgent' ? 'urgent' : 'normal',
       tone: normalizeTone(row.tone, statusRaw === 'urgent' ? 'danger' : 'info'),
@@ -1204,6 +1204,26 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
     };
   });
 });
+
+function normalizeHomeTodoTitle(raw: string, index: number) {
+  const cleaned = raw
+    .replace(/\s*\/\s*admin\s*/gi, ' ')
+    .replace(/\bDelivery Action Smoke\s*\d*\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const requestMatch = cleaned.match(/\b(PRQ\d+)\b/i);
+  if (requestMatch) return `${pageText('home_todo_payment_review_title', '付款申请待审批')} · ${requestMatch[1].toUpperCase()}`;
+  return cleaned || `${pageText('todo_title_fallback_prefix', '待办 ')}${index + 1}`;
+}
+
+function normalizeHomeTodoDescription(raw: string) {
+  const cleaned = raw
+    .replace(/\bTIER_REVIEW_PENDING\b/g, pageText('home_todo_reason_tier_review_pending', '待审批复核'))
+    .replace(/\breason\s+/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned || pageText('todo_desc_fallback', '点击进入处理');
+}
 
 const primaryTodos = computed<SuggestionItem[]>(() => concreteTodos.value.slice(0, 3));
 const hasMoreTodos = computed(() => concreteTodos.value.length > 3);
@@ -1653,13 +1673,13 @@ const homeSectionDatasetPayloads = computed<Record<string, unknown>>(() => {
     metrics: session.workspaceMetricRows,
     today_actions: session.workspaceTodayActionRows.map((item) => ({
       id: item.id,
-      title: item.title,
-      description: item.description,
+      title: normalizeHomeTodoTitle(item.title, 0),
+      description: normalizeHomeTodoDescription(item.description),
       tone: item.tone || 'warning',
       status: item.status,
       count: item.count,
       source: item.source || 'business',
-      action_label: todoActionLabel(item.actionLabel),
+      action_label: todoActionLabel(item.actionLabel || item.title),
       entry_id: item.entryId,
       action_key: item.actionKey || 'open_scene',
       scene_key: item.sceneKey,
@@ -2361,9 +2381,13 @@ function highlightParts(raw: string) {
 
 .focus-layout {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.9fr);
   gap: 12px;
   align-items: start;
+}
+
+.focus-layout > .today-actions:only-child {
+  grid-column: 1 / -1;
 }
 
 .value-grid {
@@ -3076,7 +3100,7 @@ function highlightParts(raw: string) {
 }
 
 .today-actions-grid.compact {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .group-overview {
