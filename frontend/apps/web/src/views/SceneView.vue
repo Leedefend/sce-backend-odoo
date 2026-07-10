@@ -329,7 +329,7 @@ const idleDiagnosticMessage = computed(() => {
     'status_idle_diag_hint',
     '当前场景暂无可展示内容。',
   );
-  return `${pageText('status_idle_diag_scene_prefix', 'scene')}：${sceneKey || '-'}；${hint}`;
+  return `${pageText('status_idle_diag_scene_prefix', '场景')}：${sceneKey || '-'}；${hint}`;
 });
 
 const runtimeDiagnosticTitle = computed(() => {
@@ -348,16 +348,16 @@ const runtimeDiagnosticMessage = computed(() => {
   const parts: string[] = [];
 
   if (statusKey && statusKey !== 'ready') {
-    parts.push(`${pageText('runtime_diag_status_prefix', 'runtime_status')}：${statusKey}`);
+    parts.push(`${pageText('runtime_diag_status_prefix', '运行状态')}：${statusKey}`);
   }
   if (currentState) {
-    parts.push(`${pageText('runtime_diag_state_prefix', 'record_state')}：${currentState}`);
+    parts.push(`${pageText('runtime_diag_state_prefix', '记录状态')}：${currentState}`);
   }
   if (missingRequiredCount > 0) {
-    parts.push(`${pageText('runtime_diag_missing_required_prefix', 'missing_required')}：${missingRequiredCount}`);
+    parts.push(`${pageText('runtime_diag_missing_required_prefix', '缺少必填项')}：${missingRequiredCount}`);
   }
   if (activeTransitionCount > 0) {
-    parts.push(`${pageText('runtime_diag_transition_prefix', 'active_transitions')}：${activeTransitionCount}`);
+    parts.push(`${pageText('runtime_diag_transition_prefix', '可执行流转')}：${activeTransitionCount}`);
   }
   if (!bridgeAligned) {
     parts.push(pageText('runtime_diag_alignment_mismatch', '当前场景语义尚未完全对齐。'));
@@ -1012,7 +1012,7 @@ async function resolveScene() {
       resolvedScene = getSceneByKey(sceneKey) || fallbackSceneFromSceneReady(sceneKey) || fallbackSceneFromEntryIntent(sceneKey);
     }
     if (!resolvedScene) {
-      setError(new Error(`scene not found: ${sceneKey}`), 'scene not found');
+      setError(new Error(`${pageText('error_scene_not_found', '未找到场景')}：${sceneKey}`), pageText('error_scene_not_found', '未找到场景'));
       errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
       status.value = 'error';
       return;
@@ -1324,8 +1324,8 @@ async function resolveScene() {
         return;
       }
       setError(
-        new Error(pageText('error_scene_render_target_missing', 'scene render target missing')),
-        pageText('error_scene_render_target_missing', 'scene render target missing'),
+        new Error(pageText('error_scene_render_target_missing', '缺少场景渲染目标')),
+        pageText('error_scene_render_target_missing', '缺少场景渲染目标'),
         ErrorCodes.SCENE_KIND_UNSUPPORTED,
       );
       errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
@@ -1342,8 +1342,8 @@ async function resolveScene() {
     status.value = 'error';
   } catch (err) {
     setError(
-      err instanceof Error ? err : new Error(pageText('error_scene_resolve_failed', 'scene resolve failed')),
-      pageText('error_scene_resolve_failed', 'scene resolve failed'),
+      err instanceof Error ? err : new Error(pageText('error_scene_resolve_failed', '场景解析失败')),
+      pageText('error_scene_resolve_failed', '场景解析失败'),
     );
     errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
     status.value = 'error';

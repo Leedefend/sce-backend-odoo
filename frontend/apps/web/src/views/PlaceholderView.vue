@@ -15,9 +15,9 @@
       class="card"
       :style="pageSectionStyle('card')"
     >
-      <h1>{{ pageText('title', 'Dynamic View Placeholder') }}</h1>
-      <p>{{ pageText('route_label', 'Route') }}: {{ route.path }}</p>
-      <p>{{ pageText('params_label', 'Params') }}: {{ route.params }}</p>
+      <h1>{{ pageText('title', '页面暂未配置') }}</h1>
+      <p>{{ pageText('route_label', '页面地址') }}: {{ route.path }}</p>
+      <p>{{ pageText('params_label', '页面参数') }}: {{ route.params }}</p>
     </section>
   </main>
 </template>

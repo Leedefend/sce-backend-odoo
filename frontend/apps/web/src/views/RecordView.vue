@@ -31,16 +31,16 @@
           {{ buttonLabel(btn) }}
         </button>
         <span class="pill" :class="statusTone">{{ statusLabel }}</span>
-        <button class="ghost" @click="goBack">{{ pageText('action_back', 'Back') }}</button>
-        <button v-if="status === 'ok' && canEdit" @click="startEdit">{{ pageText('action_edit', 'Edit') }}</button>
-        <button v-if="status === 'editing'" :disabled="isSaveDisabled" @click="save">{{ pageText('action_save', 'Save') }}</button>
-        <button v-if="status === 'editing'" class="ghost" @click="cancelEdit">{{ pageText('action_cancel', 'Cancel') }}</button>
-        <button class="ghost" :disabled="status === 'loading' || status === 'saving'" @click="reload">{{ pageText('action_reload', 'Reload') }}</button>
+        <button class="ghost" @click="goBack">{{ pageText('action_back', '返回') }}</button>
+        <button v-if="status === 'ok' && canEdit" @click="startEdit">{{ pageText('action_edit', '编辑') }}</button>
+        <button v-if="status === 'editing'" :disabled="isSaveDisabled" @click="save">{{ pageText('action_save', '保存') }}</button>
+        <button v-if="status === 'editing'" class="ghost" @click="cancelEdit">{{ pageText('action_cancel', '取消') }}</button>
+        <button class="ghost" :disabled="status === 'loading' || status === 'saving'" @click="reload">{{ pageText('action_reload', '刷新') }}</button>
       </div>
     </header>
 
-    <StatusPanel v-if="status === 'loading'" :title="pageText('loading_title', 'Loading record...')" variant="info" />
-    <StatusPanel v-else-if="status === 'saving'" :title="pageText('saving_title', 'Saving record...')" variant="info" />
+    <StatusPanel v-if="status === 'loading'" :title="pageText('loading_title', '正在加载记录')" variant="info" />
+    <StatusPanel v-else-if="status === 'saving'" :title="pageText('saving_title', '正在保存记录')" variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
       :title="errorCopy.title"
@@ -66,8 +66,8 @@
     />
     <StatusPanel
       v-else-if="renderBlocked"
-      :title="pageText('view_node_unsupported_title', 'View node unsupported')"
-      :message="pageText('view_node_unsupported_message', 'Layout nodes are present but renderer support is incomplete.')"
+      :title="pageText('view_node_unsupported_title', '页面结构暂不支持')"
+      :message="pageText('view_node_unsupported_message', '当前页面结构包含暂不支持的展示节点，请联系管理员完善页面配置。')"
       error-code="VIEW_NODE_UNSUPPORTED"
       variant="error"
       :on-retry="reload"
@@ -75,7 +75,7 @@
 
     <section v-else class="card sc-product-main-surface" :class="{ editing: status === 'editing' }">
       <div v-if="pageSectionEnabled('save_banner', true) && pageSectionTagIs('save_banner', 'div') && editTxState === 'saved'" class="banner success" :style="pageSectionStyle('save_banner')">
-        {{ pageText('banner_saved', 'Saved. Changes have been applied.') }}
+        {{ pageText('banner_saved', '已保存，变更已生效。') }}
       </div>
       <section v-if="pageSectionEnabled('project_summary', true) && pageSectionTagIs('project_summary', 'section') && showProjectSummary" class="record-l1" :style="pageSectionStyle('project_summary')">
         <article class="l1-card">
@@ -100,7 +100,7 @@
           <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '执行' })">{{ pageText('next_action_cost', '查看执行分析') }}</button>
         </div>
       </section>
-      <div v-if="ribbon" class="ribbon">{{ ribbon.title || pageText('ribbon_fallback', 'Ribbon') }}</div>
+      <div v-if="ribbon" class="ribbon">{{ ribbon.title || pageText('ribbon_fallback', '状态标记') }}</div>
       <div v-if="pageSectionEnabled('stat_buttons', true) && pageSectionTagIs('stat_buttons', 'div') && statButtons.length" class="stat-buttons" :style="pageSectionStyle('stat_buttons')">
         <button
           v-for="btn in statButtons"
@@ -173,7 +173,7 @@
     <DevContextPanel
       :visible="showHud && pageSectionEnabled('dev_context', true) && pageSectionTagIs('dev_context', 'div')"
       :style="pageSectionStyle('dev_context')"
-      :title="pageText('dev_context_title', 'Record Context')"
+      :title="pageText('dev_context_title', '记录上下文')"
       :entries="hudEntries"
     />
     <AttachmentViewer ref="attachmentViewerRef" />
@@ -249,11 +249,11 @@ const editTxState = computed(() => editTx.state.value);
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
 const recordTitle = ref<string | null>(null);
-const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
+const title = computed(() => recordTitle.value || `记录 ${recordId.value}`);
 const subtitle = computed(() => (
   status.value === 'editing'
-    ? pageText('subtitle_editing', 'Editing contract fields')
-    : pageText('subtitle_ready', 'Record details')
+    ? pageText('subtitle_editing', '正在编辑记录字段')
+    : pageText('subtitle_ready', '记录详情')
 ));
 const showProjectSummary = computed(() => {
   const payload = recordData.value || {};
@@ -303,8 +303,8 @@ const readonlyHint = computed(() => {
   const level = String(session.productFacts.license?.level || '').trim();
   const bundle = String(session.productFacts.bundle?.name || '').trim();
   if (level && level !== 'enterprise') {
-    const bundleSegment = bundle ? `${pageText('readonly_hint_license_bundle_sep', ', Bundle: ')}${bundle}` : '';
-    return `${pageText('readonly_hint_license_prefix', '当前为只读模式（License: ')}${level}${bundleSegment}${pageText('readonly_hint_license_suffix', '）。如需编辑权限请联系管理员。')}`;
+    const bundleSegment = bundle ? `${pageText('readonly_hint_license_bundle_sep', '，套餐：')}${bundle}` : '';
+    return `${pageText('readonly_hint_license_prefix', '当前为只读模式（授权级别：')}${level}${bundleSegment}${pageText('readonly_hint_license_suffix', '）。如需编辑权限请联系管理员。')}`;
   }
   return pageText('readonly_hint_default', '当前记录处于只读模式，请联系管理员开通写权限。');
 });
@@ -358,12 +358,12 @@ const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
 const statusLabel = computed(() => {
-  if (status.value === 'editing') return pageText('status_editing', 'Editing');
-  if (status.value === 'saving') return pageText('status_saving', 'Saving');
-  if (status.value === 'loading') return pageText('status_loading', 'Loading');
-  if (status.value === 'error') return pageText('status_error', 'Error');
-  if (status.value === 'empty') return pageText('status_empty', 'Empty');
-  return pageText('status_ready', 'Ready');
+  if (status.value === 'editing') return pageText('status_editing', '编辑中');
+  if (status.value === 'saving') return pageText('status_saving', '保存中');
+  if (status.value === 'loading') return pageText('status_loading', '加载中');
+  if (status.value === 'error') return pageText('status_error', '异常');
+  if (status.value === 'empty') return pageText('status_empty', '无数据');
+  return pageText('status_ready', '就绪');
 });
 const headerActions = computed(() => pageGlobalActions.value);
 const statusTone = computed(() => {
@@ -371,7 +371,7 @@ const statusTone = computed(() => {
   if (status.value === 'editing' || status.value === 'saving') return 'warn';
   return 'ok';
 });
-const errorCopy = computed(() => resolveErrorCopy(error.value, pageText('error_fallback', 'Record load failed')));
+const errorCopy = computed(() => resolveErrorCopy(error.value, pageText('error_fallback', '记录加载失败')));
 const emptyCopy = computed(() => resolveEmptyCopy('record'));
 const renderMode = computed(() => 'layout_tree');
 const renderRecord = computed(() => {
@@ -543,14 +543,14 @@ async function load() {
   const startedAt = Date.now();
 
   if (!model.value || !recordId.value) {
-    setError(new Error('Missing model or id'), 'Missing model or id');
+    setError(new Error(pageText('error_missing_record_context', '缺少记录上下文')), pageText('error_missing_record_context', '缺少记录上下文'));
     status.value = deriveRecordStatus({ error: error.value?.message || '', fieldsLength: 0 });
     return;
   }
 
   try {
     if (!actionId.value) {
-      throw new Error('missing action_id for contract-driven record view');
+      throw new Error(pageText('error_missing_action_context', '缺少页面动作上下文'));
     }
     const actionContract = await loadActionContractRaw(actionId.value, {
       viewId: requestedViewId.value || undefined,
@@ -568,7 +568,7 @@ async function load() {
         requestedSurface.value,
       );
       if (!markerCheck.ok) {
-        throw new Error(`contract surface markers invalid: ${markerCheck.issues.slice(0, 4).join(' | ')}`);
+        throw new Error(`${pageText('error_surface_marker_invalid', '页面契约标记不一致')}：${markerCheck.issues.slice(0, 4).join(' | ')}`);
       }
       const runtime = buildRecordRuntimeFromContract(actionContract.data);
       view = runtime.view;
@@ -577,12 +577,12 @@ async function load() {
     }
     contractMode.value = String(actionContract?.meta?.contract_mode || '');
     if (!view) {
-      throw new Error('missing ui.contract form payload');
+      throw new Error(pageText('error_missing_form_contract', '缺少表单页面契约'));
     }
     viewContract.value = view || null;
     const layout = view?.layout;
     if (!layout) {
-      setError(new Error('Missing view layout'), 'Missing view layout');
+      setError(new Error(pageText('error_missing_view_layout', '缺少页面布局配置')), pageText('error_missing_view_layout', '缺少页面布局配置'));
       status.value = 'empty';
       lastLatencyMs.value = Date.now() - startedAt;
       return;
@@ -636,7 +636,7 @@ async function load() {
       await loadChatter();
     }
   } catch (err) {
-    setError(err, pageText('error_load_record', 'failed to load record'));
+    setError(err, pageText('error_load_record', '记录加载失败'));
     traceId.value = error.value?.traceId || '';
     lastTraceId.value = error.value?.traceId || '';
     status.value = deriveRecordStatus({ error: error.value?.message || '', fieldsLength: 0 });
@@ -655,7 +655,7 @@ async function loadChatter() {
     });
     timelineEntries.value = Array.isArray(timeline.items) ? timeline.items : [];
   } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : pageText('chatter_load_failed', 'Failed to load chatter');
+    chatterError.value = err instanceof Error ? err.message : pageText('chatter_load_failed', '协作记录加载失败');
     timelineEntries.value = [];
   }
 }
@@ -674,7 +674,7 @@ async function sendChatter() {
     chatterDraft.value = '';
     await loadChatter();
   } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : pageText('chatter_post_failed', 'Failed to post chatter message');
+    chatterError.value = err instanceof Error ? err.message : pageText('chatter_post_failed', '评论发布失败');
   } finally {
     chatterPosting.value = false;
   }
@@ -699,7 +699,7 @@ async function onAttachmentSelected(event: Event) {
     });
     await loadChatter();
   } catch (err) {
-    chatterUploadError.value = err instanceof Error ? err.message : pageText('chatter_upload_failed', 'Failed to upload file');
+    chatterUploadError.value = err instanceof Error ? err.message : pageText('chatter_upload_failed', '附件上传失败');
   } finally {
     chatterUploading.value = false;
     input.value = '';
@@ -711,7 +711,7 @@ async function openAttachment(att: { id?: number; name?: string; mimetype?: stri
   try {
     await attachmentViewerRef.value?.open({ id: Number(att.id) }, att.name);
   } catch (err) {
-    chatterUploadError.value = err instanceof Error ? err.message : pageText('chatter_download_failed', 'Failed to download file');
+    chatterUploadError.value = err instanceof Error ? err.message : pageText('chatter_download_failed', '附件下载失败');
   }
 }
 
@@ -891,7 +891,7 @@ async function runHeaderButton(btn: ViewButton) {
     }
     actionFeedback.value = parseExecuteResult(response);
   } catch (err) {
-    setError(err, pageText('error_execute_button', 'failed to execute button'));
+    setError(err, pageText('error_execute_button', '操作执行失败'));
     status.value = 'error';
     lastLatencyMs.value = Date.now() - startedAt;
     actionFeedback.value = {
@@ -1039,9 +1039,9 @@ async function save() {
     await load();
   } catch (err) {
     if (err instanceof ApiError && err.status === 409) {
-      setError(err, 'Record changed, reload and retry');
+      setError(err, pageText('error_record_changed', '记录已被更新，请刷新后重试'));
     } else {
-      setError(err, pageText('error_save_record', 'failed to save record'));
+      setError(err, pageText('error_save_record', '记录保存失败'));
     }
     traceId.value = error.value?.traceId || '';
     lastTraceId.value = error.value?.traceId || '';
@@ -1081,7 +1081,7 @@ async function executeHeaderAction(actionKey: string) {
   });
   if (!handled) {
     actionFeedback.value = {
-      message: pageText('error_fallback', 'Record load failed'),
+      message: pageText('error_fallback', '记录加载失败'),
       reasonCode: 'ACTION_UNSUPPORTED',
       success: false,
     };

@@ -65,6 +65,22 @@ FORBIDDEN_PHRASES = {
     "Menu resolve failed": "菜单解析页面错误状态必须使用产品化中文表达",
     "resolve menu failed": "菜单解析页面错误信息必须使用产品化中文表达",
     "invalid menu id": "菜单解析页面错误信息必须使用产品化中文表达",
+    "Dynamic View Placeholder": "占位页面必须使用产品化中文表达",
+    "Record Context": "记录详情页诊断标题必须使用产品化中文表达",
+    "Loading record": "记录详情页加载状态必须使用产品化中文表达",
+    "Saving record": "记录详情页保存状态必须使用产品化中文表达",
+    "View node unsupported": "记录详情页错误状态必须使用产品化中文表达",
+    "Saved. Changes have been applied.": "记录详情页保存反馈必须使用产品化中文表达",
+    "Record load failed": "记录详情页错误状态必须使用产品化中文表达",
+    "Failed to load chatter": "记录详情页协作错误必须使用产品化中文表达",
+    "Failed to post chatter message": "记录详情页协作错误必须使用产品化中文表达",
+    "Failed to upload file": "记录详情页附件错误必须使用产品化中文表达",
+    "Failed to download file": "记录详情页附件错误必须使用产品化中文表达",
+    "failed to load record": "记录详情页错误状态必须使用产品化中文表达",
+    "failed to execute button": "记录详情页操作错误必须使用产品化中文表达",
+    "failed to save record": "记录详情页保存错误必须使用产品化中文表达",
+    "scene render target missing": "场景页错误状态必须使用产品化中文表达",
+    "scene resolve failed": "场景页错误状态必须使用产品化中文表达",
 }
 
 
