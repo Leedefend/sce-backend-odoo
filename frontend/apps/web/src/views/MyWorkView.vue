@@ -203,7 +203,7 @@
           class="reason-chip"
           @click="applyReasonFilterFromFailure(item.reason_code)"
         >
-          {{ item.reason_code }} x {{ item.count }}
+          {{ workItemReasonLabel(item.reason_code) }} x {{ item.count }}
         </button>
         <button
           v-if="reasonFilter !== 'ALL'"
@@ -222,7 +222,7 @@
             class="reason-chip"
             @click="applyReasonFilterFromFailure(group.reason_code)"
           >
-            {{ group.reason_code }} ({{ group.count }} / {{ pageText('retry_group_retryable_prefix', '可重试 ') }}{{ group.retryable_count }})
+            {{ workItemReasonLabel(group.reason_code) }} ({{ group.count }} / {{ pageText('retry_group_retryable_prefix', '可重试 ') }}{{ group.retryable_count }})
           </button>
           <button
             type="button"
@@ -245,7 +245,7 @@
       <ul v-if="!retryGroupByReason">
         <li v-for="item in visibleRetryFailedItems" :key="`failed-${item.id}`">
           <span class="failed-id">#{{ item.id }}</span>
-          <span class="failed-code">{{ item.reason_code || pageText('retry_unknown_reason_code', '待确认') }}</span>
+          <span class="failed-code">{{ workItemReasonLabel(item.reason_code) }}</span>
           <span class="failed-msg">{{ item.message || '-' }}</span>
           <span v-if="resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable)" class="failed-hint">
             {{ resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable) }}
@@ -269,7 +269,7 @@
       </ul>
       <div v-else class="retry-grouped-list">
         <div v-for="group in groupedVisibleRetryItems" :key="`visible-group-${group.reasonCode}`" class="retry-group-block">
-          <p class="retry-group-title">{{ group.reasonCode }} ({{ group.items.length }})</p>
+          <p class="retry-group-title">{{ workItemReasonLabel(group.reasonCode) }} ({{ group.items.length }})</p>
           <ul>
             <li v-for="item in group.items" :key="`failed-grouped-${item.id}`">
               <span class="failed-id">#{{ item.id }}</span>
@@ -877,7 +877,7 @@ const myWorkOrchestrationDatasets = computed<Record<string, unknown>>(() => {
   }));
   const retryAlerts = retryFailedItems.value.slice(0, 10).map((item) => ({
     id: String(item.id),
-    title: `#${item.id} ${item.reason_code || pageText('retry_unknown_reason_code', '待确认')}`,
+    title: `#${item.id} ${workItemReasonLabel(item.reason_code)}`,
     description: String(item.message || '-'),
     tone: item.retryable === false ? 'danger' : 'warning',
     action_key: 'focus_retry_item',
@@ -1459,7 +1459,7 @@ function applyReasonFilterFromFailure(reasonCode: string) {
   if (!reasonCode) return;
   reasonFilter.value = reasonCode;
   page.value = 1;
-  actionFeedback.value = `${pageText('feedback_filtered_by_reason_prefix', '已按失败原因筛选：')}${reasonCode}`;
+  actionFeedback.value = `${pageText('feedback_filtered_by_reason_prefix', '已按失败原因筛选：')}${workItemReasonLabel(reasonCode)}`;
   actionFeedbackError.value = false;
   void load();
 }
@@ -1479,7 +1479,7 @@ function formatFailedItemText(item: { id: number; reason_code: string; message: 
     : item.retryable === false
       ? pageText('retry_tag_non_retryable', '不可重试')
       : '';
-  return [`#${item.id} ${item.reason_code || pageText('retry_unknown_reason_code', '待确认')} ${item.message || '-'}`, retryTag, actionHint]
+  return [`#${item.id} ${workItemReasonLabel(item.reason_code)} ${item.message || '-'}`, retryTag, actionHint]
     .filter(Boolean)
     .join(' | ');
 }
@@ -1489,11 +1489,11 @@ function buildRetrySummaryText() {
   const reasons = retryFailedGroups.value.length
     ? retryFailedGroups.value
         .map((item) =>
-          `${item.reason_code}${pageText('retry_summary_group_count_sep', ' x ')}${item.count}${pageText('retry_summary_group_retryable_left', ' (')}${pageText('retry_group_retryable_prefix', '可重试 ')}${item.retryable_count}${pageText('retry_summary_group_retryable_right', ')')}`,
+          `${workItemReasonLabel(item.reason_code)}${pageText('retry_summary_group_count_sep', ' x ')}${item.count}${pageText('retry_summary_group_retryable_left', ' (')}${pageText('retry_group_retryable_prefix', '可重试 ')}${item.retryable_count}${pageText('retry_summary_group_retryable_right', ')')}`,
         )
         .join('; ')
     : retryReasonSummary.value
-    .map((item) => `${item.reason_code}${pageText('retry_summary_group_count_sep', ' x ')}${item.count}`)
+    .map((item) => `${workItemReasonLabel(item.reason_code)}${pageText('retry_summary_group_count_sep', ' x ')}${item.count}`)
     .join('; ');
   const lines = retryFailedItems.value.map((item) => formatFailedItemText(item));
   return [
@@ -1629,9 +1629,10 @@ function escapeCsvCell(raw: unknown) {
 }
 
 function buildRetryFailedCsv() {
-  const header = ['待办ID', '原因编码', '是否可重试', '错误分类', '建议动作', '错误消息', '追踪ID'];
+  const header = ['待办ID', '失败原因', '原因编码', '是否可重试', '错误分类', '建议动作', '错误消息', '追踪ID'];
   const rows = retryFailedItems.value.map((item) => [
     item.id,
+    workItemReasonLabel(item.reason_code),
     item.reason_code || '',
     item.retryable === true ? '是' : item.retryable === false ? '否' : '',
     item.error_category || '',
@@ -1711,21 +1712,22 @@ async function retryFailedTodos() {
 }
 
 async function retryByReasonGroup(reasonCode: string) {
+  const reasonLabel = workItemReasonLabel(reasonCode);
   const ids = retryFailedItems.value
     .filter((item) => item.reason_code === reasonCode && item.retryable)
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!ids.length) {
-    actionFeedback.value = `${pageText('feedback_reason_group_no_retry_prefix', '原因组 ')}${reasonCode}${pageText('feedback_reason_group_no_retry_suffix', ' 没有可重试项')}`;
+    actionFeedback.value = `${pageText('feedback_reason_group_no_retry_prefix', '原因组 ')}${reasonLabel}${pageText('feedback_reason_group_no_retry_suffix', ' 没有可重试项')}`;
     actionFeedbackError.value = true;
     return;
   }
   await runRetryBatch(
     ids,
-    resolveRetryNote(`${pageText('retry_note_default_failed_group_prefix', '从我的工作台重试失败原因组：')}${reasonCode}`),
+    resolveRetryNote(`${pageText('retry_note_default_failed_group_prefix', '从我的工作台重试失败原因组：')}${reasonLabel}`),
     buildBatchRequestId('mw_retry_group'),
     retryRequestParams.value?.source || 'mail.activity',
-    `${pageText('batch_action_retry_group_left', '重试(')}${reasonCode}${pageText('batch_action_retry_group_right', ')')}`,
+    `${pageText('batch_action_retry_group_left', '重试(')}${reasonLabel}${pageText('batch_action_retry_group_right', ')')}`,
   );
 }
 
@@ -1742,19 +1744,20 @@ function applyRetryNotePreset(note: string) {
 }
 
 function selectRetryableByReasonGroup(reasonCode: string) {
+  const reasonLabel = workItemReasonLabel(reasonCode);
   const ids = retryFailedItems.value
     .filter((item) => item.reason_code === reasonCode && item.retryable)
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!ids.length) {
-    actionFeedback.value = `${pageText('feedback_reason_group_no_retry_prefix', '原因组 ')}${reasonCode}${pageText('feedback_reason_group_no_retry_suffix', ' 没有可重试项')}`;
+    actionFeedback.value = `${pageText('feedback_reason_group_no_retry_prefix', '原因组 ')}${reasonLabel}${pageText('feedback_reason_group_no_retry_suffix', ' 没有可重试项')}`;
     actionFeedbackError.value = true;
     return;
   }
   const merged = new Set(todoSelectionIds.value);
   ids.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
-  actionFeedback.value = `${pageText('feedback_selected_reason_retryable_prefix', '已选中 ')}${ids.length}${pageText('feedback_selected_reason_retryable_middle', ' 条 ')}${reasonCode}${pageText('feedback_selected_reason_retryable_suffix', ' 可重试项')}`;
+  actionFeedback.value = `${pageText('feedback_selected_reason_retryable_prefix', '已选中 ')}${ids.length}${pageText('feedback_selected_reason_retryable_middle', ' 条 ')}${reasonLabel}${pageText('feedback_selected_reason_retryable_suffix', ' 可重试项')}`;
   actionFeedbackError.value = false;
 }
 
