@@ -15,6 +15,7 @@ function findRepoRoot(start) {
 }
 
 const ROOT = findRepoRoot(process.cwd());
+const ALLOWED_PAGE_MODES = ["dashboard", "workspace", "list", "form", "detail", "admin"];
 
 function read(relPath) {
   return fs.readFileSync(path.join(ROOT, relPath), "utf8");
@@ -33,6 +34,19 @@ function assertContains(file, pattern, message) {
 function assertNotContains(file, pattern, message) {
   const content = read(file);
   if (pattern.test(content)) fail(message, { file, pattern: String(pattern) });
+}
+
+function walkFiles(dir, result = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === "dist" || entry.name === "dist-dev" || entry.name === "node_modules") continue;
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkFiles(fullPath, result);
+    } else if (/\.(vue|ts|tsx|js|jsx|mjs)$/.test(entry.name)) {
+      result.push(fullPath);
+    }
+  }
+  return result;
 }
 
 const shellFiles = [
@@ -145,6 +159,32 @@ for (const { file, mode } of pageModeFiles) {
     "page shell must expose its product page mode in DOM",
   );
 }
+
+for (const filePath of walkFiles(path.join(ROOT, "frontend/apps/web/src"))) {
+  const relPath = path.relative(ROOT, filePath);
+  const content = fs.readFileSync(filePath, "utf8");
+  for (const match of content.matchAll(/data-product-page-mode=["']([^"']+)["']/g)) {
+    const mode = match[1];
+    if (!ALLOWED_PAGE_MODES.includes(mode)) {
+      fail("data-product-page-mode must use a canonical product page mode", {
+        file: relPath,
+        mode,
+        allowed: ALLOWED_PAGE_MODES,
+      });
+    }
+  }
+}
+
+assertContains(
+  "frontend/apps/web/src/app/pageMode.ts",
+  /export type PageMode = 'dashboard' \| 'workspace' \| 'list' \| 'form' \| 'detail' \| 'admin';/,
+  "PageMode union must match canonical product page modes",
+);
+assertNotContains(
+  "frontend/apps/web/src/app/pageMode.ts",
+  /return 'ledger';/,
+  "ledger is a layout kind, not a product page mode",
+);
 
 assertContains(
   "frontend/apps/web/src/pages/ContractFormPage.vue",

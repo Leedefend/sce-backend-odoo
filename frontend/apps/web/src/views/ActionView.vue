@@ -1173,7 +1173,7 @@ const scene = computed<Scene | null>(() => {
   return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
 });
 const pageMode = computed(() => resolvePageMode(sceneKey.value, String(scene.value?.layout?.kind || '')));
-const hasLedgerOverviewStrip = computed(() => pageMode.value === 'ledger');
+const hasLedgerOverviewStrip = computed(() => String(scene.value?.layout?.kind || '').trim().toLowerCase() === 'ledger');
 
 const listProfile = computed<SceneListProfile | null>(() => {
   return extractListProfile(actionContract.value);

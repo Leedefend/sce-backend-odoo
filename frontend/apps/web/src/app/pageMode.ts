@@ -1,4 +1,4 @@
-export type PageMode = 'dashboard' | 'workspace' | 'list' | 'ledger';
+export type PageMode = 'dashboard' | 'workspace' | 'list' | 'form' | 'detail' | 'admin';
 
 export function resolvePageMode(sceneKey: string, layoutKind: string): PageMode {
   const key = String(sceneKey || '').trim();
@@ -11,7 +11,7 @@ export function resolvePageMode(sceneKey: string, layoutKind: string): PageMode 
     return 'list';
   }
   if (kind === 'ledger') {
-    return 'ledger';
+    return 'workspace';
   }
   if (kind === 'workspace') {
     return 'workspace';
@@ -23,6 +23,8 @@ export function pageModeLabel(mode: string): string {
   const normalized = String(mode || '').trim().toLowerCase();
   if (normalized === 'dashboard') return '驾驶舱';
   if (normalized === 'list') return '台账列表';
-  if (normalized === 'ledger') return '业务台账';
-  return '角色首页';
+  if (normalized === 'form') return '业务表单';
+  if (normalized === 'detail') return '详情页';
+  if (normalized === 'admin') return '配置管理';
+  return '工作台';
 }
