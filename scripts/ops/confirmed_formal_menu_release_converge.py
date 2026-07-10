@@ -26,6 +26,33 @@ FORMAL_EQUIVALENT_MENU_XMLIDS = (
     "smart_construction_core.menu_sc_payment_deposit_return_refund_formal",
 )
 
+FORMAL_MENU_ACTION_XMLIDS = {
+    "smart_construction_core.menu_sc_arrival_confirmation": (
+        "smart_construction_core.action_sc_receipt_income_arrival_confirmation"
+    ),
+    "smart_construction_core.menu_sc_legacy_fuel_card_fact_acceptance": (
+        "smart_construction_core.action_sc_fuel_card_registration_formal"
+    ),
+    "smart_construction_core.menu_sc_legacy_fuel_card_recharge_fact_acceptance": (
+        "smart_construction_core.action_sc_fuel_card_recharge_formal"
+    ),
+    "smart_construction_core.menu_sc_company_user_roster_formal": (
+        "smart_construction_core.action_sc_company_user_roster_formal"
+    ),
+    "smart_construction_core.menu_sc_material_rental_in_acceptance": (
+        "smart_construction_core.action_sc_material_rental_in_acceptance"
+    ),
+    "smart_construction_core.menu_sc_material_rental_return_acceptance": (
+        "smart_construction_core.action_sc_material_rental_return_acceptance"
+    ),
+    "smart_construction_core.menu_sc_self_funding_advance_income": (
+        "smart_construction_core.action_sc_self_funding_registration_income"
+    ),
+    "smart_construction_core.menu_sc_self_funding_advance_refund": (
+        "smart_construction_core.action_sc_self_funding_registration_refund"
+    ),
+}
+
 GROUP_DISPLAY_ORDER = {
     "基础资料": 5,
     "项目中心": 10,
@@ -185,6 +212,34 @@ def add_current_product_policy_menus_to_allowlist() -> int:
     return added
 
 
+def converge_formal_menu_actions() -> list[dict]:
+    rows = []
+    for menu_id, action_id in FORMAL_MENU_ACTION_XMLIDS.items():
+        menu = env.ref(menu_id, raise_if_not_found=False)  # noqa: F821
+        action = env.ref(action_id, raise_if_not_found=False)  # noqa: F821
+        if not menu or not action:
+            rows.append({"menu_xmlid": menu_id, "action_xmlid": action_id, "status": "missing"})
+            continue
+        before = menu.action.id if menu.action else 0
+        target = "ir.actions.act_window,%s" % action.id
+        if before != action.id:
+            menu.write({"action": target})
+            status = "UPDATED"
+        else:
+            status = "UNCHANGED"
+        rows.append(
+            {
+                "menu_xmlid": menu_id,
+                "action_xmlid": action_id,
+                "before_action_id": before,
+                "after_action_id": action.id,
+                "res_model": getattr(action, "res_model", ""),
+                "status": status,
+            }
+        )
+    return rows
+
+
 def upsert_policy(menu, *, visible: bool, note: str) -> None:
     Policy = env["ui.menu.config.policy"].sudo().with_context(active_test=False)  # noqa: F821
     policies = Policy.search([("company_id", "=", env.company.id), ("menu_id", "=", int(menu.id))])  # noqa: F821
@@ -208,6 +263,8 @@ def upsert_policy(menu, *, visible: bool, note: str) -> None:
 Menu = env["ir.ui.menu"].sudo().with_context(active_test=False)  # noqa: F821
 Policy = env["ui.menu.config.policy"].sudo().with_context(active_test=False)  # noqa: F821
 ProductPolicy = env["sc.product.policy"].sudo()  # noqa: F821
+
+formal_menu_action_convergence = converge_formal_menu_actions()
 
 confirmed_policies = Policy.search(
     [("active", "=", True), ("custom_label", "ilike", "已确认"), ("menu_id", "!=", False)],
@@ -327,5 +384,6 @@ payload = {
     "runtime_show_policy_count": shown_count,
     "runtime_hide_policy_count": hidden_count,
     "cleaned_custom_label_count": cleaned_custom_label_count,
+    "formal_menu_action_convergence": formal_menu_action_convergence,
 }
 print("CONFIRMED_FORMAL_MENU_RELEASE_CONVERGE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))
