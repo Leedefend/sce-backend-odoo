@@ -24,6 +24,7 @@ export function resolvePageMode(sceneKey: string, layoutKind: string): PageMode 
 export function pageModeLabel(mode: string): string {
   const normalized = String(mode || '').trim().toLowerCase();
   if (normalized === 'dashboard') return '驾驶舱';
+  if (normalized === 'workspace') return '工作台';
   if (normalized === 'list') return '台账列表';
   if (normalized === 'form') return '业务表单';
   if (normalized === 'detail') return '详情页';

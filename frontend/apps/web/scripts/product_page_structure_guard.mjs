@@ -15,6 +15,15 @@ function findRepoRoot(start) {
 }
 
 const ROOT = findRepoRoot(process.cwd());
+const CANONICAL_PAGE_MODES = ["dashboard", "workspace", "list", "form", "detail", "admin"];
+const CANONICAL_REGION_CLASS_KEYS = [
+  "pageHeader",
+  "pageToolbar",
+  "summaryStrip",
+  "mainSurface",
+  "primaryActions",
+  "feedbackLayer",
+];
 
 function read(relPath) {
   return fs.readFileSync(path.join(ROOT, relPath), "utf8");
@@ -33,6 +42,12 @@ function assertContains(file, pattern, message) {
 function assertNotContains(file, pattern, message) {
   const content = read(file);
   if (pattern.test(content)) fail(message, { file, pattern: String(pattern) });
+}
+
+function assertArrayEqual(actual, expected, message) {
+  if (actual.length !== expected.length || actual.some((item, index) => item !== expected[index])) {
+    fail(message, { actual, expected });
+  }
 }
 
 function pageModesFromRuntimeSource() {
@@ -79,6 +94,12 @@ const shellFiles = [
 
 const ALLOWED_PAGE_MODES = pageModesFromRuntimeSource();
 const PRODUCT_REGION_CLASSES = productRegionClassesFromRuntimeSource();
+assertArrayEqual(ALLOWED_PAGE_MODES, CANONICAL_PAGE_MODES, "PAGE_MODES must match canonical product page modes");
+assertArrayEqual(
+  Object.keys(PRODUCT_REGION_CLASSES),
+  CANONICAL_REGION_CLASS_KEYS,
+  "PRODUCT_PAGE_REGION_CLASSES keys must match canonical product page regions",
+);
 const regionClass = (key) => {
   const value = PRODUCT_REGION_CLASSES[key];
   if (!value) fail("Unknown product page region class key", { key, available: Object.keys(PRODUCT_REGION_CLASSES) });
@@ -211,6 +232,25 @@ assertNotContains(
   "ledger is a layout kind, not a product page mode",
 );
 assertContains(
+  "frontend/apps/web/src/app/pageMode.ts",
+  /if \(kind === 'ledger'\)\s*\{\s*return 'workspace';\s*\}/s,
+  "layout.kind=ledger must normalize to workspace page mode",
+);
+for (const [mode, label] of [
+  ["dashboard", "驾驶舱"],
+  ["workspace", "工作台"],
+  ["list", "台账列表"],
+  ["form", "业务表单"],
+  ["detail", "详情页"],
+  ["admin", "配置管理"],
+]) {
+  assertContains(
+    "frontend/apps/web/src/app/pageMode.ts",
+    new RegExp(`normalized === '${mode}'[\\s\\S]+?${label}`),
+    `pageModeLabel must provide a product label for ${mode}`,
+  );
+}
+assertContains(
   "frontend/apps/web/src/app/productPageStructure.ts",
   /export type ProductPageRegionClass = typeof PRODUCT_PAGE_REGION_CLASSES\[keyof typeof PRODUCT_PAGE_REGION_CLASSES\];/,
   "ProductPageRegionClass must be derived from PRODUCT_PAGE_REGION_CLASSES",
@@ -243,4 +283,6 @@ console.log(JSON.stringify({
   shell_files: shellFiles.length,
   region_files: regionFiles.length,
   page_mode_files: pageModeFiles.length,
+  page_modes: ALLOWED_PAGE_MODES.length,
+  region_classes: Object.keys(PRODUCT_REGION_CLASSES).length,
 }));

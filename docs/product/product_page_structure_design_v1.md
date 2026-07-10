@@ -243,6 +243,7 @@ make verify.product.page_structure
 - 产品级 token：`--sc-product-workspace-gap`、`--sc-product-workspace-stack-gap`
 - 产品级 class：`sc-product-workspace`、`sc-product-workspace-stack`
 - 页面模式 DOM 标记：`data-product-page-mode`
+- 页面模式与区域语义常量：`PAGE_MODES`、`PRODUCT_PAGE_REGION_CLASSES`
 - 页面壳层：`ActionView`、`ListPage`、`KanbanPage`、`RecordView`、`ModelListPage`、`PlaceholderView`
 - 业务表单壳层：`ContractFormPage`
 - 配置工作台与菜单配置工作区
