@@ -2,7 +2,7 @@
   <main v-if="pageSectionsReady" class="release-operator" :style="pageSectionStyle('root')" :data-contract-sections="pageSectionsFingerprint">
     <section class="release-operator__header">
       <div>
-        <p class="eyebrow">{{ copy.eyebrow || 'Release Operator Surface' }}</p>
+        <p class="eyebrow">{{ copy.eyebrow || '发布运营工作台' }}</p>
         <h1>{{ copy.title || '发布控制台' }}</h1>
         <p>{{ copy.description || '查看当前发布状态、候选快照、待审批动作与回滚目标。' }}</p>
       </div>
@@ -64,16 +64,16 @@
           <strong>{{ identity.product_key || '-' }}</strong>
         </article>
         <article class="release-operator__metric">
-          <span>{{ copy.metric_active_snapshot || 'Active Released Snapshot' }}</span>
+          <span>{{ copy.metric_active_snapshot || '当前发布版本' }}</span>
           <strong>{{ activeSnapshot.version || activeSnapshot.id || '-' }}</strong>
         </article>
         <article class="release-operator__metric">
-          <span>{{ copy.metric_latest_action || 'Latest Action' }}</span>
-          <strong>{{ runtimeSummary.latest_action_type || '-' }}</strong>
+          <span>{{ copy.metric_latest_action || '最近操作' }}</span>
+          <strong>{{ releaseActionTypeLabel(runtimeSummary.latest_action_type) }}</strong>
         </article>
         <article class="release-operator__metric">
-          <span>{{ copy.metric_approval_state || 'Approval State' }}</span>
-          <strong>{{ runtimeSummary.latest_action_approval_state || '-' }}</strong>
+          <span>{{ copy.metric_approval_state || '审批状态' }}</span>
+          <strong>{{ approvalStateLabel(runtimeSummary.latest_action_approval_state) }}</strong>
         </article>
       </section>
 
@@ -178,24 +178,24 @@
       <section class="release-operator__section">
         <div class="release-operator__section-head">
           <h2>{{ copy.section_control_scope || '受控内容' }}</h2>
-          <p>{{ controlScope.policy_state || '-' }} / {{ controlScope.access_level || '-' }}</p>
+          <p>{{ policyStateLabel(controlScope.policy_state) }} / {{ policyAccessLevelLabel(controlScope.access_level) }}</p>
         </div>
         <div class="release-operator__policy-control">
           <label>
             <span>{{ copy.policy_state_label || '发布状态' }}</span>
             <select v-model="policyState" class="release-operator__select">
-              <option value="draft">draft</option>
-              <option value="preview">preview</option>
-              <option value="stable">stable</option>
-              <option value="archived">archived</option>
+              <option value="draft">草案</option>
+              <option value="preview">预览</option>
+              <option value="stable">正式</option>
+              <option value="archived">归档</option>
             </select>
           </label>
           <label>
             <span>{{ copy.policy_access_label || '访问级别' }}</span>
             <select v-model="policyAccessLevel" class="release-operator__select">
-              <option value="public">public</option>
-              <option value="internal">internal</option>
-              <option value="role_restricted">role_restricted</option>
+              <option value="public">授权用户</option>
+              <option value="internal">内部可见</option>
+              <option value="role_restricted">按角色</option>
             </select>
           </label>
           <button
@@ -316,8 +316,8 @@
             <tbody>
               <tr v-for="snapshot in candidateSnapshots" :key="`candidate-${snapshot.id}`">
                 <td>{{ snapshot.version || '-' }}</td>
-                <td><span class="release-operator__pill">{{ snapshot.state || '-' }}</span></td>
-                <td>{{ snapshot.channel || '-' }}</td>
+                <td><span class="release-operator__pill">{{ candidateSnapshotStateLabel(snapshot.state) }}</span></td>
+                <td>{{ releaseChannelLabel(snapshot.channel) }}</td>
                 <td>{{ snapshotDraftLabel(snapshot) }}</td>
                 <td>{{ snapshotDiffLabel(snapshot) }}</td>
                 <td>
@@ -622,6 +622,73 @@ function readinessLabel(value: unknown) {
   };
   return labels[status] || status || '-';
 }
+function policyStateLabel(value: unknown) {
+  const state = String(value || '').trim();
+  const labels: Record<string, string> = {
+    draft: '草案',
+    preview: '预览',
+    stable: '正式',
+    archived: '归档',
+    released: '正式发布',
+    hidden: '未发布',
+  };
+  return labels[state] || state || '-';
+}
+function policyAccessLevelLabel(value: unknown) {
+  const level = String(value || '').trim();
+  const labels: Record<string, string> = {
+    public: '授权用户',
+    internal: '内部可见',
+    role_restricted: '按角色',
+  };
+  return labels[level] || level || '-';
+}
+function releaseActionTypeLabel(value: unknown) {
+  const action = String(value || '').trim();
+  const labels: Record<string, string> = {
+    freeze: '冻结候选快照',
+    promote: '发布候选快照',
+    rollback: '回滚发布',
+    sync_policy: '同步发布策略',
+    update_policy: '更新发布策略',
+    update_page_policy: '更新页面策略',
+    approve: '审批通过',
+    reject: '审批驳回',
+  };
+  return labels[action] || action || '-';
+}
+function approvalStateLabel(value: unknown) {
+  const state = String(value || '').trim();
+  const labels: Record<string, string> = {
+    draft: '草案',
+    pending: '待审批',
+    approved: '已审批',
+    rejected: '已驳回',
+    cancelled: '已取消',
+  };
+  return labels[state] || state || '-';
+}
+function candidateSnapshotStateLabel(value: unknown) {
+  const state = String(value || '').trim();
+  const labels: Record<string, string> = {
+    candidate: '候选',
+    approved: '已审批',
+    promoted: '已发布',
+    rejected: '已驳回',
+    archived: '已归档',
+  };
+  return labels[state] || state || '-';
+}
+function releaseChannelLabel(value: unknown) {
+  const channel = String(value || '').trim();
+  const labels: Record<string, string> = {
+    stable: '正式',
+    preview: '预览',
+    beta: '灰度',
+    dev: '开发',
+  };
+  return labels[channel] || channel || '-';
+}
 function releaseStateLabel(page: AnyRecord) {
   const state = String(page.release_state || (page.enabled === false ? 'hidden' : 'released'));
   const labels: Record<string, string> = {
@@ -639,13 +706,7 @@ function releaseStateClass(page: AnyRecord) {
   return '';
 }
 function accessLevelLabel(page: AnyRecord) {
-  const level = String(page.access_level || 'public');
-  const labels: Record<string, string> = {
-    public: '授权用户',
-    internal: '内部可见',
-    role_restricted: '按角色',
-  };
-  return labels[level] || level;
+  return policyAccessLevelLabel(page.access_level || 'public');
 }
 function sourceLabel(page: AnyRecord) {
   const menu = String(page.menu_xmlid || '').trim();

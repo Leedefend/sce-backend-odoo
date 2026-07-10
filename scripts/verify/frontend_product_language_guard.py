@@ -81,6 +81,17 @@ FORBIDDEN_PHRASES = {
     "failed to save record": "记录详情页保存错误必须使用产品化中文表达",
     "scene render target missing": "场景页错误状态必须使用产品化中文表达",
     "scene resolve failed": "场景页错误状态必须使用产品化中文表达",
+    "Release Operator Surface": "发布运营页面标题必须使用产品化中文表达",
+    "Active Released Snapshot": "发布运营页面指标必须使用产品化中文表达",
+    "Latest Action": "发布运营页面指标必须使用产品化中文表达",
+    "Approval State": "发布运营页面指标必须使用产品化中文表达",
+    ">draft<": "发布运营页面枚举选项必须使用产品化中文表达",
+    ">preview<": "发布运营页面枚举选项必须使用产品化中文表达",
+    ">stable<": "发布运营页面枚举选项必须使用产品化中文表达",
+    ">archived<": "发布运营页面枚举选项必须使用产品化中文表达",
+    ">public<": "发布运营页面枚举选项必须使用产品化中文表达",
+    ">internal<": "发布运营页面枚举选项必须使用产品化中文表达",
+    ">role_restricted<": "发布运营页面枚举选项必须使用产品化中文表达",
 }
 
 
