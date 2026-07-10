@@ -101,11 +101,15 @@ async function openCustomList(page) {
     await page.waitForTimeout(2000);
     await page.waitForFunction(() => {
       const text = String(document.body.textContent || '');
+      const app = document.querySelector('#app');
+      if (!app || app.children.length === 0 || text.trim().length < 20) return false;
       if (text.includes('页面加载失败') || text.includes('页面渲染失败')) return true;
       const renderedRows = document.querySelectorAll('table tbody > tr').length;
       const degraded = text.includes('高级视图') && text.includes('降级渲染');
+      const empty = text.includes('暂无数据') || text.includes('当前页面暂无可显示字段');
       if (renderedRows > 0 || degraded) return true;
-      return !text.includes('正在加载列表') && !text.includes('正在加载页面');
+      if (empty) return true;
+      return false;
     }, null, { timeout: 45000 });
     const rowCount = await page.evaluate(() => document.querySelectorAll('table tbody > tr').length);
     if (rowCount > 0) return;
