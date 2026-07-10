@@ -223,6 +223,9 @@ FORBIDDEN_PHRASES = {
     "[MenuTree] Received nodes": "导航菜单不能保留临时调试日志",
     "[MenuTree] First node": "导航菜单不能保留临时调试日志",
     "console.info(`[toast]": "记录操作反馈必须显示在页面内，不能只写入控制台",
+    "console.warn('[list-columns]": "列表列配置失败必须通过页面状态反馈，不能只写入控制台",
+    "console.warn('[list-field-mutation]": "列表字段操作失败必须通过页面状态反馈，不能只写入控制台",
+    "console.warn(message, payload)": "列表运行时警告不能直接暴露到生产控制台",
 }
 
 

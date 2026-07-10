@@ -2875,8 +2875,8 @@ const {
     resolveLoadRequestPayloadState,
     listRecordsRaw: listActionViewRecordsRaw,
     currentErrorMessage: () => error.value?.message || '',
-    warn: (message: string, payload: Record<string, unknown>) => {
-      console.warn(message, payload);
+    warn: (_message: string, _payload: Record<string, unknown>) => {
+      // Runtime warnings are represented through page state; keep production console clean.
     },
     advancedFieldsRef: advancedFields,
     kanbanFieldsRef: kanbanFields,
@@ -3062,13 +3062,12 @@ async function loadListColumnPreference(): Promise<void> {
     listColumnVisibility.value = next;
     listColumnOrder.value = allowOrder ? columnOrder : [];
     listColumnWidths.value = allowWidth ? columnWidths : {};
-  } catch (err) {
+  } catch {
     if (seq === listColumnPreferenceLoadSeq) {
       listColumnVisibility.value = {};
       listColumnOrder.value = [];
       listColumnWidths.value = {};
     }
-    console.warn('[list-columns] failed to load preference', err);
   }
 }
 
@@ -3114,11 +3113,10 @@ async function handleListColumnVisibilityChange(payload: { visibility: Record<st
     if (saveSeq === listColumnSaveSeq) {
       setListColumnSaveStatus('saved');
     }
-  } catch (err) {
+  } catch {
     if (saveSeq === listColumnSaveSeq) {
       setListColumnSaveStatus('error');
     }
-    console.warn('[list-columns] failed to save preference', err);
   }
 }
 
@@ -3132,11 +3130,10 @@ async function handleListColumnOrderChange(payload: { columnOrder: string[] }): 
     if (saveSeq === listColumnSaveSeq) {
       setListColumnSaveStatus('saved');
     }
-  } catch (err) {
+  } catch {
     if (saveSeq === listColumnSaveSeq) {
       setListColumnSaveStatus('error');
     }
-    console.warn('[list-columns] failed to save column order preference', err);
   }
 }
 
@@ -3158,11 +3155,10 @@ async function handleListColumnWidthsChange(payload: { columnWidths: Record<stri
     if (saveSeq === listColumnSaveSeq) {
       setListColumnSaveStatus('saved');
     }
-  } catch (err) {
+  } catch {
     if (saveSeq === listColumnSaveSeq) {
       setListColumnSaveStatus('error');
     }
-    console.warn('[list-columns] failed to save column width preference', err);
   }
 }
 
@@ -3183,9 +3179,8 @@ async function handleToggleRecordFavorite(row: Record<string, unknown>, field: s
       vals: { [mutationField]: nextValue },
       context: {},
     });
-  } catch (err) {
+  } catch {
     row[field] = previousValue;
-    console.warn('[list-field-mutation] failed to save field state', err);
   }
 }
 
