@@ -1,14 +1,18 @@
 const { chromium } = require('playwright');
 const fs = require('node:fs');
+const path = require('node:path');
 
 const base = process.env.BASE_URL || 'http://127.0.0.1:18081';
-const outPath = process.env.OUT || '/tmp/user_page_visual_coverage.json';
+const rootDir = path.resolve(__dirname, '..', '..', '..', '..');
+const artifactRoot = process.env.ARTIFACT_ROOT || path.join(rootDir, 'artifacts', 'playwright', 'user-visible-surface-visual-coverage');
+const outPath = process.env.OUT || path.join(artifactRoot, 'report.json');
 const maxActions = Number(process.env.MAX_ACTIONS || 0);
 const maxForms = Number(process.env.MAX_FORMS || 0);
 const skipForms = process.env.SKIP_FORMS === '1';
 const skipActions = process.env.SKIP_ACTIONS === '1';
 const startIndex = Number(process.env.START_INDEX || 0);
 const limit = Number(process.env.LIMIT || 0);
+const takeScreenshots = process.env.TAKE_SCREENSHOTS !== '0';
 
 function flattenNav(nodes, path = []) {
   const out = [];
@@ -42,7 +46,17 @@ function uniqEntries(rows) {
   return out;
 }
 
+function slug(value) {
+  return String(value || '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 100) || 'surface';
+}
+
 async function main() {
+  fs.rmSync(artifactRoot, { recursive: true, force: true });
+  fs.mkdirSync(path.join(artifactRoot, 'actions'), { recursive: true });
+  fs.mkdirSync(path.join(artifactRoot, 'forms'), { recursive: true });
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const consoleErrors = [];
@@ -108,6 +122,7 @@ async function main() {
 
   function writeProgress() {
     const summary = {
+      artifactRoot,
       totalDiscovered,
       startIndex,
       limit,
@@ -140,7 +155,19 @@ async function main() {
     if (!skipActions) {
       currentProbe = `list:${entry.path}`;
       const started = Date.now();
-      let actionRow = { index, ...entry, route, ok: false, elapsedMs: 0, titleVisible: false, hasErrorText: false, headers: [], issue: '' };
+      let actionRow = {
+        index,
+        ...entry,
+        route,
+        ok: false,
+        elapsedMs: 0,
+        titleVisible: false,
+        hasErrorText: false,
+        hasHorizontalOverflow: false,
+        screenshotPath: '',
+        headers: [],
+        issue: '',
+      };
       try {
         await page.goto(`${base}${route}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
@@ -152,7 +179,24 @@ async function main() {
         const hasErrorText = /render error|contract not renderable|missing required nav|页面加载失败|异常|Traceback|Cannot read/i.test(text);
         const lastLabel = String(entry.path || '').split(' / ').pop() || '';
         const titleVisible = entry.label ? text.includes(entry.label) || text.includes(lastLabel) : true;
-        actionRow = { ...actionRow, ok: !hasErrorText, elapsedMs: Date.now() - started, titleVisible, hasErrorText, headers };
+        const hasHorizontalOverflow = await page.evaluate(() => (
+          document.documentElement.scrollWidth > window.innerWidth + 1 || document.body.scrollWidth > window.innerWidth + 1
+        )).catch(() => false);
+        let screenshotPath = '';
+        if (takeScreenshots) {
+          screenshotPath = path.join(artifactRoot, 'actions', `${String(index + 1).padStart(3, '0')}_${slug(entry.path || entry.label)}.png`);
+          await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => {});
+        }
+        actionRow = {
+          ...actionRow,
+          ok: !hasErrorText && !hasHorizontalOverflow,
+          elapsedMs: Date.now() - started,
+          titleVisible,
+          hasErrorText,
+          hasHorizontalOverflow,
+          screenshotPath,
+          headers,
+        };
       } catch (err) {
         actionRow = { ...actionRow, elapsedMs: Date.now() - started, issue: err instanceof Error ? err.message : String(err), ok: false };
       }
@@ -186,7 +230,18 @@ async function main() {
     formOpened += 1;
     currentProbe = `form:${entry.path}`;
     const formRoute = `/r/${encodeURIComponent(entry.model)}/${recordId}?db=${process.env.DB || 'sc_demo'}&action_id=${entry.actionId}${entry.menuId ? `&menu_id=${entry.menuId}` : ''}`;
-    let formRow = { ...entry, recordId, route: formRoute, ok: false, outline: [], inputCount: 0, issue: '', hasErrorText: false };
+    let formRow = {
+      ...entry,
+      recordId,
+      route: formRoute,
+      ok: false,
+      outline: [],
+      inputCount: 0,
+      issue: '',
+      hasErrorText: false,
+      hasHorizontalOverflow: false,
+      screenshotPath: '',
+    };
     try {
       await page.goto(`${base}${formRoute}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
       await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
@@ -197,7 +252,15 @@ async function main() {
       )).catch(() => []);
       const inputCount = await page.locator('input, textarea, select').count().catch(() => 0);
       const hasErrorText = /render error|contract not renderable|页面加载失败|Traceback|Cannot read/i.test(text);
-      formRow = { ...formRow, ok: !hasErrorText, outline, inputCount, hasErrorText };
+      const hasHorizontalOverflow = await page.evaluate(() => (
+        document.documentElement.scrollWidth > window.innerWidth + 1 || document.body.scrollWidth > window.innerWidth + 1
+      )).catch(() => false);
+      let screenshotPath = '';
+      if (takeScreenshots) {
+        screenshotPath = path.join(artifactRoot, 'forms', `${String(formOpened).padStart(3, '0')}_${slug(entry.path || entry.label)}.png`);
+        await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => {});
+      }
+      formRow = { ...formRow, ok: !hasErrorText && !hasHorizontalOverflow, outline, inputCount, hasErrorText, hasHorizontalOverflow, screenshotPath };
     } catch (err) {
       formRow = { ...formRow, issue: err instanceof Error ? err.message : String(err), ok: false };
     }

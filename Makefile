@@ -993,7 +993,7 @@ verify.finance_interfund.position.bundle_summary: guard.prod.forbid check-compos
 verify.finance_interfund.position.all: verify.finance_interfund.projection.static_guard verify.interfund_user_data.full_coverage.audit verify.interfund_borrow.classification_gap.audit verify.finance_business_fact.scope.audit verify.finance_business_fact.projection.audit verify.finance_business_project.summary.audit verify.interfund_movement.fact.audit verify.interfund_movement_project.summary.audit verify.interfund_treasury_ledger.backfill_readiness.audit verify.company_contractor.responsibility_fact.audit verify.company_contractor.responsibility_summary.audit verify.company_contractor.responsibility_http.smoke verify.finance_project_capital.position.audit verify.finance_project_counterparty.position.audit verify.finance_counterparty.position_summary.audit verify.finance_counterparty.identity_quality.audit verify.finance_position.drilldown_usability.audit verify.finance_interfund.position.menu_runtime.audit verify.finance_interfund.position.bundle_summary
 	@echo "FINANCE_INTERFUND_POSITION_AUDIT_ALL_PASS db=$(DB_NAME)"
 
-.PHONY: verify.business_capability.productization_p1 verify.business_system.usability_readiness verify.business_system.usability_readiness.prod verify.productization.system_closure.topic_guard verify.system_user_experience.coverage_guard verify.frontend.config_workbench_navigation_boundary.guard verify.project_context.selector_product_boundary.guard verify.project_context.selector_product_boundary.guard.prod verify.formal_menu.no_legacy_carrier_guard verify.formal_menu.runtime_no_legacy_carrier_guard verify.formal_menu.runtime_no_legacy_carrier_guard.prod verify.formal_list_surface.no_test_placeholder_guard verify.formal_list_surface.no_test_placeholder_guard.prod policy.cleanup.formal_list_surface_test_contract verify.system_user_experience.quick verify.system_user_experience.shell_acceptance verify.system_user_experience.business_form_user_perspective verify.system_user_experience.full_browser verify.formal_business.release_gate formal_entry_metadata.non_business_creator.write
+.PHONY: verify.business_capability.productization_p1 verify.business_system.usability_readiness verify.business_system.usability_readiness.prod verify.productization.system_closure.topic_guard verify.system_user_experience.coverage_guard verify.frontend.config_workbench_navigation_boundary.guard verify.project_context.selector_product_boundary.guard verify.project_context.selector_product_boundary.guard.prod verify.formal_menu.no_legacy_carrier_guard verify.formal_menu.runtime_no_legacy_carrier_guard verify.formal_menu.runtime_no_legacy_carrier_guard.prod verify.formal_list_surface.no_test_placeholder_guard verify.formal_list_surface.no_test_placeholder_guard.prod policy.cleanup.formal_list_surface_test_contract verify.system_user_experience.quick verify.system_user_experience.shell_acceptance verify.system_user_experience.business_form_user_perspective verify.system_user_experience.visible_surface_visual_coverage verify.system_user_experience.full_browser verify.formal_business.release_gate formal_entry_metadata.non_business_creator.write
 verify.formal_business.release_gate: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/validate_formal_business_release_gate.sh
 
@@ -1055,6 +1055,8 @@ verify.system_user_experience.quick: guard.prod.forbid verify.productization.sys
 	@node --check frontend/apps/web/scripts/business_form_user_perspective_summary_guard.mjs
 	@node --check frontend/apps/web/scripts/system_user_experience_shell_acceptance.mjs
 	@node --check frontend/apps/web/scripts/system_user_experience_shell_summary_guard.mjs
+	@node --check frontend/apps/web/scripts/user_page_visual_coverage.cjs
+	@node --check frontend/apps/web/scripts/user_visible_surface_visual_coverage_summary_guard.mjs
 	@node --check frontend/apps/web/scripts/system_user_experience_full_browser_summary_guard.mjs
 	@git diff --check
 
@@ -1066,7 +1068,11 @@ verify.system_user_experience.business_form_user_perspective: guard.prod.forbid
 	@BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB_NAME=$(DB_NAME) E2E_LOGIN=$${E2E_LOGIN:-wutao} E2E_PASSWORD=$${E2E_PASSWORD:-123456} node frontend/apps/web/scripts/business_form_user_perspective_acceptance.mjs
 	@cd frontend/apps/web && node scripts/business_form_user_perspective_summary_guard.mjs
 
-verify.system_user_experience.full_browser: guard.prod.forbid verify.system_user_experience.coverage_guard verify.product.page_structure verify.business_config.config_workbench_operation_acceptance verify.business_config.config_workbench_operation_summary_guard verify.system_user_experience.shell_acceptance verify.system_user_experience.business_form_user_perspective
+verify.system_user_experience.visible_surface_visual_coverage: guard.prod.forbid
+	@BASE_URL=$(WORKFLOW_CONTRACT_FRONTEND_URL) DB=$(DB_NAME) LOGIN=$${E2E_LOGIN:-wutao} PASSWORD=$${E2E_PASSWORD:-123456} SKIP_FORMS=1 node frontend/apps/web/scripts/user_page_visual_coverage.cjs
+	@cd frontend/apps/web && node scripts/user_visible_surface_visual_coverage_summary_guard.mjs
+
+verify.system_user_experience.full_browser: guard.prod.forbid verify.system_user_experience.coverage_guard verify.product.page_structure verify.business_config.config_workbench_operation_acceptance verify.business_config.config_workbench_operation_summary_guard verify.system_user_experience.shell_acceptance verify.system_user_experience.visible_surface_visual_coverage verify.system_user_experience.business_form_user_perspective
 	@cd frontend/apps/web && node scripts/system_user_experience_full_browser_summary_guard.mjs
 	@echo "[OK] verify.system_user_experience.full_browser done"
 

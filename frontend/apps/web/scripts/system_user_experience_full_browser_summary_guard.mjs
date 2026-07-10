@@ -8,6 +8,7 @@ const ROOT_DIR = path.resolve(SCRIPT_DIR, "..", "..", "..", "..");
 const CONFIG_SUMMARY_PATH = path.join(ROOT_DIR, "artifacts", "playwright", "config-workbench-operation", "summary.json");
 const CONFIG_REPORT_PATH = path.join(ROOT_DIR, "artifacts", "playwright", "config-workbench-operation", "report.json");
 const SHELL_REPORT_PATH = path.join(ROOT_DIR, "artifacts", "playwright", "system-user-experience-shell", "report.json");
+const VISIBLE_SURFACE_REPORT_PATH = path.join(ROOT_DIR, "artifacts", "playwright", "user-visible-surface-visual-coverage", "report.json");
 const BUSINESS_FORM_REPORT_PATH = path.join(ROOT_DIR, "artifacts", "playwright", "business-form-user-perspective", "report.json");
 const OUTPUT_PATH = path.join(ROOT_DIR, "artifacts", "playwright", "system-user-experience-full-browser", "summary.json");
 
@@ -30,10 +31,11 @@ function countArray(value) {
 }
 
 async function main() {
-  const [configSummary, configReport, shellReport, businessFormReport] = await Promise.all([
+  const [configSummary, configReport, shellReport, visibleSurfaceReport, businessFormReport] = await Promise.all([
     readJson(CONFIG_SUMMARY_PATH),
     readJson(CONFIG_REPORT_PATH),
     readJson(SHELL_REPORT_PATH),
+    readJson(VISIBLE_SURFACE_REPORT_PATH),
     readJson(BUSINESS_FORM_REPORT_PATH),
   ]);
 
@@ -53,6 +55,15 @@ async function main() {
     && shellFailures === 0
     && countArray(shellReport.consoleErrors) === 0
     && countArray(shellReport.requestFailed) === 0;
+  const visibleSurfaceSummary = visibleSurfaceReport.summary && typeof visibleSurfaceReport.summary === "object"
+    ? visibleSurfaceReport.summary
+    : {};
+  const visibleSurfaceFailures = Array.isArray(visibleSurfaceReport.actionResults)
+    ? visibleSurfaceReport.actionResults.filter((row) => row?.ok !== true)
+    : [];
+  const visibleSurfaceOk = Number(visibleSurfaceSummary.totalScanned || 0) >= 80
+    && visibleSurfaceFailures.length === 0
+    && Number(visibleSurfaceSummary.consoleErrorCount || 0) === 0;
   const businessFormResults = Array.isArray(businessFormReport.results) ? businessFormReport.results : [];
   const businessFormFailures = businessFormResults.filter((row) => row?.ok !== true);
   const businessFormOk = businessFormReport.ok === true
@@ -62,7 +73,7 @@ async function main() {
     && countArray(businessFormReport.consoleErrors) === 0;
 
   const payload = {
-    ok: configOk && shellOk && businessFormOk,
+    ok: configOk && shellOk && visibleSurfaceOk && businessFormOk,
     reportPath: OUTPUT_PATH,
     gates: {
       config_workbench: {
@@ -82,6 +93,16 @@ async function main() {
         failures: shellFailures,
         consoleErrors: countArray(shellReport.consoleErrors),
         requestFailed: countArray(shellReport.requestFailed),
+      },
+      user_visible_surface_visual_coverage: {
+        ok: visibleSurfaceOk,
+        totalDiscovered: visibleSurfaceSummary.totalDiscovered || 0,
+        totalScanned: visibleSurfaceSummary.totalScanned || 0,
+        actionOk: visibleSurfaceSummary.actionOk || 0,
+        actionFailed: visibleSurfaceSummary.actionFailed || visibleSurfaceFailures.length,
+        screenshots: visibleSurfaceSummary.actionOk || 0,
+        consoleErrors: visibleSurfaceSummary.consoleErrorCount || 0,
+        artifactRoot: visibleSurfaceSummary.artifactRoot || "",
       },
       business_form_user_perspective: {
         ok: businessFormOk,

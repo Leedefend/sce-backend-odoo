@@ -50,6 +50,7 @@
 - 业务表单：支付申请、材料入库、施工日志、分包申请、合同相关办理。
 - 详情阅读：主对象身份、状态、金额、关联对象、附件和历史信息。
 - 低代码配置：菜单配置、配置工作台、表单配置、列表搜索配置、发布反馈。
+- 用户可见面视图验收：所有主导航可进入页面必须进入浏览器扫描，生成截图、横向溢出检查、渲染错误检查和控制台错误检查。
 - 附件闭环：生产附件可打开/下载，业务办理附件可上传，且使用生产自身附件系统。
 - 运维发布：本地、日常开发服务器、生产服务器升级链路和只读生产验收。
 
@@ -86,6 +87,7 @@
 ```bash
 make verify.productization.system_closure.topic_guard
 make verify.system_user_experience.quick
+make verify.system_user_experience.visible_surface_visual_coverage
 make verify.system_user_experience.full_browser
 make verify.business_system.usability_readiness
 ```
