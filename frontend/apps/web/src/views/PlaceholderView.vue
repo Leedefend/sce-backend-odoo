@@ -15,20 +15,19 @@
       class="card"
       :style="pageSectionStyle('card')"
     >
-      <h1>{{ pageText('title', '页面暂未配置') }}</h1>
-      <p>{{ pageText('route_label', '页面地址') }}：{{ route.path }}</p>
-      <p>{{ pageText('params_label', '页面参数') }}：{{ routeParamsText }}</p>
+      <h1>{{ pageText('title', '当前入口暂不可用') }}</h1>
+      <p>{{ pageText('description', '请返回工作台重新选择业务入口，或联系管理员检查该入口的发布状态。') }}</p>
+      <button class="primary" type="button" @click="goHome">{{ pageText('action_back_home', '返回工作台') }}</button>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 
-const route = useRoute();
 const router = useRouter();
 const pageContract = usePageContract('placeholder');
 const pageText = pageContract.text;
@@ -39,12 +38,6 @@ const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
 const headerActions = computed(() => pageGlobalActions.value);
-const routeParamsText = computed(() => {
-  const entries = Object.entries(route.params)
-    .map(([key, value]) => `${key}=${Array.isArray(value) ? value.join(',') : String(value || '')}`)
-    .filter((item) => item.trim());
-  return entries.length ? entries.join('；') : pageText('params_empty', '无');
-});
 
 async function executeHeaderAction(actionKey: string) {
   const handled = await executePageContractAction({
@@ -65,6 +58,10 @@ async function executeHeaderAction(actionKey: string) {
   if (!handled) {
     await router.push('/').catch(() => {});
   }
+}
+
+async function goHome() {
+  await router.push('/').catch(() => {});
 }
 </script>
 
@@ -94,11 +91,23 @@ async function executeHeaderAction(actionKey: string) {
   cursor: pointer;
 }
 
+.primary {
+  justify-self: start;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
+  cursor: pointer;
+}
+
 .card {
   width: min(520px, 92vw);
   background: var(--sc-app-panel);
   padding: 32px;
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: var(--sc-semantic-shadow-modal);
+  display: grid;
+  gap: 12px;
 }
 </style>
