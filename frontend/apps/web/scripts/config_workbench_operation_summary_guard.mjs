@@ -19,6 +19,17 @@ const EXPECTED_FILES = [
   "summary.json",
 ];
 
+const REQUIRED_ASSERTIONS = [
+  "product_workspace_structural_gap_unified",
+  "product_page_region_outer_edges_aligned",
+  "product_page_runtime_semantics_present",
+  "business_runtime_workspace_structural_gap_unified",
+  "menu_workspace_aligned_with_header",
+  "mobile_no_horizontal_overflow",
+  "no_console_errors",
+  "no_request_failures",
+];
+
 function fail(message, details = {}) {
   const error = new Error(message);
   error.details = details;
@@ -39,6 +50,18 @@ function ratio(passed, total) {
 
 function assertEqual(actual, expected, message) {
   if (actual !== expected) fail(message, { actual, expected });
+}
+
+function assertFullCoverage(summaryValue, passed, total, message) {
+  if (!Number.isInteger(total) || total <= 0) fail(`${message}: total is invalid`, { summaryValue, passed, total });
+  if (passed !== total || summaryValue !== `${total}/${total}`) {
+    fail(message, { summaryValue, passed, total, expected: `${total}/${total}` });
+  }
+}
+
+function assertIncludesAll(actual = [], required = [], message) {
+  const missing = required.filter((item) => !actual.includes(item));
+  if (missing.length) fail(message, { missing, required, actual });
 }
 
 async function main() {
@@ -67,9 +90,11 @@ async function main() {
   assertEqual(summary.menuTreeHead, report.checks?.menuTreeHead || "", "summary menu tree head drifted");
 
   if (summary.ok !== true) fail("config workbench summary is not ok", { summary });
-  if (summary.assertion !== "64/64") fail("config workbench assertion gate is not complete", { summary });
-  if (summary.journeys !== "10/10" || summary.actions !== "19/19") fail("config workbench journey/action gate is not complete", { summary });
-  if (summary.screenshots !== "9/9") fail("config workbench screenshot gate is not complete", { summary });
+  assertIncludesAll(report.metrics?.assertions || [], REQUIRED_ASSERTIONS, "config workbench required assertion coverage drifted");
+  assertFullCoverage(summary.assertion, report.metrics?.assertion_passed_count, report.metrics?.assertion_count, "config workbench assertion gate is not complete");
+  assertFullCoverage(summary.journeys, report.metrics?.journey_passed_count, report.metrics?.journey_count, "config workbench journey gate is not complete");
+  assertFullCoverage(summary.actions, report.metrics?.action_passed_count, report.metrics?.action_count, "config workbench action gate is not complete");
+  assertFullCoverage(summary.screenshots, report.metrics?.screenshot_captured_count, report.metrics?.screenshot_required_count, "config workbench screenshot gate is not complete");
   if (summary.delivery !== "delivery_ready" || summary.professional !== "professional_ready") fail("config workbench readiness status is not complete", { summary });
   if (summary.consoleErrors !== 0 || summary.requestFailed !== 0) fail("config workbench browser health is not clean", { summary });
   if (summary.currentPage !== "项目合同汇总" || summary.formDesignerCurrentPageLabel !== "项目合同汇总") fail("config workbench page context summary is not aligned", { summary });
