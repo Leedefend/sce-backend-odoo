@@ -16,6 +16,7 @@ const ARTIFACT_ROOT = path.resolve(process.cwd(), "../../../artifacts/playwright
 const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
 const SUMMARY_PATH = path.join(ARTIFACT_ROOT, "summary.json");
 const VERBOSE_OUTPUT = ["1", "true", "yes"].includes(String(process.env.CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE || "").toLowerCase());
+const PRODUCT_PAGE_REGION_CLASSES = readProductPageRegionClasses();
 const ACCEPTANCE_COVERAGE = {
   journeys: [
     "workbench_select_page",
@@ -128,6 +129,21 @@ const ACCEPTANCE_COVERAGE = {
     "mobileViewport",
   ],
 };
+
+function readProductPageRegionClasses() {
+  const sourcePath = path.resolve(process.cwd(), "src/app/productPageStructure.ts");
+  const content = fsSync.readFileSync(sourcePath, "utf8");
+  const match = content.match(/export const PRODUCT_PAGE_REGION_CLASSES = \{([\s\S]+?)\} as const;/);
+  if (!match) throw new Error("PRODUCT_PAGE_REGION_CLASSES must be exported from productPageStructure.ts");
+  const classes = {};
+  for (const item of match[1].matchAll(/([a-zA-Z0-9_]+):\s*'([^']+)'/g)) {
+    classes[item[1]] = item[2];
+  }
+  for (const key of ["pageHeader", "pageToolbar", "mainSurface"]) {
+    if (!classes[key]) throw new Error(`PRODUCT_PAGE_REGION_CLASSES.${key} is required`);
+  }
+  return classes;
+}
 
 function assert(condition, message, details = {}) {
   if (!condition) {
@@ -1073,8 +1089,8 @@ async function main() {
         scope: "direct_selected_start",
         checks: [
           { selector: ".business-config-page", name: "page_shell", classes: ["sc-page"], mode: "admin" },
-          { selector: ".business-config-header", name: "page_header", classes: ["sc-product-page-header"] },
-          { selector: "[data-lowcode-workbench-ia='start']", name: "main_surface", classes: ["sc-product-main-surface"] },
+          { selector: ".business-config-header", name: "page_header", classes: [PRODUCT_PAGE_REGION_CLASSES.pageHeader] },
+          { selector: "[data-lowcode-workbench-ia='start']", name: "main_surface", classes: [PRODUCT_PAGE_REGION_CLASSES.mainSurface] },
         ],
       },
     ]);
@@ -1101,8 +1117,8 @@ async function main() {
         scope: "list_page_regions",
         checks: [
           { selector: ".page", name: "page_shell", classes: ["sc-page", "sc-product-workspace-stack"], mode: "list" },
-          { selector: ".page .list-toolbar", name: "page_toolbar", classes: ["sc-product-page-toolbar"] },
-          { selector: ".page .table, .page .list-empty-state", name: "main_surface", classes: ["sc-product-main-surface"] },
+          { selector: ".page .list-toolbar", name: "page_toolbar", classes: [PRODUCT_PAGE_REGION_CLASSES.pageToolbar] },
+          { selector: ".page .table, .page .list-empty-state", name: "main_surface", classes: [PRODUCT_PAGE_REGION_CLASSES.mainSurface] },
         ],
       },
     ]));
@@ -1129,8 +1145,8 @@ async function main() {
         scope: "form_page_regions",
         checks: [
           { selector: "[data-product-page-mode='form']", name: "page_shell", classes: ["sc-page"], mode: "form" },
-          { selector: ".template-page-header", name: "page_header", classes: ["sc-product-page-header"] },
-          { selector: ".card", name: "main_surface", classes: ["sc-product-main-surface"] },
+          { selector: ".template-page-header", name: "page_header", classes: [PRODUCT_PAGE_REGION_CLASSES.pageHeader] },
+          { selector: ".card", name: "main_surface", classes: [PRODUCT_PAGE_REGION_CLASSES.mainSurface] },
         ],
       },
     ]));
@@ -1385,8 +1401,8 @@ async function main() {
         scope: "menu_page_regions",
         checks: [
           { selector: ".menu-config-page", name: "page_shell", classes: ["sc-page"], mode: "admin" },
-          { selector: ".menu-config-header", name: "page_header", classes: ["sc-product-page-header"] },
-          { selector: ".menu-config-workspace", name: "main_surface", classes: ["sc-product-main-surface"] },
+          { selector: ".menu-config-header", name: "page_header", classes: [PRODUCT_PAGE_REGION_CLASSES.pageHeader] },
+          { selector: ".menu-config-workspace", name: "main_surface", classes: [PRODUCT_PAGE_REGION_CLASSES.mainSurface] },
         ],
       },
     ]));

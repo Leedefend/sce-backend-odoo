@@ -44,6 +44,17 @@ function pageModesFromRuntimeSource() {
   return modes;
 }
 
+function productRegionClassesFromRuntimeSource() {
+  const content = read("frontend/apps/web/src/app/productPageStructure.ts");
+  const match = content.match(/export const PRODUCT_PAGE_REGION_CLASSES = \{([\s\S]+?)\} as const;/);
+  if (!match) fail("PRODUCT_PAGE_REGION_CLASSES must be exported from productPageStructure.ts");
+  const classes = Object.fromEntries(
+    Array.from(match[1].matchAll(/([a-zA-Z0-9_]+):\s*'([^']+)'/g)).map((item) => [item[1], item[2]]),
+  );
+  if (!Object.keys(classes).length) fail("PRODUCT_PAGE_REGION_CLASSES must not be empty");
+  return classes;
+}
+
 function walkFiles(dir, result = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === "dist" || entry.name === "dist-dev" || entry.name === "node_modules") continue;
@@ -66,38 +77,51 @@ const shellFiles = [
   "frontend/apps/web/src/views/PlaceholderView.vue",
 ];
 
+const ALLOWED_PAGE_MODES = pageModesFromRuntimeSource();
+const PRODUCT_REGION_CLASSES = productRegionClassesFromRuntimeSource();
+const regionClass = (key) => {
+  const value = PRODUCT_REGION_CLASSES[key];
+  if (!value) fail("Unknown product page region class key", { key, available: Object.keys(PRODUCT_REGION_CLASSES) });
+  return new RegExp(value);
+};
+
 const regionFiles = [
   {
     file: "frontend/apps/web/src/components/page/PageHeader.vue",
-    markers: [/sc-product-page-header/],
+    markers: [regionClass("pageHeader")],
   },
   {
     file: "frontend/apps/web/src/components/template/PageHeader.vue",
-    markers: [/sc-product-page-header/],
+    markers: [regionClass("pageHeader")],
   },
   {
     file: "frontend/apps/web/src/pages/ListPage.vue",
-    markers: [/sc-product-page-toolbar/, /sc-product-summary-strip/, /sc-product-feedback-layer/, /sc-product-main-surface/],
+    markers: [
+      regionClass("pageToolbar"),
+      regionClass("summaryStrip"),
+      regionClass("feedbackLayer"),
+      regionClass("mainSurface"),
+    ],
   },
   {
     file: "frontend/apps/web/src/pages/KanbanPage.vue",
-    markers: [/sc-product-page-toolbar/, /sc-product-main-surface/],
+    markers: [regionClass("pageToolbar"), regionClass("mainSurface")],
   },
   {
     file: "frontend/apps/web/src/views/RecordView.vue",
-    markers: [/sc-product-page-header/, /sc-product-primary-actions/, /sc-product-main-surface/],
+    markers: [regionClass("pageHeader"), regionClass("primaryActions"), regionClass("mainSurface")],
   },
   {
     file: "frontend/apps/web/src/pages/ContractFormPage.vue",
-    markers: [/sc-product-main-surface/],
+    markers: [regionClass("mainSurface")],
   },
   {
     file: "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue",
-    markers: [/sc-product-page-header/, /sc-product-main-surface/],
+    markers: [regionClass("pageHeader"), regionClass("mainSurface")],
   },
   {
     file: "frontend/apps/web/src/views/MenuConfigView.vue",
-    markers: [/sc-product-page-header/, /sc-product-main-surface/],
+    markers: [regionClass("pageHeader"), regionClass("mainSurface")],
   },
 ];
 
@@ -112,8 +136,6 @@ const pageModeFiles = [
   { file: "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue", mode: "admin" },
   { file: "frontend/apps/web/src/views/MenuConfigView.vue", mode: "admin" },
 ];
-
-const ALLOWED_PAGE_MODES = pageModesFromRuntimeSource();
 
 assertContains(
   "frontend/apps/web/src/styles/product-patterns.css",
@@ -135,14 +157,7 @@ assertContains(
   /\.sc-product-workspace-stack\s*\{\s*row-gap:\s*var\(--sc-product-workspace-stack-gap\);/s,
   "product workspace stack class must use product stack gap token",
 );
-for (const marker of [
-  "sc-product-page-header",
-  "sc-product-page-toolbar",
-  "sc-product-summary-strip",
-  "sc-product-main-surface",
-  "sc-product-primary-actions",
-  "sc-product-feedback-layer",
-]) {
+for (const marker of Object.values(PRODUCT_REGION_CLASSES)) {
   assertContains(
     "frontend/apps/web/src/styles/product-patterns.css",
     new RegExp(`\\.${marker}\\b`),
@@ -194,6 +209,11 @@ assertNotContains(
   "frontend/apps/web/src/app/pageMode.ts",
   /return 'ledger';/,
   "ledger is a layout kind, not a product page mode",
+);
+assertContains(
+  "frontend/apps/web/src/app/productPageStructure.ts",
+  /export type ProductPageRegionClass = typeof PRODUCT_PAGE_REGION_CLASSES\[keyof typeof PRODUCT_PAGE_REGION_CLASSES\];/,
+  "ProductPageRegionClass must be derived from PRODUCT_PAGE_REGION_CLASSES",
 );
 
 assertContains(

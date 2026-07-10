@@ -58,6 +58,7 @@
 - 多栏工作区使用 `sc-product-workspace`。
 - 可见面板使用 `sc-panel` 或 `sc-panel-flat`。
 - 页面区域必须使用产品语义 class：`sc-product-page-header`、`sc-product-page-toolbar`、`sc-product-summary-strip`、`sc-product-main-surface`、`sc-product-primary-actions`、`sc-product-feedback-layer`。
+- 页面区域语义 class 的 canonical source 是 `frontend/apps/web/src/app/productPageStructure.ts` 中的 `PRODUCT_PAGE_REGION_CLASSES`，静态门禁和浏览器验收必须从该常量读取，不再各自维护区域 class 列表。
 - 页面模式必须使用 `data-product-page-mode` 体现在 DOM 或验收证据中，不能只存在于文档。
 
 ### 间距
