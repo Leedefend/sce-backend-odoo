@@ -92,6 +92,14 @@ FORBIDDEN_PHRASES = {
     ">public<": "发布运营页面枚举选项必须使用产品化中文表达",
     ">internal<": "发布运营页面枚举选项必须使用产品化中文表达",
     ">role_restricted<": "发布运营页面枚举选项必须使用产品化中文表达",
+    "retry_unknown_reason_code', 'UNKNOWN": "我的工作台失败原因默认值必须使用产品化中文表达",
+    "trace_id 已复制": "我的工作台复制反馈必须使用产品化中文表达",
+    "复制 trace_id 失败": "我的工作台复制反馈必须使用产品化中文表达",
+    "Retry failed items from my-work": "我的工作台重试备注必须使用产品化中文表达",
+    "Retry failed group": "我的工作台重试备注必须使用产品化中文表达",
+    "显示模式: ": "我的工作台复制摘要必须使用产品化中文表达",
+    "retry_visible_display_grouped', 'grouped": "我的工作台复制摘要不得暴露英文显示模式",
+    "retry_visible_display_flat', 'flat": "我的工作台复制摘要不得暴露英文显示模式",
 }
 
 

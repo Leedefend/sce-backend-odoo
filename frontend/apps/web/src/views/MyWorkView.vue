@@ -240,7 +240,7 @@
       <ul v-if="!retryGroupByReason">
         <li v-for="item in visibleRetryFailedItems" :key="`failed-${item.id}`">
           <span class="failed-id">#{{ item.id }}</span>
-          <span class="failed-code">{{ item.reason_code || pageText('retry_unknown_reason_code', 'UNKNOWN') }}</span>
+          <span class="failed-code">{{ item.reason_code || pageText('retry_unknown_reason_code', '待确认') }}</span>
           <span class="failed-msg">{{ item.message || '-' }}</span>
           <span v-if="resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable)" class="failed-hint">
             {{ resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable) }}
@@ -732,7 +732,7 @@ const retryRequestJson = computed(() => {
 const batchEvidenceText = computed(() => {
   if (!lastBatchTraceId.value && !lastReplayAuditId.value) return '';
   const rows = [];
-  if (lastBatchTraceId.value) rows.push(`trace_id: ${lastBatchTraceId.value}`);
+  if (lastBatchTraceId.value) rows.push(`${pageText('batch_trace_label', '追踪 ID')}：${lastBatchTraceId.value}`);
   if (lastReplayAuditId.value > 0) rows.push(`replay_audit_id: ${lastReplayAuditId.value}`);
   if (lastReplayAgeMs.value > 0) rows.push(`replay_age_ms: ${lastReplayAgeMs.value}`);
   return rows.join(' | ');
@@ -740,7 +740,7 @@ const batchEvidenceText = computed(() => {
 const groupedVisibleRetryItems = computed(() => {
   const map = new Map<string, typeof visibleRetryFailedItems.value>();
   for (const item of visibleRetryFailedItems.value) {
-    const code = item.reason_code || 'UNKNOWN';
+    const code = item.reason_code || pageText('retry_unknown_reason_code', '待确认');
     const rows = map.get(code) || [];
     rows.push(item);
     map.set(code, rows);
@@ -850,7 +850,7 @@ const myWorkOrchestrationDatasets = computed<Record<string, unknown>>(() => {
   }));
   const retryAlerts = retryFailedItems.value.slice(0, 10).map((item) => ({
     id: String(item.id),
-    title: `#${item.id} ${item.reason_code || 'UNKNOWN'}`,
+    title: `#${item.id} ${item.reason_code || pageText('retry_unknown_reason_code', '待确认')}`,
     description: String(item.message || '-'),
     tone: item.retryable === false ? 'danger' : 'warning',
     action_key: 'focus_retry_item',
@@ -1451,7 +1451,7 @@ function formatFailedItemText(item: { id: number; reason_code: string; message: 
     : item.retryable === false
       ? pageText('retry_tag_non_retryable', '不可重试')
       : '';
-  return [`#${item.id} ${item.reason_code || pageText('retry_unknown_reason_code', 'UNKNOWN')} ${item.message || '-'}`, retryTag, actionHint]
+  return [`#${item.id} ${item.reason_code || pageText('retry_unknown_reason_code', '待确认')} ${item.message || '-'}`, retryTag, actionHint]
     .filter(Boolean)
     .join(' | ');
 }
@@ -1470,20 +1470,26 @@ function buildRetrySummaryText() {
   const lines = retryFailedItems.value.map((item) => formatFailedItemText(item));
   return [
     `${pageText('retry_summary_header_prefix', '失败待办 ')}${retryFailedIds.value.length}${pageText('retry_summary_header_suffix', ' 条')}`,
-    reasons ? `${pageText('retry_summary_reason_dist_prefix', '原因分布: ')}${reasons}` : '',
-    typeof todoRemaining.value === 'number' ? `${pageText('retry_summary_remaining_prefix', '剩余待办: ')}${todoRemaining.value}` : '',
+    reasons ? `${pageText('retry_summary_reason_dist_prefix', '原因分布：')}${reasons}` : '',
+    typeof todoRemaining.value === 'number' ? `${pageText('retry_summary_remaining_prefix', '剩余待办：')}${todoRemaining.value}` : '',
     ...lines,
   ]
     .filter(Boolean)
     .join('\n');
 }
 
+function retryFilterModeLabel(mode: string) {
+  if (mode === 'retryable') return pageText('retry_filter_retryable_only', '仅可重试');
+  if (mode === 'non_retryable') return pageText('retry_filter_non_retryable_only', '仅不可重试');
+  return pageText('retry_filter_all', '全部');
+}
+
 function buildVisibleRetrySummaryText() {
   const lines = visibleRetryFailedItems.value.map((item) => formatFailedItemText(item));
   return [
-    `${pageText('retry_visible_mode_prefix', '筛选模式: ')}${retryFilterMode.value}`,
-    `${pageText('retry_visible_display_prefix', '显示模式: ')}${retryGroupByReason.value ? pageText('retry_visible_display_grouped', 'grouped') : pageText('retry_visible_display_flat', 'flat')}`,
-    `${pageText('retry_visible_items_prefix', '当前视图条目: ')}${visibleRetryFailedItems.value.length}`,
+    `${pageText('retry_visible_mode_prefix', '筛选模式：')}${retryFilterModeLabel(retryFilterMode.value)}`,
+    `${pageText('retry_visible_display_prefix', '显示模式：')}${retryGroupByReason.value ? pageText('retry_visible_display_grouped', '按原因分组') : pageText('retry_visible_display_flat', '平铺显示')}`,
+    `${pageText('retry_visible_items_prefix', '当前视图条目：')}${visibleRetryFailedItems.value.length}`,
     ...lines,
   ]
     .filter(Boolean)
@@ -1581,10 +1587,10 @@ async function copyBatchTraceId() {
   if (!lastBatchTraceId.value) return;
   try {
     await navigator.clipboard.writeText(lastBatchTraceId.value);
-    actionFeedback.value = pageText('feedback_copy_trace_ok', 'trace_id 已复制');
+    actionFeedback.value = pageText('feedback_copy_trace_ok', '追踪 ID 已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = pageText('feedback_copy_trace_failed', '复制 trace_id 失败，请检查浏览器剪贴板权限');
+    actionFeedback.value = pageText('feedback_copy_trace_failed', '复制追踪 ID 失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }
@@ -1598,11 +1604,11 @@ function escapeCsvCell(raw: unknown) {
 }
 
 function buildRetryFailedCsv() {
-  const header = ['id', 'reason_code', 'retryable', 'error_category', 'suggested_action', 'message', 'trace_id'];
+  const header = ['待办ID', '原因编码', '是否可重试', '错误分类', '建议动作', '错误消息', '追踪ID'];
   const rows = retryFailedItems.value.map((item) => [
     item.id,
     item.reason_code || '',
-    item.retryable === true ? 'true' : item.retryable === false ? 'false' : '',
+    item.retryable === true ? '是' : item.retryable === false ? '否' : '',
     item.error_category || '',
     item.suggested_action || '',
     item.message || '',
@@ -1667,7 +1673,7 @@ async function retryFailedTodos() {
   if (!candidateRetryIds.length) return;
   await runRetryBatch(
     candidateRetryIds,
-    resolveRetryNote('Retry failed items from my-work.'),
+    resolveRetryNote(pageText('retry_note_default_failed_items', '从我的工作台重试失败项。')),
     retryRequestParams.value?.request_id || buildBatchRequestId('mw_retry_ui'),
     retryRequestParams.value?.source || 'mail.activity',
     pageText('batch_action_retry', '重试'),
@@ -1686,7 +1692,7 @@ async function retryByReasonGroup(reasonCode: string) {
   }
   await runRetryBatch(
     ids,
-    resolveRetryNote(`Retry failed group ${reasonCode} from my-work.`),
+    resolveRetryNote(`${pageText('retry_note_default_failed_group_prefix', '从我的工作台重试失败原因组：')}${reasonCode}`),
     buildBatchRequestId('mw_retry_group'),
     retryRequestParams.value?.source || 'mail.activity',
     `${pageText('batch_action_retry_group_left', '重试(')}${reasonCode}${pageText('batch_action_retry_group_right', ')')}`,
