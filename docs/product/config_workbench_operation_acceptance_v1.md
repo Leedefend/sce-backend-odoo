@@ -429,3 +429,25 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - 移动端真实视口先展示当前配置任务，未出现横向溢出；full-page 截图包含后续系统菜单区域，这是证据截图的完整页面滚动结果，不影响真实视口合格结论。
 
 因此，本轮截图复核没有发现需要阻塞当前专题分支收口的问题。后续迭代方向应从新专题进入，不在本分支继续扩大范围。
+
+## 分支收口复验
+
+复验时间：2026-07-10
+
+已执行：
+
+```bash
+DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND_URL=http://127.0.0.1:18081 make verify.business_config.config_workbench_operation_local_closeout
+```
+
+结果：
+
+- 快速预检通过，包含 coverage guard、页面结构守卫、前端类型检查和 `git diff --check`。
+- 本地开发静态包构建通过，并重启 `sc-backend-odoo-dev-nginx-1`。
+- 浏览器操作验收通过：`journeys = 10/10`、`actions = 19/19`、`assertions = 64/64`、`screenshots = 9/9`。
+- `delivery = delivery_ready`，`professional = professional_ready`。
+- `consoleErrors = 0`，`requestFailed = 0`。
+- summary guard 复核通过，正式前端构建通过。
+- 收口后工作区保持干净。
+
+本分支可进入合并或部署前总闸流程；新的非阻断体验优化应进入后续专题分支。
