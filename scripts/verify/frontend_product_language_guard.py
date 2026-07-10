@@ -202,6 +202,7 @@ FORBIDDEN_PHRASES = {
     "payload.action || 'unknown'": "我的工作台建议动作反馈必须使用产品化兜底",
     "已触发=": "场景健康状态必须使用产品化中文标点与表达",
     "区块类型：{{ block.block_type": "页面区块兜底不能暴露工程字段名",
+    "未支持的区块类型": "页面区块兜底不能向用户暴露结构类型概念",
     "{{ block.kind }}": "场景区块预览不能直接展示结构类型编码",
     "typeof value === 'object' ? JSON.stringify(value)": "通用页面区块不能直接展示结构数据",
     "if (typeof value === 'object') return JSON.stringify(value);": "通用页面表格不能直接展示结构数据",

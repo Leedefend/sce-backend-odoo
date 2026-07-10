@@ -13,8 +13,8 @@
     />
   </div>
   <article v-else class="block-fallback">
-    <p class="block-fallback-title">未支持的区块类型</p>
-    <p class="block-fallback-meta">请联系管理员完善页面配置。</p>
+    <p class="block-fallback-title">页面内容暂不可用</p>
+    <p class="block-fallback-meta">请稍后刷新，或联系管理员检查页面配置。</p>
   </article>
 </template>
 
