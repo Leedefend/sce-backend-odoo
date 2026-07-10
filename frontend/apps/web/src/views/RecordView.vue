@@ -7,7 +7,7 @@
         <p class="meta">{{ subtitle }}</p>
         <p v-if="readonlyHint" class="meta readonly-hint">{{ readonlyHint }}</p>
         <p v-if="actionFeedback" class="meta action-feedback" :class="{ error: !actionFeedback.success }">
-          {{ actionFeedback.message }} <span v-if="!actionFeedback.success && actionFeedback.reasonCode" class="code">({{ actionFeedback.reasonCode }})</span>
+          {{ actionFeedback.message }} <span v-if="!actionFeedback.success && actionFeedback.reasonCode" class="code">({{ actionFeedbackReasonLabel(actionFeedback.reasonCode) }})</span>
         </p>
       </div>
       <div class="actions sc-product-primary-actions">
@@ -374,6 +374,24 @@ const statusTone = computed(() => {
 const errorCopy = computed(() => resolveErrorCopy(error.value, pageText('error_fallback', '记录加载失败')));
 const emptyCopy = computed(() => resolveEmptyCopy('record'));
 const renderMode = computed(() => 'layout_tree');
+
+function actionFeedbackReasonLabel(reason: unknown) {
+  const raw = String(reason || '').trim();
+  const key = raw.toUpperCase();
+  const mapping: Record<string, string> = {
+    ACTION_UNSUPPORTED: pageText('reason_action_unsupported', '暂不支持此操作'),
+    EXECUTE_FAILED: pageText('reason_execute_failed', '操作未完成'),
+    PERMISSION_DENIED: pageText('reason_permission_denied', '权限不足'),
+    NOT_FOUND: pageText('reason_not_found', '记录不存在'),
+    BUSINESS_RULE_FAILED: pageText('reason_business_rule_failed', '业务规则限制'),
+    MISSING_PARAMS: pageText('reason_missing_params', '参数不完整'),
+    NETWORK_ERROR: pageText('reason_network_error', '网络异常'),
+    SYSTEM_ERROR: pageText('reason_system_error', '系统异常'),
+  };
+  if (!raw) return pageText('reason_unknown', '待确认');
+  return mapping[key] || raw.replace(/[_-]+/g, ' ').toLowerCase().replace(/(^|\s)\S/g, (s) => s.toUpperCase());
+}
+
 const renderRecord = computed(() => {
   if (status.value !== 'editing') return recordData.value;
   return { ...(recordData.value || {}), ...draftValues.value };
