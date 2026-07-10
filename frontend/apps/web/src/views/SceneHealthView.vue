@@ -231,8 +231,8 @@ const headerActions = computed(() => {
 const autoDegradeLabel = computed(() => {
   const value = health.value?.auto_degrade;
   if (!value) return '未触发';
-  const reasons = Array.isArray(value.reason_codes) && value.reason_codes.length ? value.reason_codes.join('、') : '无';
-  return `${Boolean(value.triggered) ? '已触发' : '未触发'}；处理动作：${value.action_taken || '无'}；原因：${reasons}`;
+  const reasonCount = Array.isArray(value.reason_codes) ? value.reason_codes.filter(Boolean).length : 0;
+  return `${Boolean(value.triggered) ? '已触发' : '未触发'}；处理动作：${degradeActionLabel(value.action_taken)}；治理项：${reasonCount}`;
 });
 
 const healthSchemaVersionLabel = computed(() => {
@@ -257,10 +257,23 @@ function runtimeSourceLabel(value: unknown): string {
   if (source === 'stable') return '稳定版';
   if (source === 'rollback') return '回滚稳定版';
   if (source === 'contract') return '已发布配置';
-  if (source === 'fallback') return '兼容配置';
-  if (source === 'legacy') return '历史兼容';
+  if (source === 'fallback') return '系统补充配置';
+  if (source === 'legacy') return '历史数据适配';
   if (source === 'dev') return '开发配置';
   return source.replace(/[_-]+/g, ' ');
+}
+
+function degradeActionLabel(value: unknown): string {
+  const action = String(value || '').trim().toLowerCase();
+  const mapping: Record<string, string> = {
+    none: '无',
+    notify: '已提醒',
+    switch_channel: '已切换通道',
+    rollback: '已回滚稳定版',
+    pin_stable: '已固定稳定版',
+  };
+  if (!action) return '无';
+  return mapping[action] || action.replace(/[_-]+/g, ' ');
 }
 
 const governanceSnapshot = computed(() => {
@@ -291,9 +304,7 @@ const governanceReasonsLabel = computed(() => {
   const resolveCodes = Array.isArray(row.resolve_error_codes)
     ? row.resolve_error_codes.map((item) => String(item || '')).filter(Boolean)
     : [];
-  const autoText = autoCodes.length ? autoCodes.join('、') : '无';
-  const resolveText = resolveCodes.length ? resolveCodes.join('、') : '无';
-  return `自动降级：${autoText}；解析错误：${resolveText}`;
+  return `自动调整：${autoCodes.length}；解析异常：${resolveCodes.length}`;
 });
 
 const governanceConsumptionLabel = computed(() => {

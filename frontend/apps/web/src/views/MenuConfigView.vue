@@ -1006,7 +1006,7 @@ const auditSummary = computed(() => {
     reorderedCount: Number(summary.reordered_count || 0),
     movedCount: Number(summary.moved_count || 0),
     notApplicableCount: Array.isArray(summary.not_applicable_policy_ids) ? summary.not_applicable_policy_ids.length : 0,
-    runtimeSourceLabel: summary.runtime_source === MENU_CONFIG_RUNTIME_SOURCES.contract ? '已发布配置' : '兼容配置',
+    runtimeSourceLabel: summary.runtime_source === MENU_CONFIG_RUNTIME_SOURCES.contract ? '已发布配置' : '系统补充配置',
   };
 });
 
