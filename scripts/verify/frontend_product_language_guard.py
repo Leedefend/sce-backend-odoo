@@ -201,6 +201,11 @@ FORBIDDEN_PHRASES = {
     "window.alert(err instanceof Error ? err.message : '附件打开失败')": "列表页附件错误必须使用页面内反馈",
     "confirm(toolbarUiLabel('batch_confirm_delete'": "列表批量删除必须使用产品化确认弹窗",
     "confirm('确认删除这条关联记录？')": "关联记录删除必须使用产品化确认弹窗",
+    "window.confirm('确认导入场景能力包？')": "能力包导入必须使用产品化确认弹窗",
+    "window.confirm('确认回滚并固定到稳定版？')": "场景治理回滚必须使用产品化确认弹窗",
+    "window.confirm(`确认删除新增菜单": "菜单删除必须使用产品化确认弹窗",
+    "window.confirm([\n    `确认恢复": "配置版本恢复必须使用产品化确认弹窗",
+    "window.confirm(\n    `${pageText('confirm_batch_complete_prefix'": "我的工作台批量完成必须使用产品化确认弹窗",
 }
 
 

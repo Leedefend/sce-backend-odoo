@@ -677,6 +677,16 @@
         </section>
       </main>
     </div>
+    <ProductConfirmDialog
+      :open="deleteMenuConfirm.state.open"
+      :title="deleteMenuConfirm.state.title"
+      :message="deleteMenuConfirm.state.message"
+      :confirm-label="deleteMenuConfirm.state.confirmLabel"
+      :cancel-label="deleteMenuConfirm.state.cancelLabel"
+      :tone="deleteMenuConfirm.state.tone"
+      @confirm="deleteMenuConfirm.confirm"
+      @cancel="deleteMenuConfirm.cancel"
+    />
   </section>
 </template>
 
@@ -684,6 +694,7 @@
 import { computed, defineComponent, h, onMounted, reactive, ref, type PropType } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { NavNode } from '@sc/schema';
+import ProductConfirmDialog from '../components/ProductConfirmDialog.vue';
 import {
   loadMenuConfigurationAudit,
   loadMenuConfigurationPanel,
@@ -707,6 +718,7 @@ import { config } from '../config';
 import { BUSINESS_CONFIG_ROUTE_FLAGS, MENU_CONFIG_RUNTIME_SOURCES } from '../app/businessConfigBoundaries';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { useProductConfirmDialog } from '../composables/useProductConfirmDialog';
 
 type MenuConfigNavNode = NavNode & {
   action_id?: number | string;
@@ -798,6 +810,7 @@ const rollingBack = ref(false);
 const versionLoading = ref(false);
 const creatingMenu = ref(false);
 const deletingMenu = ref(false);
+const deleteMenuConfirm = useProductConfirmDialog();
 const error = ref('');
 const message = ref('');
 const saveNotice = ref(storedSaveNotice());
@@ -1733,7 +1746,13 @@ async function deleteSelectedMenu() {
     return;
   }
   const menuName = menu.name || menu.display_name || '当前菜单';
-  const confirmed = window.confirm(`确认删除新增菜单“${menuName}”？删除后会同步刷新导航配置。`);
+  const confirmed = await deleteMenuConfirm.open({
+    title: '确认删除菜单',
+    message: `确认删除新增菜单“${menuName}”？删除后会同步刷新导航配置。`,
+    confirmLabel: '删除',
+    cancelLabel: '取消',
+    tone: 'danger',
+  });
   if (!confirmed) return;
 
   const fallbackMenuId = Number(menu.parent_id || 0);

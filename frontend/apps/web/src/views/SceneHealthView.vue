@@ -165,15 +165,27 @@
         <p v-else class="empty-text">暂无治理事项</p>
       </details>
     </div>
+    <ProductConfirmDialog
+      :open="rollbackConfirm.state.open"
+      :title="rollbackConfirm.state.title"
+      :message="rollbackConfirm.state.message"
+      :confirm-label="rollbackConfirm.state.confirmLabel"
+      :cancel-label="rollbackConfirm.state.cancelLabel"
+      :tone="rollbackConfirm.state.tone"
+      @confirm="rollbackConfirm.confirm"
+      @cancel="rollbackConfirm.cancel"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import ProductConfirmDialog from '../components/ProductConfirmDialog.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
 import { buildStatusError, resolveErrorCopy, type StatusError } from '../composables/useStatus';
+import { useProductConfirmDialog } from '../composables/useProductConfirmDialog';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import {
@@ -197,6 +209,7 @@ const companies = ref<Array<{ id: number; name: string }>>([]);
 const targetChannel = ref<SceneChannel>('stable');
 const governanceReason = ref('');
 const governanceTraceId = ref('');
+const rollbackConfirm = useProductConfirmDialog();
 const router = useRouter();
 const session = useSessionStore();
 const pageContract = usePageContract('scene_health');
@@ -412,7 +425,13 @@ async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' |
   statusError.value = null;
   try {
     if (action === 'rollback') {
-      const ok = window.confirm('确认回滚并固定到稳定版？');
+      const ok = await rollbackConfirm.open({
+        title: pageText('confirm_rollback_title', '确认回滚稳定版'),
+        message: pageText('confirm_rollback_message', '回滚后将固定到稳定版治理结果，请确认是否继续。'),
+        confirmLabel: pageText('confirm_rollback_ok', '回滚'),
+        cancelLabel: pageText('confirm_cancel', '取消'),
+        tone: 'danger',
+      });
       if (!ok) {
         governanceBusy.value = false;
         return;

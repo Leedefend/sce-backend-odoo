@@ -144,13 +144,25 @@
         </div>
       </article>
     </section>
+    <ProductConfirmDialog
+      :open="importConfirm.state.open"
+      :title="importConfirm.state.title"
+      :message="importConfirm.state.message"
+      :confirm-label="importConfirm.state.confirmLabel"
+      :cancel-label="importConfirm.state.cancelLabel"
+      :tone="importConfirm.state.tone"
+      @confirm="importConfirm.confirm"
+      @cancel="importConfirm.cancel"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import ProductConfirmDialog from '../components/ProductConfirmDialog.vue';
 import StatusPanel from '../components/StatusPanel.vue';
+import { useProductConfirmDialog } from '../composables/useProductConfirmDialog';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import {
@@ -165,6 +177,7 @@ const busy = ref(false);
 const errorText = ref('');
 const traceId = ref('');
 const packages = ref<readonly ScenePackageInfo[]>([]);
+const importConfirm = useProductConfirmDialog();
 
 const importText = ref('');
 const importStrategy = ref<'skip_existing' | 'override_existing' | 'rename_on_conflict'>('skip_existing');
@@ -268,7 +281,13 @@ async function runImport() {
   errorText.value = '';
   try {
     const pkg = parsePackageJson();
-    const ok = window.confirm('确认导入场景能力包？');
+    const ok = await importConfirm.open({
+      title: pageText('confirm_import_title', '确认导入能力包'),
+      message: pageText('confirm_import_message', '导入后将按当前策略更新场景能力包，请确认是否继续。'),
+      confirmLabel: pageText('confirm_import_ok', '导入'),
+      cancelLabel: pageText('confirm_cancel', '取消'),
+      tone: 'danger',
+    });
     if (!ok) {
       busy.value = false;
       return;

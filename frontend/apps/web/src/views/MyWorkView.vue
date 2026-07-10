@@ -467,6 +467,16 @@
         <button class="link-btn" :disabled="loading || page >= totalPages" @click="goToPage(page + 1)">{{ pageText('pager_next', '下一页') }}</button>
       </section>
     </template>
+    <ProductConfirmDialog
+      :open="batchCompleteConfirm.state.open"
+      :title="batchCompleteConfirm.state.title"
+      :message="batchCompleteConfirm.state.message"
+      :confirm-label="batchCompleteConfirm.state.confirmLabel"
+      :cancel-label="batchCompleteConfirm.state.cancelLabel"
+      :tone="batchCompleteConfirm.state.tone"
+      @confirm="batchCompleteConfirm.confirm"
+      @cancel="batchCompleteConfirm.cancel"
+    />
   </section>
 </template>
 
@@ -475,8 +485,10 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
 import { trackUsageEvent } from '../api/usage';
+import ProductConfirmDialog from '../components/ProductConfirmDialog.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
+import { useProductConfirmDialog } from '../composables/useProductConfirmDialog';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 import { parseWorkspaceEntryContext, readWorkspaceContext } from '../app/workspaceContext';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
@@ -531,6 +543,7 @@ const useUnifiedMyWorkRenderer = computed(() => {
 const loading = ref(false);
 const errorText = ref('');
 const statusError = ref<StatusError | null>(null);
+const batchCompleteConfirm = useProductConfirmDialog();
 const sections = ref<MyWorkSection[]>([]);
 const summary = ref<MyWorkSummaryItem[]>([]);
 const items = ref<MyWorkRecordItem[]>([]);
@@ -1643,9 +1656,14 @@ function exportRetryFailedCsv() {
 
 async function completeSelectedTodos() {
   if (!todoSelectionIds.value.length) return;
-  if (!window.confirm(
-    `${pageText('confirm_batch_complete_prefix', '确认批量完成 ')}${todoSelectionIds.value.length}${pageText('confirm_batch_complete_suffix', ' 条待办？')}`,
-  )) return;
+  const confirmed = await batchCompleteConfirm.open({
+    title: pageText('confirm_batch_complete_title', '确认批量完成待办'),
+    message: `${pageText('confirm_batch_complete_prefix', '确认批量完成 ')}${todoSelectionIds.value.length}${pageText('confirm_batch_complete_suffix', ' 条待办？')}`,
+    confirmLabel: pageText('confirm_batch_complete_ok', '完成'),
+    cancelLabel: pageText('confirm_cancel', '取消'),
+    tone: 'normal',
+  });
+  if (!confirmed) return;
   loading.value = true;
   errorText.value = '';
   statusError.value = null;

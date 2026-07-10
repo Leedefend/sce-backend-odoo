@@ -1116,12 +1116,23 @@
         </span>
       </div>
     </section>
+    <ProductConfirmDialog
+      :open="rollbackConfirm.state.open"
+      :title="rollbackConfirm.state.title"
+      :message="rollbackConfirm.state.message"
+      :confirm-label="rollbackConfirm.state.confirmLabel"
+      :cancel-label="rollbackConfirm.state.cancelLabel"
+      :tone="rollbackConfirm.state.tone"
+      @confirm="rollbackConfirm.confirm"
+      @cancel="rollbackConfirm.cancel"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import ProductConfirmDialog from '../components/ProductConfirmDialog.vue';
 import {
   auditBusinessAnalysisConfig,
   auditBusinessListSearchConfig,
@@ -1160,6 +1171,7 @@ import {
 } from '../app/businessConfigBoundaries';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { useProductConfirmDialog } from '../composables/useProductConfirmDialog';
 import { useSessionStore } from '../stores/session';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
@@ -1239,6 +1251,7 @@ const listSearchSaving = ref(false);
 const approvalLoading = ref(false);
 const error = ref('');
 const message = ref({ text: '', detail: '' });
+const rollbackConfirm = useProductConfirmDialog();
 const surface = ref<BusinessConfigSurfacePayload | null>(null);
 const coverageScan = ref<BusinessConfigCoverageScanPayload | null>(null);
 const showOnlyIssues = ref(false);
@@ -3489,11 +3502,17 @@ async function rollbackContractFromWorkbench(
 ) {
   if (!contract?.name || (versionNo ? versionNo === contract.version_no : contract.versions.length < 2)) return;
   const targetText = versionNo ? `v${versionNo}` : '上一版';
-  const confirmed = window.confirm([
-    `确认恢复${versionContractDisplayName(contract)}的${targetText}？`,
-    versionContractImpactText(contract),
-    '恢复后会立即发布为新的当前配置，刷新业务页面后生效。',
-  ].join('\n'));
+  const confirmed = await rollbackConfirm.open({
+    title: '确认恢复配置版本',
+    message: [
+      `确认恢复${versionContractDisplayName(contract)}的${targetText}？`,
+      versionContractImpactText(contract),
+      '恢复后会立即发布为新的当前配置，刷新业务页面后生效。',
+    ].join('\n'),
+    confirmLabel: '恢复',
+    cancelLabel: '取消',
+    tone: 'danger',
+  });
   if (!confirmed) return;
   listSearchSaving.value = true;
   error.value = '';
