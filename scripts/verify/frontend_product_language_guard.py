@@ -230,6 +230,8 @@ FORBIDDEN_PHRASES = {
     "console.info('[ContractFormPage] auxiliary form preload skipped": "表单辅助数据预加载兜底不能写入生产控制台",
     "console.info(`[scene-mutation]": "场景操作结果必须通过页面反馈，不能只写入控制台",
     "console.warn('[scene-view] scene-ready hydration failed": "场景兜底渲染不能写入生产控制台",
+    "console.error('[ActionView] render failed": "列表渲染失败必须通过页面错误面板反馈，不能只写入控制台",
+    "console.error('[ContractFormPage] render failed": "表单渲染失败必须通过页面错误面板反馈，不能只写入控制台",
 }
 
 

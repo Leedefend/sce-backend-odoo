@@ -9861,7 +9861,6 @@ async function discardChanges() {
 onErrorCaptured((err) => {
   const message = err instanceof Error ? err.message : String(err || '未知渲染异常');
   renderErrorMessage.value = `表单页面渲染失败：${message}`;
-  console.error('[ContractFormPage] render failed', err);
   return false;
 });
 
