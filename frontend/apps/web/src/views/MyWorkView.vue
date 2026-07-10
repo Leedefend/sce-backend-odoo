@@ -1628,15 +1628,31 @@ function escapeCsvCell(raw: unknown) {
   return text;
 }
 
+function failedCategoryLabel(category: unknown) {
+  const raw = String(category || '').trim();
+  const key = raw.toUpperCase();
+  const mapping: Record<string, string> = {
+    BUSINESS: pageText('failed_category_business', '业务限制'),
+    BUSINESS_RULE: pageText('failed_category_business', '业务限制'),
+    PERMISSION: pageText('failed_category_permission', '权限限制'),
+    ACCESS: pageText('failed_category_permission', '权限限制'),
+    VALIDATION: pageText('failed_category_validation', '校验未通过'),
+    NETWORK: pageText('failed_category_network', '网络异常'),
+    SYSTEM: pageText('failed_category_system', '系统异常'),
+    UNKNOWN: pageText('failed_category_unknown', '待确认'),
+  };
+  if (!raw) return '';
+  return mapping[key] || raw.replace(/[_-]+/g, ' ').toLowerCase().replace(/(^|\s)\S/g, (s) => s.toUpperCase());
+}
+
 function buildRetryFailedCsv() {
-  const header = ['待办ID', '失败原因', '原因编码', '是否可重试', '错误分类', '建议动作', '错误消息', '追踪ID'];
+  const header = ['待办编号', '失败原因', '可再次处理', '处理类型', '建议处理', '说明', '处理编号'];
   const rows = retryFailedItems.value.map((item) => [
     item.id,
     workItemReasonLabel(item.reason_code),
-    item.reason_code || '',
     item.retryable === true ? '是' : item.retryable === false ? '否' : '',
-    item.error_category || '',
-    item.suggested_action || '',
+    failedCategoryLabel(item.error_category),
+    resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable),
     item.message || '',
     item.trace_id || '',
   ]);
