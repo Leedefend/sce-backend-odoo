@@ -79,7 +79,7 @@
       </section>
 
       <article v-if="pageSectionEnabled('meta', true) && pageSectionTagIs('meta', 'section')" class="meta" :style="pageSectionStyle('meta')">
-        <p><strong>契约引用：</strong> {{ health.contract_ref || '-' }}</p>
+        <p><strong>配置版本：</strong> {{ health.contract_ref || '未返回' }}</p>
         <p><strong>追踪 ID：</strong> {{ health.trace_id || '-' }}</p>
         <p><strong>更新时间：</strong> {{ health.last_updated_at || '-' }}</p>
         <p><strong>自动降级：</strong> {{ autoDegradeLabel }}</p>
