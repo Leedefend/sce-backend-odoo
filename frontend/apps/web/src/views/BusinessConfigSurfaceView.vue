@@ -179,19 +179,19 @@
     <section v-if="advancedPanelOpen" class="scope-panel">
       <label>
         <span>业务对象</span>
-        <input v-model="scopeModel" type="text" placeholder="res.partner" />
+        <input v-model="scopeModel" type="text" placeholder="输入业务对象编码或名称" />
       </label>
       <label>
-        <span>页面ID</span>
+        <span>页面编号</span>
         <input v-model.number="scopeActionId" type="number" min="0" />
       </label>
       <label>
-        <span>视图ID</span>
+        <span>视图编号</span>
         <input v-model.number="scopeViewId" type="number" min="0" />
       </label>
       <label>
         <span>角色编码</span>
-        <input v-model="scopeRoleKey" type="text" placeholder="可选 role_key" />
+        <input v-model="scopeRoleKey" type="text" placeholder="可选：按角色范围读取" />
       </label>
       <button type="button" class="ghost small" :disabled="loading" @click="applyScopeAndLoad">读取配置对象</button>
     </section>
