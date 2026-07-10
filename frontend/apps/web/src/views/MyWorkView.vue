@@ -126,7 +126,12 @@
             :placeholder="pageText('retry_note_placeholder', '可选：补充本次重试说明')"
           />
         </label>
-        <pre>{{ retryRequestJson }}</pre>
+        <dl class="retry-request-summary">
+          <div v-for="row in retryRequestPreviewRows" :key="row.label" class="retry-request-summary-row">
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.value }}</dd>
+          </div>
+        </dl>
       </details>
       <p v-if="retryRetryableSummary" class="retry-summary">
         {{ pageText('retry_capability_prefix', '重试能力：可重试 ') }}{{ retryRetryableSummary.retryable }}{{ pageText('retry_capability_middle', ' / 不可重试 ') }}{{ retryRetryableSummary.non_retryable }}
@@ -727,20 +732,29 @@ const visibleRetryFailedItems = computed(() => {
   if (retryFailedExpanded.value) return retryFilteredItems.value;
   return retryFilteredItems.value.slice(0, retryPreviewLimit);
 });
-const retryRequestJson = computed(() => {
-  if (!retryRequestParams.value) return '';
-  try {
-    return JSON.stringify(
-      {
-        ...retryRequestParams.value,
-        note: retryNoteDraft.value || retryRequestParams.value.note || '',
-      },
-      null,
-      2,
-    );
-  } catch {
-    return '';
-  }
+const retryRequestPayload = computed(() => {
+  if (!retryRequestParams.value) return null;
+  return {
+    ...retryRequestParams.value,
+    note: retryNoteDraft.value || retryRequestParams.value.note || '',
+  };
+});
+const retryRequestPreviewRows = computed(() => {
+  const payload = retryRequestPayload.value;
+  if (!payload) return [];
+  const retryIds = Array.isArray(payload.retry_ids)
+    ? payload.retry_ids.filter((id) => Number.isFinite(Number(id)) && Number(id) > 0)
+    : [];
+  const firstIds = retryIds.slice(0, 8).join('、');
+  const idText = retryIds.length
+    ? `${retryIds.length} 条${firstIds ? `（${firstIds}${retryIds.length > 8 ? '...' : ''}）` : ''}`
+    : '未选择';
+  return [
+    { label: pageText('retry_preview_scope_label', '重试范围'), value: idText },
+    { label: pageText('retry_preview_source_label', '来源'), value: payload.source || pageText('retry_preview_source_default', '待办任务') },
+    { label: pageText('retry_preview_request_label', '请求编号'), value: payload.request_id || pageText('retry_preview_request_auto', '执行时生成') },
+    { label: pageText('retry_preview_note_label', '备注'), value: payload.note || pageText('retry_preview_note_empty', '未填写') },
+  ];
 });
 const batchEvidenceText = computed(() => {
   if (!lastBatchTraceId.value && !lastReplayAuditId.value) return '';
@@ -1561,7 +1575,7 @@ function focusFailedInMainList() {
 }
 
 async function copyRetryRequest() {
-  const payload = retryRequestParams.value;
+  const payload = retryRequestPayload.value;
   if (!payload) return;
   try {
     await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
@@ -1574,12 +1588,9 @@ async function copyRetryRequest() {
 }
 
 function exportRetryRequestJson() {
-  if (!retryRequestParams.value) return;
+  const payload = retryRequestPayload.value;
+  if (!payload) return;
   try {
-    const payload = {
-      ...retryRequestParams.value,
-      note: retryNoteDraft.value || retryRequestParams.value.note || '',
-    };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8;' });
     const href = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -2344,17 +2355,6 @@ watch(
   margin-top: 8px;
 }
 
-.retry-request-preview pre {
-  margin: 6px 0 0;
-  padding: 8px;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 6px;
-  background: var(--sc-app-panel);
-  color: var(--sc-app-text-secondary);
-  font-size: 12px;
-  overflow-x: auto;
-}
-
 .retry-note-editor {
   margin-top: 6px;
   display: grid;
@@ -2368,6 +2368,35 @@ watch(
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+.retry-request-summary {
+  margin: 8px 0 0;
+  padding: 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel);
+  display: grid;
+  gap: 6px;
+}
+
+.retry-request-summary-row {
+  display: grid;
+  grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  font-size: 12px;
+}
+
+.retry-request-summary-row dt {
+  color: var(--sc-app-text-muted);
+  white-space: nowrap;
+}
+
+.retry-request-summary-row dd {
+  margin: 0;
+  color: var(--sc-app-text-secondary);
+  overflow-wrap: anywhere;
 }
 
 .retry-note-editor textarea {
