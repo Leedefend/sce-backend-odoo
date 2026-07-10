@@ -267,6 +267,21 @@ assertContains(
   /PAGE_MODES[\s\S]+PRODUCT_PAGE_REGION_CLASSES|PRODUCT_PAGE_REGION_CLASSES[\s\S]+PAGE_MODES/,
   "product page structure design must reference runtime canonical constants",
 );
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  /productPageRegionAlignment/,
+  "config workbench acceptance doc must describe product page region alignment evidence",
+);
+assertContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  /productPageRuntimeSemantics/,
+  "config workbench acceptance doc must describe runtime page semantics evidence",
+);
+assertNotContains(
+  "docs/product/config_workbench_operation_acceptance_v1.md",
+  /62\s*\/\s*62|当前为 62|合格线\s*\|\s*62/,
+  "config workbench acceptance doc must not retain obsolete 62/62 assertion baseline",
+);
 
 assertContains(
   "frontend/apps/web/src/pages/ContractFormPage.vue",

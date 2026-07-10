@@ -95,8 +95,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | journey_passed_count | 已通过用户路径数 | 10 |
 | action_count | 脚本模拟的关键用户动作数 | 19 |
 | action_passed_count | 已成功执行的关键动作数 | 19 |
-| assertion_count | 用户可感知断言数 | 62 |
-| assertion_passed_count | 已通过断言数 | 62 |
+| assertion_count | 用户可感知断言数 | 以报告 `metrics.assertions.length` 为准，当前为 64 |
+| assertion_passed_count | 已通过断言数 | 必须等于 `assertion_count`，当前为 64 |
 | screenshot_required_count | 需要截图留证的关键节点数 | 9 |
 | screenshot_captured_count | 实际截图数 | 9 |
 | browser_console_error_count | 控制台错误数 | 0 |
@@ -105,6 +105,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | health_passed | 浏览器健康检查 | true |
 
 只有这些指标全部达到合格线，才能给出“本专题操作级验收通过”的结论。
+
+`summary_guard` 不再维护固定断言总数，而是读取 `report.json` 中的实际覆盖数量，要求 journey、action、assertion、screenshot 全部通过。同时必须包含页面结构关键断言：`product_workspace_structural_gap_unified`、`product_page_region_outer_edges_aligned`、`product_page_runtime_semantics_present`、`business_runtime_workspace_structural_gap_unified`、`menu_workspace_aligned_with_header`、`mobile_no_horizontal_overflow`、`no_console_errors`、`no_request_failures`。
 
 报告中 `checks` 用于解释结论，必须包含：
 
@@ -142,6 +144,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - 返回工作台后的标题和配置卡片。
 - 移动端真实视口中当前配置区的首屏位置、视觉顺序和页面宽度。
 - 移动端配置工作台顶栏必须使用紧凑模式，不展示平台副标题。
+- `productPageRegionAlignment`：配置工作台、业务列表、业务表单、菜单配置的 Header/Toolbar/Main Surface 外边界对齐证据，实际渲染区域 `maxDelta <= 1px`。
+- `productPageRuntimeSemantics`：配置工作台、业务列表、业务表单、菜单配置真实 DOM 中必须存在产品页面模式和区域语义 class。
 
 报告中 `screenshots` 是证据链，至少包含：
 
@@ -318,6 +322,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 | 能力深度 | 不止有入口，表单、列表搜索、审批、菜单都能进入可操作配置面 |
 | 流程恢复 | 从子能力返回后保持原业务页面、配置卡片和上下文 |
 | 响应式韧性 | 390px 移动端结构顺序、宽度和关键区域稳定 |
+| 页面语义可审计 | 运行时 DOM 能证明页面模式、Header、Toolbar、Main Surface 等产品语义存在 |
 | 边界完整性 | 菜单配置能力边界与业务返回上下文不混淆 |
 | 运行健康 | 无 console error，无非取消类 failed request |
 | 证据和可重复性 | 有命令、报告、截图、指标，能重复复验 |
@@ -343,6 +348,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 ## 本轮验收结论
 
 验收时间：2026-07-09
+最近复验时间：2026-07-10
 
 验收环境：
 
@@ -358,7 +364,7 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 
 - `journey_passed_count = 10 / 10`
 - `action_passed_count = 19 / 19`
-- `assertion_passed_count = 62 / 62`
+- `assertion_passed_count = 64 / 64`
 - `screenshot_captured_count = 9 / 9`
 - `browser_console_error_count = 0`
 - `browser_request_failed_count = 0`
@@ -369,6 +375,8 @@ CONFIG_WORKBENCH_ACCEPTANCE_VERBOSE=1 DB_NAME=sc_demo WORKFLOW_CONTRACT_FRONTEND
 - `product_usability.blocking_issues = []`
 - `product_usability.risk_items = []`
 - `product_usability.page_structure.status = pass`
+- `checks.productPageRegionAlignment[*].maxDelta = 0`
+- `checks.productPageRuntimeSemantics[*].ready = true`
 - `professional_readiness.status = professional_ready`
 - `professional_readiness.score_total = 30 / 30`
 - `professional_readiness.blockers = []`
