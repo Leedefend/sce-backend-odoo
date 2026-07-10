@@ -14,7 +14,7 @@
   </div>
   <article v-else class="block-fallback">
     <p class="block-fallback-title">未支持的区块类型</p>
-    <p class="block-fallback-meta">区块类型：{{ block.block_type || '未识别' }}</p>
+    <p class="block-fallback-meta">请联系管理员完善页面配置。</p>
   </article>
 </template>
 

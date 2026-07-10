@@ -65,13 +65,20 @@ function columnLabel(col: string) {
   const labels = source.value.column_labels && typeof source.value.column_labels === 'object'
     ? source.value.column_labels as Record<string, string>
     : {};
-  return labels[col] || col;
+  return labels[col] || humanizeKey(col);
 }
 
 function stringify(value: unknown) {
   if (value === null || value === undefined) return '--';
-  if (typeof value === 'object') return JSON.stringify(value);
+  if (typeof value === 'object') return '多项内容';
   return String(value);
+}
+
+function humanizeKey(value: string) {
+  return String(value || '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() || '未命名';
 }
 </script>
 

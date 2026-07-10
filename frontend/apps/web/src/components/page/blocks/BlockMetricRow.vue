@@ -70,11 +70,18 @@ const metrics = computed<MetricItem[]>(() => {
     .slice(0, 8)
     .map(([key, value]) => ({
       key,
-      label: key,
-      value: typeof value === 'object' ? JSON.stringify(value) : String(value ?? '--'),
+      label: humanizeKey(key),
+      value: typeof value === 'object' ? '多项内容' : String(value ?? '--'),
       tone: 'neutral',
     }));
 });
+
+function humanizeKey(value: string) {
+  return String(value || '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() || '未命名';
+}
 
 function emitAction(item: MetricItem) {
   const actionKey = String(item.actionKey || '').trim();

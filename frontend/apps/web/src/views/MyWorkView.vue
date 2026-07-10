@@ -72,7 +72,7 @@
     >
       <summary class="retry-bar">
         <span>{{ pageText('retry_failed_prefix', '失败待办 ') }}{{ retryFailedIds.length }}{{ pageText('retry_failed_suffix', ' 条') }}</span>
-        <span v-if="lastBatchExecutionMode" class="meta-chip">{{ pageText('retry_mode_prefix', '模式: ') }}{{ lastBatchExecutionMode }}</span>
+        <span v-if="lastBatchExecutionMode" class="meta-chip">{{ pageText('retry_mode_prefix', '处理方式：') }}{{ lastBatchExecutionMode }}</span>
         <span v-if="lastBatchReplay" class="meta-chip replay">{{ pageText('retry_replay', '重放结果') }}</span>
         <span class="retry-expand-hint">{{ pageText('retry_expand_hint', '展开处理') }}</span>
       </summary>
@@ -1828,7 +1828,7 @@ function applyBatchFeedback(
     actionFeedback.value = `${actionLabel}${pageText('batch_feedback_partial_suffix', '部分失败：')}${result.done_count}${pageText('batch_feedback_success_count_suffix', ' 成功，')}${result.failed_count}${pageText('batch_feedback_failed_count_suffix', ' 失败')}${
       failedPreview ? `${pageText('batch_feedback_preview_left', '（')}${failedPreview}${pageText('batch_feedback_preview_right', '）')}` : ''
     }${typeof todoRemaining.value === 'number' ? `${pageText('batch_feedback_remaining_prefix', '，剩余待办 ')}${todoRemaining.value}${pageText('batch_feedback_remaining_suffix', ' 条')}` : ''}${
-      lastBatchReplay.value ? `${pageText('batch_feedback_replay_prefix', '，命中重放#')}${lastReplayAuditId.value || 0}` : ''
+      lastBatchReplay.value ? `${pageText('batch_feedback_replay_prefix', '，已使用重放审计编号 ')}${lastReplayAuditId.value || 0}` : ''
     }`;
     actionFeedbackError.value = true;
     return;
@@ -1836,7 +1836,7 @@ function applyBatchFeedback(
 
   actionFeedback.value = `${actionLabel}${pageText('batch_feedback_success_suffix', '成功：')}${result.done_count}${pageText('batch_feedback_done_suffix', ' 条')}${
     typeof todoRemaining.value === 'number' ? `${pageText('batch_feedback_remaining_prefix', '，剩余待办 ')}${todoRemaining.value}${pageText('batch_feedback_remaining_suffix', ' 条')}` : ''
-  }${lastBatchReplay.value ? `${pageText('batch_feedback_replay_prefix', '，命中重放#')}${lastReplayAuditId.value || 0}` : ''}`;
+  }${lastBatchReplay.value ? `${pageText('batch_feedback_replay_prefix', '，已使用重放审计编号 ')}${lastReplayAuditId.value || 0}` : ''}`;
   actionFeedbackError.value = false;
 }
 

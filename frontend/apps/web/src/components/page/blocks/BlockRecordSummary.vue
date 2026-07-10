@@ -54,10 +54,17 @@ const rows = computed(() => {
   if (!props.dataset || typeof props.dataset !== 'object') return [];
   return Object.entries(props.dataset as Record<string, unknown>).slice(0, 10).map(([key, value]) => ({
     key,
-    label: key,
-    value: typeof value === 'object' ? JSON.stringify(value) : String(value ?? '--'),
+    label: humanizeKey(key),
+    value: typeof value === 'object' ? '多项内容' : String(value ?? '--'),
   }));
 });
+
+function humanizeKey(value: string) {
+  return String(value || '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() || '未命名';
+}
 
 const summaryClass = computed(() => {
   const zone = String(props.zoneKey || '');

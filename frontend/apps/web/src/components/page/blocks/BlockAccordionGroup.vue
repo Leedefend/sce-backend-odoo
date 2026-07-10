@@ -37,10 +37,17 @@ const rows = computed(() => {
   if (!props.dataset || typeof props.dataset !== 'object') return [];
   return Object.entries(props.dataset as Record<string, unknown>).slice(0, 8).map(([key, value]) => ({
     key,
-    title: key,
-    description: typeof value === 'object' ? JSON.stringify(value) : String(value ?? '--'),
+    title: humanizeKey(key),
+    description: typeof value === 'object' ? '多项内容' : String(value ?? '--'),
   }));
 });
+
+function humanizeKey(value: string) {
+  return String(value || '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() || '未命名';
+}
 </script>
 
 <style scoped>
