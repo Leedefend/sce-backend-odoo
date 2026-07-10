@@ -241,6 +241,31 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertEqual(scope, "ui:list_columns:list:action:42")
         self.assertEqual(pref.normalize_preference_key("unknown"), "list_columns")
 
+    def test_formal_list_surface_rejects_test_placeholder_contract(self):
+        action = self.env.ref("smart_construction_core.action_sc_project_list", raise_if_not_found=False)
+        if not action:
+            self.skipTest("smart_construction_core.action_sc_project_list not installed")
+
+        with self.assertRaises(ValidationError):
+            self.env["ui.business.config.contract"].create({
+                "name": "codex_view_orch_surface_test:tree",
+                "model": "project.project",
+                "view_type": "tree",
+                "action_id": action.id,
+                "status": "published",
+                "contract_json": {
+                    "view_orchestration": {
+                        "views": {
+                            "tree": {
+                                "columns": [
+                                    {"name": "name", "label": "CODEX_NAME_COLUMN", "sequence": 10},
+                                ],
+                            },
+                        },
+                    },
+                },
+            })
+
     def test_collaboration_handlers_declare_odoo_native_authorities(self):
         self.assertEqual(ChatterTimelineHandler.SOURCE_KIND, "odoo_collaboration_timeline_projection")
         self.assertEqual(ChatterPostHandler.SOURCE_AUTHORITY, "mail.message")
