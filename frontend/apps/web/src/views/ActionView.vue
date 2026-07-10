@@ -492,7 +492,7 @@
       </header>
       <div class="advanced-contract">
         <p class="contract-label">{{ t('label.contract_summary', '配置摘要') }}</p>
-        <p>{{ t('label.view_type', '视图类型') }}：{{ contractViewType || '-' }} · {{ t('label.view_mode', '页面模式') }}：{{ vm.page.viewMode || '-' }} · {{ t('label.record_count', '记录数') }}：{{ records.length }}</p>
+        <p>{{ t('label.view_type', '视图类型') }}：{{ contractViewTypeDisplay }} · {{ t('label.view_mode', '页面模式') }}：{{ pageViewModeDisplay }} · {{ t('label.record_count', '记录数') }}：{{ records.length }}</p>
       </div>
       <div v-if="vm.content.advanced?.rows.length" class="advanced-list">
         <article v-for="row in vm.content.advanced?.rows || []" :key="row.key" class="advanced-item">
@@ -1372,6 +1372,8 @@ const toolbarViewModeLabels = computed(() =>
     return acc;
   }, {}),
 );
+const contractViewTypeDisplay = computed(() => viewModeLabel(contractViewType.value || ''));
+const pageViewModeDisplay = computed(() => viewModeLabel(vm.value.page.viewMode || ''));
 const showToolbarSearch = computed(() => canRenderActionSurfaceToolbar.value);
 const quickFiltersVisible = computed(() =>
   isSectionVisible('quick_filters', {

@@ -235,6 +235,8 @@ FORBIDDEN_PHRASES = {
     "结构：{{ health.schema_version": "场景健康页不能直接展示协议结构字段",
     "运行来源：</strong> {{ governanceSnapshot.runtime_source": "场景健康页不能直接展示运行来源字段",
     "runGovernance('export_contract')\">导出契约": "场景健康页治理导出操作必须使用产品化文案",
+    "视图类型') }}：{{ contractViewType || '-'": "列表配置摘要必须展示产品化视图名称",
+    "页面模式') }}：{{ vm.page.viewMode || '-'": "列表配置摘要必须展示产品化页面模式",
 }
 
 
