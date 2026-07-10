@@ -104,6 +104,19 @@ export function resolveBatchFailureRetryTag(options: {
   return '';
 }
 
+export function resolveBatchFailureReasonLabel(reasonCode: unknown): string {
+  const code = String(reasonCode || '').trim().toUpperCase();
+  if (!code) return '';
+  if (code.includes('PERMISSION') || code.includes('FORBIDDEN') || code.includes('ACCESS')) return '权限限制';
+  if (code.includes('VALIDATION') || code.includes('INVALID')) return '校验未通过';
+  if (code.includes('CONFLICT')) return '数据已变化';
+  if (code.includes('NOT_FOUND')) return '记录不可见';
+  if (code.includes('NETWORK')) return '网络异常';
+  if (code.includes('BUSINESS') || code.includes('RULE')) return '业务限制';
+  if (code.includes('SYSTEM') || code.includes('ERROR')) return '系统异常';
+  return '处理受限';
+}
+
 export function mapBatchFailureDetailLines(options: {
   preview: Array<Record<string, unknown>>;
   resolveHint: (row: BatchFailurePreviewRow) => string;
@@ -119,7 +132,8 @@ export function mapBatchFailureDetailLines(options: {
       retryableText: options.retryableText,
       nonRetryableText: options.nonRetryableText,
     });
-    const text = [`#${row.id || ''} ${row.reason_code || ''}: ${row.message || ''}`, retryTag, hint].filter(Boolean).join(' | ');
+    const title = [`事项 ${row.id || ''}`, resolveBatchFailureReasonLabel(row.reason_code)].filter(Boolean).join(' · ');
+    const text = [title, row.message || '', retryTag, hint].filter(Boolean).join(' | ');
     const actionMeta = options.resolveActionMeta(row);
     return {
       text,

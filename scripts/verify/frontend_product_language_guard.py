@@ -253,6 +253,7 @@ FORBIDDEN_PHRASES = {
     "'错误分类', '建议动作', '错误消息', '追踪ID'": "我的工作台失败明细导出必须使用业务处理口径",
     "item.suggested_action || ''": "我的工作台失败明细导出必须展示产品化建议动作",
     "item.error_category || ''": "我的工作台失败明细导出必须展示产品化处理类型",
+    "row.reason_code || ''}:": "批量失败明细不能直接暴露原因编码",
     "window.alert(err instanceof Error ? err.message : '附件打开失败')": "列表页附件错误必须使用页面内反馈",
     "confirm(toolbarUiLabel('batch_confirm_delete'": "列表批量删除必须使用产品化确认弹窗",
     "confirm('确认删除这条关联记录？')": "关联记录删除必须使用产品化确认弹窗",
