@@ -3427,9 +3427,13 @@ USER_CONFIRMED_FORMAL_LIST_ACTION_XMLIDS = {
     "smart_construction_core.action_project_material_plan",
     "smart_construction_core.action_sc_labor_usage_ticket",
     "smart_construction_core.action_sc_labor_usage_casual",
+    "smart_construction_core.action_sc_equipment_usage",
     "smart_construction_core.action_sc_equipment_usage_shift_user_confirmed",
     "smart_construction_core.action_sc_material_quote_user_confirmed",
     "smart_construction_core.action_sc_subcontract_request_user_confirmed",
+    "smart_construction_core.action_sc_material_rental_in_acceptance",
+    "smart_construction_core.action_sc_material_rental_return_acceptance",
+    "smart_construction_core.action_sc_invoice_registration_user",
     "smart_construction_core.action_payment_request_user_payment_apply",
     "smart_construction_core.action_sc_payment_execution_partner_payment",
     "smart_construction_core.action_sc_legacy_fuel_card_fact",
@@ -3446,6 +3450,31 @@ def _user_confirmed_formal_list_action_ids(env):
         if rec and rec.exists():
             ids.add(int(rec.id))
     return ids
+
+
+def _projected_contract_action_id(data):
+    if not isinstance(data, dict):
+        return 0
+    head = data.get("head") if isinstance(data.get("head"), dict) else {}
+    source_meta = data.get("source_meta") if isinstance(data.get("source_meta"), dict) else {}
+    page_info = data.get("pageInfo") if isinstance(data.get("pageInfo"), dict) else {}
+    for raw in (
+        data.get("action_id"),
+        data.get("actionId"),
+        head.get("action_id"),
+        head.get("actionId"),
+        source_meta.get("action_id"),
+        source_meta.get("actionId"),
+        page_info.get("action_id"),
+        page_info.get("actionId"),
+    ):
+        try:
+            action_id = int(raw or 0)
+        except Exception:
+            action_id = 0
+        if action_id > 0:
+            return action_id
+    return 0
 
 
 def smart_core_finalize_projected_contract_data(env, data, context):
@@ -3466,16 +3495,10 @@ def smart_core_finalize_projected_contract_data(env, data, context):
         except Exception:
             _logger.exception("Failed to finalize project form contract surface")
             return None
-    try:
-        action_id = int(data.get("action_id") or head.get("action_id") or 0)
-    except Exception:
-        action_id = 0
-    list_profile = data.get("list_profile") if isinstance(data.get("list_profile"), dict) else {}
-    column_policy = list_profile.get("column_policy") if isinstance(list_profile.get("column_policy"), dict) else {}
-    if str(column_policy.get("reason") or "").strip() == "business_list_config_contract_authoritative":
-        return None
+    action_id = _projected_contract_action_id(data)
     if not action_id or action_id not in _user_confirmed_formal_list_action_ids(env):
         return None
+    list_profile = data.get("list_profile") if isinstance(data.get("list_profile"), dict) else {}
     action = env["ir.actions.act_window"].sudo().browse(action_id)
     if not action.exists() or not action.res_model:
         return None
@@ -3581,6 +3604,11 @@ def smart_core_finalize_projected_contract_data(env, data, context):
                 "allow_order": False,
                 "locked_columns": columns,
                 "must_request_columns": columns,
+            },
+            "column_policy": {
+                "mode": "strict",
+                "reason": "formal_product_action_bound_tree_authoritative",
+                "owner_layer": "ir.actions.act_window.view_id",
             },
         }
     return locked

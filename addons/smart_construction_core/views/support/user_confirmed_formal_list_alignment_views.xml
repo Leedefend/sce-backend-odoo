@@ -3,8 +3,11 @@
         <field name="name">方单</field>
         <field name="res_model">sc.labor.usage</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_labor_usage_ticket_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_labor_usage_ticket_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_labor_usage_form')})
+        ]"/>
         <field name="domain">[]</field>
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
@@ -13,8 +16,11 @@
         <field name="name">零星用工</field>
         <field name="res_model">sc.labor.usage</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_labor_usage_casual_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_labor_usage_casual_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_labor_usage_form')})
+        ]"/>
         <field name="domain">[]</field>
         <field name="context">{'search_default_group_project': 1}</field>
     </record>

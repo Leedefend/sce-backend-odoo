@@ -96,6 +96,15 @@ async function main() {
     }, { intentName, params, token, dbName: process.env.DB || 'sc_demo' });
   }
 
+  async function waitForSettledUserSurface(targetPage) {
+    await targetPage.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    await targetPage.waitForFunction(() => {
+      const text = document.body?.innerText || '';
+      return !/正在加载列表|正在加载|Loading/i.test(text);
+    }, null, { timeout: 15000 }).catch(() => {});
+    await targetPage.waitForTimeout(300);
+  }
+
   const init = await intent('system.init', {
     with_preload: false,
     with: ['workspace_home'],
@@ -170,13 +179,13 @@ async function main() {
       };
       try {
         await page.goto(`${base}${route}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-        await page.waitForTimeout(700);
+        await waitForSettledUserSurface(page);
         const text = await page.locator('body').innerText({ timeout: 10000 }).catch(() => '');
         const headers = await page.locator('th').evaluateAll((nodes) => (
           nodes.map((node) => node.textContent?.trim()).filter(Boolean).slice(0, 30)
         )).catch(() => []);
-        const hasErrorText = /render error|contract not renderable|missing required nav|页面加载失败|异常|Traceback|Cannot read/i.test(text);
+        const hasErrorText = /render error|contract not renderable|missing required nav|页面加载失败|页面异常|系统异常|Traceback|Cannot read/i.test(text);
+        const hasLoadingText = /正在加载列表|正在加载|Loading/i.test(text);
         const lastLabel = String(entry.path || '').split(' / ').pop() || '';
         const titleVisible = entry.label ? text.includes(entry.label) || text.includes(lastLabel) : true;
         const hasHorizontalOverflow = await page.evaluate(() => (
@@ -189,10 +198,11 @@ async function main() {
         }
         actionRow = {
           ...actionRow,
-          ok: !hasErrorText && !hasHorizontalOverflow,
+          ok: !hasErrorText && !hasLoadingText && !hasHorizontalOverflow,
           elapsedMs: Date.now() - started,
           titleVisible,
           hasErrorText,
+          hasLoadingText,
           hasHorizontalOverflow,
           screenshotPath,
           headers,
@@ -244,14 +254,14 @@ async function main() {
     };
     try {
       await page.goto(`${base}${formRoute}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-      await page.waitForTimeout(900);
+      await waitForSettledUserSurface(page);
       const text = await page.locator('body').innerText({ timeout: 10000 }).catch(() => '');
       const outline = await page.locator('.native-business-outline-item').evaluateAll((nodes) => (
         nodes.map((node) => node.textContent?.trim()).filter(Boolean)
       )).catch(() => []);
       const inputCount = await page.locator('input, textarea, select').count().catch(() => 0);
-      const hasErrorText = /render error|contract not renderable|页面加载失败|Traceback|Cannot read/i.test(text);
+      const hasErrorText = /render error|contract not renderable|页面加载失败|页面异常|系统异常|Traceback|Cannot read/i.test(text);
+      const hasLoadingText = /正在加载列表|正在加载|Loading/i.test(text);
       const hasHorizontalOverflow = await page.evaluate(() => (
         document.documentElement.scrollWidth > window.innerWidth + 1 || document.body.scrollWidth > window.innerWidth + 1
       )).catch(() => false);
@@ -260,7 +270,7 @@ async function main() {
         screenshotPath = path.join(artifactRoot, 'forms', `${String(formOpened).padStart(3, '0')}_${slug(entry.path || entry.label)}.png`);
         await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => {});
       }
-      formRow = { ...formRow, ok: !hasErrorText && !hasHorizontalOverflow, outline, inputCount, hasErrorText, hasHorizontalOverflow, screenshotPath };
+      formRow = { ...formRow, ok: !hasErrorText && !hasLoadingText && !hasHorizontalOverflow, outline, inputCount, hasErrorText, hasLoadingText, hasHorizontalOverflow, screenshotPath };
     } catch (err) {
       formRow = { ...formRow, issue: err instanceof Error ? err.message : String(err), ok: false };
     }

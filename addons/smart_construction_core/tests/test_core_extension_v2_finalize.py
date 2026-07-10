@@ -133,7 +133,7 @@ class TestCoreExtensionV2Finalize(TransactionCase):
 
         self.assertIsNone(projected)
 
-    def test_projected_data_finalize_does_not_override_business_list_config_columns(self):
+    def test_projected_data_finalize_locks_formal_action_over_business_list_config_columns(self):
         data = {
             "model": "project.material.plan",
             "view_type": "tree",
@@ -160,4 +160,25 @@ class TestCoreExtensionV2Finalize(TransactionCase):
 
         projected = core_extension.smart_core_finalize_projected_contract_data(self.env, data, {"view_type": "tree"})
 
-        self.assertIsNone(projected)
+        self.assertIsInstance(projected, dict)
+        profile = projected.get("list_profile") or {}
+        self.assertEqual(
+            (profile.get("column_policy") or {}).get("reason"),
+            "formal_product_action_bound_tree_authoritative",
+        )
+        self.assertNotEqual(profile.get("columns"), data["list_profile"]["columns"])
+        self.assertFalse((profile.get("preference_policy") or {}).get("allow_visibility"))
+
+    def test_projected_contract_action_id_accepts_v2_action_aliases(self):
+        self.assertEqual(
+            core_extension._projected_contract_action_id({"actionId": "967"}),
+            967,
+        )
+        self.assertEqual(
+            core_extension._projected_contract_action_id({"source_meta": {"action_id": "964"}}),
+            964,
+        )
+        self.assertEqual(
+            core_extension._projected_contract_action_id({"pageInfo": {"actionId": "758"}}),
+            758,
+        )

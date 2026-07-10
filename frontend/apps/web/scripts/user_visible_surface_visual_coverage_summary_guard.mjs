@@ -35,6 +35,20 @@ function missingScreenshots(rows) {
     .map((row) => ({ path: row.path, route: row.route, screenshotPath: row.screenshotPath || "" }));
 }
 
+function placeholderHeaderRows(rows) {
+  return rows
+    .map((row) => ({
+      path: row?.path || "",
+      route: row?.route || "",
+      headers: Array.isArray(row?.headers)
+        ? row.headers.filter((header) => /历史验收可见字段|测试字段|占位字段/.test(String(header || "")))
+        : [],
+      screenshotPath: row?.screenshotPath || "",
+    }))
+    .filter((row) => row.headers.length)
+    .slice(0, 20);
+}
+
 async function main() {
   const report = await readJson(REPORT_PATH);
   const summary = report.summary && typeof report.summary === "object" ? report.summary : {};
@@ -42,6 +56,7 @@ async function main() {
   const actionFailures = actionResults.filter((row) => row?.ok !== true);
   const overflowFailures = actionResults.filter((row) => row?.hasHorizontalOverflow === true);
   const screenshotMissing = missingScreenshots(actionResults);
+  const placeholderHeaders = placeholderHeaderRows(actionResults);
   const errors = [];
 
   if (Number(summary.totalScanned || 0) < MIN_ACTIONS) {
@@ -53,6 +68,7 @@ async function main() {
     errors.push(`console errors: ${summary.consoleErrorCount || countArray(report.consoleErrors)}`);
   }
   if (screenshotMissing.length) errors.push(`missing screenshots: ${screenshotMissing.length}`);
+  if (placeholderHeaders.length) errors.push(`placeholder headers visible: ${placeholderHeaders.length}`);
 
   const payload = {
     ok: errors.length === 0,
@@ -64,6 +80,7 @@ async function main() {
       actionFailures: actionFailures.slice(0, 20),
       overflowFailures: overflowFailures.slice(0, 20),
       screenshotMissing,
+      placeholderHeaders,
       consoleErrors: Array.isArray(report.consoleErrors) ? report.consoleErrors.slice(0, 20) : [],
     },
   };

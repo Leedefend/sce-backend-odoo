@@ -540,8 +540,11 @@
         <field name="name">分包方单</field>
         <field name="res_model">sc.subcontract.request</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_subcontract_request_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_subcontract_request_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_subcontract_request_form')})
+        ]"/>
         <field name="domain">[]</field>
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
@@ -564,12 +567,25 @@
         <field name="view_ids" eval="[(5, 0, 0)]"/>
     </record>
     <record id="action_sc_labor_usage_ticket" model="ir.actions.act_window">
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_labor_usage_ticket_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_labor_usage_ticket_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_labor_usage_form')})
+        ]"/>
     </record>
     <record id="action_sc_labor_usage_casual" model="ir.actions.act_window">
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_labor_usage_casual_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_labor_usage_casual_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_labor_usage_form')})
+        ]"/>
+    </record>
+    <record id="action_sc_equipment_usage" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_equipment_usage_shift_formal_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_equipment_usage_shift_formal_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_equipment_usage_form')})
+        ]"/>
     </record>
     <record id="action_payment_request_user_payment_apply" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_payment_request_formal_payment_apply_tree"/>

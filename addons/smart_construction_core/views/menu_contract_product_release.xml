@@ -53,5 +53,19 @@
                 ref('smart_construction_core.group_sc_cap_contract_manager')
             ])]"/>
         </record>
+
+        <!-- Formal product menus must remain visible after legacy acceptance cleanup. -->
+        <record id="menu_sc_arrival_confirmation" model="ir.ui.menu">
+            <field name="active" eval="True"/>
+        </record>
+        <record id="menu_sc_legacy_fuel_card_fact_acceptance" model="ir.ui.menu">
+            <field name="active" eval="True"/>
+        </record>
+        <record id="menu_sc_legacy_fuel_card_recharge_fact_acceptance" model="ir.ui.menu">
+            <field name="active" eval="True"/>
+        </record>
+        <record id="menu_sc_company_user_roster_formal" model="ir.ui.menu">
+            <field name="active" eval="True"/>
+        </record>
     </data>
 </odoo>

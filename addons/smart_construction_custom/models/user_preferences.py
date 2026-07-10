@@ -341,7 +341,8 @@ USER_SPLIT_CONTRACT_SETTLEMENT_CATEGORY_CODES = {
     "settlement.expense",
 }
 
-PRODUCT_RUNTIME_INACTIVE_MENU_XMLIDS = (
+PRODUCT_RUNTIME_INACTIVE_MENU_XMLIDS = ()
+PRODUCT_RUNTIME_ACTIVE_MENU_XMLIDS = (
     "smart_construction_core.menu_sc_company_user_roster_formal",
 )
 
@@ -456,8 +457,17 @@ class ScUserPreferenceInitialization(models.TransientModel):
 
     @api.model
     def enforce_product_menu_runtime_cleanup(self):
-        deactivated = 0
+        changed_count = 0
         Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
+        for xmlid in PRODUCT_RUNTIME_ACTIVE_MENU_XMLIDS:
+            menu = self.env.ref(xmlid, raise_if_not_found=False)
+            if not menu:
+                continue
+            menu = Menu.browse(menu.id)
+            if menu.active:
+                continue
+            menu.write({"active": True})
+            changed_count += 1
         for xmlid in PRODUCT_RUNTIME_INACTIVE_MENU_XMLIDS:
             menu = self.env.ref(xmlid, raise_if_not_found=False)
             if not menu:
@@ -466,16 +476,16 @@ class ScUserPreferenceInitialization(models.TransientModel):
             if not menu.active:
                 continue
             menu.write({"active": False})
-            deactivated += 1
+            changed_count += 1
         Contract = self.env["ui.business.config.contract"].sudo().with_context(active_test=False)
         for contract in Contract.search([("name", "in", PRODUCTIZED_FORM_RUNTIME_INACTIVE_CONTRACT_NAMES)]):
             if not contract.active:
                 continue
             contract.write({"active": False})
-            deactivated += 1
+            changed_count += 1
         self.env["ir.config_parameter"].sudo().set_param(
             "sc.custom.product_menu_runtime_cleanup_count",
-            str(deactivated),
+            str(changed_count),
         )
         return True
 
