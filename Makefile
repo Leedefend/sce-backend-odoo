@@ -781,9 +781,11 @@ verify.business_config.config_workbench_operation_acceptance: guard.prod.forbid
 verify.business_config.config_workbench_operation_quick: guard.prod.forbid
 	@node --check frontend/apps/web/scripts/lib/product_page_structure_source.mjs
 	@node --check frontend/apps/web/scripts/lib/config_workbench_operation_coverage.mjs
+	@node --check frontend/apps/web/scripts/config_workbench_operation_coverage_guard.mjs
 	@node --check frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs
 	@node --check frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs
 	@node --check frontend/apps/web/scripts/product_page_structure_guard.mjs
+	@node frontend/apps/web/scripts/config_workbench_operation_coverage_guard.mjs
 	@$(MAKE) verify.product.page_structure
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck
 	@git diff --check
