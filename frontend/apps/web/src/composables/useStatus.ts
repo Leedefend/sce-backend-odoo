@@ -30,13 +30,13 @@ export function resolveSuggestedAction(
   if (hintByAction) return hintByAction;
 
   const code = String(reasonCode || '').toUpperCase();
-  if (code.includes('PERMISSION') || code.includes('FORBIDDEN')) return 'Check role permissions or contact an administrator.';
-  if (code.includes('NOT_FOUND')) return 'Refresh the list because the record may be removed or hidden.';
-  if (code.includes('CONFLICT')) return 'Reload current data and retry with latest version.';
-  if (code.includes('NETWORK')) return 'Check network connectivity and retry.';
+  if (code.includes('PERMISSION') || code.includes('FORBIDDEN')) return '请核对当前角色权限，必要时联系管理员处理。';
+  if (code.includes('NOT_FOUND')) return '请刷新列表，记录可能已被删除或当前不可见。';
+  if (code.includes('CONFLICT')) return '请重新加载最新数据后再尝试。';
+  if (code.includes('NETWORK')) return '请检查网络连接后再尝试。';
 
-  if (retryable === true) return 'This failure is retryable. Try again now or after a short delay.';
-  if (retryable === false) return 'This failure is non-retryable. Resolve data/permission issues first.';
+  if (retryable === true) return '该失败可重试，请立即重试或稍后再试。';
+  if (retryable === false) return '该失败不可直接重试，请先处理数据或权限问题。';
   return '';
 }
 
@@ -90,122 +90,122 @@ function errorContextHint(err?: StatusError | null): string {
   const reasonCode = String(err?.reasonCode || '').trim().toUpperCase();
   const scope = [model, op].filter(Boolean).join('/');
   if (!scope && !reasonCode) return '';
-  if (scope && reasonCode) return `Context: ${scope} [${reasonCode}].`;
-  if (scope) return `Context: ${scope}.`;
-  return `Context: [${reasonCode}].`;
+  if (scope && reasonCode) return `上下文：${scope} [${reasonCode}]。`;
+  if (scope) return `上下文：${scope}。`;
+  return `上下文：[${reasonCode}]。`;
 }
 
 function getHint(code?: number | string, kind?: string, errorCategory?: string, retryable?: boolean): string {
   const numericCode = normalizeCode(code);
   const category = normalizeCategory(errorCategory);
-  if (category === 'auth') return 'Login session may be invalid or expired. Please login again.';
-  if (category === 'permission') return 'Access is restricted. Verify your role/capabilities and retry.';
-  if (category === 'validation') return 'Submitted parameters are invalid. Fix input and retry.';
-  if (category === 'conflict') return 'Data changed on server. Reload latest data and retry.';
-  if (category === 'business') return 'Business rules blocked this action. Resolve the blocker and retry.';
-  if (category === 'system') return 'Backend service exception occurred. Retry later or contact support.';
-  if (retryable === true) return 'This failure is retryable. Try again now or after a short delay.';
-  if (retryable === false) return 'This failure is non-retryable. Resolve data/permission issues first.';
-  if (kind === 'network' || numericCode === 0) return 'Check network connectivity and API availability.';
-  if (numericCode === 401) return 'Session expired. Please login again.';
-  if (numericCode === 403) return 'Check access rights for current role.';
-  if (numericCode === 404) return 'Resource not found or not visible for current user.';
-  if (numericCode === 409) return 'Record changed on server. Reload and retry.';
-  if (numericCode && numericCode >= 500) return 'Server encountered an exception. Retry later or contact support.';
+  if (category === 'auth') return '登录状态可能已失效，请重新登录。';
+  if (category === 'permission') return '当前访问受限，请核对角色或功能权限后再尝试。';
+  if (category === 'validation') return '提交参数不符合要求，请修正后再尝试。';
+  if (category === 'conflict') return '服务端数据已变化，请加载最新数据后再尝试。';
+  if (category === 'business') return '当前操作被业务规则阻止，请先处理阻塞项。';
+  if (category === 'system') return '系统服务处理异常，请稍后重试或联系管理员。';
+  if (retryable === true) return '该失败可重试，请立即重试或稍后再试。';
+  if (retryable === false) return '该失败不可直接重试，请先处理数据或权限问题。';
+  if (kind === 'network' || numericCode === 0) return '请检查网络连接和服务可用状态。';
+  if (numericCode === 401) return '登录已过期，请重新登录。';
+  if (numericCode === 403) return '请核对当前角色的访问权限。';
+  if (numericCode === 404) return '资源不存在或当前用户不可见。';
+  if (numericCode === 409) return '记录已被更新，请刷新后再尝试。';
+  if (numericCode && numericCode >= 500) return '系统服务异常，请稍后重试或联系管理员。';
   return '';
 }
 
-export function resolveErrorCopy(err: StatusError | null, fallbackMessage = 'Request failed'): StatusCopy {
+export function resolveErrorCopy(err: StatusError | null, fallbackMessage = '请求处理失败'): StatusCopy {
   const code = normalizeCode(err?.code);
   const category = normalizeCategory(err?.errorCategory);
   const hint = err?.hint || getHint(err?.code, err?.kind, err?.errorCategory, err?.retryable);
   const contextHint = errorContextHint(err);
   if (category === 'auth') {
     return {
-      title: 'Authentication required',
-      message: 'Login state is invalid for this action.',
+      title: '需要重新登录',
+      message: '当前登录状态无法完成该操作。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (category === 'permission') {
     return {
-      title: 'Permission denied',
-      message: 'Current role cannot perform this operation.',
+      title: '权限不足',
+      message: '当前角色不能执行该操作。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (category === 'validation') {
     return {
-      title: 'Invalid request',
-      message: 'Request parameters failed backend validation.',
+      title: '参数不符合要求',
+      message: '提交内容未通过系统校验。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (category === 'conflict') {
     return {
-      title: 'Write conflict',
-      message: 'Backend rejected stale data. Reload and retry.',
+      title: '数据已变化',
+      message: '当前数据不是最新版本，请刷新后再试。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (category === 'business') {
     return {
-      title: 'Business rule blocked',
-      message: 'Operation violates current business constraints.',
+      title: '业务规则阻止',
+      message: '当前操作不满足业务规则要求。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (category === 'system') {
     return {
-      title: 'System exception',
-      message: 'Backend failed to process this request.',
+      title: '系统处理异常',
+      message: '系统服务未能完成本次请求。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (err?.kind === 'network' || code === 0) {
     return {
-      title: 'Network error',
-      message: 'Unable to reach backend service. Please check network or service health.',
+      title: '网络连接异常',
+      message: '暂时无法连接系统服务，请检查网络或服务状态。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (code === 401) {
     return {
-      title: 'Authentication required',
-      message: 'Login session is invalid. Please sign in again.',
+      title: '需要重新登录',
+      message: '登录状态已失效，请重新登录。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (code === 403) {
     return {
-      title: 'Permission denied',
-      message: 'You do not have permission to perform this action.',
+      title: '权限不足',
+      message: '当前账号没有执行该操作的权限。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (code === 404) {
     return {
-      title: 'Resource not found',
-      message: 'Requested resource is missing or no longer accessible.',
+      title: '资源不可用',
+      message: '请求的资源不存在或已不可访问。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (code === 409) {
     return {
-      title: 'Write conflict',
-      message: 'Record was updated by someone else. Reload before retrying.',
+      title: '数据已变化',
+      message: '记录已被其他操作更新，请刷新后再试。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (code && code >= 500) {
     return {
-      title: 'System exception',
-      message: 'Backend failed to process this request. Please retry shortly.',
+      title: '系统处理异常',
+      message: '系统服务未能完成本次请求，请稍后重试。',
       hint: mergeHint(hint, contextHint),
     };
   }
   return {
-    title: 'Request failed',
+    title: '请求处理失败',
     message: err?.message || fallbackMessage,
     hint: mergeHint(hint, contextHint),
   };
@@ -213,15 +213,15 @@ export function resolveErrorCopy(err: StatusError | null, fallbackMessage = 'Req
 
 export function resolveEmptyCopy(type: 'list' | 'card' | 'record' | 'my_work' = 'list'): StatusCopy {
   if (type === 'record') {
-    return { title: 'No data', message: 'Record not found or not readable.' };
+    return { title: '暂无数据', message: '记录不存在或当前账号不可查看。' };
   }
   if (type === 'my_work') {
-    return { title: 'No work items', message: 'No pending items in this section.' };
+    return { title: '暂无工作事项', message: '当前分区没有待处理事项。' };
   }
   if (type === 'card') {
-    return { title: 'No data', message: 'No cards returned for this action.' };
+    return { title: '暂无数据', message: '当前操作没有返回卡片数据。' };
   }
-  return { title: 'No data', message: 'No records returned for this action.' };
+  return { title: '暂无数据', message: '当前操作没有返回记录。' };
 }
 
 export function useStatus() {

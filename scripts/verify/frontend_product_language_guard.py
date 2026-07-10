@@ -7,8 +7,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCAN_DIRS = [
+    ROOT / "frontend" / "apps" / "web" / "src" / "app" / "action_runtime",
     ROOT / "frontend" / "apps" / "web" / "src" / "app" / "contracts",
+    ROOT / "frontend" / "apps" / "web" / "src" / "app" / "suggested_action",
     ROOT / "frontend" / "apps" / "web" / "src" / "components",
+    ROOT / "frontend" / "apps" / "web" / "src" / "composables",
     ROOT / "frontend" / "apps" / "web" / "src" / "layouts",
     ROOT / "frontend" / "apps" / "web" / "src" / "pages",
     ROOT / "frontend" / "apps" / "web" / "src" / "views",
@@ -100,6 +103,25 @@ FORBIDDEN_PHRASES = {
     "显示模式: ": "我的工作台复制摘要必须使用产品化中文表达",
     "retry_visible_display_grouped', 'grouped": "我的工作台复制摘要不得暴露英文显示模式",
     "retry_visible_display_flat', 'flat": "我的工作台复制摘要不得暴露英文显示模式",
+    "Refresh now": "建议动作默认按钮必须使用产品化中文表达",
+    "Retry now": "建议动作默认按钮必须使用产品化中文表达",
+    "Copy trace": "建议动作默认按钮必须使用产品化中文表达",
+    "Refresh the latest data and retry.": "建议动作默认说明必须使用产品化中文表达",
+    "Copy trace id for troubleshooting.": "建议动作默认说明必须使用产品化中文表达",
+    "Authentication required": "通用错误标题必须使用产品化中文表达",
+    "Permission denied": "通用错误标题必须使用产品化中文表达",
+    "Invalid request": "通用错误标题必须使用产品化中文表达",
+    "Write conflict": "通用错误标题必须使用产品化中文表达",
+    "Business rule blocked": "通用错误标题必须使用产品化中文表达",
+    "System exception": "通用错误标题必须使用产品化中文表达",
+    "Network error": "通用错误标题必须使用产品化中文表达",
+    "Request failed": "通用错误标题必须使用产品化中文表达",
+    "No work items": "通用空状态必须使用产品化中文表达",
+    "No records returned for this action.": "通用空状态必须使用产品化中文表达",
+    "return `Context:": "通用错误上下文必须使用产品化中文表达",
+    "trace_id={{": "首页入口错误诊断信息必须使用产品化中文表达",
+    "label: 'trace_id'": "HUD 标签必须使用产品化中文表达",
+    "label: 'record_id'": "HUD 标签必须使用产品化中文表达",
 }
 
 

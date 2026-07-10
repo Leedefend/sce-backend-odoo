@@ -419,24 +419,24 @@ const missingNodes = computed(() => {
 });
 const renderBlocked = computed(() => showHud.value && missingNodes.value.length > 0);
 const hudEntries = computed(() => [
-  { label: 'model', value: model.value },
-  { label: 'record_id', value: recordId.value },
-  { label: 'status', value: status.value },
-  { label: 'action_source', value: actionContext.value.source },
-  { label: 'render_mode', value: renderMode.value },
-  { label: 'layout_present', value: Boolean(viewContract.value?.layout) },
-  { label: 'layout_nodes', value: JSON.stringify(layoutStats.value) },
-  { label: 'unsupported_nodes', value: missingNodes.value.join(',') || '-' },
-  { label: 'coverage_supported', value: supportedNodes.join(',') },
-  { label: 'last_intent', value: lastIntent.value || '-' },
-  { label: 'write_mode', value: lastWriteMode.value || '-' },
-  { label: 'trace_id', value: traceId.value || lastTraceId.value || '-' },
-  { label: 'contract_mode', value: contractMode.value || '-' },
-  { label: 'surface_requested', value: requestedSurface.value },
-  { label: 'source_mode', value: requestedSourceMode.value },
-  { label: 'contract_write', value: contractWriteAllowed.value },
-  { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
-  { label: 'route', value: route.fullPath },
+  { label: '业务模型', value: model.value },
+  { label: '记录 ID', value: recordId.value },
+  { label: '页面状态', value: status.value },
+  { label: '入口来源', value: actionContext.value.source },
+  { label: '渲染模式', value: renderMode.value },
+  { label: '布局已加载', value: Boolean(viewContract.value?.layout) },
+  { label: '布局节点', value: JSON.stringify(layoutStats.value) },
+  { label: '未支持节点', value: missingNodes.value.join(',') || '-' },
+  { label: '已覆盖能力', value: supportedNodes.join(',') },
+  { label: '最近意图', value: lastIntent.value || '-' },
+  { label: '写入模式', value: lastWriteMode.value || '-' },
+  { label: '追踪 ID', value: traceId.value || lastTraceId.value || '-' },
+  { label: '契约模式', value: contractMode.value || '-' },
+  { label: '请求界面', value: requestedSurface.value },
+  { label: '来源模式', value: requestedSourceMode.value },
+  { label: '允许写入', value: contractWriteAllowed.value },
+  { label: '耗时', value: lastLatencyMs.value ?? '-' },
+  { label: '当前路由', value: route.fullPath },
 ]);
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
@@ -816,9 +816,9 @@ async function runHeaderButton(btn: ViewButton) {
   }
   if (state.state === 'disabled_permission') {
     error.value = {
-      message: 'Permission denied',
+      message: '权限不足',
       code: 403,
-      hint: 'Check access rights.',
+      hint: '请核对当前角色的访问权限。',
       reasonCode: 'PERMISSION_DENIED',
       errorCategory: 'permission',
       suggestedAction: 'request_access',

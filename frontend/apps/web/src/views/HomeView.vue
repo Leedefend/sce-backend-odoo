@@ -237,7 +237,7 @@
         <p class="status-title">{{ pageText('entry_error_title_prefix', '进入失败：') }}{{ enterError.message }}</p>
         <p class="status-detail">{{ enterError.hint }}</p>
         <p v-if="isHudEnabled" class="status-meta">
-          code={{ enterError.code || '-' }} · trace_id={{ enterError.traceId || '-' }}
+          {{ pageText('entry_error_code_label', '错误码') }}={{ enterError.code || '-' }} · {{ pageText('entry_error_trace_label', '追踪 ID') }}={{ enterError.traceId || '-' }}
         </p>
         <div class="status-actions">
           <button v-if="lastFailedEntry" @click="retryOpen">{{ pageText('action_retry', '重试') }}</button>
@@ -1752,7 +1752,7 @@ const lockedReasonOptions = computed(() => {
   const map = new Map<string, number>();
   searchedEntries.value.forEach((entry) => {
     if (entry.state !== 'LOCKED') return;
-    const code = String(entry.reasonCode || 'UNKNOWN').toUpperCase();
+    const code = String(entry.reasonCode || '未归类').toUpperCase();
     map.set(code, (map.get(code) || 0) + 1);
   });
   return Array.from(map.entries())
@@ -1969,7 +1969,7 @@ async function openScene(entry: CapabilityEntry) {
       capability_key: entry.key,
       scene_key: entry.sceneKey,
       result: 'error',
-      code: message.code || 'UNKNOWN',
+      code: message.code || '未归类',
       trace_id: message.traceId || '',
     }).catch(() => {});
   }
