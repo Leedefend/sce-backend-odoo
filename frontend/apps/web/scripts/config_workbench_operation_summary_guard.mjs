@@ -59,6 +59,22 @@ function assertReadyScore(section, message) {
   }
 }
 
+function assertTaskResultsPass(actual = {}, expected = [], message) {
+  assertExactList(Object.keys(actual || {}), expected, `${message}: task keys drifted`);
+  const failed = Object.entries(actual || {})
+    .filter(([, value]) => value?.status !== "pass")
+    .map(([key, value]) => ({ key, status: value?.status, value }));
+  if (failed.length) fail(message, { failed });
+}
+
+function assertDimensionScores(actual = {}, expected = [], expectedScore, message) {
+  assertExactList(Object.keys(actual || {}), expected, `${message}: dimension keys drifted`);
+  const failed = Object.entries(actual || {})
+    .filter(([, value]) => value?.score !== expectedScore)
+    .map(([key, value]) => ({ key, score: value?.score, expectedScore, value }));
+  if (failed.length) fail(message, { failed });
+}
+
 function assertFullCoverage(summaryValue, passed, total, message) {
   if (!Number.isInteger(total) || total <= 0) fail(`${message}: total is invalid`, { summaryValue, passed, total });
   if (passed !== total || summaryValue !== `${total}/${total}`) {
@@ -128,6 +144,23 @@ async function main() {
   assertEqual(report.professional_readiness?.schema_version, "config_workbench_professional_readiness.v1", "config workbench professional readiness schema drifted");
   assertReadyScore(report.product_usability, "config workbench product usability score is not complete");
   assertReadyScore(report.professional_readiness, "config workbench professional readiness score is not complete");
+  assertTaskResultsPass(
+    report.product_usability?.task_results,
+    ACCEPTANCE_COVERAGE.productUsabilityTasks,
+    "config workbench product usability tasks are not all pass",
+  );
+  assertDimensionScores(
+    report.product_usability?.dimensions,
+    ACCEPTANCE_COVERAGE.productUsabilityDimensions,
+    2,
+    "config workbench product usability dimensions are not full score",
+  );
+  assertDimensionScores(
+    report.professional_readiness?.dimensions,
+    ACCEPTANCE_COVERAGE.professionalDimensions,
+    3,
+    "config workbench professional dimensions are not full score",
+  );
   assertEmptyArray(report.product_usability?.blocking_issues, "config workbench product usability has blocking issues");
   assertEmptyArray(report.product_usability?.risk_items, "config workbench product usability has risk items");
   assertEmptyArray(report.professional_readiness?.blockers, "config workbench professional readiness has blockers");
