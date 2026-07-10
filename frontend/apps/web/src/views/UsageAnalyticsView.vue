@@ -2,12 +2,12 @@
   <section class="usage-analytics">
     <header v-if="pageSectionEnabled('header', true) && pageSectionTagIs('header', 'header')" class="header" :style="pageSectionStyle('header')">
       <div>
-        <h2>{{ pageText('title', 'Usage Analytics') }}</h2>
-        <p>{{ pageText('subtitle', 'Scene / Capability 使用统计（按公司累计）。') }}</p>
+        <h2>{{ pageText('title', '使用分析') }}</h2>
+        <p>{{ pageText('subtitle', '场景与能力使用统计（按公司累计）。') }}</p>
       </div>
       <div class="actions">
         <label>
-          {{ pageText('label_top', 'Top') }}
+          {{ pageText('label_top', '排行数量') }}
           <select v-model="topN" :disabled="loading">
             <option :value="5">5</option>
             <option :value="10">10</option>
@@ -46,25 +46,25 @@
             type="number"
             min="0"
             step="1"
-            :placeholder="pageText('placeholder_user_slice', '0=全部')"
+            :placeholder="pageText('placeholder_user_slice', '0 表示全部')"
             :disabled="loading"
           />
         </label>
         <label>
-          {{ pageText('label_scene_prefix', 'Scene 前缀') }}
+          {{ pageText('label_scene_prefix', '场景前缀') }}
           <input
             v-model.trim="scenePrefix"
             type="text"
-            :placeholder="pageText('placeholder_scene_prefix', '如 projects.')"
+            :placeholder="pageText('placeholder_scene_prefix', '如：项目')"
             :disabled="loading"
           />
         </label>
         <label>
-          {{ pageText('label_capability_prefix', 'Capability 前缀') }}
+          {{ pageText('label_capability_prefix', '能力前缀') }}
           <input
             v-model.trim="capabilityPrefix"
             type="text"
-            :placeholder="pageText('placeholder_capability_prefix', '如 contract.')"
+            :placeholder="pageText('placeholder_capability_prefix', '如：合同')"
             :disabled="loading"
           />
         </label>
@@ -89,7 +89,7 @@
 
     <StatusPanel
       v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && loading"
-      :title="pageText('loading_title', 'Loading usage report...')"
+      :title="pageText('loading_title', '正在加载使用分析')"
       variant="info"
       :style="pageSectionStyle('status_loading')"
     />
@@ -115,52 +115,52 @@
         <span>{{ pageText('slice_window_prefix', '窗口：') }}{{ report?.filters?.day_from || '-' }} ~ {{ report?.filters?.day_to || '-' }}</span>
         <span>{{ pageText('slice_role_prefix', '角色：') }}{{ report?.filters?.role_code || pageText('option_all', '全部') }}</span>
         <span>{{ pageText('slice_user_prefix', '用户：') }}{{ report?.filters?.user_id || 0 }}</span>
-        <span>{{ pageText('slice_scene_prefix_label', 'Scene 前缀：') }}{{ report?.filters?.scene_key_prefix || '-' }}</span>
-        <span>{{ pageText('slice_capability_prefix_label', 'Capability 前缀：') }}{{ report?.filters?.capability_key_prefix || '-' }}</span>
+        <span>{{ pageText('slice_scene_prefix_label', '场景前缀：') }}{{ report?.filters?.scene_key_prefix || '-' }}</span>
+        <span>{{ pageText('slice_capability_prefix_label', '能力前缀：') }}{{ report?.filters?.capability_key_prefix || '-' }}</span>
       </section>
 
       <section v-if="pageSectionEnabled('summary_usage', true) && pageSectionTagIs('summary_usage', 'section')" class="summary-grid" :style="pageSectionStyle('summary_usage')">
         <article class="summary-card">
-          <p class="label">{{ pageText('summary_scene_open_total', 'Scene Open Total') }}</p>
+          <p class="label">{{ pageText('summary_scene_open_total', '场景打开次数') }}</p>
           <p class="count">{{ report?.totals.scene_open_total ?? 0 }}</p>
         </article>
         <article class="summary-card">
-          <p class="label">{{ pageText('summary_capability_open_total', 'Capability Open Total') }}</p>
+          <p class="label">{{ pageText('summary_capability_open_total', '能力打开次数') }}</p>
           <p class="count">{{ report?.totals.capability_open_total ?? 0 }}</p>
         </article>
         <article class="summary-card">
-          <p class="label">{{ pageText('summary_generated_at', 'Generated At') }}</p>
+          <p class="label">{{ pageText('summary_generated_at', '生成时间') }}</p>
           <p class="count small">{{ report?.generated_at || '-' }}</p>
         </article>
       </section>
 
       <section v-if="pageSectionEnabled('summary_visibility', true) && pageSectionTagIs('summary_visibility', 'section')" class="summary-grid" :style="pageSectionStyle('summary_visibility')">
         <article class="summary-card">
-          <p class="label">{{ pageText('summary_capability_total', 'Capability Total') }}</p>
+          <p class="label">{{ pageText('summary_capability_total', '能力总数') }}</p>
           <p class="count">{{ visibility?.summary.total ?? 0 }}</p>
         </article>
         <article class="summary-card">
-          <p class="label">{{ pageText('summary_visible_hidden', 'Visible / Hidden') }}</p>
+          <p class="label">{{ pageText('summary_visible_hidden', '可见 / 隐藏') }}</p>
           <p class="count small">{{ visibility?.summary.visible ?? 0 }} / {{ visibility?.summary.hidden ?? 0 }}</p>
         </article>
         <article class="summary-card">
-          <p class="label">{{ pageText('summary_ready_preview_locked', 'Ready / Preview / Locked') }}</p>
+          <p class="label">{{ pageText('summary_ready_preview_locked', '可用 / 预览 / 锁定') }}</p>
           <p class="count small">
             {{ visibility?.summary.ready ?? 0 }} / {{ visibility?.summary.preview ?? 0 }} / {{ visibility?.summary.locked ?? 0 }}
           </p>
         </article>
         <article class="summary-card">
-          <p class="label">{{ pageText('summary_role_codes', 'Role Codes') }}</p>
+          <p class="label">{{ pageText('summary_role_codes', '角色编码') }}</p>
           <p class="count small">{{ (visibility?.role_codes || []).join(', ') || '-' }}</p>
         </article>
       </section>
 
       <section v-if="pageSectionEnabled('tables_top', true) && pageSectionTagIs('tables_top', 'section')" class="tables" :style="pageSectionStyle('tables_top')">
         <article class="table-card">
-          <h3>{{ pageText('table_top_scenes', 'Top Scenes') }}</h3>
+          <h3>{{ pageText('table_top_scenes', '场景排行') }}</h3>
           <table>
             <thead>
-              <tr><th>{{ pageText('table_scene_key', 'Scene Key') }}</th><th>{{ pageText('table_count', 'Count') }}</th></tr>
+              <tr><th>{{ pageText('table_scene_key', '场景编码') }}</th><th>{{ pageText('table_count', '次数') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!sceneTop.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -173,10 +173,10 @@
         </article>
 
         <article class="table-card">
-          <h3>{{ pageText('table_top_capabilities', 'Top Capabilities') }}</h3>
+          <h3>{{ pageText('table_top_capabilities', '能力排行') }}</h3>
           <table>
             <thead>
-              <tr><th>{{ pageText('table_capability_key', 'Capability Key') }}</th><th>{{ pageText('table_count', 'Count') }}</th></tr>
+              <tr><th>{{ pageText('table_capability_key', '能力编码') }}</th><th>{{ pageText('table_count', '次数') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!capabilityTop.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -191,10 +191,10 @@
 
       <section v-if="pageSectionEnabled('tables_daily', true) && pageSectionTagIs('tables_daily', 'section')" class="tables" :style="pageSectionStyle('tables_daily')">
         <article class="table-card">
-          <h3>{{ pageText('table_scene_open_last_7_days', 'Scene Open (Last 7 Days)') }}</h3>
+          <h3>{{ pageText('table_scene_open_last_7_days', '最近 7 天场景打开') }}</h3>
           <table>
             <thead>
-              <tr><th>{{ pageText('table_date', 'Date') }}</th><th>{{ pageText('table_count', 'Count') }}</th></tr>
+              <tr><th>{{ pageText('table_date', '日期') }}</th><th>{{ pageText('table_count', '次数') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!sceneDaily.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -207,10 +207,10 @@
         </article>
 
         <article class="table-card">
-          <h3>{{ pageText('table_capability_open_last_7_days', 'Capability Open (Last 7 Days)') }}</h3>
+          <h3>{{ pageText('table_capability_open_last_7_days', '最近 7 天能力打开') }}</h3>
           <table>
             <thead>
-              <tr><th>{{ pageText('table_date', 'Date') }}</th><th>{{ pageText('table_count', 'Count') }}</th></tr>
+              <tr><th>{{ pageText('table_date', '日期') }}</th><th>{{ pageText('table_count', '次数') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!capabilityDaily.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -225,10 +225,10 @@
 
       <section v-if="pageSectionEnabled('tables_visibility', true) && pageSectionTagIs('tables_visibility', 'section')" class="tables" :style="pageSectionStyle('tables_visibility')">
         <article class="table-card">
-          <h3>{{ pageText('table_visibility_reason_counts', 'Visibility Reason Counts') }}</h3>
+          <h3>{{ pageText('table_visibility_reason_counts', '隐藏原因统计') }}</h3>
           <table>
             <thead>
-              <tr><th>{{ pageText('table_reason_code', 'Reason Code') }}</th><th>{{ pageText('table_count', 'Count') }}</th></tr>
+              <tr><th>{{ pageText('table_reason_code', '原因编码') }}</th><th>{{ pageText('table_count', '次数') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!reasonCounts.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -241,10 +241,10 @@
         </article>
 
         <article class="table-card">
-          <h3>{{ pageText('table_hidden_capability_samples', 'Hidden Capability Samples') }}</h3>
+          <h3>{{ pageText('table_hidden_capability_samples', '隐藏能力样例') }}</h3>
           <table>
             <thead>
-              <tr><th>{{ pageText('table_key', 'Key') }}</th><th>{{ pageText('table_reason', 'Reason') }}</th></tr>
+              <tr><th>{{ pageText('table_key', '编码') }}</th><th>{{ pageText('table_reason', '原因') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!filteredHiddenSamples.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -259,14 +259,14 @@
 
       <section v-if="pageSectionEnabled('tables_role_user', true) && pageSectionTagIs('tables_role_user', 'section')" class="tables" :style="pageSectionStyle('tables_role_user')">
         <article class="table-card">
-          <h3>{{ pageText('table_role_top', 'Role Top') }}</h3>
+          <h3>{{ pageText('table_role_top', '角色排行') }}</h3>
           <table>
             <thead>
               <tr>
-                <th>{{ pageText('table_role_code', 'Role Code') }}</th>
-                <th>{{ pageText('table_scene', 'Scene') }}</th>
-                <th>{{ pageText('table_capability', 'Capability') }}</th>
-                <th>{{ pageText('table_total', 'Total') }}</th>
+                <th>{{ pageText('table_role_code', '角色编码') }}</th>
+                <th>{{ pageText('table_scene', '场景') }}</th>
+                <th>{{ pageText('table_capability', '能力') }}</th>
+                <th>{{ pageText('table_total', '合计') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -282,14 +282,14 @@
         </article>
 
         <article class="table-card">
-          <h3>{{ pageText('table_user_top', 'User Top') }}</h3>
+          <h3>{{ pageText('table_user_top', '用户排行') }}</h3>
           <table>
             <thead>
               <tr>
-                <th>{{ pageText('table_user_id', 'User ID') }}</th>
-                <th>{{ pageText('table_scene', 'Scene') }}</th>
-                <th>{{ pageText('table_capability', 'Capability') }}</th>
-                <th>{{ pageText('table_total', 'Total') }}</th>
+                <th>{{ pageText('table_user_id', '用户 ID') }}</th>
+                <th>{{ pageText('table_scene', '场景') }}</th>
+                <th>{{ pageText('table_capability', '能力') }}</th>
+                <th>{{ pageText('table_total', '合计') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -356,7 +356,7 @@ const filteredHiddenSamples = computed(() => {
   return hiddenSamples.value.filter((item) => String(item.reason_code || '') === hiddenReasonFilter.value);
 });
 const canExport = computed(() => Boolean(report.value || visibility.value));
-const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', 'Failed to load usage report')));
+const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', '使用分析加载失败')));
 const headerActions = computed(() => pageGlobalActions.value);
 
 function resolveContextAwareErrorText(err: unknown, fallback: string) {
@@ -451,7 +451,7 @@ async function load() {
   } catch (err) {
     errorText.value = resolveContextAwareErrorText(
       err,
-      err instanceof Error ? err.message : pageText('error_fallback', 'Failed to load usage report'),
+      err instanceof Error ? err.message : pageText('error_fallback', '使用分析加载失败'),
     );
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';

@@ -13,20 +13,20 @@
     </section>
     <StatusPanel
       v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && loading"
-      :title="pageText('loading_title', 'Resolving menu...')"
+      :title="pageText('loading_title', '正在打开菜单')"
       variant="info"
       :style="pageSectionStyle('status_loading')"
     />
     <StatusPanel
       v-else-if="pageSectionEnabled('status_info', true) && pageSectionTagIs('status_info', 'section') && info"
-      :title="pageText('info_title', 'Menu group')"
+      :title="pageText('info_title', '菜单分组')"
       :message="info"
       variant="info"
       :style="pageSectionStyle('status_info')"
     />
     <StatusPanel
       v-else-if="pageSectionEnabled('status_error', true) && pageSectionTagIs('status_error', 'section') && error"
-      :title="pageText('error_title', 'Menu resolve failed')"
+      :title="pageText('error_title', '菜单打开失败')"
       :message="error"
       variant="error"
       :style="pageSectionStyle('status_error')"
@@ -91,7 +91,7 @@ async function resolve() {
   try {
     const menuId = Number(route.params.menuId);
     if (!menuId) {
-      throw new Error(pageText('error_invalid_menu_id', 'invalid menu id'));
+      throw new Error(pageText('error_invalid_menu_id', '菜单地址无效'));
     }
     if (isRootContainerMenu(menuId)) {
       await router.replace('/');
@@ -212,7 +212,7 @@ async function resolve() {
       }
     }
     if (result.kind === 'group' || (result.kind === 'broken' && result.reason === 'menu has no action')) {
-      const label = result.node?.title || result.node?.name || result.node?.label || 'This menu';
+      const label = result.node?.title || result.node?.name || result.node?.label || '当前菜单';
       await router.replace({
         name: 'workbench',
         query: { menu_id: menuId, reason: ErrorCodes.NAV_MENU_NO_ACTION, label },
@@ -220,12 +220,12 @@ async function resolve() {
       return;
     }
     if (result.kind === 'broken') {
-      error.value = result.reason || pageText('error_resolve_failed', 'resolve menu failed');
+      error.value = result.reason || pageText('error_resolve_failed', '菜单打开失败');
       return;
     }
-    error.value = pageText('error_resolve_failed', 'resolve menu failed');
+    error.value = pageText('error_resolve_failed', '菜单打开失败');
   } catch (err) {
-    error.value = err instanceof Error ? err.message : pageText('error_resolve_failed', 'resolve menu failed');
+    error.value = err instanceof Error ? err.message : pageText('error_resolve_failed', '菜单打开失败');
   } finally {
     loading.value = false;
   }
@@ -248,7 +248,7 @@ async function executeHeaderAction(actionKey: string) {
     },
   });
   if (!handled) {
-    error.value = pageText('error_resolve_failed', 'resolve menu failed');
+    error.value = pageText('error_resolve_failed', '菜单打开失败');
   }
 }
 

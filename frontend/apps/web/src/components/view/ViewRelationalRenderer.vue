@@ -4,37 +4,37 @@
       <span class="relational-title">{{ headerLabel }}</span>
       <div class="relational-actions">
         <span class="relational-count">{{ countLabel }}</span>
-        <button v-if="canEdit" class="relational-add" type="button" @click="startCreate">Add line</button>
+        <button v-if="canEdit" class="relational-add" type="button" @click="startCreate">新增明细</button>
       </div>
     </div>
-    <div v-if="loading" class="relational-meta">Loading related records…</div>
+    <div v-if="loading" class="relational-meta">正在加载关联记录...</div>
     <div v-else-if="error" class="relational-meta">{{ error }}</div>
-    <div v-else-if="!rows.length" class="relational-meta">No related records.</div>
+    <div v-else-if="!rows.length" class="relational-meta">暂无关联记录。</div>
     <ul v-else class="relational-list">
       <li v-for="row in rows" :key="String(row.id)" class="relational-item">
         <button class="relational-link" type="button" @click="openRecord(row.id)">
           {{ row.name || `#${row.id}` }}
         </button>
         <div v-if="canEdit" class="relational-row-actions">
-          <button class="relational-edit" type="button" @click="startEdit(row)">Edit</button>
-          <button class="relational-delete" type="button" @click="removeRow(row)">Delete</button>
+          <button class="relational-edit" type="button" @click="startEdit(row)">编辑</button>
+          <button class="relational-delete" type="button" @click="removeRow(row)">删除</button>
         </div>
       </li>
     </ul>
-    <div v-if="truncated" class="relational-meta">Showing first {{ rows.length }} records.</div>
+    <div v-if="truncated" class="relational-meta">当前仅显示前 {{ rows.length }} 条记录。</div>
 
     <div v-if="editorVisible" class="relational-editor">
       <div class="editor-card">
         <div class="editor-title">{{ editorTitle }}</div>
-        <div v-if="editTxState === 'saved'" class="editor-banner">Saved.</div>
-        <div v-else-if="editTxState === 'saving'" class="editor-banner">Saving…</div>
-        <label class="editor-label">Name</label>
+        <div v-if="editTxState === 'saved'" class="editor-banner">已保存。</div>
+        <div v-else-if="editTxState === 'saving'" class="editor-banner">正在保存...</div>
+        <label class="editor-label">名称</label>
         <input v-model="draftName" class="editor-input" type="text" />
         <div class="editor-actions">
           <button class="relational-save" type="button" :disabled="saving || !draftName.trim()" @click="saveRow">
-            {{ saving ? 'Saving…' : 'Save' }}
+            {{ saving ? '正在保存...' : '保存' }}
           </button>
-          <button class="relational-cancel" type="button" @click="cancelEdit">Cancel</button>
+          <button class="relational-cancel" type="button" @click="cancelEdit">取消</button>
         </div>
         <div v-if="editorError" class="relational-meta">{{ editorError }}</div>
       </div>
@@ -77,10 +77,10 @@ const editorError = ref('');
 const editTx = useEditTx();
 const editTxState = computed(() => editTx.state.value);
 
-const headerLabel = computed(() => (props.model ? props.model : 'Related'));
-const countLabel = computed(() => `${props.ids.length} items`);
+const headerLabel = computed(() => (props.model ? props.model : '关联记录'));
+const countLabel = computed(() => `共 ${props.ids.length} 条`);
 const canEdit = computed(() => Boolean(props.editable && props.parentId && props.relationField && props.model));
-const editorTitle = computed(() => (editorMode.value === 'create' ? 'Add related record' : 'Edit related record'));
+const editorTitle = computed(() => (editorMode.value === 'create' ? '新增关联记录' : '编辑关联记录'));
 type RelationRecordRaw = { id?: number | string; name?: unknown };
 
 async function load() {
@@ -88,7 +88,7 @@ async function load() {
   error.value = '';
   truncated.value = false;
   if (!props.model) {
-    error.value = 'Missing relation model';
+    error.value = '缺少关联模型配置';
     return;
   }
   if (!Array.isArray(props.ids) || props.ids.length === 0) {
@@ -114,7 +114,7 @@ async function load() {
       };
     });
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load relation records';
+    error.value = err instanceof Error ? err.message : '关联记录加载失败';
   } finally {
     loading.value = false;
   }
@@ -153,7 +153,7 @@ function cancelEdit() {
 
 async function saveRow() {
   if (!props.model || !props.relationField || !props.parentId) {
-    editorError.value = 'Missing relation configuration';
+    editorError.value = '缺少关联配置';
     return;
   }
   if (!draftName.value.trim()) return;
@@ -185,7 +185,7 @@ async function saveRow() {
     draftName.value = '';
     await load();
   } catch (err) {
-    editorError.value = err instanceof Error ? err.message : 'Failed to save related record';
+    editorError.value = err instanceof Error ? err.message : '关联记录保存失败';
     editTx.markError();
   } finally {
     saving.value = false;
@@ -194,7 +194,7 @@ async function saveRow() {
 
 async function removeRow(row: { id: number }) {
   if (!props.model) return;
-  if (!confirm('Delete this related record?')) return;
+  if (!confirm('确认删除这条关联记录？')) return;
   try {
     await editTx.save(async () => {
       return unlinkRelationRendererRecord({ model: props.model, ids: [row.id] });
@@ -202,7 +202,7 @@ async function removeRow(row: { id: number }) {
     editTx.markSaved();
     await load();
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to delete related record';
+    error.value = err instanceof Error ? err.message : '关联记录删除失败';
     editTx.markError();
   }
 }

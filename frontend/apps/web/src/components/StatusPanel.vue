@@ -4,18 +4,18 @@
     <p v-if="message">{{ message }}</p>
     <p v-if="variant === 'error' && userHint" class="error-help">{{ userHint }}</p>
     <p v-if="variant === 'error' && !showHudMeta && compactContext" class="error-context">
-      Context: {{ compactContext }}
+      上下文：{{ compactContext }}
     </p>
     <div v-if="variant === 'error' && showHudMeta" class="error-meta">
-      <p class="trace">Error code: {{ errorCode ?? 'N/A' }}</p>
-      <p class="trace">Trace: {{ traceId || 'N/A' }}</p>
-      <p v-if="reasonCode" class="trace">Reason: {{ reasonCode }}</p>
-      <p v-if="errorCategory" class="trace">Category: {{ errorCategory }}</p>
-      <p v-if="errorModel" class="trace">Model: {{ errorModel }}</p>
-      <p v-if="errorOp" class="trace">Operation: {{ errorOp }}</p>
-      <p v-if="retryable !== undefined" class="trace">Retryable: {{ retryable ? 'yes' : 'no' }}</p>
-      <p v-if="hint" class="trace">Hint: {{ hint }}</p>
-      <button v-if="traceId" class="trace-copy" @click="copyTrace">Copy trace</button>
+      <p class="trace">错误码：{{ errorCode ?? '无' }}</p>
+      <p class="trace">追踪 ID：{{ traceId || '无' }}</p>
+      <p v-if="reasonCode" class="trace">原因：{{ reasonCode }}</p>
+      <p v-if="errorCategory" class="trace">分类：{{ errorCategory }}</p>
+      <p v-if="errorModel" class="trace">模型：{{ errorModel }}</p>
+      <p v-if="errorOp" class="trace">操作：{{ errorOp }}</p>
+      <p v-if="retryable !== undefined" class="trace">可重试：{{ retryable ? '是' : '否' }}</p>
+      <p v-if="hint" class="trace">提示：{{ hint }}</p>
+      <button v-if="traceId" class="trace-copy" @click="copyTrace">复制追踪 ID</button>
       <button v-if="canRunSuggestedAction && suggestedActionLabel" class="trace-copy" @click="runSuggestedAction">
         {{ suggestedActionLabel }}
       </button>
@@ -28,7 +28,7 @@
     >
       {{ suggestedActionLabel }}
     </button>
-    <button v-if="onRetry" @click="onRetry">Retry</button>
+    <button v-if="onRetry" @click="onRetry">重试</button>
   </section>
 </template>
 
@@ -103,12 +103,12 @@ function runSuggestedAction() {
     reasonCode: props.reasonCode,
     message: props.message,
     onExecuted: (result) => {
-      actionRunFeedback.value = result.success ? 'Suggested action executed.' : 'Suggested action could not run.';
+      actionRunFeedback.value = result.success ? '建议操作已执行。' : '建议操作未能执行。';
       emit('action-executed', { action: result.raw || result.kind, success: result.success });
     },
   });
   if (!ran && !actionRunFeedback.value) {
-    actionRunFeedback.value = 'Suggested action is not executable in current context.';
+    actionRunFeedback.value = '当前上下文无法执行建议操作。';
   }
 }
 
