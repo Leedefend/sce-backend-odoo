@@ -8,8 +8,8 @@
     >
       <header class="scene-block__header">
         <div>
-          <p class="scene-block__eyebrow">{{ block.kind }}</p>
-          <h3 class="scene-block__title">{{ block.title || block.key }}</h3>
+          <p class="scene-block__eyebrow">{{ blockKindLabel(block.kind) }}</p>
+          <h3 class="scene-block__title">{{ blockTitle(block) }}</h3>
         </div>
         <span v-if="block.visible === false" class="scene-block__badge">隐藏</span>
       </header>
@@ -88,13 +88,13 @@
             <strong class="scene-block__kv-val">{{ blockSearchFieldCount(block) }}</strong>
           </p>
         </div>
-        <div v-if="blockFieldNames(block).length" class="scene-block__chips">
+        <div v-if="blockFieldLabels(block).length" class="scene-block__chips">
           <span
-            v-for="name in blockFieldNames(block)"
-            :key="`${block.key}-field-${name}`"
+            v-for="field in blockFieldLabels(block)"
+            :key="`${block.key}-field-${field.key}`"
             class="scene-block__chip scene-block__chip--plain"
           >
-            {{ name }}
+            {{ field.label }}
           </span>
         </div>
       </div>
@@ -190,26 +190,60 @@ function actionDisplayLabel(action: SceneBlockAction): string {
   return labelFromDictLikeText(action.label || action.key || '');
 }
 
+function blockKindLabel(kind: unknown): string {
+  const raw = String(kind || '').trim();
+  const mapping: Record<string, string> = {
+    header_bar: '页面头部',
+    toolbar: '筛选工具栏',
+    statusbar: '状态流转',
+    primary_actions: '主要操作',
+    smart_actions: '快捷操作',
+    body: '主体内容',
+    list_view: '列表内容',
+    kanban_board: '看板内容',
+    relation_block: '关联明细',
+    overview_strip: '摘要信息',
+  };
+  if (!raw) return '页面区块';
+  return mapping[raw] || raw.replace(/_/g, ' ');
+}
+
+function blockTitle(block: SceneBlock): string {
+  const title = labelFromDictLikeText(block.title || '');
+  if (title) return title;
+  return blockKindLabel(block.kind);
+}
+
 function asArray(value: unknown): Array<Record<string, unknown>> {
   return Array.isArray(value)
     ? value.filter((item) => item && typeof item === 'object') as Array<Record<string, unknown>>
     : [];
 }
 
-function blockFieldNames(block: SceneBlock) {
+function fieldDisplayLabel(item: Record<string, unknown>) {
+  return labelFromDictLikeText(item.label || item.string || item.title || item.field || item.name || item.key || '');
+}
+
+function blockFieldLabels(block: SceneBlock) {
   const deps = block.data_deps && typeof block.data_deps === 'object' ? block.data_deps : {};
   const columns = asArray((deps as Record<string, unknown>).columns)
-    .map((item) => String(item.field || item.name || item.key || '').trim())
-    .filter(Boolean);
+    .map((item) => ({
+      key: String(item.field || item.name || item.key || item.label || '').trim(),
+      label: fieldDisplayLabel(item),
+    }))
+    .filter((item) => item.key && item.label);
   const fields = asArray((deps as Record<string, unknown>).fields)
-    .map((item) => String(item.field || item.name || item.key || '').trim())
-    .filter(Boolean);
+    .map((item) => ({
+      key: String(item.field || item.name || item.key || item.label || '').trim(),
+      label: fieldDisplayLabel(item),
+    }))
+    .filter((item) => item.key && item.label);
   const merged = [...columns, ...fields];
-  return Array.from(new Set(merged)).slice(0, 12);
+  return Array.from(new Map(merged.map((item) => [item.key, item])).values()).slice(0, 12);
 }
 
 function blockFieldCount(block: SceneBlock) {
-  return blockFieldNames(block).length;
+  return blockFieldLabels(block).length;
 }
 
 function blockSearchFieldCount(block: SceneBlock) {
