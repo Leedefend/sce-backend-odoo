@@ -276,6 +276,7 @@ export interface ProjectContextContract {
   enabled?: boolean;
   source?: string;
   model?: string;
+  legacy_project_context?: boolean;
   company_id?: number | null;
   company_name?: string;
   company_options?: BusinessScopeCompanyOption[];

@@ -32,6 +32,7 @@ from .core_extension import (  # noqa: F401
     smart_core_nav_scene_maps,
     smart_core_surface_aliases,
     smart_core_runtime_business_config_productization_sources,
+    smart_core_resolve_record_context_config,
     smart_core_critical_scene_target_overrides,
     smart_core_critical_scene_target_route_overrides,
     smart_core_server_action_window_map,

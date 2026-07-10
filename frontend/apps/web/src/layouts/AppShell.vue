@@ -436,21 +436,29 @@ const selectedCompanyId = computed(() =>
 const selectedOperationStrategy = computed(() =>
   String(projectContext.value?.operation_strategy || '').trim(),
 );
-const recordContextLabel = computed(() =>
-  String(projectContext.value?.selector?.label || '当前记录').trim() || '当前记录'
+const isProjectRecordContext = computed(() =>
+  projectContext.value?.legacy_project_context === true
+    || String(projectContext.value?.model || '').trim() === 'project.project',
 );
-const recordContextEmptyText = computed(() => `无匹配${recordContextLabel.value.replace(/^当前/, '')}`);
-const clearRecordContextTitle = computed(() => `清除${recordContextLabel.value}，显示全部记录`);
+const recordContextLabel = computed(() =>
+  String(projectContext.value?.selector?.label || (isProjectRecordContext.value ? '当前项目' : '当前记录')).trim()
+    || (isProjectRecordContext.value ? '当前项目' : '当前记录')
+);
+const recordContextSubject = computed(() => recordContextLabel.value.replace(/^当前/, '') || '记录');
+const recordContextAllLabel = computed(() => (isProjectRecordContext.value ? '全部项目' : '全部记录'));
+const recordContextEmptyText = computed(() => `无匹配${recordContextSubject.value}`);
+const clearRecordContextTitle = computed(() => `清除${recordContextLabel.value}，显示${recordContextAllLabel.value}`);
 const currentProjectLabel = computed(() => {
   if (!projectContextEnabled.value) {
     return projectContext.value?.message || '未启用';
   }
   const selected = selectedProject.value;
-  if (!selected) return '全部记录';
+  if (!selected) return recordContextAllLabel.value;
   return projectNameLabel(selected);
 });
 const projectSearchPlaceholder = computed(() =>
-  String(projectContext.value?.selector?.placeholder || '搜索项目名称').trim() || '搜索项目名称',
+  String(projectContext.value?.selector?.placeholder || `搜索${recordContextSubject.value}名称`).trim()
+    || `搜索${recordContextSubject.value}名称`,
 );
 const roleLandingPath = computed(() => session.resolveLandingPath('/'));
 const roleLandingActionLabel = computed(() => {

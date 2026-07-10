@@ -568,6 +568,7 @@ function normalizeProjectContext(raw: unknown): ProjectContextContract | null {
     enabled: Boolean(row.enabled),
     source: asText(row.source),
     model: asText(row.model),
+    legacy_project_context: Boolean(row.legacy_project_context),
     company_id: Number(row.company_id || 0) || selected?.company_id || null,
     company_name: asText(row.company_name) || selected?.company_name || '',
     company_options: normalizeCompanyOptions(row.company_options),
