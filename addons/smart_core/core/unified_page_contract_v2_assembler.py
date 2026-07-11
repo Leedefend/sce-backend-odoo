@@ -2304,6 +2304,15 @@ def _append_ui_contract_actions(
         for row in _list(ui.get(key)):
             if isinstance(row, dict):
                 rows.append(row)
+    form = _dict(_dict(ui.get("views")).get("form"))
+    for key, default_level in (("header_buttons", "header"), ("footer_buttons", "footer")):
+        for row in _list(form.get(key)) + _list(ui.get(key)):
+            if not isinstance(row, dict):
+                continue
+            normalized = deepcopy(row)
+            normalized.setdefault("level", default_level)
+            normalized.setdefault("target_scope", default_level)
+            rows.append(normalized)
     toolbar = _dict(ui.get("toolbar"))
     for key in ("header", "sidebar", "footer"):
         for row in _list(toolbar.get(key)):

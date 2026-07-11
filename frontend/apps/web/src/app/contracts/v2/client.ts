@@ -4,6 +4,7 @@ import { createContractV2Store } from './store';
 import type { ContractV2Dictionary, ContractV2NormalizedStore, ContractV2Snapshot } from './types';
 
 export interface ContractV2LoadOptions {
+  menuId?: number;
   recordId?: number;
   viewType?: string;
   renderProfile?: 'create' | 'edit' | 'readonly';
@@ -43,6 +44,8 @@ function extractContractV2FromIntentResponse(response: { data?: unknown; rawBody
 }
 
 function applyCommonOptions(params: ContractV2Dictionary, options: ContractV2LoadOptions = {}): ContractV2Dictionary {
+  const menuId = normalizedRecordId(options.menuId);
+  if (menuId) params.menu_id = menuId;
   const recordId = normalizedRecordId(options.recordId);
   if (recordId) params.record_id = recordId;
   if (options.viewType) params.view_type = options.viewType;

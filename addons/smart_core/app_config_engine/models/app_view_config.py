@@ -512,6 +512,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             }])
             block['statusbar'] = vp.get('statusbar', {'field': 'state', 'states': []})
             block['header_buttons'] = vp.get('header_buttons', [])
+            block['footer_buttons'] = vp.get('footer_buttons', [])
             block['button_box'] = vp.get('button_box', [])
             block['stat_buttons'] = vp.get('stat_buttons', [])
             block['field_modifiers'] = vp.get('field_modifiers', {})

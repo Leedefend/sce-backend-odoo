@@ -6714,7 +6714,15 @@ function rawCreateRootActionCandidates(): ContractAction[] {
       const button = parseMaybeJsonRecord(row.button);
       const buttonName = String(button.name || '').trim();
       const buttonType = String(button.type || 'object').trim();
-      if (!buttonName || sourceWidgetId !== 'page.root' || (targetScope && targetScope !== 'header' && targetScope !== 'footer')) {
+      const normalizedIntent = String(row.intent || 'execute_button').trim().toLowerCase();
+      const normalizedButtonType = buttonType.toLowerCase();
+      if (
+        !buttonName
+        || sourceWidgetId !== 'page.root'
+        || (targetScope && targetScope !== 'header' && targetScope !== 'footer')
+        || (normalizedIntent && normalizedIntent !== 'execute' && normalizedIntent !== 'execute_button')
+        || (normalizedButtonType && normalizedButtonType !== 'object' && normalizedButtonType !== 'server' && normalizedButtonType !== 'server_action')
+      ) {
         return null;
       }
       return {
@@ -6759,32 +6767,6 @@ const primaryCreateFooterAction = computed<ContractAction | null>(() => {
       && action.selection === 'none';
   });
   const candidates = mappedCandidates.length ? mappedCandidates : rawCreateRootActionCandidates();
-  const modelName = String(model.value || route.params.model || '').trim();
-  if (!candidates.length && modelName === 'ui.form.custom.field.wizard') {
-    return {
-      key: 'action_create_field_policy',
-      label: '创建字段并配置显示',
-      kind: 'object',
-      level: 'header',
-      selection: 'none',
-      actionId: null,
-      methodName: 'action_create_field_policy',
-      targetModel: modelName,
-      context: {},
-      domainRaw: '',
-      target: '',
-      url: '',
-      enabled: true,
-      hint: '',
-      intent: 'execute_button',
-      semantic: 'primary_action',
-      sourceWidgetId: 'page.root',
-      clientMode: '',
-      visibleProfiles: ['create', 'edit', 'readonly'],
-      requiredParams: [],
-      requiresReason: false,
-    };
-  }
   if (candidates.length !== 1) return null;
   return {
     ...candidates[0],
@@ -9468,6 +9450,7 @@ async function loadContract() {
   if (actionId.value) {
     try {
       response = await loadActionContractRaw(actionId.value, {
+        menuId: menuId.value || undefined,
         viewId: requestedViewId || undefined,
         recordId: recordId.value,
         renderProfile: profile,

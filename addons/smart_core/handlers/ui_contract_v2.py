@@ -809,6 +809,13 @@ class UiContractV2Handler(BaseIntentHandler):
             model=str(model or "").strip(),
             view_type=str(view_type or "").strip().lower(),
         )
+        self._inject_native_form_footer_buttons(
+            source_contract,
+            params=params,
+            ui_params=ui_params,
+            model=str(model or "").strip(),
+            view_type=str(view_type or "").strip().lower(),
+        )
         self._inject_business_operation_contract(
             source_contract,
             model=str(model or "").strip(),
@@ -1608,6 +1615,67 @@ class UiContractV2Handler(BaseIntentHandler):
                 if isinstance(business_policy_root.get("fields"), list)
                 else []
             )
+
+            def _action_identity(row: Any) -> tuple[str, str, str, str]:
+                if not isinstance(row, dict):
+                    return ("", "", "", "")
+                payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+                return (
+                    str(row.get("key") or "").strip(),
+                    str(row.get("kind") or row.get("type") or "").strip(),
+                    str(row.get("level") or row.get("target_scope") or "").strip(),
+                    str(row.get("name") or row.get("button_name") or row.get("method_name") or payload.get("method") or "").strip(),
+                )
+
+            def _merge_action_rows(existing: Any, preserved: Any) -> list[dict[str, Any]]:
+                rows = [dict(row) for row in existing if isinstance(row, dict)] if isinstance(existing, list) else []
+                seen = {_action_identity(row) for row in rows}
+                for row in preserved if isinstance(preserved, list) else []:
+                    if not isinstance(row, dict):
+                        continue
+                    key = _action_identity(row)
+                    if key in seen:
+                        continue
+                    rows.append(deepcopy(row))
+                    seen.add(key)
+                return rows
+
+            def _capture_native_action_buckets(contract: dict[str, Any]) -> dict[str, Any]:
+                views = contract.get("views") if isinstance(contract.get("views"), dict) else {}
+                form = views.get("form") if isinstance(views.get("form"), dict) else {}
+                toolbar = contract.get("toolbar") if isinstance(contract.get("toolbar"), dict) else {}
+                return {
+                    "buttons": deepcopy(contract.get("buttons") if isinstance(contract.get("buttons"), list) else []),
+                    "business_actions": deepcopy(contract.get("business_actions") if isinstance(contract.get("business_actions"), list) else []),
+                    "header_buttons": deepcopy(contract.get("header_buttons") if isinstance(contract.get("header_buttons"), list) else []),
+                    "footer_buttons": deepcopy(contract.get("footer_buttons") if isinstance(contract.get("footer_buttons"), list) else []),
+                    "views_form_header_buttons": deepcopy(form.get("header_buttons") if isinstance(form.get("header_buttons"), list) else []),
+                    "views_form_footer_buttons": deepcopy(form.get("footer_buttons") if isinstance(form.get("footer_buttons"), list) else []),
+                    "toolbar_header": deepcopy(toolbar.get("header") if isinstance(toolbar.get("header"), list) else []),
+                    "toolbar_footer": deepcopy(toolbar.get("footer") if isinstance(toolbar.get("footer"), list) else []),
+                }
+
+            def _restore_native_action_buckets(contract: dict[str, Any], preserved: dict[str, Any]) -> None:
+                contract["buttons"] = _merge_action_rows(contract.get("buttons"), preserved.get("buttons"))
+                contract["business_actions"] = _merge_action_rows(contract.get("business_actions"), preserved.get("business_actions"))
+                contract["header_buttons"] = _merge_action_rows(contract.get("header_buttons"), preserved.get("header_buttons"))
+                contract["footer_buttons"] = _merge_action_rows(contract.get("footer_buttons"), preserved.get("footer_buttons"))
+                views = contract.get("views") if isinstance(contract.get("views"), dict) else {}
+                views = dict(views)
+                form = views.get("form") if isinstance(views.get("form"), dict) else {}
+                form = dict(form)
+                form["header_buttons"] = _merge_action_rows(form.get("header_buttons"), preserved.get("views_form_header_buttons"))
+                form["footer_buttons"] = _merge_action_rows(form.get("footer_buttons"), preserved.get("views_form_footer_buttons"))
+                views["form"] = form
+                contract["views"] = views
+                toolbar = contract.get("toolbar") if isinstance(contract.get("toolbar"), dict) else {}
+                toolbar = dict(toolbar)
+                toolbar["header"] = _merge_action_rows(toolbar.get("header"), preserved.get("toolbar_header"))
+                toolbar["footer"] = _merge_action_rows(toolbar.get("footer"), preserved.get("toolbar_footer"))
+                toolbar.setdefault("sidebar", [])
+                contract["toolbar"] = toolbar
+
+            native_action_buckets = _capture_native_action_buckets(source_contract)
             contract_mode = resolve_contract_mode(params)
             contract_surface = resolve_contract_surface(params, contract_mode)
             governed = apply_contract_governance(
@@ -1627,6 +1695,7 @@ class UiContractV2Handler(BaseIntentHandler):
                     head = dict(head)
                     head["context"] = dict(merged_context)
                     source_contract["head"] = head
+                _restore_native_action_buckets(source_contract, native_action_buckets)
             if business_policy_fields:
                 business_policy = source_contract.get("business_form_policy") if isinstance(source_contract.get("business_form_policy"), dict) else {}
                 field_aliases = self._form_field_aliases(model, source_contract)
@@ -3492,6 +3561,141 @@ class UiContractV2Handler(BaseIntentHandler):
             },
         })
         source_contract["header_buttons"] = header_buttons
+
+    def _inject_native_form_footer_buttons(
+        self,
+        source_contract: dict[str, Any],
+        *,
+        params: dict[str, Any],
+        ui_params: dict[str, Any],
+        model: str,
+        view_type: str,
+    ) -> None:
+        if view_type != "form" or not model:
+            return
+        try:
+            model_obj = self.env[model].sudo()
+        except Exception:
+            return
+
+        def _positive(value: Any) -> int:
+            try:
+                parsed = int(value or 0)
+            except Exception:
+                return 0
+            return parsed if parsed > 0 else 0
+
+        view_id = _positive(params.get("view_id") or params.get("viewId") or ui_params.get("view_id") or ui_params.get("viewId"))
+        if not view_id:
+            view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
+            view_id = _positive(view_ids.get("form"))
+        if not view_id:
+            action_id = _positive(
+                params.get("action_id")
+                or params.get("actionId")
+                or ui_params.get("action_id")
+                or ui_params.get("actionId")
+                or source_contract.get("action_id")
+                or source_contract.get("actionId")
+            )
+            if action_id:
+                try:
+                    action = self.env["ir.actions.act_window"].sudo().browse(action_id)
+                    if action.exists() and action.view_id and action.view_id.type == "form":
+                        view_id = int(action.view_id.id)
+                except Exception:
+                    view_id = 0
+        try:
+            if hasattr(model_obj, "get_view"):
+                view_data = model_obj.get_view(view_id=view_id or None, view_type="form")
+            else:
+                view_data = model_obj.fields_view_get(view_id=view_id or None, view_type="form", toolbar=True)
+            arch = str((view_data or {}).get("arch") or "")
+        except Exception:
+            _logger.debug("ui.contract.v2 native footer view lookup skipped", exc_info=True)
+            return
+        if not arch or "<footer" not in arch:
+            return
+        try:
+            root = etree.fromstring(arch.encode("utf-8"))
+        except Exception:
+            _logger.debug("ui.contract.v2 native footer arch parse skipped", exc_info=True)
+            return
+
+        rows: list[dict[str, Any]] = []
+        for button in root.xpath(".//footer//button"):
+            if str(button.get("special") or "").strip():
+                continue
+            method = str(button.get("name") or "").strip()
+            if not method:
+                continue
+            button_type = str(button.get("type") or "object").strip().lower() or "object"
+            label = str(button.get("string") or method).strip()
+            rows.append({
+                "key": f"obj_{method}_{label}",
+                "name": method,
+                "label": label,
+                "string": label,
+                "kind": "server" if button_type in {"server", "server_action"} else "object",
+                "type": button_type,
+                "level": "footer",
+                "target_scope": "footer",
+                "selection": "none",
+                "visible_profiles": ["create", "edit", "readonly"],
+                "intent": "execute",
+                "payload": {
+                    "method": method,
+                    "type": button_type,
+                    "confirm": str(button.get("confirm") or "").strip(),
+                    "class": str(button.get("class") or "").strip(),
+                },
+                "source_authority": {
+                    "kind": "ui_contract_v2_native_form_footer_projection",
+                    "authorities": ["ir.ui.view:form"],
+                    "projection_only": True,
+                    "rebuildable": True,
+                    "no_business_fact_authority": True,
+                    "runtime_carrier": "ui.contract.v2.native_form_footer_buttons",
+                },
+            })
+        if not rows:
+            return
+
+        def _identity(row: Any) -> tuple[str, str]:
+            if not isinstance(row, dict):
+                return ("", "")
+            payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+            return (
+                str(row.get("key") or "").strip(),
+                str(row.get("name") or payload.get("method") or "").strip(),
+            )
+
+        def _merge(existing: Any, additions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            merged = [dict(row) for row in existing if isinstance(row, dict)] if isinstance(existing, list) else []
+            seen = {_identity(row) for row in merged}
+            for row in additions:
+                key = _identity(row)
+                if key in seen:
+                    continue
+                merged.append(deepcopy(row))
+                seen.add(key)
+            return merged
+
+        source_contract["footer_buttons"] = _merge(source_contract.get("footer_buttons"), rows)
+        source_contract["buttons"] = _merge(source_contract.get("buttons"), rows)
+        views = source_contract.get("views") if isinstance(source_contract.get("views"), dict) else {}
+        views = dict(views)
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        form = dict(form)
+        form["footer_buttons"] = _merge(form.get("footer_buttons"), rows)
+        views["form"] = form
+        source_contract["views"] = views
+        toolbar = source_contract.get("toolbar") if isinstance(source_contract.get("toolbar"), dict) else {}
+        toolbar = dict(toolbar)
+        toolbar["footer"] = _merge(toolbar.get("footer"), rows)
+        toolbar.setdefault("header", [])
+        toolbar.setdefault("sidebar", [])
+        source_contract["toolbar"] = toolbar
 
     def _inject_record_business_category_context(self, source_contract: dict[str, Any], *, model: str, record_id: Any) -> None:
         if not model:

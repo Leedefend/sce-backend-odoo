@@ -196,6 +196,43 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual(action["button"]["name"], "action_create_field_policy")
         self.assertEqual(action["targetScope"], "footer")
 
+    def test_ui_contract_v2_projects_form_footer_buttons_as_footer_actions(self):
+        source = {
+            "model": "project.quick.create.wizard",
+            "view_type": "form",
+            "head": {"title": "快速创建项目", "render_profile": "create"},
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "项目名称"},
+            },
+            "views": {
+                "form": {
+                    "layout": [{"type": "sheet", "children": [{"type": "field", "name": "name"}]}],
+                    "footer_buttons": [
+                        {
+                            "key": "action_quick_create",
+                            "label": "创建并进入项目驾驶舱",
+                            "kind": "object",
+                            "payload": {"method": "action_quick_create", "type": "object"},
+                        }
+                    ],
+                }
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.footer.buttons",
+        )
+
+        action = next(
+            row for row in full["actionContract"]["actionRuleList"]
+            if row["label"] == "创建并进入项目驾驶舱"
+        )
+        self.assertEqual(action["button"]["name"], "action_quick_create")
+        self.assertEqual(action["targetScope"], "footer")
+
     def test_data_source_and_formal_metadata_projection_carry_source_authority(self):
         source = {
             "model": "project.project",

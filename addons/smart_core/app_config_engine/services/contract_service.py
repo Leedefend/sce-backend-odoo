@@ -236,6 +236,7 @@ class ContractService:
             views = root.get("views") or {}
             form = views.get("form") or {}
             header_buttons = form.get("header_buttons") or []
+            footer_buttons = form.get("footer_buttons") or []
             # 兼容两种命名
             stat_buttons = form.get("stat_buttons") or form.get("button_box") or []
             top_buttons = root.get("buttons") or []
@@ -250,7 +251,7 @@ class ContractService:
 
 
             merged = {}
-            for b in (top_buttons + header_buttons + stat_buttons):
+            for b in (top_buttons + header_buttons + footer_buttons + stat_buttons):
                 if not isinstance(b, dict):
                     continue
                 merged[_key(b)] = b
@@ -497,7 +498,7 @@ class ContractService:
         try:
             views = (data.get('data') or {}).get('views') or {}
             form = (views.get('form') or {})
-            for bucket in ('header_buttons', 'stat_buttons', 'button_box'):
+            for bucket in ('header_buttons', 'footer_buttons', 'stat_buttons', 'button_box'):
                 for btn in form.get(bucket, []) or []:
                     groups = btn.get('groups_xmlids', []) or []
                     btn['groups_xmlids'] = [g for g in groups if not (isinstance(g, str) and g.startswith('!'))]
