@@ -137,6 +137,22 @@
                   {{ String(option[1]) }}
                 </option>
               </select>
+              <span v-else-if="isDateLikeColumn(column.ttype)" class="relation-date-input-shell">
+                <input
+                  :class="['input', 'relation-date-input', { 'relation-date-input--empty': !adapter.one2manyColumnDisplayValue(column, row.values[column.name]) }]"
+                  :type="adapter.one2manyColumnInputType(column)"
+                  :disabled="column.readonly || adapter.busy"
+                  :value="adapter.one2manyColumnDisplayValue(column, row.values[column.name])"
+                  :placeholder="column.label"
+                  @input="adapter.setOne2manyRowField(field.name, row.key, column, ($event.target as HTMLInputElement).value)"
+                />
+                <span
+                  v-if="!adapter.one2manyColumnDisplayValue(column, row.values[column.name])"
+                  class="relation-date-placeholder"
+                >
+                  {{ localizedDateColumnPlaceholder(column.ttype) }}
+                </span>
+              </span>
               <input
                 v-else
                 class="input"
@@ -249,6 +265,14 @@ function tagColorStyle(color: unknown) {
   ];
   const bg = palette[Math.abs(Math.trunc(idx)) % palette.length];
   return { '--tag-bg': bg };
+}
+
+function isDateLikeColumn(type: unknown) {
+  return ['date', 'datetime'].includes(String(type || '').trim().toLowerCase());
+}
+
+function localizedDateColumnPlaceholder(type: unknown) {
+  return String(type || '').trim().toLowerCase() === 'datetime' ? '请选择日期时间' : '请选择日期';
 }
 </script>
 
@@ -592,6 +616,39 @@ function tagColorStyle(color: unknown) {
   color: var(--sc-app-text-secondary);
   background: var(--sc-app-muted-bg);
   cursor: not-allowed;
+}
+
+.relation-date-input-shell {
+  position: relative;
+  display: grid;
+  min-width: 0;
+}
+
+.relation-date-input--empty::-webkit-datetime-edit {
+  color: transparent;
+}
+
+.relation-date-input--empty:focus::-webkit-datetime-edit {
+  color: var(--sc-app-text-primary);
+}
+
+.relation-date-placeholder {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: calc(100% - 42px);
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.relation-date-input-shell:focus-within .relation-date-placeholder {
+  display: none;
 }
 
 select.input {
