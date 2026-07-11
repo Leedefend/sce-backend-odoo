@@ -1635,7 +1635,7 @@
         <field name="direction">noncash_tax</field>
         <field name="sequence">145</field>
         <field name="source_aliases">外经证登记、税票证明登记、跨区域涉税事项报验</field>
-        <field name="default_values_json"><![CDATA[{"payment_family": "tax_certificate_registration", "source_table": "USER_TAX_CERTIFICATE_REGISTRATION"}]]></field>
+        <field name="default_values_json"><![CDATA[{"payment_family": "tax_certificate_registration", "payment_family_label": "外经证登记", "source_table": "USER_TAX_CERTIFICATE_REGISTRATION"}]]></field>
         <field name="domain_json"><![CDATA[[["payment_family", "=", "tax_certificate_registration"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_name", "taxpayer_name", "tax_report_management_no"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.legacy.payment.residual.fact"], "terminal_action": "manual_confirm", "balance_policy": "tax_certificate_reference"}]]></field>

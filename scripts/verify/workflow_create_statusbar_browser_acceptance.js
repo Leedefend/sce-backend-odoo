@@ -217,6 +217,13 @@ function headerLayoutFailures(layout) {
   return failures;
 }
 
+function visibleTechnicalTokenFailures(text) {
+  const normalized = normalize(text);
+  return [
+    'tax_certificate_registration',
+  ].filter((token) => normalized.includes(token));
+}
+
 async function launchBrowser() {
   try {
     const runtime = await import(pathToFileUrl(path.join(repoRoot, 'scripts/verify/playwright_runtime.mjs')));
@@ -256,10 +263,14 @@ async function main() {
       const visibleStateFields = await visibleWorkflowStateFields(page);
       const headerLayout = await nativeCreateHeaderLayout(page);
       const layoutFailures = headerLayoutFailures(headerLayout);
+      const technicalTokenFailures = visibleTechnicalTokenFailures(text);
       const screenshot = outPath(`${scenario.code.replace(/[^a-z0-9_.-]+/gi, '_')}.png`);
       await page.screenshot({ path: screenshot, fullPage: true });
       const result = {
-        ok: visible.length === 0 && visibleStateFields.length === 0 && layoutFailures.length === 0,
+        ok: visible.length === 0
+          && visibleStateFields.length === 0
+          && layoutFailures.length === 0
+          && technicalTokenFailures.length === 0,
         code: scenario.code,
         name: scenario.name,
         model: scenario.model,
@@ -270,6 +281,7 @@ async function main() {
         visibleStateFields,
         headerLayout,
         layoutFailures,
+        technicalTokenFailures,
         textSample: text.slice(0, 300),
         screenshot,
       };
@@ -279,6 +291,7 @@ async function main() {
           visibleStatusbars: visible,
           visibleStateFields,
           layoutFailures,
+          technicalTokenFailures,
           headerLayout,
         })}`);
       }

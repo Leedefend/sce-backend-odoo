@@ -653,7 +653,7 @@ def _tax_certificate_policy() -> dict:
     )
     return _policy(
         [
-            _section("business_identity", "办理类型", ["payment_family", "document_state_label", "document_no"], 10),
+            _section("business_identity", "办理类型", ["payment_family_label", "document_state_label", "document_no"], 10),
             _section("business_object", "项目与合同", ["project_id", "project_name", "partner_id", "partner_name", "contract_no", "contract_name"], 20),
             _section("certificate", "外经证信息", ["document_date", "taxpayer_name", "taxpayer_identifier", "counterparty_tax_identifier", "tax_report_management_no", "operation_address"], 30),
             _section("contact", "经办与税务联系人", ["handler_name", "handler_phone", "regional_tax_contact", "regional_tax_contact_phone"], 40),
@@ -662,7 +662,8 @@ def _tax_certificate_policy() -> dict:
             _section("source_trace", "来源与系统追溯", list(trace), 90, collapsed=True),
         ],
         required=("project_id", "document_date", "taxpayer_name", "tax_report_management_no"),
-        readonly_all=("payment_family", "document_state_label"),
+        readonly_all=("payment_family", "payment_family_label", "document_state_label"),
+        hide_create=("payment_family_label",),
         trace=trace,
     )
 
