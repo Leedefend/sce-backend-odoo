@@ -304,6 +304,7 @@ def main() -> int:
         "required_quick_dependencies": len(REQUIRED_QUICK_DEPS),
         "required_target_dependencies": sum(len(deps) for deps in REQUIRED_TARGET_DEPS.values()),
         "required_target_body_tokens": sum(len(tokens) for tokens in REQUIRED_TARGET_BODY_TOKENS.values()),
+        "required_target_body_order_tokens": sum(len(tokens) for tokens in REQUIRED_TARGET_BODY_ORDER.values()),
     }
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 2 if errors else 0

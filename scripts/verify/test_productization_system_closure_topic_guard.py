@@ -3,8 +3,23 @@
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 
 import productization_system_closure_topic_guard as guard
+
+
+class _FakePath:
+    def __init__(self, text: str) -> None:
+        self._text = text
+
+    def is_file(self) -> bool:
+        return True
+
+    def read_text(self, encoding: str = "utf-8") -> str:
+        return self._text
+
+    def relative_to(self, _root: object) -> str:
+        return "fake"
 
 
 def _doc_text() -> str:
@@ -105,6 +120,17 @@ def _make_text() -> str:
 class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
     def test_complete_minimal_fixture_passes(self) -> None:
         self.assertEqual([], guard.validate(_doc_text(), _make_text()))
+
+    def test_main_reports_body_order_rule_count(self) -> None:
+        with mock.patch.object(guard, "DOC", _FakePath(_doc_text())), mock.patch.object(
+            guard,
+            "MAKEFILE",
+            _FakePath(_make_text()),
+        ), mock.patch("builtins.print") as print_mock:
+            self.assertEqual(0, guard.main())
+
+        payload = print_mock.call_args.args[0]
+        self.assertIn('"required_target_body_order_tokens": 3', payload)
 
     def test_doc_must_keep_frontend_backend_contract_boundary(self) -> None:
         doc_text = _doc_text().replace("前端只消费后端契约", "")
