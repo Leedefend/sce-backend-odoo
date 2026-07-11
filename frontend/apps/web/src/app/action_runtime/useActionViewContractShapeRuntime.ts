@@ -236,27 +236,40 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   });
 
   function extractColumnsFromContract(contract: unknown, sceneColumns: string[] = []) {
-    if (Array.isArray(sceneColumns) && sceneColumns.length) {
-      return sceneColumns;
-    }
+    const preferred = Array.isArray(sceneColumns)
+      ? sceneColumns.map((item) => String(item || '').trim()).filter(Boolean)
+      : [];
     const typed = (contract || {}) as Dict;
     const v2Fields = collectUnifiedPageContractV2FieldWidgets(typed).map((widget) => widget.fieldCode).filter(Boolean);
-    if (v2Fields.length) return v2Fields;
+    if (v2Fields.length) return applyPreferredColumnOrder(v2Fields, preferred);
     const directViews = typed.views as Dict | undefined;
     if (directViews) {
       const treeBlock = (directViews.tree || directViews.list || {}) as Dict;
       const treeColumns = treeBlock.columns;
       if (Array.isArray(treeColumns) && treeColumns.length) {
-        return treeColumns.map((item) => String(item || '')).filter(Boolean);
+        return applyPreferredColumnOrder(treeColumns.map((item) => String(item || '')).filter(Boolean), preferred);
       }
       const treeSchema = (treeBlock.columnsSchema || treeBlock.columns_schema) as unknown;
       if (Array.isArray(treeSchema) && treeSchema.length) {
-        return treeSchema
+        return applyPreferredColumnOrder(treeSchema
           .map((col) => String(((col as Dict).name || '')).trim())
-          .filter(Boolean);
+          .filter(Boolean), preferred);
       }
     }
-    return [];
+    return preferred;
+  }
+
+  function applyPreferredColumnOrder(contractColumns: string[], preferredColumns: string[]) {
+    const contract = uniqueFields(contractColumns.map((item) => String(item || '').trim()).filter(Boolean));
+    const preferred = uniqueFields(preferredColumns.map((item) => String(item || '').trim()).filter(Boolean));
+    if (!contract.length) return preferred;
+    if (!preferred.length) return contract;
+    const contractSet = new Set(contract);
+    return uniqueFields([
+      ...preferred.filter((item) => contractSet.has(item)),
+      ...contract,
+      ...preferred.filter((item) => !contractSet.has(item)),
+    ]);
   }
 
   function extractColumnSchemaFromContract(contract: unknown): Dict[] {
@@ -290,7 +303,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       if (name && !acc[name]) acc[name] = row;
       return acc;
     }, {});
-    const baseColumns = preferred.length ? preferred : extractColumnsFromContract(contract, []);
+    const baseColumns = extractColumnsFromContract(contract, preferred);
     const labels = {
       ...contractColumnLabels.value,
       ...((profile?.column_labels || {}) as Record<string, string>),

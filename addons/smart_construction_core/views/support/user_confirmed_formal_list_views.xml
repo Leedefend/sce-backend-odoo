@@ -713,14 +713,20 @@
         <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票登记', 'default_business_category_code': 'invoice.output.registration', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_settlement_order_income" model="ir.actions.act_window">
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})
+        ]"/>
         <field name="domain">[('business_category_id.code', '=', 'settlement.income')]</field>
         <field name="context">{'create': True, 'edit': True, 'default_settlement_type': 'in', 'default_business_category_code': 'settlement.income', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_settlement_order_expense" model="ir.actions.act_window">
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})]"/>
+        <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})
+        ]"/>
         <field name="domain">[('business_category_id.code', '=', 'settlement.expense')]</field>
         <field name="context">{'create': True, 'edit': True, 'default_settlement_type': 'out', 'default_business_category_code': 'settlement.expense', 'search_default_group_project': 1}</field>
     </record>

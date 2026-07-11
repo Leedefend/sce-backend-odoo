@@ -64,6 +64,30 @@ function auditHeaderRows(rows) {
     .slice(0, 20);
 }
 
+function missingRequiredBusinessHeaders(rows) {
+  const requiredByAction = new Map([
+    [753, ["结算单号", "合同名称", "合同总额", "往来单位", "未付款金额"]],
+    [754, ["单据状态", "单据编号", "项目名称", "结算单位", "结算金额"]],
+  ]);
+  return rows
+    .map((row) => {
+      const actionId = Number(row?.actionId || 0);
+      const required = requiredByAction.get(actionId) || [];
+      const headers = Array.isArray(row?.headers) ? row.headers.map((header) => String(header || "").trim()).filter(Boolean) : [];
+      const missing = required.filter((label) => !headers.includes(label));
+      return {
+        actionId,
+        path: row?.path || "",
+        route: row?.route || "",
+        missing,
+        headers,
+        screenshotPath: row?.screenshotPath || "",
+      };
+    })
+    .filter((row) => row.missing.length)
+    .slice(0, 20);
+}
+
 async function main() {
   const report = await readJson(REPORT_PATH);
   const summary = report.summary && typeof report.summary === "object" ? report.summary : {};
@@ -73,6 +97,7 @@ async function main() {
   const screenshotMissing = missingScreenshots(actionResults);
   const placeholderHeaders = placeholderHeaderRows(actionResults);
   const auditHeaders = auditHeaderRows(actionResults);
+  const missingBusinessHeaders = missingRequiredBusinessHeaders(actionResults);
   const errors = [];
 
   if (Number(summary.totalScanned || 0) < MIN_ACTIONS) {
@@ -86,6 +111,7 @@ async function main() {
   if (screenshotMissing.length) errors.push(`missing screenshots: ${screenshotMissing.length}`);
   if (placeholderHeaders.length) errors.push(`placeholder headers visible: ${placeholderHeaders.length}`);
   if (auditHeaders.length) errors.push(`audit headers visible: ${auditHeaders.length}`);
+  if (missingBusinessHeaders.length) errors.push(`required business headers missing: ${missingBusinessHeaders.length}`);
 
   const payload = {
     ok: errors.length === 0,
@@ -99,6 +125,7 @@ async function main() {
       screenshotMissing,
       placeholderHeaders,
       auditHeaders,
+      missingBusinessHeaders,
       consoleErrors: Array.isArray(report.consoleErrors) ? report.consoleErrors.slice(0, 20) : [],
     },
   };

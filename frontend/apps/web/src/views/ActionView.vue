@@ -3072,7 +3072,7 @@ async function loadListColumnPreference(): Promise<void> {
         }
       });
     }
-    listColumnVisibility.value = next;
+    listColumnVisibility.value = normalizeListColumnVisibility(next);
     listColumnOrder.value = allowOrder ? columnOrder : [];
     listColumnWidths.value = allowWidth ? columnWidths : {};
   } catch {
@@ -3088,6 +3088,37 @@ function normalizeListColumnWidth(value: unknown) {
   const parsed = Number(value || 0);
   if (!Number.isFinite(parsed) || parsed <= 0) return 0;
   return Math.min(Math.max(Math.trunc(parsed), 80), 640);
+}
+
+function minimumUsableVisibleListColumnCount(columnNames: string[]) {
+  if (columnNames.length >= 6) return 3;
+  if (columnNames.length >= 3) return 2;
+  return 1;
+}
+
+function normalizeListColumnVisibility(visibility: Record<string, boolean>) {
+  const columnNames = listColumnOptions.value.map((column) => column.name).filter(Boolean);
+  if (!columnNames.length) return {};
+  const columnNameSet = new Set(columnNames);
+  const normalized = Object.entries(visibility || {}).reduce<Record<string, boolean>>((acc, [name, visible]) => {
+    const key = String(name || '').trim();
+    if (key && columnNameSet.has(key)) acc[key] = visible === true;
+    return acc;
+  }, {});
+  const defaultVisibleCount = listColumnOptions.value.filter((column) => column.defaultVisible !== false).length;
+  const visibleCount = columnNames.filter((name) => (
+    Object.prototype.hasOwnProperty.call(normalized, name)
+      ? normalized[name] === true
+      : listColumnOptions.value.find((column) => column.name === name)?.defaultVisible !== false
+  )).length;
+  const minimumVisibleCount = Math.min(
+    minimumUsableVisibleListColumnCount(columnNames),
+    Math.max(defaultVisibleCount, 1),
+  );
+  if (visibleCount < minimumVisibleCount) {
+    return {};
+  }
+  return normalized;
 }
 
 function buildListColumnPreference(visibility: Record<string, boolean>, columnOrder: string[], columnWidths: Record<string, number>) {
@@ -3118,7 +3149,7 @@ function buildListColumnPreference(visibility: Record<string, boolean>, columnOr
 
 async function handleListColumnVisibilityChange(payload: { visibility: Record<string, boolean> }): Promise<void> {
   const saveSeq = ++listColumnSaveSeq;
-  const next = payload.visibility || {};
+  const next = normalizeListColumnVisibility(payload.visibility || {});
   listColumnVisibility.value = { ...next };
   setListColumnSaveStatus('saving');
   try {
