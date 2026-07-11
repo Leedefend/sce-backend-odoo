@@ -18,6 +18,8 @@ Makefile guards and script-level guards.
 - `make verify.legacy_online_attachment.custody.evidence.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make verify.legacy_online_attachment.mirror.job.audit.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make verify.production_menu.release_gate.guard.prod` (requires `PROD_READONLY_VERIFY=1`)
+- `make verify.formal_menu.runtime_no_legacy_carrier_guard.prod` (requires `PROD_READONLY_VERIFY=1`)
+- `make verify.formal_list_surface.no_test_placeholder_guard.prod` (requires `PROD_READONLY_VERIFY=1`)
 - `make verify.production_git.authority.guard` (read-only Git/worktree/auth check)
 - `make verify.baseline` (requires PROD_DANGER=1)
 - `make verify.p0` (requires PROD_DANGER=1)
@@ -97,6 +99,10 @@ Read-only production menu release-gate verification:
 ```bash
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
   make verify.production_menu.release_gate.guard.prod
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
+  make verify.formal_menu.runtime_no_legacy_carrier_guard.prod
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
+  make verify.formal_list_surface.no_test_placeholder_guard.prod
 ```
 
 Read-only production attachment custody verification:

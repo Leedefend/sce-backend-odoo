@@ -190,6 +190,10 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
 ```bash
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
   make verify.production_menu.release_gate.guard.prod
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
+  make verify.formal_menu.runtime_no_legacy_carrier_guard.prod
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 \
+  make verify.formal_list_surface.no_test_placeholder_guard.prod
 ```
 
 ### 5.4 发布后验证

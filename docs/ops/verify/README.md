@@ -183,6 +183,12 @@
   - Verifies `smart_core.platform_release_db` points at the current production database.
   - Verifies active released snapshots exist for `construction.standard` and `construction.preview`.
   - Verifies release-gate page counts match released product-policy menu counts and runtime gated navigation does not expose old `用户核对菜单` paths.
+- `make verify.formal_menu.runtime_no_legacy_carrier_guard.prod`
+  - Read-only production guard for released product menu runtime carriers.
+  - Verifies formal business menus still point to their productized actions/models and do not drift back to legacy carrier actions.
+- `make verify.formal_list_surface.no_test_placeholder_guard.prod`
+  - Read-only production guard for released formal list surfaces.
+  - Verifies productized list contracts do not expose test placeholder contracts or acceptance-only pollution.
 - `make policy.restore.formal_product_menu`
   - Write operation guarded by `PROD_DANGER=1`.
   - Restores `construction.standard` and `construction.preview` product policies from `formal_business_product_menu_policy_v1.json`.
@@ -347,6 +353,7 @@
   - Verifies the production release-flow control plane is wired together across the flow standard, deployment record template, Makefile target, verify catalog, release checklist, release indexes, deployment runbook, and deployment record guard script.
   - Enforces the release-flow document keeps environment responsibilities, alignment definitions, hard rules, package verification, production validation matrix, difference registration, and closure criteria in order.
   - Enforces the production read-only business readiness gate is wired through Makefile, production command policy, deployment runbook, and release-flow validation matrix: `make verify.business_system.usability_readiness.prod`.
+  - Enforces the production read-only formal menu and formal list visible-surface gates remain wired through Makefile, production command policy, deployment runbook, and release-flow validation matrix.
   - Enforces the production read-only attachment custody gate is wired through Makefile, production command policy, deployment runbook, and release-flow validation matrix: `make history.attachment.custody.probe.prod`.
   - Enforces the production attachment custody marker backfill entry remains explicitly guarded by `PROD_DANGER=1`: `make legacy_attachment.custody_marker.backfill.prod`.
   - Enforces the production read-only attachment validation targets remain registered for attachment-scope releases.
