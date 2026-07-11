@@ -82,6 +82,25 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
             errors,
         )
 
+    def test_prod_project_context_guard_must_keep_readonly_dependency(self) -> None:
+        make_text = _make_text().replace(
+            "verify.project_context.selector_product_boundary.guard.prod: guard.prod.readonly",
+            "verify.project_context.selector_product_boundary.guard.prod:",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.project_context.selector_product_boundary.guard.prod missing dependency: guard.prod.readonly",
+            errors,
+        )
+
+    def test_prod_project_context_guard_must_keep_readonly_parameter(self) -> None:
+        make_text = _make_text().replace("PROD_READONLY_VERIFY=1", "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.project_context.selector_product_boundary.guard.prod missing command token: PROD_READONLY_VERIFY=1",
+            errors,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
