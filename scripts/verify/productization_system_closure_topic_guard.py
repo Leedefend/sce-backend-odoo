@@ -383,6 +383,16 @@ def _duplicate_tokens(tokens: list[str]) -> list[str]:
     return duplicates
 
 
+def _inspected_make_targets() -> list[str]:
+    targets = [
+        *REQUIRED_MAKE_TARGETS,
+        *REQUIRED_TARGET_DEPS.keys(),
+        *REQUIRED_TARGET_BODY_TOKENS.keys(),
+        *REQUIRED_TARGET_BODY_ORDER.keys(),
+    ]
+    return list(dict.fromkeys(targets))
+
+
 def validate(doc_text: str, make_text: str) -> list[str]:
     errors: list[str] = []
 
@@ -417,7 +427,10 @@ def validate(doc_text: str, make_text: str) -> list[str]:
             if target not in REQUIRED_MAKE_TARGETS:
                 errors.append(f"{group} target not guarded as required Makefile target: {target}")
 
-    for target in REQUIRED_MAKE_TARGETS:
+    for target in _duplicate_tokens(REQUIRED_MAKE_TARGETS):
+        errors.append(f"required Makefile target duplicated: {target}")
+
+    for target in _inspected_make_targets():
         if not _target_line(make_text, target):
             errors.append(f"Makefile missing target: {target}")
         elif _target_line_count(make_text, target) > 1:
@@ -488,6 +501,7 @@ def main() -> int:
         "required_evidence_artifact_paths": len(REQUIRED_EVIDENCE_ARTIFACT_PATHS),
         "required_closeout_fields": len(REQUIRED_CLOSEOUT_FIELDS),
         "required_make_targets": len(REQUIRED_MAKE_TARGETS),
+        "inspected_make_targets": len(_inspected_make_targets()),
         "required_target_mode_groups": len(REQUIRED_TARGET_MODE_GROUPS),
         "required_prod_readonly_targets": len(REQUIRED_PROD_READONLY_TARGETS),
         "required_prod_forbid_targets": len(REQUIRED_PROD_FORBID_TARGETS),

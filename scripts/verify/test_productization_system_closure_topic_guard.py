@@ -174,6 +174,7 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         self.assertIn('"required_doc_token_groups": 3', payload)
         self.assertIn('"required_evidence_artifact_paths": 9', payload)
         self.assertIn('"required_closeout_fields": 6', payload)
+        self.assertIn('"inspected_make_targets": 22', payload)
         self.assertIn('"required_target_mode_groups": 2', payload)
         self.assertIn('"required_prod_readonly_targets": 8', payload)
         self.assertIn('"required_prod_forbid_targets": 9', payload)
@@ -307,6 +308,22 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         make_text = _make_text() + "\n" + _target("verify.frontend.product_language.guard", ["guard.prod.forbid"])
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn("Makefile duplicate target: verify.frontend.product_language.guard", errors)
+
+    def test_duplicate_required_target_inventory_fails(self) -> None:
+        duplicated_targets = [*guard.REQUIRED_MAKE_TARGETS, "verify.frontend.product_language.guard"]
+        with mock.patch.object(guard, "REQUIRED_MAKE_TARGETS", duplicated_targets):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn("required Makefile target duplicated: verify.frontend.product_language.guard", errors)
+
+    def test_duplicate_auxiliary_inspected_target_fails(self) -> None:
+        make_text = _make_text() + "\n" + _target(
+            "verify.system_user_experience.shell_acceptance",
+            ["guard.prod.forbid"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.shell_acceptance"],
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("Makefile duplicate target: verify.system_user_experience.shell_acceptance", errors)
 
     def test_missing_quick_dependency_fails(self) -> None:
         make_text = _make_text().replace(" verify.formal_list_surface.no_test_placeholder_guard", "")
