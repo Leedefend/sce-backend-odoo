@@ -17,6 +17,14 @@ def _target(name: str, deps: list[str], body: list[str] | None = None) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _multiline_target(name: str, deps: list[str], body: list[str] | None = None) -> str:
+    lines = [f"{name}: \\"]
+    lines.extend(f"  {dep} \\" for dep in deps[:-1])
+    lines.append(f"  {deps[-1] if deps else ''}".rstrip())
+    lines.extend(f"\t@{line}" for line in body or [])
+    return "\n".join(lines) + "\n"
+
+
 def _make_text() -> str:
     targets = [
         _target(
@@ -186,6 +194,20 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
             "verify.system_user_experience.full_browser missing dependency: verify.system_user_experience.business_form_user_perspective",
             errors,
         )
+
+    def test_multiline_target_dependencies_are_supported(self) -> None:
+        single_line_target = _target(
+            "verify.system_user_experience.full_browser",
+            ["guard.prod.forbid", *guard.REQUIRED_TARGET_DEPS["verify.system_user_experience.full_browser"]],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.full_browser"],
+        )
+        multiline_target = _multiline_target(
+            "verify.system_user_experience.full_browser",
+            ["guard.prod.forbid", *guard.REQUIRED_TARGET_DEPS["verify.system_user_experience.full_browser"]],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.full_browser"],
+        )
+        make_text = _make_text().replace(single_line_target, multiline_target)
+        self.assertEqual([], guard.validate(_doc_text(), make_text))
 
     def test_prod_project_context_guard_must_keep_readonly_dependency(self) -> None:
         make_text = _make_text().replace(

@@ -175,9 +175,21 @@ REQUIRED_TARGET_BODY_ORDER = {
 
 
 def _target_line(text: str, target: str) -> str:
-    pattern = re.compile(rf"^{re.escape(target)}\s*:(?P<deps>[^\n]*)$", re.MULTILINE)
-    match = pattern.search(text)
-    return match.group(0) if match else ""
+    lines = text.splitlines()
+    prefix_pattern = re.compile(rf"^{re.escape(target)}\s*:")
+    for index, line in enumerate(lines):
+        if not prefix_pattern.match(line):
+            continue
+        chunks = [line.rstrip()]
+        cursor = index
+        while chunks[-1].endswith("\\"):
+            chunks[-1] = chunks[-1][:-1].rstrip()
+            cursor += 1
+            if cursor >= len(lines):
+                break
+            chunks.append(lines[cursor].strip())
+        return " ".join(chunk for chunk in chunks if chunk)
+    return ""
 
 
 def _target_line_count(text: str, target: str) -> int:
@@ -193,12 +205,24 @@ def _target_deps(text: str, target: str) -> list[str]:
 
 
 def _target_body(text: str, target: str) -> str:
-    pattern = re.compile(
-        rf"^{re.escape(target)}\s*:[^\n]*\n(?P<body>(?:\t[^\n]*\n|[ \t]*\n)*)",
-        re.MULTILINE,
-    )
-    match = pattern.search(text)
-    return match.group("body") if match else ""
+    lines = text.splitlines()
+    prefix_pattern = re.compile(rf"^{re.escape(target)}\s*:")
+    for index, line in enumerate(lines):
+        if not prefix_pattern.match(line):
+            continue
+        cursor = index
+        while lines[cursor].rstrip().endswith("\\"):
+            cursor += 1
+            if cursor >= len(lines):
+                return ""
+        body_lines = []
+        for body_line in lines[cursor + 1 :]:
+            if not body_line.startswith("\t") and body_line.strip():
+                break
+            if body_line.startswith("\t") or not body_line.strip():
+                body_lines.append(body_line)
+        return "\n".join(body_lines) + ("\n" if body_lines else "")
+    return ""
 
 
 def _tokens_in_order(text: str, tokens: list[str]) -> bool:
