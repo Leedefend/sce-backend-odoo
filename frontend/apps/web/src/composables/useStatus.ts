@@ -115,7 +115,7 @@ function getHint(code?: number | string, kind?: string, errorCategory?: string, 
   return '';
 }
 
-export function resolveErrorCopy(err: StatusError | null, fallbackMessage = '请求处理失败'): StatusCopy {
+export function resolveErrorCopy(err: StatusError | null, fallbackMessage = '处理失败'): StatusCopy {
   const code = normalizeCode(err?.code);
   const category = normalizeCategory(err?.errorCategory);
   const hint = err?.hint || getHint(err?.code, err?.kind, err?.errorCategory, err?.retryable);
@@ -158,7 +158,7 @@ export function resolveErrorCopy(err: StatusError | null, fallbackMessage = '请
   if (category === 'system') {
     return {
       title: '系统处理问题',
-      message: '系统服务未能完成本次请求。',
+      message: '系统服务未能完成本次操作。',
       hint: mergeHint(hint, contextHint),
     };
   }
@@ -186,7 +186,7 @@ export function resolveErrorCopy(err: StatusError | null, fallbackMessage = '请
   if (code === 404) {
     return {
       title: '资源不可用',
-      message: '请求的资源不存在或已不可访问。',
+      message: '要访问的内容不存在或已不可访问。',
       hint: mergeHint(hint, contextHint),
     };
   }
@@ -200,12 +200,12 @@ export function resolveErrorCopy(err: StatusError | null, fallbackMessage = '请
   if (code && code >= 500) {
     return {
       title: '系统处理问题',
-      message: '系统服务未能完成本次请求，请稍后重试。',
+      message: '系统服务未能完成本次操作，请稍后重试。',
       hint: mergeHint(hint, contextHint),
     };
   }
   return {
-    title: '请求处理失败',
+    title: '处理失败',
     message: err?.message || fallbackMessage,
     hint: mergeHint(hint, contextHint),
   };

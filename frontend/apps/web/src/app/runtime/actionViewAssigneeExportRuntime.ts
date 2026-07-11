@@ -78,7 +78,7 @@ export function resolveAssigneePermissionWarningMessage(options: {
   text: (key: string, fallback: string) => string;
 }): string {
   if (!options.warning) return '';
-  return `${options.text('batch_msg_assignee_options_limited_prefix', '负责人候选加载受限（')}${options.warning.model}/${options.warning.op}${options.text('batch_msg_assignee_options_limited_suffix', '）')}`;
+  return options.text('batch_msg_assignee_options_limited', '负责人候选加载受限，请确认当前角色权限。');
 }
 
 export function resolveExportGuard(options: {

@@ -101,7 +101,7 @@ export function resolveBatchActionResultMessage(options: {
   text: (key: string, fallback: string) => string;
 }): string {
   if (options.idempotentReplay) {
-    return options.text('batch_msg_idempotent_replay', '批量操作已幂等处理（重复请求被忽略）');
+    return options.text('batch_msg_idempotent_replay', '批量操作已处理（重复提交已忽略）');
   }
   if (options.action === 'delete') {
     return `${options.text('batch_msg_delete_done_prefix', '批量删除完成：成功 ')}${options.succeeded}${options.text('batch_msg_done_middle', '，失败 ')}${options.failed}`;
@@ -123,7 +123,7 @@ export function resolveBatchActionFailureMessage(options: {
   if (options.action === 'assign') {
     const assignee = options.assigneeName || '';
     if (options.idempotentReplay) {
-      return `${options.text('batch_msg_assign_idempotent_prefix', '批量指派给 ')}${assignee}${options.text('batch_msg_assign_idempotent_suffix', ' 已幂等处理（重复请求被忽略）')}`;
+      return `${options.text('batch_msg_assign_idempotent_prefix', '批量指派给 ')}${assignee}${options.text('batch_msg_assign_idempotent_suffix', ' 已处理（重复提交已忽略）')}`;
     }
     return `${options.text('batch_msg_assign_done_prefix', '批量指派给 ')}${assignee}${options.text('batch_msg_assign_done_middle', '：成功 ')}${options.succeeded || 0}${options.text('batch_msg_done_middle', '，失败 ')}${options.failed || 0}`;
   }
