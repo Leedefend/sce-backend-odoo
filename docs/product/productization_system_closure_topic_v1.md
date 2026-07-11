@@ -92,6 +92,8 @@ make verify.business_config.config_workbench_operation_quick
 make verify.business_config.full_acceptance
 make verify.system_user_experience.visible_surface_visual_coverage
 make verify.system_user_experience.full_browser
+make verify.formal_business.release_gate
+make verify.business_capability.productization_p1
 make verify.business_system.usability_readiness
 ```
 

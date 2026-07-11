@@ -32,6 +32,8 @@ REQUIRED_DOC_TOKENS = [
     "make verify.business_config.full_acceptance",
     "make verify.system_user_experience.visible_surface_visual_coverage",
     "make verify.system_user_experience.full_browser",
+    "make verify.formal_business.release_gate",
+    "make verify.business_capability.productization_p1",
     "make verify.business_system.usability_readiness",
     "make verify.production_git.authority.guard",
     "make verify.project_context.selector_product_boundary.guard.prod",
@@ -52,6 +54,8 @@ REQUIRED_MAKE_TARGETS = [
     "verify.business_config.unit",
     "verify.business_config.config_workbench_operation_quick",
     "verify.business_config.full_acceptance",
+    "verify.formal_business.release_gate",
+    "verify.business_capability.productization_p1",
     "verify.business_system.usability_readiness",
     "verify.production_git.authority.guard",
     "verify.business_system.usability_readiness.prod",
@@ -90,6 +94,16 @@ REQUIRED_TARGET_DEPS = {
         "verify.business_config.low_code_menu_navigation_alignment",
         "verify.business_config.low_code_global_stability",
         "verify.user_menu.reachability.guard",
+    ],
+    "verify.formal_business.release_gate": [
+        "guard.prod.forbid",
+        "check-compose-project",
+        "check-compose-env",
+    ],
+    "verify.business_capability.productization_p1": [
+        "guard.prod.forbid",
+        "check-compose-project",
+        "check-compose-env",
     ],
     "verify.business_system.usability_readiness": [
         "guard.prod.forbid",
@@ -169,6 +183,14 @@ REQUIRED_TARGET_BODY_TOKENS = {
     "verify.business_system.usability_readiness": [
         'BUSINESS_SYSTEM_READINESS_INCLUDE_P1="$(BUSINESS_SYSTEM_READINESS_INCLUDE_P1)"',
         "scripts/ops/validate_business_system_usability_readiness.sh",
+    ],
+    "verify.formal_business.release_gate": [
+        "MIGRATION_ARTIFACT_ROOT",
+        "scripts/ops/validate_formal_business_release_gate.sh",
+    ],
+    "verify.business_capability.productization_p1": [
+        "MIGRATION_ARTIFACT_ROOT",
+        "scripts/ops/validate_business_capability_productization_p1.sh",
     ],
     "verify.business_system.usability_readiness.prod": [
         "BUSINESS_SYSTEM_READINESS_PROD_READONLY=1",

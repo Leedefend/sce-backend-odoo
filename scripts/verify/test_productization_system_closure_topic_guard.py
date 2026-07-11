@@ -128,6 +128,16 @@ def _make_text() -> str:
             guard.REQUIRED_TARGET_DEPS["verify.business_config.full_acceptance"],
         ),
         _target(
+            "verify.formal_business.release_gate",
+            guard.REQUIRED_TARGET_DEPS["verify.formal_business.release_gate"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.formal_business.release_gate"],
+        ),
+        _target(
+            "verify.business_capability.productization_p1",
+            guard.REQUIRED_TARGET_DEPS["verify.business_capability.productization_p1"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.business_capability.productization_p1"],
+        ),
+        _target(
             "verify.system_user_experience.shell_acceptance",
             ["guard.prod.forbid"],
             guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.shell_acceptance"],
@@ -282,6 +292,35 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn(
             "verify.business_config.full_acceptance missing dependency: verify.business_config.low_code_menu_navigation_alignment",
+            errors,
+        )
+
+    def test_doc_must_keep_formal_business_release_gate(self) -> None:
+        doc_text = _doc_text().replace("make verify.formal_business.release_gate", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: make verify.formal_business.release_gate", errors)
+
+    def test_formal_business_release_gate_must_keep_prod_forbid_dependency(self) -> None:
+        make_text = _make_text().replace(
+            "verify.formal_business.release_gate: guard.prod.forbid",
+            "verify.formal_business.release_gate:",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("verify.formal_business.release_gate missing dependency: guard.prod.forbid", errors)
+
+    def test_formal_business_release_gate_must_keep_ops_script(self) -> None:
+        make_text = _make_text().replace("scripts/ops/validate_formal_business_release_gate.sh", "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.formal_business.release_gate missing command token: scripts/ops/validate_formal_business_release_gate.sh",
+            errors,
+        )
+
+    def test_business_capability_p1_gate_must_keep_ops_script(self) -> None:
+        make_text = _make_text().replace("scripts/ops/validate_business_capability_productization_p1.sh", "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.business_capability.productization_p1 missing command token: scripts/ops/validate_business_capability_productization_p1.sh",
             errors,
         )
 
