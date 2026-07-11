@@ -7,6 +7,7 @@ import { getSceneByKey, setSceneRegistry, setSceneRegistryFromSceneReadyContract
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
+import { resolveDisplayText } from '../app/displayText';
 import { isConfiguredDbPinned, resolveActiveDb, resolveConfiguredDb, resolveLoginRoutingDb, setActiveDb } from '../services/dbContext';
 
 let appInitInFlight: Promise<void> | null = null;
@@ -711,7 +712,7 @@ function normalizeActivityPage(raw: unknown): ActivityPage | null {
     key,
     route,
     kind,
-    title: asText(row.title) || '活动页面',
+    title: resolveDisplayText(row.title) || asText(row.title) || '活动页面',
     model: asText(row.model) || undefined,
     action_id: Number(row.action_id || row.actionId || 0) || undefined,
     menu_id: Number(row.menu_id || row.menuId || 0) || undefined,
@@ -1289,7 +1290,7 @@ export const useSessionStore = defineStore('session', {
       const route = asText(rawPage.route);
       if (!key || !route) return;
       const existing = this.activityPages.find((page) => page.key === key);
-      const incomingTitle = asText(rawPage.title) || '活动页面';
+      const incomingTitle = resolveDisplayText(rawPage.title) || asText(rawPage.title) || '活动页面';
       const title = existing?.title && !isGenericActivityTitle(existing.title) && isGenericActivityTitle(incomingTitle)
         ? existing.title
         : incomingTitle;
@@ -1368,7 +1369,7 @@ export const useSessionStore = defineStore('session', {
     },
     updateActiveActivityTitle(rawTitle: unknown) {
       const activeKey = asText(this.activeActivityPageKey);
-      const title = asText(rawTitle);
+      const title = resolveDisplayText(rawTitle) || asText(rawTitle);
       if (!activeKey || !title) return;
       const activePage = this.activityPages.find((page) => page.key === activeKey);
       const titleBelongsToAnotherPage = this.activityPages.some((page) => page.key !== activeKey && page.title === title);

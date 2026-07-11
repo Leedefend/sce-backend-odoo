@@ -656,6 +656,7 @@ import { useActionViewPageDisplayStateRuntime } from '../app/action_runtime/useA
 import { useActionViewHudEntriesRuntime } from '../app/action_runtime/useActionViewHudEntriesRuntime';
 import { useActionViewHudEntriesInputRuntime } from '../app/action_runtime/useActionViewHudEntriesInputRuntime';
 import { useActionViewSurfaceIntentRuntime } from '../app/action_runtime/useActionViewSurfaceIntentRuntime';
+import { resolveDisplayText } from '../app/displayText';
 import { useActionViewAdvancedDisplayRuntime } from '../app/action_runtime/useActionViewAdvancedDisplayRuntime';
 import { useActionViewContentDisplayRuntime } from '../app/action_runtime/useActionViewContentDisplayRuntime';
 import { useActionViewSurfaceDisplayRuntime } from '../app/action_runtime/useActionViewSurfaceDisplayRuntime';
@@ -1697,7 +1698,7 @@ const {
   pageText,
   resolveActionViewSurfaceIntent,
 });
-const actionMetaName = computed(() => String(actionMeta.value?.name || '').trim());
+const actionMetaName = computed(() => resolveDisplayText(actionMeta.value?.name));
 const baseErrorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
 const {
   pageTitle,

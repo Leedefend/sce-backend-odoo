@@ -288,6 +288,7 @@ import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
 import { BUSINESS_CONFIG_MODES, BUSINESS_CONFIG_ROUTE_FLAGS } from '../app/businessConfigBoundaries';
+import { resolveDisplayText } from '../app/displayText';
 import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
 import { config } from '../config';
 import { openAction } from '../services/action_service';
@@ -573,7 +574,7 @@ const menuLabel = computed(() => {
   }
   const menuPath = findMenuPath(menuTree.value, menuId);
   const node = menuPath[menuPath.length - 1];
-  return node?.title || node?.name || node?.label || '';
+  return resolveDisplayText(node?.title || node?.name || node?.label);
 });
 
 const hudEnabled = computed(() => isHudEnabled(route));
@@ -877,15 +878,23 @@ async function clearProjectSelection() {
 function resolveActionBusinessTitle(action: unknown) {
   const source = asDict(action);
   if (!source) return '';
-  const uiTitle = asText(source.ui_title);
+  const uiTitle = resolveDisplayText(source.ui_title) || asText(source.ui_title);
   if (uiTitle) return uiTitle;
-  const sceneTitle = asText(source.scene_title);
+  const sceneTitle = resolveDisplayText(source.scene_title) || asText(source.scene_title);
   if (sceneTitle) return sceneTitle;
-  const menuTitle = asText(source.menu_title);
+  const menuTitle = resolveDisplayText(source.menu_title) || asText(source.menu_title);
   if (menuTitle) return menuTitle;
-  const actionName = asText(source.name);
+  const actionName = resolveDisplayText(source.name) || asText(source.name);
   if (actionName) return actionName;
   return '';
+}
+
+function productizedActionCrumbLabel(rawLabel: string) {
+  const label = String(rawLabel || '').trim();
+  if (/^SCBS\d+\s+\d+\s+/i.test(label) && menuLabel.value) {
+    return menuLabel.value;
+  }
+  return label;
 }
 
 const routeBusinessCategoryLabel = computed(() => asText(
@@ -1352,7 +1361,7 @@ const breadcrumb = computed(() => {
   const menuPath = findMenuPath(menuTree.value, menuId);
   if (menuPath.length) {
     menuPath.forEach((node) => {
-      const label = node.title || node.name || node.label || '菜单';
+      const label = resolveDisplayText(node.title || node.name || node.label) || '菜单';
       const id = node.menu_id ?? node.id;
       if (id) {
         crumbs.push({ label, to: isRootContainerMenuId(Number(id)) ? undefined : `/m/${id}` });
@@ -1360,7 +1369,8 @@ const breadcrumb = computed(() => {
     });
   }
   if (route.name === 'action') {
-    const label = routeBusinessCategoryLabel.value || session.currentAction?.name || `动作 ${route.params.actionId ?? ''}`.trim();
+    const actionLabel = productizedActionCrumbLabel(resolveDisplayText(session.currentAction?.name) || asText(session.currentAction?.name));
+    const label = routeBusinessCategoryLabel.value || actionLabel || `动作 ${route.params.actionId ?? ''}`.trim();
     crumbs.push({ label });
   }
   if (route.name === 'record' || route.name === 'model-form') {

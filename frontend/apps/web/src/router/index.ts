@@ -7,6 +7,7 @@ import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { findActionMeta, findActionMetaByMenu, findActionNodeByModel, findMenuNode } from '../app/menu';
 import { config } from '../config';
 import { BUSINESS_CONFIG_MODELS } from '../app/businessConfigBoundaries';
+import { resolveDisplayText } from '../app/displayText';
 
 const APP_TITLE = config.appTitle;
 
@@ -171,7 +172,7 @@ function resolveActivityTitle(to: RouteLocationNormalized, session: ReturnType<t
       || (currentActionMatches(session, actionId) ? session.currentAction : null)
       || null;
     const menuNode = menuId > 0 ? findMenuNode(session.menuTree, menuId) : null;
-    return String(meta?.ui_title || meta?.scene_title || meta?.menu_title || menuNode?.label || meta?.name || `动作 ${actionId}`).trim();
+    return resolveDisplayText(meta?.ui_title || meta?.scene_title || meta?.menu_title || menuNode?.label || meta?.name) || `动作 ${actionId}`;
   }
   if (to.name === 'record' || to.name === 'model-form') {
     const model = routeQueryText(to.params.model);
@@ -184,7 +185,7 @@ function resolveActivityTitle(to: RouteLocationNormalized, session: ReturnType<t
         || (currentActionMatches(session, actionId) ? session.currentAction : null)
         || null;
       const menuNode = menuId > 0 ? findMenuNode(session.menuTree, menuId) : null;
-      const baseTitle = String(meta?.ui_title || meta?.scene_title || meta?.menu_title || menuNode?.label || meta?.name || '').trim();
+      const baseTitle = resolveDisplayText(meta?.ui_title || meta?.scene_title || meta?.menu_title || menuNode?.label || meta?.name);
       return baseTitle ? `新建${baseTitle}` : '新建业务表单';
     }
     return `${model || '记录'} #${id || ''}`.trim();
