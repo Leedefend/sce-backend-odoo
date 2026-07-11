@@ -2832,7 +2832,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 group("identity", "业务识别", identity_fields, role="identity"),
                 group("relations", "业务关系", relation_fields, role="relations"),
                 group("terms", "业务约定", term_fields, role="terms"),
-                group("other_facts", "其他事实", other_fact_fields, role="facts"),
+                group("other_facts", "基础信息", other_fact_fields, role="facts"),
             ], role="facts"),
             slot("amount_progress", "金额与进度", [
                 group("amounts", "金额信息", amount_fields, role="amounts"),

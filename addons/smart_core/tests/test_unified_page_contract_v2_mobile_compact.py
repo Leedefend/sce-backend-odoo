@@ -624,7 +624,7 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
                         "title": "主业务事实",
                         "groups": [
                             {"name": "identity", "title": "业务识别", "fieldRefs": ["name", "subject"]},
-                            {"name": "other_facts", "title": "其他事实", "fieldRefs": ["hidden_internal_note"]},
+                            {"name": "other_facts", "title": "基础信息", "fieldRefs": ["hidden_internal_note"]},
                         ],
                     },
                     {
