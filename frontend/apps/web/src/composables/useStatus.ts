@@ -30,7 +30,7 @@ export function resolveSuggestedAction(
   if (hintByAction) return hintByAction;
 
   const code = String(reasonCode || '').toUpperCase();
-  if (code.includes('PERMISSION') || code.includes('FORBIDDEN')) return '请核对当前角色权限，必要时联系管理员处理。';
+  if (code.includes('PERMISSION') || code.includes('FORBIDDEN')) return '请核对当前角色权限，必要时联系系统管理员处理。';
   if (code.includes('NOT_FOUND')) return '请刷新列表，记录可能已被删除或当前不可见。';
   if (code.includes('CONFLICT')) return '请重新加载最新数据后再尝试。';
   if (code.includes('NETWORK')) return '请检查网络连接后再尝试。';
@@ -103,7 +103,7 @@ function getHint(code?: number | string, kind?: string, errorCategory?: string, 
   if (category === 'validation') return '提交参数不符合要求，请修正后再尝试。';
   if (category === 'conflict') return '服务端数据已变化，请加载最新数据后再尝试。';
   if (category === 'business') return '当前操作被业务规则阻止，请先处理阻塞项。';
-  if (category === 'system') return '系统服务处理异常，请稍后重试或联系管理员。';
+  if (category === 'system') return '系统服务处理问题，请稍后重试或联系系统管理员。';
   if (retryable === true) return '该失败可重试，请立即重试或稍后再试。';
   if (retryable === false) return '该失败不可直接重试，请先处理数据或权限问题。';
   if (kind === 'network' || numericCode === 0) return '请检查网络连接和服务可用状态。';
@@ -111,7 +111,7 @@ function getHint(code?: number | string, kind?: string, errorCategory?: string, 
   if (numericCode === 403) return '请核对当前角色的访问权限。';
   if (numericCode === 404) return '资源不存在或当前用户不可见。';
   if (numericCode === 409) return '记录已被更新，请刷新后再尝试。';
-  if (numericCode && numericCode >= 500) return '系统服务异常，请稍后重试或联系管理员。';
+  if (numericCode && numericCode >= 500) return '系统服务处理问题，请稍后重试或联系系统管理员。';
   return '';
 }
 

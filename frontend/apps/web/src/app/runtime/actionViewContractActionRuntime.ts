@@ -92,15 +92,15 @@ export function resolveContractActionRunIds(execIds: number[]): number[] {
 }
 
 export function resolveContractActionMissingOpenTargetMessage(text: (key: string, fallback: string) => string): string {
-  return text('batch_msg_contract_action_missing_action_id', '页面动作缺少 action_id，无法打开目标页面');
+  return text('batch_msg_contract_action_missing_action_id', '页面操作缺少目标页面，无法打开');
 }
 
 export function resolveContractActionRequiresRecordContextMessage(text: (key: string, fallback: string) => string): string {
-  return text('batch_msg_action_requires_record_context', '当前动作需要记录上下文，暂不支持无记录执行');
+  return text('batch_msg_action_requires_record_context', '当前操作需要先选择记录，无法直接执行');
 }
 
 export function resolveContractActionMissingModelMessage(text: (key: string, fallback: string) => string): string {
-  return text('batch_msg_contract_action_missing_model', '页面动作缺少 model，无法执行');
+  return text('batch_msg_contract_action_missing_model', '页面操作缺少业务对象，无法执行');
 }
 
 export function resolveContractActionDoneMessage(options: {

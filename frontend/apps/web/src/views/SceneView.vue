@@ -1057,8 +1057,8 @@ async function resolveScene() {
           ? `${pageText('forbidden_message_missing_prefix', '缺少能力：')}${details.join(pageText('forbidden_message_missing_sep', '、'))}`
           : pageText('forbidden_message_scope_missing', '当前角色能力范围不包含该场景所需能力。'),
         hint: level && level !== 'enterprise'
-          ? `${pageText('forbidden_hint_license_prefix', '当前授权级别：')}${level}${pageText('forbidden_hint_license_suffix', '，可联系管理员评估升级或开通。')}`
-          : pageText('forbidden_hint_default', '可联系管理员开通对应能力。'),
+          ? `${pageText('forbidden_hint_license_prefix', '当前授权级别：')}${level}${pageText('forbidden_hint_license_suffix', '，可联系系统管理员评估升级或开通。')}`
+          : pageText('forbidden_hint_default', '可联系系统管理员开通对应能力。'),
       };
       status.value = 'forbidden';
       return;

@@ -308,11 +308,11 @@ const reasonLabel = computed(() => {
     case ErrorCodes.ACT_NO_MODEL:
       return pageText('reason_act_no_model', '入口未绑定业务对象');
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return pageText('reason_act_unsupported_type', '当前操作暂不支持');
+      return pageText('reason_act_unsupported_type', '当前操作暂不可用');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
       return pageText('reason_contract_context_missing', '页面上下文缺失');
     case ErrorCodes.CAPABILITY_MISSING:
-      return pageText('reason_capability_missing', '缺少能力权限');
+      return pageText('reason_capability_missing', '权限未开通');
     default:
       return reason.value || pageText('reason_unknown', '未知原因');
   }
