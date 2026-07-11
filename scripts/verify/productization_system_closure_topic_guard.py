@@ -107,6 +107,11 @@ REQUIRED_TARGET_DEPS = {
 }
 
 REQUIRED_TARGET_BODY_TOKENS = {
+    "verify.productization.system_closure.topic_guard": [
+        "python3 -m py_compile scripts/verify/productization_system_closure_topic_guard.py scripts/verify/test_productization_system_closure_topic_guard.py",
+        "cd scripts/verify && python3 test_productization_system_closure_topic_guard.py",
+        "python3 scripts/verify/productization_system_closure_topic_guard.py",
+    ],
     "verify.system_user_experience.quick": [
         "node --check frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
         "node --check frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs",

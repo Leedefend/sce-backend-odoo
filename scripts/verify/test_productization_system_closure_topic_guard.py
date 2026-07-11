@@ -19,7 +19,11 @@ def _target(name: str, deps: list[str], body: list[str] | None = None) -> str:
 
 def _make_text() -> str:
     targets = [
-        _target("verify.productization.system_closure.topic_guard", ["guard.prod.forbid"]),
+        _target(
+            "verify.productization.system_closure.topic_guard",
+            ["guard.prod.forbid"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.productization.system_closure.topic_guard"],
+        ),
         _target(
             "verify.system_user_experience.quick",
             [
@@ -111,6 +115,17 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         )
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn("topic guard must use guard.prod.forbid", errors)
+
+    def test_topic_guard_must_run_its_regression_tests(self) -> None:
+        make_text = _make_text().replace(
+            "cd scripts/verify && python3 test_productization_system_closure_topic_guard.py",
+            "",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.productization.system_closure.topic_guard missing command token: cd scripts/verify && python3 test_productization_system_closure_topic_guard.py",
+            errors,
+        )
 
     def test_missing_quick_dependency_fails(self) -> None:
         make_text = _make_text().replace(" verify.formal_list_surface.no_test_placeholder_guard", "")
