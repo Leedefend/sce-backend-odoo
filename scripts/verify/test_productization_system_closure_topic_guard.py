@@ -202,6 +202,19 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
 
         self.assertIn("doc token cross-classified: 可重复验收证据 in doc and evidence_artifact", errors)
 
+    def test_doc_declared_make_target_must_be_required_make_target(self) -> None:
+        doc_tokens = [*guard.REQUIRED_DOC_TOKENS, "make verify.untracked.topic.gate"]
+        with mock.patch.object(guard, "REQUIRED_DOC_TOKENS", doc_tokens), mock.patch.dict(
+            guard.REQUIRED_DOC_TOKEN_GROUPS,
+            {"doc": doc_tokens},
+        ):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn(
+            "doc declared make target not guarded as required Makefile target: verify.untracked.topic.gate",
+            errors,
+        )
+
     def test_doc_must_keep_frontend_backend_contract_boundary(self) -> None:
         doc_text = _doc_text().replace("前端只消费后端契约", "")
         errors = guard.validate(doc_text, _make_text())

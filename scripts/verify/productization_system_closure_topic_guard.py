@@ -395,6 +395,14 @@ def _duplicate_tokens(tokens: list[str]) -> list[str]:
     return duplicates
 
 
+def _doc_declared_make_targets() -> list[str]:
+    targets: list[str] = []
+    for token in REQUIRED_DOC_TOKENS:
+        if token.startswith("make "):
+            targets.append(token.removeprefix("make ").strip())
+    return targets
+
+
 def _inspected_make_targets() -> list[str]:
     targets = [
         *REQUIRED_MAKE_TARGETS,
@@ -426,6 +434,10 @@ def validate(doc_text: str, make_text: str) -> list[str]:
     for token in [token for tokens in REQUIRED_DOC_TOKEN_GROUPS.values() for token in tokens]:
         if token not in doc_text:
             errors.append(f"doc missing token: {token}")
+
+    for target in _doc_declared_make_targets():
+        if target not in REQUIRED_MAKE_TARGETS:
+            errors.append(f"doc declared make target not guarded as required Makefile target: {target}")
 
     seen_target_mode_groups: dict[str, str] = {}
     for group, targets in REQUIRED_TARGET_MODE_GROUPS.items():
