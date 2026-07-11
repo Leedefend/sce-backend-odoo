@@ -373,6 +373,18 @@ def _tokens_in_order(text: str, tokens: list[str]) -> bool:
     return True
 
 
+def _target_commands(target_body: str) -> list[str]:
+    commands: list[str] = []
+    for line in target_body.splitlines():
+        command = line.strip()
+        if not command:
+            continue
+        if command.startswith("@"):
+            command = command[1:]
+        commands.append(command)
+    return commands
+
+
 def _duplicate_tokens(tokens: list[str]) -> list[str]:
     seen: set[str] = set()
     duplicates: list[str] = []
@@ -478,6 +490,8 @@ def validate(doc_text: str, make_text: str) -> list[str]:
         if not target_body:
             errors.append(f"Makefile missing command body: {target}")
             continue
+        for command in _duplicate_tokens(_target_commands(target_body)):
+            errors.append(f"{target} Makefile command duplicated: {command}")
         for token in _duplicate_tokens(tokens):
             errors.append(f"{target} required command token duplicated: {token}")
         for token in tokens:

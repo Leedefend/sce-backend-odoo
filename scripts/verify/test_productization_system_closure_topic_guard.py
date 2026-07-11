@@ -335,6 +335,18 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
             errors,
         )
 
+    def test_duplicate_makefile_command_fails(self) -> None:
+        duplicated_command = "\t@python3 scripts/verify/productization_system_closure_topic_guard.py"
+        make_text = _make_text().replace(
+            duplicated_command,
+            f"{duplicated_command}\n{duplicated_command}",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.productization.system_closure.topic_guard Makefile command duplicated: python3 scripts/verify/productization_system_closure_topic_guard.py",
+            errors,
+        )
+
     def test_duplicate_required_target_fails(self) -> None:
         make_text = _make_text() + "\n" + _target("verify.frontend.product_language.guard", ["guard.prod.forbid"])
         errors = guard.validate(_doc_text(), make_text)
