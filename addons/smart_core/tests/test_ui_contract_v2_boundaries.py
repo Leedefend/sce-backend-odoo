@@ -782,6 +782,73 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertEqual(profile["preference_policy"]["must_request_columns"], ["name", "source_created_by"])
         self.assertEqual(profile["preference_policy"]["locked_columns"], [])
 
+    def test_business_list_profile_deduplicates_mixed_direct_config_labels(self):
+        class _Config:
+            contract_json = {
+                "view_orchestration": {
+                    "views": {
+                        "tree": {
+                            "columns": [
+                                {"name": "legacy_visible_13", "label": "录入人", "sequence": 10},
+                                {"name": "legacy_visible_14", "label": "录入时间", "sequence": 20},
+                                {"name": "source_created_by", "label": "录入人", "sequence": 30},
+                                {"name": "source_created_at", "label": "录入时间", "sequence": 40},
+                            ]
+                        }
+                    }
+                }
+            }
+
+        class _ConfigModel:
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0, view_id=None):
+                return [_Config()]
+
+        class _Env(dict):
+            def __contains__(self, key):
+                return dict.__contains__(self, key)
+
+        handler = self.module.UiContractV2Handler(env=_Env({
+            "ui.business.config.contract": _ConfigModel(),
+        }))
+        source_contract = {
+            "action_id": 525,
+            "model": "project.material.plan",
+            "views": {
+                "tree": {
+                    "columns": [
+                        {"name": "legacy_visible_13", "label": "录入人"},
+                        {"name": "legacy_visible_14", "label": "录入时间"},
+                        {"name": "source_created_by", "label": "录入人"},
+                        {"name": "source_created_at", "label": "录入时间"},
+                    ],
+                }
+            },
+            "fields": {
+                "legacy_visible_13": {"type": "char", "string": "录入人"},
+                "legacy_visible_14": {"type": "char", "string": "录入时间"},
+                "source_created_by": {"type": "char", "string": "录入人"},
+                "source_created_at": {"type": "char", "string": "录入时间"},
+            },
+            "list_profile": {},
+        }
+
+        handler._merge_business_list_profile(
+            source_contract,
+            common_fields=["source_created_by", "source_created_at"],
+            amount_fields=[],
+            note_field="",
+            status_field="",
+            label_for=lambda name: source_contract["fields"].get(name, {}).get("string", name),
+            type_for=lambda name: "char",
+        )
+
+        profile = source_contract["list_profile"]
+        self.assertEqual(profile["columns"], ["legacy_visible_13", "legacy_visible_14"])
+        self.assertEqual(profile["column_labels"], {
+            "legacy_visible_13": "录入人",
+            "legacy_visible_14": "录入时间",
+        })
+
     def test_business_list_profile_does_not_extend_direct_config_with_existing_profile(self):
         class _Config:
             contract_json = {

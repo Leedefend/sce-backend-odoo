@@ -421,8 +421,22 @@ class UiContractV2Handler(BaseIntentHandler):
             contract["actionContract"] = action_contract
         if isinstance(source_contract.get("list_profile"), dict):
             list_profile = deepcopy(source_contract.get("list_profile") or {})
-            columns = self._user_visible_list_columns(list_profile.get("columns") if isinstance(list_profile.get("columns"), list) else [])
-            fact_columns = self._user_visible_list_columns(list_profile.get("fact_columns") if isinstance(list_profile.get("fact_columns"), list) else [])
+            column_labels = list_profile.get("column_labels") if isinstance(list_profile.get("column_labels"), dict) else {}
+            if column_labels:
+                list_profile["column_labels"] = {
+                    str(name or "").strip(): label
+                    for name, label in column_labels.items()
+                    if str(name or "").strip() and str(name or "").strip() not in BUSINESS_OPERATION_TECHNICAL_AUDIT_FIELDS
+                }
+            column_labels = list_profile.get("column_labels") if isinstance(list_profile.get("column_labels"), dict) else {}
+            columns = self._dedupe_user_visible_list_columns_by_label(
+                list_profile.get("columns") if isinstance(list_profile.get("columns"), list) else [],
+                column_labels,
+            )
+            fact_columns = self._dedupe_user_visible_list_columns_by_label(
+                list_profile.get("fact_columns") if isinstance(list_profile.get("fact_columns"), list) else [],
+                column_labels,
+            )
             if columns:
                 list_profile["columns"] = columns
             if fact_columns:
@@ -432,19 +446,15 @@ class UiContractV2Handler(BaseIntentHandler):
                 for name in self._user_visible_list_columns(list_profile.get("hidden_columns") if isinstance(list_profile.get("hidden_columns"), list) else [])
                 if not columns or name in columns
             ]
-            column_labels = list_profile.get("column_labels") if isinstance(list_profile.get("column_labels"), dict) else {}
-            if column_labels:
-                list_profile["column_labels"] = {
-                    str(name or "").strip(): label
-                    for name, label in column_labels.items()
-                    if str(name or "").strip() and str(name or "").strip() not in BUSINESS_OPERATION_TECHNICAL_AUDIT_FIELDS
-                }
             preference_policy = list_profile.get("preference_policy") if isinstance(list_profile.get("preference_policy"), dict) else {}
             if preference_policy:
                 preference_policy = deepcopy(preference_policy)
                 for key in ("locked_columns", "must_request_columns"):
                     if isinstance(preference_policy.get(key), list):
-                        preference_policy[key] = self._user_visible_list_columns(preference_policy.get(key) or [])
+                        preference_policy[key] = self._dedupe_user_visible_list_columns_by_label(
+                            preference_policy.get(key) or [],
+                            column_labels,
+                        )
                 list_profile["preference_policy"] = preference_policy
             layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
             layout_contract["listProfile"] = self._v2_policy_projection(
@@ -552,6 +562,28 @@ class UiContractV2Handler(BaseIntentHandler):
             out.append(name)
         return out
 
+    def _dedupe_user_visible_list_columns_by_label(
+        self,
+        columns: list[Any],
+        labels: dict[str, Any] | None = None,
+    ) -> list[str]:
+        visible = self._user_visible_list_columns(columns)
+        if not visible:
+            return []
+        if all(name.startswith("legacy_visible_") or name.startswith("p1_visible_") for name in visible):
+            return visible
+        label_map = labels if isinstance(labels, dict) else {}
+        out: list[str] = []
+        seen_keys: set[str] = set()
+        for name in visible:
+            label = str(label_map.get(name) or name).strip()
+            key = label or name
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            out.append(name)
+        return out
+
     def _apply_list_profile_layout(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
         if not isinstance(contract_v2, dict) or not isinstance(source_contract, dict):
             return
@@ -565,10 +597,13 @@ class UiContractV2Handler(BaseIntentHandler):
         if view_type not in {"tree", "list"}:
             return
         profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
-        columns = self._user_visible_list_columns(profile.get("columns") if isinstance(profile.get("columns"), list) else [])
+        labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
+        columns = self._dedupe_user_visible_list_columns_by_label(
+            profile.get("columns") if isinstance(profile.get("columns"), list) else [],
+            labels,
+        )
         if not columns:
             return
-        labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
         field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
 
         def widget_for(name: str) -> dict[str, Any]:
@@ -2994,19 +3029,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 view_column_labels[name] = label
         labels = {**{name: label_for(name) for name in columns}, **labels, **view_column_labels, **direct_orchestration_labels, **override_labels}
         labels = self._apply_legacy_visible_business_labels(source_contract, columns, labels)
-        deduped_columns: list[str] = []
-        preserve_duplicate_labels = bool(direct_orchestration_columns) or (
-            bool(columns) and all(str(name or "").startswith("legacy_visible_") for name in columns)
-        )
-        seen_keys: set[str] = set()
-        for name in columns:
-            label = str(labels.get(name) or label_for(name) or name).strip()
-            dedupe_key = name if preserve_duplicate_labels else (label or name)
-            if dedupe_key in seen_keys:
-                continue
-            seen_keys.add(dedupe_key)
-            deduped_columns.append(name)
-        columns = deduped_columns
+        columns = self._dedupe_user_visible_list_columns_by_label(columns, labels)
         labels = {name: labels.get(name) or label_for(name) for name in columns}
         fields_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
         if fields_map:
