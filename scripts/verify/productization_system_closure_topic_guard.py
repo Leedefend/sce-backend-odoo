@@ -459,6 +459,8 @@ def validate(doc_text: str, make_text: str) -> list[str]:
     for target in _doc_declared_make_targets():
         if target not in REQUIRED_MAKE_TARGETS:
             errors.append(f"doc declared make target not guarded as required Makefile target: {target}")
+        if target not in REQUIRED_DOC_DECLARED_MAKE_TARGETS:
+            errors.append(f"doc declared make target not allowed in topic doc: {target}")
 
     doc_declared_make_targets = _doc_declared_make_targets()
     for target in _duplicate_tokens(doc_declared_make_targets):
