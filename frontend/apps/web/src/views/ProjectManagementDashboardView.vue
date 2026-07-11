@@ -620,7 +620,7 @@ const orchestrationContract = computed<PageOrchestrationContract>(() => {
       title: isBoard ? '项目看板' : '项目驾驶舱',
       subtitle: isBoard
         ? '先选择项目，再进入该项目的指标、风险与进度视图'
-        : `聚焦指标、风险与进度${projectHint} · 项目ID ${projectId || '-'}`,
+        : `聚焦指标、风险与进度${projectHint} · 项目编号 ${projectId || '-'}`,
       page_type: isBoard ? 'board' : 'dashboard',
       layout_mode: isBoard ? 'board' : 'dashboard',
       header: {

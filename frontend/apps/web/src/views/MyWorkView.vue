@@ -364,7 +364,7 @@
             <option value="title">{{ pageText('sort_title', '排序：事项标题') }}</option>
             <option value="reason_code">{{ pageText('sort_reason_code', '排序：状态') }}</option>
             <option value="source">{{ pageText('sort_source', '排序：来源') }}</option>
-            <option value="id">{{ pageText('sort_id', '排序：ID') }}</option>
+            <option value="id">{{ pageText('sort_id', '排序：编号') }}</option>
           </select>
           <select v-model="sortDir" class="filter-select">
             <option value="desc">{{ pageText('sort_desc', '降序') }}</option>

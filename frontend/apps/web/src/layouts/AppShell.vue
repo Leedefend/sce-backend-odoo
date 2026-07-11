@@ -408,7 +408,7 @@ const sidebarSubtitle = computed(() => {
   const raw = String(userName.value || '').trim();
   if (!raw) return roleLabel.value;
   const stripped = stripRoleFromIdentity(raw, roleLabel.value);
-  if (!stripped) return 'Demo账号';
+  if (!stripped) return '体验账号';
   return normalizeDeliveryText(stripped);
 });
 const roleLabel = computed(() => {
