@@ -532,8 +532,11 @@ def main() -> int:
         "required_prod_readonly_targets": len(REQUIRED_PROD_READONLY_TARGETS),
         "required_prod_forbid_targets": len(REQUIRED_PROD_FORBID_TARGETS),
         "required_quick_dependencies": len(REQUIRED_QUICK_DEPS),
+        "required_dependency_targets": len(REQUIRED_TARGET_DEPS),
         "required_target_dependencies": sum(len(deps) for deps in REQUIRED_TARGET_DEPS.values()),
+        "required_command_token_targets": len(REQUIRED_TARGET_BODY_TOKENS),
         "required_target_body_tokens": sum(len(tokens) for tokens in REQUIRED_TARGET_BODY_TOKENS.values()),
+        "required_command_order_targets": len(REQUIRED_TARGET_BODY_ORDER),
         "required_target_body_order_tokens": sum(len(tokens) for tokens in REQUIRED_TARGET_BODY_ORDER.values()),
     }
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))

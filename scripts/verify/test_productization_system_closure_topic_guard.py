@@ -178,6 +178,9 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         self.assertIn('"required_target_mode_groups": 2', payload)
         self.assertIn('"required_prod_readonly_targets": 8', payload)
         self.assertIn('"required_prod_forbid_targets": 9', payload)
+        self.assertIn('"required_dependency_targets": 15', payload)
+        self.assertIn('"required_command_token_targets": 17', payload)
+        self.assertIn('"required_command_order_targets": 1', payload)
 
     def test_duplicate_doc_token_fails(self) -> None:
         duplicated_tokens = [*guard.REQUIRED_DOC_TOKENS, "用户体验"]
