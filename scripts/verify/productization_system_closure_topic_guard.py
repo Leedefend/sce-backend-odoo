@@ -62,6 +62,16 @@ REQUIRED_TARGET_DEPS = {
     "verify.business_config.config_workbench_operation_quick": [
         "verify.frontend.product_language.guard",
     ],
+    "verify.business_system.usability_readiness": [
+        "guard.prod.forbid",
+        "check-compose-project",
+        "check-compose-env",
+    ],
+    "verify.business_system.usability_readiness.prod": [
+        "guard.prod.readonly",
+        "check-compose-project",
+        "check-compose-env",
+    ],
     "verify.system_user_experience.full_browser": [
         "verify.system_user_experience.coverage_guard",
         "verify.product.page_structure",
@@ -74,6 +84,15 @@ REQUIRED_TARGET_DEPS = {
 }
 
 REQUIRED_TARGET_BODY_TOKENS = {
+    "verify.business_system.usability_readiness": [
+        'BUSINESS_SYSTEM_READINESS_INCLUDE_P1="$(BUSINESS_SYSTEM_READINESS_INCLUDE_P1)"',
+        "scripts/ops/validate_business_system_usability_readiness.sh",
+    ],
+    "verify.business_system.usability_readiness.prod": [
+        "BUSINESS_SYSTEM_READINESS_PROD_READONLY=1",
+        "BUSINESS_SYSTEM_READINESS_INCLUDE_P1=0",
+        "scripts/ops/validate_business_system_usability_readiness.sh",
+    ],
     "verify.system_user_experience.shell_acceptance": [
         "scripts/system_user_experience_shell_acceptance.mjs",
         "scripts/system_user_experience_shell_summary_guard.mjs",
