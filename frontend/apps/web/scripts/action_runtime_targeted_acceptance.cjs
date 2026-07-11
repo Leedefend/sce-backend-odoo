@@ -24,12 +24,14 @@ function parseTargets() {
     .map((item) => item.trim())
     .filter(Boolean)
     .map((item) => {
-      const [actionRaw, modelRaw, maxDataRaw] = item.split(':');
+      const [actionRaw, modelRaw, maxDataRaw, modeRaw, ...pathParts] = item.split(':');
       const action = Number(actionRaw || 0);
       const model = String(modelRaw || '').trim();
       const maxDataMs = Number(maxDataRaw || 0) || 2000;
+      const mode = String(modeRaw || 'data').trim() || 'data';
+      const path = pathParts.join(':').trim();
       if (!action || !model) throw new Error(`invalid target: ${item}`);
-      return { action, model, maxDataMs };
+      return { action, model, maxDataMs, mode, path };
     });
 }
 
@@ -56,6 +58,16 @@ async function navigateInApp(page, action) {
     await router.push(path);
   }, `/a/${action}?db=${encodeURIComponent(dbName)}`);
   await page.waitForURL(new RegExp(`/a/${action}(\\\\?|$)`), { timeout: 30000 });
+}
+
+async function navigatePathInApp(page, path) {
+  await page.evaluate(async (targetPath) => {
+    const router = window.__SC_ROUTER__;
+    if (!router || typeof router.push !== 'function') {
+      throw new Error('router hook missing: run dev server or set VITE_E2E_ROUTER_HOOK=1');
+    }
+    await router.push(targetPath);
+  }, path);
 }
 
 async function waitForTargetDataCall(calls, startIndex, target) {
@@ -107,8 +119,17 @@ async function main() {
   const results = [];
   for (const target of targets) {
     const before = calls.length;
-    await navigateInApp(page, target.action);
-    const data = await waitForTargetDataCall(calls, before, target);
+    if (target.mode === 'route') {
+      await navigatePathInApp(page, target.path || `/a/${target.action}?db=${encodeURIComponent(dbName)}`);
+    } else {
+      await navigateInApp(page, target.action);
+      if (target.mode === 'form') {
+        await page.waitForURL((url) => String(url).includes(`/f/${target.model}/new`), { timeout: 30000 }).catch(() => {});
+      }
+    }
+    const data = target.mode === 'data'
+      ? await waitForTargetDataCall(calls, before, target)
+      : null;
     await page.waitForTimeout(300);
     const rows = calls.slice(before);
     const prefs = rows.filter((row) => (
@@ -120,17 +141,28 @@ async function main() {
     const wrongPrefs = prefModels.filter((model) => model && model !== target.model);
     const bodyText = await page.locator('body').innerText({ timeout: 10000 }).catch(() => '');
     const hasErrorText = /render error|页面加载失败|页面异常|系统异常|Traceback|Cannot read/i.test(bodyText);
+    const routeReady = target.mode === 'route'
+      ? bodyText.includes(target.model) || (target.path && page.url().includes(target.path.split('?')[0]))
+      : true;
+    const formReady = target.mode === 'form'
+      ? page.url().includes(`/f/${target.model}/new`) && /保存草稿|提交|新建/.test(bodyText)
+      : true;
     results.push({
       action: target.action,
       model: target.model,
+      mode: target.mode,
+      url: page.url(),
       dataMs: data?.ms ?? null,
       maxDataMs: target.maxDataMs,
       prefModels,
-      ok: Boolean(data)
-        && data.ms <= target.maxDataMs
+      routeReady,
+      formReady,
+      ok: (target.mode === 'data' ? Boolean(data) && data.ms <= target.maxDataMs : true)
         && emptyPrefs.length === 0
         && wrongPrefs.length === 0
-        && !hasErrorText,
+        && !hasErrorText
+        && routeReady
+        && formReady,
       hasErrorText,
     });
   }

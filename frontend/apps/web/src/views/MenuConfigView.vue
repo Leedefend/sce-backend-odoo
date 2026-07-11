@@ -1620,6 +1620,17 @@ function selectMenu(menuId: number) {
   selectedMenuId.value = menuId;
 }
 
+function firstConfigurableMenuId(items: MenuConfigMenu[]): number {
+  for (const item of items) {
+    if (!isRuntimeMenuGroup(item) && menus.value.some((menu) => Number(menu.id) === Number(item.id))) {
+      return Number(item.id);
+    }
+    const childId = item.children?.length ? firstConfigurableMenuId(item.children) : 0;
+    if (childId) return childId;
+  }
+  return 0;
+}
+
 function upsertCreatedMenu(menu: MenuConfigMenu, policy?: MenuConfigPolicy) {
   if (!menu?.id) return;
   const nextMenu = { ...menu, children: menu.children || [] };
@@ -2292,7 +2303,7 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
     runtimeState.value = payload.runtime || null;
     tree.value = completeTree;
     const routeMenuId = Number(route.query.menu_id || 0);
-    const firstMenuId = completeTree[0]?.id || payload.menus?.[0]?.id || 0;
+    const firstMenuId = firstConfigurableMenuId(completeTree) || payload.menus?.[0]?.id || 0;
     if (!selectedMenuId.value || !payload.menus.some((menu) => Number(menu.id) === Number(selectedMenuId.value))) {
       selectedMenuId.value = payload.menus.some((menu) => Number(menu.id) === routeMenuId) ? routeMenuId : firstMenuId;
     }
