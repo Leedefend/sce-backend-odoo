@@ -98,11 +98,93 @@ async function main() {
 
   async function waitForSettledUserSurface(targetPage) {
     await targetPage.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    await targetPage.waitForFunction(() => (document.body?.innerText || '').trim().length > 20, null, { timeout: 15000 }).catch(() => {});
     await targetPage.waitForFunction(() => {
       const text = document.body?.innerText || '';
-      return !/正在加载列表|正在加载|Loading/i.test(text);
-    }, null, { timeout: 15000 }).catch(() => {});
+      const hasError = /render error|contract not renderable|missing required nav|页面加载失败|页面异常|系统异常|Traceback|Cannot read/i.test(text);
+      const hasTableHeaders = document.querySelectorAll('th').length > 0;
+      const visible = (node) => {
+        if (!(node instanceof HTMLElement)) return false;
+        const style = window.getComputedStyle(node);
+        if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity || 1) === 0) return false;
+        const rect = node.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      };
+      const loadingPattern = /正在加载列表|正在加载页面|正在加载|Loading/i;
+      const visibleLoading = Array.from(document.body?.querySelectorAll('*') || []).some((node) => {
+        if (!(node instanceof HTMLElement) || !visible(node)) return false;
+        const ownText = node.textContent || '';
+        if (!loadingPattern.test(ownText)) return false;
+        return !Array.from(node.children || []).some((child) => child instanceof HTMLElement && visible(child) && loadingPattern.test(child.textContent || ''));
+      });
+      const visibleFormControls = Array.from(document.querySelectorAll('input, textarea, select')).some((node) => visible(node));
+      const productSurface = document.querySelector('.sc-product-main-surface');
+      const visibleProductSurface = productSurface instanceof HTMLElement && visible(productSurface) && (productSurface.innerText || '').trim().length > 40;
+      return hasError || (!visibleLoading && (hasTableHeaders || visibleFormControls || visibleProductSurface || text.trim().length > 80));
+    }, null, { timeout: 30000 }).catch(() => {});
+    let stableReadyCount = 0;
+    let lastUrl = '';
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      const currentUrl = targetPage.url();
+      const loading = await hasVisibleLoadingText(targetPage);
+      const ready = await hasVisibleUserSurfaceReady(targetPage);
+      if (!loading && ready && currentUrl === lastUrl) {
+        stableReadyCount += 1;
+      } else {
+        stableReadyCount = 0;
+      }
+      if (stableReadyCount >= 2) break;
+      lastUrl = currentUrl;
+      await targetPage.waitForTimeout(500);
+    }
     await targetPage.waitForTimeout(300);
+  }
+
+  async function hasVisibleLoadingText(targetPage) {
+    return await targetPage.evaluate(() => {
+      const visible = (node) => {
+        if (!(node instanceof HTMLElement)) return false;
+        const style = window.getComputedStyle(node);
+        if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity || 1) === 0) return false;
+        const rect = node.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      };
+      const loadingPattern = /正在加载列表|正在加载页面|正在加载|Loading/i;
+      return Array.from(document.body?.querySelectorAll('*') || []).some((node) => {
+        if (!(node instanceof HTMLElement) || !visible(node)) return false;
+        const ownText = node.textContent || '';
+        if (!loadingPattern.test(ownText)) return false;
+        return !Array.from(node.children || []).some((child) => child instanceof HTMLElement && visible(child) && loadingPattern.test(child.textContent || ''));
+      });
+    }).catch(() => false);
+  }
+
+  async function hasVisibleUserSurfaceReady(targetPage) {
+    return await targetPage.evaluate(() => {
+      const visible = (node) => {
+        if (!(node instanceof HTMLElement)) return false;
+        const style = window.getComputedStyle(node);
+        if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity || 1) === 0) return false;
+        const rect = node.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      };
+      const text = document.body?.innerText || '';
+      if (/render error|contract not renderable|missing required nav|页面加载失败|页面异常|系统异常|Traceback|Cannot read/i.test(text)) {
+        return true;
+      }
+      if (Array.from(document.querySelectorAll('th')).some((node) => visible(node))) return true;
+      const productSurface = document.querySelector('.sc-product-main-surface');
+      if (productSurface instanceof HTMLElement && visible(productSurface)) {
+        const surfaceText = productSurface.innerText || '';
+        if (surfaceText.trim().length > 40) return true;
+        if (Array.from(productSurface.querySelectorAll('input, textarea, select, button')).some((node) => visible(node))) return true;
+      }
+      const pageSurface = document.querySelector('.page-renderer, [data-product-page-mode], main');
+      if (pageSurface instanceof HTMLElement && visible(pageSurface) && (pageSurface.innerText || '').trim().length > 80) {
+        return true;
+      }
+      return false;
+    }).catch(() => false);
   }
 
   const init = await intent('system.init', {
@@ -185,9 +267,10 @@ async function main() {
           nodes.map((node) => node.textContent?.trim()).filter(Boolean).slice(0, 30)
         )).catch(() => []);
         const hasErrorText = /render error|contract not renderable|missing required nav|页面加载失败|页面异常|系统异常|Traceback|Cannot read/i.test(text);
-        const hasLoadingText = /正在加载列表|正在加载|Loading/i.test(text);
+        const hasLoadingText = await hasVisibleLoadingText(page);
         const lastLabel = String(entry.path || '').split(' / ').pop() || '';
         const titleVisible = entry.label ? text.includes(entry.label) || text.includes(lastLabel) : true;
+        const isBlankSurface = !titleVisible && headers.length === 0 && text.trim().length < 20;
         const hasHorizontalOverflow = await page.evaluate(() => (
           document.documentElement.scrollWidth > window.innerWidth + 1 || document.body.scrollWidth > window.innerWidth + 1
         )).catch(() => false);
@@ -198,7 +281,7 @@ async function main() {
         }
         actionRow = {
           ...actionRow,
-          ok: !hasErrorText && !hasLoadingText && !hasHorizontalOverflow,
+          ok: !hasErrorText && !hasLoadingText && !hasHorizontalOverflow && !isBlankSurface,
           elapsedMs: Date.now() - started,
           titleVisible,
           hasErrorText,
@@ -206,6 +289,7 @@ async function main() {
           hasHorizontalOverflow,
           screenshotPath,
           headers,
+          issue: isBlankSurface ? 'blank user surface' : '',
         };
       } catch (err) {
         actionRow = { ...actionRow, elapsedMs: Date.now() - started, issue: err instanceof Error ? err.message : String(err), ok: false };

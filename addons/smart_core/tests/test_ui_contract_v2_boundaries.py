@@ -414,7 +414,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertIn("visible_contract_amount", profile_columns)
         hidden_columns = source_contract["list_profile"]["hidden_columns"]
         default_visible_columns = [name for name in profile_columns if name not in hidden_columns]
-        self.assertLessEqual(len(default_visible_columns), 20)
+        self.assertLessEqual(len(default_visible_columns), 16)
         self.assertIn("operation_strategy", default_visible_columns)
         self.assertIn("entry_user_text", default_visible_columns)
         self.assertIn("entry_time", default_visible_columns)
@@ -814,8 +814,11 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         default_visible_columns = [name for name in profile["columns"] if name not in profile["hidden_columns"]]
         self.assertEqual(profile["columns"], columns)
         self.assertEqual(profile["preference_policy"]["must_request_columns"], columns)
-        self.assertEqual(len(default_visible_columns), 20)
-        self.assertEqual(profile["hidden_columns"], ["field_20", "field_21", "field_22", "field_23"])
+        self.assertEqual(len(default_visible_columns), 16)
+        self.assertEqual(
+            profile["hidden_columns"],
+            ["field_16", "field_17", "field_18", "field_19", "field_20", "field_21", "field_22", "field_23"],
+        )
 
     def test_business_list_profile_deduplicates_mixed_direct_config_labels(self):
         class _Config:
@@ -1023,7 +1026,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         default_visible_columns = [name for name in profile["columns"] if name not in profile["hidden_columns"]]
         self.assertEqual(profile["columns"], columns)
         self.assertEqual(profile["preference_policy"]["must_request_columns"], columns)
-        self.assertLessEqual(len(default_visible_columns), 20)
+        self.assertLessEqual(len(default_visible_columns), 16)
         self.assertIn("field_01", profile["hidden_columns"])
         self.assertIn("field_24", profile["hidden_columns"])
 

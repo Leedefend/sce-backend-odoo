@@ -185,7 +185,7 @@ STANDARD_LOWCODE_COLUMN_LABELS = {
     "source_created_by": "录入人",
     "source_created_at": "录入时间",
 }
-DEFAULT_LIST_VISIBLE_COLUMN_BUDGET = 20
+DEFAULT_LIST_VISIBLE_COLUMN_BUDGET = 16
 BUSINESS_LIST_VISIBILITY_PROTECTED_FIELDS = (
     "operation_strategy",
     "entry_user_text",
@@ -512,6 +512,8 @@ class UiContractV2Handler(BaseIntentHandler):
                 columns = list(action_view_columns)
             if not fact_columns:
                 fact_columns = list(columns)
+        columns = self._drop_mixed_legacy_alias_list_columns(columns)
+        fact_columns = self._drop_mixed_legacy_alias_list_columns(fact_columns or columns)
         locked_profile = deepcopy(profile)
         profile_labels = locked_profile.get("column_labels") if isinstance(locked_profile.get("column_labels"), dict) else {}
         if isinstance(action_view_override, dict):
@@ -590,6 +592,17 @@ class UiContractV2Handler(BaseIntentHandler):
             out.append(name)
         return out
 
+    def _drop_mixed_legacy_alias_list_columns(self, columns: list[Any]) -> list[str]:
+        visible = self._user_visible_list_columns(columns)
+        if not visible:
+            return []
+        alias_prefixes = ("legacy_visible_", "p1_visible_")
+        if not any(name.startswith(alias_prefixes) for name in visible):
+            return visible
+        if all(name.startswith(alias_prefixes) for name in visible):
+            return visible
+        return [name for name in visible if not name.startswith(alias_prefixes)]
+
     def _dedupe_user_visible_list_columns_by_label(
         self,
         columns: list[Any],
@@ -640,12 +653,24 @@ class UiContractV2Handler(BaseIntentHandler):
         if not isinstance(profile, dict) or not columns:
             return
         column_set = set(columns)
+        labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
         existing_hidden = {
             str(name or "").strip()
             for name in (profile.get("hidden_columns") if isinstance(profile.get("hidden_columns"), list) else [])
             if str(name or "").strip() in column_set
         }
-        default_visible = set(self._default_visible_list_columns(columns, protected_fields))
+        risk_metric_fields = {
+            name
+            for name in columns
+            if any(token in str(name or "").lower() for token in ("unpaid", "unreceived", "balance", "residual"))
+            or any(token in str(labels.get(name) or "") for token in ("未付", "未收", "余额"))
+        }
+        protected = {
+            str(name or "").strip()
+            for name in (protected_fields or [])
+            if str(name or "").strip()
+        }
+        default_visible = set(self._default_visible_list_columns(columns, [*protected, *risk_metric_fields]))
         profile["hidden_columns"] = [
             name
             for name in columns
@@ -3165,6 +3190,7 @@ class UiContractV2Handler(BaseIntentHandler):
             columns = [name for name in columns if name in action_column_names]
         if optional_hidden_columns:
             columns = [name for name in columns if name not in optional_hidden_columns]
+        columns = self._drop_mixed_legacy_alias_list_columns(columns)
         if not columns:
             return
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
@@ -4170,6 +4196,17 @@ class UiContractV2Handler(BaseIntentHandler):
         ).strip()
         if not model:
             return ui_data, ui_meta
+        action = ui_data.get("action") if isinstance(ui_data.get("action"), dict) else {}
+        if not view_type:
+            raw_modes = action.get("view_modes") or action.get("viewModes") or action.get("view_mode") or action.get("viewMode") or ""
+            mode_rows = raw_modes if isinstance(raw_modes, list) else str(raw_modes or "").split(",")
+            for raw_mode in mode_rows:
+                normalized = str(raw_mode or "").strip().lower()
+                if normalized == "list":
+                    normalized = "tree"
+                if normalized in {"tree", "form", "kanban"}:
+                    view_type = normalized
+                    break
 
         next_params = dict(ui_params)
         next_params["op"] = "model"
@@ -4177,7 +4214,6 @@ class UiContractV2Handler(BaseIntentHandler):
         next_params["view_type"] = view_type or "tree"
         if ui_data.get("menu_id") and not next_params.get("menu_id"):
             next_params["menu_id"] = ui_data.get("menu_id")
-        action = ui_data.get("action") if isinstance(ui_data.get("action"), dict) else {}
         if action.get("id") and not next_params.get("action_id"):
             next_params["action_id"] = action.get("id")
         view_ids = ui_data.get("view_ids_by_type") if isinstance(ui_data.get("view_ids_by_type"), dict) else {}
