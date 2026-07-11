@@ -246,7 +246,7 @@
       />
       <StatusPanel
         v-else-if="showSceneErrors"
-        title="场景配置异常"
+        title="场景配置问题"
         :message="sceneErrorMessage"
         variant="error"
       />
@@ -563,7 +563,7 @@ const sceneErrorMessage = computed(() => {
     return `${key} (${err.issues.join(', ')})`;
   });
   const suffix = sceneRegistryErrors.length > 3 ? ` +${sceneRegistryErrors.length - 3} more` : '';
-  return `场景注册校验失败：${sample.join(' | ')}${suffix}`;
+  return `场景配置校验未通过：${sample.join(' | ')}${suffix}`;
 });
 
 const menuLabel = computed(() => {
@@ -939,7 +939,7 @@ const pageTitle = computed(() => {
     }
   }
   if (route.name === 'workbench') {
-    return '导航异常';
+    return '导航待恢复';
   }
   if (route.name === 'record') {
     return '记录';
@@ -1147,11 +1147,11 @@ const hudEntries = computed(() => {
   ];
   if (sceneGovernanceSnapshot.value) {
     entries.push(
-      { label: '治理通道', value: String(sceneGovernanceSnapshot.value.scene_channel || '-') },
+      { label: '发布通道', value: String(sceneGovernanceSnapshot.value.scene_channel || '-') },
       { label: '运行来源', value: String(sceneGovernanceSnapshot.value.runtime_source || '-') },
-      { label: '治理门禁', value: sceneGovernanceGatesSummary.value },
-      { label: '治理原因', value: sceneGovernanceReasonsSummary.value },
-      { label: '治理质量', value: sceneGovernanceQualitySummary.value },
+      { label: '发布门禁', value: sceneGovernanceGatesSummary.value },
+      { label: '配置原因', value: sceneGovernanceReasonsSummary.value },
+      { label: '配置质量', value: sceneGovernanceQualitySummary.value },
       { label: '场景消费', value: sceneGovernanceConsumptionSummary.value },
     );
   }

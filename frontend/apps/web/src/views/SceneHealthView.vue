@@ -91,15 +91,15 @@
         class="meta"
         :style="pageSectionStyle('governance_runtime')"
       >
-        <p><strong>治理通道：</strong> {{ sceneChannelLabel(governanceSnapshot.scene_channel) }}</p>
+        <p><strong>发布通道：</strong> {{ sceneChannelLabel(governanceSnapshot.scene_channel) }}</p>
         <p><strong>运行策略：</strong> {{ runtimeSourceLabel(governanceSnapshot.runtime_source) }}</p>
-        <p><strong>治理门禁：</strong> {{ governanceGatesLabel }}</p>
-        <p><strong>治理原因：</strong> {{ governanceReasonsLabel }}</p>
+        <p><strong>发布门禁：</strong> {{ governanceGatesLabel }}</p>
+        <p><strong>配置原因：</strong> {{ governanceReasonsLabel }}</p>
         <p><strong>场景消费：</strong> {{ governanceConsumptionLabel }}</p>
       </article>
 
       <section v-if="pageSectionEnabled('governance', true) && pageSectionTagIs('governance', 'section')" class="governance" :style="pageSectionStyle('governance')">
-        <h3>治理操作</h3>
+        <h3>配置操作</h3>
         <div class="governance-grid">
           <label>
             <span>目标通道</span>
@@ -111,7 +111,7 @@
           </label>
           <label class="reason">
             <span>操作说明（必填）</span>
-            <input v-model="governanceReason" type="text" placeholder="填写本次治理原因" />
+            <input v-model="governanceReason" type="text" placeholder="填写本次配置原因" />
           </label>
         </div>
         <div class="governance-actions">
@@ -447,7 +447,7 @@ async function executeHeaderAction(actionKey: string) {
 async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' | 'export_contract') {
   const reason = governanceReason.value.trim();
   if (!reason) {
-    errorText.value = pageText('error_reason_required', '请填写治理操作说明');
+    errorText.value = pageText('error_reason_required', '请填写配置操作说明');
     statusError.value = { message: errorText.value };
     return;
   }
@@ -486,7 +486,7 @@ async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' |
     governanceTraceId.value = response.data.trace_id || response.traceId || '';
     await loadHealth();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : pageText('error_governance_failed', '治理操作失败');
+    errorText.value = err instanceof Error ? err.message : pageText('error_governance_failed', '配置操作失败');
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';
   } finally {

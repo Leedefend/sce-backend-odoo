@@ -160,7 +160,7 @@ function normalizeDataset(block: SceneBlock) {
       {
         key: 'summary',
         label: '说明',
-        value: asText(block.summary) || '可继续打开原生明细。',
+        value: asText(block.summary) || '可继续打开页面明细。',
       },
       {
         key: 'model',
