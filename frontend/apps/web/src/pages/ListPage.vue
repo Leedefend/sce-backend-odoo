@@ -1981,7 +1981,7 @@ function numericCellValue(value: unknown) {
 }
 
 function formatNumericCellValue(field: string, value: unknown) {
-  if (!isNumericColumn(field)) return '';
+  if (!isNumericColumn(field) && !isNumericDisplayColumn(field)) return '';
   const numeric = numericCellValue(value);
   if (numeric === null) return '';
   const type = String(columnOption(field)?.type || '').trim();
