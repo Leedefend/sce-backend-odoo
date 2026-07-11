@@ -53,6 +53,8 @@ REQUIRED_QUICK_DEPS = [
     "verify.frontend.product_language.guard",
     "verify.frontend.config_workbench_navigation_boundary.guard",
     "verify.project_context.selector_product_boundary.guard",
+    "verify.formal_menu.runtime_no_legacy_carrier_guard",
+    "verify.formal_list_surface.no_test_placeholder_guard",
     "verify.product.page_structure",
 ]
 
@@ -90,6 +92,18 @@ REQUIRED_TARGET_DEPS = {
 }
 
 REQUIRED_TARGET_BODY_TOKENS = {
+    "verify.system_user_experience.quick": [
+        "node --check frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
+        "node --check frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs",
+        "node --check frontend/apps/web/scripts/business_form_user_perspective_acceptance.mjs",
+        "node --check frontend/apps/web/scripts/business_form_user_perspective_summary_guard.mjs",
+        "node --check frontend/apps/web/scripts/system_user_experience_shell_acceptance.mjs",
+        "node --check frontend/apps/web/scripts/system_user_experience_shell_summary_guard.mjs",
+        "node --check frontend/apps/web/scripts/user_page_visual_coverage.cjs",
+        "node --check frontend/apps/web/scripts/user_visible_surface_visual_coverage_summary_guard.mjs",
+        "node --check frontend/apps/web/scripts/system_user_experience_full_browser_summary_guard.mjs",
+        "git diff --check",
+    ],
     "verify.business_system.usability_readiness": [
         'BUSINESS_SYSTEM_READINESS_INCLUDE_P1="$(BUSINESS_SYSTEM_READINESS_INCLUDE_P1)"',
         "scripts/ops/validate_business_system_usability_readiness.sh",
