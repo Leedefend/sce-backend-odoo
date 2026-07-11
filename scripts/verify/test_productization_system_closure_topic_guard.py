@@ -104,6 +104,10 @@ def _make_text() -> str:
             ],
         ),
         _target(
+            "verify.business_config.full_acceptance",
+            guard.REQUIRED_TARGET_DEPS["verify.business_config.full_acceptance"],
+        ),
+        _target(
             "verify.system_user_experience.shell_acceptance",
             ["guard.prod.forbid"],
             guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.shell_acceptance"],
@@ -233,6 +237,31 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn(
             "verify.system_user_experience.full_browser missing dependency: verify.system_user_experience.business_form_user_perspective",
+            errors,
+        )
+
+    def test_full_lowcode_acceptance_target_must_exist(self) -> None:
+        target = _target(
+            "verify.business_config.full_acceptance",
+            guard.REQUIRED_TARGET_DEPS["verify.business_config.full_acceptance"],
+        )
+        make_text = _make_text().replace(target, "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("Makefile missing target: verify.business_config.full_acceptance", errors)
+
+    def test_full_lowcode_acceptance_must_keep_config_workbench_browser_acceptance(self) -> None:
+        make_text = _make_text().replace(" verify.business_config.config_workbench_operation_acceptance", "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.business_config.full_acceptance missing dependency: verify.business_config.config_workbench_operation_acceptance",
+            errors,
+        )
+
+    def test_full_lowcode_acceptance_must_keep_menu_navigation_alignment(self) -> None:
+        make_text = _make_text().replace(" verify.business_config.low_code_menu_navigation_alignment", "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.business_config.full_acceptance missing dependency: verify.business_config.low_code_menu_navigation_alignment",
             errors,
         )
 

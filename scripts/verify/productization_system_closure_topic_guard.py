@@ -45,6 +45,9 @@ REQUIRED_MAKE_TARGETS = [
     "verify.system_user_experience.quick",
     "verify.system_user_experience.visible_surface_visual_coverage",
     "verify.system_user_experience.full_browser",
+    "verify.business_config.unit",
+    "verify.business_config.config_workbench_operation_quick",
+    "verify.business_config.full_acceptance",
     "verify.business_system.usability_readiness",
     "verify.production_git.authority.guard",
     "verify.business_system.usability_readiness.prod",
@@ -71,6 +74,14 @@ REQUIRED_TARGET_DEPS = {
     ],
     "verify.business_config.config_workbench_operation_quick": [
         "verify.frontend.product_language.guard",
+    ],
+    "verify.business_config.full_acceptance": [
+        "verify.business_config.unit",
+        "verify.frontend.build",
+        "verify.business_config.config_workbench_operation_acceptance",
+        "verify.business_config.low_code_menu_navigation_alignment",
+        "verify.business_config.low_code_global_stability",
+        "verify.user_menu.reachability.guard",
     ],
     "verify.business_system.usability_readiness": [
         "guard.prod.forbid",
