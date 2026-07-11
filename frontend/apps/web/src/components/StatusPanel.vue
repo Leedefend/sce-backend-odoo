@@ -7,15 +7,15 @@
       上下文：{{ compactContext }}
     </p>
     <div v-if="variant === 'error' && showHudMeta" class="error-meta">
-      <p class="trace">错误码：{{ errorCode ?? '无' }}</p>
-      <p class="trace">追踪 ID：{{ traceId || '无' }}</p>
+      <p class="trace">错误状态：{{ errorCode ?? '无' }}</p>
+      <p class="trace">处理编号：{{ traceId || '无' }}</p>
       <p v-if="reasonCode" class="trace">原因：{{ reasonLabel }}</p>
       <p v-if="errorCategory" class="trace">分类：{{ errorCategory }}</p>
       <p v-if="errorModel" class="trace">模型：{{ errorModel }}</p>
       <p v-if="errorOp" class="trace">操作：{{ errorOp }}</p>
       <p v-if="retryable !== undefined" class="trace">可重试：{{ retryable ? '是' : '否' }}</p>
       <p v-if="hint" class="trace">提示：{{ hint }}</p>
-      <button v-if="traceId" class="trace-copy" @click="copyTrace">复制追踪 ID</button>
+      <button v-if="traceId" class="trace-copy" @click="copyTrace">复制处理编号</button>
       <button v-if="canRunSuggestedAction && suggestedActionLabel" class="trace-copy" @click="runSuggestedAction">
         {{ suggestedActionLabel }}
       </button>

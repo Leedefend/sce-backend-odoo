@@ -438,7 +438,7 @@ const missingNodes = computed(() => {
 const renderBlocked = computed(() => showHud.value && missingNodes.value.length > 0);
 const hudEntries = computed(() => [
   { label: '业务模型', value: model.value },
-  { label: '记录 ID', value: recordId.value },
+  { label: '记录编号', value: recordId.value },
   { label: '页面状态', value: status.value },
   { label: '入口来源', value: actionContext.value.source },
   { label: '渲染模式', value: renderMode.value },
@@ -448,7 +448,7 @@ const hudEntries = computed(() => [
   { label: '已覆盖能力', value: supportedNodes.join('、') },
   { label: '最近意图', value: lastIntent.value || '-' },
   { label: '写入模式', value: lastWriteMode.value || '-' },
-  { label: '追踪 ID', value: traceId.value || lastTraceId.value || '-' },
+  { label: '处理编号', value: traceId.value || lastTraceId.value || '-' },
   { label: '契约模式', value: contractMode.value || '-' },
   { label: '请求界面', value: requestedSurface.value },
   { label: '来源模式', value: requestedSourceMode.value },

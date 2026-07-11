@@ -237,7 +237,7 @@
         <p class="status-title">{{ pageText('entry_error_title_prefix', '进入失败：') }}{{ enterError.message }}</p>
         <p class="status-detail">{{ enterError.hint }}</p>
         <p v-if="isHudEnabled" class="status-meta">
-          {{ pageText('entry_error_code_label', '错误码') }}={{ enterError.code || '-' }} · {{ pageText('entry_error_trace_label', '追踪 ID') }}={{ enterError.traceId || '-' }}
+          {{ pageText('entry_error_code_label', '错误状态') }}={{ enterError.code || '-' }} · {{ pageText('entry_error_trace_label', '处理编号') }}={{ enterError.traceId || '-' }}
         </p>
         <div class="status-actions">
           <button v-if="lastFailedEntry" @click="retryOpen">{{ pageText('action_retry', '重试') }}</button>

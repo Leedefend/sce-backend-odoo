@@ -9065,8 +9065,8 @@ const viewOrchestrationHudSummary = computed(() => {
 
 const hudEntries = computed(() => [
   { label: '业务模型', value: model.value || '-' },
-  { label: '操作 ID', value: actionId.value || '-' },
-  { label: '记录 ID', value: recordIdDisplay.value },
+  { label: '操作编号', value: actionId.value || '-' },
+  { label: '记录编号', value: recordIdDisplay.value },
   { label: '契约已加载', value: Boolean(contract.value) },
   { label: '契约可用', value: contractReadiness.value.usable },
   { label: '契约问题数', value: contractReadiness.value.issues.length },

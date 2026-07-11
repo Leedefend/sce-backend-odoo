@@ -97,7 +97,7 @@
         <span class="value">{{ lastIntent || pageText('hud_value_na', '暂无') }}</span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">{{ pageText('hud_label_trace_id', '追踪 ID') }}</span>
+        <span class="label">{{ pageText('hud_label_trace_id', '处理编号') }}</span>
         <span class="value">
           {{ lastTraceId || pageText('hud_value_na', '暂无') }}
           <button v-if="lastTraceId" class="ghost mini" @click="copyTrace">{{ pageText('action_copy', '复制') }}</button>
@@ -268,7 +268,7 @@ const workbenchOrchestrationDatasets = computed<Record<string, unknown>>(() => {
   }));
   const hudEntries = [
     { id: 'route', title: pageText('hud_label_route', '路由'), description: route.fullPath, tone: 'info' },
-    { id: 'trace', title: pageText('hud_label_trace_id', '追踪 ID'), description: lastTraceId.value || pageText('hud_value_na', '暂无'), tone: 'neutral' },
+    { id: 'trace', title: pageText('hud_label_trace_id', '处理编号'), description: lastTraceId.value || pageText('hud_value_na', '暂无'), tone: 'neutral' },
     { id: 'intent', title: pageText('hud_label_last_intent', '最近意图'), description: lastIntent.value || pageText('hud_value_na', '暂无'), tone: 'neutral' },
   ];
   return {

@@ -13,8 +13,8 @@ export function useActionViewHudEntriesRuntime(options: UseActionViewHudEntriesR
   function buildHudEntries(): HudEntry[] {
     const input = options.buildHudEntriesInput();
     return [
-      { label: '操作 ID', value: input.actionId || '-' },
-      { label: '菜单 ID', value: input.menuId || '-' },
+      { label: '操作编号', value: input.actionId || '-' },
+      { label: '菜单编号', value: input.menuId || '-' },
       { label: '场景编码', value: input.sceneKey || '-' },
       { label: '业务模型', value: input.model || '-' },
       { label: '视图模式', value: input.viewMode || '-' },
@@ -39,7 +39,7 @@ export function useActionViewHudEntriesRuntime(options: UseActionViewHudEntriesR
       { label: '排序', value: input.sortLabel || '-' },
       { label: '最近意图', value: input.lastIntent || '-' },
       { label: '写入模式', value: input.lastWriteMode || '-' },
-      { label: '追踪 ID', value: input.traceId || input.lastTraceId || '-' },
+      { label: '处理编号', value: input.traceId || input.lastTraceId || '-' },
       { label: '耗时', value: input.lastLatencyMs ?? '-' },
       { label: '当前路由', value: input.routeFullPath || '' },
     ];

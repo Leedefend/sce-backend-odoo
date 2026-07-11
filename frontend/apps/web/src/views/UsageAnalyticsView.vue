@@ -286,7 +286,7 @@
           <table>
             <thead>
               <tr>
-                <th>{{ pageText('table_user_id', '用户 ID') }}</th>
+                <th>{{ pageText('table_user_id', '用户编号') }}</th>
                 <th>{{ pageText('table_scene', '场景') }}</th>
                 <th>{{ pageText('table_capability', '能力') }}</th>
                 <th>{{ pageText('table_total', '合计') }}</th>

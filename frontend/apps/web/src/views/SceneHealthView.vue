@@ -80,10 +80,10 @@
 
       <article v-if="pageSectionEnabled('meta', true) && pageSectionTagIs('meta', 'section')" class="meta" :style="pageSectionStyle('meta')">
         <p><strong>配置版本：</strong> {{ health.contract_ref || '未返回' }}</p>
-        <p><strong>追踪 ID：</strong> {{ health.trace_id || '-' }}</p>
+        <p><strong>处理编号：</strong> {{ health.trace_id || '-' }}</p>
         <p><strong>更新时间：</strong> {{ health.last_updated_at || '-' }}</p>
         <p><strong>自动降级：</strong> {{ autoDegradeLabel }}</p>
-        <p v-if="governanceTraceId"><strong>治理追踪：</strong> {{ governanceTraceId }}</p>
+        <p v-if="governanceTraceId"><strong>治理处理编号：</strong> {{ governanceTraceId }}</p>
       </article>
 
       <article

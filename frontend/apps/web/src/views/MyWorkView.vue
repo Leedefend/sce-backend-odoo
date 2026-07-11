@@ -90,7 +90,7 @@
           <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">{{ pageText('retry_action_copy_retry_request', '复制重试请求') }}</button>
           <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">{{ pageText('retry_action_export_retry_json', '导出重试配置') }}</button>
           <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">{{ pageText('retry_action_focus_in_main_list', '主列表定位失败') }}</button>
-          <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">{{ pageText('retry_action_copy_trace', '复制追踪 ID') }}</button>
+          <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">{{ pageText('retry_action_copy_trace', '复制处理编号') }}</button>
           <button class="link-btn secondary-btn" @click="clearRetryFailed">{{ pageText('retry_action_ignore', '忽略') }}</button>
         </div>
       <details v-if="retryRequestParams" class="retry-request-preview">
@@ -759,7 +759,7 @@ const retryRequestPreviewRows = computed(() => {
 const batchEvidenceText = computed(() => {
   if (!lastBatchTraceId.value && !lastReplayAuditId.value) return '';
   const rows = [];
-  if (lastBatchTraceId.value) rows.push(`${pageText('batch_trace_label', '追踪 ID')}：${lastBatchTraceId.value}`);
+  if (lastBatchTraceId.value) rows.push(`${pageText('batch_trace_label', '处理编号')}：${lastBatchTraceId.value}`);
   if (lastReplayAuditId.value > 0) rows.push(`${pageText('batch_replay_audit_label', '重放审计编号')}：${lastReplayAuditId.value}`);
   if (lastReplayAgeMs.value > 0) rows.push(`${pageText('batch_replay_age_label', '重放耗时')}：${lastReplayAgeMs.value}ms`);
   return rows.join(' | ');
@@ -1612,10 +1612,10 @@ async function copyBatchTraceId() {
   if (!lastBatchTraceId.value) return;
   try {
     await navigator.clipboard.writeText(lastBatchTraceId.value);
-    actionFeedback.value = pageText('feedback_copy_trace_ok', '追踪 ID 已复制');
+    actionFeedback.value = pageText('feedback_copy_trace_ok', '处理编号已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = pageText('feedback_copy_trace_failed', '复制追踪 ID 失败，请检查浏览器剪贴板权限');
+    actionFeedback.value = pageText('feedback_copy_trace_failed', '复制处理编号失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }

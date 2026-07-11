@@ -1245,9 +1245,9 @@ function exportSuggestedActionJson(filter: { success?: boolean; kind?: string; s
     downloadTextAsFile(`suggested-action-traces-${sanitizeExportSuffix(suffix)}-${now}.json`, content);
     const filterSummary = summarizeSuggestedActionTraceFilter(filter);
     const details = [suffix, filterSummary].filter(Boolean).join(', ');
-    hudMessage.value = `建议动作追踪已导出（${details}）。`;
+    hudMessage.value = `建议动作记录已导出（${details}）。`;
   } catch {
-    hudMessage.value = '建议动作追踪导出失败。';
+    hudMessage.value = '建议动作记录导出失败。';
   }
 }
 
