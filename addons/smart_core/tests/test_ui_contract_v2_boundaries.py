@@ -610,7 +610,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
 
         self.assertEqual(
             source_contract["list_profile"]["columns"],
-            ["p1_visible_a", "p1_visible_b", "source_created_by", "source_created_at"],
+            ["source_created_by", "source_created_at"],
         )
         self.assertEqual(
             source_contract["list_profile"]["column_policy"]["reason"],
@@ -881,10 +881,10 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         )
 
         profile = source_contract["list_profile"]
-        self.assertEqual(profile["columns"], ["legacy_visible_13", "legacy_visible_14"])
+        self.assertEqual(profile["columns"], ["source_created_by", "source_created_at"])
         self.assertEqual(profile["column_labels"], {
-            "legacy_visible_13": "录入人",
-            "legacy_visible_14": "录入时间",
+            "source_created_by": "录入人",
+            "source_created_at": "录入时间",
         })
 
     def test_business_list_profile_does_not_extend_direct_config_with_existing_profile(self):
@@ -936,7 +936,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
 
         self.assertEqual(
             source_contract["list_profile"]["columns"],
-            ["legacy_visible_status", "legacy_visible_project", "source_created_by"],
+            ["source_created_by"],
         )
         self.assertEqual(
             source_contract["list_profile"]["column_policy"]["reason"],
@@ -999,7 +999,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         profile = contract["layoutContract"]["listProfile"]
         self.assertEqual(
             profile["columns"],
-            ["legacy_visible_01", "legacy_visible_02", "source_created_by", "source_created_at"],
+            ["source_created_by", "source_created_at"],
         )
         self.assertEqual(profile["preference_policy"]["locked_columns"], [])
         self.assertEqual(profile["preference_policy"]["must_request_columns"], profile["columns"])
@@ -1052,8 +1052,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         handler._enforce_business_list_config_projection(contract, source_contract)
 
         labels = contract["layoutContract"]["listProfile"]["column_labels"]
-        self.assertEqual(labels["legacy_visible_01"], "单据状态")
-        self.assertEqual(labels["legacy_visible_05"], "采购材料名称")
+        self.assertEqual(contract["layoutContract"]["listProfile"]["columns"], ["source_created_by"])
         self.assertEqual(labels["source_created_by"], "录入人")
 
     def test_material_plan_legacy_visible_widget_layout_uses_business_labels(self):
@@ -1112,9 +1111,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         handler._enforce_business_list_config_projection(contract, source_contract)
 
         labels = contract["layoutContract"]["listProfile"]["column_labels"]
-        self.assertEqual(labels["legacy_visible_01"], "单据状态")
-        self.assertEqual(labels["legacy_visible_02"], "入库单号")
-        self.assertEqual(labels["legacy_visible_05"], "材料名称")
+        self.assertEqual(contract["layoutContract"]["listProfile"]["columns"], ["source_created_by"])
         self.assertEqual(labels["source_created_by"], "录入人")
 
     def test_material_inbound_legacy_visible_widget_layout_uses_business_labels(self):
@@ -1162,6 +1159,55 @@ class TestUiContractV2Boundaries(unittest.TestCase):
 
         self.assertEqual(params["view_type"], "tree")
         self.assertEqual(params["viewType"], "tree")
+
+    def test_runtime_entry_context_uses_action_form_view_mode_for_create_surface(self):
+        handler = self.module.UiContractV2Handler(env=object())
+
+        context = handler._resolve_runtime_entry_context(
+            {"op": "action_open", "action_id": 840, "menu_id": 645},
+            {"op": "action_open", "action_id": 840, "menu_id": 645},
+            {
+                "entry": {"model": "ui.form.custom.field.wizard"},
+                "action": {"id": 840, "view_mode": "form"},
+                "menu_id": 645,
+                "view_ids_by_type": {"form": 91},
+            },
+            {},
+        )
+
+        self.assertEqual(context["model"], "ui.form.custom.field.wizard")
+        self.assertEqual(context["view_type"], "form")
+        self.assertEqual(context["render_profile"], "create")
+        self.assertEqual(context["view_id"], 91)
+
+    def test_runtime_entry_context_normalizes_list_alias_and_edit_profile(self):
+        handler = self.module.UiContractV2Handler(env=object())
+
+        context = handler._resolve_runtime_entry_context(
+            {"op": "model", "model": "sc.payment.request", "viewType": "list", "recordId": 12},
+            {"op": "model", "model": "sc.payment.request", "view_type": "tree", "record_id": 12},
+            {"action": {"view_modes": ["list", "form"]}},
+            {},
+        )
+
+        self.assertEqual(context["model"], "sc.payment.request")
+        self.assertEqual(context["view_type"], "tree")
+        self.assertEqual(context["record_id_int"], 12)
+        self.assertEqual(context["render_profile"], "")
+
+    def test_runtime_entry_context_derives_existing_record_form_edit_profile(self):
+        handler = self.module.UiContractV2Handler(env=object())
+
+        context = handler._resolve_runtime_entry_context(
+            {"op": "model", "model": "sc.payment.request", "view_type": "form", "record_id": 12},
+            {"op": "model", "model": "sc.payment.request", "view_type": "form", "record_id": 12},
+            {},
+            {},
+        )
+
+        self.assertEqual(context["view_type"], "form")
+        self.assertEqual(context["record_id_int"], 12)
+        self.assertEqual(context["render_profile"], "edit")
 
     def test_form_structure_contract_uses_generic_slots_not_contract_template(self):
         handler = self.module.UiContractV2Handler(env=object())

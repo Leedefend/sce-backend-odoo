@@ -791,8 +791,11 @@ class UiContractV2Handler(BaseIntentHandler):
         ui_data = source_envelope.get("data") or {}
         ui_meta = source_envelope.get("meta") or {}
         ui_data, ui_meta = self._resolve_entry_contract(ui_data, ui_meta, ui_params, ctx)
-        model = params.get("model") or ui_data.get("model") or ui_meta.get("model") or ""
-        view_type = params.get("view_type") or params.get("viewType") or ui_data.get("view_type") or ui_meta.get("view_type") or "form"
+        entry_context = self._resolve_runtime_entry_context(params, ui_params, ui_data, ui_meta)
+        model = entry_context["model"]
+        view_type = entry_context["view_type"] or "form"
+        record_id = entry_context["record_id"]
+        render_profile = entry_context["render_profile"]
         request_id = (
             params.get("request_id")
             or params.get("requestId")
@@ -816,17 +819,12 @@ class UiContractV2Handler(BaseIntentHandler):
         source_contract.update({
             "model": model,
             "view_type": view_type,
-            "record_id": params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
-            "render_profile": params.get("render_profile") or params.get("renderProfile") or ui_params.get("render_profile") or ui_params.get("renderProfile"),
-            "domain_raw": params.get("domain_raw") or params.get("domainRaw") or ui_params.get("domain_raw") or ui_params.get("domainRaw"),
-            "context_raw": params.get("context_raw") or params.get("contextRaw") or ui_params.get("context_raw") or ui_params.get("contextRaw"),
-            "context": (
-                ui_data.get("context")
-                or ((ui_data.get("head") or {}).get("context") if isinstance(ui_data.get("head"), dict) else {})
-                or ui_params.get("context")
-                or params.get("context")
-                or {}
-            ),
+            "record_id": record_id,
+            "render_profile": render_profile,
+            "domain_raw": entry_context["domain_raw"],
+            "context_raw": entry_context["context_raw"],
+            "context": entry_context["context"],
+            "entry_runtime_context": entry_context,
             "record": source_record,
             "source_meta": ui_meta,
         })
@@ -845,7 +843,7 @@ class UiContractV2Handler(BaseIntentHandler):
         self._inject_record_business_category_context(
             source_contract,
             model=str(model or "").strip(),
-            record_id=params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
+            record_id=record_id,
         )
         self._inject_business_category_form_policy(
             source_contract,
@@ -870,8 +868,8 @@ class UiContractV2Handler(BaseIntentHandler):
             source_contract,
             model=str(model or "").strip(),
             view_type=str(view_type or "").strip().lower(),
-            render_profile=str(params.get("render_profile") or params.get("renderProfile") or params.get("profile") or "").strip().lower(),
-            record_id=params.get("record_id") or params.get("recordId"),
+            render_profile=str(render_profile or "").strip().lower(),
+            record_id=record_id,
         )
         self._inject_collaboration_contract(
             source_contract,
@@ -884,7 +882,7 @@ class UiContractV2Handler(BaseIntentHandler):
         )
         hydrated_record = self._hydrate_record_snapshot(
             model=str(model or "").strip(),
-            record_id=params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
+            record_id=record_id,
             source_contract=source_contract,
             current_record=source_record,
             view_type=str(view_type or "").strip().lower(),
@@ -4171,6 +4169,177 @@ class UiContractV2Handler(BaseIntentHandler):
             ui_params["with_data"] = True
         return ui_params
 
+    def _normalize_runtime_view_type(self, value: Any) -> str:
+        view_type = str(value or "").strip().lower()
+        if view_type == "list":
+            return "tree"
+        if view_type in {"tree", "form", "kanban"}:
+            return view_type
+        return ""
+
+    def _normalize_runtime_render_profile(self, value: Any, *, view_type: str = "", record_id: Any = None) -> str:
+        profile = str(value or "").strip().lower()
+        if profile in {"read", "view"}:
+            profile = "readonly"
+        if profile in {"create", "edit", "readonly"}:
+            return profile
+        if view_type == "form":
+            return "edit" if self._runtime_positive_int(record_id) else "create"
+        return ""
+
+    def _runtime_positive_int(self, value: Any) -> int:
+        try:
+            parsed = int(value or 0)
+        except Exception:
+            return 0
+        return parsed if parsed > 0 else 0
+
+    def _first_runtime_value(self, *values: Any) -> Any:
+        for value in values:
+            if value not in (None, False, ""):
+                return value
+        return None
+
+    def _runtime_action_view_modes(self, action: dict[str, Any]) -> list[str]:
+        raw_modes = (
+            action.get("view_modes")
+            or action.get("viewModes")
+            or action.get("view_mode")
+            or action.get("viewMode")
+            or ""
+        )
+        mode_rows = raw_modes if isinstance(raw_modes, list) else str(raw_modes or "").split(",")
+        out: list[str] = []
+        for raw_mode in mode_rows:
+            view_type = self._normalize_runtime_view_type(raw_mode)
+            if view_type and view_type not in out:
+                out.append(view_type)
+        return out
+
+    def _resolve_runtime_entry_context(
+        self,
+        params: dict[str, Any],
+        ui_params: dict[str, Any],
+        ui_data: dict[str, Any],
+        ui_meta: dict[str, Any],
+        *,
+        default_view_type: str = "form",
+    ) -> dict[str, Any]:
+        entry = ui_data.get("entry") if isinstance(ui_data.get("entry"), dict) else {}
+        action = ui_data.get("action") if isinstance(ui_data.get("action"), dict) else {}
+        head = ui_data.get("head") if isinstance(ui_data.get("head"), dict) else {}
+        view_ids = ui_data.get("view_ids_by_type") if isinstance(ui_data.get("view_ids_by_type"), dict) else {}
+        action_modes = self._runtime_action_view_modes(action)
+        view_type = ""
+        for candidate in (
+            params.get("view_type"),
+            params.get("viewType"),
+            ui_params.get("view_type"),
+            ui_params.get("viewType"),
+            entry.get("view_type"),
+            entry.get("viewType"),
+            ui_data.get("view_type"),
+            ui_data.get("viewType"),
+            ui_meta.get("view_type"),
+            ui_meta.get("viewType"),
+            action_modes[0] if action_modes else "",
+            default_view_type,
+        ):
+            view_type = self._normalize_runtime_view_type(candidate)
+            if view_type:
+                break
+        model = str(self._first_runtime_value(
+            params.get("model"),
+            params.get("model_code"),
+            params.get("modelCode"),
+            ui_params.get("model"),
+            ui_params.get("model_code"),
+            ui_params.get("modelCode"),
+            entry.get("model"),
+            ui_data.get("model"),
+            ui_meta.get("model"),
+            action.get("res_model"),
+            action.get("resModel"),
+        ) or "").strip()
+        record_id = self._first_runtime_value(
+            params.get("record_id"),
+            params.get("recordId"),
+            params.get("res_id"),
+            params.get("resId"),
+            ui_params.get("record_id"),
+            ui_params.get("recordId"),
+            ui_params.get("res_id"),
+            ui_params.get("resId"),
+            entry.get("record_id"),
+            entry.get("recordId"),
+            action.get("res_id"),
+            action.get("resId"),
+            ui_data.get("record_id"),
+            ui_data.get("recordId"),
+        )
+        render_profile = self._normalize_runtime_render_profile(
+            self._first_runtime_value(
+                params.get("render_profile"),
+                params.get("renderProfile"),
+                params.get("profile"),
+                ui_params.get("render_profile"),
+                ui_params.get("renderProfile"),
+                ui_params.get("profile"),
+                entry.get("render_profile"),
+                entry.get("renderProfile"),
+                ui_data.get("render_profile"),
+                ui_data.get("renderProfile"),
+                ui_meta.get("render_profile"),
+                ui_meta.get("renderProfile"),
+            ),
+            view_type=view_type,
+            record_id=record_id,
+        )
+        action_id = self._first_runtime_value(
+            params.get("action_id"),
+            params.get("actionId"),
+            ui_params.get("action_id"),
+            ui_params.get("actionId"),
+            action.get("id"),
+            ui_data.get("action_id"),
+            ui_data.get("actionId"),
+        )
+        menu_id = self._first_runtime_value(
+            params.get("menu_id"),
+            params.get("menuId"),
+            ui_params.get("menu_id"),
+            ui_params.get("menuId"),
+            ui_data.get("menu_id"),
+            ui_data.get("menuId"),
+        )
+        view_id = self._first_runtime_value(
+            params.get("view_id"),
+            params.get("viewId"),
+            ui_params.get("view_id"),
+            ui_params.get("viewId"),
+            view_ids.get(view_type),
+        )
+        return {
+            "model": model,
+            "view_type": view_type,
+            "record_id": record_id,
+            "record_id_int": self._runtime_positive_int(record_id),
+            "render_profile": render_profile,
+            "action_id": action_id,
+            "menu_id": menu_id,
+            "view_id": view_id,
+            "domain_raw": self._first_runtime_value(params.get("domain_raw"), params.get("domainRaw"), ui_params.get("domain_raw"), ui_params.get("domainRaw")),
+            "context_raw": self._first_runtime_value(params.get("context_raw"), params.get("contextRaw"), ui_params.get("context_raw"), ui_params.get("contextRaw")),
+            "context": (
+                ui_data.get("context")
+                or head.get("context")
+                or ui_params.get("context")
+                or params.get("context")
+                or {}
+            ),
+            "action_view_modes": action_modes,
+        }
+
     def _envelope(self, result: Any) -> dict[str, Any]:
         if isinstance(result, IntentExecutionResult):
             return result.to_legacy_dict()
@@ -4185,41 +4354,26 @@ class UiContractV2Handler(BaseIntentHandler):
         ui_params: dict[str, Any],
         ctx: Optional[Dict[str, Any]],
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        entry = ui_data.get("entry") if isinstance(ui_data.get("entry"), dict) else {}
-        model = str(entry.get("model") or ui_data.get("model") or "").strip()
-        view_type = str(
-            entry.get("view_type")
-            or entry.get("viewType")
-            or ui_data.get("view_type")
-            or ui_data.get("viewType")
-            or ""
-        ).strip()
+        entry_context = self._resolve_runtime_entry_context(ui_params, ui_params, ui_data, ui_meta, default_view_type="tree")
+        model = entry_context["model"]
+        view_type = entry_context["view_type"] or "tree"
         if not model:
             return ui_data, ui_meta
-        action = ui_data.get("action") if isinstance(ui_data.get("action"), dict) else {}
-        if not view_type:
-            raw_modes = action.get("view_modes") or action.get("viewModes") or action.get("view_mode") or action.get("viewMode") or ""
-            mode_rows = raw_modes if isinstance(raw_modes, list) else str(raw_modes or "").split(",")
-            for raw_mode in mode_rows:
-                normalized = str(raw_mode or "").strip().lower()
-                if normalized == "list":
-                    normalized = "tree"
-                if normalized in {"tree", "form", "kanban"}:
-                    view_type = normalized
-                    break
 
         next_params = dict(ui_params)
         next_params["op"] = "model"
         next_params["model"] = model
-        next_params["view_type"] = view_type or "tree"
-        if ui_data.get("menu_id") and not next_params.get("menu_id"):
-            next_params["menu_id"] = ui_data.get("menu_id")
-        if action.get("id") and not next_params.get("action_id"):
-            next_params["action_id"] = action.get("id")
-        view_ids = ui_data.get("view_ids_by_type") if isinstance(ui_data.get("view_ids_by_type"), dict) else {}
-        requested_view_id = view_ids.get(next_params["view_type"])
-        if requested_view_id and not next_params.get("view_id"):
-            next_params["view_id"] = requested_view_id
+        next_params["view_type"] = view_type
+        if entry_context.get("menu_id") and not next_params.get("menu_id"):
+            next_params["menu_id"] = entry_context["menu_id"]
+        if entry_context.get("action_id") and not next_params.get("action_id"):
+            next_params["action_id"] = entry_context["action_id"]
+        if entry_context.get("view_id") and not next_params.get("view_id"):
+            next_params["view_id"] = entry_context["view_id"]
+        if entry_context.get("record_id") and not next_params.get("record_id"):
+            next_params["record_id"] = entry_context["record_id"]
+        if entry_context.get("render_profile") and not next_params.get("render_profile"):
+            next_params["render_profile"] = entry_context["render_profile"]
 
         projection_context = dict(getattr(self.env, "context", {}) or {})
         projection_context["contract_projection_readonly"] = True
