@@ -158,6 +158,65 @@ async function visibleWorkflowStateFields(page) {
   });
 }
 
+async function nativeCreateHeaderLayout(page) {
+  return page.evaluate(() => {
+    const rectOf = (node) => {
+      if (!node) return null;
+      const rect = node.getBoundingClientRect();
+      return {
+        left: Math.round(rect.left * 100) / 100,
+        right: Math.round(rect.right * 100) / 100,
+        width: Math.round(rect.width * 100) / 100,
+        top: Math.round(rect.top * 100) / 100,
+        bottom: Math.round(rect.bottom * 100) / 100,
+      };
+    };
+    const header = document.querySelector('.contract-form-native-shell .template-page-header');
+    const actions = document.querySelector('.contract-form-native-shell .template-page-header-actions');
+    const status = document.querySelector('.contract-form-native-shell .template-page-header-status');
+    const firstAction = actions ? actions.querySelector('button, a, [role="button"]') : null;
+    const statusStyle = status ? window.getComputedStyle(status) : null;
+    const hasVisibleStatus = Boolean(status)
+      && statusStyle.display !== 'none'
+      && statusStyle.visibility !== 'hidden'
+      && Boolean(status.offsetWidth || status.offsetHeight || status.getClientRects().length)
+      && String(status.textContent || '').trim().length > 0;
+    const headerStyle = header ? window.getComputedStyle(header) : null;
+    const actionsStyle = actions ? window.getComputedStyle(actions) : null;
+    return {
+      viewportWidth: window.innerWidth,
+      hasHeader: Boolean(header),
+      hasActions: Boolean(actions),
+      hasVisibleStatus,
+      headerClass: header ? String(header.getAttribute('class') || '') : '',
+      headerJustify: headerStyle ? headerStyle.justifyContent : '',
+      actionsJustify: actionsStyle ? actionsStyle.justifyContent : '',
+      header: rectOf(header),
+      actions: rectOf(actions),
+      firstAction: rectOf(firstAction),
+      firstActionText: firstAction ? String(firstAction.textContent || '').replace(/\s+/g, ' ').trim() : '',
+    };
+  });
+}
+
+function headerLayoutFailures(layout) {
+  if (!layout || !layout.hasHeader || !layout.hasActions) return [];
+  if (layout.viewportWidth <= 860 || layout.hasVisibleStatus) return [];
+  if (!String(layout.headerClass || '').includes('template-page-header--title-hidden')) return [];
+  const failures = [];
+  const rightGap = layout.header && layout.actions ? layout.header.right - layout.actions.right : 0;
+  if (rightGap > 6) {
+    failures.push(`header actions not right aligned: rightGap=${rightGap}`);
+  }
+  if (layout.headerJustify !== 'flex-end') {
+    failures.push(`header justify mismatch: ${layout.headerJustify || '-'}`);
+  }
+  if (layout.actionsJustify !== 'flex-end') {
+    failures.push(`actions justify mismatch: ${layout.actionsJustify || '-'}`);
+  }
+  return failures;
+}
+
 async function launchBrowser() {
   try {
     const runtime = await import(pathToFileUrl(path.join(repoRoot, 'scripts/verify/playwright_runtime.mjs')));
@@ -195,10 +254,12 @@ async function main() {
       await page.waitForTimeout(500);
       const visible = await visibleStatusbars(page);
       const visibleStateFields = await visibleWorkflowStateFields(page);
+      const headerLayout = await nativeCreateHeaderLayout(page);
+      const layoutFailures = headerLayoutFailures(headerLayout);
       const screenshot = outPath(`${scenario.code.replace(/[^a-z0-9_.-]+/gi, '_')}.png`);
       await page.screenshot({ path: screenshot, fullPage: true });
       const result = {
-        ok: visible.length === 0 && visibleStateFields.length === 0,
+        ok: visible.length === 0 && visibleStateFields.length === 0 && layoutFailures.length === 0,
         code: scenario.code,
         name: scenario.name,
         model: scenario.model,
@@ -207,14 +268,18 @@ async function main() {
         url: page.url(),
         visibleStatusbars: visible,
         visibleStateFields,
+        headerLayout,
+        layoutFailures,
         textSample: text.slice(0, 300),
         screenshot,
       };
       results.push(result);
       if (!result.ok) {
-        throw new Error(`create form rendered workflow state surface: ${scenario.code} ${JSON.stringify({
+        throw new Error(`create form rendered invalid create surface: ${scenario.code} ${JSON.stringify({
           visibleStatusbars: visible,
           visibleStateFields,
+          layoutFailures,
+          headerLayout,
         })}`);
       }
     }
