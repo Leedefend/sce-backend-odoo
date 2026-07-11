@@ -100,8 +100,8 @@
           {{ action.label }}
         </button>
         <button v-if="showDiscardAction" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy" @click="discardChanges">{{ formUiLabel('discard') }}</button>
-        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
-        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
+        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy || !contract" @click="copyContractJson">复制配置</button>
+        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy || !contract" @click="exportContractJson">导出配置</button>
         <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy" @click="reload">{{ formUiLabel('reload') }}</button>
       </template>
     </PageHeaderTemplate>
@@ -9634,7 +9634,7 @@ async function openNativeChatterAction(action: NativeChatterAction) {
   }
   activeChatterMode.value = '';
   activeChatterLabel.value = action.label;
-  chatterError.value = `${action.label} 缺少可执行调度配置`;
+  chatterError.value = `${action.label} 缺少可执行配置`;
 }
 
 function handleSceneBlockAction(payload: { action?: { target?: Record<string, unknown> } }) {

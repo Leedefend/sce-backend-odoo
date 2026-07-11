@@ -2285,7 +2285,7 @@ async function loadPanel(options: { preserveStatus?: boolean } = {}) {
     const usedMenuIds = new Set<number>();
     const scopedNavTree = runtimeNavigationTreeFromPayload(payload);
     if (!scopedNavTree.length) {
-      throw new Error('菜单配置缺少最终运行时导航树，已阻止回退到原生菜单结构。');
+      throw new Error('菜单配置缺少最终导航结果，已阻止回退到未发布菜单。');
     }
     const navigationTree = buildTreeFromNavigation(scopedNavTree, menuById, usedMenuIds);
     const completeTree = mergeNavigationAndConfigTrees(navigationTree, payload.tree || [], usedMenuIds);

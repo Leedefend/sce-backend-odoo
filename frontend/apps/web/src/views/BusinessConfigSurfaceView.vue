@@ -2396,7 +2396,7 @@ function buildSnapshotRemediationPlan(result: BusinessConfigSnapshotComparePaylo
       action_count: actions.length,
     },
     acceptance: {
-      product_boundary: '仅包含低代码配置契约的差异项。',
+      product_boundary: '仅包含低代码配置差异项。',
       execution_policy: '本清单用于上线复核，变更应通过低代码配置页面、迁移脚本或客户模块基线完成。',
       required_after_action: [
         '复核配置快照一致性',

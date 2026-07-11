@@ -595,7 +595,7 @@ async function load() {
         requestedSurface.value,
       );
       if (!markerCheck.ok) {
-        throw new Error(`${pageText('error_surface_marker_invalid', '页面契约标记不一致')}：${markerCheck.issues.slice(0, 4).join(' | ')}`);
+        throw new Error(`${pageText('error_surface_marker_invalid', '页面配置标记不一致')}：${markerCheck.issues.slice(0, 4).join(' | ')}`);
       }
       const runtime = buildRecordRuntimeFromContract(actionContract.data);
       view = runtime.view;
@@ -604,7 +604,7 @@ async function load() {
     }
     contractMode.value = String(actionContract?.meta?.contract_mode || '');
     if (!view) {
-      throw new Error(pageText('error_missing_form_contract', '缺少表单页面契约'));
+      throw new Error(pageText('error_missing_form_contract', '缺少表单页面配置'));
     }
     viewContract.value = view || null;
     const layout = view?.layout;
