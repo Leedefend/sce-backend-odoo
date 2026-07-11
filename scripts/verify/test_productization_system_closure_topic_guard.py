@@ -61,7 +61,10 @@ def _make_text() -> str:
         ),
         _target(
             "verify.business_config.config_workbench_operation_quick",
-            ["guard.prod.forbid", *guard.REQUIRED_TARGET_DEPS["verify.business_config.config_workbench_operation_quick"]],
+            [
+                "guard.prod.forbid",
+                *guard.REQUIRED_TARGET_DEPS["verify.business_config.config_workbench_operation_quick"],
+            ],
         ),
         _target(
             "verify.system_user_experience.shell_acceptance",
@@ -80,6 +83,24 @@ def _make_text() -> str:
 class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
     def test_complete_minimal_fixture_passes(self) -> None:
         self.assertEqual([], guard.validate(_doc_text(), _make_text()))
+
+    def test_doc_must_keep_frontend_backend_contract_boundary(self) -> None:
+        doc_text = _doc_text().replace("前端只消费后端契约", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: 前端只消费后端契约", errors)
+
+    def test_doc_must_keep_menu_alignment_boundary(self) -> None:
+        doc_text = _doc_text().replace("菜单配置展示口径必须与主导航展示口径一致", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: 菜单配置展示口径必须与主导航展示口径一致", errors)
+
+    def test_topic_guard_must_forbid_production_write_context(self) -> None:
+        make_text = _make_text().replace(
+            "verify.productization.system_closure.topic_guard: guard.prod.forbid",
+            "verify.productization.system_closure.topic_guard:",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("topic guard must use guard.prod.forbid", errors)
 
     def test_missing_quick_dependency_fails(self) -> None:
         make_text = _make_text().replace(" verify.formal_list_surface.no_test_placeholder_guard", "")
