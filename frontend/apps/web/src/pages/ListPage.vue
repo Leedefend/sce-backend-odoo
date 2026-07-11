@@ -1040,6 +1040,7 @@ function semanticCell(field: string, value: unknown) {
   const raw = normalizeCellRawValue(value);
   const selectionText = selectionLabel(option, value);
   const numericText = formatNumericCellValue(field, raw);
+  const dateText = formatDateCellValue(field, raw);
   const fieldType = String(option?.type || '').trim().toLowerCase();
   const rawText = typeof raw === 'string' ? raw : '';
   const rawTrimmedText = rawText.trim();
@@ -1055,7 +1056,7 @@ function semanticCell(field: string, value: unknown) {
         ? '0'
       : (typeof raw === 'boolean'
         ? (fieldType === 'boolean' ? uiLabel(raw ? 'boolean_true' : 'boolean_false', raw ? '是' : '否') : '--')
-        : attachmentText || numericText || String(raw)))));
+        : attachmentText || numericText || dateText || String(raw)))));
   const toneKey = String(raw ?? '').trim();
   const tone = option?.cellRole === 'status'
     ? (option.toneByValue?.[toneKey] || 'neutral')
@@ -1962,6 +1963,29 @@ function formatNumericCellValue(field: string, value: unknown) {
     maximumFractionDigits: type === 'integer' ? 0 : 2,
     minimumFractionDigits: type === 'integer' ? 0 : 2,
   });
+}
+
+function isDateLikeColumn(field: string) {
+  const type = String(columnOption(field)?.type || '').trim().toLowerCase();
+  if (type === 'date' || type === 'datetime') return true;
+  const label = columnLabel(field).trim();
+  return /日期|时间/.test(label) && !/耗时|时长|次数|时间差/.test(label);
+}
+
+function formatDateCellValue(field: string, value: unknown) {
+  if (!isDateLikeColumn(field)) return '';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 16).replace('T', ' ');
+  }
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if (!match) return '';
+  const [, year, month, day, hour = '', minute = '', second = ''] = match;
+  if (!hour || (hour === '00' && minute === '00' && (!second || second === '00'))) {
+    return `${year}-${month}-${day}`;
+  }
+  return `${year}-${month}-${day} ${hour}:${minute || '00'}`;
 }
 
 function formatFooterNumber(value: number, field: string) {
