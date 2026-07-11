@@ -594,7 +594,9 @@
             @native-action="runNativeLayoutAction"
           >
             <template #readonly="{ field }">
-              <FieldValue :value="field.value" :field="field.descriptor" />
+              <span class="contract-readonly-value">
+                <FieldValue :value="field.value" :field="field.descriptor" />
+              </span>
             </template>
             <template #chatter>
               <section v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode" class="block native-chatter-block">
@@ -12203,6 +12205,23 @@ onBeforeUnmount(() => {
   color: var(--sc-app-text-primary);
   font-size: 14px;
   font-weight: 700;
+}
+
+.contract-readonly-value {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-input-radius);
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
 }
 
 .contract-form-native-shell :deep(.native-form-tree) {

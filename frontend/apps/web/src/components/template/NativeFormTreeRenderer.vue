@@ -453,7 +453,10 @@ const SMART_BUTTON_DIRECT_LIMIT = 4;
 const visibleNodes = computed(() => (props.nodes || []).filter((node) => isNodeRenderable(node)));
 
 function isNodeRenderable(node: NativeFormLayoutNode) {
-  return props.isNodeVisible(node);
+  if (!props.isNodeVisible(node)) return false;
+  if (props.fieldConfigEditable || props.fieldOrderEditable) return true;
+  if (!isContainerNode(node)) return true;
+  return hasRenderableContainerContent(node);
 }
 
 function nodeType(node: NativeFormLayoutNode) {
@@ -497,6 +500,18 @@ function nodeText(node: NativeFormLayoutNode) {
 
 function isContainerNode(node: NativeFormLayoutNode) {
   return ['header', 'sheet', 'group', 'notebook', 'page', 'container', 'div', 'span', 'h1', 'h2', 'h3'].includes(nodeType(node));
+}
+
+function hasRenderableContainerContent(node: NativeFormLayoutNode): boolean {
+  if (containerTitle(node) || nodeText(node)) return true;
+  return rawChildren(node).some((child) => {
+    if (!props.isNodeVisible(child)) return false;
+    const type = nodeType(child);
+    if (type === 'field') return props.fieldSchemasForNodes([child]).length > 0;
+    if (['button', 'widget', 'chatter'].includes(type)) return true;
+    if (isContainerNode(child)) return hasRenderableContainerContent(child);
+    return true;
+  });
 }
 
 function rawChildren(node: NativeFormLayoutNode) {
