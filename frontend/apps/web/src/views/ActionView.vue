@@ -3338,7 +3338,7 @@ onBeforeUnmount(() => {
 });
 
 onErrorCaptured((err) => {
-  const message = err instanceof Error ? err.message : String(err || pageText('error_unknown_render', '未知渲染异常'));
+  const message = err instanceof Error ? err.message : String(err || pageText('error_unknown_render', '系统处理异常'));
   renderErrorMessage.value = `${pageText('error_action_render_failed', '列表页面渲染失败：')}${message}`;
   return false;
 });

@@ -9085,7 +9085,7 @@ const hudEntries = computed(() => [
   { label: 'V2 主数据字段数', value: v2ShadowMainDataFieldCount.value },
   { label: 'V2 只读值数', value: v2ShadowReadonlyValueCount.value },
   { label: 'V2 值来源', value: v2ShadowValueSourceKind.value },
-  { label: 'V2 解析错误', value: v2ContractDecodeError.value || '-' },
+  { label: '配置解析问题', value: v2ContractDecodeError.value || '-' },
   { label: '契约视图类型', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
   { label: '视图编排已应用', value: viewOrchestrationHudSummary.value.applied },
   { label: '视图编排责任层', value: viewOrchestrationHudSummary.value.owner },
@@ -9925,7 +9925,7 @@ async function discardChanges() {
 }
 
 onErrorCaptured((err) => {
-  const message = err instanceof Error ? err.message : String(err || '未知渲染异常');
+  const message = err instanceof Error ? err.message : String(err || '系统处理异常');
   renderErrorMessage.value = `表单页面渲染失败：${message}`;
   return false;
 });
@@ -11089,7 +11089,7 @@ async function runPrimaryFormAction() {
   await nextTick();
   const submittedRecordId = typeof saved === 'number' ? saved : recordId.value;
   if (!submittedRecordId) {
-    errorMessage.value = '提交失败：记录尚未创建';
+    errorMessage.value = '提交失败：请先保存记录后再提交';
     status.value = 'error';
     return;
   }

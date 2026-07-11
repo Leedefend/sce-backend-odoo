@@ -65,7 +65,7 @@
 
       <section v-if="pageSectionEnabled('cards', true) && pageSectionTagIs('cards', 'section')" class="cards" :style="pageSectionStyle('cards')">
         <article class="card danger">
-          <h3>关键解析错误</h3>
+          <h3>关键配置问题</h3>
           <p>{{ health.summary.critical_resolve_errors_count }}</p>
         </article>
         <article class="card danger">
@@ -127,14 +127,14 @@
         :style="pageSectionStyle('details_resolve_errors')"
         :open="pageSectionOpenDefault('details_resolve_errors', true)"
       >
-        <summary>解析错误（{{ health.details?.resolve_errors?.length || 0 }}）</summary>
+        <summary>配置解析问题（{{ health.details?.resolve_errors?.length || 0 }}）</summary>
         <ul v-if="health.details?.resolve_errors?.length" class="diagnostic-list">
           <li v-for="item in health.details.resolve_errors" :key="diagnosticItemKey(item)">
             <strong>{{ diagnosticItemTitle(item) }}</strong>
             <span>{{ diagnosticItemMeta(item) }}</span>
           </li>
         </ul>
-        <p v-else class="empty-text">暂无解析错误</p>
+        <p v-else class="empty-text">暂无配置解析问题</p>
       </details>
       <details
         v-if="pageSectionEnabled('details_drift', true) && pageSectionTagIs('details_drift', 'details')"

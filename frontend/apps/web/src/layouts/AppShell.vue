@@ -239,14 +239,14 @@
       <StatusPanel
         v-else-if="initStatus === 'error'"
         title="初始化失败"
-        :message="initError || '未知错误'"
+        :message="initError || '系统处理异常，请稍后重试。'"
         :trace-id="initTraceId || undefined"
         variant="error"
         :on-retry="refreshInit"
       />
       <StatusPanel
         v-else-if="showSceneErrors"
-        title="场景注册异常"
+        title="场景配置异常"
         :message="sceneErrorMessage"
         variant="error"
       />
