@@ -62,6 +62,33 @@ REQUIRED_TARGET_DEPS = {
     "verify.business_config.config_workbench_operation_quick": [
         "verify.frontend.product_language.guard",
     ],
+    "verify.system_user_experience.full_browser": [
+        "verify.system_user_experience.coverage_guard",
+        "verify.product.page_structure",
+        "verify.business_config.config_workbench_operation_acceptance",
+        "verify.business_config.config_workbench_operation_summary_guard",
+        "verify.system_user_experience.shell_acceptance",
+        "verify.system_user_experience.visible_surface_visual_coverage",
+        "verify.system_user_experience.business_form_user_perspective",
+    ],
+}
+
+REQUIRED_TARGET_BODY_TOKENS = {
+    "verify.system_user_experience.shell_acceptance": [
+        "scripts/system_user_experience_shell_acceptance.mjs",
+        "scripts/system_user_experience_shell_summary_guard.mjs",
+    ],
+    "verify.system_user_experience.business_form_user_perspective": [
+        "frontend/apps/web/scripts/business_form_user_perspective_acceptance.mjs",
+        "scripts/business_form_user_perspective_summary_guard.mjs",
+    ],
+    "verify.system_user_experience.visible_surface_visual_coverage": [
+        "frontend/apps/web/scripts/user_page_visual_coverage.cjs",
+        "scripts/user_visible_surface_visual_coverage_summary_guard.mjs",
+    ],
+    "verify.system_user_experience.full_browser": [
+        "scripts/system_user_experience_full_browser_summary_guard.mjs",
+    ],
 }
 
 
@@ -69,6 +96,15 @@ def _target_line(text: str, target: str) -> str:
     pattern = re.compile(rf"^{re.escape(target)}\s*:(?P<deps>[^\n]*)$", re.MULTILINE)
     match = pattern.search(text)
     return match.group(0) if match else ""
+
+
+def _target_body(text: str, target: str) -> str:
+    pattern = re.compile(
+        rf"^{re.escape(target)}\s*:[^\n]*\n(?P<body>(?:\t[^\n]*\n|[ \t]*\n)*)",
+        re.MULTILINE,
+    )
+    match = pattern.search(text)
+    return match.group("body") if match else ""
 
 
 def main() -> int:
@@ -103,6 +139,15 @@ def main() -> int:
             if dep not in target_line:
                 errors.append(f"{target} missing dependency: {dep}")
 
+    for target, tokens in REQUIRED_TARGET_BODY_TOKENS.items():
+        target_body = _target_body(make_text, target)
+        if not target_body:
+            errors.append(f"Makefile missing command body: {target}")
+            continue
+        for token in tokens:
+            if token not in target_body:
+                errors.append(f"{target} missing command token: {token}")
+
     topic_line = _target_line(make_text, "verify.productization.system_closure.topic_guard")
     if topic_line and "guard.prod.forbid" not in topic_line:
         errors.append("topic guard must use guard.prod.forbid")
@@ -116,6 +161,7 @@ def main() -> int:
         "required_make_targets": len(REQUIRED_MAKE_TARGETS),
         "required_quick_dependencies": len(REQUIRED_QUICK_DEPS),
         "required_target_dependencies": sum(len(deps) for deps in REQUIRED_TARGET_DEPS.values()),
+        "required_target_body_tokens": sum(len(tokens) for tokens in REQUIRED_TARGET_BODY_TOKENS.values()),
     }
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 2 if errors else 0
