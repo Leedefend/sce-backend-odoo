@@ -498,8 +498,27 @@ class UiContractV2Handler(BaseIntentHandler):
         if not columns:
             return
         columns = self._merge_user_list_preference_columns(source_contract, columns)
+        action_view_override = self._action_scoped_visible_list_columns(source_contract)
+        action_view_columns = [
+            str(name or "").strip()
+            for name in (action_view_override.get("columns") if isinstance(action_view_override, dict) else [])
+            if str(name or "").strip()
+        ]
+        if action_view_columns:
+            action_column_names = set(action_view_columns)
+            columns = [name for name in columns if name in action_column_names]
+            fact_columns = [name for name in (fact_columns or columns) if name in action_column_names]
+            if not columns:
+                columns = list(action_view_columns)
+            if not fact_columns:
+                fact_columns = list(columns)
         locked_profile = deepcopy(profile)
         profile_labels = locked_profile.get("column_labels") if isinstance(locked_profile.get("column_labels"), dict) else {}
+        if isinstance(action_view_override, dict):
+            profile_labels = {
+                **profile_labels,
+                **(action_view_override.get("column_labels") if isinstance(action_view_override.get("column_labels"), dict) else {}),
+            }
         locked_profile["column_labels"] = self._apply_legacy_visible_business_labels(
             source_contract,
             columns,
@@ -519,6 +538,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "must_request_columns": list(locked_profile.get("fact_columns") or columns),
         }
         self._project_v2_source_policies(contract, {"list_profile": locked_profile})
+        source_contract["list_profile"] = locked_profile
         profile_projection = ((contract.get("layoutContract") or {}).get("listProfile") or {})
         source_authority = profile_projection.get("sourceAuthority") if isinstance(profile_projection, dict) else {}
         if isinstance(source_authority, dict):
@@ -3036,6 +3056,13 @@ class UiContractV2Handler(BaseIntentHandler):
         action_view_override = self._action_scoped_visible_list_columns(source_contract)
         action_view_columns = list(action_view_override.get("columns") or []) if action_view_override else []
         action_view_labels = dict(action_view_override.get("column_labels") or {}) if action_view_override else {}
+        optional_hidden_columns = {
+            str(row.get("name") or "").strip()
+            for row in tree_schema_rows
+            if isinstance(row, dict)
+            and str(row.get("name") or "").strip()
+            and str(row.get("optional") or "").strip().lower() == "hide"
+        }
         legacy_view_columns = []
         for row in [*raw_columns, *tree_schema_rows]:
             if not isinstance(row, dict):
@@ -3049,6 +3076,8 @@ class UiContractV2Handler(BaseIntentHandler):
         has_explicit_view_columns = False
         for row in raw_columns:
             name = str(row.get("name") if isinstance(row, dict) else row or "").strip()
+            if name in optional_hidden_columns:
+                continue
             if name and name not in columns:
                 columns.append(name)
                 explicit_view_columns.append(name)
@@ -3061,6 +3090,8 @@ class UiContractV2Handler(BaseIntentHandler):
         if not direct_orchestration_columns:
             for name in profile.get("columns") if isinstance(profile.get("columns"), list) else []:
                 normalized = str(name or "").strip()
+                if normalized in optional_hidden_columns:
+                    continue
                 if normalized and normalized not in columns:
                     columns.append(normalized)
         column_policy = profile.get("column_policy") if isinstance(profile.get("column_policy"), dict) else {}
@@ -3129,6 +3160,11 @@ class UiContractV2Handler(BaseIntentHandler):
 
         columns = self._merge_user_list_preference_columns(source_contract, columns)
         columns = self._user_visible_list_columns(columns)
+        if action_view_columns:
+            action_column_names = set(action_view_columns)
+            columns = [name for name in columns if name in action_column_names]
+        if optional_hidden_columns:
+            columns = [name for name in columns if name not in optional_hidden_columns]
         if not columns:
             return
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
@@ -3333,6 +3369,8 @@ class UiContractV2Handler(BaseIntentHandler):
                 if not productized_list and not (name.startswith("p1_visible_") or name.startswith("legacy_visible_")):
                     continue
                 if productized_list and str(node.get("invisible") or "").strip().lower() in {"1", "true", "yes"}:
+                    continue
+                if productized_list and str(node.get("optional") or "").strip().lower() == "hide":
                     continue
                 if model_fields and name not in model_fields:
                     continue

@@ -980,7 +980,7 @@
         <field name="view_id" ref="smart_construction_core.view_sc_customer_partner_tree"/>
         <field name="search_view_id" ref="smart_construction_core.view_sc_customer_partner_search"/>
         <field name="domain">[('customer_rank', '&gt;', 0)]</field>
-        <field name="context">{'default_customer_rank': 1, 'default_is_company': True, 'default_company_type': 'company'}</field>
+        <field name="context">{'default_customer_rank': 1, 'default_is_company': True, 'default_company_type': 'company', 'sc_productized_list': True}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contact_manager'))]"/>
     </record>
     <record id="action_sc_customer_partner_tree_view" model="ir.actions.act_window.view">
@@ -1002,7 +1002,7 @@
         <field name="view_id" ref="smart_construction_core.view_sc_supplier_partner_tree"/>
         <field name="search_view_id" ref="smart_construction_core.view_sc_supplier_partner_search"/>
         <field name="domain">[('supplier_rank', '&gt;', 0)]</field>
-        <field name="context">{'default_supplier_rank': 1, 'default_is_company': True, 'default_company_type': 'company'}</field>
+        <field name="context">{'default_supplier_rank': 1, 'default_is_company': True, 'default_company_type': 'company', 'sc_productized_list': True}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contact_manager'))]"/>
     </record>
     <record id="action_sc_supplier_partner_tree_view" model="ir.actions.act_window.view">
