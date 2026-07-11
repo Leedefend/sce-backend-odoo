@@ -106,7 +106,7 @@
       </template>
     </PageHeaderTemplate>
 
-    <StatusPanel v-if="renderErrorMessage" title="页面渲染失败" :message="renderErrorMessage" variant="error" :on-retry="reload" />
+    <StatusPanel v-if="renderErrorMessage" title="页面打开失败" :message="renderErrorMessage" variant="error" :on-retry="reload" />
     <StatusPanel v-else-if="status === 'loading'" title="正在加载页面..." variant="info" />
     <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
 
@@ -9926,7 +9926,7 @@ async function discardChanges() {
 
 onErrorCaptured((err) => {
   const message = err instanceof Error ? err.message : String(err || '系统处理异常');
-  renderErrorMessage.value = `表单页面渲染失败：${message}`;
+  renderErrorMessage.value = `表单页面打开失败：${message}`;
   return false;
 });
 

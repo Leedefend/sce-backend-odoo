@@ -87,14 +87,14 @@
           <button class="link-btn" @click="copyRetrySummary">{{ pageText('retry_action_copy_summary', '复制失败摘要') }}</button>
           <button class="link-btn" @click="copyVisibleRetrySummary">{{ pageText('retry_action_copy_current_view', '复制当前视图') }}</button>
           <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">{{ pageText('retry_action_export_failed_csv', '导出失败明细') }}</button>
-          <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">{{ pageText('retry_action_copy_retry_request', '复制重试请求') }}</button>
-          <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">{{ pageText('retry_action_export_retry_json', '导出重试配置') }}</button>
+          <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">{{ pageText('retry_action_copy_retry_request', '复制重试内容') }}</button>
+          <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">{{ pageText('retry_action_export_retry_json', '导出重试内容') }}</button>
           <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">{{ pageText('retry_action_focus_in_main_list', '主列表定位失败') }}</button>
           <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">{{ pageText('retry_action_copy_trace', '复制处理编号') }}</button>
           <button class="link-btn secondary-btn" @click="clearRetryFailed">{{ pageText('retry_action_ignore', '忽略') }}</button>
         </div>
       <details v-if="retryRequestParams" class="retry-request-preview">
-        <summary>{{ pageText('retry_request_preview_title', '重试请求预览') }}</summary>
+        <summary>{{ pageText('retry_request_preview_title', '重试内容预览') }}</summary>
         <div class="retry-note-presets">
           <button
             type="button"
@@ -752,7 +752,7 @@ const retryRequestPreviewRows = computed(() => {
   return [
     { label: pageText('retry_preview_scope_label', '重试范围'), value: idText },
     { label: pageText('retry_preview_source_label', '来源'), value: payload.source || pageText('retry_preview_source_default', '待办任务') },
-    { label: pageText('retry_preview_request_label', '请求编号'), value: payload.request_id || pageText('retry_preview_request_auto', '执行时生成') },
+    { label: pageText('retry_preview_request_label', '处理编号'), value: payload.request_id || pageText('retry_preview_request_auto', '执行时生成') },
     { label: pageText('retry_preview_note_label', '备注'), value: payload.note || pageText('retry_preview_note_empty', '未填写') },
   ];
 });
@@ -1579,10 +1579,10 @@ async function copyRetryRequest() {
   if (!payload) return;
   try {
     await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-    actionFeedback.value = pageText('feedback_copy_retry_request_ok', '重试请求已复制');
+    actionFeedback.value = pageText('feedback_copy_retry_request_ok', '重试内容已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = pageText('feedback_copy_retry_request_failed', '复制重试请求失败，请检查浏览器剪贴板权限');
+    actionFeedback.value = pageText('feedback_copy_retry_request_failed', '复制重试内容失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }
@@ -1595,15 +1595,15 @@ function exportRetryRequestJson() {
     const href = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = href;
-    anchor.download = `my-work-retry-request-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.json`;
+    anchor.download = `my-work-retry-content-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.json`;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(href);
-    actionFeedback.value = pageText('feedback_export_retry_json_ok', '重试配置已导出');
+    actionFeedback.value = pageText('feedback_export_retry_json_ok', '重试内容已导出');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = pageText('feedback_export_retry_json_failed', '导出重试配置失败');
+    actionFeedback.value = pageText('feedback_export_retry_json_failed', '导出重试内容失败');
     actionFeedbackError.value = true;
   }
 }

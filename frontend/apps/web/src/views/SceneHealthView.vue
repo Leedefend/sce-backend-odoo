@@ -259,7 +259,7 @@ function runtimeSourceLabel(value: unknown): string {
   if (source === 'contract') return '已发布配置';
   if (source === 'fallback') return '系统补充配置';
   if (source === 'legacy') return '历史数据兼容';
-  if (source === 'dev') return '开发配置';
+  if (source === 'dev') return '调试配置';
   return source.replace(/[_-]+/g, ' ');
 }
 

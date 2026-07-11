@@ -65,7 +65,7 @@
     />
     <StatusPanel
       v-else-if="status === 'idle' && !sceneContractEntryIntent && !handlingEntryGroups.length && !productDeliverySurface.visible && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
-      :title="pageText('status_idle_diag_title', '场景已加载，但没有可渲染目标')"
+      :title="pageText('status_idle_diag_title', '场景已加载，但没有可展示内容')"
       :message="idleDiagnosticMessage"
       variant="info"
     />
@@ -1322,8 +1322,8 @@ async function resolveScene() {
         return;
       }
       setError(
-        new Error(pageText('error_scene_render_target_missing', '缺少场景渲染目标')),
-        pageText('error_scene_render_target_missing', '缺少场景渲染目标'),
+        new Error(pageText('error_scene_render_target_missing', '缺少场景展示内容')),
+        pageText('error_scene_render_target_missing', '缺少场景展示内容'),
         ErrorCodes.SCENE_KIND_UNSUPPORTED,
       );
       errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
@@ -1340,8 +1340,8 @@ async function resolveScene() {
     status.value = 'error';
   } catch (err) {
     setError(
-      err instanceof Error ? err : new Error(pageText('error_scene_resolve_failed', '场景解析失败')),
-      pageText('error_scene_resolve_failed', '场景解析失败'),
+      err instanceof Error ? err : new Error(pageText('error_scene_resolve_failed', '场景打开失败')),
+      pageText('error_scene_resolve_failed', '场景打开失败'),
     );
     errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
     status.value = 'error';
