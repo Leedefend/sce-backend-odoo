@@ -216,6 +216,24 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(doc_text, _make_text())
         self.assertIn("doc missing token: 是否具备交付用户使用的条件", errors)
 
+    def test_doc_must_keep_full_browser_summary_artifact_path(self) -> None:
+        doc_text = _doc_text().replace("artifacts/playwright/system-user-experience-full-browser/summary.json", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn(
+            "doc missing token: artifacts/playwright/system-user-experience-full-browser/summary.json",
+            errors,
+        )
+
+    def test_doc_must_keep_business_readiness_artifact_path(self) -> None:
+        doc_text = _doc_text().replace("artifacts/backend/business_system_usability_readiness.json", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: artifacts/backend/business_system_usability_readiness.json", errors)
+
+    def test_doc_must_keep_production_record_directory_path(self) -> None:
+        doc_text = _doc_text().replace("docs/ops/releases/current/", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: docs/ops/releases/current/", errors)
+
     def test_topic_guard_must_forbid_production_write_context(self) -> None:
         make_text = _make_text().replace(
             "verify.productization.system_closure.topic_guard: guard.prod.forbid",

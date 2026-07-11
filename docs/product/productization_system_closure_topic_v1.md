@@ -111,6 +111,20 @@ make verify.legacy_attachment.frontend_browser.sample_manifest.prod
 make verify.attachment_upload.surface_manifest.prod
 ```
 
+## 结构化证据路径
+
+最终收口报告必须引用以下结构化证据，不允许只给口头结论：
+
+- 用户体验全浏览器汇总：`artifacts/playwright/system-user-experience-full-browser/summary.json`
+- 配置工作台操作验收：`artifacts/playwright/config-workbench-operation/summary.json`
+- 业务表单用户视角验收：`artifacts/playwright/business-form-user-perspective/summary.json`
+- 非表单壳层路径验收：`artifacts/playwright/system-user-experience-shell/summary.json`
+- 业务系统可用性 readiness：`artifacts/backend/business_system_usability_readiness.json`
+- 完整办理能力口径：`artifacts/product/full_product_capability_scope_v1.json`
+- 正式办理能力矩阵：`artifacts/product/formal_business_operation_capability_matrix_v1.json`
+- 正式办理核心流程 smoke：`artifacts/product/formal_business_operation_core_flow_smoke_v1.json`
+- 生产部署记录：`docs/ops/releases/current/`
+
 ## 收口结论格式
 
 最终结论必须同时给出：
