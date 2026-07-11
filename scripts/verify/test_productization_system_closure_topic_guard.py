@@ -23,7 +23,13 @@ class _FakePath:
 
 
 def _doc_text() -> str:
-    return "\n".join(guard.REQUIRED_DOC_TOKENS)
+    return "\n".join(
+        [
+            *guard.REQUIRED_DOC_TOKENS,
+            *guard.REQUIRED_EVIDENCE_ARTIFACT_PATHS,
+            *guard.REQUIRED_CLOSEOUT_FIELDS,
+        ]
+    )
 
 
 def _target(name: str, deps: list[str], body: list[str] | None = None) -> str:
@@ -165,6 +171,8 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
 
         payload = print_mock.call_args.args[0]
         self.assertIn('"required_target_body_order_tokens": 3', payload)
+        self.assertIn('"required_evidence_artifact_paths": 9', payload)
+        self.assertIn('"required_closeout_fields": 6', payload)
 
     def test_doc_must_keep_frontend_backend_contract_boundary(self) -> None:
         doc_text = _doc_text().replace("前端只消费后端契约", "")

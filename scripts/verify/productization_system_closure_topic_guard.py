@@ -45,6 +45,9 @@ REQUIRED_DOC_TOKENS = [
     "make verify.legacy_online_attachment.custody.evidence.prod",
     "make verify.legacy_attachment.frontend_browser.sample_manifest.prod",
     "make verify.attachment_upload.surface_manifest.prod",
+]
+
+REQUIRED_EVIDENCE_ARTIFACT_PATHS = [
     "artifacts/playwright/system-user-experience-full-browser/summary.json",
     "artifacts/playwright/config-workbench-operation/summary.json",
     "artifacts/playwright/business-form-user-perspective/summary.json",
@@ -54,6 +57,9 @@ REQUIRED_DOC_TOKENS = [
     "artifacts/product/formal_business_operation_capability_matrix_v1.json",
     "artifacts/product/formal_business_operation_core_flow_smoke_v1.json",
     "docs/ops/releases/current/",
+]
+
+REQUIRED_CLOSEOUT_FIELDS = [
     "分支、提交、部署环境和版本",
     "覆盖的用户角色、页面类型、业务任务和低代码任务",
     "浏览器验收结果与结构化报告路径",
@@ -341,7 +347,7 @@ def validate(doc_text: str, make_text: str) -> list[str]:
     if not make_text:
         errors.append("missing Makefile")
 
-    for token in REQUIRED_DOC_TOKENS:
+    for token in REQUIRED_DOC_TOKENS + REQUIRED_EVIDENCE_ARTIFACT_PATHS + REQUIRED_CLOSEOUT_FIELDS:
         if token not in doc_text:
             errors.append(f"doc missing token: {token}")
 
@@ -398,6 +404,8 @@ def main() -> int:
         "doc": str(DOC.relative_to(ROOT)),
         "errors": errors,
         "required_doc_tokens": len(REQUIRED_DOC_TOKENS),
+        "required_evidence_artifact_paths": len(REQUIRED_EVIDENCE_ARTIFACT_PATHS),
+        "required_closeout_fields": len(REQUIRED_CLOSEOUT_FIELDS),
         "required_make_targets": len(REQUIRED_MAKE_TARGETS),
         "required_quick_dependencies": len(REQUIRED_QUICK_DEPS),
         "required_target_dependencies": sum(len(deps) for deps in REQUIRED_TARGET_DEPS.values()),
