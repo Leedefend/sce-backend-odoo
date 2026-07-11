@@ -420,7 +420,7 @@ def _doc_declared_make_targets() -> list[str]:
     targets: list[str] = []
     for token in REQUIRED_DOC_TOKENS:
         if token.startswith("make "):
-            targets.append(token.removeprefix("make ").strip())
+            targets.append(" ".join(token.removeprefix("make ").split()))
     return targets
 
 
@@ -461,6 +461,8 @@ def validate(doc_text: str, make_text: str) -> list[str]:
             errors.append(f"doc declared make target not guarded as required Makefile target: {target}")
 
     doc_declared_make_targets = _doc_declared_make_targets()
+    for target in _duplicate_tokens(doc_declared_make_targets):
+        errors.append(f"doc declared make target duplicated: {target}")
     for target in _duplicate_tokens(REQUIRED_DOC_DECLARED_MAKE_TARGETS):
         errors.append(f"required doc-declared make target duplicated: {target}")
     for target in REQUIRED_DOC_DECLARED_MAKE_TARGETS:

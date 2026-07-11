@@ -216,6 +216,16 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
             errors,
         )
 
+    def test_doc_declared_make_target_duplicate_normalizes_spacing(self) -> None:
+        doc_tokens = [*guard.REQUIRED_DOC_TOKENS, "make   verify.system_user_experience.quick"]
+        with mock.patch.object(guard, "REQUIRED_DOC_TOKENS", doc_tokens), mock.patch.dict(
+            guard.REQUIRED_DOC_TOKEN_GROUPS,
+            {"doc": doc_tokens},
+        ):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn("doc declared make target duplicated: verify.system_user_experience.quick", errors)
+
     def test_required_doc_declared_make_target_duplicate_fails(self) -> None:
         duplicated_targets = [
             *guard.REQUIRED_DOC_DECLARED_MAKE_TARGETS,
