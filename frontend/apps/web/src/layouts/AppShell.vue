@@ -907,6 +907,16 @@ const businessConfigFormTitle = computed(() => {
   return pageLabel ? `配置：${pageLabel}` : '表单配置';
 });
 
+const activeRecordFormActivityTitle = computed(() => {
+  if (route.name !== 'record' && route.name !== 'model-form') return '';
+  const activeKey = asText(session.activeActivityPageKey);
+  if (!activeKey) return '';
+  const page = session.activityPages.find((item) => item.key === activeKey && item.kind === 'record_form');
+  const title = asText(page?.title);
+  if (!title || title === '活动页面' || title === '新建业务表单') return '';
+  return title;
+});
+
 const pageTitle = computed(() => {
   if (businessConfigFormTitle.value) {
     return businessConfigFormTitle.value;
@@ -916,6 +926,9 @@ const pageTitle = computed(() => {
   }
   if (routeBusinessCategoryLabel.value) {
     return routeBusinessCategoryLabel.value;
+  }
+  if (activeRecordFormActivityTitle.value) {
+    return activeRecordFormActivityTitle.value;
   }
   const sceneKey = routeSceneKey.value;
   if (sceneKey) {
@@ -1350,8 +1363,10 @@ const breadcrumb = computed(() => {
     const label = routeBusinessCategoryLabel.value || session.currentAction?.name || `动作 ${route.params.actionId ?? ''}`.trim();
     crumbs.push({ label });
   }
-  if (route.name === 'record') {
-    const recordLabel = routeBusinessCategoryLabel.value || `记录 ${route.params.id ?? ''}`.trim();
+  if (route.name === 'record' || route.name === 'model-form') {
+    const recordLabel = routeBusinessCategoryLabel.value
+      || activeRecordFormActivityTitle.value
+      || `记录 ${route.params.id ?? ''}`.trim();
     crumbs.push({ label: recordLabel });
   }
   if (!crumbs.length) {
