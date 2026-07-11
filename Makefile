@@ -1007,7 +1007,8 @@ verify.business_system.usability_readiness.prod: guard.prod.readonly check-compo
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" BUSINESS_SYSTEM_READINESS_PROD_READONLY=1 BUSINESS_SYSTEM_READINESS_INCLUDE_P1=0 BUSINESS_SYSTEM_READINESS_ARTIFACT_DIR="$(BUSINESS_SYSTEM_READINESS_ARTIFACT_DIR)" bash scripts/ops/validate_business_system_usability_readiness.sh
 
 verify.productization.system_closure.topic_guard: guard.prod.forbid
-	@python3 -m py_compile scripts/verify/productization_system_closure_topic_guard.py
+	@python3 -m py_compile scripts/verify/productization_system_closure_topic_guard.py scripts/verify/test_productization_system_closure_topic_guard.py
+	@cd scripts/verify && python3 test_productization_system_closure_topic_guard.py
 	@python3 scripts/verify/productization_system_closure_topic_guard.py
 
 verify.system_user_experience.coverage_guard: guard.prod.forbid

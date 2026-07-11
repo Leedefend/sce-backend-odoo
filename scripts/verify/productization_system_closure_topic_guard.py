@@ -151,10 +151,8 @@ def _target_body(text: str, target: str) -> str:
     return match.group("body") if match else ""
 
 
-def main() -> int:
+def validate(doc_text: str, make_text: str) -> list[str]:
     errors: list[str] = []
-    doc_text = DOC.read_text(encoding="utf-8") if DOC.is_file() else ""
-    make_text = MAKEFILE.read_text(encoding="utf-8") if MAKEFILE.is_file() else ""
 
     if not doc_text:
         errors.append(f"missing doc: {DOC.relative_to(ROOT)}")
@@ -195,6 +193,14 @@ def main() -> int:
     topic_line = _target_line(make_text, "verify.productization.system_closure.topic_guard")
     if topic_line and "guard.prod.forbid" not in topic_line:
         errors.append("topic guard must use guard.prod.forbid")
+
+    return errors
+
+
+def main() -> int:
+    doc_text = DOC.read_text(encoding="utf-8") if DOC.is_file() else ""
+    make_text = MAKEFILE.read_text(encoding="utf-8") if MAKEFILE.is_file() else ""
+    errors = validate(doc_text, make_text)
 
     result = {
         "guard": "productization_system_closure_topic_guard",
