@@ -81,6 +81,13 @@ BUSINESS_OPERATION_TECHNICAL_FIELDS = {
     "write_date",
     "__last_update",
 }
+BUSINESS_OPERATION_TECHNICAL_AUDIT_FIELDS = {
+    "create_uid",
+    "create_date",
+    "write_uid",
+    "write_date",
+    "__last_update",
+}
 BUSINESS_FORM_STRUCTURE_ALLOWED_LEGACY_FIELDS = {
     "legacy_document_no",
     "legacy_contract_no",
@@ -414,6 +421,31 @@ class UiContractV2Handler(BaseIntentHandler):
             contract["actionContract"] = action_contract
         if isinstance(source_contract.get("list_profile"), dict):
             list_profile = deepcopy(source_contract.get("list_profile") or {})
+            columns = self._user_visible_list_columns(list_profile.get("columns") if isinstance(list_profile.get("columns"), list) else [])
+            fact_columns = self._user_visible_list_columns(list_profile.get("fact_columns") if isinstance(list_profile.get("fact_columns"), list) else [])
+            if columns:
+                list_profile["columns"] = columns
+            if fact_columns:
+                list_profile["fact_columns"] = fact_columns
+            list_profile["hidden_columns"] = [
+                name
+                for name in self._user_visible_list_columns(list_profile.get("hidden_columns") if isinstance(list_profile.get("hidden_columns"), list) else [])
+                if not columns or name in columns
+            ]
+            column_labels = list_profile.get("column_labels") if isinstance(list_profile.get("column_labels"), dict) else {}
+            if column_labels:
+                list_profile["column_labels"] = {
+                    str(name or "").strip(): label
+                    for name, label in column_labels.items()
+                    if str(name or "").strip() and str(name or "").strip() not in BUSINESS_OPERATION_TECHNICAL_AUDIT_FIELDS
+                }
+            preference_policy = list_profile.get("preference_policy") if isinstance(list_profile.get("preference_policy"), dict) else {}
+            if preference_policy:
+                preference_policy = deepcopy(preference_policy)
+                for key in ("locked_columns", "must_request_columns"):
+                    if isinstance(preference_policy.get(key), list):
+                        preference_policy[key] = self._user_visible_list_columns(preference_policy.get(key) or [])
+                list_profile["preference_policy"] = preference_policy
             layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
             layout_contract["listProfile"] = self._v2_policy_projection(
                 list_profile,
@@ -508,6 +540,87 @@ class UiContractV2Handler(BaseIntentHandler):
         if not preferred:
             return columns
         return [*preferred, *[name for name in columns if name not in preferred]]
+
+    def _user_visible_list_columns(self, columns: list[Any]) -> list[str]:
+        out: list[str] = []
+        seen: set[str] = set()
+        for raw in columns:
+            name = str(raw or "").strip()
+            if not name or name in BUSINESS_OPERATION_TECHNICAL_AUDIT_FIELDS or name in seen:
+                continue
+            seen.add(name)
+            out.append(name)
+        return out
+
+    def _apply_list_profile_layout(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
+        if not isinstance(contract_v2, dict) or not isinstance(source_contract, dict):
+            return
+        page_info = contract_v2.get("pageInfo") if isinstance(contract_v2.get("pageInfo"), dict) else {}
+        view_type = str(
+            contract_v2.get("viewType")
+            or page_info.get("viewType")
+            or source_contract.get("view_type")
+            or ""
+        ).strip().lower()
+        if view_type not in {"tree", "list"}:
+            return
+        profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
+        columns = self._user_visible_list_columns(profile.get("columns") if isinstance(profile.get("columns"), list) else [])
+        if not columns:
+            return
+        labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
+        field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
+
+        def widget_for(name: str) -> dict[str, Any]:
+            field = field_map.get(name) if isinstance(field_map.get(name), dict) else {}
+            field_type = str(field.get("type") or field.get("ttype") or "char").strip() or "char"
+            label = str(labels.get(name) or field.get("string") or field.get("label") or name).strip()
+            return {
+                "widgetId": f"field.{name}",
+                "widgetType": "table",
+                "fieldCode": name,
+                "label": label,
+                "span": 12,
+                "componentKey": "sc.table.data",
+                "capabilities": ["sortable", "filterable"],
+                "componentConfig": {
+                    "readonly": True,
+                    "required": False,
+                    "fieldType": field_type,
+                },
+            }
+
+        widgets = [widget_for(name) for name in columns]
+        layout = contract_v2.get("layoutContract") if isinstance(contract_v2.get("layoutContract"), dict) else {}
+        containers = layout.get("containerTree") if isinstance(layout.get("containerTree"), list) else []
+        if not containers:
+            return
+
+        def apply_to_first_table_container(rows: list[Any]) -> bool:
+            for node in rows:
+                if not isinstance(node, dict):
+                    continue
+                if isinstance(node.get("widgetList"), list):
+                    node["widgetList"] = deepcopy(widgets)
+                    node["children"] = []
+                    return True
+                for key in ("children", "pages", "tabs", "nodes", "items"):
+                    children = node.get(key)
+                    if isinstance(children, list) and apply_to_first_table_container(children):
+                        return True
+            return False
+
+        changed = apply_to_first_table_container(containers)
+        if not changed and isinstance(containers[0], dict):
+            containers[0]["widgetList"] = deepcopy(widgets)
+            containers[0]["children"] = []
+            changed = True
+        if changed:
+            layout["componentRegistry"] = {
+                **(layout.get("componentRegistry") if isinstance(layout.get("componentRegistry"), dict) else {}),
+                "sc.table.data": {"componentKey": "sc.table.data"},
+            }
+            self._set_v2_data_meta(contract_v2, {"fieldCount": len(columns)})
 
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         params = self._params(payload)
@@ -708,6 +821,7 @@ class UiContractV2Handler(BaseIntentHandler):
         )
         self._apply_business_config_form_groups_to_v2(contract_v2, source_contract=source_contract)
         self._enforce_business_list_config_projection(contract_v2, source_contract)
+        self._apply_list_profile_layout(contract_v2, source_contract)
         contract_v2 = trim_unified_page_contract_v2(
             contract_v2,
             client_type=client_type,
@@ -2857,7 +2971,14 @@ class UiContractV2Handler(BaseIntentHandler):
         if not columns:
             return
 
+        columns = self._user_visible_list_columns(columns)
+        if not columns:
+            return
+
         columns = self._merge_user_list_preference_columns(source_contract, columns)
+        columns = self._user_visible_list_columns(columns)
+        if not columns:
+            return
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
         view_column_labels = {}
         for row in [*raw_columns, *tree_schema_rows]:

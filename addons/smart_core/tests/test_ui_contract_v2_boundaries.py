@@ -666,6 +666,122 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             ["contract_name", "contract_no", "amount_total"],
         )
 
+    def test_business_list_profile_filters_native_audit_columns(self):
+        handler = self.module.UiContractV2Handler(env={})
+        handler._merge_user_list_preference_columns = lambda source_contract, columns: [*columns, "create_uid", "create_date"]
+        source_contract = {
+            "action_id": 701,
+            "model": "sc.construction.diary",
+            "views": {
+                "tree": {
+                    "columns": [
+                        {"name": "document_no"},
+                        {"name": "create_uid"},
+                        {"name": "create_date"},
+                        {"name": "entry_user_text"},
+                        {"name": "entry_time"},
+                    ],
+                }
+            },
+            "list_profile": {},
+        }
+
+        handler._merge_business_list_profile(
+            source_contract,
+            common_fields=["document_no", "create_uid", "create_date", "entry_user_text", "entry_time"],
+            amount_fields=[],
+            note_field="",
+            status_field="",
+            label_for=lambda name: {"create_uid": "Created by", "create_date": "Created on"}.get(name, name),
+            type_for=lambda name: "char",
+        )
+
+        columns = source_contract["list_profile"]["columns"]
+        self.assertNotIn("create_uid", columns)
+        self.assertNotIn("create_date", columns)
+        self.assertIn("entry_user_text", columns)
+        self.assertIn("entry_time", columns)
+
+    def test_list_profile_layout_overrides_mixed_audit_widgets(self):
+        handler = self.module.UiContractV2Handler(env={})
+        contract = {
+            "pageInfo": {"viewType": "list"},
+            "layoutContract": {
+                "containerTree": [
+                    {
+                        "type": "section",
+                        "name": "main.table",
+                        "widgetList": [
+                            {"fieldCode": "name", "label": "单号"},
+                            {"fieldCode": "create_uid", "label": "Created by"},
+                            {"fieldCode": "create_date", "label": "Created on"},
+                        ],
+                        "children": [{"type": "field", "name": "create_uid"}],
+                    }
+                ]
+            },
+        }
+        source_contract = {
+            "view_type": "tree",
+            "fields": {
+                "legacy_visible_01": {"type": "char", "string": "单据状态"},
+                "name": {"type": "char", "string": "单号"},
+                "source_created_by": {"type": "char", "string": "录入人"},
+                "create_uid": {"type": "many2one", "string": "Created by"},
+                "create_date": {"type": "datetime", "string": "Created on"},
+            },
+            "list_profile": {
+                "columns": ["legacy_visible_01", "name", "source_created_by", "create_uid", "create_date"],
+                "column_labels": {
+                    "legacy_visible_01": "单据状态",
+                    "name": "单号",
+                    "source_created_by": "录入人",
+                },
+            },
+        }
+
+        handler._apply_list_profile_layout(contract, source_contract)
+
+        widgets = contract["layoutContract"]["containerTree"][0]["widgetList"]
+        self.assertEqual(
+            [widget["fieldCode"] for widget in widgets],
+            ["legacy_visible_01", "name", "source_created_by"],
+        )
+        self.assertEqual([widget["label"] for widget in widgets], ["单据状态", "单号", "录入人"])
+        self.assertEqual(contract["dataContract"]["dataMeta"]["fieldCount"], 3)
+
+    def test_v2_list_profile_projection_filters_native_audit_columns(self):
+        handler = self.module.UiContractV2Handler(env={})
+        contract = {"layoutContract": {}}
+        source_contract = {
+            "list_profile": {
+                "columns": ["name", "create_uid", "create_date", "source_created_by"],
+                "fact_columns": ["name", "create_uid", "source_created_by"],
+                "hidden_columns": ["create_uid", "source_created_by"],
+                "column_labels": {
+                    "name": "单号",
+                    "create_uid": "Created by",
+                    "create_date": "Created on",
+                    "source_created_by": "录入人",
+                },
+                "preference_policy": {
+                    "must_request_columns": ["name", "create_uid", "source_created_by"],
+                    "locked_columns": ["create_date"],
+                },
+            }
+        }
+
+        handler._project_v2_source_policies(contract, source_contract)
+
+        profile = contract["layoutContract"]["listProfile"]
+        self.assertEqual(profile["columns"], ["name", "source_created_by"])
+        self.assertEqual(profile["fact_columns"], ["name", "source_created_by"])
+        self.assertEqual(profile["hidden_columns"], ["source_created_by"])
+        self.assertNotIn("create_uid", profile["column_labels"])
+        self.assertNotIn("create_date", profile["column_labels"])
+        self.assertEqual(profile["preference_policy"]["must_request_columns"], ["name", "source_created_by"])
+        self.assertEqual(profile["preference_policy"]["locked_columns"], [])
+
     def test_business_list_profile_does_not_extend_direct_config_with_existing_profile(self):
         class _Config:
             contract_json = {
