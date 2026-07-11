@@ -2449,6 +2449,8 @@ onMounted(async () => {
 .menu-config-page {
   display: grid;
   gap: 10px;
+  width: min(100%, 1440px);
+  margin: 0 auto;
   min-height: calc(100vh - 96px);
 }
 
@@ -2477,7 +2479,10 @@ h1 {
 .header-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
+  min-width: 0;
 }
 
 .dirty-count {
@@ -2788,7 +2793,7 @@ h1 {
 
 .menu-config-workspace {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 280px minmax(0, 1fr);
   min-height: 0;
   gap: var(--sc-product-workspace-gap);
   padding: 0 0 18px;
@@ -3041,7 +3046,7 @@ h1 {
 .menu-config-editor {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   align-items: start;
   gap: var(--sc-product-workspace-gap);
@@ -3067,7 +3072,7 @@ h1 {
 }
 
 .menu-primary-panel {
-  min-height: 360px;
+  min-height: 300px;
 }
 
 .menu-selected-panel--empty {
@@ -3244,29 +3249,27 @@ h1 {
 
 .menu-role-check-list {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  height: 118px;
-  max-height: 118px;
+  max-height: 148px;
   align-content: start;
 }
 
 .menu-side-panel {
   display: grid;
-  gap: 0;
+  grid-template-columns: minmax(150px, 0.75fr) repeat(4, minmax(150px, 1fr));
+  gap: 12px;
   align-self: start;
   min-width: 0;
   border: 1px solid var(--sc-app-border);
-  border-left: 0;
-  border-radius: 0 8px 8px 0;
+  border-radius: 8px;
   padding: 12px;
-  background: var(--sc-app-panel);
-  box-shadow: var(--sc-app-shadow);
+  background: var(--sc-app-muted-bg);
 }
 
 .menu-side-panel-head {
   display: grid;
   gap: 4px;
   min-width: 0;
-  padding-bottom: 10px;
+  align-content: start;
 }
 
 .menu-side-panel-head strong {
@@ -3281,8 +3284,10 @@ h1 {
   display: grid;
   gap: 8px;
   min-width: 0;
-  padding: 12px 0;
-  border-top: 1px solid var(--sc-app-border);
+  align-content: start;
+  padding: 0 0 0 12px;
+  border-top: 0;
+  border-left: 1px solid var(--sc-app-border);
 }
 
 .action-hint {
@@ -3305,6 +3310,7 @@ h1 {
 .menu-side-action-group .ghost {
   width: 100%;
   justify-content: center;
+  padding-inline: 10px;
 }
 
 .menu-utility-section {
@@ -3332,6 +3338,7 @@ h1 {
 
 .menu-bulk-panel {
   grid-column: 1 / -1;
+  background: var(--sc-app-muted-bg);
 }
 
 .table-toolbar {
@@ -3394,7 +3401,7 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 12px;
+  padding: 12px;
   color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
@@ -3666,7 +3673,15 @@ tr.dirty td:first-child {
   }
 
   .menu-side-panel {
+    grid-template-columns: 1fr;
     position: static;
+    background: var(--sc-app-panel);
+  }
+
+  .menu-side-section {
+    padding: 12px 0 0;
+    border-top: 1px solid var(--sc-app-border);
+    border-left: 0;
   }
 
   .menu-config-tree {
