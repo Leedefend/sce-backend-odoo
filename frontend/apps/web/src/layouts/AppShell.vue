@@ -1180,8 +1180,8 @@ const hudActions = computed(() => [
     },
   },
   { key: 'export-sa-all', label: '导出全部处理建议', onClick: () => exportSuggestedActionJson() },
-  { key: 'export-sa-ok', label: '导出成功动作', onClick: () => exportSuggestedActionJson({ success: true }, 'ok') },
-  { key: 'export-sa-fail', label: '导出失败动作', onClick: () => exportSuggestedActionJson({ success: false }, 'fail') },
+  { key: 'export-sa-ok', label: '导出成功处理建议', onClick: () => exportSuggestedActionJson({ success: true }, 'ok') },
+  { key: 'export-sa-fail', label: '导出失败处理建议', onClick: () => exportSuggestedActionJson({ success: false }, 'fail') },
   { key: 'export-sa-1h', label: '导出近 1 小时', onClick: () => exportSuggestedActionJson({ since_ts: sinceTsFromHours(1) }, '1h') },
   { key: 'export-sa-24h', label: '导出近 24 小时', onClick: () => exportSuggestedActionJson({ since_ts: sinceTsFromHours(24) }, '24h') },
   ...resolveKindExportActions(),
@@ -1190,9 +1190,9 @@ const hudActions = computed(() => [
 function resolveKindExportActions() {
   const rankedKinds = rankSuggestedActionKinds(3).map((item) => item.kind);
   const chosenKinds = [...new Set([...rankedKinds, ...defaultKindActions])].slice(0, 3);
-  return chosenKinds.map((kind) => ({
+  return chosenKinds.map((kind, index) => ({
     key: `export-sa-kind-${kind}`,
-    label: `导出动作类型 ${kind}`,
+    label: `导出处理建议类型 ${index + 1}`,
     onClick: () => exportSuggestedActionJson({ kind }, `kind-${kind}`),
   }));
 }
