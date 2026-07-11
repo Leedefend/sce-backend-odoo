@@ -174,6 +174,8 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         self.assertIn('"required_doc_token_groups": 3', payload)
         self.assertIn('"required_evidence_artifact_paths": 9', payload)
         self.assertIn('"required_closeout_fields": 6', payload)
+        self.assertIn('"required_prod_readonly_targets": 8', payload)
+        self.assertIn('"required_prod_forbid_targets": 9', payload)
 
     def test_duplicate_doc_token_fails(self) -> None:
         duplicated_tokens = [*guard.REQUIRED_DOC_TOKENS, "用户体验"]
@@ -325,6 +327,24 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
             "verify.business_system.usability_readiness.prod missing command token: BUSINESS_SYSTEM_READINESS_PROD_READONLY=1",
             errors,
         )
+
+    def test_prod_target_must_not_use_forbid_guard(self) -> None:
+        make_text = _make_text().replace(
+            "verify.business_system.usability_readiness.prod: guard.prod.readonly",
+            "verify.business_system.usability_readiness.prod: guard.prod.forbid",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("verify.business_system.usability_readiness.prod must use guard.prod.readonly", errors)
+        self.assertIn("verify.business_system.usability_readiness.prod must not use guard.prod.forbid", errors)
+
+    def test_nonprod_release_gate_must_not_use_readonly_guard(self) -> None:
+        make_text = _make_text().replace(
+            "verify.formal_business.release_gate: guard.prod.forbid",
+            "verify.formal_business.release_gate: guard.prod.readonly",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("verify.formal_business.release_gate must use guard.prod.forbid", errors)
+        self.assertIn("verify.formal_business.release_gate must not use guard.prod.readonly", errors)
 
     def test_full_browser_gate_must_keep_config_workbench_acceptance(self) -> None:
         make_text = _make_text().replace(" verify.business_config.config_workbench_operation_acceptance", "")

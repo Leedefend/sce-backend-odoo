@@ -97,6 +97,29 @@ REQUIRED_MAKE_TARGETS = [
     "verify.frontend.product_language.guard",
 ]
 
+REQUIRED_PROD_READONLY_TARGETS = [
+    "verify.business_system.usability_readiness.prod",
+    "verify.project_context.selector_product_boundary.guard.prod",
+    "verify.formal_menu.runtime_no_legacy_carrier_guard.prod",
+    "verify.formal_list_surface.no_test_placeholder_guard.prod",
+    "history.attachment.custody.probe.prod",
+    "verify.legacy_online_attachment.custody.evidence.prod",
+    "verify.legacy_attachment.frontend_browser.sample_manifest.prod",
+    "verify.attachment_upload.surface_manifest.prod",
+]
+
+REQUIRED_PROD_FORBID_TARGETS = [
+    "verify.productization.system_closure.topic_guard",
+    "verify.system_user_experience.quick",
+    "verify.system_user_experience.visible_surface_visual_coverage",
+    "verify.system_user_experience.full_browser",
+    "verify.business_config.unit",
+    "verify.business_config.config_workbench_operation_quick",
+    "verify.formal_business.release_gate",
+    "verify.business_capability.productization_p1",
+    "verify.business_system.usability_readiness",
+]
+
 REQUIRED_QUICK_DEPS = [
     "verify.productization.system_closure.topic_guard",
     "verify.system_user_experience.coverage_guard",
@@ -398,6 +421,20 @@ def validate(doc_text: str, make_text: str) -> list[str]:
             if dep not in actual_deps:
                 errors.append(f"{target} missing dependency: {dep}")
 
+    for target in REQUIRED_PROD_READONLY_TARGETS:
+        actual_deps = _target_deps(make_text, target)
+        if "guard.prod.readonly" not in actual_deps:
+            errors.append(f"{target} must use guard.prod.readonly")
+        if "guard.prod.forbid" in actual_deps:
+            errors.append(f"{target} must not use guard.prod.forbid")
+
+    for target in REQUIRED_PROD_FORBID_TARGETS:
+        actual_deps = _target_deps(make_text, target)
+        if "guard.prod.forbid" not in actual_deps:
+            errors.append(f"{target} must use guard.prod.forbid")
+        if "guard.prod.readonly" in actual_deps:
+            errors.append(f"{target} must not use guard.prod.readonly")
+
     for target, tokens in REQUIRED_TARGET_BODY_TOKENS.items():
         target_body = _target_body(make_text, target)
         if not target_body:
@@ -434,6 +471,8 @@ def main() -> int:
         "required_evidence_artifact_paths": len(REQUIRED_EVIDENCE_ARTIFACT_PATHS),
         "required_closeout_fields": len(REQUIRED_CLOSEOUT_FIELDS),
         "required_make_targets": len(REQUIRED_MAKE_TARGETS),
+        "required_prod_readonly_targets": len(REQUIRED_PROD_READONLY_TARGETS),
+        "required_prod_forbid_targets": len(REQUIRED_PROD_FORBID_TARGETS),
         "required_quick_dependencies": len(REQUIRED_QUICK_DEPS),
         "required_target_dependencies": sum(len(deps) for deps in REQUIRED_TARGET_DEPS.values()),
         "required_target_body_tokens": sum(len(tokens) for tokens in REQUIRED_TARGET_BODY_TOKENS.values()),
