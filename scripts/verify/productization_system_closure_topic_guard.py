@@ -437,6 +437,10 @@ def validate(doc_text: str, make_text: str) -> list[str]:
             errors.append(f"Makefile duplicate target: {target}")
 
     quick_deps = _target_deps(make_text, "verify.system_user_experience.quick")
+    for dep in _duplicate_tokens(REQUIRED_QUICK_DEPS):
+        errors.append(f"quick gate required dependency duplicated: {dep}")
+    for dep in _duplicate_tokens(quick_deps):
+        errors.append(f"quick gate Makefile dependency duplicated: {dep}")
     for dep in REQUIRED_QUICK_DEPS:
         if dep not in quick_deps:
             errors.append(f"quick gate missing dependency: {dep}")
@@ -447,6 +451,10 @@ def validate(doc_text: str, make_text: str) -> list[str]:
             errors.append(f"Makefile missing target: {target}")
             continue
         actual_deps = _target_deps(make_text, target)
+        for dep in _duplicate_tokens(deps):
+            errors.append(f"{target} required dependency duplicated: {dep}")
+        for dep in _duplicate_tokens(actual_deps):
+            errors.append(f"{target} Makefile dependency duplicated: {dep}")
         for dep in deps:
             if dep not in actual_deps:
                 errors.append(f"{target} missing dependency: {dep}")

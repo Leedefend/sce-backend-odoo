@@ -338,6 +338,48 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn("quick gate missing dependency: verify.formal_list_surface.no_test_placeholder_guard", errors)
 
+    def test_duplicate_quick_required_dependency_fails(self) -> None:
+        duplicated_deps = [*guard.REQUIRED_QUICK_DEPS, "verify.product.page_structure"]
+        with mock.patch.object(guard, "REQUIRED_QUICK_DEPS", duplicated_deps):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn("quick gate required dependency duplicated: verify.product.page_structure", errors)
+
+    def test_duplicate_quick_makefile_dependency_fails(self) -> None:
+        make_text = _make_text().replace(
+            "verify.product.page_structure",
+            "verify.product.page_structure verify.product.page_structure",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("quick gate Makefile dependency duplicated: verify.product.page_structure", errors)
+
+    def test_duplicate_required_target_dependency_fails(self) -> None:
+        duplicated_target_deps = {
+            **guard.REQUIRED_TARGET_DEPS,
+            "verify.business_config.full_acceptance": [
+                *guard.REQUIRED_TARGET_DEPS["verify.business_config.full_acceptance"],
+                "verify.user_menu.reachability.guard",
+            ],
+        }
+        with mock.patch.object(guard, "REQUIRED_TARGET_DEPS", duplicated_target_deps):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn(
+            "verify.business_config.full_acceptance required dependency duplicated: verify.user_menu.reachability.guard",
+            errors,
+        )
+
+    def test_duplicate_target_makefile_dependency_fails(self) -> None:
+        make_text = _make_text().replace(
+            "verify.user_menu.reachability.guard",
+            "verify.user_menu.reachability.guard verify.user_menu.reachability.guard",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.business_config.full_acceptance Makefile dependency duplicated: verify.user_menu.reachability.guard",
+            errors,
+        )
+
     def test_prod_readiness_must_keep_readonly_parameters(self) -> None:
         make_text = _make_text().replace("BUSINESS_SYSTEM_READINESS_PROD_READONLY=1", "")
         errors = guard.validate(_doc_text(), make_text)
