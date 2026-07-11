@@ -809,7 +809,7 @@ function workItemSourceLabel(source: unknown) {
     'project.task': '项目任务',
     'project.project': '项目主数据',
     business: '业务事项',
-    capability_fallback: '系统补充',
+    capability_fallback: '系统补充事项',
   };
   return mapping[raw] || mapping[raw.toLowerCase()] || raw || '业务事项';
 }

@@ -304,7 +304,7 @@ const governanceReasonsLabel = computed(() => {
   const resolveCodes = Array.isArray(row.resolve_error_codes)
     ? row.resolve_error_codes.map((item) => String(item || '')).filter(Boolean)
     : [];
-  return `自动调整：${autoCodes.length}；解析异常：${resolveCodes.length}`;
+  return `自动调整：${autoCodes.length}；配置问题：${resolveCodes.length}`;
 });
 
 const governanceConsumptionLabel = computed(() => {

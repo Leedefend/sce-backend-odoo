@@ -1088,7 +1088,7 @@ const sceneGovernanceReasonsSummary = computed(() => {
   const issueCount = Array.isArray(reasons.resolve_error_codes)
     ? reasons.resolve_error_codes.map((item) => String(item || '')).filter(Boolean).length
     : 0;
-  return `自动调整：${adjustmentCount}；解析异常：${issueCount}`;
+  return `自动调整：${adjustmentCount}；配置问题：${issueCount}`;
 });
 
 const sceneGovernanceQualitySummary = computed(() => {

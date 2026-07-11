@@ -115,7 +115,7 @@ function sourceLabel(value: unknown) {
     'mail.followers': '关注动态',
     'project.task': '项目任务',
     'project.project': '项目主数据',
-    capability_fallback: '系统补充',
+    capability_fallback: '系统补充事项',
   };
   return mapping[raw] || mapping[raw.toLowerCase()] || raw || '业务事项';
 }

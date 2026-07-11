@@ -59,7 +59,7 @@
           验收视图：{{ roleLabel }} · 默认入口：{{ roleLandingLabel || '未配置' }}
         </p>
         <p v-if="isHudEnabled" class="hud-line">
-          入口统计：内部入口 {{ internalTileCount }} 项 · 当前显示全部
+          入口统计：补充入口 {{ internalTileCount }} 项 · 当前显示全部
         </p>
         <p v-if="isHudEnabled" class="hud-line">
           编排状态：{{ orchestrationBlocks.length }} 个区块 · 角色版本：{{ roleVariantCode || '默认' }}

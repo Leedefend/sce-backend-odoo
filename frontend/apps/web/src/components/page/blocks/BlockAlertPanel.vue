@@ -102,7 +102,7 @@ function sourceLabel(value: unknown) {
     'project.budget': '预算管理',
     'project.cost.ledger': '成本台账',
     'sc.workflow.workitem': '流程待办',
-    capability_fallback: '系统补充',
+    capability_fallback: '系统补充事项',
   };
   return mapping[raw] || mapping[raw.toLowerCase()] || raw || '业务事项';
 }

@@ -91,7 +91,7 @@
                 @click="selectUser(user)"
               >
                 <strong>{{ user.name }}</strong>
-                <small>{{ user.login || user.email || '内部用户' }}</small>
+                <small>{{ user.login || user.email || '协作用户' }}</small>
               </button>
             </div>
           </div>

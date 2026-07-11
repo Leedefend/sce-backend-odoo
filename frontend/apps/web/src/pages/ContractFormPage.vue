@@ -236,7 +236,7 @@
                   :disabled="busy"
                   @click="hideSuggestedInternalFields"
                 >
-                  隐藏内部字段 {{ suggestedHiddenFieldRows.length }}
+                  隐藏系统字段 {{ suggestedHiddenFieldRows.length }}
                 </button>
               </div>
             </header>
@@ -3016,12 +3016,12 @@ const formConfigAuditSummary = computed(() => {
     ? `业务配置已接管旧规则字段：${result.skippedLegacyPolicyFields.join('、')}`
     : '无被接管的旧规则字段';
   const activeLegacyText = result.activeLegacyPolicyFields.length
-    ? `系统补充规则生效：${result.activeLegacyPolicyFields.join('、')}`
-    : '无系统补充字段生效';
+    ? `系统补充配置生效：${result.activeLegacyPolicyFields.join('、')}`
+    : '无系统补充配置生效';
   const layoutText = result.hasBusinessConfigFormLayout
     ? `正式布局 ${result.businessConfigFormLayoutFields.length}，${result.layoutMatchesFields ? '字段顺序一致' : '字段顺序不一致'}`
     : '未固化正式布局';
-  return `配置字段 ${result.businessConfigFormFields.length} / 系统补充规则 ${result.legacyPolicyFields.length}，${layoutText}，${conflictText}，${activeLegacyText}`;
+  return `配置字段 ${result.businessConfigFormFields.length} / 系统补充配置 ${result.legacyPolicyFields.length}，${layoutText}，${conflictText}，${activeLegacyText}`;
 });
 
 const selectedFormSettingsFieldRow = computed(() => {
@@ -10356,8 +10356,8 @@ function hideSuggestedInternalFields() {
   });
   fieldVisibilityDirty.value = true;
   formConfigAuditResult.value = null;
-  appendFormConfigOperation('批量隐藏字段', `隐藏 ${rows.length} 个内部字段`);
-  contractModeFeedback.value = `已标记隐藏 ${rows.length} 个内部字段，保存后生效`;
+  appendFormConfigOperation('批量隐藏字段', `隐藏 ${rows.length} 个系统字段`);
+  contractModeFeedback.value = `已标记隐藏 ${rows.length} 个系统字段，保存后生效`;
 }
 
 function contractInlineFieldOrderIndex(field: FormSectionFieldSchema) {
