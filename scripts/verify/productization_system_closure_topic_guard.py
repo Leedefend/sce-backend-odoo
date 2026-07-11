@@ -575,6 +575,7 @@ def main() -> int:
         "required_evidence_artifact_paths": len(REQUIRED_EVIDENCE_ARTIFACT_PATHS),
         "required_closeout_fields": len(REQUIRED_CLOSEOUT_FIELDS),
         "required_make_targets": len(REQUIRED_MAKE_TARGETS),
+        "required_doc_declared_make_targets": len(REQUIRED_DOC_DECLARED_MAKE_TARGETS),
         "inspected_make_targets": len(_inspected_make_targets()),
         "required_target_mode_groups": len(REQUIRED_TARGET_MODE_GROUPS),
         "required_prod_readonly_targets": len(REQUIRED_PROD_READONLY_TARGETS),

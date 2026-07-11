@@ -174,6 +174,7 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         self.assertIn('"required_doc_token_groups": 3', payload)
         self.assertIn('"required_evidence_artifact_paths": 9', payload)
         self.assertIn('"required_closeout_fields": 6', payload)
+        self.assertIn('"required_doc_declared_make_targets": 18', payload)
         self.assertIn('"inspected_make_targets": 22', payload)
         self.assertIn('"required_target_mode_groups": 2', payload)
         self.assertIn('"required_prod_readonly_targets": 8', payload)
