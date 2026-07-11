@@ -625,7 +625,7 @@ const generatedAtText = computed(() => {
 const visibilityNotice = computed(() => {
   if (!summaryVisibility.value?.partial_data_hidden) return '';
   const base = String(summaryVisibility.value?.message || pageText('partial_data_hidden', '部分数据未显示'));
-  return `${base}${pageText('visibility_notice_suffix', '，请联系管理员开通对应权限。')}`;
+  return `${base}${pageText('visibility_notice_suffix', '，请联系系统管理员开通对应权限。')}`;
 });
 const restrictedSourceText = computed(() => {
   const rows = Array.isArray(summaryVisibility.value?.restricted_sources)
@@ -1532,7 +1532,7 @@ async function copyRetrySummary() {
     actionFeedback.value = pageText('feedback_copy_summary_ok', '失败摘要已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = pageText('feedback_copy_failed', '复制失败，请检查浏览器剪贴板权限');
+    actionFeedback.value = pageText('feedback_copy_failed', '复制失败，请确认浏览器允许剪贴板访问');
     actionFeedbackError.value = true;
   }
 }
@@ -1558,7 +1558,7 @@ async function copyVisibleRetrySummary() {
     actionFeedback.value = pageText('feedback_copy_view_summary_ok', '当前视图摘要已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = pageText('feedback_copy_view_summary_failed', '复制当前视图摘要失败，请检查浏览器剪贴板权限');
+    actionFeedback.value = pageText('feedback_copy_view_summary_failed', '复制当前视图摘要失败，请确认浏览器允许剪贴板访问');
     actionFeedbackError.value = true;
   }
 }
@@ -1582,7 +1582,7 @@ async function copyRetryRequest() {
     actionFeedback.value = pageText('feedback_copy_retry_request_ok', '重试内容已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = pageText('feedback_copy_retry_request_failed', '复制重试内容失败，请检查浏览器剪贴板权限');
+    actionFeedback.value = pageText('feedback_copy_retry_request_failed', '复制重试内容失败，请确认浏览器允许剪贴板访问');
     actionFeedbackError.value = true;
   }
 }
@@ -1615,7 +1615,7 @@ async function copyBatchTraceId() {
     actionFeedback.value = pageText('feedback_copy_trace_ok', '处理编号已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = pageText('feedback_copy_trace_failed', '复制处理编号失败，请检查浏览器剪贴板权限');
+    actionFeedback.value = pageText('feedback_copy_trace_failed', '复制处理编号失败，请确认浏览器允许剪贴板访问');
     actionFeedbackError.value = true;
   }
 }
@@ -1637,8 +1637,8 @@ function failedCategoryLabel(category: unknown) {
     PERMISSION: pageText('failed_category_permission', '权限限制'),
     ACCESS: pageText('failed_category_permission', '权限限制'),
     VALIDATION: pageText('failed_category_validation', '校验未通过'),
-    NETWORK: pageText('failed_category_network', '网络异常'),
-    SYSTEM: pageText('failed_category_system', '系统异常'),
+    NETWORK: pageText('failed_category_network', '网络连接问题'),
+    SYSTEM: pageText('failed_category_system', '系统处理问题'),
     UNKNOWN: pageText('failed_category_unknown', '待确认'),
   };
   if (!raw) return '';

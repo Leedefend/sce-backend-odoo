@@ -36,7 +36,7 @@ export function resolveBatchActionGuardMessage(options: {
     return options.text('batch_msg_model_no_active_field', '当前业务对象暂不支持归档状态，无法批量归档/激活');
   }
   if (options.reason === 'delete_mode_unavailable') {
-    return options.text('batch_msg_delete_mode_unavailable', '当前场景暂不支持删除，请联系管理员检查删除权限。');
+    return options.text('batch_msg_delete_mode_unavailable', '当前场景暂不支持删除，请联系系统管理员确认删除权限。');
   }
   return '';
 }
@@ -147,7 +147,7 @@ function resolveBatchReasonLabel(reason: unknown, text: (key: string, fallback: 
   const raw = String(reason || '').trim();
   const key = raw.toUpperCase();
   const mapping: Record<string, string> = {
-    ACTION_UNSUPPORTED: text('reason_action_unsupported', '暂不支持此操作'),
+    ACTION_UNSUPPORTED: text('reason_action_unsupported', '当前操作暂不可用'),
     EXECUTE_FAILED: text('reason_execute_failed', '操作未完成'),
     PERMISSION_DENIED: text('reason_permission_denied', '权限不足'),
     ACCESS_DENIED: text('reason_permission_denied', '权限不足'),
@@ -156,9 +156,9 @@ function resolveBatchReasonLabel(reason: unknown, text: (key: string, fallback: 
     VALIDATION_ERROR: text('reason_validation_error', '校验未通过'),
     MISSING_PARAMS: text('reason_missing_params', '参数不完整'),
     CONFLICT: text('reason_conflict', '数据已变化'),
-    NETWORK_ERROR: text('reason_network_error', '网络异常'),
-    SYSTEM_ERROR: text('reason_system_error', '系统异常'),
-    INTERNAL_ERROR: text('reason_system_error', '系统异常'),
+    NETWORK_ERROR: text('reason_network_error', '网络连接问题'),
+    SYSTEM_ERROR: text('reason_system_error', '系统处理问题'),
+    INTERNAL_ERROR: text('reason_system_error', '系统处理问题'),
     UNKNOWN: text('reason_unknown', '待确认'),
   };
   if (!raw) return text('reason_unknown', '待确认');

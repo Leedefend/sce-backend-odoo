@@ -359,7 +359,7 @@
           </button>
         </div>
         <p v-if="showEmptyHelp" class="empty-help">
-          {{ pageText('empty_help_detail', '建议先点击“切换角色”确认当前角色；若仍无功能，请联系管理员开通角色权限或配置角色首页目录。') }}
+          {{ pageText('empty_help_detail', '建议先点击“切换角色”确认当前角色；若仍无功能，请联系系统管理员开通角色权限或配置角色首页目录。') }}
         </p>
       </template>
     </div>
@@ -1794,7 +1794,7 @@ function lockReasonLabel(reasonCode: string) {
   if (code === 'FEATURE_DISABLED') return pageText('lock_reason_feature_disabled', '订阅未开通');
   if (code === 'ROLE_SCOPE_MISMATCH') return pageText('lock_reason_role_scope_mismatch', '角色范围不匹配');
   if (code === 'CAPABILITY_SCOPE_MISSING') return pageText('lock_reason_scope_missing', '缺少前置条件');
-  if (code === 'CAPABILITY_SCOPE_CYCLE') return pageText('lock_reason_scope_cycle', '功能依赖异常');
+  if (code === 'CAPABILITY_SCOPE_CYCLE') return pageText('lock_reason_scope_cycle', '功能依赖问题');
   if (code === 'COMING_SOON') return pageText('lock_reason_coming_soon', '功能建设中');
   if (code === 'PENDING_APPROVAL') return pageText('lock_reason_waiting_open', '待审批开放');
   return pageText('lock_reason_default', '当前不可用');
@@ -2157,10 +2157,10 @@ function resolveEnterErrorMessage(error: unknown) {
 }
 
 function resolveEnterErrorHint(code: string) {
-  if (code === 'PERMISSION_DENIED') return pageText('enter_error_hint_permission_denied', '请联系管理员开通对应权限后重试。');
-  if (code === 'ROUTE_NOT_FOUND') return pageText('enter_error_hint_route_not_found', '入口配置异常，请稍后重试或联系管理员。');
+  if (code === 'PERMISSION_DENIED') return pageText('enter_error_hint_permission_denied', '请联系系统管理员开通对应权限后重试。');
+  if (code === 'ROUTE_NOT_FOUND') return pageText('enter_error_hint_route_not_found', '入口配置需要完善，请稍后重试或联系系统管理员。');
   if (code === 'TIMEOUT') return pageText('enter_error_hint_timeout', '网络连接超时，请检查网络后点击重试。');
-  return pageText('enter_error_hint_default', '请稍后重试；如果问题持续，请联系管理员。');
+  return pageText('enter_error_hint_default', '请稍后重试；如果问题持续，请联系系统管理员。');
 }
 
 onMounted(() => {

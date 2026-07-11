@@ -4887,18 +4887,18 @@ function formRuntimeReasonLabel(reason: unknown): string {
   const raw = String(reason || '').trim();
   const key = raw.toUpperCase();
   const mapping: Record<string, string> = {
-    ACTION_UNSUPPORTED: '暂不支持此操作',
+    ACTION_UNSUPPORTED: '当前操作暂不可用',
     BUSINESS_RULE_FAILED: '业务规则限制',
     CONFLICT: '数据已变化',
     FIELD_CREATE_DISABLED: '当前字段暂不支持新增',
     INLINE_CREATE_READY: '可在明细中新增',
     MISSING_PARAMS: '参数不完整',
-    NETWORK_ERROR: '网络异常',
+    NETWORK_ERROR: '网络连接问题',
     NOT_FOUND: '记录不存在',
     PERMISSION_DENIED: '权限不足',
     RELATION_CREATE_FORBIDDEN: '关联数据暂不允许新增',
     RELATION_READ_FORBIDDEN: '关联数据暂不可查看',
-    SYSTEM_ERROR: '系统异常',
+    SYSTEM_ERROR: '系统处理问题',
     VALIDATION_ERROR: '校验未通过',
     WRITE_FAILED: '保存失败',
   };
@@ -9925,7 +9925,7 @@ async function discardChanges() {
 }
 
 onErrorCaptured((err) => {
-  const message = err instanceof Error ? err.message : String(err || '系统处理异常');
+  const message = err instanceof Error ? err.message : String(err || '系统处理问题');
   renderErrorMessage.value = `表单页面打开失败：${message}`;
   return false;
 });

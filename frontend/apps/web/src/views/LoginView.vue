@@ -164,7 +164,7 @@ function normalizeLoginError(err: unknown): string {
     return pageText('error_invalid_credentials', '账号或密码错误，请重新输入');
   }
   if (lower.includes('timeout') || lower.includes('network') || lower.includes('failed to fetch')) {
-    return pageText('error_network', '网络异常，请稍后重试');
+    return pageText('error_network', '网络连接问题，请稍后重试');
   }
   return fallback;
 }

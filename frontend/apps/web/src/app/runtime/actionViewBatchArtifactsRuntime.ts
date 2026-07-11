@@ -111,9 +111,9 @@ export function resolveBatchFailureReasonLabel(reasonCode: unknown): string {
   if (code.includes('VALIDATION') || code.includes('INVALID')) return '校验未通过';
   if (code.includes('CONFLICT')) return '数据已变化';
   if (code.includes('NOT_FOUND')) return '记录不可见';
-  if (code.includes('NETWORK')) return '网络异常';
+  if (code.includes('NETWORK')) return '网络连接问题';
   if (code.includes('BUSINESS') || code.includes('RULE')) return '业务限制';
-  if (code.includes('SYSTEM') || code.includes('ERROR')) return '系统异常';
+  if (code.includes('SYSTEM') || code.includes('ERROR')) return '系统处理问题';
   return '处理受限';
 }
 

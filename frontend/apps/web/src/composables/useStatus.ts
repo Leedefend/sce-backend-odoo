@@ -157,14 +157,14 @@ export function resolveErrorCopy(err: StatusError | null, fallbackMessage = '请
   }
   if (category === 'system') {
     return {
-      title: '系统处理异常',
+      title: '系统处理问题',
       message: '系统服务未能完成本次请求。',
       hint: mergeHint(hint, contextHint),
     };
   }
   if (err?.kind === 'network' || code === 0) {
     return {
-      title: '网络连接异常',
+      title: '网络连接问题',
       message: '暂时无法连接系统服务，请检查网络或服务状态。',
       hint: mergeHint(hint, contextHint),
     };
@@ -199,7 +199,7 @@ export function resolveErrorCopy(err: StatusError | null, fallbackMessage = '请
   }
   if (code && code >= 500) {
     return {
-      title: '系统处理异常',
+      title: '系统处理问题',
       message: '系统服务未能完成本次请求，请稍后重试。',
       hint: mergeHint(hint, contextHint),
     };

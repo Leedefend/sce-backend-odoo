@@ -101,7 +101,7 @@ function resolveStatusReasonLabel(reason: unknown): string {
   const raw = String(reason || '').trim();
   const key = raw.toUpperCase();
   const mapping: Record<string, string> = {
-    ACTION_UNSUPPORTED: '暂不支持此操作',
+    ACTION_UNSUPPORTED: '当前操作暂不可用',
     EXECUTE_FAILED: '操作未完成',
     PERMISSION_DENIED: '权限不足',
     ACCESS_DENIED: '权限不足',
@@ -110,9 +110,9 @@ function resolveStatusReasonLabel(reason: unknown): string {
     VALIDATION_ERROR: '校验未通过',
     MISSING_PARAMS: '参数不完整',
     CONFLICT: '数据已变化',
-    NETWORK_ERROR: '网络异常',
-    SYSTEM_ERROR: '系统异常',
-    INTERNAL_ERROR: '系统异常',
+    NETWORK_ERROR: '网络连接问题',
+    SYSTEM_ERROR: '系统处理问题',
+    INTERNAL_ERROR: '系统处理问题',
     UNKNOWN: '待确认',
   };
   if (!raw) return '待确认';

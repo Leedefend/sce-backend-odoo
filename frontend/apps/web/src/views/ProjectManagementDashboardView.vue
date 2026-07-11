@@ -128,7 +128,7 @@ function metricStatusLabel(value: unknown) {
     ready: '就绪',
     warning: '需关注',
     danger: '高风险',
-    error: '异常',
+    error: '处理问题',
     empty: '暂无数据',
   };
   return map[status] || asText(value || '--') || '--';

@@ -66,8 +66,8 @@
     />
     <StatusPanel
       v-else-if="renderBlocked"
-      :title="pageText('view_node_unsupported_title', '页面结构暂不支持')"
-      :message="pageText('view_node_unsupported_message', '当前页面结构包含暂不支持的展示节点，请联系管理员完善页面配置。')"
+      :title="pageText('view_node_unsupported_title', '页面结构待完善')"
+      :message="pageText('view_node_unsupported_message', '当前页面结构还需要补充展示配置，请联系系统管理员完善页面配置。')"
       error-code="VIEW_NODE_UNSUPPORTED"
       variant="error"
       :on-retry="reload"
@@ -304,9 +304,9 @@ const readonlyHint = computed(() => {
   const bundle = String(session.productFacts.bundle?.name || '').trim();
   if (level && level !== 'enterprise') {
     const bundleSegment = bundle ? `${pageText('readonly_hint_license_bundle_sep', '，套餐：')}${bundle}` : '';
-    return `${pageText('readonly_hint_license_prefix', '当前为只读模式（授权级别：')}${level}${bundleSegment}${pageText('readonly_hint_license_suffix', '）。如需编辑权限请联系管理员。')}`;
+    return `${pageText('readonly_hint_license_prefix', '当前为只读模式（授权级别：')}${level}${bundleSegment}${pageText('readonly_hint_license_suffix', '）。如需编辑权限请联系系统管理员。')}`;
   }
-  return pageText('readonly_hint_default', '当前记录处于只读模式，请联系管理员开通写权限。');
+  return pageText('readonly_hint_default', '当前记录处于只读模式，请联系系统管理员开通写权限。');
 });
 const actionContext = computed(() => {
   const fromQuery = Number(route.query.action_id || 0);
@@ -361,7 +361,7 @@ const statusLabel = computed(() => {
   if (status.value === 'editing') return pageText('status_editing', '编辑中');
   if (status.value === 'saving') return pageText('status_saving', '保存中');
   if (status.value === 'loading') return pageText('status_loading', '加载中');
-  if (status.value === 'error') return pageText('status_error', '异常');
+  if (status.value === 'error') return pageText('status_error', '处理问题');
   if (status.value === 'empty') return pageText('status_empty', '无数据');
   return pageText('status_ready', '就绪');
 });
@@ -379,14 +379,14 @@ function actionFeedbackReasonLabel(reason: unknown) {
   const raw = String(reason || '').trim();
   const key = raw.toUpperCase();
   const mapping: Record<string, string> = {
-    ACTION_UNSUPPORTED: pageText('reason_action_unsupported', '暂不支持此操作'),
+    ACTION_UNSUPPORTED: pageText('reason_action_unsupported', '当前操作暂不可用'),
     EXECUTE_FAILED: pageText('reason_execute_failed', '操作未完成'),
     PERMISSION_DENIED: pageText('reason_permission_denied', '权限不足'),
     NOT_FOUND: pageText('reason_not_found', '记录不存在'),
     BUSINESS_RULE_FAILED: pageText('reason_business_rule_failed', '业务规则限制'),
     MISSING_PARAMS: pageText('reason_missing_params', '参数不完整'),
-    NETWORK_ERROR: pageText('reason_network_error', '网络异常'),
-    SYSTEM_ERROR: pageText('reason_system_error', '系统异常'),
+    NETWORK_ERROR: pageText('reason_network_error', '网络连接问题'),
+    SYSTEM_ERROR: pageText('reason_system_error', '系统处理问题'),
   };
   if (!raw) return pageText('reason_unknown', '待确认');
   return mapping[key] || raw.replace(/[_-]+/g, ' ').toLowerCase().replace(/(^|\s)\S/g, (s) => s.toUpperCase());

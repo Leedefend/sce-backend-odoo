@@ -239,7 +239,7 @@
       <StatusPanel
         v-else-if="initStatus === 'error'"
         title="初始化失败"
-        :message="initError || '系统处理异常，请稍后重试。'"
+        :message="initError || '系统处理问题，请稍后重试。'"
         :trace-id="initTraceId || undefined"
         variant="error"
         :on-retry="refreshInit"
