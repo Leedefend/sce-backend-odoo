@@ -165,11 +165,24 @@ REQUIRED_TARGET_BODY_TOKENS = {
     ],
 }
 
+REQUIRED_TARGET_BODY_ORDER = {
+    "verify.productization.system_closure.topic_guard": [
+        "python3 -m py_compile scripts/verify/productization_system_closure_topic_guard.py scripts/verify/test_productization_system_closure_topic_guard.py",
+        "cd scripts/verify && python3 test_productization_system_closure_topic_guard.py",
+        "python3 scripts/verify/productization_system_closure_topic_guard.py",
+    ],
+}
+
 
 def _target_line(text: str, target: str) -> str:
     pattern = re.compile(rf"^{re.escape(target)}\s*:(?P<deps>[^\n]*)$", re.MULTILINE)
     match = pattern.search(text)
     return match.group(0) if match else ""
+
+
+def _target_line_count(text: str, target: str) -> int:
+    pattern = re.compile(rf"^{re.escape(target)}\s*:", re.MULTILINE)
+    return len(pattern.findall(text))
 
 
 def _target_deps(text: str, target: str) -> list[str]:
@@ -188,6 +201,16 @@ def _target_body(text: str, target: str) -> str:
     return match.group("body") if match else ""
 
 
+def _tokens_in_order(text: str, tokens: list[str]) -> bool:
+    cursor = -1
+    for token in tokens:
+        index = text.find(token, cursor + 1)
+        if index < 0:
+            return False
+        cursor = index
+    return True
+
+
 def validate(doc_text: str, make_text: str) -> list[str]:
     errors: list[str] = []
 
@@ -203,6 +226,8 @@ def validate(doc_text: str, make_text: str) -> list[str]:
     for target in REQUIRED_MAKE_TARGETS:
         if not _target_line(make_text, target):
             errors.append(f"Makefile missing target: {target}")
+        elif _target_line_count(make_text, target) > 1:
+            errors.append(f"Makefile duplicate target: {target}")
 
     quick_deps = _target_deps(make_text, "verify.system_user_experience.quick")
     for dep in REQUIRED_QUICK_DEPS:
@@ -227,6 +252,11 @@ def validate(doc_text: str, make_text: str) -> list[str]:
         for token in tokens:
             if token not in target_body:
                 errors.append(f"{target} missing command token: {token}")
+
+    for target, tokens in REQUIRED_TARGET_BODY_ORDER.items():
+        target_body = _target_body(make_text, target)
+        if target_body and not _tokens_in_order(target_body, tokens):
+            errors.append(f"{target} command order mismatch")
 
     topic_line = _target_line(make_text, "verify.productization.system_closure.topic_guard")
     if topic_line and "guard.prod.forbid" not in _target_deps(make_text, "verify.productization.system_closure.topic_guard"):

@@ -135,6 +135,21 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
             errors,
         )
 
+    def test_topic_guard_commands_must_stay_in_order(self) -> None:
+        make_text = _make_text().replace(
+            "\t@cd scripts/verify && python3 test_productization_system_closure_topic_guard.py\n"
+            "\t@python3 scripts/verify/productization_system_closure_topic_guard.py",
+            "\t@python3 scripts/verify/productization_system_closure_topic_guard.py\n"
+            "\t@cd scripts/verify && python3 test_productization_system_closure_topic_guard.py",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("verify.productization.system_closure.topic_guard command order mismatch", errors)
+
+    def test_duplicate_required_target_fails(self) -> None:
+        make_text = _make_text() + "\n" + _target("verify.frontend.product_language.guard", ["guard.prod.forbid"])
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("Makefile duplicate target: verify.frontend.product_language.guard", errors)
+
     def test_missing_quick_dependency_fails(self) -> None:
         make_text = _make_text().replace(" verify.formal_list_surface.no_test_placeholder_guard", "")
         errors = guard.validate(_doc_text(), make_text)
