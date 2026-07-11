@@ -108,7 +108,7 @@ export function resolveContractActionDoneMessage(options: {
   failureCount: number;
   text: (key: string, fallback: string) => string;
 }): string {
-  return `${options.text('batch_msg_contract_action_done_prefix', '页面动作执行完成：成功 ')}${options.successCount}${options.text('batch_msg_contract_action_done_middle', '，失败 ')}${options.failureCount}`;
+  return `${options.text('batch_msg_contract_action_done_prefix', '页面操作执行完成：成功 ')}${options.successCount}${options.text('batch_msg_contract_action_done_middle', '，失败 ')}${options.failureCount}`;
 }
 
 export function buildContractActionRouteTarget(options: {

@@ -150,7 +150,7 @@ export function resolveActionViewSurfaceIntent(options: {
 
   return {
     title: String(intentSource.title || '').trim() || options.pageText('intent_title_default', '业务列表'),
-    summary: String(intentSource.summary || '').trim() || options.pageText('intent_summary_default', '请通过页面动作继续处理。'),
+    summary: String(intentSource.summary || '').trim() || options.pageText('intent_summary_default', '请通过页面操作继续处理。'),
     actions,
     emptyTitle: String(intentSource.empty_title || '').trim() || options.pageText('empty_title_default', '暂无可展示内容'),
     emptyHint: String(intentSource.empty_hint || '').trim() || options.pageText('empty_hint_default', ''),

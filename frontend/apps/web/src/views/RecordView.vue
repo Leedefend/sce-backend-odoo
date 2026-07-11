@@ -577,7 +577,7 @@ async function load() {
 
   try {
     if (!actionId.value) {
-      throw new Error(pageText('error_missing_action_context', '缺少页面动作上下文'));
+      throw new Error(pageText('error_missing_action_context', '缺少页面操作上下文'));
     }
     const actionContract = await loadActionContractRaw(actionId.value, {
       viewId: requestedViewId.value || undefined,

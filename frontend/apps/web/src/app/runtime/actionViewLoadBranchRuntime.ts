@@ -63,8 +63,8 @@ export function resolveLoadMissingResolvedModelErrorState(): {
   statusRecordsLength: number;
 } {
   return {
-    message: 'Action has no model',
-    statusError: 'Action has no model',
+    message: '当前入口缺少业务对象，无法打开页面',
+    statusError: '当前入口缺少业务对象，无法打开页面',
     statusRecordsLength: 0,
   };
 }

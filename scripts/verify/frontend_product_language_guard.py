@@ -399,6 +399,8 @@ FORBIDDEN_PHRASES = {
     "治理门禁": "正式用户面必须使用发布门禁口径",
     "治理原因": "正式用户面必须使用配置原因口径",
     "治理质量": "正式用户面必须使用配置质量口径",
+    "Action has no model": "正式用户面不能暴露英文业务对象缺失错误",
+    "页面动作": "正式用户面必须使用页面操作口径",
     "window.alert(err instanceof Error ? err.message : '附件打开失败')": "列表页附件错误必须使用页面内反馈",
     "confirm(toolbarUiLabel('batch_confirm_delete'": "列表批量删除必须使用产品化确认弹窗",
     "confirm('确认删除这条关联记录？')": "关联记录删除必须使用产品化确认弹窗",
