@@ -1,10 +1,35 @@
 <odoo>
+    <record id="view_sc_purchase_order_productized_tree" model="ir.ui.view">
+        <field name="name">purchase.order.productized.tree</field>
+        <field name="model">purchase.order</field>
+        <field name="arch" type="xml">
+            <tree string="采购订单" create="true" edit="false" delete="false" default_order="date_order desc, id desc">
+                <field name="name" string="采购单号"/>
+                <field name="project_id" string="项目"/>
+                <field name="partner_id" string="供应商"/>
+                <field name="plan_id" string="物资计划"/>
+                <field name="source_material_rfq_id" string="来源询比价"/>
+                <field name="date_order" string="下单日期"/>
+                <field name="date_planned" string="预计到货"/>
+                <field name="amount_untaxed" string="不含税金额"/>
+                <field name="amount_tax" string="税额"/>
+                <field name="amount_total" string="合计金额"/>
+                <field name="validation_status" string="审批状态"/>
+                <field name="state" string="订单状态"/>
+            </tree>
+        </field>
+    </record>
+
     <record id="action_sc_purchase_order" model="ir.actions.act_window">
         <field name="name">采购单</field>
         <field name="res_model">purchase.order</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_purchase_order_productized_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+          (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_purchase_order_productized_tree')})
+        ]"/>
         <field name="domain">[]</field>
-        <field name="context">{'quotation_only': True}</field>
+        <field name="context">{'quotation_only': True, 'sc_productized_list': True}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
                                       (4, ref('smart_construction_core.group_sc_cap_purchase_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_purchase_manager'))]"/>
