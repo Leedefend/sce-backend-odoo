@@ -563,8 +563,11 @@
     </record>
 
     <record id="action_project_material_plan" model="ir.actions.act_window">
-        <field name="view_id" eval="False"/>
-        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="view_id" ref="smart_construction_core.view_project_material_plan_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_project_material_plan_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_project_material_plan_form')})
+        ]"/>
     </record>
     <record id="action_sc_labor_usage_ticket" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_sc_labor_usage_ticket_user_confirmed_tree"/>

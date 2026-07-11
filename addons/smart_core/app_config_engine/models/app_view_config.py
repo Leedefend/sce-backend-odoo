@@ -25,6 +25,13 @@ from odoo.addons.smart_core.core.view_orchestrator import ViewOrchestrator
 
 _logger = logging.getLogger(__name__)
 
+PRODUCT_LIST_AUDIT_FIELD_NAMES = frozenset({
+    "create_uid",
+    "create_date",
+    "write_uid",
+    "write_date",
+})
+
 
 class AppViewConfig(models.Model, ContractSchemaMixin):
     _name = 'app.view.config'
@@ -108,6 +115,32 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             "rebuildable": True,
             "no_business_fact_authority": True,
         }
+
+    @staticmethod
+    def _product_list_field_name(value):
+        if isinstance(value, dict):
+            return str(value.get("name") or value.get("field") or value.get("id") or "").strip()
+        return str(value or "").strip()
+
+    @classmethod
+    def _is_product_list_audit_field(cls, value):
+        return cls._product_list_field_name(value) in PRODUCT_LIST_AUDIT_FIELD_NAMES
+
+    @classmethod
+    def _without_product_list_audit_fields(cls, values):
+        if not isinstance(values, list):
+            return values
+        return [value for value in values if not cls._is_product_list_audit_field(value)]
+
+    @classmethod
+    def _sanitize_tree_columns_for_user_surface(cls, payload):
+        if not isinstance(payload, dict):
+            return payload
+        next_payload = dict(payload)
+        for key in ("columns", "columns_schema", "read_fields"):
+            if key in next_payload:
+                next_payload[key] = cls._without_product_list_audit_fields(next_payload.get(key))
+        return next_payload
 
     def _projection_identity(self, model_name, view_type):
         context = dict(self.env.context or {})
@@ -386,6 +419,9 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                 except Exception as e:
                     _logger.warning("从原始视图提取字段失败: %s", e)
 
+            if view_type == 'tree':
+                parsed_json = self._sanitize_tree_columns_for_user_surface(parsed_json)
+
             # 4) 清理不可序列化的对象
             _logger.debug("VIEW_PARSE_DEBUG: cleaning unserializable objects")
             parsed_json = self._clean_unserializable_objects(parsed_json)
@@ -482,6 +518,8 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             subject=subject, action_id=action_id, menu_id=menu_id,
             ctx=ctx, check_model_acl=check_model_acl,
         )
+        if self.view_type == 'tree':
+            vp = self._sanitize_tree_columns_for_user_surface(vp)
         orchestration_version = self._view_orchestration_version_token(vp)
 
         block = {

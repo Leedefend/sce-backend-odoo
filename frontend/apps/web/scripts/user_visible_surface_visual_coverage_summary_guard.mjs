@@ -49,6 +49,21 @@ function placeholderHeaderRows(rows) {
     .slice(0, 20);
 }
 
+function auditHeaderRows(rows) {
+  const auditHeaderPattern = /^(Created by|Created on|Last Updated by|Last Updated on)$/i;
+  return rows
+    .map((row) => ({
+      path: row?.path || "",
+      route: row?.route || "",
+      headers: Array.isArray(row?.headers)
+        ? row.headers.filter((header) => auditHeaderPattern.test(String(header || "").trim()))
+        : [],
+      screenshotPath: row?.screenshotPath || "",
+    }))
+    .filter((row) => row.headers.length)
+    .slice(0, 20);
+}
+
 async function main() {
   const report = await readJson(REPORT_PATH);
   const summary = report.summary && typeof report.summary === "object" ? report.summary : {};
@@ -57,6 +72,7 @@ async function main() {
   const overflowFailures = actionResults.filter((row) => row?.hasHorizontalOverflow === true);
   const screenshotMissing = missingScreenshots(actionResults);
   const placeholderHeaders = placeholderHeaderRows(actionResults);
+  const auditHeaders = auditHeaderRows(actionResults);
   const errors = [];
 
   if (Number(summary.totalScanned || 0) < MIN_ACTIONS) {
@@ -69,6 +85,7 @@ async function main() {
   }
   if (screenshotMissing.length) errors.push(`missing screenshots: ${screenshotMissing.length}`);
   if (placeholderHeaders.length) errors.push(`placeholder headers visible: ${placeholderHeaders.length}`);
+  if (auditHeaders.length) errors.push(`audit headers visible: ${auditHeaders.length}`);
 
   const payload = {
     ok: errors.length === 0,
@@ -81,6 +98,7 @@ async function main() {
       overflowFailures: overflowFailures.slice(0, 20),
       screenshotMissing,
       placeholderHeaders,
+      auditHeaders,
       consoleErrors: Array.isArray(report.consoleErrors) ? report.consoleErrors.slice(0, 20) : [],
     },
   };

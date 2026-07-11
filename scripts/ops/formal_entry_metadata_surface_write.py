@@ -534,6 +534,31 @@ def _has_entry_fields(arch):
     return "source_created_by" in (arch or "") and "source_created_at" in (arch or "")
 
 
+def _has_tree_entry_surface(arch):
+    if _has_entry_fields(arch):
+        return True
+    try:
+        root = _parse_arch(arch)
+    except Exception:
+        return False
+    labels = {
+        clean(node.get("string"))
+        for node in root.xpath("//tree//field")
+        if clean(node.get("string"))
+    }
+    return "录入人" in labels and "录入时间" in labels
+
+
+def _model_has_tree_entry_surface(model_name):
+    View = env["ir.ui.view"].sudo()  # noqa: F821
+    for view in View.search([("model", "=", model_name), ("type", "=", "tree")]):
+        if str(view.name or "").startswith("formal.entry.metadata."):
+            continue
+        if _has_tree_entry_surface(view.arch_db):
+            return True
+    return False
+
+
 def _parse_arch(arch):
     return etree.fromstring((arch or "").encode("utf-8"))
 
@@ -580,6 +605,7 @@ def ensure_view_extensions(model_name):
     skipped = 0
     failed = []
     base_views = View.search([("model", "=", model_name), ("type", "in", ["tree", "form"]), ("inherit_id", "=", False)])
+    model_has_tree_entry_surface = _model_has_tree_entry_surface(model_name)
     if not base_views:
         view_name = f"formal.entry.metadata.{model_name}.tree.base"
         existing = View.search([("name", "=", view_name), ("model", "=", model_name), ("type", "=", "tree")], limit=1)
@@ -596,7 +622,10 @@ def ensure_view_extensions(model_name):
             created += 1
         return {"created": created, "skipped": skipped, "failed": failed}
     for view in base_views:
-        if _has_entry_fields(view.arch_db):
+        if view.type == "tree" and model_has_tree_entry_surface:
+            skipped += 1
+            continue
+        if view.type != "tree" and _has_entry_fields(view.arch_db):
             skipped += 1
             continue
         extension_name = f"formal.entry.metadata.{model_name}.{view.type}.{view.id}"

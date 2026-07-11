@@ -8,7 +8,7 @@
 - 意图调度总线（/api/intent），用于场景化业务动作
 - 私有缓存与多公司/多语言上下文透传
 """,
-    "version": "17.0.1.0",
+    "version": "17.0.1.1",
     "author": "Leedefend",
     "website": "https://example.com",
     "category": "Technical/Framework",
