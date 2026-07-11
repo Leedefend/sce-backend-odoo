@@ -412,6 +412,16 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertIn("contract_payment_method_text", profile_columns)
         self.assertIn("attachment_text", profile_columns)
         self.assertIn("visible_contract_amount", profile_columns)
+        hidden_columns = source_contract["list_profile"]["hidden_columns"]
+        default_visible_columns = [name for name in profile_columns if name not in hidden_columns]
+        self.assertLessEqual(len(default_visible_columns), 20)
+        self.assertIn("operation_strategy", default_visible_columns)
+        self.assertIn("entry_user_text", default_visible_columns)
+        self.assertIn("entry_time", default_visible_columns)
+        self.assertIn("contract_duration_text", default_visible_columns)
+        self.assertIn("contract_payment_method_text", default_visible_columns)
+        self.assertIn("attachment_text", default_visible_columns)
+        self.assertIn("visible_contract_amount", default_visible_columns)
         self.assertEqual(
             source_contract["list_profile"]["preference_policy"]["must_request_columns"],
             profile_columns,
@@ -542,7 +552,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
 
         self.assertEqual(
             source_contract["list_profile"]["columns"],
-            ["entry_user_text", "source_created_by", "entry_time", "source_created_at"],
+            ["entry_user_text", "entry_time"],
         )
 
     def test_business_list_profile_prefers_config_over_legacy_visible_override(self):
@@ -782,6 +792,31 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertEqual(profile["preference_policy"]["must_request_columns"], ["name", "source_created_by"])
         self.assertEqual(profile["preference_policy"]["locked_columns"], [])
 
+    def test_v2_list_profile_projection_applies_default_visibility_budget(self):
+        handler = self.module.UiContractV2Handler(env={})
+        columns = [f"field_{index:02d}" for index in range(24)]
+        contract = {"layoutContract": {}}
+        source_contract = {
+            "list_profile": {
+                "columns": columns,
+                "fact_columns": columns,
+                "hidden_columns": [],
+                "column_labels": {name: name for name in columns},
+                "preference_policy": {
+                    "must_request_columns": columns,
+                },
+            }
+        }
+
+        handler._project_v2_source_policies(contract, source_contract)
+
+        profile = contract["layoutContract"]["listProfile"]
+        default_visible_columns = [name for name in profile["columns"] if name not in profile["hidden_columns"]]
+        self.assertEqual(profile["columns"], columns)
+        self.assertEqual(profile["preference_policy"]["must_request_columns"], columns)
+        self.assertEqual(len(default_visible_columns), 20)
+        self.assertEqual(profile["hidden_columns"], ["field_20", "field_21", "field_22", "field_23"])
+
     def test_business_list_profile_deduplicates_mixed_direct_config_labels(self):
         class _Config:
             contract_json = {
@@ -966,6 +1001,32 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertEqual(profile["preference_policy"]["locked_columns"], [])
         self.assertEqual(profile["preference_policy"]["must_request_columns"], profile["columns"])
 
+    def test_business_list_config_projection_applies_default_visibility_budget(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        columns = [f"field_{index:02d}" for index in range(25)]
+        source_contract = {
+            "list_profile": {
+                "columns": columns,
+                "fact_columns": columns,
+                "hidden_columns": ["field_01"],
+                "column_policy": {
+                    "mode": "strict",
+                    "reason": "business_list_config_contract_authoritative",
+                },
+            }
+        }
+        contract = {"layoutContract": {"listProfile": {"columns": columns}}}
+
+        handler._enforce_business_list_config_projection(contract, source_contract)
+
+        profile = contract["layoutContract"]["listProfile"]
+        default_visible_columns = [name for name in profile["columns"] if name not in profile["hidden_columns"]]
+        self.assertEqual(profile["columns"], columns)
+        self.assertEqual(profile["preference_policy"]["must_request_columns"], columns)
+        self.assertLessEqual(len(default_visible_columns), 20)
+        self.assertIn("field_01", profile["hidden_columns"])
+        self.assertIn("field_24", profile["hidden_columns"])
+
     def test_material_plan_business_config_projection_labels_legacy_visible_columns(self):
         handler = self.module.UiContractV2Handler(env=object())
         source_contract = {
@@ -990,7 +1051,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         labels = contract["layoutContract"]["listProfile"]["column_labels"]
         self.assertEqual(labels["legacy_visible_01"], "单据状态")
         self.assertEqual(labels["legacy_visible_05"], "采购材料名称")
-        self.assertEqual(labels["source_created_by"], "来源录入人")
+        self.assertEqual(labels["source_created_by"], "录入人")
 
     def test_material_plan_legacy_visible_widget_layout_uses_business_labels(self):
         handler = self.module.UiContractV2Handler(env={})
@@ -1051,7 +1112,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertEqual(labels["legacy_visible_01"], "单据状态")
         self.assertEqual(labels["legacy_visible_02"], "入库单号")
         self.assertEqual(labels["legacy_visible_05"], "材料名称")
-        self.assertEqual(labels["source_created_by"], "来源录入人")
+        self.assertEqual(labels["source_created_by"], "录入人")
 
     def test_material_inbound_legacy_visible_widget_layout_uses_business_labels(self):
         handler = self.module.UiContractV2Handler(env={})

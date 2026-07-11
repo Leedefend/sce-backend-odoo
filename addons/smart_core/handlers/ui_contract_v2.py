@@ -185,6 +185,15 @@ STANDARD_LOWCODE_COLUMN_LABELS = {
     "source_created_by": "录入人",
     "source_created_at": "录入时间",
 }
+DEFAULT_LIST_VISIBLE_COLUMN_BUDGET = 20
+BUSINESS_LIST_VISIBILITY_PROTECTED_FIELDS = (
+    "operation_strategy",
+    "entry_user_text",
+    "entry_time",
+    "contract_duration_text",
+    "contract_payment_method_text",
+    "attachment_text",
+)
 
 
 class UiContractV2Handler(BaseIntentHandler):
@@ -282,10 +291,11 @@ class UiContractV2Handler(BaseIntentHandler):
         business_label = label_map.get(field_name)
         if not business_label:
             label = str(current_label or "").strip()
-            if model_key in self.env and (
-                field_name.startswith("legacy_visible_")
-                or field_name.startswith("p1_visible_")
-            ):
+            try:
+                has_model = model_key in self.env
+            except Exception:
+                has_model = False
+            if has_model and (field_name.startswith("legacy_visible_") or field_name.startswith("p1_visible_")):
                 try:
                     field = self.env[model_key]._fields.get(field_name)
                 except Exception:
@@ -446,6 +456,8 @@ class UiContractV2Handler(BaseIntentHandler):
                 for name in self._user_visible_list_columns(list_profile.get("hidden_columns") if isinstance(list_profile.get("hidden_columns"), list) else [])
                 if not columns or name in columns
             ]
+            if columns:
+                self._apply_default_list_visibility_budget(list_profile, columns)
             preference_policy = list_profile.get("preference_policy") if isinstance(list_profile.get("preference_policy"), dict) else {}
             if preference_policy:
                 preference_policy = deepcopy(preference_policy)
@@ -495,11 +507,7 @@ class UiContractV2Handler(BaseIntentHandler):
         )
         locked_profile["columns"] = columns
         locked_profile["fact_columns"] = list(fact_columns or columns)
-        locked_profile["hidden_columns"] = [
-            str(name or "").strip()
-            for name in (locked_profile.get("hidden_columns") if isinstance(locked_profile.get("hidden_columns"), list) else [])
-            if str(name or "").strip() in set(columns)
-        ]
+        self._apply_default_list_visibility_budget(locked_profile, columns)
         pref = locked_profile.get("preference_policy") if isinstance(locked_profile.get("preference_policy"), dict) else {}
         locked_profile["preference_policy"] = {
             **pref,
@@ -583,6 +591,46 @@ class UiContractV2Handler(BaseIntentHandler):
             seen_keys.add(key)
             out.append(name)
         return out
+
+    def _default_visible_list_columns(
+        self,
+        columns: list[str],
+        protected_fields: list[str] | tuple[str, ...] | None = None,
+    ) -> list[str]:
+        if len(columns) <= DEFAULT_LIST_VISIBLE_COLUMN_BUDGET:
+            return list(columns)
+        protected = {str(name or "").strip() for name in (protected_fields or []) if str(name or "").strip()}
+        selected = set(columns[:DEFAULT_LIST_VISIBLE_COLUMN_BUDGET])
+        for name in columns:
+            if name in protected:
+                selected.add(name)
+        for name in reversed(columns):
+            if len(selected) <= DEFAULT_LIST_VISIBLE_COLUMN_BUDGET:
+                break
+            if name in selected and name not in protected:
+                selected.remove(name)
+        return [name for name in columns if name in selected]
+
+    def _apply_default_list_visibility_budget(
+        self,
+        profile: dict[str, Any],
+        columns: list[str],
+        protected_fields: list[str] | tuple[str, ...] | None = None,
+    ) -> None:
+        if not isinstance(profile, dict) or not columns:
+            return
+        column_set = set(columns)
+        existing_hidden = {
+            str(name or "").strip()
+            for name in (profile.get("hidden_columns") if isinstance(profile.get("hidden_columns"), list) else [])
+            if str(name or "").strip() in column_set
+        }
+        default_visible = set(self._default_visible_list_columns(columns, protected_fields))
+        profile["hidden_columns"] = [
+            name
+            for name in columns
+            if name in existing_hidden or (len(columns) > DEFAULT_LIST_VISIBLE_COLUMN_BUDGET and name not in default_visible)
+        ]
 
     def _apply_list_profile_layout(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
         if not isinstance(contract_v2, dict) or not isinstance(source_contract, dict):
@@ -3062,7 +3110,6 @@ class UiContractV2Handler(BaseIntentHandler):
             "source": "ui.contract.v2.scbs55_legacy_visible_projection" if legacy_override else "ui.contract.v2.business_operation_projection",
             "columns": columns,
             "fact_columns": columns,
-            "hidden_columns": [name for name in (profile.get("hidden_columns") if isinstance(profile.get("hidden_columns"), list) else []) if name in columns],
             "column_labels": labels,
             "show_row_number": False if legacy_override else profile.get("show_row_number", True),
             "row_primary": row_primary,
@@ -3078,6 +3125,15 @@ class UiContractV2Handler(BaseIntentHandler):
                 "must_request_columns": columns,
             },
         })
+        protected_visibility_fields = [
+            *amount_fields,
+            note_field,
+            *BUSINESS_LIST_VISIBILITY_PROTECTED_FIELDS,
+            row_primary,
+            row_secondary,
+            derived_status_field,
+        ]
+        self._apply_default_list_visibility_budget(profile, columns, protected_visibility_fields)
         if direct_orchestration_columns:
             profile["column_policy"] = {
                 "mode": "strict",
