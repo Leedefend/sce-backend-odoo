@@ -319,8 +319,9 @@ class _TreeFormParserMixin:
                 "visible_profiles": ["readonly", "list"],
             }
 
+        normalized_level = str(level or "").strip().lower()
         return {
-            "level": "header" if level != 'smart' else 'smart',
+            "level": normalized_level if normalized_level in ("header", "footer", "body", "smart") else "header",
             "selection": "none",
             "visible_profiles": ["create", "edit", "readonly"],
         }
@@ -592,7 +593,11 @@ class _TreeFormParserMixin:
         header_buttons = self._extract_header_buttons(root) if root is not None else []
         _logger.debug("FORM_PARSER_DEBUG: header_buttons=%s", header_buttons)
 
-        # 5) Smart Buttons（oe_button_box/oe_stat_button）
+        # 5) Footer Buttons（wizard/form footer primary actions）
+        footer_buttons = self._extract_footer_buttons(root) if root is not None else []
+        _logger.debug("FORM_PARSER_DEBUG: footer_buttons=%s", footer_buttons)
+
+        # 6) Smart Buttons（oe_button_box/oe_stat_button）
         stat_buttons = self._extract_button_box(root) if root is not None else []
         # 兼容：有些版本直接把 oe_stat_button 放 sheet/header 下
         if root is not None and not stat_buttons:
@@ -603,21 +608,21 @@ class _TreeFormParserMixin:
         button_box = list(stat_buttons)
         _logger.debug("FORM_PARSER_DEBUG: button_box=%s", button_box)
 
-        # 6) 字段修饰（字段级 + arch 覆盖）
+        # 7) 字段修饰（字段级 + arch 覆盖）
         field_modifiers = self._collect_field_modifiers(fields_info, root)
         _logger.debug("FORM_PARSER_DEBUG: field_modifiers keys=%s", list(field_modifiers.keys()))
 
-        # 7) 子视图（inline + 引用式）
+        # 8) 子视图（inline + 引用式）
         subviews = self._collect_x2many_subviews_from_dom(root, fields_info)
         if not subviews:
             subviews = self._infer_x2many_subviews(fields_info)
         _logger.debug("FORM_PARSER_DEBUG: subviews keys=%s", list(subviews.keys()))
 
-        # 8) 协作能力（优先模型字段判定，其次 DOM 探测）
+        # 9) 协作能力（优先模型字段判定，其次 DOM 探测）
         chatter, attachments = self._detect_chatter_and_attachments_model_first(model_name, fields_info, root)
         _logger.debug("FORM_PARSER_DEBUG: chatter=%s, attachments=%s", chatter, attachments)
 
-        # 9) 最小 search（表单内置搜索占位）
+        # 10) 最小 search（表单内置搜索占位）
         search = {"filters": [], "group_by": [], "facets": {"enabled": True}}
 
         result = {
@@ -625,8 +630,10 @@ class _TreeFormParserMixin:
             "capabilities": capabilities,
             "statusbar": statusbar,
             "header_buttons": header_buttons,
+            "footer_buttons": footer_buttons,
             "button_box": button_box,
             "stat_buttons": stat_buttons,
+            "toolbar": {"header": [], "sidebar": [], "footer": footer_buttons},
             "field_modifiers": field_modifiers,
             "subviews": subviews,
             "chatter": chatter,
@@ -1071,6 +1078,19 @@ class _TreeFormParserMixin:
         btns = []
         for b in root.xpath('.//header//button'):
             entry = self._button_to_action(b, level='header')
+            if entry:
+                btns.append(entry)
+        return btns
+
+    def _extract_footer_buttons(self, root):
+        """抽取 <footer>//button → 归一化为契约按钮。"""
+        if root is None:
+            return []
+        btns = []
+        for b in root.xpath('.//footer//button'):
+            if (b.get('special') or '').strip():
+                continue
+            entry = self._button_to_action(b, level='footer')
             if entry:
                 btns.append(entry)
         return btns

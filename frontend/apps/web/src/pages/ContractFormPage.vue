@@ -2018,13 +2018,15 @@ const intakeCreateButtonLabel = computed(() => {
 });
 
 const submitButtonLabel = computed(() => {
+  const footerAction = primaryCreateFooterAction.value;
   if (busy.value && busyKind.value === 'save' && !primarySubmitAction.value) {
     if (isProjectQuickIntakeMode.value) return '创建中...';
-    return !recordId.value ? '提交中...' : formUiLabel('saving');
+    return !recordId.value && footerAction ? '处理中...' : (!recordId.value ? '提交中...' : formUiLabel('saving'));
   }
-  if (busy.value && busyKind.value === 'action' && primarySubmitAction.value) {
-    return '提交中...';
+  if (busy.value && busyKind.value === 'action' && (primarySubmitAction.value || footerAction)) {
+    return footerAction ? '处理中...' : '提交中...';
   }
+  if (footerAction) return footerAction.label;
   if (primarySubmitAction.value) {
     return '提交';
   }
@@ -2037,7 +2039,7 @@ const submitButtonLabel = computed(() => {
   return formUiLabel('save');
 });
 const showPrimaryBusinessFormAction = computed(() => !showCurrentFormFieldConfigScope.value && !isProjectIntakeCreateMode.value);
-const showDraftSaveAction = computed(() => showPrimaryBusinessFormAction.value && !recordId.value && canSave.value);
+const showDraftSaveAction = computed(() => showPrimaryBusinessFormAction.value && !recordId.value && canSave.value && !primaryCreateFooterAction.value);
 const draftSaveButtonLabel = computed(() => (busy.value && busyKind.value === 'save' ? formUiLabel('saving') : '保存草稿'));
 const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boolean(recordId.value) && hasChanges.value);
 
@@ -3827,6 +3829,7 @@ const isQuickSubmitDisabled = computed(() => {
 const primaryFormActionDisabled = computed(() => {
   if (busy.value) return true;
   if (!canSave.value) return true;
+  if (primaryCreateFooterAction.value) return false;
   if (primarySubmitAction.value) return false;
   return isQuickSubmitDisabled.value;
 });
@@ -6208,24 +6211,37 @@ const contractActions = computed<ContractAction[]>(() => {
       if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return;
       const row = raw as Record<string, unknown>;
       const sourceWidgetId = String(row.sourceWidgetId || row.source_widget_id || '').trim();
-      if (sourceWidgetId !== 'page.header') return;
+      const targetScope = String(row.targetScope || row.target_scope || '').trim().toLowerCase();
       const triggerType = String(row.triggerType || row.trigger_type || '').trim();
       if (triggerType && triggerType !== 'click') return;
       const key = String(row.actionKey || row.key || row.actionId || '').trim();
       if (!key) return;
       const target = parseMaybeJsonRecord(row.target);
+      const button = parseMaybeJsonRecord(row.button);
       const clientMode = String(target.mode || target.client_mode || '').trim();
+      const intent = String(row.intent || '').trim();
+      const buttonType = String(button.type || button.buttonType || '').trim();
+      const buttonName = String(button.name || button.method || '').trim();
+      const isRootObjectAction = sourceWidgetId === 'page.root' && Boolean(buttonName);
+      if (sourceWidgetId !== 'page.header' && targetScope !== 'footer' && !isRootObjectAction) return;
+      const actionKind = buttonType === 'server' || buttonType === 'server_action'
+        ? 'server'
+        : buttonName
+          ? 'object'
+          : (clientMode ? 'client' : 'open');
       merged.push({
         key,
         label: String(row.label || key).trim() || key,
-        kind: clientMode ? 'client' : 'open',
-        intent: String(row.intent || '').trim(),
-        level: 'header',
+        kind: actionKind,
+        intent,
+        level: targetScope === 'footer' ? 'footer' : 'header',
         selection: 'none',
         sourceWidgetId,
         target,
         target_model: String(target.model || '').trim(),
         payload: {
+          method: buttonName,
+          type: buttonType,
           action_id: target.action_id,
           ref: target.ref,
           url: target.url || target.route,
@@ -6683,6 +6699,98 @@ const primarySubmitAction = computed<ContractAction | null>(() => {
   if (!recordId.value) return nativeHeaderSubmitActionForCreate();
   const visibleAction = headerActions.value.find((action) => isUnifiedSubmitAction(action) && action.enabled);
   return visibleAction || null;
+});
+
+function rawCreateRootActionCandidates(): ContractAction[] {
+  const v2 = resolveUnifiedPageContractV2(contract.value);
+  const rows = parseMaybeJsonRecord(v2?.actionContract).actionRuleList;
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .map((raw) => (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null))
+    .filter((row): row is Record<string, unknown> => Boolean(row))
+    .map((row) => {
+      const sourceWidgetId = String(row.sourceWidgetId || row.source_widget_id || '').trim();
+      const targetScope = String(row.targetScope || row.target_scope || '').trim().toLowerCase();
+      const button = parseMaybeJsonRecord(row.button);
+      const buttonName = String(button.name || '').trim();
+      const buttonType = String(button.type || 'object').trim();
+      if (!buttonName || sourceWidgetId !== 'page.root' || (targetScope && targetScope !== 'header' && targetScope !== 'footer')) {
+        return null;
+      }
+      return {
+        key: String(row.actionKey || row.key || row.actionId || buttonName).trim() || buttonName,
+        label: String(row.label || buttonName).trim() || buttonName,
+        kind: buttonType === 'server' || buttonType === 'server_action' ? 'server' : 'object',
+        level: targetScope === 'footer' ? 'footer' : 'header',
+        selection: 'none' as const,
+        actionId: null,
+        methodName: buttonName,
+        targetModel: String(model.value || '').trim(),
+        context: {},
+        domainRaw: '',
+        target: '',
+        url: '',
+        enabled: true,
+        hint: '',
+        intent: String(row.intent || 'execute_button').trim(),
+        semantic: 'primary_action',
+        sourceWidgetId,
+        clientMode: '',
+        visibleProfiles: ['create', 'edit', 'readonly'] as Array<'create' | 'edit' | 'readonly'>,
+        requiredParams: [],
+        requiresReason: false,
+      };
+    })
+    .filter(Boolean) as ContractAction[];
+}
+
+const primaryCreateFooterAction = computed<ContractAction | null>(() => {
+  if (isProjectIntakeCreateMode.value) return null;
+  if (!model.value || recordId.value) return null;
+  if (primarySubmitAction.value) return null;
+  const mappedCandidates = contractActions.value.filter((action) => {
+    const level = String(action.level || '').trim().toLowerCase();
+    const kind = String(action.kind || '').trim().toLowerCase();
+    const source = String(action.sourceWidgetId || '').trim();
+    const isWizardRootAction = source === 'page.root' && level === 'header';
+    return (level === 'footer' || isWizardRootAction)
+      && (kind === 'object' || kind === 'server')
+      && Boolean(action.methodName)
+      && action.selection === 'none';
+  });
+  const candidates = mappedCandidates.length ? mappedCandidates : rawCreateRootActionCandidates();
+  const modelName = String(model.value || route.params.model || '').trim();
+  if (!candidates.length && modelName === 'ui.form.custom.field.wizard') {
+    return {
+      key: 'action_create_field_policy',
+      label: '创建字段并配置显示',
+      kind: 'object',
+      level: 'header',
+      selection: 'none',
+      actionId: null,
+      methodName: 'action_create_field_policy',
+      targetModel: modelName,
+      context: {},
+      domainRaw: '',
+      target: '',
+      url: '',
+      enabled: true,
+      hint: '',
+      intent: 'execute_button',
+      semantic: 'primary_action',
+      sourceWidgetId: 'page.root',
+      clientMode: '',
+      visibleProfiles: ['create', 'edit', 'readonly'],
+      requiredParams: [],
+      requiresReason: false,
+    };
+  }
+  if (candidates.length !== 1) return null;
+  return {
+    ...candidates[0],
+    enabled: true,
+    hint: '',
+  };
 });
 
 function actionResponseNavQuery(result: object | null | undefined, extra?: Record<string, unknown>) {
@@ -11081,6 +11189,24 @@ async function runAction(action: ContractAction) {
 }
 
 async function runPrimaryFormAction() {
+  const footerAction = primaryCreateFooterAction.value;
+  if (footerAction) {
+    const saved = await saveRecord(footerAction.refreshPolicy);
+    if (!saved) return;
+    await nextTick();
+    const submittedRecordId = typeof saved === 'number' ? saved : recordId.value;
+    if (!submittedRecordId) {
+      errorMessage.value = '操作失败：请先保存记录后再执行';
+      status.value = 'error';
+      return;
+    }
+    await executePrimarySubmitAction({
+      ...footerAction,
+      enabled: true,
+      hint: '',
+    }, submittedRecordId);
+    return;
+  }
   const submitAction = primarySubmitAction.value;
   if (!submitAction) {
     await saveRecord();

@@ -2358,7 +2358,7 @@ def _append_ui_contract_actions(
             action_intent = _text(row.get("intent"), "execute_button")
             target = deepcopy(_dict(row.get("target")))
             button = {
-                "name": _text(row.get("name") or row.get("button_name") or row.get("method_name"), key),
+                "name": _text(row.get("name") or row.get("button_name") or row.get("method_name") or payload.get("method"), key),
                 "type": _text(row.get("type") or row.get("button_type"), "object"),
             }
         normalized.append(

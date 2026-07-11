@@ -160,6 +160,42 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual(header["children"][0]["name"], "action_submit")
         self.assertEqual(header["children"][0]["label"], "提交")
 
+    def test_ui_contract_v2_action_button_uses_payload_method(self):
+        source = {
+            "model": "ui.form.custom.field.wizard",
+            "view_type": "form",
+            "head": {"title": "新增表单字段", "render_profile": "create"},
+            "fields": {
+                "label": {"name": "label", "type": "char", "string": "字段名称"},
+            },
+            "toolbar": {
+                "footer": [
+                    {
+                        "key": "obj_action_create_field_policy_创建字段并配置显示",
+                        "label": "创建字段并配置显示",
+                        "kind": "object",
+                        "level": "footer",
+                        "intent": "execute",
+                        "payload": {"method": "action_create_field_policy", "type": "object"},
+                    }
+                ],
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.footer.button.payload.method",
+        )
+
+        action = next(
+            row for row in full["actionContract"]["actionRuleList"]
+            if row["label"] == "创建字段并配置显示"
+        )
+        self.assertEqual(action["button"]["name"], "action_create_field_policy")
+        self.assertEqual(action["targetScope"], "footer")
+
     def test_data_source_and_formal_metadata_projection_carry_source_authority(self):
         source = {
             "model": "project.project",
