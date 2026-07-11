@@ -796,7 +796,7 @@ def _validate_menu_config_runtime_authority(errors: list[dict]) -> None:
         "runtimeState.value = payload.runtime || null",
         "runtimeNavigationTreeFromPayload(payload)",
         "payload.runtime?.tree",
-        "throw new Error('菜单配置缺少最终运行时导航树，已阻止回退到原生菜单结构。')",
+        "throw new Error('菜单配置缺少最终导航结果，已阻止回退到未发布菜单。')",
     ):
         if token not in frontend_text:
             errors.append({

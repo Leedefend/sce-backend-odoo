@@ -669,7 +669,7 @@ verify.business_config.guard_inventory: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/business_config_guard_inventory.py
 	@python3 scripts/verify/business_config_guard_inventory.py
 
-verify.business_config.unit: guard.prod.forbid
+verify.business_config.unit: guard.prod.forbid verify.frontend.product_language.guard
 	@python3 scripts/verify/business_config_user_language_guard.py
 	@python3 scripts/verify/lowcode_config_boundary_guard.py
 	@python3 scripts/verify/backend_contract_boundary_guard.py
@@ -778,7 +778,7 @@ verify.business_config.config_workbench_operation_acceptance: guard.prod.forbid
 
 .PHONY: verify.business_config.config_workbench_operation_quick verify.business_config.config_workbench_operation_summary_guard verify.business_config.config_workbench_operation_local_closeout verify.product.page_structure
 
-verify.business_config.config_workbench_operation_quick: guard.prod.forbid
+verify.business_config.config_workbench_operation_quick: guard.prod.forbid verify.frontend.product_language.guard
 	@node --check frontend/apps/web/scripts/lib/product_page_structure_source.mjs
 	@node --check frontend/apps/web/scripts/lib/config_workbench_operation_coverage.mjs
 	@node --check frontend/apps/web/scripts/config_workbench_operation_coverage_guard.mjs
