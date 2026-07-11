@@ -11703,7 +11703,7 @@ onBeforeUnmount(() => {
 .card {
   border: 1px solid var(--sc-app-border);
   border-radius: var(--sc-product-panel-radius);
-  padding: 14px;
+  padding: 18px 20px 20px;
   background: var(--sc-app-panel);
   max-width: 1360px;
   width: 100%;
@@ -11970,7 +11970,7 @@ onBeforeUnmount(() => {
 
 .form-grid {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .form-grid--designer-workspace {
@@ -12080,7 +12080,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--sc-app-border);
   border-radius: var(--sc-product-panel-radius);
   background: var(--sc-app-panel);
@@ -12094,7 +12094,7 @@ onBeforeUnmount(() => {
 
 .contract-form-native-shell :deep(.template-page-header-main h1) {
   color: var(--sc-app-text-primary);
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -12108,20 +12108,28 @@ onBeforeUnmount(() => {
 
 .contract-form-native-shell :deep(.template-page-header-actions) {
   flex: 0 0 auto;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
+  padding: 3px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel-muted);
 }
 
 .contract-header-action-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 7px;
   color: var(--sc-app-text-secondary);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .contract-form-native-shell :deep(.template-page-header-actions .sc-btn) {
-  min-height: 34px;
-  padding: 6px 12px;
+  min-height: 30px;
+  padding: 5px 11px;
   font-weight: 600;
 }
 
@@ -12138,7 +12146,7 @@ onBeforeUnmount(() => {
 .contract-header-action-separator {
   align-self: center;
   width: 1px;
-  height: 18px;
+  height: 16px;
   background: var(--sc-app-border);
 }
 
@@ -12195,6 +12203,54 @@ onBeforeUnmount(() => {
   color: var(--sc-app-text-primary);
   font-size: 14px;
   font-weight: 700;
+}
+
+.contract-form-native-shell :deep(.native-form-tree) {
+  gap: 18px;
+}
+
+.contract-form-native-shell :deep(.native-container--sheet) {
+  gap: 18px;
+}
+
+.contract-form-native-shell :deep(.native-container--group) {
+  gap: 14px;
+  padding: 14px 14px 16px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--sc-app-panel) 86%, var(--sc-app-muted-bg));
+}
+
+.contract-form-native-shell :deep(.native-container--group > .native-container-head) {
+  min-height: 28px;
+  margin: -2px 0 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--sc-semantic-surface-interactive);
+}
+
+.contract-form-native-shell :deep(.native-container--group > .native-container-head h3) {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.contract-form-native-shell :deep(.native-tabs) {
+  border-radius: 8px;
+  padding: 5px;
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel-muted);
+}
+
+.contract-form-native-shell :deep(.native-tab) {
+  min-height: 30px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+.contract-form-native-shell :deep(.native-tab--active) {
+  border-color: var(--sc-app-border);
+  background: var(--sc-app-panel);
+  box-shadow: 0 1px 2px var(--sc-app-shadow);
 }
 
 .contract-mode-actions {

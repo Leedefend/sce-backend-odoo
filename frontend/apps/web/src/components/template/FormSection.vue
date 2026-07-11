@@ -649,15 +649,15 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   min-width: 0;
 }
 
 .template-form-section-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--sc-app-text-primary);
-  font-weight: 500;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -669,14 +669,14 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 
 .template-form-section-grid {
   display: grid;
-  row-gap: 16px;
-  column-gap: 24px;
+  row-gap: 14px;
+  column-gap: 20px;
   min-width: 0;
 }
 
 .field {
   display: grid;
-  gap: 0;
+  gap: 5px;
   min-width: 0;
   align-content: start;
   border: 1px solid transparent;
@@ -757,11 +757,11 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .label {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--sc-app-text-primary);
   font-weight: 600;
   margin: 0;
@@ -856,7 +856,7 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 
 .field-control-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: nowrap;
   gap: 6px;
   min-width: 0;
@@ -871,22 +871,28 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 .readonly-value {
   font-size: 13px;
   color: var(--sc-app-text-secondary);
-  min-height: 40px;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
+  width: 100%;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-input-radius);
+  background: var(--sc-app-panel-muted);
+  padding: 7px 10px;
   min-width: 0;
   overflow-wrap: anywhere;
+  box-sizing: border-box;
 }
 
 .input {
   border: 1px solid var(--sc-app-border);
   border-radius: var(--sc-component-input-radius);
-  padding: 8px 12px;
-  height: 40px;
-  min-height: 40px;
+  padding: 7px 10px;
+  height: 36px;
+  min-height: 36px;
   width: 100%;
   min-width: 0;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.35;
   color: var(--sc-app-text-primary);
   background: var(--sc-app-input-bg);
