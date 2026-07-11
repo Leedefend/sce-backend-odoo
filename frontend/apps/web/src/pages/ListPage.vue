@@ -1457,7 +1457,9 @@ const listTotal = computed(() => {
   if (props.listTotalCount === null || typeof props.listTotalCount === 'undefined') return null;
   const raw = Number(props.listTotalCount);
   if (!Number.isFinite(raw) || raw < 0) return null;
-  return Math.trunc(raw);
+  const total = Math.trunc(raw);
+  if (total === 0 && pageVisibleRows.value.length > 0) return pageVisibleRows.value.length;
+  return total;
 });
 const listOffset = computed(() => {
   const offset = Number(props.listOffset || 0);
@@ -2270,7 +2272,7 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100%;
   max-width: 100%;
-  max-height: max(420px, calc(100vh - 210px));
+  max-height: max(420px, calc(100vh - 260px));
   overflow-x: auto;
   overflow-y: auto;
   background: var(--sc-app-panel);
@@ -2625,8 +2627,7 @@ onBeforeUnmount(() => {
 .pagination-footer {
   display: flex;
   justify-content: flex-end;
-  position: sticky;
-  bottom: 0;
+  position: static;
   z-index: 24;
   background: var(--sc-app-bg);
   padding-top: 6px;
