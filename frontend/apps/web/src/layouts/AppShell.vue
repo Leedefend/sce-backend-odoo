@@ -1141,9 +1141,9 @@ const hudEntries = computed(() => {
   { label: '当前企业库', value: effectiveDb.value || '-' },
   { label: '导航版本', value: navVersion.value || '-' },
   { label: '业务模型', value: asText(asDict(session.currentAction)?.model) || '-' },
-  { label: '建议动作类型', value: latestSuggestedAction.value?.suggested_action_kind || '-' },
-  { label: '建议动作结果', value: latestSuggestedAction.value?.suggested_action_success === undefined ? '-' : (latestSuggestedAction.value.suggested_action_success ? '成功' : '失败') },
-  { label: '建议动作时间', value: latestSuggestedActionTs.value },
+  { label: '处理建议类型', value: latestSuggestedAction.value?.suggested_action_kind || '-' },
+  { label: '处理建议结果', value: latestSuggestedAction.value?.suggested_action_success === undefined ? '-' : (latestSuggestedAction.value.suggested_action_success ? '成功' : '失败') },
+  { label: '处理建议时间', value: latestSuggestedActionTs.value },
   ];
   if (sceneGovernanceSnapshot.value) {
     entries.push(
@@ -1179,7 +1179,7 @@ const hudActions = computed(() => [
         : '抽取统计已隐藏。';
     },
   },
-  { key: 'export-sa-all', label: '导出全部建议动作', onClick: () => exportSuggestedActionJson() },
+  { key: 'export-sa-all', label: '导出全部处理建议', onClick: () => exportSuggestedActionJson() },
   { key: 'export-sa-ok', label: '导出成功动作', onClick: () => exportSuggestedActionJson({ success: true }, 'ok') },
   { key: 'export-sa-fail', label: '导出失败动作', onClick: () => exportSuggestedActionJson({ success: false }, 'fail') },
   { key: 'export-sa-1h', label: '导出近 1 小时', onClick: () => exportSuggestedActionJson({ since_ts: sinceTsFromHours(1) }, '1h') },
@@ -1242,12 +1242,12 @@ function exportSuggestedActionJson(filter: { success?: boolean; kind?: string; s
   try {
     const content = exportSuggestedActionTraces({ ...filter, limit: 200 });
     const now = new Date().toISOString().replace(/[:.]/g, '-');
-    downloadTextAsFile(`suggested-action-traces-${sanitizeExportSuffix(suffix)}-${now}.json`, content);
+    downloadTextAsFile(`handling-suggestion-records-${sanitizeExportSuffix(suffix)}-${now}.json`, content);
     const filterSummary = summarizeSuggestedActionTraceFilter(filter);
     const details = [suffix, filterSummary].filter(Boolean).join(', ');
-    hudMessage.value = `建议动作记录已导出（${details}）。`;
+    hudMessage.value = `处理建议记录已导出（${details}）。`;
   } catch {
-    hudMessage.value = '建议动作记录导出失败。';
+    hudMessage.value = '处理建议记录导出失败。';
   }
 }
 

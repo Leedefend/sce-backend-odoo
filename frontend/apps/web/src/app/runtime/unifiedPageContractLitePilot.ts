@@ -128,7 +128,7 @@ export function adaptLiteContractToActionViewContract(lite: UnifiedPageContractL
   }, {});
 
   if (!fields.id) {
-    fields.id = { name: 'id', string: 'ID', type: 'integer' };
+    fields.id = { name: 'id', string: '编号', type: 'integer' };
   }
 
   const columnsSchema = uniqueColumns.map((name) => ({

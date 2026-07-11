@@ -1175,10 +1175,10 @@ async function executeHeaderAction(actionKey: string) {
 }
 
 function onErrorSuggestedActionExecuted(payload: { action: string; success: boolean }) {
-  const actionLabel = payload.action || pageText('suggested_action_unknown', '建议动作');
+  const actionLabel = payload.action || pageText('suggested_action_unknown', '处理建议');
   actionFeedback.value = payload.success
-    ? `${pageText('feedback_suggest_action_ok_prefix', '已执行建议动作：')}${actionLabel}`
-    : `${pageText('feedback_suggest_action_failed_prefix', '建议动作执行失败：')}${actionLabel}`;
+    ? `${pageText('feedback_suggest_action_ok_prefix', '已执行处理建议：')}${actionLabel}`
+    : `${pageText('feedback_suggest_action_failed_prefix', '处理建议执行失败：')}${actionLabel}`;
   actionFeedbackError.value = !payload.success;
 }
 
