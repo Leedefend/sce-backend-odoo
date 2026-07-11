@@ -28,7 +28,11 @@ def _make_text() -> str:
             ],
             guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.quick"],
         ),
-        _target("verify.system_user_experience.visible_surface_visual_coverage", ["guard.prod.forbid"], guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.visible_surface_visual_coverage"]),
+        _target(
+            "verify.system_user_experience.visible_surface_visual_coverage",
+            ["guard.prod.forbid"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.visible_surface_visual_coverage"],
+        ),
         _target(
             "verify.system_user_experience.full_browser",
             ["guard.prod.forbid", *guard.REQUIRED_TARGET_DEPS["verify.system_user_experience.full_browser"]],
@@ -59,8 +63,16 @@ def _make_text() -> str:
             "verify.business_config.config_workbench_operation_quick",
             ["guard.prod.forbid", *guard.REQUIRED_TARGET_DEPS["verify.business_config.config_workbench_operation_quick"]],
         ),
-        _target("verify.system_user_experience.shell_acceptance", ["guard.prod.forbid"], guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.shell_acceptance"]),
-        _target("verify.system_user_experience.business_form_user_perspective", ["guard.prod.forbid"], guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.business_form_user_perspective"]),
+        _target(
+            "verify.system_user_experience.shell_acceptance",
+            ["guard.prod.forbid"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.shell_acceptance"],
+        ),
+        _target(
+            "verify.system_user_experience.business_form_user_perspective",
+            ["guard.prod.forbid"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.system_user_experience.business_form_user_perspective"],
+        ),
     ]
     return "\n\n".join(targets)
 
@@ -79,6 +91,22 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn(
             "verify.business_system.usability_readiness.prod missing command token: BUSINESS_SYSTEM_READINESS_PROD_READONLY=1",
+            errors,
+        )
+
+    def test_full_browser_gate_must_keep_config_workbench_acceptance(self) -> None:
+        make_text = _make_text().replace(" verify.business_config.config_workbench_operation_acceptance", "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.system_user_experience.full_browser missing dependency: verify.business_config.config_workbench_operation_acceptance",
+            errors,
+        )
+
+    def test_full_browser_gate_must_keep_business_form_acceptance(self) -> None:
+        make_text = _make_text().replace(" verify.system_user_experience.business_form_user_perspective", "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.system_user_experience.full_browser missing dependency: verify.system_user_experience.business_form_user_perspective",
             errors,
         )
 
