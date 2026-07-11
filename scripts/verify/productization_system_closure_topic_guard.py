@@ -48,6 +48,15 @@ REQUIRED_QUICK_DEPS = [
     "verify.product.page_structure",
 ]
 
+REQUIRED_TARGET_DEPS = {
+    "verify.business_config.unit": [
+        "verify.frontend.product_language.guard",
+    ],
+    "verify.business_config.config_workbench_operation_quick": [
+        "verify.frontend.product_language.guard",
+    ],
+}
+
 
 def _target_line(text: str, target: str) -> str:
     pattern = re.compile(rf"^{re.escape(target)}\s*:(?P<deps>[^\n]*)$", re.MULTILINE)
@@ -78,6 +87,15 @@ def main() -> int:
         if dep not in quick_line:
             errors.append(f"quick gate missing dependency: {dep}")
 
+    for target, deps in REQUIRED_TARGET_DEPS.items():
+        target_line = _target_line(make_text, target)
+        if not target_line:
+            errors.append(f"Makefile missing target: {target}")
+            continue
+        for dep in deps:
+            if dep not in target_line:
+                errors.append(f"{target} missing dependency: {dep}")
+
     topic_line = _target_line(make_text, "verify.productization.system_closure.topic_guard")
     if topic_line and "guard.prod.forbid" not in topic_line:
         errors.append("topic guard must use guard.prod.forbid")
@@ -90,6 +108,7 @@ def main() -> int:
         "required_doc_tokens": len(REQUIRED_DOC_TOKENS),
         "required_make_targets": len(REQUIRED_MAKE_TARGETS),
         "required_quick_dependencies": len(REQUIRED_QUICK_DEPS),
+        "required_target_dependencies": sum(len(deps) for deps in REQUIRED_TARGET_DEPS.values()),
     }
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 2 if errors else 0

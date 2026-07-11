@@ -101,6 +101,7 @@ FULL_ACCEPTANCE_TARGETS = {
     "verify.business_config.browser_acceptance",
     "verify.product.navigation_boundary",
     "verify.business_config.low_code_acceptance",
+    "verify.business_config.config_workbench_operation_acceptance",
     "verify.business_config.low_code_runtime_consistency",
     "verify.business_config.low_code_group_matrix",
     "verify.business_config.low_code_layout_runtime",
@@ -149,6 +150,9 @@ TARGET_SCRIPT_REQUIREMENTS = {
     "verify.business_config.low_code_acceptance": (
         "scripts/low_code_business_config_acceptance.mjs|frontend/apps/web/scripts/low_code_business_config_acceptance.mjs",
     ),
+    "verify.business_config.config_workbench_operation_acceptance": (
+        "scripts/config_workbench_operation_acceptance.mjs|frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
+    ),
     "verify.business_config.low_code_runtime_consistency": (
         "scripts/low_code_form_runtime_consistency_acceptance.mjs|frontend/apps/web/scripts/low_code_form_runtime_consistency_acceptance.mjs",
     ),
@@ -166,6 +170,15 @@ TARGET_SCRIPT_REQUIREMENTS = {
     ),
     "verify.full_product_capability_scope": (
         "scripts/verify/full_product_capability_scope_audit.py",
+    ),
+}
+
+TARGET_DEPENDENCY_REQUIREMENTS = {
+    "verify.business_config.unit": (
+        "verify.frontend.product_language.guard",
+    ),
+    "verify.business_config.config_workbench_operation_quick": (
+        "verify.frontend.product_language.guard",
     ),
 }
 
@@ -480,6 +493,15 @@ def main() -> int:
                 errors.append("%s does not invoke %s" % (target, invoke))
             if not (ROOT / artifact).is_file():
                 errors.append("missing verification artifact %s" % artifact)
+
+    for target, required_deps in TARGET_DEPENDENCY_REQUIREMENTS.items():
+        deps = _deps(_target_line(makefile, target))
+        if not deps:
+            errors.append("Makefile missing dependencies for %s" % target)
+            continue
+        for dep in required_deps:
+            if dep not in deps:
+                errors.append("%s missing dependency %s" % (target, dep))
 
     for target, artifacts in TARGET_SOURCE_MARKER_REQUIREMENTS.items():
         for artifact, markers in artifacts.items():

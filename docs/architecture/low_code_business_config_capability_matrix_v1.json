@@ -89,7 +89,7 @@
       "publish_versioning": "not applicable; boundary is a guardrail",
       "rollback": "not applicable; boundary violations are rejected",
       "audit": "business_config_coverage_gate.py + backend_contract_boundary_guard.py + low_code_boundary_parity + guard_inventory matrix coverage",
-      "acceptance": ["verify.business_config.guard_inventory", "verify.business_config.coverage", "verify.business_config.unit"],
+      "acceptance": ["verify.business_config.guard_inventory", "verify.business_config.coverage", "verify.business_config.unit", "verify.business_config.config_workbench_operation_acceptance"],
       "status": "ready",
       "release_blockers": []
     }
