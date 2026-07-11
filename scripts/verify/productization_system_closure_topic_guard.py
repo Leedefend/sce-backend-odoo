@@ -97,6 +97,27 @@ REQUIRED_MAKE_TARGETS = [
     "verify.frontend.product_language.guard",
 ]
 
+REQUIRED_DOC_DECLARED_MAKE_TARGETS = [
+    "verify.system_user_experience.quick",
+    "verify.business_config.unit",
+    "verify.business_config.config_workbench_operation_quick",
+    "verify.business_config.full_acceptance",
+    "verify.system_user_experience.visible_surface_visual_coverage",
+    "verify.system_user_experience.full_browser",
+    "verify.formal_business.release_gate",
+    "verify.business_capability.productization_p1",
+    "verify.business_system.usability_readiness",
+    "verify.production_git.authority.guard",
+    "verify.project_context.selector_product_boundary.guard.prod",
+    "verify.formal_menu.runtime_no_legacy_carrier_guard.prod",
+    "verify.formal_list_surface.no_test_placeholder_guard.prod",
+    "verify.business_system.usability_readiness.prod",
+    "history.attachment.custody.probe.prod",
+    "verify.legacy_online_attachment.custody.evidence.prod",
+    "verify.legacy_attachment.frontend_browser.sample_manifest.prod",
+    "verify.attachment_upload.surface_manifest.prod",
+]
+
 REQUIRED_PROD_READONLY_TARGETS = [
     "verify.business_system.usability_readiness.prod",
     "verify.project_context.selector_product_boundary.guard.prod",
@@ -438,6 +459,15 @@ def validate(doc_text: str, make_text: str) -> list[str]:
     for target in _doc_declared_make_targets():
         if target not in REQUIRED_MAKE_TARGETS:
             errors.append(f"doc declared make target not guarded as required Makefile target: {target}")
+
+    doc_declared_make_targets = _doc_declared_make_targets()
+    for target in _duplicate_tokens(REQUIRED_DOC_DECLARED_MAKE_TARGETS):
+        errors.append(f"required doc-declared make target duplicated: {target}")
+    for target in REQUIRED_DOC_DECLARED_MAKE_TARGETS:
+        if target not in REQUIRED_MAKE_TARGETS:
+            errors.append(f"required doc-declared make target not guarded as required Makefile target: {target}")
+        if target not in doc_declared_make_targets:
+            errors.append(f"required doc-declared make target missing from doc tokens: {target}")
 
     seen_target_mode_groups: dict[str, str] = {}
     for group, targets in REQUIRED_TARGET_MODE_GROUPS.items():

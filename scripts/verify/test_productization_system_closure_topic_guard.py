@@ -215,6 +215,36 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
             errors,
         )
 
+    def test_required_doc_declared_make_target_duplicate_fails(self) -> None:
+        duplicated_targets = [
+            *guard.REQUIRED_DOC_DECLARED_MAKE_TARGETS,
+            "verify.system_user_experience.quick",
+        ]
+        with mock.patch.object(guard, "REQUIRED_DOC_DECLARED_MAKE_TARGETS", duplicated_targets):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn("required doc-declared make target duplicated: verify.system_user_experience.quick", errors)
+
+    def test_required_doc_declared_make_target_must_be_required_make_target(self) -> None:
+        required_doc_targets = [*guard.REQUIRED_DOC_DECLARED_MAKE_TARGETS, "verify.untracked.topic.gate"]
+        with mock.patch.object(guard, "REQUIRED_DOC_DECLARED_MAKE_TARGETS", required_doc_targets):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn(
+            "required doc-declared make target not guarded as required Makefile target: verify.untracked.topic.gate",
+            errors,
+        )
+
+    def test_required_doc_declared_make_target_must_be_in_doc_tokens(self) -> None:
+        required_doc_targets = [*guard.REQUIRED_DOC_DECLARED_MAKE_TARGETS, "verify.frontend.product_language.guard"]
+        with mock.patch.object(guard, "REQUIRED_DOC_DECLARED_MAKE_TARGETS", required_doc_targets):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn(
+            "required doc-declared make target missing from doc tokens: verify.frontend.product_language.guard",
+            errors,
+        )
+
     def test_doc_must_keep_frontend_backend_contract_boundary(self) -> None:
         doc_text = _doc_text().replace("前端只消费后端契约", "")
         errors = guard.validate(doc_text, _make_text())
